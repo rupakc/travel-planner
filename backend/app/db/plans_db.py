@@ -65,9 +65,8 @@ def update_plan(
         vals.append(json.dumps(selections))
     vals += [plan_id, username]
     with get_connection() as conn:
-        conn.execute(
-            f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?", vals
-        )  # nosec B608
+        sql = f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?"  # nosec B608
+        conn.execute(sql, vals)
     return get_plan(plan_id)
 
 

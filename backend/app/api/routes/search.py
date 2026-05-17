@@ -16,7 +16,12 @@ def get_orchestrator() -> TravelOrchestrator:
 @router.post("/search")
 async def search(request: TravelSearchRequest):
     """Stream travel planning results; cache full event sequence for 30 min."""
-    cache_key = "search:" + hashlib.md5(request.model_dump_json().encode(), usedforsecurity=False).hexdigest()  # nosec B324
+    cache_key = (
+        "search:"
+        + hashlib.md5(
+            request.model_dump_json().encode(), usedforsecurity=False
+        ).hexdigest()
+    )
     cache = get_cache()
 
     async def generate():

@@ -76,9 +76,8 @@ def list_feedback(
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
     params.append(limit)
     with get_connection() as conn:
-        rows = conn.execute(
-            f"SELECT * FROM feedback {where} ORDER BY created_at DESC LIMIT ?", params  # nosec B608
-        ).fetchall()
+        sql = f"SELECT * FROM feedback {where} ORDER BY created_at DESC LIMIT ?"  # nosec B608
+        rows = conn.execute(sql, params).fetchall()
     return [_row_to_dict(r) for r in rows]
 
 
