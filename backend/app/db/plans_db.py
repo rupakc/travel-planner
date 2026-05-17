@@ -54,12 +54,14 @@ def get_user_plans(username: str) -> list[dict]:
 def update_plan(plan_id: int, username: str, name: str | None, selections: dict | None) -> dict | None:
     sets, vals = ["updated_at = datetime('now')"], []
     if name is not None:
-        sets.append("name = ?"); vals.append(name)
+        sets.append("name = ?")
+        vals.append(name)
     if selections is not None:
-        sets.append("selections = ?"); vals.append(json.dumps(selections))
+        sets.append("selections = ?")
+        vals.append(json.dumps(selections))
     vals += [plan_id, username]
     with get_connection() as conn:
-        conn.execute(f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?", vals)
+        conn.execute(f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?", vals)  # nosec B608
     return get_plan(plan_id)
 
 

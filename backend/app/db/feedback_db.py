@@ -64,11 +64,14 @@ def list_feedback(
 ) -> list[dict]:
     clauses, params = [], []
     if page:
-        clauses.append("page = ?"); params.append(page)
+        clauses.append("page = ?")
+        params.append(page)
     if category:
-        clauses.append("category = ?"); params.append(category)
+        clauses.append("category = ?")
+        params.append(category)
     if min_rating is not None:
-        clauses.append("rating >= ?"); params.append(min_rating)
+        clauses.append("rating >= ?")
+        params.append(min_rating)
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
     params.append(limit)
     with get_connection() as conn:

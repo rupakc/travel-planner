@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     cache_maxsize: int = 500
 
     # Security
-    jwt_secret_key: str = "change-me-in-production"
+    jwt_secret_key: str = ""
     cors_origins: list[str] = ["http://localhost:5174", "http://localhost:5173"]
 
     # Storage

@@ -297,7 +297,8 @@ class TravelOrchestrator:
                 day_slots = []
                 for tod in ("morning", "afternoon", "evening"):
                     if act_idx < len(activity_list):
-                        a = activity_list[act_idx]; act_idx += 1
+                        a = activity_list[act_idx]
+                        act_idx += 1
                         day_slots.append({
                             "time_of_day":       tod,
                             "activity":          a.get("name", "Local exploration"),

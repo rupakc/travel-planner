@@ -7,6 +7,7 @@ on:
 jobs:
   push-images:
     runs-on: ubuntu-latest
+    if: ${{ secrets.GCP_SA_KEY != '' }}
     outputs:
       registry: ${{ steps.registry.outputs.url }}
     steps:

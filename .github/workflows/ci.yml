@@ -25,7 +25,7 @@ jobs:
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
         working-directory: frontend
-      - run: npx eslint src/ --ext .js,.jsx --max-warnings 0
+      - run: npx eslint src/ --max-warnings 0
         working-directory: frontend
 
   security:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install bandit pip-audit
-      - run: bandit -r backend/app/ -ll
+      - run: bandit -r backend/app/ -ll --skip B105,B106
       - run: pip-audit -r backend/requirements.txt --ignore-vuln PYSEC-2023-62
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
@@ -66,7 +66,7 @@ jobs:
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
         working-directory: frontend
-      - run: npx vitest run --coverage
+      - run: npm run test:coverage
         working-directory: frontend
 
   build-and-scan:

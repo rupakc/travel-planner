@@ -16,7 +16,7 @@ _GCS_PREFIX = "sqlite-backups/"
 
 
 def _get_client():
-    from google.cloud import storage  # noqa: import guard
+    from google.cloud import storage  # noqa: F401
     return storage.Client()
 
 

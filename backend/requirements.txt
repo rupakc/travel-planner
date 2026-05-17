@@ -12,3 +12,5 @@ bcrypt>=4.0.0
 ddgs
 beautifulsoup4
 google-cloud-storage
+
+anthropic>=0.40.0
