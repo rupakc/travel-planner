@@ -11,7 +11,11 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
         super().__init__(load_agent_definition(agents_dir, "getting-around"))
 
     async def run(self, request: TravelSearchRequest) -> dict:
-        nights = (request.return_date - request.departure_date).days if request.return_date else 7
+        nights = (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        )
         prompt = (
             f"Find all public and private transportation options for getting around {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Trip duration: {nights} nights\n"
@@ -42,7 +46,7 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
         if not items:
             return data
 
-        for item in items[:self._MAX_ENRICH]:
+        for item in items[: self._MAX_ENRICH]:
             # First, clean up any multi-URL values from Haiku
             raw_url = item.get("booking_url", "")
             if raw_url and "|" in raw_url:
@@ -55,8 +59,7 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
                 continue
 
             url = await self._search_url(
-                f"{name} {self._destination} official website",
-                match_name=name
+                f"{name} {self._destination} official website", match_name=name
             )
             if url:
                 item["booking_url"] = url

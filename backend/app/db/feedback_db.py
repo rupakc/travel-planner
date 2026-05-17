@@ -1,4 +1,5 @@
 """SQLite persistence for user feedback submissions."""
+
 import json
 import logging
 import uuid
@@ -76,7 +77,7 @@ def list_feedback(
     params.append(limit)
     with get_connection() as conn:
         rows = conn.execute(
-            f"SELECT * FROM feedback {where} ORDER BY created_at DESC LIMIT ?", params
+            f"SELECT * FROM feedback {where} ORDER BY created_at DESC LIMIT ?", params  # nosec B608
         ).fetchall()
     return [_row_to_dict(r) for r in rows]
 

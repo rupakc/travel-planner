@@ -19,7 +19,10 @@ def _secret() -> str:
 
 def create_access_token(data: dict) -> str:
     """Create a JWT. Pass at minimum {"sub": username}; extra claims are included."""
-    payload = {**data, "exp": datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)}
+    payload = {
+        **data,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS),
+    }
     return jwt.encode(payload, _secret(), algorithm=ALGORITHM)
 
 
@@ -40,6 +43,7 @@ def get_current_user(
     payload = decode_token(credentials.credentials)
     username: str = payload.get("sub", "")
     from ..db.users_db import get_user_by_username
+
     user = get_user_by_username(username)
     if not user or not user.get("is_active"):
         raise HTTPException(status_code=401, detail="User not found or inactive")
@@ -56,6 +60,7 @@ def get_optional_user(
         payload = jwt.decode(credentials.credentials, _secret(), algorithms=[ALGORITHM])
         username = payload.get("sub", "")
         from ..db.users_db import get_user_by_username
+
         return get_user_by_username(username)
     except JWTError:
         return None

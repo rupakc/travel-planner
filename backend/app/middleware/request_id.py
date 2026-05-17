@@ -1,4 +1,5 @@
 """Propagate X-Request-ID through every request."""
+
 import uuid
 
 from starlette.middleware.base import BaseHTTPMiddleware

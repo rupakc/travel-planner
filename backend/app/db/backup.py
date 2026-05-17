@@ -6,6 +6,7 @@ On SIGTERM: the periodic task does a final upload before the process exits.
 
 Set BACKUP_BUCKET env var to enable. Empty string disables silently.
 """
+
 import asyncio
 import logging
 from pathlib import Path
@@ -17,6 +18,7 @@ _GCS_PREFIX = "sqlite-backups/"
 
 def _get_client():
     from google.cloud import storage  # noqa: F401
+
     return storage.Client()
 
 
@@ -26,6 +28,7 @@ async def restore_from_gcs(bucket_name: str, data_dir: str) -> None:
         return
     try:
         import asyncio
+
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _sync_restore, bucket_name, data_dir)
     except Exception as e:
@@ -74,7 +77,9 @@ def _sync_backup(bucket_name: str, data_dir: str) -> None:
         logger.info(f"Backed up {db_file.name} to GCS")
 
 
-async def start_periodic_backup(bucket_name: str, data_dir: str, interval_seconds: int = 300) -> None:
+async def start_periodic_backup(
+    bucket_name: str, data_dir: str, interval_seconds: int = 300
+) -> None:
     """Run as an asyncio background task; backs up every interval_seconds."""
     if not bucket_name:
         return

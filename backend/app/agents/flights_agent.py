@@ -29,7 +29,9 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "flights"))
 
-    async def run(self, request: TravelSearchRequest, filters: dict | None = None) -> dict:
+    async def run(
+        self, request: TravelSearchRequest, filters: dict | None = None
+    ) -> dict:
         is_round_trip = request.return_date is not None
         trip_type = "round-trip" if is_round_trip else "one-way"
 
@@ -64,19 +66,29 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
             if filters.get("max_stops") is not None:
                 stops = filters["max_stops"]
                 if stops == 0:
-                    lines.append("STOPS: Non-stop/direct flights ONLY. Do NOT include any flights with stops.")
+                    lines.append(
+                        "STOPS: Non-stop/direct flights ONLY. Do NOT include any flights with stops."
+                    )
                 else:
-                    lines.append(f"STOPS: Maximum {stops} stop(s). Exclude flights with more than {stops} stop(s).")
+                    lines.append(
+                        f"STOPS: Maximum {stops} stop(s). Exclude flights with more than {stops} stop(s)."
+                    )
             if filters.get("max_price_usd") is not None:
-                lines.append(f"PRICE: Maximum ${int(filters['max_price_usd'])} per person. Exclude flights above this price.")
+                lines.append(
+                    f"PRICE: Maximum ${int(filters['max_price_usd'])} per person. Exclude flights above this price."
+                )
             dep_e = filters.get("departure_time_earliest")
             dep_l = filters.get("departure_time_latest")
             if dep_e or dep_l:
-                lines.append(f"DEPARTURE TIME: Only flights departing between {dep_e or '00:00'} and {dep_l or '23:59'}.")
+                lines.append(
+                    f"DEPARTURE TIME: Only flights departing between {dep_e or '00:00'} and {dep_l or '23:59'}."
+                )
             arr_e = filters.get("arrival_time_earliest")
             arr_l = filters.get("arrival_time_latest")
             if arr_e or arr_l:
-                lines.append(f"ARRIVAL TIME: Only flights arriving between {arr_e or '00:00'} and {arr_l or '23:59'}.")
+                lines.append(
+                    f"ARRIVAL TIME: Only flights arriving between {arr_e or '00:00'} and {arr_l or '23:59'}."
+                )
             lines.append("--- END FILTERS ---")
             prompt += "\n".join(lines)
 
@@ -91,9 +103,8 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         seen_airlines = set()
         for flight in flights:
-            airline = (
-                flight.get("airline")
-                or (flight.get("outbound", {}) or {}).get("airline", "")
+            airline = flight.get("airline") or (flight.get("outbound", {}) or {}).get(
+                "airline", ""
             )
             if not airline or airline in seen_airlines:
                 continue
@@ -115,9 +126,8 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
             if url:
                 source = _url_to_source(url)
                 for f in flights:
-                    f_airline = (
-                        f.get("airline")
-                        or (f.get("outbound", {}) or {}).get("airline", "")
+                    f_airline = f.get("airline") or (f.get("outbound", {}) or {}).get(
+                        "airline", ""
                     )
                     if f_airline == airline:
                         f["booking_url"] = url

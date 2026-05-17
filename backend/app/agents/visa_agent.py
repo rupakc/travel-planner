@@ -11,9 +11,19 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
         super().__init__(load_agent_definition(agents_dir, "visa"))
 
     async def run(self, request: TravelSearchRequest) -> dict:
-        permits_str = ", ".join(request.residence_permits) if request.residence_permits else "none"
-        visas_str = ", ".join(request.existing_visas) if request.existing_visas else "none"
-        nights = (request.return_date - request.departure_date).days if request.return_date else 7
+        permits_str = (
+            ", ".join(request.residence_permits)
+            if request.residence_permits
+            else "none"
+        )
+        visas_str = (
+            ", ".join(request.existing_visas) if request.existing_visas else "none"
+        )
+        nights = (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        )
         prompt = (
             f"Determine visa requirements for:\n"
             f"Nationality: {request.nationality}\n"
@@ -29,10 +39,16 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
         return await self.execute(prompt)
 
     async def _enrich_urls(self, data: dict) -> dict:
-        dest_country = self._destination.split(",")[-1].strip() if "," in self._destination else self._destination
+        dest_country = (
+            self._destination.split(",")[-1].strip()
+            if "," in self._destination
+            else self._destination
+        )
 
         req = data.get("requirement", {})
-        if isinstance(req, dict) and not (req.get("official_url") and self._is_clean_url(req.get("official_url", ""))):
+        if isinstance(req, dict) and not (
+            req.get("official_url") and self._is_clean_url(req.get("official_url", ""))
+        ):
             url = await self._search_url(
                 f"{dest_country} visa requirements {self._nationality} official government"
             )
@@ -41,7 +57,9 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
                 logger.info(f"Visa official URL: {dest_country} -> {url}")
 
         vacc = data.get("vaccinations", {})
-        if isinstance(vacc, dict) and not (vacc.get("source_url") and self._is_clean_url(vacc.get("source_url", ""))):
+        if isinstance(vacc, dict) and not (
+            vacc.get("source_url") and self._is_clean_url(vacc.get("source_url", ""))
+        ):
             url = await self._search_url(
                 f"{dest_country} travel vaccination requirements CDC WHO"
             )
@@ -50,7 +68,10 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
                 logger.info(f"Vaccination URL: {dest_country} -> {url}")
 
         customs = data.get("customs", {})
-        if isinstance(customs, dict) and not (customs.get("source_url") and self._is_clean_url(customs.get("source_url", ""))):
+        if isinstance(customs, dict) and not (
+            customs.get("source_url")
+            and self._is_clean_url(customs.get("source_url", ""))
+        ):
             url = await self._search_url(
                 f"{dest_country} customs duty free allowance import rules"
             )

@@ -1,4 +1,5 @@
 """SQLite persistence for user travel preferences."""
+
 import json
 
 from .database import get_connection
@@ -20,7 +21,9 @@ def create_preferences_table() -> None:
             );
         """)
         try:
-            conn.execute("ALTER TABLE preferences ADD COLUMN current_residence TEXT DEFAULT ''")
+            conn.execute(
+                "ALTER TABLE preferences ADD COLUMN current_residence TEXT DEFAULT ''"
+            )
         except Exception:
             pass
 

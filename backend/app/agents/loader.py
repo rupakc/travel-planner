@@ -42,7 +42,7 @@ def load_agent_definition(agents_dir: str, agent_name: str) -> AgentDefinition:
     content = path.read_text()
 
     # Parse YAML frontmatter (between --- markers)
-    match = re.match(r'^---\s*\n(.*?)\n---\s*\n(.*)$', content, re.DOTALL)
+    match = re.match(r"^---\s*\n(.*?)\n---\s*\n(.*)$", content, re.DOTALL)
     if not match:
         raise ValueError(f"Invalid agent definition format in {path}")
 

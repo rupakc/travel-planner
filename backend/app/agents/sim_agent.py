@@ -11,7 +11,11 @@ class SimAgent(ToolAgent, _URLSearchMixin):
         super().__init__(load_agent_definition(agents_dir, "sim"))
 
     async def run(self, request: TravelSearchRequest) -> dict:
-        nights = (request.return_date - request.departure_date).days if request.return_date else 7
+        nights = (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        )
         prompt = (
             f"Recommend SIM card and eSIM options for traveling to {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Trip duration: {nights} days\n"
@@ -40,13 +44,14 @@ class SimAgent(ToolAgent, _URLSearchMixin):
             if item.get("url") and self._is_clean_url(item["url"]):
                 continue
             url = await self._search_url(
-                f"{provider} eSIM SIM card {self._destination} buy",
-                match_name=provider
+                f"{provider} eSIM SIM card {self._destination} buy", match_name=provider
             )
             if url:
                 for it in items:
                     p = it.get("provider", "") or it.get("name", "")
-                    if p == provider and not (it.get("url") and self._is_clean_url(it["url"])):
+                    if p == provider and not (
+                        it.get("url") and self._is_clean_url(it["url"])
+                    ):
                         it["url"] = url
                 logger.info(f"SIM URL: {provider} -> {url}")
 

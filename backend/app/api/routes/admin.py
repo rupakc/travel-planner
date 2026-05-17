@@ -1,4 +1,5 @@
 """Admin-only user management endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -29,7 +30,9 @@ async def admin_create_user(
     if get_user_by_username(req.username):
         raise HTTPException(status_code=409, detail="Username already exists")
     if len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Temporary password must be at least 6 characters")
+        raise HTTPException(
+            status_code=400, detail="Temporary password must be at least 6 characters"
+        )
     user = create_user(
         username=req.username,
         password=req.password,
@@ -51,7 +54,9 @@ async def admin_deactivate_user(
     admin: dict = Depends(require_admin),
 ):
     if username == admin["username"]:
-        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+        raise HTTPException(
+            status_code=400, detail="Cannot deactivate your own account"
+        )
     if not get_user_by_username(username):
         raise HTTPException(status_code=404, detail="User not found")
     deactivate_user(username)

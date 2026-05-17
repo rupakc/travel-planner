@@ -26,8 +26,12 @@ async def list_plans(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/plans")
-async def create_plan(req: SavePlanRequest, current_user: dict = Depends(get_current_user)):
-    return save_plan(current_user["username"], req.name, req.search_data, req.selections)
+async def create_plan(
+    req: SavePlanRequest, current_user: dict = Depends(get_current_user)
+):
+    return save_plan(
+        current_user["username"], req.name, req.search_data, req.selections
+    )
 
 
 @router.get("/plans/{plan_id}")

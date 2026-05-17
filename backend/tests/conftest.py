@@ -3,6 +3,7 @@
 Env vars must be set at module level (before any app imports) so pydantic-settings
 reads them during Settings() instantiation at collection time.
 """
+
 import os
 import tempfile
 
@@ -21,13 +22,16 @@ from fastapi.testclient import TestClient
 @pytest.fixture(scope="session")
 def client():
     from app.main import app
+
     with TestClient(app) as c:
         yield c
 
 
 @pytest.fixture(scope="session")
 def admin_token(client):
-    r = client.post("/api/auth/login", json={"username": "admin", "password": "test-admin-pw!"})
+    r = client.post(
+        "/api/auth/login", json={"username": "admin", "password": "test-admin-pw!"}
+    )
     assert r.status_code == 200, f"Admin login failed: {r.text}"
     return r.json()["access_token"]
 

@@ -1,4 +1,5 @@
 """SQLite persistence for user accounts."""
+
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── Schema ────────────────────────────────────────────────────────────────────
+
 
 def create_users_table() -> None:
     with get_connection() as conn:
@@ -54,6 +56,7 @@ def seed_admin() -> None:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _hash(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
@@ -76,6 +79,7 @@ def _row_to_dict(row) -> dict:
 
 # ── CRUD ──────────────────────────────────────────────────────────────────────
 
+
 def create_user(
     username: str,
     password: str,
@@ -91,7 +95,16 @@ def create_user(
             """INSERT INTO users
                (id, username, email, password_hash, is_admin, is_first_login, is_active, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)""",
-            (uid, username, email, _hash(password), int(is_admin), int(is_first_login), now, now),
+            (
+                uid,
+                username,
+                email,
+                _hash(password),
+                int(is_admin),
+                int(is_first_login),
+                now,
+                now,
+            ),
         )
     return get_user_by_username(username)
 
@@ -106,9 +119,7 @@ def get_user_by_username(username: str) -> dict | None:
 
 def get_all_users() -> list[dict]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM users ORDER BY created_at DESC"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM users ORDER BY created_at DESC").fetchall()
     return [_row_to_dict(r) for r in rows]
 
 

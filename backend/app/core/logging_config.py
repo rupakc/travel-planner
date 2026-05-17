@@ -1,4 +1,5 @@
 """Structured JSON logging for Cloud Run / Cloud Logging."""
+
 import json
 import logging
 import sys
@@ -8,8 +9,8 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "severity": record.levelname,
-            "message":  record.getMessage(),
-            "module":   record.module,
+            "message": record.getMessage(),
+            "module": record.module,
         }
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)

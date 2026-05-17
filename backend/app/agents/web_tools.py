@@ -114,7 +114,9 @@ async def _web_search(query: str) -> str:
                     lines.append("")
                 return "\n".join(lines)
             except Exception as e:
-                logger.warning(f"Web search attempt {attempt}/{max_retries} failed for '{query[:80]}': {e}")
+                logger.warning(
+                    f"Web search attempt {attempt}/{max_retries} failed for '{query[:80]}': {e}"
+                )
                 if attempt < max_retries:
                     await asyncio.sleep(1.5)
                     continue

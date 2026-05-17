@@ -1,4 +1,5 @@
 """Request-level analytics logging middleware."""
+
 import json
 import logging
 import time
@@ -20,12 +21,16 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         duration_ms = round((time.monotonic() - start) * 1000)
 
-        logger.info(json.dumps({
-            "event":       "api_request",
-            "method":      request.method,
-            "path":        request.url.path,
-            "status_code": response.status_code,
-            "duration_ms": duration_ms,
-            "user":        getattr(request.state, "username", "anonymous"),
-        }))
+        logger.info(
+            json.dumps(
+                {
+                    "event": "api_request",
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                    "user": getattr(request.state, "username", "anonymous"),
+                }
+            )
+        )
         return response

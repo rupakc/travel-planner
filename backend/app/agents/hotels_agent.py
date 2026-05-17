@@ -48,8 +48,14 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "hotels"))
 
-    async def run(self, request: TravelSearchRequest, filters: dict | None = None) -> dict:
-        nights = (request.return_date - request.departure_date).days if request.return_date else 7
+    async def run(
+        self, request: TravelSearchRequest, filters: dict | None = None
+    ) -> dict:
+        nights = (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        )
         prompt = (
             f"Find hotels in {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Check-in: {request.departure_date}\n"
@@ -63,17 +69,31 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
         if filters:
             lines = ["\n\n--- MANDATORY HOTEL FILTERS (strictly enforce these) ---"]
             if filters.get("num_beds") is not None:
-                lines.append(f"BEDS: Only rooms with at least {filters['num_beds']} bed(s). Mention bed count in amenities or description.")
+                lines.append(
+                    f"BEDS: Only rooms with at least {filters['num_beds']} bed(s). Mention bed count in amenities or description."
+                )
             if filters.get("max_price_per_night_usd") is not None:
-                lines.append(f"PRICE: Maximum ${int(filters['max_price_per_night_usd'])} per night. Exclude any hotel above this nightly rate.")
+                lines.append(
+                    f"PRICE: Maximum ${int(filters['max_price_per_night_usd'])} per night. Exclude any hotel above this nightly rate."
+                )
             if filters.get("wifi_quality"):
                 quality = filters["wifi_quality"]
-                desc = {"basic": "basic/free WiFi", "good": "good/reliable WiFi suitable for video calls", "excellent": "excellent high-speed WiFi"}
-                lines.append(f"WIFI: Only hotels with {desc.get(quality, quality)}. Include wifi_quality field in each result (basic/good/excellent).")
+                desc = {
+                    "basic": "basic/free WiFi",
+                    "good": "good/reliable WiFi suitable for video calls",
+                    "excellent": "excellent high-speed WiFi",
+                }
+                lines.append(
+                    f"WIFI: Only hotels with {desc.get(quality, quality)}. Include wifi_quality field in each result (basic/good/excellent)."
+                )
             if filters.get("max_distance_from_center_km") is not None:
-                lines.append(f"LOCATION: Only hotels within {filters['max_distance_from_center_km']} km of the city center. Include distance_from_center_km in each result.")
+                lines.append(
+                    f"LOCATION: Only hotels within {filters['max_distance_from_center_km']} km of the city center. Include distance_from_center_km in each result."
+                )
             if filters.get("private_washroom"):
-                lines.append("BATHROOM: Only hotels/rooms with a private en-suite bathroom/washroom. Exclude shared-bathroom options.")
+                lines.append(
+                    "BATHROOM: Only hotels/rooms with a private en-suite bathroom/washroom. Exclude shared-bathroom options."
+                )
             lines.append("--- END FILTERS ---")
             prompt += "\n".join(lines)
 
@@ -87,7 +107,7 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
         if not hotels:
             return data
 
-        for hotel in hotels[:self._MAX_ENRICH]:
+        for hotel in hotels[: self._MAX_ENRICH]:
             name = hotel.get("name", "")
             if not name:
                 continue

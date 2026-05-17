@@ -29,7 +29,11 @@ class TipsAgent(ToolAgent, _URLSearchMixin):
         if not tips:
             return data
 
-        dest_country = self._destination.split(",")[-1].strip() if "," in self._destination else self._destination
+        dest_country = (
+            self._destination.split(",")[-1].strip()
+            if "," in self._destination
+            else self._destination
+        )
 
         categories_seen = set()
         category_urls = {}

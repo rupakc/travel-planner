@@ -39,9 +39,17 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "activities"))
 
-    async def run(self, request: TravelSearchRequest, filters: dict | None = None) -> dict:
-        interests_str = ", ".join(request.interests) if request.interests else "general sightseeing"
-        nights = (request.return_date - request.departure_date).days if request.return_date else 7
+    async def run(
+        self, request: TravelSearchRequest, filters: dict | None = None
+    ) -> dict:
+        interests_str = (
+            ", ".join(request.interests) if request.interests else "general sightseeing"
+        )
+        nights = (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        )
         prompt = (
             f"Find the best activities and experiences in {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Traveler interests: {interests_str}\n"
@@ -56,17 +64,25 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             lines = ["\n\n--- MANDATORY ACTIVITY FILTERS (strictly enforce these) ---"]
             fi = filters.get("filter_interests")
             if fi:
-                lines.append(f"INTERESTS: Focus ONLY on these categories: {', '.join(fi)}. Every result must belong to one of these categories.")
+                lines.append(
+                    f"INTERESTS: Focus ONLY on these categories: {', '.join(fi)}. Every result must belong to one of these categories."
+                )
             if filters.get("max_price_usd") is not None:
-                lines.append(f"PRICE: Maximum ${int(filters['max_price_usd'])} per person. Exclude activities above this price.")
+                lines.append(
+                    f"PRICE: Maximum ${int(filters['max_price_usd'])} per person. Exclude activities above this price."
+                )
             avail_from = filters.get("available_from")
             avail_to = filters.get("available_to")
             if avail_from or avail_to:
                 f_str = str(avail_from) if avail_from else "any"
                 t_str = str(avail_to) if avail_to else "any"
-                lines.append(f"AVAILABILITY: Only activities available between {f_str} and {t_str}. Include an availability_dates or available_from/available_to field in each result.")
+                lines.append(
+                    f"AVAILABILITY: Only activities available between {f_str} and {t_str}. Include an availability_dates or available_from/available_to field in each result."
+                )
             if filters.get("min_rating") is not None:
-                lines.append(f"RATING: Only activities rated {filters['min_rating']}+ stars. Exclude anything below this rating.")
+                lines.append(
+                    f"RATING: Only activities rated {filters['min_rating']}+ stars. Exclude anything below this rating."
+                )
             lines.append("--- END FILTERS ---")
             prompt += "\n".join(lines)
 
@@ -80,11 +96,11 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
         if not activities:
             return data
 
-        for activity in activities[:self._MAX_ENRICH]:
+        for activity in activities[: self._MAX_ENRICH]:
             raw_name = activity.get("name", "")
             if not raw_name:
                 continue
-            clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', raw_name).strip()
+            clean = re.sub(r"[^a-zA-Z0-9\s]", " ", raw_name).strip()
             short = " ".join(clean.split()[:6])
             source = activity.get("source", "")
             source_key = _normalize_source_key(source)
@@ -109,6 +125,8 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             if url:
                 activity["booking_url"] = url
                 activity["source"] = _url_to_source(url)
-                logger.info(f"Activity URL: {raw_name} -> {url} (source: {activity['source']})")
+                logger.info(
+                    f"Activity URL: {raw_name} -> {url} (source: {activity['source']})"
+                )
 
         return data

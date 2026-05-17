@@ -1,4 +1,5 @@
 """Frontend analytics event ingestion — logs to stdout → Cloud Logging."""
+
 import json
 import logging
 from typing import Any
@@ -30,11 +31,15 @@ async def ingest_events(
 ):
     username = current_user["username"]
     for ev in batch.events:
-        logger.info(json.dumps({
-            "event":    "feature_used",
-            "feature":  ev.feature,
-            "page":     ev.page,
-            "user":     username,
-            "metadata": ev.metadata or {},
-            "ts":       ev.ts,
-        }))
+        logger.info(
+            json.dumps(
+                {
+                    "event": "feature_used",
+                    "feature": ev.feature,
+                    "page": ev.page,
+                    "user": username,
+                    "metadata": ev.metadata or {},
+                    "ts": ev.ts,
+                }
+            )
+        )

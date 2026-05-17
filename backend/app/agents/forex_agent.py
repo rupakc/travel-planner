@@ -119,38 +119,94 @@ _DESTINATION_CURRENCY = {
 }
 
 _CITY_TO_COUNTRY = {
-    "tokyo": "japan", "osaka": "japan", "kyoto": "japan",
-    "bangkok": "thailand", "phuket": "thailand", "chiang mai": "thailand",
-    "mumbai": "india", "delhi": "india", "goa": "india", "jaipur": "india",
-    "new york": "usa", "nyc": "usa", "los angeles": "usa", "san francisco": "usa",
-    "miami": "usa", "chicago": "usa", "las vegas": "usa", "hawaii": "usa",
-    "london": "uk", "manchester": "uk", "edinburgh": "uk",
-    "sydney": "australia", "melbourne": "australia",
-    "paris": "france", "lyon": "france", "nice": "france",
-    "berlin": "germany", "munich": "germany", "frankfurt": "germany",
-    "rome": "italy", "milan": "italy", "venice": "italy", "florence": "italy",
-    "barcelona": "spain", "madrid": "spain",
+    "tokyo": "japan",
+    "osaka": "japan",
+    "kyoto": "japan",
+    "bangkok": "thailand",
+    "phuket": "thailand",
+    "chiang mai": "thailand",
+    "mumbai": "india",
+    "delhi": "india",
+    "goa": "india",
+    "jaipur": "india",
+    "new york": "usa",
+    "nyc": "usa",
+    "los angeles": "usa",
+    "san francisco": "usa",
+    "miami": "usa",
+    "chicago": "usa",
+    "las vegas": "usa",
+    "hawaii": "usa",
+    "london": "uk",
+    "manchester": "uk",
+    "edinburgh": "uk",
+    "sydney": "australia",
+    "melbourne": "australia",
+    "paris": "france",
+    "lyon": "france",
+    "nice": "france",
+    "berlin": "germany",
+    "munich": "germany",
+    "frankfurt": "germany",
+    "rome": "italy",
+    "milan": "italy",
+    "venice": "italy",
+    "florence": "italy",
+    "barcelona": "spain",
+    "madrid": "spain",
     "amsterdam": "netherlands",
-    "dubai": "uae", "abu dhabi": "uae",
-    "bali": "indonesia", "jakarta": "indonesia",
-    "kuala lumpur": "malaysia", "penang": "malaysia",
-    "beijing": "china", "shanghai": "china",
-    "seoul": "south korea", "busan": "south korea",
-    "mexico city": "mexico", "cancun": "mexico",
-    "istanbul": "turkey", "antalya": "turkey", "ankara": "turkey",
-    "zurich": "switzerland", "geneva": "switzerland",
-    "toronto": "canada", "vancouver": "canada",
-    "cairo": "egypt", "cape town": "south africa", "johannesburg": "south africa",
-    "manila": "philippines", "ho chi minh city": "vietnam", "hanoi": "vietnam",
-    "kathmandu": "nepal", "male": "maldives", "colombo": "sri lanka",
-    "prague": "czech republic", "budapest": "hungary", "warsaw": "poland",
-    "stockholm": "sweden", "oslo": "norway", "copenhagen": "denmark",
-    "moscow": "russia", "buenos aires": "argentina", "bogota": "colombia",
-    "lima": "peru", "santiago": "chile", "nairobi": "kenya",
-    "marrakech": "morocco", "tel aviv": "israel", "jerusalem": "israel",
-    "amman": "jordan", "athens": "greece", "lisbon": "portugal",
-    "vienna": "austria", "dublin": "ireland", "brussels": "belgium",
-    "helsinki": "finland", "zagreb": "croatia", "dubrovnik": "croatia",
+    "dubai": "uae",
+    "abu dhabi": "uae",
+    "bali": "indonesia",
+    "jakarta": "indonesia",
+    "kuala lumpur": "malaysia",
+    "penang": "malaysia",
+    "beijing": "china",
+    "shanghai": "china",
+    "seoul": "south korea",
+    "busan": "south korea",
+    "mexico city": "mexico",
+    "cancun": "mexico",
+    "istanbul": "turkey",
+    "antalya": "turkey",
+    "ankara": "turkey",
+    "zurich": "switzerland",
+    "geneva": "switzerland",
+    "toronto": "canada",
+    "vancouver": "canada",
+    "cairo": "egypt",
+    "cape town": "south africa",
+    "johannesburg": "south africa",
+    "manila": "philippines",
+    "ho chi minh city": "vietnam",
+    "hanoi": "vietnam",
+    "kathmandu": "nepal",
+    "male": "maldives",
+    "colombo": "sri lanka",
+    "prague": "czech republic",
+    "budapest": "hungary",
+    "warsaw": "poland",
+    "stockholm": "sweden",
+    "oslo": "norway",
+    "copenhagen": "denmark",
+    "moscow": "russia",
+    "buenos aires": "argentina",
+    "bogota": "colombia",
+    "lima": "peru",
+    "santiago": "chile",
+    "nairobi": "kenya",
+    "marrakech": "morocco",
+    "tel aviv": "israel",
+    "jerusalem": "israel",
+    "amman": "jordan",
+    "athens": "greece",
+    "lisbon": "portugal",
+    "vienna": "austria",
+    "dublin": "ireland",
+    "brussels": "belgium",
+    "helsinki": "finland",
+    "zagreb": "croatia",
+    "dubrovnik": "croatia",
     "singapore": "singapore",
 }
 
@@ -190,14 +246,29 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
 
         # Phase 1: Run real web searches in parallel for live data
         searches = {
-            "usd_rate": execute_tool("web_search", {"query": f"1 USD to {local_code} exchange rate today"}),
-            "eur_rate": execute_tool("web_search", {"query": f"1 EUR to {local_code} exchange rate today"}),
-            "exchange_places": execute_tool("web_search", {"query": f"best place to exchange money in {dest_name} tourists 2025 2026"}),
-            "atm_cards": execute_tool("web_search", {"query": f"ATM fees credit card acceptance {dest_name} tourists"}),
+            "usd_rate": execute_tool(
+                "web_search", {"query": f"1 USD to {local_code} exchange rate today"}
+            ),
+            "eur_rate": execute_tool(
+                "web_search", {"query": f"1 EUR to {local_code} exchange rate today"}
+            ),
+            "exchange_places": execute_tool(
+                "web_search",
+                {
+                    "query": f"best place to exchange money in {dest_name} tourists 2025 2026"
+                },
+            ),
+            "atm_cards": execute_tool(
+                "web_search",
+                {"query": f"ATM fees credit card acceptance {dest_name} tourists"},
+            ),
         }
 
         if home and home[0] not in ("USD", "EUR") and home[0] != local_code:
-            searches["home_rate"] = execute_tool("web_search", {"query": f"1 {home[0]} to {local_code} exchange rate today"})
+            searches["home_rate"] = execute_tool(
+                "web_search",
+                {"query": f"1 {home[0]} to {local_code} exchange rate today"},
+            )
 
         keys = list(searches.keys())
         raw_results = await asyncio.gather(*searches.values(), return_exceptions=True)
@@ -209,7 +280,9 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
             else:
                 search_data[key] = result
 
-        logger.info(f"Forex agent completed {len(search_data)} web searches for {dest_name}")
+        logger.info(
+            f"Forex agent completed {len(search_data)} web searches for {dest_name}"
+        )
 
         # Phase 2: Feed real search results to LLM for structured JSON extraction
         home_section = ""
@@ -224,7 +297,9 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
 
         local_section = ""
         if local:
-            local_section = f"The local currency is {local[1]} ({local[0]}, {local[2]}).\n"
+            local_section = (
+                f"The local currency is {local[1]} ({local[0]}, {local[2]}).\n"
+            )
 
         prompt = (
             f"You are extracting REAL forex data from web search results for {dest_name}.\n"
@@ -255,7 +330,11 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
         if source_urls and all(self._is_clean_url(u) for u in source_urls):
             return data
 
-        dest_country = self._destination.split(",")[-1].strip() if "," in self._destination else self._destination
+        dest_country = (
+            self._destination.split(",")[-1].strip()
+            if "," in self._destination
+            else self._destination
+        )
         queries = [
             f"{dest_country} currency exchange rate tips travelers",
             f"{dest_country} ATM card payment guide tourists",

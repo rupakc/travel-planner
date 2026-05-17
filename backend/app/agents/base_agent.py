@@ -17,6 +17,7 @@ def _get_client() -> anthropic.AsyncAnthropic:
     global _client
     if _client is None:
         from ..core.config import settings
+
         _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     return _client
 
@@ -63,7 +64,9 @@ class BaseAgent:
                 await asyncio.sleep(0.5)
                 continue
 
-        return {"error": f"Agent returned no parseable result after {_MAX_RETRIES} attempts"}
+        return {
+            "error": f"Agent returned no parseable result after {_MAX_RETRIES} attempts"
+        }
 
     def _parse_json(self, text: str) -> dict:
         """Parse JSON from agent output with 3 fallback strategies."""
@@ -77,7 +80,7 @@ class BaseAgent:
             pass
 
         # Strategy 2: Extract JSON code block
-        match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
+        match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
         if match:
             try:
                 return json.loads(match.group(1).strip())
@@ -85,14 +88,16 @@ class BaseAgent:
                 pass
 
         # Strategy 3: Find first {...} block
-        match = re.search(r'\{.*\}', text, re.DOTALL)
+        match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             try:
                 return json.loads(match.group(0))
             except json.JSONDecodeError:
                 pass
 
-        logger.warning(f"Agent {self.definition.name} could not parse JSON from output: {text[:200]}")
+        logger.warning(
+            f"Agent {self.definition.name} could not parse JSON from output: {text[:200]}"
+        )
         return {}
 
 
@@ -119,12 +124,24 @@ class _URLSearchMixin:
     """Shared logic for searching real URLs via web search."""
 
     _JUNK_DOMAINS = {
-        "bing.com/aclick", "googleadservices.com", "ad.doubleclick.net",
-        "wikipedia.org", "pinterest.com", "pinterest.co",
-        "tiktok.com", "youtube.com", "youtu.be",
-        "facebook.com", "instagram.com", "twitter.com", "x.com",
-        "reddit.com", "quora.com", "medium.com",
-        "amazon.com", "ebay.com",
+        "bing.com/aclick",
+        "googleadservices.com",
+        "ad.doubleclick.net",
+        "wikipedia.org",
+        "pinterest.com",
+        "pinterest.co",
+        "tiktok.com",
+        "youtube.com",
+        "youtu.be",
+        "facebook.com",
+        "instagram.com",
+        "twitter.com",
+        "x.com",
+        "reddit.com",
+        "quora.com",
+        "medium.com",
+        "amazon.com",
+        "ebay.com",
     }
 
     @classmethod
@@ -135,13 +152,43 @@ class _URLSearchMixin:
             return False
         return not any(d in url for d in cls._JUNK_DOMAINS)
 
-    _STOP_WORDS = frozenset({
-        "the", "and", "for", "tour", "tours", "with", "from", "hotel",
-        "hotels", "book", "booking", "tickets", "city", "best", "top",
-        "guide", "travel", "trip", "official", "site", "website",
-        "new", "york", "los", "angeles", "san", "francisco",
-        "airline", "airlines", "international", "airways", "air", "lines",
-    })
+    _STOP_WORDS = frozenset(
+        {
+            "the",
+            "and",
+            "for",
+            "tour",
+            "tours",
+            "with",
+            "from",
+            "hotel",
+            "hotels",
+            "book",
+            "booking",
+            "tickets",
+            "city",
+            "best",
+            "top",
+            "guide",
+            "travel",
+            "trip",
+            "official",
+            "site",
+            "website",
+            "new",
+            "york",
+            "los",
+            "angeles",
+            "san",
+            "francisco",
+            "airline",
+            "airlines",
+            "international",
+            "airways",
+            "air",
+            "lines",
+        }
+    )
 
     @staticmethod
     async def _search_url(query: str, match_name: str = "") -> str | None:
@@ -152,6 +199,7 @@ class _URLSearchMixin:
         in the result title, with a floor of 2 absolute matches.
         """
         from .web_tools import execute_tool
+
         result = await execute_tool("web_search", {"query": query})
         lines = result.split("\n")
         pairs = []
@@ -173,7 +221,8 @@ class _URLSearchMixin:
             return pairs[0][1]
 
         import re
-        clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', match_name).lower()
+
+        clean = re.sub(r"[^a-zA-Z0-9\s]", " ", match_name).lower()
         all_words = {w for w in clean.split() if len(w) > 2}
         name_words = all_words - _URLSearchMixin._STOP_WORDS
         if not name_words:
@@ -189,7 +238,7 @@ class _URLSearchMixin:
         best_url = None
         best_score = 0
         for title, url in pairs:
-            title_text = re.sub(r'[^a-zA-Z0-9\s]', ' ', title).lower()
+            title_text = re.sub(r"[^a-zA-Z0-9\s]", " ", title).lower()
             title_words = {w for w in title_text.split() if len(w) > 2}
             score = len(name_words & title_words)
             if score > best_score:
@@ -201,7 +250,7 @@ class _URLSearchMixin:
 
         # Fallback: check URL path for distinctive name words
         for title, url in pairs:
-            url_path = re.sub(r'[^a-zA-Z0-9\s]', ' ', url).lower()
+            url_path = re.sub(r"[^a-zA-Z0-9\s]", " ", url).lower()
             path_words = {w for w in url_path.split() if len(w) > 2}
             path_score = len(name_words & path_words)
             if path_score >= min_matches:
@@ -214,6 +263,7 @@ class _URLSearchMixin:
     async def _batch_search(query: str) -> list[tuple[str, str]]:
         """Run a single search and return list of (title, url) pairs."""
         from .web_tools import execute_tool
+
         result = await execute_tool("web_search", {"query": query})
         pairs = []
         lines = result.split("\n")

@@ -6,8 +6,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def _db_path() -> Path:
     from ..core.config import settings
+
     p = Path(settings.data_dir)
     p.mkdir(parents=True, exist_ok=True)
     return p / "airports.db"
@@ -84,11 +86,14 @@ def search_nationalities(query: str, limit: int = 10) -> list[dict]:
         LIMIT :limit
     """
     with get_connection() as conn:
-        rows = conn.execute(sql, {
-            "like": like,
-            "starts": starts,
-            "limit": limit,
-        }).fetchall()
+        rows = conn.execute(
+            sql,
+            {
+                "like": like,
+                "starts": starts,
+                "limit": limit,
+            },
+        ).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -125,7 +130,10 @@ def _web_search_iata(code: str) -> dict | None:
     persist to DB, and return info."""
     try:
         from ddgs import DDGS
-        results = list(DDGS().text(f"{code} IATA airport code city country", max_results=5))
+
+        results = list(
+            DDGS().text(f"{code} IATA airport code city country", max_results=5)
+        )
         if not results:
             return None
 
@@ -152,24 +160,29 @@ def _web_search_iata(code: str) -> dict | None:
         return None
 
 
-def _llm_extract_city_country(code: str, search_text: str) -> tuple[str | None, str | None]:
+def _llm_extract_city_country(
+    code: str, search_text: str
+) -> tuple[str | None, str | None]:
     """Use Claude Haiku to reliably extract city and country from search results."""
     try:
         import anthropic
         from ..core.config import settings
+
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
         resp = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=100,
-            messages=[{
-                "role": "user",
-                "content": (
-                    f"What city and country does the IATA airport code {code} belong to? "
-                    f"Here are web search results:\n{search_text}\n\n"
-                    f"Reply with ONLY a JSON object: {{\"city\": \"...\", \"country\": \"...\"}}\n"
-                    f"Use the major/nearest city name, not the suburb. No other text."
-                ),
-            }],
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"What city and country does the IATA airport code {code} belong to? "
+                        f"Here are web search results:\n{search_text}\n\n"
+                        f'Reply with ONLY a JSON object: {{"city": "...", "country": "..."}}\n'
+                        f"Use the major/nearest city name, not the suburb. No other text."
+                    ),
+                }
+            ],
         )
         text = resp.content[0].text.strip()
         # Strip markdown code fences if present
@@ -193,7 +206,7 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         return []
 
     upper = q.upper()
-    like  = f"%{q}%"
+    like = f"%{q}%"
 
     sql = """
         SELECT iata_code, name, city, country, country_code
@@ -215,10 +228,13 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         LIMIT :limit
     """
     with get_connection() as conn:
-        rows = conn.execute(sql, {
-            "upper": upper,
-            "like_upper": f"{upper}%",
-            "like": like,
-            "limit": limit,
-        }).fetchall()
+        rows = conn.execute(
+            sql,
+            {
+                "upper": upper,
+                "like_upper": f"{upper}%",
+                "like": like,
+                "limit": limit,
+            },
+        ).fetchall()
     return [dict(r) for r in rows]

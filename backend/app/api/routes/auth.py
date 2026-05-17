@@ -22,11 +22,13 @@ async def login(req: LoginRequest):
     user = authenticate_user(req.username, req.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    token = create_access_token({
-        "sub": user["username"],
-        "is_admin": user["is_admin"],
-        "is_first_login": user["is_first_login"],
-    })
+    token = create_access_token(
+        {
+            "sub": user["username"],
+            "is_admin": user["is_admin"],
+            "is_first_login": user["is_first_login"],
+        }
+    )
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -47,14 +49,18 @@ async def change_password_endpoint(
     if not user:
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     if len(req.new_password) < 8:
-        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+        raise HTTPException(
+            status_code=400, detail="New password must be at least 8 characters"
+        )
     change_password(current_user["username"], req.new_password)
     # Issue a new token with is_first_login=False
-    token = create_access_token({
-        "sub": current_user["username"],
-        "is_admin": current_user["is_admin"],
-        "is_first_login": False,
-    })
+    token = create_access_token(
+        {
+            "sub": current_user["username"],
+            "is_admin": current_user["is_admin"],
+            "is_first_login": False,
+        }
+    )
     return {"access_token": token, "token_type": "bearer"}
 
 

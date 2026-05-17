@@ -21,51 +21,84 @@ _CHAT_MODEL = "claude-sonnet-4-6"
 logger = logging.getLogger(__name__)
 
 _PLANNING_PATTERNS = re.compile(
-    r'|'.join([
-        r'\bitinerar',
-        r'\bplan\b.{0,30}\b(trip|travel|vacation|holiday|getaway)',
-        r'\b(trip|travel|vacation|holiday)\b.{0,30}\bplan',
-        r'\bbook\b.{0,30}\b(everything|flights?\b.{0,15}hotels?|hotels?\b.{0,15}flights?)',
-        r'\bfull\b.{0,20}\b(trip|travel)\b.{0,15}\bplan',
-        r'\borganize\b.{0,20}\b(trip|travel|vacation)',
-        r'\bplan\b.{0,15}\bfor\s+me\b',
-        r'\bsearch\b.{0,20}\b(flights?\b.{0,15}hotels?|everything)',
-        r'\bwhat\s+do\s+i\s+need\b.{0,30}\b(trip|travel|visit)',
-        r'\bhelp\s+me\s+(plan|organize|book)\b',
-    ]),
+    r"|".join(
+        [
+            r"\bitinerar",
+            r"\bplan\b.{0,30}\b(trip|travel|vacation|holiday|getaway)",
+            r"\b(trip|travel|vacation|holiday)\b.{0,30}\bplan",
+            r"\bbook\b.{0,30}\b(everything|flights?\b.{0,15}hotels?|hotels?\b.{0,15}flights?)",
+            r"\bfull\b.{0,20}\b(trip|travel)\b.{0,15}\bplan",
+            r"\borganize\b.{0,20}\b(trip|travel|vacation)",
+            r"\bplan\b.{0,15}\bfor\s+me\b",
+            r"\bsearch\b.{0,20}\b(flights?\b.{0,15}hotels?|everything)",
+            r"\bwhat\s+do\s+i\s+need\b.{0,30}\b(trip|travel|visit)",
+            r"\bhelp\s+me\s+(plan|organize|book)\b",
+        ]
+    ),
     re.IGNORECASE,
 )
 
 _INTENT_MAP = {
-    'flights': re.compile(r'\b(flight|fly|airline|airport|ticket|depart|arrive|airfare|plane)\b', re.I),
-    'hotels': re.compile(r'\b(hotel|stay|accommodation|hostel|airbnb|resort|lodge|booking|room)\b', re.I),
-    'activities': re.compile(r'\b(activit|thing.{0,10}to do|sightse|tour|museum|excursion|attraction|experience|visit)\b', re.I),
-    'visa': re.compile(r'\b(visa|passport|entry.{0,10}require|immigration|permit|travel.{0,10}document)\b', re.I),
-    'sim': re.compile(r'\b(sim|esim|phone|data.{0,10}plan|mobile|connectivity|internet)\b', re.I),
-    'tips': re.compile(r'\b(tip|safety|scam|danger|advice|warn|culture|customs|etiquette)\b', re.I),
-    'getting_around': re.compile(r'\b(transport|metro|subway|bus|taxi|uber|getting around|train|tram|commut)\b', re.I),
-    'forex': re.compile(r'\b(forex|currency|exchange\s+rate|money\s+exchange|atm|cash|local\s+money|convert|conversion)\b', re.I),
+    "flights": re.compile(
+        r"\b(flight|fly|airline|airport|ticket|depart|arrive|airfare|plane)\b", re.I
+    ),
+    "hotels": re.compile(
+        r"\b(hotel|stay|accommodation|hostel|airbnb|resort|lodge|booking|room)\b", re.I
+    ),
+    "activities": re.compile(
+        r"\b(activit|thing.{0,10}to do|sightse|tour|museum|excursion|attraction|experience|visit)\b",
+        re.I,
+    ),
+    "visa": re.compile(
+        r"\b(visa|passport|entry.{0,10}require|immigration|permit|travel.{0,10}document)\b",
+        re.I,
+    ),
+    "sim": re.compile(
+        r"\b(sim|esim|phone|data.{0,10}plan|mobile|connectivity|internet)\b", re.I
+    ),
+    "tips": re.compile(
+        r"\b(tip|safety|scam|danger|advice|warn|culture|customs|etiquette)\b", re.I
+    ),
+    "getting_around": re.compile(
+        r"\b(transport|metro|subway|bus|taxi|uber|getting around|train|tram|commut)\b",
+        re.I,
+    ),
+    "forex": re.compile(
+        r"\b(forex|currency|exchange\s+rate|money\s+exchange|atm|cash|local\s+money|convert|conversion)\b",
+        re.I,
+    ),
 }
 
 _PLAN_PATTERNS = re.compile(
-    r'|'.join([
-        r'\b(add|put|include|save)\b.{0,30}\b(plan|my plan|the plan)',
-        r'\b(remove|delete|drop|take out|take off)\b.{0,30}\b(plan|my plan|the plan|from.{0,10}plan)',
-        r'\b(remove|delete|drop|take out|take off)\b.{0,30}\b(flight|hotel|sim|activit|tip|transport)',
-        r'\b(change|swap|replace|switch|update)\b.{0,30}\b(flight|hotel|sim|activit)',
-        r'\b(change|swap|replace|switch|update)\b.{0,30}\b(plan|my plan|the plan)',
-        r'\bclear\b.{0,15}\b(plan|my plan|the plan|everything)',
-        r"\bwhat.{0,10}(in|on).{0,10}(plan|my plan)",
-        r"\bshow\b.{0,10}\b(plan|my plan)",
-        r"\bmy plan\b",
-        r"\bthe plan\b",
-    ]),
+    r"|".join(
+        [
+            r"\b(add|put|include|save)\b.{0,30}\b(plan|my plan|the plan)",
+            r"\b(remove|delete|drop|take out|take off)\b.{0,30}\b(plan|my plan|the plan|from.{0,10}plan)",
+            r"\b(remove|delete|drop|take out|take off)\b.{0,30}\b(flight|hotel|sim|activit|tip|transport)",
+            r"\b(change|swap|replace|switch|update)\b.{0,30}\b(flight|hotel|sim|activit)",
+            r"\b(change|swap|replace|switch|update)\b.{0,30}\b(plan|my plan|the plan)",
+            r"\bclear\b.{0,15}\b(plan|my plan|the plan|everything)",
+            r"\bwhat.{0,10}(in|on).{0,10}(plan|my plan)",
+            r"\bshow\b.{0,10}\b(plan|my plan)",
+            r"\bmy plan\b",
+            r"\bthe plan\b",
+        ]
+    ),
     re.IGNORECASE,
 )
 
 _BUDGET_MAP = {"low": 1000, "medium": 3000, "high": 8000}
 
-_ALL_AGENT_NAMES = ["flights", "hotels", "activities", "visa", "sim", "tips", "getting_around", "forex"]
+_ALL_AGENT_NAMES = [
+    "flights",
+    "hotels",
+    "activities",
+    "visa",
+    "sim",
+    "tips",
+    "getting_around",
+    "forex",
+]
 
 
 class ChatAgent:
@@ -75,7 +108,9 @@ class ChatAgent:
 
     @staticmethod
     def _classify_intent(message: str) -> list[str]:
-        matched = [name for name, pattern in _INTENT_MAP.items() if pattern.search(message)]
+        matched = [
+            name for name, pattern in _INTENT_MAP.items() if pattern.search(message)
+        ]
         return matched
 
     async def stream(
@@ -106,14 +141,20 @@ class ChatAgent:
                 params = await self._extract_travel_params(messages, preferences)
                 if params:
                     async for chunk in self._run_comprehensive_planning(
-                        params, messages, preferences, selections,
+                        params,
+                        messages,
+                        preferences,
+                        selections,
                         agent_names=needs_agents,
                     ):
                         yield chunk
                     return
 
             async for chunk in self._handle_plan_command(
-                messages, preferences, selections, search_results,
+                messages,
+                preferences,
+                selections,
+                search_results,
             ):
                 yield chunk
             return
@@ -123,7 +164,10 @@ class ChatAgent:
             params = await self._extract_travel_params(messages, preferences)
             if params:
                 async for chunk in self._run_comprehensive_planning(
-                    params, messages, preferences, selections,
+                    params,
+                    messages,
+                    preferences,
+                    selections,
                 ):
                     yield chunk
                 return
@@ -134,7 +178,10 @@ class ChatAgent:
             params = await self._extract_travel_params(messages, preferences)
             if params:
                 async for chunk in self._run_comprehensive_planning(
-                    params, messages, preferences, selections,
+                    params,
+                    messages,
+                    preferences,
+                    selections,
                     agent_names=matched_agents,
                 ):
                     yield chunk
@@ -161,15 +208,15 @@ class ChatAgent:
 
         prompt = (
             "The user wants to modify their travel plan. Analyze their request and return a JSON response.\n\n"
-            f"User message: \"{last_msg}\"\n\n"
+            f'User message: "{last_msg}"\n\n'
             f"Current plan contents:\n{plan_summary}\n\n"
             f"Available search results:\n{results_summary}\n\n"
             "Return a JSON object with:\n"
-            "- \"actions\": list of plan actions, each with:\n"
-            "  - \"action\": \"set\" | \"add\" | \"remove\" | \"clear\"\n"
-            "  - \"field\": \"flight\" | \"hotel\" | \"sim\" | \"activities\" | \"tips\" | \"getting_around\" | \"itinerary_slots\" | \"all\"\n"
-            "  - \"data\": the item data (for set/add), or {\"name\": \"...\"} / {\"title\": \"...\"} for remove, or null for clear\n"
-            "- \"message\": a friendly confirmation message to show the user (1-2 sentences, use markdown)\n\n"
+            '- "actions": list of plan actions, each with:\n'
+            '  - "action": "set" | "add" | "remove" | "clear"\n'
+            '  - "field": "flight" | "hotel" | "sim" | "activities" | "tips" | "getting_around" | "itinerary_slots" | "all"\n'
+            '  - "data": the item data (for set/add), or {"name": "..."} / {"title": "..."} for remove, or null for clear\n'
+            '- "message": a friendly confirmation message to show the user (1-2 sentences, use markdown)\n\n'
             "For 'show'/'what's in my plan' requests, return empty actions and summarize the plan in the message.\n"
             "For 'clear' requests, use action='clear' with field='all'.\n"
             "For 'remove' with a specific type (e.g., 'remove the flight'), use action='clear' with the field name.\n"
@@ -218,7 +265,12 @@ class ChatAgent:
         if flights:
             valid = [f for f in flights if not f.get("error")]
             if valid:
-                cheapest = min(valid, key=lambda f: f.get("price_usd") or f.get("total_price_usd") or 99999)
+                cheapest = min(
+                    valid,
+                    key=lambda f: (
+                        f.get("price_usd") or f.get("total_price_usd") or 99999
+                    ),
+                )
                 actions.append({"action": "set", "field": "flight", "data": cheapest})
 
         # Best hotel: mid-range, highest rated
@@ -235,36 +287,55 @@ class ChatAgent:
         activities = results.get("activities", {}).get("results", [])
         if activities:
             valid = [a for a in activities if not a.get("error")]
-            top = sorted(valid, key=lambda a: a.get("similarity_score", 0), reverse=True)[:5]
+            top = sorted(
+                valid, key=lambda a: a.get("similarity_score", 0), reverse=True
+            )[:5]
             for activity in top:
-                actions.append({"action": "add", "field": "activities", "data": activity})
+                actions.append(
+                    {"action": "add", "field": "activities", "data": activity}
+                )
 
         # Best SIM: best coverage at reasonable price
-        sims = results.get("sim", {}).get("plans", results.get("sim", {}).get("results", []))
+        sims = results.get("sim", {}).get(
+            "plans", results.get("sim", {}).get("results", [])
+        )
         if sims:
             valid = [s for s in sims if not s.get("error")]
             if valid:
+
                 def sim_score(s):
-                    rating_map = {"excellent": 4, "good": 3, "moderate": 2, "limited": 1}
+                    rating_map = {
+                        "excellent": 4,
+                        "good": 3,
+                        "moderate": 2,
+                        "limited": 1,
+                    }
                     nq = s.get("network_quality", {})
                     coverage = rating_map.get(nq.get("coverage_rating", ""), 0)
                     price = s.get("price_usd", 999)
                     return (coverage * 10) - price
+
                 best_sim = max(valid, key=sim_score)
                 actions.append({"action": "set", "field": "sim", "data": best_sim})
 
         # Top tips: danger and warning severity
-        tips = results.get("tips", {}).get("tips", results.get("tips", {}).get("results", []))
+        tips = results.get("tips", {}).get(
+            "tips", results.get("tips", {}).get("results", [])
+        )
         if tips:
             important = [t for t in tips if t.get("severity") in ("danger", "warning")]
             for tip in important[:5]:
                 actions.append({"action": "add", "field": "tips", "data": tip})
 
         # Top 3 transport options
-        transport = results.get("getting_around", {}).get("options", results.get("getting_around", {}).get("results", []))
+        transport = results.get("getting_around", {}).get(
+            "options", results.get("getting_around", {}).get("results", [])
+        )
         if transport:
             for opt in transport[:3]:
-                actions.append({"action": "add", "field": "getting_around", "data": opt})
+                actions.append(
+                    {"action": "add", "field": "getting_around", "data": opt}
+                )
 
         # Itinerary slots
         itinerary = results.get("itinerary", {})
@@ -272,14 +343,20 @@ class ChatAgent:
             for day in itinerary["days"]:
                 for slot in day.get("slots", []):
                     key = f"{day['day_number']}-{slot['time_of_day']}"
-                    actions.append({"action": "add", "field": "itinerary_slots", "data": {
-                        "key": key,
-                        "day_number": day["day_number"],
-                        "time_of_day": slot["time_of_day"],
-                        "activity": slot.get("activity", ""),
-                        "location": slot.get("location", ""),
-                        "estimated_cost_usd": slot.get("estimated_cost_usd", 0),
-                    }})
+                    actions.append(
+                        {
+                            "action": "add",
+                            "field": "itinerary_slots",
+                            "data": {
+                                "key": key,
+                                "day_number": day["day_number"],
+                                "time_of_day": slot["time_of_day"],
+                                "activity": slot.get("activity", ""),
+                                "location": slot.get("location", ""),
+                                "estimated_cost_usd": slot.get("estimated_cost_usd", 0),
+                            },
+                        }
+                    )
 
         return actions
 
@@ -288,7 +365,8 @@ class ChatAgent:
     @staticmethod
     def _summarize_selections(selections: dict) -> str:
         if not selections or all(
-            not v for k, v in selections.items()
+            not v
+            for k, v in selections.items()
             if k not in ("itinerary_notes", "itinerary_edits")
         ):
             return "Plan is empty — no items selected yet."
@@ -296,16 +374,24 @@ class ChatAgent:
         lines = []
         if selections.get("flight"):
             f = selections["flight"]
-            lines.append(f"- Flight: {f.get('airline', 'Unknown')} — ${f.get('price_usd', '?')}")
+            lines.append(
+                f"- Flight: {f.get('airline', 'Unknown')} — ${f.get('price_usd', '?')}"
+            )
         if selections.get("hotel"):
             h = selections["hotel"]
-            lines.append(f"- Hotel: {h.get('name', 'Unknown')} — ${h.get('price_per_night_usd', '?')}/night")
+            lines.append(
+                f"- Hotel: {h.get('name', 'Unknown')} — ${h.get('price_per_night_usd', '?')}/night"
+            )
         if selections.get("activities"):
             for a in selections["activities"]:
-                lines.append(f"- Activity: {a.get('name', 'Unknown')} — ${a.get('price_usd', '?')}")
+                lines.append(
+                    f"- Activity: {a.get('name', 'Unknown')} — ${a.get('price_usd', '?')}"
+                )
         if selections.get("sim"):
             s = selections["sim"]
-            lines.append(f"- SIM: {s.get('provider', 'Unknown')} {s.get('plan_name', '')} — ${s.get('price_usd', '?')}")
+            lines.append(
+                f"- SIM: {s.get('provider', 'Unknown')} {s.get('plan_name', '')} — ${s.get('price_usd', '?')}"
+            )
         if selections.get("tips"):
             for t in selections["tips"]:
                 lines.append(f"- Tip: {t.get('title', 'Unknown')}")
@@ -313,7 +399,9 @@ class ChatAgent:
             for g in selections["getting_around"]:
                 lines.append(f"- Transport: {g.get('name', 'Unknown')}")
         if selections.get("itinerary_slots"):
-            lines.append(f"- Itinerary: {len(selections['itinerary_slots'])} slots selected")
+            lines.append(
+                f"- Itinerary: {len(selections['itinerary_slots'])} slots selected"
+            )
         return "\n".join(lines) if lines else "Plan is empty."
 
     @staticmethod
@@ -324,7 +412,9 @@ class ChatAgent:
         lines = []
         if results.get("flights", {}).get("results"):
             flights = results["flights"]["results"]
-            lines.append(f"Flights: {len(flights)} options (${min(f.get('price_usd', 9999) for f in flights)}-${max(f.get('price_usd', 0) for f in flights)})")
+            lines.append(
+                f"Flights: {len(flights)} options (${min(f.get('price_usd', 9999) for f in flights)}-${max(f.get('price_usd', 0) for f in flights)})"
+            )
         if results.get("hotels", {}).get("results"):
             hotels = results["hotels"]["results"]
             lines.append(f"Hotels: {len(hotels)} options")
@@ -337,11 +427,17 @@ class ChatAgent:
             sims = results["sim"]["plans"]
             lines.append(f"SIM cards: {len(sims)} options")
             for s in sims[:3]:
-                lines.append(f"  - {s.get('provider', '?')} {s.get('plan_name', '')} (${s.get('price_usd', '?')})")
+                lines.append(
+                    f"  - {s.get('provider', '?')} {s.get('plan_name', '')} (${s.get('price_usd', '?')})"
+                )
         if results.get("tips", {}).get("tips"):
             lines.append(f"Tips: {len(results['tips']['tips'])} available")
-        if results.get("getting_around", {}).get("options", results.get("getting_around", {}).get("results")):
-            opts = results["getting_around"].get("options", results["getting_around"].get("results", []))
+        if results.get("getting_around", {}).get(
+            "options", results.get("getting_around", {}).get("results")
+        ):
+            opts = results["getting_around"].get(
+                "options", results["getting_around"].get("results", [])
+            )
             lines.append(f"Transport: {len(opts)} options")
         if results.get("forex", {}).get("exchange_rates"):
             rates = results["forex"]["exchange_rates"]
@@ -350,7 +446,12 @@ class ChatAgent:
 
     # ── Regular chat (plan-aware) ─────────────────────────────────────
 
-    async def _regular_chat(self, messages: list[dict], preferences: dict | None = None, selections: dict | None = None):
+    async def _regular_chat(
+        self,
+        messages: list[dict],
+        preferences: dict | None = None,
+        selections: dict | None = None,
+    ):
         system_prompt = self._build_system_prompt(preferences, selections)
         api_messages = self._to_api_messages(messages)
 
@@ -372,7 +473,9 @@ class ChatAgent:
 
     # ── Comprehensive planning ────────────────────────────────────────
 
-    async def _extract_travel_params(self, messages: list[dict], preferences: dict | None) -> TravelSearchRequest | None:
+    async def _extract_travel_params(
+        self, messages: list[dict], preferences: dict | None
+    ) -> TravelSearchRequest | None:
         conversation = "\n".join(
             f"{'User' if m['role'] == 'user' else 'Assistant'}: {m['content']}"
             for m in messages[-6:]
@@ -383,18 +486,30 @@ class ChatAgent:
             if preferences.get("nationality"):
                 pref_lines.append(f"nationality: {preferences['nationality']}")
             if preferences.get("current_residence"):
-                pref_lines.append(f"current_residence: {preferences['current_residence']}")
+                pref_lines.append(
+                    f"current_residence: {preferences['current_residence']}"
+                )
             if preferences.get("budget_category"):
-                pref_lines.append(f"budget_usd: {_BUDGET_MAP.get(preferences['budget_category'], 3000)}")
+                pref_lines.append(
+                    f"budget_usd: {_BUDGET_MAP.get(preferences['budget_category'], 3000)}"
+                )
             if preferences.get("residence_permits"):
-                pref_lines.append(f"residence_permits: {json.dumps(preferences['residence_permits'])}")
+                pref_lines.append(
+                    f"residence_permits: {json.dumps(preferences['residence_permits'])}"
+                )
             if preferences.get("existing_visas"):
-                pref_lines.append(f"existing_visas: {json.dumps(preferences['existing_visas'])}")
+                pref_lines.append(
+                    f"existing_visas: {json.dumps(preferences['existing_visas'])}"
+                )
             if preferences.get("interests"):
                 pref_lines.append(f"interests: {json.dumps(preferences['interests'])}")
             if preferences.get("num_travelers", 1) > 1:
                 pref_lines.append(f"num_travelers: {preferences['num_travelers']}")
-        pref_block = ("\n\nUser's saved preferences:\n" + "\n".join(pref_lines)) if pref_lines else ""
+        pref_block = (
+            ("\n\nUser's saved preferences:\n" + "\n".join(pref_lines))
+            if pref_lines
+            else ""
+        )
 
         extraction_prompt = (
             "Extract travel planning parameters from this conversation. Return ONLY a JSON object.\n"
@@ -405,7 +520,7 @@ class ChatAgent:
             "interests (list), nationality (string), residence_permits (list), "
             "existing_visas (list), budget_usd (number or null), num_travelers (int).\n"
             f"Use preferences to fill missing fields. Today is {date.today().isoformat()}. "
-            "Convert relative dates (\"next week\", \"in June\") to actual dates.\n"
+            'Convert relative dates ("next week", "in June") to actual dates.\n'
             "IMPORTANT for origin: If the user has not specified an origin/departure city, "
             "use their current_residence from preferences. If current_residence is also empty, "
             "use the capital city of their nationality's country. Never leave origin empty if "
@@ -423,11 +538,19 @@ class ChatAgent:
             result_text = response.content[0].text if response.content else ""
 
             params = self._parse_json_text(result_text)
-            if not params or params.get("insufficient") or not params.get("destination"):
+            if (
+                not params
+                or params.get("insufficient")
+                or not params.get("destination")
+            ):
                 return None
 
-            dep_date = self._safe_date(params.get("departure_date"), fallback=date.today() + timedelta(days=14))
-            ret_date = self._safe_date(params.get("return_date"), fallback=dep_date + timedelta(days=7))
+            dep_date = self._safe_date(
+                params.get("departure_date"), fallback=date.today() + timedelta(days=14)
+            )
+            ret_date = self._safe_date(
+                params.get("return_date"), fallback=dep_date + timedelta(days=7)
+            )
 
             return TravelSearchRequest(
                 origin=params.get("origin") or "",
@@ -453,7 +576,13 @@ class ChatAgent:
         selections: dict | None = None,
         agent_names: list[str] | None = None,
     ):
-        from .static_results import get_static_visa, get_static_sim, get_static_tips, get_static_getting_around, get_static_forex
+        from .static_results import (
+            get_static_visa,
+            get_static_sim,
+            get_static_tips,
+            get_static_getting_around,
+            get_static_forex,
+        )
 
         run_all = agent_names is None
         active_agents = _ALL_AGENT_NAMES if run_all else agent_names
@@ -473,18 +602,25 @@ class ChatAgent:
             if section_name in active_agents:
                 static_data = getter(request)
                 if static_data:
-                    yield json.dumps({"type": "section_result", "section": section_name, "data": static_data, "source": "static"})
+                    yield json.dumps(
+                        {
+                            "type": "section_result",
+                            "section": section_name,
+                            "data": static_data,
+                            "source": "static",
+                        }
+                    )
 
         # Phase 1: Run agents in parallel
         _AGENT_CLASSES = {
-            "flights":       FlightsAgent,
-            "hotels":        HotelsAgent,
-            "activities":    ActivitiesAgent,
-            "visa":          VisaAgent,
-            "sim":           SimAgent,
-            "tips":          TipsAgent,
+            "flights": FlightsAgent,
+            "hotels": HotelsAgent,
+            "activities": ActivitiesAgent,
+            "visa": VisaAgent,
+            "sim": SimAgent,
+            "tips": TipsAgent,
             "getting_around": GettingAroundAgent,
-            "forex":         ForexAgent,
+            "forex": ForexAgent,
         }
 
         agents = {
@@ -511,7 +647,9 @@ class ChatAgent:
         ]
 
         _STATIC_BACKED = {"visa", "sim", "tips", "getting_around", "forex"}
-        run_itinerary = run_all or ("activities" in active_agents and "hotels" in active_agents)
+        run_itinerary = run_all or (
+            "activities" in active_agents and "hotels" in active_agents
+        )
 
         for _ in range(len(tasks)):
             name, result = await done_queue.get()
@@ -520,12 +658,26 @@ class ChatAgent:
             if name in _STATIC_BACKED and result.get("error"):
                 logger.info(f"Agent {name} errored, retaining Phase 0 static data")
             else:
-                yield json.dumps({"type": "section_result", "section": name, "data": result, "source": "ai"})
+                yield json.dumps(
+                    {
+                        "type": "section_result",
+                        "section": name,
+                        "data": result,
+                        "source": "ai",
+                    }
+                )
 
-            if run_itinerary and itinerary_task is None and "activities" in results and "hotels" in results:
+            if (
+                run_itinerary
+                and itinerary_task is None
+                and "activities" in results
+                and "hotels" in results
+            ):
                 itinerary_task = asyncio.create_task(
                     ItineraryAgent(self.agents_dir).run(
-                        request, activities=results["activities"], hotels=results["hotels"],
+                        request,
+                        activities=results["activities"],
+                        hotels=results["hotels"],
                     )
                 )
 
@@ -534,16 +686,27 @@ class ChatAgent:
             if itinerary_task is None:
                 itinerary_task = asyncio.create_task(
                     ItineraryAgent(self.agents_dir).run(
-                        request, activities=results.get("activities", {}), hotels=results.get("hotels", {}),
+                        request,
+                        activities=results.get("activities", {}),
+                        hotels=results.get("hotels", {}),
                     )
                 )
             try:
-                results["itinerary"] = await asyncio.wait_for(itinerary_task, timeout=60)
+                results["itinerary"] = await asyncio.wait_for(
+                    itinerary_task, timeout=60
+                )
             except (asyncio.TimeoutError, Exception) as e:
                 logger.warning(f"Itinerary agent issue: {e}")
                 results["itinerary"] = {"error": str(e)}
 
-            yield json.dumps({"type": "section_result", "section": "itinerary", "data": results["itinerary"], "source": "ai"})
+            yield json.dumps(
+                {
+                    "type": "section_result",
+                    "section": "itinerary",
+                    "data": results["itinerary"],
+                    "source": "ai",
+                }
+            )
 
         # Phase 3: Auto-build plan from results
         if run_all:
@@ -565,8 +728,12 @@ class ChatAgent:
             return None
         for attempt in [
             lambda: json.loads(text.strip()),
-            lambda: json.loads(re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL).group(1).strip()),
-            lambda: json.loads(re.search(r'\{.*\}', text, re.DOTALL).group(0)),
+            lambda: json.loads(
+                re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
+                .group(1)
+                .strip()
+            ),
+            lambda: json.loads(re.search(r"\{.*\}", text, re.DOTALL).group(0)),
         ]:
             try:
                 return attempt()
@@ -583,7 +750,9 @@ class ChatAgent:
         except (ValueError, TypeError):
             return fallback
 
-    def _build_system_prompt(self, preferences: dict | None, selections: dict | None = None) -> str:
+    def _build_system_prompt(
+        self, preferences: dict | None, selections: dict | None = None
+    ) -> str:
         base = self.definition.system_prompt
         parts = []
 
@@ -604,11 +773,17 @@ class ChatAgent:
         has_travelers = preferences.get("num_travelers", 1) > 1
 
         filled_fields = []
-        budget_labels = {"low": "Budget (~$1,000)", "medium": "Mid-range (~$3,000)", "high": "Luxury (~$8,000)"}
+        budget_labels = {
+            "low": "Budget (~$1,000)",
+            "medium": "Mid-range (~$3,000)",
+            "high": "Luxury (~$8,000)",
+        }
 
         parts.append("\n\n## Current User Profile\n")
-        parts.append("The user has saved these preferences. **DO NOT ask about information "
-                      "already provided below** — use it directly in your recommendations:\n")
+        parts.append(
+            "The user has saved these preferences. **DO NOT ask about information "
+            "already provided below** — use it directly in your recommendations:\n"
+        )
 
         if has_nationality:
             parts.append(f"- **Nationality**: {preferences['nationality']}")
@@ -617,14 +792,20 @@ class ChatAgent:
             parts.append(f"- **Current residence**: {preferences['current_residence']}")
             filled_fields.append("current residence")
         if has_budget:
-            label = budget_labels.get(preferences["budget_category"], preferences["budget_category"])
+            label = budget_labels.get(
+                preferences["budget_category"], preferences["budget_category"]
+            )
             parts.append(f"- **Budget preference**: {label}")
             filled_fields.append("budget")
         if has_permits:
-            parts.append(f"- **Residence permits**: {', '.join(preferences['residence_permits'])}")
+            parts.append(
+                f"- **Residence permits**: {', '.join(preferences['residence_permits'])}"
+            )
             filled_fields.append("residence permits")
         if has_visas:
-            parts.append(f"- **Existing visas**: {', '.join(preferences['existing_visas'])}")
+            parts.append(
+                f"- **Existing visas**: {', '.join(preferences['existing_visas'])}"
+            )
             filled_fields.append("existing visas")
         if has_interests:
             parts.append(f"- **Interests**: {', '.join(preferences['interests'])}")
@@ -634,17 +815,23 @@ class ChatAgent:
             filled_fields.append("number of travelers")
 
         if filled_fields:
-            parts.append(f"\n**IMPORTANT**: Since you already know the user's {', '.join(filled_fields)}, "
-                         "do NOT ask about these again. Only ask clarifying questions about details "
-                         "that are NOT in the profile above.")
+            parts.append(
+                f"\n**IMPORTANT**: Since you already know the user's {', '.join(filled_fields)}, "
+                "do NOT ask about these again. Only ask clarifying questions about details "
+                "that are NOT in the profile above."
+            )
         else:
-            parts.append("\nNo preferences are filled in yet. Ask the user for key details: "
-                         "destination, dates, budget, nationality (for visa info), and interests.")
+            parts.append(
+                "\nNo preferences are filled in yet. Ask the user for key details: "
+                "destination, dates, budget, nationality (for visa info), and interests."
+            )
 
-        parts.append("\n\n**CRITICAL**: Before generating a trip plan or searching for flights, you MUST "
-                     "know the user's nationality and origin/departure city. If nationality is unknown, "
-                     "ask for it. If no origin city is specified and no current_residence is in the profile, "
-                     "ask where they will be departing from.")
+        parts.append(
+            "\n\n**CRITICAL**: Before generating a trip plan or searching for flights, you MUST "
+            "know the user's nationality and origin/departure city. If nationality is unknown, "
+            "ask for it. If no origin city is specified and no current_residence is in the profile, "
+            "ask where they will be departing from."
+        )
 
         return base + "\n".join(parts)
 

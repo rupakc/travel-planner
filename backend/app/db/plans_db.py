@@ -1,4 +1,5 @@
 """SQLite persistence for saved travel plans."""
+
 import json
 
 from .database import get_connection
@@ -46,12 +47,15 @@ def get_plan(plan_id: int) -> dict | None:
 def get_user_plans(username: str) -> list[dict]:
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT * FROM plans WHERE username = ? ORDER BY updated_at DESC", (username,)
+            "SELECT * FROM plans WHERE username = ? ORDER BY updated_at DESC",
+            (username,),
         ).fetchall()
     return [_row_to_dict(r) for r in rows]
 
 
-def update_plan(plan_id: int, username: str, name: str | None, selections: dict | None) -> dict | None:
+def update_plan(
+    plan_id: int, username: str, name: str | None, selections: dict | None
+) -> dict | None:
     sets, vals = ["updated_at = datetime('now')"], []
     if name is not None:
         sets.append("name = ?")
@@ -61,10 +65,14 @@ def update_plan(plan_id: int, username: str, name: str | None, selections: dict 
         vals.append(json.dumps(selections))
     vals += [plan_id, username]
     with get_connection() as conn:
-        conn.execute(f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?", vals)  # nosec B608
+        conn.execute(
+            f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?", vals
+        )  # nosec B608
     return get_plan(plan_id)
 
 
 def delete_plan(plan_id: int, username: str) -> None:
     with get_connection() as conn:
-        conn.execute("DELETE FROM plans WHERE id = ? AND username = ?", (plan_id, username))
+        conn.execute(
+            "DELETE FROM plans WHERE id = ? AND username = ?", (plan_id, username)
+        )
