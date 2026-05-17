@@ -19,6 +19,21 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
+      - name: Enable required APIs
+        run: |
+          gcloud services enable \
+            serviceusage.googleapis.com \
+            run.googleapis.com \
+            artifactregistry.googleapis.com \
+            secretmanager.googleapis.com \
+            storage.googleapis.com \
+            iam.googleapis.com \
+            cloudresourcemanager.googleapis.com \
+            compute.googleapis.com \
+            monitoring.googleapis.com \
+            logging.googleapis.com \
+            --project=${{ secrets.GCP_PROJECT_ID }} --quiet
+
       - name: Create Terraform state bucket
         run: |
           BUCKET="${{ secrets.GCP_PROJECT_ID }}-tf-state"
