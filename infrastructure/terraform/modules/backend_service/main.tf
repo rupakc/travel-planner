@@ -3,7 +3,6 @@ variable "region"             { type = string }
 variable "image"              { type = string }
 variable "backup_bucket"      { type = string }
 variable "cloud_run_sa_email" { type = string }
-variable "secret_ids"         { type = map(string) }
 
 resource "google_cloud_run_v2_service" "backend" {
   project  = var.project_id
@@ -48,7 +47,7 @@ resource "google_cloud_run_v2_service" "backend" {
         name = "ANTHROPIC_API_KEY"
         value_source {
           secret_key_ref {
-            secret  = var.secret_ids["anthropic-api-key"]
+            secret  = "anthropic-api-key"
             version = "latest"
           }
         }
@@ -57,7 +56,7 @@ resource "google_cloud_run_v2_service" "backend" {
         name = "JWT_SECRET_KEY"
         value_source {
           secret_key_ref {
-            secret  = var.secret_ids["jwt-secret-key"]
+            secret  = "jwt-secret-key"
             version = "latest"
           }
         }
@@ -66,7 +65,7 @@ resource "google_cloud_run_v2_service" "backend" {
         name = "ADMIN_PASSWORD"
         value_source {
           secret_key_ref {
-            secret  = var.secret_ids["admin-password"]
+            secret  = "admin-password"
             version = "latest"
           }
         }

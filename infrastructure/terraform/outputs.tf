@@ -1,5 +1,5 @@
 output "project_id" {
-  value = module.project.project_id
+  value = var.project_id
 }
 
 output "backend_url" {

@@ -1,11 +1,5 @@
-variable "project_name" {
-  description = "GCP project name (will be slugified to form the project ID)"
-  type        = string
-  default     = "travel-planner"
-}
-
-variable "billing_account_id" {
-  description = "GCP billing account ID"
+variable "project_id" {
+  description = "Existing GCP project ID"
   type        = string
 }
 
