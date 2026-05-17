@@ -22,7 +22,7 @@ resource "google_cloud_run_v2_service" "frontend" {
 
       resources {
         limits = {
-          memory = "256Mi"
+          memory = "512Mi"
           cpu    = "1"
         }
       }
