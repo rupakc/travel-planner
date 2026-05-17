@@ -10,10 +10,6 @@ output "frontend_url" {
   value = module.frontend_service.url
 }
 
-output "registry_url" {
-  value = module.artifact_registry.registry_url
-}
-
 output "backup_bucket" {
   value = module.storage.bucket_name
 }

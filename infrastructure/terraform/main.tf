@@ -55,13 +55,6 @@ module "iam" {
   depends_on = [google_project_service.apis]
 }
 
-module "artifact_registry" {
-  source     = "./modules/artifact_registry"
-  project_id = var.project_id
-  region     = var.region
-  depends_on = [google_project_service.apis]
-}
-
 module "storage" {
   source     = "./modules/storage"
   project_id = var.project_id
