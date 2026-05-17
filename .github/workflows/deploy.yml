@@ -5,10 +5,67 @@ on:
     branches: [main]
 
 jobs:
-  push-images:
+  bootstrap:
+    # Creates Artifact Registry + Terraform state bucket so push-images can run.
+    # Safe to re-run — all operations are idempotent.
     runs-on: ubuntu-latest
     outputs:
       registry: ${{ steps.registry.outputs.url }}
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create Terraform state bucket
+        run: |
+          BUCKET="${{ secrets.GCP_PROJECT_ID }}-tf-state"
+          if ! gcloud storage buckets describe "gs://$BUCKET" \
+               --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+            gcloud storage buckets create "gs://$BUCKET" \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --location=europe-west1 \
+              --uniform-bucket-level-access
+            gcloud storage buckets update "gs://$BUCKET" --versioning
+          fi
+
+      - id: registry
+        name: Create Artifact Registry repo
+        run: |
+          URL="europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          if ! gcloud artifacts repositories describe travel-planner \
+               --location=europe-west1 \
+               --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+            gcloud artifacts repositories create travel-planner \
+              --repository-format=docker \
+              --location=europe-west1 \
+              --project=${{ secrets.GCP_PROJECT_ID }}
+          fi
+
+      - name: Populate Secret Manager secrets
+        run: |
+          PROJECT=${{ secrets.GCP_PROJECT_ID }}
+          upsert_secret() {
+            local name="$1"
+            local value="$2"
+            if ! gcloud secrets describe "$name" --project="$PROJECT" &>/dev/null; then
+              gcloud secrets create "$name" \
+                --project="$PROJECT" \
+                --replication-policy=automatic
+            fi
+            echo -n "$value" | gcloud secrets versions add "$name" \
+              --data-file=- --project="$PROJECT"
+          }
+          upsert_secret "anthropic-api-key" "${{ secrets.ANTHROPIC_API_KEY }}"
+          upsert_secret "jwt-secret-key"    "${{ secrets.JWT_SECRET_KEY }}"
+          upsert_secret "admin-password"    "${{ secrets.ADMIN_PASSWORD }}"
+
+  push-images:
+    runs-on: ubuntu-latest
+    needs: bootstrap
     steps:
       - uses: actions/checkout@v4
 
@@ -19,81 +76,29 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable required APIs
-        run: |
-          gcloud services enable \
-            run.googleapis.com \
-            artifactregistry.googleapis.com \
-            secretmanager.googleapis.com \
-            storage.googleapis.com \
-            iam.googleapis.com \
-            cloudresourcemanager.googleapis.com \
-            compute.googleapis.com \
-            monitoring.googleapis.com \
-            logging.googleapis.com \
-            --project=${{ secrets.GCP_PROJECT_ID }} --quiet
-
-      - name: Create Terraform state bucket
-        run: |
-          BUCKET="${{ secrets.GCP_PROJECT_ID }}-tf-state"
-          if ! gcloud storage buckets describe "gs://$BUCKET" --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
-            gcloud storage buckets create "gs://$BUCKET" \
-              --project=${{ secrets.GCP_PROJECT_ID }} \
-              --location=europe-west1 \
-              --uniform-bucket-level-access
-            gcloud storage buckets update "gs://$BUCKET" --versioning
-          fi
-
-      - name: Populate Secret Manager secrets
-        run: |
-          PROJECT=${{ secrets.GCP_PROJECT_ID }}
-          upsert_secret() {
-            local name="$1"
-            local value="$2"
-            if ! gcloud secrets describe "$name" --project="$PROJECT" &>/dev/null; then
-              gcloud secrets create "$name" --project="$PROJECT" --replication-policy=automatic
-            fi
-            echo -n "$value" | gcloud secrets versions add "$name" \
-              --data-file=- --project="$PROJECT"
-          }
-          upsert_secret "anthropic-api-key" "${{ secrets.ANTHROPIC_API_KEY }}"
-          upsert_secret "jwt-secret-key"    "${{ secrets.JWT_SECRET_KEY }}"
-          upsert_secret "admin-password"    "${{ secrets.ADMIN_PASSWORD }}"
-
-      - id: registry
-        run: |
-          URL="europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-
-          # Create Artifact Registry repo if it doesn't exist
-          if ! gcloud artifacts repositories describe travel-planner \
-               --location=europe-west1 \
-               --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
-            gcloud artifacts repositories create travel-planner \
-              --repository-format=docker \
-              --location=europe-west1 \
-              --project=${{ secrets.GCP_PROJECT_ID }}
-          fi
-          gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+      - name: Configure Docker
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
       - name: Build and push backend
         run: |
-          docker build backend/ -t ${{ steps.registry.outputs.url }}/backend:${{ github.sha }}
-          docker push ${{ steps.registry.outputs.url }}/backend:${{ github.sha }}
+          docker build backend/ \
+            -t ${{ needs.bootstrap.outputs.registry }}/backend:${{ github.sha }}
+          docker push ${{ needs.bootstrap.outputs.registry }}/backend:${{ github.sha }}
 
       - name: Build and push frontend
         run: |
-          docker build frontend/ -t ${{ steps.registry.outputs.url }}/frontend:${{ github.sha }}
-          docker push ${{ steps.registry.outputs.url }}/frontend:${{ github.sha }}
+          docker build frontend/ \
+            -t ${{ needs.bootstrap.outputs.registry }}/frontend:${{ github.sha }}
+          docker push ${{ needs.bootstrap.outputs.registry }}/frontend:${{ github.sha }}
 
   terraform:
     runs-on: ubuntu-latest
-    needs: push-images
+    needs: [bootstrap, push-images]
     env:
-      TF_VAR_project_id:    ${{ secrets.GCP_PROJECT_ID }}
-      TF_VAR_admin_email:   ${{ secrets.ADMIN_EMAIL || 'rchakraborty@dataguard.com' }}
-      TF_VAR_backend_image: ${{ needs.push-images.outputs.registry }}/backend:${{ github.sha }}
-      TF_VAR_frontend_image: ${{ needs.push-images.outputs.registry }}/frontend:${{ github.sha }}
+      TF_VAR_project_id:     ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_admin_email:    ${{ secrets.ADMIN_EMAIL != '' && secrets.ADMIN_EMAIL || 'rchakraborty@dataguard.com' }}
+      TF_VAR_backend_image:  ${{ needs.bootstrap.outputs.registry }}/backend:${{ github.sha }}
+      TF_VAR_frontend_image: ${{ needs.bootstrap.outputs.registry }}/frontend:${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
 

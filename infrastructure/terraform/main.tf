@@ -27,24 +27,46 @@ provider "google-beta" {
   region  = var.region
 }
 
+# ─── APIs ─────────────────────────────────────────────────────────────────────
+
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "run.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "secretmanager.googleapis.com",
+    "storage.googleapis.com",
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "compute.googleapis.com",
+    "monitoring.googleapis.com",
+    "logging.googleapis.com",
+  ])
+  project            = var.project_id
+  service            = each.key
+  disable_on_destroy = false
+}
+
 # ─── Modules ──────────────────────────────────────────────────────────────────
 
 module "iam" {
   source     = "./modules/iam"
   project_id = var.project_id
   region     = var.region
+  depends_on = [google_project_service.apis]
 }
 
 module "artifact_registry" {
   source     = "./modules/artifact_registry"
   project_id = var.project_id
   region     = var.region
+  depends_on = [google_project_service.apis]
 }
 
 module "storage" {
   source     = "./modules/storage"
   project_id = var.project_id
   region     = var.region
+  depends_on = [google_project_service.apis]
 }
 
 module "backend_service" {
