@@ -1,0 +1,12 @@
+from fastapi import APIRouter
+from ...schemas.request import TravelSearchRequest
+from ...agents.itinerary_agent import ItineraryAgent
+from ...core.config import settings
+
+router = APIRouter()
+
+
+@router.post("/itinerary")
+async def get_itinerary(request: TravelSearchRequest):
+    agent = ItineraryAgent(agents_dir=settings.agents_dir)
+    return await agent.run(request)

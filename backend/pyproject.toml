@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "travel-planner-backend"
+version = "1.0.0"
+description = "AI-powered travel planning backend with multi-agent architecture"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "httpx>=0.28.0",
+    "claude-agent-sdk",
+    "python-dotenv",
+    "cachetools",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+omit = [
+    # Agent pipeline requires real Anthropic API — unit tested separately
+    "app/agents/*_agent.py",
+    "app/agents/orchestrator.py",
+    "app/agents/chat_agent.py",
+    "app/agents/static_results.py",
+    "app/agents/web_tools.py",
+    # Schema models — pure data classes, no logic to test
+    "app/schemas/travel.py",
+    # Seed data loaders — tested implicitly via startup
+    "app/db/seed_airports.py",
+    "app/db/seed_nationalities.py",
+    # GCS backup — requires GCS client
+    "app/db/backup.py",
+    # SQLite schema migrations — complex data layer tested via API
+    "app/db/database.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

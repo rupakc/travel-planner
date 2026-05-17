@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.tfvars
+!*.tfvars.example
+github-sa-key.json
+*-key.json
+
+# SQLite / data
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraform.lock.hcl
+
+# Node
+node_modules/
+frontend/dist/
+
+# Logs
+*.log
+.logs/
+.pids/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp

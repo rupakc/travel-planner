@@ -1,0 +1,14 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+httpx>=0.28.0
+claude-agent-sdk
+python-dotenv
+cachetools
+pyyaml
+python-jose[cryptography]
+bcrypt>=4.0.0
+ddgs
+beautifulsoup4
+google-cloud-storage

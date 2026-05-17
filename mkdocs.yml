@@ -1,0 +1,32 @@
+site_name: Travel Planner — Developer Docs
+site_description: AI-powered travel planning — developer reference
+repo_url: https://github.com/your-org/travel-planner
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [backend]
+          options:
+            docstring_style: google
+            show_source: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Agent System: agents.md
+  - API Reference: api.md
+  - Deployment: deployment.md
+  - Contributing: contributing.md

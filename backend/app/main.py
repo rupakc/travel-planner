@@ -1,0 +1,91 @@
+import asyncio
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .core.config import settings as _settings
+from .api.routes import search, flights, hotels, activities, visa, sim, tips, getting_around, forex, itinerary
+from .api.routes.airports import router as airports_router
+from .api.routes.nationalities import router as nationalities_router
+from .api.routes.auth import router as auth_router
+from .api.routes.chat import router as chat_router
+from .api.routes.plans import router as plans_router
+from .api.routes.preferences import router as preferences_router
+from .api.routes.admin import router as admin_router
+from .db.database import create_tables
+from .db.seed_airports import seed as seed_airports
+from .db.seed_nationalities import seed as seed_nationalities
+from .db.plans_db import create_plans_table
+from .db.preferences_db import create_preferences_table
+from .db.backup import restore_from_gcs, start_periodic_backup
+from .api.routes.feedback import router as feedback_router
+from .api.routes.analytics import router as analytics_router
+from .middleware.analytics import AnalyticsMiddleware
+from .middleware.request_id import RequestIdMiddleware
+from .core.logging_config import configure_logging
+
+import os
+configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await restore_from_gcs(_settings.backup_bucket, _settings.data_dir)
+    seed_airports()
+    seed_nationalities()
+    create_tables()
+    create_plans_table()
+    create_preferences_table()
+    from .db.users_db import create_users_table, seed_admin
+    from .db.feedback_db import create_feedback_table
+    create_users_table()
+    seed_admin()
+    create_feedback_table()
+    asyncio.create_task(start_periodic_backup(_settings.backup_bucket, _settings.data_dir))
+    yield
+
+
+app = FastAPI(
+    title="Travel Planner API",
+    description="AI-powered travel planning with multi-agent architecture",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(AnalyticsMiddleware)
+app.add_middleware(RequestIdMiddleware)
+
+
+
+app.include_router(auth_router,        prefix="/api", tags=["auth"])
+app.include_router(admin_router,       prefix="/api", tags=["admin"])
+app.include_router(feedback_router,    prefix="/api", tags=["feedback"])
+app.include_router(analytics_router,   prefix="/api", tags=["analytics"])
+app.include_router(chat_router,        prefix="/api", tags=["chat"])
+app.include_router(plans_router,       prefix="/api", tags=["plans"])
+app.include_router(preferences_router, prefix="/api", tags=["preferences"])
+app.include_router(airports_router,       prefix="/api", tags=["airports"])
+app.include_router(nationalities_router,  prefix="/api", tags=["nationalities"])
+app.include_router(search.router,   prefix="/api", tags=["search"])
+app.include_router(flights.router,  prefix="/api", tags=["flights"])
+app.include_router(hotels.router,   prefix="/api", tags=["hotels"])
+app.include_router(activities.router, prefix="/api", tags=["activities"])
+app.include_router(visa.router,     prefix="/api", tags=["visa"])
+app.include_router(sim.router,      prefix="/api", tags=["sim"])
+app.include_router(tips.router,     prefix="/api", tags=["tips"])
+app.include_router(getting_around.router, prefix="/api", tags=["getting_around"])
+app.include_router(forex.router,   prefix="/api", tags=["forex"])
+app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "travel-planner-backend"}
