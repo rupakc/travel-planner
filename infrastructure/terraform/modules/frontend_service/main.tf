@@ -1,8 +1,7 @@
-variable "project_id"         { type = string }
-variable "region"             { type = string }
-variable "image"              { type = string }
-variable "backend_url"        { type = string }
-variable "cloud_run_sa_email" { type = string }
+variable "project_id"  { type = string }
+variable "region"      { type = string }
+variable "image"       { type = string }
+variable "backend_url" { type = string }
 
 resource "google_cloud_run_v2_service" "frontend" {
   project  = var.project_id
@@ -11,8 +10,6 @@ resource "google_cloud_run_v2_service" "frontend" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
-    service_account = var.cloud_run_sa_email
-
     execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
 
     scaling {

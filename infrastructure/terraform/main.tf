@@ -48,10 +48,27 @@ resource "google_project_service" "apis" {
 
 # ─── Modules ──────────────────────────────────────────────────────────────────
 
-module "iam" {
-  source     = "./modules/iam"
+# Resolve project number so we can reference the default Compute SA
+data "google_project" "current" {
   project_id = var.project_id
-  region     = var.region
+}
+
+locals {
+  default_compute_sa = "${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
+# Grant the default Compute SA the permissions Cloud Run needs at runtime
+resource "google_project_iam_member" "compute_sa_secret_accessor" {
+  project    = var.project_id
+  role       = "roles/secretmanager.secretAccessor"
+  member     = "serviceAccount:${local.default_compute_sa}"
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_project_iam_member" "compute_sa_storage_admin" {
+  project    = var.project_id
+  role       = "roles/storage.objectAdmin"
+  member     = "serviceAccount:${local.default_compute_sa}"
   depends_on = [google_project_service.apis]
 }
 
@@ -63,23 +80,21 @@ module "storage" {
 }
 
 module "backend_service" {
-  source             = "./modules/backend_service"
-  project_id         = var.project_id
-  region             = var.region
-  image              = var.backend_image
-  backup_bucket      = module.storage.bucket_name
-  cloud_run_sa_email = module.iam.cloud_run_sa_email
-  depends_on         = [module.iam, module.storage]
+  source        = "./modules/backend_service"
+  project_id    = var.project_id
+  region        = var.region
+  image         = var.backend_image
+  backup_bucket = module.storage.bucket_name
+  depends_on    = [module.storage, google_project_iam_member.compute_sa_secret_accessor]
 }
 
 module "frontend_service" {
-  source             = "./modules/frontend_service"
-  project_id         = var.project_id
-  region             = var.region
-  image              = var.frontend_image
-  backend_url        = module.backend_service.url
-  cloud_run_sa_email = module.iam.cloud_run_sa_email
-  depends_on         = [module.backend_service]
+  source      = "./modules/frontend_service"
+  project_id  = var.project_id
+  region      = var.region
+  image       = var.frontend_image
+  backend_url = module.backend_service.url
+  depends_on  = [module.backend_service]
 }
 
 module "monitoring" {
