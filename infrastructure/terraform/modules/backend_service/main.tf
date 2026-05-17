@@ -20,6 +20,10 @@ resource "google_cloud_run_v2_service" "backend" {
     containers {
       image = var.image
 
+      ports {
+        container_port = 8001
+      }
+
       resources {
         limits = {
           memory = "512Mi"
