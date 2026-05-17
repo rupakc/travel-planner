@@ -737,79 +737,83 @@ class MyAgent(BaseAgent):
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>backend/app/agents/base_agent.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span>
-<span class="normal">89</span>
-<span class="normal">90</span>
-<span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span>
-<span class="normal">94</span>
-<span class="normal">95</span>
-<span class="normal">96</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BaseAgent</span><span class="p">:</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BaseAgent</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">definition</span><span class="p">:</span> <span class="n">AgentDefinition</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">definition</span> <span class="o">=</span> <span class="n">definition</span>
 
@@ -851,7 +855,9 @@ class MyAgent(BaseAgent):
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
                 <span class="k">continue</span>
 
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Agent returned no parseable result after </span><span class="si">{</span><span class="n">_MAX_RETRIES</span><span class="si">}</span><span class="s2"> attempts&quot;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Agent returned no parseable result after </span><span class="si">{</span><span class="n">_MAX_RETRIES</span><span class="si">}</span><span class="s2"> attempts&quot;</span>
+        <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse JSON from agent output with 3 fallback strategies.&quot;&quot;&quot;</span>
@@ -865,7 +871,7 @@ class MyAgent(BaseAgent):
             <span class="k">pass</span>
 
         <span class="c1"># Strategy 2: Extract JSON code block</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;```(?:json)?\s*\n?(.*?)\n?```&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;```(?:json)?\s*\n?(.*?)\n?```&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
@@ -873,14 +879,16 @@ class MyAgent(BaseAgent):
                 <span class="k">pass</span>
 
         <span class="c1"># Strategy 3: Find first {...} block</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\{.*\}&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{.*\}&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
             <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
                 <span class="k">pass</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Agent </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> could not parse JSON from output: </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Agent </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> could not parse JSON from output: </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="p">{}</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -918,8 +926,7 @@ class MyAgent(BaseAgent):
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>backend/app/agents/base_agent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
-<span class="normal">29</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
 <span class="normal">32</span>
@@ -956,7 +963,10 @@ class MyAgent(BaseAgent):
 <span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
-<span class="normal">66</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute agent via direct Anthropic API and return parsed JSON.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_MAX_RETRIES</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -994,7 +1004,9 @@ class MyAgent(BaseAgent):
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
             <span class="k">continue</span>
 
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Agent returned no parseable result after </span><span class="si">{</span><span class="n">_MAX_RETRIES</span><span class="si">}</span><span class="s2"> attempts&quot;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Agent returned no parseable result after </span><span class="si">{</span><span class="n">_MAX_RETRIES</span><span class="si">}</span><span class="s2"> attempts&quot;</span>
+    <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1340,7 +1352,87 @@ class MyAgent(BaseAgent):
 <span class="normal">328</span>
 <span class="normal">329</span>
 <span class="normal">330</span>
-<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TravelOrchestrator</span><span class="p">:</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TravelOrchestrator</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agents_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flights</span> <span class="o">=</span> <span class="n">FlightsAgent</span><span class="p">(</span><span class="n">agents_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hotels</span> <span class="o">=</span> <span class="n">HotelsAgent</span><span class="p">(</span><span class="n">agents_dir</span><span class="p">)</span>
@@ -1354,7 +1446,9 @@ class MyAgent(BaseAgent):
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">TravelSearchRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run all agents: Phase 1 in parallel, Phase 2 sequential.&quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting travel planning for </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Starting travel planning for </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
         <span class="c1"># Phase 1: Run all independent agents in parallel</span>
         <span class="n">phase1_results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
@@ -1385,7 +1479,9 @@ class MyAgent(BaseAgent):
         <span class="n">forex</span> <span class="o">=</span> <span class="n">safe</span><span class="p">(</span><span class="n">phase1_results</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="p">{</span><span class="s2">&quot;exchange_rates&quot;</span><span class="p">:</span> <span class="p">[]})</span>
 
         <span class="c1"># Phase 2: Itinerary uses activities + hotels</span>
-        <span class="n">itinerary</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">activities</span><span class="o">=</span><span class="n">activities</span><span class="p">,</span> <span class="n">hotels</span><span class="o">=</span><span class="n">hotels</span><span class="p">)</span>
+        <span class="n">itinerary</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="n">activities</span><span class="o">=</span><span class="n">activities</span><span class="p">,</span> <span class="n">hotels</span><span class="o">=</span><span class="n">hotels</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;flights&quot;</span><span class="p">:</span> <span class="n">flights</span><span class="p">,</span>
@@ -1416,11 +1512,17 @@ class MyAgent(BaseAgent):
 <span class="sd">            the template builder after 60 s.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.static_results</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_static_visa</span><span class="p">,</span> <span class="n">get_static_sim</span><span class="p">,</span> <span class="n">get_static_tips</span><span class="p">,</span> <span class="n">get_static_getting_around</span><span class="p">,</span> <span class="n">get_static_forex</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.static_results</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">get_static_visa</span><span class="p">,</span>
+            <span class="n">get_static_sim</span><span class="p">,</span>
+            <span class="n">get_static_tips</span><span class="p">,</span>
+            <span class="n">get_static_getting_around</span><span class="p">,</span>
+            <span class="n">get_static_forex</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># ── Phase 0: Instant static results ──────────────────────────────</span>
         <span class="n">static_visa</span> <span class="o">=</span> <span class="n">get_static_visa</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        <span class="n">static_sim</span>  <span class="o">=</span> <span class="n">get_static_sim</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">static_sim</span> <span class="o">=</span> <span class="n">get_static_sim</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="n">static_tips</span> <span class="o">=</span> <span class="n">get_static_tips</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="n">static_getting_around</span> <span class="o">=</span> <span class="n">get_static_getting_around</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="n">static_forex</span> <span class="o">=</span> <span class="n">get_static_forex</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -1439,7 +1541,16 @@ class MyAgent(BaseAgent):
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Static results yielded for visa/sim/tips/getting_around/forex&quot;</span><span class="p">)</span>
 
         <span class="c1"># Notify frontend that AI agents are starting</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;flights&quot;</span><span class="p">,</span> <span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="s2">&quot;visa&quot;</span><span class="p">,</span> <span class="s2">&quot;sim&quot;</span><span class="p">,</span> <span class="s2">&quot;tips&quot;</span><span class="p">,</span> <span class="s2">&quot;getting_around&quot;</span><span class="p">,</span> <span class="s2">&quot;forex&quot;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;flights&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hotels&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;activities&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;visa&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sim&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tips&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;getting_around&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;forex&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
             <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;data: </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;agent_status&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;agent&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;status&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;searching&#39;</span><span class="p">})</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
 
         <span class="c1"># ── Phase 1: Parallel AI agents (fast — no web searches) ────────</span>
@@ -1479,6 +1590,7 @@ class MyAgent(BaseAgent):
 
         <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enrich_agent</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">agent</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;enrich&quot;</span><span class="p">):</span>
                     <span class="n">data_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -1507,7 +1619,11 @@ class MyAgent(BaseAgent):
                         <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">enrich_agent</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">agent</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
                     <span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">itinerary_task</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;activities&quot;</span> <span class="ow">in</span> <span class="n">results</span> <span class="ow">and</span> <span class="s2">&quot;hotels&quot;</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">itinerary_task</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="s2">&quot;activities&quot;</span> <span class="ow">in</span> <span class="n">results</span>
+                <span class="ow">and</span> <span class="s2">&quot;hotels&quot;</span> <span class="ow">in</span> <span class="n">results</span>
+            <span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting itinerary agent (activities+hotels ready)&quot;</span><span class="p">)</span>
                 <span class="n">itinerary_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
@@ -1550,9 +1666,13 @@ class MyAgent(BaseAgent):
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">itinerary</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">itinerary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">):</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Empty itinerary result&quot;</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Itinerary agent returned bad result (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">), using fallback&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Itinerary agent returned bad result (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">), using fallback&quot;</span>
+                    <span class="p">)</span>
                     <span class="n">itinerary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fallback_itinerary</span><span class="p">(</span>
-                        <span class="n">request</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                        <span class="n">request</span><span class="p">,</span>
+                        <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="p">{}),</span>
                     <span class="p">)</span>
                 <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;data: </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;itinerary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;data&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">itinerary</span><span class="p">})</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
                 <span class="n">itinerary_done</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1582,7 +1702,9 @@ class MyAgent(BaseAgent):
             <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">return_date</span>
             <span class="k">else</span> <span class="mi">7</span>
         <span class="p">)</span>
-        <span class="n">activity_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">activities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)]</span>
+        <span class="n">activity_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">activities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
         <span class="n">hotel_name</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">hotels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="p">[{}])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;your hotel&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">hotels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">)</span>
@@ -1591,7 +1713,7 @@ class MyAgent(BaseAgent):
 
         <span class="n">themes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;Arrival &amp; First Impressions&quot;</span><span class="p">,</span>
-            <span class="o">*</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Day </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="si">}</span><span class="s2"> — Exploration&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nights</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))],</span>
+            <span class="o">*</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Day </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2"> — Exploration&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nights</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))],</span>
             <span class="s2">&quot;Last Day &amp; Departure&quot;</span><span class="p">,</span>
         <span class="p">]</span>
 
@@ -1600,23 +1722,67 @@ class MyAgent(BaseAgent):
         <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
 
         <span class="k">for</span> <span class="n">day_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nights</span> <span class="o">+</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="n">date_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">departure_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">day_num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">date_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">departure_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">day_num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
             <span class="n">is_first</span> <span class="o">=</span> <span class="n">day_num</span> <span class="o">==</span> <span class="mi">1</span>
-            <span class="n">is_last</span>  <span class="o">=</span> <span class="n">day_num</span> <span class="o">==</span> <span class="n">nights</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">theme</span>    <span class="o">=</span> <span class="n">themes</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">day_num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">themes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">is_last</span> <span class="o">=</span> <span class="n">day_num</span> <span class="o">==</span> <span class="n">nights</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">theme</span> <span class="o">=</span> <span class="n">themes</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">day_num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">themes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
 
             <span class="n">slots</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">if</span> <span class="n">is_first</span><span class="p">:</span>
                 <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;morning&quot;</span><span class="p">,</span>   <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Arrive at </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">, transfer to </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Check transport options from the airport in advance&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;afternoon&quot;</span><span class="p">,</span>  <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Check in to </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">, freshen up, explore the neighbourhood&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Pick up a local SIM or eSIM if not done already&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;evening&quot;</span><span class="p">,</span>    <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Welcome dinner — try a local restaurant recommended by the hotel&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Ask hotel staff for their favourite spots&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">40.0</span><span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;morning&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Arrive at </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">, transfer to </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Check transport options from the airport in advance&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;afternoon&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Check in to </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">, freshen up, explore the neighbourhood&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Pick up a local SIM or eSIM if not done already&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;evening&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Welcome dinner — try a local restaurant recommended by the hotel&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Ask hotel staff for their favourite spots&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">40.0</span><span class="p">,</span>
+                    <span class="p">},</span>
                 <span class="p">]</span>
             <span class="k">elif</span> <span class="n">is_last</span><span class="p">:</span>
                 <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;morning&quot;</span><span class="p">,</span>   <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Final breakfast, last-minute souvenir shopping&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Pack the night before&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;afternoon&quot;</span><span class="p">,</span>  <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Check out of </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">, head to airport&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow extra time for check-in queues&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;evening&quot;</span><span class="p">,</span>    <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Departure flight&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="s2">&quot;Airport&quot;</span><span class="p">,</span> <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Safe travels!&quot;</span><span class="p">,</span> <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;morning&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Final breakfast, last-minute souvenir shopping&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Pack the night before&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;afternoon&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Check out of </span><span class="si">{</span><span class="n">hotel_name</span><span class="si">}</span><span class="s2">, head to airport&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow extra time for check-in queues&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="s2">&quot;evening&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="s2">&quot;Departure flight&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="s2">&quot;Airport&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+                        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Safe travels!&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="p">},</span>
                 <span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">day_slots</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1624,34 +1790,40 @@ class MyAgent(BaseAgent):
                     <span class="k">if</span> <span class="n">act_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">activity_list</span><span class="p">):</span>
                         <span class="n">a</span> <span class="o">=</span> <span class="n">activity_list</span><span class="p">[</span><span class="n">act_idx</span><span class="p">]</span>
                         <span class="n">act_idx</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="n">day_slots</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-                            <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span>       <span class="n">tod</span><span class="p">,</span>
-                            <span class="s2">&quot;activity&quot;</span><span class="p">:</span>          <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;Local exploration&quot;</span><span class="p">),</span>
-                            <span class="s2">&quot;location&quot;</span><span class="p">:</span>          <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">),</span>
-                            <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span>    <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration_hours&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
-                            <span class="s2">&quot;notes&quot;</span><span class="p">:</span>             <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                            <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;price_usd&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">25</span><span class="p">),</span>
-                        <span class="p">})</span>
+                        <span class="n">day_slots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="n">tod</span><span class="p">,</span>
+                                <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;Local exploration&quot;</span><span class="p">),</span>
+                                <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">),</span>
+                                <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration_hours&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+                                <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                                <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;price_usd&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">25</span><span class="p">),</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">day_slots</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-                            <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span>       <span class="n">tod</span><span class="p">,</span>
-                            <span class="s2">&quot;activity&quot;</span><span class="p">:</span>          <span class="sa">f</span><span class="s2">&quot;Free time — explore </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2"> at your own pace&quot;</span><span class="p">,</span>
-                            <span class="s2">&quot;location&quot;</span><span class="p">:</span>          <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
-                            <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span>    <span class="mf">3.0</span><span class="p">,</span>
-                            <span class="s2">&quot;notes&quot;</span><span class="p">:</span>             <span class="s2">&quot;Great opportunity for spontaneous discoveries&quot;</span><span class="p">,</span>
-                            <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
-                        <span class="p">})</span>
+                        <span class="n">day_slots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span> <span class="n">tod</span><span class="p">,</span>
+                                <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Free time — explore </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2"> at your own pace&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                                <span class="s2">&quot;duration_hours&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+                                <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Great opportunity for spontaneous discoveries&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span>
                 <span class="n">slots</span> <span class="o">=</span> <span class="n">day_slots</span>
 
             <span class="n">daily_cost</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;estimated_cost_usd&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">)</span>
             <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">daily_cost</span>
-            <span class="n">days</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-                <span class="s2">&quot;day_number&quot;</span><span class="p">:</span>             <span class="n">day_num</span><span class="p">,</span>
-                <span class="s2">&quot;date&quot;</span><span class="p">:</span>                   <span class="n">date_str</span><span class="p">,</span>
-                <span class="s2">&quot;theme&quot;</span><span class="p">:</span>                  <span class="n">theme</span><span class="p">,</span>
-                <span class="s2">&quot;slots&quot;</span><span class="p">:</span>                  <span class="n">slots</span><span class="p">,</span>
-                <span class="s2">&quot;daily_estimated_cost_usd&quot;</span><span class="p">:</span> <span class="n">daily_cost</span><span class="p">,</span>
-            <span class="p">})</span>
+            <span class="n">days</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;day_number&quot;</span><span class="p">:</span> <span class="n">day_num</span><span class="p">,</span>
+                    <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">date_str</span><span class="p">,</span>
+                    <span class="s2">&quot;theme&quot;</span><span class="p">:</span> <span class="n">theme</span><span class="p">,</span>
+                    <span class="s2">&quot;slots&quot;</span><span class="p">:</span> <span class="n">slots</span><span class="p">,</span>
+                    <span class="s2">&quot;daily_estimated_cost_usd&quot;</span><span class="p">:</span> <span class="n">daily_cost</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;days&quot;</span><span class="p">:</span> <span class="n">days</span><span class="p">,</span> <span class="s2">&quot;total_estimated_cost_usd&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">total_cost</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
 </code></pre></div></td></tr></table></div>
@@ -1735,9 +1907,15 @@ class MyAgent(BaseAgent):
 <span class="normal">72</span>
 <span class="normal">73</span>
 <span class="normal">74</span>
-<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">TravelSearchRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">TravelSearchRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run all agents: Phase 1 in parallel, Phase 2 sequential.&quot;&quot;&quot;</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting travel planning for </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Starting travel planning for </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
     <span class="c1"># Phase 1: Run all independent agents in parallel</span>
     <span class="n">phase1_results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
@@ -1768,7 +1946,9 @@ class MyAgent(BaseAgent):
     <span class="n">forex</span> <span class="o">=</span> <span class="n">safe</span><span class="p">(</span><span class="n">phase1_results</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="p">{</span><span class="s2">&quot;exchange_rates&quot;</span><span class="p">:</span> <span class="p">[]})</span>
 
     <span class="c1"># Phase 2: Itinerary uses activities + hotels</span>
-    <span class="n">itinerary</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">activities</span><span class="o">=</span><span class="n">activities</span><span class="p">,</span> <span class="n">hotels</span><span class="o">=</span><span class="n">hotels</span><span class="p">)</span>
+    <span class="n">itinerary</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span> <span class="n">activities</span><span class="o">=</span><span class="n">activities</span><span class="p">,</span> <span class="n">hotels</span><span class="o">=</span><span class="n">hotels</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;flights&quot;</span><span class="p">:</span> <span class="n">flights</span><span class="p">,</span>
@@ -1817,11 +1997,7 @@ class MyAgent(BaseAgent):
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>backend/app/agents/orchestrator.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 81</span>
 <span class="normal"> 82</span>
 <span class="normal"> 83</span>
 <span class="normal"> 84</span>
@@ -1985,7 +2161,35 @@ class MyAgent(BaseAgent):
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
-<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">TravelSearchRequest</span><span class="p">):</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">TravelSearchRequest</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream results with a static-first, AI-enhanced pattern.</span>
 
 <span class="sd">    Phase 0 (instant, &lt; 1s):</span>
@@ -2002,11 +2206,17 @@ class MyAgent(BaseAgent):
 <span class="sd">        the template builder after 60 s.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.static_results</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_static_visa</span><span class="p">,</span> <span class="n">get_static_sim</span><span class="p">,</span> <span class="n">get_static_tips</span><span class="p">,</span> <span class="n">get_static_getting_around</span><span class="p">,</span> <span class="n">get_static_forex</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.static_results</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">get_static_visa</span><span class="p">,</span>
+        <span class="n">get_static_sim</span><span class="p">,</span>
+        <span class="n">get_static_tips</span><span class="p">,</span>
+        <span class="n">get_static_getting_around</span><span class="p">,</span>
+        <span class="n">get_static_forex</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># ── Phase 0: Instant static results ──────────────────────────────</span>
     <span class="n">static_visa</span> <span class="o">=</span> <span class="n">get_static_visa</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-    <span class="n">static_sim</span>  <span class="o">=</span> <span class="n">get_static_sim</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="n">static_sim</span> <span class="o">=</span> <span class="n">get_static_sim</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
     <span class="n">static_tips</span> <span class="o">=</span> <span class="n">get_static_tips</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
     <span class="n">static_getting_around</span> <span class="o">=</span> <span class="n">get_static_getting_around</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
     <span class="n">static_forex</span> <span class="o">=</span> <span class="n">get_static_forex</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -2025,7 +2235,16 @@ class MyAgent(BaseAgent):
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Static results yielded for visa/sim/tips/getting_around/forex&quot;</span><span class="p">)</span>
 
     <span class="c1"># Notify frontend that AI agents are starting</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;flights&quot;</span><span class="p">,</span> <span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="s2">&quot;visa&quot;</span><span class="p">,</span> <span class="s2">&quot;sim&quot;</span><span class="p">,</span> <span class="s2">&quot;tips&quot;</span><span class="p">,</span> <span class="s2">&quot;getting_around&quot;</span><span class="p">,</span> <span class="s2">&quot;forex&quot;</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;flights&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;hotels&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;activities&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;visa&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sim&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tips&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;getting_around&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;forex&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
         <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;data: </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;agent_status&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;agent&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;status&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;searching&#39;</span><span class="p">})</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
 
     <span class="c1"># ── Phase 1: Parallel AI agents (fast — no web searches) ────────</span>
@@ -2065,6 +2284,7 @@ class MyAgent(BaseAgent):
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enrich_agent</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">agent</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;enrich&quot;</span><span class="p">):</span>
                 <span class="n">data_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -2093,7 +2313,11 @@ class MyAgent(BaseAgent):
                     <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">enrich_agent</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">agent</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
                 <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">itinerary_task</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;activities&quot;</span> <span class="ow">in</span> <span class="n">results</span> <span class="ow">and</span> <span class="s2">&quot;hotels&quot;</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">itinerary_task</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="s2">&quot;activities&quot;</span> <span class="ow">in</span> <span class="n">results</span>
+            <span class="ow">and</span> <span class="s2">&quot;hotels&quot;</span> <span class="ow">in</span> <span class="n">results</span>
+        <span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting itinerary agent (activities+hotels ready)&quot;</span><span class="p">)</span>
             <span class="n">itinerary_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">itinerary</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
@@ -2136,9 +2360,13 @@ class MyAgent(BaseAgent):
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">itinerary</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">itinerary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Empty itinerary result&quot;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Itinerary agent returned bad result (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">), using fallback&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Itinerary agent returned bad result (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">), using fallback&quot;</span>
+                <span class="p">)</span>
                 <span class="n">itinerary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fallback_itinerary</span><span class="p">(</span>
-                    <span class="n">request</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;activities&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hotels&quot;</span><span class="p">,</span> <span class="p">{}),</span>
                 <span class="p">)</span>
             <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;data: </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;itinerary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;data&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">itinerary</span><span class="p">})</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
             <span class="n">itinerary_done</span> <span class="o">=</span> <span class="kc">True</span>
