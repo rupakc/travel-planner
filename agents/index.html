@@ -1339,7 +1339,8 @@ class MyAgent(BaseAgent):
 <span class="normal">327</span>
 <span class="normal">328</span>
 <span class="normal">329</span>
-<span class="normal">330</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TravelOrchestrator</span><span class="p">:</span>
+<span class="normal">330</span>
+<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TravelOrchestrator</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agents_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flights</span> <span class="o">=</span> <span class="n">FlightsAgent</span><span class="p">(</span><span class="n">agents_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hotels</span> <span class="o">=</span> <span class="n">HotelsAgent</span><span class="p">(</span><span class="n">agents_dir</span><span class="p">)</span>
@@ -1621,7 +1622,8 @@ class MyAgent(BaseAgent):
                 <span class="n">day_slots</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">tod</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;morning&quot;</span><span class="p">,</span> <span class="s2">&quot;afternoon&quot;</span><span class="p">,</span> <span class="s2">&quot;evening&quot;</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">act_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">activity_list</span><span class="p">):</span>
-                        <span class="n">a</span> <span class="o">=</span> <span class="n">activity_list</span><span class="p">[</span><span class="n">act_idx</span><span class="p">];</span> <span class="n">act_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">a</span> <span class="o">=</span> <span class="n">activity_list</span><span class="p">[</span><span class="n">act_idx</span><span class="p">]</span>
+                        <span class="n">act_idx</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="n">day_slots</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
                             <span class="s2">&quot;time_of_day&quot;</span><span class="p">:</span>       <span class="n">tod</span><span class="p">,</span>
                             <span class="s2">&quot;activity&quot;</span><span class="p">:</span>          <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;Local exploration&quot;</span><span class="p">),</span>
