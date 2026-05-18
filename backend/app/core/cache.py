@@ -1,4 +1,5 @@
 from cachetools import TTLCache
+
 from .config import settings
 
 _cache: TTLCache = TTLCache(

@@ -1,9 +1,10 @@
 import asyncio
 import logging
+
+from ..schemas.request import TravelSearchRequest
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
 from .web_tools import execute_tool
-from ..schemas.request import TravelSearchRequest
 
 logger = logging.getLogger(__name__)
 

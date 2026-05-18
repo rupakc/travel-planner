@@ -1,20 +1,21 @@
-import json
 import asyncio
-import re
+import json
 import logging
+import re
 from datetime import date, timedelta
-from .base_agent import _get_client, _MODEL
-from .loader import load_agent_definition
-from .flights_agent import FlightsAgent
-from .hotels_agent import HotelsAgent
+
+from ..schemas.request import TravelSearchRequest
 from .activities_agent import ActivitiesAgent
-from .visa_agent import VisaAgent
+from .base_agent import _MODEL, _get_client
+from .flights_agent import FlightsAgent
+from .forex_agent import ForexAgent
+from .getting_around_agent import GettingAroundAgent
+from .hotels_agent import HotelsAgent
+from .itinerary_agent import ItineraryAgent
+from .loader import load_agent_definition
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
-from .getting_around_agent import GettingAroundAgent
-from .forex_agent import ForexAgent
-from .itinerary_agent import ItineraryAgent
-from ..schemas.request import TravelSearchRequest
+from .visa_agent import VisaAgent
 
 _CHAT_MODEL = "claude-sonnet-4-6"
 
@@ -577,11 +578,11 @@ class ChatAgent:
         agent_names: list[str] | None = None,
     ):
         from .static_results import (
-            get_static_visa,
+            get_static_forex,
+            get_static_getting_around,
             get_static_sim,
             get_static_tips,
-            get_static_getting_around,
-            get_static_forex,
+            get_static_visa,
         )
 
         run_all = agent_names is None
@@ -695,7 +696,7 @@ class ChatAgent:
                 results["itinerary"] = await asyncio.wait_for(
                     itinerary_task, timeout=60
                 )
-            except (asyncio.TimeoutError, Exception) as e:
+            except (TimeoutError, Exception) as e:
                 logger.warning(f"Itinerary agent issue: {e}")
                 results["itinerary"] = {"error": str(e)}
 

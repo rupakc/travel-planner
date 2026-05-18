@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
 from ...core.auth import get_current_user, require_admin
-from ...db.feedback_db import submit_feedback, list_feedback
+from ...db.feedback_db import list_feedback, submit_feedback
 
 router = APIRouter()
 

@@ -1,7 +1,8 @@
 from fastapi import APIRouter
-from ...schemas.request import TravelSearchRequest
+
 from ...agents.forex_agent import ForexAgent
 from ...core.config import settings
+from ...schemas.request import TravelSearchRequest
 
 router = APIRouter()
 

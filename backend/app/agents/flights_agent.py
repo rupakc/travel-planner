@@ -1,8 +1,9 @@
 import logging
 from urllib.parse import urlparse
+
+from ..schemas.request import TravelSearchRequest
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
-from ..schemas.request import TravelSearchRequest
 
 logger = logging.getLogger(__name__)
 

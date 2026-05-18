@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import time
+
 import httpx
 from bs4 import BeautifulSoup
 from ddgs import DDGS

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
 from ...agents.chat_agent import ChatAgent
 from ...core.auth import get_current_user
 from ...core.config import settings

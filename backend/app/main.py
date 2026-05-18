@@ -1,42 +1,41 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .core.config import settings as _settings
 from .api.routes import (
-    search,
-    flights,
-    hotels,
     activities,
-    visa,
+    flights,
+    forex,
+    getting_around,
+    hotels,
+    itinerary,
+    search,
     sim,
     tips,
-    getting_around,
-    forex,
-    itinerary,
+    visa,
 )
+from .api.routes.admin import router as admin_router
 from .api.routes.airports import router as airports_router
-from .api.routes.nationalities import router as nationalities_router
+from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
+from .api.routes.feedback import router as feedback_router
+from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
-from .api.routes.admin import router as admin_router
+from .core.config import settings as _settings
+from .core.logging_config import configure_logging
+from .db.backup import restore_from_gcs, start_periodic_backup
 from .db.database import create_tables
-from .db.seed_airports import seed as seed_airports
-from .db.seed_nationalities import seed as seed_nationalities
 from .db.plans_db import create_plans_table
 from .db.preferences_db import create_preferences_table
-from .db.backup import restore_from_gcs, start_periodic_backup
-from .api.routes.feedback import router as feedback_router
-from .api.routes.analytics import router as analytics_router
+from .db.seed_airports import seed as seed_airports
+from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .core.logging_config import configure_logging
-
-import os
 
 configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
 
@@ -49,8 +48,8 @@ async def lifespan(app: FastAPI):
     create_tables()
     create_plans_table()
     create_preferences_table()
-    from .db.users_db import create_users_table, seed_admin
     from .db.feedback_db import create_feedback_table
+    from .db.users_db import create_users_table, seed_admin
 
     create_users_table()
     seed_admin()

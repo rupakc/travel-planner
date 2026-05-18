@@ -1,16 +1,17 @@
 import asyncio
 import logging
 from datetime import timedelta
-from .flights_agent import FlightsAgent
-from .hotels_agent import HotelsAgent
+
+from ..schemas.request import TravelSearchRequest
 from .activities_agent import ActivitiesAgent
-from .visa_agent import VisaAgent
+from .flights_agent import FlightsAgent
+from .forex_agent import ForexAgent
+from .getting_around_agent import GettingAroundAgent
+from .hotels_agent import HotelsAgent
+from .itinerary_agent import ItineraryAgent
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
-from .getting_around_agent import GettingAroundAgent
-from .forex_agent import ForexAgent
-from .itinerary_agent import ItineraryAgent
-from ..schemas.request import TravelSearchRequest
+from .visa_agent import VisaAgent
 
 logger = logging.getLogger(__name__)
 
@@ -95,12 +96,13 @@ class TravelOrchestrator:
             the template builder after 60 s.
         """
         import json
+
         from .static_results import (
-            get_static_visa,
+            get_static_forex,
+            get_static_getting_around,
             get_static_sim,
             get_static_tips,
-            get_static_getting_around,
-            get_static_forex,
+            get_static_visa,
         )
 
         # ── Phase 0: Instant static results ──────────────────────────────
@@ -267,7 +269,7 @@ class TravelOrchestrator:
                 if enriched is not None:
                     yield f"data: {json.dumps({'type': name, 'data': enriched, 'source': 'ai'})}\n\n"
                     logger.info(f"Streamed enriched URLs for {name}")
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield ": keepalive\n\n"
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"

@@ -1,14 +1,15 @@
 """Tests for users_db CRUD operations."""
 
 import pytest
+
 from app.db.users_db import (
-    create_user,
-    get_user_by_username,
     authenticate_user,
     change_password,
+    create_user,
     deactivate_user,
-    reactivate_user,
     get_all_users,
+    get_user_by_username,
+    reactivate_user,
 )
 
 

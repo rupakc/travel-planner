@@ -3,7 +3,7 @@ Seed the nationalities SQLite table with a comprehensive list of world nationali
 Run directly:  python -m app.db.seed_nationalities
 """
 
-from .database import get_connection, create_tables, is_nationalities_seeded
+from .database import create_tables, get_connection, is_nationalities_seeded
 
 # (nationality, country, country_code)
 NATIONALITIES = [

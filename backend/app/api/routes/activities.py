@@ -1,7 +1,8 @@
 from fastapi import APIRouter
-from ...schemas.request import TravelSearchRequest, ActivityFilteredSearchRequest
+
 from ...agents.activities_agent import ActivitiesAgent
 from ...core.config import settings
+from ...schemas.request import ActivityFilteredSearchRequest, TravelSearchRequest
 
 router = APIRouter()
 

@@ -1,7 +1,8 @@
 import json
+
+from ..schemas.request import TravelSearchRequest
 from .base_agent import BaseAgent
 from .loader import load_agent_definition
-from ..schemas.request import TravelSearchRequest
 
 
 class ItineraryAgent(BaseAgent):

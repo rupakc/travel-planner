@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query
+
 from ...db.database import search_nationalities
 
 router = APIRouter()

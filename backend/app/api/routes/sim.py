@@ -1,7 +1,8 @@
 from fastapi import APIRouter
-from ...schemas.request import TravelSearchRequest
+
 from ...agents.sim_agent import SimAgent
 from ...core.config import settings
+from ...schemas.request import TravelSearchRequest
 
 router = APIRouter()
 

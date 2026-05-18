@@ -8,7 +8,6 @@ provide enhanced, web-searched results.
 
 from ..schemas.request import TravelSearchRequest
 
-
 # ── Visa static lookup ────────────────────────────────────────────────────────
 
 _VISA_TABLE = {

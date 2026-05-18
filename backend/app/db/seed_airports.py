@@ -3,7 +3,7 @@ Seed the airports SQLite database with a comprehensive list of worldwide airport
 Run directly:  python -m app.db.seed_airports
 """
 
-from .database import get_connection, create_tables
+from .database import create_tables, get_connection
 
 # (iata_code, icao_code, name, city, country, country_code, lat, lon)
 AIRPORTS = [

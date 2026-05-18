@@ -3,7 +3,7 @@
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .database import get_connection
 
@@ -39,7 +39,7 @@ def submit_feedback(
     metadata: dict | None = None,
 ) -> dict:
     fid = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     meta_str = json.dumps(metadata) if metadata else None
     with get_connection() as conn:
         conn.execute(
