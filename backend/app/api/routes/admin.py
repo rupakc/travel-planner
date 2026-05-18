@@ -59,7 +59,9 @@ async def admin_create_user(
     except sqlite3.IntegrityError as exc:
         # Catch any remaining unique-constraint violations (e.g. duplicate email)
         # and surface them as 409 rather than letting FastAPI produce a 500.
-        raise HTTPException(status_code=409, detail=f"User could not be created: {exc}") from exc
+        raise HTTPException(
+            status_code=409, detail=f"User could not be created: {exc}"
+        ) from exc
     return _safe(user)
 
 
