@@ -1,7 +1,9 @@
 """Admin-only user management endpoints."""
 
+import sqlite3
+
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from ...core.auth import require_admin
 from ...db.users_db import (
@@ -21,6 +23,19 @@ class CreateUserRequest(BaseModel):
     email: str | None = None
     is_admin: bool = False
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v):
+        """Coerce empty / whitespace-only strings to None.
+
+        The frontend always sends email: "" when the field is left blank.
+        Storing "" violates the UNIQUE constraint on the second such user.
+        """
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
+
 
 @router.post("/admin/users", status_code=201)
 async def admin_create_user(
@@ -33,13 +48,18 @@ async def admin_create_user(
         raise HTTPException(
             status_code=400, detail="Temporary password must be at least 6 characters"
         )
-    user = create_user(
-        username=req.username,
-        password=req.password,
-        email=req.email,
-        is_admin=req.is_admin,
-        is_first_login=True,
-    )
+    try:
+        user = create_user(
+            username=req.username,
+            password=req.password,
+            email=req.email,
+            is_admin=req.is_admin,
+            is_first_login=True,
+        )
+    except sqlite3.IntegrityError as exc:
+        # Catch any remaining unique-constraint violations (e.g. duplicate email)
+        # and surface them as 409 rather than letting FastAPI produce a 500.
+        raise HTTPException(status_code=409, detail=f"User could not be created: {exc}") from exc
     return _safe(user)
 
 

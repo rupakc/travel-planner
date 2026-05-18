@@ -88,6 +88,10 @@ def create_user(
     is_admin: bool = False,
     is_first_login: bool = True,
 ) -> dict:
+    # Normalise empty strings to NULL so the UNIQUE constraint on email
+    # doesn't reject a second user whose email was omitted.
+    if isinstance(email, str):
+        email = email.strip() or None
     uid = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     with get_connection() as conn:
