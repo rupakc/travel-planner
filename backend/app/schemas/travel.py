@@ -1,7 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class FlightLeg(BaseModel):
+    airline: str | None = None
+    flight_number: str | None = None
+    origin: str | None = None
+    destination: str | None = None
+    departure_date: str | None = None
+    departure_time: str | None = None
+    arrival_time: str | None = None
+    duration_minutes: int | None = None
+    stops: int | None = None
 
 
 class FlightResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    # Flat fields — kept for AI agent backward compat
     airline: str | None = None
     flight_number: str | None = None
     origin: str | None = None
@@ -13,6 +28,16 @@ class FlightResult(BaseModel):
     stops: int | None = None
     booking_url: str | None = None
     source_snippet: str | None = None
+
+    # Structured fields (SerpAPI / rich AI results)
+    trip_type: str | None = None
+    source: str | None = None
+    outbound: FlightLeg | None = None
+    return_flight: FlightLeg | None = Field(
+        None, alias="return"
+    )  # "return" is a keyword
+    carbon_emissions_grams: int | None = None
+    often_delayed: bool | None = None
 
 
 class FlightsResponse(BaseModel):

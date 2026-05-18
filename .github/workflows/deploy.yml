@@ -73,6 +73,7 @@ jobs:
           upsert_secret "anthropic-api-key" "${{ secrets.ANTHROPIC_API_KEY }}"
           upsert_secret "jwt-secret-key"    "${{ secrets.JWT_SECRET_KEY }}"
           upsert_secret "admin-password"    "${{ secrets.ADMIN_PASSWORD }}"
+          upsert_secret "serpapi-key"       "${{ secrets.SERPAPI_KEY }}"
 
   push-images:
     runs-on: ubuntu-latest

@@ -31,6 +31,10 @@ echo "  (auto-generated; no need to record it)"
 read -rsp "ADMIN_PASSWORD (initial admin account password): " ADMIN_PASSWORD; echo
 set_secret "admin-password" "$ADMIN_PASSWORD"
 
+# SERPAPI_KEY
+read -rsp "SERPAPI_KEY: " SERPAPI_KEY; echo
+set_secret "serpapi-key" "$SERPAPI_KEY"
+
 echo ""
 echo "=== All secrets populated ==="
 echo "Push to main to trigger deployment."

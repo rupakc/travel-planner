@@ -1,7 +1,11 @@
 import logging
+import time
 from urllib.parse import urlparse
 
+from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
+from ..services.serp_flights import SerpAPIError
+from ..services.serp_flights import search as serp_search
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
 
@@ -30,9 +34,29 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "flights"))
 
+    async def enrich(self, data: dict) -> dict:
+        if any(r.get("source") == "google_flights" for r in data.get("results", [])):
+            return data  # SerpAPI results already have authoritative booking URLs
+        return await self._enrich_urls(data)
+
     async def run(
         self, request: TravelSearchRequest, filters: dict | None = None
     ) -> dict:
+        if settings.serpapi_key:
+            try:
+                t0 = time.monotonic()
+                result = await serp_search(settings.serpapi_key, request, filters)
+                logger.info(
+                    "SerpAPI flights: %d results in %.0fms",
+                    len(result.get("results", [])),
+                    (time.monotonic() - t0) * 1000,
+                )
+                if result.get("results"):
+                    return result
+                logger.info("SerpAPI returned no results, falling back to AI agent")
+            except SerpAPIError as exc:
+                logger.warning("SerpAPI failed (%s), falling back to AI agent", exc)
+
         is_round_trip = request.return_date is not None
         trip_type = "round-trip" if is_round_trip else "one-way"
 

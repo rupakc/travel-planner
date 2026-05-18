@@ -1,7 +1,7 @@
 variable "project_id" { type = string }
 
 locals {
-  secret_names = ["anthropic-api-key", "jwt-secret-key", "admin-password"]
+  secret_names = ["anthropic-api-key", "jwt-secret-key", "admin-password", "serpapi-key"]
 }
 
 resource "google_secret_manager_secret" "secrets" {

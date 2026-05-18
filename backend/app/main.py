@@ -36,6 +36,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
+from .services.serp_flights import close_client as _close_serp_client
 
 configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
 
@@ -58,6 +59,7 @@ async def lifespan(app: FastAPI):
         start_periodic_backup(_settings.backup_bucket, _settings.data_dir)
     )
     yield
+    await _close_serp_client()
 
 
 app = FastAPI(

@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     data_dir: str = str(_BACKEND_ROOT / "data")
     backup_bucket: str = ""  # GCS bucket name; empty = backup disabled
 
+    # Third-party API keys
+    serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
+
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"
     admin_password: str = ""

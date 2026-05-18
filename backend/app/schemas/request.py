@@ -43,10 +43,22 @@ class TravelSearchRequest(BaseModel):
     budget_usd: float | None = Field(None, description="Total trip budget in USD")
     num_travelers: int = Field(1, ge=1, le=20, description="Number of travelers")
 
+    # Auto-set by validator — not in the request body, not serialised to JSON
+    origin_iata: str | None = Field(None, exclude=True)
+    destination_iata: str | None = Field(None, exclude=True)
+
     @model_validator(mode="after")
     def resolve_iata_codes(self) -> "TravelSearchRequest":
+        stripped_o = self.origin.strip()
+        if _IATA_RE.match(stripped_o.upper()):
+            self.origin_iata = stripped_o.upper()
         self.origin = _resolve_iata(self.origin)
+
+        stripped_d = self.destination.strip()
+        if _IATA_RE.match(stripped_d.upper()):
+            self.destination_iata = stripped_d.upper()
         self.destination = _resolve_iata(self.destination)
+
         return self
 
 
