@@ -28,8 +28,6 @@ export default function LoginPage() {
     }
   }
 
-  const quickFill = (u, p) => setForm({ username: u, password: p })
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-200 via-teal-100 to-emerald-200 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -91,19 +89,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Demo accounts</p>
-            <div className="space-y-2">
-              {[['admin', 'admin123', 'Admin'], ['traveler', 'travel2024', 'Traveler']].map(([u, p, label]) => (
-                <button key={u} type="button" onClick={() => quickFill(u, p)}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-teal-300 hover:bg-teal-50 transition-colors text-xs">
-                  <span className="font-medium text-gray-700">{label}</span>
-                  <span className="text-gray-400 font-mono">{u} / {p}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

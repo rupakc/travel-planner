@@ -13,6 +13,9 @@ import AdminPage           from './pages/AdminPage'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
 
+// SearchDataProvider is intentionally placed inside Layout (not at App root)
+// so that all search/results state is wiped on logout and starts fresh on login.
+
 function RequireAuth({ children }) {
   const { isAuthenticated, loading, requiresPasswordChange } = useAuth()
   const location = useLocation()
@@ -59,26 +62,26 @@ function Layout() {
   const path = location.pathname
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100">
-      <NavBar />
-      <FeedbackWidget />
-      {/* SearchTab is always in the DOM — navigating away never unmounts it */}
-      <div style={{ display: path === '/' ? 'block' : 'none' }}><SearchTab /></div>
-      {path === '/chat'        && <ChatPage />}
-      {path === '/preferences' && <PreferencesPage />}
-      {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
-    </div>
+    <SearchDataProvider>
+      <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100">
+        <NavBar />
+        <FeedbackWidget />
+        {/* SearchTab is always in the DOM — navigating away never unmounts it */}
+        <div style={{ display: path === '/' ? 'block' : 'none' }}><SearchTab /></div>
+        {path === '/chat'        && <ChatPage />}
+        {path === '/preferences' && <PreferencesPage />}
+        {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
+      </div>
+    </SearchDataProvider>
   )
 }
 
 export default function App() {
   return (
-    <SearchDataProvider>
-      <Routes>
-        <Route path="/login"           element={<LoginPage />} />
-        <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
-        <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
-      </Routes>
-    </SearchDataProvider>
+    <Routes>
+      <Route path="/login"           element={<LoginPage />} />
+      <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
+      <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
+    </Routes>
   )
 }
