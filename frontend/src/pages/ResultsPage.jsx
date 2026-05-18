@@ -163,20 +163,25 @@ function FlightLeg({ leg, direction }) {
   if (!leg) return null
   const fmtDur = leg.duration_minutes ? `${Math.floor(leg.duration_minutes/60)}h ${leg.duration_minutes%60}m` : null
   return (
-    <div className="flex items-center gap-3 text-xs">
-      <span className={`shrink-0 w-14 text-center px-1.5 py-0.5 rounded font-semibold ${direction === 'outbound' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'}`}>
-        {direction === 'outbound' ? 'Depart' : 'Return'}
-      </span>
-      <div className="flex-1 min-w-0">
-        <span className="font-medium text-gray-900">{leg.airline || '—'}</span>
-        {leg.flight_number && <span className="text-gray-400 ml-1">{leg.flight_number}</span>}
+    <div className="text-xs space-y-1">
+      <div className="flex items-center gap-2">
+        <span className={`shrink-0 px-1.5 py-0.5 rounded font-semibold ${direction === 'outbound' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'}`}>
+          {direction === 'outbound' ? 'Depart' : 'Return'}
+        </span>
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-gray-900">{leg.airline || '—'}</span>
+          {leg.flight_number && <span className="text-gray-400 ml-1">{leg.flight_number}</span>}
+        </div>
+        <span className={`shrink-0 px-1.5 py-0.5 rounded-full font-medium ${leg.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+          {leg.stops === 0 ? 'Direct' : `${leg.stops} stop${leg.stops > 1 ? 's' : ''}`}
+        </span>
       </div>
-      <div className="text-gray-500">{leg.origin || '—'} → {leg.destination || '—'}</div>
-      <div className="text-gray-500">{leg.departure_time || '—'} → {leg.arrival_time || '—'}</div>
-      {fmtDur && <div className="text-gray-400 w-14 text-right">{fmtDur}</div>}
-      <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${leg.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-        {leg.stops === 0 ? 'Direct' : `${leg.stops} stop${leg.stops > 1 ? 's' : ''}`}
-      </span>
+      <div className="flex items-center gap-2 text-gray-500 pl-1 flex-wrap">
+        <span>{leg.origin || '—'} → {leg.destination || '—'}</span>
+        <span className="text-gray-300">·</span>
+        <span>{leg.departure_time || '—'} – {leg.arrival_time || '—'}</span>
+        {fmtDur && <><span className="text-gray-300">·</span><span className="text-gray-400">{fmtDur}</span></>}
+      </div>
     </div>
   )
 }
@@ -1917,15 +1922,15 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
   return (
     <div className="bg-white border-b border-gray-200">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm">
-        <div className="flex items-center gap-2 text-gray-700 font-medium">
-          <RefreshCw size={14} className="text-teal-500" />
-          <span>Search Criteria</span>
-          <span className="text-gray-400 font-normal text-xs">
+      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm min-w-0">
+        <div className="flex items-center gap-2 text-gray-700 font-medium min-w-0 flex-1">
+          <RefreshCw size={14} className="text-teal-500 shrink-0" />
+          <span className="shrink-0">Search Criteria</span>
+          <span className="text-gray-400 font-normal text-xs truncate hidden sm:inline">
             {searchData.origin} → {searchData.destination} · {searchData.departure_date} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}
           </span>
         </div>
-        {isOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
       </button>
 
       {isOpen && (
@@ -2031,6 +2036,9 @@ export default function ResultsPage() {
     setIsDone(false)
     setError(null)
     setLoadedPlanId(null)
+    setActiveFlightFilterCount(0)
+    setActiveHotelFilterCount(0)
+    setActiveActivityFilterCount(0)
     hasStarted.current = false
     pendingSelections.current = preloadSelections
 
@@ -2304,16 +2312,16 @@ export default function ResultsPage() {
         {/* Top bar */}
         <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <button onClick={() => clearSearchResults()} className="flex items-center gap-1.5 text-slate-200 hover:text-white text-sm shrink-0">
-                <ArrowLeft size={15}/> New Search
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
+              <button onClick={() => clearSearchResults()} className="flex items-center gap-1 sm:gap-1.5 text-slate-200 hover:text-white text-xs sm:text-sm shrink-0">
+                <ArrowLeft size={14}/><span className="hidden xs:inline">New Search</span><span className="xs:hidden">Back</span>
               </button>
-              <div className="text-center min-w-0">
-                <p className="font-semibold text-sm truncate">{searchData.origin} → {searchData.destination}</p>
-                <p className="text-slate-300 text-xs">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
+              <div className="text-center min-w-0 flex-1">
+                <p className="font-semibold text-xs sm:text-sm truncate">{searchData.origin} → {searchData.destination}</p>
+                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {isDone ? <span className="flex items-center gap-1 text-green-300 text-sm"><CheckCircle2 size={13}/> Done</span> : <span className="text-blue-200 text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> Done</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
               </div>
             </div>
           </div>
@@ -2325,10 +2333,8 @@ export default function ResultsPage() {
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex flex-nowrap gap-1.5 justify-center overflow-x-auto">
-              {AGENT_ORDER.map(agent => <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />)}
-            </div>
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {AGENT_ORDER.map(agent => <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />)}
           </div>
           {!isDone && (
             <div className="mt-2 bg-gray-200 rounded-full h-1 overflow-hidden">
