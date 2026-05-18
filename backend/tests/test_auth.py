@@ -116,6 +116,114 @@ class TestCreateAndChangePassword:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert r.status_code == 400
+        assert "8 characters" in r.json()["detail"]
+
+
+class TestAdminResetPassword:
+    def test_admin_can_reset_regular_user_password(self, client, admin_headers):
+        client.post(
+            "/api/admin/users",
+            json={"username": "resetme", "password": "original1", "is_admin": False},
+            headers=admin_headers,
+        )
+        # First login to clear is_first_login flag
+        r = client.post("/api/auth/login", json={"username": "resetme", "password": "original1"})
+        token = r.json()["access_token"]
+        client.post(
+            "/api/auth/change-password",
+            json={"current_password": "original1", "new_password": "changed99"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        # Admin resets the password
+        r = client.post(
+            "/api/admin/users/resetme/reset-password",
+            json={"new_password": "newreset1"},
+            headers=admin_headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["status"] == "password_reset"
+
+        # Login with new password should work and requires_password_change must be True
+        r = client.post("/api/auth/login", json={"username": "resetme", "password": "newreset1"})
+        assert r.status_code == 200
+        assert r.json()["user"]["requires_password_change"] is True
+
+        # Old password no longer works
+        r = client.post("/api/auth/login", json={"username": "resetme", "password": "changed99"})
+        assert r.status_code == 401
+
+    def test_admin_can_reset_another_admin_password(self, client, admin_headers):
+        client.post(
+            "/api/admin/users",
+            json={"username": "admin2", "password": "adminpass1", "is_admin": True},
+            headers=admin_headers,
+        )
+        r = client.post(
+            "/api/admin/users/admin2/reset-password",
+            json={"new_password": "newapass1"},
+            headers=admin_headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["username"] == "admin2"
+
+        r = client.post("/api/auth/login", json={"username": "admin2", "password": "newapass1"})
+        assert r.status_code == 200
+        assert r.json()["user"]["requires_password_change"] is True
+
+    def test_cannot_reset_nonexistent_user(self, client, admin_headers):
+        r = client.post(
+            "/api/admin/users/doesnotexist/reset-password",
+            json={"new_password": "somepass1"},
+            headers=admin_headers,
+        )
+        assert r.status_code == 404
+
+    def test_cannot_reset_inactive_user_password(self, client, admin_headers):
+        client.post(
+            "/api/admin/users",
+            json={"username": "inactive_reset", "password": "pass1234", "is_admin": False},
+            headers=admin_headers,
+        )
+        client.delete("/api/admin/users/inactive_reset", headers=admin_headers)
+
+        r = client.post(
+            "/api/admin/users/inactive_reset/reset-password",
+            json={"new_password": "newpass99"},
+            headers=admin_headers,
+        )
+        assert r.status_code == 400
+        assert "inactive" in r.json()["detail"].lower()
+
+    def test_reset_password_too_short_rejected(self, client, admin_headers):
+        client.post(
+            "/api/admin/users",
+            json={"username": "shortpw2", "password": "pass1234", "is_admin": False},
+            headers=admin_headers,
+        )
+        r = client.post(
+            "/api/admin/users/shortpw2/reset-password",
+            json={"new_password": "abc"},
+            headers=admin_headers,
+        )
+        assert r.status_code == 400
+        assert "8 characters" in r.json()["detail"]
+
+    def test_non_admin_cannot_reset_password(self, client, admin_headers):
+        client.post(
+            "/api/admin/users",
+            json={"username": "noreset_user", "password": "pass1234", "is_admin": False},
+            headers=admin_headers,
+        )
+        r = client.post("/api/auth/login", json={"username": "noreset_user", "password": "pass1234"})
+        token = r.json()["access_token"]
+
+        r = client.post(
+            "/api/admin/users/admin/reset-password",
+            json={"new_password": "hackattempt"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 403
 
 
 class TestAdminRBAC:

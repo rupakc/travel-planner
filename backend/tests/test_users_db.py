@@ -3,6 +3,7 @@
 import pytest
 
 from app.db.users_db import (
+    admin_reset_password,
     authenticate_user,
     change_password,
     create_user,
@@ -101,6 +102,24 @@ def test_reactivate_restores_auth():
     deactivate_user(uname)
     reactivate_user(uname)
     assert authenticate_user(uname, "pass1234") is not None
+
+
+def test_admin_reset_password_sets_force_change_flag():
+    import uuid
+
+    uname = f"resettest_{uuid.uuid4().hex[:6]}"
+    create_user(uname, "oldpass123")
+
+    # Clear is_first_login as a user would after their initial login
+    change_password(uname, "userchosen1")
+    assert get_user_by_username(uname)["is_first_login"] is False
+
+    # Admin reset must set is_first_login back to True and update the password
+    admin_reset_password(uname, "adminset99")
+    u = get_user_by_username(uname)
+    assert u["is_first_login"] is True
+    assert authenticate_user(uname, "adminset99") is not None
+    assert authenticate_user(uname, "userchosen1") is None
 
 
 def test_get_all_users_includes_created():

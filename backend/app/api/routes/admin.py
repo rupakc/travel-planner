@@ -1,12 +1,14 @@
 """Admin-only user management endpoints."""
 
+import logging
 import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 
-from ...core.auth import require_admin
+from ...core.auth import MIN_PASSWORD_LENGTH, require_admin
 from ...db.users_db import (
+    admin_reset_password,
     create_user,
     deactivate_user,
     get_all_users,
@@ -14,6 +16,7 @@ from ...db.users_db import (
     reactivate_user,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -37,6 +40,10 @@ class CreateUserRequest(BaseModel):
         return v
 
 
+class ResetPasswordRequest(BaseModel):
+    new_password: str
+
+
 @router.post("/admin/users", status_code=201)
 async def admin_create_user(
     req: CreateUserRequest,
@@ -44,9 +51,10 @@ async def admin_create_user(
 ):
     if get_user_by_username(req.username):
         raise HTTPException(status_code=409, detail="Username already exists")
-    if len(req.password) < 6:
+    if len(req.password) < MIN_PASSWORD_LENGTH:
         raise HTTPException(
-            status_code=400, detail="Temporary password must be at least 6 characters"
+            status_code=400,
+            detail=f"Temporary password must be at least {MIN_PASSWORD_LENGTH} characters",
         )
     try:
         user = create_user(
@@ -93,6 +101,29 @@ async def admin_reactivate_user(
         raise HTTPException(status_code=404, detail="User not found")
     reactivate_user(username)
     return {"status": "reactivated"}
+
+
+@router.post("/admin/users/{username}/reset-password", status_code=200)
+async def admin_reset_password_endpoint(
+    username: str,
+    req: ResetPasswordRequest,
+    _admin: dict = Depends(require_admin),
+):
+    user = get_user_by_username(username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user["is_active"]:
+        raise HTTPException(
+            status_code=400, detail="Cannot reset password for an inactive user"
+        )
+    if len(req.new_password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters",
+        )
+    admin_reset_password(username, req.new_password)
+    logger.info("Admin '%s' reset password for user '%s'", _admin["username"], username)
+    return {"status": "password_reset", "username": username}
 
 
 def _safe(user: dict) -> dict:

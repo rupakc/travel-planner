@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const TABS = ['Users', 'Feedback']
 
 export default function AdminPage() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [tab, setTab] = useState('Users')
 
   return (
@@ -27,7 +27,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {tab === 'Users'    && <UsersTab token={token} />}
+      {tab === 'Users'    && <UsersTab token={token} currentUsername={user?.username} />}
       {tab === 'Feedback' && <FeedbackTab token={token} />}
     </div>
   )
@@ -35,13 +35,14 @@ export default function AdminPage() {
 
 // ── Users Tab ─────────────────────────────────────────────────────────────────
 
-function UsersTab({ token }) {
+function UsersTab({ token, currentUsername }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [form, setForm] = useState({ username: '', email: '', password: '', is_admin: false })
   const [formError, setFormError] = useState('')
   const [formLoading, setFormLoading] = useState(false)
+  const [resetTarget, setResetTarget] = useState(null) // username string or null
 
   const fetchUsers = () => {
     setLoading(true)
@@ -152,7 +153,7 @@ function UsersTab({ token }) {
                 <th className="px-4 py-3 text-left hidden md:table-cell">Created</th>
                 <th className="px-4 py-3 text-center">Role</th>
                 <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Action</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -174,14 +175,28 @@ function UsersTab({ token }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button onClick={() => toggleActive(u)}
-                      className={`text-xs px-2 py-1 rounded-md font-medium transition-colors ${
-                        u.is_active
-                          ? 'text-red-600 hover:bg-red-50'
-                          : 'text-green-600 hover:bg-green-50'
-                      }`}>
-                      {u.is_active ? 'Deactivate' : 'Reactivate'}
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      {u.is_active && (
+                        <button
+                          onClick={() => setResetTarget(u.username)}
+                          title={u.username === currentUsername ? 'Resetting your own password will require you to set a new one on next page load' : undefined}
+                          className={`text-xs px-2 py-1 rounded-md font-medium transition-colors ${
+                            u.username === currentUsername
+                              ? 'text-amber-600 hover:bg-amber-50'
+                              : 'text-blue-600 hover:bg-blue-50'
+                          }`}>
+                          {u.username === currentUsername ? 'Reset own pw' : 'Reset pw'}
+                        </button>
+                      )}
+                      <button onClick={() => toggleActive(u)}
+                        className={`text-xs px-2 py-1 rounded-md font-medium transition-colors ${
+                          u.is_active
+                            ? 'text-red-600 hover:bg-red-50'
+                            : 'text-green-600 hover:bg-green-50'
+                        }`}>
+                        {u.is_active ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -189,6 +204,144 @@ function UsersTab({ token }) {
           </table>
         </div>
       )}
+
+      {resetTarget && (
+        <ResetPasswordModal
+          username={resetTarget}
+          token={token}
+          isSelf={resetTarget === currentUsername}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Reset Password Modal ──────────────────────────────────────────────────────
+
+function ResetPasswordModal({ username, token, isSelf, onClose }) {
+  const [form, setForm] = useState({ password: '', confirm: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const handleClose = useCallback(() => {
+    if (!loading) onClose()
+  }, [loading, onClose])
+
+  useEffect(() => {
+    const onKeyDown = (e) => { if (e.key === 'Escape') handleClose() }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [handleClose])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await fetch(
+        `/api/admin/users/${encodeURIComponent(username)}/reset-password`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ new_password: form.password }),
+        }
+      )
+      if (!res.ok) {
+        const err = await res.json()
+        setError(err.detail || 'Failed to reset password')
+        return
+      }
+      setSuccess(true)
+    } catch {
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">Reset password</h2>
+        <p className="text-sm text-gray-500 mb-3">
+          Setting a new password for <span className="font-medium text-gray-700">{username}</span>.
+          They will be required to change it on next login.
+        </p>
+        {isSelf && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+            You are resetting your own password. You will be redirected to the change-password page on your next page load.
+          </p>
+        )}
+
+        {success ? (
+          <div className="space-y-4">
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+              Password reset for {username}. They will be prompted to set a new password on next login.
+            </p>
+            <button onClick={onClose}
+              className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">New password *</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="Min. 8 characters"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Confirm password *</label>
+              <input
+                type="password"
+                value={form.confirm}
+                onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="Repeat the new password"
+                required
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button type="submit" disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-medium rounded-lg transition-colors">
+                {loading ? 'Resetting…' : 'Reset password'}
+              </button>
+              <button type="button" onClick={handleClose} disabled={loading}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

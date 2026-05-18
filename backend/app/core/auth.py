@@ -8,6 +8,7 @@ from .config import settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+MIN_PASSWORD_LENGTH = 8
 
 _bearer = HTTPBearer(auto_error=False)
 

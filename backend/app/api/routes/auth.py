@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ...core.auth import create_access_token, get_current_user
+from ...core.auth import MIN_PASSWORD_LENGTH, create_access_token, get_current_user
 from ...db.users_db import authenticate_user, change_password
 
 router = APIRouter()
@@ -48,9 +48,10 @@ async def change_password_endpoint(
     user = authenticate_user(current_user["username"], req.current_password)
     if not user:
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    if len(req.new_password) < 8:
+    if len(req.new_password) < MIN_PASSWORD_LENGTH:
         raise HTTPException(
-            status_code=400, detail="New password must be at least 8 characters"
+            status_code=400,
+            detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters",
         )
     change_password(current_user["username"], req.new_password)
     # Issue a new token with is_first_login=False

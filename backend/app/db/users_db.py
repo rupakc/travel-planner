@@ -137,15 +137,25 @@ def authenticate_user(username: str, password: str) -> dict | None:
     return user
 
 
-def change_password(username: str, new_password: str) -> None:
+def _set_password(username: str, new_password: str, *, force_change: bool) -> None:
     now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         conn.execute(
             """UPDATE users
-               SET password_hash = ?, is_first_login = 0, updated_at = ?
+               SET password_hash = ?, is_first_login = ?, updated_at = ?
                WHERE username = ?""",
-            (_hash(new_password), now, username),
+            (_hash(new_password), int(force_change), now, username),
         )
+
+
+def change_password(username: str, new_password: str) -> None:
+    """Self-service password change — clears the forced-change flag."""
+    _set_password(username, new_password, force_change=False)
+
+
+def admin_reset_password(username: str, new_password: str) -> None:
+    """Admin-initiated password reset — forces the user to change on next login."""
+    _set_password(username, new_password, force_change=True)
 
 
 def deactivate_user(username: str) -> None:
