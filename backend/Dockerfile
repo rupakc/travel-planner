@@ -2,10 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install deps first for layer caching
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy application code
+COPY backend/ ./
+
+# Copy agent definitions (project root .agents/ → /app/.agents/)
+COPY .agents/ .agents/
 
 EXPOSE 8001
 

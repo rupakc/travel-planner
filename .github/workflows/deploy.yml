@@ -93,7 +93,7 @@ jobs:
       - name: Build and push backend
         run: |
           REGISTRY="europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner"
-          docker build backend/ -t "$REGISTRY/backend:${{ github.sha }}"
+          docker build -f backend/Dockerfile . -t "$REGISTRY/backend:${{ github.sha }}"
           docker push "$REGISTRY/backend:${{ github.sha }}"
 
       - name: Build and push frontend

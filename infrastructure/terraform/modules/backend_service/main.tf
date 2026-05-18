@@ -40,8 +40,16 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "/tmp/data"
       }
       env {
+        name  = "AGENTS_DIR"
+        value = "/app/.agents"
+      }
+      env {
         name  = "LOG_FORMAT"
         value = "json"
+      }
+      env {
+        name  = "CORS_ORIGINS"
+        value = "[\"https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app\",\"http://localhost:5174\",\"http://localhost:5173\"]"
       }
 
       env {
