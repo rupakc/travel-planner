@@ -1,7 +1,9 @@
 import logging
 import re
-from urllib.parse import urlparse
+import unicodedata
+from urllib.parse import quote_plus, urlparse
 
+from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
@@ -19,6 +21,43 @@ _SOURCE_DOMAINS = {
 }
 
 _DOMAIN_TO_SOURCE = {v: k for k, v in _SOURCE_DOMAINS.items()}
+
+# Tier 1 — deterministic platform search URLs (always valid, never expire)
+_SEARCH_URL_TEMPLATES: dict[str, str] = {
+    "getyourguide": "https://www.getyourguide.com/s/?q={q}&et=2",
+    "viator": "https://www.viator.com/searchResults/all?text={q}",
+    "klook": "https://www.klook.com/search/?query={q}",
+    "tripadvisor": "https://www.tripadvisor.com/Search?q={q}",
+    "tiqets": "https://www.tiqets.com/en/search/?q={q}",
+    "musement": "https://www.musement.com/us/search/?q={q}",
+}
+_FALLBACK_URL_TEMPLATE = "https://www.google.com/search?q={q}"
+
+
+def _sanitize_query(text: str) -> str:
+    """Normalize unicode and strip special chars so every platform search URL works.
+
+    Handles: accented chars (á→a, é→e, ñ→n), ampersands, colons, commas,
+    brackets, and any other non-alphanumeric punctuation. Result is plain
+    ASCII words separated by single spaces — safe for all search engines.
+    """
+    # Strip accents: NFKD decomposes é→e+combining-accent; ASCII encode drops the accent
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    # Replace any char that isn't a letter, digit, or space with a space
+    text = re.sub(r"[^a-zA-Z0-9 ]", " ", text)
+    # Collapse runs of whitespace
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _build_search_url(name: str, destination: str, source: str | None) -> str:
+    # Sanitize both independently so neither bleeds special chars into the URL
+    clean_name = _sanitize_query(name)
+    clean_dest = _sanitize_query(destination)
+    # Use first 6 words of the activity name — shorter queries get better results
+    short_name = " ".join(clean_name.split()[:6])
+    q = quote_plus(f"{short_name} {clean_dest}")
+    key = _normalize_source_key(source or "")
+    return _SEARCH_URL_TEMPLATES.get(key, _FALLBACK_URL_TEMPLATE).format(q=q)
 
 
 def _url_to_source(url: str) -> str:
@@ -87,47 +126,26 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             lines.append("--- END FILTERS ---")
             prompt += "\n".join(lines)
 
-        self._destination = request.destination
-        return await self.execute(prompt)
+        result = await self.execute(prompt)
+        destination = request.destination
+        # Store destination as metadata — travels to enrich(), popped there (not serialised)
+        result["_destination"] = destination
+        # Tier 1: guarantee every activity has a working booking URL before returning
+        for activity in result.get("results", []):
+            activity["booking_url"] = _build_search_url(
+                activity.get("name", ""), destination, activity.get("source")
+            )
+        return result
 
-    _MAX_ENRICH = 15
+    async def enrich(self, data: dict) -> dict:
+        """Override ToolAgent.enrich() — extract destination metadata then run Tier 2 resolver."""
+        destination = data.pop("_destination", "")
+        from ..services.activity_url_resolver import _pick_resolver, resolve_top
+
+        resolver = _pick_resolver(settings)
+        if resolver is None:
+            return data
+        return await resolve_top(resolver, data, destination)
 
     async def _enrich_urls(self, data: dict) -> dict:
-        activities = data.get("results", [])
-        if not activities:
-            return data
-
-        for activity in activities[: self._MAX_ENRICH]:
-            raw_name = activity.get("name", "")
-            if not raw_name:
-                continue
-            clean = re.sub(r"[^a-zA-Z0-9\s]", " ", raw_name).strip()
-            short = " ".join(clean.split()[:6])
-            source = activity.get("source", "")
-            source_key = _normalize_source_key(source)
-
-            url = None
-
-            # Try source-specific search first
-            domain = _SOURCE_DOMAINS.get(source_key)
-            if domain:
-                url = await self._search_url(
-                    f"site:{domain} {short} {self._destination}",
-                    match_name=raw_name,
-                )
-
-            # Fallback: general search
-            if not url:
-                url = await self._search_url(
-                    f"{short} {self._destination} book tickets tour",
-                    match_name=raw_name,
-                )
-
-            if url:
-                activity["booking_url"] = url
-                activity["source"] = _url_to_source(url)
-                logger.info(
-                    f"Activity URL: {raw_name} -> {url} (source: {activity['source']})"
-                )
-
-        return data
+        return data  # superseded by enrich() override above

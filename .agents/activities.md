@@ -59,7 +59,6 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
       "duration_hours": 3.0,
       "price_usd": 45.0,
       "location": "Tsukiji, Tokyo",
-      "booking_url": "https://www.getyourguide.com/tokyo-l193/tsukiji-food-tour-t12345",
       "source": "getyourguide",
       "similarity_score": 0.95,
       "rating": 4.7,
@@ -69,4 +68,4 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 }
 ```
 
-Return 15–20 activities sorted by similarity_score descending. Write rich 2-sentence descriptions. Include `source` to indicate which platform the activity was found on. Include `rating` and `review_count` when available (set to null if unknown). Prefer activities with high ratings (4.0+) and many reviews.
+Return 15–20 activities sorted by similarity_score descending. Write rich 2-sentence descriptions. Include `source` to indicate which platform the activity was found on (one of: getyourguide / viator / klook / tripadvisor / tiqets / musement / web). Include `rating` and `review_count` when available (set to null if unknown). Prefer activities with high ratings (4.0+) and many reviews. Do NOT include `booking_url` — it is generated server-side from the activity name and destination.

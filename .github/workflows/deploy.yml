@@ -74,6 +74,7 @@ jobs:
           upsert_secret "jwt-secret-key"    "${{ secrets.JWT_SECRET_KEY }}"
           upsert_secret "admin-password"    "${{ secrets.ADMIN_PASSWORD }}"
           upsert_secret "serpapi-key"       "${{ secrets.SERPAPI_KEY }}"
+          upsert_secret "serper-key"        "${{ secrets.SERPER_KEY }}"
 
   push-images:
     runs-on: ubuntu-latest

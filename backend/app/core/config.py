@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
+    serper_key: str = (
+        ""  # Serper Google Search API key; enables Tier 2 activity URL resolution
+    )
 
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"

@@ -35,6 +35,10 @@ set_secret "admin-password" "$ADMIN_PASSWORD"
 read -rsp "SERPAPI_KEY: " SERPAPI_KEY; echo
 set_secret "serpapi-key" "$SERPAPI_KEY"
 
+# SERPER_KEY
+read -rsp "SERPER_KEY: " SERPER_KEY; echo
+set_secret "serper-key" "$SERPER_KEY"
+
 echo ""
 echo "=== All secrets populated ==="
 echo "Push to main to trigger deployment."

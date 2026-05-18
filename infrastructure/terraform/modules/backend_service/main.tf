@@ -88,6 +88,15 @@ resource "google_cloud_run_v2_service" "backend" {
           }
         }
       }
+      env {
+        name = "SERPER_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "serper-key"
+            version = "latest"
+          }
+        }
+      }
 
       liveness_probe {
         http_get {
