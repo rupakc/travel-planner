@@ -15,8 +15,8 @@ os.environ["JWT_SECRET_KEY"] = "test-secret-key-32chars-long!!"
 os.environ["LOG_FORMAT"] = "text"
 os.environ["BACKUP_BUCKET"] = ""
 
-import pytest
-from fastapi.testclient import TestClient
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
 
 @pytest.fixture(scope="session")

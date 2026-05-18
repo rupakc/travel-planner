@@ -1,7 +1,5 @@
 """Tests for auth endpoints and RBAC."""
 
-import pytest
-
 
 class TestLogin:
     def test_admin_login_success(self, client):
@@ -74,7 +72,7 @@ class TestCreateAndChangePassword:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert r.status_code == 200
-        new_token = r.json()["access_token"]
+        _ = r.json()["access_token"]  # token issued; value not needed here
 
         # Login with new password — requires_password_change should be False
         r = client.post(

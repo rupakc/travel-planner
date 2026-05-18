@@ -59,3 +59,30 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "raise NotImplementedError",
 ]
+
+# ── Ruff ──────────────────────────────────────────────────────────────────────
+# Single source of truth for all ruff settings.
+# CI installs the pinned version from requirements-dev.txt and runs:
+#   ruff check backend/
+#   ruff format --check backend/
+# Pre-commit runs the same checks before every commit.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# E/W = pycodestyle  F = pyflakes  I = isort  UP = pyupgrade
+select = ["E", "W", "F", "I", "UP"]
+ignore = [
+    "E501",   # line-too-long — formatter handles this; don't double-report
+    "UP007",  # Use X | Y for type unions — keep `Optional[X]` for clarity
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

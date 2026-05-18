@@ -13,8 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install ruff
-      - run: ruff check backend/app/
+      # Install the pinned ruff from requirements-dev.txt — same version used
+      # locally and in pre-commit, so formatting never diverges between
+      # developer machines and CI.
+      - run: pip install -r backend/requirements-dev.txt
+      - run: ruff check backend/
       - run: ruff format --check backend/
 
   lint-frontend:
@@ -34,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install bandit pip-audit
+      - run: pip install -r backend/requirements-dev.txt
       - run: bandit -r backend/app/ -ll --skip B105,B106
       - run: pip-audit -r backend/requirements.txt --ignore-vuln PYSEC-2023-62
       - uses: actions/setup-node@v4
@@ -75,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build backend image
-        run: docker build backend/ -t backend:${{ github.sha }}
+        run: docker build -f backend/Dockerfile . -t backend:${{ github.sha }}
       - name: Build frontend image
         run: docker build frontend/ -t frontend:${{ github.sha }}
       - name: Scan backend image

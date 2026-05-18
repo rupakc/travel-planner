@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -16,8 +14,8 @@ class SavePlanRequest(BaseModel):
 
 
 class UpdatePlanRequest(BaseModel):
-    name: Optional[str] = None
-    selections: Optional[dict] = None
+    name: str | None = None
+    selections: dict | None = None
 
 
 @router.get("/plans")

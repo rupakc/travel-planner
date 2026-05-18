@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Must match the version pinned in backend/requirements-dev.txt
+    rev: v0.15.13
+    hooks:
+      - id: ruff
+        name: ruff lint
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        name: ruff format
+        files: ^backend/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "\\.(md|txt)$"
+      - id: end-of-file-fixer
+        exclude: "\\.(md)$"
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+        exclude: "tsconfig.*\\.json$"
+      - id: mixed-line-ending
+        args: [--fix=lf]

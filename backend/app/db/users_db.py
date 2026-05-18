@@ -2,12 +2,12 @@
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import bcrypt
 
-from .database import get_connection
 from ..core.config import settings
+from .database import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def create_user(
     if isinstance(email, str):
         email = email.strip() or None
     uid = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         conn.execute(
             """INSERT INTO users
@@ -138,7 +138,7 @@ def authenticate_user(username: str, password: str) -> dict | None:
 
 
 def change_password(username: str, new_password: str) -> None:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         conn.execute(
             """UPDATE users
@@ -149,7 +149,7 @@ def change_password(username: str, new_password: str) -> None:
 
 
 def deactivate_user(username: str) -> None:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         conn.execute(
             "UPDATE users SET is_active = 0, updated_at = ? WHERE username = ?",
@@ -158,7 +158,7 @@ def deactivate_user(username: str) -> None:
 
 
 def reactivate_user(username: str) -> None:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         conn.execute(
             "UPDATE users SET is_active = 1, updated_at = ? WHERE username = ?",

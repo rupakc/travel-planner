@@ -114,6 +114,6 @@ class TestAdminFeedback:
         assert all(i["rating"] >= 5 for i in r.json())
 
     def test_non_admin_blocked(self, client, auth):
-        r = client.get("/api/admin/feedback", headers=auth)
-        # admin token IS admin in this fixture, so test with a non-admin user
-        pass  # covered by TestAdminRBAC in test_auth.py
+        # admin token IS admin in this fixture — RBAC is covered by TestAdminRBAC
+        # in test_auth.py; nothing to assert here.
+        pass

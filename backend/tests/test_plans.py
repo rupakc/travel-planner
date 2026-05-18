@@ -1,7 +1,5 @@
 """Tests for plans CRUD endpoints."""
 
-import pytest
-
 
 class TestPlans:
     def test_list_plans_empty(self, client, admin_headers):

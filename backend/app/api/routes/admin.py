@@ -8,9 +8,9 @@ from pydantic import BaseModel, field_validator
 from ...core.auth import require_admin
 from ...db.users_db import (
     create_user,
+    deactivate_user,
     get_all_users,
     get_user_by_username,
-    deactivate_user,
     reactivate_user,
 )
 

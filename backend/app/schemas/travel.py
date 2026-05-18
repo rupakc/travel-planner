@@ -1,19 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional
 
 
 class FlightResult(BaseModel):
-    airline: Optional[str] = None
-    flight_number: Optional[str] = None
-    origin: Optional[str] = None
-    destination: Optional[str] = None
-    departure_time: Optional[str] = None
-    arrival_time: Optional[str] = None
-    duration_minutes: Optional[int] = None
-    price_usd: Optional[float] = None
-    stops: Optional[int] = None
-    booking_url: Optional[str] = None
-    source_snippet: Optional[str] = None
+    airline: str | None = None
+    flight_number: str | None = None
+    origin: str | None = None
+    destination: str | None = None
+    departure_time: str | None = None
+    arrival_time: str | None = None
+    duration_minutes: int | None = None
+    price_usd: float | None = None
+    stops: int | None = None
+    booking_url: str | None = None
+    source_snippet: str | None = None
 
 
 class FlightsResponse(BaseModel):
@@ -21,15 +20,15 @@ class FlightsResponse(BaseModel):
 
 
 class HotelResult(BaseModel):
-    name: Optional[str] = None
-    star_rating: Optional[float] = None
-    price_per_night_usd: Optional[float] = None
-    total_price_usd: Optional[float] = None
-    location: Optional[str] = None
+    name: str | None = None
+    star_rating: float | None = None
+    price_per_night_usd: float | None = None
+    total_price_usd: float | None = None
+    location: str | None = None
     amenities: list[str] = []
-    booking_url: Optional[str] = None
-    review_score: Optional[float] = None
-    source_snippet: Optional[str] = None
+    booking_url: str | None = None
+    review_score: float | None = None
+    source_snippet: str | None = None
 
 
 class HotelsResponse(BaseModel):
@@ -37,15 +36,15 @@ class HotelsResponse(BaseModel):
 
 
 class ActivityResult(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    duration_hours: Optional[float] = None
-    price_usd: Optional[float] = None
-    location: Optional[str] = None
-    booking_url: Optional[str] = None
-    similarity_score: Optional[float] = None
-    source: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    duration_hours: float | None = None
+    price_usd: float | None = None
+    location: str | None = None
+    booking_url: str | None = None
+    similarity_score: float | None = None
+    source: str | None = None
 
 
 class ActivitiesResponse(BaseModel):
@@ -53,36 +52,36 @@ class ActivitiesResponse(BaseModel):
 
 
 class VisaRequirement(BaseModel):
-    visa_type: Optional[str] = None
-    max_stay_days: Optional[int] = None
+    visa_type: str | None = None
+    max_stay_days: int | None = None
     requirements: list[str] = []
-    processing_time: Optional[str] = None
-    fee_usd: Optional[float] = None
-    official_url: Optional[str] = None
-    confidence: Optional[str] = None
-    notes: Optional[str] = None
+    processing_time: str | None = None
+    fee_usd: float | None = None
+    official_url: str | None = None
+    confidence: str | None = None
+    notes: str | None = None
 
 
 class VisaResponse(BaseModel):
-    requirement: Optional[VisaRequirement] = None
+    requirement: VisaRequirement | None = None
 
 
 class NetworkQuality(BaseModel):
-    speed: Optional[str] = None
-    coverage_rating: Optional[str] = None
-    coverage_description: Optional[str] = None
+    speed: str | None = None
+    coverage_rating: str | None = None
+    coverage_description: str | None = None
 
 
 class SimPlan(BaseModel):
-    provider: Optional[str] = None
-    plan_name: Optional[str] = None
-    data_gb: Optional[float] = None
-    validity_days: Optional[int] = None
-    price_usd: Optional[float] = None
-    purchase_location: Optional[str] = None
-    url: Optional[str] = None
-    snippet: Optional[str] = None
-    network_quality: Optional[NetworkQuality] = None
+    provider: str | None = None
+    plan_name: str | None = None
+    data_gb: float | None = None
+    validity_days: int | None = None
+    price_usd: float | None = None
+    purchase_location: str | None = None
+    url: str | None = None
+    snippet: str | None = None
+    network_quality: NetworkQuality | None = None
 
 
 class SimResponse(BaseModel):
@@ -90,11 +89,11 @@ class SimResponse(BaseModel):
 
 
 class Tip(BaseModel):
-    category: Optional[str] = None
-    title: Optional[str] = None
-    body: Optional[str] = None
-    severity: Optional[str] = None
-    source_url: Optional[str] = None
+    category: str | None = None
+    title: str | None = None
+    body: str | None = None
+    severity: str | None = None
+    source_url: str | None = None
 
 
 class TipsResponse(BaseModel):
@@ -104,36 +103,36 @@ class TipsResponse(BaseModel):
 class ItinerarySlot(BaseModel):
     time_of_day: str
     activity: str
-    location: Optional[str] = None
-    duration_hours: Optional[float] = None
-    notes: Optional[str] = None
-    estimated_cost_usd: Optional[float] = None
+    location: str | None = None
+    duration_hours: float | None = None
+    notes: str | None = None
+    estimated_cost_usd: float | None = None
 
 
 class ItineraryDay(BaseModel):
     day_number: int
-    date: Optional[str] = None
-    theme: Optional[str] = None
+    date: str | None = None
+    theme: str | None = None
     slots: list[ItinerarySlot] = []
-    daily_estimated_cost_usd: Optional[float] = None
+    daily_estimated_cost_usd: float | None = None
 
 
 class ItineraryResponse(BaseModel):
     days: list[ItineraryDay] = []
-    total_estimated_cost_usd: Optional[float] = None
+    total_estimated_cost_usd: float | None = None
 
 
 class TransportOption(BaseModel):
-    name: Optional[str] = None
-    type: Optional[str] = None
-    scope: Optional[str] = None
-    description: Optional[str] = None
-    coverage: Optional[str] = None
-    price_info: Optional[str] = None
-    operating_hours: Optional[str] = None
-    tips: Optional[str] = None
-    booking_url: Optional[str] = None
-    tourist_pass: Optional[str] = None
+    name: str | None = None
+    type: str | None = None
+    scope: str | None = None
+    description: str | None = None
+    coverage: str | None = None
+    price_info: str | None = None
+    operating_hours: str | None = None
+    tips: str | None = None
+    booking_url: str | None = None
+    tourist_pass: str | None = None
 
 
 class GettingAroundResponse(BaseModel):
@@ -141,69 +140,69 @@ class GettingAroundResponse(BaseModel):
 
 
 class ExchangeRate(BaseModel):
-    from_currency: Optional[str] = None
-    to_currency: Optional[str] = None
-    rate: Optional[float] = None
-    description: Optional[str] = None
-    trend: Optional[str] = None
+    from_currency: str | None = None
+    to_currency: str | None = None
+    rate: float | None = None
+    description: str | None = None
+    trend: str | None = None
 
 
 class ExchangeLocation(BaseModel):
-    type: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    rating: Optional[str] = None
-    fees: Optional[str] = None
-    tip: Optional[str] = None
+    type: str | None = None
+    name: str | None = None
+    description: str | None = None
+    rating: str | None = None
+    fees: str | None = None
+    tip: str | None = None
 
 
 class CardAcceptance(BaseModel):
-    visa_mastercard: Optional[str] = None
-    amex: Optional[str] = None
-    contactless: Optional[str] = None
-    digital_wallets: Optional[str] = None
-    surcharges: Optional[str] = None
+    visa_mastercard: str | None = None
+    amex: str | None = None
+    contactless: str | None = None
+    digital_wallets: str | None = None
+    surcharges: str | None = None
 
 
 class CashAdvice(BaseModel):
-    cash_dependency: Optional[str] = None
-    recommendation: Optional[str] = None
-    denominations: Optional[str] = None
-    bring_usd_eur: Optional[str] = None
+    cash_dependency: str | None = None
+    recommendation: str | None = None
+    denominations: str | None = None
+    bring_usd_eur: str | None = None
 
 
 class AtmInfo(BaseModel):
-    availability: Optional[str] = None
-    networks: Optional[str] = None
-    withdrawal_limit: Optional[str] = None
-    fees: Optional[str] = None
-    best_option: Optional[str] = None
+    availability: str | None = None
+    networks: str | None = None
+    withdrawal_limit: str | None = None
+    fees: str | None = None
+    best_option: str | None = None
 
 
 class TippingInfo(BaseModel):
-    expected: Optional[bool] = None
-    description: Optional[str] = None
+    expected: bool | None = None
+    description: str | None = None
 
 
 class MoneyTip(BaseModel):
-    title: Optional[str] = None
-    body: Optional[str] = None
+    title: str | None = None
+    body: str | None = None
 
 
 class LocalCurrency(BaseModel):
-    name: Optional[str] = None
-    code: Optional[str] = None
-    symbol: Optional[str] = None
+    name: str | None = None
+    code: str | None = None
+    symbol: str | None = None
 
 
 class ForexResponse(BaseModel):
-    local_currency: Optional[LocalCurrency] = None
+    local_currency: LocalCurrency | None = None
     exchange_rates: list[ExchangeRate] = []
     exchange_locations: list[ExchangeLocation] = []
-    card_acceptance: Optional[CardAcceptance] = None
-    cash_advice: Optional[CashAdvice] = None
-    atm_info: Optional[AtmInfo] = None
-    tipping: Optional[TippingInfo] = None
+    card_acceptance: CardAcceptance | None = None
+    cash_advice: CashAdvice | None = None
+    atm_info: AtmInfo | None = None
+    tipping: TippingInfo | None = None
     money_tips: list[MoneyTip] = []
     source_urls: list[str] = []
 

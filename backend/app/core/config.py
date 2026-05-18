@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # This file lives at backend/app/core/config.py.
@@ -6,8 +7,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # so going 4 levels up reaches "/" (container root), not the project root.
 # All production paths are therefore set explicitly via env vars (AGENTS_DIR,
 # DATA_DIR, BACKUP_BUCKET) injected by Cloud Run / Terraform.
-_BACKEND_ROOT = Path(__file__).parent.parent.parent   # /app in container, backend/ locally
-_PROJECT_ROOT = _BACKEND_ROOT.parent                  # / in container, project root locally
+_BACKEND_ROOT = Path(
+    __file__
+).parent.parent.parent  # /app in container, backend/ locally
+_PROJECT_ROOT = _BACKEND_ROOT.parent  # / in container, project root locally
 
 
 class Settings(BaseSettings):

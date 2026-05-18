@@ -166,6 +166,7 @@ def _llm_extract_city_country(
     """Use Claude Haiku to reliably extract city and country from search results."""
     try:
         import anthropic
+
         from ..core.config import settings
 
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)

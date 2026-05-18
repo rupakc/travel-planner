@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from .config import settings
@@ -21,7 +20,7 @@ def create_access_token(data: dict) -> str:
     """Create a JWT. Pass at minimum {"sub": username}; extra claims are included."""
     payload = {
         **data,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS),
+        "exp": datetime.now(UTC) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS),
     }
     return jwt.encode(payload, _secret(), algorithm=ALGORITHM)
 
@@ -35,7 +34,7 @@ def decode_token(token: str) -> dict:
 
 
 def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict:
     """Validate JWT and return user row from DB. Raises 401 if missing/invalid/inactive."""
     if not credentials:
@@ -51,8 +50,8 @@ def get_current_user(
 
 
 def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
-) -> Optional[dict]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> dict | None:
     """Like get_current_user but returns None instead of raising 401."""
     if not credentials:
         return None
