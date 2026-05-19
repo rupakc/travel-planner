@@ -9,6 +9,7 @@ AI-powered travel planning. Give it your destination, dates, and interests — i
 | **Frontend** | https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app |
 | **Backend API** | https://travel-planner-backend-2hrxgxqboa-ew.a.run.app |
 | **API docs** | https://travel-planner-backend-2hrxgxqboa-ew.a.run.app/docs |
+| **Project docs** | https://rupakc.github.io/travel-planner/ |
 
 The frontend proxies all `/api/*` calls to the backend, so most users only need the frontend URL. Use the backend URL directly for API exploration or health checks (`/health`).
 
