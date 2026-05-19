@@ -135,6 +135,24 @@ jobs:
         run: terraform validate
         working-directory: infrastructure/terraform
 
+      - name: Import pre-existing GCS buckets into state
+        run: |
+          # The sqlite-backup bucket may already exist in GCP from a prior run
+          # but not be in Terraform state (e.g. after a state reset or rename).
+          # Import it so Terraform doesn't try to re-create it and get a 409.
+          BACKUP_BUCKET="${TF_VAR_project_id}-sqlite-backup"
+          if gcloud storage buckets describe "gs://${BACKUP_BUCKET}" --quiet 2>/dev/null; then
+            if ! terraform state show module.storage.google_storage_bucket.sqlite_backup 2>/dev/null; then
+              echo "Importing ${BACKUP_BUCKET} into Terraform state..."
+              terraform import module.storage.google_storage_bucket.sqlite_backup "${BACKUP_BUCKET}"
+            else
+              echo "Bucket already in state, skipping import."
+            fi
+          else
+            echo "Bucket does not exist yet, Terraform will create it."
+          fi
+        working-directory: infrastructure/terraform
+
       - name: Terraform Plan
         run: terraform plan -out=tfplan
         working-directory: infrastructure/terraform
