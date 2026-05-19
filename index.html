@@ -1,744 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Travel Planner — AI-powered, full-stack travel planning with real-time streaming and specialist agents." />
+  <title>Travel Planner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-        <meta name="description" content="AI-powered travel planning — developer reference">
-      
-      
-      
-      
-      
-        <link rel="next" href="architecture/">
-      
-      
-        
-      
-      
-      <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
-    
-    
-      
-        <title>Travel Planner — Developer Docs</title>
-      
-    
-    
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
-      
-        
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
-      
-      
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --green:     #2ea043;
+      --green-hi:  #3fb950;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --code-bg:   #1f2428;
+    }
 
+    html { scroll-behavior: smooth; }
 
-    
-    
-      
-    
-    
-      
-        
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-      
-    
-    
-      <link rel="stylesheet" href="assets/_mkdocstrings.css">
-    
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-    
-      
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      font-size: 16px;
+    }
 
-    
-    
-  </head>
-  
-  
-    
-    
-      
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#travel-planner" class="md-skip">
-          Skip to content
-        </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-    
-      
+    a { color: var(--green-hi); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-<header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand { font-weight: 700; font-size: 1.1rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+    .nav-brand .dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; display: inline-block; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { color: var(--muted); font-size: 0.9rem; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
 
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
-            Travel Planner — Developer Docs
-          </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
-            
-              Home
-            
-          </span>
-        </div>
-      </div>
-    </div>
-    
-      
-        <form class="md-header__option" data-md-component="palette">
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
-    
-  
-</form>
-      
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
-    
-    
-    
-      
-      
-        <label class="md-header__button md-icon" for="__search">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        </label>
-        <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
-          </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 7rem 2rem 5rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(46,160,67,0.15);
+      border: 1px solid rgba(46,160,67,0.4);
+      color: var(--green-hi);
+      padding: 0.25rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 span { color: var(--green-hi); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 620px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.75;
+    }
+    .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-hi); text-decoration: none; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); text-decoration: none; }
+
+    /* SECTIONS */
+    section { padding: 5rem 2rem; }
+    section + section { border-top: 1px solid var(--border); }
+    .section-inner { max-width: 1080px; margin: 0 auto; }
+    .section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green-hi); margin-bottom: 0.75rem; }
+    .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+    .section-subtitle { color: var(--muted); max-width: 560px; margin-bottom: 3rem; font-size: 1.05rem; }
+
+    /* FEATURE CARDS */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--green); transform: translateY(-2px); }
+    .card-icon { font-size: 1.6rem; margin-bottom: 0.75rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .card p { color: var(--muted); font-size: 0.9rem; line-height: 1.55; }
+
+    /* ARCHITECTURE */
+    .arch-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+    .arch-phase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      position: relative;
+    }
+    .arch-phase-num {
+      position: absolute; top: -14px; left: 1.5rem;
+      background: var(--green);
+      color: #fff;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+    }
+    .arch-phase h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 0.25rem; }
+    .arch-phase p { color: var(--muted); font-size: 0.88rem; line-height: 1.55; }
+    .arch-phase ul { color: var(--muted); font-size: 0.85rem; padding-left: 1.1rem; margin-top: 0.5rem; }
+    .arch-phase ul li { margin-bottom: 0.2rem; }
+    .arch-timing {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--green-hi);
+      background: rgba(46,160,67,0.12);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    /* TECH STACK */
+    .badges { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+    .badge {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    .badge.green { color: var(--green-hi); border-color: rgba(46,160,67,0.4); }
+    .badge.blue { color: #79c0ff; border-color: rgba(121,192,255,0.3); }
+    .badge.yellow { color: #e3b341; border-color: rgba(227,179,65,0.3); }
+    .badge.purple { color: #d2a8ff; border-color: rgba(210,168,255,0.3); }
+
+    /* QUICK START */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: #e6edf3;
+    }
+    .comment { color: var(--muted); }
+
+    /* LINKS */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .link-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0.35rem;
+      transition: border-color 0.15s;
+    }
+    .link-card:hover { border-color: var(--green); text-decoration: none; }
+    .link-card-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+    .link-card-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .link-card-desc { font-size: 0.85rem; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      nav .nav-links { display: none; }
+      .hero { padding: 5rem 1.25rem 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand"><span class="dot"></span> Travel Planner</span>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="https://github.com/rupakc/travel-planner/wiki">Wiki</a>
+    <a href="https://github.com/rupakc/travel-planner">GitHub</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">Open Source &middot; MIT License</div>
+  <h1>AI travel planning,<br /><span>done in 30 seconds</span></h1>
+  <p>
+    Enter a destination, your dates, budget, and interests.
+    Eight specialist AI agents run in parallel and stream a complete trip plan &mdash;
+    flights, hotels, activities, visa info, itinerary &mdash; section by section, in real time.
+  </p>
+  <div class="hero-buttons">
+    <a class="btn btn-primary" href="https://github.com/rupakc/travel-planner">View on GitHub</a>
+    <a class="btn btn-secondary" href="https://github.com/rupakc/travel-planner/wiki">Read the Wiki</a>
   </div>
 </div>
-      
-    
-    
-      <div class="md-header__source">
-        <a href="https://github.com/your-org/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
-  </div>
-  <div class="md-source__repository">
-    GitHub
-  </div>
-</a>
+
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything a trip plan needs</div>
+    <p class="section-subtitle">
+      Eight specialist agents, each an expert in their domain, assembled into a single streaming response.
+    </p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">&#9889;</div>
+        <h3>Real-time streaming</h3>
+        <p>Results stream section by section via Server-Sent Events. No spinner waiting for the full response &mdash; flights appear while hotels are still generating.</p>
       </div>
-    
-  </nav>
-  
-</header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-          
-            
-<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
-  <div class="md-grid">
-    <ul class="md-tabs__list">
-      
-        
-  
-  
-  
-    
-  
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
-        
-  
-  
-    
-  
-  Home
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="architecture/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Architecture
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="agents/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Agent System
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="api/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  API Reference
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="deployment/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Deployment
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="contributing/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Contributing
-
-      </a>
-    </li>
-  
-
-      
-    </ul>
-  </div>
-</nav>
-          
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-  
-
-
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
-
-    </a>
-    Travel Planner — Developer Docs
-  </label>
-  
-    <div class="md-nav__source">
-      <a href="https://github.com/your-org/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
-  </div>
-  <div class="md-source__repository">
-    GitHub
-  </div>
-</a>
+      <div class="card">
+        <div class="card-icon">&#129302;</div>
+        <h3>8 specialist AI agents</h3>
+        <p>Flights, hotels, activities, visa, SIM cards, forex, transport, and tips &mdash; each agent is purpose-built with its own system prompt and runs in parallel.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128197;</div>
+        <h3>Day-by-day itinerary</h3>
+        <p>A synthesis agent combines hotel neighbourhoods and ranked activities into a coherent daily schedule, not just a list of things to do.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#127919;</div>
+        <h3>Relevance-ranked activities</h3>
+        <p>Activities are scored with sentence-transformers cosine similarity against your stated interests. A foodie gets different rankings than a museum-goer.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128274;</div>
+        <h3>Secure multi-user auth</h3>
+        <p>JWT HS256 tokens, bcrypt passwords, admin-created accounts with forced first-login password change. Role-based access for admin operations.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128190;</div>
+        <h3>Save and revisit plans</h3>
+        <p>Authenticated users can save any trip plan and return to it later. Plans are stored in SQLite with automatic Cloud Storage backup every 5 minutes.</p>
+      </div>
     </div>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
+  </div>
+</section>
 
-    
-  </span>
-  
-  
+<section id="architecture">
+  <div class="section-inner">
+    <div class="section-label">Architecture</div>
+    <div class="section-title">Three-phase orchestration</div>
+    <p class="section-subtitle">
+      Static data first, eight agents in parallel, then synthesis &mdash; designed so the user always sees something within one second.
+    </p>
+    <div class="arch-flow">
+      <div class="arch-phase">
+        <div class="arch-phase-num">Phase 0</div>
+        <h3>Static lookup tables</h3>
+        <p>Visa categories, SIM basics, country tips, and transport modes come from pre-computed tables and stream to the browser before any AI call starts.</p>
+        <span class="arch-timing">&lt; 1 second</span>
+      </div>
+      <div class="arch-phase">
+        <div class="arch-phase-num">Phase 1</div>
+        <h3>8 agents in parallel</h3>
+        <ul>
+          <li>FlightsAgent</li>
+          <li>HotelsAgent</li>
+          <li>ActivitiesAgent + relevance scoring</li>
+          <li>VisaAgent</li>
+          <li>SimAgent</li>
+          <li>TipsAgent</li>
+          <li>GettingAroundAgent</li>
+          <li>ForexAgent</li>
+        </ul>
+        <span class="arch-timing">8 &ndash; 15 seconds</span>
+      </div>
+      <div class="arch-phase">
+        <div class="arch-phase-num">Phase 2</div>
+        <h3>Itinerary synthesis</h3>
+        <p>The ItineraryAgent takes hotels and ranked activities and produces a day-by-day plan. 60s timeout with template fallback for resilience.</p>
+        <span class="arch-timing">5 &ndash; 10 seconds</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#tech-stack" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tech Stack
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick links
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="agents/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Agent System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API Reference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deployment/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Deployment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="contributing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Contributing
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-  </ul>
-</nav>
-                  </div>
-                </div>
-              </div>
-            
-            
-          
-          
-            <div class="md-content" data-md-component="content">
-              
-              <article class="md-content__inner md-typeset">
-                
-                  
-
-
-  
-  
-
-
-<h1 id="travel-planner">Travel Planner</h1>
-<p>AI-powered travel planning application built on Anthropic's Claude.</p>
-<h2 id="tech-stack">Tech Stack</h2>
-<table>
-<thead>
-<tr>
-<th>Layer</th>
-<th>Technology</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Backend</td>
-<td>Python 3.12, FastAPI, uvicorn</td>
-</tr>
-<tr>
-<td>AI</td>
-<td>Claude via Anthropic SDK, multi-agent orchestration</td>
-</tr>
-<tr>
-<td>Frontend</td>
-<td>React 18, Vite, Tailwind CSS 4</td>
-</tr>
-<tr>
-<td>Persistence</td>
-<td>SQLite (backed up to GCS on Cloud Run)</td>
-</tr>
-<tr>
-<td>Auth</td>
-<td>JWT (python-jose), bcrypt</td>
-</tr>
-<tr>
-<td>Infra</td>
-<td>Cloud Run v2, Terraform, GitHub Actions</td>
-</tr>
-<tr>
-<td>Observability</td>
-<td>Cloud Monitoring, Cloud Logging (structured JSON)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="features">Features</h2>
-<ul>
-<li>Real-time SSE streaming of AI agent results</li>
-<li>8 specialist agents (flights, hotels, activities, visa, SIM, tips, transport, itinerary)</li>
-<li>My Plan — select, save, and reload travel plans</li>
-<li>Conversational chat with auto-planning</li>
-<li>User feedback widget on every page</li>
-<li>Admin panel (user management, feedback view)</li>
-<li>Mobile responsive UI</li>
-<li>Production monitoring, alerting, and log-based analytics</li>
-</ul>
-<h2 id="quick-links">Quick links</h2>
-<ul>
-<li><a href="architecture/">Architecture</a> — how the multi-agent system works</li>
-<li><a href="agents/">Agent System</a> — how to add or modify agents</li>
-<li><a href="api/">API Reference</a> — endpoint documentation</li>
-<li><a href="deployment/">Deployment</a> — step-by-step GCP deploy guide</li>
-</ul>
-
-
-
-
-
-
-
-
-
-
-
-
-                
-              </article>
-            </div>
-          
-          
-<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+<section id="stack">
+  <div class="section-inner">
+    <div class="section-label">Tech Stack</div>
+    <div class="section-title">Production-grade from the start</div>
+    <p class="section-subtitle">No duct tape. Every component chosen for a reason.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem;">
+      <div>
+        <p style="font-weight:700; margin-bottom: 0.75rem; font-size: 0.9rem;">Backend</p>
+        <div class="badges">
+          <span class="badge green">Python 3.11</span>
+          <span class="badge green">FastAPI</span>
+          <span class="badge green">Anthropic SDK</span>
+          <span class="badge green">Pydantic v2</span>
+          <span class="badge green">SQLite</span>
+          <span class="badge green">sentence-transformers</span>
+          <span class="badge green">JWT + bcrypt</span>
         </div>
-        
-      </main>
-      
-        <footer class="md-footer">
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
-  
-  
-    Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
-    </a>
-  
-</div>
-      
+      </div>
+      <div>
+        <p style="font-weight:700; margin-bottom: 0.75rem; font-size: 0.9rem;">Frontend</p>
+        <div class="badges">
+          <span class="badge blue">React 18</span>
+          <span class="badge blue">Vite 6</span>
+          <span class="badge blue">Tailwind CSS 4</span>
+          <span class="badge blue">React Router 7</span>
+          <span class="badge blue">Web Workers</span>
+          <span class="badge blue">SSE</span>
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:700; margin-bottom: 0.75rem; font-size: 0.9rem;">Infrastructure</p>
+        <div class="badges">
+          <span class="badge yellow">GCP Cloud Run</span>
+          <span class="badge yellow">Terraform</span>
+          <span class="badge yellow">Cloud Storage</span>
+          <span class="badge yellow">Secret Manager</span>
+          <span class="badge purple">Docker</span>
+          <span class="badge purple">GitHub Actions</span>
+        </div>
+      </div>
     </div>
   </div>
+</section>
+
+<section id="quickstart">
+  <div class="section-inner">
+    <div class="section-label">Quick Start</div>
+    <div class="section-title">Up and running in 5 minutes</div>
+    <p class="section-subtitle">Clone, configure, start.</p>
+    <pre><span class="comment"># 1. Clone the repository</span>
+git clone https://github.com/rupakc/travel-planner.git
+cd travel-planner
+
+<span class="comment"># 2. Configure environment</span>
+cp .env.example backend/.env
+<span class="comment"># Edit backend/.env: set ANTHROPIC_API_KEY, JWT_SECRET_KEY, ADMIN_PASSWORD</span>
+
+<span class="comment"># 3. Start with Docker Compose</span>
+docker compose up --build
+
+<span class="comment"># Frontend: http://localhost:8080</span>
+<span class="comment"># Backend API: http://localhost:8001</span>
+<span class="comment"># API docs: http://localhost:8001/docs</span></pre>
+    <p style="margin-top: 1.25rem; color: var(--muted); font-size: 0.9rem;">
+      For non-Docker setup, detailed configuration, and GCP deployment see the <a href="https://github.com/rupakc/travel-planner/wiki">project wiki</a>.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="section-inner">
+    <div class="section-label">Resources</div>
+    <div class="section-title">Where to go next</div>
+    <div style="height: 2rem;"></div>
+    <div class="links-grid">
+      <a class="link-card" href="https://github.com/rupakc/travel-planner">
+        <span class="link-card-label">Source</span>
+        <span class="link-card-title">GitHub Repository</span>
+        <span class="link-card-desc">Browse the code, open issues, submit pull requests.</span>
+      </a>
+      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki">
+        <span class="link-card-label">Documentation</span>
+        <span class="link-card-title">Project Wiki</span>
+        <span class="link-card-desc">Architecture, setup guide, API reference, deployment.</span>
+      </a>
+      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/Agent-System">
+        <span class="link-card-label">Deep Dive</span>
+        <span class="link-card-title">Agent System</span>
+        <span class="link-card-desc">How the 8 specialist agents work, retry logic, fallbacks.</span>
+      </a>
+      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/API-Reference">
+        <span class="link-card-label">Reference</span>
+        <span class="link-card-title">API Reference</span>
+        <span class="link-card-desc">All REST endpoints, request and response formats, SSE events.</span>
+      </a>
+      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/Deployment">
+        <span class="link-card-label">Ops</span>
+        <span class="link-card-title">Deployment Guide</span>
+        <span class="link-card-desc">GCP Cloud Run, Terraform, GitHub Actions CI/CD.</span>
+      </a>
+      <a class="link-card" href="https://github.com/rupakc/travel-planner/issues">
+        <span class="link-card-label">Community</span>
+        <span class="link-card-title">Open an Issue</span>
+        <span class="link-card-desc">Report a bug or request a feature.</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Built with Python, FastAPI, React, and Claude &mdash; <a href="https://github.com/rupakc/travel-planner">github.com/rupakc/travel-planner</a></p>
+  <p style="margin-top: 0.5rem;">Released under the MIT License.</p>
 </footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    
-    
-    
-      
-      
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
-    
-    
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
-      
-    
-  </body>
+
+</body>
 </html>
