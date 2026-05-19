@@ -21,7 +21,6 @@ class TestPlans:
         data = r.json()
         assert data["name"] == "Tokyo Trip"
         assert "id" in data
-        return data["id"]
 
     def test_get_plan(self, client, admin_headers):
         # Create first
