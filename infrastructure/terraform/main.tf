@@ -106,6 +106,7 @@ module "backend_service" {
   region        = var.region
   image         = var.backend_image
   backup_bucket = module.storage.bucket_name
+  frontend_url  = var.frontend_url
   depends_on    = [module.storage, google_project_iam_member.compute_sa_secret_accessor, time_sleep.iam_propagation]
 }
 

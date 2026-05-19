@@ -16,6 +16,10 @@ resource "google_storage_bucket" "sqlite_backup" {
     condition { num_newer_versions = 10 }
     action    { type = "Delete" }
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 output "bucket_name" { value = google_storage_bucket.sqlite_backup.name }

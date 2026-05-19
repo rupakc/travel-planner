@@ -2,6 +2,15 @@ variable "project_id"    { type = string }
 variable "region"        { type = string }
 variable "image"         { type = string }
 variable "backup_bucket" { type = string }
+variable "frontend_url"  { type = string; default = "" }
+
+locals {
+  cors_origins = compact([
+    var.frontend_url,
+    "http://localhost:5174",
+    "http://localhost:5173",
+  ])
+}
 
 resource "google_cloud_run_v2_service" "backend" {
   project  = var.project_id
@@ -49,7 +58,7 @@ resource "google_cloud_run_v2_service" "backend" {
       }
       env {
         name  = "CORS_ORIGINS"
-        value = "[\"https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app\",\"http://localhost:5174\",\"http://localhost:5173\"]"
+        value = jsonencode(local.cors_origins)
       }
 
       env {

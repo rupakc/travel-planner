@@ -23,3 +23,9 @@ variable "frontend_image" {
   description = "Full Artifact Registry image tag for the frontend"
   type        = string
 }
+
+variable "frontend_url" {
+  description = "Cloud Run URL of the deployed frontend service (for CORS). Empty string on first deploy; subsequent runs supply the live URL."
+  type        = string
+  default     = ""
+}

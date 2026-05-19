@@ -135,23 +135,119 @@ jobs:
         run: terraform validate
         working-directory: infrastructure/terraform
 
-      - name: Import pre-existing GCS buckets into state
+      - name: Reconcile Terraform state with existing GCP resources
         run: |
-          # The sqlite-backup bucket may already exist in GCP from a prior run
-          # but not be in Terraform state (e.g. after a state reset or rename).
-          # Import it so Terraform doesn't try to re-create it and get a 409.
-          BACKUP_BUCKET="${TF_VAR_project_id}-sqlite-backup"
-          if gcloud storage buckets describe "gs://${BACKUP_BUCKET}" --quiet 2>/dev/null; then
-            if ! terraform state show module.storage.google_storage_bucket.sqlite_backup 2>/dev/null; then
-              echo "Importing ${BACKUP_BUCKET} into Terraform state..."
-              terraform import module.storage.google_storage_bucket.sqlite_backup "${BACKUP_BUCKET}"
+          PROJECT="${TF_VAR_project_id}"
+          REGION="${TF_VAR_region:-europe-west1}"
+
+          # Import a resource only if it exists in GCP but is absent from TF state.
+          tf_import_if_missing() {
+            local tf_addr="$1" gcp_id="$2"
+            [ -z "$gcp_id" ] && return 0
+            if terraform state show "$tf_addr" &>/dev/null; then
+              echo "  ✓ ${tf_addr} — already in state"
             else
-              echo "Bucket already in state, skipping import."
+              echo "  → Importing ${tf_addr} ..."
+              terraform import "$tf_addr" "$gcp_id"
             fi
-          else
-            echo "Bucket does not exist yet, Terraform will create it."
+          }
+
+          echo "=== Storage ==="
+          BACKUP_BUCKET="${PROJECT}-sqlite-backup"
+          if gcloud storage buckets describe "gs://${BACKUP_BUCKET}" \
+               --project="$PROJECT" --quiet 2>/dev/null; then
+            tf_import_if_missing \
+              "module.storage.google_storage_bucket.sqlite_backup" \
+              "$BACKUP_BUCKET"
           fi
+
+          echo "=== Cloud Run services ==="
+          for PAIR in "backend:travel-planner-backend" "frontend:travel-planner-frontend"; do
+            SHORT="${PAIR%%:*}"
+            SVC_NAME="${PAIR##*:}"
+            if gcloud run services describe "$SVC_NAME" \
+                 --region="$REGION" --project="$PROJECT" &>/dev/null 2>&1; then
+              tf_import_if_missing \
+                "module.${SHORT}_service.google_cloud_run_v2_service.${SHORT}" \
+                "projects/${PROJECT}/locations/${REGION}/services/${SVC_NAME}"
+            fi
+          done
+
+          echo "=== Monitoring: notification channel ==="
+          CHANNEL_ID=$(gcloud beta monitoring channels list \
+            --project="$PROJECT" \
+            --filter="displayName='Admin Email' AND type=email" \
+            --format="value(name)" 2>/dev/null | head -1)
+          tf_import_if_missing \
+            "module.monitoring.google_monitoring_notification_channel.email" \
+            "$CHANNEL_ID"
+
+          echo "=== Monitoring: uptime check ==="
+          UPTIME_ID=$(gcloud monitoring uptime list-configs \
+            --project="$PROJECT" \
+            --filter="displayName='Backend Health Check'" \
+            --format="value(name)" 2>/dev/null | head -1)
+          tf_import_if_missing \
+            "module.monitoring.google_monitoring_uptime_check_config.backend_health" \
+            "$UPTIME_ID"
+
+          echo "=== Logging metrics ==="
+          for METRIC in "api_request_count" "feature_usage_count"; do
+            if gcloud logging metrics describe "$METRIC" \
+                 --project="$PROJECT" &>/dev/null 2>&1; then
+              tf_import_if_missing \
+                "module.monitoring.google_logging_metric.${METRIC}" \
+                "${PROJECT}/${METRIC}"
+            fi
+          done
+
+          echo "=== Alert policies ==="
+          TOKEN=$(gcloud auth print-access-token --quiet 2>/dev/null)
+          POLICIES=$(curl -sf \
+            "https://monitoring.googleapis.com/v3/projects/${PROJECT}/alertPolicies" \
+            -H "Authorization: Bearer $TOKEN" 2>/dev/null || echo '{}')
+          for PAIR in \
+            "Backend Uptime Failure|uptime_failure" \
+            "High API Error Rate|high_error_rate" \
+            "High API Latency|high_latency"; do
+            DISPLAY_NAME="${PAIR%%|*}"
+            TF_NAME="${PAIR##*|}"
+            POLICY_ID=$(echo "$POLICIES" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          target = sys.argv[1]
+          for p in data.get('alertPolicies', []):
+              if p.get('displayName') == target:
+                  print(p['name']); break
+          " "$DISPLAY_NAME" 2>/dev/null)
+            tf_import_if_missing \
+              "module.monitoring.google_monitoring_alert_policy.${TF_NAME}" \
+              "$POLICY_ID"
+          done
+
+          echo "=== Monitoring dashboard ==="
+          DASHBOARD_ID=$(gcloud monitoring dashboards list \
+            --project="$PROJECT" \
+            --format="value(name,displayName)" 2>/dev/null \
+            | grep "Travel Planner" | awk '{print $1}' | head -1)
+          tf_import_if_missing \
+            "module.monitoring.google_monitoring_dashboard.main" \
+            "$DASHBOARD_ID"
         working-directory: infrastructure/terraform
+
+      - name: Capture frontend URL for CORS
+        run: |
+          REGION="${TF_VAR_region:-europe-west1}"
+          FRONTEND_URL=$(gcloud run services describe travel-planner-frontend \
+            --region="$REGION" \
+            --project="${TF_VAR_project_id}" \
+            --format='value(status.url)' 2>/dev/null || echo "")
+          echo "TF_VAR_frontend_url=${FRONTEND_URL}" >> "$GITHUB_ENV"
+          if [ -n "$FRONTEND_URL" ]; then
+            echo "Frontend URL for CORS: ${FRONTEND_URL}"
+          else
+            echo "Frontend not yet deployed — CORS will include localhost only on this run"
+          fi
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
