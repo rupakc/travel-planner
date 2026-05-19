@@ -2,7 +2,10 @@ variable "project_id"    { type = string }
 variable "region"        { type = string }
 variable "image"         { type = string }
 variable "backup_bucket" { type = string }
-variable "frontend_url"  { type = string; default = "" }
+variable "frontend_url" {
+  type    = string
+  default = ""
+}
 
 locals {
   cors_origins = compact([
