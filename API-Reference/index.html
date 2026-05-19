@@ -11,10 +11,6 @@
       
       
       
-        <link rel="prev" href="../api/">
-      
-      
-        <link rel="next" href="../contributing/">
       
       
         
@@ -25,7 +21,7 @@
     
     
       
-        <title>Deployment - Travel Planner — Developer Docs</title>
+        <title>API Reference - Travel Planner — Developer Docs</title>
       
     
     
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deployment" class="md-skip">
+        <a href="#api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Deployment
+              API Reference
             
           </span>
         </div>
@@ -283,11 +279,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../deployment/" class="md-tabs__link">
         
   
   
@@ -478,37 +472,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Deployment
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
         
   
   
@@ -524,147 +491,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-bootstrap-gcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 1: Bootstrap GCP
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-populate-secrets-in-secret-manager" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 2: Populate secrets in Secret Manager
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-configure-terraform-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 3: Configure Terraform variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-add-github-actions-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4: Add GitHub Actions secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-first-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 5: First deployment
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cloud-run-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud Run configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sqlite-backuprestore-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SQLite backup/restore lifecycle
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#monitoring-and-logging" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Monitoring and logging
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rollback-procedure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rollback procedure
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -716,269 +542,322 @@
   
 
 
-<h1 id="deployment">Deployment</h1>
-<p>Travel Planner is deployed on Google Cloud Platform. The backend and frontend each run as separate Cloud Run services. Infrastructure is managed with Terraform. Deployments are triggered by GitHub Actions.</p>
-<hr />
-<h2 id="overview">Overview</h2>
-<pre><code>GitHub (push to main)
-    │
-    ▼
-GitHub Actions CI/CD
-    ├── Build + push backend Docker image → Artifact Registry
-    ├── Build + push frontend Docker image → Artifact Registry
-    ├── Run terraform plan + apply
-    └── Cloud Run services updated with new image tags
-
-Cloud Run (backend)          Cloud Run (frontend nginx)
-    port 8001                    port 8080
-    ├── FastAPI app              ├── Serves built React SPA
-    ├── SQLite databases         └── Proxies /api/* to backend
-    ├── GCS backup every 5m
-    └── GCS restore on start
+<h1 id="api-reference">API Reference</h1>
+<p>The Travel Planner backend is a FastAPI application running on port 8001. All endpoints are under <code>/api/</code>. Interactive documentation (Swagger UI) is available at <code>/docs</code> and ReDoc at <code>/redoc</code>.</p>
+<p><strong>Base URL (local):</strong> <code>http://localhost:8001</code></p>
+<p><strong>Authentication:</strong> Protected endpoints use JWT Bearer tokens. Include the token from the login response in the <code>Authorization</code> header:</p>
+<pre><code>Authorization: Bearer &lt;token&gt;
 </code></pre>
 <hr />
-<h2 id="prerequisites">Prerequisites</h2>
-<ul>
-<li>GCP project with billing enabled</li>
-<li><code>gcloud</code> CLI authenticated (<code>gcloud auth application-default login</code>)</li>
-<li>Terraform &gt;= 1.5 installed</li>
-<li>GitHub repository with Actions enabled</li>
-<li>Anthropic API key</li>
-</ul>
+<h2 id="auth-endpoints">Auth endpoints</h2>
+<h3 id="post-apiauthlogin"><code>POST /api/auth/login</code></h3>
+<p>Authenticate and receive a JWT access token.</p>
+<p><strong>Auth required:</strong> No</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;username&quot;: &quot;admin&quot;,
+  &quot;password&quot;: &quot;your-password&quot;
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJ...&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;requires_password_change&quot;: false,
+  &quot;user&quot;: {
+    &quot;id&quot;: 1,
+    &quot;username&quot;: &quot;admin&quot;,
+    &quot;role&quot;: &quot;admin&quot;
+  }
+}
+</code></pre>
+<p>If <code>requires_password_change</code> is <code>true</code>, the frontend redirects to the password change screen before allowing further navigation.</p>
 <hr />
-<h2 id="step-1-bootstrap-gcp">Step 1: Bootstrap GCP</h2>
-<p>Before Terraform can run, a few manual one-time steps are needed to create the state bucket and enable APIs.</p>
-<pre><code class="language-bash"># Set your project
-export PROJECT_ID=your-gcp-project-id
-gcloud config set project $PROJECT_ID
-
-# Enable required APIs
-gcloud services enable \
-  run.googleapis.com \
-  artifactregistry.googleapis.com \
-  secretmanager.googleapis.com \
-  storage.googleapis.com \
-  cloudresourcemanager.googleapis.com
-
-# Create Terraform state bucket
-gsutil mb -l europe-west1 gs://${PROJECT_ID}-tf-state
-
-# Create SQLite backup bucket
-gsutil mb -l europe-west1 gs://${PROJECT_ID}-db-backup
+<h3 id="post-apiauthchange-password"><code>POST /api/auth/change-password</code></h3>
+<p>Change the current user's password.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;current_password&quot;: &quot;old-password&quot;,
+  &quot;new_password&quot;: &quot;new-password&quot;
+}
+</code></pre>
+<p><strong>Response:</strong> <code>200 OK</code> with <code>{"message": "Password changed successfully"}</code></p>
+<hr />
+<h3 id="get-apiauthme"><code>GET /api/auth/me</code></h3>
+<p>Get the currently authenticated user's profile.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 1,
+  &quot;username&quot;: &quot;admin&quot;,
+  &quot;role&quot;: &quot;admin&quot;,
+  &quot;created_at&quot;: &quot;2025-01-01T00:00:00Z&quot;
+}
 </code></pre>
 <hr />
-<h2 id="step-2-populate-secrets-in-secret-manager">Step 2: Populate secrets in Secret Manager</h2>
-<p>Terraform reads these secrets at plan/apply time and injects them into Cloud Run as environment variables. Create them before first Terraform run:</p>
-<pre><code class="language-bash"># Anthropic API key
-echo -n &quot;sk-ant-api03-...&quot; | gcloud secrets create ANTHROPIC_API_KEY --data-file=-
-
-# JWT secret (generate a strong one)
-python3 -c &quot;import secrets; print(secrets.token_hex(32))&quot; | \
-  gcloud secrets create JWT_SECRET_KEY --data-file=-
-
-# Admin password
-echo -n &quot;YourSecureAdminPassword&quot; | gcloud secrets create ADMIN_PASSWORD --data-file=-
+<h2 id="search-endpoints">Search endpoints</h2>
+<h3 id="post-apisearch-sse-streaming"><code>POST /api/search</code> (SSE streaming)</h3>
+<p>The primary endpoint. Submits a travel search and streams results as they become available via Server-Sent Events.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;destination&quot;: &quot;Tokyo&quot;,
+  &quot;start_date&quot;: &quot;2025-06-01&quot;,
+  &quot;end_date&quot;: &quot;2025-06-14&quot;,
+  &quot;nationality&quot;: &quot;German&quot;,
+  &quot;budget&quot;: &quot;medium&quot;,
+  &quot;interests&quot;: &quot;street food, anime, temples, nightlife&quot;
+}
 </code></pre>
-<hr />
-<h2 id="step-3-configure-terraform-variables">Step 3: Configure Terraform variables</h2>
-<p>Edit <code>infrastructure/terraform/terraform.tfvars</code>:</p>
-<pre><code class="language-hcl">project_id       = &quot;your-gcp-project-id&quot;
-region           = &quot;europe-west1&quot;
-backup_bucket    = &quot;your-gcp-project-id-db-backup&quot;
-tf_state_bucket  = &quot;your-gcp-project-id-tf-state&quot;
+<p><strong>Budget values:</strong> <code>"budget"</code>, <code>"medium"</code>, <code>"luxury"</code></p>
+<p><strong>Response:</strong> <code>Content-Type: text/event-stream</code></p>
+<p>The response is a stream of SSE events. Each event has this structure:</p>
+<pre><code>data: {&quot;section&quot;: &quot;&lt;section_name&gt;&quot;, &quot;content&quot;: &lt;object&gt;, &quot;phase&quot;: &lt;0|1|2&gt;}\n\n
 </code></pre>
-<hr />
-<h2 id="step-4-add-github-actions-secrets">Step 4: Add GitHub Actions secrets</h2>
-<p>In your GitHub repository settings → Secrets and variables → Actions:</p>
+<p><strong>Section names and phases:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Secret</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GCP_PROJECT_ID</code></td>
-<td>Your GCP project ID</td>
-</tr>
-<tr>
-<td><code>GCP_SA_KEY</code></td>
-<td>JSON key for a GCP service account with Cloud Run Admin, Artifact Registry Writer, and Secret Manager Accessor roles</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="step-5-first-deployment">Step 5: First deployment</h2>
-<p>Push to <code>main</code>. GitHub Actions will:</p>
-<ol>
-<li>Build the backend image and push to Artifact Registry</li>
-<li>Build the frontend image and push to Artifact Registry</li>
-<li>Run <code>terraform init</code> and <code>terraform apply</code> — this creates the Cloud Run services, sets environment variables from Secret Manager, and configures IAM</li>
-<li>Both Cloud Run services are live</li>
-</ol>
-<p>After the first deployment, get the service URLs:</p>
-<pre><code class="language-bash">cd infrastructure/terraform
-terraform output backend_url
-terraform output frontend_url
-</code></pre>
-<hr />
-<h2 id="cloud-run-configuration">Cloud Run configuration</h2>
-<p><strong>Backend service:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Setting</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Container port</td>
-<td>8001</td>
-</tr>
-<tr>
-<td>CPU</td>
-<td>2 vCPU</td>
-</tr>
-<tr>
-<td>Memory</td>
-<td>2 GiB</td>
-</tr>
-<tr>
-<td>Min instances</td>
-<td>1 (to avoid cold start delay)</td>
-</tr>
-<tr>
-<td>Max instances</td>
-<td>10</td>
-</tr>
-<tr>
-<td>Startup probe</td>
-<td><code>GET /api/health/ready</code></td>
-</tr>
-<tr>
-<td>Timeout</td>
-<td>300s (needed for long SSE streams)</td>
-</tr>
-<tr>
-<td>Concurrency</td>
-<td>80</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Frontend service:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Setting</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Container port</td>
-<td>8080</td>
-</tr>
-<tr>
-<td>CPU</td>
-<td>1 vCPU</td>
-</tr>
-<tr>
-<td>Memory</td>
-<td>512 MiB</td>
-</tr>
-<tr>
-<td>Min instances</td>
-<td>0</td>
-</tr>
-<tr>
-<td>Max instances</td>
-<td>5</td>
-</tr>
-</tbody>
-</table>
-<p>The frontend nginx config proxies <code>/api/*</code> to the backend Cloud Run URL. The backend URL is baked into the nginx config at build time via a Docker build argument set by Terraform.</p>
-<hr />
-<h2 id="sqlite-backuprestore-lifecycle">SQLite backup/restore lifecycle</h2>
-<p><strong>On startup (Cloud Run container start):</strong></p>
-<ol>
-<li>Application checks for existing database files in <code>DATA_DIR</code></li>
-<li>If any are missing or empty (fresh container), downloads from GCS backup bucket</li>
-<li>Startup probe (<code>/api/health/ready</code>) passes only after databases are confirmed accessible</li>
-<li>Cloud Run's startup probe retries until the probe passes, so the container does not receive traffic until restore is complete</li>
-</ol>
-<p><strong>During runtime:</strong></p>
-<ul>
-<li>A background <code>asyncio</code> task runs every 5 minutes, uploading all four <code>.db</code> files to GCS</li>
-<li>Each upload is atomic — the file is written to a <code>.tmp</code> key and renamed, so a partial upload cannot corrupt the backup</li>
-</ul>
-<p><strong>On shutdown (SIGTERM from Cloud Run):</strong></p>
-<ul>
-<li>Cloud Run sends SIGTERM 10 seconds before hard-killing the container</li>
-<li>A SIGTERM handler triggers an immediate GCS backup before the process exits</li>
-<li>This ensures the most recent data (up to the last 5 minutes) is preserved even on instance scale-down</li>
-</ul>
-<hr />
-<h2 id="monitoring-and-logging">Monitoring and logging</h2>
-<p><strong>Cloud Logging:</strong> All logs are in JSON format (set via <code>LOG_FORMAT=json</code>) and automatically ingested by Cloud Logging. Use the Log Explorer with filter <code>resource.type="cloud_run_revision"</code> to query logs.</p>
-<p><strong>Key log fields (structlog):</strong></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
+<th>Section</th>
+<th>Phase</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>agent</code></td>
-<td>Which agent emitted the log</td>
+<td><code>visa_static</code></td>
+<td>0</td>
+<td>Static visa category lookup</td>
 </tr>
 <tr>
-<td><code>phase</code></td>
-<td>0, 1, or 2</td>
+<td><code>sim_static</code></td>
+<td>0</td>
+<td>Static SIM data</td>
 </tr>
 <tr>
-<td><code>duration_ms</code></td>
-<td>Agent call duration</td>
+<td><code>tips_static</code></td>
+<td>0</td>
+<td>Static country tips</td>
 </tr>
 <tr>
-<td><code>retry_count</code></td>
-<td>Number of retries before success</td>
+<td><code>transport_static</code></td>
+<td>0</td>
+<td>Static transport modes</td>
 </tr>
 <tr>
-<td><code>user_id</code></td>
-<td>Authenticated user (hashed, not plain)</td>
+<td><code>flights</code></td>
+<td>1</td>
+<td>FlightsAgent result</td>
+</tr>
+<tr>
+<td><code>hotels</code></td>
+<td>1</td>
+<td>HotelsAgent result</td>
+</tr>
+<tr>
+<td><code>activities</code></td>
+<td>1</td>
+<td>ActivitiesAgent result (relevance-sorted)</td>
+</tr>
+<tr>
+<td><code>visa</code></td>
+<td>1</td>
+<td>VisaAgent result</td>
+</tr>
+<tr>
+<td><code>sim</code></td>
+<td>1</td>
+<td>SimAgent result</td>
+</tr>
+<tr>
+<td><code>tips</code></td>
+<td>1</td>
+<td>TipsAgent result</td>
+</tr>
+<tr>
+<td><code>getting_around</code></td>
+<td>1</td>
+<td>GettingAroundAgent result</td>
+</tr>
+<tr>
+<td><code>forex</code></td>
+<td>1</td>
+<td>ForexAgent result</td>
+</tr>
+<tr>
+<td><code>itinerary</code></td>
+<td>2</td>
+<td>ItineraryAgent result</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Cloud Run metrics:</strong> CPU utilisation, request count, request latency, and container instance count are available in the Cloud Run console under "Metrics". Set up alerting policies for P99 latency &gt; 40s or error rate &gt; 1%.</p>
+<p>The final event is:</p>
+<pre><code>data: [DONE]\n\n
+</code></pre>
+<p>On agent failure, a section is still emitted with <code>"error": true</code> in the content, so the frontend can display a "not available" card for that section rather than hanging.</p>
 <hr />
-<h2 id="rollback-procedure">Rollback procedure</h2>
-<p>If a deployment introduces a regression:</p>
-<p><strong>Option 1: GitHub Actions redeploy</strong></p>
-<p>Revert the commit and push to <code>main</code>. GitHub Actions will rebuild and redeploy from the reverted code.</p>
-<p><strong>Option 2: Cloud Run traffic split (fastest)</strong></p>
-<p>Cloud Run keeps the previous revision. To instantly roll back without a build:</p>
-<pre><code class="language-bash"># Find the previous revision name
-gcloud run revisions list --service travel-planner-backend --region europe-west1
-
-# Route 100% traffic to the previous revision
-gcloud run services update-traffic travel-planner-backend \
-  --region europe-west1 \
-  --to-revisions PREVIOUS_REVISION_NAME=100
+<h3 id="post-apisearchsync"><code>POST /api/search/sync</code></h3>
+<p>Same as <code>/api/search</code> but waits for all agents to complete and returns the full result as a single JSON response. Useful for testing; not recommended in production due to latency.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong> Same as <code>/api/search</code></p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;destination&quot;: &quot;Tokyo&quot;,
+  &quot;sections&quot;: {
+    &quot;flights&quot;: {...},
+    &quot;hotels&quot;: {...},
+    &quot;activities&quot;: [...],
+    &quot;itinerary&quot;: {...}
+  },
+  &quot;generated_at&quot;: &quot;2025-06-01T10:00:00Z&quot;
+}
 </code></pre>
-<p>Replace <code>PREVIOUS_REVISION_NAME</code> with the revision from the list output.</p>
-<p><strong>Option 3: Database restore</strong></p>
-<p>If you need to restore the SQLite databases to a previous state (e.g. after a bad migration):</p>
-<pre><code class="language-bash"># List available backups
-gsutil ls gs://your-backup-bucket/
-
-# Download a specific backup
-gsutil cp gs://your-backup-bucket/users.db.backup ./users.db
+<hr />
+<h2 id="chat-endpoints">Chat endpoints</h2>
+<h3 id="post-apichat-sse-streaming"><code>POST /api/chat</code> (SSE streaming)</h3>
+<p>Conversational follow-up chat with travel context awareness.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;Can you suggest some vegetarian restaurants in Shinjuku?&quot;,
+  &quot;session_id&quot;: &quot;optional-session-id-for-continuity&quot;,
+  &quot;trip_context&quot;: {
+    &quot;destination&quot;: &quot;Tokyo&quot;,
+    &quot;start_date&quot;: &quot;2025-06-01&quot;,
+    &quot;end_date&quot;: &quot;2025-06-14&quot;
+  }
+}
 </code></pre>
-<p>Then restart the Cloud Run service with <code>gcloud run services update</code> to trigger a new container start, which will restore from the updated backup.</p>
+<p><strong>Response:</strong> <code>Content-Type: text/event-stream</code></p>
+<p>Events:</p>
+<pre><code>data: {&quot;type&quot;: &quot;chunk&quot;, &quot;content&quot;: &quot;Here are some great...&quot;}\n\n
+data: {&quot;type&quot;: &quot;chunk&quot;, &quot;content&quot;: &quot; vegetarian options...&quot;}\n\n
+data: [DONE]\n\n
+</code></pre>
+<hr />
+<h2 id="plans-endpoints">Plans endpoints</h2>
+<h3 id="get-apiplans"><code>GET /api/plans</code></h3>
+<p>List all saved plans for the authenticated user.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 1,
+    &quot;destination&quot;: &quot;Tokyo&quot;,
+    &quot;start_date&quot;: &quot;2025-06-01&quot;,
+    &quot;end_date&quot;: &quot;2025-06-14&quot;,
+    &quot;created_at&quot;: &quot;2025-05-01T12:00:00Z&quot;
+  }
+]
+</code></pre>
+<hr />
+<h3 id="post-apiplans"><code>POST /api/plans</code></h3>
+<p>Save a trip plan.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;destination&quot;: &quot;Tokyo&quot;,
+  &quot;start_date&quot;: &quot;2025-06-01&quot;,
+  &quot;end_date&quot;: &quot;2025-06-14&quot;,
+  &quot;plan_data&quot;: { ... }
+}
+</code></pre>
+<p><strong>Response:</strong> The saved plan with its assigned <code>id</code>.</p>
+<hr />
+<h3 id="get-apiplansplan_id"><code>GET /api/plans/{plan_id}</code></h3>
+<p>Retrieve a specific saved plan.</p>
+<p><strong>Auth required:</strong> Yes (must be the owner)</p>
+<p><strong>Response:</strong> Full plan object including <code>plan_data</code>.</p>
+<hr />
+<h3 id="delete-apiplansplan_id"><code>DELETE /api/plans/{plan_id}</code></h3>
+<p>Delete a saved plan.</p>
+<p><strong>Auth required:</strong> Yes (must be the owner)</p>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<hr />
+<h2 id="preferences-endpoints">Preferences endpoints</h2>
+<h3 id="get-apipreferences"><code>GET /api/preferences</code></h3>
+<p>Get the authenticated user's travel preferences.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;default_nationality&quot;: &quot;German&quot;,
+  &quot;default_budget&quot;: &quot;medium&quot;,
+  &quot;interests&quot;: &quot;museums, street food, architecture&quot;
+}
+</code></pre>
+<hr />
+<h3 id="put-apipreferences"><code>PUT /api/preferences</code></h3>
+<p>Update travel preferences.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong> Same structure as GET response. All fields optional — only provided fields are updated.</p>
+<hr />
+<h2 id="feedback-endpoints">Feedback endpoints</h2>
+<h3 id="post-apifeedback"><code>POST /api/feedback</code></h3>
+<p>Submit feedback on a plan section.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;plan_id&quot;: 1,
+  &quot;section&quot;: &quot;activities&quot;,
+  &quot;rating&quot;: 4,
+  &quot;comment&quot;: &quot;Good suggestions but missing some famous spots&quot;
+}
+</code></pre>
+<p><strong>Rating:</strong> Integer 1–5</p>
+<p><strong>Response:</strong> <code>201 Created</code> with the saved feedback object.</p>
+<hr />
+<h2 id="admin-endpoints">Admin endpoints</h2>
+<p>All admin endpoints require a user with <code>role: admin</code>.</p>
+<h3 id="get-apiadminusers"><code>GET /api/admin/users</code></h3>
+<p>List all user accounts.</p>
+<p><strong>Auth required:</strong> Yes (admin only)</p>
+<p><strong>Response:</strong> Array of user objects (without password hashes).</p>
+<hr />
+<h3 id="post-apiadminusers"><code>POST /api/admin/users</code></h3>
+<p>Create a new user account.</p>
+<p><strong>Auth required:</strong> Yes (admin only)</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;username&quot;: &quot;newuser&quot;,
+  &quot;password&quot;: &quot;TemporaryPassword123&quot;,
+  &quot;role&quot;: &quot;user&quot;
+}
+</code></pre>
+<p><strong>Roles:</strong> <code>"user"</code>, <code>"admin"</code></p>
+<p>New users are flagged as requiring a password change on first login.</p>
+<hr />
+<h3 id="delete-apiadminusersuser_id"><code>DELETE /api/admin/users/{user_id}</code></h3>
+<p>Delete a user account.</p>
+<p><strong>Auth required:</strong> Yes (admin only)</p>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<hr />
+<h2 id="health-endpoints">Health endpoints</h2>
+<h3 id="get-apihealth"><code>GET /api/health</code></h3>
+<p>Basic liveness check.</p>
+<p><strong>Auth required:</strong> No</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;ok&quot;,
+  &quot;timestamp&quot;: &quot;2025-06-01T10:00:00Z&quot;
+}
+</code></pre>
+<hr />
+<h3 id="get-apihealthready"><code>GET /api/health/ready</code></h3>
+<p>Readiness check — confirms databases are accessible and the application is ready to serve traffic.</p>
+<p><strong>Auth required:</strong> No</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;ready&quot;,
+  &quot;databases&quot;: {
+    &quot;users&quot;: &quot;ok&quot;,
+    &quot;plans&quot;: &quot;ok&quot;,
+    &quot;preferences&quot;: &quot;ok&quot;,
+    &quot;feedback&quot;: &quot;ok&quot;
+  }
+}
+</code></pre>
+<p>Cloud Run uses this endpoint for startup and readiness probes.</p>
 
 
 

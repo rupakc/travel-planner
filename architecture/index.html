@@ -460,10 +460,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#multi-agent-orchestration" class="md-nav__link">
+  <a href="#the-three-phase-orchestration-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multi-Agent Orchestration
+        The three-phase orchestration flow
       
     </span>
   </a>
@@ -471,10 +471,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sse-streaming" class="md-nav__link">
+  <a href="#static-first-design-philosophy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SSE Streaming
+        Static-first design philosophy
       
     </span>
   </a>
@@ -482,10 +482,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sqlite-on-cloud-run" class="md-nav__link">
+  <a href="#sse-streaming-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SQLite on Cloud Run
+        SSE streaming mechanism
       
     </span>
   </a>
@@ -493,10 +493,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#web-worker-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication
+        Web Worker pattern
       
     </span>
   </a>
@@ -504,10 +504,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#frontend-state" class="md-nav__link">
+  <a href="#how-the-8-agents-relate-to-each-other" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend State
+        How the 8 agents relate to each other
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sqlite-gcs-backup-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQLite + GCS backup strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-these-choices-were-made" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why these choices were made
       
     </span>
   </a>
@@ -651,43 +673,130 @@
 
 
 <h1 id="architecture">Architecture</h1>
-<h2 id="multi-agent-orchestration">Multi-Agent Orchestration</h2>
-<p>The backend uses a <strong>three-phase orchestrator</strong> pattern:</p>
-<pre><code>POST /api/search
-       │
-       ▼
-TravelOrchestrator.stream_run()
-       │
-       ├── Phase 0 (instant ~1s)
-       │     Static lookup tables → visa, SIM, tips, transport
-       │     Yields SSE events immediately
-       │
-       ├── Phase 1 (parallel ~8-15s)
-       │     asyncio.gather() → 7 specialist agents run concurrently
-       │     Each yields its SSE event as soon as it finishes
-       │
-       └── Phase 2 (sequential ~5-10s)
-             Itinerary agent waits for activities + hotels
-             Synthesises day-by-day plan
+<p>This page explains how Travel Planner is structured end to end: from the moment a user submits a search to the moment the last itinerary line appears on screen.</p>
+<hr />
+<h2 id="the-three-phase-orchestration-flow">The three-phase orchestration flow</h2>
+<pre><code>User submits search (destination, dates, budget, nationality, interests)
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 0 — Static data  (&lt; 1 second)                        │
+│                                                             │
+│  lookup_tables.py                                           │
+│  ├── visa category map (nationality → destination)          │
+│  ├── SIM card data                                          │
+│  ├── country travel tips                                    │
+│  └── transport modes                                        │
+│                                                             │
+│  Streamed to browser immediately as SSE events              │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼ (Phase 0 results already in browser)
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 1 — 8 specialist agents in parallel  (8–15 seconds)  │
+│                                                             │
+│  asyncio.gather(                                            │
+│    FlightsAgent,    HotelsAgent,   ActivitiesAgent,         │
+│    VisaAgent,       SimAgent,      TipsAgent,               │
+│    GettingAroundAgent,             ForexAgent               │
+│  )                                                          │
+│                                                             │
+│  Each agent:                                                │
+│    1. Loads system prompt from .agents/{name}.md            │
+│    2. Calls Anthropic Claude API                            │
+│    3. Retries up to 4× on failure                           │
+│    4. Parses JSON (3-strategy fallback)                     │
+│    5. Streams result as SSE event when done                 │
+│                                                             │
+│  ActivitiesAgent result → relevance scoring                 │
+│    sentence-transformers cosine similarity                  │
+│    against user interests → sorted list                     │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼ (Phase 1 results already streaming to browser)
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 2 — Itinerary synthesis  (5–10 seconds)              │
+│                                                             │
+│  ItineraryAgent                                             │
+│    Inputs: activities results + hotels results              │
+│    Output: structured day-by-day plan                       │
+│    Timeout: 60 seconds                                      │
+│    Fallback: template-based itinerary on timeout            │
+│                                                             │
+│  Streamed as final SSE event                                │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+  Browser renders complete trip plan
 </code></pre>
-<p><strong>Static-first, AI-enhanced pattern:</strong></p>
-<p>Agents with curated static data (visa, SIM, tips, transport) send static results immediately in Phase 0 (tagged <code>source: "static"</code>). In Phase 1 they send AI-enhanced results (<code>source: "ai"</code>). The frontend replaces static with AI. If the AI agent errors, the error is suppressed and static data is retained.</p>
-<h2 id="sse-streaming">SSE Streaming</h2>
-<p>The search and chat endpoints return <code>Content-Type: text/event-stream</code>. Each event is:</p>
-<pre><code>data: {&quot;section&quot;: &quot;flights&quot;, &quot;data&quot;: {...}, &quot;status&quot;: &quot;done&quot;}\n\n
+<hr />
+<h2 id="static-first-design-philosophy">Static-first design philosophy</h2>
+<p>Phase 0 exists because some data does not benefit from being generated by a language model. A lookup table for visa categories is faster, cheaper, and more deterministic than asking Claude whether a German passport holder needs a visa for Thailand. Static data is pre-computed, served instantly, and gives the user something to read while the AI agents run. This also makes the application feel significantly faster than a pure AI approach.</p>
+<p>The same philosophy applies to the ItineraryAgent's template fallback: if the model is slow or unavailable, the application degrades gracefully rather than timing out with an error.</p>
+<hr />
+<h2 id="sse-streaming-mechanism">SSE streaming mechanism</h2>
+<p>The backend uses FastAPI's <code>StreamingResponse</code> with <code>text/event-stream</code> content type. As each phase completes (or as each agent finishes), the orchestrator yields an SSE event:</p>
+<pre><code>data: {&quot;section&quot;: &quot;flights&quot;, &quot;content&quot;: {...}}\n\n
+data: {&quot;section&quot;: &quot;hotels&quot;, &quot;content&quot;: {...}}\n\n
+data: {&quot;section&quot;: &quot;itinerary&quot;, &quot;content&quot;: {...}}\n\n
+data: [DONE]\n\n
 </code></pre>
-<p>The frontend parses SSE in a Web Worker (<code>sseWorker.js</code>) to keep parsing off the main thread.</p>
-<h2 id="sqlite-on-cloud-run">SQLite on Cloud Run</h2>
-<p>Cloud Run containers have ephemeral local storage. On startup, all <code>*.db</code> files are restored from GCS. A background asyncio task runs every 5 minutes to backup. SIGTERM is handled to run a final backup before shutdown.</p>
-<h2 id="authentication">Authentication</h2>
-<p>JWT-based with bcrypt password hashing. Tokens carry <code>sub</code> (username), <code>is_admin</code>, and <code>is_first_login</code>. On first login, users are redirected to a forced password-change page before they can access the app.</p>
-<h2 id="frontend-state">Frontend State</h2>
-<ul>
-<li><code>AuthContext</code> — auth state, preferences, token management</li>
-<li><code>SearchDataContext</code> — shared search data and results between SearchPage and ResultsPage</li>
-<li>Local state — all other UI state (selections, filters, modals)</li>
-<li>Web Workers — SSE parsing for search (<code>sseWorker.js</code>) and chat (<code>chatWorker.js</code>)</li>
-</ul>
+<p>Each event is flushed immediately. The browser receives and renders sections progressively rather than waiting for the full response.</p>
+<hr />
+<h2 id="web-worker-pattern">Web Worker pattern</h2>
+<p>Parsing a high-frequency SSE stream on the browser's main thread risks blocking UI rendering. Travel Planner uses a dedicated Web Worker (<code>sseWorker.js</code>) to handle the SSE connection and parse incoming events off the main thread. Parsed section data is posted back to the main thread via <code>postMessage</code>, where React state updates trigger re-renders. This keeps the UI responsive throughout the streaming period.</p>
+<p>The same pattern is used for the chat interface (<code>chatWorker.js</code>).</p>
+<hr />
+<h2 id="how-the-8-agents-relate-to-each-other">How the 8 agents relate to each other</h2>
+<p>The 8 Phase 1 agents are entirely independent of each other. They share no state and run concurrently. The only dependency is in Phase 2: the ItineraryAgent receives the outputs of HotelsAgent and ActivitiesAgent (after relevance scoring) to build its day-by-day plan.</p>
+<pre><code>FlightsAgent ─────────────────────────────────────────► (stream)
+HotelsAgent ──────────────────────────────► (stream) ─► ItineraryAgent
+ActivitiesAgent → relevance scoring ──────► (stream) ─► ItineraryAgent
+VisaAgent ────────────────────────────────────────────► (stream)
+SimAgent ─────────────────────────────────────────────► (stream)
+TipsAgent ────────────────────────────────────────────► (stream)
+GettingAroundAgent ───────────────────────────────────► (stream)
+ForexAgent ───────────────────────────────────────────► (stream)
+</code></pre>
+<hr />
+<h2 id="sqlite-gcs-backup-strategy">SQLite + GCS backup strategy</h2>
+<p>Travel Planner uses four SQLite databases:</p>
+<table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users.db</code></td>
+<td>User accounts, hashed passwords, roles</td>
+</tr>
+<tr>
+<td><code>plans.db</code></td>
+<td>Saved trip plans per user</td>
+</tr>
+<tr>
+<td><code>preferences.db</code></td>
+<td>User travel preferences</td>
+</tr>
+<tr>
+<td><code>feedback.db</code></td>
+<td>User feedback on plans</td>
+</tr>
+</tbody>
+</table>
+<p>SQLite was chosen for operational simplicity: no separate database process to manage, no connection pooling, no migrations to coordinate. For the expected scale of this application (hundreds to low thousands of users), SQLite is more than sufficient.</p>
+<p><strong>Backup mechanism:</strong> A background task runs every 5 minutes and uploads all four database files to a Google Cloud Storage bucket. A SIGTERM handler also triggers a final backup before the process exits (important for Cloud Run deployments, which send SIGTERM before terminating instances).</p>
+<p><strong>Restore on startup:</strong> On application start, if the local database files are missing or empty (as they will be on a fresh Cloud Run instance), the application downloads them from GCS before accepting traffic. This gives Cloud Run's stateless compute the behaviour of a persistent database.</p>
+<hr />
+<h2 id="why-these-choices-were-made">Why these choices were made</h2>
+<p><strong>FastAPI over Django/Flask:</strong> Native async support is essential for running 8 concurrent agent calls without blocking. FastAPI's <code>StreamingResponse</code> makes SSE straightforward.</p>
+<p><strong>SQLite over PostgreSQL/MySQL:</strong> Zero infrastructure overhead. The GCS backup strategy handles durability. Cloud Run's ephemeral filesystem is the only risk, and the backup/restore lifecycle addresses it.</p>
+<p><strong>Sentence-transformers for relevance scoring:</strong> A deterministic, locally-run semantic similarity model gives meaningful activity ranking without an extra API call. It runs fast enough (&lt; 500ms) to not add noticeable latency to Phase 1.</p>
+<p><strong><code>.agents/*.md</code> for agent definitions:</strong> Keeping system prompts as markdown files with YAML frontmatter means prompt engineers can edit them without touching Python code. The frontmatter carries metadata (name, description, tools, max_turns) that the BaseAgent reads at load time.</p>
+<p><strong>Web Worker for SSE:</strong> The alternative — parsing SSE on the main thread — causes frame drops on low-end devices during peak streaming. The worker approach is a small amount of complexity for a meaningful UX improvement.</p>
 
 
 
