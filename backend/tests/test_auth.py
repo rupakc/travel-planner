@@ -127,7 +127,9 @@ class TestAdminResetPassword:
             headers=admin_headers,
         )
         # First login to clear is_first_login flag
-        r = client.post("/api/auth/login", json={"username": "resetme", "password": "original1"})
+        r = client.post(
+            "/api/auth/login", json={"username": "resetme", "password": "original1"}
+        )
         token = r.json()["access_token"]
         client.post(
             "/api/auth/change-password",
@@ -145,12 +147,16 @@ class TestAdminResetPassword:
         assert r.json()["status"] == "password_reset"
 
         # Login with new password should work and requires_password_change must be True
-        r = client.post("/api/auth/login", json={"username": "resetme", "password": "newreset1"})
+        r = client.post(
+            "/api/auth/login", json={"username": "resetme", "password": "newreset1"}
+        )
         assert r.status_code == 200
         assert r.json()["user"]["requires_password_change"] is True
 
         # Old password no longer works
-        r = client.post("/api/auth/login", json={"username": "resetme", "password": "changed99"})
+        r = client.post(
+            "/api/auth/login", json={"username": "resetme", "password": "changed99"}
+        )
         assert r.status_code == 401
 
     def test_admin_can_reset_another_admin_password(self, client, admin_headers):
@@ -167,7 +173,9 @@ class TestAdminResetPassword:
         assert r.status_code == 200
         assert r.json()["username"] == "admin2"
 
-        r = client.post("/api/auth/login", json={"username": "admin2", "password": "newapass1"})
+        r = client.post(
+            "/api/auth/login", json={"username": "admin2", "password": "newapass1"}
+        )
         assert r.status_code == 200
         assert r.json()["user"]["requires_password_change"] is True
 
@@ -182,7 +190,11 @@ class TestAdminResetPassword:
     def test_cannot_reset_inactive_user_password(self, client, admin_headers):
         client.post(
             "/api/admin/users",
-            json={"username": "inactive_reset", "password": "pass1234", "is_admin": False},
+            json={
+                "username": "inactive_reset",
+                "password": "pass1234",
+                "is_admin": False,
+            },
             headers=admin_headers,
         )
         client.delete("/api/admin/users/inactive_reset", headers=admin_headers)
@@ -212,10 +224,16 @@ class TestAdminResetPassword:
     def test_non_admin_cannot_reset_password(self, client, admin_headers):
         client.post(
             "/api/admin/users",
-            json={"username": "noreset_user", "password": "pass1234", "is_admin": False},
+            json={
+                "username": "noreset_user",
+                "password": "pass1234",
+                "is_admin": False,
+            },
             headers=admin_headers,
         )
-        r = client.post("/api/auth/login", json={"username": "noreset_user", "password": "pass1234"})
+        r = client.post(
+            "/api/auth/login", json={"username": "noreset_user", "password": "pass1234"}
+        )
         token = r.json()["access_token"]
 
         r = client.post(
