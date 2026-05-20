@@ -59,7 +59,9 @@ async def lifespan(app: FastAPI):
     # Immediately back up the freshly-initialised DB so GCS always has a baseline.
     await backup_to_gcs(_settings.backup_bucket, _settings.data_dir)
     asyncio.create_task(
-        start_periodic_backup(_settings.backup_bucket, _settings.data_dir, interval_seconds=60)
+        start_periodic_backup(
+            _settings.backup_bucket, _settings.data_dir, interval_seconds=60
+        )
     )
     yield
     # Final backup on SIGTERM — Cloud Run gives ~10 s; this is fast (<1 s for a few MB).
