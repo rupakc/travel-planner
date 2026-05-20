@@ -60,15 +60,16 @@ jobs:
         run: |
           PROJECT=${{ secrets.GCP_PROJECT_ID }}
           upsert_secret() {
-            local name="$1"
-            local value="$2"
+            local name="$1" value="$2"
             if ! gcloud secrets describe "$name" --project="$PROJECT" &>/dev/null; then
-              gcloud secrets create "$name" \
-                --project="$PROJECT" \
-                --replication-policy=automatic
+              gcloud secrets create "$name" --project="$PROJECT" --replication-policy=automatic
+              echo -n "$value" | gcloud secrets versions add "$name" --data-file=- --project="$PROJECT"
+            else
+              existing=$(gcloud secrets versions access latest --secret="$name" --project="$PROJECT" 2>/dev/null || echo "__missing__")
+              if [ "$existing" != "$value" ]; then
+                echo -n "$value" | gcloud secrets versions add "$name" --data-file=- --project="$PROJECT"
+              fi
             fi
-            echo -n "$value" | gcloud secrets versions add "$name" \
-              --data-file=- --project="$PROJECT"
           }
           upsert_secret "anthropic-api-key" "${{ secrets.ANTHROPIC_API_KEY }}"
           upsert_secret "jwt-secret-key"    "${{ secrets.JWT_SECRET_KEY }}"
@@ -92,17 +93,30 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push backend
         run: |
           REGISTRY="europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner"
-          docker build -f backend/Dockerfile . -t "$REGISTRY/backend:${{ github.sha }}"
-          docker push "$REGISTRY/backend:${{ github.sha }}"
+          docker buildx build \
+            --cache-from "type=registry,ref=$REGISTRY/backend:cache" \
+            --cache-to   "type=registry,ref=$REGISTRY/backend:cache,mode=max" \
+            --tag "$REGISTRY/backend:${{ github.sha }}" \
+            --tag "$REGISTRY/backend:latest" \
+            --push \
+            -f backend/Dockerfile .
 
       - name: Build and push frontend
         run: |
           REGISTRY="europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner"
-          docker build frontend/ -t "$REGISTRY/frontend:${{ github.sha }}"
-          docker push "$REGISTRY/frontend:${{ github.sha }}"
+          docker buildx build \
+            --cache-from "type=registry,ref=$REGISTRY/frontend:cache" \
+            --cache-to   "type=registry,ref=$REGISTRY/frontend:cache,mode=max" \
+            --tag "$REGISTRY/frontend:${{ github.sha }}" \
+            --tag "$REGISTRY/frontend:latest" \
+            --push \
+            frontend/
 
   terraform:
     runs-on: ubuntu-latest

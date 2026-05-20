@@ -28,7 +28,7 @@ from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
-from .db.backup import restore_from_gcs, start_periodic_backup
+from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
 from .db.database import create_tables
 from .db.plans_db import create_plans_table
 from .db.preferences_db import create_preferences_table
@@ -56,10 +56,14 @@ async def lifespan(app: FastAPI):
     create_users_table()
     seed_admin()
     create_feedback_table()
+    # Immediately back up the freshly-initialised DB so GCS always has a baseline.
+    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir)
     asyncio.create_task(
-        start_periodic_backup(_settings.backup_bucket, _settings.data_dir)
+        start_periodic_backup(_settings.backup_bucket, _settings.data_dir, interval_seconds=60)
     )
     yield
+    # Final backup on SIGTERM — Cloud Run gives ~10 s; this is fast (<1 s for a few MB).
+    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir)
     await _close_serp_client()
     await _close_activity_client()
 
