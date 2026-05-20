@@ -56,16 +56,15 @@ async def lifespan(app: FastAPI):
     create_users_table()
     seed_admin()
     create_feedback_table()
-    # Immediately back up the freshly-initialised DB so GCS always has a baseline.
-    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir)
     asyncio.create_task(
         start_periodic_backup(
             _settings.backup_bucket, _settings.data_dir, interval_seconds=60
         )
     )
     yield
-    # Final backup on SIGTERM — Cloud Run gives ~10 s; this is fast (<1 s for a few MB).
-    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir)
+    # SIGTERM: force=True always uploads our current state regardless of GCS generation.
+    # This is safe — the dying instance holds the most up-to-date data.
+    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)
     await _close_serp_client()
     await _close_activity_client()
 
