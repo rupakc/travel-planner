@@ -14,8 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # mkdocs needs full history for git-revision-date
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install mkdocs mkdocstrings[python] mkdocs-material
-      - run: mkdocs gh-deploy --force
+      - run: pip install mkdocs mkdocstrings[python] mkdocs-material ghp-import
+      - name: Build docs
+        run: mkdocs build
+      - name: Inject custom home page
+        run: cp docs_homepage/index.html site/index.html
+      - name: Deploy to GitHub Pages
+        run: ghp-import -n -p -f site
