@@ -1,0 +1,16 @@
+# Trivy CVE exception registry
+#
+# The primary suppression mechanism is --ignore-unfixed in ci.yml, which
+# suppresses CVEs where no patched version exists yet (common for base image
+# OS packages). Do not add entries here just because no fix exists — use
+# --ignore-unfixed for that.
+#
+# Add an entry here ONLY when:
+#   (a) A fix IS available but we cannot upgrade yet (blocking reason below), OR
+#   (b) The CVE is a confirmed false positive (trivy misidentifies the component).
+#
+# Format: CVE-ID on its own line, mandatory comment with reason + expected resolution.
+#
+# Example:
+#   CVE-2099-12345  # python:3.12-slim openssl — fix in 3.12.11, blocked by
+#                   # python-jose incompatibility; resolve by 2099-06-01

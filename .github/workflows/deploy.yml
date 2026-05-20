@@ -10,6 +10,7 @@ env:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - id: auth
         uses: google-github-actions/auth@v2
@@ -20,18 +21,21 @@ jobs:
 
       - name: Enable required APIs
         run: |
-          gcloud services enable \
-            serviceusage.googleapis.com \
-            run.googleapis.com \
-            artifactregistry.googleapis.com \
-            secretmanager.googleapis.com \
-            storage.googleapis.com \
-            iam.googleapis.com \
-            cloudresourcemanager.googleapis.com \
-            compute.googleapis.com \
-            monitoring.googleapis.com \
-            logging.googleapis.com \
-            --project=${{ secrets.GCP_PROJECT_ID }} --quiet
+          for attempt in 1 2 3; do
+            gcloud services enable \
+              serviceusage.googleapis.com \
+              run.googleapis.com \
+              artifactregistry.googleapis.com \
+              secretmanager.googleapis.com \
+              storage.googleapis.com \
+              iam.googleapis.com \
+              cloudresourcemanager.googleapis.com \
+              compute.googleapis.com \
+              monitoring.googleapis.com \
+              logging.googleapis.com \
+              --project=${{ secrets.GCP_PROJECT_ID }} --quiet && break
+            [ "$attempt" -lt 3 ] && { echo "Attempt $attempt failed — retrying in 15s..."; sleep 15; } || exit 1
+          done
 
       - name: Create Terraform state bucket
         run: |
@@ -79,6 +83,7 @@ jobs:
 
   push-images:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: bootstrap
     steps:
       - uses: actions/checkout@v4
@@ -120,6 +125,7 @@ jobs:
 
   terraform:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [bootstrap, push-images]
     env:
       TF_VAR_project_id:     ${{ secrets.GCP_PROJECT_ID }}
@@ -155,15 +161,27 @@ jobs:
           REGION="${TF_VAR_region:-europe-west1}"
 
           # Import a resource only if it exists in GCP but is absent from TF state.
+          # Non-fatal: if import fails after 3 attempts, plan will show it as to-create
+          # and terraform apply will surface the real error at the right layer rather
+          # than stopping the whole reconcile on a transient API glitch.
           tf_import_if_missing() {
             local tf_addr="$1" gcp_id="$2"
             [ -z "$gcp_id" ] && return 0
             if terraform state show "$tf_addr" &>/dev/null; then
               echo "  ✓ ${tf_addr} — already in state"
-            else
-              echo "  → Importing ${tf_addr} ..."
-              terraform import "$tf_addr" "$gcp_id"
+              return 0
             fi
+            echo "  → Importing ${tf_addr} ..."
+            local ok=0
+            for attempt in 1 2 3; do
+              terraform import "$tf_addr" "$gcp_id" && ok=1 && break
+              echo "    attempt ${attempt}/3 failed — retrying in 5s..."
+              sleep 5
+            done
+            if [ "$ok" -eq 0 ]; then
+              echo "  ⚠ Import failed after 3 attempts — plan will show resource as to-create"
+            fi
+            return 0
           }
 
           echo "=== Storage ==="
