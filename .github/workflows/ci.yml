@@ -81,15 +81,11 @@ jobs:
         run: docker build -f backend/Dockerfile . -t backend:${{ github.sha }}
       - name: Build frontend image
         run: docker build frontend/ -t frontend:${{ github.sha }}
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin v0.63.0
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          image-ref: backend:${{ github.sha }}
-          exit-code: "1"
-          severity: CRITICAL
+        run: trivy image --exit-code 1 --severity CRITICAL --no-progress backend:${{ github.sha }}
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          image-ref: frontend:${{ github.sha }}
-          exit-code: "1"
-          severity: CRITICAL
+        run: trivy image --exit-code 1 --severity CRITICAL --no-progress frontend:${{ github.sha }}
