@@ -17,7 +17,10 @@ lint:             ## Run all linters (mirrors CI lint jobs)
 
 security:         ## Run security scans (mirrors CI security job)
 	bandit -r backend/app/ -ll --skip B105,B106,B608
-	pip-audit -r backend/requirements.txt --timeout 60 --ignore-vuln PYSEC-2023-62
+	pip-audit -r backend/requirements.txt --timeout 60 \
+	  --ignore-vuln PYSEC-2023-62 \
+	  --ignore-vuln PYSEC-2025-185 \
+	  --ignore-vuln PYSEC-2025-183
 	cd frontend && npm audit --audit-level=high
 
 test:             ## Run backend + frontend tests (mirrors CI test jobs)

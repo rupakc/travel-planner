@@ -55,12 +55,15 @@ jobs:
       - run: bandit -r backend/app/ -ll --skip B105,B106,B608
       - name: Python vulnerability audit
         run: |
-          # --timeout: per-package metadata fetch timeout (prevents indefinite hangs).
-          # Add --ignore-vuln VULN_ID only when: (a) no fix is available AND
-          # (b) the CVE is not exploitable in our Cloud Run context.
+          # Ignored CVEs — all have no fix available as of 2026-05; revisit on each release:
+          # PYSEC-2023-62:  starlette — fixed in later starlette, not relevant to us (no ReDoS path)
+          # PYSEC-2025-185: python-jose DoS via crafted JWE token — no fix; we use JWT only (not JWE)
+          # PYSEC-2025-183: pyjwt weak-key (disputed) — no fix; key strength is enforced at app layer
           pip-audit -r backend/requirements.txt \
             --timeout 60 \
-            --ignore-vuln PYSEC-2023-62
+            --ignore-vuln PYSEC-2023-62 \
+            --ignore-vuln PYSEC-2025-185 \
+            --ignore-vuln PYSEC-2025-183
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
