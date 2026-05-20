@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     selections: dict = {}
     search_results: dict = {}
+    session_context: dict = {}
 
 
 @router.post("/chat")
@@ -34,6 +35,7 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
             preferences=prefs,
             selections=request.selections,
             search_results=request.search_results,
+            session_context=request.session_context,
         ):
             yield f"data: {chunk}\n\n"
 

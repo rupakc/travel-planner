@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import {
   Send, Square, Plane, User, Trash2, Hotel, MapPin, Shield,
   Smartphone, Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
   Star, AlertTriangle, Info, AlertCircle, ExternalLink,
-  DollarSign, Zap, X, Check, Plus, Bookmark, Save, Eye,
+  DollarSign, Zap, X, Check, Copy, Plus, Bookmark, Save, Eye,
   ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi
 } from 'lucide-react'
 import PlanViewModal from '../components/PlanViewModal'
@@ -38,7 +38,7 @@ const CHAT_COLORS = {
 
 // ─── Chat streaming function ─────────────────────────────────────────────────
 
-function streamChat(messages, onEvent, onDone, onError, token, selections, searchResults) {
+function streamChat(messages, onEvent, onDone, onError, token, selections, searchResults, sessionContext) {
   const worker = new Worker(
     new URL('../workers/chatWorker.js', import.meta.url),
     { type: 'module' }
@@ -64,7 +64,7 @@ function streamChat(messages, onEvent, onDone, onError, token, selections, searc
   worker.postMessage({
     url: '/api/chat',
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ messages, selections: selections || {}, search_results: searchResults || {} }),
+    body: JSON.stringify({ messages, selections: selections || {}, search_results: searchResults || {}, session_context: sessionContext || {} }),
   })
 
   return () => worker.terminate()
@@ -72,12 +72,16 @@ function streamChat(messages, onEvent, onDone, onError, token, selections, searc
 
 // ─── Section renderers (compact for chat) ────────────────────────────────────
 
-function ChatFlightsSection({ data, selections, onSelect }) {
+function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No flights found</p>
+  const LIMIT = 5
   const selected = selections.flight
+  const items = data.results
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-2">
-      {data.results.slice(0, 5).map((f, i) => {
+      {visible.map((f, i) => {
         const isSelected = selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline
         return (
           <div key={i} onClick={() => onSelect('flight', isSelected ? null : f)}
@@ -94,16 +98,28 @@ function ChatFlightsSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-sky-600 hover:text-sky-800 font-medium py-1.5 border border-dashed border-sky-200 rounded-lg hover:bg-sky-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
 
-function ChatHotelsSection({ data, selections, onSelect }) {
+function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No hotels found</p>
+  const LIMIT = 5
   const selected = selections.hotel
+  const items = data.results
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-2">
-      {data.results.slice(0, 5).map((h, i) => {
+      {visible.map((h, i) => {
         const isSelected = selected?.name === h.name
         return (
           <div key={i} className={`border rounded-lg p-2.5 text-xs transition-all ${isSelected ? 'border-violet-400 bg-violet-50 ring-1 ring-violet-300' : 'border-gray-200 hover:shadow-sm'}`}>
@@ -127,15 +143,27 @@ function ChatHotelsSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-violet-600 hover:text-violet-800 font-medium py-1.5 border border-dashed border-violet-200 rounded-lg hover:bg-violet-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
 
-function ChatActivitiesSection({ data, selections, onSelect }) {
+function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No activities found</p>
+  const LIMIT = 8
+  const items = data.results
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-1.5">
-      {data.results.slice(0, 8).map((a, i) => {
+      {visible.map((a, i) => {
         const isSelected = selections.activities.some(x => x.name === a.name)
         return (
           <div key={i} className={`flex items-center justify-between border rounded-lg p-2 text-xs ${isSelected ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200'}`}>
@@ -154,16 +182,28 @@ function ChatActivitiesSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-emerald-600 hover:text-emerald-800 font-medium py-1.5 border border-dashed border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
 
-function ChatSimSection({ data, selections, onSelect }) {
+function ChatSimSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.plans?.length) return <p className="text-xs text-gray-500">No SIM plans found</p>
+  const LIMIT = 5
   const selected = selections.sim
+  const items = data.plans
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-1.5">
-      {data.plans.slice(0, 5).map((p, i) => {
+      {visible.map((p, i) => {
         const isSelected = selected?.provider === p.provider && selected?.plan_name === p.plan_name
         return (
           <div key={i} className={`flex items-center justify-between border rounded-lg p-2 text-xs ${isSelected ? 'border-rose-400 bg-rose-50' : 'border-gray-200'}`}>
@@ -185,6 +225,14 @@ function ChatSimSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-rose-600 hover:text-rose-800 font-medium py-1.5 border border-dashed border-rose-200 rounded-lg hover:bg-rose-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
@@ -207,13 +255,17 @@ function ChatVisaSection({ data }) {
   )
 }
 
-function ChatTipsSection({ data, selections, onSelect }) {
+function ChatTipsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.tips?.length) return <p className="text-xs text-gray-500">No tips available</p>
+  const LIMIT = 8
   const sc = { danger: 'bg-red-50 border-red-200 text-red-800', warning: 'bg-yellow-50 border-yellow-200 text-yellow-800', info: 'bg-blue-50 border-blue-200 text-blue-800' }
   const selectedTips = selections.tips || []
+  const items = data.tips
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-1.5">
-      {data.tips.slice(0, 8).map((tip, i) => {
+      {visible.map((tip, i) => {
         const isSelected = selectedTips.some(t => t.title === tip.title)
         return (
           <div key={i} className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs ${sc[tip.severity] || sc.info}`}>
@@ -229,16 +281,28 @@ function ChatTipsSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-amber-600 hover:text-amber-800 font-medium py-1.5 border border-dashed border-amber-200 rounded-lg hover:bg-amber-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
 
-function ChatGettingAroundSection({ data, selections, onSelect }) {
+function ChatGettingAroundSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
   if (!data?.options?.length) return <p className="text-xs text-gray-500">No transport info available</p>
+  const LIMIT = 8
   const selectedTransport = selections?.getting_around || []
+  const items = data.options
+  const visible = isExpanded ? items : items.slice(0, LIMIT)
+  const hidden = items.length - LIMIT
   return (
     <div className="space-y-1.5">
-      {data.options.slice(0, 8).map((opt, i) => {
+      {visible.map((opt, i) => {
         const isSelected = selectedTransport.some(a => a.name === opt.name)
         return (
         <div key={i} className={`border rounded-lg p-2 text-xs transition-all ${isSelected ? 'border-cyan-400 ring-1 ring-cyan-300 bg-cyan-50' : 'border-gray-200'}`}>
@@ -258,6 +322,14 @@ function ChatGettingAroundSection({ data, selections, onSelect }) {
         </div>
         )
       })}
+      {!isExpanded && hidden > 0 && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-cyan-600 hover:text-cyan-800 font-medium py-1.5 border border-dashed border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all">
+          Show {hidden} more →
+        </button>
+      )}
+      {isExpanded && items.length > LIMIT && (
+        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+      )}
     </div>
   )
 }
@@ -370,19 +442,21 @@ function ChatItinerarySection({ data, selections, onSelect }) {
 
 function ChatSection({ section, data, status, selections, onSelect }) {
   const [open, setOpen] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
   const cfg = AGENT_CONFIG[section]
   if (!cfg) return null
   const Icon = cfg.icon
   const cc = CHAT_COLORS[cfg.color] || CHAT_COLORS.teal
+  const toggleExpand = () => setIsExpanded(v => !v)
 
   const renderers = {
-    flights:        () => <ChatFlightsSection data={data} selections={selections} onSelect={onSelect} />,
-    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} />,
-    activities:     () => <ChatActivitiesSection data={data} selections={selections} onSelect={onSelect} />,
+    flights:        () => <ChatFlightsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    activities:     () => <ChatActivitiesSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
     visa:           () => <ChatVisaSection data={data} />,
-    sim:            () => <ChatSimSection data={data} selections={selections} onSelect={onSelect} />,
-    tips:           () => <ChatTipsSection data={data} selections={selections} onSelect={onSelect} />,
-    getting_around: () => <ChatGettingAroundSection data={data} selections={selections} onSelect={onSelect} />,
+    sim:            () => <ChatSimSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    tips:           () => <ChatTipsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    getting_around: () => <ChatGettingAroundSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
     forex:          () => <ChatForexSection data={data} />,
     itinerary:      () => <ChatItinerarySection data={data} selections={selections} onSelect={onSelect} />,
   }
@@ -794,6 +868,78 @@ const SUGGESTIONS = [
   "Suggest a romantic getaway in Europe for a week",
 ]
 
+// ─── Suggestion chips after planning ────────────────────────────────────────
+
+function SuggestionsBar({ chips, onSelect }) {
+  if (!chips?.length) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
+      {chips.map((chip, i) => (
+        <button key={i} onClick={() => onSelect(chip)}
+          className="px-3 py-1 text-xs font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-full hover:bg-teal-100 hover:border-teal-300 transition-all active:scale-95">
+          {chip}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Real-time budget tracker ────────────────────────────────────────────────
+
+function BudgetTracker({ selections, searchContext }) {
+  const budget = searchContext?.budget_usd
+  if (!budget || budget <= 0) return null
+  const cost = computePlanCost(selections, searchContext)
+  if (cost <= 0) return null
+  const budgetStatus = getBudgetStatus(cost, budget)
+  const pct = Math.min((cost / budget) * 100, 100)
+  const barColor = budgetStatus?.status === 'over' ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-emerald-400'
+  const textColor = budgetStatus?.status === 'over' ? 'text-red-700' : pct >= 80 ? 'text-amber-700' : 'text-emerald-700'
+  return (
+    <div className="mb-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+      <div className="flex items-center justify-between text-xs mb-1.5">
+        <span className="text-gray-500 font-medium">Plan Cost</span>
+        <span className={`font-bold ${textColor}`}>
+          ${cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          <span className="text-gray-400 font-normal">{' / '}${budget.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+        </span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      {budgetStatus?.status === 'over' && (
+        <p className="text-[10px] text-red-600 mt-1">{budgetStatus.label}</p>
+      )}
+    </div>
+  )
+}
+
+// ─── Message actions (copy + retry) ─────────────────────────────────────────
+
+function MessageActions({ content, onRetry, isError }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <div className="flex gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button onClick={handleCopy}
+        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">
+        {copied ? <Check size={10} /> : <Copy size={10} />}
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      {isError && onRetry && (
+        <button onClick={onRetry}
+          className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50">
+          <RefreshCw size={10} /> Retry
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ─── Main ChatPage ───────────────────────────────────────────────────────────
 
 export default function ChatPage() {
@@ -808,6 +954,8 @@ export default function ChatPage() {
     flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
+  const [sessionContext, setSessionContext] = useState({})
+  const [lastSearchContext, setLastSearchContext] = useState(null)
   const prevCountRef = useRef(0)
   const stopRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -819,6 +967,45 @@ export default function ChatPage() {
 
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
   useEffect(() => { inputRef.current?.focus() }, [])
+
+  // Restore chat history from localStorage on mount
+  useEffect(() => {
+    const key = `chat_history_${user?.username || 'guest'}`
+    try {
+      const raw = localStorage.getItem(key)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed?.messages?.length > 0) {
+        setMessages(parsed.messages)
+        if (parsed.sessionContext) setSessionContext(parsed.sessionContext)
+        if (parsed.lastSearchContext) setLastSearchContext(parsed.lastSearchContext)
+      }
+    } catch { localStorage.removeItem(`chat_history_${user?.username || 'guest'}`) }
+  }, [user?.username])
+
+  // Save chat history to localStorage on change
+  useEffect(() => {
+    if (isStreaming || messages.length === 0) return
+    const key = `chat_history_${user?.username || 'guest'}`
+    const serializable = {
+      messages: messages.slice(-50).map(m => ({
+        role: m.role, content: m.content,
+        sections: m.sections || {}, sectionStatuses: m.sectionStatuses || {},
+        suggestions: m.suggestions || [], planning: m.planning || false,
+        planningDone: m.planningDone || false, error: m.error || false,
+      })),
+      sessionContext,
+      lastSearchContext,
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(serializable))
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        try { localStorage.setItem(key, JSON.stringify({ ...serializable, messages: serializable.messages.slice(-20) })) }
+        catch {}
+      }
+    }
+  }, [messages, sessionContext, lastSearchContext, user?.username, isStreaming])
 
   useEffect(() => {
     const count = countSelections(selections)
@@ -960,6 +1147,16 @@ export default function ChatPage() {
           applyPlanAction(event)
         } else if (event.type === 'plan_ready') {
           if (planActionsReceived) setIsPlanOpen(true)
+        } else if (event.type === 'session_context_update') {
+          setSessionContext(event.context)
+        } else if (event.type === 'search_context') {
+          setLastSearchContext(event.params)
+        } else if (event.type === 'suggestions') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], suggestions: event.chips }
+            return updated
+          })
         } else if (event.type === 'planning_done') {
           setMessages(prev => {
             const updated = [...prev]
@@ -1021,9 +1218,10 @@ export default function ChatPage() {
       token,
       selections,
       getLatestSearchResults(),
+      sessionContext,
     )
     stopRef.current = cleanup
-  }, [messages, isStreaming, token])
+  }, [messages, isStreaming, token, sessionContext])
 
   const handleStop = () => {
     if (stopRef.current) {
@@ -1041,6 +1239,9 @@ export default function ChatPage() {
   const clearChat = () => {
     if (isStreaming) return
     setMessages([])
+    setSessionContext({})
+    setLastSearchContext(null)
+    localStorage.removeItem(`chat_history_${user?.username || 'guest'}`)
     inputRef.current?.focus()
   }
 
@@ -1071,7 +1272,23 @@ export default function ChatPage() {
         ) : (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.map((msg, i) => (
-              <ChatBubble key={i} message={msg} userName={user?.name} selections={selections} onSelect={handleSelect} />
+              <React.Fragment key={i}>
+                <ChatBubble
+                  message={msg}
+                  userName={user?.name}
+                  selections={selections}
+                  onSelect={handleSelect}
+                  onRetry={msg.error ? () => {
+                    const prevUser = messages.slice(0, i).filter(m => m.role === 'user').at(-1)
+                    if (prevUser) sendMessage(prevUser.content)
+                  } : undefined}
+                />
+                {msg.role === 'assistant' && msg.suggestions?.length > 0 && !msg.streaming && (
+                  <div className="flex justify-start ml-11">
+                    <SuggestionsBar chips={msg.suggestions} onSelect={(chip) => sendMessage(chip)} />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -1080,6 +1297,7 @@ export default function ChatPage() {
 
       <div className="border-t border-gray-200 bg-white/80 backdrop-blur-sm px-4 py-3">
         <div className="max-w-3xl mx-auto">
+          <BudgetTracker selections={selections} searchContext={lastSearchContext} />
           {messages.length > 0 && !isStreaming && (
             <div className="flex justify-end mb-2">
               <button onClick={clearChat} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500"><Trash2 size={12} /> Clear chat</button>
@@ -1138,7 +1356,7 @@ export default function ChatPage() {
 
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
-function ChatBubble({ message, userName, selections, onSelect }) {
+function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
   const hasSections = message.planning || Object.keys(message.sections || {}).length > 0
@@ -1150,7 +1368,7 @@ function ChatBubble({ message, userName, selections, onSelect }) {
           <Plane className="text-white" size={16} />
         </div>
       )}
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+      <div className={`group max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         isUser ? 'bg-teal-600 text-white rounded-br-md'
         : isError ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-md'
         : 'bg-white text-slate-700 shadow-sm border border-gray-100 rounded-bl-md'
@@ -1179,6 +1397,9 @@ function ChatBubble({ message, userName, selections, onSelect }) {
         )}
         {message.streaming && !hasSections && (
           <span className="inline-block w-1.5 h-4 bg-teal-500 rounded-sm ml-0.5 animate-pulse align-text-bottom" />
+        )}
+        {!isUser && !message.streaming && message.content && (
+          <MessageActions content={message.content} onRetry={onRetry} isError={isError} />
         )}
       </div>
       {isUser && (
