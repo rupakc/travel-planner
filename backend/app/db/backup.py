@@ -194,7 +194,7 @@ def _merge_gcs_into_local(blob, local_path: Path) -> None:
             blob.download_to_filename(str(tmp_path))
             conn = sqlite3.connect(str(local_path))
             conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute(f"ATTACH DATABASE '{tmp_path}' AS gcs_db")
+            conn.execute(f"ATTACH DATABASE '{tmp_path}' AS gcs_db")  # nosec B608
 
             tables = conn.execute(
                 "SELECT name FROM gcs_db.sqlite_master WHERE type='table'"
@@ -203,8 +203,9 @@ def _merge_gcs_into_local(blob, local_path: Path) -> None:
             merged_total = 0
             for (table,) in tables:
                 try:
+                    # table name comes from sqlite_master, not user input — safe  # nosec B608
                     cur = conn.execute(
-                        f"INSERT OR IGNORE INTO main.{table} SELECT * FROM gcs_db.{table}"
+                        f"INSERT OR IGNORE INTO main.{table} SELECT * FROM gcs_db.{table}"  # nosec B608
                     )
                     merged_total += cur.rowcount
                 except Exception as exc:
