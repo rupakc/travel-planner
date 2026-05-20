@@ -9,6 +9,7 @@ from .forex_agent import ForexAgent
 from .getting_around_agent import GettingAroundAgent
 from .hotels_agent import HotelsAgent
 from .itinerary_agent import ItineraryAgent
+from .places_agent import PlacesAgent
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
 from .visa_agent import VisaAgent
@@ -26,6 +27,7 @@ class TravelOrchestrator:
         self.tips = TipsAgent(agents_dir)
         self.getting_around = GettingAroundAgent(agents_dir)
         self.forex = ForexAgent(agents_dir)
+        self.places = PlacesAgent(agents_dir)
         self.itinerary = ItineraryAgent(agents_dir)
 
     async def run(self, request: TravelSearchRequest) -> dict:
@@ -44,6 +46,7 @@ class TravelOrchestrator:
             self.tips.run(request),
             self.getting_around.run(request),
             self.forex.run(request),
+            self.places.run(request),
             return_exceptions=True,
         )
 
@@ -61,6 +64,7 @@ class TravelOrchestrator:
         tips = safe(phase1_results[5], {"tips": []})
         getting_around = safe(phase1_results[6], {"options": []})
         forex = safe(phase1_results[7], {"exchange_rates": []})
+        places_to_see = safe(phase1_results[8], {"results": []})
 
         # Phase 2: Itinerary uses activities + hotels
         itinerary = await self.itinerary.run(
@@ -71,6 +75,7 @@ class TravelOrchestrator:
             "flights": flights,
             "hotels": hotels,
             "activities": activities,
+            "places_to_see": places_to_see,
             "visa": visa,
             "sim": sim,
             "tips": tips,
@@ -130,6 +135,7 @@ class TravelOrchestrator:
             "flights",
             "hotels",
             "activities",
+            "places_to_see",
             "visa",
             "sim",
             "tips",
@@ -155,6 +161,7 @@ class TravelOrchestrator:
             "flights": self.flights,
             "hotels": self.hotels,
             "activities": self.activities,
+            "places_to_see": self.places,
             "visa": self.visa,
             "sim": self.sim,
             "tips": self.tips,

@@ -83,6 +83,7 @@ export function countSelections(selections) {
     (selections?.flight ? 1 : 0) +
     (selections?.hotel ? 1 : 0) +
     (selections?.activities?.length || 0) +
+    (selections?.places_to_see?.length || 0) +
     (selections?.sim ? 1 : 0) +
     (selections?.getting_around?.length || 0) +
     (selections?.tips?.length || 0) +
@@ -94,6 +95,7 @@ export const EMPTY_SELECTIONS = {
   flight: null,
   hotel: null,
   activities: [],
+  places_to_see: [],
   sim: null,
   tips: [],
   getting_around: [],

@@ -6,7 +6,7 @@ import {
   DollarSign, Users, Globe, Zap, BookmarkPlus, X,
   ChevronDown, ChevronUp, Check, PenLine, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
-  Bus, SlidersHorizontal, Wifi, Bath
+  Bus, Map, SlidersHorizontal, Wifi, Bath
 } from 'lucide-react'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -23,6 +23,7 @@ const AGENT_CONFIG = {
   flights:        { label: 'Flights',        icon: Plane,       color: 'blue'   },
   hotels:         { label: 'Hotels',         icon: Hotel,       color: 'purple' },
   activities:     { label: 'Activities',     icon: MapPin,      color: 'green'  },
+  places_to_see:  { label: 'Places to See',  icon: Map,         color: 'lime'   },
   visa:           { label: 'Visa',           icon: Shield,      color: 'orange' },
   sim:            { label: 'SIM Cards',      icon: Smartphone,  color: 'pink'   },
   tips:           { label: 'Travel Tips',    icon: Lightbulb,   color: 'yellow' },
@@ -30,7 +31,7 @@ const AGENT_CONFIG = {
   forex:          { label: 'Currency & Forex', icon: DollarSign, color: 'emerald'},
   itinerary:      { label: 'Itinerary',      icon: Calendar,    color: 'indigo' },
 }
-const AGENT_ORDER = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
+const AGENT_ORDER = ['flights', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -42,13 +43,14 @@ const COLOR_MAP = {
   cyan:   { badge: 'bg-cyan-50 text-cyan-700 border-cyan-200',    header: 'from-cyan-500 to-cyan-600' },
   emerald:{ badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', header: 'from-emerald-500 to-emerald-600' },
   indigo: { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
+  lime:   { badge: 'bg-lime-50 text-lime-700 border-lime-200',    header: 'from-lime-500 to-green-500' },
 }
 
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', hotels: 'Hotels', activities: 'Activities', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary' }
+const BADGE_LABELS = { flights: 'Flights', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -130,6 +132,11 @@ const LOADING_MESSAGES = {
     "Building your day-by-day plan...",
     "Organizing activities by day...",
     "Crafting the perfect itinerary..."
+  ],
+  places_to_see: [
+    "Finding must-see attractions...",
+    "Searching Google for top landmarks...",
+    "Discovering iconic sites and hidden gems..."
   ],
 }
 
@@ -713,6 +720,73 @@ function ActivitiesSection({ data, selections, onSelect }) {
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
             </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PlacesToSeeSection({ data, selections, onSelect }) {
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No places found</div>
+  const catColors = { Landmark:'bg-lime-100 text-lime-700', 'Temple/Mosque/Church':'bg-violet-100 text-violet-700', Museum:'bg-sky-100 text-sky-700', Viewpoint:'bg-cyan-100 text-cyan-700', 'Park/Garden':'bg-green-100 text-green-700', Market:'bg-orange-100 text-orange-700', 'Palace/Castle':'bg-amber-100 text-amber-700', 'Natural Wonder':'bg-teal-100 text-teal-700', 'Historic District':'bg-rose-100 text-rose-700', Monument:'bg-gray-100 text-gray-700' }
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      {data.results.map((place, i) => {
+        const isSelected = (selections.places_to_see || []).some(p => p.name === place.name)
+        return (
+          <div key={i}
+            onClick={() => onSelect('places_to_see', place)}
+            className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-lime-400 ring-2 ring-lime-300 bg-lime-50' : 'border-gray-200 hover:shadow-md'}`}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[place.category] || catColors.Landmark}`}>
+                {place.category || 'Landmark'}
+              </span>
+              <div className="flex items-center gap-2">
+                {place.rating != null && (
+                  <span className="text-xs text-amber-600 font-semibold flex items-center gap-0.5">
+                    <Star size={10} className="fill-amber-400 text-amber-400" />
+                    {place.rating.toFixed(1)}
+                    {place.review_count ? <span className="text-gray-400 font-normal ml-0.5">({place.review_count.toLocaleString()})</span> : null}
+                  </span>
+                )}
+                <button type="button" onClick={e => { e.stopPropagation(); onSelect('places_to_see', place) }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-lime-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-lime-100 hover:text-lime-700'}`}>
+                  {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                </button>
+              </div>
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">{place.name}</h3>
+            {(place.neighbourhood || place.address) && (
+              <p className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">
+                <MapPin size={10} />{place.neighbourhood || place.address}
+              </p>
+            )}
+            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{place.description}</p>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-2">
+              {place.visit_duration_hours && <span className="flex items-center gap-1"><Clock size={10} />~{place.visit_duration_hours}h</span>}
+              {place.best_time_to_visit && <span className="flex items-center gap-1"><Info size={10} />{place.best_time_to_visit}</span>}
+              {place.admission_fee_usd === 0
+                ? <span className="text-green-600 font-medium">Free entry</span>
+                : place.admission_fee_usd
+                ? <span className="flex items-center gap-1"><DollarSign size={10} />~${place.admission_fee_usd}</span>
+                : null}
+            </div>
+            {place.highlights?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {place.highlights.map((h, j) => (
+                  <span key={j} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{h}</span>
+                ))}
+              </div>
+            )}
+            {place.info_url && (
+              <a href={place.info_url} target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
+                <ExternalLink size={10} /> View details
+              </a>
+            )}
           </div>
         )
       })}
@@ -1692,6 +1766,31 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             </div>
           )}
 
+          {/* Selected places */}
+          {(selections.places_to_see?.length > 0) && (
+            <div className="border border-lime-200 bg-lime-50 rounded-xl p-3">
+              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Map size={11}/> Places to See ({selections.places_to_see.length})</div>
+              <div className="space-y-2">
+                {selections.places_to_see.map((place, i) => (
+                  <div key={i} className="flex items-start justify-between border-b border-lime-100 last:border-0 pb-1.5 last:pb-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-xs font-medium text-gray-800">{place.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                        {place.category && <span>{place.category}</span>}
+                        {place.neighbourhood && <span className="truncate">{place.neighbourhood}</span>}
+                        {place.admission_fee_usd === 0 && <span className="text-green-600">Free</span>}
+                      </div>
+                      {place.info_url && (
+                        <a href={place.info_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
+                      )}
+                    </div>
+                    <button onClick={() => onRemoveSelection('places_to_see', place)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Selected SIM */}
           {selections.sim && (
             <div className="border border-pink-200 bg-pink-50 rounded-xl p-3">
@@ -1994,7 +2093,7 @@ export default function ResultsPage() {
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
-    flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [],
+    flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
@@ -2045,7 +2144,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -2068,7 +2167,7 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', hotels:'loading', activities:'loading', visa:'loading', sim:'loading', tips:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
@@ -2118,7 +2217,7 @@ export default function ResultsPage() {
   if (!searchData) return null
 
   const completedCount = Object.values(statuses).filter(s => s === 'done' || s === 'enhancing').length
-  const selectedCount  = (selections.flight ? 1 : 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.itinerary_slots?.length || 0)
+  const selectedCount  = (selections.flight ? 1 : 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.itinerary_slots?.length || 0)
 
   const handleSelect = (type, value) => {
     if (type === 'activities') {
@@ -2135,6 +2234,11 @@ export default function ResultsPage() {
       setSelections(s => {
         const already = s.getting_around.some(a => a.name === value.name)
         return { ...s, getting_around: already ? s.getting_around.filter(a => a.name !== value.name) : [...s.getting_around, value] }
+      })
+    } else if (type === 'places_to_see') {
+      setSelections(s => {
+        const already = (s.places_to_see || []).some(p => p.name === value.name)
+        return { ...s, places_to_see: already ? (s.places_to_see || []).filter(p => p.name !== value.name) : [...(s.places_to_see || []), value] }
       })
     } else {
       setSelections(s => ({ ...s, [type]: value }))
@@ -2158,6 +2262,8 @@ export default function ResultsPage() {
       setSelections(s => ({ ...s, getting_around: s.getting_around.filter(a => a.name !== value.name) }))
     } else if (type === 'tips') {
       setSelections(s => ({ ...s, tips: s.tips.filter(t => t.title !== value.title) }))
+    } else if (type === 'places_to_see') {
+      setSelections(s => ({ ...s, places_to_see: (s.places_to_see || []).filter(p => p.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
       setSelections(s => ({ ...s, itinerary_slots: (s.itinerary_slots || []).filter(sl => sl.key !== value.key) }))
     } else {
@@ -2247,8 +2353,9 @@ export default function ResultsPage() {
     const renderers = {
       flights:        () => <FlightsSection    data={data} {...sectionProps} />,
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
-      activities:     () => <ActivitiesSection data={data} {...sectionProps} />,
-      visa:           () => <VisaSection       data={data} />,
+      activities:     () => <ActivitiesSection   data={data} {...sectionProps} />,
+      places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} />,
+      visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,
       tips:           () => <TipsSection       data={data} {...sectionProps} />,
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,

@@ -232,10 +232,31 @@ class ForexResponse(BaseModel):
     source_urls: list[str] = []
 
 
+class PlaceResult(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    description: str | None = None
+    neighbourhood: str | None = None
+    address: str | None = None
+    rating: float | None = None
+    review_count: int | None = None
+    visit_duration_hours: float | None = None
+    best_time_to_visit: str | None = None
+    admission_fee_usd: float | None = None
+    highlights: list[str] = []
+    info_url: str | None = None
+    source: str | None = None
+
+
+class PlacesResponse(BaseModel):
+    results: list[PlaceResult] = []
+
+
 class TravelSearchResponse(BaseModel):
     flights: dict = {}
     hotels: dict = {}
     activities: dict = {}
+    places_to_see: dict = {}
     visa: dict = {}
     sim: dict = {}
     tips: dict = {}
