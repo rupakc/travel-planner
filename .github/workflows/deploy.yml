@@ -129,7 +129,7 @@ jobs:
     needs: [bootstrap, push-images]
     env:
       TF_VAR_project_id:     ${{ secrets.GCP_PROJECT_ID }}
-      TF_VAR_admin_email:    rchakraborty@dataguard.com
+      TF_VAR_admin_email:    rupak97.4@gmail.com
       TF_VAR_backend_image:  europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner/backend:${{ github.sha }}
       TF_VAR_frontend_image: europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner/frontend:${{ github.sha }}
     steps:

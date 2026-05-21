@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"
     admin_password: str = ""
+    admin_email: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

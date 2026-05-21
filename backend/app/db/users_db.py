@@ -49,7 +49,7 @@ def seed_admin() -> None:
         password=password,
         is_admin=True,
         is_first_login=False,  # admin doesn't need to change password on first login
-        email=None,
+        email=settings.admin_email or None,
     )
     logger.info(f"Admin account '{settings.admin_username}' created")
 
