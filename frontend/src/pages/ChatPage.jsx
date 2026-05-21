@@ -464,8 +464,8 @@ function ChatSection({ section, data, status, selections, onSelect }) {
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden mb-2">
       <button onClick={() => setOpen(v => !v)}
-        className={`flex items-center gap-2 px-3 py-2 w-full text-left ${cc.bg} border-b ${cc.border} ${cc.text} font-semibold text-xs`}>
-        <Icon size={13} />
+        className={`flex items-center gap-2 px-3 py-2 w-full text-left bg-gray-50 border-b border-gray-200 text-slate-700 hover:bg-gray-100 font-semibold text-xs`}>
+        <Icon size={13} className={cc.text} />
         <span className="flex-1">{cfg.label}</span>
         {status === 'enhancing' && <Loader2 size={10} className="animate-spin text-amber-500" />}
         {status === 'done' && <CheckCircle2 size={10} className="text-green-600" />}
@@ -1253,17 +1253,17 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full px-4">
-            <div className="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center mb-5 shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-5 shadow-lg">
               <Plane className="text-white" size={28} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-700 mb-2">Travel Planner Chat</h2>
+            <h2 className="font-display text-2xl font-bold text-slate-800 mb-2">Travel Planner Chat</h2>
             <p className="text-slate-500 mb-8 text-center max-w-md">
               Chat with your AI travel assistant. Ask for a full trip plan and results will stream in real-time with interactive cards.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
               {SUGGESTIONS.map((s, i) => (
                 <button key={i} onClick={() => sendMessage(s)}
-                  className="text-left px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:bg-teal-50 text-sm text-slate-600 transition-all shadow-sm hover:shadow-md">
+                  className="text-left px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:bg-teal-50/80 hover:-translate-y-0.5 transition-all duration-150 shadow-sm hover:shadow-md">
                   {s}
                 </button>
               ))}
@@ -1295,7 +1295,7 @@ export default function ChatPage() {
         )}
       </div>
 
-      <div className="border-t border-gray-200 bg-white/80 backdrop-blur-sm px-4 py-3">
+      <div className="border-t border-gray-100 bg-white/90 backdrop-blur-md px-4 py-3">
         <div className="max-w-3xl mx-auto">
           <BudgetTracker selections={selections} searchContext={lastSearchContext} />
           {messages.length > 0 && !isStreaming && (
@@ -1329,7 +1329,7 @@ export default function ChatPage() {
       {/* My Plan floating button */}
       {(() => { const cost = computePlanCost(selections); return (
       <button onClick={() => setIsPlanOpen(true)}
-        className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl hover:bg-teal-700 transition-all">
+        className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-700 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
         <Bookmark size={14} />
         <span className="text-xs">My Plan</span>
         {cost > 0 && <span className="text-[10px] font-bold opacity-80">${cost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
@@ -1364,14 +1364,14 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center mt-0.5">
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 shadow-sm flex items-center justify-center mt-0.5">
           <Plane className="text-white" size={16} />
         </div>
       )}
       <div className={`group max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-        isUser ? 'bg-teal-600 text-white rounded-br-md'
-        : isError ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-md'
-        : 'bg-white text-slate-700 shadow-sm border border-gray-100 rounded-bl-md'
+        isUser ? 'bg-gradient-to-br from-teal-600 to-teal-700 text-white rounded-br-sm shadow-md'
+        : isError ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
+        : 'bg-white text-slate-700 shadow-sm border border-gray-100 rounded-bl-sm'
       }`}>
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>

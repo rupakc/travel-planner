@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X } from 'lucide-react'
+import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane } from 'lucide-react'
 
 const BASE_TABS = [
   { path: '/',            label: 'Search',      icon: Search },
@@ -28,7 +28,7 @@ export default function NavBar() {
         className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all ${
           isActive
             ? 'bg-white text-teal-700 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700'
+            : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
         }`}
       >
         <Icon size={14} />
@@ -39,10 +39,18 @@ export default function NavBar() {
 
   return (
     <>
-      <div className="h-14 flex items-center justify-between px-4 sm:px-6 bg-white/70 backdrop-blur-sm border-b border-gray-200/60 sticky top-0 z-50">
-        {/* Desktop tabs */}
-        <div className="hidden sm:flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-          <NavLinks />
+      <div className="h-14 flex items-center justify-between px-4 sm:px-6 bg-white/85 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+        {/* Wordmark + Desktop tabs */}
+        <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-2 mr-4 shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm">
+              <Plane size={14} className="text-white" strokeWidth={2.5} />
+            </div>
+            <span className="font-display font-bold text-slate-800 text-sm tracking-tight">Voyager</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-100/80 rounded-xl p-0.5">
+            <NavLinks />
+          </div>
         </div>
 
         {/* Mobile hamburger */}
@@ -73,7 +81,7 @@ export default function NavBar() {
 
       {/* Mobile nav drawer */}
       {menuOpen && (
-        <div className="sm:hidden bg-white border-b border-gray-200 px-4 py-3 flex flex-col gap-1 sticky top-14 z-40 shadow-sm">
+        <div className="sm:hidden bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex flex-col gap-1 sticky top-14 z-40 shadow-md">
           <NavLinks onClick={() => setMenuOpen(false)} />
         </div>
       )}

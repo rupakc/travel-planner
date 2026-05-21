@@ -83,7 +83,7 @@ export default function AirportSearch({ label, value, onChange, placeholder = 'S
           placeholder={placeholder}
           required={required}
           autoComplete="off"
-          className="w-full px-3 py-2.5 pl-9 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white"
+          className="w-full px-3 py-2.5 pl-9 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-colors text-sm bg-white"
         />
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -102,9 +102,9 @@ export default function AirportSearch({ label, value, onChange, placeholder = 'S
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); handleSelect(airport) }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${idx === highlightIdx ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${idx === highlightIdx ? 'bg-teal-50' : 'hover:bg-gray-50'}`}
               >
-                <span className="w-11 shrink-0 text-xs font-bold text-blue-700 bg-blue-100 rounded-md px-1.5 py-0.5 text-center">
+                <span className="w-11 shrink-0 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 rounded-md px-1.5 py-0.5 text-center">
                   {airport.iata_code}
                 </span>
                 <div className="min-w-0 flex-1">

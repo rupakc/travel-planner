@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function ChangePasswordPage() {
@@ -37,11 +38,13 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100 px-4">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 px-4">
+      <div className="bg-white rounded-3xl shadow-lg ring-1 ring-gray-100 w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <div className="text-3xl mb-2">🔑</div>
-          <h1 className="text-2xl font-bold text-gray-800">Set your password</h1>
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-4 shadow-lg">
+            <Lock size={26} className="text-white" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-gray-800">Set your password</h1>
           <p className="text-sm text-gray-500 mt-1">
             Welcome, <strong>{user?.username}</strong>! Please set a new password to continue.
           </p>

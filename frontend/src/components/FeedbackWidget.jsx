@@ -67,7 +67,7 @@ export default function FeedbackWidget() {
       {/* Floating trigger button */}
       <button
         onClick={open ? handleClose : handleOpen}
-        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-3.5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-full shadow-lg transition-all"
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-3.5 py-2.5 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium rounded-full shadow-lg transition-all"
         title="Give feedback"
       >
         {open ? <X size={15} /> : <MessageSquarePlus size={15} />}

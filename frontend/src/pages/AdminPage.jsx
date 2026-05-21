@@ -9,7 +9,7 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Admin Panel</h1>
+      <h1 className="font-display text-2xl font-bold text-gray-800 mb-6">Admin Panel</h1>
 
       <div className="flex gap-2 mb-6 border-b border-gray-200">
         {TABS.map(t => (
@@ -183,7 +183,7 @@ function UsersTab({ token, currentUsername }) {
                           className={`text-xs px-2 py-1 rounded-md font-medium transition-colors ${
                             u.username === currentUsername
                               ? 'text-amber-600 hover:bg-amber-50'
-                              : 'text-blue-600 hover:bg-blue-50'
+                              : 'text-teal-600 hover:bg-teal-50'
                           }`}>
                           {u.username === currentUsername ? 'Reset own pw' : 'Reset pw'}
                         </button>
@@ -312,7 +312,7 @@ function ResetPasswordModal({ username, token, isSelf, onClose }) {
                 type="password"
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                 placeholder="Min. 8 characters"
                 required
                 autoFocus
@@ -324,14 +324,14 @@ function ResetPasswordModal({ username, token, isSelf, onClose }) {
                 type="password"
                 value={form.confirm}
                 onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                 placeholder="Repeat the new password"
                 required
               />
             </div>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg transition-colors">
                 {loading ? 'Resetting…' : 'Reset password'}
               </button>
               <button type="button" onClick={handleClose} disabled={loading}

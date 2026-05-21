@@ -29,19 +29,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-200 via-teal-100 to-emerald-200 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/60 rounded-2xl shadow-md mb-4">
-            <Plane size={32} className="text-teal-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl shadow-lg mb-4">
+            <Plane size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-700">Travel Planner</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-800 tracking-tight">Travel Planner</h1>
           <p className="text-slate-500 mt-1">Plan your perfect trip</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign in to your account</h2>
 
           {error && (
@@ -84,7 +84,7 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" disabled={loading}
-              className="w-full py-2.5 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-60 transition-all shadow-md text-sm">
+              className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-semibold rounded-xl shadow-lg hover:from-teal-700 hover:to-teal-800 active:scale-[0.99] disabled:opacity-60 transition-all text-sm">
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>

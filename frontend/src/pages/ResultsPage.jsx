@@ -47,6 +47,19 @@ const COLOR_MAP = {
   lime:   { badge: 'bg-lime-50 text-lime-700 border-lime-200',    header: 'from-lime-500 to-green-500' },
 }
 
+const SECTION_ACCENT = {
+  blue:    { icon: 'text-sky-600',     line: 'border-l-sky-400',     bg: 'bg-sky-50/40'     },
+  purple:  { icon: 'text-violet-600',  line: 'border-l-violet-400',  bg: 'bg-violet-50/30'  },
+  green:   { icon: 'text-emerald-600', line: 'border-l-emerald-400', bg: 'bg-emerald-50/30' },
+  orange:  { icon: 'text-amber-600',   line: 'border-l-amber-400',   bg: 'bg-amber-50/30'   },
+  pink:    { icon: 'text-rose-600',    line: 'border-l-rose-400',    bg: 'bg-rose-50/30'    },
+  yellow:  { icon: 'text-amber-500',   line: 'border-l-amber-300',   bg: 'bg-amber-50/20'   },
+  cyan:    { icon: 'text-cyan-600',    line: 'border-l-cyan-400',    bg: 'bg-cyan-50/30'    },
+  emerald: { icon: 'text-emerald-600', line: 'border-l-emerald-400', bg: 'bg-emerald-50/30' },
+  indigo:  { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
+  lime:    { icon: 'text-lime-600',    line: 'border-l-lime-400',    bg: 'bg-lime-50/30'    },
+}
+
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
@@ -73,17 +86,19 @@ function AgentBadge({ agent, status, onClick }) {
 
 function SectionHeader({ agent, status, isOpen, onToggle, actions }) {
   const { label, icon: Icon, color } = AGENT_CONFIG[agent]
+  const acc = SECTION_ACCENT[color] || SECTION_ACCENT.indigo
   return (
     <div
       onClick={onToggle}
-      className={`flex items-center gap-3 p-4 w-full text-left ${isOpen ? 'rounded-t-xl' : 'rounded-xl'} bg-gradient-to-r ${COLOR_MAP[color].header} text-white transition-all cursor-pointer`}
+      className={`flex items-center gap-3 px-4 py-3.5 w-full text-left border-l-4 ${acc.line} ${acc.bg} bg-white cursor-pointer transition-colors hover:bg-gray-50/80 ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
     >
-      <Icon size={20} /> <h2 className="font-semibold text-lg flex-1">{label}</h2>
+      <Icon size={18} className={acc.icon} />
+      <h2 className="font-semibold text-base text-slate-800 flex-1">{label}</h2>
       {actions}
-      {status === 'loading'   && <Loader2 size={16} className="animate-spin" />}
-      {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-white/20 px-2 py-0.5 rounded-full"><Loader2 size={12} className="animate-spin" /> Enhancing…</span>}
-      {status === 'done'      && <CheckCircle2 size={16} className="opacity-80" />}
-      <ChevronDown size={18} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      {status === 'loading'   && <Loader2 size={15} className="animate-spin text-gray-400" />}
+      {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> Enhancing…</span>}
+      {status === 'done'      && <CheckCircle2 size={15} className="text-teal-500 opacity-70" />}
+      <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </div>
   )
 }
@@ -156,10 +171,10 @@ function Skeleton({ agent }) {
         <Loader2 size={16} className="animate-spin text-teal-500" />
         <span className="animate-pulse">{msgs[msgIdx]}</span>
       </div>
-      <div className="w-full space-y-3 animate-pulse">
-        <div className="flex gap-3"><div className="h-4 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-100 rounded w-1/4" /></div>
-        <div className="flex gap-3"><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-100 rounded w-1/2" /></div>
-        <div className="flex gap-3"><div className="h-4 bg-gray-200 rounded w-5/6" /><div className="h-4 bg-gray-100 rounded w-1/6" /></div>
+      <div className="w-full space-y-3">
+        <div className="flex gap-3"><div className="h-4 skeleton-shimmer rounded w-3/4" /><div className="h-4 skeleton-shimmer rounded w-1/4" /></div>
+        <div className="flex gap-3"><div className="h-4 skeleton-shimmer rounded w-1/2" /><div className="h-4 skeleton-shimmer rounded w-1/2" /></div>
+        <div className="flex gap-3"><div className="h-4 skeleton-shimmer rounded w-5/6" /><div className="h-4 skeleton-shimmer rounded w-1/6" /></div>
       </div>
     </div>
   )
@@ -2427,7 +2442,7 @@ export default function ResultsPage() {
       return null
     })()
     return (
-      <div key={agent} id={`section-${agent}`} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem', ...extraStyle }}>
+      <div key={agent} id={`section-${agent}`} className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem', ...extraStyle }}>
         <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} />
         {isOpen && (
           status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>

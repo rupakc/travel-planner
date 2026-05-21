@@ -91,13 +91,17 @@ export default function SearchPage() {
     <div>
       {/* Hero */}
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-tight text-slate-700">Plan Your Perfect Trip</h1>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-teal-700 text-xs font-semibold mb-4">
+          <Plane size={12} strokeWidth={2.5} />
+          AI-Powered Travel Planning
+        </div>
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">Plan Your Perfect Trip</h1>
         <p className="text-slate-500 text-lg">Flights, hotels, activities, visa, SIM &amp; itinerary — all in one place.</p>
       </div>
 
       {/* Form card */}
       <div className="max-w-4xl mx-auto px-4 pb-16 -mt-2">
-        <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8">
+        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
 
             {/* Origin + Destination */}
@@ -173,7 +177,7 @@ export default function SearchPage() {
               <div className="flex flex-wrap gap-2 mt-1">
                 {INTERESTS.map(({ id, label }) => (
                   <button key={id} type="button" onClick={() => toggleInterest(id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${form.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${form.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                     {label}
                   </button>
                 ))}
@@ -181,7 +185,7 @@ export default function SearchPage() {
             </div>
 
             <button type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-all shadow-md hover:shadow-lg text-base">
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
               <Search size={18} /> Plan My Trip
             </button>
           </form>
