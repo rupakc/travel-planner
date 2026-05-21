@@ -4,7 +4,7 @@ import {
   Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
   Star, AlertTriangle, Info, AlertCircle, ExternalLink,
   DollarSign, Users, Globe, Zap, BookmarkPlus, X,
-  ChevronDown, ChevronUp, Check, PenLine, Trash2,
+  ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map, SlidersHorizontal, Wifi, Bath
 } from 'lucide-react'
@@ -14,6 +14,7 @@ import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { track } from '../utils/analytics'
 import AirportSearch from '../components/ui/AirportSearch'
+import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import PlanViewModal from '../components/PlanViewModal'
 
@@ -80,7 +81,7 @@ function SectionHeader({ agent, status, isOpen, onToggle, actions }) {
       <Icon size={20} /> <h2 className="font-semibold text-lg flex-1">{label}</h2>
       {actions}
       {status === 'loading'   && <Loader2 size={16} className="animate-spin" />}
-      {status === 'enhancing' && <span className="flex items-center gap-1.5 text-xs bg-white/20 px-2 py-0.5 rounded-full"><Loader2 size={12} className="animate-spin" /> Enhancing…</span>}
+      {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-white/20 px-2 py-0.5 rounded-full"><Loader2 size={12} className="animate-spin" /> Enhancing…</span>}
       {status === 'done'      && <CheckCircle2 size={16} className="opacity-80" />}
       <ChevronDown size={18} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </div>
@@ -194,7 +195,7 @@ function FlightLeg({ leg, direction }) {
 }
 
 function FlightsSection({ data, selections, onSelect }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found</div>
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
   // Detect format: new round-trip (has outbound/return objects) vs legacy flat
@@ -320,8 +321,6 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   const priceFloor = 100
   const effectiveMaxPrice = maxPrice ?? priceCeil
 
-  if (!isOpen) return null
-
   const fmtHour = (h) => {
     const hh = Math.floor(h)
     return `${hh.toString().padStart(2, '0')}:00`
@@ -345,6 +344,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
     setDepLatest(24)
     setArrEarliest(0)
     setArrLatest(24)
+    onApply({})
   }
 
   const hasFilters = stops !== null || maxPrice !== null || depEarliest > 0 || depLatest < 24 || arrEarliest > 0 || arrLatest < 24
@@ -360,7 +360,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   const sliderThumb = '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sky-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm${!isOpen ? ' hidden' : ''}`} onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
@@ -394,7 +394,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
               type="range"
               min={priceFloor} max={priceCeil} step={50}
               value={effectiveMaxPrice}
-              onChange={e => setMaxPrice(Number(e.target.value))}
+              onChange={e => { const v = Number(e.target.value); setMaxPrice(v >= priceCeil ? null : v) }}
               className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-sky-500 ${sliderThumb}`}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -468,7 +468,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
           <button onClick={handleReset} disabled={!hasFilters}
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Reset All
+            Clear All
           </button>
           <button onClick={handleApply} disabled={isLoading}
             className="flex items-center gap-2 px-5 py-2.5 bg-sky-500 text-white text-sm font-semibold rounded-xl hover:bg-sky-600 disabled:opacity-60 transition-all shadow-md">
@@ -481,14 +481,16 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
 }
 
 function HotelsSection({ data, selections, onSelect }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found</div>
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
   const selected = selections.hotel
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
       {data.results.map((h, i) => {
         const isSelected = selected && selected.name === h.name
         return (
-          <div key={i} className={`border rounded-xl p-4 transition-all ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'}`}>
+          <div key={i}
+            onClick={() => onSelect('hotel', isSelected ? null : h)}
+            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'}`}>
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1 min-w-0 mr-2">
                 <h3 className="font-semibold text-gray-900 truncate">{h.name}</h3>
@@ -511,10 +513,10 @@ function HotelsSection({ data, selections, onSelect }) {
             )}
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-2">
-                {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
+                {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
                 {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
               </div>
-              <button type="button" onClick={() => onSelect('hotel', isSelected ? null : h)}
+              <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
                 {isSelected ? <><Check size={11}/> Added to Plan</> : <><Plus size={11}/> Add to Plan</>}
               </button>
@@ -542,8 +544,6 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   const effectiveMaxDist = maxDistance ?? 20
   const distanceCeil = 20
 
-  if (!isOpen) return null
-
   const handleApply = () => {
     const filters = {}
     if (numBeds !== null) filters.num_beds = numBeds
@@ -560,6 +560,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
     setWifiQuality(null)
     setMaxDistance(null)
     setPrivateWashroom(false)
+    onApply({})
   }
 
   const hasFilters = numBeds !== null || maxPricePerNight !== null || wifiQuality !== null || maxDistance !== null || privateWashroom
@@ -583,7 +584,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   const sliderThumb = '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm${!isOpen ? ' hidden' : ''}`} onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white">
@@ -617,7 +618,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
               type="range"
               min={priceFloor} max={priceCeil} step={10}
               value={effectiveMaxPrice}
-              onChange={e => setMaxPricePerNight(Number(e.target.value))}
+              onChange={e => { const v = Number(e.target.value); setMaxPricePerNight(v >= priceCeil ? null : v) }}
               className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-violet-500 ${sliderThumb}`}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -677,7 +678,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
           <button onClick={handleReset} disabled={!hasFilters}
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Reset All
+            Clear All
           </button>
           <button onClick={handleApply} disabled={isLoading}
             className="flex items-center gap-2 px-5 py-2.5 bg-violet-500 text-white text-sm font-semibold rounded-xl hover:bg-violet-600 disabled:opacity-60 transition-all shadow-md">
@@ -690,19 +691,21 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
 }
 
 function ActivitiesSection({ data, selections, onSelect }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found</div>
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found — try different interests or adjusting dates</div>
   const catColors = { food:'bg-orange-100 text-orange-700',history:'bg-amber-100 text-amber-700',adventure:'bg-red-100 text-red-700',culture:'bg-purple-100 text-purple-700',nature:'bg-green-100 text-green-700',shopping:'bg-pink-100 text-pink-700',nightlife:'bg-indigo-100 text-indigo-700',wellness:'bg-teal-100 text-teal-700',art:'bg-violet-100 text-violet-700',family:'bg-blue-100 text-blue-700',general:'bg-gray-100 text-gray-700' }
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
       {data.results.map((a, i) => {
         const isSelected = selections.activities.some(x => x.name === a.name)
         return (
-          <div key={i} className={`border rounded-xl p-4 transition-all ${isSelected ? 'border-green-400 ring-2 ring-green-300 bg-green-50' : 'border-gray-200 hover:shadow-md'}`}>
+          <div key={i}
+            onClick={() => onSelect('activities', a)}
+            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-green-400 ring-2 ring-green-300 bg-green-50' : 'border-gray-200 hover:shadow-md'}`}>
             <div className="flex justify-between items-start mb-2">
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[a.category] || catColors.general}`}>{a.category}</span>
               <div className="flex items-center gap-2">
                 {a.similarity_score && <span className="text-xs text-gray-400">{Math.round(a.similarity_score*100)}% match</span>}
-                <button type="button" onClick={() => onSelect('activities', a)}
+                <button type="button" onClick={e => { e.stopPropagation(); onSelect('activities', a) }}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'}`}>
                   {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
                 </button>
@@ -717,7 +720,7 @@ function ActivitiesSection({ data, selections, onSelect }) {
               {a.rating && <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{a.rating}{a.review_count ? ` (${a.review_count.toLocaleString()})` : ''}</span>}
             </div>
             <div className="flex items-center gap-2 mt-1.5">
-              {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
+              {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
             </div>
           </div>
@@ -812,8 +815,8 @@ const ACTIVITY_INTERESTS = [
 function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoading, searchData }) {
   const [selectedInterests, setSelectedInterests] = useState([])
   const [maxPrice, setMaxPrice] = useState(null)
-  const [availFrom, setAvailFrom] = useState('')
-  const [availTo, setAvailTo] = useState('')
+  const [availFrom, setAvailFrom] = useState(searchData?.departure_date || '')
+  const [availTo, setAvailTo] = useState(searchData?.return_date || '')
   const [minRating, setMinRating] = useState(null)
 
   const prices = (currentResults?.results || []).map(a => a.price_usd).filter(Boolean)
@@ -823,8 +826,6 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
 
   const defaultFrom = searchData?.departure_date || ''
   const defaultTo = searchData?.return_date || ''
-
-  if (!isOpen) return null
 
   const toggleInterest = (id) =>
     setSelectedInterests(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
@@ -842,9 +843,10 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
   const handleReset = () => {
     setSelectedInterests([])
     setMaxPrice(null)
-    setAvailFrom('')
-    setAvailTo('')
+    setAvailFrom(searchData?.departure_date || '')
+    setAvailTo(searchData?.return_date || '')
     setMinRating(null)
+    onApply({})
   }
 
   const hasFilters = selectedInterests.length > 0 || maxPrice !== null || availFrom || availTo || minRating !== null
@@ -863,7 +865,7 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
   const inputClass = "w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm bg-white"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm${!isOpen ? ' hidden' : ''}`} onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white">
@@ -897,7 +899,7 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
               type="range"
               min={priceFloor} max={priceCeil} step={5}
               value={effectiveMaxPrice}
-              onChange={e => setMaxPrice(Number(e.target.value))}
+              onChange={e => { const v = Number(e.target.value); setMaxPrice(v >= priceCeil ? null : v) }}
               className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-emerald-500 ${sliderThumb}`}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -943,7 +945,7 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
           <button onClick={handleReset} disabled={!hasFilters}
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Reset All
+            Clear All
           </button>
           <button onClick={handleApply} disabled={isLoading}
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 disabled:opacity-60 transition-all shadow-md">
@@ -959,7 +961,7 @@ function VisaSection({ data }) {
   const req = data?.requirement
   const vacc = data?.vaccinations
   const customs = data?.customs
-  if (!req && !vacc && !customs) return <div className="p-4 text-sm text-gray-500">No visa information available</div>
+  if (!req && !vacc && !customs) return <div className="p-4 text-sm text-gray-500">Visa info unavailable — check your government's official travel portal</div>
   const typeColors = { 'visa-free':'bg-green-100 text-green-800 border-green-200','visa-on-arrival':'bg-blue-100 text-blue-800 border-blue-200','e-visa':'bg-yellow-100 text-yellow-800 border-yellow-200','visa-required':'bg-red-100 text-red-800 border-red-200' }
   return (
     <div className="p-4 space-y-5">
@@ -1041,7 +1043,7 @@ function VisaSection({ data }) {
 }
 
 function SimSection({ data, selections, onSelect }) {
-  if (!data?.plans?.length) return <div className="p-4 text-sm text-gray-500">No SIM plans found</div>
+  if (!data?.plans?.length) return <div className="p-4 text-sm text-gray-500">No SIM plans found — check local carriers on arrival</div>
   const selected = selections.sim
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -1079,7 +1081,7 @@ function SimSection({ data, selections, onSelect }) {
 }
 
 function TipsSection({ data, selections, onSelect }) {
-  if (!data?.tips?.length) return <div className="p-4 text-sm text-gray-500">No tips available</div>
+  if (!data?.tips?.length) return <div className="p-4 text-sm text-gray-500">No travel tips available yet</div>
   const sc = { danger:{ icon:AlertCircle, bg:'bg-red-50', border:'border-red-200', text:'text-red-800', ic:'text-red-500', badge:'bg-red-100 text-red-700' }, warning:{ icon:AlertTriangle, bg:'bg-yellow-50', border:'border-yellow-200', text:'text-yellow-800', ic:'text-yellow-500', badge:'bg-yellow-100 text-yellow-700' }, info:{ icon:Info, bg:'bg-blue-50', border:'border-blue-200', text:'text-blue-800', ic:'text-blue-400', badge:'bg-blue-100 text-blue-700' } }
   const selectedTips = selections?.tips || []
   return (
@@ -1108,9 +1110,25 @@ function TipsSection({ data, selections, onSelect }) {
 }
 
 function GettingAroundSection({ data, selections, onSelect }) {
-  if (!data?.options?.length) return <div className="p-4 text-sm text-gray-500">No transportation info available</div>
+  if (!data?.options?.length) return <div className="p-4 text-sm text-gray-500">No transport info available — check local transit apps on arrival</div>
   const scopeColors = { intra_city: 'bg-cyan-100 text-cyan-700', inter_city: 'bg-indigo-100 text-indigo-700' }
-  const typeIcons = { metro: 'M', bus: 'B', tram: 'T', taxi: 'TX', rideshare: 'R', bike: 'BK', scooter: 'SC', walking: 'W', water_transport: 'WT', tourist_transport: 'TT', train: 'TR', long_distance_bus: 'LB', domestic_flight: 'DF', car_rental: 'CR', ferry: 'FY' }
+  const typeIcons = {
+    metro: 'MRT',
+    bus: 'BUS',
+    tram: 'TRAM',
+    taxi: 'TAXI',
+    rideshare: 'RIDE',
+    bike: 'BIKE',
+    scooter: 'MOTO',
+    walking: 'WALK',
+    water_transport: 'BOAT',
+    tourist_transport: 'TOUR',
+    train: 'RAIL',
+    long_distance_bus: 'COACH',
+    domestic_flight: 'FLY',
+    car_rental: 'RENT',
+    ferry: 'FERRY',
+  }
   const selectedTransport = selections?.getting_around || []
 
   const intraCity = data.options.filter(o => o.scope === 'intra_city')
@@ -1129,7 +1147,7 @@ function GettingAroundSection({ data, selections, onSelect }) {
             <div key={i} className={`border rounded-xl p-4 transition-all ${isSelected ? 'border-cyan-400 ring-2 ring-cyan-300 bg-cyan-50' : 'border-gray-200 hover:shadow-md'}`}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">{typeIcons[opt.type] || '?'}</span>
+                  <span className="w-12 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] font-bold shrink-0">{typeIcons[opt.type] || '?'}</span>
                   <div>
                     <h4 className="font-semibold text-gray-900 text-sm">{opt.name}</h4>
                     <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium mt-0.5 ${scopeColors[opt.scope] || 'bg-gray-100 text-gray-600'}`}>{opt.type?.replace(/_/g, ' ')}</span>
@@ -1167,7 +1185,7 @@ function GettingAroundSection({ data, selections, onSelect }) {
 }
 
 function ForexSection({ data }) {
-  if (!data || data.error) return <div className="p-4 text-sm text-gray-500">No currency information available</div>
+  if (!data || data.error) return <div className="p-4 text-sm text-gray-500">Currency info unavailable — check xe.com for live rates</div>
   const ratingColors = { excellent: 'bg-emerald-100 text-emerald-700', good: 'bg-blue-100 text-blue-700', fair: 'bg-yellow-100 text-yellow-700', poor: 'bg-red-100 text-red-700' }
   const locTypeIcons = { atm: '🏧', bank: '🏦', exchange_bureau: '💱', hotel: '🏨', airport: '✈️', online: '🌐' }
   const isHome = (rate) => rate.from_currency !== 'USD' && rate.from_currency !== 'EUR'
@@ -1188,7 +1206,7 @@ function ForexSection({ data }) {
                   <div className="flex items-baseline gap-2">
                     {rate.rate != null
                       ? <span className={`text-lg font-bold ${isHome(rate) ? 'text-amber-700' : 'text-emerald-700'}`}>{rate.rate}</span>
-                      : <span className="flex items-center gap-1 text-sm text-gray-400"><Loader2 size={12} className="animate-spin" /> Fetching live rate...</span>
+                      : <span className="flex items-center gap-1 text-sm text-gray-400"><Clock size={12} /> Live rate loading…</span>
                     }
                     <span className="text-sm text-gray-500">{rate.description}</span>
                   </div>
@@ -1495,17 +1513,15 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
                       <div className="shrink-0 flex flex-col items-end gap-1.5">
                         {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
                         <button onClick={() => { setEditingSlot(key); setOpenNote(null) }}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
                           <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
                         </button>
-                        {!edit.activity && (
-                          <button onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
-                            <PenLine size={10}/> {note ? 'Note ✓' : 'Note'}
+                        <button onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
+                            <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
                           </button>
-                        )}
                         <button onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             selections.itinerary_slots?.some(s => s.key === key)
                               ? 'bg-teal-600 text-white'
                               : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
@@ -1540,26 +1556,6 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
       ))}
     </div>
   )
-}
-
-// ─── Cost estimator ───────────────────────────────────────────────────────────
-
-function computeEstimatedCost(selections, searchData) {
-  let total = 0
-  if (selections.flight?.price_usd) total += Number(selections.flight.price_usd)
-  if (selections.hotel) {
-    if (selections.hotel.total_price_usd) {
-      total += Number(selections.hotel.total_price_usd)
-    } else if (selections.hotel.price_per_night_usd) {
-      const nights = searchData?.return_date && searchData?.departure_date
-        ? Math.max(1, (new Date(searchData.return_date) - new Date(searchData.departure_date)) / 86400000)
-        : 7
-      total += Number(selections.hotel.price_per_night_usd) * nights
-    }
-  }
-  selections.activities.forEach(a => { if (a.price_usd) total += Number(a.price_usd) })
-  if (selections.sim?.price_usd) total += Number(selections.sim.price_usd)
-  return total
 }
 
 // ─── My Plan Drawer ───────────────────────────────────────────────────────────
@@ -1663,7 +1659,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               <Bookmark size={18} />
               <h2 className="font-semibold">My Plan</h2>
               {selectedCount > 0 && <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedCount}</span>}
-              {loadedPlanId && <span className="bg-amber-400/30 text-amber-100 text-[10px] font-medium px-1.5 py-0.5 rounded">Editing saved plan</span>}
+              {loadedPlanId && <span className="bg-amber-200 text-amber-900 text-[10px] font-medium px-1.5 py-0.5 rounded">Editing saved plan</span>}
             </div>
             <div className="flex items-center gap-3">
               {estimatedCost > 0 && (
@@ -1695,6 +1691,11 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             </label>
             <input type="text" value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+            {selectedCount > 0 && (
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <Info size={10} /> Tip: drag the plan name down to "Saved Plans" to archive it
+              </p>
+            )}
           </div>
 
           {/* Selected flight */}
@@ -1933,7 +1934,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
           {selectedCount > 0 && (
             <button onClick={saveAndClear} disabled={saving}
               className="w-full flex items-center justify-center gap-2 py-2 border border-slate-300 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50">
-              <Bookmark size={12} /> Save &amp; Send to Saved Plans
+              <Bookmark size={12} /> Archive Plan
             </button>
           )}
           {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{saveMsg}</p>}
@@ -2041,7 +2042,14 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
             <div><label className="block text-xs font-medium text-gray-600 mb-1">Return</label><input type="date" value={form.return_date} min={form.departure_date} onChange={e=>setForm(f=>({...f,return_date:e.target.value}))} className={inputClass} /></div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Nationality</label><input type="text" value={form.nationality} onChange={e=>setForm(f=>({...f,nationality:e.target.value}))} className={inputClass} /></div>
+            <div>
+              <NationalitySearch
+                label="Nationality"
+                value={form.nationality}
+                onChange={v => setForm(f => ({ ...f, nationality: v }))}
+                placeholder="American, Indian…"
+              />
+            </div>
             <div><label className="block text-xs font-medium text-gray-600 mb-1">Budget (USD)</label><input type="number" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder="Optional" className={inputClass} /></div>
             <div><label className="block text-xs font-medium text-gray-600 mb-1">Travelers</label>
               <div className="flex border border-gray-300 rounded-lg overflow-hidden bg-white">
@@ -2366,25 +2374,55 @@ export default function ResultsPage() {
     const filterAction = (() => {
       const ready = status === 'done' || status === 'enhancing'
       if (agent === 'flights' && ready) return (
-        <button onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-          <SlidersHorizontal size={12} /><span>Filters</span>
-          {activeFlightFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-sky-600 text-[10px] font-bold">{activeFlightFilterCount}</span>}
-        </button>
+        <div className="flex items-center gap-1">
+          {activeFlightFilterCount > 0 && (
+            <button
+              onClick={e => { e.stopPropagation(); handleApplyFlightFilters({}) }}
+              title="Clear flight filters"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
+              ×
+            </button>
+          )}
+          <button onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
+            <SlidersHorizontal size={12} /><span>Filters</span>
+            {activeFlightFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-sky-600 text-[10px] font-bold">{activeFlightFilterCount}</span>}
+          </button>
+        </div>
       )
       if (agent === 'hotels' && ready) return (
-        <button onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-          <SlidersHorizontal size={12} /><span>Filters</span>
-          {activeHotelFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-violet-600 text-[10px] font-bold">{activeHotelFilterCount}</span>}
-        </button>
+        <div className="flex items-center gap-1">
+          {activeHotelFilterCount > 0 && (
+            <button
+              onClick={e => { e.stopPropagation(); handleApplyHotelFilters({}) }}
+              title="Clear hotel filters"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
+              ×
+            </button>
+          )}
+          <button onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
+            <SlidersHorizontal size={12} /><span>Filters</span>
+            {activeHotelFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-violet-600 text-[10px] font-bold">{activeHotelFilterCount}</span>}
+          </button>
+        </div>
       )
       if (agent === 'activities' && ready) return (
-        <button onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-          <SlidersHorizontal size={12} /><span>Filters</span>
-          {activeActivityFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-emerald-600 text-[10px] font-bold">{activeActivityFilterCount}</span>}
-        </button>
+        <div className="flex items-center gap-1">
+          {activeActivityFilterCount > 0 && (
+            <button
+              onClick={e => { e.stopPropagation(); handleApplyActivityFilters({}) }}
+              title="Clear activity filters"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
+              ×
+            </button>
+          )}
+          <button onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
+            <SlidersHorizontal size={12} /><span>Filters</span>
+            {activeActivityFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-emerald-600 text-[10px] font-bold">{activeActivityFilterCount}</span>}
+          </button>
+        </div>
       )
       return null
     })()
@@ -2399,16 +2437,9 @@ export default function ResultsPage() {
   }
 
   const completionBanner = isDone && (
-    <div className="text-center py-8">
-      <div className="inline-flex flex-col items-center gap-3 px-8 py-5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
-        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-          <CheckCircle2 size={24} className="text-green-600" />
-        </div>
-        <div>
-          <p className="text-green-800 font-bold text-lg">Your travel plan is ready!</p>
-          <p className="text-green-600 text-sm mt-1">Browse the sections above and add items to your plan</p>
-        </div>
-      </div>
+    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium">
+      <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+      Your travel plan is ready — select items below to build your trip
     </div>
   )
 
@@ -2420,12 +2451,20 @@ export default function ResultsPage() {
         <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <button onClick={() => clearSearchResults()} className="flex items-center gap-1 sm:gap-1.5 text-slate-200 hover:text-white text-xs sm:text-sm shrink-0">
+              <button onClick={() => {
+                if (!isDone && completedCount > 0) {
+                  if (!window.confirm('Leave this page? Your search results will be lost.')) return
+                }
+                clearSearchResults()
+              }} className="flex items-center gap-1 sm:gap-1.5 text-slate-200 hover:text-white text-xs sm:text-sm shrink-0">
                 <ArrowLeft size={14}/><span className="hidden xs:inline">New Search</span><span className="xs:hidden">Back</span>
               </button>
               <div className="text-center min-w-0 flex-1">
                 <p className="font-semibold text-xs sm:text-sm truncate">{searchData.origin} → {searchData.destination}</p>
                 <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
+                {searchData.budget_usd > 0 && (
+                  <p className="text-slate-300 text-[10px] hidden md:block">Budget: ${searchData.budget_usd.toLocaleString()}</p>
+                )}
               </div>
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> Done</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
@@ -2440,7 +2479,7 @@ export default function ResultsPage() {
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
-          <div className="flex flex-wrap gap-1.5 justify-center">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none sm:flex-wrap sm:justify-center sm:overflow-visible">
             {AGENT_ORDER.map(agent => <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />)}
           </div>
           {!isDone && (
@@ -2481,8 +2520,8 @@ export default function ResultsPage() {
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-5 space-y-5 pb-24">
-        {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
         {completionBanner}
+        {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
       </div>
 
       {/* Floating plan button */}
