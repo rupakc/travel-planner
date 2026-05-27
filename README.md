@@ -15,10 +15,11 @@ The frontend proxies all `/api/*` calls to the backend, so most users only need 
 
 ## Features
 
-- **Multi-agent AI** — 8 specialist Claude agents run in parallel (flights, hotels, activities, visa, SIM, tips, transport, itinerary)
+- **Multi-agent AI** — 9 specialist Claude agents run in parallel (flights, hotels, activities, places to see, visa, SIM, tips, transport, itinerary)
+- **Places to See** — dedicated agent combining live Serper/Google Maps data with Claude synthesis to surface must-visit landmarks, temples, museums, and viewpoints with ratings, visit durations, and direct links
 - **Real-time streaming** — results appear section by section via SSE, no waiting for all agents
-- **My Plan** — select flights, hotels, activities and more into a named plan; save and reload anytime
-- **Chat interface** — conversational trip planning that auto-triggers the agent pipeline
+- **My Plan** — select flights, hotels, activities, places, and more into a named plan; save and reload anytime
+- **Chat interface** — conversational trip planning with session memory, smart routing, suggestion chips, and real-time budget tracker; auto-triggers the full agent pipeline
 - **User feedback** — floating feedback widget on every page; admin can view and export
 - **Multi-user auth** — admin-created accounts with forced first-login password change
 - **Admin panel** — create/deactivate users, view feedback, manage the app
@@ -178,10 +179,10 @@ Cloud Run: travel-planner-backend  (FastAPI, port 8001)
   │       │   (Server-Sent Events) │    visa, sim, tips, getting_around
   │       │◄──────────────────────┤
   │       │                        │  Phase 1 — Parallel AI agents
-  │       │                        │    8 agents via asyncio.gather():
+  │       │                        │    9 agents via asyncio.gather():
   │       │                        │    flights, hotels, activities,
-  │       │                        │    visa*, sim*, tips*, forex,
-  │       │                        │    getting_around*
+  │       │                        │    places, visa*, sim*, tips*,
+  │       │                        │    forex, getting_around*
   │       │                        │    (* AI enhances static fallback)
   │       │◄──────────────────────┤
   │       │                        │  Phase 2 — Sequential synthesis
@@ -218,6 +219,10 @@ TravelOrchestrator
 │     HotelsAgent          → hotels across 4 budget tiers
 │     ActivitiesAgent      → activities scored by interest relevance
 │                            (sentence-transformers + sklearn cosine sim)
+│     PlacesAgent          → must-see landmarks, temples, museums, viewpoints
+│                            Serper /places + /search → Claude synthesis
+│                            SerperPlacesResolver enriches top-5 with
+│                            TripAdvisor/Timeout/Lonely Planet URLs
 │     VisaAgent            → AI-enhanced visa + vaccinations + customs
 │     SimAgent             → AI-enhanced eSIM / local SIM plans
 │     TipsAgent            → AI-enhanced safety + culture tips
@@ -343,6 +348,7 @@ Full OpenAPI docs available at `/docs` when the backend is running.
 | `BACKUP_BUCKET` | (empty) | GCS bucket for SQLite backup; empty = disabled |
 | `CORS_ORIGINS` | `http://localhost:5174` | Allowed CORS origins (comma-separated list) |
 | `LOG_FORMAT` | `json` | `json` for Cloud Logging, `text` for local dev |
+| `SERPER_KEY` | (empty) | Serper.dev API key for Places to See Google data; agent falls back to Claude-only if unset |
 
 ## Running Tests
 

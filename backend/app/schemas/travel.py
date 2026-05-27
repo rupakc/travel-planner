@@ -132,12 +132,16 @@ class ItinerarySlot(BaseModel):
     duration_hours: float | None = None
     notes: str | None = None
     estimated_cost_usd: float | None = None
+    city: str | None = None
+    lat: float | None = None
+    lng: float | None = None
 
 
 class ItineraryDay(BaseModel):
     day_number: int
     date: str | None = None
     theme: str | None = None
+    city: str | None = None
     slots: list[ItinerarySlot] = []
     daily_estimated_cost_usd: float | None = None
 

@@ -37,6 +37,9 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "time_of_day": "morning",
           "activity": "Arrive at Narita Airport, take Narita Express to hotel",
           "location": "Narita Airport → Shinjuku",
+          "city": "Tokyo",
+          "lat": 35.6762,
+          "lng": 139.6503,
           "duration_hours": 3.0,
           "notes": "Buy Suica IC card at the airport for transit",
           "estimated_cost_usd": 30.0
@@ -58,7 +61,8 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "estimated_cost_usd": 35.0
         }
       ],
-      "daily_estimated_cost_usd": 85.0
+      "daily_estimated_cost_usd": 85.0,
+      "city": "Tokyo"
     }
   ],
   "total_estimated_cost_usd": 1200.0
@@ -70,3 +74,5 @@ Rules:
 - `date` format: `"YYYY-MM-DD"`
 - `daily_estimated_cost_usd` = sum of all slot costs
 - `total_estimated_cost_usd` = sum of all daily costs
+- `city`: the city name this day/slot takes place in (always include)
+- `lat`, `lng`: approximate decimal-degree coordinates of the activity location (always include when a specific place is named)

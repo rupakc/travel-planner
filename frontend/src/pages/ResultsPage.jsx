@@ -17,6 +17,7 @@ import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import PlanViewModal from '../components/PlanViewModal'
+import TripMap from '../components/TripMap'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1430,10 +1431,15 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
       {data.days.map((day) => (
         <div key={day.day_number} className="border border-gray-200 rounded-xl overflow-hidden">
           {/* Day header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+          <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
             <div>
               <span className="font-bold">Day {day.day_number}</span>
               {day.date && <span className="ml-2 text-teal-200 text-sm">{day.date}</span>}
+              {day.city && (
+                <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                  {day.city}
+                </span>
+              )}
             </div>
             <div className="text-right">
               {day.theme && <p className="text-sm font-medium">{day.theme}</p>}
@@ -1569,6 +1575,7 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
           </div>
         </div>
       ))}
+      <TripMap days={data.days} />
     </div>
   )
 }

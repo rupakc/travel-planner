@@ -7,9 +7,19 @@ import {
   DollarSign, Zap, X, Check, Copy, Plus, Bookmark, Save, Eye,
   ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi
 } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
+import TripMap from '../components/TripMap'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { track } from '../utils/analytics'
+
+// Fix Leaflet default icon (only once, even if TripMap.jsx also does this)
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({ iconUrl: markerIconUrl, iconRetinaUrl: markerIcon2xUrl, shadowUrl: markerShadowUrl })
 
 // ─── Agent config (reused from ResultsPage) ─────────────────────────────────
 
@@ -81,6 +91,11 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
   const hidden = items.length - LIMIT
   return (
     <div className="space-y-2">
+      {data.knowledge_estimate && (
+        <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2 flex items-center gap-1">
+          <AlertTriangle size={10} /> Prices are estimates — verify with booking sites before booking
+        </p>
+      )}
       {visible.map((f, i) => {
         const isSelected = selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline
         return (
@@ -119,6 +134,11 @@ function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExp
   const hidden = items.length - LIMIT
   return (
     <div className="space-y-2">
+      {data.knowledge_estimate && (
+        <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2 flex items-center gap-1">
+          <AlertTriangle size={10} /> Prices are estimates — verify with booking sites before booking
+        </p>
+      )}
       {visible.map((h, i) => {
         const isSelected = selected?.name === h.name
         return (
@@ -407,8 +427,15 @@ function ChatItinerarySection({ data, selections, onSelect }) {
     <div className="space-y-2">
       {data.days.map(day => (
         <div key={day.day_number} className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-teal-600 text-white px-3 py-1.5 text-xs font-semibold flex justify-between">
-            <span>Day {day.day_number} {day.date && `— ${day.date}`}</span>
+          <div className={`${day.city ? 'bg-indigo-700' : 'bg-teal-600'} text-white px-3 py-1.5 text-xs font-semibold flex justify-between`}>
+            <span>
+              Day {day.day_number}{day.date && ` — ${day.date}`}
+              {day.city && (
+                <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                  {day.city}
+                </span>
+              )}
+            </span>
             {day.theme && <span className="font-normal opacity-80">{day.theme}</span>}
           </div>
           <div className="divide-y divide-gray-100">
@@ -434,6 +461,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
           </div>
         </div>
       ))}
+      <TripMap days={data.days} />
     </div>
   )
 }
@@ -467,13 +495,19 @@ function ChatSection({ section, data, status, selections, onSelect }) {
         className={`flex items-center gap-2 px-3 py-2 w-full text-left bg-gray-50 border-b border-gray-200 text-slate-700 hover:bg-gray-100 font-semibold text-xs`}>
         <Icon size={13} className={cc.text} />
         <span className="flex-1">{cfg.label}</span>
+        {status === 'generating' && <Loader2 size={10} className="animate-spin text-teal-500" />}
         {status === 'enhancing' && <Loader2 size={10} className="animate-spin text-amber-500" />}
         {status === 'done' && <CheckCircle2 size={10} className="text-green-600" />}
         {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       </button>
       {open && (
         <div className="p-3">
-          {data ? (renderers[section] ? renderers[section]() : <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>) : <Loader2 size={14} className="animate-spin text-gray-400" />}
+          {data ? (renderers[section] ? renderers[section]() : <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>) : (
+            <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+              <Loader2 size={13} className="animate-spin shrink-0" />
+              <span>Building your itinerary…</span>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -482,9 +516,10 @@ function ChatSection({ section, data, status, selections, onSelect }) {
 
 // ─── Planning message with streamed sections ─────────────────────────────────
 
-function PlanningMessage({ sections, sectionStatuses, selections, onSelect }) {
+function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating }) {
   const sectionOrder = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
-  const arrived = sectionOrder.filter(s => sections[s])
+  // Include itinerary immediately once the backend signals it has started generating
+  const arrived = sectionOrder.filter(s => sections[s] || (s === 'itinerary' && itineraryGenerating))
   const total = 9
   const doneCount = Object.values(sectionStatuses).filter(s => s === 'done' || s === 'enhancing').length
 
@@ -496,9 +531,13 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect }) {
         </div>
         <span className="text-[10px] text-gray-400 shrink-0">{doneCount}/{total}</span>
       </div>
-      {arrived.map(section => (
-        <ChatSection key={section} section={section} data={sections[section]} status={sectionStatuses[section] || 'done'} selections={selections} onSelect={onSelect} />
-      ))}
+      {arrived.map(section => {
+        const isLoading = !sections[section] && section === 'itinerary' && itineraryGenerating
+        const status = isLoading ? 'generating' : (sectionStatuses[section] || 'done')
+        return (
+          <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} />
+        )
+      })}
     </div>
   )
 }
@@ -884,6 +923,41 @@ function SuggestionsBar({ chips, onSelect }) {
   )
 }
 
+// ─── Follow-up question chips ────────────────────────────────────────────────
+
+function parseFollowUps(text) {
+  if (!text) return { body: text, followUps: [] }
+  const lines = text.split('\n')
+  const followUps = []
+  let cutAt = lines.length
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim()
+    if (trimmed === '') continue
+    if (trimmed.startsWith('— ') || trimmed.startsWith('– ') || trimmed.startsWith('- ')) {
+      followUps.unshift(trimmed.replace(/^[—–-]\s+/, ''))
+      cutAt = i
+    } else {
+      break
+    }
+  }
+  const body = lines.slice(0, cutAt).join('\n').trimEnd()
+  return { body, followUps }
+}
+
+function FollowUpChips({ chips, onSelect }) {
+  if (!chips?.length) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {chips.map((chip, i) => (
+        <button key={i} onClick={() => onSelect(chip)}
+          className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full hover:bg-indigo-100 hover:border-indigo-400 transition-all active:scale-95 text-left">
+          {chip}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ─── Real-time budget tracker ────────────────────────────────────────────────
 
 function BudgetTracker({ selections, searchContext }) {
@@ -1127,6 +1201,28 @@ export default function ChatPage() {
             updated[assistantIdx] = { ...updated[assistantIdx], planning: true }
             return updated
           })
+        } else if (event.type === 'itinerary_generating') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], itineraryGenerating: true }
+            return updated
+          })
+        } else if (event.type === 'trip_map') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], tripMap: event }
+            return updated
+          })
+        } else if (event.type === 'comprehensive_itinerary') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = {
+              ...updated[assistantIdx],
+              comprehensiveItinerary: event.data,
+              streaming: false,
+            }
+            return updated
+          })
         } else if (event.type === 'section_result') {
           const isStatic = event.source === 'static'
           const hasError = event.data?.error
@@ -1273,21 +1369,39 @@ export default function ChatPage() {
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.map((msg, i) => (
               <React.Fragment key={i}>
-                <ChatBubble
-                  message={msg}
-                  userName={user?.name}
-                  selections={selections}
-                  onSelect={handleSelect}
-                  onRetry={msg.error ? () => {
-                    const prevUser = messages.slice(0, i).filter(m => m.role === 'user').at(-1)
-                    if (prevUser) sendMessage(prevUser.content)
-                  } : undefined}
-                />
-                {msg.role === 'assistant' && msg.suggestions?.length > 0 && !msg.streaming && (
-                  <div className="flex justify-start ml-11">
-                    <SuggestionsBar chips={msg.suggestions} onSelect={(chip) => sendMessage(chip)} />
-                  </div>
-                )}
+                {(() => {
+                  const isAssistant = msg.role === 'assistant'
+                  const { body, followUps } = isAssistant && !msg.streaming
+                    ? parseFollowUps(msg.content)
+                    : { body: msg.content, followUps: [] }
+                  const displayMsg = (isAssistant && followUps.length > 0)
+                    ? { ...msg, content: body }
+                    : msg
+                  return (
+                    <>
+                      <ChatBubble
+                        message={displayMsg}
+                        userName={user?.name}
+                        selections={selections}
+                        onSelect={handleSelect}
+                        onRetry={msg.error ? () => {
+                          const prevUser = messages.slice(0, i).filter(m => m.role === 'user').at(-1)
+                          if (prevUser) sendMessage(prevUser.content)
+                        } : undefined}
+                      />
+                      {isAssistant && !msg.streaming && (
+                        <div className="flex justify-start ml-11 flex-col gap-1.5">
+                          {followUps.length > 0 && (
+                            <FollowUpChips chips={followUps} onSelect={(chip) => sendMessage(chip)} />
+                          )}
+                          {msg.suggestions?.length > 0 && (
+                            <SuggestionsBar chips={msg.suggestions} onSelect={(chip) => sendMessage(chip)} />
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </React.Fragment>
             ))}
             <div ref={messagesEndRef} />
@@ -1354,12 +1468,497 @@ export default function ChatPage() {
   )
 }
 
+// ─── Trip Plan View helpers ───────────────────────────────────────────────────
+
+function FitBoundsUpdatable({ positions }) {
+  const map = useMap()
+  const prevCount = useRef(0)
+  useEffect(() => {
+    if (positions.length > 0 && positions.length !== prevCount.current) {
+      prevCount.current = positions.length
+      if (positions.length >= 2) map.fitBounds(positions, { padding: [50, 50], maxZoom: 9 })
+      else map.setView(positions[0], 10)
+    }
+  }, [positions, map])
+  return null
+}
+
+// ─── City color palette ───────────────────────────────────────────────────────
+const CITY_PALETTE = [
+  { border: 'border-l-sky-500',     bg: 'bg-sky-50',     badge: 'bg-sky-100 text-sky-800',       dot: 'bg-sky-500'     },
+  { border: 'border-l-violet-500',  bg: 'bg-violet-50',  badge: 'bg-violet-100 text-violet-800', dot: 'bg-violet-500'  },
+  { border: 'border-l-emerald-500', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
+  { border: 'border-l-amber-500',   bg: 'bg-amber-50',   badge: 'bg-amber-100 text-amber-800',   dot: 'bg-amber-500'   },
+  { border: 'border-l-rose-500',    bg: 'bg-rose-50',    badge: 'bg-rose-100 text-rose-800',     dot: 'bg-rose-500'    },
+  { border: 'border-l-indigo-500',  bg: 'bg-indigo-50',  badge: 'bg-indigo-100 text-indigo-800', dot: 'bg-indigo-500'  },
+]
+
+const SLOT_ICONS = { morning: '☀️', afternoon: '🌤️', evening: '🌙' }
+
+const PALETTE_HEX = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#6366f1']
+
+function makeNumberedIcon(num, color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;font-family:system-ui,sans-serif">${num}</div>`,
+    iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -15],
+  })
+}
+
+function makeOriginIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:18px;height:18px;border-radius:50%;background:#64748b;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -10],
+  })
+}
+
+function makeSmallDotIcon(color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:9px;height:9px;border-radius:50%;background:${color};border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.25);opacity:0.9"></div>`,
+    iconSize: [9, 9], iconAnchor: [4, 4], popupAnchor: [0, -6],
+  })
+}
+
+function fmtDate(d) {
+  if (!d) return ''
+  try {
+    const [y, m, day] = d.split('-').map(Number)
+    return new Date(y, m - 1, day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  } catch { return d }
+}
+
+function transportModeIcon(mode) {
+  const m = (mode || '').toLowerCase()
+  if (m.includes('train') || m.includes('rail') || m.includes('eurostar') || m.includes('tgv') || m.includes('shinkansen')) return '🚆'
+  if (m.includes('bus') || m.includes('coach')) return '🚌'
+  if (m.includes('ferry') || m.includes('boat') || m.includes('ship')) return '⛴️'
+  if (m.includes('car') || m.includes('drive') || m.includes('taxi')) return '🚗'
+  return '✈️'
+}
+
+function DayCardSkeleton() {
+  return (
+    <div className="border-l-4 border-l-gray-200 bg-white rounded-r-xl border border-l-0 border-gray-100 shadow-sm overflow-hidden animate-pulse">
+      <div className="px-4 py-3 bg-gray-50 flex items-center gap-3">
+        <div className="w-10 h-4 bg-gray-200 rounded" />
+        <div className="w-16 h-3.5 bg-gray-200 rounded" />
+        <div className="w-24 h-5 bg-gray-200 rounded-full" />
+        <div className="flex-1" />
+        <div className="w-14 h-5 bg-gray-200 rounded-full" />
+      </div>
+      <div className="px-4 py-3.5 space-y-3">
+        <div className="h-14 bg-violet-50 rounded-xl" />
+        <div className="space-y-3">
+          {[0,1,2].map(i => (
+            <div key={i} className="flex gap-3 items-start">
+              <div className="w-6 h-6 rounded-full bg-gray-100 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="w-5/6 h-4 bg-gray-100 rounded" />
+                <div className="w-3/6 h-3 bg-gray-100 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <div className="w-28 h-7 bg-gray-100 rounded-xl" />
+          <div className="w-24 h-7 bg-gray-100 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TripPlanView({ tripMap, itinerary, generating }) {
+  const [allOpen, setAllOpen] = useState(true)
+  const days = itinerary?.days || []
+  const summary = itinerary?.trip_summary
+  const intercity = itinerary?.intercity_travel || []
+  const hasError = itinerary?.error
+
+  // Merge city coords: static CITY_COORDS + LLM-provided trip_summary.cities[].lat/lng
+  const llmCityMap = {}
+  if (Array.isArray(summary?.cities)) {
+    summary.cities.forEach(c => {
+      const key = (c.name || c.city || '').toLowerCase()
+      if (key && c.lat && c.lng) llmCityMap[key] = c
+    })
+  }
+  const cities = (tripMap?.cities || []).map(c => {
+    const llm = llmCityMap[c.city?.toLowerCase()]
+    return { ...c, lat: c.lat ?? llm?.lat ?? null, lng: c.lng ?? llm?.lng ?? null }
+  })
+  const originLat = tripMap?.origin_lat ?? summary?.origin_lat ?? null
+  const originLng = tripMap?.origin_lng ?? summary?.origin_lng ?? null
+
+  // City color index
+  const cityIndex = {}
+  cities.forEach((c, i) => { cityIndex[c.city?.toLowerCase()] = i })
+  const getCityPalette = (name) => CITY_PALETTE[(cityIndex[name?.toLowerCase()] ?? 0) % CITY_PALETTE.length]
+  const getCityHex    = (name) => PALETTE_HEX[(cityIndex[name?.toLowerCase()] ?? 0) % PALETTE_HEX.length]
+
+  // Route polyline points
+  const routePoints = [
+    ...(originLat && originLng ? [[originLat, originLng]] : []),
+    ...cities.filter(c => c.lat && c.lng).map(c => [c.lat, c.lng]),
+  ]
+
+  // All map points for fit-bounds (route + place pins)
+  const placePins = []
+  days.forEach(day => {
+    const hex = getCityHex(day.city)
+    ;(day.places_to_see || []).forEach(p => {
+      if (p.lat && p.lng) placePins.push({ name: p.name, why: p.why, city: day.city, lat: p.lat, lng: p.lng, hex })
+    })
+    ;['morning', 'afternoon', 'evening'].forEach(tod => {
+      const slot = day[tod]
+      if (slot?.lat && slot?.lng && slot?.place) {
+        placePins.push({ name: slot.place, city: day.city, lat: slot.lat, lng: slot.lng, hex })
+      }
+    })
+  })
+  const allMapPoints = [...routePoints, ...placePins.map(p => [p.lat, p.lng])]
+
+  const numDays = days.length
+  const nonTravelDays = days.filter(d => !d.is_travel_day).length
+
+  return (
+    <div className="space-y-3 -mx-1">
+
+      {/* ── Map ─────────────────────────────────────────────────────────── */}
+      {routePoints.length > 0 && (
+        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
+          <MapContainer
+            center={routePoints[0]}
+            zoom={4}
+            style={{ height: '280px', width: '100%' }}
+            scrollWheelZoom={false}
+            zoomControl={true}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='© <a href="https://osm.org/copyright">OpenStreetMap</a>'
+            />
+            <FitBoundsUpdatable positions={allMapPoints.length >= 2 ? allMapPoints : routePoints} />
+
+            {/* Route polyline */}
+            {routePoints.length >= 2 && (
+              <Polyline positions={routePoints} color="#94a3b8" weight={5} opacity={0.35} />
+            )}
+            {routePoints.length >= 2 && (
+              <Polyline positions={routePoints} color="#0ea5e9" weight={3} opacity={0.9} />
+            )}
+
+            {/* Origin pin */}
+            {originLat && originLng && (
+              <Marker position={[originLat, originLng]} icon={makeOriginIcon()}>
+                <Popup><strong>{tripMap?.origin || 'Origin'}</strong><br/><span style={{color:'#64748b',fontSize:'11px'}}>Departure city</span></Popup>
+              </Marker>
+            )}
+
+            {/* Destination markers — numbered, color-coded */}
+            {cities.filter(c => c.lat && c.lng).map((c, i) => (
+              <Marker key={`city-${i}`} position={[c.lat, c.lng]} icon={makeNumberedIcon(i + 1, PALETTE_HEX[i % PALETTE_HEX.length])}>
+                <Popup>
+                  <strong>{c.city}</strong>
+                  {c.nights && <><br/><span style={{color:'#64748b',fontSize:'11px'}}>{c.nights} nights</span></>}
+                </Popup>
+              </Marker>
+            ))}
+
+            {/* Activity place pins — small dots */}
+            {placePins.map((p, i) => (
+              <Marker key={`place-${i}`} position={[p.lat, p.lng]} icon={makeSmallDotIcon(p.hex)}>
+                <Popup>
+                  <strong style={{fontSize:'12px'}}>{p.name}</strong><br/>
+                  {p.why && <span style={{color:'#4b5563',fontSize:'11px'}}>{p.why}</span>}
+                  {p.why && <br/>}
+                  <span style={{color:'#64748b',fontSize:'11px'}}>{p.city}</span>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+
+          {/* Map loading overlay while itinerary generates */}
+          {generating && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-[999]">
+              <div className="flex items-center gap-2 bg-white/90 border border-gray-200 rounded-full px-3 py-1.5 shadow text-xs text-teal-700 font-medium">
+                <Loader2 size={12} className="animate-spin" /> Plotting your journey…
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Trip summary bar ─────────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-700 text-white rounded-xl px-4 py-4">
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-1.5">
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-base leading-snug truncate">
+              {tripMap?.origin && `${tripMap.origin} → `}{cities.map(c => c.city).join(' → ')}
+            </p>
+            <p className="text-slate-400 text-xs mt-1">
+              {tripMap?.departure_date && fmtDate(tripMap.departure_date)}
+              {tripMap?.return_date && ` – ${fmtDate(tripMap.return_date)}`}
+              {summary?.total_nights > 0 && ` · ${summary.total_nights} nights`}
+              {numDays > 0 && ` · ${nonTravelDays} full days`}
+              {tripMap?.num_travelers > 1 && ` · ${tripMap.num_travelers} travelers`}
+            </p>
+          </div>
+          {summary?.total_cost_usd > 0 && (
+            <div className="text-right shrink-0">
+              <p className="font-extrabold text-teal-300 text-xl">${summary.total_cost_usd.toLocaleString()}</p>
+              <p className="text-slate-400 text-[10px] mt-0.5">est. per person</p>
+            </div>
+          )}
+        </div>
+        {cities.length > 1 && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-slate-700">
+            {cities.map((c, i) => (
+              <span key={i} className="flex items-center gap-1.5 text-xs">
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-white font-black text-[10px]"
+                  style={{ background: PALETTE_HEX[i % PALETTE_HEX.length], minWidth: '20px' }}>
+                  {i + 1}
+                </span>
+                <span className="text-slate-200 font-medium">{c.city}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Intercity transport ──────────────────────────────────────────── */}
+      {intercity.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-0.5">Getting there</p>
+          <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+            {intercity.map((leg, i) => (
+              <div key={i} className="shrink-0 bg-white border border-gray-200 rounded-xl p-3.5 min-w-[190px] shadow-sm">
+                <p className="text-xs font-bold text-gray-700 mb-2">
+                  {leg.from} <span className="text-gray-300 mx-1">→</span> {leg.to}
+                </p>
+                {(leg.options || []).slice(0, 2).map((opt, j) => (
+                  <div key={j} className="flex items-center gap-2 text-sm text-gray-700 mb-1.5 last:mb-0">
+                    <span className="shrink-0 text-base">{transportModeIcon(opt.mode)}</span>
+                    <span className="font-medium truncate flex-1 text-xs">{opt.mode}</span>
+                    {opt.duration && <span className="text-gray-400 shrink-0 text-xs">{opt.duration}</span>}
+                    {opt.price_usd > 0 && <span className="text-teal-600 font-bold shrink-0 text-xs">${opt.price_usd}</span>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Error state ──────────────────────────────────────────────────── */}
+      {hasError && (
+        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+          <AlertCircle size={14} className="shrink-0" />
+          <span>Could not build itinerary — please try again.</span>
+        </div>
+      )}
+
+      {/* ── Skeleton loading cards ────────────────────────────────────────── */}
+      {generating && [1, 2, 3].map(n => <DayCardSkeleton key={n} />)}
+
+      {/* ── Day cards header with expand/collapse ────────────────────────── */}
+      {days.length > 0 && (
+        <div className="flex items-center justify-between px-0.5">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            {numDays}-day itinerary
+          </p>
+          <button
+            onClick={() => setAllOpen(v => !v)}
+            className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-1"
+          >
+            {allOpen ? <><ChevronUp size={10} /> Collapse all</> : <><ChevronDown size={10} /> Expand all</>}
+          </button>
+        </div>
+      )}
+
+      {/* ── Day cards ────────────────────────────────────────────────────── */}
+      {days.map(day => (
+        <DayCard
+          key={day.day_number}
+          day={day}
+          palette={getCityPalette(day.city)}
+          isTravel={day.is_travel_day}
+          forceOpen={allOpen}
+        />
+      ))}
+    </div>
+  )
+}
+
+const TIER_BADGE = {
+  budget:      'bg-green-100 text-green-700 border-green-200',
+  'mid-range': 'bg-blue-100 text-blue-700 border-blue-200',
+  premium:     'bg-violet-100 text-violet-700 border-violet-200',
+  luxury:      'bg-amber-100 text-amber-700 border-amber-200',
+}
+
+const MORE_PLACE_ICONS = {
+  museum: '🏛️', landmark: '🗺️', park: '🌿', garden: '🌸',
+  market: '🛍️', beach: '🏖️', temple: '⛩️', gallery: '🖼️',
+  castle: '🏰', palace: '🏯', church: '⛪', viewpoint: '🔭',
+  waterfall: '💧', mountain: '⛰️', island: '🏝️', village: '🏘️',
+  ruins: '🏺', fort: '🏰', lake: '🌊', cave: '🕳️', default: '📍',
+}
+
+function DayCard({ day, palette, isTravel, forceOpen }) {
+  const [open, setOpen] = useState(true)
+  useEffect(() => { setOpen(forceOpen) }, [forceOpen])
+
+  const travelBorder = 'border-l-amber-400'
+
+  return (
+    <div className={`border-l-4 ${isTravel ? travelBorder : palette.border} rounded-r-xl border border-l-0 border-gray-100 shadow-sm overflow-hidden bg-white`}>
+
+      {/* Header */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left ${isTravel ? 'bg-amber-50' : palette.bg} hover:brightness-[0.96] transition-all`}
+      >
+        <div className="flex-1 flex items-center gap-2 flex-wrap min-w-0">
+          <span className="text-sm font-black text-gray-800 shrink-0">Day {day.day_number}</span>
+          {day.date && <span className="text-xs text-gray-400 shrink-0">{fmtDate(day.date)}</span>}
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${isTravel ? 'bg-amber-100 text-amber-700' : palette.badge}`}>
+            {isTravel ? '✈️ Travel' : `${day.city}${day.country && !isTravel ? `, ${day.country}` : ''}`}
+          </span>
+          {day.theme && (
+            <span className="text-xs text-gray-400 italic truncate hidden sm:inline">{day.theme}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {day.daily_cost_usd > 0 && (
+            <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+              ${day.daily_cost_usd}
+            </span>
+          )}
+          {open ? <ChevronUp size={13} className="text-gray-400" /> : <ChevronDown size={13} className="text-gray-400" />}
+        </div>
+      </button>
+
+      {/* Body */}
+      {open && (
+        <div className="px-4 py-3.5 space-y-3.5">
+
+          {/* Hotel */}
+          {day.hotel && (
+            <div className="rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 p-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+                  <Hotel size={16} className="text-violet-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                    <span className="font-bold text-sm text-violet-900">{day.hotel.name}</span>
+                    {day.hotel.stars > 0 && (
+                      <span className="text-amber-400 text-sm">{'★'.repeat(Math.min(5, Math.round(day.hotel.stars)))}</span>
+                    )}
+                    {day.hotel.tier && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${TIER_BADGE[day.hotel.tier] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                        {day.hotel.tier}
+                      </span>
+                    )}
+                  </div>
+                  {day.hotel.neighbourhood && (
+                    <p className="text-xs font-medium text-violet-600 mt-0.5">{day.hotel.neighbourhood}</p>
+                  )}
+                  {day.hotel.highlight && (
+                    <p className="text-xs text-gray-500 mt-1 italic">"{day.hotel.highlight}"</p>
+                  )}
+                </div>
+                {day.hotel.price_per_night_usd > 0 && (
+                  <div className="text-right shrink-0">
+                    <p className="text-base font-extrabold text-violet-700">${day.hotel.price_per_night_usd}</p>
+                    <p className="text-[10px] text-violet-400">/night</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="space-y-3">
+            {['morning', 'afternoon', 'evening'].map(tod => {
+              const slot = day[tod]
+              if (!slot?.activity) return null
+              return (
+                <div key={tod} className="flex gap-3 items-start">
+                  <span className="shrink-0 text-base w-5 text-center leading-5 mt-0.5">{SLOT_ICONS[tod]}</span>
+                  <div className="flex-1 min-w-0 pb-2.5 border-b border-gray-50 last:border-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 leading-snug">{slot.activity}</p>
+                        {slot.place && slot.place !== slot.activity && (
+                          <p className="text-xs text-gray-400 mt-0.5">{slot.place}</p>
+                        )}
+                      </div>
+                      {slot.cost_usd > 0 && (
+                        <span className="shrink-0 text-xs font-semibold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full whitespace-nowrap">${slot.cost_usd}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Must See */}
+          {day.places_to_see?.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Must See</p>
+              <div className="flex flex-wrap gap-1.5">
+                {day.places_to_see.map((p, i) => (
+                  <div key={i} title={p.why || p.name}
+                    className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 cursor-default hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all">
+                    <span className="text-sm">{MORE_PLACE_ICONS[p.category?.toLowerCase()] || MORE_PLACE_ICONS.default}</span>
+                    <span className="text-xs font-semibold text-gray-700">{p.name}</span>
+                    {p.entry_usd === 0
+                      ? <span className="text-[10px] text-green-600 font-bold">Free</span>
+                      : p.entry_usd > 0
+                        ? <span className="text-[10px] text-teal-600 font-semibold">${p.entry_usd}</span>
+                        : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dining */}
+          {day.dining?.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dining</p>
+              <div className="flex flex-wrap gap-1.5">
+                {day.dining.map((r, i) => (
+                  <div key={i} className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-xl px-2.5 py-1.5 hover:bg-orange-100 transition-colors cursor-default">
+                    <span className="text-sm">🍽️</span>
+                    <span className="text-xs font-bold text-gray-800">{r.name}</span>
+                    {r.cuisine && <>
+                      <span className="text-[10px] text-gray-300">·</span>
+                      <span className="text-xs text-gray-500">{r.cuisine}</span>
+                    </>}
+                    {r.price_range && <span className="text-xs font-bold text-orange-500 ml-0.5">{r.price_range}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
 function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
-  const hasSections = message.planning || Object.keys(message.sections || {}).length > 0
+  const hasSections = message.planning || message.tripMap || Object.keys(message.sections || {}).length > 0
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -1377,18 +1976,28 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : hasSections ? (
           <div>
-            {message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (
-              <div className="flex items-center gap-2 text-sm text-teal-700 mb-2">
-                <Loader2 size={14} className="animate-spin" /> Searching for your trip details...
-              </div>
+            {/* New comprehensive plan view */}
+            {message.tripMap && (
+              <TripPlanView
+                tripMap={message.tripMap}
+                itinerary={message.comprehensiveItinerary}
+                generating={message.itineraryGenerating && !message.comprehensiveItinerary}
+              />
             )}
-            {Object.keys(message.sections || {}).length > 0 && (
+            {/* Fallback: old section cards (for partial/non-itinerary planning responses) */}
+            {!message.tripMap && Object.keys(message.sections || {}).length > 0 && (
               <PlanningMessage
                 sections={message.sections}
                 sectionStatuses={message.sectionStatuses || {}}
                 selections={selections}
                 onSelect={onSelect}
+                itineraryGenerating={message.itineraryGenerating}
               />
+            )}
+            {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (
+              <div className="flex items-center gap-2 text-sm text-teal-700 mb-2">
+                <Loader2 size={14} className="animate-spin" /> Planning your trip...
+              </div>
             )}
             {message.content && <div className="mt-3"><MarkdownContent text={message.content} /></div>}
           </div>

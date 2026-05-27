@@ -42,6 +42,11 @@ class TravelSearchRequest(BaseModel):
     )
     budget_usd: float | None = Field(None, description="Total trip budget in USD")
     num_travelers: int = Field(1, ge=1, le=20, description="Number of travelers")
+    destinations: list[str] | None = Field(
+        None,
+        description="Ordered city list for multi-city trips, e.g. ['Paris', 'Rome', 'Barcelona']. "
+        "destination (above) is always the primary/first city.",
+    )
 
     # Auto-set by validator — not in the request body, not serialised to JSON
     origin_iata: str | None = Field(None, exclude=True)

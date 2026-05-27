@@ -10,7 +10,11 @@ class ItineraryAgent(BaseAgent):
         super().__init__(load_agent_definition(agents_dir, "itinerary"))
 
     async def run(
-        self, request: TravelSearchRequest, activities: dict = None, hotels: dict = None
+        self,
+        request: TravelSearchRequest,
+        activities: dict = None,
+        hotels: dict = None,
+        destinations: list[str] | None = None,
     ) -> dict:
         nights = (
             (request.return_date - request.departure_date).days
@@ -40,6 +44,51 @@ class ItineraryAgent(BaseAgent):
         if hotels and hotels.get("results"):
             hotel_name = hotels["results"][0].get("name", "your hotel")
 
+        is_multi = bool(destinations and len(destinations) > 1)
+
+        if is_multi:
+            n = len(destinations)
+            base = max(2, nights // n)
+            extra = nights - base * n
+            city_nights = [base] * n
+            for i in range(extra):
+                city_nights[(n // 2 + i) % n] += 1
+
+            city_plan_lines = []
+            current_day = 1
+            for city, cn in zip(destinations, city_nights):
+                end_day = current_day + cn
+                city_plan_lines.append(
+                    f"- {city}: Days {current_day}–{end_day - 1} ({cn} nights)"
+                )
+                current_day = end_day
+
+            multi_city_block = (
+                "\n\nThis is a MULTI-CITY trip."
+                "\n\nSTEP 1 — OPTIMIZE CITY ORDER FIRST:"
+                f"\nThe requested cities are: {', '.join(destinations)}."
+                "\nBefore building the itinerary, reorder these cities to minimize total travel "
+                "distance and cost (avoid backtracking across continents or long detours). "
+                "Use geographic proximity — neighbouring cities should be visited consecutively. "
+                "Apply the optimized order to all day assignments below. "
+                "If the first city was specified as the starting point by the user, keep it first.\n"
+                "\nSTEP 2 — CITY ALLOCATION (adjust days to match your optimized order):\n"
+                + "\n".join(city_plan_lines)
+                + "\n\nFor each day:\n"
+                '- Add a \'city\' field to the day object (e.g. "city": "Paris")\n'
+                "- Add a 'city' field to each slot object matching the day's city\n"
+                "- Between cities, insert a travel day:\n"
+                "    morning: 'Travel from [City A] to [City B]' (train/flight — use the cheapest realistic option)\n"
+                "    afternoon: 'Arrive [City B], check in, light walk'\n"
+                "    evening: 'First dinner in [City B] — [local dish]'\n"
+                "- Keep all activities geographically within each day's city\n"
+                "- Add lat/lng coordinates (decimal degrees) to every slot\n"
+            )
+        else:
+            multi_city_block = (
+                "\nAdd lat/lng coordinates (decimal degrees) to every slot.\n"
+            )
+
         prompt = (
             f"Create a day-by-day travel itinerary for {request.destination} (identify the country).\n"
             f"Traveling from: {request.origin}\n"
@@ -54,5 +103,6 @@ class ItineraryAgent(BaseAgent):
             f"Include daily_estimated_cost_usd and total_estimated_cost_usd.\n"
             f"Group geographically close activities on the same day.\n"
             f"Include meal costs (~$50/person/day). Costs are PER PERSON."
+            + multi_city_block
         )
         return await self.execute(prompt)
