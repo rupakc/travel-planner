@@ -103,11 +103,11 @@ Path to the directory containing `.agents/*.md` definition files. In Docker imag
 | | |
 |---|---|
 | **Required** | No |
-| **Default** | `http://localhost:5173` |
-| **Example** | `https://travel-planner.example.com,http://localhost:5173` |
+| **Default** | `http://localhost:5174` |
+| **Example** | `https://travel-planner.example.com,http://localhost:5174` |
 | **What breaks** | Browser blocks API requests from your frontend origin |
 
-Comma-separated list of allowed CORS origins. In production, set this to your frontend's public URL. In Docker Compose local development, the default covers the Vite dev server. In Cloud Run, Terraform sets this to the frontend Cloud Run service URL.
+Comma-separated list of allowed CORS origins. In production, set this to your frontend's public URL. In local development, the default covers the Vite dev server (port 5174). In Cloud Run, Terraform sets this to the frontend Cloud Run service URL.
 
 ---
 
@@ -130,18 +130,6 @@ Controls whether `structlog` outputs JSON (for log aggregation in Cloud Run / Cl
 
 These are used if you want the agents to perform live web searches to supplement their training data. If not set, agents rely solely on the model's knowledge.
 
-### `SERPAPI_KEY`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | None |
-| **Example** | `abc123...` |
-
-API key for SerpAPI (Google Search). If provided, relevant agents use this for live search results. Get one at [serpapi.com](https://serpapi.com).
-
----
-
 ### `SERPER_KEY`
 
 | | |
@@ -150,9 +138,9 @@ API key for SerpAPI (Google Search). If provided, relevant agents use this for l
 | **Default** | None |
 | **Example** | `abc123...` |
 
-API key for Serper.dev (alternative Google Search API). If provided alongside or instead of `SERPAPI_KEY`, agents can use this for live searches. Get one at [serper.dev](https://serper.dev).
+API key for Serper.dev (Google Search API). Used by the PlacesAgent to fetch real-time place data that Claude then synthesises into the `places_to_see` section. Get one at [serper.dev](https://serper.dev).
 
-If neither search key is provided, the application falls back to DuckDuckGo search (no key required) for any web search operations.
+If not provided, the application falls back to DuckDuckGo search (no key required) for any web search operations.
 
 ---
 
@@ -169,7 +157,7 @@ DATA_DIR=./data
 AGENTS_DIR=../.agents
 
 # Network
-CORS_ORIGINS=http://localhost:5173
+CORS_ORIGINS=http://localhost:5174
 
 # Logging
 LOG_FORMAT=console

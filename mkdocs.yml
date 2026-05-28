@@ -1,6 +1,6 @@
 site_name: Travel Planner — Developer Docs
-site_description: AI-powered travel planning — developer reference
-repo_url: https://github.com/your-org/travel-planner
+site_description: AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more
+repo_url: https://github.com/rupakc/travel-planner
 
 theme:
   name: material
@@ -25,8 +25,11 @@ plugins:
 
 nav:
   - Home: index.md
+  - Setup and Installation: Setup-and-Installation.md
+  - Configuration: Configuration.md
   - Architecture: architecture.md
   - Agent System: agents.md
+  - Frontend: Frontend.md
   - API Reference: api.md
   - Deployment: deployment.md
   - Contributing: contributing.md

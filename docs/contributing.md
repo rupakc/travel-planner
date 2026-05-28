@@ -46,11 +46,23 @@ cd frontend && npx playwright test
 docker compose down
 ```
 
-Coverage gate: 70% minimum on backend.
+Coverage gate: 70% minimum on backend (`--cov-fail-under=70`). There is no enforced gate for frontend unit tests.
 
 ## Adding Agents
 
 See [Agent System](agents.md) for instructions on adding new specialist agents.
+
+## CI Pipeline
+
+Each push runs the following stages in order:
+
+1. **Lint** — `ruff check` (backend) and `eslint` (frontend)
+2. **Security scan** — `bandit` on the backend source tree
+3. **Test** — `pytest --cov` with the 70% gate (backend) + `vitest run` (frontend)
+4. **Build** — Docker image build for backend and Vite production build for frontend
+5. **Deploy** — automatic deploy to Cloud Run on merge to `main`
+
+All five stages must pass before a PR can be merged.
 
 ## Pull Request Flow
 

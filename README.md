@@ -57,6 +57,67 @@ Log in with the credentials you were given, or contact the admin to create an ac
 
 ---
 
+## How it works
+
+When you submit a search, the app runs three phases back-to-back — you start seeing results within a second and they keep arriving for the next 15–30 seconds:
+
+```
+You submit: destination, dates, budget, nationality, interests
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 0 — Instant (< 1 second)                              │
+│                                                             │
+│  Pre-computed lookup tables — no AI needed:                 │
+│  ├─ Visa category for your nationality                      │
+│  ├─ SIM card options for the destination                    │
+│  ├─ Country travel tips                                     │
+│  ├─ Emergency numbers (police, ambulance, fire)             │
+│  ├─ Getting around basics                                   │
+│  └─ Travel Confidence Score (safety, visa, budget, infra)   │
+│                                                             │
+│  These appear on screen immediately while agents load.      │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼ (Phase 0 already visible in browser)
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 1 — 11 AI agents running in parallel (8–15 seconds)  │
+│                                                             │
+│  Each agent runs at the same time and streams its result    │
+│  the moment it finishes — you don't wait for all 11:        │
+│                                                             │
+│  ✈  FlightsAgent      🏨 HotelsAgent                       │
+│  🎯 ActivitiesAgent   📍 PlacesAgent                       │
+│  📄 VisaAgent         📱 SimAgent                          │
+│  💡 TipsAgent         💱 ForexAgent                        │
+│  🚌 GettingAroundAgent 🌤 WeatherAgent                     │
+│  🛡  EmergencyCardAgent                                     │
+│                                                             │
+│  + 2 deferred agents (start as soon as their inputs land):  │
+│  💰 PricingAdvisorAgent — triggers when ≥ 3 flight prices   │
+│  🎒 PackingListAgent    — triggers when activities + weather │
+│                                                             │
+│  Static-backed agents (visa, sim, tips, emergency, etc.):   │
+│  if AI fails → Phase 0 static data stays on screen         │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼ (Phase 1 results streaming throughout)
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 2 — Itinerary synthesis (5–15 seconds)               │
+│                                                             │
+│  ItineraryAgent reads hotels + ranked activities and        │
+│  builds a structured day-by-day plan. Starts as soon as     │
+│  both inputs are ready. 60s timeout with template fallback. │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+  Complete trip plan in the browser
+```
+
+**Why results appear so fast:** Phase 0 uses lookup tables (no AI calls) and appears in under a second. Phase 1 agents all run simultaneously — the page fills in section by section as each agent finishes, rather than making you wait for the slowest one. This is done via Server-Sent Events (SSE), with a dedicated Web Worker parsing the stream off the main thread so the UI stays smooth throughout.
+
+---
+
 ## For developers
 
 ### Quick start (local)
