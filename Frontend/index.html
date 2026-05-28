@@ -543,42 +543,44 @@
 
 
 <h1 id="frontend">Frontend</h1>
-<p>The Travel Planner frontend is a React 18 single-page application built with Vite 6 and styled with Tailwind CSS 4. This page covers the application structure, state management, the Web Worker SSE approach, and the key pages.</p>
+<p>The Travel Planner frontend is a React 18 single-page application built with Vite 6 and styled with Tailwind CSS 4.</p>
 <hr />
 <h2 id="project-structure">Project structure</h2>
-<pre><code>frontend/
-├── src/
-│   ├── pages/
-│   │   ├── LoginPage.jsx
-│   │   ├── ChangePasswordPage.jsx
-│   │   ├── SearchPage.jsx
-│   │   ├── ResultsPage.jsx
-│   │   ├── ChatPage.jsx
-│   │   ├── PlansPage.jsx
-│   │   └── PreferencesPage.jsx
-│   ├── components/
-│   │   ├── Layout.jsx
-│   │   ├── Navbar.jsx
-│   │   ├── SearchForm.jsx
-│   │   ├── ResultsSection.jsx
-│   │   ├── SectionCard.jsx
-│   │   └── ItineraryView.jsx
-│   ├── context/
-│   │   ├── AuthContext.jsx
-│   │   └── SearchDataContext.jsx
-│   ├── workers/
-│   │   ├── sseWorker.js
-│   │   └── chatWorker.js
-│   ├── services/
-│   │   └── api.js
-│   └── main.jsx
-├── index.html
-├── vite.config.js
-└── tailwind.config.js
+<pre><code>frontend/src/
+├── pages/
+│   ├── SearchPage.jsx          — trip search form + &quot;Surprise Me&quot; discovery mode
+│   ├── ResultsPage.jsx         — streaming results, 13 sections, My Plan drawer
+│   ├── ChatPage.jsx            — conversational AI assistant + auto-planning
+│   ├── PreferencesPage.jsx     — saved nationality, interests, budget
+│   ├── LoginPage.jsx
+│   └── ChangePasswordPage.jsx
+├── components/
+│   ├── ui/
+│   │   ├── NavBar.jsx          — top navigation with active tab highlight
+│   │   ├── AirportSearch.jsx   — typeahead airport/city input
+│   │   ├── NationalitySearch.jsx
+│   │   └── TagInput.jsx
+│   ├── TimelineView.jsx        — itinerary timeline grid (day cards, morning/afternoon/evening)
+│   ├── TripMap.jsx             — Leaflet map for itinerary activity stops
+│   ├── PlanViewModal.jsx       — modal for viewing/editing a saved plan
+│   └── FeedbackWidget.jsx      — floating feedback button on all pages
+├── context/
+│   ├── AuthContext.jsx         — auth state, JWT token, user preferences sync
+│   └── SearchDataContext.jsx   — search form state, streaming results, SSE worker
+├── workers/
+│   ├── sseWorker.js            — SSE parser for /api/search stream (off main thread)
+│   └── chatWorker.js           — SSE parser for /api/chat stream
+├── services/
+│   └── api.js                  — Axios client + all API call functions
+├── utils/
+│   ├── planHelpers.js          — plan name generation, cost calculation, selection counting
+│   └── analytics.js            — frontend event tracking
+└── data/
+    └── airports.js             — static airport/city data for typeahead
 </code></pre>
 <hr />
-<h2 id="routing">Routing</h2>
-<p>React Router 7 handles client-side routing. Routes are defined in <code>main.jsx</code>. Protected routes check <code>AuthContext</code> and redirect to <code>/login</code> if the user is not authenticated.</p>
+<h2 id="routing-and-tab-persistence">Routing and tab persistence</h2>
+<p>React Router 7 handles client-side routing. Routes are defined in <code>App.jsx</code>.</p>
 <table>
 <thead>
 <tr>
@@ -600,12 +602,7 @@
 </tr>
 <tr>
 <td><code>/</code></td>
-<td>SearchPage</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td><code>/results</code></td>
-<td>ResultsPage</td>
+<td>SearchPage / ResultsPage</td>
 <td>Yes</td>
 </tr>
 <tr>
@@ -614,115 +611,132 @@
 <td>Yes</td>
 </tr>
 <tr>
-<td><code>/plans</code></td>
-<td>PlansPage</td>
-<td>Yes</td>
-</tr>
-<tr>
 <td><code>/preferences</code></td>
 <td>PreferencesPage</td>
 <td>Yes</td>
 </tr>
+<tr>
+<td><code>/admin</code></td>
+<td>AdminPage</td>
+<td>Yes (admin)</td>
+</tr>
 </tbody>
 </table>
-<p>After login, if <code>requires_password_change</code> is <code>true</code>, the router immediately pushes to <code>/change-password</code> and blocks all other routes until the password is changed.</p>
+<p><strong>Important</strong>: <code>SearchTab</code> (SearchPage + ResultsPage) and <code>ChatPage</code> are <strong>always mounted</strong> in the DOM, shown or hidden with <code>display: none / block</code>. This means:</p>
+<ul>
+<li>Navigating away from the Results page never loses your streaming results</li>
+<li>Navigating away from Chat never loses your conversation or interrupts a response in progress</li>
+<li>When you return to either tab, you land exactly where you left off</li>
+</ul>
+<p><code>PreferencesPage</code> and <code>AdminPage</code> are conditionally rendered (they reset cleanly on each visit, which is the desired behaviour).</p>
 <hr />
 <h2 id="authcontext">AuthContext</h2>
-<p><code>AuthContext</code> (<code>src/context/AuthContext.jsx</code>) is a React context that wraps the entire application. It manages:</p>
+<p><code>AuthContext</code> (<code>src/context/AuthContext.jsx</code>) wraps the whole app and manages:</p>
 <ul>
-<li><strong>Authentication state</strong> — whether a user is logged in, their JWT token, username, and role</li>
-<li><strong>Token storage</strong> — the JWT is stored in <code>localStorage</code> and restored on page load</li>
-<li><strong>Auto-logout</strong> — on 401 responses from the API, <code>AuthContext</code> clears the token and redirects to <code>/login</code></li>
-<li><strong>User preferences</strong> — fetches and caches preferences from <code>/api/preferences</code> on login so they are available across pages without repeated API calls</li>
+<li>Whether the user is logged in, their JWT token, username, and role</li>
+<li>Token storage in <code>localStorage</code> — restored on page reload</li>
+<li>Auto-logout on 401 responses</li>
+<li>Two-way preference sync: preferences are fetched on login; search form values are synced back to preferences on submit</li>
 </ul>
-<p>Key values exposed by the context:</p>
-<pre><code class="language-jsx">const { user, token, isAuthenticated, login, logout, preferences, updatePreferences } = useAuth();
+<pre><code class="language-jsx">const { user, token, isAuthenticated, login, logout, preferences } = useAuth()
 </code></pre>
 <hr />
 <h2 id="searchdatacontext">SearchDataContext</h2>
-<p><code>SearchDataContext</code> (<code>src/context/SearchDataContext.jsx</code>) manages the state shared between the search form and the results page. Without this context, navigating from search to results would lose the in-progress streaming state.</p>
-<p>It holds:</p>
+<p><code>SearchDataContext</code> (<code>src/context/SearchDataContext.jsx</code>) manages shared state between the search form and the results page:</p>
 <ul>
-<li><strong>Search form values</strong> — destination, dates, budget, nationality, interests (persisted across navigation)</li>
-<li><strong>Streaming results</strong> — a <code>Map</code> of section name → content, updated as SSE events arrive</li>
-<li><strong>Streaming status</strong> — <code>idle</code>, <code>streaming</code>, <code>complete</code>, <code>error</code></li>
-<li><strong>Worker reference</strong> — a ref to the active <code>sseWorker.js</code> instance</li>
+<li>Search form values (destination, dates, budget, nationality, interests)</li>
+<li>Whether there are current search results (<code>hasSearchResults</code>) — controls which tab is visible</li>
+<li>The active SSE Web Worker reference</li>
 </ul>
-<p>When the user submits the search form, <code>SearchDataContext</code> starts the Web Worker, which opens the SSE connection and posts parsed events back. As events arrive, the context updates the results map and React re-renders only the affected section card.</p>
-<pre><code class="language-jsx">const { searchParams, results, status, submitSearch, clearResults } = useSearchData();
-</code></pre>
 <hr />
-<h2 id="web-worker-sse-approach">Web Worker SSE approach</h2>
-<h3 id="why-a-web-worker">Why a Web Worker?</h3>
-<p>The SSE stream from a travel search runs for 25–30 seconds and emits 10–15 events of varying size. Parsing each event on the main thread — even though parsing itself is fast — risks being blocked by a React re-render cycle and can cause noticeable jank on lower-end devices. More importantly, if the main thread is busy (e.g. animations, user interactions), it may delay reading from the SSE buffer, which can cause events to pile up.</p>
-<p>The Web Worker runs on a separate OS thread. It opens the SSE connection, reads and parses events, and posts structured messages to the main thread. The main thread only handles React state updates, which is its proper job.</p>
-<h3 id="how-it-works">How it works</h3>
-<p><code>sseWorker.js</code> (loaded via <code>new Worker(new URL('./workers/sseWorker.js', import.meta.url))</code>):</p>
-<pre><code class="language-javascript">// In sseWorker.js
-self.onmessage = function(e) {
-  const { url, token } = e.data;
-  const eventSource = new EventSource(url + '?token=' + token);
-
-  eventSource.onmessage = function(event) {
-    if (event.data === '[DONE]') {
-      self.postMessage({ type: 'done' });
-      eventSource.close();
-      return;
-    }
-    const parsed = JSON.parse(event.data);
-    self.postMessage({ type: 'section', section: parsed.section, content: parsed.content });
-  };
-
-  eventSource.onerror = function() {
-    self.postMessage({ type: 'error', message: 'SSE connection failed' });
-    eventSource.close();
-  };
-};
-</code></pre>
-<p>In <code>SearchDataContext</code>, the main thread listens:</p>
-<pre><code class="language-javascript">worker.onmessage = (e) =&gt; {
-  if (e.data.type === 'section') {
-    setResults(prev =&gt; new Map(prev).set(e.data.section, e.data.content));
-  } else if (e.data.type === 'done') {
-    setStatus('complete');
-  }
-};
-</code></pre>
-<p>The same pattern is used in <code>chatWorker.js</code> for the chat SSE stream.</p>
+<h2 id="web-worker-sse">Web Worker SSE</h2>
+<p>Both the search stream and the chat stream are parsed off the main thread by Web Workers.</p>
+<p><code>sseWorker.js</code> opens a <code>fetch</code> POST to <code>/api/search</code>, reads the response body as a stream, and posts each parsed SSE event back to the main thread. The main thread handles only React state updates. This keeps the UI smooth even when large JSON payloads (activities, itinerary) arrive mid-stream.</p>
+<p>The same pattern applies to <code>chatWorker.js</code> for <code>/api/chat</code>.</p>
 <hr />
 <h2 id="key-pages">Key pages</h2>
 <h3 id="searchpage">SearchPage</h3>
-<p>The landing page after login. Contains <code>SearchForm</code>, which collects destination, dates, nationality, budget, and interests. Pre-populates from user preferences if available. On submit, calls <code>SearchDataContext.submitSearch()</code> and navigates to <code>/results</code>.</p>
+<p>Two modes controlled by a toggle at the top of the form:</p>
+<p><strong>Known destination mode (default)</strong>
+Standard search form: destination (with airport typeahead), departure date, return date, nationality, interests, budget, and number of travellers. Pre-fills from saved preferences. On submit, calls the SSE search stream and switches to the results view.</p>
+<p><strong>Discover / Surprise Me mode</strong>
+For users without a specific destination. Form collects origin, dates, nationality, budget, and interests. Calls <code>POST /api/discover</code>. Returns 5 destination cards, each showing estimated cost range, typical weather, visa status (with a "Verify" badge for unconfirmed entries), approximate flight time from origin, and the specific reasons this destination suits the user's interests. "Plan this trip" pre-fills the destination in the standard form and switches back to Known mode.</p>
+<hr />
 <h3 id="resultspage">ResultsPage</h3>
-<p>Renders the streaming trip plan. Sections appear as they arrive — the page does not wait for all sections before showing anything. Each section is wrapped in <code>SectionCard</code>, which handles its own loading/error/content states. The itinerary (Phase 2) renders last, after all Phase 1 sections are visible.</p>
-<p>A "Save Plan" button appears when streaming is complete, which calls <code>POST /api/plans</code> and confirms with a toast notification.</p>
+<p>The main results view. Receives streaming events from <code>sseWorker.js</code> via <code>SearchDataContext</code> and renders sections as they arrive.</p>
+<p><strong>13 result sections</strong> (in display order):
+1. Flights
+2. Weather
+3. Hotels
+4. Activities
+5. Places to See
+6. Visa
+7. SIM Cards
+8. Travel Tips
+9. Safety &amp; Emergency Card
+10. Getting Around
+11. Forex
+12. Itinerary
+13. Packing List</p>
+<p><strong>Additional UI elements:</strong></p>
+<ul>
+<li>
+<p><strong>Travel Confidence Score banner</strong> — appears instantly at the top (Phase 0 static data). Shows an overall score (green / amber / red) with five sub-scores: visa ease, safety, English friendliness, cost vs budget, and tourist infrastructure. Expandable to show per-score notes.</p>
+</li>
+<li>
+<p><strong>Flight Price Advisor banner</strong> — appears inside the Flights section once the pricing agent has run. Shows whether current prices are above or below typical, a booking recommendation, and an SVG sparkline of the historical price curve.</p>
+</li>
+<li>
+<p><strong>Badge / chip strip</strong> — a row of chips below the page header linking to each section. Wraps across multiple rows as needed. Each chip shows the section status (loading / enhancing / done / error).</p>
+</li>
+<li>
+<p><strong>View switcher (Cards / Timeline)</strong> — appears once the itinerary loads. Cards view shows each section as a card. Timeline view renders the itinerary as an interactive day grid: each day is a collapsible card with morning / afternoon / evening columns, a weather header, expandable activity cards, and a daily spend bar.</p>
+</li>
+<li>
+<p><strong>My Plan drawer</strong> — a slide-in panel for selecting and saving trip components. Supports flight, hotel, activities, places, SIM, tips, transport options, itinerary slots, and packing list. Shows a live cost total. Plans can be named, saved, and reloaded.</p>
+</li>
+</ul>
+<hr />
 <h3 id="chatpage">ChatPage</h3>
-<p>A chat interface with message history. The user types follow-up questions; the ChatAgent streams responses. Each response token appears as it is generated, similar to ChatGPT. Trip context (destination, dates) is included in each request so the agent does not need the user to repeat it.</p>
+<p>A persistent conversational interface. Survives tab switches (the component stays mounted — see Routing above). Key features:</p>
+<ul>
+<li><strong>Streaming responses</strong> — each token appears as it is generated</li>
+<li><strong>Session memory</strong> — conversation history is maintained in React state and backed up to <code>localStorage</code> every time a message completes</li>
+<li><strong>Auto-planning</strong> — when the message contains a trip-planning request, the chat agent triggers the full search pipeline and renders structured section cards inline</li>
+<li><strong>Interactive itinerary map</strong> — when an itinerary is generated, a Leaflet map renders the destination city markers and place pins. Map focuses on the destination area, not the origin (no intercontinental zoom-out)</li>
+<li><strong>My Plan drawer</strong> — same plan management as ResultsPage</li>
+</ul>
+<hr />
+<h3 id="preferencespage">PreferencesPage</h3>
+<p>Saves the user's default nationality, interests, budget, and travel documents (residence permits, existing visas). These are synced two-ways: the Search form reads them on load, and the Search form writes back to them on submit.</p>
+<hr />
+<h2 id="tripmap-component">TripMap component</h2>
+<p><code>TripMap.jsx</code> is a shared Leaflet map component. It takes <code>days</code> (from the itinerary) and renders:</p>
+<ul>
+<li>Numbered, color-coded markers for each activity stop</li>
+<li>A dashed teal polyline connecting the stops in visit order (nearest-neighbour routing within each day)</li>
+<li>Popup details for each stop (activity name, location, day, time of day)</li>
+<li>Automatic <code>fitBounds</code> on mount, centred on the activity area</li>
+</ul>
+<p>Used by ResultsPage's Itinerary section. ChatPage has its own inline map (for city-level + place-pin rendering) but uses the same visual style (22px markers, teal dashed polyline, 300px height, same <code>fitBounds</code> padding).</p>
 <hr />
 <h2 id="vite-dev-proxy">Vite dev proxy</h2>
-<p>In development, the Vite dev server proxies <code>/api/*</code> to <code>http://localhost:8001</code>. This avoids CORS issues during development and mirrors the production setup where the frontend nginx container proxies API requests to the backend service. The proxy config is in <code>vite.config.js</code>:</p>
-<pre><code class="language-javascript">server: {
+<p>In development, Vite proxies <code>/api/*</code> to <code>http://localhost:8001</code>. This mirrors the production nginx setup. Config in <code>vite.config.js</code>:</p>
+<pre><code class="language-js">server: {
   proxy: {
-    '/api': {
-      target: 'http://localhost:8001',
-      changeOrigin: true
-    }
+    '/api': { target: 'http://localhost:8001', changeOrigin: true }
   }
 }
 </code></pre>
 <hr />
-<h2 id="tailwind-css-setup">Tailwind CSS setup</h2>
-<p>Tailwind CSS 4 (JIT mode by default) is configured in <code>tailwind.config.js</code>. The design uses a dark-first palette. Custom theme extensions include the travel planner's brand colours and responsive breakpoints. Tailwind classes are purged from unused HTML in production builds, keeping the CSS bundle minimal.</p>
-<hr />
 <h2 id="api-service-layer">API service layer</h2>
-<p><code>src/services/api.js</code> is a thin wrapper around <code>fetch</code> that:</p>
+<p><code>src/services/api.js</code> is an Axios instance that:</p>
 <ul>
-<li>Reads the JWT token from <code>AuthContext</code> via a module-level accessor</li>
+<li>Reads the JWT token from <code>localStorage</code></li>
 <li>Adds <code>Authorization: Bearer &lt;token&gt;</code> to all requests</li>
-<li>Handles 401 responses by triggering <code>AuthContext.logout()</code></li>
-<li>Provides typed functions for each endpoint (<code>login</code>, <code>getPlans</code>, <code>savePlan</code>, etc.)</li>
+<li>Exports typed functions for every API call: <code>discoverDestinations</code>, <code>searchFlightsFiltered</code>, <code>searchHotelsFiltered</code>, <code>searchActivitiesFiltered</code>, and others</li>
+<li><code>streamSearch</code> creates a Web Worker and wires up the <code>onResult / onDone / onError</code> callbacks</li>
 </ul>
-<p>Components never call <code>fetch</code> directly — they always use functions from <code>api.js</code>. This makes it straightforward to add request interceptors, logging, or retry logic in one place.</p>
 
 
 

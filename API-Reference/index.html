@@ -543,9 +543,10 @@
 
 
 <h1 id="api-reference">API Reference</h1>
-<p>The Travel Planner backend is a FastAPI application running on port 8001. All endpoints are under <code>/api/</code>. Interactive documentation (Swagger UI) is available at <code>/docs</code> and ReDoc at <code>/redoc</code>.</p>
-<p><strong>Base URL (local):</strong> <code>http://localhost:8001</code></p>
-<p><strong>Authentication:</strong> Protected endpoints use JWT Bearer tokens. Include the token from the login response in the <code>Authorization</code> header:</p>
+<p>The Travel Planner backend is a FastAPI application. All endpoints are under <code>/api/</code>. Interactive documentation (Swagger UI) is available at <code>/docs</code> on any running instance.</p>
+<p><strong>Live API:</strong> <code>https://travel-planner-backend-2hrxgxqboa-ew.a.run.app</code>
+<strong>Local API:</strong> <code>http://localhost:8001</code></p>
+<p><strong>Authentication:</strong> Most endpoints require a JWT Bearer token from the login response:</p>
 <pre><code>Authorization: Bearer &lt;token&gt;
 </code></pre>
 <hr />
@@ -564,300 +565,283 @@
   &quot;access_token&quot;: &quot;eyJ...&quot;,
   &quot;token_type&quot;: &quot;bearer&quot;,
   &quot;requires_password_change&quot;: false,
-  &quot;user&quot;: {
-    &quot;id&quot;: 1,
-    &quot;username&quot;: &quot;admin&quot;,
-    &quot;role&quot;: &quot;admin&quot;
-  }
+  &quot;user&quot;: { &quot;id&quot;: 1, &quot;username&quot;: &quot;admin&quot;, &quot;role&quot;: &quot;admin&quot; }
 }
 </code></pre>
-<p>If <code>requires_password_change</code> is <code>true</code>, the frontend redirects to the password change screen before allowing further navigation.</p>
+<p>If <code>requires_password_change</code> is <code>true</code>, the frontend redirects to <code>/change-password</code> before allowing further navigation.</p>
 <hr />
 <h3 id="post-apiauthchange-password"><code>POST /api/auth/change-password</code></h3>
-<p>Change the current user's password.</p>
 <p><strong>Auth required:</strong> Yes</p>
-<p><strong>Request body:</strong></p>
-<pre><code class="language-json">{
-  &quot;current_password&quot;: &quot;old-password&quot;,
-  &quot;new_password&quot;: &quot;new-password&quot;
-}
+<pre><code class="language-json">{ &quot;current_password&quot;: &quot;old&quot;, &quot;new_password&quot;: &quot;new&quot; }
 </code></pre>
-<p><strong>Response:</strong> <code>200 OK</code> with <code>{"message": "Password changed successfully"}</code></p>
+<p><strong>Response:</strong> <code>200 OK</code> — <code>{"message": "Password changed successfully"}</code></p>
 <hr />
 <h3 id="get-apiauthme"><code>GET /api/auth/me</code></h3>
-<p>Get the currently authenticated user's profile.</p>
+<p>Returns the currently authenticated user's profile.</p>
 <p><strong>Auth required:</strong> Yes</p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">{
-  &quot;id&quot;: 1,
-  &quot;username&quot;: &quot;admin&quot;,
-  &quot;role&quot;: &quot;admin&quot;,
-  &quot;created_at&quot;: &quot;2025-01-01T00:00:00Z&quot;
-}
-</code></pre>
 <hr />
-<h2 id="search-endpoints">Search endpoints</h2>
-<h3 id="post-apisearch-sse-streaming"><code>POST /api/search</code> (SSE streaming)</h3>
-<p>The primary endpoint. Submits a travel search and streams results as they become available via Server-Sent Events.</p>
+<h2 id="search-primary-trip-planning">Search (primary trip planning)</h2>
+<h3 id="post-apisearch-sse-streaming"><code>POST /api/search</code> — SSE streaming</h3>
+<p>The core endpoint. Submits a trip search and streams results in real time via Server-Sent Events.</p>
 <p><strong>Auth required:</strong> Yes</p>
 <p><strong>Request body:</strong></p>
 <pre><code class="language-json">{
+  &quot;origin&quot;: &quot;London&quot;,
   &quot;destination&quot;: &quot;Tokyo&quot;,
-  &quot;start_date&quot;: &quot;2025-06-01&quot;,
-  &quot;end_date&quot;: &quot;2025-06-14&quot;,
-  &quot;nationality&quot;: &quot;German&quot;,
-  &quot;budget&quot;: &quot;medium&quot;,
-  &quot;interests&quot;: &quot;street food, anime, temples, nightlife&quot;
+  &quot;departure_date&quot;: &quot;2026-06-01&quot;,
+  &quot;return_date&quot;: &quot;2026-06-14&quot;,
+  &quot;nationality&quot;: &quot;British&quot;,
+  &quot;interests&quot;: [&quot;food&quot;, &quot;history&quot;, &quot;nature&quot;],
+  &quot;budget_usd&quot;: 4000,
+  &quot;num_travelers&quot;: 1,
+  &quot;residence_permits&quot;: [],
+  &quot;existing_visas&quot;: []
 }
 </code></pre>
-<p><strong>Budget values:</strong> <code>"budget"</code>, <code>"medium"</code>, <code>"luxury"</code></p>
 <p><strong>Response:</strong> <code>Content-Type: text/event-stream</code></p>
-<p>The response is a stream of SSE events. Each event has this structure:</p>
-<pre><code>data: {&quot;section&quot;: &quot;&lt;section_name&gt;&quot;, &quot;content&quot;: &lt;object&gt;, &quot;phase&quot;: &lt;0|1|2&gt;}\n\n
+<p>Each event:</p>
+<pre><code>data: {&quot;type&quot;: &quot;&lt;event_type&gt;&quot;, &quot;data&quot;: &lt;object&gt;, &quot;source&quot;: &quot;static&quot;|&quot;ai&quot;}\n\n
 </code></pre>
-<p><strong>Section names and phases:</strong></p>
+<p>The final event:</p>
+<pre><code>data: {&quot;type&quot;: &quot;done&quot;}\n\n
+</code></pre>
+<p><strong>Event types and phases:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Section</th>
+<th>Event type</th>
 <th>Phase</th>
+<th>Source</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>visa_static</code></td>
+<td><code>confidence</code></td>
 <td>0</td>
-<td>Static visa category lookup</td>
+<td>static</td>
+<td>Travel confidence score (safety / visa / budget / infrastructure)</td>
 </tr>
 <tr>
-<td><code>sim_static</code></td>
-<td>0</td>
-<td>Static SIM data</td>
+<td><code>visa</code></td>
+<td>0 then 1</td>
+<td>static → ai</td>
+<td>Visa requirements</td>
 </tr>
 <tr>
-<td><code>tips_static</code></td>
-<td>0</td>
-<td>Static country tips</td>
+<td><code>sim</code></td>
+<td>0 then 1</td>
+<td>static → ai</td>
+<td>SIM card options</td>
 </tr>
 <tr>
-<td><code>transport_static</code></td>
-<td>0</td>
-<td>Static transport modes</td>
+<td><code>tips</code></td>
+<td>0 then 1</td>
+<td>static → ai</td>
+<td>Travel tips</td>
+</tr>
+<tr>
+<td><code>getting_around</code></td>
+<td>0 then 1</td>
+<td>static → ai</td>
+<td>Local transport</td>
+</tr>
+<tr>
+<td><code>emergency_card</code></td>
+<td>0 then 1</td>
+<td>static → ai</td>
+<td>Emergency numbers, embassy, phrases, local laws</td>
 </tr>
 <tr>
 <td><code>flights</code></td>
 <td>1</td>
-<td>FlightsAgent result</td>
+<td>ai</td>
+<td>Flights guidance</td>
+</tr>
+<tr>
+<td><code>weather</code></td>
+<td>1</td>
+<td>ai</td>
+<td>Forecast for travel dates</td>
 </tr>
 <tr>
 <td><code>hotels</code></td>
 <td>1</td>
-<td>HotelsAgent result</td>
+<td>ai</td>
+<td>Hotels by neighbourhood and budget tier</td>
 </tr>
 <tr>
 <td><code>activities</code></td>
 <td>1</td>
-<td>ActivitiesAgent result (relevance-sorted)</td>
+<td>ai</td>
+<td>Activities, relevance-sorted</td>
 </tr>
 <tr>
-<td><code>visa</code></td>
+<td><code>places_to_see</code></td>
 <td>1</td>
-<td>VisaAgent result</td>
-</tr>
-<tr>
-<td><code>sim</code></td>
-<td>1</td>
-<td>SimAgent result</td>
-</tr>
-<tr>
-<td><code>tips</code></td>
-<td>1</td>
-<td>TipsAgent result</td>
-</tr>
-<tr>
-<td><code>getting_around</code></td>
-<td>1</td>
-<td>GettingAroundAgent result</td>
+<td>ai</td>
+<td>Must-visit landmarks</td>
 </tr>
 <tr>
 <td><code>forex</code></td>
 <td>1</td>
-<td>ForexAgent result</td>
+<td>ai</td>
+<td>Currency and payment tips</td>
+</tr>
+<tr>
+<td><code>pricing_advisor</code></td>
+<td>1 (deferred)</td>
+<td>ai</td>
+<td>Flight price trend and booking recommendation</td>
+</tr>
+<tr>
+<td><code>packing_list</code></td>
+<td>1 (deferred)</td>
+<td>ai</td>
+<td>Personalised packing checklist</td>
 </tr>
 <tr>
 <td><code>itinerary</code></td>
 <td>2</td>
-<td>ItineraryAgent result</td>
+<td>ai</td>
+<td>Day-by-day schedule</td>
 </tr>
 </tbody>
 </table>
-<p>The final event is:</p>
-<pre><code>data: [DONE]\n\n
-</code></pre>
-<p>On agent failure, a section is still emitted with <code>"error": true</code> in the content, so the frontend can display a "not available" card for that section rather than hanging.</p>
+<p><strong>Static-backed events</strong> (visa, sim, tips, getting_around, emergency_card): Phase 0 sends static data immediately. Phase 1 replaces it with AI-enriched data. If Phase 1 fails, the static data is retained — no error is shown for these sections.</p>
+<p><strong>Deferred events</strong>: <code>pricing_advisor</code> triggers when ≥ 3 flight prices are available; <code>packing_list</code> triggers when activities are ready and weather is done.</p>
+<p>On agent failure, the event is still emitted with <code>"error": true</code> in the data so the frontend can show "not available" rather than hang.</p>
 <hr />
 <h3 id="post-apisearchsync"><code>POST /api/search/sync</code></h3>
-<p>Same as <code>/api/search</code> but waits for all agents to complete and returns the full result as a single JSON response. Useful for testing; not recommended in production due to latency.</p>
-<p><strong>Auth required:</strong> Yes</p>
-<p><strong>Request body:</strong> Same as <code>/api/search</code></p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">{
-  &quot;destination&quot;: &quot;Tokyo&quot;,
-  &quot;sections&quot;: {
-    &quot;flights&quot;: {...},
-    &quot;hotels&quot;: {...},
-    &quot;activities&quot;: [...],
-    &quot;itinerary&quot;: {...}
-  },
-  &quot;generated_at&quot;: &quot;2025-06-01T10:00:00Z&quot;
-}
-</code></pre>
+<p>Same as <code>/api/search</code> but waits for all agents and returns a single JSON response. For testing only — too slow for production use.</p>
 <hr />
-<h2 id="chat-endpoints">Chat endpoints</h2>
-<h3 id="post-apichat-sse-streaming"><code>POST /api/chat</code> (SSE streaming)</h3>
-<p>Conversational follow-up chat with travel context awareness.</p>
+<h2 id="destination-discovery">Destination Discovery</h2>
+<h3 id="post-apidiscover"><code>POST /api/discover</code></h3>
+<p>The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destination suggestions without needing a specific destination input.</p>
 <p><strong>Auth required:</strong> Yes</p>
 <p><strong>Request body:</strong></p>
 <pre><code class="language-json">{
-  &quot;message&quot;: &quot;Can you suggest some vegetarian restaurants in Shinjuku?&quot;,
-  &quot;session_id&quot;: &quot;optional-session-id-for-continuity&quot;,
-  &quot;trip_context&quot;: {
-    &quot;destination&quot;: &quot;Tokyo&quot;,
-    &quot;start_date&quot;: &quot;2025-06-01&quot;,
-    &quot;end_date&quot;: &quot;2025-06-14&quot;
-  }
+  &quot;origin&quot;: &quot;JFK&quot;,
+  &quot;nationality&quot;: &quot;American&quot;,
+  &quot;departure_date&quot;: &quot;2026-08-01&quot;,
+  &quot;return_date&quot;: &quot;2026-08-08&quot;,
+  &quot;budget_usd&quot;: 3000,
+  &quot;interests&quot;: [&quot;food&quot;, &quot;history&quot;],
+  &quot;adults&quot;: 1,
+  &quot;children&quot;: 0,
+  &quot;seniors&quot;: 0,
+  &quot;infants&quot;: 0
+}
+</code></pre>
+<p><code>return_date</code> is optional (for one-way or open-ended trips).</p>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;destinations&quot;: [
+    {
+      &quot;city&quot;: &quot;Lisbon&quot;,
+      &quot;country&quot;: &quot;Portugal&quot;,
+      &quot;estimated_cost_usd_low&quot;: 1400,
+      &quot;estimated_cost_usd_high&quot;: 2200,
+      &quot;visa_type&quot;: &quot;visa-free&quot;,
+      &quot;visa_verified&quot;: true,
+      &quot;weather_emoji&quot;: &quot;☀️&quot;,
+      &quot;weather_description&quot;: &quot;Warm and sunny, 22–26°C in August — typical for the season&quot;,
+      &quot;flight_duration_hours&quot;: 7.5,
+      &quot;flight_duration_label&quot;: &quot;~7h 30m from New York&quot;,
+      &quot;match_reasons&quot;: [&quot;Exceptional food scene&quot;, &quot;Rich Age of Discovery history&quot;],
+      &quot;highlights&quot;: [&quot;Alfama district&quot;, &quot;Sintra&quot;, &quot;Belém Tower&quot;]
+    }
+  ]
+}
+</code></pre>
+<p><code>visa_verified: true</code> means the visa type was confirmed from the authoritative <code>_VISA_TABLE</code> lookup. <code>visa_verified: false</code> means the AI's guess was not verifiable — the frontend shows an amber "Verify" badge.</p>
+<p><strong>Errors:</strong>
+- <code>422</code> — missing required fields
+- <code>504</code> — agent timed out (&gt; 30 seconds); retry
+- <code>500</code> — agent failed; retry</p>
+<p>Results are cached in memory for 30 minutes per unique request.</p>
+<hr />
+<h2 id="chat">Chat</h2>
+<h3 id="post-apichat-sse-streaming"><code>POST /api/chat</code> — SSE streaming</h3>
+<p>Conversational trip planning. The agent maintains session context and can trigger the full search pipeline when the message is trip-planning related.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;messages&quot;: [
+    { &quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Plan a 5-day trip to Bangkok for two people&quot; }
+  ],
+  &quot;selections&quot;: {},
+  &quot;search_results&quot;: {},
+  &quot;session_context&quot;: {}
 }
 </code></pre>
 <p><strong>Response:</strong> <code>Content-Type: text/event-stream</code></p>
-<p>Events:</p>
-<pre><code>data: {&quot;type&quot;: &quot;chunk&quot;, &quot;content&quot;: &quot;Here are some great...&quot;}\n\n
-data: {&quot;type&quot;: &quot;chunk&quot;, &quot;content&quot;: &quot; vegetarian options...&quot;}\n\n
-data: [DONE]\n\n
-</code></pre>
+<p>Events include plain text chunks, structured planning sections (same types as <code>/api/search</code>), and a final <code>done</code> event.</p>
 <hr />
-<h2 id="plans-endpoints">Plans endpoints</h2>
+<h2 id="plans">Plans</h2>
 <h3 id="get-apiplans"><code>GET /api/plans</code></h3>
-<p>List all saved plans for the authenticated user.</p>
+<p>List all saved plans for the current user.</p>
 <p><strong>Auth required:</strong> Yes</p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">[
-  {
-    &quot;id&quot;: 1,
-    &quot;destination&quot;: &quot;Tokyo&quot;,
-    &quot;start_date&quot;: &quot;2025-06-01&quot;,
-    &quot;end_date&quot;: &quot;2025-06-14&quot;,
-    &quot;created_at&quot;: &quot;2025-05-01T12:00:00Z&quot;
-  }
-]
-</code></pre>
 <hr />
 <h3 id="post-apiplans"><code>POST /api/plans</code></h3>
-<p>Save a trip plan.</p>
+<p>Save a new plan.</p>
 <p><strong>Auth required:</strong> Yes</p>
 <p><strong>Request body:</strong></p>
 <pre><code class="language-json">{
-  &quot;destination&quot;: &quot;Tokyo&quot;,
-  &quot;start_date&quot;: &quot;2025-06-01&quot;,
-  &quot;end_date&quot;: &quot;2025-06-14&quot;,
-  &quot;plan_data&quot;: { ... }
-}
-</code></pre>
-<p><strong>Response:</strong> The saved plan with its assigned <code>id</code>.</p>
-<hr />
-<h3 id="get-apiplansplan_id"><code>GET /api/plans/{plan_id}</code></h3>
-<p>Retrieve a specific saved plan.</p>
-<p><strong>Auth required:</strong> Yes (must be the owner)</p>
-<p><strong>Response:</strong> Full plan object including <code>plan_data</code>.</p>
-<hr />
-<h3 id="delete-apiplansplan_id"><code>DELETE /api/plans/{plan_id}</code></h3>
-<p>Delete a saved plan.</p>
-<p><strong>Auth required:</strong> Yes (must be the owner)</p>
-<p><strong>Response:</strong> <code>204 No Content</code></p>
-<hr />
-<h2 id="preferences-endpoints">Preferences endpoints</h2>
-<h3 id="get-apipreferences"><code>GET /api/preferences</code></h3>
-<p>Get the authenticated user's travel preferences.</p>
-<p><strong>Auth required:</strong> Yes</p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">{
-  &quot;default_nationality&quot;: &quot;German&quot;,
-  &quot;default_budget&quot;: &quot;medium&quot;,
-  &quot;interests&quot;: &quot;museums, street food, architecture&quot;
-}
-</code></pre>
-<hr />
-<h3 id="put-apipreferences"><code>PUT /api/preferences</code></h3>
-<p>Update travel preferences.</p>
-<p><strong>Auth required:</strong> Yes</p>
-<p><strong>Request body:</strong> Same structure as GET response. All fields optional — only provided fields are updated.</p>
-<hr />
-<h2 id="feedback-endpoints">Feedback endpoints</h2>
-<h3 id="post-apifeedback"><code>POST /api/feedback</code></h3>
-<p>Submit feedback on a plan section.</p>
-<p><strong>Auth required:</strong> Yes</p>
-<p><strong>Request body:</strong></p>
-<pre><code class="language-json">{
-  &quot;plan_id&quot;: 1,
-  &quot;section&quot;: &quot;activities&quot;,
-  &quot;rating&quot;: 4,
-  &quot;comment&quot;: &quot;Good suggestions but missing some famous spots&quot;
-}
-</code></pre>
-<p><strong>Rating:</strong> Integer 1–5</p>
-<p><strong>Response:</strong> <code>201 Created</code> with the saved feedback object.</p>
-<hr />
-<h2 id="admin-endpoints">Admin endpoints</h2>
-<p>All admin endpoints require a user with <code>role: admin</code>.</p>
-<h3 id="get-apiadminusers"><code>GET /api/admin/users</code></h3>
-<p>List all user accounts.</p>
-<p><strong>Auth required:</strong> Yes (admin only)</p>
-<p><strong>Response:</strong> Array of user objects (without password hashes).</p>
-<hr />
-<h3 id="post-apiadminusers"><code>POST /api/admin/users</code></h3>
-<p>Create a new user account.</p>
-<p><strong>Auth required:</strong> Yes (admin only)</p>
-<p><strong>Request body:</strong></p>
-<pre><code class="language-json">{
-  &quot;username&quot;: &quot;newuser&quot;,
-  &quot;password&quot;: &quot;TemporaryPassword123&quot;,
-  &quot;role&quot;: &quot;user&quot;
-}
-</code></pre>
-<p><strong>Roles:</strong> <code>"user"</code>, <code>"admin"</code></p>
-<p>New users are flagged as requiring a password change on first login.</p>
-<hr />
-<h3 id="delete-apiadminusersuser_id"><code>DELETE /api/admin/users/{user_id}</code></h3>
-<p>Delete a user account.</p>
-<p><strong>Auth required:</strong> Yes (admin only)</p>
-<p><strong>Response:</strong> <code>204 No Content</code></p>
-<hr />
-<h2 id="health-endpoints">Health endpoints</h2>
-<h3 id="get-apihealth"><code>GET /api/health</code></h3>
-<p>Basic liveness check.</p>
-<p><strong>Auth required:</strong> No</p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">{
-  &quot;status&quot;: &quot;ok&quot;,
-  &quot;timestamp&quot;: &quot;2025-06-01T10:00:00Z&quot;
-}
-</code></pre>
-<hr />
-<h3 id="get-apihealthready"><code>GET /api/health/ready</code></h3>
-<p>Readiness check — confirms databases are accessible and the application is ready to serve traffic.</p>
-<p><strong>Auth required:</strong> No</p>
-<p><strong>Response:</strong></p>
-<pre><code class="language-json">{
-  &quot;status&quot;: &quot;ready&quot;,
-  &quot;databases&quot;: {
-    &quot;users&quot;: &quot;ok&quot;,
-    &quot;plans&quot;: &quot;ok&quot;,
-    &quot;preferences&quot;: &quot;ok&quot;,
-    &quot;feedback&quot;: &quot;ok&quot;
+  &quot;name&quot;: &quot;The Rainy Tokyo Adventure&quot;,
+  &quot;search_data&quot;: { &quot;destination&quot;: &quot;Tokyo&quot;, &quot;departure_date&quot;: &quot;2026-04-01&quot;, ... },
+  &quot;selections&quot;: {
+    &quot;flight&quot;: { ... },
+    &quot;hotel&quot;: { ... },
+    &quot;activities&quot;: [ ... ],
+    &quot;packing_list&quot;: { ... }
   }
 }
 </code></pre>
-<p>Cloud Run uses this endpoint for startup and readiness probes.</p>
+<hr />
+<h3 id="get-apiplansid-put-apiplansid-delete-apiplansid"><code>GET /api/plans/{id}</code> / <code>PUT /api/plans/{id}</code> / <code>DELETE /api/plans/{id}</code></h3>
+<p>Retrieve, update, or delete a specific plan. Must be the plan's owner.</p>
+<hr />
+<h2 id="preferences">Preferences</h2>
+<h3 id="get-apipreferences-put-apipreferences"><code>GET /api/preferences</code> / <code>PUT /api/preferences</code></h3>
+<p>Get or update the current user's saved preferences (nationality, interests, budget, residence permits, existing visas). These pre-fill the search form on next visit.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<hr />
+<h2 id="feedback">Feedback</h2>
+<h3 id="post-apifeedback"><code>POST /api/feedback</code></h3>
+<p>Submit a feedback rating from the floating widget.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong></p>
+<pre><code class="language-json">{
+  &quot;page&quot;: &quot;results&quot;,
+  &quot;rating&quot;: 4,
+  &quot;category&quot;: &quot;content&quot;,
+  &quot;message&quot;: &quot;Great activity suggestions!&quot;
+}
+</code></pre>
+<hr />
+<h3 id="get-apiadminfeedback"><code>GET /api/admin/feedback</code></h3>
+<p>View all submitted feedback. Admin only.</p>
+<p><strong>Auth required:</strong> Yes (admin)</p>
+<hr />
+<h2 id="admin">Admin</h2>
+<h3 id="get-apiadminusers"><code>GET /api/admin/users</code></h3>
+<p>List all user accounts (without password hashes).</p>
+<p><strong>Auth required:</strong> Yes (admin)</p>
+<hr />
+<h3 id="post-apiadminusers"><code>POST /api/admin/users</code></h3>
+<p>Create a new user. The user is flagged as requiring a password change on first login.</p>
+<p><strong>Auth required:</strong> Yes (admin)</p>
+<pre><code class="language-json">{ &quot;username&quot;: &quot;newuser&quot;, &quot;password&quot;: &quot;TemporaryPassword123&quot;, &quot;role&quot;: &quot;user&quot; }
+</code></pre>
+<p><strong>Roles:</strong> <code>"user"</code>, <code>"admin"</code></p>
+<hr />
+<h3 id="patch-apiadminusersuser_id-delete-apiadminusersuser_id"><code>PATCH /api/admin/users/{user_id}</code> / <code>DELETE /api/admin/users/{user_id}</code></h3>
+<p>Deactivate/reactivate or delete a user account. Admin only.</p>
+<hr />
+<h2 id="health">Health</h2>
+<h3 id="get-health"><code>GET /health</code></h3>
+<p>Liveness check. Returns <code>{"status": "ok"}</code>. Used by Cloud Run health probes and Cloud Monitoring uptime checks. No auth required.</p>
 
 
 
