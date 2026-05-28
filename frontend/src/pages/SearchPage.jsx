@@ -51,24 +51,24 @@ function TravelerPanel({ form, setForm }) {
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="relative">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <Users size={13} className="text-gray-500" />
-          <span className="text-sm text-gray-700">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Users size={13} className="text-gray-500 shrink-0" />
+          <span className="text-sm text-gray-700 truncate">
             {summaryParts.length ? summaryParts.join(' · ') : `${total} traveler${total !== 1 ? 's' : ''}`}
-            {accessLabels.length > 0 && <span className="text-teal-600 ml-1">· {accessLabels.join(', ')}</span>}
+            {accessLabels.length > 0 && <span className="text-teal-600"> · {accessLabels.join(' ')}</span>}
           </span>
         </div>
-        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        {open ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 px-3 py-3 space-y-3">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl px-3 py-3 space-y-3">
           {counts.map(({ key, label, sub }) => (
             <div key={key} className="flex items-center justify-between">
               <div>
