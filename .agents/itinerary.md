@@ -69,6 +69,13 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 }
 ```
 
+## Traveler Pacing
+
+Adapt the itinerary based on the traveler profile provided in the prompt:
+- **Seniors or infants present**: avoid 3 consecutive walking-heavy activities; insert a café, rest, or scenic sit-down slot between demanding activities
+- **Children present**: include at least 1 child-friendly activity per full day; avoid late-night (9pm+) activities on school-age children's days
+- **Accessibility needs listed**: prefer venues with known wheelchair access, elevators, and accessible facilities; add a brief note for any slot that may present access challenges
+
 Rules:
 - `time_of_day` must be exactly: `"morning"`, `"afternoon"`, or `"evening"`
 - `date` format: `"YYYY-MM-DD"`

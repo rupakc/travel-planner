@@ -93,7 +93,7 @@ class ItineraryAgent(BaseAgent):
             f"Create a day-by-day travel itinerary for {request.destination} (identify the country).\n"
             f"Traveling from: {request.origin}\n"
             f"Trip dates: {request.departure_date} to {request.return_date} ({nights} nights)\n"
-            f"Travelers: {request.num_travelers}\n"
+            f"Travelers: {request.traveler_context}\n"
             f"Interests: {interests_str}\n"
             f"Hotel: {hotel_name}\n\n"
             f"Available activities:\n{activities_summary}\n\n"

@@ -42,6 +42,14 @@ class TravelSearchRequest(BaseModel):
     )
     budget_usd: float | None = Field(None, description="Total trip budget in USD")
     num_travelers: int = Field(1, ge=1, le=20, description="Number of travelers")
+    adults: int = Field(default=1, ge=0, description="Number of adults (18-64)")
+    children: int = Field(default=0, ge=0, description="Number of children (5-17)")
+    seniors: int = Field(default=0, ge=0, description="Number of seniors (65+)")
+    infants: int = Field(default=0, ge=0, description="Number of infants (0-4)")
+    accessibility_needs: list[str] = Field(
+        default_factory=list,
+        description="Accessibility requirements e.g. wheelchair, visual_impairment, hearing_impairment, cognitive_disability",
+    )
     destinations: list[str] | None = Field(
         None,
         description="Ordered city list for multi-city trips, e.g. ['Paris', 'Rome', 'Barcelona']. "
@@ -51,6 +59,28 @@ class TravelSearchRequest(BaseModel):
     # Auto-set by validator — not in the request body, not serialised to JSON
     origin_iata: str | None = Field(None, exclude=True)
     destination_iata: str | None = Field(None, exclude=True)
+
+    @property
+    def traveler_context(self) -> str:
+        parts = []
+        if self.adults:
+            parts.append(f"{self.adults} adult{'s' if self.adults != 1 else ''}")
+        if self.children:
+            parts.append(
+                f"{self.children} child{'ren' if self.children != 1 else ''} (5-17)"
+            )
+        if self.seniors:
+            parts.append(
+                f"{self.seniors} senior{'s' if self.seniors != 1 else ''} (65+)"
+            )
+        if self.infants:
+            parts.append(
+                f"{self.infants} infant{'s' if self.infants != 1 else ''} (0-4)"
+            )
+        base = ", ".join(parts) if parts else f"{self.num_travelers} traveler(s)"
+        if self.accessibility_needs:
+            return f"{base}. Accessibility needs: {', '.join(self.accessibility_needs)}"
+        return base
 
     @model_validator(mode="after")
     def resolve_iata_codes(self) -> "TravelSearchRequest":

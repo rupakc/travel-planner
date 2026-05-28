@@ -13,6 +13,7 @@ from .places_agent import PlacesAgent
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
 from .visa_agent import VisaAgent
+from .weather_agent import WeatherAgent
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class TravelOrchestrator:
         self.forex = ForexAgent(agents_dir)
         self.places = PlacesAgent(agents_dir)
         self.itinerary = ItineraryAgent(agents_dir)
+        self.weather = WeatherAgent(agents_dir)
 
     async def run(self, request: TravelSearchRequest) -> dict:
         """Run all agents: Phase 1 in parallel, Phase 2 sequential."""
@@ -133,6 +135,7 @@ class TravelOrchestrator:
         # Notify frontend that AI agents are starting
         for name in [
             "flights",
+            "weather",
             "hotels",
             "activities",
             "places_to_see",
@@ -159,6 +162,7 @@ class TravelOrchestrator:
 
         phase1_agents = {
             "flights": self.flights,
+            "weather": self.weather,
             "hotels": self.hotels,
             "activities": self.activities,
             "places_to_see": self.places,

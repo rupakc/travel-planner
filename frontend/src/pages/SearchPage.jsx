@@ -2,10 +2,121 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
-import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin } from 'lucide-react'
+import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
+
+const ACCESSIBILITY_OPTIONS = [
+  { id: 'wheelchair',           label: '♿ Wheelchair / Mobility aid' },
+  { id: 'visual_impairment',    label: '👁️ Visual impairment' },
+  { id: 'hearing_impairment',   label: '🦻 Hearing impairment' },
+  { id: 'cognitive_disability', label: '🧠 Cognitive / Neurodivergent' },
+]
+
+function TravelerPanel({ form, setForm }) {
+  const [open, setOpen] = useState(false)
+
+  const counts = [
+    { key: 'adults',   label: 'Adults',   sub: '18–64' },
+    { key: 'seniors',  label: 'Seniors',  sub: '65+' },
+    { key: 'children', label: 'Children', sub: '5–17' },
+    { key: 'infants',  label: 'Infants',  sub: '0–4' },
+  ]
+
+  const total = form.adults + form.seniors + form.children + form.infants
+  const summaryParts = []
+  if (form.adults)   summaryParts.push(`${form.adults} adult${form.adults !== 1 ? 's' : ''}`)
+  if (form.seniors)  summaryParts.push(`${form.seniors} senior${form.seniors !== 1 ? 's' : ''}`)
+  if (form.children) summaryParts.push(`${form.children} child${form.children !== 1 ? 'ren' : ''}`)
+  if (form.infants)  summaryParts.push(`${form.infants} infant${form.infants !== 1 ? 's' : ''}`)
+  const accessLabels = form.accessibility_needs.map(id => ACCESSIBILITY_OPTIONS.find(o => o.id === id)?.label?.split(' ')[0] || id)
+
+  const change = (key, delta) => {
+    setForm(f => {
+      const next = Math.max(0, (f[key] || 0) + delta)
+      const newTotal = (key === 'adults' ? next : f.adults) + (key === 'seniors' ? next : f.seniors) + (key === 'children' ? next : f.children) + (key === 'infants' ? next : f.infants)
+      if (newTotal < 1) return f
+      return { ...f, [key]: next }
+    })
+  }
+
+  const toggleAccess = (id) => {
+    setForm(f => ({
+      ...f,
+      accessibility_needs: f.accessibility_needs.includes(id)
+        ? f.accessibility_needs.filter(x => x !== id)
+        : [...f.accessibility_needs, id],
+    }))
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Users size={13} className="text-gray-500" />
+          <span className="text-sm text-gray-700">
+            {summaryParts.length ? summaryParts.join(' · ') : `${total} traveler${total !== 1 ? 's' : ''}`}
+            {accessLabels.length > 0 && <span className="text-teal-600 ml-1">· {accessLabels.join(', ')}</span>}
+          </span>
+        </div>
+        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-gray-100 px-3 py-3 space-y-3">
+          {counts.map(({ key, label, sub }) => (
+            <div key={key} className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium text-gray-700">{label}</span>
+                <span className="text-xs text-gray-400 ml-1">({sub})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => change(key, -1)}
+                  disabled={form[key] === 0 || (key === 'adults' && total <= 1 && form[key] <= 1)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Minus size={12} />
+                </button>
+                <span className="w-5 text-center text-sm font-semibold text-gray-800">{form[key] || 0}</span>
+                <button
+                  type="button"
+                  onClick={() => change(key, 1)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full border border-teal-200 bg-teal-50 hover:bg-teal-100 transition-colors text-teal-700"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs font-medium text-gray-600 mb-2">Accessibility needs</p>
+            <div className="space-y-1.5">
+              {ACCESSIBILITY_OPTIONS.map(({ id, label }) => (
+                <label key={id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.accessibility_needs.includes(id)}
+                    onChange={() => toggleAccess(id)}
+                    className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-400"
+                  />
+                  <span className="text-sm text-gray-700">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const INTERESTS = [
   { id: 'food',      label: '🍜 Food' },
@@ -41,7 +152,10 @@ export default function SearchPage() {
     origin: '', destination: '',
     departure_date: nextWeek, return_date: twoWeeks,
     nationality: '', residence_permits: [], existing_visas: [],
-    interests: [], budget_usd: '', num_travelers: 1,
+    interests: [], budget_usd: '',
+    num_travelers: 1,
+    adults: 1, children: 0, seniors: 0, infants: 0,
+    accessibility_needs: [],
   })
 
   // Pre-fill from saved preferences
@@ -55,6 +169,11 @@ export default function SearchPage() {
       interests: preferences.interests?.length ? preferences.interests : f.interests,
       num_travelers: preferences.num_travelers || f.num_travelers,
       budget_usd: preferences.budget_category ? (BUDGET_TO_USD[preferences.budget_category] || '') : f.budget_usd,
+      adults: preferences.adults ?? f.adults,
+      children: preferences.children ?? f.children,
+      seniors: preferences.seniors ?? f.seniors,
+      infants: preferences.infants ?? f.infants,
+      accessibility_needs: preferences.accessibility_needs?.length ? preferences.accessibility_needs : f.accessibility_needs,
     }))
   }, [preferences])
 
@@ -63,7 +182,12 @@ export default function SearchPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const searchData = { ...form, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null }
+    const totalTravelers = Math.max(1, form.adults + form.children + form.seniors + form.infants)
+    const searchData = {
+      ...form,
+      num_travelers: totalTravelers,
+      budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
+    }
 
     // Two-way binding: sync search values back to preferences
     updatePreferences({
@@ -72,14 +196,19 @@ export default function SearchPage() {
       residence_permits: form.residence_permits,
       existing_visas: form.existing_visas,
       interests: form.interests,
-      num_travelers: form.num_travelers,
+      num_travelers: totalTravelers,
       budget_category: USD_TO_BUDGET(form.budget_usd),
+      adults: form.adults,
+      children: form.children,
+      seniors: form.seniors,
+      infants: form.infants,
+      accessibility_needs: form.accessibility_needs,
     })
 
     track('search_submit', 'search', {
       destination: form.destination,
       num_interests: form.interests.length,
-      num_travelers: form.num_travelers,
+      num_travelers: totalTravelers,
     })
     setPendingSearchData(searchData)
   }
@@ -153,13 +282,7 @@ export default function SearchPage() {
               </div>
               <div>
                 <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> Travelers</span></label>
-                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
-                  <button type="button" onClick={() => setForm(f => ({ ...f, num_travelers: Math.max(1, f.num_travelers - 1) }))}
-                    className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg leading-none">−</button>
-                  <span className="flex-1 text-center text-sm font-medium py-2.5">{form.num_travelers}</span>
-                  <button type="button" onClick={() => setForm(f => ({ ...f, num_travelers: Math.min(20, f.num_travelers + 1) }))}
-                    className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg leading-none">+</button>
-                </div>
+                <TravelerPanel form={form} setForm={setForm} />
               </div>
             </div>
 

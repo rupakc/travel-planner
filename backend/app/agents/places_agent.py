@@ -65,7 +65,8 @@ class PlacesAgent(ToolAgent):
         )
         prompt = (
             f"Find the best places to see in {destination}.\n"
-            f"Traveler interests: {interests_str}. Trip duration: {nights} nights.\n\n"
+            f"Traveler interests: {interests_str}. Trip duration: {nights} nights.\n"
+            f"Traveler profile: {request.traveler_context}\n\n"
             f"=== GOOGLE SEARCH DATA ===\n{google_context}\n=========================\n\n"
             "Synthesise the Google data above with your knowledge. Return 8–12 must-see places. "
             "JSON only."

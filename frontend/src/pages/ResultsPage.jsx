@@ -6,7 +6,7 @@ import {
   DollarSign, Users, Globe, Zap, BookmarkPlus, X,
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
-  Bus, Map, SlidersHorizontal, Wifi, Bath
+  Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud
 } from 'lucide-react'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -22,21 +22,23 @@ import TripMap from '../components/TripMap'
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const AGENT_CONFIG = {
-  flights:        { label: 'Flights',        icon: Plane,       color: 'blue'   },
-  hotels:         { label: 'Hotels',         icon: Hotel,       color: 'purple' },
-  activities:     { label: 'Activities',     icon: MapPin,      color: 'green'  },
-  places_to_see:  { label: 'Places to See',  icon: Map,         color: 'lime'   },
-  visa:           { label: 'Visa',           icon: Shield,      color: 'orange' },
-  sim:            { label: 'SIM Cards',      icon: Smartphone,  color: 'pink'   },
-  tips:           { label: 'Travel Tips',    icon: Lightbulb,   color: 'yellow' },
-  getting_around: { label: 'Getting Around', icon: Bus,         color: 'cyan'   },
-  forex:          { label: 'Currency & Forex', icon: DollarSign, color: 'emerald'},
-  itinerary:      { label: 'Itinerary',      icon: Calendar,    color: 'indigo' },
+  flights:        { label: 'Flights',          icon: Plane,       color: 'blue'    },
+  weather:        { label: 'Weather Forecast', icon: Cloud,       color: 'sky'     },
+  hotels:         { label: 'Hotels',           icon: Hotel,       color: 'purple'  },
+  activities:     { label: 'Activities',       icon: MapPin,      color: 'green'   },
+  places_to_see:  { label: 'Places to See',    icon: Map,         color: 'lime'    },
+  visa:           { label: 'Visa',             icon: Shield,      color: 'orange'  },
+  sim:            { label: 'SIM Cards',        icon: Smartphone,  color: 'pink'    },
+  tips:           { label: 'Travel Tips',      icon: Lightbulb,   color: 'yellow'  },
+  getting_around: { label: 'Getting Around',   icon: Bus,         color: 'cyan'    },
+  forex:          { label: 'Currency & Forex', icon: DollarSign,  color: 'emerald' },
+  itinerary:      { label: 'Itinerary',        icon: Calendar,    color: 'indigo'  },
 }
-const AGENT_ORDER = ['flights', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
+  sky:    { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-300 to-blue-400' },
   purple: { badge: 'bg-violet-50 text-violet-700 border-violet-200', header: 'from-violet-400 to-violet-500' },
   green:  { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', header: 'from-emerald-500 to-emerald-600' },
   orange: { badge: 'bg-orange-50 text-orange-700 border-orange-200', header: 'from-amber-400 to-orange-400' },
@@ -50,6 +52,7 @@ const COLOR_MAP = {
 
 const SECTION_ACCENT = {
   blue:    { icon: 'text-sky-600',     line: 'border-l-sky-400',     bg: 'bg-sky-50/40'     },
+  sky:     { icon: 'text-sky-500',     line: 'border-l-sky-300',     bg: 'bg-sky-50/30'     },
   purple:  { icon: 'text-violet-600',  line: 'border-l-violet-400',  bg: 'bg-violet-50/30'  },
   green:   { icon: 'text-emerald-600', line: 'border-l-emerald-400', bg: 'bg-emerald-50/30' },
   orange:  { icon: 'text-amber-600',   line: 'border-l-amber-400',   bg: 'bg-amber-50/30'   },
@@ -65,7 +68,7 @@ const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -103,6 +106,19 @@ function SectionHeader({ agent, status, isOpen, onToggle, actions }) {
     </div>
   )
 }
+
+const WMO_EMOJI = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️',
+  51:'🌦️', 53:'🌧️', 55:'🌧️',
+  61:'🌧️', 63:'🌧️', 65:'🌧️',
+  71:'🌨️', 73:'❄️', 75:'❄️', 77:'❄️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️',
+  85:'🌨️', 86:'❄️',
+  95:'⛈️', 96:'⛈️', 99:'⛈️',
+}
+
+const OUTDOOR_CATS = ['adventure', 'nature', 'outdoor', 'sports', 'hiking', 'beach']
 
 const LOADING_MESSAGES = {
   flights: [
@@ -155,6 +171,11 @@ const LOADING_MESSAGES = {
     "Searching Google for top landmarks...",
     "Discovering iconic sites and hidden gems..."
   ],
+  weather: [
+    "Fetching weather forecast...",
+    "Checking daily conditions...",
+    "Preparing weather outlook for your trip..."
+  ],
 }
 
 function Skeleton({ agent }) {
@@ -182,6 +203,49 @@ function Skeleton({ agent }) {
 }
 
 // ─── Section renderers ────────────────────────────────────────────────────────
+
+function WeatherDayCard({ day }) {
+  const emoji = WMO_EMOJI[day.weather_code] ?? '🌡️'
+  return (
+    <div className={`flex-shrink-0 w-28 rounded-xl border p-3 text-center ${day.is_poor ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+      <p className="text-xs text-gray-400 mb-1">
+        {new Date(day.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+      </p>
+      <div className="text-3xl mb-1">{emoji}</div>
+      <p className="font-medium text-gray-700 leading-tight text-xs">{day.description}</p>
+      {day.temp_high_c != null && (
+        <p className="mt-1 text-xs text-gray-500">
+          {Math.round(day.temp_high_c)}°/{Math.round(day.temp_low_c)}°C
+        </p>
+      )}
+      {day.precipitation_mm > 0 && (
+        <p className="text-xs text-blue-500 mt-0.5">💧{day.precipitation_mm.toFixed(1)} mm</p>
+      )}
+    </div>
+  )
+}
+
+function WeatherSection({ data }) {
+  if (!data?.days?.length) return null
+  const poor = data.poor_weather_day_count ?? 0
+  const isEstimate = data.source === 'llm-estimate'
+  return (
+    <div className="p-4 space-y-3">
+      {isEstimate && (
+        <p className="text-xs text-gray-500 italic">Historical climate estimate — actual conditions may vary</p>
+      )}
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        {data.days.map(day => <WeatherDayCard key={day.date} day={day} />)}
+      </div>
+      {poor > 0 && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-700">
+          <AlertTriangle size={14} />
+          <span>{poor} day{poor !== 1 ? 's' : ''} with poor weather — outdoor activities may be affected</span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function FlightLeg({ leg, direction }) {
   if (!leg) return null
@@ -706,13 +770,16 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   )
 }
 
-function ActivitiesSection({ data, selections, onSelect }) {
+function ActivitiesSection({ data, selections, onSelect, weatherData }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found — try different interests or adjusting dates</div>
   const catColors = { food:'bg-orange-100 text-orange-700',history:'bg-amber-100 text-amber-700',adventure:'bg-red-100 text-red-700',culture:'bg-purple-100 text-purple-700',nature:'bg-green-100 text-green-700',shopping:'bg-pink-100 text-pink-700',nightlife:'bg-indigo-100 text-indigo-700',wellness:'bg-teal-100 text-teal-700',art:'bg-violet-100 text-violet-700',family:'bg-blue-100 text-blue-700',general:'bg-gray-100 text-gray-700' }
+  const poorDays = weatherData?.poor_weather_day_count ?? 0
+  const weatherLoaded = !!weatherData?.days?.length
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
       {data.results.map((a, i) => {
         const isSelected = selections.activities.some(x => x.name === a.name)
+        const isOutdoor = OUTDOOR_CATS.some(c => (a.category || '').toLowerCase().includes(c))
         return (
           <div key={i}
             onClick={() => onSelect('activities', a)}
@@ -735,9 +802,13 @@ function ActivitiesSection({ data, selections, onSelect }) {
               {a.location && <span className="flex items-center gap-1"><MapPin size={10} />{a.location}</span>}
               {a.rating && <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{a.rating}{a.review_count ? ` (${a.review_count.toLocaleString()})` : ''}</span>}
             </div>
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
+              {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
+              {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
+              {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ Check weather</span>}
+              {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ Good weather</span>}
             </div>
           </div>
         )
@@ -746,9 +817,11 @@ function ActivitiesSection({ data, selections, onSelect }) {
   )
 }
 
-function PlacesToSeeSection({ data, selections, onSelect }) {
+function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No places found</div>
   const catColors = { Landmark:'bg-lime-100 text-lime-700', 'Temple/Mosque/Church':'bg-violet-100 text-violet-700', Museum:'bg-sky-100 text-sky-700', Viewpoint:'bg-cyan-100 text-cyan-700', 'Park/Garden':'bg-green-100 text-green-700', Market:'bg-orange-100 text-orange-700', 'Palace/Castle':'bg-amber-100 text-amber-700', 'Natural Wonder':'bg-teal-100 text-teal-700', 'Historic District':'bg-rose-100 text-rose-700', Monument:'bg-gray-100 text-gray-700' }
+  const poorDays = weatherData?.poor_weather_day_count ?? 0
+  const weatherLoaded = !!weatherData?.days?.length
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
       {data.results.map((place, i) => {
@@ -799,13 +872,27 @@ function PlacesToSeeSection({ data, selections, onSelect }) {
                 ))}
               </div>
             )}
-            {place.info_url && (
-              <a href={place.info_url} target="_blank" rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
-                <ExternalLink size={10} /> View details
-              </a>
-            )}
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {place.info_url && (
+                <a href={place.info_url} target="_blank" rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
+                  <ExternalLink size={10} /> View details
+                </a>
+              )}
+              {place.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
+              {place.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
+              {(() => {
+                const cat = (place.category || '').toLowerCase()
+                const isOutdoor = ['viewpoint', 'park/garden', 'natural wonder', 'market'].some(c => cat.includes(c))
+                return (
+                  <>
+                    {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ Check weather</span>}
+                    {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ Good weather</span>}
+                  </>
+                )
+              })()}
+            </div>
           </div>
         )
       })}
@@ -1415,6 +1502,9 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
 
   return (
     <div className="p-4 space-y-4">
+      {/* Map at the top */}
+      <TripMap days={data.days} />
+
       {/* Header row */}
       <div className="flex items-center justify-between">
         {data.total_estimated_cost_usd > 0 && (
@@ -1575,7 +1665,6 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
           </div>
         </div>
       ))}
-      <TripMap days={data.days} />
     </div>
   )
 }
@@ -2197,7 +2286,7 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
@@ -2382,9 +2471,10 @@ export default function ResultsPage() {
     const data = results[agent]
     const renderers = {
       flights:        () => <FlightsSection    data={data} {...sectionProps} />,
+      weather:        () => <WeatherSection    data={data} />,
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
-      activities:     () => <ActivitiesSection   data={data} {...sectionProps} />,
-      places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} />,
+      activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
+      places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
       visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,
       tips:           () => <TipsSection       data={data} {...sectionProps} />,

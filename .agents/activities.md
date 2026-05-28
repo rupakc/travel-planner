@@ -62,10 +62,15 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
       "source": "getyourguide",
       "similarity_score": 0.95,
       "rating": 4.7,
-      "review_count": 2340
+      "review_count": 2340,
+      "accessibility_features": ["wheelchair_accessible", "audio_guide"],
+      "family_friendly": true,
+      "age_suitability": "all ages"
     }
   ]
 }
 ```
 
 Return 15–20 activities sorted by similarity_score descending. Write rich 2-sentence descriptions. Include `source` to indicate which platform the activity was found on (one of: getyourguide / viator / klook / tripadvisor / tiqets / musement / web). Include `rating` and `review_count` when available (set to null if unknown). Prefer activities with high ratings (4.0+) and many reviews. Do NOT include `booking_url` — it is generated server-side from the activity name and destination.
+
+If the traveler profile includes children, set `family_friendly: true` for activities suitable for kids. If it includes seniors or accessibility needs, prioritise activities with accessibility features and note them in `accessibility_features` (e.g. `wheelchair_accessible`, `audio_guide`, `accessible_toilet`, `hearing_loop`, `elevator`). Set `age_suitability` to reflect the appropriate audience (e.g. `"all ages"`, `"adults only"`, `"8+"`, `"3+"`). Set `family_friendly: false` for activities not suitable for children (e.g. nightlife, extreme sports).

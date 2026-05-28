@@ -70,6 +70,9 @@ class ActivityResult(BaseModel):
     booking_url: str | None = None
     similarity_score: float | None = None
     source: str | None = None
+    accessibility_features: list[str] = []
+    family_friendly: bool | None = None
+    age_suitability: str | None = None
 
 
 class ActivitiesResponse(BaseModel):
@@ -250,10 +253,30 @@ class PlaceResult(BaseModel):
     highlights: list[str] = []
     info_url: str | None = None
     source: str | None = None
+    accessibility_features: list[str] = []
+    wheelchair_accessible: bool | None = None
+    family_friendly: bool | None = None
 
 
 class PlacesResponse(BaseModel):
     results: list[PlaceResult] = []
+
+
+class WeatherDay(BaseModel):
+    date: str
+    description: str = ""
+    weather_code: int = 0
+    temp_high_c: float | None = None
+    temp_low_c: float | None = None
+    precipitation_mm: float | None = None
+    wind_kmh: float | None = None
+    is_poor: bool = False
+
+
+class WeatherResponse(BaseModel):
+    days: list[WeatherDay] = []
+    poor_weather_day_count: int = 0
+    source: str = "unknown"
 
 
 class TravelSearchResponse(BaseModel):
@@ -267,3 +290,4 @@ class TravelSearchResponse(BaseModel):
     getting_around: dict = {}
     forex: dict = {}
     itinerary: dict = {}
+    weather: dict = {}

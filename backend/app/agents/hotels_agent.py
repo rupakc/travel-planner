@@ -64,7 +64,8 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
             f"Number of nights: {nights}\n"
             f"Number of travelers: {request.num_travelers}\n"
             f"Budget: {'$' + str(int(request.budget_usd)) + ' total' if request.budget_usd else 'flexible'}\n"
-            f"Return 12 hotels across all four budget tiers (luxury, premium, mid-range, budget). Include source and source_snippet for each."
+            f"Return 12 hotels across all four budget tiers (luxury, premium, mid-range, budget). Include source and source_snippet for each.\n"
+            f"Traveler profile: {request.traveler_context}"
         )
 
         if filters:

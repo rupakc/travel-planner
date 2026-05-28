@@ -75,3 +75,5 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 ```
 
 Return 8–12 hotels sorted by star_rating descending. Compute total_price_usd = price_per_night × num_nights. Include the `source` field indicating which platform the deal was found on. When the same hotel appears on multiple platforms, keep the cheapest price.
+
+If the traveler profile includes accessibility needs (wheelchair, visual impairment, etc.), prioritise hotels with wheelchair-accessible rooms, elevators, roll-in showers, and accessible bathrooms. Note these features in the `amenities` list (e.g. "wheelchair accessible rooms", "elevator", "accessible bathroom"). If the profile includes infants or children, favour hotels with family rooms, cribs/cots, and child-friendly amenities.

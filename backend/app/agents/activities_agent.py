@@ -97,7 +97,8 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             f"Number of travelers: {request.num_travelers}\n"
             f"Return 15-20 activities sorted by similarity_score descending.\n"
             f"Include similarity_score (0.0-1.0), category, rating, review_count, source for each.\n"
-            f"Write rich 2-sentence descriptions. Prefer activities with ratings 4.0+."
+            f"Write rich 2-sentence descriptions. Prefer activities with ratings 4.0+.\n"
+            f"Traveler profile: {request.traveler_context}"
         )
 
         if filters:
