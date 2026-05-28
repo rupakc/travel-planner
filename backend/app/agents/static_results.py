@@ -385,6 +385,1074 @@ _VISA_TABLE = {
 }
 
 
+# ── Destination confidence scores ─────────────────────────────────────────────
+# safety: /20, english_friendliness: /20, tourist_infrastructure: /20
+# avg_daily_cost_usd: realistic mid-range daily spend in USD
+_DESTINATION_SCORES: dict[str, dict] = {
+    "japan": {
+        "safety": 19,
+        "english_friendliness": 8,
+        "tourist_infrastructure": 20,
+        "avg_daily_cost_usd": 120,
+        "notes": {
+            "safety": "One of the world's safest destinations; violent crime is extremely rare",
+            "english_friendliness": "Limited English outside tourist zones — offline translation app essential",
+            "tourist_infrastructure": "Excellent public transit, English signage at all major stations",
+        },
+    },
+    "france": {
+        "safety": 15,
+        "english_friendliness": 12,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 150,
+        "notes": {
+            "safety": "Generally safe; petty theft common in Paris tourist areas — watch your bags",
+            "english_friendliness": "English widely spoken in Paris and tourist areas; rural areas less so",
+            "tourist_infrastructure": "Excellent rail, metro, and tourist infrastructure",
+        },
+    },
+    "thailand": {
+        "safety": 14,
+        "english_friendliness": 13,
+        "tourist_infrastructure": 16,
+        "avg_daily_cost_usd": 60,
+        "notes": {
+            "safety": "Tourist areas generally safe; exercise caution in some nightlife areas",
+            "english_friendliness": "Good English in tourist zones; very limited elsewhere",
+            "tourist_infrastructure": "Well-developed tourist infrastructure in Bangkok, Chiang Mai, Phuket",
+        },
+    },
+    "uk": {
+        "safety": 16,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 19,
+        "avg_daily_cost_usd": 180,
+        "notes": {
+            "safety": "Generally safe; exercise normal city caution in London",
+            "english_friendliness": "English is the native language",
+            "tourist_infrastructure": "Excellent transport, tourist info, and infrastructure",
+        },
+    },
+    "australia": {
+        "safety": 18,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 160,
+        "notes": {
+            "safety": "Very safe; be aware of natural hazards (sun, wildlife) in remote areas",
+            "english_friendliness": "English is the native language",
+            "tourist_infrastructure": "Excellent in cities; remote areas have limited facilities",
+        },
+    },
+    "usa": {
+        "safety": 14,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 200,
+        "notes": {
+            "safety": "Varies significantly by city and neighborhood; research your specific destination",
+            "english_friendliness": "English is the primary language",
+            "tourist_infrastructure": "Good in major cities; limited public transport in many areas",
+        },
+    },
+    "italy": {
+        "safety": 15,
+        "english_friendliness": 11,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 140,
+        "notes": {
+            "safety": "Generally safe; pickpocketing common in tourist areas — stay alert",
+            "english_friendliness": "English spoken in tourist areas; limited in rural areas",
+            "tourist_infrastructure": "Good in major cities; variable in rural areas",
+        },
+    },
+    "germany": {
+        "safety": 17,
+        "english_friendliness": 16,
+        "tourist_infrastructure": 19,
+        "avg_daily_cost_usd": 130,
+        "notes": {
+            "safety": "Very safe; standard city precautions apply",
+            "english_friendliness": "English widely spoken, especially among younger generations",
+            "tourist_infrastructure": "Excellent public transport and tourist infrastructure",
+        },
+    },
+    "spain": {
+        "safety": 16,
+        "english_friendliness": 12,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 110,
+        "notes": {
+            "safety": "Generally safe; pickpocketing in Barcelona tourist areas — be cautious",
+            "english_friendliness": "English in coastal/tourist areas; limited in inland regions",
+            "tourist_infrastructure": "Good in major cities; variable elsewhere",
+        },
+    },
+    "uae": {
+        "safety": 18,
+        "english_friendliness": 18,
+        "tourist_infrastructure": 19,
+        "avg_daily_cost_usd": 170,
+        "notes": {
+            "safety": "Very safe; strict laws — respect local customs to avoid issues",
+            "english_friendliness": "English widely spoken — it is the business language of Dubai",
+            "tourist_infrastructure": "World-class tourist infrastructure in Dubai and Abu Dhabi",
+        },
+    },
+    "singapore": {
+        "safety": 19,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 20,
+        "avg_daily_cost_usd": 140,
+        "notes": {
+            "safety": "One of Asia's safest cities; very strict laws — be aware of regulations",
+            "english_friendliness": "English is an official language and universally spoken",
+            "tourist_infrastructure": "World-class MRT, tourist info, and infrastructure",
+        },
+    },
+    "indonesia": {
+        "safety": 13,
+        "english_friendliness": 11,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 55,
+        "notes": {
+            "safety": "Tourist areas like Bali are generally safe; exercise caution outside resorts",
+            "english_friendliness": "English in Bali tourist areas; very limited elsewhere",
+            "tourist_infrastructure": "Good in Bali; limited on other islands",
+        },
+    },
+    "india": {
+        "safety": 12,
+        "english_friendliness": 15,
+        "tourist_infrastructure": 12,
+        "avg_daily_cost_usd": 50,
+        "notes": {
+            "safety": "Exercise heightened caution; research specific areas; solo female travelers should be extra careful",
+            "english_friendliness": "English widely spoken in cities and tourist areas",
+            "tourist_infrastructure": "Variable — excellent in major tourist cities, very limited in rural areas",
+        },
+    },
+    "china": {
+        "safety": 16,
+        "english_friendliness": 5,
+        "tourist_infrastructure": 15,
+        "avg_daily_cost_usd": 80,
+        "notes": {
+            "safety": "Very safe in terms of crime; be aware of political sensitivities",
+            "english_friendliness": "Very limited English except in top hotels and major tourist sites — essential to download offline translator",
+            "tourist_infrastructure": "Good in major cities; challenging language barrier for independent travelers",
+        },
+    },
+    "malaysia": {
+        "safety": 14,
+        "english_friendliness": 16,
+        "tourist_infrastructure": 15,
+        "avg_daily_cost_usd": 65,
+        "notes": {
+            "safety": "Generally safe; exercise normal city precautions",
+            "english_friendliness": "English widely spoken — colonial legacy",
+            "tourist_infrastructure": "Good in KL and Penang; limited in rural areas",
+        },
+    },
+    "mexico": {
+        "safety": 10,
+        "english_friendliness": 10,
+        "tourist_infrastructure": 14,
+        "avg_daily_cost_usd": 80,
+        "notes": {
+            "safety": "High variability — tourist areas like Cancun/CDMX are generally safe; some regions have elevated risk — research thoroughly",
+            "english_friendliness": "Limited English outside tourist resorts and Mexico City",
+            "tourist_infrastructure": "Good in major tourist areas; limited elsewhere",
+        },
+    },
+    "portugal": {
+        "safety": 18,
+        "english_friendliness": 15,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 100,
+        "notes": {
+            "safety": "One of Europe's safest countries; standard city precautions apply",
+            "english_friendliness": "Widely spoken, especially in Lisbon and Porto",
+            "tourist_infrastructure": "Good and improving; some rural areas are limited",
+        },
+    },
+    "greece": {
+        "safety": 16,
+        "english_friendliness": 14,
+        "tourist_infrastructure": 16,
+        "avg_daily_cost_usd": 110,
+        "notes": {
+            "safety": "Generally safe; pickpocketing in Athens tourist areas — be alert",
+            "english_friendliness": "Good English in tourist areas and islands",
+            "tourist_infrastructure": "Good in islands and major cities; limited in remote areas",
+        },
+    },
+    "turkey": {
+        "safety": 13,
+        "english_friendliness": 11,
+        "tourist_infrastructure": 15,
+        "avg_daily_cost_usd": 70,
+        "notes": {
+            "safety": "Generally safe in tourist areas; check travel advisories for current conditions",
+            "english_friendliness": "English in Istanbul tourist areas; limited elsewhere",
+            "tourist_infrastructure": "Good in Istanbul and coastal resorts",
+        },
+    },
+    "south korea": {
+        "safety": 18,
+        "english_friendliness": 10,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 100,
+        "notes": {
+            "safety": "Very safe; one of Asia's lowest crime rates",
+            "english_friendliness": "Limited English outside tourist areas in Seoul",
+            "tourist_infrastructure": "Excellent public transit and tourist infrastructure",
+        },
+    },
+    "vietnam": {
+        "safety": 13,
+        "english_friendliness": 10,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 45,
+        "notes": {
+            "safety": "Generally safe; watch for scams targeting tourists in busy areas",
+            "english_friendliness": "Limited but improving in Ho Chi Minh City and Hanoi tourist areas",
+            "tourist_infrastructure": "Good in major tourist cities; limited elsewhere",
+        },
+    },
+    "netherlands": {
+        "safety": 17,
+        "english_friendliness": 19,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 150,
+        "notes": {
+            "safety": "Very safe; bike theft is common — secure rental bikes properly",
+            "english_friendliness": "Near-universal English — one of the highest proficiency rates in Europe",
+            "tourist_infrastructure": "Excellent cycling, transit, and tourist infrastructure",
+        },
+    },
+    "switzerland": {
+        "safety": 19,
+        "english_friendliness": 16,
+        "tourist_infrastructure": 19,
+        "avg_daily_cost_usd": 250,
+        "notes": {
+            "safety": "One of the world's safest countries",
+            "english_friendliness": "English widely spoken; four official languages",
+            "tourist_infrastructure": "World-class rail and tourist infrastructure",
+        },
+    },
+    "new zealand": {
+        "safety": 18,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 150,
+        "notes": {
+            "safety": "Very safe; be aware of natural hazards in remote outdoor areas",
+            "english_friendliness": "English is the primary language",
+            "tourist_infrastructure": "Good in tourist areas; self-drive recommended for remote areas",
+        },
+    },
+    "canada": {
+        "safety": 17,
+        "english_friendliness": 20,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 170,
+        "notes": {
+            "safety": "Very safe; standard city precautions apply",
+            "english_friendliness": "English is the primary language (French in Quebec)",
+            "tourist_infrastructure": "Good in cities; limited public transport outside major centres",
+        },
+    },
+    "brazil": {
+        "safety": 9,
+        "english_friendliness": 7,
+        "tourist_infrastructure": 12,
+        "avg_daily_cost_usd": 70,
+        "notes": {
+            "safety": "Exercise heightened caution; avoid displaying valuables; research specific areas carefully",
+            "english_friendliness": "Very limited English — Portuguese essential or have a phrasebook/app",
+            "tourist_infrastructure": "Good in major tourist cities; challenging elsewhere",
+        },
+    },
+    "argentina": {
+        "safety": 12,
+        "english_friendliness": 9,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 60,
+        "notes": {
+            "safety": "Exercise normal caution in Buenos Aires tourist areas; pickpocketing reported",
+            "english_friendliness": "Limited English; Spanish strongly recommended",
+            "tourist_infrastructure": "Good in Buenos Aires; limited in remote Patagonia",
+        },
+    },
+    "south africa": {
+        "safety": 9,
+        "english_friendliness": 17,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 80,
+        "notes": {
+            "safety": "Exercise heightened caution; high crime rate in some areas — research thoroughly and avoid walking at night",
+            "english_friendliness": "English is one of 11 official languages and widely spoken",
+            "tourist_infrastructure": "Good in Cape Town and safari areas; limited public transport",
+        },
+    },
+    "egypt": {
+        "safety": 12,
+        "english_friendliness": 10,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 60,
+        "notes": {
+            "safety": "Check current travel advisories; tourist areas generally safe with normal caution",
+            "english_friendliness": "English in main tourist areas; limited elsewhere",
+            "tourist_infrastructure": "Good in Luxor, Cairo, Hurghada; limited in remote areas",
+        },
+    },
+    "morocco": {
+        "safety": 13,
+        "english_friendliness": 11,
+        "tourist_infrastructure": 14,
+        "avg_daily_cost_usd": 55,
+        "notes": {
+            "safety": "Generally safe; expect persistent hawking in medinas — firm but polite refusals work",
+            "english_friendliness": "French more useful than English; English in major tourist areas",
+            "tourist_infrastructure": "Good in Marrakech and Fes; basic in remote areas",
+        },
+    },
+    "kenya": {
+        "safety": 11,
+        "english_friendliness": 16,
+        "tourist_infrastructure": 12,
+        "avg_daily_cost_usd": 100,
+        "notes": {
+            "safety": "Exercise caution; research specific areas; safari zones generally secure",
+            "english_friendliness": "English is an official language and widely spoken",
+            "tourist_infrastructure": "Good in Nairobi and safari parks; basic elsewhere",
+        },
+    },
+    "peru": {
+        "safety": 11,
+        "english_friendliness": 8,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 55,
+        "notes": {
+            "safety": "Exercise caution in Lima; altitude sickness risk in Cusco/Machu Picchu — acclimatise carefully",
+            "english_friendliness": "Limited English; Spanish helpful",
+            "tourist_infrastructure": "Good for Machu Picchu circuit; limited elsewhere",
+        },
+    },
+    "colombia": {
+        "safety": 11,
+        "english_friendliness": 8,
+        "tourist_infrastructure": 13,
+        "avg_daily_cost_usd": 50,
+        "notes": {
+            "safety": "Significant improvement in recent years; research specific areas; Medellín and Cartagena tourist areas generally safe",
+            "english_friendliness": "Very limited English; Spanish strongly recommended",
+            "tourist_infrastructure": "Good in Bogotá, Medellín, Cartagena; limited elsewhere",
+        },
+    },
+    "iceland": {
+        "safety": 20,
+        "english_friendliness": 19,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 220,
+        "notes": {
+            "safety": "One of the world's safest countries; be aware of natural hazards (weather, volcanic activity)",
+            "english_friendliness": "Near-universal English proficiency",
+            "tourist_infrastructure": "Good ring road infrastructure; limited in highland interiors",
+        },
+    },
+    "norway": {
+        "safety": 19,
+        "english_friendliness": 19,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 230,
+        "notes": {
+            "safety": "Extremely safe; be prepared for remote outdoor conditions",
+            "english_friendliness": "Excellent English proficiency nationwide",
+            "tourist_infrastructure": "Excellent in cities and fjord areas; challenging in remote north",
+        },
+    },
+    "czechia": {
+        "safety": 17,
+        "english_friendliness": 14,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 90,
+        "notes": {
+            "safety": "Very safe; Prague is one of Europe's safer capitals",
+            "english_friendliness": "Good English in Prague; limited in rural areas",
+            "tourist_infrastructure": "Excellent in Prague; good elsewhere in Bohemia",
+        },
+    },
+    "hungary": {
+        "safety": 17,
+        "english_friendliness": 12,
+        "tourist_infrastructure": 16,
+        "avg_daily_cost_usd": 85,
+        "notes": {
+            "safety": "Safe; Budapest is a very visitor-friendly city",
+            "english_friendliness": "English in tourist areas of Budapest; limited outside",
+            "tourist_infrastructure": "Good in Budapest; basic in rural areas",
+        },
+    },
+    "poland": {
+        "safety": 17,
+        "english_friendliness": 14,
+        "tourist_infrastructure": 16,
+        "avg_daily_cost_usd": 80,
+        "notes": {
+            "safety": "Safe; standard precautions in busy city areas",
+            "english_friendliness": "Good English among younger generation; limited with older residents",
+            "tourist_infrastructure": "Good in Warsaw, Kraków; improving nationwide",
+        },
+    },
+    "austria": {
+        "safety": 18,
+        "english_friendliness": 15,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 140,
+        "notes": {
+            "safety": "Very safe; standard precautions apply",
+            "english_friendliness": "Good English in Vienna and tourist areas",
+            "tourist_infrastructure": "Excellent rail and tourist infrastructure",
+        },
+    },
+    "sweden": {
+        "safety": 17,
+        "english_friendliness": 19,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 180,
+        "notes": {
+            "safety": "Generally very safe; some areas of Stockholm require normal caution",
+            "english_friendliness": "Near-universal English proficiency",
+            "tourist_infrastructure": "Excellent in cities; good for outdoor/wilderness areas",
+        },
+    },
+    "denmark": {
+        "safety": 19,
+        "english_friendliness": 19,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 190,
+        "notes": {
+            "safety": "Very safe; one of the world's lowest crime rates",
+            "english_friendliness": "Excellent English proficiency",
+            "tourist_infrastructure": "Excellent cycling, transit, and tourist infrastructure",
+        },
+    },
+    "cambodia": {
+        "safety": 12,
+        "english_friendliness": 11,
+        "tourist_infrastructure": 11,
+        "avg_daily_cost_usd": 35,
+        "notes": {
+            "safety": "Exercise caution; watch for scams near temples; avoid unexploded ordnance risk in rural areas",
+            "english_friendliness": "English in Siem Reap and Phnom Penh tourist areas",
+            "tourist_infrastructure": "Good in Siem Reap; basic elsewhere",
+        },
+    },
+    "myanmar": {
+        "safety": 8,
+        "english_friendliness": 8,
+        "tourist_infrastructure": 8,
+        "avg_daily_cost_usd": 40,
+        "notes": {
+            "safety": "Check current travel advisories — situation is fluid; some areas are restricted",
+            "english_friendliness": "Limited English; mainly in Yangon and Bagan tourist areas",
+            "tourist_infrastructure": "Limited; improving in key tourist areas",
+        },
+    },
+    "philippines": {
+        "safety": 12,
+        "english_friendliness": 17,
+        "tourist_infrastructure": 12,
+        "avg_daily_cost_usd": 50,
+        "notes": {
+            "safety": "Varies by region; popular islands like Palawan are generally safe; check advisories",
+            "english_friendliness": "English is an official language and widely spoken",
+            "tourist_infrastructure": "Good in Manila and popular islands; limited in remote areas",
+        },
+    },
+    "taiwan": {
+        "safety": 18,
+        "english_friendliness": 12,
+        "tourist_infrastructure": 18,
+        "avg_daily_cost_usd": 80,
+        "notes": {
+            "safety": "Very safe; one of Asia's safest destinations",
+            "english_friendliness": "English in Taipei MRT/tourist areas; limited elsewhere",
+            "tourist_infrastructure": "Excellent MRT and railway; good tourist infrastructure",
+        },
+    },
+    "hong kong": {
+        "safety": 16,
+        "english_friendliness": 17,
+        "tourist_infrastructure": 20,
+        "avg_daily_cost_usd": 140,
+        "notes": {
+            "safety": "Generally safe; check current political situation for any advisories",
+            "english_friendliness": "English is an official language and widely used",
+            "tourist_infrastructure": "World-class MTR, airport, and tourist infrastructure",
+        },
+    },
+    "croatia": {
+        "safety": 17,
+        "english_friendliness": 14,
+        "tourist_infrastructure": 16,
+        "avg_daily_cost_usd": 100,
+        "notes": {
+            "safety": "Safe; tourist areas on the coast are very visitor-friendly",
+            "english_friendliness": "Good English in Dubrovnik and coastal areas",
+            "tourist_infrastructure": "Good in Dalmatian coast; basic in inland areas",
+        },
+    },
+    "nepal": {
+        "safety": 14,
+        "english_friendliness": 12,
+        "tourist_infrastructure": 11,
+        "avg_daily_cost_usd": 40,
+        "notes": {
+            "safety": "Generally safe in tourist areas; altitude sickness is a real risk for trekkers",
+            "english_friendliness": "English in Kathmandu and trekking areas; limited elsewhere",
+            "tourist_infrastructure": "Good in Kathmandu and Pokhara; very basic on trekking routes",
+        },
+    },
+    "maldives": {
+        "safety": 18,
+        "english_friendliness": 16,
+        "tourist_infrastructure": 17,
+        "avg_daily_cost_usd": 250,
+        "notes": {
+            "safety": "Very safe resort environment; strict Islamic laws apply outside resort islands",
+            "english_friendliness": "English widely spoken in resorts and Male",
+            "tourist_infrastructure": "Excellent in resorts; limited outside resort islands",
+        },
+    },
+}
+
+# ── Emergency numbers static lookup ──────────────────────────────────────────
+_EMERGENCY_NUMBERS: dict[str, dict] = {
+    "japan": {
+        "police": "110",
+        "ambulance": "119",
+        "fire": "119",
+        "tourist_police": "03-3503-8484",
+    },
+    "france": {"police": "17", "ambulance": "15", "fire": "18", "tourist_police": "17"},
+    "thailand": {
+        "police": "191",
+        "ambulance": "1669",
+        "fire": "199",
+        "tourist_police": "1155",
+    },
+    "uk": {"police": "999", "ambulance": "999", "fire": "999", "tourist_police": "101"},
+    "australia": {
+        "police": "000",
+        "ambulance": "000",
+        "fire": "000",
+        "tourist_police": "131 444",
+    },
+    "usa": {
+        "police": "911",
+        "ambulance": "911",
+        "fire": "911",
+        "tourist_police": "911",
+    },
+    "italy": {
+        "police": "113",
+        "ambulance": "118",
+        "fire": "115",
+        "tourist_police": "06-46861",
+    },
+    "germany": {
+        "police": "110",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "110",
+    },
+    "spain": {
+        "police": "091",
+        "ambulance": "112",
+        "fire": "080",
+        "tourist_police": "902 102 112",
+    },
+    "uae": {
+        "police": "999",
+        "ambulance": "998",
+        "fire": "997",
+        "tourist_police": "901",
+    },
+    "singapore": {
+        "police": "999",
+        "ambulance": "995",
+        "fire": "995",
+        "tourist_police": "1800-255-0000",
+    },
+    "indonesia": {
+        "police": "110",
+        "ambulance": "119",
+        "fire": "113",
+        "tourist_police": "024-8412 222",
+    },
+    "india": {
+        "police": "100",
+        "ambulance": "108",
+        "fire": "101",
+        "tourist_police": "1363",
+    },
+    "china": {
+        "police": "110",
+        "ambulance": "120",
+        "fire": "119",
+        "tourist_police": "110",
+    },
+    "malaysia": {
+        "police": "999",
+        "ambulance": "999",
+        "fire": "994",
+        "tourist_police": "03-2149 6593",
+    },
+    "mexico": {
+        "police": "911",
+        "ambulance": "911",
+        "fire": "911",
+        "tourist_police": "078",
+    },
+    "portugal": {
+        "police": "112",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "21 342 1634",
+    },
+    "greece": {
+        "police": "100",
+        "ambulance": "166",
+        "fire": "199",
+        "tourist_police": "171",
+    },
+    "turkey": {
+        "police": "155",
+        "ambulance": "112",
+        "fire": "110",
+        "tourist_police": "157",
+    },
+    "south korea": {
+        "police": "112",
+        "ambulance": "119",
+        "fire": "119",
+        "tourist_police": "1330",
+    },
+    "vietnam": {
+        "police": "113",
+        "ambulance": "115",
+        "fire": "114",
+        "tourist_police": "1800 599 920",
+    },
+    "netherlands": {
+        "police": "112",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "0900-8844",
+    },
+    "switzerland": {
+        "police": "117",
+        "ambulance": "144",
+        "fire": "118",
+        "tourist_police": "117",
+    },
+    "new zealand": {
+        "police": "111",
+        "ambulance": "111",
+        "fire": "111",
+        "tourist_police": "111",
+    },
+    "canada": {
+        "police": "911",
+        "ambulance": "911",
+        "fire": "911",
+        "tourist_police": "911",
+    },
+    "brazil": {
+        "police": "190",
+        "ambulance": "192",
+        "fire": "193",
+        "tourist_police": "190",
+    },
+    "argentina": {
+        "police": "101",
+        "ambulance": "107",
+        "fire": "100",
+        "tourist_police": "0800-999-5000",
+    },
+    "south africa": {
+        "police": "10111",
+        "ambulance": "10177",
+        "fire": "10177",
+        "tourist_police": "0861-400-800",
+    },
+    "egypt": {
+        "police": "122",
+        "ambulance": "123",
+        "fire": "180",
+        "tourist_police": "126",
+    },
+    "morocco": {
+        "police": "19",
+        "ambulance": "15",
+        "fire": "15",
+        "tourist_police": "0537-706-666",
+    },
+    "iceland": {
+        "police": "112",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "444-1000",
+    },
+    "norway": {
+        "police": "112",
+        "ambulance": "113",
+        "fire": "110",
+        "tourist_police": "02800",
+    },
+    "sweden": {
+        "police": "112",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "114 14",
+    },
+    "denmark": {
+        "police": "112",
+        "ambulance": "112",
+        "fire": "112",
+        "tourist_police": "114",
+    },
+    "cambodia": {
+        "police": "117",
+        "ambulance": "119",
+        "fire": "118",
+        "tourist_police": "012 969 990",
+    },
+    "philippines": {
+        "police": "117",
+        "ambulance": "911",
+        "fire": "911",
+        "tourist_police": "1-800-1888-5601",
+    },
+    "taiwan": {
+        "police": "110",
+        "ambulance": "119",
+        "fire": "119",
+        "tourist_police": "0800-024-111",
+    },
+    "croatia": {
+        "police": "192",
+        "ambulance": "194",
+        "fire": "193",
+        "tourist_police": "192",
+    },
+    "peru": {
+        "police": "105",
+        "ambulance": "106",
+        "fire": "116",
+        "tourist_police": "01-460-0849",
+    },
+    "colombia": {
+        "police": "123",
+        "ambulance": "123",
+        "fire": "119",
+        "tourist_police": "018000-510-900",
+    },
+}
+
+
+def _find_dest_key(destination: str) -> str | None:
+    """Find the matching key from a dest dict by iterating and using _match_destination."""
+    dest_lower = destination.lower()
+    # We need to call _match_destination which is defined below,
+    # so we inline the logic here to avoid forward-reference issues.
+    _city_to_country = {
+        "tokyo": "japan",
+        "osaka": "japan",
+        "kyoto": "japan",
+        "paris": "france",
+        "lyon": "france",
+        "nice": "france",
+        "bangkok": "thailand",
+        "phuket": "thailand",
+        "chiang mai": "thailand",
+        "bali": "indonesia",
+        "jakarta": "indonesia",
+        "london": "uk",
+        "manchester": "uk",
+        "edinburgh": "uk",
+        "new york": "usa",
+        "nyc": "usa",
+        "los angeles": "usa",
+        "san francisco": "usa",
+        "miami": "usa",
+        "chicago": "usa",
+        "las vegas": "usa",
+        "boston": "usa",
+        "seattle": "usa",
+        "hawaii": "usa",
+        "honolulu": "usa",
+        "dubai": "uae",
+        "abu dhabi": "uae",
+        "sydney": "australia",
+        "melbourne": "australia",
+        "rome": "italy",
+        "milan": "italy",
+        "venice": "italy",
+        "florence": "italy",
+        "barcelona": "spain",
+        "madrid": "spain",
+        "berlin": "germany",
+        "munich": "germany",
+        "frankfurt": "germany",
+        "amsterdam": "netherlands",
+        "mumbai": "india",
+        "delhi": "india",
+        "goa": "india",
+        "jaipur": "india",
+        "kathmandu": "nepal",
+        "male": "maldives",
+        "kuala lumpur": "malaysia",
+        "penang": "malaysia",
+        "beijing": "china",
+        "shanghai": "china",
+        "mexico city": "mexico",
+        "cancun": "mexico",
+        "singapore": "singapore",
+        "seoul": "south korea",
+        "busan": "south korea",
+        "lisbon": "portugal",
+        "porto": "portugal",
+        "athens": "greece",
+        "santorini": "greece",
+        "mykonos": "greece",
+        "istanbul": "turkey",
+        "ankara": "turkey",
+        "hanoi": "vietnam",
+        "ho chi minh": "vietnam",
+        "da nang": "vietnam",
+        "zurich": "switzerland",
+        "geneva": "switzerland",
+        "bern": "switzerland",
+        "auckland": "new zealand",
+        "queenstown": "new zealand",
+        "toronto": "canada",
+        "vancouver": "canada",
+        "montreal": "canada",
+        "rio de janeiro": "brazil",
+        "sao paulo": "brazil",
+        "buenos aires": "argentina",
+        "cape town": "south africa",
+        "johannesburg": "south africa",
+        "cairo": "egypt",
+        "luxor": "egypt",
+        "hurghada": "egypt",
+        "marrakech": "morocco",
+        "casablanca": "morocco",
+        "fes": "morocco",
+        "nairobi": "kenya",
+        "mombasa": "kenya",
+        "lima": "peru",
+        "cusco": "peru",
+        "machu picchu": "peru",
+        "bogota": "colombia",
+        "medellin": "colombia",
+        "cartagena": "colombia",
+        "reykjavik": "iceland",
+        "oslo": "norway",
+        "bergen": "norway",
+        "prague": "czechia",
+        "budapest": "hungary",
+        "warsaw": "poland",
+        "krakow": "poland",
+        "vienna": "austria",
+        "stockholm": "sweden",
+        "copenhagen": "denmark",
+        "phnom penh": "cambodia",
+        "siem reap": "cambodia",
+        "manila": "philippines",
+        "cebu": "philippines",
+        "palawan": "philippines",
+        "taipei": "taiwan",
+        "hong kong": "hong kong",
+        "dubrovnik": "croatia",
+        "zagreb": "croatia",
+        "split": "croatia",
+    }
+    resolved = _city_to_country.get(dest_lower, dest_lower)
+    # Additional country name aliases not in city_to_country
+    _country_aliases: dict[str, str] = {
+        "united kingdom": "uk",
+        "england": "uk",
+        "great britain": "uk",
+        "united states": "usa",
+        "united states of america": "usa",
+        "new york city": "usa",
+        "new york": "usa",
+        "united arab emirates": "uae",
+        "republic of korea": "south korea",
+        "democratic people": "south korea",
+        "czech republic": "czechia",
+        "czechia": "czechia",
+        "new zealand": "new zealand",
+        "south africa": "south africa",
+        "hong kong": "hong kong",
+        "south korea": "south korea",
+    }
+    # Strip comma-separated country suffixes: "Bangkok, Thailand" -> "bangkok"
+    primary = dest_lower.split(",")[0].strip()
+
+    # Try alias lookup first
+    if dest_lower in _country_aliases:
+        return _country_aliases[dest_lower]
+    if primary in _country_aliases:
+        return _country_aliases[primary]
+
+    resolved = _city_to_country.get(primary, primary)
+
+    seen: set[str] = set()
+    all_keys = []
+    for k in list(_DESTINATION_SCORES.keys()) + list(_EMERGENCY_NUMBERS.keys()):
+        if k not in seen:
+            seen.add(k)
+            all_keys.append(k)
+
+    # Exact matches first (highest priority)
+    for key in all_keys:
+        if key == resolved or key == primary or key == dest_lower:
+            return key
+    # Resolved value contains key or key contains resolved (for "south korea" etc.)
+    for key in all_keys:
+        if len(key) >= 4 and (key in resolved or resolved in key):
+            return key
+    # dest_lower starts with key or primary starts with key (e.g. "france" in "france, europe")
+    for key in all_keys:
+        if len(key) >= 4 and (primary.startswith(key) or key.startswith(primary)):
+            return key
+        if len(key) >= 4 and (dest_lower.startswith(key) or key.startswith(dest_lower)):
+            return key
+    # Check if any word in dest_lower equals a key exactly (catches "japan" in "tokyo japan")
+    words = set(dest_lower.replace(",", " ").split())
+    for key in all_keys:
+        if key in words:
+            return key
+    return None
+
+
+def get_static_emergency_card(request: TravelSearchRequest) -> dict | None:
+    """Return static emergency numbers for destination, or None if not found."""
+    dest_key = _find_dest_key(request.destination)
+    if not dest_key or dest_key not in _EMERGENCY_NUMBERS:
+        return None
+    numbers = _EMERGENCY_NUMBERS[dest_key]
+    return {
+        "emergency_numbers": numbers,
+        "embassy": None,
+        "hospitals": [],
+        "local_phrases": [],
+        "local_laws": [],
+        "home_country_note": None,
+        "_static_only": True,  # flag so frontend knows to show "Loading embassy details..."
+    }
+
+
+def get_confidence_score(request: TravelSearchRequest) -> dict | None:
+    """Compute travel confidence score. Returns None if destination not in our data."""
+    dest_key = _find_dest_key(request.destination)
+    if not dest_key or dest_key not in _DESTINATION_SCORES:
+        return None
+
+    d = _DESTINATION_SCORES[dest_key]
+    days = max(
+        1,
+        (
+            (request.return_date - request.departure_date).days
+            if request.return_date
+            else 7
+        ),
+    )
+
+    # Dynamic visa_ease from _VISA_TABLE
+    nat_key = request.nationality.lower().strip()
+    visa_info = _VISA_TABLE.get((nat_key, dest_key)) or {}
+    visa_type = visa_info.get("visa_type", "unknown")
+    visa_score = {
+        "visa-free": 20,
+        "visa-on-arrival": 15,
+        "e-visa": 12,
+        "visa-required": 6,
+    }.get(visa_type, 10)
+    if visa_type == "unknown":
+        visa_note = "Unable to verify for your nationality — check destination embassy"
+    elif visa_type == "visa-free":
+        stay = visa_info.get("max_stay_days")
+        visa_note = f"Visa-free for {stay} days" if stay else "Visa-free entry"
+    else:
+        visa_note = f"Visa type: {visa_type}"
+
+    # Dynamic cost_vs_budget
+    daily_cost = d["avg_daily_cost_usd"]
+    if request.budget_usd:
+        cost_ratio = request.budget_usd / (days * daily_cost)
+        cost_score = max(0, min(20, int(cost_ratio * 10)))
+        days_covered = int(request.budget_usd / daily_cost)
+        cost_note = f"~${daily_cost}/day avg; your budget covers ~{days_covered} days"
+    else:
+        cost_score = 12
+        cost_note = "Set a budget for a personalised cost score"
+
+    total = (
+        visa_score
+        + d["safety"]
+        + d["english_friendliness"]
+        + cost_score
+        + d["tourist_infrastructure"]
+    )
+    grade = "green" if total >= 71 else "amber" if total >= 41 else "red"
+
+    return {
+        "total": total,
+        "grade": grade,
+        "destination": request.destination,
+        "sub_scores": {
+            "visa_ease": {
+                "score": visa_score,
+                "max": 20,
+                "label": "Visa Ease",
+                "note": visa_note,
+            },
+            "safety": {
+                "score": d["safety"],
+                "max": 20,
+                "label": "Safety",
+                "note": d["notes"]["safety"],
+            },
+            "english_friendliness": {
+                "score": d["english_friendliness"],
+                "max": 20,
+                "label": "English Friendliness",
+                "note": d["notes"]["english_friendliness"],
+            },
+            "cost_vs_budget": {
+                "score": cost_score,
+                "max": 20,
+                "label": "Cost vs Budget",
+                "note": cost_note,
+            },
+            "tourist_infrastructure": {
+                "score": d["tourist_infrastructure"],
+                "max": 20,
+                "label": "Infrastructure",
+                "note": d["notes"]["tourist_infrastructure"],
+            },
+        },
+    }
+
+
 def _match_destination(destination: str, key_dest: str) -> bool:
     """Fuzzy match destination against lookup key."""
     dest = destination.lower()

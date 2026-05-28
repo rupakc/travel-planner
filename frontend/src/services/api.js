@@ -97,4 +97,9 @@ export async function searchActivitiesFiltered(searchData, filters) {
   return res.data
 }
 
+export async function discoverDestinations(data) {
+  const res = await api.post('/discover', data)
+  return res.data
+}
+
 export default api

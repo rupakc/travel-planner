@@ -4,12 +4,15 @@ from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
 from .activities_agent import ActivitiesAgent
+from .emergency_card_agent import EmergencyCardAgent
 from .flights_agent import FlightsAgent
 from .forex_agent import ForexAgent
 from .getting_around_agent import GettingAroundAgent
 from .hotels_agent import HotelsAgent
 from .itinerary_agent import ItineraryAgent
+from .packing_list_agent import PackingListAgent
 from .places_agent import PlacesAgent
+from .pricing_advisor_agent import PricingAdvisorAgent
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
 from .visa_agent import VisaAgent
@@ -31,6 +34,9 @@ class TravelOrchestrator:
         self.places = PlacesAgent(agents_dir)
         self.itinerary = ItineraryAgent(agents_dir)
         self.weather = WeatherAgent(agents_dir)
+        self.emergency_card = EmergencyCardAgent(agents_dir)
+        self.packing_list = PackingListAgent(agents_dir)
+        self.pricing_advisor = PricingAdvisorAgent(agents_dir)
 
     async def run(self, request: TravelSearchRequest) -> dict:
         """Run all agents: Phase 1 in parallel, Phase 2 sequential."""
@@ -105,6 +111,8 @@ class TravelOrchestrator:
         import json
 
         from .static_results import (
+            get_confidence_score,
+            get_static_emergency_card,
             get_static_forex,
             get_static_getting_around,
             get_static_sim,
@@ -130,7 +138,17 @@ class TravelOrchestrator:
         if static_forex:
             yield f"data: {json.dumps({'type': 'forex', 'data': static_forex, 'source': 'static'})}\n\n"
 
-        logger.info("Static results yielded for visa/sim/tips/getting_around/forex")
+        confidence = get_confidence_score(request)
+        if confidence:
+            yield f"data: {json.dumps({'type': 'confidence', 'data': confidence, 'source': 'static'})}\n\n"
+
+        static_emergency = get_static_emergency_card(request)
+        if static_emergency:
+            yield f"data: {json.dumps({'type': 'emergency_card', 'data': static_emergency, 'source': 'static'})}\n\n"
+
+        logger.info(
+            "Static results yielded for visa/sim/tips/getting_around/forex/confidence/emergency_card"
+        )
 
         # Notify frontend that AI agents are starting
         for name in [
@@ -142,8 +160,11 @@ class TravelOrchestrator:
             "visa",
             "sim",
             "tips",
+            "emergency_card",
             "getting_around",
             "forex",
+            "packing_list",
+            "pricing_advisor",
         ]:
             yield f"data: {json.dumps({'type': 'agent_status', 'agent': name, 'status': 'searching'})}\n\n"
 
@@ -151,6 +172,8 @@ class TravelOrchestrator:
         results = {}
         queue: asyncio.Queue = asyncio.Queue()
         itinerary_task = None
+        packing_list_task = None
+        pricing_advisor_task = None
 
         async def run_agent(name: str, coro):
             try:
@@ -169,6 +192,7 @@ class TravelOrchestrator:
             "visa": self.visa,
             "sim": self.sim,
             "tips": self.tips,
+            "emergency_card": self.emergency_card,
             "getting_around": self.getting_around,
             "forex": self.forex,
         }
@@ -178,7 +202,14 @@ class TravelOrchestrator:
             for name, agent in phase1_agents.items()
         ]
 
-        _STATIC_BACKED = {"visa", "sim", "tips", "getting_around", "forex"}
+        _STATIC_BACKED = {
+            "visa",
+            "sim",
+            "tips",
+            "getting_around",
+            "forex",
+            "emergency_card",
+        }
 
         # Enrichment starts per-agent as soon as each Phase 1 result arrives
         enrich_queue: asyncio.Queue = asyncio.Queue()
@@ -229,7 +260,46 @@ class TravelOrchestrator:
                     )
                 )
 
-        # ── Phase 2: Drain remaining enrichments + itinerary ─────────────
+            # Deferred: packing_list starts when activities ready AND weather done
+            if (
+                packing_list_task is None
+                and "activities" in results
+                and (
+                    "weather" in results
+                    or (results.get("weather", {}) or {}).get("error")
+                )
+            ):
+                logger.info("Starting packing_list agent")
+                packing_list_task = asyncio.create_task(
+                    self.packing_list.run(
+                        request,
+                        weather=results.get("weather"),
+                        activities=results.get("activities"),
+                    )
+                )
+
+            # Deferred: pricing_advisor starts when flights ready (with valid results)
+            flights_result = results.get("flights", {})
+            if (
+                pricing_advisor_task is None
+                and "flights" in results
+                and not flights_result.get("error")
+                and len(flights_result.get("results", [])) >= 3
+            ):
+                prices = [
+                    f["price_usd"]
+                    for f in flights_result.get("results", [])
+                    if f.get("price_usd")
+                ]
+                avg_price = sum(prices) / len(prices) if prices else None
+                logger.info("Starting pricing_advisor agent")
+                pricing_advisor_task = asyncio.create_task(
+                    self.pricing_advisor.run(
+                        request, flights=flights_result, avg_price=avg_price
+                    )
+                )
+
+        # ── Phase 2: Drain remaining enrichments + itinerary + deferred ─────────────
         if itinerary_task is None:
             itinerary_task = asyncio.create_task(
                 self.itinerary.run(
@@ -239,14 +309,49 @@ class TravelOrchestrator:
                 )
             )
 
+        if packing_list_task is None:
+            packing_list_task = asyncio.create_task(
+                self.packing_list.run(
+                    request,
+                    weather=results.get("weather"),
+                    activities=results.get("activities", {}),
+                )
+            )
+
+        if pricing_advisor_task is None:
+            prices = [
+                f["price_usd"]
+                for f in results.get("flights", {}).get("results", [])
+                if f.get("price_usd")
+            ]
+            if prices:
+                avg_price = sum(prices) / len(prices)
+                pricing_advisor_task = asyncio.create_task(
+                    self.pricing_advisor.run(
+                        request,
+                        flights=results.get("flights"),
+                        avg_price=avg_price,
+                    )
+                )
+
         enriched_count = 0
         itinerary_done = False
+        packing_done = packing_list_task is None
+        pricing_done = pricing_advisor_task is None
         itinerary_timeout = 60
+        deferred_timeout = 45
         timer_start = asyncio.get_event_loop().time()
 
-        while enriched_count < len(enrich_tasks) or not itinerary_done:
+        while (
+            enriched_count < len(enrich_tasks)
+            or not itinerary_done
+            or not packing_done
+            or not pricing_done
+        ):
             now = asyncio.get_event_loop().time()
-            if not itinerary_done and (now - timer_start) > itinerary_timeout:
+            elapsed = now - timer_start
+
+            if not itinerary_done and elapsed > itinerary_timeout:
                 itinerary_task.cancel()
                 logger.warning("Itinerary agent timed out after %ds", itinerary_timeout)
                 itinerary = self._build_fallback_itinerary(
@@ -254,6 +359,24 @@ class TravelOrchestrator:
                 )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
+                continue
+
+            if not packing_done and elapsed > deferred_timeout:
+                if packing_list_task:
+                    packing_list_task.cancel()
+                logger.warning(
+                    "Packing list agent timed out after %ds", deferred_timeout
+                )
+                packing_done = True
+                continue
+
+            if not pricing_done and elapsed > deferred_timeout:
+                if pricing_advisor_task:
+                    pricing_advisor_task.cancel()
+                logger.warning(
+                    "Pricing advisor agent timed out after %ds", deferred_timeout
+                )
+                pricing_done = True
                 continue
 
             if not itinerary_done and itinerary_task.done():
@@ -272,6 +395,32 @@ class TravelOrchestrator:
                     )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
+                continue
+
+            if not packing_done and packing_list_task and packing_list_task.done():
+                try:
+                    packing_result = packing_list_task.result()
+                except Exception as e:
+                    logger.warning(f"Packing list agent failed: {e}")
+                    packing_result = {"error": str(e)}
+                if not packing_result.get("error"):
+                    yield f"data: {json.dumps({'type': 'packing_list', 'data': packing_result, 'source': 'ai'})}\n\n"
+                packing_done = True
+                continue
+
+            if (
+                not pricing_done
+                and pricing_advisor_task
+                and pricing_advisor_task.done()
+            ):
+                try:
+                    pricing_result = pricing_advisor_task.result()
+                except Exception as e:
+                    logger.warning(f"Pricing advisor agent failed: {e}")
+                    pricing_result = {"error": str(e)}
+                if not pricing_result.get("error"):
+                    yield f"data: {json.dumps({'type': 'pricing_advisor', 'data': pricing_result, 'source': 'ai'})}\n\n"
+                pricing_done = True
                 continue
 
             try:

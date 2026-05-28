@@ -6,6 +6,7 @@ import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, ChevronDown,
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
+import { discoverDestinations } from '../services/api'
 
 const ACCESSIBILITY_OPTIONS = [
   { id: 'wheelchair',           label: '♿ Wheelchair / Mobility aid' },
@@ -157,6 +158,60 @@ const USD_TO_BUDGET = (usd) => {
   return 'high'
 }
 
+function DestinationCard({ dest, onSelect }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h4 className="font-semibold text-gray-900">{dest.city}</h4>
+          <p className="text-xs text-gray-500">{dest.country}</p>
+        </div>
+        <span className="text-2xl">{dest.weather_emoji || '🌍'}</span>
+      </div>
+
+      {/* Visa badge */}
+      <span className={`self-start text-xs px-2 py-0.5 rounded-full font-medium ${
+        dest.visa_type === 'visa-free' ? 'bg-green-100 text-green-700' :
+        dest.visa_type === 'visa-on-arrival' ? 'bg-blue-100 text-blue-700' :
+        dest.visa_type === 'e-visa' ? 'bg-sky-100 text-sky-700' :
+        dest.visa_type === 'required' ? 'bg-orange-100 text-orange-700' :
+        'bg-amber-100 text-amber-700'
+      }`}>
+        {dest.visa_verified ? '' : '⚠️ '}{dest.visa_type === 'visa-free' ? '✓ Visa-free' : dest.visa_type === 'visa-on-arrival' ? 'Visa on arrival' : dest.visa_type === 'e-visa' ? 'e-Visa' : dest.visa_type === 'required' ? 'Visa required' : 'Verify visa'}
+      </span>
+
+      {/* Weather */}
+      <p className="text-xs text-gray-600">{dest.weather_description}</p>
+
+      {/* Flight duration */}
+      {dest.flight_duration_label && (
+        <p className="text-xs text-gray-500 flex items-center gap-1"><Plane size={11} />{dest.flight_duration_label}</p>
+      )}
+
+      {/* Cost estimate */}
+      {dest.estimated_cost_usd_low && (
+        <p className="text-sm font-medium text-teal-700">
+          ~${dest.estimated_cost_usd_low.toLocaleString()}–${dest.estimated_cost_usd_high.toLocaleString()} <span className="text-xs font-normal text-gray-500">rough estimate</span>
+        </p>
+      )}
+
+      {/* Match reasons */}
+      {dest.match_reasons?.length > 0 && (
+        <ul className="space-y-1">
+          {dest.match_reasons.slice(0, 2).map((r, i) => (
+            <li key={i} className="text-xs text-gray-600 flex gap-1.5"><span className="text-teal-500 mt-0.5">✓</span><span>{r}</span></li>
+          ))}
+        </ul>
+      )}
+
+      <button type="button" onClick={onSelect}
+        className="mt-auto w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors">
+        Plan this trip →
+      </button>
+    </div>
+  )
+}
+
 export default function SearchPage() {
   const { preferences, updatePreferences } = useAuth()
   const { setPendingSearchData } = useSearchData()
@@ -164,6 +219,20 @@ export default function SearchPage() {
   const today     = new Date().toISOString().split('T')[0]
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
   const twoWeeks  = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
+
+  const [mode, setMode] = useState('known')  // 'known' | 'discover'
+  const [discoverForm, setDiscoverForm] = useState({
+    origin: '',
+    nationality: '',
+    departure_date: nextWeek,
+    return_date: twoWeeks,
+    budget_usd: '',
+    interests: [],
+    adults: 1, children: 0, seniors: 0, infants: 0,
+  })
+  const [discovering, setDiscovering] = useState(false)
+  const [destinations, setDestinations] = useState(null)
+  const [discoverError, setDiscoverError] = useState(null)
 
   const [form, setForm] = useState({
     origin: '', destination: '',
@@ -191,6 +260,15 @@ export default function SearchPage() {
       seniors: preferences.seniors ?? f.seniors,
       infants: preferences.infants ?? f.infants,
       accessibility_needs: preferences.accessibility_needs?.length ? preferences.accessibility_needs : f.accessibility_needs,
+    }))
+    setDiscoverForm(f => ({
+      ...f,
+      nationality: preferences.nationality || f.nationality,
+      interests: preferences.interests?.length ? preferences.interests : f.interests,
+      adults: preferences.adults ?? f.adults,
+      children: preferences.children ?? f.children,
+      seniors: preferences.seniors ?? f.seniors,
+      infants: preferences.infants ?? f.infants,
     }))
   }, [preferences])
 
@@ -230,6 +308,32 @@ export default function SearchPage() {
     setPendingSearchData(searchData)
   }
 
+  const handleDiscover = async () => {
+    setDiscovering(true)
+    setDiscoverError(null)
+    setDestinations(null)
+    try {
+      const totalTravelers = Math.max(1, discoverForm.adults + discoverForm.children + discoverForm.seniors + discoverForm.infants)
+      const result = await discoverDestinations({
+        origin: discoverForm.origin,
+        nationality: discoverForm.nationality,
+        departure_date: discoverForm.departure_date,
+        return_date: discoverForm.return_date || null,
+        budget_usd: discoverForm.budget_usd ? parseFloat(discoverForm.budget_usd) : null,
+        interests: discoverForm.interests,
+        adults: discoverForm.adults,
+        children: discoverForm.children,
+        seniors: discoverForm.seniors,
+        infants: discoverForm.infants,
+      })
+      setDestinations(result.destinations || [])
+    } catch (err) {
+      setDiscoverError(err.response?.data?.detail || 'Discovery failed — please try again')
+    } finally {
+      setDiscovering(false)
+    }
+  }
+
   const inputClass = "w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-colors text-sm bg-white"
   const labelClass = "block text-sm font-medium text-gray-700 mb-1"
 
@@ -248,7 +352,21 @@ export default function SearchPage() {
       {/* Form card */}
       <div className="max-w-4xl mx-auto px-4 pb-16 -mt-2">
         <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Mode toggle */}
+          <div className="flex items-center gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit mx-auto">
+            <button type="button"
+              onClick={() => setMode('known')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'known' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              I know where I'm going
+            </button>
+            <button type="button"
+              onClick={() => setMode('discover')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'discover' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              Surprise me 🎲
+            </button>
+          </div>
+
+          {mode === 'known' && <form onSubmit={handleSubmit} className="space-y-6">
 
             {/* Origin + Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -328,7 +446,105 @@ export default function SearchPage() {
               className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
               <Search size={18} /> Plan My Trip
             </button>
-          </form>
+          </form>}
+
+          {mode === 'discover' && (
+            <div className="space-y-6">
+              {/* Origin + Dates row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <AirportSearch
+                  label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> Flying from</span>}
+                  value={discoverForm.origin}
+                  onChange={v => setDiscoverForm(f => ({ ...f, origin: v }))}
+                  placeholder="City or airport…"
+                  required
+                />
+                <div>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Departure</span></label>
+                  <input type="date" required value={discoverForm.departure_date} min={today}
+                    onChange={e => setDiscoverForm(f => ({ ...f, departure_date: e.target.value }))} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Return</span></label>
+                  <input type="date" value={discoverForm.return_date} min={discoverForm.departure_date}
+                    onChange={e => setDiscoverForm(f => ({ ...f, return_date: e.target.value }))} className={inputClass} />
+                </div>
+              </div>
+
+              {/* Nationality + Budget */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <NationalitySearch
+                  label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> Nationality</span>}
+                  value={discoverForm.nationality}
+                  onChange={v => setDiscoverForm(f => ({ ...f, nationality: v }))}
+                  placeholder="American, Indian…"
+                  required
+                />
+                <div>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> Budget (USD, optional)</span></label>
+                  <input type="number" value={discoverForm.budget_usd} min="0" step="100"
+                    onChange={e => setDiscoverForm(f => ({ ...f, budget_usd: e.target.value }))}
+                    placeholder="Total trip budget" className={inputClass} />
+                </div>
+              </div>
+
+              {/* Interests */}
+              <div>
+                <label className={labelClass}>✨ What are you into?</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {INTERESTS.map(({ id, label }) => (
+                    <button key={id} type="button"
+                      onClick={() => setDiscoverForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${discoverForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <button type="button"
+                disabled={discovering || !discoverForm.origin || !discoverForm.nationality}
+                onClick={handleDiscover}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
+                {discovering ? (
+                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Finding destinations…</>
+                ) : (
+                  <><Search size={18} /> Find My Perfect Destination</>
+                )}
+              </button>
+
+              {/* Error */}
+              {discoverError && (
+                <p className="text-center text-red-500 text-sm">{discoverError}</p>
+              )}
+
+              {/* Results: DestinationCard grid */}
+              {destinations && destinations.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Your personalized picks ✨</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {destinations.map((dest, i) => (
+                      <DestinationCard
+                        key={i}
+                        dest={dest}
+                        onSelect={() => {
+                          setForm(f => ({ ...f, destination: dest.city + ', ' + dest.country, origin: discoverForm.origin, departure_date: discoverForm.departure_date, return_date: discoverForm.return_date, nationality: discoverForm.nationality, budget_usd: discoverForm.budget_usd, interests: discoverForm.interests }))
+                          setMode('known')
+                          setDestinations(null)
+                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {destinations && destinations.length === 0 && (
+                <p className="text-center text-gray-500 text-sm py-4">No destinations found — try different interests or a higher budget.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

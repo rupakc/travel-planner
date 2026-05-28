@@ -22,6 +22,7 @@ from .api.routes.airports import router as airports_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
+from .api.routes.discover import router as discover_router
 from .api.routes.feedback import router as feedback_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
@@ -106,6 +107,7 @@ app.include_router(tips.router, prefix="/api", tags=["tips"])
 app.include_router(getting_around.router, prefix="/api", tags=["getting_around"])
 app.include_router(forex.router, prefix="/api", tags=["forex"])
 app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
+app.include_router(discover_router, prefix="/api", tags=["discover"])
 
 
 @app.get("/health")

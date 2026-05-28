@@ -152,3 +152,23 @@ class ActivityFilteredSearchRequest(TravelSearchRequest):
     min_rating: float | None = Field(
         None, ge=0, le=5, description="Minimum star rating (0-5)"
     )
+
+
+class DiscoveryRequest(BaseModel):
+    """Request for destination discovery ('Surprise Me' mode)."""
+
+    origin: str = Field(..., description="Departure city or airport")
+    budget_usd: float | None = Field(None, ge=0, description="Total budget in USD")
+    departure_date: date = Field(..., description="Departure date")
+    return_date: date | None = Field(None, description="Return date")
+    nationality: str = Field(..., description="Traveler nationality")
+    interests: list[str] = Field(default_factory=list)
+    adults: int = Field(default=1, ge=1)
+    children: int = Field(default=0, ge=0)
+    seniors: int = Field(default=0, ge=0)
+    infants: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def resolve_origin_iata(self) -> "DiscoveryRequest":
+        self.origin = _resolve_iata(self.origin)
+        return self

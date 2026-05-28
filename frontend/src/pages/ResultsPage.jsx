@@ -6,8 +6,10 @@ import {
   DollarSign, Users, Globe, Zap, BookmarkPlus, X,
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
-  Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud
+  Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
+  ShoppingBag, TrendingUp, LayoutList, CalendarDays
 } from 'lucide-react'
+import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
@@ -33,8 +35,10 @@ const AGENT_CONFIG = {
   getting_around: { label: 'Getting Around',   icon: Bus,         color: 'cyan'    },
   forex:          { label: 'Currency & Forex', icon: DollarSign,  color: 'emerald' },
   itinerary:      { label: 'Itinerary',        icon: Calendar,    color: 'indigo'  },
+  emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
+  packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
 }
-const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'packing_list']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -48,6 +52,8 @@ const COLOR_MAP = {
   emerald:{ badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', header: 'from-emerald-500 to-emerald-600' },
   indigo: { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
   lime:   { badge: 'bg-lime-50 text-lime-700 border-lime-200',    header: 'from-lime-500 to-green-500' },
+  red:    { badge: 'bg-red-50 text-red-700 border-red-200',       header: 'from-red-500 to-red-600'   },
+  teal:   { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
 }
 
 const SECTION_ACCENT = {
@@ -62,13 +68,15 @@ const SECTION_ACCENT = {
   emerald: { icon: 'text-emerald-600', line: 'border-l-emerald-400', bg: 'bg-emerald-50/30' },
   indigo:  { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
   lime:    { icon: 'text-lime-600',    line: 'border-l-lime-400',    bg: 'bg-lime-50/30'    },
+  red:     { icon: 'text-red-600',     line: 'border-l-red-400',     bg: 'bg-red-50/30'     },
+  teal:    { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
 }
 
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', emergency_card: 'Emergency', packing_list: 'Packing' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -176,6 +184,16 @@ const LOADING_MESSAGES = {
     "Checking daily conditions...",
     "Preparing weather outlook for your trip..."
   ],
+  emergency_card: [
+    "Finding emergency contacts...",
+    "Looking up embassy details...",
+    "Compiling safety information..."
+  ],
+  packing_list: [
+    "Checking weather...",
+    "Planning what to pack...",
+    "Finalising your packing list..."
+  ],
 }
 
 function Skeleton({ agent }) {
@@ -274,7 +292,7 @@ function FlightLeg({ leg, direction }) {
   )
 }
 
-function FlightsSection({ data, selections, onSelect }) {
+function FlightsSection({ data, selections, onSelect, pricingData }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
@@ -284,6 +302,8 @@ function FlightsSection({ data, selections, onSelect }) {
   if (!isRoundTripFormat) {
     // Legacy flat format fallback
     return (
+      <div>
+      {pricingData && <div className="px-4 pt-4"><PricingAdvisorBanner data={pricingData} /></div>}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
@@ -328,12 +348,14 @@ function FlightsSection({ data, selections, onSelect }) {
           </tbody>
         </table>
       </div>
+      </div>
     )
   }
 
   // Round-trip card layout
   return (
     <div className="space-y-3 p-4">
+      {pricingData && <PricingAdvisorBanner data={pricingData} />}
       {data.results.map((f, i) => {
         const isSelected = selected && selected === f || (selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline)
         const isOneWay = f.trip_type === 'one_way' || !f.return
@@ -1435,6 +1457,418 @@ function ForexSection({ data }) {
   )
 }
 
+// ─── Confidence Banner ────────────────────────────────────────────────────────
+
+function ConfidenceBanner({ data }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!data) return null
+
+  const gradeColors = {
+    green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', score: 'text-green-700', bar: 'bg-green-500' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', score: 'text-amber-700', bar: 'bg-amber-400' },
+    red:   { bg: 'bg-red-50',   border: 'border-red-200',   text: 'text-red-800',   score: 'text-red-700',   bar: 'bg-red-500' },
+  }
+  const c = gradeColors[data.grade] || gradeColors.amber
+  const subScores = Object.values(data.sub_scores || {})
+
+  return (
+    <div className={`rounded-xl border ${c.bg} ${c.border} px-4 py-3 mb-4`}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* Score circle */}
+        <div className="flex items-center gap-3">
+          <div className={`w-12 h-12 rounded-full border-2 ${c.border} flex items-center justify-center shrink-0`}>
+            <span className={`text-lg font-bold ${c.score}`}>{data.total}</span>
+          </div>
+          <div>
+            <p className={`text-sm font-semibold ${c.text}`}>Travel Ease Score</p>
+            <p className="text-xs text-gray-500">{data.destination}</p>
+          </div>
+        </div>
+        {/* Mini sub-score pills */}
+        <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
+          {subScores.map(s => (
+            <div key={s.label} className="flex items-center gap-1 bg-white rounded-full border border-gray-200 px-2 py-0.5">
+              <span className="text-xs text-gray-600">{s.label}</span>
+              <span className={`text-xs font-semibold ${c.score}`}>{s.score}/{s.max}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setExpanded(e => !e)} className="text-xs text-gray-500 hover:text-gray-700 whitespace-nowrap shrink-0">
+          {expanded ? 'Less ▲' : 'Details ▼'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
+          {subScores.map(s => (
+            <div key={s.label} className="flex items-start gap-3">
+              <div className="w-28 shrink-0">
+                <p className="text-xs font-medium text-gray-700">{s.label}</p>
+                <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className={`h-full ${c.bar} rounded-full`} style={{ width: `${(s.score / s.max) * 100}%` }} />
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">{s.note}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Pricing Advisor ──────────────────────────────────────────────────────────
+
+function PricingSparkline({ trendData, daysUntilDeparture }) {
+  if (!trendData?.length) return null
+  const sorted = [...trendData].sort((a, b) => b.days_before - a.days_before)
+  const W = 180, H = 44, PAD = 6
+  const maxDB = sorted[0]?.days_before || 90
+  const prices = sorted.map(d => d.relative_price)
+  const minP = Math.min(...prices), maxP = Math.max(...prices)
+  const range = maxP - minP || 0.1
+  const px = d => PAD + (1 - d.days_before / maxDB) * (W - 2 * PAD)
+  const py = p => H - PAD - ((p - minP) / range) * (H - 2 * PAD)
+  const pathD = sorted.map((d, i) => `${i === 0 ? 'M' : 'L'} ${px(d).toFixed(1)} ${py(d.relative_price).toFixed(1)}`).join(' ')
+
+  const nowPoint = sorted.reduce((best, d) =>
+    Math.abs(d.days_before - daysUntilDeparture) < Math.abs(best.days_before - daysUntilDeparture) ? d : best
+  , sorted[sorted.length - 1])
+  const nowX = px(nowPoint)
+  const nowY = py(nowPoint.relative_price)
+
+  return (
+    <svg width={W} height={H + 14} className="overflow-visible">
+      <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx={nowX} cy={nowY} r="5" fill="#0ea5e9" opacity="0.25" />
+      <circle cx={nowX} cy={nowY} r="3" fill="#0ea5e9" />
+      <text x={nowX} y={H + 13} textAnchor="middle" fontSize="8" fill="#94a3b8">Now</text>
+      <text x={PAD} y={H + 13} textAnchor="start" fontSize="8" fill="#94a3b8">90d</text>
+    </svg>
+  )
+}
+
+function PricingAdvisorBanner({ data }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!data?.trend_data?.length) return null
+
+  const statusColors = {
+    above_average: { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700' },
+    below_average: { bg: 'bg-green-50', border: 'border-green-200', badge: 'bg-green-100 text-green-700' },
+    average:       { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-700' },
+  }
+  const c = statusColors[data.price_status] || statusColors.average
+  const recColors = data.recommendation === 'book_now'
+    ? 'bg-green-100 text-green-800'
+    : 'bg-amber-100 text-amber-800'
+
+  const today = new Date()
+  const depDate = new Date(data.route?.split('→')[1]?.trim() || today)
+  const daysUntil = Math.max(0, Math.round((depDate - today) / 86400000))
+
+  return (
+    <div className={`rounded-xl border ${c.bg} ${c.border} px-4 py-3 mb-4`}>
+      <div className="flex items-start gap-4 flex-wrap">
+        {/* Sparkline */}
+        <div className="shrink-0">
+          <PricingSparkline trendData={data.trend_data} daysUntilDeparture={daysUntil} />
+        </div>
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${c.badge}`}>
+              {data.price_status_label}
+            </span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${recColors}`}>
+              {data.recommendation === 'book_now' ? '✓ Book now' : '⏳ Consider waiting'}
+            </span>
+            <span className="text-xs text-gray-400">{data.confidence} confidence</span>
+          </div>
+          {expanded && (
+            <>
+              <p className="text-xs text-gray-700 mb-1">{data.recommendation_detail}</p>
+              {data.optimal_booking_window && (
+                <p className="text-xs text-gray-500">Best window: {data.optimal_booking_window}</p>
+              )}
+            </>
+          )}
+          <button onClick={() => setExpanded(e => !e)} className="text-xs text-gray-400 hover:text-gray-600 mt-1">
+            {expanded ? 'Less ▲' : 'Why? ▼'}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-gray-400 mt-2 border-t border-gray-200 pt-2">
+        📊 Historical pattern estimate — not live market data. {data.disclaimer}
+      </p>
+    </div>
+  )
+}
+
+// ─── Emergency Card Section ───────────────────────────────────────────────────
+
+function printEmergencyCard(data, destination) {
+  const numbers = data?.emergency_numbers || {}
+  const phrases = data?.local_phrases || []
+  const laws = data?.local_laws || []
+  const hospitals = data?.hospitals || []
+  const embassy = data?.embassy
+
+  const win = window.open('', '_blank', 'width=820,height=700')
+  if (!win) return
+
+  const lawsHtml = laws.map(l => `
+    <div style="margin:4px 0;padding:6px 8px;border-radius:4px;background:${l.severity === 'critical' ? '#fee2e2' : '#fef3c7'};">
+      <strong>${l.law}</strong>: ${l.detail}
+    </div>`).join('')
+
+  const phrasesHtml = phrases.map(p => `
+    <tr>
+      <td style="padding:4px 6px;border:1px solid #ddd;">${p.english}</td>
+      <td style="padding:4px 6px;border:1px solid #ddd;">${p.local}</td>
+      <td style="padding:4px 6px;border:1px solid #ddd;color:#555;">${p.phonetic}</td>
+    </tr>`).join('')
+
+  win.document.write(`<!DOCTYPE html><html><head><title>Emergency Card — ${destination}</title>
+    <style>
+      body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;font-size:13px;color:#111}
+      h1{font-size:17px;margin-bottom:4px} h2{font-size:13px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
+      .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+      .num-box{background:#fee2e2;border-radius:6px;padding:8px;text-align:center}
+      .num-box strong{display:block;font-size:18px;color:#991b1b}
+      table{width:100%;border-collapse:collapse}
+      td,th{border:1px solid #ddd;padding:4px 6px;font-size:12px}
+      th{background:#f3f4f6;font-weight:600}
+      .disclaimer{font-size:10px;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
+      @media print{button{display:none}}
+    </style></head><body>
+    <h1>🚨 Emergency Card — ${destination}</h1>
+    <p style="font-size:11px;color:#666;">Verify all details before travel — information may be outdated.</p>
+    <h2>Emergency Numbers</h2>
+    <div class="nums">
+      <div class="num-box"><strong>${numbers.police || '—'}</strong>Police</div>
+      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>Ambulance</div>
+      <div class="num-box"><strong>${numbers.fire || '—'}</strong>Fire</div>
+      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>Tourist Police</div>
+    </div>
+    ${embassy ? `<h2>Embassy</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | After hours: ${embassy.emergency_after_hours || '—'}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
+    ${hospitals.length ? `<h2>Hospitals</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
+    ${phrases.length ? `<h2>Essential Phrases</h2><table><tr><th>English</th><th>Local</th><th>Phonetic</th></tr>${phrasesHtml}</table>` : ''}
+    ${laws.length ? `<h2>Laws to Know</h2>${lawsHtml}` : ''}
+    <div class="disclaimer">Information provided for general guidance only. Always verify current details with official sources. Embassy hours and hospital services may change.</div>
+    <br/><button onclick="window.print()">🖨️ Print this card</button>
+    </body></html>`)
+  win.document.close()
+}
+
+function EmergencyCardSection({ data, status }) {
+  if (!data?.emergency_numbers && status === 'waiting') return null
+  if (!data) return <div className="p-4 text-sm text-gray-500">Emergency information unavailable</div>
+
+  const numbers = data.emergency_numbers || {}
+  const isEnhancing = data._static_only
+  const phrases = data.local_phrases || []
+  const laws = data.local_laws || []
+  const hospitals = data.hospitals || []
+  const embassy = data.embassy
+  const destination = data.destination || ''
+
+  const numButtons = [
+    { label: 'Police', value: numbers.police, color: 'bg-blue-100 text-blue-800' },
+    { label: 'Ambulance', value: numbers.ambulance, color: 'bg-red-100 text-red-800' },
+    { label: 'Fire', value: numbers.fire, color: 'bg-orange-100 text-orange-800' },
+    { label: 'Tourist Police', value: numbers.tourist_police, color: 'bg-purple-100 text-purple-800' },
+  ]
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Subtitle / print row */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
+        <button onClick={() => printEmergencyCard(data, destination)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          🖨️ Print Card
+        </button>
+      </div>
+
+      {/* Disclaimer */}
+      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        ⚠️ Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.
+      </p>
+
+      {/* Emergency numbers */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {numButtons.map(({ label, value, color }) => (
+          <div key={label} className={`${color} rounded-lg px-3 py-2 text-center`}>
+            <p className="text-xs font-medium opacity-70">{label}</p>
+            <p className="text-xl font-bold">{value || '—'}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Embassy */}
+      {embassy && (
+        <div className="bg-white border border-gray-200 rounded-lg p-3">
+          <p className="text-sm font-semibold text-gray-800 mb-1">🏛️ {embassy.name}</p>
+          <p className="text-xs text-gray-600">{embassy.address}</p>
+          <p className="text-xs text-gray-600 mt-1">📞 {embassy.phone} · After hours: {embassy.emergency_after_hours || '—'}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{embassy.hours}</p>
+          {embassy.website && <a href={embassy.website} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-teal-600 hover:underline mt-0.5 block">🌐 {embassy.website}</a>}
+        </div>
+      )}
+
+      {/* Hospitals */}
+      {hospitals.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">🏥 Hospitals</p>
+          <div className="space-y-2">
+            {hospitals.map((h, i) => (
+              <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-800">{h.name}</p>
+                <p className="text-xs text-gray-600">📞 {h.phone} · {h.address}</p>
+                {h.notes && <p className="text-xs text-gray-500 italic mt-0.5">{h.notes}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Phrases */}
+      {phrases.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">💬 Essential Phrases</p>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">English</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Local</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Phonetic</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {phrases.map((p, i) => (
+                  <tr key={i} className="bg-white">
+                    <td className="px-3 py-2 text-gray-800">{p.english}</td>
+                    <td className="px-3 py-2 text-gray-700">{p.local}</td>
+                    <td className="px-3 py-2 text-gray-500 italic">{p.phonetic}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Local laws */}
+      {laws.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">⚖️ Laws to Know</p>
+          <div className="space-y-2">
+            {laws.map((l, i) => (
+              <div key={i} className={`rounded-lg px-3 py-2 border ${
+                l.severity === 'critical' ? 'bg-red-50 border-red-200' :
+                l.severity === 'warning' ? 'bg-amber-50 border-amber-200' :
+                'bg-gray-50 border-gray-200'
+              }`}>
+                <p className={`text-sm font-semibold ${l.severity === 'critical' ? 'text-red-800' : l.severity === 'warning' ? 'text-amber-800' : 'text-gray-800'}`}>
+                  {l.severity === 'critical' && '🚨 '}{l.law}
+                </p>
+                <p className="text-xs text-gray-700 mt-0.5">{l.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Packing List Section ─────────────────────────────────────────────────────
+
+function PackingListSection({ data, status }) {
+  if (!data?.categories?.length) return null
+
+  const [checkedItems, setCheckedItems] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('packing_checked') || '{}') }
+    catch { return {} }
+  })
+  const [customItems, setCustomItems] = useState({})
+  const [customInputs, setCustomInputs] = useState({})
+
+  const toggleItem = (catName, item) => {
+    const key = `${catName}::${item}`
+    setCheckedItems(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      try { localStorage.setItem('packing_checked', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  const addCustomItem = (catName) => {
+    const val = customInputs[catName]?.trim()
+    if (!val) return
+    setCustomItems(prev => ({
+      ...prev, [catName]: [...(prev[catName] || []), val]
+    }))
+    setCustomInputs(prev => ({ ...prev, [catName]: '' }))
+  }
+
+  const totalItems = (data.total_items || 0) + Object.values(customItems).flat().length
+  const checkedCount = Object.values(checkedItems).filter(Boolean).length
+
+  return (
+    <div className="p-4 space-y-4">
+      {data.luggage_note && (
+        <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          🧳 {data.luggage_note}
+        </p>
+      )}
+      <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {data.categories.map(cat => (
+          <div key={cat.name} className="bg-white border border-gray-200 rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">{cat.icon}</span>
+              <span className="text-sm font-semibold text-gray-800">{cat.name}</span>
+            </div>
+            {cat.weather_note && (
+              <p className="text-xs text-sky-700 bg-sky-50 rounded px-2 py-1 mb-2">{cat.weather_note}</p>
+            )}
+            <div className="space-y-1.5">
+              {[...(cat.items || []), ...(customItems[cat.name] || []).map(i => ({ item: i, essential: false, note: null, _custom: true }))].map((item, idx) => {
+                const key = `${cat.name}::${item.item}`
+                const isChecked = checkedItems[key]
+                return (
+                  <label key={idx} className="flex items-start gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={!!isChecked} onChange={() => toggleItem(cat.name, item.item)}
+                      className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-400 shrink-0" />
+                    <div className={`flex-1 min-w-0 ${isChecked ? 'opacity-50 line-through' : ''}`}>
+                      <span className={`text-sm text-gray-700 ${item.essential ? 'font-medium' : ''}`}>{item.item}</span>
+                      {item.essential && <span className="ml-1 text-xs text-red-500">*</span>}
+                      {item.note && <p className="text-xs text-gray-400 mt-0.5">{item.note}</p>}
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+            {/* Add custom item */}
+            <div className="flex gap-1.5 mt-2">
+              <input type="text" value={customInputs[cat.name] || ''} placeholder="Add item..."
+                onChange={e => setCustomInputs(p => ({ ...p, [cat.name]: e.target.value }))}
+                onKeyDown={e => e.key === 'Enter' && addCustomItem(cat.name)}
+                className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400" />
+              <button type="button" onClick={() => addCustomItem(cat.name)}
+                className="text-xs px-2 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded hover:bg-teal-100 transition-colors">+</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-gray-400">* = essential items</p>
+    </div>
+  )
+}
+
 // Build a client-side fallback itinerary from activities + hotels data
 function buildClientItinerary(activities, hotels, searchData) {
   if (!searchData) return null
@@ -2226,6 +2660,9 @@ export default function ResultsPage() {
   const [isActivityFilterOpen, setIsActivityFilterOpen] = useState(false)
   const [isActivityFilterLoading, setIsActivityFilterLoading] = useState(false)
   const [activeActivityFilterCount, setActiveActivityFilterCount] = useState(0)
+  const [confidenceData, setConfidenceData] = useState(null)
+  const [pricingData, setPricingData] = useState(null)
+  const [view, setView] = useState('cards')  // 'cards' | 'timeline'
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -2257,6 +2694,9 @@ export default function ResultsPage() {
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
+    setConfidenceData(null)
+    setPricingData(null)
+    setView('cards')
     hasStarted.current = false
     pendingSelections.current = preloadSelections
 
@@ -2286,13 +2726,21 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', packing_list:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
     cleanupWorker.current = streamSearch(
       searchData,
       (type, data, source) => {
+        if (type === 'confidence') {
+          setConfidenceData(data)
+          return
+        }
+        if (type === 'pricing_advisor') {
+          setPricingData(data)
+          return
+        }
         if (!AGENT_ORDER.includes(type)) return
         startTransition(() => {
           setResults(r => {
@@ -2470,7 +2918,7 @@ export default function ResultsPage() {
     if (status === 'waiting') return null
     const data = results[agent]
     const renderers = {
-      flights:        () => <FlightsSection    data={data} {...sectionProps} />,
+      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} />,
       weather:        () => <WeatherSection    data={data} />,
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
@@ -2478,9 +2926,11 @@ export default function ResultsPage() {
       visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,
       tips:           () => <TipsSection       data={data} {...sectionProps} />,
+      emergency_card: () => <EmergencyCardSection data={data} status={status} />,
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
+      packing_list:   () => <PackingListSection data={data} status={status} />,
     }
     const isOpen = !collapsedSections[agent]
     const filterAction = (() => {
@@ -2631,9 +3081,43 @@ export default function ResultsPage() {
       )}
 
       {/* Results */}
-      <div className="max-w-6xl mx-auto px-4 py-5 space-y-5 pb-24">
-        {completionBanner}
-        {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
+      <div className="max-w-6xl mx-auto px-4 py-5 pb-24">
+        {completionBanner && <div className="mb-5">{completionBanner}</div>}
+
+        {/* Tab switcher — only show once itinerary is loaded */}
+        {results.itinerary?.days?.length > 0 && (
+          <div className="flex gap-1 p-1 bg-white rounded-lg border border-gray-200 shadow-sm max-w-fit mb-4">
+            <button
+              onClick={() => setView('cards')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                view === 'cards' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <LayoutList size={14} /> Cards
+            </button>
+            <button
+              onClick={() => setView('timeline')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                view === 'timeline' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <CalendarDays size={14} /> Timeline
+            </button>
+          </div>
+        )}
+
+        {view === 'cards' ? (
+          <div className="space-y-5">
+            <ConfidenceBanner data={confidenceData} />
+            {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
+          </div>
+        ) : (
+          <TimelineView
+            itineraryData={results.itinerary}
+            weatherData={results.weather}
+            searchData={searchData}
+          />
+        )}
       </div>
 
       {/* Floating plan button */}
