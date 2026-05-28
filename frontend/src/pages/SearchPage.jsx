@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
@@ -14,8 +14,25 @@ const ACCESSIBILITY_OPTIONS = [
   { id: 'cognitive_disability', label: '🧠 Cognitive / Neurodivergent' },
 ]
 
+const ACCESS_EMOJI = {
+  wheelchair:           '♿',
+  visual_impairment:    '👁️',
+  hearing_impairment:   '🦻',
+  cognitive_disability: '🧠',
+}
+
 function TravelerPanel({ form, setForm }) {
   const [open, setOpen] = useState(false)
+  const panelRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
 
   const counts = [
     { key: 'adults',   label: 'Adults',   sub: '18–64' },
@@ -25,12 +42,12 @@ function TravelerPanel({ form, setForm }) {
   ]
 
   const total = form.adults + form.seniors + form.children + form.infants
-  const summaryParts = []
-  if (form.adults)   summaryParts.push(`${form.adults} adult${form.adults !== 1 ? 's' : ''}`)
-  if (form.seniors)  summaryParts.push(`${form.seniors} senior${form.seniors !== 1 ? 's' : ''}`)
-  if (form.children) summaryParts.push(`${form.children} child${form.children !== 1 ? 'ren' : ''}`)
-  if (form.infants)  summaryParts.push(`${form.infants} infant${form.infants !== 1 ? 's' : ''}`)
-  const accessLabels = form.accessibility_needs.map(id => ACCESSIBILITY_OPTIONS.find(o => o.id === id)?.label?.split(' ')[0] || id)
+  const chips = []
+  if (form.adults)   chips.push(`${form.adults}👤`)
+  if (form.seniors)  chips.push(`${form.seniors}🧓`)
+  if (form.children) chips.push(`${form.children}🧒`)
+  if (form.infants)  chips.push(`${form.infants}👶`)
+  const accessEmojis = form.accessibility_needs.map(id => ACCESS_EMOJI[id] || '').filter(Boolean)
 
   const change = (key, delta) => {
     setForm(f => {
@@ -51,17 +68,17 @@ function TravelerPanel({ form, setForm }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={panelRef}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
       >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
           <Users size={13} className="text-gray-500 shrink-0" />
-          <span className="text-sm text-gray-700 truncate">
-            {summaryParts.length ? summaryParts.join(' · ') : `${total} traveler${total !== 1 ? 's' : ''}`}
-            {accessLabels.length > 0 && <span className="text-teal-600"> · {accessLabels.join(' ')}</span>}
+          <span className="text-sm text-gray-700 whitespace-nowrap">
+            {chips.length ? chips.join(' ') : `${total} traveler${total !== 1 ? 's' : ''}`}
+            {accessEmojis.length > 0 && <span className="text-teal-600"> {accessEmojis.join('')}</span>}
           </span>
         </div>
         {open ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
