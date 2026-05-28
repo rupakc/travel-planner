@@ -1,45 +1,35 @@
 # Agent System
 
-Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each specialist agent does, and how the system handles failures.
+Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each of the 15 specialist agents does, and how the system handles failures.
 
 ---
 
-## BaseAgent
+## How agents work
 
-Every agent inherits from `BaseAgent` (`backend/app/agents/base_agent.py`). BaseAgent is responsible for:
+### BaseAgent
+
+Every agent inherits from `BaseAgent` (`backend/app/agents/base_agent.py`). It handles:
 
 1. **Loading the agent definition** — reads `.agents/{name}.md`, parses the YAML frontmatter, and stores the system prompt body
-2. **Building the conversation** — constructs the `messages` array with the system prompt and a user message derived from the search context
-3. **Calling the Anthropic API** — uses the `claude-agent-sdk` with configurable model, max_tokens, and max_turns from frontmatter
-4. **Retrying on failure** — up to 4 attempts with exponential backoff before giving up
+2. **Building the conversation** — constructs the messages array with the system prompt and a user message derived from the search context
+3. **Calling Claude** — uses `claude-agent-sdk` with configurable model, max_tokens, and max_turns from frontmatter
+4. **Retrying on failure** — up to 4 attempts with exponential backoff
 5. **Parsing the response** — applies a 3-strategy JSON extraction fallback
 6. **Returning a typed result** — all agents return a Pydantic model, never raw dicts
 
-BaseAgent exposes one method that subclasses implement:
-
-```python
-async def run(self, context: SearchContext) -> AgentResult:
-    ...
-```
-
----
-
-## Agent definition format
+### Agent definition format
 
 Agent prompts live in `.agents/` at the project root. Each file is a markdown document with YAML frontmatter:
 
 ```markdown
 ---
 name: flights
-description: Finds typical flight routes, airlines, and price guidance for a destination
+description: Finds typical flight routes, airlines, and price guidance
 tools: []
-max_turns: 3
+max_turns: 1
 ---
 
-You are a specialist travel flights analyst. Given a destination, travel dates,
-origin country, and budget, provide structured information about...
-
-[rest of system prompt]
+You are a specialist travel flights analyst...
 ```
 
 **Frontmatter fields:**
@@ -48,91 +38,173 @@ origin country, and budget, provide structured information about...
 |---|---|---|
 | `name` | string | Agent identifier, must match the filename |
 | `description` | string | Human-readable description, used in logs |
-| `tools` | list | Reserved for future tool-use; currently empty for most agents |
+| `tools` | list | Tool-use configuration; most agents use `[]` (no tools) |
 | `max_turns` | int | Maximum conversation turns passed to the SDK |
 
-This design means prompt engineers can iterate on agent behaviour by editing markdown files without touching Python. Changes are picked up on next application start (or hot-reload in development).
+Changing agent behaviour means editing the `.md` file — no Python changes needed.
 
----
+### Retry and JSON parsing logic
 
-## The 8 specialist agents
-
-### FlightsAgent
-
-Generates guidance on flight options between the user's origin country and destination. Output covers typical routes, airlines that serve the route, rough price ranges for the travel dates, and booking strategy advice (when to book, whether to use budget airlines, layover considerations). Does not make live API calls — relies on the model's training data and DuckDuckGo search for current context.
-
-### HotelsAgent
-
-Breaks down accommodation options by neighbourhood and type. Output covers areas of the city worth staying in (with reasoning), accommodation categories from budget hostels to boutique hotels, approximate price ranges per night, and booking tips. Neighbourhoods are contextualised to the user's stated interests — a user interested in nightlife gets different neighbourhood recommendations than one interested in museums.
-
-### ActivitiesAgent
-
-Generates a list of activities, experiences, and attractions for the destination. After the agent returns, the backend applies relevance scoring:
-
-**Relevance scoring pipeline:**
-1. The agent returns a list of activities, each with a name and description
-2. `sentence-transformers` encodes the description of each activity and the user's interests string into embedding vectors
-3. Cosine similarity is computed between each activity embedding and the interests embedding
-4. Activities are sorted descending by similarity score
-5. The sorted list is what gets streamed to the browser
-
-This means a user who lists "street food and local markets" as interests will see food-focused activities ranked above standard tourist attractions, even if the model listed them in a different order.
-
-### VisaAgent
-
-Provides entry requirement information specific to the user's nationality. Output covers visa category (visa-free, visa on arrival, e-visa, embassy visa), application process, required documents, processing times, fees, and any notable conditions (e.g. onward ticket required, sufficient funds check). Nationality is passed as part of the search context.
-
-### SimAgent
-
-Covers mobile connectivity at the destination: which local carriers to consider, typical prepaid SIM data plans and pricing, whether eSIM is available, coverage quality notes, and where to buy (airport, convenience stores, carrier shops). Also notes whether the user's home country roaming is likely to be a better option for short trips.
-
-### TipsAgent
-
-Cultural and practical travel tips: local customs and etiquette, safety considerations, health precautions, tipping culture, bargaining norms, dress codes for religious sites, local laws tourists sometimes inadvertently break, and any destination-specific practical advice that does not fit neatly into the other agent categories.
-
-### GettingAroundAgent
-
-Transport options within the destination city and country: airport transfer options with price ranges, public transport coverage and how to use it, ride-hailing app availability, taxi culture (metered vs negotiated, reliability), car rental considerations, and intercity transport for multi-city itineraries.
-
-### ForexAgent
-
-Currency and money guidance: local currency and ISO code, current rough exchange rate context, whether to exchange before travel or at destination, ATM availability and typical fees, credit card acceptance, digital payment adoption, and any currency controls or cash-preference considerations.
-
----
-
-## Retry and JSON parsing logic
-
-**Retry:** Each agent wraps its Anthropic API call in a retry loop with up to 4 attempts. On `APIStatusError` (rate limits, server errors) or network timeouts, the agent waits with exponential backoff before retrying. On the 4th failure, it returns a structured error result rather than raising an exception — the orchestrator can still stream partial results to the browser.
+**Retry:** Each agent wraps its API call in a retry loop with up to 4 attempts. On rate limits, server errors, or network timeouts, it waits with exponential backoff. On the 4th failure, it returns a structured error result instead of raising an exception.
 
 **JSON parsing (3-strategy fallback):**
 
-The Anthropic API is instructed to return structured JSON, but model outputs are not always perfectly formed. BaseAgent applies three strategies in order:
+1. **Direct parse** — `json.loads()` on the full response text
+2. **Code block extraction** — extract content from ` ```json ... ``` ` fences
+3. **Regex extraction** — find the first `{...}` block via regex
 
-1. **Direct parse** — attempt `json.loads()` on the full response text
-2. **Code block extraction** — look for ` ```json ... ``` ` fences and parse the content inside
-3. **Regex extraction** — find the first `{...}` block in the response using a regex and attempt to parse it
-
-If all three fail, the agent returns a fallback result with an error flag set, which the frontend renders as a "not available" section rather than a crash.
+If all three fail, the agent returns a fallback error result, which the frontend renders as a "not available" section.
 
 ---
 
-## ItineraryAgent
+## The orchestrator phases
 
-The ItineraryAgent runs after Phase 1 completes. It receives:
-- The activities list (after relevance scoring and sorting)
-- The hotels result (neighbourhood and accommodation data)
-- The original search context (destination, dates, budget, interests)
+### Phase 0 — Static data (instant)
 
-It synthesises a day-by-day itinerary that logically groups activities, ties mornings/afternoons/evenings to sensible locations, and references specific accommodation areas. The output is a structured JSON object with one entry per day.
+Static lookup tables in `static_results.py` yield results before any AI call:
 
-**60-second timeout:** If the model takes longer than 60 seconds, the orchestrator falls back to a template-based itinerary generator that distributes activities across the days mechanically. The fallback is clearly marked as auto-generated in the response.
+- `VisaAgent.static()` — visa category from `_VISA_TABLE` keyed by `(nationality, destination)`
+- `SimAgent.static()` — SIM options by destination
+- `TipsAgent.static()` — travel tips by destination
+- `GettingAroundAgent.static()` — transport options by destination
+- `get_static_emergency_card()` — emergency numbers from `_EMERGENCY_NUMBERS` (40+ destinations)
+- `get_confidence_score()` — safety / visa / budget / infrastructure score from `_DESTINATION_SCORES` (49 destinations)
+
+All stream to the browser within 1 second with `source: 'static'`. The UI shows them as "Enhancing…" until AI results arrive.
+
+### Phase 1 — Parallel AI agents
+
+Thirteen agents run concurrently via `asyncio.gather()`. As each finishes, its result is yielded over SSE:
+
+| Agent | File | Purpose |
+|---|---|---|
+| FlightsAgent | `flights_agent.py` | Routes, airlines, pricing, booking advice |
+| HotelsAgent | `hotels_agent.py` | Neighbourhoods and accommodation tiers |
+| ActivitiesAgent | `activities_agent.py` | Activities with interest-relevance scoring |
+| PlacesAgent | `places_agent.py` | Landmarks from Serper/Google + Claude synthesis |
+| VisaAgent | `visa_agent.py` | Entry requirements, documents, fees |
+| SimAgent | `sim_agent.py` | SIM cards, eSIM, local carriers |
+| TipsAgent | `tips_agent.py` | Etiquette, safety, health, local knowledge |
+| ForexAgent | `forex_agent.py` | Currency, exchange rates, payment tips |
+| GettingAroundAgent | `getting_around_agent.py` | Local and intercity transport |
+| WeatherAgent | `weather_agent.py` | Forecast for travel dates |
+| EmergencyCardAgent | `emergency_card_agent.py` | Embassy, hospitals, phrases, local laws |
+| PricingAdvisorAgent | `pricing_advisor_agent.py` | Price trend + booking timing (deferred) |
+| PackingListAgent | `packing_list_agent.py` | Personalised packing checklist (deferred) |
+
+**Deferred tasks** (triggered by Phase 1 results, not at start):
+- `pricing_advisor` starts when ≥ 3 flight prices are available
+- `packing_list` starts when activities are ready AND weather is done (or has failed)
+
+**Static-backed agents**: If visa, SIM, tips, getting around, or emergency card AI calls fail, the error is suppressed and the Phase 0 static data is retained. Users never see a degraded experience for these sections.
+
+### Phase 2 — Itinerary synthesis
+
+`ItineraryAgent` starts once both activities and hotels are available. It synthesises a day-by-day schedule with morning / afternoon / evening slots, daily cost estimates, and weather-aware themes. Has a 60-second timeout with a template-based fallback.
 
 ---
 
-## ChatAgent
+## All 15 agents in detail
 
-The ChatAgent powers the follow-up chat interface. It differs from the specialist agents in that it is conversational — it maintains message history across turns within a session.
+### FlightsAgent
 
-When a user sends a message in the chat interface, the ChatAgent first runs intent detection to decide whether the message is travel-planning related. If it is, the agent responds with travel expertise in the context of the current trip plan. If the message is clearly off-topic (e.g. "write me a Python script"), the agent politely redirects to travel topics. This keeps the chat focused without being overly restrictive.
+Generates guidance on flight options between the user's origin and destination. Covers typical routes, airlines, rough price ranges, and booking timing advice. Does not make live flight API calls — uses Claude's knowledge enriched by web search context.
 
-Chat responses are also streamed via SSE, handled by the dedicated `chatWorker.js` Web Worker on the frontend.
+### HotelsAgent
+
+Breaks down accommodation by neighbourhood and type. Covers the best areas to stay (matched to the user's interests), accommodation categories from budget to boutique, price ranges per night, and booking tips. A nightlife-focused user gets different neighbourhood recommendations than a museum-focused user.
+
+### ActivitiesAgent
+
+Generates a list of activities, experiences, and attractions. After the agent returns, the backend applies **relevance scoring**:
+
+1. `sentence-transformers` encodes each activity description and the user's interests string into embedding vectors
+2. Cosine similarity is computed between each activity and the interests
+3. Activities are sorted descending by similarity score
+
+This means a "street food and local markets" user sees food-focused activities ranked above generic tourist attractions.
+
+### PlacesAgent
+
+Surfaces must-see landmarks, temples, museums, viewpoints, and markets using live data. The pipeline:
+
+1. Calls the Serper `/places` and `/search` APIs to fetch Google Maps data and editorial mentions
+2. Sends the raw data to Claude for synthesis into structured results
+3. `SerperPlacesResolver` enriches the top results with TripAdvisor, Timeout, and Lonely Planet URLs
+
+Falls back to Claude-only results if `SERPER_KEY` is not configured.
+
+### VisaAgent
+
+Entry requirements specific to the user's nationality: visa category (visa-free / on-arrival / e-visa / embassy), application process, required documents, processing times, fees, and any notable conditions.
+
+### SimAgent
+
+Mobile connectivity: local carriers and prepaid SIM data plans, eSIM availability, coverage quality, and where to buy. Notes whether home-country roaming might be better for short trips.
+
+### TipsAgent
+
+Cultural and practical information: local customs and etiquette, safety, health precautions, tipping culture, bargaining norms, dress codes for religious sites, local laws tourists sometimes accidentally break.
+
+### ForexAgent
+
+Currency guidance: local currency and ISO code, current exchange rate context, whether to exchange before travel or at destination, ATM availability and fees, card acceptance, digital payment adoption.
+
+### GettingAroundAgent
+
+Transport at the destination: airport transfer options with price ranges, public transport usage, ride-hailing apps, taxi culture, car rental, and intercity travel for multi-city trips.
+
+### WeatherAgent
+
+Fetches forecast data from the Open-Meteo API using destination coordinates from `CITY_COORDS`. Returns daily high/low temperatures, weather codes (mapped to emoji), and precipitation probability. Used by the weather section and the Timeline view day headers.
+
+### EmergencyCardAgent
+
+The safety-critical agent. Given destination and nationality, returns:
+
+- Emergency phone numbers (police, ambulance, fire, tourist police)
+- The traveller's embassy: address, phone, emergency after-hours line, opening hours
+- Nearby international hospitals with English-speaking staff
+- Ten phonetic survival phrases in the local language
+- Local laws with severity levels (critical / warning)
+
+The backend detects home-country trips and skips the embassy section in that case. The frontend renders a printable card via `window.open()` — reliable across all browsers and mobile.
+
+Phase 0 provides static numbers (from `_EMERGENCY_NUMBERS`, 40+ destinations) immediately. AI enrichment adds the embassy, hospitals, phrases, and laws. If AI fails, the static numbers are retained.
+
+### PricingAdvisorAgent (deferred)
+
+Triggers when ≥ 3 flight prices are available. Receives the route, average price, and days until departure. Returns whether current prices are above or below typical, a booking recommendation, historical relative price trend data for the sparkline, and confidence level. Rendered as a banner above the Flights section.
+
+### PackingListAgent (deferred)
+
+Triggers when activities are ready and weather is done. Receives a summarised prompt (destination, duration, weather summary, planned activities, traveller profile). Returns categories — Documents, Clothing, Electronics, Medications, Activity Gear, Destination-Specific — with items marked essential or optional. Saved to My Plan as a persistent checklist with localStorage-backed checkbox state.
+
+### DiscoveryAgent
+
+Powers the "Surprise Me" flow (`POST /api/discover`). Given origin, budget, dates, nationality, and interests, suggests five curated destinations with cost range, seasonal weather, visa type, flight duration, match reasons, and highlights.
+
+Visa types are post-processed: the LLM's guess is overridden by `_VISA_TABLE` lookup when available. If not in the table, the badge shows "Verify" rather than potentially wrong data.
+
+Runs as a synchronous endpoint (not SSE) with a 30-second timeout and in-memory caching.
+
+### ItineraryAgent
+
+Phase 2 synthesis. Receives activities, hotels, the full search context, and weather data. Generates a structured day-by-day schedule:
+
+- Day number, date, theme, and city
+- Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes
+- Daily estimated cost
+- Coordinates for the Timeline map view
+
+60-second timeout with a template-based fallback that distributes activities mechanically.
+
+---
+
+## Adding a new agent
+
+1. Create `.agents/{name}.md` with YAML frontmatter and a system prompt
+2. Create `backend/app/agents/{name}_agent.py` as a subclass of `BaseAgent`
+3. Add it to the orchestrator in `backend/app/agents/orchestrator.py`
+4. Add the SSE event type to `AGENT_CONFIG` and `AGENT_ORDER` in `ResultsPage.jsx`
+5. Write a section component to render the data

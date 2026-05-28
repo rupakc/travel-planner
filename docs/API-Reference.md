@@ -1,10 +1,11 @@
 # API Reference
 
-The Travel Planner backend is a FastAPI application running on port 8001. All endpoints are under `/api/`. Interactive documentation (Swagger UI) is available at `/docs` and ReDoc at `/redoc`.
+The Travel Planner backend is a FastAPI application. All endpoints are under `/api/`. Interactive documentation (Swagger UI) is available at `/docs` on any running instance.
 
-**Base URL (local):** `http://localhost:8001`
+**Live API:** `https://travel-planner-backend-2hrxgxqboa-ew.a.run.app`
+**Local API:** `http://localhost:8001`
 
-**Authentication:** Protected endpoints use JWT Bearer tokens. Include the token from the login response in the `Authorization` header:
+**Authentication:** Most endpoints require a JWT Bearer token from the login response:
 ```
 Authorization: Bearer <token>
 ```
@@ -33,362 +34,297 @@ Authenticate and receive a JWT access token.
   "access_token": "eyJ...",
   "token_type": "bearer",
   "requires_password_change": false,
-  "user": {
-    "id": 1,
-    "username": "admin",
-    "role": "admin"
-  }
+  "user": { "id": 1, "username": "admin", "role": "admin" }
 }
 ```
 
-If `requires_password_change` is `true`, the frontend redirects to the password change screen before allowing further navigation.
+If `requires_password_change` is `true`, the frontend redirects to `/change-password` before allowing further navigation.
 
 ---
 
 ### `POST /api/auth/change-password`
 
-Change the current user's password.
-
 **Auth required:** Yes
 
-**Request body:**
 ```json
-{
-  "current_password": "old-password",
-  "new_password": "new-password"
-}
+{ "current_password": "old", "new_password": "new" }
 ```
 
-**Response:** `200 OK` with `{"message": "Password changed successfully"}`
+**Response:** `200 OK` — `{"message": "Password changed successfully"}`
 
 ---
 
 ### `GET /api/auth/me`
 
-Get the currently authenticated user's profile.
+Returns the currently authenticated user's profile.
 
 **Auth required:** Yes
 
-**Response:**
-```json
-{
-  "id": 1,
-  "username": "admin",
-  "role": "admin",
-  "created_at": "2025-01-01T00:00:00Z"
-}
-```
-
 ---
 
-## Search endpoints
+## Search (primary trip planning)
 
-### `POST /api/search` (SSE streaming)
+### `POST /api/search` — SSE streaming
 
-The primary endpoint. Submits a travel search and streams results as they become available via Server-Sent Events.
+The core endpoint. Submits a trip search and streams results in real time via Server-Sent Events.
 
 **Auth required:** Yes
 
 **Request body:**
 ```json
 {
+  "origin": "London",
   "destination": "Tokyo",
-  "start_date": "2025-06-01",
-  "end_date": "2025-06-14",
-  "nationality": "German",
-  "budget": "medium",
-  "interests": "street food, anime, temples, nightlife"
+  "departure_date": "2026-06-01",
+  "return_date": "2026-06-14",
+  "nationality": "British",
+  "interests": ["food", "history", "nature"],
+  "budget_usd": 4000,
+  "num_travelers": 1,
+  "residence_permits": [],
+  "existing_visas": []
 }
 ```
 
-**Budget values:** `"budget"`, `"medium"`, `"luxury"`
-
 **Response:** `Content-Type: text/event-stream`
 
-The response is a stream of SSE events. Each event has this structure:
+Each event:
 ```
-data: {"section": "<section_name>", "content": <object>, "phase": <0|1|2>}\n\n
-```
-
-**Section names and phases:**
-
-| Section | Phase | Description |
-|---|---|---|
-| `visa_static` | 0 | Static visa category lookup |
-| `sim_static` | 0 | Static SIM data |
-| `tips_static` | 0 | Static country tips |
-| `transport_static` | 0 | Static transport modes |
-| `flights` | 1 | FlightsAgent result |
-| `hotels` | 1 | HotelsAgent result |
-| `activities` | 1 | ActivitiesAgent result (relevance-sorted) |
-| `visa` | 1 | VisaAgent result |
-| `sim` | 1 | SimAgent result |
-| `tips` | 1 | TipsAgent result |
-| `getting_around` | 1 | GettingAroundAgent result |
-| `forex` | 1 | ForexAgent result |
-| `itinerary` | 2 | ItineraryAgent result |
-
-The final event is:
-```
-data: [DONE]\n\n
+data: {"type": "<event_type>", "data": <object>, "source": "static"|"ai"}\n\n
 ```
 
-On agent failure, a section is still emitted with `"error": true` in the content, so the frontend can display a "not available" card for that section rather than hanging.
+The final event:
+```
+data: {"type": "done"}\n\n
+```
+
+**Event types and phases:**
+
+| Event type | Phase | Source | Description |
+|---|---|---|---|
+| `confidence` | 0 | static | Travel confidence score (safety / visa / budget / infrastructure) |
+| `visa` | 0 then 1 | static → ai | Visa requirements |
+| `sim` | 0 then 1 | static → ai | SIM card options |
+| `tips` | 0 then 1 | static → ai | Travel tips |
+| `getting_around` | 0 then 1 | static → ai | Local transport |
+| `emergency_card` | 0 then 1 | static → ai | Emergency numbers, embassy, phrases, local laws |
+| `flights` | 1 | ai | Flights guidance |
+| `weather` | 1 | ai | Forecast for travel dates |
+| `hotels` | 1 | ai | Hotels by neighbourhood and budget tier |
+| `activities` | 1 | ai | Activities, relevance-sorted |
+| `places_to_see` | 1 | ai | Must-visit landmarks |
+| `forex` | 1 | ai | Currency and payment tips |
+| `pricing_advisor` | 1 (deferred) | ai | Flight price trend and booking recommendation |
+| `packing_list` | 1 (deferred) | ai | Personalised packing checklist |
+| `itinerary` | 2 | ai | Day-by-day schedule |
+
+**Static-backed events** (visa, sim, tips, getting_around, emergency_card): Phase 0 sends static data immediately. Phase 1 replaces it with AI-enriched data. If Phase 1 fails, the static data is retained — no error is shown for these sections.
+
+**Deferred events**: `pricing_advisor` triggers when ≥ 3 flight prices are available; `packing_list` triggers when activities are ready and weather is done.
+
+On agent failure, the event is still emitted with `"error": true` in the data so the frontend can show "not available" rather than hang.
 
 ---
 
 ### `POST /api/search/sync`
 
-Same as `/api/search` but waits for all agents to complete and returns the full result as a single JSON response. Useful for testing; not recommended in production due to latency.
-
-**Auth required:** Yes
-
-**Request body:** Same as `/api/search`
-
-**Response:**
-```json
-{
-  "destination": "Tokyo",
-  "sections": {
-    "flights": {...},
-    "hotels": {...},
-    "activities": [...],
-    "itinerary": {...}
-  },
-  "generated_at": "2025-06-01T10:00:00Z"
-}
-```
+Same as `/api/search` but waits for all agents and returns a single JSON response. For testing only — too slow for production use.
 
 ---
 
-## Chat endpoints
+## Destination Discovery
 
-### `POST /api/chat` (SSE streaming)
+### `POST /api/discover`
 
-Conversational follow-up chat with travel context awareness.
+The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destination suggestions without needing a specific destination input.
 
 **Auth required:** Yes
 
 **Request body:**
 ```json
 {
-  "message": "Can you suggest some vegetarian restaurants in Shinjuku?",
-  "session_id": "optional-session-id-for-continuity",
-  "trip_context": {
-    "destination": "Tokyo",
-    "start_date": "2025-06-01",
-    "end_date": "2025-06-14"
-  }
+  "origin": "JFK",
+  "nationality": "American",
+  "departure_date": "2026-08-01",
+  "return_date": "2026-08-08",
+  "budget_usd": 3000,
+  "interests": ["food", "history"],
+  "adults": 1,
+  "children": 0,
+  "seniors": 0,
+  "infants": 0
+}
+```
+
+`return_date` is optional (for one-way or open-ended trips).
+
+**Response:**
+```json
+{
+  "destinations": [
+    {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "estimated_cost_usd_low": 1400,
+      "estimated_cost_usd_high": 2200,
+      "visa_type": "visa-free",
+      "visa_verified": true,
+      "weather_emoji": "☀️",
+      "weather_description": "Warm and sunny, 22–26°C in August — typical for the season",
+      "flight_duration_hours": 7.5,
+      "flight_duration_label": "~7h 30m from New York",
+      "match_reasons": ["Exceptional food scene", "Rich Age of Discovery history"],
+      "highlights": ["Alfama district", "Sintra", "Belém Tower"]
+    }
+  ]
+}
+```
+
+`visa_verified: true` means the visa type was confirmed from the authoritative `_VISA_TABLE` lookup. `visa_verified: false` means the AI's guess was not verifiable — the frontend shows an amber "Verify" badge.
+
+**Errors:**
+- `422` — missing required fields
+- `504` — agent timed out (> 30 seconds); retry
+- `500` — agent failed; retry
+
+Results are cached in memory for 30 minutes per unique request.
+
+---
+
+## Chat
+
+### `POST /api/chat` — SSE streaming
+
+Conversational trip planning. The agent maintains session context and can trigger the full search pipeline when the message is trip-planning related.
+
+**Auth required:** Yes
+
+**Request body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Plan a 5-day trip to Bangkok for two people" }
+  ],
+  "selections": {},
+  "search_results": {},
+  "session_context": {}
 }
 ```
 
 **Response:** `Content-Type: text/event-stream`
 
-Events:
-```
-data: {"type": "chunk", "content": "Here are some great..."}\n\n
-data: {"type": "chunk", "content": " vegetarian options..."}\n\n
-data: [DONE]\n\n
-```
+Events include plain text chunks, structured planning sections (same types as `/api/search`), and a final `done` event.
 
 ---
 
-## Plans endpoints
+## Plans
 
 ### `GET /api/plans`
 
-List all saved plans for the authenticated user.
+List all saved plans for the current user.
 
 **Auth required:** Yes
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "destination": "Tokyo",
-    "start_date": "2025-06-01",
-    "end_date": "2025-06-14",
-    "created_at": "2025-05-01T12:00:00Z"
-  }
-]
-```
 
 ---
 
 ### `POST /api/plans`
 
-Save a trip plan.
+Save a new plan.
 
 **Auth required:** Yes
 
 **Request body:**
 ```json
 {
-  "destination": "Tokyo",
-  "start_date": "2025-06-01",
-  "end_date": "2025-06-14",
-  "plan_data": { ... }
-}
-```
-
-**Response:** The saved plan with its assigned `id`.
-
----
-
-### `GET /api/plans/{plan_id}`
-
-Retrieve a specific saved plan.
-
-**Auth required:** Yes (must be the owner)
-
-**Response:** Full plan object including `plan_data`.
-
----
-
-### `DELETE /api/plans/{plan_id}`
-
-Delete a saved plan.
-
-**Auth required:** Yes (must be the owner)
-
-**Response:** `204 No Content`
-
----
-
-## Preferences endpoints
-
-### `GET /api/preferences`
-
-Get the authenticated user's travel preferences.
-
-**Auth required:** Yes
-
-**Response:**
-```json
-{
-  "default_nationality": "German",
-  "default_budget": "medium",
-  "interests": "museums, street food, architecture"
+  "name": "The Rainy Tokyo Adventure",
+  "search_data": { "destination": "Tokyo", "departure_date": "2026-04-01", ... },
+  "selections": {
+    "flight": { ... },
+    "hotel": { ... },
+    "activities": [ ... ],
+    "packing_list": { ... }
+  }
 }
 ```
 
 ---
 
-### `PUT /api/preferences`
+### `GET /api/plans/{id}` / `PUT /api/plans/{id}` / `DELETE /api/plans/{id}`
 
-Update travel preferences.
-
-**Auth required:** Yes
-
-**Request body:** Same structure as GET response. All fields optional — only provided fields are updated.
+Retrieve, update, or delete a specific plan. Must be the plan's owner.
 
 ---
 
-## Feedback endpoints
+## Preferences
+
+### `GET /api/preferences` / `PUT /api/preferences`
+
+Get or update the current user's saved preferences (nationality, interests, budget, residence permits, existing visas). These pre-fill the search form on next visit.
+
+**Auth required:** Yes
+
+---
+
+## Feedback
 
 ### `POST /api/feedback`
 
-Submit feedback on a plan section.
+Submit a feedback rating from the floating widget.
 
 **Auth required:** Yes
 
 **Request body:**
 ```json
 {
-  "plan_id": 1,
-  "section": "activities",
+  "page": "results",
   "rating": 4,
-  "comment": "Good suggestions but missing some famous spots"
+  "category": "content",
+  "message": "Great activity suggestions!"
 }
 ```
 
-**Rating:** Integer 1–5
+---
 
-**Response:** `201 Created` with the saved feedback object.
+### `GET /api/admin/feedback`
+
+View all submitted feedback. Admin only.
+
+**Auth required:** Yes (admin)
 
 ---
 
-## Admin endpoints
-
-All admin endpoints require a user with `role: admin`.
+## Admin
 
 ### `GET /api/admin/users`
 
-List all user accounts.
+List all user accounts (without password hashes).
 
-**Auth required:** Yes (admin only)
-
-**Response:** Array of user objects (without password hashes).
+**Auth required:** Yes (admin)
 
 ---
 
 ### `POST /api/admin/users`
 
-Create a new user account.
+Create a new user. The user is flagged as requiring a password change on first login.
 
-**Auth required:** Yes (admin only)
+**Auth required:** Yes (admin)
 
-**Request body:**
 ```json
-{
-  "username": "newuser",
-  "password": "TemporaryPassword123",
-  "role": "user"
-}
+{ "username": "newuser", "password": "TemporaryPassword123", "role": "user" }
 ```
 
 **Roles:** `"user"`, `"admin"`
 
-New users are flagged as requiring a password change on first login.
+---
+
+### `PATCH /api/admin/users/{user_id}` / `DELETE /api/admin/users/{user_id}`
+
+Deactivate/reactivate or delete a user account. Admin only.
 
 ---
 
-### `DELETE /api/admin/users/{user_id}`
+## Health
 
-Delete a user account.
+### `GET /health`
 
-**Auth required:** Yes (admin only)
-
-**Response:** `204 No Content`
-
----
-
-## Health endpoints
-
-### `GET /api/health`
-
-Basic liveness check.
-
-**Auth required:** No
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-06-01T10:00:00Z"
-}
-```
-
----
-
-### `GET /api/health/ready`
-
-Readiness check — confirms databases are accessible and the application is ready to serve traffic.
-
-**Auth required:** No
-
-**Response:**
-```json
-{
-  "status": "ready",
-  "databases": {
-    "users": "ok",
-    "plans": "ok",
-    "preferences": "ok",
-    "feedback": "ok"
-  }
-}
-```
-
-Cloud Run uses this endpoint for startup and readiness probes.
+Liveness check. Returns `{"status": "ok"}`. Used by Cloud Run health probes and Cloud Monitoring uptime checks. No auth required.
