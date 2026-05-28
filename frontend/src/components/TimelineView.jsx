@@ -47,16 +47,16 @@ function ActivityCard({ slot, col }) {
       onClick={() => hasDetails && setExpanded(e => !e)}
       className={`border-l-4 ${col.border} ${col.bg} rounded-r-lg p-2.5 transition-all ${hasDetails ? 'cursor-pointer hover:brightness-95' : ''}`}
     >
-      <p className={`text-xs font-semibold ${col.text} leading-snug line-clamp-2`} title={slot.activity}>
+      <p className={`text-sm font-semibold ${col.text} leading-snug line-clamp-2`} title={slot.activity}>
         {slot.activity}
       </p>
       {slot.location && (
-        <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-0.5">
+        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-0.5">
           <span>📍</span>{slot.location}
         </p>
       )}
       {!expanded && (slot.duration_hours || slot.estimated_cost_usd != null) && (
-        <p className="text-[11px] text-gray-400 mt-1">
+        <p className="text-xs text-gray-400 mt-1">
           {slot.duration_hours ? `⏱ ${slot.duration_hours}h` : ''}
           {slot.duration_hours && slot.estimated_cost_usd != null ? ' · ' : ''}
           {slot.estimated_cost_usd != null ? `$${slot.estimated_cost_usd}` : ''}
@@ -65,18 +65,18 @@ function ActivityCard({ slot, col }) {
       {expanded && (
         <div className="mt-1.5 pt-1.5 border-t border-current/10 space-y-0.5">
           {slot.duration_hours && (
-            <p className="text-[11px] text-gray-600">⏱ {slot.duration_hours} hour{slot.duration_hours !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-600">⏱ {slot.duration_hours} hour{slot.duration_hours !== 1 ? 's' : ''}</p>
           )}
           {slot.estimated_cost_usd != null && (
-            <p className="text-[11px] text-gray-600">💰 ${slot.estimated_cost_usd} est.</p>
+            <p className="text-xs text-gray-600">💰 ${slot.estimated_cost_usd} est.</p>
           )}
           {slot.notes && (
-            <p className="text-[11px] text-gray-500 italic">{slot.notes}</p>
+            <p className="text-xs text-gray-500 italic">{slot.notes}</p>
           )}
         </div>
       )}
       {hasDetails && (
-        <p className={`text-[10px] ${col.text} opacity-50 mt-1`}>{expanded ? '▲ less' : '▼ more'}</p>
+        <p className={`text-[11px] ${col.text} opacity-50 mt-1`}>{expanded ? '▲ less' : '▼ more'}</p>
       )}
     </div>
   )
@@ -147,7 +147,7 @@ function DayCard({ dayData, weatherDay }) {
           <div className="grid grid-cols-3 border-b border-gray-100">
             {TIME_COLS.map(col => (
               <div key={col.key} className="px-2 py-1.5 text-center">
-                <span className="text-xs font-medium text-gray-500">{col.icon} {col.label}</span>
+                <span className="text-sm font-medium text-gray-500">{col.icon} {col.label}</span>
               </div>
             ))}
           </div>
@@ -166,7 +166,7 @@ function DayCard({ dayData, weatherDay }) {
           {/* Budget bar */}
           {dayData.daily_estimated_cost_usd != null && (
             <div className="px-3 pb-3">
-              <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1">
+              <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                 <span>Est. daily spend</span>
                 <span className="font-medium text-gray-600">${dayData.daily_estimated_cost_usd}</span>
               </div>

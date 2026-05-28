@@ -1476,7 +1476,7 @@ function FitBoundsUpdatable({ positions }) {
   useEffect(() => {
     if (positions.length > 0 && positions.length !== prevCount.current) {
       prevCount.current = positions.length
-      if (positions.length >= 2) map.fitBounds(positions, { padding: [50, 50], maxZoom: 9 })
+      if (positions.length >= 2) map.fitBounds(positions, { padding: [30, 30] })
       else map.setView(positions[0], 10)
     }
   }, [positions, map])
@@ -1500,8 +1500,8 @@ const PALETTE_HEX = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#63
 function makeNumberedIcon(num, color) {
   return L.divIcon({
     className: '',
-    html: `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;font-family:system-ui,sans-serif">${num}</div>`,
-    iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -15],
+    html: `<div style="width:22px;height:22px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;font-family:system-ui,sans-serif">${num}</div>`,
+    iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -13],
   })
 }
 
@@ -1628,11 +1628,11 @@ function TripPlanView({ tripMap, itinerary, generating }) {
 
       {/* ── Map ─────────────────────────────────────────────────────────── */}
       {routePoints.length > 0 && (
-        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
+        <div className="rounded-xl overflow-hidden border border-gray-200 mt-3 relative">
           <MapContainer
             center={routePoints[0]}
-            zoom={4}
-            style={{ height: '280px', width: '100%' }}
+            zoom={12}
+            style={{ height: '300px', width: '100%' }}
             scrollWheelZoom={false}
             zoomControl={true}
           >
@@ -1644,10 +1644,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
 
             {/* Route polyline */}
             {routePoints.length >= 2 && (
-              <Polyline positions={routePoints} color="#94a3b8" weight={5} opacity={0.35} />
-            )}
-            {routePoints.length >= 2 && (
-              <Polyline positions={routePoints} color="#0ea5e9" weight={3} opacity={0.9} />
+              <Polyline positions={routePoints} color="#0d9488" weight={2} opacity={0.55} dashArray="7 5" />
             )}
 
             {/* Origin pin */}
