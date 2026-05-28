@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   Send, Square, Plane, User, Trash2, Hotel, MapPin, Shield,
@@ -1035,12 +1036,22 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
+  const location = useLocation()
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
   useEffect(() => { inputRef.current?.focus() }, [])
+
+  // When the user navigates back to the chat tab, scroll to bottom and refocus input
+  useEffect(() => {
+    if (location.pathname === '/chat') {
+      scrollToBottom()
+      inputRef.current?.focus()
+    }
+  }, [location.pathname, scrollToBottom])
 
   // Restore chat history from localStorage on mount
   useEffect(() => {

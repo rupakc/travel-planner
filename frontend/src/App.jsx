@@ -66,9 +66,9 @@ function Layout() {
       <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100">
         <NavBar />
         <FeedbackWidget />
-        {/* SearchTab is always in the DOM — navigating away never unmounts it */}
+        {/* SearchTab and ChatPage are always in the DOM — navigating away never unmounts them */}
         <div style={{ display: path === '/' ? 'block' : 'none' }}><SearchTab /></div>
-        {path === '/chat'        && <ChatPage />}
+        <div style={{ display: path === '/chat' ? 'block' : 'none' }}><ChatPage /></div>
         {path === '/preferences' && <PreferencesPage />}
         {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
       </div>
