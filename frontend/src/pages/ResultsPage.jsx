@@ -1786,21 +1786,38 @@ function EmergencyCardSection({ data, status }) {
 
 // ─── Packing List Section ─────────────────────────────────────────────────────
 
-function PackingListSection({ data, status }) {
+function PackingListSection({ data, status, selections, onSavePacking }) {
   if (!data?.categories?.length) return null
 
+  const lsKey = 'packing_checked'
+  const isSavedToPlan = !!selections?.packing_list
+
   const [checkedItems, setCheckedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('packing_checked') || '{}') }
+    // Plan is source of truth if available, else localStorage
+    if (selections?.packing_list?.checked_items) return selections.packing_list.checked_items
+    try { return JSON.parse(localStorage.getItem(lsKey) || '{}') }
     catch { return {} }
   })
-  const [customItems, setCustomItems] = useState({})
+  const [customItems, setCustomItems] = useState(() => {
+    return selections?.packing_list?.custom_items || {}
+  })
   const [customInputs, setCustomInputs] = useState({})
+
+  const buildPlanState = (checked, custom) => ({
+    categories: data.categories,
+    luggage_note: data.luggage_note,
+    checked_items: checked,
+    custom_items: custom,
+    total_items: (data.total_items || 0) + Object.values(custom).flat().length,
+    checked_count: Object.values(checked).filter(Boolean).length,
+  })
 
   const toggleItem = (catName, item) => {
     const key = `${catName}::${item}`
     setCheckedItems(prev => {
       const next = { ...prev, [key]: !prev[key] }
-      try { localStorage.setItem('packing_checked', JSON.stringify(next)) } catch {}
+      try { localStorage.setItem(lsKey, JSON.stringify(next)) } catch {}
+      if (isSavedToPlan) onSavePacking(buildPlanState(next, customItems))
       return next
     })
   }
@@ -1808,9 +1825,11 @@ function PackingListSection({ data, status }) {
   const addCustomItem = (catName) => {
     const val = customInputs[catName]?.trim()
     if (!val) return
-    setCustomItems(prev => ({
-      ...prev, [catName]: [...(prev[catName] || []), val]
-    }))
+    setCustomItems(prev => {
+      const next = { ...prev, [catName]: [...(prev[catName] || []), val] }
+      if (isSavedToPlan) onSavePacking(buildPlanState(checkedItems, next))
+      return next
+    })
     setCustomInputs(prev => ({ ...prev, [catName]: '' }))
   }
 
@@ -1824,7 +1843,26 @@ function PackingListSection({ data, status }) {
           🧳 {data.luggage_note}
         </p>
       )}
-      <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+        {isSavedToPlan ? (
+          <button
+            type="button"
+            onClick={() => onSavePacking(null)}
+            className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+          >
+            <Check size={11} /> Saved to Plan · Remove
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSavePacking(buildPlanState(checkedItems, customItems))}
+            className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-teal-100 transition-colors"
+          >
+            <Bookmark size={11} /> Save to Plan
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data.categories.map(cat => (
           <div key={cat.name} className="bg-white border border-gray-200 rounded-xl p-3">
@@ -1852,7 +1890,6 @@ function PackingListSection({ data, status }) {
                 )
               })}
             </div>
-            {/* Add custom item */}
             <div className="flex gap-1.5 mt-2">
               <input type="text" value={customInputs[cat.name] || ''} placeholder="Add item..."
                 onChange={e => setCustomInputs(p => ({ ...p, [cat.name]: e.target.value }))}
@@ -2438,6 +2475,39 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             </div>
           )}
 
+          {selections.packing_list && (
+            <div className="border border-teal-200 bg-teal-50/60 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-teal-800 flex items-center gap-1.5">
+                  <ShoppingBag size={14} /> Packing List
+                </span>
+                <button
+                  onClick={() => onRemoveSelection('packing_list')}
+                  className="text-teal-400 hover:text-red-500 transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-xs text-teal-700 mb-1.5">
+                <span>{selections.packing_list.checked_count ?? 0}/{selections.packing_list.total_items ?? 0} items packed</span>
+                <span className="text-teal-500">{Math.round(((selections.packing_list.checked_count ?? 0) / Math.max(1, selections.packing_list.total_items ?? 1)) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-teal-200 rounded-full overflow-hidden mb-2">
+                <div
+                  className="h-full bg-teal-600 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round(((selections.packing_list.checked_count ?? 0) / Math.max(1, selections.packing_list.total_items ?? 1)) * 100)}%` }}
+                />
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(selections.packing_list.categories || []).map(cat => (
+                  <span key={cat.name} className="text-[10px] bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">
+                    {cat.icon} {cat.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {selectedCount === 0 && (
             <div
               className={`border-2 border-dashed rounded-xl py-8 px-4 text-center transition-all ${isDragOver ? 'border-teal-400 bg-teal-50 scale-[1.02]' : 'border-gray-200 text-gray-400'}`}
@@ -2930,7 +3000,7 @@ export default function ResultsPage() {
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
-      packing_list:   () => <PackingListSection data={data} status={status} />,
+      packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
     const filterAction = (() => {
@@ -3041,7 +3111,7 @@ export default function ResultsPage() {
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none sm:flex-wrap sm:justify-center sm:overflow-visible">
+          <div className="flex gap-1.5 flex-wrap justify-center">
             {AGENT_ORDER.map(agent => <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />)}
           </div>
           {!isDone && (

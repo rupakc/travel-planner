@@ -87,7 +87,8 @@ export function countSelections(selections) {
     (selections?.sim ? 1 : 0) +
     (selections?.getting_around?.length || 0) +
     (selections?.tips?.length || 0) +
-    (selections?.itinerary_slots?.length || 0)
+    (selections?.itinerary_slots?.length || 0) +
+    (selections?.packing_list ? 1 : 0)
   )
 }
 
@@ -102,4 +103,5 @@ export const EMPTY_SELECTIONS = {
   itinerary_notes: {},
   itinerary_edits: {},
   itinerary_slots: [],
+  packing_list: null,
 }
