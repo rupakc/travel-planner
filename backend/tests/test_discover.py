@@ -2,7 +2,6 @@
 
 from unittest.mock import AsyncMock, patch
 
-
 _FAKE_RESULT = {
     "destinations": [
         {
@@ -37,9 +36,7 @@ _VALID_PAYLOAD = {
 
 
 def test_discover_success(client):
-    with patch(
-        "app.api.routes.discover.get_discovery_agent"
-    ) as mock_factory:
+    with patch("app.api.routes.discover.get_discovery_agent") as mock_factory:
         agent = mock_factory.return_value
         agent.run = AsyncMock(return_value=_FAKE_RESULT)
 
@@ -53,9 +50,7 @@ def test_discover_success(client):
 
 def test_discover_cache_hit(client):
     """Second identical request returns cached result without calling the agent."""
-    with patch(
-        "app.api.routes.discover.get_discovery_agent"
-    ) as mock_factory:
+    with patch("app.api.routes.discover.get_discovery_agent") as mock_factory:
         agent = mock_factory.return_value
         agent.run = AsyncMock(return_value=_FAKE_RESULT)
 
@@ -69,9 +64,7 @@ def test_discover_cache_hit(client):
 
 def test_discover_agent_error_returns_500(client):
     payload = {**_VALID_PAYLOAD, "budget_usd": 9999}  # distinct cache key
-    with patch(
-        "app.api.routes.discover.get_discovery_agent"
-    ) as mock_factory:
+    with patch("app.api.routes.discover.get_discovery_agent") as mock_factory:
         agent = mock_factory.return_value
         agent.run = AsyncMock(side_effect=RuntimeError("agent boom"))
 
@@ -83,11 +76,12 @@ def test_discover_agent_error_returns_500(client):
 
 def test_discover_timeout_returns_504(client):
     payload = {**_VALID_PAYLOAD, "budget_usd": 8888}  # distinct cache key
-    with patch(
-        "app.api.routes.discover.get_discovery_agent"
-    ) as mock_factory, patch(
-        "app.api.routes.discover.asyncio.wait_for",
-        side_effect=TimeoutError,
+    with (
+        patch("app.api.routes.discover.get_discovery_agent") as mock_factory,
+        patch(
+            "app.api.routes.discover.asyncio.wait_for",
+            side_effect=TimeoutError,
+        ),
     ):
         agent = mock_factory.return_value
         agent.run = AsyncMock(return_value=_FAKE_RESULT)
