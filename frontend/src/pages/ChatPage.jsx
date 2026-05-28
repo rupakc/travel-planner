@@ -1598,11 +1598,11 @@ function TripPlanView({ tripMap, itinerary, generating }) {
   const getCityPalette = (name) => CITY_PALETTE[(cityIndex[name?.toLowerCase()] ?? 0) % CITY_PALETTE.length]
   const getCityHex    = (name) => PALETTE_HEX[(cityIndex[name?.toLowerCase()] ?? 0) % PALETTE_HEX.length]
 
-  // Route polyline points
-  const routePoints = [
-    ...(originLat && originLng ? [[originLat, originLng]] : []),
-    ...cities.filter(c => c.lat && c.lng).map(c => [c.lat, c.lng]),
-  ]
+  // Destination-city polyline (no origin — avoids intercontinental zoom-out)
+  const destCityPoints = cities.filter(c => c.lat && c.lng).map(c => [c.lat, c.lng])
+
+  // Origin used only for the decorative departure pin
+  const originPoint = originLat && originLng ? [originLat, originLng] : null
 
   // All map points for fit-bounds (route + place pins)
   const placePins = []
@@ -1618,7 +1618,10 @@ function TripPlanView({ tripMap, itinerary, generating }) {
       }
     })
   })
-  const allMapPoints = [...routePoints, ...placePins.map(p => [p.lat, p.lng])]
+
+  // Bounds fit uses only destination-side points so we never zoom out to show origin country
+  const destPoints = [...destCityPoints, ...placePins.map(p => [p.lat, p.lng])]
+
 
   const numDays = days.length
   const nonTravelDays = days.filter(d => !d.is_travel_day).length
@@ -1627,10 +1630,10 @@ function TripPlanView({ tripMap, itinerary, generating }) {
     <div className="space-y-3 -mx-1">
 
       {/* ── Map ─────────────────────────────────────────────────────────── */}
-      {routePoints.length > 0 && (
+      {destCityPoints.length > 0 && (
         <div className="rounded-xl overflow-hidden border border-gray-200 mt-3 relative">
           <MapContainer
-            center={routePoints[0]}
+            center={destCityPoints[0]}
             zoom={12}
             style={{ height: '300px', width: '100%' }}
             scrollWheelZoom={false}
@@ -1640,16 +1643,16 @@ function TripPlanView({ tripMap, itinerary, generating }) {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='© <a href="https://osm.org/copyright">OpenStreetMap</a>'
             />
-            <FitBoundsUpdatable positions={allMapPoints.length >= 2 ? allMapPoints : routePoints} />
+            <FitBoundsUpdatable positions={destPoints.length >= 2 ? destPoints : destCityPoints} />
 
-            {/* Route polyline */}
-            {routePoints.length >= 2 && (
-              <Polyline positions={routePoints} color="#0d9488" weight={2} opacity={0.55} dashArray="7 5" />
+            {/* Destination-city route polyline */}
+            {destCityPoints.length >= 2 && (
+              <Polyline positions={destCityPoints} color="#0d9488" weight={2} opacity={0.55} dashArray="7 5" />
             )}
 
-            {/* Origin pin */}
-            {originLat && originLng && (
-              <Marker position={[originLat, originLng]} icon={makeOriginIcon()}>
+            {/* Origin departure pin (decorative only — not included in bounds) */}
+            {originPoint && (
+              <Marker position={originPoint} icon={makeOriginIcon()}>
                 <Popup><strong>{tripMap?.origin || 'Origin'}</strong><br/><span style={{color:'#64748b',fontSize:'11px'}}>Departure city</span></Popup>
               </Marker>
             )}
