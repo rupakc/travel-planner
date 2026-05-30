@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, startTransition } from 'react'
+import { useState, useEffect, useRef, startTransition, useMemo } from 'react'
 import {
   ArrowLeft, Plane, Hotel, MapPin, Shield, Smartphone,
   Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
@@ -7,7 +7,8 @@ import {
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
-  ShoppingBag, TrendingUp, LayoutList, CalendarDays
+  ShoppingBag, TrendingUp, LayoutList, CalendarDays,
+  Utensils, Train, BriefcaseMedical, Languages, Moon, FileDown
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
@@ -20,6 +21,10 @@ import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
+import { flightDeepLink } from '../utils/bookingLinks'
+import { loadPackingState, savePackingState } from '../utils/packingListHelpers'
+import { generateOfflineHTML } from '../utils/offlineExport'
+import SmartPackageBanner from '../components/SmartPackageBanner'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -37,8 +42,13 @@ const AGENT_CONFIG = {
   itinerary:      { label: 'Itinerary',        icon: Calendar,    color: 'indigo'  },
   emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
   packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
+  restaurants:    { label: 'Restaurants',      icon: Utensils,         color: 'orange'  },
+  day_trips:      { label: 'Day Trips',        icon: Train,            color: 'violet'  },
+  insurance:      { label: 'Travel Insurance', icon: BriefcaseMedical, color: 'red'     },
+  phrasebook:     { label: 'Phrasebook',       icon: Languages,        color: 'purple'  },
+  jet_lag:        { label: 'Jet Lag Advisor',  icon: Moon,             color: 'indigo'  },
 }
-const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'packing_list']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'packing_list', 'restaurants', 'day_trips', 'insurance', 'phrasebook', 'jet_lag']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -54,6 +64,7 @@ const COLOR_MAP = {
   lime:   { badge: 'bg-lime-50 text-lime-700 border-lime-200',    header: 'from-lime-500 to-green-500' },
   red:    { badge: 'bg-red-50 text-red-700 border-red-200',       header: 'from-red-500 to-red-600'   },
   teal:   { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
+  violet: { badge: 'bg-violet-50 text-violet-700 border-violet-200', header: 'from-violet-400 to-violet-500' },
 }
 
 const SECTION_ACCENT = {
@@ -70,13 +81,14 @@ const SECTION_ACCENT = {
   lime:    { icon: 'text-lime-600',    line: 'border-l-lime-400',    bg: 'bg-lime-50/30'    },
   red:     { icon: 'text-red-600',     line: 'border-l-red-400',     bg: 'bg-red-50/30'     },
   teal:    { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
+  violet:  { icon: 'text-violet-600', line: 'border-l-violet-400',  bg: 'bg-violet-50/30'  },
 }
 
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', emergency_card: 'Emergency', packing_list: 'Packing' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', emergency_card: 'Emergency', packing_list: 'Packing', restaurants: 'Restaurants', day_trips: 'Day Trips', insurance: 'Insurance', phrasebook: 'Phrases', jet_lag: 'Jet Lag' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -193,6 +205,31 @@ const LOADING_MESSAGES = {
     "Checking weather...",
     "Planning what to pack...",
     "Finalising your packing list..."
+  ],
+  restaurants: [
+    "Finding top restaurants...",
+    "Searching for local dining gems...",
+    "Curating breakfast, lunch & dinner options..."
+  ],
+  day_trips: [
+    "Discovering nearby day trip destinations...",
+    "Checking transit routes...",
+    "Finding the best escapes from the city..."
+  ],
+  insurance: [
+    "Assessing travel risk levels...",
+    "Comparing insurance policy types...",
+    "Finding the right coverage for your trip..."
+  ],
+  phrasebook: [
+    "Compiling essential phrases...",
+    "Adding transit and food vocabulary...",
+    "Preparing your pocket phrasebook..."
+  ],
+  jet_lag: [
+    "Calculating time zone shift...",
+    "Preparing jet lag recovery tips...",
+    "Building your adjustment schedule..."
   ],
 }
 
@@ -1786,17 +1823,20 @@ function EmergencyCardSection({ data, status }) {
 
 // ─── Packing List Section ─────────────────────────────────────────────────────
 
-function PackingListSection({ data, status, selections, onSavePacking }) {
+function PackingListSection({ data, status, selections, onSavePacking, tripId }) {
   if (!data?.categories?.length) return null
 
-  const lsKey = 'packing_checked'
+  const resolvedTripId = tripId || 'default'
   const isSavedToPlan = !!selections?.packing_list
 
   const [checkedItems, setCheckedItems] = useState(() => {
-    // Plan is source of truth if available, else localStorage
+    // Plan is source of truth if available, else loadPackingState helper
     if (selections?.packing_list?.checked_items) return selections.packing_list.checked_items
-    try { return JSON.parse(localStorage.getItem(lsKey) || '{}') }
-    catch { return {} }
+    const savedSet = loadPackingState(resolvedTripId)
+    // Convert Set back to object format used internally
+    const obj = {}
+    savedSet.forEach(k => { obj[k] = true })
+    return obj
   })
   const [customItems, setCustomItems] = useState(() => {
     return selections?.packing_list?.custom_items || {}
@@ -1816,7 +1856,9 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
     const key = `${catName}::${item}`
     setCheckedItems(prev => {
       const next = { ...prev, [key]: !prev[key] }
-      try { localStorage.setItem(lsKey, JSON.stringify(next)) } catch {}
+      // Persist using savePackingState helper (Set of checked keys)
+      const checkedSet = new Set(Object.entries(next).filter(([, v]) => v).map(([k]) => k))
+      savePackingState(resolvedTripId, checkedSet)
       if (isSavedToPlan) onSavePacking(buildPlanState(next, customItems))
       return next
     })
@@ -1843,8 +1885,21 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
           🧳 {data.luggage_note}
         </p>
       )}
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>{checkedCount}/{totalItems} items packed</span>
+          <span className="font-medium text-teal-600">{totalItems > 0 ? Math.round((checkedCount / totalItems) * 100) : 0}%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-300"
+            style={{ width: `${totalItems > 0 ? Math.round((checkedCount / totalItems) * 100) : 0}%` }}
+          />
+        </div>
+      </div>
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+        <p className="text-xs text-gray-400">{checkedCount} of {totalItems} packed</p>
         {isSavedToPlan ? (
           <button
             type="button"
@@ -2552,6 +2607,28 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               <Bookmark size={12} /> Archive Plan
             </button>
           )}
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const html = generateOfflineHTML({
+                  planName,
+                  sections: results,
+                  searchData,
+                })
+                const blob = new Blob([html], { type: 'text/html' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${planName.replace(/[^a-z0-9]/gi, '_')}_offline.html`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 border border-teal-200 text-teal-700 font-medium rounded-xl text-xs hover:bg-teal-50 hover:border-teal-400 transition-all"
+            >
+              <FileDown size={12} /> Export Offline
+            </button>
+          )}
           {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{saveMsg}</p>}
 
           {/* Saved plans — drop zone for current plan */}
@@ -2622,6 +2699,367 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
         </div>
       </div>
     </>
+  )
+}
+
+// ─── Restaurants Section ──────────────────────────────────────────────────────
+
+function RestaurantsSection({ data }) {
+  if (!data?.restaurants?.length && !data?.results?.length) return <div className="p-4 text-sm text-gray-500">No restaurant recommendations available</div>
+  const items = data.restaurants || data.results || []
+  const mealGroups = ['breakfast', 'lunch', 'dinner', 'street food', 'cafe', 'bar']
+  const groupEmoji = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', 'street food': '🥡', cafe: '☕', bar: '🍺' }
+
+  const grouped = {}
+  for (const r of items) {
+    const meal = (r.meal_type || r.type || 'other').toLowerCase()
+    const key = mealGroups.find(g => meal.includes(g)) || 'other'
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(r)
+  }
+  const orderedKeys = [...mealGroups.filter(k => grouped[k]), ...(grouped.other ? ['other'] : [])]
+
+  return (
+    <div className="p-4 space-y-5">
+      {orderedKeys.map(meal => (
+        <div key={meal}>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
+            {groupEmoji[meal] || '🍽️'} {meal.charAt(0).toUpperCase() + meal.slice(1)}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {grouped[meal].map((r, i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900 text-sm flex-1 mr-2">{r.name}</h4>
+                  {r.price_range && (
+                    <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                      {r.price_range}
+                    </span>
+                  )}
+                </div>
+                {r.cuisine && <p className="text-xs text-gray-500 mb-1">{r.cuisine}</p>}
+                {r.location && (
+                  <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                    <MapPin size={10} /> {r.location}
+                  </p>
+                )}
+                {r.signature_dish && (
+                  <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
+                    Try: {r.signature_dish}
+                  </p>
+                )}
+                {r.reservation_required && (
+                  <p className="text-xs text-red-600 flex items-center gap-1 mb-2">
+                    <AlertTriangle size={10} /> Reservation recommended
+                  </p>
+                )}
+                {r.description && <p className="text-xs text-gray-600 mb-2 line-clamp-2">{r.description}</p>}
+                {r.location && (
+                  <a
+                    href={`https://www.google.com/maps/search/${encodeURIComponent(r.name + ' ' + (r.location || ''))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium"
+                  >
+                    <ExternalLink size={10} /> View on Maps
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Day Trips Section ────────────────────────────────────────────────────────
+
+function DayTripsSection({ data }) {
+  if (!data?.trips?.length && !data?.results?.length) return <div className="p-4 text-sm text-gray-500">No day trip suggestions available</div>
+  const trips = data.trips || data.results || []
+  const crowdColors = { low: 'bg-green-100 text-green-700', moderate: 'bg-amber-100 text-amber-700', high: 'bg-red-100 text-red-700' }
+
+  return (
+    <div className="p-4 space-y-4">
+      {trips.map((trip, i) => (
+        <div key={i} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all">
+          {/* Violet gradient header */}
+          <div className="bg-gradient-to-r from-violet-500 to-violet-600 px-4 py-3 text-white">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-base">{trip.name}</h3>
+                {trip.country && <p className="text-violet-200 text-xs mt-0.5">{trip.country}</p>}
+              </div>
+              {trip.crowd_level && (
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${crowdColors[trip.crowd_level?.toLowerCase()] || 'bg-gray-100 text-gray-700'}`}>
+                  {trip.crowd_level} crowds
+                </span>
+              )}
+            </div>
+            {trip.transit_info && (
+              <div className="flex items-center gap-1.5 text-violet-200 text-xs mt-2">
+                <Train size={11} /> {trip.transit_info}
+              </div>
+            )}
+          </div>
+          {/* Body */}
+          <div className="p-4 space-y-3">
+            {trip.description && <p className="text-sm text-gray-600">{trip.description}</p>}
+            {trip.transit_route && (
+              <p className="text-xs text-gray-500"><span className="font-medium">How to get there:</span> {trip.transit_route}</p>
+            )}
+            {trip.mini_itinerary && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Sample Day</p>
+                {trip.mini_itinerary.morning && (
+                  <div className="flex gap-2 text-xs text-gray-600">
+                    <span className="w-20 shrink-0 font-medium text-gray-500">🌅 Morning</span>
+                    <span>{trip.mini_itinerary.morning}</span>
+                  </div>
+                )}
+                {trip.mini_itinerary.afternoon && (
+                  <div className="flex gap-2 text-xs text-gray-600">
+                    <span className="w-20 shrink-0 font-medium text-gray-500">☀️ Afternoon</span>
+                    <span>{trip.mini_itinerary.afternoon}</span>
+                  </div>
+                )}
+                {trip.mini_itinerary.evening && (
+                  <div className="flex gap-2 text-xs text-gray-600">
+                    <span className="w-20 shrink-0 font-medium text-gray-500">🌙 Evening</span>
+                    <span>{trip.mini_itinerary.evening}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Insurance Section ────────────────────────────────────────────────────────
+
+function InsuranceSection({ data }) {
+  if (!data) return <div className="p-4 text-sm text-gray-500">Insurance information unavailable</div>
+  const riskColors = { low: 'bg-green-50 border-green-200 text-green-800', moderate: 'bg-amber-50 border-amber-200 text-amber-800', high: 'bg-red-50 border-red-200 text-red-800', extreme: 'bg-red-100 border-red-300 text-red-900' }
+  const riskLevel = (data.risk_level || 'moderate').toLowerCase()
+  const riskClass = riskColors[riskLevel] || riskColors.moderate
+  const policies = data.policy_types || data.policies || []
+  const factors = data.risk_factors || []
+  const warnings = data.watch_out || data.warnings || []
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Risk level banner */}
+      <div className={`rounded-xl border px-4 py-3 ${riskClass}`}>
+        <div className="flex items-center gap-2">
+          <BriefcaseMedical size={16} />
+          <span className="font-bold capitalize">Risk Level: {riskLevel}</span>
+        </div>
+        {data.risk_summary && <p className="text-sm mt-1">{data.risk_summary}</p>}
+      </div>
+
+      {/* Risk factors */}
+      {factors.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Risk Factors</p>
+          <ul className="space-y-1">
+            {factors.map((f, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                <AlertTriangle size={12} className="text-amber-500 mt-0.5 shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Policy types */}
+      {policies.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Recommended Coverage</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {policies.slice(0, 3).map((p, i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-3 hover:shadow-md transition-all">
+                <h4 className="font-semibold text-gray-900 text-sm mb-1">{p.name || p.type}</h4>
+                {p.description && <p className="text-xs text-gray-600 mb-2">{p.description}</p>}
+                {p.estimated_cost && <p className="text-xs font-medium text-red-700">Est. {p.estimated_cost}</p>}
+                {p.covers?.length > 0 && (
+                  <ul className="mt-2 space-y-0.5">
+                    {p.covers.slice(0, 3).map((c, j) => (
+                      <li key={j} className="flex items-center gap-1 text-xs text-gray-500">
+                        <CheckCircle2 size={10} className="text-green-500 shrink-0" /> {c}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Watch-out warnings */}
+      {warnings.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Watch Out</p>
+          <div className="space-y-2">
+            {warnings.map((w, i) => (
+              <div key={i} className="flex gap-2 p-2.5 rounded-lg border border-red-200 bg-red-50">
+                <AlertCircle size={13} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{w}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Phrasebook Section ───────────────────────────────────────────────────────
+
+function PhrasebookSection({ data }) {
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [copiedKey, setCopiedKey] = useState(null)
+
+  if (!data?.phrases?.length && !data?.categories?.length) return <div className="p-4 text-sm text-gray-500">No phrasebook available</div>
+
+  // Flatten phrases from either format
+  const allPhrases = data.phrases || (data.categories || []).flatMap(c => (c.phrases || []).map(p => ({ ...p, category: c.name || c.id })))
+
+  const categories = ['all', ...Array.from(new Set(allPhrases.map(p => (p.category || 'general').toLowerCase())))]
+
+  const filtered = activeCategory === 'all' ? allPhrases : allPhrases.filter(p => (p.category || 'general').toLowerCase() === activeCategory)
+
+  const copyPhrase = (phrase, key) => {
+    navigator.clipboard.writeText(phrase).then(() => {
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 1500)
+    }).catch(() => {})
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Category filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {categories.map(cat => (
+          <button key={cat} type="button"
+            onClick={() => setActiveCategory(cat)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all capitalize ${activeCategory === cat ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-600'}`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Phrase cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {filtered.map((phrase, i) => {
+          const copyKey = `${i}-${phrase.local}`
+          const isCopied = copiedKey === copyKey
+          return (
+            <div key={i} className="border border-gray-200 rounded-xl p-3 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  {phrase.local && <p className="text-base font-bold text-purple-800">{phrase.local}</p>}
+                  {phrase.romanized && <p className="text-sm text-gray-600 italic">{phrase.romanized}</p>}
+                  <p className="text-sm font-medium text-gray-900 mt-1">{phrase.meaning || phrase.english}</p>
+                  {phrase.usage_context && (
+                    <p className="text-xs text-gray-400 mt-0.5">{phrase.usage_context}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyPhrase(phrase.local || phrase.meaning || '', copyKey)}
+                  className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${isCopied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}
+                >
+                  {isCopied ? <><Check size={10} /> Copied</> : 'Copy'}
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Jet Lag Section ──────────────────────────────────────────────────────────
+
+function JetLagSection({ data }) {
+  const [openSection, setOpenSection] = useState(null)
+
+  if (!data) return null
+  if (data.skip) return null
+
+  const severityColors = { mild: 'bg-green-100 text-green-700', moderate: 'bg-amber-100 text-amber-700', severe: 'bg-red-100 text-red-700' }
+  const severity = (data.severity || 'moderate').toLowerCase()
+
+  const collapsibleSections = [
+    { key: 'before', label: 'Days Before Departure', icon: '📅', content: data.days_before || data.before_flight || [] },
+    { key: 'flight', label: 'On the Flight', icon: '✈️', content: data.on_flight || data.during_flight || [] },
+    { key: 'first_day', label: 'First Day at Destination', icon: '🌅', content: data.first_day || data.after_arrival || [] },
+  ]
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Severity badge */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${severityColors[severity] || severityColors.moderate}`}>
+          <Moon size={13} className="inline mr-1.5" />
+          Jet Lag: {severity.charAt(0).toUpperCase() + severity.slice(1)}
+        </span>
+        {data.time_zone_shift && (
+          <span className="text-sm text-gray-500">Time zone shift: <span className="font-medium text-gray-700">{data.time_zone_shift}</span></span>
+        )}
+      </div>
+
+      {/* Arrival home equivalent */}
+      {data.arrival_home_equivalent && (
+        <p className="text-sm text-gray-600">
+          Arriving at your destination feels like <span className="font-semibold text-gray-800">{data.arrival_home_equivalent}</span> back home.
+        </p>
+      )}
+
+      {/* Key tip highlighted box */}
+      {data.key_tip && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex gap-2">
+          <Lightbulb size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-indigo-800 font-medium">{data.key_tip}</p>
+        </div>
+      )}
+
+      {/* Collapsible tip sections */}
+      {collapsibleSections.map(sec => {
+        const tips = Array.isArray(sec.content) ? sec.content : (sec.content ? [sec.content] : [])
+        if (!tips.length) return null
+        const isOpen = openSection === sec.key
+        return (
+          <div key={sec.key} className="border border-gray-200 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpenSection(isOpen ? null : sec.key)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <span className="font-semibold text-gray-800 text-sm">{sec.icon} {sec.label}</span>
+              <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-3 space-y-1.5 border-t border-gray-100">
+                {tips.map((tip, j) => (
+                  <div key={j} className="flex items-start gap-2 text-sm text-gray-600 pt-2">
+                    <CheckCircle2 size={13} className="text-indigo-400 shrink-0 mt-0.5" />
+                    <span>{typeof tip === 'string' ? tip : (tip.tip || tip.text || JSON.stringify(tip))}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -2733,7 +3171,49 @@ export default function ResultsPage() {
   const [confidenceData, setConfidenceData] = useState(null)
   const [pricingData, setPricingData] = useState(null)
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
+  const [packageDismissed, setPackageDismissed] = useState(false)
   const prevCountRef = useRef(0)
+
+  // Compute smart package suggestion from loaded results
+  const smartPackage = useMemo(() => {
+    const flights = results.flights?.results || []
+    const hotels = results.hotels?.results || []
+    const activities = results.activities?.results || []
+    const simPlans = results.sim?.plans || []
+    if (!flights.length && !hotels.length) return null
+
+    const cheapestFlight = [...flights].sort((a, b) => (a.price_usd || 9999) - (b.price_usd || 9999))[0] || null
+    const midRangeHotel = hotels.find(h => h.tier === 'mid_range' || h.tier === 'mid-range') ||
+      (hotels.length > 1 ? hotels[Math.floor(hotels.length / 2)] : hotels[0]) || null
+    const topFreeActivities = activities.filter(a => !a.price_usd || a.price_usd === 0).slice(0, 3)
+    const firstSim = simPlans[0] || null
+
+    if (!cheapestFlight && !midRangeHotel) return null
+
+    const flightCost = cheapestFlight?.price_usd || 0
+    const hotelNights = searchData?.return_date && searchData?.departure_date
+      ? Math.round((new Date(searchData.return_date) - new Date(searchData.departure_date)) / 86400000)
+      : 7
+    const hotelCost = (midRangeHotel?.price_per_night_usd || 0) * hotelNights
+    const simCost = firstSim?.price_usd || 0
+    const totalCost = flightCost + hotelCost + simCost
+
+    const expensiveFlight = [...flights].sort((a, b) => (b.price_usd || 0) - (a.price_usd || 0))[0]
+    const expensiveHotel = hotels.find(h => h.tier === 'luxury') || hotels[hotels.length - 1]
+    const savingsVsExpensive = Math.max(0,
+      ((expensiveFlight?.price_usd || 0) + (expensiveHotel?.price_per_night_usd || 0) * hotelNights) - (flightCost + hotelCost)
+    )
+
+    return {
+      flight: cheapestFlight ? { airline: cheapestFlight.outbound?.airline || cheapestFlight.airline, price_usd: cheapestFlight.price_usd } : null,
+      hotel: midRangeHotel ? { name: midRangeHotel.name, tier: midRangeHotel.tier || 'mid-range' } : null,
+      activities: topFreeActivities,
+      sim: firstSim ? { name: firstSim.plan_name || firstSim.provider } : null,
+      total_cost_usd: totalCost || null,
+      savings_vs_expensive: savingsVsExpensive,
+      _raw: { flight: cheapestFlight, hotel: midRangeHotel, sim: firstSim },
+    }
+  }, [results.flights, results.hotels, results.activities, results.sim, searchData])
 
   useEffect(() => {
     const count = countSelections(selections)
@@ -3000,7 +3480,12 @@ export default function ResultsPage() {
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
-      packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
+      packing_list:   () => <PackingListSection data={data} status={status} selections={selections} tripId={`${searchData?.origin}_${searchData?.destination}_${searchData?.departure_date}`} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
+      restaurants:    () => <RestaurantsSection data={data} />,
+      day_trips:      () => <DayTripsSection data={data} />,
+      insurance:      () => <InsuranceSection data={data} />,
+      phrasebook:     () => <PhrasebookSection data={data} />,
+      jet_lag:        () => <JetLagSection data={data} />,
     }
     const isOpen = !collapsedSections[agent]
     const filterAction = (() => {
@@ -3153,6 +3638,23 @@ export default function ResultsPage() {
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-5 pb-24">
         {completionBanner && <div className="mb-5">{completionBanner}</div>}
+
+        {/* Smart Package Banner */}
+        {smartPackage && !packageDismissed && isDone && (
+          <div className="mb-5">
+            <SmartPackageBanner
+              packageData={smartPackage}
+              onDismiss={() => setPackageDismissed(true)}
+              onAccept={(pkg) => {
+                if (pkg._raw.flight) handleSelect('flight', pkg._raw.flight)
+                if (pkg._raw.hotel) handleSelect('hotel', pkg._raw.hotel)
+                if (pkg._raw.sim) handleSelect('sim', pkg._raw.sim)
+                pkg.activities.forEach(a => handleSelect('activities', a))
+                setPackageDismissed(true)
+              }}
+            />
+          </div>
+        )}
 
         {/* Tab switcher — only show once itinerary is loaded */}
         {results.itinerary?.days?.length > 0 && (

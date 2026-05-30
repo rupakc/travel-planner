@@ -30,12 +30,16 @@ export default function PreferencesPage() {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [loading, setLoading] = useState(true)
+  const [visitedDestinations, setVisitedDestinations] = useState([])
 
   useEffect(() => {
     if (!token) return
     fetch('/api/preferences', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => setPrefs(data))
+      .then(data => {
+        setPrefs(data)
+        setVisitedDestinations(data.visited_destinations || [])
+      })
       .catch(() => setPrefs({
         budget_category: 'medium', nationality: '', current_residence: '',
         residence_permits: [], existing_visas: [],
@@ -50,7 +54,7 @@ export default function PreferencesPage() {
       const res = await fetch('/api/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(prefs),
+        body: JSON.stringify({ ...prefs, visited_destinations: visitedDestinations }),
       })
       if (res.ok) {
         refreshPreferences()
@@ -160,6 +164,16 @@ export default function PreferencesPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className={labelClass}><span className="flex items-center gap-1.5"><MapPin size={14} /> Places You Have Visited</span></label>
+            <p className="text-xs text-gray-400 mb-2">We will skip tourist basics on repeat visits</p>
+            <TagInput
+              value={visitedDestinations}
+              onChange={setVisitedDestinations}
+              placeholder="Tokyo, Paris, Bali..."
+            />
           </div>
 
           {/* Save */}

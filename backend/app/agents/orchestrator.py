@@ -3,16 +3,22 @@ import logging
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
+from ..services.weather_itinerary_adapter import adapt_itinerary_for_weather
 from .activities_agent import ActivitiesAgent
+from .day_trips_agent import DayTripsAgent
 from .emergency_card_agent import EmergencyCardAgent
 from .flights_agent import FlightsAgent
 from .forex_agent import ForexAgent
 from .getting_around_agent import GettingAroundAgent
 from .hotels_agent import HotelsAgent
+from .insurance_agent import InsuranceAgent
 from .itinerary_agent import ItineraryAgent
+from .jet_lag_agent import JetLagAgent
 from .packing_list_agent import PackingListAgent
+from .phrasebook_agent import PhrasebookAgent
 from .places_agent import PlacesAgent
 from .pricing_advisor_agent import PricingAdvisorAgent
+from .restaurants_agent import RestaurantsAgent
 from .sim_agent import SimAgent
 from .tips_agent import TipsAgent
 from .visa_agent import VisaAgent
@@ -37,6 +43,11 @@ class TravelOrchestrator:
         self.emergency_card = EmergencyCardAgent(agents_dir)
         self.packing_list = PackingListAgent(agents_dir)
         self.pricing_advisor = PricingAdvisorAgent(agents_dir)
+        self.restaurants = RestaurantsAgent(agents_dir)
+        self.day_trips = DayTripsAgent(agents_dir)
+        self.insurance = InsuranceAgent(agents_dir)
+        self.phrasebook = PhrasebookAgent(agents_dir)
+        self.jet_lag = JetLagAgent(agents_dir)
 
     async def run(self, request: TravelSearchRequest) -> dict:
         """Run all agents: Phase 1 in parallel, Phase 2 sequential."""
@@ -165,6 +176,11 @@ class TravelOrchestrator:
             "forex",
             "packing_list",
             "pricing_advisor",
+            "restaurants",
+            "day_trips",
+            "insurance",
+            "phrasebook",
+            "jet_lag",
         ]:
             yield f"data: {json.dumps({'type': 'agent_status', 'agent': name, 'status': 'searching'})}\n\n"
 
@@ -195,6 +211,11 @@ class TravelOrchestrator:
             "emergency_card": self.emergency_card,
             "getting_around": self.getting_around,
             "forex": self.forex,
+            "restaurants": self.restaurants,
+            "day_trips": self.day_trips,
+            "insurance": self.insurance,
+            "phrasebook": self.phrasebook,
+            "jet_lag": self.jet_lag,
         }
 
         phase1_tasks = [
@@ -357,6 +378,9 @@ class TravelOrchestrator:
                 itinerary = self._build_fallback_itinerary(
                     request, results.get("activities", {}), results.get("hotels", {})
                 )
+                itinerary = adapt_itinerary_for_weather(
+                    itinerary, results.get("weather", {})
+                )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
                 continue
@@ -393,6 +417,9 @@ class TravelOrchestrator:
                         results.get("activities", {}),
                         results.get("hotels", {}),
                     )
+                itinerary = adapt_itinerary_for_weather(
+                    itinerary, results.get("weather", {})
+                )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
                 continue

@@ -1,6 +1,6 @@
 import logging
 import time
-from urllib.parse import urlparse
+from urllib.parse import quote_plus, urlparse
 
 from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
@@ -119,7 +119,57 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         self._origin = request.origin
         self._destination = request.destination
-        return await self.execute(prompt)
+        result = await self.execute(prompt)
+        if not result.get("error") and result.get("results"):
+            result["results"] = self._add_deeplinks_and_signals(
+                result["results"], request
+            )
+        return result
+
+    def _add_deeplinks_and_signals(self, results: list, request) -> list:
+        if not results:
+            return results
+        prices = [f.get("price_usd", 0) for f in results if f.get("price_usd")]
+        avg = sum(prices) / len(prices) if prices else 0
+        origin_iata = getattr(request, "origin_iata", None) or ""
+        dest_iata = getattr(request, "destination_iata", None) or ""
+        dep = (
+            str(request.departure_date).replace("-", "")
+            if request.departure_date
+            else ""
+        )
+        ret = str(request.return_date).replace("-", "") if request.return_date else ""
+        for f in results:
+            if origin_iata and dest_iata and dep:
+                path = "/transport/flights/" + origin_iata + "/" + dest_iata + "/" + dep
+                if ret:
+                    path += "/" + ret
+                path += "/"
+                f["booking_deeplink"] = (
+                    "https://www.skyscanner.net"
+                    + path
+                    + "?adults="
+                    + str(request.num_travelers or 1)
+                )
+            else:
+                f["booking_deeplink"] = (
+                    "https://www.skyscanner.net/transport/flights/"
+                    + quote_plus(str(request.origin))
+                    + "/"
+                    + quote_plus(str(request.destination))
+                    + "/"
+                )
+            price = f.get("price_usd") or 0
+            if avg and price:
+                if price < avg * 0.85:
+                    f["price_signal"] = "below_average"
+                elif price > avg * 1.15:
+                    f["price_signal"] = "above_average"
+                else:
+                    f["price_signal"] = "average"
+            else:
+                f["price_signal"] = None
+        return results
 
     async def _enrich_urls(self, data: dict) -> dict:
         flights = data.get("results", [])

@@ -7,11 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import (
     activities,
+    checklist,
+    content_import,
+    day_trips,
     flights,
     forex,
     getting_around,
     hotels,
+    insurance,
     itinerary,
+    restaurants,
     search,
     sim,
     tips,
@@ -102,12 +107,17 @@ app.include_router(flights.router, prefix="/api", tags=["flights"])
 app.include_router(hotels.router, prefix="/api", tags=["hotels"])
 app.include_router(activities.router, prefix="/api", tags=["activities"])
 app.include_router(visa.router, prefix="/api", tags=["visa"])
+app.include_router(insurance.router, prefix="/api", tags=["insurance"])
 app.include_router(sim.router, prefix="/api", tags=["sim"])
 app.include_router(tips.router, prefix="/api", tags=["tips"])
 app.include_router(getting_around.router, prefix="/api", tags=["getting_around"])
 app.include_router(forex.router, prefix="/api", tags=["forex"])
 app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
+app.include_router(day_trips.router, prefix="/api", tags=["day_trips"])
+app.include_router(restaurants.router, prefix="/api", tags=["restaurants"])
 app.include_router(discover_router, prefix="/api", tags=["discover"])
+app.include_router(checklist.router, prefix="/api", tags=["checklist"])
+app.include_router(content_import.router, prefix="/api", tags=["content_import"])
 
 
 @app.get("/health")

@@ -42,7 +42,11 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "lng": 139.6503,
           "duration_hours": 3.0,
           "notes": "Buy Suica IC card at the airport for transit",
-          "estimated_cost_usd": 30.0
+          "estimated_cost_usd": 30.0,
+          "start_time": "09:00",
+          "end_time": "12:00",
+          "transit_to_next_minutes": 15,
+          "transit_to_next_mode": "metro"
         },
         {
           "time_of_day": "afternoon",
@@ -50,7 +54,11 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "location": "Shinjuku",
           "duration_hours": 3.0,
           "notes": "Rest and acclimatise after the flight",
-          "estimated_cost_usd": 20.0
+          "estimated_cost_usd": 20.0,
+          "start_time": "13:00",
+          "end_time": "16:00",
+          "transit_to_next_minutes": 10,
+          "transit_to_next_mode": "walking"
         },
         {
           "time_of_day": "evening",
@@ -58,7 +66,11 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "location": "Shinjuku",
           "duration_hours": 2.0,
           "notes": "Try yakitori and local sake",
-          "estimated_cost_usd": 35.0
+          "estimated_cost_usd": 35.0,
+          "start_time": "19:00",
+          "end_time": "21:00",
+          "transit_to_next_minutes": 0,
+          "transit_to_next_mode": "walking"
         }
       ],
       "daily_estimated_cost_usd": 85.0,
@@ -83,3 +95,6 @@ Rules:
 - `total_estimated_cost_usd` = sum of all daily costs
 - `city`: the city name this day/slot takes place in (always include)
 - `lat`, `lng`: approximate decimal-degree coordinates of the activity location (always include when a specific place is named)
+- `start_time` and `end_time`: always include in HH:MM 24-hour format. Morning slots start 08:30–10:00. Afternoon slots start 13:00–14:00. Evening slots start 18:00–19:00.
+- `transit_to_next_minutes`: estimated travel time in minutes to reach the next slot's location (use 0 for the last slot of the day)
+- `transit_to_next_mode`: mode of transit to the next slot — use `walking`, `metro`, `taxi`, `tuk-tuk`, or `boat` as appropriate for the city and distance
