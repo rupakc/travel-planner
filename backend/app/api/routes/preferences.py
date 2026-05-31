@@ -15,11 +15,6 @@ class PreferencesUpdate(BaseModel):
     existing_visas: list[str] = Field(default_factory=list)
     interests: list[str] = Field(default_factory=list)
     num_travelers: int = Field(1, ge=1, le=20)
-    visited_destinations: list = Field(default_factory=list)
-    adults: int = 1
-    children: int = 0
-    seniors: int = 0
-    infants: int = 0
 
 
 @router.get("/preferences")

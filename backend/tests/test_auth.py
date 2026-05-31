@@ -1,12 +1,5 @@
 """Tests for auth endpoints and RBAC."""
 
-import uuid
-
-
-def _uid(prefix: str) -> str:
-    """Return a test-run-unique username so tests don't collide across runs."""
-    return f"{prefix}_{uuid.uuid4().hex[:8]}"
-
 
 class TestLogin:
     def test_admin_login_success(self, client):
@@ -55,19 +48,18 @@ class TestMe:
 
 class TestCreateAndChangePassword:
     def test_full_flow(self, client, admin_headers):
-        username = _uid("flowuser")
         # Create user
         r = client.post(
             "/api/admin/users",
-            json={"username": username, "password": "temp1234", "is_admin": False},
+            json={"username": "flowuser", "password": "temp1234", "is_admin": False},
             headers=admin_headers,
         )
         assert r.status_code == 201
-        assert r.json()["username"] == username
+        assert r.json()["username"] == "flowuser"
 
         # Login — requires_password_change should be True
         r = client.post(
-            "/api/auth/login", json={"username": username, "password": "temp1234"}
+            "/api/auth/login", json={"username": "flowuser", "password": "temp1234"}
         )
         assert r.status_code == 200
         assert r.json()["user"]["requires_password_change"] is True
@@ -84,7 +76,7 @@ class TestCreateAndChangePassword:
 
         # Login with new password — requires_password_change should be False
         r = client.post(
-            "/api/auth/login", json={"username": username, "password": "newpass99"}
+            "/api/auth/login", json={"username": "flowuser", "password": "newpass99"}
         )
         assert r.status_code == 200
         assert r.json()["user"]["requires_password_change"] is False
@@ -129,15 +121,14 @@ class TestCreateAndChangePassword:
 
 class TestAdminResetPassword:
     def test_admin_can_reset_regular_user_password(self, client, admin_headers):
-        username = _uid("resetme")
         client.post(
             "/api/admin/users",
-            json={"username": username, "password": "original1", "is_admin": False},
+            json={"username": "resetme", "password": "original1", "is_admin": False},
             headers=admin_headers,
         )
         # First login to clear is_first_login flag
         r = client.post(
-            "/api/auth/login", json={"username": username, "password": "original1"}
+            "/api/auth/login", json={"username": "resetme", "password": "original1"}
         )
         token = r.json()["access_token"]
         client.post(
@@ -148,7 +139,7 @@ class TestAdminResetPassword:
 
         # Admin resets the password
         r = client.post(
-            f"/api/admin/users/{username}/reset-password",
+            "/api/admin/users/resetme/reset-password",
             json={"new_password": "newreset1"},
             headers=admin_headers,
         )
@@ -157,14 +148,14 @@ class TestAdminResetPassword:
 
         # Login with new password should work and requires_password_change must be True
         r = client.post(
-            "/api/auth/login", json={"username": username, "password": "newreset1"}
+            "/api/auth/login", json={"username": "resetme", "password": "newreset1"}
         )
         assert r.status_code == 200
         assert r.json()["user"]["requires_password_change"] is True
 
         # Old password no longer works
         r = client.post(
-            "/api/auth/login", json={"username": username, "password": "changed99"}
+            "/api/auth/login", json={"username": "resetme", "password": "changed99"}
         )
         assert r.status_code == 401
 

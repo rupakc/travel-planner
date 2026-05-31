@@ -105,31 +105,4 @@ class ItineraryAgent(BaseAgent):
             f"Include meal costs (~$50/person/day). Costs are PER PERSON."
             + multi_city_block
         )
-        result = await self.execute(prompt)
-        if result and not result.get("error"):
-            result = self._add_transit_times(result)
-        return result
-
-    def _add_transit_times(self, itinerary: dict) -> dict:
-        try:
-            from ..services.transit_estimator import estimate_transit
-
-            for day in itinerary.get("days", []):
-                slots = day.get("slots", [])
-                for i in range(len(slots) - 1):
-                    slot, nxt = slots[i], slots[i + 1]
-                    lat1 = slot.get("lat")
-                    lng1 = slot.get("lng")
-                    lat2 = nxt.get("lat")
-                    lng2 = nxt.get("lng")
-                    if all(v is not None for v in [lat1, lng1, lat2, lng2]):
-                        t = estimate_transit(
-                            float(lat1), float(lng1), float(lat2), float(lng2)
-                        )
-                        slot["transit_to_next_minutes"] = t["minutes"]
-                        slot["transit_to_next_mode"] = t["mode"]
-        except Exception as exc:
-            import logging
-
-            logging.getLogger(__name__).warning("Transit enrichment failed: %s", exc)
-        return itinerary
+        return await self.execute(prompt)

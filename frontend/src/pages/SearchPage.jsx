@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
-import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, ChevronDown, ChevronUp, Plus, Minus, ExternalLink, Loader2, RefreshCw } from 'lucide-react'
+import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
@@ -213,17 +213,12 @@ function DestinationCard({ dest, onSelect }) {
 }
 
 export default function SearchPage() {
-  const { preferences, updatePreferences, token } = useAuth()
+  const { preferences, updatePreferences } = useAuth()
   const { setPendingSearchData } = useSearchData()
 
   const today     = new Date().toISOString().split('T')[0]
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
   const twoWeeks  = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
-
-  const [showImport, setShowImport] = useState(false)
-  const [importUrl, setImportUrl] = useState("")
-  const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState(null)
 
   const [mode, setMode] = useState('known')  // 'known' | 'discover'
   const [discoverForm, setDiscoverForm] = useState({
@@ -276,25 +271,6 @@ export default function SearchPage() {
       infants: preferences.infants ?? f.infants,
     }))
   }, [preferences])
-
-  const handleImportUrl = async () => {
-    if (!importUrl.trim()) return
-    setImporting(true)
-    try {
-      const res = await fetch("/api/content-import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        body: JSON.stringify({ url: importUrl.trim() })
-      })
-      const data = await res.json()
-      if (data && data.pre_fill) {
-        if (data.pre_fill.destination) setForm(f => ({ ...f, destination: data.pre_fill.destination }))
-        if (data.pre_fill.interests) setForm(f => ({ ...f, interests: data.pre_fill.interests }))
-        setImportResult(data)
-      }
-    } catch (e) { console.error("Import failed", e) }
-    setImporting(false)
-  }
 
   const toggleInterest = (id) =>
     setForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))
@@ -392,50 +368,6 @@ export default function SearchPage() {
 
           {mode === 'known' && <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Import from URL */}
-            <div>
-              <button
-                type="button"
-                onClick={() => { setShowImport(o => !o); setImportResult(null) }}
-                className="inline-flex items-center gap-1.5 text-sm text-teal-700 hover:text-teal-900 font-medium transition-colors"
-              >
-                <ExternalLink size={14} />
-                Import from a blog or Reddit post
-                <RefreshCw size={12} className={`ml-0.5 transition-transform ${showImport ? 'rotate-180' : ''}`} />
-              </button>
-
-              {showImport && (
-                <div className="mt-2 space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={importUrl}
-                      onChange={e => setImportUrl(e.target.value)}
-                      placeholder="https://www.reddit.com/r/travel/… or blog URL"
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleImportUrl}
-                      disabled={importing || !importUrl.trim()}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      {importing ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-                      {importing ? 'Importing…' : 'Import'}
-                    </button>
-                  </div>
-                  {importResult && (
-                    <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                      Imported from <span className="font-medium">{importResult.source_title || importUrl}</span>
-                      {importResult.pre_fill?.interests?.length > 0 && (
-                        <> — {importResult.pre_fill.interests.length} activit{importResult.pre_fill.interests.length === 1 ? 'y' : 'ies'} extracted</>
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Origin + Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <AirportSearch
@@ -453,15 +385,6 @@ export default function SearchPage() {
                 required
               />
             </div>
-
-            {/* Repeat traveler detection */}
-            {form.destination && preferences?.visited_destinations?.some(
-              v => form.destination.toLowerCase().includes(v.toLowerCase()) || v.toLowerCase().includes(form.destination.toLowerCase())
-            ) && (
-              <p className="text-sm text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
-                You have visited here before — we will show deeper, off-the-beaten-path experiences.
-              </p>
-            )}
 
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
