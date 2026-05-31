@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane } from 'lucide-react'
 
@@ -42,12 +42,12 @@ export default function NavBar() {
       <div className="h-14 flex items-center justify-between px-4 sm:px-6 bg-white/85 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         {/* Wordmark + Desktop tabs */}
         <div className="hidden sm:flex items-center gap-1">
-          <div className="hidden sm:flex items-center gap-2 mr-4 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm">
+          <Link to="/" className="hidden sm:flex items-center gap-2 mr-4 shrink-0 group hover:opacity-90 transition-opacity">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <Plane size={14} className="text-white" strokeWidth={2.5} />
             </div>
             <span className="font-display font-bold text-slate-800 text-sm tracking-tight">Voyager</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-1 bg-slate-100/80 rounded-xl p-0.5">
             <NavLinks />
           </div>

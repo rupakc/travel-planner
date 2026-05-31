@@ -85,13 +85,13 @@ function AgentBadge({ agent, status, onClick }) {
   return (
     <button
       onClick={() => isClickable && onClick?.(agent)}
-      className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] font-medium ${COLOR_MAP[color].badge} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current/20 transition-all' : 'opacity-60 cursor-default'}`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[13px] font-semibold tracking-wide ${COLOR_MAP[color].badge} ${isClickable ? 'cursor-pointer hover:scale-105 hover:shadow-sm active:scale-95 transition-all duration-150' : 'opacity-50 cursor-default'}`}
     >
-      <Icon size={11} /> <span>{badgeLabel}</span>
-      {status === 'loading'   && <Loader2 size={10} className="animate-spin" />}
-      {status === 'enhancing' && <Loader2 size={10} className="animate-spin text-amber-500" />}
-      {status === 'done'      && <CheckCircle2 size={10} className="text-green-600" />}
-      {status === 'waiting'   && <div className="w-1.5 h-1.5 rounded-full bg-current opacity-30" />}
+      <Icon size={13} /> <span>{badgeLabel}</span>
+      {status === 'loading'   && <Loader2 size={11} className="animate-spin" />}
+      {status === 'enhancing' && <Loader2 size={11} className="animate-spin text-amber-500" />}
+      {status === 'done'      && <CheckCircle2 size={11} className="text-green-600" />}
+      {status === 'waiting'   && <div className="w-2 h-2 rounded-full bg-current opacity-30" />}
     </button>
   )
 }
@@ -3111,9 +3111,23 @@ export default function ResultsPage() {
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
-          <div className="flex gap-1.5 flex-wrap justify-center">
-            {AGENT_ORDER.map(agent => <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />)}
-          </div>
+          {(() => {
+            const mid = Math.ceil(AGENT_ORDER.length / 2)
+            return (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {AGENT_ORDER.slice(0, mid).map(agent => (
+                    <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {AGENT_ORDER.slice(mid).map(agent => (
+                    <AgentBadge key={agent} agent={agent} status={statuses[agent]} onClick={scrollToSection} />
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
           {!isDone && (
             <div className="mt-2 bg-gray-200 rounded-full h-1 overflow-hidden">
               <div className="bg-gradient-to-r from-teal-400 to-sky-400 h-full rounded-full transition-all duration-500" style={{ width: `${(completedCount/AGENT_ORDER.length)*100}%` }} />
