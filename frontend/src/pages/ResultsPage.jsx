@@ -20,6 +20,7 @@ import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
+import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2629,11 +2630,23 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
 function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   const today = new Date().toISOString().split('T')[0]
-  const [form, setForm] = useState({ ...searchData, budget_usd: searchData.budget_usd ?? '' })
+  const [form, setForm] = useState({
+    ...searchData,
+    budget_usd: searchData.budget_usd ?? '',
+    adults: searchData.adults ?? Math.max(1, searchData.num_travelers ?? 1),
+    seniors: searchData.seniors ?? 0,
+    children: searchData.children ?? 0,
+    infants: searchData.infants ?? 0,
+    accessibility_needs: searchData.accessibility_needs ?? [],
+  })
   const INTEREST_LIST = ['food','history','adventure','culture','nature','shopping','nightlife','wellness','art','family']
   const toggle = (id) => setForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i=>i!==id) : [...f.interests, id] }))
   const inputClass = "w-full px-2.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm bg-white"
-  const handleSubmit = (e) => { e.preventDefault(); onUpdateSearch({ ...form, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null }) }
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const num_travelers = Math.max(1, (form.adults || 0) + (form.seniors || 0) + (form.children || 0) + (form.infants || 0))
+    onUpdateSearch({ ...form, num_travelers, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
+  }
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -2666,14 +2679,10 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
               />
             </div>
             <div><label className="block text-xs font-medium text-gray-600 mb-1">Budget (USD)</label><input type="number" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder="Optional" className={inputClass} /></div>
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Travelers</label>
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden bg-white">
-                <button type="button" onClick={()=>setForm(f=>({...f,num_travelers:Math.max(1,f.num_travelers-1)}))} className="px-2.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold">−</button>
-                <span className="flex-1 text-center py-2 text-sm font-medium">{form.num_travelers}</span>
-                <button type="button" onClick={()=>setForm(f=>({...f,num_travelers:Math.min(20,f.num_travelers+1)}))} className="px-2.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold">+</button>
-              </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Travelers</label>
+              <TravelerPanel form={form} setForm={setForm} />
             </div>
-            <div className="col-span-1"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <TagInput label="Residence Permits" value={form.residence_permits} onChange={v=>setForm(f=>({...f,residence_permits:v}))} placeholder="Schengen, UK…" />
@@ -2733,6 +2742,7 @@ export default function ResultsPage() {
   const [confidenceData, setConfidenceData] = useState(null)
   const [pricingData, setPricingData] = useState(null)
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
+  const [pendingScrollTarget, setPendingScrollTarget] = useState(null)
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -2742,6 +2752,21 @@ export default function ResultsPage() {
     }
     prevCountRef.current = count
   }, [selections, searchData, loadedPlanId])
+
+  // When a badge is clicked while in timeline view we switch to cards first, then
+  // scroll once the card sections are back in the DOM (double-rAF for two paint cycles).
+  useEffect(() => {
+    if (!pendingScrollTarget || view !== 'cards') return
+    const outer = requestAnimationFrame(() => {
+      const inner = requestAnimationFrame(() => {
+        const el = document.getElementById(`section-${pendingScrollTarget}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setPendingScrollTarget(null)
+      })
+      return () => cancelAnimationFrame(inner)
+    })
+    return () => cancelAnimationFrame(outer)
+  }, [view, pendingScrollTarget])
 
   const handleLoadPlan = (plan) => {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
@@ -2975,10 +3000,18 @@ export default function ResultsPage() {
 
   const scrollToSection = (agent) => {
     setCollapsedSections(prev => ({ ...prev, [agent]: false }))
-    requestAnimationFrame(() => {
-      const el = document.getElementById(`section-${agent}`)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
+    if (view === 'timeline') {
+      // Section cards don't exist in the DOM while timeline is active.
+      // Switch to cards view first; the pending-scroll effect handles the scroll
+      // once the card sections are mounted and painted.
+      setView('cards')
+      setPendingScrollTarget(agent)
+    } else {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`section-${agent}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
   }
 
   const sectionProps = { selections, onSelect: handleSelect }
