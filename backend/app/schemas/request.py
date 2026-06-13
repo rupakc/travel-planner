@@ -155,7 +155,7 @@ class ActivityFilteredSearchRequest(TravelSearchRequest):
 
 
 class DiscoveryRequest(BaseModel):
-    """Request for destination discovery ('Surprise Me' mode)."""
+    """Request for destination discovery used when user uses the surprise me mode in Search tab ('Surprise Me' mode)."""
 
     origin: str = Field(..., description="Departure city or airport")
     budget_usd: float | None = Field(None, ge=0, description="Total budget in USD")
