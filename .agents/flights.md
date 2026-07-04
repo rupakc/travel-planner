@@ -33,10 +33,12 @@ For each round-trip option found, extract BOTH legs:
 
 **Outbound leg** (origin → destination):
 - Airline, flight number, departure/arrival times, duration, stops
+- For flights with stops: the layover city/airport and layover duration for each stop
 
 **Return leg** (destination → origin):
 - Airline, flight number, departure/arrival times, duration, stops
 - Return may be on a different airline (mixed-carrier combos are fine)
+- Same layover details for each stop
 
 **Overall**: Total round-trip price in USD, booking URL, source platform
 
@@ -61,7 +63,8 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
         "departure_time": "11:00",
         "arrival_time": "15:30+1",
         "duration_minutes": 810,
-        "stops": 0
+        "stops": 0,
+        "layovers": []
       },
       "return": {
         "airline": "Japan Airlines",
@@ -72,7 +75,10 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
         "departure_time": "17:00",
         "arrival_time": "16:30",
         "duration_minutes": 780,
-        "stops": 0
+        "stops": 1,
+        "layovers": [
+          {"city": "Doha, Qatar", "airport": "DOH", "duration_hours": 6.5}
+        ]
       }
     }
   ]
@@ -82,3 +88,5 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 **For one-way searches** (no return date), omit the `return` field and set `trip_type` to `"one_way"`.
 
 Include 8–12 options from different airlines and sources. **Sort by price_usd ascending** (cheapest first). Set fields to null if unknown. Deduplicate: if the same flight combo appears on multiple platforms, keep the cheapest price and note the source.
+
+`layovers` must have exactly one entry per stop (empty list for non-stop). Each entry: `city` ("City, Country"), `airport` (IATA code), `duration_hours` (decimal hours between arrival and connecting departure). Use the typical/realistic connection for that route and airline when the exact layover is not stated.

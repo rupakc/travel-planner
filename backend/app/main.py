@@ -25,6 +25,7 @@ from .api.routes.chat import router as chat_router
 from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.feedback import router as feedback_router
+from .api.routes.layover import router as layover_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
@@ -116,6 +117,7 @@ app.include_router(discover_router, prefix="/api", tags=["discover"])
 app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
 app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(events_router, prefix="/api", tags=["events"])
+app.include_router(layover_router, prefix="/api", tags=["layover"])
 
 
 @app.get("/health")

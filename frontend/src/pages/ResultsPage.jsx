@@ -284,9 +284,12 @@ function WeatherSection({ data }) {
   )
 }
 
-function FlightLeg({ leg, direction }) {
+const LONG_LAYOVER_HOURS = 5
+
+function FlightLeg({ leg, direction, onLayover }) {
   if (!leg) return null
   const fmtDur = leg.duration_minutes ? `${Math.floor(leg.duration_minutes/60)}h ${leg.duration_minutes%60}m` : null
+  const layovers = (leg.layovers || []).filter(lv => lv && (lv.city || lv.airport))
   return (
     <div className="text-xs space-y-1">
       <div className="flex items-center gap-2">
@@ -307,11 +310,33 @@ function FlightLeg({ leg, direction }) {
         <span>{leg.departure_time || '—'} – {leg.arrival_time || '—'}</span>
         {fmtDur && <><span className="text-gray-300">·</span><span className="text-gray-400">{fmtDur}</span></>}
       </div>
+      {layovers.length > 0 && (
+        <div className="flex items-center gap-1.5 pl-1 flex-wrap">
+          {layovers.map((lv, i) => {
+            const label = lv.city || lv.airport
+            const isLong = (lv.duration_hours || 0) >= LONG_LAYOVER_HOURS
+            return (
+              <span key={i} className="inline-flex items-center gap-1">
+                <span className={`px-1.5 py-0.5 rounded-full border ${isLong ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                  🛬 {lv.duration_hours ? `${lv.duration_hours}h` : 'Stop'} in {label}
+                </span>
+                {isLong && onLayover && (
+                  <button type="button"
+                    onClick={e => { e.stopPropagation(); onLayover(lv) }}
+                    className="px-1.5 py-0.5 rounded-full bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors">
+                    ✨ Make the most of it
+                  </button>
+                )}
+              </span>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
-function FlightsSection({ data, selections, onSelect, pricingData }) {
+function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
@@ -400,13 +425,13 @@ function FlightsSection({ data, selections, onSelect, pricingData }) {
             </div>
 
             {/* Outbound leg */}
-            <FlightLeg leg={f.outbound} direction="outbound" />
+            <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
 
             {/* Return leg */}
             {f.return && (
               <>
                 <div className="border-t border-dashed border-gray-200 my-2" />
-                <FlightLeg leg={f.return} direction="return" />
+                <FlightLeg leg={f.return} direction="return" onLayover={onLayover} />
               </>
             )}
 
@@ -2902,6 +2927,91 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   )
 }
 
+// ─── Layover Optimizer ──────────────────────────────────────────────────────
+
+function LayoverModal({ info, onClose }) {
+  if (!info) return null
+  const { city, airport, duration_hours, status, data } = info
+  const label = city || airport
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-white">
+          <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+            ✈️ {duration_hours}h layover in {label}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+        </div>
+        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+          {status === 'loading' && (
+            <div className="flex items-center gap-3 text-gray-500 text-sm py-6 justify-center">
+              <Loader2 size={18} className="animate-spin text-teal-500" /> Planning your layover…
+            </div>
+          )}
+          {status === 'error' && (
+            <p className="text-sm text-red-600">Couldn't plan this layover right now — please try again.</p>
+          )}
+          {status === 'done' && data && (
+            <>
+              <div className={`flex items-start gap-2.5 rounded-xl p-3 border ${data.feasible_to_exit ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                <span className="text-lg">{data.feasible_to_exit ? '🏙️' : '🛋️'}</span>
+                <div>
+                  <p className={`text-sm font-semibold ${data.feasible_to_exit ? 'text-green-800' : 'text-amber-800'}`}>
+                    {data.feasible_to_exit ? 'You can leave the airport' : 'Better to stay airside'}
+                  </p>
+                  {data.verdict_summary && <p className="text-xs text-gray-600 mt-0.5">{data.verdict_summary}</p>}
+                  {data.feasible_to_exit && data.usable_city_hours > 0 && (
+                    <p className="text-xs text-gray-500 mt-0.5">~{data.usable_city_hours}h usable in the city after buffers</p>
+                  )}
+                </div>
+              </div>
+
+              {data.transit_visa && (
+                <div className="flex items-start gap-2 text-sm">
+                  <Shield size={14} className={`mt-0.5 shrink-0 ${data.transit_visa.required ? 'text-amber-500' : 'text-green-500'}`} />
+                  <p className="text-gray-700">
+                    <span className="font-semibold">{data.transit_visa.required ? 'Transit visa required. ' : 'No transit visa needed. '}</span>
+                    {data.transit_visa.notes}
+                  </p>
+                </div>
+              )}
+
+              {(data.plan || []).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your mini-plan</p>
+                  <div className="space-y-2">
+                    {data.plan.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5 border border-gray-100 rounded-lg p-2.5">
+                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-xs font-semibold">{step.time_slot}</span>
+                        <p className="text-sm text-gray-700 flex-1">{step.activity}</p>
+                        {step.cost_usd != null && <span className="text-xs text-gray-400 shrink-0">${step.cost_usd}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {data.buffer_advice && (
+                <div className="flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-lg p-2.5 text-xs text-sky-800">
+                  <Clock size={13} className="mt-0.5 shrink-0" />{data.buffer_advice}
+                </div>
+              )}
+              {data.airside_alternative && (
+                <p className="text-xs text-gray-500"><span className="font-semibold">Rather stay in?</span> {data.airside_alternative}</p>
+              )}
+              {(data.notes || []).length > 0 && (
+                <ul className="text-xs text-gray-500 space-y-1 list-disc pl-4">
+                  {data.notes.map((n, i) => <li key={i}>{n}</li>)}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Trip Remix ───────────────────────────────────────────────────────────────
 
 function RemixBar({ searchData, onRemix }) {
@@ -3015,6 +3125,7 @@ export default function ResultsPage() {
   const [pricingData, setPricingData] = useState(null)
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
   const [remixInfo, setRemixInfo] = useState(null)  // { label, before } while comparing a remixed run
+  const [layoverInfo, setLayoverInfo] = useState(null)  // { city, airport, duration_hours, status, data }
   const [pendingScrollTarget, setPendingScrollTarget] = useState(null)
   const prevCountRef = useRef(0)
 
@@ -3089,6 +3200,31 @@ export default function ResultsPage() {
       clearPendingSearch()
     }
   }, [pendingSearchData])
+
+  const handleLayover = async (lv) => {
+    const info = { city: lv.city, airport: lv.airport, duration_hours: lv.duration_hours, status: 'loading', data: null }
+    setLayoverInfo(info)
+    track('layover_optimizer_opened', 'results', { city: info.city || info.airport, hours: info.duration_hours })
+    try {
+      const res = await fetch('/api/layover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: info.city || info.airport,
+          airport: info.airport,
+          duration_hours: info.duration_hours,
+          nationality: searchData.nationality,
+          interests: searchData.interests || [],
+        }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setLayoverInfo(prev => prev && { ...prev, status: 'done', data })
+    } catch {
+      setLayoverInfo(prev => prev && { ...prev, status: 'error' })
+    }
+  }
 
   const handleRemix = (preset) => {
     const remixed = applyRemix(searchData, preset.id)
@@ -3309,7 +3445,7 @@ export default function ResultsPage() {
     if (status === 'waiting') return null
     const data = results[agent]
     const renderers = {
-      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} />,
+      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} onLayover={handleLayover} />,
       weather:        () => <WeatherSection    data={data} />,
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
@@ -3571,6 +3707,8 @@ export default function ResultsPage() {
         onClearLoadedPlan={() => setLoadedPlanId(null)}
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
       />
+
+      {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}
 
       {viewingPlan && (
         <PlanViewModal

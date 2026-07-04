@@ -115,6 +115,14 @@ def _map_leg(flights_arr: list, layovers: list, date_str: str) -> dict:
         or None,
         "duration_minutes": leg_duration + layover_duration,
         "stops": len(flights_arr) - 1,
+        "layovers": [
+            {
+                "city": lv.get("name"),
+                "airport": lv.get("id"),
+                "duration_hours": round((lv.get("duration") or 0) / 60, 1),
+            }
+            for lv in (layovers or [])
+        ],
     }
 
 
