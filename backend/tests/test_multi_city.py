@@ -200,6 +200,36 @@ class TestFlightLegGrouping:
         assert FlightsAgent._group_legs(data, req.flight_legs) == data
 
 
+class TestAiLegFill:
+    @pytest.mark.anyio
+    async def test_fills_only_empty_legs_with_matching_indexes(self, monkeypatch):
+        from app.agents.flights_agent import FlightsAgent
+
+        agent = FlightsAgent.__new__(FlightsAgent)
+
+        async def fake_execute(prompt):
+            assert "Leg index 0" in prompt and "Leg index 3" in prompt
+            return {
+                "results": [
+                    {"leg_index": 0, "airline": "Delta", "price_usd": 480},
+                    {"leg_index": 3, "airline": "Iberia", "price_usd": 390},
+                    {"leg_index": 9, "airline": "Bogus", "price_usd": 1},
+                ]
+            }
+
+        agent.execute = fake_execute
+        req = TravelSearchRequest(**MULTI)
+        empty = [
+            {"leg_index": 0, "from": "NYC", "to": "Paris", "date": "2026-09-10"},
+            {"leg_index": 3, "from": "Barcelona", "to": "NYC", "date": "2026-09-19"},
+        ]
+        filled = await agent._ai_fill_legs(req, empty)
+        assert set(filled) == {0, 3}
+        assert filled[0][0]["city"] == "Paris"
+        assert filled[0][0]["source"] == "estimate"
+        assert filled[3][0]["leg_from"] == "Barcelona"
+
+
 class TestSerpMultiCity:
     @pytest.mark.anyio
     async def test_searches_every_leg(self, client, monkeypatch):
@@ -303,6 +333,65 @@ class TestWeatherMultiCity:
         assert cities == {"Paris, France", "Rome, Italy", "Barcelona, Spain"}
         assert result["poor_weather_day_count"] == 3
         assert result["source"] == "open-meteo"
+
+
+class TestWeatherNestedSalvage:
+    def test_flatten_days_salvages_nested_per_city_shape(self):
+        from app.agents.weather_agent import WeatherAgent
+
+        stays = [
+            {"city": "Paris", "start_date": "2026-09-10", "end_date": "2026-09-13"},
+            {"city": "Rome", "start_date": "2026-09-13", "end_date": "2026-09-16"},
+        ]
+        nested = {
+            "rome": {"days": [{"date": "2026-09-14"}]},
+            "paris": {"days": [{"date": "2026-09-10"}]},
+        }
+        flat = WeatherAgent._flatten_days(nested, stays)
+        assert [(d["date"], d["city"]) for d in flat] == [
+            ("2026-09-10", "Paris"),
+            ("2026-09-14", "Rome"),
+        ]
+
+    def test_flatten_days_passes_flat_shape_through(self):
+        from app.agents.weather_agent import WeatherAgent
+
+        flat = WeatherAgent._flatten_days(
+            {"days": [{"date": "2026-09-10", "city": "Paris"}]}, []
+        )
+        assert flat == [{"date": "2026-09-10", "city": "Paris"}]
+
+    @pytest.mark.anyio
+    async def test_llm_days_ordered_by_stop_and_deduped(self):
+        from app.agents.weather_agent import WeatherAgent
+
+        agent = WeatherAgent.__new__(WeatherAgent)
+
+        async def fake_llm_cities(request, stays):
+            # Out of order + duplicated hand-over date for the same city
+            return [
+                {"date": "2026-09-14", "city": "Rome", "is_poor": False},
+                {"date": "2026-09-13", "city": "Rome", "is_poor": False},
+                {"date": "2026-09-13", "city": "Rome", "is_poor": True},
+                {"date": "2026-09-10", "city": "Paris", "is_poor": False},
+            ]
+
+        agent._llm_estimate_cities = fake_llm_cities
+        req = TravelSearchRequest(
+            **{
+                **MULTI,
+                "destinations": ["Paris", "Rome"],
+                "departure_date": "2026-09-10",
+                "return_date": "2026-09-16",
+            }
+        )
+        result = await agent._run_multi_city(req, days_out=60)
+        got = [(d["date"], d["city"]) for d in result["days"]]
+        assert got == [
+            ("2026-09-10", "Paris"),
+            ("2026-09-13", "Rome"),
+            ("2026-09-14", "Rome"),
+        ]
 
 
 class TestOrchestratorWiring:

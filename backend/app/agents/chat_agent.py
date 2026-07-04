@@ -213,7 +213,8 @@ class ChatAgent:
         0. Security gate — jailbreak / off-topic rejection
         1. Plan commands (add/remove/change/show/clear) -> handle plan + respond
         2. Planning patterns -> run all agents + auto-build plan
-        3. Specific intent -> run matched agents + add relevant items to plan
+        3. Specific intent -> explicit search: matched agents; otherwise
+           knowledge-first answer + background live-data verification
         3.5. Modification of prior search -> re-run with modified params
         3.6. Knowledge queries -> answer directly from Claude's expertise
         4. Regular chat
@@ -307,13 +308,22 @@ class ChatAgent:
                 yield chunk
             return
 
-        # 3. Specific topic queries — route to specialist agents when destination is known
+        # 3. Specific topic queries — knowledge-first: explicit search verbs get
+        # live specialist results; everything else is answered instantly from
+        # the model's own expertise while specialists verify in the background
+        # and only material corrections/additions are appended.
         matched_agents = self._classify_intent(last_msg)
         if matched_agents:
             params = await self._extract_travel_params(messages, preferences)
             if params:
                 self._update_session_context(params)
-                async for chunk in self._run_specialist_agents(
+                if _AGENT_TRIGGER_TERMS.search(last_msg):
+                    async for chunk in self._run_specialist_agents(
+                        params, messages, preferences, selections, matched_agents
+                    ):
+                        yield chunk
+                    return
+                async for chunk in self._knowledge_first_answer(
                     params, messages, preferences, selections, matched_agents
                 ):
                     yield chunk
@@ -903,6 +913,155 @@ class ChatAgent:
         ):
             yield chunk
 
+    # ── Knowledge-first answering with background verification ─────────
+
+    _VERIFY_TIMEOUT = 40
+
+    def _specialist_classes(self) -> dict:
+        from .activities_agent import ActivitiesAgent
+        from .flights_agent import FlightsAgent
+        from .getting_around_agent import GettingAroundAgent
+        from .hotels_agent import HotelsAgent
+        from .sim_agent import SimAgent
+        from .tips_agent import TipsAgent
+        from .visa_agent import VisaAgent
+
+        return {
+            "visa": VisaAgent,
+            "sim": SimAgent,
+            "tips": TipsAgent,
+            "getting_around": GettingAroundAgent,
+            "hotels": HotelsAgent,
+            "activities": ActivitiesAgent,
+            "flights": FlightsAgent,
+        }
+
+    async def _knowledge_first_answer(
+        self,
+        request: TravelSearchRequest,
+        messages: list[dict],
+        preferences: dict | None,
+        selections: dict | None,
+        agent_names: list[str],
+    ):
+        """Answer instantly from the model's own knowledge, then verify.
+
+        The matched specialists start in the background BEFORE the answer
+        streams, so live data is usually ready the moment the answer ends.
+        A comparison pass then appends only material corrections/additions
+        — nothing is repeated, and a clean answer gets no addendum.
+        """
+        classes = self._specialist_classes()
+        runnable = [n for n in agent_names if n in classes][:2]
+        request.taste_context = self._taste_context
+
+        async def run_one(name: str):
+            try:
+                result = await asyncio.wait_for(
+                    classes[name](self.agents_dir).run(request),
+                    timeout=self._VERIFY_TIMEOUT,
+                )
+                return name, result
+            except Exception as e:
+                logger.warning(f"Background verification agent {name} failed: {e}")
+                return name, {"error": str(e)}
+
+        background = [asyncio.create_task(run_one(n)) for n in runnable]
+
+        # 1. Immediate expert answer, streamed as it is generated
+        answer_parts: list[str] = []
+        async for chunk in self._knowledge_chat(messages, preferences, selections):
+            try:
+                event = json.loads(chunk)
+            except (TypeError, json.JSONDecodeError):
+                yield chunk
+                continue
+            if event.get("type") == "done":
+                continue  # the stream ends after verification instead
+            if event.get("type") == "delta":
+                answer_parts.append(event.get("text") or "")
+            yield chunk
+
+        if not background:
+            yield json.dumps({"type": "done"})
+            return
+
+        # 2. Compare the answer with the live data; surface only what matters
+        yield json.dumps({"type": "verifying", "agents": runnable})
+        try:
+            gathered = await asyncio.gather(*background)
+            results = {
+                name: data for name, data in gathered if data and not data.get("error")
+            }
+        except Exception as e:
+            logger.warning(f"Background verification gather failed: {e}")
+            for task in background:
+                task.cancel()
+            results = {}
+
+        addendum = ""
+        if results:
+            last_msg = messages[-1]["content"] if messages else ""
+            addendum = await self._verification_addendum(
+                last_msg, "".join(answer_parts), results
+            )
+        yield json.dumps({"type": "verified", "agents": runnable})
+        if addendum:
+            yield json.dumps(
+                {"type": "delta", "text": f"\n\n> 🔎 **Quick update:** {addendum}"}
+            )
+        yield json.dumps({"type": "done"})
+
+    async def _verification_addendum(
+        self, question: str, answer: str, results: dict
+    ) -> str:
+        """Diff the knowledge answer against live specialist data.
+
+        Returns 1-3 sentences of markdown covering ONLY corrections or
+        additions pertinent to the user's question, or '' when the answer
+        already stands on its own.
+        """
+        data_json = json.dumps(results, default=str)[:6000]
+        prompt = (
+            "A travel assistant just answered a user from its own knowledge. "
+            "Fresh search data has now arrived. Compare them.\n\n"
+            f'USER QUESTION: "{question}"\n\n'
+            f"ASSISTANT'S ANSWER:\n{answer[:3000]}\n\n"
+            f"FRESH DATA (JSON):\n{data_json}\n\n"
+            'Return ONLY JSON: {"has_update": true|false, "update": "<markdown>"}\n'
+            "Rules:\n"
+            "- has_update=true ONLY when the fresh data materially corrects the "
+            "answer or adds something the user needs for THIS question (a real "
+            "current price, a requirement the answer missed, a warning).\n"
+            "- update: 1-3 short sentences, purely additive — never repeat what "
+            "the answer already said, never mention data sources, searches, "
+            "agents or tools. Write it as a quick follow-up note from the same "
+            "advisor.\n"
+            '- Otherwise: {"has_update": false, "update": ""}'
+        )
+        try:
+            client = _get_client()
+            response = await client.messages.create(
+                model=_MODEL,
+                max_tokens=300,
+                system=(
+                    "You compare a travel answer against fresh data and emit "
+                    "only material updates. Reply with valid JSON only."
+                ),
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = response.content[0].text if response.content else ""
+            parsed = self._parse_json_text(text)
+            if (
+                isinstance(parsed, dict)
+                and parsed.get("has_update")
+                and (parsed.get("update") or "").strip()
+            ):
+                return str(parsed["update"]).strip()
+        except Exception as e:
+            logger.warning(f"Verification addendum failed: {e}")
+        return ""
+
     # ── Session context helpers ───────────────────────────────────────
 
     def _update_session_context(self, params: TravelSearchRequest) -> None:
@@ -1472,23 +1631,7 @@ class ChatAgent:
     ):
         """Run named specialist agents in parallel, streaming each result the
         moment it completes (with live per-section status events)."""
-        from .activities_agent import ActivitiesAgent
-        from .flights_agent import FlightsAgent
-        from .getting_around_agent import GettingAroundAgent
-        from .hotels_agent import HotelsAgent
-        from .sim_agent import SimAgent
-        from .tips_agent import TipsAgent
-        from .visa_agent import VisaAgent
-
-        AGENT_CLASSES = {
-            "visa": VisaAgent,
-            "sim": SimAgent,
-            "tips": TipsAgent,
-            "getting_around": GettingAroundAgent,
-            "hotels": HotelsAgent,
-            "activities": ActivitiesAgent,
-            "flights": FlightsAgent,
-        }
+        AGENT_CLASSES = self._specialist_classes()
 
         request.taste_context = self._taste_context
         yield json.dumps({"type": "planning_start", "destination": request.destination})

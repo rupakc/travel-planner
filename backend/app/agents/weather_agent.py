@@ -94,7 +94,30 @@ class WeatherAgent(BaseAgent):
                 request.return_date or request.departure_date + timedelta(days=7),
             )
 
-        all_days.sort(key=lambda d: d.get("date") or "")
+        # Journey order first, then chronology — the strip of day cards must
+        # follow the user's stop order even at shared boundary dates.
+        stay_order = {
+            s["city"].lower().split(",")[0].strip(): i for i, s in enumerate(stays)
+        }
+        all_days.sort(
+            key=lambda d: (
+                stay_order.get(
+                    (d.get("city") or "").lower().split(",")[0].strip(), len(stays)
+                ),
+                d.get("date") or "",
+            )
+        )
+        # LLM ranges are end-inclusive, so the hand-over date can appear twice
+        # for the same city — keep the first occurrence only. A genuine
+        # boundary day (in city A morning, city B evening) has distinct cities
+        # and survives.
+        seen: set[tuple] = set()
+        all_days = [
+            d
+            for d in all_days
+            if (key := (str(d.get("date")), (d.get("city") or "").lower())) not in seen
+            and not seen.add(key)
+        ]
         poor_count = sum(1 for d in all_days if d.get("is_poor"))
         return {
             "days": all_days,
@@ -118,12 +141,10 @@ class WeatherAgent(BaseAgent):
         result = await self.execute(prompt)
         if "error" in result:
             return []
-        days = result.get("days", [])
-        # Deterministic city assignment from the stay date ranges — the LLM
-        # sometimes omits or blanks the city field
+        days = self._flatten_days(result, stays)
+        # Deterministic city assignment from the stay date ranges — dates are
+        # authoritative; the LLM sometimes omits, blanks, or mislabels cities
         for day in days:
-            if day.get("city"):
-                continue
             d = str(day.get("date") or "")
             for stay in stays:
                 if str(stay["start_date"]) <= d < str(stay["end_date"]):
@@ -133,6 +154,43 @@ class WeatherAgent(BaseAgent):
                 if stays and d == str(stays[-1]["end_date"]):
                     day["city"] = stays[-1]["city"]
         return days
+
+    @staticmethod
+    def _flatten_days(result: dict, stays: list[dict]) -> list[dict]:
+        """Extract a flat day list even when the LLM nests days per city.
+
+        Despite the flat-array instruction, the model sometimes returns
+        {"paris": {"days": [...]}, "rome": {"days": [...]}} — losing every
+        day. Accept the flat shape first, then salvage nested ones in the
+        journey (stay) order.
+        """
+        days = result.get("days")
+        if isinstance(days, list) and days:
+            return [d for d in days if isinstance(d, dict)]
+
+        nested: list[tuple[str, list[dict]]] = []
+        for key, value in result.items():
+            if isinstance(value, dict) and isinstance(value.get("days"), list):
+                nested.append((key, [d for d in value["days"] if isinstance(d, dict)]))
+            elif (
+                isinstance(value, list)
+                and value
+                and all(isinstance(d, dict) and d.get("date") for d in value)
+            ):
+                nested.append((key, value))
+        if not nested:
+            return []
+
+        order = {
+            s["city"].lower().split(",")[0].strip(): i for i, s in enumerate(stays)
+        }
+        nested.sort(key=lambda kv: order.get(kv[0].lower().split(",")[0].strip(), 99))
+        flat: list[dict] = []
+        for key, city_days in nested:
+            for day in city_days:
+                day.setdefault("city", key.title())
+                flat.append(day)
+        return flat
 
     async def _fetch_open_meteo(self, coords: tuple, dep: date, ret: date) -> dict:
         params = {

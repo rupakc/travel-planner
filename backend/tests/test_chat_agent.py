@@ -287,3 +287,122 @@ class TestChatImprovements:
 
         source = inspect.getsource(cia)
         assert "optimize_city_order" not in source
+
+
+class TestKnowledgeFirst:
+    def _agent(self):
+        from app.agents.chat_agent import ChatAgent
+
+        agent = ChatAgent.__new__(ChatAgent)
+        agent.agents_dir = "../.agents"
+        agent._session_context = {}
+        agent._taste_context = None
+        return agent
+
+    def test_trigger_terms_gate_explicit_search_only(self):
+        from app.agents.chat_agent import _AGENT_TRIGGER_TERMS
+
+        assert _AGENT_TRIGGER_TERMS.search("find me flights to Rome")
+        assert _AGENT_TRIGGER_TERMS.search("how much is a hotel in Tokyo")
+        assert not _AGENT_TRIGGER_TERMS.search("do I need a visa for Japan?")
+        assert not _AGENT_TRIGGER_TERMS.search(
+            "what is the best way of getting around in Tokyo"
+        )
+
+    @pytest.mark.anyio
+    async def test_knowledge_first_streams_answer_then_verifies(self, monkeypatch):
+        import json as _json
+
+        from app.schemas.request import TravelSearchRequest
+
+        agent = self._agent()
+
+        async def fake_knowledge_chat(messages, preferences, selections):
+            yield _json.dumps({"type": "delta", "text": "Tokyo has superb metro."})
+            yield _json.dumps({"type": "done"})
+
+        agent._knowledge_chat = fake_knowledge_chat
+
+        class FakeSpecialist:
+            def __init__(self, agents_dir):
+                pass
+
+            async def run(self, request):
+                return {"options": [{"name": "Suica card"}]}
+
+        monkeypatch.setattr(
+            type(agent),
+            "_specialist_classes",
+            lambda self: {"getting_around": FakeSpecialist},
+        )
+
+        async def fake_addendum(question, answer, results):
+            assert "getting_around" in results
+            return "Grab a Suica card at the airport."
+
+        agent._verification_addendum = fake_addendum
+
+        req = TravelSearchRequest(
+            origin="NYC",
+            destination="Tokyo",
+            departure_date="2026-09-10",
+            return_date="2026-09-17",
+            nationality="American",
+        )
+        events = []
+        async for chunk in agent._knowledge_first_answer(
+            req,
+            [{"role": "user", "content": "how do I get around Tokyo?"}],
+            None,
+            None,
+            ["getting_around"],
+        ):
+            events.append(_json.loads(chunk))
+
+        types = [e["type"] for e in events]
+        assert types == ["delta", "verifying", "verified", "delta", "done"]
+        assert "Suica" in events[3]["text"]
+
+    @pytest.mark.anyio
+    async def test_no_addendum_when_answer_already_covers_it(self, monkeypatch):
+        import json as _json
+
+        from app.schemas.request import TravelSearchRequest
+
+        agent = self._agent()
+
+        async def fake_knowledge_chat(messages, preferences, selections):
+            yield _json.dumps({"type": "delta", "text": "Answer."})
+            yield _json.dumps({"type": "done"})
+
+        agent._knowledge_chat = fake_knowledge_chat
+
+        class FakeSpecialist:
+            def __init__(self, agents_dir):
+                pass
+
+            async def run(self, request):
+                return {"results": []}
+
+        monkeypatch.setattr(
+            type(agent), "_specialist_classes", lambda self: {"visa": FakeSpecialist}
+        )
+
+        async def fake_addendum(question, answer, results):
+            return ""
+
+        agent._verification_addendum = fake_addendum
+
+        req = TravelSearchRequest(
+            origin="NYC",
+            destination="Tokyo",
+            departure_date="2026-09-10",
+            nationality="American",
+        )
+        events = []
+        async for chunk in agent._knowledge_first_answer(
+            req, [{"role": "user", "content": "visa?"}], None, None, ["visa"]
+        ):
+            events.append(_json.loads(chunk))
+        types = [e["type"] for e in events]
+        assert types == ["delta", "verifying", "verified", "done"]

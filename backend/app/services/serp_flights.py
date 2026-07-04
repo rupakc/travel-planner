@@ -25,7 +25,7 @@ _client: httpx.AsyncClient | None = None
 def _get_client() -> httpx.AsyncClient:
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(timeout=12.0)
+        _client = httpx.AsyncClient(timeout=20.0)
     return _client
 
 
@@ -400,8 +400,16 @@ async def search_multi_city(
         try:
             data = await _call(params)
         except SerpAPIError as exc:
-            logger.warning("Multi-city leg %d (%s) failed: %s", index, label, exc)
-            return {"leg_index": index, "label": label, "error": str(exc)}
+            if exc.quota_exceeded:
+                logger.warning("Multi-city leg %d (%s) failed: %s", index, label, exc)
+                return {"leg_index": index, "label": label, "error": str(exc)}
+            # Long-haul legs regularly need more than one attempt — retry once
+            logger.info("Multi-city leg %d (%s) retrying after: %s", index, label, exc)
+            try:
+                data = await _call(params)
+            except SerpAPIError as exc2:
+                logger.warning("Multi-city leg %d (%s) failed: %s", index, label, exc2)
+                return {"leg_index": index, "label": label, "error": str(exc2)}
         items = data.get("best_flights", []) + data.get("other_flights", [])
         results = []
         for item in items[:5]:

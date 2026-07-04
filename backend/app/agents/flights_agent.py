@@ -155,6 +155,22 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
                     len(result.get("results", [])),
                     (time.monotonic() - t0) * 1000,
                 )
+                empty = [lg for lg in result.get("legs", []) if not lg.get("results")]
+                if empty:
+                    logger.info(
+                        "Multi-city: %d legs empty after SerpAPI, AI-filling: %s",
+                        len(empty),
+                        [lg.get("label") for lg in empty],
+                    )
+                    filled = await self._ai_fill_legs(request, empty)
+                    for lg in result.get("legs", []):
+                        if not lg.get("results"):
+                            lg["results"] = filled.get(lg.get("leg_index"), [])
+                    result["results"] = [
+                        f
+                        for lg in result.get("legs", [])
+                        for f in lg.get("results", [])
+                    ]
                 return result
             except SerpAPIError as exc:
                 logger.warning(
@@ -189,6 +205,54 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         self._destination = request.destination
         data = await self.execute(prompt)
         return self._group_legs(data, legs)
+
+    async def _ai_fill_legs(
+        self, request: TravelSearchRequest, empty_legs: list[dict]
+    ) -> dict[int, list[dict]]:
+        """AI-estimate flight options for legs SerpAPI could not serve.
+
+        Every leg of the journey must show options — an empty NYC → Paris
+        row when the intra-EU hops all resolved reads as 'multi-city is
+        broken'. Returns {leg_index: [flights]}.
+        """
+        leg_lines = "\n".join(
+            f"  Leg index {lg['leg_index']}: {lg['from']} → {lg['to']} "
+            f"on {lg['date']} (one-way)"
+            for lg in empty_legs
+        )
+        prompt = (
+            "Provide realistic one-way flight options for these journey legs "
+            f"(part of a multi-city trip):\n{leg_lines}\n"
+            f"Travelers: {request.traveler_context}\n"
+            "Return 3-5 one-way options PER LEG sorted by price. Every result "
+            "MUST include: leg_index (use the exact leg index numbers above), "
+            "leg_from, leg_to, leg_date, and a city field set to leg_to. "
+            "price_usd is a realistic current one-way price per person. "
+            "Use full 'City, Country' locations in origin/destination fields."
+        )
+        self._origin = request.origin
+        self._destination = request.destination
+        data = await self.execute(prompt)
+        if "error" in data:
+            logger.warning("AI leg fill failed: %s", data.get("error"))
+            return {}
+        valid = {lg["leg_index"]: lg for lg in empty_legs}
+        out: dict[int, list[dict]] = {}
+        for flight in data.get("results", []):
+            try:
+                idx = int(flight.get("leg_index", -1))
+            except (TypeError, ValueError):
+                continue
+            leg = valid.get(idx)
+            if not leg:
+                continue
+            flight.setdefault("city", leg["to"])
+            flight.setdefault("leg_date", str(leg["date"]))
+            flight.setdefault("leg_from", leg["from"])
+            flight.setdefault("leg_to", leg["to"])
+            flight.setdefault("source", "estimate")
+            out.setdefault(idx, []).append(flight)
+        return out
 
     @staticmethod
     def _group_legs(data: dict, legs: list[dict]) -> dict:

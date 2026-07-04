@@ -1338,6 +1338,18 @@ export default function ChatPage() {
             updated[assistantIdx] = { ...updated[assistantIdx], content: fullText }
             return updated
           })
+        } else if (event.type === 'verifying') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], verifying: true }
+            return updated
+          })
+        } else if (event.type === 'verified') {
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], verifying: false }
+            return updated
+          })
         } else if (event.type === 'message' || event.type === 'result') {
           if (event.text && !fullText) {
             fullText = event.text
@@ -1391,6 +1403,7 @@ export default function ChatPage() {
               ...cur,
               content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
               streaming: false,
+              verifying: false,
               error: cur.error || isEmpty,
             }
             return updated
@@ -1412,6 +1425,7 @@ export default function ChatPage() {
               ...cur,
               content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
               streaming: false,
+              verifying: false,
               error: cur.error || isEmpty,
             }
           }
@@ -2126,6 +2140,11 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
         )}
         {message.streaming && !hasSections && (
           <span className="inline-block w-1.5 h-4 bg-teal-500 rounded-sm ml-0.5 animate-pulse align-text-bottom" />
+        )}
+        {message.verifying && message.streaming && (
+          <div className="flex items-center gap-1.5 text-[11px] text-teal-600 mt-2">
+            <Loader2 size={11} className="animate-spin" /> Double-checking with live data…
+          </div>
         )}
         {!isUser && !message.streaming && message.content && (
           <MessageActions content={message.content} onRetry={onRetry} isError={isError} />
