@@ -5,6 +5,7 @@ from datetime import timedelta
 from ..schemas.request import TravelSearchRequest
 from .activities_agent import ActivitiesAgent
 from .emergency_card_agent import EmergencyCardAgent
+from .events_agent import EventsAgent
 from .flights_agent import FlightsAgent
 from .forex_agent import ForexAgent
 from .getting_around_agent import GettingAroundAgent
@@ -36,6 +37,7 @@ class TravelOrchestrator:
         self.itinerary = ItineraryAgent(agents_dir)
         self.weather = WeatherAgent(agents_dir)
         self.emergency_card = EmergencyCardAgent(agents_dir)
+        self.events = EventsAgent(agents_dir)
         self.packing_list = PackingListAgent(agents_dir)
         self.pricing_advisor = PricingAdvisorAgent(agents_dir)
         self.stress_test = StressTestAgent(agents_dir)
@@ -57,6 +59,7 @@ class TravelOrchestrator:
             self.getting_around.run(request),
             self.forex.run(request),
             self.places.run(request),
+            self.events.run(request),
             return_exceptions=True,
         )
 
@@ -75,6 +78,7 @@ class TravelOrchestrator:
         getting_around = safe(phase1_results[6], {"options": []})
         forex = safe(phase1_results[7], {"exchange_rates": []})
         places_to_see = safe(phase1_results[8], {"results": []})
+        events = safe(phase1_results[9], {"results": []})
 
         # Phase 2: Itinerary uses activities + hotels
         itinerary = await self.itinerary.run(
@@ -95,6 +99,7 @@ class TravelOrchestrator:
             "hotels": hotels,
             "activities": activities,
             "places_to_see": places_to_see,
+            "events": events,
             "visa": visa,
             "sim": sim,
             "tips": tips,
@@ -168,6 +173,7 @@ class TravelOrchestrator:
             "hotels",
             "activities",
             "places_to_see",
+            "events",
             "visa",
             "sim",
             "tips",
@@ -202,6 +208,7 @@ class TravelOrchestrator:
             "hotels": self.hotels,
             "activities": self.activities,
             "places_to_see": self.places,
+            "events": self.events,
             "visa": self.visa,
             "sim": self.sim,
             "tips": self.tips,

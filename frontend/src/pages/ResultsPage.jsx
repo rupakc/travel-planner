@@ -8,7 +8,7 @@ import {
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
   ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
-  Wand2, ArrowDown, ArrowUp
+  Wand2, ArrowDown, ArrowUp, PartyPopper
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
@@ -32,6 +32,7 @@ const AGENT_CONFIG = {
   hotels:         { label: 'Hotels',           icon: Hotel,       color: 'purple'  },
   activities:     { label: 'Activities',       icon: MapPin,      color: 'green'   },
   places_to_see:  { label: 'Places to See',    icon: Map,         color: 'lime'    },
+  events:         { label: "What's On",        icon: PartyPopper, color: 'fuchsia' },
   visa:           { label: 'Visa',             icon: Shield,      color: 'orange'  },
   sim:            { label: 'SIM Cards',        icon: Smartphone,  color: 'pink'    },
   tips:           { label: 'Travel Tips',      icon: Lightbulb,   color: 'yellow'  },
@@ -42,7 +43,7 @@ const AGENT_CONFIG = {
   emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
   packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
 }
-const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -59,6 +60,7 @@ const COLOR_MAP = {
   red:    { badge: 'bg-red-50 text-red-700 border-red-200',       header: 'from-red-500 to-red-600'   },
   teal:   { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
   rose:   { badge: 'bg-rose-50 text-rose-700 border-rose-200',    header: 'from-rose-500 to-red-500'  },
+  fuchsia:{ badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200', header: 'from-fuchsia-400 to-purple-500' },
 }
 
 const SECTION_ACCENT = {
@@ -76,13 +78,14 @@ const SECTION_ACCENT = {
   red:     { icon: 'text-red-600',     line: 'border-l-red-400',     bg: 'bg-red-50/30'     },
   teal:    { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
   rose:    { icon: 'text-rose-600',    line: 'border-l-rose-400',    bg: 'bg-rose-50/30'    },
+  fuchsia: { icon: 'text-fuchsia-600', line: 'border-l-fuchsia-400', bg: 'bg-fuchsia-50/30' },
 }
 
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', events: "What's On", visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -184,6 +187,11 @@ const LOADING_MESSAGES = {
     "Finding must-see attractions...",
     "Searching Google for top landmarks...",
     "Discovering iconic sites and hidden gems..."
+  ],
+  events: [
+    "Checking what's on during your dates...",
+    "Scanning festivals, concerts and exhibitions...",
+    "Looking for seasonal happenings and disruptions..."
   ],
   weather: [
     "Fetching weather forecast...",
@@ -1091,6 +1099,86 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+const EVENT_CATEGORY_STYLE = {
+  festival:   { emoji: '🎉', chip: 'bg-fuchsia-100 text-fuchsia-700' },
+  music:      { emoji: '🎵', chip: 'bg-purple-100 text-purple-700' },
+  exhibition: { emoji: '🖼️', chip: 'bg-sky-100 text-sky-700' },
+  sports:     { emoji: '🏟️', chip: 'bg-emerald-100 text-emerald-700' },
+  market:     { emoji: '🛍️', chip: 'bg-orange-100 text-orange-700' },
+  seasonal:   { emoji: '🌸', chip: 'bg-pink-100 text-pink-700' },
+  holiday:    { emoji: '📅', chip: 'bg-amber-100 text-amber-700' },
+  other:      { emoji: '✨', chip: 'bg-gray-100 text-gray-700' },
+}
+
+function formatEventDates(start, end) {
+  if (!start) return null
+  const opts = { month: 'short', day: 'numeric' }
+  try {
+    const s = new Date(`${start}T00:00:00`).toLocaleDateString(undefined, opts)
+    if (!end || end === start) return s
+    const e = new Date(`${end}T00:00:00`).toLocaleDateString(undefined, opts)
+    return `${s} – ${e}`
+  } catch {
+    return start
+  }
+}
+
+function EventsSection({ data }) {
+  if (data?.error) return <div className="p-4 text-sm text-gray-500">Couldn't check local events this time — the rest of your plan is unaffected.</div>
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No notable events found during your dates.</div>
+  const highlights = data.results.filter(e => e.impact !== 'consider')
+  const disruptions = data.results.filter(e => e.impact === 'consider')
+  return (
+    <div className="p-4 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {highlights.map((ev, i) => {
+          const style = EVENT_CATEGORY_STYLE[ev.category] || EVENT_CATEGORY_STYLE.other
+          const dates = formatEventDates(ev.start_date, ev.end_date)
+          return (
+            <div key={i} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${style.chip}`}>{style.emoji} {ev.category}</span>
+                {dates && (
+                  <span className="text-xs font-semibold text-fuchsia-600 flex items-center gap-1 shrink-0">
+                    <Calendar size={10} />{dates}
+                    {ev.date_certainty === 'typical_season' && <span className="text-gray-400 font-normal" title="Typical season — exact dates may vary">~</span>}
+                  </span>
+                )}
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">{ev.name}</h3>
+              <p className="text-sm text-gray-600 mb-2 line-clamp-3">{ev.description}</p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                {ev.location && <span className="flex items-center gap-1"><MapPin size={10} />{ev.location}</span>}
+                {ev.price && <span className="flex items-center gap-1"><DollarSign size={10} />{ev.price}</span>}
+                {(ev.interest_match || []).map(m => (
+                  <span key={m} className="px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 border border-teal-100">{INTEREST_LABELS[m] || m}</span>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      {disruptions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Plan around these</p>
+          {disruptions.map((ev, i) => (
+            <div key={i} className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-amber-900">
+                  {ev.name}
+                  {formatEventDates(ev.start_date, ev.end_date) && <span className="ml-2 text-xs font-medium text-amber-600">{formatEventDates(ev.start_date, ev.end_date)}</span>}
+                </p>
+                <p className="text-xs text-amber-800">{ev.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -3016,7 +3104,7 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', stress_test:'waiting', packing_list:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', events:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', stress_test:'waiting', packing_list:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
@@ -3226,6 +3314,7 @@ export default function ResultsPage() {
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
+      events:         () => <EventsSection data={data} />,
       visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,
       tips:           () => <TipsSection       data={data} {...sectionProps} />,
