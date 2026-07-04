@@ -76,12 +76,127 @@ function DetailCard({ title, icon: Icon, accent, children }) {
   )
 }
 
-// Draws the poster onto a canvas and triggers a PNG download — no extra deps
+// Draws the FULL trip page (poster + every detail section) onto a canvas
+// and triggers a PNG download — no extra deps. Two passes: measure, then draw.
 function downloadCard(plan) {
   const sd = plan.search_data || {}
   const sel = plan.selections || {}
   const [c1, c2] = pickGradient(plan.name)
-  const W = 1080, H = 1350
+  const W = 1080
+  const M = 80            // left/right margin
+  const maxW = W - M * 2
+
+  // ── Build the line plan ────────────────────────────────────────────
+  const lines = []
+  const add = (text, { size = 30, weight = 400, color = '#ffffff', gap = 14, indent = 0 } = {}) =>
+    lines.push({ text, size, weight, color, indent, gap })
+  const space = (gap) => lines.push({ text: '', size: 0, gap })
+  const section = (title) => { space(34); add(title, { size: 40, weight: 700, gap: 20 }) }
+  const dim = 'rgba(255,255,255,0.78)'
+  const faint = 'rgba(255,255,255,0.62)'
+
+  add('✈ VOYAGER TRIP', { size: 34, weight: 600, color: dim, gap: 26 })
+  add(destinationLabel(sd), { size: 68, weight: 700, gap: 18 })
+  const dates = tripDates(sd)
+  if (dates) add(dates, { size: 38, color: dim, gap: 8 })
+  if (sd.origin) add(`from ${sd.origin} · ${sd.num_travelers || 1} traveler${(sd.num_travelers || 1) > 1 ? 's' : ''}`, { size: 34, color: dim, gap: 8 })
+  const totalCost = computePlanCost(sel, sd)
+  if (totalCost > 0) add(`~$${Math.round(totalCost).toLocaleString()} planned spend`, { size: 34, weight: 600, gap: 8 })
+  if ((sd.interests || []).length) add(`✨ ${sd.interests.slice(0, 5).join(' · ')}`, { size: 30, color: faint, gap: 8 })
+
+  const legFlights = sel.flights || []
+  if (legFlights.length || sel.flight) {
+    section('✈️ Flights')
+    const legLine = (tag, leg, price) => {
+      if (!leg) return
+      add(`${tag}: ${leg.airline || 'Flight'}${leg.flight_number ? ' ' + leg.flight_number : ''}${price != null ? ` — $${Number(price).toLocaleString()}` : ''}`, { size: 32, weight: 600, gap: 4 })
+      const bits = [
+        `${leg.origin || ''} → ${leg.destination || ''}`,
+        leg.departure_date, 
+        leg.departure_time ? `${leg.departure_time}–${leg.arrival_time || '?'}` : null,
+        fmtDuration(leg.duration_minutes),
+        leg.stops != null ? (leg.stops === 0 ? 'non-stop' : `${leg.stops} stop${leg.stops > 1 ? 's' : ''}`) : null,
+      ].filter(Boolean).join(' · ')
+      add(bits, { size: 27, color: dim, indent: 30, gap: 14 })
+    }
+    if (legFlights.length) {
+      legFlights.forEach((f, i) => legLine(`Leg ${(f.leg_index ?? i) + 1}`, {
+        ...(f.outbound || {}),
+        origin: city(f.leg_from) || f.outbound?.origin,
+        destination: city(f.leg_to) || f.outbound?.destination,
+        departure_date: f.leg_date,
+      }, f.price_usd))
+      const t = legFlights.reduce((a, f) => a + (Number(f.price_usd) || 0), 0)
+      if (t) add(`$${t.toLocaleString()} total flights / person`, { size: 28, weight: 600, gap: 6 })
+    } else if (sel.flight.outbound) {
+      legLine('Depart', sel.flight.outbound, sel.flight.price_usd)
+      if (sel.flight.return) legLine('Return', sel.flight.return)
+    } else {
+      legLine('Flight', sel.flight, sel.flight.price_usd)
+    }
+  }
+
+  if (sel.hotel) {
+    section('🏨 Hotel')
+    add(`${sel.hotel.name}${sel.hotel.star_rating ? ` · ${'★'.repeat(Math.round(sel.hotel.star_rating))}` : ''}`, { size: 32, weight: 600, gap: 4 })
+    const bits = [sel.hotel.location, sel.hotel.price_per_night_usd ? `$${Number(sel.hotel.price_per_night_usd).toLocaleString()}/night` : null, sel.hotel.total_price_usd ? `$${Number(sel.hotel.total_price_usd).toLocaleString()} total` : null].filter(Boolean).join(' · ')
+    if (bits) add(bits, { size: 27, color: dim, indent: 30, gap: 6 })
+  }
+
+  const itinDays = sel.itinerary?.days || []
+  if (itinDays.length) {
+    section(`📅 Itinerary — ${itinDays.length} days`)
+    for (const day of itinDays) {
+      add(`Day ${day.day_number}${day.date ? ` · ${day.date}` : ''}${day.city ? ` · ${city(day.city)}` : ''}${day.theme ? ` — ${day.theme}` : ''}`, { size: 30, weight: 700, gap: 6 })
+      for (const slot of day.slots || []) {
+        const key = `${day.day_number}-${slot.time_of_day}`
+        const edit = sel.itinerary_edits?.[key] || {}
+        const note = sel.itinerary_notes?.[key]
+        add(`${slot.time_of_day}: ${edit.activity ?? slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
+      }
+      space(10)
+    }
+    if (sel.itinerary?.total_estimated_cost_usd > 0) add(`Est. itinerary cost: $${Number(sel.itinerary.total_estimated_cost_usd).toLocaleString()} / person`, { size: 28, weight: 600, gap: 6 })
+  }
+
+  const listSection = (title, items, fmt) => {
+    if (!items?.length) return
+    section(title)
+    for (const item of items) add(`• ${fmt(item)}`, { size: 28, color: dim, gap: 8 })
+  }
+  listSection(`🎯 Activities (${(sel.activities || []).length})`, sel.activities, a =>
+    `${a.name}${a.city ? ` — ${city(a.city)}` : ''}${a.price_usd != null ? ` ($${a.price_usd})` : ''}`)
+  listSection(`🎉 Local events (${(sel.events || []).length})`, sel.events, e =>
+    `${e.name}${e.city ? ` — ${city(e.city)}` : ''}${e.start_date ? ` (${e.start_date})` : ''}`)
+  if (sel.sim) listSection('📶 Staying connected', [sel.sim], s2 =>
+    `${s2.provider} ${s2.plan_name || ''}${s2.price_usd != null ? ` ($${s2.price_usd})` : ''}`)
+  listSection(`🚇 Getting around (${(sel.getting_around || []).length})`, sel.getting_around, o =>
+    `${o.name}${o.city ? ` — ${city(o.city)}` : ''}`)
+  listSection(`💡 Good to know (${(sel.tips || []).length})`, sel.tips, t => t.title)
+
+  space(40)
+  add(plan.name || 'My Trip Plan', { size: 30, color: faint, gap: 0 })
+
+  // ── Measure (with wrapping), then draw ─────────────────────────────
+  const measurer = document.createElement('canvas').getContext('2d')
+  const wrapped = []
+  for (const ln of lines) {
+    if (!ln.text) { wrapped.push(ln); continue }
+    measurer.font = `${ln.weight} ${ln.size}px system-ui, sans-serif`
+    const words = String(ln.text).split(' ')
+    let cur = ''
+    for (const w of words) {
+      const test = cur ? `${cur} ${w}` : w
+      if (measurer.measureText(test).width > maxW - ln.indent && cur) {
+        wrapped.push({ ...ln, text: cur, gap: 6 })
+        cur = w
+      } else cur = test
+    }
+    wrapped.push({ ...ln, text: cur })
+  }
+
+  const TOP = 110, BOTTOM = 90
+  const H = Math.ceil(TOP + wrapped.reduce((h, ln) => h + ln.size * 1.18 + ln.gap, 0) + BOTTOM)
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
@@ -92,62 +207,20 @@ function downloadCard(plan) {
   grad.addColorStop(1, c2)
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = 'rgba(255,255,255,0.10)'
+  ctx.beginPath(); ctx.arc(W - 110, 150, 220, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(70, H - 170, 260, 0, Math.PI * 2); ctx.fill()
 
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'
-  ctx.beginPath(); ctx.arc(W - 120, 140, 220, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(80, H - 160, 260, 0, Math.PI * 2); ctx.fill()
-
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'
-  ctx.font = '600 40px system-ui, sans-serif'
-  ctx.fillText('✈ Voyager Trip', 80, 120)
-
-  ctx.fillStyle = '#ffffff'
-  ctx.font = '700 76px system-ui, sans-serif'
-  const dest = destinationLabel(sd)
-  // Wrap the destination line if long
-  const words = dest.split(' ')
-  let line = '', y = 320
-  for (const w of words) {
-    const test = line ? `${line} ${w}` : w
-    if (ctx.measureText(test).width > W - 160 && line) {
-      ctx.fillText(line, 80, y); y += 92; line = w
-    } else line = test
+  let y = TOP
+  for (const ln of wrapped) {
+    y += ln.size * 1.18
+    if (ln.text) {
+      ctx.font = `${ln.weight} ${ln.size}px system-ui, sans-serif`
+      ctx.fillStyle = ln.color
+      ctx.fillText(ln.text, M + ln.indent, y)
+    }
+    y += ln.gap
   }
-  ctx.fillText(line, 80, y)
-
-  ctx.fillStyle = 'rgba(255,255,255,0.9)'
-  ctx.font = '400 44px system-ui, sans-serif'
-  const dates = tripDates(sd)
-  if (dates) ctx.fillText(dates, 80, y + 90)
-  if (sd.origin) ctx.fillText(`from ${sd.origin}`, 80, y + 150)
-
-  let statsY = y + 260
-  ctx.font = '600 40px system-ui, sans-serif'
-  const stats = []
-  const legFlights = sel.flights || []
-  if (legFlights.length) {
-    const legTotal = legFlights.reduce((t, f) => t + (Number(f.price_usd) || 0), 0)
-    stats.push(`✈️  ${legFlights.length} flight legs${legTotal ? ` — $${legTotal.toLocaleString()}` : ''}`)
-  } else if (sel.flight) {
-    const ob = sel.flight.outbound || sel.flight
-    stats.push(`✈️  ${ob.airline || 'Flight picked'}${sel.flight.price_usd ? ` — $${Number(sel.flight.price_usd).toLocaleString()}` : ''}`)
-  }
-  if (sel.hotel?.name) stats.push(`🏨  ${sel.hotel.name}${sel.hotel.price_per_night_usd ? ` — $${sel.hotel.price_per_night_usd}/night` : ''}`)
-  if (sel.itinerary?.days?.length) stats.push(`📅  ${sel.itinerary.days.length}-day itinerary inside`)
-  else if (sel.itinerary_slots?.length) stats.push(`📅  ${sel.itinerary_slots.length} itinerary picks`)
-  if (sel.activities?.length) stats.push(`🎯  ${sel.activities.length} activities planned`)
-  if (sel.events?.length) stats.push(`🎉  ${sel.events.length} local events`)
-  const totalCost = computePlanCost(sel, sd)
-  if (totalCost > 0) stats.push(`💰  ~$${Math.round(totalCost).toLocaleString()} planned spend`)
-  if ((sd.interests || []).length) stats.push(`✨  ${sd.interests.slice(0, 4).join(' · ')}`)
-  for (const s of stats.slice(0, 6)) {
-    ctx.fillText(s, 80, statsY)
-    statsY += 72
-  }
-
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
-  ctx.font = '400 34px system-ui, sans-serif'
-  ctx.fillText(plan.name || 'My Trip Plan', 80, H - 90)
 
   const a = document.createElement('a')
   a.download = `${(plan.name || 'trip-card').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`

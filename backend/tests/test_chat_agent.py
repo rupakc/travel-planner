@@ -207,3 +207,83 @@ class TestChatRouteRobustness:
         types = [e["type"] for e in events]
         assert types[-1] == "done", f"stream must terminate with done, got {types}"
         assert "error" in types
+
+
+class TestChatImprovements:
+    def _agent(self):
+        from app.agents.chat_agent import ChatAgent
+
+        agent = ChatAgent.__new__(ChatAgent)
+        agent.agents_dir = "../.agents"
+        agent._session_context = {}
+        agent._taste_context = None
+        return agent
+
+    def test_diff_affected_maps_fields_to_sections(self):
+        from app.schemas.request import TravelSearchRequest
+
+        agent = self._agent()
+        base = TravelSearchRequest(
+            origin="NYC",
+            destination="Tokyo, Japan",
+            departure_date="2026-09-01",
+            return_date="2026-09-08",
+            nationality="American",
+            budget_usd=3000,
+        )
+        cheaper = base.model_copy(update={"budget_usd": 1500})
+        affected = agent._diff_affected(base, cheaper)
+        assert affected == {"flights", "hotels"}
+        assert agent._refinement_needs_itinerary is False
+
+        longer = base.model_copy(
+            update={"return_date": base.return_date.replace(day=12)}
+        )
+        affected = agent._diff_affected(base, longer)
+        assert "flights" in affected and "hotels" in affected
+        assert agent._refinement_needs_itinerary is True
+
+    def test_clarify_missing_emits_question_and_chips(self):
+        import json
+
+        agent = self._agent()
+        events = [json.loads(c) for c in agent._clarify_missing({})]
+        types = [e["type"] for e in events]
+        assert types == ["delta", "suggestions", "done"]
+        assert "Where would you like to go" in events[0]["text"]
+        assert len(events[1]["chips"]) >= 3
+
+    @pytest.mark.anyio
+    async def test_planning_intent_without_destination_asks_clarifying_question(self):
+        import json
+        from unittest.mock import AsyncMock
+
+        agent = self._agent()
+        agent._extract_travel_params = AsyncMock(return_value=None)
+        events = []
+        async for chunk in agent.stream(
+            [{"role": "user", "content": "help me plan a trip"}]
+        ):
+            events.append(json.loads(chunk))
+        types = [e["type"] for e in events]
+        assert "suggestions" in types
+        assert any("Where would you like to go" in e.get("text", "") for e in events)
+
+    def test_taste_context_lands_in_system_prompt(self):
+        from app.agents.loader import load_agent_definition
+
+        agent = self._agent()
+        agent.definition = load_agent_definition("../.agents", "chat")
+        agent._taste_context = "usually books luxury hotels"
+        prompt = agent._build_system_prompt(None, None)
+        assert "Learned Traveler Taste" in prompt
+        assert "luxury hotels" in prompt
+
+    def test_itinerary_keeps_user_city_order(self):
+        # The chat itinerary must not reorder the user's requested cities
+        import inspect
+
+        from app.agents import chat_itinerary_agent as cia
+
+        source = inspect.getsource(cia)
+        assert "optimize_city_order" not in source

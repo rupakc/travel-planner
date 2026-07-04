@@ -65,14 +65,9 @@ class ItineraryAgent(BaseAgent):
 
             multi_city_block = (
                 "\n\nThis is a MULTI-CITY trip."
-                "\n\nSTEP 1 — OPTIMIZE CITY ORDER FIRST:"
-                f"\nThe requested cities are: {', '.join(destinations)}."
-                "\nBefore building the itinerary, reorder these cities to minimize total travel "
-                "distance and cost (avoid backtracking across continents or long detours). "
-                "Use geographic proximity — neighbouring cities should be visited consecutively. "
-                "Apply the optimized order to all day assignments below. "
-                "If the first city was specified as the starting point by the user, keep it first.\n"
-                "\nSTEP 2 — CITY ALLOCATION (adjust days to match your optimized order):\n"
+                f"\nThe cities MUST be visited in exactly this order (the order "
+                f"the user requested — do NOT reorder): {', '.join(destinations)}.\n"
+                "\nCITY ALLOCATION:\n"
                 + "\n".join(city_plan_lines)
                 + "\n\nFor each day:\n"
                 '- Add a \'city\' field to the day object (e.g. "city": "Paris")\n'

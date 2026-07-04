@@ -101,7 +101,12 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             f"Traveler profile: {request.traveler_context}"
         )
         if request.multi_city_context:
-            prompt += f"\n{request.multi_city_context}"
+            prompt += (
+                f"\n{request.multi_city_context}\n"
+                f"MANDATORY COVERAGE: include at least 5 activities for EACH "
+                f"city ({', '.join(request.destinations)}) — never skip a city. "
+                "List them in trip order."
+            )
         if request.serendipity_context:
             prompt += f"\n{request.serendipity_context}"
         if request.taste_context:

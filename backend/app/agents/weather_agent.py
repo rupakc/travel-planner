@@ -119,8 +119,19 @@ class WeatherAgent(BaseAgent):
         if "error" in result:
             return []
         days = result.get("days", [])
+        # Deterministic city assignment from the stay date ranges — the LLM
+        # sometimes omits or blanks the city field
         for day in days:
-            day.setdefault("city", stays[0]["city"] if stays else None)
+            if day.get("city"):
+                continue
+            d = str(day.get("date") or "")
+            for stay in stays:
+                if str(stay["start_date"]) <= d < str(stay["end_date"]):
+                    day["city"] = stay["city"]
+                    break
+            else:
+                if stays and d == str(stays[-1]["end_date"]):
+                    day["city"] = stays[-1]["city"]
         return days
 
     async def _fetch_open_meteo(self, coords: tuple, dep: date, ret: date) -> dict:

@@ -141,7 +141,7 @@ class TestAgentPrompts:
         await agent.run(req, destinations=req.destinations)
         prompt = agent.execute.call_args[0][0]
         assert "MULTI-CITY" in prompt
-        assert "OPTIMIZE CITY ORDER" in prompt
+        assert "do NOT reorder" in prompt
         assert "travel day" in prompt
 
     @pytest.mark.anyio

@@ -28,33 +28,46 @@ class PlacesAgent(ToolAgent):
 
     async def run(self, request: TravelSearchRequest) -> dict:
         destination = request.destination
+        cities = request.destinations if request.is_multi_city else [destination]
 
-        # Fetch from Serper in parallel (cached 30 min)
-        places_data: list[dict] = []
-        guides_data: list[dict] = []
-        if settings.serper_key:
-            cache_key = f"serper:places_ctx:{destination}"
+        # Fetch from Serper per city in parallel (cached 30 min each)
+        async def fetch_city(city: str) -> tuple[str, list[dict], list[dict]]:
+            cache_key = f"serper:places_ctx:{city}"
             cached = get_cache().get(cache_key)
             if cached:
-                places_data, guides_data = cached
-            else:
-                client = SerperPlacesClient(settings.serper_key)
-                fetched = await asyncio.gather(
-                    client.fetch_places(destination),
-                    client.fetch_guides(destination),
-                    return_exceptions=True,
-                )
-                places_data = (
-                    fetched[0] if not isinstance(fetched[0], Exception) else []
-                )
-                guides_data = (
-                    fetched[1] if not isinstance(fetched[1], Exception) else []
-                )
-                if places_data or guides_data:
-                    get_cache()[cache_key] = (places_data, guides_data)
+                return city, cached[0], cached[1]
+            client = SerperPlacesClient(settings.serper_key)
+            fetched = await asyncio.gather(
+                client.fetch_places(city),
+                client.fetch_guides(city),
+                return_exceptions=True,
+            )
+            p_data = fetched[0] if not isinstance(fetched[0], Exception) else []
+            g_data = fetched[1] if not isinstance(fetched[1], Exception) else []
+            if p_data or g_data:
+                get_cache()[cache_key] = (p_data, g_data)
+            return city, p_data, g_data
+
+        places_data: list[dict] = []
+        guides_data: list[dict] = []
+        city_context_blocks: list[str] = []
+        if settings.serper_key:
+            per_city = await asyncio.gather(*[fetch_city(c) for c in cities])
+            for city, p_data, g_data in per_city:
+                places_data.extend(p_data)
+                guides_data.extend(g_data)
+                if len(cities) > 1:
+                    city_context_blocks.append(
+                        f"### {city}\n"
+                        + SerperPlacesClient.format_context(p_data, g_data)
+                    )
 
         # Build prompt with injected Google context
-        google_context = SerperPlacesClient.format_context(places_data, guides_data)
+        google_context = (
+            "\n\n".join(city_context_blocks)
+            if city_context_blocks
+            else SerperPlacesClient.format_context(places_data, guides_data)
+        )
         interests_str = (
             ", ".join(request.interests) if request.interests else "general sightseeing"
         )
@@ -72,7 +85,12 @@ class PlacesAgent(ToolAgent):
             "JSON only."
         )
         if request.multi_city_context:
-            prompt += f"\n{request.multi_city_context}"
+            prompt += (
+                f"\n{request.multi_city_context}\n"
+                f"MANDATORY COVERAGE: return 4-6 must-see places for EACH of "
+                f"the {len(cities)} cities ({', '.join(cities)}) — never skip a "
+                "city. Group them city by city in trip order."
+            )
         if request.serendipity_context:
             prompt += f"\n{request.serendipity_context}"
 

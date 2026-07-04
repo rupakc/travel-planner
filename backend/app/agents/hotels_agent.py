@@ -70,8 +70,10 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
         if request.multi_city_context:
             prompt += (
                 f"\n{request.multi_city_context}\n"
-                "Split the 12 hotels roughly evenly across the cities, still "
-                "covering multiple budget tiers in each city."
+                f"MANDATORY COVERAGE: at least 3 hotels for EACH city "
+                f"({', '.join(request.destinations)}) — never skip a city — "
+                "still covering multiple budget tiers per city. Order the "
+                "results city by city in trip order."
             )
         if request.taste_context:
             prompt += (

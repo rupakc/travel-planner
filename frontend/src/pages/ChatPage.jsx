@@ -522,6 +522,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
   const sectionOrder = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
   // Include itinerary immediately once the backend signals it has started generating
   const arrived = sectionOrder.filter(s => sections[s] || (s === 'itinerary' && itineraryGenerating))
+  const searching = sectionOrder.filter(s => !sections[s] && sectionStatuses[s] === 'loading' && s !== 'itinerary')
   const total = 9
   const doneCount = Object.values(sectionStatuses).filter(s => s === 'done' || s === 'enhancing').length
 
@@ -538,6 +539,15 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
         const status = isLoading ? 'generating' : (sectionStatuses[section] || 'done')
         return (
           <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} />
+        )
+      })}
+      {searching.map(section => {
+        const cfg = AGENT_CONFIG[section]
+        return (
+          <div key={section} className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400">
+            <span className="w-3 h-3 border-2 border-teal-300 border-t-transparent rounded-full animate-spin" />
+            Searching {cfg?.label?.toLowerCase() || section.replace(/_/g, ' ')}…
+          </div>
         )
       })}
     </div>
@@ -1274,6 +1284,13 @@ export default function ChatPage() {
             }
             return updated
           })
+        } else if (event.type === 'agent_status') {
+          sectionStatuses = { ...sectionStatuses, [event.agent]: event.status }
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], planning: true, sectionStatuses: { ...sectionStatuses } }
+            return updated
+          })
         } else if (event.type === 'section_result') {
           const isStatic = event.source === 'static'
           const hasError = event.data?.error
@@ -1345,6 +1362,27 @@ export default function ChatPage() {
             return updated
           })
         } else if (event.type === 'done') {
+          // Convert the advisor's trailing "— question" lines into tappable chips
+          if (fullText) {
+            const lines = fullText.split('\n')
+            const chips = []
+            while (lines.length && /^\s*[—–-]\s+\S/.test(lines[lines.length - 1])) {
+              chips.unshift(lines.pop().replace(/^\s*[—–-]\s+/, '').trim())
+            }
+            if (chips.length >= 2) {
+              const trimmed = lines.join('\n').trimEnd()
+              setMessages(prev => {
+                const updated = [...prev]
+                const msg = updated[assistantIdx]
+                updated[assistantIdx] = {
+                  ...msg,
+                  content: trimmed,
+                  suggestions: msg.suggestions?.length ? msg.suggestions : chips,
+                }
+                return updated
+              })
+            }
+          }
           setMessages(prev => {
             const updated = [...prev]
             const cur = updated[assistantIdx] || {}

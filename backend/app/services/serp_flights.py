@@ -440,6 +440,8 @@ async def search_multi_city(
     if all(lg.get("error") or not lg.get("results") for lg in fetched):
         raise SerpAPIError("All multi-city legs failed or returned no results")
 
+    # Legs (and the flattened list) always follow the user's journey order
+    fetched = sorted(fetched, key=lambda lg: lg.get("leg_index", 0))
     flattened = [r for lg in fetched for r in lg.get("results", [])]
     payload = {"trip_type": "multi_city", "legs": fetched, "results": flattened}
     cache[cache_key] = payload

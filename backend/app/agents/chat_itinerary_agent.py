@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from ..schemas.request import TravelSearchRequest
-from ..utils.geo import optimize_city_order
 from .base_agent import _MAX_RETRIES, BaseAgent, _get_client
 from .loader import load_agent_definition
 
@@ -100,7 +99,9 @@ class ChatItineraryAgent(BaseAgent):
         )
 
         if is_multi:
-            optimized = optimize_city_order(destinations, lock_first=True)
+            # Preserve exactly the order the user gave — flights, weather and
+            # hotel stays are all planned against this sequence.
+            optimized = list(destinations)
             n = len(optimized)
             base = max(2, nights // n)
             extra = nights - base * n

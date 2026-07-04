@@ -9,6 +9,7 @@ from ...agents.chat_agent import ChatAgent
 from ...core.auth import get_current_user
 from ...core.config import settings
 from ...db.preferences_db import get_preferences
+from ...db.taste_db import derive_taste_context
 
 router = APIRouter()
 
@@ -31,6 +32,10 @@ class ChatRequest(BaseModel):
 async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
     """Stream a conversational travel planning response."""
     prefs = get_preferences(user["username"])
+    try:
+        taste = derive_taste_context(user["username"])
+    except Exception:
+        taste = None
     agent = ChatAgent(agents_dir=settings.agents_dir)
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
@@ -44,6 +49,7 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
                 selections=request.selections,
                 search_results=request.search_results,
                 session_context=request.session_context,
+                taste_context=taste,
             ):
                 yield f"data: {chunk}\n\n"
         except Exception as e:

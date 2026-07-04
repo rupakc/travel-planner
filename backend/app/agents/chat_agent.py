@@ -189,6 +189,7 @@ class ChatAgent:
         self.agents_dir = agents_dir
         self.definition = load_agent_definition(agents_dir, "chat")
         self._session_context: dict = {}
+        self._taste_context: str | None = None
 
     @staticmethod
     def _classify_intent(message: str) -> list[str]:
@@ -204,6 +205,7 @@ class ChatAgent:
         selections: dict | None = None,
         search_results: dict | None = None,
         session_context: dict | None = None,
+        taste_context: str | None = None,
     ):
         """Stream chat responses with plan management.
 
@@ -218,6 +220,7 @@ class ChatAgent:
         """
         if session_context:
             self._session_context = {**session_context}
+        self._taste_context = taste_context
 
         last_msg = messages[-1]["content"] if messages else ""
         selections = selections or {}
@@ -282,19 +285,27 @@ class ChatAgent:
                 yield chunk
             return
 
-        # 2. Full trip planning
-        if _PLANNING_PATTERNS.search(last_msg):
+        # 1.5. A clarifying answer to a question we just asked ("From Berlin")
+        if self._session_context.get("awaiting") == "origin":
+            self._session_context.pop("awaiting", None)
             params = await self._extract_travel_params(messages, preferences)
-            if params:
+            if params and (params.origin or "").strip():
                 self._update_session_context(params)
                 async for chunk in self._run_comprehensive_planning(
-                    params,
-                    messages,
-                    preferences,
-                    selections,
+                    params, messages, preferences, selections
                 ):
                     yield chunk
                 return
+            # fall through — the reply wasn't an origin after all
+
+        # 2. Full trip planning
+        if _PLANNING_PATTERNS.search(last_msg):
+            params = await self._extract_travel_params(messages, preferences)
+            async for chunk in self._plan_or_clarify(
+                params, messages, preferences, selections
+            ):
+                yield chunk
+            return
 
         # 3. Specific topic queries — route to specialist agents when destination is known
         matched_agents = self._classify_intent(last_msg)
@@ -315,14 +326,12 @@ class ChatAgent:
             base = self._params_from_session_context()
             if base:
                 modified = await self._apply_modification_hint(base, last_msg)
+                affected = self._diff_affected(base, modified) | set(
+                    self._classify_intent(last_msg)
+                )
                 self._update_session_context(modified)
-                agent_names = self._classify_intent(last_msg) or None
-                async for chunk in self._run_comprehensive_planning(
-                    modified,
-                    messages,
-                    preferences,
-                    selections,
-                    agent_names=agent_names,
+                async for chunk in self._run_refinement(
+                    modified, affected, preferences, selections
                 ):
                     yield chunk
                 return
@@ -335,9 +344,206 @@ class ChatAgent:
                 yield chunk
             return
 
+        # 3.7. LLM intent router — catches trip requests the regexes miss
+        # ("we're thinking Lisbon in October, maybe with the kids?")
+        if word_count >= 4:
+            routed = await self._route_intent(last_msg)
+            if routed == "plan_trip":
+                params = await self._extract_travel_params(messages, preferences)
+                async for chunk in self._plan_or_clarify(
+                    params, messages, preferences, selections
+                ):
+                    yield chunk
+                return
+            if routed == "plan_action":
+                async for chunk in self._handle_plan_command(
+                    messages, preferences, selections, search_results
+                ):
+                    yield chunk
+                return
+            if routed == "knowledge":
+                async for chunk in self._knowledge_chat(
+                    messages, preferences, selections
+                ):
+                    yield chunk
+                return
+
         # 4. Regular chat (plan-aware)
         async for chunk in self._regular_chat(messages, preferences, selections):
             yield chunk
+
+    # ── Intent routing, clarification & refinement ─────────────────────
+
+    async def _route_intent(self, message: str) -> str:
+        """One cheap LLM call to classify ambiguous messages.
+
+        Returns: plan_trip | plan_action | knowledge | chat
+        """
+        ctx = self._session_context
+        ctx_line = (
+            f"An earlier trip is being discussed: {ctx.get('destination')}."
+            if ctx.get("destination")
+            else "No trip is being discussed yet."
+        )
+        prompt = (
+            "Classify this message from a travel-planning chat into exactly one "
+            "label:\n"
+            "- plan_trip: user wants a trip planned/searched (destination ideas "
+            "with dates/duration/party, 'thinking about X in October', 'maybe Y "
+            "with the kids')\n"
+            "- plan_action: user wants to view/change the items saved in their "
+            "plan\n"
+            "- knowledge: a travel question answerable from expertise (culture, "
+            "food, safety, weather, neighbourhoods)\n"
+            "- chat: greetings, small talk, anything else\n\n"
+            f"{ctx_line}\n"
+            f'Message: "{message}"\n\n'
+            "Reply with ONLY the label."
+        )
+        try:
+            client = _get_client()
+            response = await client.messages.create(
+                model=_MODEL,
+                max_tokens=8,
+                system="You classify travel-chat messages. Reply with one label only.",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            label = (
+                (response.content[0].text if response.content else "").strip().lower()
+            )
+            if label in ("plan_trip", "plan_action", "knowledge", "chat"):
+                return label
+        except Exception as e:
+            logger.warning(f"Intent routing failed: {e}")
+        return "chat"
+
+    async def _plan_or_clarify(self, params, messages, preferences, selections):
+        """Run planning when the essentials are present; otherwise ask one
+        targeted question and remember everything already known."""
+        if params is None:
+            for chunk in self._clarify_missing(preferences):
+                yield chunk
+            return
+        if not (params.origin or "").strip():
+            self._update_session_context(params)
+            self._session_context["awaiting"] = "origin"
+            dest = params.destination
+            yield json.dumps(
+                {
+                    "type": "delta",
+                    "text": (
+                        f"**{dest}** — great choice! One last thing: "
+                        "which city will you be flying from?"
+                    ),
+                }
+            )
+            chips = []
+            if (preferences or {}).get("current_residence"):
+                chips.append(f"From {preferences['current_residence']}")
+            chips += ["From New York", "From London", "From Dubai"]
+            yield json.dumps({"type": "suggestions", "chips": chips[:4]})
+            yield json.dumps(
+                {"type": "session_context_update", "context": self._session_context}
+            )
+            yield json.dumps({"type": "done"})
+            return
+        self._update_session_context(params)
+        async for chunk in self._run_comprehensive_planning(
+            params, messages, preferences, selections
+        ):
+            yield chunk
+
+    def _clarify_missing(self, preferences: dict | None):
+        """Ask one friendly question for the missing essentials, with chips."""
+        has_residence = bool((preferences or {}).get("current_residence"))
+        question = (
+            "Sounds fun — I just need a couple of details to start planning. "
+            "**Where would you like to go**, and roughly when?"
+        )
+        if not has_residence:
+            question += " And which city will you be flying from?"
+        chips = [
+            "Tokyo for a week next month",
+            "Paris and Rome, 10 days in September",
+            "Somewhere warm on a $2,000 budget",
+            "Surprise me with ideas",
+        ]
+        yield json.dumps({"type": "delta", "text": question})
+        yield json.dumps({"type": "suggestions", "chips": chips})
+        yield json.dumps({"type": "done"})
+
+    # Which specialist sections each changed field invalidates
+    _FIELD_AGENTS = {
+        "departure_date": {"flights", "hotels", "activities"},
+        "return_date": {"flights", "hotels", "activities"},
+        "budget_usd": {"flights", "hotels"},
+        "num_travelers": {"flights", "hotels"},
+        "interests": {"activities"},
+        "origin": {"flights", "visa"},
+        "destination": {
+            "flights",
+            "hotels",
+            "activities",
+            "visa",
+            "sim",
+            "tips",
+            "getting_around",
+        },
+    }
+    _ITINERARY_FIELDS = {
+        "departure_date",
+        "return_date",
+        "destination",
+        "destinations",
+        "interests",
+    }
+
+    def _diff_affected(
+        self, base: TravelSearchRequest, modified: TravelSearchRequest
+    ) -> set[str]:
+        """Sections invalidated by a refinement — re-run only these."""
+        old, new = base.model_dump(), modified.model_dump()
+        affected: set[str] = set()
+        self._refinement_needs_itinerary = False
+        for field, agents in self._FIELD_AGENTS.items():
+            if old.get(field) != new.get(field):
+                affected |= agents
+        if old.get("destinations") != new.get("destinations"):
+            affected |= self._FIELD_AGENTS["destination"]
+        for field in self._ITINERARY_FIELDS:
+            if old.get(field) != new.get(field):
+                self._refinement_needs_itinerary = True
+        return affected
+
+    async def _run_refinement(
+        self,
+        request: TravelSearchRequest,
+        affected: set[str],
+        preferences: dict | None,
+        selections: dict | None,
+    ):
+        """Re-run only the sections a refinement invalidated."""
+        request.taste_context = self._taste_context
+        affected = {a for a in affected if a}
+        logger.info(f"_run_refinement: affected={sorted(affected)}")
+        if not affected and not self._refinement_needs_itinerary:
+            self._refinement_needs_itinerary = True  # safest useful default
+
+        if affected:
+            async for chunk in self._run_specialist_agents(
+                request,
+                [],
+                preferences,
+                selections,
+                sorted(affected),
+                emit_done=not self._refinement_needs_itinerary,
+            ):
+                yield chunk
+        if self._refinement_needs_itinerary:
+            async for chunk in self._run_comprehensive_planning(
+                request, [], preferences, selections
+            ):
+                yield chunk
 
     # ── Plan command handling ─────────────────────────────────────────
 
@@ -939,7 +1145,9 @@ class ChatAgent:
                 messages=[{"role": "user", "content": prompt}],
             )
             result_text = response.content[0].text if response.content else ""
-            parsed = json.loads(result_text.strip())
+            cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", result_text.strip())
+            match = re.search(r"\[.*\]", cleaned, re.DOTALL)
+            parsed = json.loads(match.group(0) if match else cleaned)
             if isinstance(parsed, list):
                 return [str(c) for c in parsed[:6]]
         except Exception as e:
@@ -1011,7 +1219,9 @@ class ChatAgent:
 
         extraction_prompt = (
             "Extract travel planning parameters from this conversation. Return ONLY a JSON object.\n"
-            'If there is NOT enough info to plan (need at minimum: destination), return {"insufficient": true}.\n\n'
+            'Return {"insufficient": true} ONLY if no destination can be determined. '
+            "A missing origin, missing dates or missing budget is NOT insufficient — "
+            "extract what is known and leave origin as an empty string if truly unknown.\n\n"
             f"Conversation:\n{conversation}\n{pref_block}{ctx_block}\n\n"
             "Return JSON with fields: origin (string), destination (string), "
             "departure_date (YYYY-MM-DD), return_date (YYYY-MM-DD or null), "
@@ -1121,7 +1331,11 @@ class ChatAgent:
             f"dates={request.departure_date}→{request.return_date}"
         )
 
+        request.taste_context = self._taste_context
         yield json.dumps({"type": "planning_start", "destination": request.destination})
+
+        # Proactive heads-up checks run alongside the itinerary build
+        warnings_task = asyncio.create_task(self._proactive_warnings(request))
 
         # Build trip_map from Python CITY_COORDS (instant, no LLM)
         cities = request.destinations or [request.destination]
@@ -1175,11 +1389,75 @@ class ChatAgent:
         )
         yield json.dumps({"type": "comprehensive_itinerary", "data": itin})
 
+        try:
+            warnings = await asyncio.wait_for(warnings_task, timeout=30)
+        except Exception:
+            warnings_task.cancel()
+            warnings = []
+        if warnings:
+            heads_up = "\n\n> **Heads up:**\n" + "\n".join(f"> {w}" for w in warnings)
+            yield json.dumps({"type": "delta", "text": heads_up})
+
         self._update_session_context(request)
         yield json.dumps(
             {"type": "session_context_update", "context": self._session_context}
         )
+        chips = await self._generate_suggestions(request, ["itinerary"])
+        if chips:
+            yield json.dumps({"type": "suggestions", "chips": chips})
         yield json.dumps({"type": "planning_done"})
+
+    async def _proactive_warnings(self, request: TravelSearchRequest) -> list[str]:
+        """Volunteer expertise the user didn't ask for: bad-weather windows
+        and major events/disruptions overlapping the trip dates."""
+        warnings: list[str] = []
+
+        async def check_weather():
+            try:
+                from .weather_agent import WeatherAgent
+
+                agent = WeatherAgent(self.agents_dir)
+                days_out = (request.departure_date - date.today()).days
+                if days_out > 16 or days_out < 0:
+                    return
+                result = await agent.run(request)
+                poor = result.get("poor_weather_day_count") or 0
+                if poor >= 2:
+                    warnings.append(
+                        f"🌧️ {poor} of your trip days show rain or rough weather "
+                        "in the forecast — worth planning indoor alternatives."
+                    )
+            except Exception as e:
+                logger.debug(f"Proactive weather check skipped: {e}")
+
+        async def check_events():
+            try:
+                from .events_agent import EventsAgent
+
+                result = await asyncio.wait_for(
+                    EventsAgent(self.agents_dir).run(request), timeout=28
+                )
+                events = result.get("results") or []
+                disruptions = [e for e in events if e.get("impact") == "consider"]
+                for ev in disruptions[:2]:
+                    warnings.append(
+                        f"⚠️ {ev.get('name')} overlaps your dates"
+                        + (f" ({ev.get('start_date')})" if ev.get("start_date") else "")
+                        + " — expect crowds or closures; book key spots early."
+                    )
+                highlight = next(
+                    (e for e in events if e.get("impact") != "consider"), None
+                )
+                if highlight and not disruptions:
+                    warnings.append(
+                        f"🎉 {highlight.get('name')} is on during your trip — "
+                        "could be a fun addition to the plan."
+                    )
+            except Exception as e:
+                logger.debug(f"Proactive events check skipped: {e}")
+
+        await asyncio.gather(check_weather(), check_events())
+        return warnings
 
     # ── Specialist agent runner ───────────────────────────────────────
 
@@ -1190,8 +1468,10 @@ class ChatAgent:
         preferences: dict | None,
         selections: dict | None,
         agent_names: list[str],
+        emit_done: bool = True,
     ):
-        """Run named specialist agents in parallel and stream section_result events."""
+        """Run named specialist agents in parallel, streaming each result the
+        moment it completes (with live per-section status events)."""
         from .activities_agent import ActivitiesAgent
         from .flights_agent import FlightsAgent
         from .getting_around_agent import GettingAroundAgent
@@ -1210,6 +1490,7 @@ class ChatAgent:
             "flights": FlightsAgent,
         }
 
+        request.taste_context = self._taste_context
         yield json.dumps({"type": "planning_start", "destination": request.destination})
 
         async def run_one(name: str):
@@ -1225,9 +1506,16 @@ class ChatAgent:
 
         runnable = [n for n in agent_names if n in AGENT_CLASSES]
         logger.info(f"_run_specialist_agents: {runnable} for {request.destination!r}")
-        results = await asyncio.gather(*[run_one(n) for n in runnable])
 
-        for section_name, result in results:
+        # Announce every section up-front so the UI can show live progress rows
+        for name in runnable:
+            yield json.dumps(
+                {"type": "agent_status", "agent": name, "status": "loading"}
+            )
+
+        tasks = [asyncio.create_task(run_one(n)) for n in runnable]
+        for task in asyncio.as_completed(tasks):
+            section_name, result = await task
             yield json.dumps(
                 {
                     "type": "section_result",
@@ -1243,7 +1531,11 @@ class ChatAgent:
         yield json.dumps(
             {"type": "session_context_update", "context": self._session_context}
         )
-        yield json.dumps({"type": "planning_done"})
+        chips = await self._generate_suggestions(request, runnable)
+        if chips:
+            yield json.dumps({"type": "suggestions", "chips": chips})
+        if emit_done:
+            yield json.dumps({"type": "planning_done"})
 
     # ── Helpers ────────────────────────────────────────────────────────
 
@@ -1339,6 +1631,13 @@ class ChatAgent:
         if selections:
             plan_summary = self._summarize_selections(selections)
             parts.append(f"\n\n## Current My Plan\n{plan_summary}")
+
+        if self._taste_context:
+            parts.append(
+                f"\n\n## Learned Traveler Taste\n{self._taste_context}\n"
+                "Weave these learned preferences into recommendations naturally "
+                "(never recite the profile back to the user)."
+            )
 
         # Knowledge-first directive
         parts.append(

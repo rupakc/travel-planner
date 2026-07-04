@@ -218,6 +218,8 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
                 grouped[idx]["results"].append(flight)
         data["trip_type"] = "multi_city"
         data["legs"] = grouped
+        # Flattened results follow the user's journey order, leg by leg
+        data["results"] = [f for leg in grouped for f in leg["results"]]
         return data
 
     async def _enrich_urls(self, data: dict) -> dict:

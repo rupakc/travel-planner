@@ -27,7 +27,12 @@ class EventsAgent(BaseAgent):
             f"Travelers: {request.traveler_context}\n"
         )
         if request.multi_city_context:
-            prompt += f"{request.multi_city_context}\n"
+            prompt += (
+                f"{request.multi_city_context}\n"
+                f"MANDATORY COVERAGE: 2-4 events for EACH city "
+                f"({', '.join(request.destinations)}) — never skip a city; "
+                "match each city's events to the dates the traveler is there.\n"
+            )
         prompt += (
             "Return festivals, concerts, exhibitions, sports, markets and "
             "seasonal happenings overlapping these dates, plus any disruptions "
