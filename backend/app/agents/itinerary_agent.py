@@ -119,4 +119,9 @@ class ItineraryAgent(BaseAgent):
             f"Include meal costs (~$50/person/day). Costs are PER PERSON."
             + multi_city_block
         )
+        if request.taste_context:
+            prompt += (
+                f"\n{request.taste_context}\n"
+                "Lean the day plans toward this profile where it fits the destination."
+            )
         return await self.execute(prompt)

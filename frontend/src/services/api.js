@@ -10,7 +10,7 @@ const api = axios.create({
  * happens off the main thread, keeping the UI smooth.
  * Returns a cleanup function that terminates the worker.
  */
-export function streamSearch(searchData, onResult, onDone, onError) {
+export function streamSearch(searchData, onResult, onDone, onError, token = null) {
   // Vite exposes workers via `new URL(..., import.meta.url)` + `{ type: 'module' }`
   const worker = new Worker(
     new URL('../workers/sseWorker.js', import.meta.url),
@@ -36,7 +36,12 @@ export function streamSearch(searchData, onResult, onDone, onError) {
 
   worker.postMessage({
     url: '/api/search',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      // Auth is optional on /api/search — when present, the backend injects
+      // the user's learned Taste Graph profile into agent prompts.
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(searchData),
   })
 

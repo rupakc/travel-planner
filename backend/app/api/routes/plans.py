@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 from ...core.auth import get_current_user
 from ...db.plans_db import delete_plan, get_plan, get_user_plans, save_plan, update_plan
+from ...db.taste_db import record_plan_signals
 
 router = APIRouter()
 
@@ -27,9 +28,11 @@ async def list_plans(current_user: dict = Depends(get_current_user)):
 async def create_plan(
     req: SavePlanRequest, current_user: dict = Depends(get_current_user)
 ):
-    return save_plan(
+    plan = save_plan(
         current_user["username"], req.name, req.search_data, req.selections
     )
+    record_plan_signals(current_user["username"], req.search_data, req.selections)
+    return plan
 
 
 @router.get("/plans/{plan_id}")
@@ -48,6 +51,10 @@ async def update_one_plan(
     if not plan or plan["username"] != current_user["username"]:
         raise HTTPException(status_code=404, detail="Plan not found")
     updated = update_plan(plan_id, current_user["username"], req.name, req.selections)
+    if req.selections is not None:
+        record_plan_signals(
+            current_user["username"], plan["search_data"], req.selections
+        )
     return updated
 
 

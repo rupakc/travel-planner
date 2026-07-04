@@ -3,7 +3,87 @@ import { useAuth } from '../context/AuthContext'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import { track } from '../utils/analytics'
 import TagInput from '../components/ui/TagInput'
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Heart, MapPin } from 'lucide-react'
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Heart, MapPin, Sparkles, Trash2 } from 'lucide-react'
+
+const SIGNAL_LABELS = {
+  activity_category: 'Favourite activity types',
+  hotel_tier: 'Hotel style',
+  flight_style: 'Flight style',
+  interest: 'Recurring interests',
+  destination: 'Planned destinations',
+  pace: 'Trip pace',
+}
+
+function TasteProfileCard({ token }) {
+  const [profile, setProfile] = useState(null)
+  const [resetting, setResetting] = useState(false)
+
+  const load = () => {
+    fetch('/api/taste-profile', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(setProfile)
+      .catch(() => setProfile(null))
+  }
+  useEffect(() => { if (token) load() }, [token])
+
+  const handleReset = async () => {
+    if (!window.confirm('Reset your learned taste profile? Future searches will no longer be personalised from past plans.')) return
+    setResetting(true)
+    try {
+      await fetch('/api/taste-profile', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      track('taste_profile_reset', 'preferences')
+      load()
+    } finally { setResetting(false) }
+  }
+
+  const hasSignals = profile && profile.total_signals > 0
+
+  return (
+    <div className="px-6 md:px-8 py-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Taste Graph</p>
+        {hasSignals && (
+          <button onClick={handleReset} disabled={resetting}
+            className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50">
+            <Trash2 size={12} /> Reset
+          </button>
+        )}
+      </div>
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-pink-500 flex items-center justify-center shrink-0">
+          <Sparkles size={16} className="text-white" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-800">What we've learned about your travel taste</p>
+          {hasSignals ? (
+            <p className="text-xs text-gray-500 mt-0.5">
+              Built from {profile.total_signals} signal{profile.total_signals !== 1 ? 's' : ''} in your saved plans.
+              Logged-in searches are automatically personalised with this profile.
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-0.5">
+              Nothing learned yet — save a few trip plans and your future searches will be personalised automatically.
+            </p>
+          )}
+        </div>
+      </div>
+      {hasSignals && (
+        <div className="space-y-2">
+          {Object.entries(profile.signals).map(([type, entries]) => (
+            <div key={type} className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-gray-500 w-44 shrink-0">{SIGNAL_LABELS[type] || type}</span>
+              {entries.slice(0, 4).map(e => (
+                <span key={e.value} className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+                  {e.value} <span className="text-amber-500">×{e.count}</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const BUDGET_OPTIONS = [
   { value: 'low',    label: 'Budget',   desc: 'Hostels, street food, public transport',     color: 'bg-green-100 text-green-700 border-green-300' },
@@ -81,6 +161,9 @@ export default function PreferencesPage() {
       </div>
 
       <div className="bg-white rounded-3xl shadow-lg ring-1 ring-gray-100 divide-y divide-gray-100/80">
+
+        {/* Learned Taste Graph */}
+        <TasteProfileCard token={token} />
 
         {/* Budget Category */}
         <div className="px-6 md:px-8 py-6 space-y-5">

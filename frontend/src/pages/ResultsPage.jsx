@@ -3068,6 +3068,7 @@ export default function ResultsPage() {
         })
       },
       (err) => setError(err.message || 'Search error'),
+      token,
     )
   }, [searchData])
 

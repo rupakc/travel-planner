@@ -28,6 +28,7 @@ from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
 from .api.routes.stress_test import router as stress_test_router
+from .api.routes.taste import router as taste_router
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
@@ -53,11 +54,13 @@ async def lifespan(app: FastAPI):
     create_plans_table()
     create_preferences_table()
     from .db.feedback_db import create_feedback_table
+    from .db.taste_db import create_taste_table
     from .db.users_db import create_users_table, seed_admin
 
     create_users_table()
     seed_admin()
     create_feedback_table()
+    create_taste_table()
     asyncio.create_task(
         start_periodic_backup(
             _settings.backup_bucket, _settings.data_dir, interval_seconds=60
@@ -110,6 +113,7 @@ app.include_router(forex.router, prefix="/api", tags=["forex"])
 app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
 app.include_router(discover_router, prefix="/api", tags=["discover"])
 app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
+app.include_router(taste_router, prefix="/api", tags=["taste"])
 
 
 @app.get("/health")

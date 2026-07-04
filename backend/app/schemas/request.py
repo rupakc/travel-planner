@@ -62,6 +62,14 @@ class TravelSearchRequest(BaseModel):
         "or packed (maximise sightseeing)",
     )
 
+    # Server-set from the authenticated user's Taste Graph (never client input).
+    # Included in serialisation so cached search results are per-profile.
+    taste_context: str | None = Field(
+        None,
+        description="Learned taste profile summary injected into agent prompts. "
+        "Overwritten server-side; client-supplied values are ignored.",
+    )
+
     # Auto-set by validator — not in the request body, not serialised to JSON
     origin_iata: str | None = Field(None, exclude=True)
     destination_iata: str | None = Field(None, exclude=True)

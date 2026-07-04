@@ -86,6 +86,13 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         else:
             prompt += "Find 8-12 one-way flight options sorted by price."
 
+        if request.taste_context:
+            prompt += (
+                f"\n{request.taste_context}\n"
+                "If the profile shows a flight-style preference (e.g. non-stop), "
+                "rank matching options higher."
+            )
+
         if filters:
             lines = ["\n\n--- MANDATORY FLIGHT FILTERS (strictly enforce these) ---"]
             if filters.get("max_stops") is not None:
