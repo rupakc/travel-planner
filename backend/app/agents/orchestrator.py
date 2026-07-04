@@ -78,7 +78,10 @@ class TravelOrchestrator:
 
         # Phase 2: Itinerary uses activities + hotels
         itinerary = await self.itinerary.run(
-            request, activities=activities, hotels=hotels
+            request,
+            activities=activities,
+            hotels=hotels,
+            destinations=request.destinations,
         )
 
         # Phase 3: Stress-test audits the assembled plan
@@ -267,6 +270,7 @@ class TravelOrchestrator:
                         request,
                         activities=results["activities"],
                         hotels=results["hotels"],
+                        destinations=request.destinations,
                     )
                 )
 
@@ -316,6 +320,7 @@ class TravelOrchestrator:
                     request,
                     activities=results.get("activities", {}),
                     hotels=results.get("hotels", {}),
+                    destinations=request.destinations,
                 )
             )
 

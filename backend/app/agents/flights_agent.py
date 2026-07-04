@@ -86,6 +86,15 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         else:
             prompt += "Find 8-12 one-way flight options sorted by price."
 
+        if request.is_multi_city:
+            last_city = request.destinations[-1]
+            prompt += (
+                f"\nNOTE: This is a multi-city trip ({request.destination_label}). "
+                f"Prefer OPEN-JAW itineraries: outbound {request.origin} → "
+                f"{request.destinations[0]}, return {last_city} → {request.origin}. "
+                "Inter-city travel is handled separately — do not include it."
+            )
+
         if request.taste_context:
             prompt += (
                 f"\n{request.taste_context}\n"

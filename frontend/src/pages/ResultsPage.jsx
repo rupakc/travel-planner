@@ -2747,7 +2747,9 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const num_travelers = Math.max(1, (form.adults || 0) + (form.seniors || 0) + (form.children || 0) + (form.infants || 0))
-    onUpdateSearch({ ...form, num_travelers, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
+    // Keep multi-city list in sync when the primary destination is edited
+    const destinations = form.destinations?.length > 1 ? [form.destination, ...form.destinations.slice(1)] : null
+    onUpdateSearch({ ...form, num_travelers, destinations, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
   }
 
   return (
@@ -3322,7 +3324,9 @@ export default function ResultsPage() {
                 <ArrowLeft size={14}/><span className="hidden xs:inline">New Search</span><span className="xs:hidden">Back</span>
               </button>
               <div className="text-center min-w-0 flex-1">
-                <p className="font-semibold text-xs sm:text-sm truncate">{searchData.origin} → {searchData.destination}</p>
+                <p className="font-semibold text-xs sm:text-sm truncate">
+                  {searchData.origin} → {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}
+                </p>
                 <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
                 {searchData.budget_usd > 0 && (
                   <p className="text-slate-300 text-[10px] hidden md:block">Budget: ${searchData.budget_usd.toLocaleString()}</p>
@@ -3375,7 +3379,7 @@ export default function ResultsPage() {
               <Globe size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Planning your trip to {searchData.destination}</h2>
+              <h2 className="text-lg font-bold text-gray-800">Planning your trip to {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}</h2>
               <p className="text-sm text-gray-500">
                 {completedCount === 0 ? "Getting everything ready for you..."
                  : completedCount < 4 ? `Found ${completedCount} results so far — more coming!`

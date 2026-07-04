@@ -71,6 +71,8 @@ class PlacesAgent(ToolAgent):
             "Synthesise the Google data above with your knowledge. Return 8–12 must-see places. "
             "JSON only."
         )
+        if request.multi_city_context:
+            prompt += f"\n{request.multi_city_context}"
 
         # Claude synthesises Serper + internal knowledge → structured JSON
         result = await self.execute(prompt)

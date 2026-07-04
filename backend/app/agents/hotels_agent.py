@@ -67,6 +67,12 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
             f"Return 12 hotels across all four budget tiers (luxury, premium, mid-range, budget). Include source and source_snippet for each.\n"
             f"Traveler profile: {request.traveler_context}"
         )
+        if request.multi_city_context:
+            prompt += (
+                f"\n{request.multi_city_context}\n"
+                "Split the 12 hotels roughly evenly across the cities, still "
+                "covering multiple budget tiers in each city."
+            )
         if request.taste_context:
             prompt += (
                 f"\n{request.taste_context}\n"

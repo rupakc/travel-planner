@@ -35,6 +35,13 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
             f"You MUST include all three sections: requirement, vaccinations, customs.\n"
             f"Consider how any held visas or residence permits might modify entry requirements."
         )
+        if request.is_multi_city:
+            prompt += (
+                f"\nIMPORTANT: This is a multi-city trip visiting "
+                f"{', '.join(request.destinations)}. If these cities span multiple "
+                "countries, cover entry requirements for EVERY country visited and "
+                "note each country in the requirement details."
+            )
         self._destination = request.destination
         self._nationality = request.nationality
         return await self.execute(prompt)

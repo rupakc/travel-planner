@@ -100,6 +100,8 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             f"Write rich 2-sentence descriptions. Prefer activities with ratings 4.0+.\n"
             f"Traveler profile: {request.traveler_context}"
         )
+        if request.multi_city_context:
+            prompt += f"\n{request.multi_city_context}"
         if request.taste_context:
             prompt += (
                 f"\n{request.taste_context}\n"

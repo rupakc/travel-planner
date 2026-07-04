@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
-import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin } from 'lucide-react'
+import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, Plus, X } from 'lucide-react'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
@@ -116,6 +116,8 @@ export default function SearchPage() {
     adults: 1, children: 0, seniors: 0, infants: 0,
     accessibility_needs: [],
   })
+  // Multi-city: up to 3 additional cities after the primary destination
+  const [extraStops, setExtraStops] = useState([])
 
   // Pre-fill from saved preferences
   useEffect(() => {
@@ -151,10 +153,12 @@ export default function SearchPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
     const totalTravelers = Math.max(1, form.adults + form.children + form.seniors + form.infants)
+    const stops = extraStops.map(s => s.trim()).filter(Boolean)
     const searchData = {
       ...form,
       num_travelers: totalTravelers,
       budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
+      destinations: stops.length ? [form.destination, ...stops] : null,
     }
 
     // Two-way binding: sync search values back to preferences
@@ -177,6 +181,7 @@ export default function SearchPage() {
       destination: form.destination,
       num_interests: form.interests.length,
       num_travelers: totalTravelers,
+      num_cities: 1 + stops.length,
     })
     setPendingSearchData(searchData)
   }
@@ -257,6 +262,40 @@ export default function SearchPage() {
                 placeholder="City or airport…"
                 required
               />
+            </div>
+
+            {/* Multi-city stops */}
+            <div className="space-y-3">
+              {extraStops.map((stop, i) => (
+                <div key={i} className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <AirportSearch
+                      label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Stop {i + 2}</span>}
+                      value={stop}
+                      onChange={v => setExtraStops(stops => stops.map((s, j) => (j === i ? v : s)))}
+                      placeholder="Next city…"
+                      required
+                    />
+                  </div>
+                  <button type="button" title="Remove this stop"
+                    onClick={() => setExtraStops(stops => stops.filter((_, j) => j !== i))}
+                    className="mb-1 p-2.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+              {extraStops.length < 3 && (
+                <button type="button"
+                  onClick={() => setExtraStops(stops => [...stops, ''])}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
+                  <Plus size={14} /> Add a stop (multi-city)
+                </button>
+              )}
+              {extraStops.length > 0 && (
+                <p className="text-xs text-gray-400">
+                  We'll optimise the city order, split nights between cities and plan inter-city travel automatically.
+                </p>
+              )}
             </div>
 
             {/* Dates */}

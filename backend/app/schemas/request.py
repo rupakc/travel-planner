@@ -75,6 +75,29 @@ class TravelSearchRequest(BaseModel):
     destination_iata: str | None = Field(None, exclude=True)
 
     @property
+    def is_multi_city(self) -> bool:
+        return bool(self.destinations and len(self.destinations) > 1)
+
+    @property
+    def destination_label(self) -> str:
+        """'Paris → Rome → Barcelona' for multi-city, else the destination."""
+        if self.is_multi_city:
+            return " → ".join(self.destinations)
+        return self.destination
+
+    @property
+    def multi_city_context(self) -> str | None:
+        """Prompt snippet describing the multi-city scope, or None."""
+        if not self.is_multi_city:
+            return None
+        return (
+            f"This is a MULTI-CITY trip covering, in order: "
+            f"{', '.join(self.destinations)}. "
+            "Cover ALL of these cities in the results and add a 'city' field "
+            "to every result so it can be grouped by city."
+        )
+
+    @property
     def traveler_context(self) -> str:
         parts = []
         if self.adults:
