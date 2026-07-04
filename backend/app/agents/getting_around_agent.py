@@ -20,8 +20,9 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
         prompt = (
             f"Find all public and private transportation options for getting around {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Trip duration: {nights} nights\n"
-            f"Number of travelers: {request.num_travelers}\n"
+            f"Travelers: {request.traveler_context}\n"
             f"Budget: {'$' + str(int(request.budget_usd)) if request.budget_usd else 'flexible'}\n"
+            f"If the group includes children, infants, seniors or accessibility needs, note child fares, stroller/wheelchair access and elevator availability in the relevant options' tips.\n"
             f"Cover both intra-city transit AND inter-city travel within {request.destination}'s country.\n"
             f"Return 10-18 transportation options. Include intra-city first, then inter-city.\n"
             f"Every option must have: name, type, scope, description, coverage, price_info, operating_hours, tips, booking_url.\n"

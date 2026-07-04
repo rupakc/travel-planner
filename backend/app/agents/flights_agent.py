@@ -71,9 +71,15 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
             prompt += "Return date: N/A (one-way)\n"
 
         prompt += (
-            f"Number of travelers: {request.num_travelers}\n"
+            f"Travelers: {request.traveler_context}\n"
             f"Budget: {'$' + str(int(request.budget_usd)) + ' total' if request.budget_usd else 'flexible'}\n"
         )
+        if request.children or request.infants:
+            prompt += (
+                "Note: the group includes young travelers — infants (0-4) usually "
+                "fly at ~10% of adult fare on laps, children (5-17) at child fare. "
+                "price_usd remains the ADULT per-person fare.\n"
+            )
 
         if is_round_trip:
             prompt += (

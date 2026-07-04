@@ -4,6 +4,15 @@ import json
 
 from .database import get_connection
 
+# Traveler-composition columns added after initial release (ALTER migrations)
+_COMPOSITION_COLUMNS = (
+    ("adults", "INTEGER DEFAULT 1"),
+    ("children", "INTEGER DEFAULT 0"),
+    ("seniors", "INTEGER DEFAULT 0"),
+    ("infants", "INTEGER DEFAULT 0"),
+    ("accessibility_needs", "TEXT DEFAULT '[]'"),
+)
+
 
 def create_preferences_table() -> None:
     with get_connection() as conn:
@@ -20,12 +29,17 @@ def create_preferences_table() -> None:
                 updated_at         TEXT DEFAULT (datetime('now'))
             );
         """)
-        try:
+        cols = {
+            row["name"]
+            for row in conn.execute("PRAGMA table_info(preferences)").fetchall()
+        }
+        if "current_residence" not in cols:
             conn.execute(
                 "ALTER TABLE preferences ADD COLUMN current_residence TEXT DEFAULT ''"
             )
-        except Exception:
-            pass
+        for name, decl in _COMPOSITION_COLUMNS:
+            if name not in cols:
+                conn.execute(f"ALTER TABLE preferences ADD COLUMN {name} {decl}")  # nosec B608
 
 
 DEFAULT_PREFS = {
@@ -36,6 +50,11 @@ DEFAULT_PREFS = {
     "existing_visas": [],
     "interests": [],
     "num_travelers": 1,
+    "adults": 1,
+    "children": 0,
+    "seniors": 0,
+    "infants": 0,
+    "accessibility_needs": [],
 }
 
 
@@ -44,6 +63,7 @@ def _row_to_dict(row) -> dict:
     d["residence_permits"] = json.loads(d["residence_permits"])
     d["existing_visas"] = json.loads(d["existing_visas"])
     d["interests"] = json.loads(d["interests"])
+    d["accessibility_needs"] = json.loads(d.get("accessibility_needs") or "[]")
     return d
 
 
@@ -61,17 +81,23 @@ def save_preferences(username: str, prefs: dict) -> dict:
     with get_connection() as conn:
         conn.execute(
             """INSERT INTO preferences (username, budget_category, nationality, current_residence,
-               residence_permits, existing_visas, interests, num_travelers, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+               residence_permits, existing_visas, interests, num_travelers,
+               adults, children, seniors, infants, accessibility_needs, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                ON CONFLICT(username) DO UPDATE SET
-                   budget_category   = excluded.budget_category,
-                   nationality       = excluded.nationality,
-                   current_residence = excluded.current_residence,
-                   residence_permits = excluded.residence_permits,
-                   existing_visas    = excluded.existing_visas,
-                   interests         = excluded.interests,
-                   num_travelers     = excluded.num_travelers,
-                   updated_at        = datetime('now')
+                   budget_category     = excluded.budget_category,
+                   nationality         = excluded.nationality,
+                   current_residence   = excluded.current_residence,
+                   residence_permits   = excluded.residence_permits,
+                   existing_visas      = excluded.existing_visas,
+                   interests           = excluded.interests,
+                   num_travelers       = excluded.num_travelers,
+                   adults              = excluded.adults,
+                   children            = excluded.children,
+                   seniors             = excluded.seniors,
+                   infants             = excluded.infants,
+                   accessibility_needs = excluded.accessibility_needs,
+                   updated_at          = datetime('now')
             """,
             (
                 username,
@@ -82,6 +108,11 @@ def save_preferences(username: str, prefs: dict) -> dict:
                 json.dumps(prefs.get("existing_visas", [])),
                 json.dumps(prefs.get("interests", [])),
                 prefs.get("num_travelers", 1),
+                prefs.get("adults", 1),
+                prefs.get("children", 0),
+                prefs.get("seniors", 0),
+                prefs.get("infants", 0),
+                json.dumps(prefs.get("accessibility_needs", [])),
             ),
         )
     return get_preferences(username)

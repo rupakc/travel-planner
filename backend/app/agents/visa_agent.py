@@ -31,9 +31,13 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
             f"Destination: {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan')\n"
             f"Intended stay: {nights} days (from {request.departure_date})\n"
             f"Residence permits held: {permits_str}\n"
-            f"Existing visas held: {visas_str}\n\n"
+            f"Existing visas held: {visas_str}\n"
+            f"Travelers: {request.traveler_context}\n\n"
             f"You MUST include all three sections: requirement, vaccinations, customs.\n"
-            f"Consider how any held visas or residence permits might modify entry requirements."
+            f"Consider how any held visas or residence permits might modify entry requirements.\n"
+            f"If the group includes minors, note any extra documents commonly required "
+            f"(birth certificates, parental consent letters for children travelling "
+            f"with one parent)."
         )
         if request.is_multi_city:
             prompt += (

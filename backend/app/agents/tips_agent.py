@@ -15,8 +15,10 @@ class TipsAgent(ToolAgent, _URLSearchMixin):
         prompt = (
             f"Provide essential travel tips for visiting {request.destination} (identify the country and use the full location, e.g. 'Tokyo, Japan').\n"
             f"Traveler nationality: {request.nationality}\n"
+            f"Travelers: {request.traveler_context}\n"
             f"Travel dates: {request.departure_date} to {request.return_date or 'N/A'}\n"
             f"Return 18-25 tips covering safety, culture, money, health, transport, scam, tourist_trap, food, legal.\n"
+            f"Tailor tips to the traveler group — e.g. child/stroller practicalities when children are present, mobility and rest-stop advice for seniors, step-free access when accessibility needs are listed.\n"
             f"Sort by severity: danger first, then warning, then info.\n"
             f"Include at least 4-5 tips about tourist traps and scams.\n"
             f"Every tip MUST have a real source_url (government advisory, tourism board, WHO, CDC)."

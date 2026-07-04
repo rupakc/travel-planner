@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import NationalitySearch from '../components/ui/NationalitySearch'
+import TravelerPanel from '../components/ui/TravelerPanel'
 import { track } from '../utils/analytics'
 import TagInput from '../components/ui/TagInput'
 import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Heart, MapPin, Sparkles, Trash2 } from 'lucide-react'
@@ -120,6 +121,8 @@ export default function PreferencesPage() {
         budget_category: 'medium', nationality: '', current_residence: '',
         residence_permits: [], existing_visas: [],
         interests: [], num_travelers: 1,
+        adults: 1, children: 0, seniors: 0, infants: 0,
+        accessibility_needs: [],
       }))
       .finally(() => setLoading(false))
   }, [token])
@@ -127,10 +130,12 @@ export default function PreferencesPage() {
   const handleSave = async () => {
     setSaving(true); setSaveMsg('')
     try {
+      const totalTravelers = Math.max(1,
+        (prefs.adults || 0) + (prefs.children || 0) + (prefs.seniors || 0) + (prefs.infants || 0))
       const res = await fetch('/api/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(prefs),
+        body: JSON.stringify({ ...prefs, num_travelers: totalTravelers }),
       })
       if (res.ok) {
         refreshPreferences()
@@ -223,14 +228,9 @@ export default function PreferencesPage() {
           <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Travel Style</p>
 
           <div>
-            <label className={labelClass}><span className="flex items-center gap-1.5"><Users size={14} /> Default Number of Travelers</span></label>
-            <div className="inline-flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
-              <button type="button" onClick={() => setPrefs(p => ({ ...p, num_travelers: Math.max(1, p.num_travelers - 1) }))}
-                className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg leading-none">−</button>
-              <span className="flex-1 text-center text-sm font-medium py-2.5">{prefs.num_travelers}</span>
-              <button type="button" onClick={() => setPrefs(p => ({ ...p, num_travelers: Math.min(20, p.num_travelers + 1) }))}
-                className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg leading-none">+</button>
-            </div>
+            <label className={labelClass}><span className="flex items-center gap-1.5"><Users size={14} /> Default Travel Group</span></label>
+            <TravelerPanel form={prefs} setForm={setPrefs} />
+            <p className="text-xs text-gray-400 mt-1">Adults, children, seniors, infants and accessibility needs — pre-fills every search</p>
           </div>
 
           <div>
