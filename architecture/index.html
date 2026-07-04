@@ -306,6 +306,82 @@
   
   
     <li class="md-tabs__item">
+      <a href="../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../Frontend/" class="md-tabs__link">
         
   
@@ -669,6 +745,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#multi-city-execution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-city execution model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chat-design-knowledge-only-answers-agents-as-last-resort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chat design: knowledge-only answers, agents as last resort
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -692,6 +790,114 @@
     
   
     Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
   
 
     
@@ -1059,6 +1265,19 @@ Separate endpoint (not part of search stream)
 <p><strong>Web Worker for SSE:</strong> The alternative — parsing SSE on the main thread — causes frame drops on low-end devices during peak streaming. The worker approach is a small amount of complexity for a meaningful UX improvement.</p>
 <p><strong>Deferred agent pattern:</strong> PricingAdvisorAgent and PackingListAgent need data from other agents before they can run. Rather than waiting for all of Phase 1 to finish, they trigger as soon as their inputs are available, hiding their latency behind the remaining Phase 1 agents.</p>
 <p><strong>Static-backed agent suppression:</strong> For agents with Phase 0 static data (visa, sim, tips, getting_around, forex, emergency_card), an AI failure is silently suppressed. The user already has correct static data on screen; replacing it with an error would be a regression. Both the orchestrator (backend) and the SSE event handler (frontend) enforce this invariant independently.</p>
+<hr />
+<h2 id="multi-city-execution-model">Multi-city execution model</h2>
+<p>Multi-city trips (<code>destinations: ["Paris", "Rome", "Barcelona"]</code>) reuse the same three-phase pipeline with three derived structures on <code>TravelSearchRequest</code>:</p>
+<ul>
+<li><strong><code>city_stays</code></strong> — trip days split proportionally across cities (<code>round(i × days / n)</code> boundaries, exact date coverage for any split). Each stay's <code>end_date</code> is the move-on day.</li>
+<li><strong><code>flight_legs</code></strong> — origin → city₁ on the departure date, one inter-city hop per move-on day, last city → origin on the return date.</li>
+<li><strong><code>multi_city_context</code></strong> — a prompt block instructing every agent to cover all cities and tag each result with a <code>city</code> field.</li>
+</ul>
+<p>Flights run <strong>one parallel SerpAPI one-way search per leg</strong> (20 s timeout + one retry); legs that still come back empty are AI-filled with estimates so the UI never shows an empty leg. Weather forecasts each stay only for its own dates. Specialist prompts carry per-city minimum quotas (hotels ≥ 3, activities ≥ 5, places 4–6, events 2–4 per city).</p>
+<p><strong>Journey order is enforced twice</strong>: the backend sorts flight legs and weather days into the user's stop order, and the frontend stable-sorts every city-tagged section list by the entered stop order the moment results arrive (<code>orderSectionByCity</code>). The itinerary agent is explicitly forbidden from reordering the route. See <a href="../Multi-City-Trips/">Multi-City Trips</a>.</p>
+<h2 id="chat-design-knowledge-only-answers-agents-as-last-resort">Chat design: knowledge-only answers, agents as last resort</h2>
+<p>Chat topic queries are answered purely from the model's own knowledge and the SSE stream closes as soon as the answer ends. Specialist agents run <strong>only when the model fails to answer at all</strong> (stream error, empty response, or explicit refusal detected by <code>_NON_ANSWER_RE</code>). Structured planning requests ("plan a week in Lisbon") still run the full agent pipeline and stream section results into the conversation, with refinement diffing re-running only the agents whose inputs changed. See <a href="../Chat-Assistant/">Chat Assistant</a>.</p>
+<p><strong>Why:</strong> running agents for every chat question made responses feel slow and heavy; a background-verification design held the stream open for up to ~40 s after the answer. Knowledge-only answering keeps chat conversational while the Search page remains the live-data surface.</p>
 
 
 

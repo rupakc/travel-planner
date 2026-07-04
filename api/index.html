@@ -304,6 +304,82 @@
   
   
     <li class="md-tabs__item">
+      <a href="../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../Frontend/" class="md-tabs__link">
         
   
@@ -546,6 +622,114 @@
     
   
     Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
   
 
     
@@ -1004,6 +1188,84 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#taste-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Taste Graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Taste Graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apitaste-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/taste-profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analytics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apianalyticsevents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/analytics/events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Data
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1562,6 +1824,91 @@ data: {&quot;section&quot;: &quot;itinerary&quot;, &quot;data&quot;: {&quot;days
 <p>Deletes a user. Returns <code>204 No Content</code>.</p>
 <p><strong>Errors</strong>: <code>404</code> user not found, <code>403</code> cannot delete yourself.</p>
 <hr />
+<h2 id="section-endpoints">Section Endpoints</h2>
+<p>Each results section is also exposed as a standalone endpoint (same request body as <code>/api/search</code>, plus per-domain filters):</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/flights</code></td>
+<td>Flight options (supports stop/price/time filters; multi-city returns ordered <code>legs</code>)</td>
+</tr>
+<tr>
+<td><code>POST /api/hotels</code></td>
+<td>Hotels across four budget tiers (bed/price/wifi/distance filters)</td>
+</tr>
+<tr>
+<td><code>POST /api/activities</code></td>
+<td>Interest-ranked activities (category/price/date/rating filters)</td>
+</tr>
+<tr>
+<td><code>POST /api/visa</code></td>
+<td>Entry requirements for the traveler's nationality</td>
+</tr>
+<tr>
+<td><code>POST /api/sim</code></td>
+<td>SIM/eSIM plans</td>
+</tr>
+<tr>
+<td><code>POST /api/tips</code></td>
+<td>Safety, culture &amp; practical tips</td>
+</tr>
+<tr>
+<td><code>POST /api/getting-around</code></td>
+<td>Local + inter-city transportation options</td>
+</tr>
+<tr>
+<td><code>POST /api/forex</code></td>
+<td>Currency &amp; money guidance</td>
+</tr>
+<tr>
+<td><code>POST /api/itinerary</code></td>
+<td>Day-by-day itinerary</td>
+</tr>
+<tr>
+<td><code>POST /api/events</code></td>
+<td>What's On — festivals, concerts, exhibitions during the trip</td>
+</tr>
+<tr>
+<td><code>POST /api/layover</code></td>
+<td>Layover excursion plan for long connections</td>
+</tr>
+<tr>
+<td><code>POST /api/stress-test</code></td>
+<td>Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="taste-graph">Taste Graph</h2>
+<h3 id="get-apitaste-profile"><code>GET /api/taste-profile</code></h3>
+<p>Returns the authenticated user's learned taste profile — signals mined from saved-plan selections (flight style, hotel tier, activity categories, budget band) plus the natural-language summary injected into agent prompts. <code>DELETE /api/taste-profile</code> resets it.</p>
+<h2 id="analytics">Analytics</h2>
+<h3 id="post-apianalyticsevents"><code>POST /api/analytics/events</code></h3>
+<p>Ingests batched client-side usage events (up to 50 per call). Returns <code>204</code>.</p>
+<h2 id="reference-data">Reference Data</h2>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/airports?q=</code></td>
+<td>Airport/city typeahead search</td>
+</tr>
+<tr>
+<td><code>GET /api/nationalities?q=</code></td>
+<td>Nationality typeahead search</td>
+</tr>
+</tbody>
+</table>
 <h2 id="health">Health</h2>
 <h3 id="get-health"><code>GET /health</code></h3>
 <p>No authentication required. Returns <code>200 OK</code> when the backend is running.</p>

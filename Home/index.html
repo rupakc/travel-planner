@@ -300,6 +300,82 @@
   
   
     <li class="md-tabs__item">
+      <a href="../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../Frontend/" class="md-tabs__link">
         
   
@@ -559,6 +635,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Frontend/" class="md-nav__link">
         
   
@@ -689,22 +873,25 @@
 <p>The core idea: instead of bouncing between a dozen tabs to piece together visa rules, SIM card options, flights, hotels, things to do, and a day-by-day schedule, you describe your trip once and a coordinated team of AI agents assembles it for you in under 30 seconds.</p>
 <hr />
 <h2 id="whats-in-the-app-current-feature-set">What's in the app (current feature set)</h2>
-<h3 id="search-results-13-sections">Search results (13 sections)</h3>
+<h3 id="search-results-15-sections">Search results (15 sections)</h3>
 <ol>
-<li><strong>Flights</strong> — routes, airlines, price ranges, booking advice</li>
-<li><strong>Weather</strong> — forecast for travel dates</li>
-<li><strong>Hotels</strong> — neighbourhoods and accommodation tiers</li>
-<li><strong>Activities</strong> — things to do, scored and sorted by interest relevance</li>
-<li><strong>Places to See</strong> — must-visit landmarks from live Google data + Claude synthesis</li>
-<li><strong>Visa</strong> — entry requirements for the traveller's nationality</li>
+<li><strong>Flights</strong> — live prices via Google Flights (SerpAPI) with AI fallback; <strong>per-leg search on multi-city trips</strong> with one pick per leg</li>
+<li><strong>Weather</strong> — day-by-day forecast for the travel dates; per-stay forecasts grouped by city on multi-city trips</li>
+<li><strong>Hotels</strong> — neighbourhoods and accommodation across four budget tiers (≥ 3 per city on multi-city)</li>
+<li><strong>Activities</strong> — things to do, scored and sorted by interest relevance (≥ 5 per city)</li>
+<li><strong>Places to See</strong> — must-visit landmarks from live Google data + Claude synthesis (4–6 per city)</li>
+<li><strong>What's On (Events)</strong> — festivals, concerts, exhibitions during the trip dates, with disruption flags</li>
+<li><strong>Visa</strong> — entry requirements for the traveller's nationality (every country on multi-country routes)</li>
 <li><strong>SIM Cards</strong> — local carrier options and eSIM availability</li>
 <li><strong>Travel Tips</strong> — etiquette, safety, health, and practical advice</li>
 <li><strong>Safety &amp; Emergency Card</strong> — emergency numbers, embassy, hospitals, local phrases, local laws</li>
-<li><strong>Getting Around</strong> — local and intercity transport</li>
+<li><strong>Getting Around</strong> — local and intercity transport (per-city + inter-city hops on multi-city)</li>
 <li><strong>Forex</strong> — currency, exchange rates, payment tips</li>
-<li><strong>Itinerary</strong> — day-by-day schedule (Cards view or Timeline view)</li>
+<li><strong>Itinerary</strong> — day-by-day schedule (Cards or Timeline view), always in the user's stop order</li>
+<li><strong>Itinerary Health Check</strong> — adversarial stress-test of the finished plan (pacing, timing, visa, weather, budget)</li>
 <li><strong>Packing List</strong> — personalised checklist saved to My Plan</li>
 </ol>
+<p>Every result on a multi-city trip carries a 📍 city label, and all sections follow the exact stop order entered.</p>
 <h3 id="instant-overlays-phase-0-appear-within-1-second">Instant overlays (Phase 0, appear within 1 second)</h3>
 <ul>
 <li><strong>Travel Confidence Score</strong> — safety / visa ease / budget / infrastructure, shown as a banner</li>
@@ -720,9 +907,20 @@
 </ul>
 <h3 id="chat">Chat</h3>
 <ul>
+<li><strong>Knowledge-only answers</strong> — topic questions are answered instantly from the model's own expertise; specialist agents run only if the model fails to answer at all</li>
+<li>Full planning pipeline on request, with live per-section progress, targeted clarifying questions (slot memory), suggestion chips, and proactive weather/event heads-ups</li>
+<li><strong>Refinement diffing</strong> — "make it cheaper" re-runs only the affected agents</li>
 <li>Persistent conversational interface — survives tab switches, continues mid-stream</li>
-<li>Auto-triggers the full agent pipeline when the message is trip-planning related</li>
-<li>Chat map aligned visually with the Results page itinerary map</li>
+</ul>
+<h3 id="personalization">Personalization</h3>
+<ul>
+<li><strong>Taste Graph</strong> — learns travel style from saved-plan selections and ranks matching options higher on every search</li>
+<li>Serendipity dial (classics ↔ hidden gems), pace (relaxed/balanced/packed), traveler mix, accessibility needs</li>
+<li>Two-way preference binding between the Search form and saved Preferences</li>
+</ul>
+<h3 id="sharing">Sharing</h3>
+<ul>
+<li><strong>Shareable trip card</strong> — public share page per saved plan with the complete trip, downloadable as a full-page PNG</li>
 </ul>
 <h3 id="accounts-and-admin">Accounts and admin</h3>
 <ul>
@@ -754,7 +952,23 @@ The itinerary agent runs once activities and hotels are both ready. Two deferred
 <tbody>
 <tr>
 <td><a href="Agent-System">Agent System</a></td>
-<td>All 15 agents, BaseAgent, <code>.agents/*.md</code> format, retry logic, JSON parsing, relevance scoring</td>
+<td>All 21 agents, BaseAgent, <code>.agents/*.md</code> format, retry logic, JSON parsing, relevance scoring</td>
+</tr>
+<tr>
+<td><a href="Multi-City-Trips">Multi-City Trips</a></td>
+<td>Per-leg flight search, day allocation, per-city coverage quotas, stop-order guarantees</td>
+</tr>
+<tr>
+<td><a href="Chat-Assistant">Chat Assistant</a></td>
+<td>Knowledge-only answering, planning pipeline, refinement diffing, session context</td>
+</tr>
+<tr>
+<td><a href="Personalization">Personalization</a></td>
+<td>Taste Graph, serendipity dial, pace, preferences</td>
+</tr>
+<tr>
+<td><a href="Sharing-and-Plans">Sharing and Plans</a></td>
+<td>My Plan drawer, saved plans, shareable full-page PNG card</td>
 </tr>
 <tr>
 <td><a href="Setup-and-Installation">Setup and Installation</a></td>

@@ -300,6 +300,82 @@
   
   
     <li class="md-tabs__item">
+      <a href="../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../Frontend/" class="md-tabs__link">
         
   
@@ -540,6 +616,114 @@
     
   
     Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
   
 
     
@@ -915,6 +1099,44 @@ You are a specialist travel flights analyst...
 <li>Add the SSE event type to <code>AGENT_CONFIG</code> and <code>AGENT_ORDER</code> in <code>ResultsPage.jsx</code></li>
 <li>Write a section component to render the data</li>
 </ol>
+<hr />
+<h2 id="multi-city-behaviour">Multi-city behaviour</h2>
+<p>When <code>request.is_multi_city</code> is true, agents change behaviour:</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Multi-city behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flights</td>
+<td>One search per leg via <code>serp_flights.search_multi_city</code> (parallel one-ways, retry, AI fill for empty legs); results grouped into ordered <code>legs</code></td>
+</tr>
+<tr>
+<td>weather</td>
+<td>Per-stay forecasts (<code>city_stays</code>); LLM fallback parses nested per-city output, assigns cities authoritatively by date range, sorts by stop order</td>
+</tr>
+<tr>
+<td>hotels / activities / places / events</td>
+<td>Mandatory per-city quotas; every result tagged with <code>city</code></td>
+</tr>
+<tr>
+<td>getting_around</td>
+<td>Intra-city options per city plus inter-city hops (train/bus/flight) tagged with a <code>city</code> route label</td>
+</tr>
+<tr>
+<td>visa</td>
+<td>Evaluates every country on the route</td>
+</tr>
+<tr>
+<td>itinerary</td>
+<td>Allocates days per <code>city_stays</code> and visits cities in exactly the user's order — never reorders</td>
+</tr>
+</tbody>
+</table>
+<p>The chat assistant (<code>chat_agent.py</code>) is documented separately in <a href="../Chat-Assistant/">Chat Assistant</a>: topic queries are answered from model knowledge only, with specialists as a failure-only fallback; planning requests stream the full pipeline.</p>
 
 
 

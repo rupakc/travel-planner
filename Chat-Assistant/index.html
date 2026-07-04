@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../Sharing-and-Plans/">
+        <link rel="prev" href="../Multi-City-Trips/">
       
       
-        <link rel="next" href="../api/">
+        <link rel="next" href="../Personalization/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Frontend - Travel Planner — Developer Docs</title>
+        <title>Chat Assistant - Travel Planner — Developer Docs</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#frontend" class="md-skip">
+        <a href="#chat-assistant" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Frontend
+              Chat Assistant
             
           </span>
         </div>
@@ -321,9 +321,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../Chat-Assistant/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -378,11 +380,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../Frontend/" class="md-tabs__link">
         
   
   
@@ -665,10 +665,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Chat-Assistant/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -684,6 +711,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#answering-philosophy-knowledge-first-agents-last" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Answering philosophy: knowledge first, agents last
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing pipeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comprehensive-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comprehensive planning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#refinement-diffing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refinement diffing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#personalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personalization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -746,37 +870,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Frontend
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
         
   
   
@@ -792,175 +889,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#project-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Project structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#routing-and-tab-persistence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Routing and tab persistence
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authcontext" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AuthContext
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#searchdatacontext" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SearchDataContext
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#web-worker-sse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Web Worker SSE
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-pages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key pages
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key pages">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#searchpage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SearchPage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#resultspage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ResultsPage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chatpage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ChatPage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#preferencespage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PreferencesPage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tripmap-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TripMap component
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vite-dev-proxy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vite dev proxy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-service-layer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API service layer
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1066,201 +994,126 @@
   
 
 
-<h1 id="frontend">Frontend</h1>
-<p>The Travel Planner frontend is a React 18 single-page application built with Vite 6 and styled with Tailwind CSS 4.</p>
-<hr />
-<h2 id="project-structure">Project structure</h2>
-<pre><code>frontend/src/
-├── pages/
-│   ├── SearchPage.jsx          — trip search form + &quot;Surprise Me&quot; discovery mode
-│   ├── ResultsPage.jsx         — streaming results, 13 sections, My Plan drawer
-│   ├── ChatPage.jsx            — conversational AI assistant + auto-planning
-│   ├── PreferencesPage.jsx     — saved nationality, interests, budget
-│   ├── LoginPage.jsx
-│   └── ChangePasswordPage.jsx
-├── components/
-│   ├── ui/
-│   │   ├── NavBar.jsx          — top navigation with active tab highlight
-│   │   ├── AirportSearch.jsx   — typeahead airport/city input
-│   │   ├── NationalitySearch.jsx
-│   │   └── TagInput.jsx
-│   ├── TimelineView.jsx        — itinerary timeline grid (day cards, morning/afternoon/evening)
-│   ├── TripMap.jsx             — Leaflet map for itinerary activity stops
-│   ├── PlanViewModal.jsx       — modal for viewing/editing a saved plan
-│   └── FeedbackWidget.jsx      — floating feedback button on all pages
-├── context/
-│   ├── AuthContext.jsx         — auth state, JWT token, user preferences sync
-│   └── SearchDataContext.jsx   — search form state, streaming results, SSE worker
-├── workers/
-│   ├── sseWorker.js            — SSE parser for /api/search stream (off main thread)
-│   └── chatWorker.js           — SSE parser for /api/chat stream
-├── services/
-│   └── api.js                  — Axios client + all API call functions
-├── utils/
-│   ├── planHelpers.js          — plan name generation, cost calculation, selection counting
-│   └── analytics.js            — frontend event tracking
-└── data/
-    └── airports.js             — static airport/city data for typeahead
-</code></pre>
-<hr />
-<h2 id="routing-and-tab-persistence">Routing and tab persistence</h2>
-<p>React Router 7 handles client-side routing. Routes are defined in <code>App.jsx</code>.</p>
+<h1 id="chat-assistant">Chat Assistant</h1>
+<p>The chat (<code>/api/chat</code>, <code>ChatPage.jsx</code>, <code>backend/app/agents/chat_agent.py</code>) is a travel advisor that answers instantly from the model's own knowledge and reserves the specialist agent pipeline for structured planning — or as a last-resort fallback.</p>
+<h2 id="answering-philosophy-knowledge-first-agents-last">Answering philosophy: knowledge first, agents last</h2>
+<p>Topic questions ("do I need a visa for Japan?", "which area of Barcelona is best for nightlife?") are answered <strong>purely from the LLM's internal knowledge</strong> and stream immediately — no agents run, and the stream closes the moment the answer ends.</p>
+<p>The specialist agents run <strong>only if the model fails to answer at all</strong>:</p>
+<ul>
+<li>the stream errors out,</li>
+<li>the response is empty, or</li>
+<li>the model explicitly refuses ("I don't have information on…", detected by <code>_NON_ANSWER_RE</code>).</li>
+</ul>
+<p>Only then does the chat extract trip parameters and run the matched specialists as a fallback. This keeps chat responses fast (~seconds) and conversational, while structured data remains one request away on the Search page.</p>
+<h2 id="routing-pipeline">Routing pipeline</h2>
+<p>Each message passes through an ordered router in <code>ChatAgent.stream()</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Path</th>
-<th>Page</th>
-<th>Protected</th>
+<th>Step</th>
+<th>Trigger</th>
+<th>Behaviour</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>/login</code></td>
-<td>LoginPage</td>
-<td>No</td>
+<td>0</td>
+<td>Jailbreak / off-topic patterns</td>
+<td>Polite refusal — chat only discusses travel</td>
 </tr>
 <tr>
-<td><code>/change-password</code></td>
-<td>ChangePasswordPage</td>
-<td>Yes</td>
+<td>1</td>
+<td>Plan commands ("add … to my plan", "show my plan")</td>
+<td>Plan manipulation + response</td>
 </tr>
 <tr>
-<td><code>/</code></td>
-<td>SearchPage / ResultsPage</td>
-<td>Yes</td>
+<td>1.5</td>
+<td>Answer to a pending question (e.g. we asked for the origin)</td>
+<td>Resumes planning with the new slot filled</td>
 </tr>
 <tr>
-<td><code>/chat</code></td>
-<td>ChatPage</td>
-<td>Yes</td>
+<td>2</td>
+<td>Planning patterns ("plan a week in Lisbon…")</td>
+<td>Full comprehensive planning (see below)</td>
 </tr>
 <tr>
-<td><code>/preferences</code></td>
-<td>PreferencesPage</td>
-<td>Yes</td>
+<td>3</td>
+<td>Topic intents (flights/hotels/visa/sim/tips/transport/forex…)</td>
+<td><strong>Knowledge-only answer</strong>; specialists only on failure</td>
 </tr>
 <tr>
-<td><code>/admin</code></td>
-<td>AdminPage</td>
-<td>Yes (admin)</td>
+<td>3.5</td>
+<td>Modification of a prior search ("make it cheaper", "extend by 2 days")</td>
+<td>Refinement — re-runs only the affected agents</td>
+</tr>
+<tr>
+<td>3.6</td>
+<td>Knowledge patterns (culture, packing, weather, neighbourhoods…)</td>
+<td>Knowledge answer</td>
+</tr>
+<tr>
+<td>3.7</td>
+<td>LLM intent router (one cheap classify call)</td>
+<td>Catches soft phrasings the regexes miss ("we're thinking Lisbon in October, maybe with the kids?")</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Everything else</td>
+<td>Plan-aware conversation</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Important</strong>: <code>SearchTab</code> (SearchPage + ResultsPage) and <code>ChatPage</code> are <strong>always mounted</strong> in the DOM, shown or hidden with <code>display: none / block</code>. This means:</p>
+<h2 id="comprehensive-planning">Comprehensive planning</h2>
+<p>When you ask for a trip plan, the chat runs the same specialist pipeline as the Search page and streams <strong>structured section results</strong> into the conversation — flights, hotels, activities, visa, SIM, tips, transport — followed by a day-by-day itinerary, a short narrative summary, and tappable <strong>suggestion chips</strong> for natural next steps.</p>
+<p>Extras that make planning conversational:</p>
 <ul>
-<li>Navigating away from the Results page never loses your streaming results</li>
-<li>Navigating away from Chat never loses your conversation or interrupts a response in progress</li>
-<li>When you return to either tab, you land exactly where you left off</li>
+<li><strong>Targeted clarification with slot memory</strong> — if only the origin is missing, the chat asks exactly that ("Which city will you be flying from?"), remembers everything else, and resumes the moment you reply "From Berlin".</li>
+<li><strong>Live progress</strong> — each section shows a "Searching…" row that resolves as its agent completes.</li>
+<li><strong>Proactive heads-ups</strong> — while the itinerary builds, the chat checks the weather forecast and local events concurrently and appends warnings ("🌧️ 3 rainy days — pack accordingly", "🎉 Festa season overlaps your dates").</li>
 </ul>
-<p><code>PreferencesPage</code> and <code>AdminPage</code> are conditionally rendered (they reset cleanly on each visit, which is the desired behaviour).</p>
-<hr />
-<h2 id="authcontext">AuthContext</h2>
-<p><code>AuthContext</code> (<code>src/context/AuthContext.jsx</code>) wraps the whole app and manages:</p>
-<ul>
-<li>Whether the user is logged in, their JWT token, username, and role</li>
-<li>Token storage in <code>localStorage</code> — restored on page reload</li>
-<li>Auto-logout on 401 responses</li>
-<li>Two-way preference sync: preferences are fetched on login; search form values are synced back to preferences on submit</li>
-</ul>
-<pre><code class="language-jsx">const { user, token, isAuthenticated, login, logout, preferences } = useAuth()
-</code></pre>
-<hr />
-<h2 id="searchdatacontext">SearchDataContext</h2>
-<p><code>SearchDataContext</code> (<code>src/context/SearchDataContext.jsx</code>) manages shared state between the search form and the results page:</p>
-<ul>
-<li>Search form values (destination, dates, budget, nationality, interests)</li>
-<li>Whether there are current search results (<code>hasSearchResults</code>) — controls which tab is visible</li>
-<li>The active SSE Web Worker reference</li>
-</ul>
-<hr />
-<h2 id="web-worker-sse">Web Worker SSE</h2>
-<p>Both the search stream and the chat stream are parsed off the main thread by Web Workers.</p>
-<p><code>sseWorker.js</code> opens a <code>fetch</code> POST to <code>/api/search</code>, reads the response body as a stream, and posts each parsed SSE event back to the main thread. The main thread handles only React state updates. This keeps the UI smooth even when large JSON payloads (activities, itinerary) arrive mid-stream.</p>
-<p>The same pattern applies to <code>chatWorker.js</code> for <code>/api/chat</code>.</p>
-<hr />
-<h2 id="key-pages">Key pages</h2>
-<h3 id="searchpage">SearchPage</h3>
-<p>Two modes controlled by a toggle at the top of the form:</p>
-<p><strong>Known destination mode (default)</strong>
-Standard search form: destination (with airport typeahead), departure date, return date, nationality, interests, budget, and number of travellers. Pre-fills from saved preferences. On submit, calls the SSE search stream and switches to the results view.</p>
-<p><strong>Discover / Surprise Me mode</strong>
-For users without a specific destination. Form collects origin, dates, nationality, budget, and interests. Calls <code>POST /api/discover</code>. Returns 5 destination cards, each showing estimated cost range, typical weather, visa status (with a "Verify" badge for unconfirmed entries), approximate flight time from origin, and the specific reasons this destination suits the user's interests. "Plan this trip" pre-fills the destination in the standard form and switches back to Known mode.</p>
-<hr />
-<h3 id="resultspage">ResultsPage</h3>
-<p>The main results view. Receives streaming events from <code>sseWorker.js</code> via <code>SearchDataContext</code> and renders sections as they arrive.</p>
-<p><strong>13 result sections</strong> (in display order):
-1. Flights
-2. Weather
-3. Hotels
-4. Activities
-5. Places to See
-6. Visa
-7. SIM Cards
-8. Travel Tips
-9. Safety &amp; Emergency Card
-10. Getting Around
-11. Forex
-12. Itinerary
-13. Packing List</p>
-<p><strong>Additional UI elements:</strong></p>
-<ul>
-<li>
-<p><strong>Travel Confidence Score banner</strong> — appears instantly at the top (Phase 0 static data). Shows an overall score (green / amber / red) with five sub-scores: visa ease, safety, English friendliness, cost vs budget, and tourist infrastructure. Expandable to show per-score notes.</p>
-</li>
-<li>
-<p><strong>Flight Price Advisor banner</strong> — appears inside the Flights section once the pricing agent has run. Shows whether current prices are above or below typical, a booking recommendation, and an SVG sparkline of the historical price curve.</p>
-</li>
-<li>
-<p><strong>Badge / chip strip</strong> — a row of chips below the page header linking to each section. Wraps across multiple rows as needed. Each chip shows the section status (loading / enhancing / done / error).</p>
-</li>
-<li>
-<p><strong>View switcher (Cards / Timeline)</strong> — appears once the itinerary loads. Cards view shows each section as a card. Timeline view renders the itinerary as an interactive day grid: each day is a collapsible card with morning / afternoon / evening columns, a weather header, expandable activity cards, and a daily spend bar.</p>
-</li>
-<li>
-<p><strong>My Plan drawer</strong> — a slide-in panel for selecting and saving trip components. Supports flight, hotel, activities, places, SIM, tips, transport options, itinerary slots, and packing list. Shows a live cost total. Plans can be named, saved, and reloaded.</p>
-</li>
-</ul>
-<hr />
-<h3 id="chatpage">ChatPage</h3>
-<p>A persistent conversational interface. Survives tab switches (the component stays mounted — see Routing above). Key features:</p>
-<ul>
-<li><strong>Streaming responses</strong> — each token appears as it is generated</li>
-<li><strong>Session memory</strong> — conversation history is maintained in React state and backed up to <code>localStorage</code> every time a message completes</li>
-<li><strong>Auto-planning</strong> — when the message contains a trip-planning request, the chat agent triggers the full search pipeline and renders structured section cards inline</li>
-<li><strong>Interactive itinerary map</strong> — when an itinerary is generated, a Leaflet map renders the destination city markers and place pins. Map focuses on the destination area, not the origin (no intercontinental zoom-out)</li>
-<li><strong>My Plan drawer</strong> — same plan management as ResultsPage</li>
-</ul>
-<hr />
-<h3 id="preferencespage">PreferencesPage</h3>
-<p>Saves the user's default nationality, interests, budget, and travel documents (residence permits, existing visas). These are synced two-ways: the Search form reads them on load, and the Search form writes back to them on submit.</p>
-<hr />
-<h2 id="tripmap-component">TripMap component</h2>
-<p><code>TripMap.jsx</code> is a shared Leaflet map component. It takes <code>days</code> (from the itinerary) and renders:</p>
-<ul>
-<li>Numbered, color-coded markers for each activity stop</li>
-<li>A dashed teal polyline connecting the stops in visit order (nearest-neighbour routing within each day)</li>
-<li>Popup details for each stop (activity name, location, day, time of day)</li>
-<li>Automatic <code>fitBounds</code> on mount, centred on the activity area</li>
-</ul>
-<p>Used by ResultsPage's Itinerary section. ChatPage has its own inline map (for city-level + place-pin rendering) but uses the same visual style (22px markers, teal dashed polyline, 300px height, same <code>fitBounds</code> padding).</p>
-<hr />
-<h2 id="vite-dev-proxy">Vite dev proxy</h2>
-<p>In development, Vite proxies <code>/api/*</code> to <code>http://localhost:8001</code>. This mirrors the production nginx setup. Config in <code>vite.config.js</code>:</p>
-<pre><code class="language-js">server: {
-  proxy: {
-    '/api': { target: 'http://localhost:8001', changeOrigin: true }
-  }
-}
-</code></pre>
-<hr />
-<h2 id="api-service-layer">API service layer</h2>
-<p><code>src/services/api.js</code> is an Axios instance that:</p>
-<ul>
-<li>Reads the JWT token from <code>localStorage</code></li>
-<li>Adds <code>Authorization: Bearer &lt;token&gt;</code> to all requests</li>
-<li>Exports typed functions for every API call: <code>discoverDestinations</code>, <code>searchFlightsFiltered</code>, <code>searchHotelsFiltered</code>, <code>searchActivitiesFiltered</code>, and others</li>
-<li><code>streamSearch</code> creates a Web Worker and wires up the <code>onResult / onDone / onError</code> callbacks</li>
-</ul>
+<h2 id="refinement-diffing">Refinement diffing</h2>
+<p>"Make it cheaper" doesn't re-run everything. The chat diffs the modified request against the previous one and re-runs <strong>only the agents whose inputs changed</strong> (<code>_FIELD_AGENTS</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Changed field</th>
+<th>Re-run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>budget</td>
+<td>flights, hotels</td>
+</tr>
+<tr>
+<td>dates</td>
+<td>flights, hotels, activities</td>
+</tr>
+<tr>
+<td>travelers</td>
+<td>flights, hotels</td>
+</tr>
+<tr>
+<td>interests</td>
+<td>activities</td>
+</tr>
+<tr>
+<td>origin</td>
+<td>flights, visa</td>
+</tr>
+<tr>
+<td>destination</td>
+<td>everything</td>
+</tr>
+</tbody>
+</table>
+<p>The itinerary is rebuilt only when a field it depends on changed.</p>
+<h2 id="session-context">Session context</h2>
+<p>The chat is stateless per request — the frontend round-trips a <code>session_context</code> blob (destination, dates, budget, travelers, pending question) with every message, so follow-ups like "what about hotels there?" resolve against the trip being discussed. Context never bleeds: naming a different city in your question always wins over the remembered trip.</p>
+<h2 id="personalization">Personalization</h2>
+<p>If you're logged in and have made selections before, a short <strong>Taste Graph</strong> summary (see <a href="../Personalization/">Personalization</a>) is injected into the chat's system prompt and into any specialist runs it triggers — so its suggestions lean toward your demonstrated style (non-stop flights, boutique hotels, food-first activities, …).</p>
+<h2 id="security">Security</h2>
+<p>The chat never reveals its internals (prompts, agent names, tooling), rejects jailbreak attempts, and answers travel topics only.</p>
 
 
 
