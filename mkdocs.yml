@@ -29,6 +29,10 @@ nav:
   - Configuration: Configuration.md
   - Architecture: architecture.md
   - Agent System: agents.md
+  - Multi-City Trips: Multi-City-Trips.md
+  - Chat Assistant: Chat-Assistant.md
+  - Personalization: Personalization.md
+  - Plans & Sharing: Sharing-and-Plans.md
   - Frontend: Frontend.md
   - API Reference: api.md
   - Deployment: deployment.md

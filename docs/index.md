@@ -69,7 +69,7 @@ An instant snapshot of how straightforward the trip is — scored across five di
 Cultural etiquette (what's polite, what's rude), safety advice, health precautions, tipping norms, dress codes for religious sites, and practical local knowledge you won't find on the booking site.
 
 **Weather**
-A forecast for your travel dates.
+Day-by-day forecast for your exact travel dates (Open-Meteo for trips within 16 days, seasonal climate estimates beyond) — on multi-city trips, each stop is forecast only for the days you're actually there, grouped under a city header.
 
 ---
 
@@ -84,11 +84,34 @@ The local currency, rough exchange rates, whether to exchange before you travel 
 **Getting Around**
 Airport transfer options with price ranges, how to use the local public transport, ride-hailing app availability, taxi culture, and intercity travel if you're visiting multiple cities.
 
+**Layover Optimizer**
+Long layover on the way? Get a "make the most of it" mini-plan — whether you can leave the airport, transit visa notes, and a realistic timed excursion.
+
+**Itinerary Health Check**
+An adversarial AI review of the finished plan — it hunts for pacing problems, timing clashes, visa deadlines you'd miss, weather conflicts with outdoor days, and budget overruns, and reports them with severity levels.
+
 **Flight Price Advisor**
 Based on historical pricing patterns for your specific route, this tells you whether current prices are above or below average, recommends whether to book now or wait, and shows a chart of how prices typically move in the weeks before departure.
 
 **Smart Packing List**
 A personalised checklist built from your destination, travel dates, planned activities, and weather forecast. Items are grouped by category (documents, clothing, electronics, medications, activity gear) with essentials flagged. Tick off items as you pack and add your own — saved automatically to your plan.
+
+---
+
+### Multi-city journeys
+
+**Multiple stops, one search**
+Enter an ordered list of stops (Paris → Rome → Barcelona) and every section covers every city, each item tagged with a 📍 city chip. Days are split across cities automatically, flights are searched **per leg** (including the transatlantic bookends) with one pick per leg and a running total, and the itinerary visits your cities in exactly the order you entered them. See [Multi-City Trips](Multi-City-Trips.md).
+
+---
+
+### Personalised to you
+
+**Taste Graph**
+The app learns your travel style from what you actually select — non-stop flights, boutique hotels, food-first activities — and quietly ranks matching options higher on every future search. No forms; it's mined from your saved plans. See [Personalization](Personalization.md).
+
+**Serendipity dial & pace**
+Slide between famous classics and hidden local gems; choose a relaxed, balanced, or packed daily pace.
 
 ---
 
@@ -105,7 +128,10 @@ Not sure where to go? Enter your origin, budget, travel dates, and interests, an
 A drawer that follows you through the app. Select the exact flights, hotel, activities, and other items you want. See a live cost total as you build. Name your plan ("The Rainy Tokyo Adventure"), save it, and reload it whenever you come back.
 
 **Chat**
-A conversational AI travel assistant that stays open alongside your results. Ask follow-up questions ("Is March a good month for Kyoto?"), request changes ("Can you suggest alternatives that are cheaper?"), or describe a trip from scratch and have the full planning pipeline triggered automatically.
+A conversational AI travel advisor. Questions are answered instantly from the model's own expertise; describe a trip and the full planning pipeline streams structured results into the conversation, asks targeted clarifying questions when something's missing, and re-runs only the affected sections when you say "make it cheaper". See [Chat Assistant](Chat-Assistant.md).
+
+**Shareable trip card**
+Every saved plan gets a public share page with the complete trip — flights per leg, hotel, full itinerary with your notes, and all picks — downloadable as a single full-page PNG. See [Plans & Sharing](Sharing-and-Plans.md).
 
 ---
 

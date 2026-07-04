@@ -16,20 +16,24 @@ The core idea: instead of bouncing between a dozen tabs to piece together visa r
 
 ## What's in the app (current feature set)
 
-### Search results (13 sections)
-1. **Flights** — routes, airlines, price ranges, booking advice
-2. **Weather** — forecast for travel dates
-3. **Hotels** — neighbourhoods and accommodation tiers
-4. **Activities** — things to do, scored and sorted by interest relevance
-5. **Places to See** — must-visit landmarks from live Google data + Claude synthesis
-6. **Visa** — entry requirements for the traveller's nationality
-7. **SIM Cards** — local carrier options and eSIM availability
-8. **Travel Tips** — etiquette, safety, health, and practical advice
-9. **Safety & Emergency Card** — emergency numbers, embassy, hospitals, local phrases, local laws
-10. **Getting Around** — local and intercity transport
-11. **Forex** — currency, exchange rates, payment tips
-12. **Itinerary** — day-by-day schedule (Cards view or Timeline view)
-13. **Packing List** — personalised checklist saved to My Plan
+### Search results (15 sections)
+1. **Flights** — live prices via Google Flights (SerpAPI) with AI fallback; **per-leg search on multi-city trips** with one pick per leg
+2. **Weather** — day-by-day forecast for the travel dates; per-stay forecasts grouped by city on multi-city trips
+3. **Hotels** — neighbourhoods and accommodation across four budget tiers (≥ 3 per city on multi-city)
+4. **Activities** — things to do, scored and sorted by interest relevance (≥ 5 per city)
+5. **Places to See** — must-visit landmarks from live Google data + Claude synthesis (4–6 per city)
+6. **What's On (Events)** — festivals, concerts, exhibitions during the trip dates, with disruption flags
+7. **Visa** — entry requirements for the traveller's nationality (every country on multi-country routes)
+8. **SIM Cards** — local carrier options and eSIM availability
+9. **Travel Tips** — etiquette, safety, health, and practical advice
+10. **Safety & Emergency Card** — emergency numbers, embassy, hospitals, local phrases, local laws
+11. **Getting Around** — local and intercity transport (per-city + inter-city hops on multi-city)
+12. **Forex** — currency, exchange rates, payment tips
+13. **Itinerary** — day-by-day schedule (Cards or Timeline view), always in the user's stop order
+14. **Itinerary Health Check** — adversarial stress-test of the finished plan (pacing, timing, visa, weather, budget)
+15. **Packing List** — personalised checklist saved to My Plan
+
+Every result on a multi-city trip carries a 📍 city label, and all sections follow the exact stop order entered.
 
 ### Instant overlays (Phase 0, appear within 1 second)
 - **Travel Confidence Score** — safety / visa ease / budget / infrastructure, shown as a banner
@@ -42,9 +46,18 @@ The core idea: instead of bouncing between a dozen tabs to piece together visa r
 - **My Plan drawer** — select flights, hotels, activities, packing list, SIM, tips, transport, itinerary slots; live cost total; save and reload named plans
 
 ### Chat
+- **Knowledge-only answers** — topic questions are answered instantly from the model's own expertise; specialist agents run only if the model fails to answer at all
+- Full planning pipeline on request, with live per-section progress, targeted clarifying questions (slot memory), suggestion chips, and proactive weather/event heads-ups
+- **Refinement diffing** — "make it cheaper" re-runs only the affected agents
 - Persistent conversational interface — survives tab switches, continues mid-stream
-- Auto-triggers the full agent pipeline when the message is trip-planning related
-- Chat map aligned visually with the Results page itinerary map
+
+### Personalization
+- **Taste Graph** — learns travel style from saved-plan selections and ranks matching options higher on every search
+- Serendipity dial (classics ↔ hidden gems), pace (relaxed/balanced/packed), traveler mix, accessibility needs
+- Two-way preference binding between the Search form and saved Preferences
+
+### Sharing
+- **Shareable trip card** — public share page per saved plan with the complete trip, downloadable as a full-page PNG
 
 ### Accounts and admin
 - JWT authentication, bcrypt passwords, forced first-login password change
@@ -77,7 +90,11 @@ For visa, SIM, tips, getting around, and emergency card: Phase 0 sends instant d
 
 | Page | What it covers |
 |---|---|
-| [Agent System](Agent-System) | All 15 agents, BaseAgent, `.agents/*.md` format, retry logic, JSON parsing, relevance scoring |
+| [Agent System](Agent-System) | All 21 agents, BaseAgent, `.agents/*.md` format, retry logic, JSON parsing, relevance scoring |
+| [Multi-City Trips](Multi-City-Trips) | Per-leg flight search, day allocation, per-city coverage quotas, stop-order guarantees |
+| [Chat Assistant](Chat-Assistant) | Knowledge-only answering, planning pipeline, refinement diffing, session context |
+| [Personalization](Personalization) | Taste Graph, serendipity dial, pace, preferences |
+| [Sharing and Plans](Sharing-and-Plans) | My Plan drawer, saved plans, shareable full-page PNG card |
 | [Setup and Installation](Setup-and-Installation) | Local dev setup, Docker Compose, first login, running tests |
 | [Configuration](Configuration) | Every environment variable with required/optional status and effect |
 | [API Reference](API-Reference) | All REST endpoints: search, discover, chat, auth, plans, preferences, feedback, admin |

@@ -501,3 +501,21 @@ _STATIC_BACKED = {
 ```
 
 And yield the static data in the Phase 0 block before the Phase 1 tasks are launched.
+
+
+---
+
+## Multi-city behaviour
+
+When `request.is_multi_city` is true, agents change behaviour:
+
+| Agent | Multi-city behaviour |
+|---|---|
+| flights | One search per leg via `serp_flights.search_multi_city` (parallel one-ways, retry, AI fill for empty legs); results grouped into ordered `legs` |
+| weather | Per-stay forecasts (`city_stays`); LLM fallback parses nested per-city output, assigns cities authoritatively by date range, sorts by stop order |
+| hotels / activities / places / events | Mandatory per-city quotas; every result tagged with `city` |
+| getting_around | Intra-city options per city plus inter-city hops (train/bus/flight) tagged with a `city` route label |
+| visa | Evaluates every country on the route |
+| itinerary | Allocates days per `city_stays` and visits cities in exactly the user's order — never reorders |
+
+The chat assistant (`chat_agent.py`) is documented separately in [Chat Assistant](Chat-Assistant.md): topic queries are answered from model knowledge only, with specialists as a failure-only fallback; planning requests stream the full pipeline.

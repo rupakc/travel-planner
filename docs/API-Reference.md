@@ -323,6 +323,44 @@ Deactivate/reactivate or delete a user account. Admin only.
 
 ---
 
+## Section Endpoints
+
+Each results section is also exposed as a standalone endpoint (same request body as `/api/search`, plus per-domain filters):
+
+| Endpoint | Returns |
+|---|---|
+| `POST /api/flights` | Flight options (supports stop/price/time filters; multi-city returns ordered `legs`) |
+| `POST /api/hotels` | Hotels across four budget tiers (bed/price/wifi/distance filters) |
+| `POST /api/activities` | Interest-ranked activities (category/price/date/rating filters) |
+| `POST /api/visa` | Entry requirements for the traveler's nationality |
+| `POST /api/sim` | SIM/eSIM plans |
+| `POST /api/tips` | Safety, culture & practical tips |
+| `POST /api/getting-around` | Local + inter-city transportation options |
+| `POST /api/forex` | Currency & money guidance |
+| `POST /api/itinerary` | Day-by-day itinerary |
+| `POST /api/events` | What's On — festivals, concerts, exhibitions during the trip |
+| `POST /api/layover` | Layover excursion plan for long connections |
+| `POST /api/stress-test` | Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget) |
+
+## Taste Graph
+
+### `GET /api/taste-profile`
+
+Returns the authenticated user's learned taste profile — signals mined from saved-plan selections (flight style, hotel tier, activity categories, budget band) plus the natural-language summary injected into agent prompts. `DELETE /api/taste-profile` resets it.
+
+## Analytics
+
+### `POST /api/analytics/events`
+
+Ingests batched client-side usage events (up to 50 per call). Returns `204`.
+
+## Reference Data
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/airports?q=` | Airport/city typeahead search |
+| `GET /api/nationalities?q=` | Nationality typeahead search |
+
 ## Health
 
 ### `GET /health`

@@ -251,3 +251,24 @@ In-memory caching via `cachetools` (TTL 30 minutes, max 500 entries). Cache keys
 **Deferred agent pattern:** PricingAdvisorAgent and PackingListAgent need data from other agents before they can run. Rather than waiting for all of Phase 1 to finish, they trigger as soon as their inputs are available, hiding their latency behind the remaining Phase 1 agents.
 
 **Static-backed agent suppression:** For agents with Phase 0 static data (visa, sim, tips, getting_around, forex, emergency_card), an AI failure is silently suppressed. The user already has correct static data on screen; replacing it with an error would be a regression. Both the orchestrator (backend) and the SSE event handler (frontend) enforce this invariant independently.
+
+
+---
+
+## Multi-city execution model
+
+Multi-city trips (`destinations: ["Paris", "Rome", "Barcelona"]`) reuse the same three-phase pipeline with three derived structures on `TravelSearchRequest`:
+
+- **`city_stays`** — trip days split proportionally across cities (`round(i × days / n)` boundaries, exact date coverage for any split). Each stay's `end_date` is the move-on day.
+- **`flight_legs`** — origin → city₁ on the departure date, one inter-city hop per move-on day, last city → origin on the return date.
+- **`multi_city_context`** — a prompt block instructing every agent to cover all cities and tag each result with a `city` field.
+
+Flights run **one parallel SerpAPI one-way search per leg** (20 s timeout + one retry); legs that still come back empty are AI-filled with estimates so the UI never shows an empty leg. Weather forecasts each stay only for its own dates. Specialist prompts carry per-city minimum quotas (hotels ≥ 3, activities ≥ 5, places 4–6, events 2–4 per city).
+
+**Journey order is enforced twice**: the backend sorts flight legs and weather days into the user's stop order, and the frontend stable-sorts every city-tagged section list by the entered stop order the moment results arrive (`orderSectionByCity`). The itinerary agent is explicitly forbidden from reordering the route. See [Multi-City Trips](Multi-City-Trips.md).
+
+## Chat design: knowledge-only answers, agents as last resort
+
+Chat topic queries are answered purely from the model's own knowledge and the SSE stream closes as soon as the answer ends. Specialist agents run **only when the model fails to answer at all** (stream error, empty response, or explicit refusal detected by `_NON_ANSWER_RE`). Structured planning requests ("plan a week in Lisbon") still run the full agent pipeline and stream section results into the conversation, with refinement diffing re-running only the agents whose inputs changed. See [Chat Assistant](Chat-Assistant.md).
+
+**Why:** running agents for every chat question made responses feel slow and heavy; a background-verification design held the stream open for up to ~40 s after the answer. Knowledge-only answering keeps chat conversational while the Search page remains the live-data surface.

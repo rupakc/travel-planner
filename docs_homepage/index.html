@@ -477,8 +477,8 @@
       </div>
       <div class="card coral">
         <div class="card-icon">&#129302;</div>
-        <h3>15 specialist agents</h3>
-        <p>Flights, hotels, activities, visa, SIM cards, forex, weather, packing list, emergency card, places to see &mdash; each with its own system prompt, running in parallel.</p>
+        <h3>21 specialist agents</h3>
+        <p>Flights, hotels, activities, events, visa, SIM cards, forex, weather, packing list, emergency card, places to see, layovers, chat and more &mdash; each with its own system prompt, running in parallel.</p>
       </div>
       <div class="card teal">
         <div class="card-icon">&#128197;</div>
@@ -525,6 +525,26 @@
         <h3>Save &amp; revisit plans</h3>
         <p>Authenticated users can bookmark any trip plan. Stored in SQLite with automatic Cloud Storage backup every 5 minutes for durability.</p>
       </div>
+      <div class="card sky">
+        <div class="card-icon">&#128506;</div>
+        <h3>Multi-city journeys</h3>
+        <p>Paris &rarr; Rome &rarr; Barcelona in one search: flights per leg with one pick each, per-city coverage in every section, weather per stay, and your exact stop order guaranteed throughout.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">&#128172;</div>
+        <h3>Conversational advisor</h3>
+        <p>Chat answers travel questions instantly from the model&apos;s own expertise, plans full trips with live per-section progress, and re-runs only the affected sections when you say &ldquo;make it cheaper&rdquo;.</p>
+      </div>
+      <div class="card violet">
+        <div class="card-icon">&#129504;</div>
+        <h3>Taste Graph personalization</h3>
+        <p>The app learns your style from what you select &mdash; non-stop flights, boutique hotels, food-first activities &mdash; and ranks matching options higher on every future search. No forms.</p>
+      </div>
+      <div class="card rose">
+        <div class="card-icon">&#128444;</div>
+        <h3>Shareable trip card</h3>
+        <p>Every saved plan gets a public share page with the complete trip &mdash; flights per leg, hotel, full itinerary with your notes &mdash; downloadable as a single full-page PNG.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -543,12 +563,12 @@
       </div>
       <div class="arch-phase">
         <div class="arch-phase-num p1">1</div>
-        <h3>11 parallel agents</h3>
+        <h3>12 parallel agents</h3>
         <ul>
-          <li>FlightsAgent</li>
+          <li>FlightsAgent (per-leg on multi-city)</li>
           <li>HotelsAgent</li>
           <li>ActivitiesAgent</li>
-          <li>PlacesAgent</li>
+          <li>PlacesAgent &amp; EventsAgent</li>
           <li>VisaAgent &amp; SimAgent</li>
           <li>TipsAgent &amp; ForexAgent</li>
           <li>GettingAroundAgent</li>
@@ -562,7 +582,7 @@
       <div class="arch-phase">
         <div class="arch-phase-num p2">2</div>
         <h3>Synthesis</h3>
-        <p>The ItineraryAgent ingests hotels and ranked activities and produces a structured day-by-day plan. 60 s timeout with template fallback for resilience. Timeline View renders this as a visual morning/afternoon/evening grid.</p>
+        <p>The ItineraryAgent ingests hotels and ranked activities and produces a structured day-by-day plan (in your exact stop order on multi-city trips). The StressTestAgent then audits it adversarially &mdash; pacing, timing, visa deadlines, weather clashes, budget. 60 s timeout with template fallback for resilience.</p>
         <span class="arch-timing teal">5 &ndash; 15 seconds</span>
       </div>
     </div>
