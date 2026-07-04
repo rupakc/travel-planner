@@ -16,6 +16,7 @@ import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
+import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
 
 // Fix Leaflet default icon (only once, even if TripMap.jsx also does this)
@@ -1078,6 +1079,8 @@ export default function ChatPage() {
         sections: m.sections || {}, sectionStatuses: m.sectionStatuses || {},
         suggestions: m.suggestions || [], planning: m.planning || false,
         planningDone: m.planningDone || false, error: m.error || false,
+        comprehensiveItinerary: m.comprehensiveItinerary || null,
+        tripMap: m.tripMap || null,
       })),
       sessionContext,
       lastSearchContext,
@@ -1196,14 +1199,20 @@ export default function ChatPage() {
     const assistantIdx = newMessages.length
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true, sections: {}, sectionStatuses: {} }])
 
+    // Send the full session history, with planning-only turns converted to
+    // text so the model has complete context (empty messages are rejected).
+    const historyForApi = buildApiHistory(newMessages)
+
     let fullText = ''
     let sections = {}
     let sectionStatuses = {}
     let isPlanning = false
     let planActionsReceived = false
+    let structuredReceived = false
+    let errorReceived = false
 
     const cleanup = streamChat(
-      newMessages,
+      historyForApi,
       (event) => {
         if (event.type === 'planning_start') {
           isPlanning = true
@@ -1219,12 +1228,14 @@ export default function ChatPage() {
             return updated
           })
         } else if (event.type === 'trip_map') {
+          structuredReceived = true
           setMessages(prev => {
             const updated = [...prev]
             updated[assistantIdx] = { ...updated[assistantIdx], tripMap: event }
             return updated
           })
         } else if (event.type === 'comprehensive_itinerary') {
+          structuredReceived = true
           setMessages(prev => {
             const updated = [...prev]
             updated[assistantIdx] = {
@@ -1238,6 +1249,7 @@ export default function ChatPage() {
           const isStatic = event.source === 'static'
           const hasError = event.data?.error
           const existingIsGood = sections[event.section] && !sections[event.section]?.error
+          structuredReceived = true
           if (!(hasError && existingIsGood)) {
             sections = { ...sections, [event.section]: event.data }
           }
@@ -1289,10 +1301,31 @@ export default function ChatPage() {
               return updated
             })
           }
+        } else if (event.type === 'error') {
+          errorReceived = true
+          setMessages(prev => {
+            const updated = [...prev]
+            const cur = updated[assistantIdx] || {}
+            const hasContent = cur.content && cur.content.trim()
+            updated[assistantIdx] = {
+              ...cur,
+              content: hasContent ? cur.content : 'Sorry — something went wrong while answering that. Please try again.',
+              streaming: false,
+              error: true,
+            }
+            return updated
+          })
         } else if (event.type === 'done') {
           setMessages(prev => {
             const updated = [...prev]
-            updated[assistantIdx] = { ...updated[assistantIdx], streaming: false }
+            const cur = updated[assistantIdx] || {}
+            const isEmpty = !(cur.content && cur.content.trim()) && !structuredReceived && !planActionsReceived && !errorReceived
+            updated[assistantIdx] = {
+              ...cur,
+              content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
+              streaming: false,
+              error: cur.error || isEmpty,
+            }
             return updated
           })
           setIsStreaming(false)
@@ -1301,10 +1334,19 @@ export default function ChatPage() {
         }
       },
       () => {
+        // Stream ended (possibly without a done event, e.g. server crash) —
+        // never leave the user staring at an empty bubble.
         setMessages(prev => {
           const updated = [...prev]
-          if (updated[assistantIdx]?.streaming) {
-            updated[assistantIdx] = { ...updated[assistantIdx], streaming: false }
+          const cur = updated[assistantIdx]
+          if (cur) {
+            const isEmpty = !(cur.content && cur.content.trim()) && !structuredReceived && !planActionsReceived && !errorReceived
+            updated[assistantIdx] = {
+              ...cur,
+              content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
+              streaming: false,
+              error: cur.error || isEmpty,
+            }
           }
           return updated
         })

@@ -1,3 +1,6 @@
+import json
+import logging
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -8,6 +11,8 @@ from ...core.config import settings
 from ...db.preferences_db import get_preferences
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 class ChatMessage(BaseModel):
@@ -30,14 +35,29 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
     async def generate():
-        async for chunk in agent.stream(
-            messages,
-            preferences=prefs,
-            selections=request.selections,
-            search_results=request.search_results,
-            session_context=request.session_context,
-        ):
-            yield f"data: {chunk}\n\n"
+        # An uncaught exception here would silently truncate the SSE stream —
+        # the user would see a blank reply. Always close with error + done.
+        try:
+            async for chunk in agent.stream(
+                messages,
+                preferences=prefs,
+                selections=request.selections,
+                search_results=request.search_results,
+                session_context=request.session_context,
+            ):
+                yield f"data: {chunk}\n\n"
+        except Exception as e:
+            logger.exception("Chat stream failed")
+            fallback = {
+                "type": "delta",
+                "text": (
+                    "Sorry — something went wrong while answering that. "
+                    "Please try again."
+                ),
+            }
+            yield f"data: {json.dumps(fallback)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(
         generate(),

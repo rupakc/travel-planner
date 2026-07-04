@@ -349,10 +349,15 @@ class ChatAgent:
         search_results: dict,
     ):
         """Use LLM to interpret a plan command and emit plan_action events."""
-        last_msg = messages[-1]["content"]
+        last_msg = messages[-1]["content"] if messages else ""
 
-        plan_summary = self._summarize_selections(selections)
-        results_summary = self._summarize_search_results(search_results)
+        try:
+            plan_summary = self._summarize_selections(selections)
+            results_summary = self._summarize_search_results(search_results)
+        except Exception as e:
+            logger.warning(f"Plan/search summary failed: {e}")
+            plan_summary = "Plan summary unavailable."
+            results_summary = "Search results summary unavailable."
 
         prompt = (
             "The user wants to modify their travel plan. Analyze their request and return a JSON response.\n\n"
@@ -560,9 +565,17 @@ class ChatAgent:
         lines = []
         if results.get("flights", {}).get("results"):
             flights = results["flights"]["results"]
-            lines.append(
-                f"Flights: {len(flights)} options (${min(f.get('price_usd', 9999) for f in flights)}-${max(f.get('price_usd', 0) for f in flights)})"
-            )
+            prices = [
+                f.get("price_usd")
+                for f in flights
+                if isinstance(f.get("price_usd"), (int, float))
+            ]
+            if prices:
+                lines.append(
+                    f"Flights: {len(flights)} options (${min(prices)}-${max(prices)})"
+                )
+            else:
+                lines.append(f"Flights: {len(flights)} options")
         if results.get("hotels", {}).get("results"):
             hotels = results["hotels"]["results"]
             lines.append(f"Hotels: {len(hotels)} options")
@@ -606,6 +619,7 @@ class ChatAgent:
             system_prompt = system_prompt + "\n\n" + extra_context
         api_messages = self._to_api_messages(messages)
 
+        streamed_any = False
         try:
             client = _get_client()
             async with client.messages.stream(
@@ -616,11 +630,25 @@ class ChatAgent:
             ) as stream:
                 async for text in stream.text_stream:
                     if text:
+                        streamed_any = True
                         yield json.dumps({"type": "delta", "text": text})
             yield json.dumps({"type": "done"})
         except Exception as e:
             logger.error(f"Chat agent error: {e}")
+            # Always give the user a visible reply and terminate the stream —
+            # a bare error event leaves the chat bubble blank on the client.
+            if not streamed_any:
+                yield json.dumps(
+                    {
+                        "type": "delta",
+                        "text": (
+                            "Sorry — I ran into a temporary problem answering that. "
+                            "Please try again in a moment."
+                        ),
+                    }
+                )
             yield json.dumps({"type": "error", "text": str(e)})
+            yield json.dumps({"type": "done"})
 
     async def _knowledge_chat(
         self,
@@ -1209,6 +1237,12 @@ class ChatAgent:
                 }
             )
 
+        # ChatAgent is per-request — the frontend must round-trip the session
+        # context or follow-up questions lose the trip being discussed.
+        self._update_session_context(request)
+        yield json.dumps(
+            {"type": "session_context_update", "context": self._session_context}
+        )
         yield json.dumps({"type": "planning_done"})
 
     # ── Helpers ────────────────────────────────────────────────────────
@@ -1408,19 +1442,28 @@ class ChatAgent:
 
     @staticmethod
     def _to_api_messages(messages: list[dict]) -> list[dict]:
-        if not messages:
-            return [{"role": "user", "content": "Hello"}]
-
         api_msgs = []
-        for msg in messages:
-            role = msg["role"]
-            content = msg["content"]
+        for msg in messages or []:
+            role = msg.get("role")
+            content = str(msg.get("content") or "").strip()
+            # Planning-only turns arrive with empty content — the API rejects
+            # empty text blocks with a 400, so they must be dropped here.
+            if role not in ("user", "assistant") or not content:
+                continue
             if api_msgs and api_msgs[-1]["role"] == role:
                 api_msgs[-1]["content"] += "\n\n" + content
             else:
                 api_msgs.append({"role": role, "content": content})
 
+        if not api_msgs:
+            return [{"role": "user", "content": "Hello"}]
+
         if api_msgs[0]["role"] != "user":
             api_msgs.insert(0, {"role": "user", "content": "(continuing conversation)"})
+
+        # A trailing assistant message is treated as a prefill and rejected
+        # with a 400 on current models.
+        if api_msgs[-1]["role"] != "user":
+            api_msgs.append({"role": "user", "content": "(please continue)"})
 
         return api_msgs
