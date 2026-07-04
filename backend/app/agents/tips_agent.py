@@ -23,6 +23,13 @@ class TipsAgent(ToolAgent, _URLSearchMixin):
             f"Include at least 4-5 tips about tourist traps and scams.\n"
             f"Every tip MUST have a real source_url (government advisory, tourism board, WHO, CDC)."
         )
+        if request.is_multi_city:
+            prompt += (
+                f"\nThis is a MULTI-CITY trip covering: {request.destination_label}. "
+                "Cover ALL of these cities — include city-specific safety/scam/"
+                "transport tips for each, and add a 'city' field on city-specific "
+                "tips (omit it for tips that apply to the whole trip)."
+            )
         self._destination = request.destination
         self._nationality = request.nationality
         return await self.execute(prompt)

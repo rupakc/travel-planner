@@ -84,9 +84,14 @@ def extract_signals(search_data: dict, selections: dict) -> list[tuple[str, str]
     if tier:
         signals.append(("hotel_tier", tier))
 
-    flight = _as_dict(selections.get("flight"))
-    stops = _as_dict(flight.get("outbound")).get("stops")
-    if stops is not None:
+    flights = selections.get("flights")
+    flight_list = [selections.get("flight")] + (
+        flights if isinstance(flights, list) else []
+    )
+    for flight in flight_list:
+        stops = _as_dict(_as_dict(flight).get("outbound")).get("stops")
+        if stops is None:
+            continue
         try:
             style = "non-stop" if int(stops) == 0 else "with stops (cheaper)"
             signals.append(("flight_style", style))

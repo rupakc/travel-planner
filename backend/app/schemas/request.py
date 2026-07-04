@@ -1,5 +1,5 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -116,6 +116,69 @@ class TravelSearchRequest(BaseModel):
         if self.is_multi_city:
             return " → ".join(self.destinations)
         return self.destination
+
+    @property
+    def city_stays(self) -> list[dict] | None:
+        """Even allocation of trip days across cities for multi-city trips.
+
+        Returns [{"city", "start_date", "end_date", "nights"}] where end_date
+        is the day the traveler moves on (= next city's start_date). The last
+        city's end_date is the return date. None for single-city trips.
+        """
+        if not self.is_multi_city:
+            return None
+        n = len(self.destinations)
+        total_days = (
+            (self.return_date - self.departure_date).days if self.return_date else 2 * n
+        )
+        total_days = max(total_days, n)  # at least one day per city
+        # Proportional boundaries guarantee exact date coverage for any split
+        bounds = [round(i * total_days / n) for i in range(n + 1)]
+        stays = []
+        for i, city in enumerate(self.destinations):
+            start = self.departure_date + timedelta(days=bounds[i])
+            end = self.departure_date + timedelta(days=bounds[i + 1])
+            stays.append(
+                {
+                    "city": city,
+                    "start_date": start,
+                    "end_date": end,
+                    "nights": (end - start).days,
+                }
+            )
+        return stays
+
+    @property
+    def flight_legs(self) -> list[dict] | None:
+        """Every flight leg of a multi-city journey, with dates.
+
+        origin → city1 on the departure date, then each inter-city hop on the
+        day the traveler moves on, then last city → origin on the return date.
+        None for single-city trips.
+        """
+        stays = self.city_stays
+        if not stays:
+            return None
+        legs = [
+            {
+                "from": self.origin,
+                "to": stays[0]["city"],
+                "date": self.departure_date,
+            }
+        ]
+        for prev, nxt in zip(stays, stays[1:]):
+            legs.append(
+                {"from": prev["city"], "to": nxt["city"], "date": nxt["start_date"]}
+            )
+        if self.return_date:
+            legs.append(
+                {
+                    "from": stays[-1]["city"],
+                    "to": self.origin,
+                    "date": self.return_date,
+                }
+            )
+        return legs
 
     @property
     def multi_city_context(self) -> str | None:

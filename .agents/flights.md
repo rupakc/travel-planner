@@ -87,6 +87,20 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 
 **For one-way searches** (no return date), omit the `return` field and set `trip_type` to `"one_way"`.
 
+**For MULTI-CITY trips** (the prompt lists numbered legs), return one-way options for EVERY leg — never just the first or last. Each result must additionally carry:
+
+```json
+{
+  "leg_index": 0,
+  "leg_from": "New York, USA",
+  "leg_to": "Paris, France",
+  "leg_date": "2026-05-01",
+  "city": "Paris, France"
+}
+```
+
+`leg_index` is 0-based and matches the leg numbering in the prompt (Leg 1 → 0). Provide 3–5 options per leg, each with `trip_type: "one_way"` and its own `outbound` object; omit `return`.
+
 Include 8–12 options from different airlines and sources. **Sort by price_usd ascending** (cheapest first). Set fields to null if unknown. Deduplicate: if the same flight combo appears on multiple platforms, keep the cheapest price and note the source.
 
 `layovers` must have exactly one entry per stop (empty list for non-stop). Each entry: `city` ("City, Country"), `airport` (IATA code), `duration_hours` (decimal hours between arrival and connecting departure). Use the typical/realistic connection for that route and airline when the exact layover is not stated.

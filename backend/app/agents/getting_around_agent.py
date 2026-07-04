@@ -28,6 +28,16 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
             f"Every option must have: name, type, scope, description, coverage, price_info, operating_hours, tips, booking_url.\n"
             f"IMPORTANT: booking_url must be a SINGLE URL, not multiple URLs."
         )
+        if request.is_multi_city:
+            hops = " \u2192 ".join(request.destinations)
+            prompt += (
+                f"\nThis is a MULTI-CITY trip: {hops}. Cover intra-city transit "
+                "options for EACH city (2-4 per city) AND the inter-city "
+                "connections between consecutive cities (train/bus/flight with "
+                "realistic durations and prices). Add a 'city' field to every "
+                "option — the city it serves, or 'City A \u2192 City B' for "
+                "inter-city connections."
+            )
         self._destination = request.destination
         return await self.execute(prompt)
 

@@ -46,6 +46,9 @@ class WeatherAgent(BaseAgent):
         ret = request.return_date or (dep + timedelta(days=7))
         days_out = (dep - date.today()).days
 
+        if request.is_multi_city:
+            return await self._run_multi_city(request, days_out)
+
         # Strip country suffix — "Tokyo, Japan" → "tokyo"
         city_key = request.destination.lower().strip().split(",")[0].strip()
         coords = CITY_COORDS.get(city_key)
@@ -56,6 +59,69 @@ class WeatherAgent(BaseAgent):
                 return result
 
         return await self._llm_estimate(request, dep, ret)
+
+    async def _run_multi_city(
+        self, request: TravelSearchRequest, days_out: int
+    ) -> dict:
+        """Forecast every city for the dates the traveler is actually there."""
+        stays = request.city_stays or []
+        all_days: list[dict] = []
+        missing: list[dict] = []
+
+        for stay in stays:
+            city_key = stay["city"].lower().strip().split(",")[0].strip()
+            coords = CITY_COORDS.get(city_key)
+            result: dict = {"error": "no coords"}
+            if days_out <= 16 and coords:
+                result = await self._fetch_open_meteo(
+                    coords, stay["start_date"], stay["end_date"]
+                )
+            if "error" in result:
+                missing.append(stay)
+                continue
+            for day in result.get("days", []):
+                day["city"] = stay["city"]
+            all_days.extend(result.get("days", []))
+
+        if missing:
+            llm = await self._llm_estimate_cities(request, missing)
+            all_days.extend(llm)
+
+        if not all_days:
+            return await self._llm_estimate(
+                request,
+                request.departure_date,
+                request.return_date or request.departure_date + timedelta(days=7),
+            )
+
+        all_days.sort(key=lambda d: d.get("date") or "")
+        poor_count = sum(1 for d in all_days if d.get("is_poor"))
+        return {
+            "days": all_days,
+            "poor_weather_day_count": poor_count,
+            "cities": [s["city"] for s in stays],
+            "source": "open-meteo" if not missing else "open-meteo+llm-estimate",
+        }
+
+    async def _llm_estimate_cities(
+        self, request: TravelSearchRequest, stays: list[dict]
+    ) -> list[dict]:
+        """One LLM call covering the cities open-meteo couldn't serve."""
+        ranges = "\n".join(
+            f"- {s['city']}: {s['start_date']} to {s['end_date']}" for s in stays
+        )
+        prompt = (
+            "Produce day-by-day climate estimates for each city and date range "
+            f"below (historical seasonal averages, specific per day):\n{ranges}\n"
+            'Every day object MUST include a "city" field naming its city.'
+        )
+        result = await self.execute(prompt)
+        if "error" in result:
+            return []
+        days = result.get("days", [])
+        for day in days:
+            day.setdefault("city", stays[0]["city"] if stays else None)
+        return days
 
     async def _fetch_open_meteo(self, coords: tuple, dep: date, ret: date) -> dict:
         params = {

@@ -28,6 +28,14 @@ class SimAgent(ToolAgent, _URLSearchMixin):
             f"(one sentence about real-world coverage at {request.destination}). "
             f"For global eSIMs, assess the partner network quality at {request.destination}."
         )
+        if request.is_multi_city:
+            prompt += (
+                f"\nThis is a MULTI-CITY trip covering: {request.destination_label}. "
+                "If the cities span multiple countries, prioritise regional/global "
+                "eSIMs that cover ALL of them, and state per-country coverage in "
+                "coverage_description. Add a 'city' field listing the covered "
+                "cities for any country-specific SIM."
+            )
         self._destination = request.destination
         return await self.execute(prompt)
 

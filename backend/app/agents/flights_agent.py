@@ -6,6 +6,7 @@ from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
 from ..services.serp_flights import SerpAPIError
 from ..services.serp_flights import search as serp_search
+from ..services.serp_flights import search_multi_city as serp_search_multi_city
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
 
@@ -42,6 +43,8 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
     async def run(
         self, request: TravelSearchRequest, filters: dict | None = None
     ) -> dict:
+        if request.is_multi_city:
+            return await self._run_multi_city(request, filters)
         if settings.serpapi_key:
             try:
                 t0 = time.monotonic()
@@ -92,15 +95,6 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         else:
             prompt += "Find 8-12 one-way flight options sorted by price."
 
-        if request.is_multi_city:
-            last_city = request.destinations[-1]
-            prompt += (
-                f"\nNOTE: This is a multi-city trip ({request.destination_label}). "
-                f"Prefer OPEN-JAW itineraries: outbound {request.origin} → "
-                f"{request.destinations[0]}, return {last_city} → {request.origin}. "
-                "Inter-city travel is handled separately — do not include it."
-            )
-
         if request.taste_context:
             prompt += (
                 f"\n{request.taste_context}\n"
@@ -142,6 +136,89 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         self._origin = request.origin
         self._destination = request.destination
         return await self.execute(prompt)
+
+    async def _run_multi_city(
+        self, request: TravelSearchRequest, filters: dict | None = None
+    ) -> dict:
+        """Cover EVERY leg of a multi-city journey: origin → city1 → … → origin."""
+        legs = request.flight_legs or []
+
+        if settings.serpapi_key:
+            try:
+                t0 = time.monotonic()
+                result = await serp_search_multi_city(
+                    settings.serpapi_key, request, filters
+                )
+                logger.info(
+                    "SerpAPI multi-city flights: %d legs, %d results in %.0fms",
+                    len(result.get("legs", [])),
+                    len(result.get("results", [])),
+                    (time.monotonic() - t0) * 1000,
+                )
+                return result
+            except SerpAPIError as exc:
+                logger.warning(
+                    "SerpAPI multi-city failed (%s), falling back to AI agent", exc
+                )
+
+        leg_lines = "\n".join(
+            f"  Leg {i + 1}: {leg['from']} → {leg['to']} on {leg['date']} (one-way)"
+            for i, leg in enumerate(legs)
+        )
+        prompt = (
+            f"Search flights for a MULTI-CITY trip: {request.destination_label}.\n"
+            f"You MUST return one-way flight options for EVERY leg below — "
+            f"not just the first or last:\n{leg_lines}\n"
+            f"Travelers: {request.traveler_context}\n"
+            f"Budget: {'$' + str(int(request.budget_usd)) + ' total' if request.budget_usd else 'flexible'}\n"
+            "Return 3-5 one-way options PER LEG sorted by price. Every result "
+            "MUST include: leg_index (0-based, matching the legs above), "
+            "leg_from, leg_to, leg_date, and a city field set to leg_to. "
+            "price_usd is the one-way price per person for that leg. "
+            "IMPORTANT: identify the country for each city and use full "
+            "locations in origin/destination fields (e.g. 'Rome, Italy')."
+        )
+        if request.taste_context:
+            prompt += (
+                f"\n{request.taste_context}\n"
+                "If the profile shows a flight-style preference (e.g. non-stop), "
+                "rank matching options higher."
+            )
+
+        self._origin = request.origin
+        self._destination = request.destination
+        data = await self.execute(prompt)
+        return self._group_legs(data, legs)
+
+    @staticmethod
+    def _group_legs(data: dict, legs: list[dict]) -> dict:
+        """Group flat leg-tagged AI results into the legs structure the UI expects."""
+        results = data.get("results", [])
+        if "error" in data or not results:
+            return data
+        grouped: list[dict] = [
+            {
+                "leg_index": i,
+                "label": f"{leg['from']} → {leg['to']}",
+                "date": str(leg["date"]),
+                "from": leg["from"],
+                "to": leg["to"],
+                "results": [],
+            }
+            for i, leg in enumerate(legs)
+        ]
+        for flight in results:
+            try:
+                idx = int(flight.get("leg_index", -1))
+            except (TypeError, ValueError):
+                idx = -1
+            if 0 <= idx < len(grouped):
+                flight.setdefault("city", grouped[idx]["to"])
+                flight.setdefault("leg_date", grouped[idx]["date"])
+                grouped[idx]["results"].append(flight)
+        data["trip_type"] = "multi_city"
+        data["legs"] = grouped
+        return data
 
     async def _enrich_urls(self, data: dict) -> dict:
         flights = data.get("results", [])

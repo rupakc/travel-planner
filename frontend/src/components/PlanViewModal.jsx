@@ -37,7 +37,7 @@ function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
 export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted }) {
   const [name, setName]           = useState(plan.name)
   const [sel,  setSel]            = useState(() => ({
-    flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [],
+    flight: null, flights: [], hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
     ...(plan.selections || {}),
   }))
@@ -61,6 +61,8 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       setSel(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
       setSel(s => ({ ...s, itinerary_slots: (s.itinerary_slots || []).filter(sl => sl.key !== value.key) }))
+    } else if (type === 'flights') {
+      setSel(s => ({ ...s, flights: (s.flights || []).filter(f => f !== value) }))
     } else {
       setSel(s => ({ ...s, [type]: null }))
     }
@@ -116,7 +118,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
     } finally { setDeleting(false) }
   }
 
-  const hasSelections = sel.flight || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.itinerary_slots?.length
+  const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.itinerary_slots?.length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
@@ -187,6 +189,36 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                 <button onClick={() => removeItem('flight')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />
                 </button>
+              </div>
+            </Section>
+          )}
+
+          {/* Multi-city flights (one per leg) */}
+          {sel.flights?.length > 0 && (
+            <Section title={`Flights (${sel.flights.length} leg${sel.flights.length > 1 ? 's' : ''})`} color="sky" icon={Plane} defaultOpen>
+              <div className="space-y-2">
+                {sel.flights.map((f, i) => (
+                  <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-semibold text-sky-700">Leg {(f.leg_index ?? i) + 1}:</span>{' '}
+                        <span className="font-medium text-gray-700">{f.outbound?.airline || f.airline}</span>
+                        {(f.outbound?.flight_number || f.flight_number) && <span className="text-gray-400 ml-1">{f.outbound?.flight_number || f.flight_number}</span>}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {String(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {String(f.leg_to || f.outbound?.destination || '').split(',')[0]}
+                        {f.leg_date ? ` · ${f.leg_date}` : ''}
+                        {f.price_usd != null && <span className="font-semibold text-sky-700"> · ${Number(f.price_usd).toLocaleString()}</span>}
+                      </p>
+                      {f.booking_url && (
+                        <a href={f.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-0.5"><ExternalLink size={10} /> Book</a>
+                      )}
+                    </div>
+                    <button onClick={() => removeItem('flights', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </Section>
           )}
@@ -362,6 +394,32 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     <button onClick={() => removeItem('itinerary_slots', slot)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+          {/* Full itinerary snapshot */}
+          {sel.itinerary?.days?.length > 0 && (
+            <Section title={`Full Itinerary (${sel.itinerary.days.length} days)`} color="teal" icon={Calendar}>
+              <div className="space-y-3">
+                {sel.itinerary.days.map((day, i) => (
+                  <div key={i}>
+                    <p className="text-xs font-bold text-teal-700">
+                      Day {day.day_number}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${String(day.city).split(',')[0]}` : ''}{day.theme ? ` — ${day.theme}` : ''}
+                    </p>
+                    <ul className="mt-1 space-y-0.5">
+                      {(day.slots || []).map((slot, j) => {
+                        const key = `${day.day_number}-${slot.time_of_day}`
+                        const edit = sel.itinerary_edits?.[key] || {}
+                        return (
+                          <li key={j} className="text-xs text-gray-600">
+                            <span className="capitalize text-gray-400">{slot.time_of_day}:</span> {edit.activity ?? slot.activity}
+                            {sel.itinerary_notes?.[key] && <span className="text-teal-600 italic"> — 📝 {sel.itinerary_notes[key]}</span>}
+                          </li>
+                        )
+                      })}
+                    </ul>
                   </div>
                 ))}
               </div>

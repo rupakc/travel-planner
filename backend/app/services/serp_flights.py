@@ -339,3 +339,108 @@ async def search(
     payload = {"results": results}
     cache[cache_key] = payload
     return payload
+
+
+async def search_multi_city(
+    api_key: str,
+    request: TravelSearchRequest,
+    filters: dict | None = None,
+) -> dict:
+    """Fetch one-way flights for EVERY leg of a multi-city journey.
+
+    Runs a parallel one-way search per leg (origin → city1, city1 → city2, …,
+    last city → origin) and returns:
+        {"trip_type": "multi_city", "legs": [...], "results": [flattened]}
+    Each flight result is tagged with leg_index / leg_from / leg_to / leg_date.
+    Raises SerpAPIError if no leg can be resolved or every leg fails.
+    """
+    from ..db.database import lookup_city_iata
+
+    legs = request.flight_legs or []
+    if not legs:
+        raise SerpAPIError("Not a multi-city request")
+
+    cache = get_cache()
+    filters_key = tuple(sorted((filters or {}).items()))
+    leg_key = "|".join(f"{lg['from']}>{lg['to']}@{lg['date']}" for lg in legs)
+    cache_key = f"serp-mc:{leg_key}:{request.num_travelers}:{hash(filters_key)}"
+    if cache_key in cache:
+        logger.info("SerpAPI multi-city cache hit")
+        return cache[cache_key]
+
+    # Resolve every endpoint to IATA codes; origin may already carry one.
+    origin_code = request.origin_iata or lookup_city_iata(request.origin)
+
+    def resolve(city: str) -> str | None:
+        if city == request.origin:
+            return origin_code
+        return lookup_city_iata(city)
+
+    async def fetch_leg(index: int, leg: dict) -> dict:
+        dep_id = resolve(leg["from"])
+        arr_id = resolve(leg["to"])
+        label = f"{leg['from']} → {leg['to']}"
+        if not dep_id or not arr_id:
+            return {"leg_index": index, "label": label, "error": "unresolved city"}
+        params: dict[str, Any] = {
+            "engine": "google_flights",
+            "api_key": api_key,
+            "departure_id": dep_id,
+            "arrival_id": arr_id,
+            "outbound_date": str(leg["date"]),
+            "type": "2",
+            "adults": str(request.num_travelers),
+            "currency": "USD",
+            "hl": "en",
+        }
+        if filters and filters.get("max_stops") is not None:
+            params["stops"] = str(filters["max_stops"] + 1)
+        if filters and filters.get("max_price_usd") is not None:
+            params["max_price"] = str(int(filters["max_price_usd"]))
+        try:
+            data = await _call(params)
+        except SerpAPIError as exc:
+            logger.warning("Multi-city leg %d (%s) failed: %s", index, label, exc)
+            return {"leg_index": index, "label": label, "error": str(exc)}
+        items = data.get("best_flights", []) + data.get("other_flights", [])
+        results = []
+        for item in items[:5]:
+            mapped = _map_result(
+                item,
+                "one_way",
+                _map_leg(
+                    item.get("flights", []), item.get("layovers", []), str(leg["date"])
+                ),
+                str(leg["date"]),
+                None,
+                dep_id.split(",")[0],
+                arr_id.split(",")[0],
+            )
+            mapped.update(
+                {
+                    "leg_index": index,
+                    "leg_from": leg["from"],
+                    "leg_to": leg["to"],
+                    "leg_date": str(leg["date"]),
+                    "city": leg["to"],
+                }
+            )
+            results.append(mapped)
+        return {
+            "leg_index": index,
+            "label": label,
+            "date": str(leg["date"]),
+            "from": leg["from"],
+            "to": leg["to"],
+            "results": results,
+        }
+
+    fetched = await asyncio.gather(*[fetch_leg(i, leg) for i, leg in enumerate(legs)])
+
+    if all(lg.get("error") or not lg.get("results") for lg in fetched):
+        raise SerpAPIError("All multi-city legs failed or returned no results")
+
+    flattened = [r for lg in fetched for r in lg.get("results", [])]
+    payload = {"trip_type": "multi_city", "legs": fetched, "results": flattened}
+    cache[cache_key] = payload
+    return payload

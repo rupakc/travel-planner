@@ -51,6 +51,9 @@ export function generatePlanName(destination, interests = [], departureDate = nu
 export function computePlanCost(selections, searchData = null) {
   let total = 0
   if (selections?.flight?.price_usd) total += Number(selections.flight.price_usd)
+  ;(selections?.flights || []).forEach((f) => {
+    if (f.price_usd) total += Number(f.price_usd)
+  })
   if (selections?.hotel) {
     if (selections.hotel.total_price_usd) {
       total += Number(selections.hotel.total_price_usd)
@@ -78,9 +81,21 @@ export function getBudgetStatus(cost, budgetUsd) {
   return { status: 'over', amount: Math.round(Math.abs(diff)), label: `$${Math.round(Math.abs(diff)).toLocaleString()} over budget` }
 }
 
+// Identity check for per-leg flight selections (multi-city trips)
+export function sameFlight(a, b) {
+  if (!a || !b) return false
+  return (
+    (a.leg_index ?? null) === (b.leg_index ?? null) &&
+    a.price_usd === b.price_usd &&
+    (a.outbound?.airline ?? a.airline) === (b.outbound?.airline ?? b.airline) &&
+    (a.outbound?.flight_number ?? a.flight_number) === (b.outbound?.flight_number ?? b.flight_number)
+  )
+}
+
 export function countSelections(selections) {
   return (
     (selections?.flight ? 1 : 0) +
+    (selections?.flights?.length || 0) +
     (selections?.hotel ? 1 : 0) +
     (selections?.activities?.length || 0) +
     (selections?.places_to_see?.length || 0) +
@@ -95,6 +110,7 @@ export function countSelections(selections) {
 
 export const EMPTY_SELECTIONS = {
   flight: null,
+  flights: [],
   hotel: null,
   activities: [],
   places_to_see: [],

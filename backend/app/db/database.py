@@ -125,6 +125,38 @@ def lookup_iata(code: str) -> dict | None:
     return _web_search_iata(code)
 
 
+def lookup_city_iata(city: str, max_codes: int = 2) -> str | None:
+    """Resolve a city name (optionally 'City, Country') to IATA airport codes.
+
+    Returns up to max_codes codes comma-joined (SerpAPI accepts multiple
+    departure/arrival IDs), or None if the city isn't in the airports table.
+    Seed data lists major airports first, so row order is the tiebreaker.
+    """
+    if not city or not city.strip():
+        return None
+    stripped = city.strip()
+    if re.match(r"^[A-Za-z]{3}$", stripped):
+        return stripped.upper()
+    parts = [p.strip() for p in stripped.split(",")]
+    city_name, country = parts[0], (parts[1] if len(parts) > 1 else None)
+    with get_connection() as conn:
+        if country:
+            rows = conn.execute(
+                "SELECT iata_code FROM airports WHERE lower(city) = :city "
+                "AND lower(country) = :country LIMIT :n",
+                {"city": city_name.lower(), "country": country.lower(), "n": max_codes},
+            ).fetchall()
+            if rows:
+                return ",".join(r["iata_code"] for r in rows)
+        rows = conn.execute(
+            "SELECT iata_code FROM airports WHERE lower(city) = :city LIMIT :n",
+            {"city": city_name.lower(), "n": max_codes},
+        ).fetchall()
+    if not rows:
+        return None
+    return ",".join(r["iata_code"] for r in rows)
+
+
 def _web_search_iata(code: str) -> dict | None:
     """Search the web for an IATA airport code, use Haiku to extract city/country,
     persist to DB, and return info."""

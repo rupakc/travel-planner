@@ -14,7 +14,7 @@ import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
-import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
+import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
 import AirportSearch from '../components/ui/AirportSearch'
@@ -245,6 +245,7 @@ function WeatherDayCard({ day }) {
   const emoji = WMO_EMOJI[day.weather_code] ?? '🌡️'
   return (
     <div className={`flex-shrink-0 w-28 rounded-xl border p-3 text-center ${day.is_poor ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+      {day.city && <p className="text-[10px] font-bold text-indigo-500 truncate mb-0.5">{(day.city || '').split(',')[0]}</p>}
       <p className="text-xs text-gray-400 mb-1">
         {new Date(day.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
       </p>
@@ -336,7 +337,91 @@ function FlightLeg({ leg, direction, onLayover }) {
   )
 }
 
+// Short city label for chips — "Rome, Italy" → "Rome"
+const cityName = (c) => String(c || '').split(',')[0].trim()
+
+function CityChip({ city }) {
+  if (!city || (Array.isArray(city) && !city.length)) return null
+  const label = Array.isArray(city) ? city.map(cityName).join(' · ') : cityName(city)
+  return (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-semibold whitespace-nowrap">
+      <MapPin size={9} /> {label}
+    </span>
+  )
+}
+
+// Multi-city flights: one group per leg, users pick one flight per leg
+function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLayover }) {
+  const chosen = selections.flights || []
+  const chosenTotal = chosen.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0)
+  return (
+    <div className="p-4 space-y-5">
+      {pricingData && <PricingAdvisorBanner data={pricingData} />}
+      <div className="flex items-center justify-between bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-sm">
+        <span className="text-sky-800 font-medium">✈️ Multi-city trip — pick one flight per leg ({chosen.length}/{legs.length} selected)</span>
+        {chosenTotal > 0 && <span className="text-sky-700 font-bold">${chosenTotal.toLocaleString()} total</span>}
+      </div>
+      {legs.map((leg, li) => {
+        const legDate = leg.date ? new Date(`${leg.date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null
+        return (
+          <div key={li}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 rounded-full bg-sky-600 text-white text-xs font-bold">Leg {(leg.leg_index ?? li) + 1}</span>
+              <span className="text-sm font-semibold text-gray-800">{cityName(leg.from)} → {cityName(leg.to)}</span>
+              {legDate && <span className="text-xs text-gray-400">· {legDate}</span>}
+            </div>
+            {!(leg.results?.length) ? (
+              <div className="border border-dashed border-gray-300 rounded-xl px-4 py-3 text-xs text-gray-500">
+                No flights found for this leg — check trains/buses in Getting Around
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {leg.results.map((f, i) => {
+                  const isSelected = chosen.some(x => sameFlight(x, f))
+                  return (
+                    <div key={i}
+                      onClick={() => onSelect('flights', f)}
+                      className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-base font-bold text-teal-700">{f.price_usd ? `$${Number(f.price_usd).toLocaleString()}` : '—'}</p>
+                          <p className="text-[10px] text-gray-400">per person</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {f.booking_url && (
+                            <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                              className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
+                              <ExternalLink size={11} /> Book
+                            </a>
+                          )}
+                          {f.source && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g, ' ')}</span>}
+                        </div>
+                        <button type="button" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
+                          {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) {
+  if (data?.legs?.length) {
+    return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} onLayover={onLayover} />
+  }
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
@@ -640,7 +725,10 @@ function HotelsSection({ data, selections, onSelect }) {
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1 min-w-0 mr-2">
                 <h3 className="font-semibold text-gray-900 truncate">{h.name}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{h.location}</p>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <p className="text-xs text-gray-500">{h.location}</p>
+                  {h.city && <CityChip city={h.city} />}
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="font-bold text-purple-700">${h.price_per_night_usd?.toLocaleString()}<span className="text-xs font-normal text-gray-500">/night</span></p>
@@ -869,6 +957,7 @@ function ActivitiesSection({ data, selections, onSelect, weatherData }) {
               {a.rating && <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{a.rating}{a.review_count ? ` (${a.review_count.toLocaleString()})` : ''}</span>}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
@@ -940,6 +1029,7 @@ function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
               </div>
             )}
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {place.city && <CityChip city={place.city} />}
               {place.info_url && (
                 <a href={place.info_url} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
@@ -1189,6 +1279,7 @@ function EventsSection({ data, selections, onSelect }) {
               <h3 className="font-semibold text-gray-900 mb-1">{ev.name}</h3>
               <p className="text-sm text-gray-600 mb-2 line-clamp-3">{ev.description}</p>
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                {ev.city && <CityChip city={ev.city} />}
                 {ev.location && <span className="flex items-center gap-1"><MapPin size={10} />{ev.location}</span>}
                 {ev.price && <span className="flex items-center gap-1"><DollarSign size={10} />{ev.price}</span>}
                 {(ev.interest_match || []).map(m => (
@@ -1318,7 +1409,10 @@ function SimSection({ data, selections, onSelect }) {
               <h3 className="font-semibold text-gray-900 text-sm">{p.provider}</h3>
               <span className="font-bold text-pink-700">${p.price_usd}</span>
             </div>
-            <p className="text-xs text-gray-500 mb-3">{p.plan_name}</p>
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+              <p className="text-xs text-gray-500">{p.plan_name}</p>
+              {p.city && <CityChip city={p.city} />}
+            </div>
             <div className="space-y-1 text-xs text-gray-600 mb-3">
               {p.data_gb ? <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{p.data_gb}GB data</div> : <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />Unlimited data</div>}
               {p.validity_days && <div className="flex items-center gap-1.5"><Clock size={10} className="text-pink-400" />{p.validity_days} days validity</div>}
@@ -1352,7 +1446,7 @@ function TipsSection({ data, selections, onSelect }) {
       {data.tips.map((tip, i) => { const c = sc[tip.severity] || sc.info; const SI = c.icon; const isSelected = selectedTips.some(t => t.title === tip.title); return (
         <div key={i} className={`flex gap-3 p-3 rounded-lg border ${isSelected ? 'border-amber-400 ring-1 ring-amber-300' : ''} ${c.bg} ${c.border}`}>
           <SI size={15} className={`shrink-0 mt-0.5 ${c.ic}`} />
-          <div className="flex-1"><div className="flex items-center gap-2 mb-0.5"><span className="text-sm font-semibold text-gray-900">{tip.title}</span><span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${c.badge}`}>{tip.category}</span></div><p className={`text-sm ${c.text}`}>{tip.body}</p>
+          <div className="flex-1"><div className="flex items-center gap-2 mb-0.5"><span className="text-sm font-semibold text-gray-900">{tip.title}</span><span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${c.badge}`}>{tip.category}</span>{tip.city && <CityChip city={tip.city} />}</div><p className={`text-sm ${c.text}`}>{tip.body}</p>
           <div className="flex items-center gap-3 mt-1.5">
             {tip.source_url && (
               <a href={tip.source_url} target="_blank" rel="noopener noreferrer"
@@ -1414,6 +1508,7 @@ function GettingAroundSection({ data, selections, onSelect }) {
                   <div>
                     <h4 className="font-semibold text-gray-900 text-sm">{opt.name}</h4>
                     <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium mt-0.5 ${scopeColors[opt.scope] || 'bg-gray-100 text-gray-600'}`}>{opt.type?.replace(/_/g, ' ')}</span>
+                    {opt.city && <span className="ml-1"><CityChip city={opt.city} /></span>}
                   </div>
                 </div>
                 <button type="button" onClick={() => onSelect('getting_around', opt)}
@@ -2398,6 +2493,14 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
 
+  // Full itinerary snapshot travels with the plan so the public share card
+  // can render the complete day-by-day schedule
+  const selectionsForSave = () => {
+    const days = results?.itinerary?.days
+    if (!days?.length) return selections
+    return { ...selections, itinerary: { days, total_estimated_cost_usd: results.itinerary.total_estimated_cost_usd } }
+  }
+
   const save = async () => {
     if (!token) { setSaveMsg('Please log in to save plans'); return }
     setSaving(true); setSaveMsg('')
@@ -2405,9 +2508,10 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
       const isUpdate = !!loadedPlanId
       const url = isUpdate ? `/api/plans/${loadedPlanId}` : '/api/plans'
       const method = isUpdate ? 'PUT' : 'POST'
+      const sel = selectionsForSave()
       const body = isUpdate
-        ? JSON.stringify({ name: planName, selections })
-        : JSON.stringify({ name: planName, search_data: searchData, selections })
+        ? JSON.stringify({ name: planName, selections: sel })
+        : JSON.stringify({ name: planName, search_data: searchData, selections: sel })
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2456,9 +2560,10 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
       const isUpdate = !!loadedPlanId
       const url = isUpdate ? `/api/plans/${loadedPlanId}` : '/api/plans'
       const method = isUpdate ? 'PUT' : 'POST'
+      const sel = selectionsForSave()
       const body = isUpdate
-        ? JSON.stringify({ name: planName, selections })
-        : JSON.stringify({ name: planName, search_data: searchData, selections })
+        ? JSON.stringify({ name: planName, selections: sel })
+        : JSON.stringify({ name: planName, search_data: searchData, selections: sel })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
         setSaveMsg(isUpdate ? 'Plan sent back!' : 'Plan saved!')
@@ -2473,7 +2578,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
   }
 
   const handleCurrentPlanDragStart = (e) => {
-    e.dataTransfer.setData('application/x-current-plan', JSON.stringify({ name: planName, selections }))
+    e.dataTransfer.setData('application/x-current-plan', JSON.stringify({ name: planName, selections: selectionsForSave() }))
     e.dataTransfer.effectAllowed = 'move'
   }
 
@@ -2552,6 +2657,29 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               {selections.flight.booking_url && (
                 <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> Book this flight</a>
               )}
+            </div>
+          )}
+
+          {/* Selected multi-city flights (one per leg) */}
+          {(selections.flights || []).length > 0 && (
+            <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide mb-1.5"><Plane size={11}/> Flights ({selections.flights.length} leg{selections.flights.length > 1 ? 's' : ''})</div>
+              <div className="space-y-2">
+                {selections.flights.map((f, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2 border-t border-sky-100 pt-1.5 first:border-t-0 first:pt-0">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-semibold text-sky-700">Leg {(f.leg_index ?? i) + 1}:</span>{' '}
+                        <span className="font-medium text-gray-700">{f.outbound?.airline || f.airline}</span>
+                        {(f.outbound?.flight_number || f.flight_number) && <span className="text-gray-400 ml-1">{f.outbound?.flight_number || f.flight_number}</span>}
+                      </p>
+                      <p className="text-[11px] text-gray-500">{(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {(f.leg_to || f.outbound?.destination || '').split(',')[0]}{f.leg_date ? ` · ${f.leg_date}` : ''} · <span className="font-semibold text-sky-700">${Number(f.price_usd || 0).toLocaleString()}</span></p>
+                    </div>
+                    <button onClick={() => onRemoveSelection('flights', f)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={13}/></button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs font-semibold text-sky-700 mt-2">${selections.flights.reduce((t, f) => t + (Number(f.price_usd) || 0), 0).toLocaleString()} total flights</p>
             </div>
           )}
 
@@ -3172,7 +3300,7 @@ export default function ResultsPage() {
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
-    flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [],
+    flight: null, flights: [], hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
@@ -3247,7 +3375,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -3368,7 +3496,7 @@ export default function ResultsPage() {
   if (!searchData) return null
 
   const completedCount = Object.values(statuses).filter(s => s === 'done' || s === 'enhancing').length
-  const selectedCount  = (selections.flight ? 1 : 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
+  const selectedCount  = (selections.flight ? 1 : 0) + (selections.flights?.length || 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
 
   const handleSelect = (type, value) => {
     if (type === 'activities') {
@@ -3395,6 +3523,15 @@ export default function ResultsPage() {
       setSelections(s => {
         const already = (s.places_to_see || []).some(p => p.name === value.name)
         return { ...s, places_to_see: already ? (s.places_to_see || []).filter(p => p.name !== value.name) : [...(s.places_to_see || []), value] }
+      })
+    } else if (type === 'flights') {
+      // Multi-city: one flight per leg — clicking again deselects, picking
+      // another flight on the same leg replaces it
+      setSelections(s => {
+        const list = s.flights || []
+        const same = list.find(f => sameFlight(f, value))
+        const rest = list.filter(f => f.leg_index !== value.leg_index)
+        return { ...s, flights: same ? rest : [...rest, value].sort((a, b) => (a.leg_index ?? 0) - (b.leg_index ?? 0)) }
       })
     } else {
       setSelections(s => ({ ...s, [type]: value }))
@@ -3424,6 +3561,8 @@ export default function ResultsPage() {
       setSelections(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
       setSelections(s => ({ ...s, itinerary_slots: (s.itinerary_slots || []).filter(sl => sl.key !== value.key) }))
+    } else if (type === 'flights') {
+      setSelections(s => ({ ...s, flights: (s.flights || []).filter(f => !sameFlight(f, value)) }))
     } else {
       setSelections(s => ({ ...s, [type]: null }))
     }
