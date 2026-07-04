@@ -16,7 +16,7 @@ class FeedbackRequest(BaseModel):
 
 
 @router.post("/feedback", status_code=201)
-async def post_feedback(
+def post_feedback(
     req: FeedbackRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -32,7 +32,7 @@ async def post_feedback(
 
 
 @router.get("/admin/feedback")
-async def admin_list_feedback(
+def admin_list_feedback(
     page: str | None = Query(None),
     category: str | None = Query(None),
     min_rating: int | None = Query(None, ge=1, le=5),

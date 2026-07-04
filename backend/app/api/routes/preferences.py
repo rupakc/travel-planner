@@ -23,13 +23,13 @@ class PreferencesUpdate(BaseModel):
 
 
 @router.get("/preferences")
-async def get_user_preferences(user: dict = Depends(get_current_user)):
+def get_user_preferences(user: dict = Depends(get_current_user)):
     """Get the current user's travel preferences."""
     return get_preferences(user["username"])
 
 
 @router.put("/preferences")
-async def update_user_preferences(
+def update_user_preferences(
     prefs: PreferencesUpdate,
     user: dict = Depends(get_current_user),
 ):

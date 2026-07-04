@@ -18,7 +18,7 @@ class ChangePasswordRequest(BaseModel):
 
 
 @router.post("/auth/login")
-async def login(req: LoginRequest):
+def login(req: LoginRequest):
     user = authenticate_user(req.username, req.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
@@ -41,7 +41,7 @@ async def login(req: LoginRequest):
 
 
 @router.post("/auth/change-password")
-async def change_password_endpoint(
+def change_password_endpoint(
     req: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -66,7 +66,7 @@ async def change_password_endpoint(
 
 
 @router.get("/auth/me")
-async def me(current_user: dict = Depends(get_current_user)):
+def me(current_user: dict = Depends(get_current_user)):
     return {
         "username": current_user["username"],
         "is_admin": current_user["is_admin"],

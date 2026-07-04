@@ -60,14 +60,12 @@ class UpdatePlanRequest(BaseModel):
 
 
 @router.get("/plans")
-async def list_plans(current_user: dict = Depends(get_current_user)):
+def list_plans(current_user: dict = Depends(get_current_user)):
     return get_user_plans(current_user["username"])
 
 
 @router.post("/plans")
-async def create_plan(
-    req: SavePlanRequest, current_user: dict = Depends(get_current_user)
-):
+def create_plan(req: SavePlanRequest, current_user: dict = Depends(get_current_user)):
     plan = save_plan(
         current_user["username"], req.name, req.search_data, req.selections
     )
@@ -76,7 +74,7 @@ async def create_plan(
 
 
 @router.get("/plans/{plan_id}")
-async def get_one_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
+def get_one_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
     plan = get_plan(plan_id)
     if not plan or plan["username"] != current_user["username"]:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -84,7 +82,7 @@ async def get_one_plan(plan_id: int, current_user: dict = Depends(get_current_us
 
 
 @router.put("/plans/{plan_id}")
-async def update_one_plan(
+def update_one_plan(
     plan_id: int, req: UpdatePlanRequest, current_user: dict = Depends(get_current_user)
 ):
     plan = get_plan(plan_id)
@@ -99,7 +97,7 @@ async def update_one_plan(
 
 
 @router.post("/plans/{plan_id}/share")
-async def share_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
+def share_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
     """Generate (or return the existing) public share token for a plan."""
     plan = get_plan(plan_id)
     if not plan or plan["username"] != current_user["username"]:
@@ -110,7 +108,7 @@ async def share_plan(plan_id: int, current_user: dict = Depends(get_current_user
 
 
 @router.delete("/plans/{plan_id}/share")
-async def revoke_share(plan_id: int, current_user: dict = Depends(get_current_user)):
+def revoke_share(plan_id: int, current_user: dict = Depends(get_current_user)):
     """Revoke the public share link for a plan."""
     plan = get_plan(plan_id)
     if not plan or plan["username"] != current_user["username"]:
@@ -120,7 +118,7 @@ async def revoke_share(plan_id: int, current_user: dict = Depends(get_current_us
 
 
 @router.get("/share/{token}")
-async def get_shared_plan(token: str):
+def get_shared_plan(token: str):
     """Public, read-only view of a shared plan — no authentication required."""
     plan = get_plan_by_share_token(token)
     if not plan:
@@ -129,7 +127,7 @@ async def get_shared_plan(token: str):
 
 
 @router.delete("/plans/{plan_id}")
-async def delete_one_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
+def delete_one_plan(plan_id: int, current_user: dict = Depends(get_current_user)):
     plan = get_plan(plan_id)
     if not plan or plan["username"] != current_user["username"]:
         raise HTTPException(status_code=404, detail="Plan not found")

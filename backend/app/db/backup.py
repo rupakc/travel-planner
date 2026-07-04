@@ -168,11 +168,36 @@ def _sync_backup(bucket_name: str, data_dir: str, force: bool) -> None:
                 _restore_generation[name] = gcs_gen
                 # Fall through to upload the merged DB.
 
-        # Upload the local (possibly just merged) file.
-        blob.upload_from_filename(str(db_file))
+        # Upload a consistent point-in-time snapshot. Uploading the raw file
+        # is wrong under WAL: commits since the last checkpoint live only in
+        # the -wal sidecar, so the main file can lag by arbitrarily many rows
+        # (low-volume tables like feedback may NEVER hit an auto-checkpoint
+        # before the instance dies) and can even be torn mid-checkpoint.
+        snapshot = _snapshot_db(db_file)
+        try:
+            blob.upload_from_filename(str(snapshot))
+        finally:
+            snapshot.unlink(missing_ok=True)
         blob.reload()  # refresh generation after upload
         _restore_generation[name] = blob.generation
         logger.info("Backed up %s to GCS (gen=%s)", name, blob.generation)
+
+
+def _snapshot_db(db_file: Path) -> Path:
+    """Consistent copy of a SQLite DB including all WAL contents."""
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    src = sqlite3.connect(str(db_file))
+    try:
+        dst = sqlite3.connect(str(tmp_path))
+        try:
+            with dst:
+                src.backup(dst)
+        finally:
+            dst.close()
+    finally:
+        src.close()
+    return tmp_path
 
 
 def _merge_gcs_into_local(blob, local_path: Path) -> None:

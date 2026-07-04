@@ -45,7 +45,7 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/admin/users", status_code=201)
-async def admin_create_user(
+def admin_create_user(
     req: CreateUserRequest,
     _admin: dict = Depends(require_admin),
 ):
@@ -74,12 +74,12 @@ async def admin_create_user(
 
 
 @router.get("/admin/users")
-async def admin_list_users(_admin: dict = Depends(require_admin)):
+def admin_list_users(_admin: dict = Depends(require_admin)):
     return [_safe(u) for u in get_all_users()]
 
 
 @router.delete("/admin/users/{username}", status_code=204)
-async def admin_deactivate_user(
+def admin_deactivate_user(
     username: str,
     admin: dict = Depends(require_admin),
 ):
@@ -93,7 +93,7 @@ async def admin_deactivate_user(
 
 
 @router.post("/admin/users/{username}/reactivate", status_code=200)
-async def admin_reactivate_user(
+def admin_reactivate_user(
     username: str,
     _admin: dict = Depends(require_admin),
 ):
@@ -104,7 +104,7 @@ async def admin_reactivate_user(
 
 
 @router.post("/admin/users/{username}/reset-password", status_code=200)
-async def admin_reset_password_endpoint(
+def admin_reset_password_endpoint(
     username: str,
     req: ResetPasswordRequest,
     _admin: dict = Depends(require_admin),

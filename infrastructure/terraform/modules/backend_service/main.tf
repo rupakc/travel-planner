@@ -25,7 +25,9 @@ resource "google_cloud_run_v2_service" "backend" {
     execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
 
     scaling {
-      min_instance_count = 0
+      # min 1: scale-to-zero caused cold starts (GCS restore + seeding) that
+      # made the first login/save after idle take tens of seconds
+      min_instance_count = 1
       max_instance_count = 1
     }
 
@@ -38,8 +40,10 @@ resource "google_cloud_run_v2_service" "backend" {
 
       resources {
         limits = {
-          memory = "1Gi"
-          cpu    = "1"
+          # 2 CPU / 2Gi: a search runs 12 agent-SDK subprocesses at once —
+          # on 1 vCPU they starved concurrent logins and plan saves
+          memory = "2Gi"
+          cpu    = "2"
         }
       }
 
