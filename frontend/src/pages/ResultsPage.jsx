@@ -838,6 +838,7 @@ function ActivitiesSection({ data, selections, onSelect, weatherData }) {
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
+              {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
               {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ Check weather</span>}
@@ -913,6 +914,7 @@ function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
                   <ExternalLink size={10} /> View details
                 </a>
               )}
+              {place.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {place.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {place.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
               {(() => {

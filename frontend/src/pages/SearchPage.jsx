@@ -115,6 +115,7 @@ export default function SearchPage() {
     num_travelers: 1,
     adults: 1, children: 0, seniors: 0, infants: 0,
     accessibility_needs: [],
+    serendipity: 0.5,
   })
   // Multi-city: up to 3 additional cities after the primary destination
   const [extraStops, setExtraStops] = useState([])
@@ -351,6 +352,27 @@ export default function SearchPage() {
                     {label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Serendipity dial */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelClass}>🎯 Discovery style</label>
+                <span className="text-xs font-semibold text-teal-600">
+                  {form.serendipity < 0.33 ? '🏛️ Famous classics' : form.serendipity > 0.66 ? '💎 Hidden gems' : '⚖️ Balanced mix'}
+                </span>
+              </div>
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={form.serendipity}
+                onChange={e => setForm(f => ({ ...f, serendipity: parseFloat(e.target.value) }))}
+                className="w-full accent-teal-600 cursor-pointer"
+                aria-label="Serendipity dial: classics to hidden gems"
+              />
+              <div className="flex justify-between text-[11px] text-gray-400 mt-0.5">
+                <span>Iconic must-sees</span>
+                <span>Off the beaten path</span>
               </div>
             </div>
 

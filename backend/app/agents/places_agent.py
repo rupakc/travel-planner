@@ -73,6 +73,8 @@ class PlacesAgent(ToolAgent):
         )
         if request.multi_city_context:
             prompt += f"\n{request.multi_city_context}"
+        if request.serendipity_context:
+            prompt += f"\n{request.serendipity_context}"
 
         # Claude synthesises Serper + internal knowledge → structured JSON
         result = await self.execute(prompt)

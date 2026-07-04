@@ -28,7 +28,8 @@ Output JSON only. No prose, no markdown, no explanation. Return exactly this sha
       "source": null,
       "accessibility_features": ["wheelchair_ramp", "accessible_toilet"],
       "wheelchair_accessible": true,
-      "family_friendly": true
+      "family_friendly": true,
+      "hidden_gem": false
     }
   ]
 }
@@ -43,6 +44,7 @@ Rules:
 - accessibility_features: list known accessibility provisions (e.g. `wheelchair_ramp`, `elevator`, `accessible_toilet`, `audio_guide`, `tactile_path`); empty list if none known
 - wheelchair_accessible: true if the place has full wheelchair access, false if not, null if unknown
 - family_friendly: true if suitable for children, false if not recommended for families
+- hidden_gem: true for lesser-known local favourites off the tourist trail, false for famous attractions. If the prompt includes a SERENDIPITY DIAL instruction, follow it when choosing the classics vs hidden-gems mix
 - description: two full sentences — what it is and why it matters to visit
 - Use the Google data provided in the prompt — it contains real ratings and official websites
 - Weight results toward the traveler's stated interests where possible

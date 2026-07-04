@@ -61,6 +61,13 @@ class TravelSearchRequest(BaseModel):
         description="Trip pacing: relaxed (fewer activities, downtime), balanced, "
         "or packed (maximise sightseeing)",
     )
+    serendipity: float = Field(
+        0.5,
+        ge=0.0,
+        le=1.0,
+        description="0 = famous classics only, 0.5 = balanced mix, "
+        "1 = hidden gems and local favourites",
+    )
 
     # Server-set from the authenticated user's Taste Graph (never client input).
     # Included in serialisation so cached search results are per-profile.
@@ -73,6 +80,31 @@ class TravelSearchRequest(BaseModel):
     # Auto-set by validator — not in the request body, not serialised to JSON
     origin_iata: str | None = Field(None, exclude=True)
     destination_iata: str | None = Field(None, exclude=True)
+
+    @property
+    def serendipity_context(self) -> str | None:
+        """Prompt snippet mapping the serendipity dial to result style, or None."""
+        if self.serendipity < 0.33:
+            return (
+                "SERENDIPITY DIAL — CLASSICS: The traveler wants the famous, "
+                "iconic, can't-miss options. Prioritise world-renowned "
+                "attractions and top-rated mainstream picks. Set "
+                '"hidden_gem": false on every result.'
+            )
+        if self.serendipity > 0.66:
+            return (
+                "SERENDIPITY DIAL — HIDDEN GEMS: The traveler wants to go off "
+                "the beaten path. Prioritise lesser-known local favourites, "
+                "neighbourhood spots, and under-the-radar experiences over "
+                "famous attractions (include at most 2-3 iconic must-sees). "
+                'Mark each off-the-beaten-path result with "hidden_gem": true '
+                "and famous ones with false."
+            )
+        return (
+            "SERENDIPITY DIAL — BALANCED: Mix famous must-see attractions "
+            "with a few lesser-known local favourites. Mark the "
+            'off-the-beaten-path results with "hidden_gem": true.'
+        )
 
     @property
     def is_multi_city(self) -> bool:
