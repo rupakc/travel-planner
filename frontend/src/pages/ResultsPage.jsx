@@ -7,13 +7,15 @@ import {
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
-  ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse
+  ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
+  Wand2, ArrowDown, ArrowUp
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
+import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
@@ -2808,6 +2810,84 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   )
 }
 
+// ─── Trip Remix ───────────────────────────────────────────────────────────────
+
+function RemixBar({ searchData, onRemix }) {
+  return (
+    <div className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+          <Wand2 size={14} className="text-white" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-gray-800">Remix this trip</h3>
+          <p className="text-xs text-gray-500">One click to see a what-if version — we'll re-plan everything and show you what changed</p>
+        </div>
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {REMIX_PRESETS.map((preset) => {
+          const disabled = applyRemix(searchData, preset.id) === searchData
+          return (
+            <button
+              key={preset.id}
+              onClick={() => onRemix(preset)}
+              disabled={disabled}
+              title={disabled ? 'Not applicable to this search' : preset.description}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                disabled
+                  ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                  : 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 hover:border-violet-300'
+              }`}
+            >
+              <span>{preset.emoji}</span>{preset.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
+  const rows = diffMetrics(remixInfo.before, snapshotMetrics(results))
+  return (
+    <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Wand2 size={15} className="text-violet-600 shrink-0" />
+          <p className="text-sm font-semibold text-violet-900">
+            Remixed: {remixInfo.label} — here's what changed vs your original plan
+          </p>
+        </div>
+        <button onClick={onDismiss} title="Dismiss comparison" className="text-violet-400 hover:text-violet-700 shrink-0">
+          <X size={15} />
+        </button>
+      </div>
+      {rows.length > 0 ? (
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {rows.map((row) => (
+            <div key={row.key} className="bg-white rounded-lg border border-violet-100 px-3 py-2">
+              <p className="text-[11px] text-gray-500">{row.label}</p>
+              <p className="text-sm font-bold text-gray-800">
+                {formatMetricValue(row.after, row.kind)}
+                <span className="ml-1 text-[11px] font-medium text-gray-400 line-through">{formatMetricValue(row.before, row.kind)}</span>
+              </p>
+              {row.direction !== 'same' && (
+                <p className={`flex items-center gap-0.5 text-[11px] font-semibold ${row.improved ? 'text-green-600' : 'text-red-500'}`}>
+                  {row.direction === 'down' ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
+                  {formatMetricValue(Math.abs(row.delta), row.kind)}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-violet-700">Not enough comparable data between the two runs — browse the new results below.</p>
+      )}
+    </div>
+  )
+}
+
 // ─── Main ResultsPage ─────────────────────────────────────────────────────────
 
 export default function ResultsPage() {
@@ -2842,6 +2922,7 @@ export default function ResultsPage() {
   const [confidenceData, setConfidenceData] = useState(null)
   const [pricingData, setPricingData] = useState(null)
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
+  const [remixInfo, setRemixInfo] = useState(null)  // { label, before } while comparing a remixed run
   const [pendingScrollTarget, setPendingScrollTarget] = useState(null)
   const prevCountRef = useRef(0)
 
@@ -2911,10 +2992,20 @@ export default function ResultsPage() {
   useEffect(() => {
     if (pendingSearchData) {
       showResults()
+      setRemixInfo(null)
       runSearch(pendingSearchData)
       clearPendingSearch()
     }
   }, [pendingSearchData])
+
+  const handleRemix = (preset) => {
+    const remixed = applyRemix(searchData, preset.id)
+    if (remixed === searchData) return
+    track('remix_applied', 'results', { preset: preset.id })
+    setRemixInfo({ label: preset.label, before: snapshotMetrics(results) })
+    runSearch(remixed)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Kick off SSE whenever searchData changes (with hasStarted guard)
   useEffect(() => {
@@ -3244,7 +3335,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Search panel */}
-        <SearchPanel searchData={searchData} isOpen={isSearchPanelOpen} onToggle={() => setIsSearchPanelOpen(v=>!v)} onUpdateSearch={(sd) => { setIsSearchPanelOpen(false); runSearch(sd) }} />
+        <SearchPanel searchData={searchData} isOpen={isSearchPanelOpen} onToggle={() => setIsSearchPanelOpen(v=>!v)} onUpdateSearch={(sd) => { setIsSearchPanelOpen(false); setRemixInfo(null); runSearch(sd) }} />
 
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
@@ -3305,6 +3396,18 @@ export default function ResultsPage() {
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-5 pb-24">
         {completionBanner && <div className="mb-5">{completionBanner}</div>}
+
+        {isDone && remixInfo && (
+          <div className="mb-5">
+            <RemixComparisonBanner remixInfo={remixInfo} results={results} onDismiss={() => setRemixInfo(null)} />
+          </div>
+        )}
+
+        {isDone && (
+          <div className="mb-5">
+            <RemixBar searchData={searchData} onRemix={handleRemix} />
+          </div>
+        )}
 
         {/* Tab switcher — only show once itinerary is loaded */}
         {results.itinerary?.days?.length > 0 && (

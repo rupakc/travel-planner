@@ -89,12 +89,26 @@ class ItineraryAgent(BaseAgent):
                 "\nAdd lat/lng coordinates (decimal degrees) to every slot.\n"
             )
 
+        pace_guidance = {
+            "relaxed": (
+                "RELAXED pace: at most one major activity per day plus one light "
+                "slot; build in free time, long meals and rest. Never schedule "
+                "three big attractions in a day."
+            ),
+            "balanced": "BALANCED pace: mix of sightseeing and downtime.",
+            "packed": (
+                "PACKED pace: maximise sightseeing — fill morning, afternoon and "
+                "evening with substantial activities, minimise idle time."
+            ),
+        }.get(request.pace, "BALANCED pace: mix of sightseeing and downtime.")
+
         prompt = (
             f"Create a day-by-day travel itinerary for {request.destination} (identify the country).\n"
             f"Traveling from: {request.origin}\n"
             f"Trip dates: {request.departure_date} to {request.return_date} ({nights} nights)\n"
             f"Travelers: {request.traveler_context}\n"
             f"Interests: {interests_str}\n"
+            f"Pacing: {pace_guidance}\n"
             f"Hotel: {hotel_name}\n\n"
             f"Available activities:\n{activities_summary}\n\n"
             f"Create a {nights + 1}-day itinerary (arrival day through departure day).\n"

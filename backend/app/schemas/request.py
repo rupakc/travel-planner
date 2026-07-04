@@ -55,6 +55,12 @@ class TravelSearchRequest(BaseModel):
         description="Ordered city list for multi-city trips, e.g. ['Paris', 'Rome', 'Barcelona']. "
         "destination (above) is always the primary/first city.",
     )
+    pace: str = Field(
+        "balanced",
+        pattern=r"^(relaxed|balanced|packed)$",
+        description="Trip pacing: relaxed (fewer activities, downtime), balanced, "
+        "or packed (maximise sightseeing)",
+    )
 
     # Auto-set by validator — not in the request body, not serialised to JSON
     origin_iata: str | None = Field(None, exclude=True)
