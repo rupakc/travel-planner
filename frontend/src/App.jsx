@@ -10,6 +10,7 @@ import PreferencesPage     from './pages/PreferencesPage'
 import LoginPage           from './pages/LoginPage'
 import ChangePasswordPage  from './pages/ChangePasswordPage'
 import AdminPage           from './pages/AdminPage'
+import SharePage           from './pages/SharePage'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
 
@@ -80,6 +81,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login"           element={<LoginPage />} />
+      {/* Public share link — works without login */}
+      <Route path="/share/:token"    element={<SharePage />} />
       <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
     </Routes>

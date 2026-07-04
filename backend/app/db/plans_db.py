@@ -19,6 +19,16 @@ def create_plans_table() -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_plans_username ON plans (username);
         """)
+        # Migration: share_token for public read-only links (NULL = not shared)
+        cols = {
+            row["name"] for row in conn.execute("PRAGMA table_info(plans)").fetchall()
+        }
+        if "share_token" not in cols:
+            conn.execute("ALTER TABLE plans ADD COLUMN share_token TEXT")
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_share_token "
+            "ON plans (share_token) WHERE share_token IS NOT NULL"
+        )
 
 
 def _row_to_dict(row) -> dict:
@@ -68,6 +78,26 @@ def update_plan(
         sql = f"UPDATE plans SET {', '.join(sets)} WHERE id = ? AND username = ?"  # nosec B608
         conn.execute(sql, vals)
     return get_plan(plan_id)
+
+
+def set_share_token(plan_id: int, username: str, token: str | None) -> dict | None:
+    """Set (or clear with None) the public share token for a user's plan."""
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE plans SET share_token = ? WHERE id = ? AND username = ?",
+            (token, plan_id, username),
+        )
+    return get_plan(plan_id)
+
+
+def get_plan_by_share_token(token: str) -> dict | None:
+    if not token:
+        return None
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM plans WHERE share_token = ?", (token,)
+        ).fetchone()
+    return _row_to_dict(row) if row else None
 
 
 def delete_plan(plan_id: int, username: str) -> None:
