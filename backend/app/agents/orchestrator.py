@@ -14,6 +14,7 @@ from .packing_list_agent import PackingListAgent
 from .places_agent import PlacesAgent
 from .pricing_advisor_agent import PricingAdvisorAgent
 from .sim_agent import SimAgent
+from .stress_test_agent import StressTestAgent
 from .tips_agent import TipsAgent
 from .visa_agent import VisaAgent
 from .weather_agent import WeatherAgent
@@ -37,6 +38,7 @@ class TravelOrchestrator:
         self.emergency_card = EmergencyCardAgent(agents_dir)
         self.packing_list = PackingListAgent(agents_dir)
         self.pricing_advisor = PricingAdvisorAgent(agents_dir)
+        self.stress_test = StressTestAgent(agents_dir)
 
     async def run(self, request: TravelSearchRequest) -> dict:
         """Run all agents: Phase 1 in parallel, Phase 2 sequential."""
@@ -79,7 +81,13 @@ class TravelOrchestrator:
             request, activities=activities, hotels=hotels
         )
 
+        # Phase 3: Stress-test audits the assembled plan
+        stress_test = await self.stress_test.run(
+            request, itinerary=itinerary, flights=flights, visa=visa
+        )
+
         return {
+            "stress_test": stress_test,
             "flights": flights,
             "hotels": hotels,
             "activities": activities,
@@ -174,6 +182,8 @@ class TravelOrchestrator:
         itinerary_task = None
         packing_list_task = None
         pricing_advisor_task = None
+        stress_test_task = None
+        stress_started_at = None
 
         async def run_agent(name: str, coro):
             try:
@@ -336,17 +346,33 @@ class TravelOrchestrator:
 
         enriched_count = 0
         itinerary_done = False
+        stress_done = False
         packing_done = packing_list_task is None
         pricing_done = pricing_advisor_task is None
         itinerary_timeout = 60
         deferred_timeout = 45
+        stress_timeout = 45
         timer_start = asyncio.get_event_loop().time()
+
+        def start_stress_test(itinerary_data: dict):
+            nonlocal stress_test_task, stress_started_at
+            stress_test_task = asyncio.create_task(
+                self.stress_test.run(
+                    request,
+                    itinerary=itinerary_data,
+                    flights=results.get("flights"),
+                    visa=results.get("visa"),
+                    weather=results.get("weather"),
+                )
+            )
+            stress_started_at = asyncio.get_event_loop().time()
 
         while (
             enriched_count < len(enrich_tasks)
             or not itinerary_done
             or not packing_done
             or not pricing_done
+            or not stress_done
         ):
             now = asyncio.get_event_loop().time()
             elapsed = now - timer_start
@@ -359,6 +385,8 @@ class TravelOrchestrator:
                 )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
+                yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'searching'})}\n\n"
+                start_stress_test(itinerary)
                 continue
 
             if not packing_done and elapsed > deferred_timeout:
@@ -395,6 +423,33 @@ class TravelOrchestrator:
                     )
                 yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
                 itinerary_done = True
+                yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'searching'})}\n\n"
+                start_stress_test(itinerary)
+                continue
+
+            if not stress_done and stress_test_task and stress_test_task.done():
+                try:
+                    stress_result = stress_test_task.result()
+                except Exception as e:
+                    logger.warning(f"Stress test agent failed: {e}")
+                    stress_result = {"error": str(e)}
+                if not stress_result.get("error"):
+                    yield f"data: {json.dumps({'type': 'stress_test', 'data': stress_result, 'source': 'ai'})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'done'})}\n\n"
+                stress_done = True
+                continue
+
+            if (
+                not stress_done
+                and stress_started_at is not None
+                and asyncio.get_event_loop().time() - stress_started_at > stress_timeout
+            ):
+                if stress_test_task:
+                    stress_test_task.cancel()
+                logger.warning("Stress test agent timed out after %ds", stress_timeout)
+                yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'done'})}\n\n"
+                stress_done = True
                 continue
 
             if not packing_done and packing_list_task and packing_list_task.done():

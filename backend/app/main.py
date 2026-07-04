@@ -27,6 +27,7 @@ from .api.routes.feedback import router as feedback_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
+from .api.routes.stress_test import router as stress_test_router
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
@@ -108,6 +109,7 @@ app.include_router(getting_around.router, prefix="/api", tags=["getting_around"]
 app.include_router(forex.router, prefix="/api", tags=["forex"])
 app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
 app.include_router(discover_router, prefix="/api", tags=["discover"])
+app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
 
 
 @app.get("/health")

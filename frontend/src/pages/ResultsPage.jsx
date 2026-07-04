@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
-  ShoppingBag, TrendingUp, LayoutList, CalendarDays
+  ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
@@ -36,10 +36,11 @@ const AGENT_CONFIG = {
   getting_around: { label: 'Getting Around',   icon: Bus,         color: 'cyan'    },
   forex:          { label: 'Currency & Forex', icon: DollarSign,  color: 'emerald' },
   itinerary:      { label: 'Itinerary',        icon: Calendar,    color: 'indigo'  },
+  stress_test:    { label: 'Trip Health Check', icon: HeartPulse, color: 'rose'    },
   emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
   packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
 }
-const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'packing_list']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -55,6 +56,7 @@ const COLOR_MAP = {
   lime:   { badge: 'bg-lime-50 text-lime-700 border-lime-200',    header: 'from-lime-500 to-green-500' },
   red:    { badge: 'bg-red-50 text-red-700 border-red-200',       header: 'from-red-500 to-red-600'   },
   teal:   { badge: 'bg-teal-50 text-teal-700 border-teal-200',    header: 'from-teal-500 to-teal-600' },
+  rose:   { badge: 'bg-rose-50 text-rose-700 border-rose-200',    header: 'from-rose-500 to-red-500'  },
 }
 
 const SECTION_ACCENT = {
@@ -71,13 +73,14 @@ const SECTION_ACCENT = {
   lime:    { icon: 'text-lime-600',    line: 'border-l-lime-400',    bg: 'bg-lime-50/30'    },
   red:     { icon: 'text-red-600',     line: 'border-l-red-400',     bg: 'bg-red-50/30'     },
   teal:    { icon: 'text-teal-600',    line: 'border-l-teal-400',    bg: 'bg-teal-50/30'    },
+  rose:    { icon: 'text-rose-600',    line: 'border-l-rose-400',    bg: 'bg-rose-50/30'    },
 }
 
 const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', emergency_card: 'Emergency', packing_list: 'Packing' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -194,6 +197,11 @@ const LOADING_MESSAGES = {
     "Checking weather...",
     "Planning what to pack...",
     "Finalising your packing list..."
+  ],
+  stress_test: [
+    "Playing devil's advocate on your plan...",
+    "Checking opening days, timings and pacing...",
+    "Auditing budget, visa deadlines and weather clashes..."
   ],
 }
 
@@ -2143,6 +2151,98 @@ function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPl
 
 // ─── My Plan Drawer ───────────────────────────────────────────────────────────
 
+// ─── Trip Stress-Test (Trip Health Check) ────────────────────────────────────
+
+const STRESS_OVERALL_STYLES = {
+  green: { ring: 'text-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Looking solid' },
+  amber: { ring: 'text-amber-500',   chip: 'bg-amber-50 text-amber-700 border-amber-200',       label: 'Needs attention' },
+  red:   { ring: 'text-red-500',     chip: 'bg-red-50 text-red-700 border-red-200',             label: 'At risk' },
+}
+
+const STRESS_SEVERITY_STYLES = {
+  high:   { chip: 'bg-red-50 text-red-700 border-red-200',          icon: AlertCircle,   label: 'High' },
+  medium: { chip: 'bg-amber-50 text-amber-700 border-amber-200',    icon: AlertTriangle, label: 'Medium' },
+  low:    { chip: 'bg-sky-50 text-sky-700 border-sky-200',          icon: Info,          label: 'Low' },
+}
+
+const STRESS_CATEGORY_EMOJI = { pacing: '🏃', timing: '⏰', visa: '🛂', weather: '🌧️', budget: '💸', logistics: '🧭' }
+
+function StressScoreRing({ score, overall }) {
+  const safeScore = Math.max(0, Math.min(100, Number(score) || 0))
+  const style = STRESS_OVERALL_STYLES[overall] || STRESS_OVERALL_STYLES.amber
+  const r = 26
+  const circ = 2 * Math.PI * r
+  return (
+    <div className="relative w-16 h-16 shrink-0">
+      <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
+        <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-gray-100" />
+        <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round"
+          className={style.ring} strokeDasharray={circ} strokeDashoffset={circ * (1 - safeScore / 100)} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-800">{safeScore}</span>
+    </div>
+  )
+}
+
+function StressTestSection({ data }) {
+  if (!data) return null
+  if (data.error) return (
+    <div className="p-4 text-sm text-gray-500">Health check unavailable for this plan — try re-running the search.</div>
+  )
+
+  const overall = ['green', 'amber', 'red'].includes(data.overall) ? data.overall : 'amber'
+  const style = STRESS_OVERALL_STYLES[overall]
+  const severityRank = { high: 0, medium: 1, low: 2 }
+  const findings = Array.isArray(data.findings)
+    ? [...data.findings].sort((a, b) => (severityRank[a?.severity] ?? 3) - (severityRank[b?.severity] ?? 3))
+    : []
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+        <StressScoreRing score={data.score} overall={overall} />
+        <div className="min-w-0">
+          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
+          {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
+          <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
+        </div>
+      </div>
+
+      {findings.length === 0 ? (
+        <p className="text-sm text-gray-500">No issues found — this plan held up under scrutiny.</p>
+      ) : (
+        <ul className="space-y-3">
+          {findings.map((f, i) => {
+            const sev = STRESS_SEVERITY_STYLES[f?.severity] || STRESS_SEVERITY_STYLES.low
+            const SevIcon = sev.icon
+            return (
+              <li key={i} className="border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${sev.chip}`}>
+                    <SevIcon size={11} /> {sev.label}
+                  </span>
+                  {f?.category && (
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      {STRESS_CATEGORY_EMOJI[f.category] || '🔎'} {f.category}
+                    </span>
+                  )}
+                  {(f?.day_number || f?.day_number === 0) && (
+                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">Day {f.day_number}</span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-800 mt-1.5">{f?.issue}</p>
+                {f?.suggestion && (
+                  <p className="text-sm text-teal-700 mt-1 flex gap-1.5"><span className="shrink-0">💡</span><span>{f.suggestion}</span></p>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
@@ -2821,7 +2921,7 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', packing_list:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', stress_test:'waiting', packing_list:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
@@ -2854,6 +2954,10 @@ export default function ResultsPage() {
               next.itinerary === 'waiting') {
             next.itinerary = 'loading'
           }
+          // Stress test audits the finished itinerary, so it starts right after
+          if (next.itinerary === 'done' && next.stress_test === 'waiting') {
+            next.stress_test = 'loading'
+          }
           return next
         })
       },
@@ -2866,10 +2970,10 @@ export default function ResultsPage() {
           return fallback ? { ...prev, itinerary: fallback } : prev
         })
         setStatuses(prev => {
-          if (prev.itinerary === 'waiting' || prev.itinerary === 'loading') {
-            return { ...prev, itinerary: 'done' }
-          }
-          return prev
+          const next = { ...prev }
+          if (next.itinerary === 'waiting' || next.itinerary === 'loading') next.itinerary = 'done'
+          if (next.stress_test === 'waiting' || next.stress_test === 'loading') next.stress_test = 'done'
+          return next
         })
       },
       (err) => setError(err.message || 'Search error'),
@@ -3033,6 +3137,7 @@ export default function ResultsPage() {
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
+      stress_test:    () => <StressTestSection data={data} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
