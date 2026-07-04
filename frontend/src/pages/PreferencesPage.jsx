@@ -8,6 +8,7 @@ import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Heart, MapPin, S
 
 const SIGNAL_LABELS = {
   activity_category: 'Favourite activity types',
+  event_category: 'Favourite event types',
   hotel_tier: 'Hotel style',
   flight_style: 'Flight style',
   interest: 'Recurring interests',

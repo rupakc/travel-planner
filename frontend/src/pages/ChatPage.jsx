@@ -6,7 +6,7 @@ import {
   Smartphone, Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
   Star, AlertTriangle, Info, AlertCircle, ExternalLink,
   DollarSign, Zap, X, Check, Copy, Plus, Bookmark, Save, Eye,
-  ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi
+  ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi, Share2
 } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -552,6 +552,8 @@ function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChang
   const [savedPlans, setSavedPlans] = useState([])
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [sharingId, setSharingId] = useState(null)
+  const [shareMsg, setShareMsg] = useState(null)  // { id, url } | { id, error }
   const [viewingPlan, setViewingPlan] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isDragOverSaved, setIsDragOverSaved] = useState(false)
@@ -595,6 +597,23 @@ function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChang
       await fetch(`/api/plans/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       setSavedPlans(p => p.filter(x => x.id !== id))
     } finally { setDeletingId(null) }
+  }
+
+  const sharePlan = async (id) => {
+    if (!token) return
+    setSharingId(id)
+    try {
+      const res = await fetch(`/api/plans/${id}/share`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error()
+      const { share_token } = await res.json()
+      const url = `${window.location.origin}/share/${share_token}`
+      try { await navigator.clipboard.writeText(url) } catch { /* clipboard can be unavailable */ }
+      setShareMsg({ id, url })
+      setTimeout(() => setShareMsg(m => (m?.id === id ? null : m)), 6000)
+    } catch {
+      setShareMsg({ id, error: true })
+      setTimeout(() => setShareMsg(m => (m?.id === id ? null : m)), 4000)
+    } finally { setSharingId(null) }
   }
 
   const saveAndClear = async () => {
@@ -878,7 +897,17 @@ function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChang
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
                         <Eye size={11} /> View
                       </button>
+                      <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
+                        title="Copy a public share link — no login needed to view"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
+                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
+                      </button>
                     </div>
+                    {shareMsg?.id === plan.id && (
+                      shareMsg.error
+                        ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
+                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 Link copied: {shareMsg.url}</p>
+                    )}
                   </div>
                 )
               })}

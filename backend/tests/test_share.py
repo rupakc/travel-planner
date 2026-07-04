@@ -13,7 +13,11 @@ SEARCH_DATA = {
     "num_travelers": 2,
 }
 
-SELECTIONS = {"hotel": {"name": "Park Hyatt", "star_rating": 5.0}, "activities": []}
+SELECTIONS = {
+    "hotel": {"name": "Park Hyatt", "star_rating": 5.0},
+    "activities": [],
+    "events": [{"name": "Sumida Fireworks", "category": "festival"}],
+}
 
 
 def _create_plan(client, admin_headers, name="Share me"):
@@ -45,6 +49,7 @@ class TestShareLifecycle:
         body = public.json()
         assert body["name"] == "Share me"
         assert body["selections"]["hotel"]["name"] == "Park Hyatt"
+        assert body["selections"]["events"][0]["name"] == "Sumida Fireworks"
 
         # Revoke kills the link
         revoke = client.delete(f"/api/plans/{plan_id}/share", headers=admin_headers)

@@ -28,6 +28,10 @@ SELECTIONS = {
         {"name": "Sushi class", "category": "Food"},
         {"name": "Senso-ji", "category": "history"},
     ],
+    "events": [
+        {"name": "Sumida Fireworks", "category": "Festival"},
+        {"name": "Bad event", "category": 7},
+    ],
 }
 
 
@@ -54,6 +58,8 @@ class TestExtractSignals:
         assert ("flight_style", "non-stop") in signals
         assert ("activity_category", "food") in signals
         assert ("activity_category", "history") in signals
+        assert ("event_category", "festival") in signals
+        assert not any(t == "event_category" and v == 7 for t, v in signals)
 
     def test_balanced_pace_is_not_a_signal(self):
         signals = extract_signals({**SEARCH_DATA, "pace": "balanced"}, {})
@@ -111,6 +117,7 @@ class TestProfileAggregation:
 
         context = derive_taste_context(username)
         assert "luxury hotels" in context
+        assert "festival events" in context
         assert "non-stop flights" in context
         assert "food" in context
         assert "relaxed-pace" in context

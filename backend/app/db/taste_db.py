@@ -11,6 +11,7 @@ from .database import get_connection
 # Signal types recorded per plan save
 SIGNAL_TYPES = (
     "activity_category",
+    "event_category",
     "hotel_tier",
     "flight_style",
     "interest",
@@ -98,6 +99,12 @@ def extract_signals(search_data: dict, selections: dict) -> list[tuple[str, str]
         if isinstance(category, str) and category.strip():
             signals.append(("activity_category", category.strip().lower()))
 
+    events = selections.get("events")
+    for event in events if isinstance(events, list) else []:
+        category = _as_dict(event).get("category")
+        if isinstance(category, str) and category.strip():
+            signals.append(("event_category", category.strip().lower()))
+
     return signals
 
 
@@ -169,6 +176,9 @@ def derive_taste_context(username: str) -> str | None:
     categories = top("activity_category")
     if categories:
         parts.append(f"gravitates to {', '.join(categories)} activities")
+    event_cats = top("event_category")
+    if event_cats:
+        parts.append(f"seeks out local {', '.join(event_cats)} events")
     interests = top("interest")
     if interests:
         parts.append(f"recurring interests: {', '.join(interests)}")

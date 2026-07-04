@@ -2,7 +2,8 @@ import { useState } from 'react'
 import {
   X, Plane, Hotel, MapPin, Smartphone, Calendar,
   Save, Trash2, Loader2, Check, PenLine, ExternalLink,
-  ChevronDown, ChevronUp, DollarSign, Star, Lightbulb, Bus, Wifi
+  ChevronDown, ChevronUp, DollarSign, Star, Lightbulb, Bus, Wifi,
+  PartyPopper, Share2
 } from 'lucide-react'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 
@@ -14,6 +15,7 @@ const SECTION_COLORS = {
   cyan:   'bg-cyan-50 border-b border-cyan-100 text-cyan-800',
   amber:  'bg-amber-50 border-b border-amber-100 text-amber-800',
   teal:   'bg-teal-50 border-b border-teal-100 text-teal-800',
+  fuchsia:'bg-fuchsia-50 border-b border-fuchsia-100 text-fuchsia-800',
 }
 
 function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
@@ -35,11 +37,12 @@ function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
 export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted }) {
   const [name, setName]           = useState(plan.name)
   const [sel,  setSel]            = useState(() => ({
-    flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [],
+    flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
     ...(plan.selections || {}),
   }))
   const [saving,   setSaving]   = useState(false)
+  const [sharing,  setSharing]  = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [msg,      setMsg]      = useState('')
 
@@ -54,6 +57,8 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       setSel(s => ({ ...s, tips: (s.tips || []).filter(t => t.title !== value.title) }))
     } else if (type === 'getting_around') {
       setSel(s => ({ ...s, getting_around: (s.getting_around || []).filter(a => a.name !== value.name) }))
+    } else if (type === 'events') {
+      setSel(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
       setSel(s => ({ ...s, itinerary_slots: (s.itinerary_slots || []).filter(sl => sl.key !== value.key) }))
     } else {
@@ -81,6 +86,23 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
     finally { setSaving(false) }
   }
 
+  const sharePlan = async () => {
+    setSharing(true); setMsg('')
+    try {
+      const res = await fetch(`/api/plans/${plan.id}/share`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error()
+      const { share_token } = await res.json()
+      const url = `${window.location.origin}/share/${share_token}`
+      try { await navigator.clipboard.writeText(url) } catch { /* clipboard may be unavailable */ }
+      setMsg('Share link copied ✓')
+      setTimeout(() => setMsg(''), 4000)
+    } catch { setMsg('Share failed') }
+    finally { setSharing(false) }
+  }
+
   const deletePlan = async () => {
     if (!confirm(`Delete "${name}"?`)) return
     setDeleting(true)
@@ -94,7 +116,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
     } finally { setDeleting(false) }
   }
 
-  const hasSelections = sel.flight || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.itinerary_slots?.length
+  const hasSelections = sel.flight || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.itinerary_slots?.length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
@@ -296,6 +318,30 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
             </Section>
           )}
 
+          {/* Events */}
+          {sel.events?.length > 0 && (
+            <Section title={`Events (${sel.events.length})`} color="fuchsia" icon={PartyPopper}>
+              <div className="space-y-2">
+                {sel.events.map((ev, i) => (
+                  <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-sm font-medium text-gray-900">{ev.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                        {ev.category && <span className="capitalize">{ev.category}</span>}
+                        {ev.start_date && <span>{ev.start_date}{ev.end_date && ev.end_date !== ev.start_date ? ` – ${ev.end_date}` : ''}</span>}
+                        {ev.price && <span>{ev.price}</span>}
+                      </div>
+                      {ev.location && <p className="text-xs text-gray-500 mt-0.5">{ev.location}</p>}
+                    </div>
+                    <button onClick={() => removeItem('events', ev)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {/* Itinerary slots */}
           {sel.itinerary_slots?.length > 0 && (
             <Section title={`Itinerary Slots (${sel.itinerary_slots.length})`} color="teal" icon={Calendar}>
@@ -331,6 +377,11 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
           </button>
           <div className="flex items-center gap-2 flex-1 justify-end">
             {msg && <span className={`text-sm font-medium ${msg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{msg}</span>}
+            <button onClick={sharePlan} disabled={sharing}
+              title="Copy a public link — anyone can view this trip card, no login needed"
+              className="flex items-center gap-1.5 px-3 py-2 text-violet-700 border border-violet-300 rounded-lg text-sm font-medium hover:bg-violet-50 transition-colors disabled:opacity-50">
+              {sharing ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />} Share
+            </button>
             <button onClick={onClose} className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
               Close
             </button>

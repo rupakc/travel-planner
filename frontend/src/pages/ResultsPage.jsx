@@ -1152,27 +1152,39 @@ function formatEventDates(start, end) {
   }
 }
 
-function EventsSection({ data }) {
+function EventsSection({ data, selections, onSelect }) {
   if (data?.error) return <div className="p-4 text-sm text-gray-500">Couldn't check local events this time — the rest of your plan is unaffected.</div>
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No notable events found during your dates.</div>
   const highlights = data.results.filter(e => e.impact !== 'consider')
   const disruptions = data.results.filter(e => e.impact === 'consider')
+  const isSelected = (ev) => (selections?.events || []).some(e => e.name === ev.name)
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {highlights.map((ev, i) => {
           const style = EVENT_CATEGORY_STYLE[ev.category] || EVENT_CATEGORY_STYLE.other
           const dates = formatEventDates(ev.start_date, ev.end_date)
+          const added = isSelected(ev)
           return (
-            <div key={i} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
+            <div key={i}
+              onClick={() => onSelect?.('events', ev)}
+              className={`border rounded-xl p-4 transition-all cursor-pointer ${added ? 'border-fuchsia-400 ring-2 ring-fuchsia-300 bg-fuchsia-50' : 'border-gray-200 hover:shadow-md'}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${style.chip}`}>{style.emoji} {ev.category}</span>
-                {dates && (
-                  <span className="text-xs font-semibold text-fuchsia-600 flex items-center gap-1 shrink-0">
-                    <Calendar size={10} />{dates}
-                    {ev.date_certainty === 'typical_season' && <span className="text-gray-400 font-normal" title="Typical season — exact dates may vary">~</span>}
-                  </span>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {dates && (
+                    <span className="text-xs font-semibold text-fuchsia-600 flex items-center gap-1">
+                      <Calendar size={10} />{dates}
+                      {ev.date_certainty === 'typical_season' && <span className="text-gray-400 font-normal" title="Typical season — exact dates may vary">~</span>}
+                    </span>
+                  )}
+                  {onSelect && (
+                    <button type="button" onClick={e => { e.stopPropagation(); onSelect('events', ev) }}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${added ? 'bg-fuchsia-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-fuchsia-100 hover:text-fuchsia-700'}`}>
+                      {added ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                    </button>
+                  )}
+                </div>
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">{ev.name}</h3>
               <p className="text-sm text-gray-600 mb-2 line-clamp-3">{ev.description}</p>
@@ -2681,6 +2693,29 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             </div>
           )}
 
+          {/* Selected events */}
+          {selections.events?.length > 0 && (
+            <div className="border border-fuchsia-200 bg-fuchsia-50 rounded-xl p-3">
+              <div className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PartyPopper size={11}/> Events ({selections.events.length})</div>
+              <div className="space-y-2">
+                {selections.events.map((ev, i) => (
+                  <div key={i} className="flex items-start justify-between border-b border-fuchsia-100 last:border-0 pb-1.5 last:pb-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-xs font-medium text-gray-800">{ev.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                        {ev.category && <span className="capitalize">{ev.category}</span>}
+                        {formatEventDates(ev.start_date, ev.end_date) && <span>{formatEventDates(ev.start_date, ev.end_date)}</span>}
+                        {ev.price && <span>{ev.price}</span>}
+                      </div>
+                      {ev.location && <p className="text-xs text-gray-500 mt-0.5">{ev.location}</p>}
+                    </div>
+                    <button onClick={() => onRemoveSelection('events', ev)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Itinerary notes */}
           {Object.entries(selections.itinerary_notes).filter(([,v]) => v).length > 0 && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
@@ -3137,7 +3172,7 @@ export default function ResultsPage() {
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
-    flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [],
+    flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
@@ -3212,7 +3247,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -3333,7 +3368,7 @@ export default function ResultsPage() {
   if (!searchData) return null
 
   const completedCount = Object.values(statuses).filter(s => s === 'done' || s === 'enhancing').length
-  const selectedCount  = (selections.flight ? 1 : 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.itinerary_slots?.length || 0)
+  const selectedCount  = (selections.flight ? 1 : 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
 
   const handleSelect = (type, value) => {
     if (type === 'activities') {
@@ -3350,6 +3385,11 @@ export default function ResultsPage() {
       setSelections(s => {
         const already = s.getting_around.some(a => a.name === value.name)
         return { ...s, getting_around: already ? s.getting_around.filter(a => a.name !== value.name) : [...s.getting_around, value] }
+      })
+    } else if (type === 'events') {
+      setSelections(s => {
+        const already = (s.events || []).some(e => e.name === value.name)
+        return { ...s, events: already ? (s.events || []).filter(e => e.name !== value.name) : [...(s.events || []), value] }
       })
     } else if (type === 'places_to_see') {
       setSelections(s => {
@@ -3380,6 +3420,8 @@ export default function ResultsPage() {
       setSelections(s => ({ ...s, tips: s.tips.filter(t => t.title !== value.title) }))
     } else if (type === 'places_to_see') {
       setSelections(s => ({ ...s, places_to_see: (s.places_to_see || []).filter(p => p.name !== value.name) }))
+    } else if (type === 'events') {
+      setSelections(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
       setSelections(s => ({ ...s, itinerary_slots: (s.itinerary_slots || []).filter(sl => sl.key !== value.key) }))
     } else {
@@ -3480,7 +3522,7 @@ export default function ResultsPage() {
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
-      events:         () => <EventsSection data={data} />,
+      events:         () => <EventsSection data={data} {...sectionProps} />,
       visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,
       tips:           () => <TipsSection       data={data} {...sectionProps} />,

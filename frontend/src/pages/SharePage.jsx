@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Loader2, Download, Plane, Hotel, MapPin, Calendar, Users, Smartphone, Bus } from 'lucide-react'
+import { Loader2, Download, Plane, Hotel, MapPin, Calendar, Users, Smartphone, Bus, PartyPopper } from 'lucide-react'
 
 // Public, read-only trip card — reachable without login via /share/:token
 
@@ -83,6 +83,7 @@ function downloadCard(plan) {
   if (sel.hotel?.name) stats.push(`🏨  ${sel.hotel.name}`)
   if (sel.activities?.length) stats.push(`🎯  ${sel.activities.length} activities planned`)
   if (sel.itinerary_slots?.length) stats.push(`📅  ${sel.itinerary_slots.length} itinerary picks`)
+  if (sel.events?.length) stats.push(`🎉  ${sel.events.length} local events`)
   if ((sd.interests || []).length) stats.push(`✨  ${sd.interests.slice(0, 4).join(' · ')}`)
   for (const s of stats.slice(0, 5)) {
     ctx.fillText(s, 80, statsY)
@@ -166,6 +167,7 @@ export default function SharePage() {
               {(sel.activities || []).length > 0 && <p className="flex items-center gap-2"><MapPin size={14} className="shrink-0" />{sel.activities.length} activities planned</p>}
               {sel.sim?.provider && <p className="flex items-center gap-2"><Smartphone size={14} className="shrink-0" />{sel.sim.provider}</p>}
               {(sel.getting_around || []).length > 0 && <p className="flex items-center gap-2"><Bus size={14} className="shrink-0" />{sel.getting_around.length} transport picks</p>}
+              {(sel.events || []).length > 0 && <p className="flex items-center gap-2"><PartyPopper size={14} className="shrink-0" />{sel.events.length} local event{sel.events.length > 1 ? 's' : ''}</p>}
             </div>
             <p className="text-white/70 text-xs pt-2">{plan.name}</p>
           </div>
