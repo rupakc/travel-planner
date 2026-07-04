@@ -289,7 +289,7 @@ class TestChatImprovements:
         assert "optimize_city_order" not in source
 
 
-class TestKnowledgeFirst:
+class TestKnowledgeOnlyWithFallback:
     def _agent(self):
         from app.agents.chat_agent import ChatAgent
 
@@ -299,72 +299,48 @@ class TestKnowledgeFirst:
         agent._taste_context = None
         return agent
 
-    def test_trigger_terms_gate_explicit_search_only(self):
-        from app.agents.chat_agent import _AGENT_TRIGGER_TERMS
+    def test_non_answer_detector(self):
+        from app.agents.chat_agent import _NON_ANSWER_RE
 
-        assert _AGENT_TRIGGER_TERMS.search("find me flights to Rome")
-        assert _AGENT_TRIGGER_TERMS.search("how much is a hotel in Tokyo")
-        assert not _AGENT_TRIGGER_TERMS.search("do I need a visa for Japan?")
-        assert not _AGENT_TRIGGER_TERMS.search(
-            "what is the best way of getting around in Tokyo"
+        assert _NON_ANSWER_RE.search("I don't have specific information on that.")
+        assert _NON_ANSWER_RE.search("I'm unable to answer that question.")
+        assert _NON_ANSWER_RE.search(
+            "Sorry — I ran into a temporary problem answering that. Please try again."
+        )
+        assert not _NON_ANSWER_RE.search(
+            "Tokyo's metro is superb — grab a Suica card and you're set."
         )
 
     @pytest.mark.anyio
-    async def test_knowledge_first_streams_answer_then_verifies(self, monkeypatch):
+    async def test_good_answer_never_touches_specialists(self):
         import json as _json
-
-        from app.schemas.request import TravelSearchRequest
 
         agent = self._agent()
 
         async def fake_knowledge_chat(messages, preferences, selections):
-            yield _json.dumps({"type": "delta", "text": "Tokyo has superb metro."})
+            yield _json.dumps({"type": "delta", "text": "Tokyo has a superb metro."})
             yield _json.dumps({"type": "done"})
 
         agent._knowledge_chat = fake_knowledge_chat
 
-        class FakeSpecialist:
-            def __init__(self, agents_dir):
-                pass
+        async def boom(*a, **k):
+            raise AssertionError("specialists must not run when the model answers")
 
-            async def run(self, request):
-                return {"options": [{"name": "Suica card"}]}
+        agent._run_specialist_agents = boom
+        agent._extract_travel_params = boom
 
-        monkeypatch.setattr(
-            type(agent),
-            "_specialist_classes",
-            lambda self: {"getting_around": FakeSpecialist},
-        )
-
-        async def fake_addendum(question, answer, results):
-            assert "getting_around" in results
-            return "Grab a Suica card at the airport."
-
-        agent._verification_addendum = fake_addendum
-
-        req = TravelSearchRequest(
-            origin="NYC",
-            destination="Tokyo",
-            departure_date="2026-09-10",
-            return_date="2026-09-17",
-            nationality="American",
-        )
         events = []
-        async for chunk in agent._knowledge_first_answer(
-            req,
+        async for chunk in agent._knowledge_with_fallback(
             [{"role": "user", "content": "how do I get around Tokyo?"}],
             None,
             None,
             ["getting_around"],
         ):
             events.append(_json.loads(chunk))
-
-        types = [e["type"] for e in events]
-        assert types == ["delta", "verifying", "verified", "delta", "done"]
-        assert "Suica" in events[3]["text"]
+        assert [e["type"] for e in events] == ["delta", "done"]
 
     @pytest.mark.anyio
-    async def test_no_addendum_when_answer_already_covers_it(self, monkeypatch):
+    async def test_failed_answer_falls_back_to_specialists(self):
         import json as _json
 
         from app.schemas.request import TravelSearchRequest
@@ -372,37 +348,64 @@ class TestKnowledgeFirst:
         agent = self._agent()
 
         async def fake_knowledge_chat(messages, preferences, selections):
-            yield _json.dumps({"type": "delta", "text": "Answer."})
+            yield _json.dumps({"type": "error", "text": "boom"})
             yield _json.dumps({"type": "done"})
 
         agent._knowledge_chat = fake_knowledge_chat
 
-        class FakeSpecialist:
-            def __init__(self, agents_dir):
-                pass
-
-            async def run(self, request):
-                return {"results": []}
-
-        monkeypatch.setattr(
-            type(agent), "_specialist_classes", lambda self: {"visa": FakeSpecialist}
-        )
-
-        async def fake_addendum(question, answer, results):
-            return ""
-
-        agent._verification_addendum = fake_addendum
-
         req = TravelSearchRequest(
-            origin="NYC",
+            origin="New York",
             destination="Tokyo",
             departure_date="2026-09-10",
             nationality="American",
         )
+
+        async def fake_extract(messages, preferences):
+            return req
+
+        agent._extract_travel_params = fake_extract
+
+        async def fake_specialists(request, messages, preferences, selections, names):
+            assert names == ["getting_around"]
+            yield _json.dumps({"type": "section_result", "section": "getting_around"})
+            yield _json.dumps({"type": "planning_done"})
+
+        agent._run_specialist_agents = fake_specialists
+
         events = []
-        async for chunk in agent._knowledge_first_answer(
-            req, [{"role": "user", "content": "visa?"}], None, None, ["visa"]
+        async for chunk in agent._knowledge_with_fallback(
+            [{"role": "user", "content": "how do I get around Tokyo?"}],
+            None,
+            None,
+            ["getting_around"],
         ):
             events.append(_json.loads(chunk))
-        types = [e["type"] for e in events]
-        assert types == ["delta", "verifying", "verified", "done"]
+        assert [e["type"] for e in events] == ["section_result", "planning_done"]
+
+    @pytest.mark.anyio
+    async def test_refusal_answer_falls_back(self):
+        import json as _json
+
+        agent = self._agent()
+
+        async def fake_knowledge_chat(messages, preferences, selections):
+            yield _json.dumps(
+                {"type": "delta", "text": "I don't have specific information on that."}
+            )
+            yield _json.dumps({"type": "done"})
+
+        agent._knowledge_chat = fake_knowledge_chat
+
+        async def fake_extract(messages, preferences):
+            return None
+
+        agent._extract_travel_params = fake_extract
+
+        events = []
+        async for chunk in agent._knowledge_with_fallback(
+            [{"role": "user", "content": "visa rules?"}], None, None, ["visa"]
+        ):
+            events.append(_json.loads(chunk))
+        # Refusal delta streams, no params extractable -> graceful done
+        assert events[0]["type"] == "delta"
+        assert events[-1]["type"] == "done"
