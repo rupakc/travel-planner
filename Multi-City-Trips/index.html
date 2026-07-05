@@ -1091,7 +1091,7 @@
 <p>LLM output order is not trusted:</p>
 <ul>
 <li><strong>Backend</strong> — flight legs are sorted by <code>leg_index</code>; weather days are sorted by <em>(stay order, date)</em>.</li>
-<li><strong>Frontend</strong> — <code>orderSectionByCity</code> (<code>ResultsPage.jsx</code>) stable-sorts every city-tagged section list by the index of its city in your entered stop order, the moment results arrive.</li>
+<li><strong>Frontend</strong> — <code>orderSectionByCity</code> (<code>frontend/src/utils/orderSectionByCity.js</code>) stable-sorts every city-tagged section list by the index of its city in your entered stop order, the moment results arrive.</li>
 </ul>
 <p>The itinerary agent is instructed to visit cities <strong>in exactly the order requested</strong> — it never reorders your route.</p>
 <h2 id="weather-per-stay">Weather per stay</h2>
