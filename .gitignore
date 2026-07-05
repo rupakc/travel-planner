@@ -39,6 +39,9 @@ backend/data/
 node_modules/
 frontend/dist/
 
+# Claude Code plugin state (volatile, per-session)
+.claude/ito*
+
 # Coverage
 .coverage
 coverage/
