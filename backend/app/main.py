@@ -120,6 +120,40 @@ app.include_router(events_router, prefix="/api", tags=["events"])
 app.include_router(layover_router, prefix="/api", tags=["layover"])
 
 
+@app.get("/health/agents")
+async def health_agents():
+    """Deep health: verifies the LLM pipeline actually works from this
+    instance (one tiny Haiku call, cached 5 min so it can't be abused).
+    Lets operators distinguish 'backend up' from 'agents can run'."""
+    import anthropic
+
+    from .core.cache import get_cache
+
+    cache = get_cache()
+    cached = cache.get("health:agents")
+    if cached:
+        return cached
+    try:
+        client = anthropic.AsyncAnthropic(
+            api_key=_settings.anthropic_api_key, max_retries=0, timeout=15
+        )
+        resp = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=8,
+            messages=[{"role": "user", "content": "Reply with the word OK"}],
+        )
+        llm = "ok" if resp.content else "empty-response"
+    except Exception as e:
+        llm = f"error: {type(e).__name__}"
+    result = {
+        "llm": llm,
+        "serpapi_configured": bool(_settings.serpapi_key),
+        "backup_configured": bool(_settings.backup_bucket),
+    }
+    cache["health:agents"] = result
+    return result
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "travel-planner-backend"}

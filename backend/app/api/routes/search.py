@@ -1,4 +1,6 @@
 import hashlib
+import json
+import logging
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -10,11 +12,31 @@ from ...core.config import settings
 from ...db.taste_db import derive_taste_context
 from ...schemas.request import TravelSearchRequest
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
 def get_orchestrator() -> TravelOrchestrator:
     return TravelOrchestrator(agents_dir=settings.agents_dir)
+
+
+def _is_cacheable_run(events: list[str]) -> bool:
+    """Only fully-successful, complete runs may be cached and replayed."""
+    saw_done = False
+    for chunk in events:
+        if not chunk.startswith("data: "):
+            continue
+        try:
+            event = json.loads(chunk[len("data: ") :].strip())
+        except (ValueError, TypeError):
+            continue
+        if event.get("type") == "done":
+            saw_done = True
+        data = event.get("data")
+        if isinstance(data, dict) and data.get("error"):
+            return False
+    return saw_done
 
 
 def _apply_taste_context(request: TravelSearchRequest, user: dict | None) -> None:
@@ -52,7 +74,15 @@ async def search(
                 collected.append(chunk)
             yield chunk
 
-        cache[cache_key] = collected
+        # NEVER cache a run containing failures — a cached error sequence is
+        # replayed verbatim for 30 minutes, so one transient failure would
+        # keep "failing" on every retry long after the cause is gone.
+        if _is_cacheable_run(collected):
+            cache[cache_key] = collected
+        else:
+            logger.warning(
+                "Search run had errored sections or ended early — not cached"
+            )
 
     return StreamingResponse(
         generate(),
