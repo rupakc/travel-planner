@@ -30,6 +30,10 @@ class Settings(BaseSettings):
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
+    # Max concurrent Anthropic API calls across all specialist agents — a
+    # 12-agent burst with large outputs trips org rate limits and every
+    # section fails at once
+    agent_max_concurrency: int = 6
     serper_key: str = (
         ""  # Serper Google Search API key; enables Tier 2 activity URL resolution
     )

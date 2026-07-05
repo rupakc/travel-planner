@@ -11,8 +11,28 @@ logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 4
 _MODEL = "claude-haiku-4-5-20251001"
-_MAX_TOKENS = 8192
+# Multi-city responses (per-city coverage quotas x 3 cities) can exceed 8192
+# output tokens; a truncated response is unparseable JSON and the whole
+# section "fails". Haiku 4.5 supports far larger outputs — cap generously.
+_MAX_TOKENS = 16384
 _client: anthropic.AsyncAnthropic | None = None
+
+# All specialist agents fire at once when a search starts. A burst of 12
+# concurrent large-output calls trips org rate limits (429/529) and every
+# section fails together. The semaphore smooths the burst; the SSE stream
+# already renders sections as they finish, so queueing is invisible.
+_semaphore: asyncio.Semaphore | None = None
+
+
+def _get_semaphore() -> asyncio.Semaphore:
+    global _semaphore
+    if _semaphore is None:
+        from ..core.config import settings
+
+        _semaphore = asyncio.Semaphore(
+            getattr(settings, "agent_max_concurrency", 6) or 6
+        )
+    return _semaphore
 
 
 def _get_client() -> anthropic.AsyncAnthropic:
@@ -20,7 +40,10 @@ def _get_client() -> anthropic.AsyncAnthropic:
     if _client is None:
         from ..core.config import settings
 
-        _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        # SDK-level retries handle 429/529 with Retry-After awareness
+        _client = anthropic.AsyncAnthropic(
+            api_key=settings.anthropic_api_key, max_retries=3
+        )
     return _client
 
 
@@ -30,29 +53,58 @@ class BaseAgent:
 
     async def execute(self, prompt: str) -> dict:
         """Execute agent via direct Anthropic API and return parsed JSON."""
+        compact_nudge = ""
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 client = _get_client()
                 system = (
                     self.definition.system_prompt
                     + "\n\nReturn ONLY valid JSON. No prose, no tool calls, no markdown."
+                    + compact_nudge
                 )
-                response = await client.messages.create(
-                    model=_MODEL,
-                    max_tokens=_MAX_TOKENS,
-                    system=system,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+                async with _get_semaphore():
+                    response = await client.messages.create(
+                        model=_MODEL,
+                        max_tokens=_MAX_TOKENS,
+                        system=system,
+                        messages=[{"role": "user", "content": prompt}],
+                    )
                 result_text = response.content[0].text if response.content else ""
             except Exception as e:
+                # Rate limits and overloads need real backoff, not 0.5s bursts
+                is_capacity = isinstance(
+                    e,
+                    (
+                        anthropic.RateLimitError,
+                        anthropic.InternalServerError,
+                        anthropic.APIConnectionError,
+                    ),
+                )
                 logger.warning(
                     f"Agent {self.definition.name} attempt {attempt}/{_MAX_RETRIES} "
                     f"failed: {e}"
                 )
                 if attempt < _MAX_RETRIES:
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(
+                        min(2**attempt, 10) if is_capacity else 2 * attempt
+                    )
                     continue
                 return {"error": str(e)}
+
+            if getattr(response, "stop_reason", None) == "max_tokens":
+                # Truncated output = unparseable JSON. Ask for a tighter
+                # response instead of burning retries on the same failure.
+                logger.warning(
+                    f"Agent {self.definition.name} attempt {attempt}/{_MAX_RETRIES} "
+                    f"hit the output-token cap — retrying with compact instruction"
+                )
+                compact_nudge = (
+                    "\nIMPORTANT: your previous response was cut off for being "
+                    "too long. Be compact: shorter descriptions, omit optional "
+                    "fields, keep every list to the stated minimum count."
+                )
+                if attempt < _MAX_RETRIES:
+                    continue
 
             parsed = self._parse_json(result_text)
             if parsed:
@@ -63,7 +115,7 @@ class BaseAgent:
                 f"returned empty/unparseable result: {result_text[:200]}"
             )
             if attempt < _MAX_RETRIES:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
                 continue
 
         return {

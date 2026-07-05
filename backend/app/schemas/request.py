@@ -266,6 +266,11 @@ class TravelSearchRequest(BaseModel):
             self.destination_iata = stripped_d.upper()
         self.destination = _resolve_iata(self.destination)
 
+        # Multi-city stops are entered as bare IATA codes too ("AMS", "JFK") —
+        # resolve them so prompts, stay labels, and city tags use real names
+        if self.destinations:
+            self.destinations = [_resolve_iata(d) for d in self.destinations]
+
         return self
 
 

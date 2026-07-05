@@ -196,7 +196,12 @@ class TravelOrchestrator:
 
         async def run_agent(name: str, coro):
             try:
-                result = await coro
+                # Generous ceiling (covers semaphore queueing) — a hung agent
+                # must never stall the stream or hold its section in limbo
+                result = await asyncio.wait_for(coro, timeout=240)
+            except TimeoutError:
+                logger.error(f"Agent {name} timed out after 240s")
+                result = {"error": "timed out"}
             except Exception as e:
                 logger.error(f"Agent {name} failed: {e}")
                 result = {"error": str(e)}
