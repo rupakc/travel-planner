@@ -6,7 +6,7 @@ import {
   DollarSign, Users, Globe, Zap, BookmarkPlus, X,
   ChevronDown, ChevronUp, Check, PenLine, MessageSquare, Trash2,
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
-  Bus, Map, SlidersHorizontal, Wifi, Bath, Cloud,
+  Bus, Map as MapIcon, SlidersHorizontal, Wifi, Bath, Cloud,
   ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2
 } from 'lucide-react'
@@ -17,6 +17,7 @@ import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
+import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
@@ -31,7 +32,7 @@ const AGENT_CONFIG = {
   weather:        { label: 'Weather Forecast', icon: Cloud,       color: 'sky'     },
   hotels:         { label: 'Hotels',           icon: Hotel,       color: 'purple'  },
   activities:     { label: 'Activities',       icon: MapPin,      color: 'green'   },
-  places_to_see:  { label: 'Places to See',    icon: Map,         color: 'lime'    },
+  places_to_see:  { label: 'Places to See',    icon: MapIcon,     color: 'lime'    },
   events:         { label: "What's On",        icon: PartyPopper, color: 'fuchsia' },
   visa:           { label: 'Visa',             icon: Shield,      color: 'orange'  },
   sim:            { label: 'SIM Cards',        icon: Smartphone,  color: 'pink'    },
@@ -45,26 +46,6 @@ const AGENT_CONFIG = {
 }
 const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
-// Multi-city: agents are told to follow the journey order but LLM output is
-// not guaranteed — stable-sort every city-tagged list so items always appear
-// in the exact stop order the user entered.
-const CITY_LIST_FIELDS = ['results', 'hotels', 'places', 'events', 'options', 'plans']
-function orderSectionByCity(data, destinations) {
-  if (!destinations || destinations.length < 2 || !data || typeof data !== 'object' || Array.isArray(data)) return data
-  const order = new Map(destinations.map((c, i) => [c.split(',')[0].trim().toLowerCase(), i]))
-  const cityIdx = item => {
-    const raw = Array.isArray(item?.city) ? item.city[0] : item?.city
-    const c = (raw || '').split(',')[0].trim().toLowerCase()
-    return order.has(c) ? order.get(c) : destinations.length
-  }
-  const out = { ...data }
-  for (const field of CITY_LIST_FIELDS) {
-    if (Array.isArray(out[field]) && out[field].some(it => it?.city)) {
-      out[field] = [...out[field]].sort((a, b) => cityIdx(a) - cityIdx(b))
-    }
-  }
-  return out
-}
 
 const COLOR_MAP = {
   blue:   { badge: 'bg-sky-50 text-sky-700 border-sky-200',       header: 'from-sky-400 to-sky-500' },
@@ -2777,7 +2758,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
           {/* Selected places */}
           {(selections.places_to_see?.length > 0) && (
             <div className="border border-lime-200 bg-lime-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Map size={11}/> Places to See ({selections.places_to_see.length})</div>
+              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapIcon size={11}/> Places to See ({selections.places_to_see.length})</div>
               <div className="space-y-2">
                 {selections.places_to_see.map((place, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-lime-100 last:border-0 pb-1.5 last:pb-0">
