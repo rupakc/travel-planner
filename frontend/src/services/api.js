@@ -10,7 +10,7 @@ const api = axios.create({
  * happens off the main thread, keeping the UI smooth.
  * Returns a cleanup function that terminates the worker.
  */
-export function streamSearch(searchData, onResult, onDone, onError, token = null) {
+export function streamSearch(searchData, onResult, onDone, onError, token = null, onInterrupted = null) {
   // Vite exposes workers via `new URL(..., import.meta.url)` + `{ type: 'module' }`
   const worker = new Worker(
     new URL('../workers/sseWorker.js', import.meta.url),
@@ -20,6 +20,11 @@ export function streamSearch(searchData, onResult, onDone, onError, token = null
   worker.onmessage = ({ data }) => {
     if (data.type === '__error') {
       onError(new Error(data.message))
+      worker.terminate()
+    } else if (data.type === '__interrupted') {
+      // Stream severed before the server's `done` event — let the caller
+      // retry; fall back to a normal completion if it can't.
+      ;(onInterrupted || onDone)()
       worker.terminate()
     } else if (data.type === '__stream_end' || data.type === 'done') {
       onDone()

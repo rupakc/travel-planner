@@ -366,9 +366,12 @@ class TravelOrchestrator:
         stress_done = False
         packing_done = packing_list_task is None
         pricing_done = pricing_advisor_task is None
+        # Deferred agents share the LLM concurrency semaphore with ~12
+        # enrichment calls, so under contention they can sit queued for a
+        # while before their first token — deadlines must absorb that.
         itinerary_timeout = 60
-        deferred_timeout = 45
-        stress_timeout = 45
+        deferred_timeout = 120
+        stress_timeout = 90
         timer_start = asyncio.get_event_loop().time()
 
         def start_stress_test(itinerary_data: dict):
@@ -410,8 +413,11 @@ class TravelOrchestrator:
                 if packing_list_task:
                     packing_list_task.cancel()
                 logger.warning(
-                    "Packing list agent timed out after %ds", deferred_timeout
+                    "Packing list agent timed out after %ds — using template fallback",
+                    deferred_timeout,
                 )
+                fallback_packing = self._build_fallback_packing_list(request)
+                yield f"data: {json.dumps({'type': 'packing_list', 'data': fallback_packing, 'source': 'static'})}\n\n"
                 packing_done = True
                 continue
 
@@ -450,9 +456,11 @@ class TravelOrchestrator:
                 except Exception as e:
                     logger.warning(f"Stress test agent failed: {e}")
                     stress_result = {"error": str(e)}
-                if not stress_result.get("error"):
-                    yield f"data: {json.dumps({'type': 'stress_test', 'data': stress_result, 'source': 'ai'})}\n\n"
-                else:
+                # Errors are sent as section data too — the UI renders its
+                # graceful "health check unavailable" state instead of a
+                # section that never resolves.
+                yield f"data: {json.dumps({'type': 'stress_test', 'data': stress_result, 'source': 'ai'})}\n\n"
+                if stress_result.get("error"):
                     yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'done'})}\n\n"
                 stress_done = True
                 continue
@@ -465,6 +473,7 @@ class TravelOrchestrator:
                 if stress_test_task:
                     stress_test_task.cancel()
                 logger.warning("Stress test agent timed out after %ds", stress_timeout)
+                yield f"data: {json.dumps({'type': 'stress_test', 'data': {'error': 'timed out'}, 'source': 'ai'})}\n\n"
                 yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'done'})}\n\n"
                 stress_done = True
                 continue
@@ -477,6 +486,10 @@ class TravelOrchestrator:
                     packing_result = {"error": str(e)}
                 if not packing_result.get("error"):
                     yield f"data: {json.dumps({'type': 'packing_list', 'data': packing_result, 'source': 'ai'})}\n\n"
+                else:
+                    # Never leave the section empty — a template list beats silence.
+                    fallback_packing = self._build_fallback_packing_list(request)
+                    yield f"data: {json.dumps({'type': 'packing_list', 'data': fallback_packing, 'source': 'static'})}\n\n"
                 packing_done = True
                 continue
 
@@ -505,6 +518,94 @@ class TravelOrchestrator:
                 yield ": keepalive\n\n"
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _build_fallback_packing_list(request: TravelSearchRequest) -> dict:
+        """Template packing list — no AI call, used when the agent fails.
+
+        Matches the packing_list agent's schema (categories → items with
+        essential/note flags) so the UI renders it identically.
+        """
+        interests = [i.lower() for i in (request.interests or [])]
+
+        def item(name: str, essential: bool = False, note: str | None = None) -> dict:
+            return {"item": name, "essential": essential, "note": note}
+
+        activity_gear = [item("Comfortable walking shoes", essential=True)]
+        if any(i in interests for i in ("adventure", "hiking", "nature")):
+            activity_gear += [item("Hiking layers"), item("Reusable water bottle")]
+        if any(i in interests for i in ("beach", "swimming")):
+            activity_gear += [item("Swimwear"), item("Sunscreen SPF 50")]
+        if any(i in interests for i in ("food", "nightlife")):
+            activity_gear.append(item("One smart-casual outfit"))
+
+        categories = [
+            {
+                "name": "Documents",
+                "icon": "📄",
+                "items": [
+                    item(
+                        "Passport",
+                        essential=True,
+                        note="Valid 6+ months beyond return date",
+                    ),
+                    item("Visa / entry confirmations", essential=True),
+                    item("Travel insurance details", essential=True),
+                    item("Flight and hotel confirmations", essential=True),
+                    item("Payment cards + some cash", essential=True),
+                ],
+            },
+            {
+                "name": "Clothing",
+                "icon": "👕",
+                "items": [
+                    item(
+                        "Outfits for each day",
+                        essential=True,
+                        note="Check the Weather section for conditions per city",
+                    ),
+                    item("Light rain jacket"),
+                    item("Sleepwear and underwear", essential=True),
+                ],
+            },
+            {
+                "name": "Electronics",
+                "icon": "🔌",
+                "items": [
+                    item("Phone + charger", essential=True),
+                    item("Universal power adapter", essential=True),
+                    item("Power bank"),
+                ],
+            },
+            {
+                "name": "Medications & Health",
+                "icon": "💊",
+                "items": [
+                    item(
+                        "Personal prescriptions",
+                        essential=True,
+                        note="Carry in original packaging",
+                    ),
+                    item("Basic first-aid / painkillers"),
+                    item("Hand sanitiser"),
+                ],
+            },
+            {"name": "Activity Gear", "icon": "🎒", "items": activity_gear},
+            {
+                "name": "Destination-Specific",
+                "icon": "📍",
+                "items": [
+                    item("Offline maps for each city"),
+                    item("Local SIM / eSIM plan", note="See the SIM Cards section"),
+                ],
+            },
+        ]
+        return {
+            "categories": categories,
+            "luggage_note": "Check your airline's baggage allowance before packing.",
+            "total_items": sum(len(c["items"]) for c in categories),
+        }
 
     # ------------------------------------------------------------------
     def _build_fallback_itinerary(

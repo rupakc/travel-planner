@@ -2048,11 +2048,10 @@ function EmergencyCardSection({ data, status }) {
 // ─── Packing List Section ─────────────────────────────────────────────────────
 
 function PackingListSection({ data, status, selections, onSavePacking }) {
-  if (!data?.categories?.length) return null
-
   const lsKey = 'packing_checked'
   const isSavedToPlan = !!selections?.packing_list
 
+  // Hooks must run unconditionally — the empty-state return comes after them.
   const [checkedItems, setCheckedItems] = useState(() => {
     // Plan is source of truth if available, else localStorage
     if (selections?.packing_list?.checked_items) return selections.packing_list.checked_items
@@ -2063,6 +2062,10 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
     return selections?.packing_list?.custom_items || {}
   })
   const [customInputs, setCustomInputs] = useState({})
+
+  if (!data?.categories?.length) return (
+    <div className="p-4 text-sm text-gray-500">Packing list unavailable — try re-running the search.</div>
+  )
 
   const buildPlanState = (checked, custom) => ({
     categories: data.categories,
@@ -2437,8 +2440,9 @@ function StressScoreRing({ score, overall }) {
 }
 
 function StressTestSection({ data }) {
-  if (!data) return null
-  if (data.error) return (
+  // A rendered section with no data means the stream finished without a
+  // stress-test result — say so instead of showing an empty card.
+  if (!data || data.error) return (
     <div className="p-4 text-sm text-gray-500">Health check unavailable for this plan — try re-running the search.</div>
   )
 
@@ -3323,6 +3327,7 @@ export default function ResultsPage() {
   const [results,    setResults]    = useState({})
   const [isDone,     setIsDone]     = useState(false)
   const [error,      setError]      = useState(null)
+  const [streamWarning, setStreamWarning] = useState(null)
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
   const [isPlanOpen, setIsPlanOpen] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
@@ -3466,9 +3471,8 @@ export default function ResultsPage() {
 
     if (cleanupWorker.current) cleanupWorker.current()
 
-    cleanupWorker.current = streamSearch(
-      searchData,
-      (type, data, source) => {
+    let interrupts = 0
+    const onEvent = (type, data, source) => {
         if (type === 'confidence') {
           setConfidenceData(data)
           return
@@ -3506,8 +3510,8 @@ export default function ResultsPage() {
           }
           return next
         })
-      },
-      () => {
+      }
+    const finalize = () => {
         setIsDone(true)
         // If itinerary never arrived, generate client-side fallback so section always renders
         setResults(prev => {
@@ -3515,16 +3519,38 @@ export default function ResultsPage() {
           const fallback = buildClientItinerary(prev.activities, prev.hotels, searchData)
           return fallback ? { ...prev, itinerary: fallback } : prev
         })
+        // Terminalize every section: anything still waiting/loading/enhancing
+        // when the stream ends must not spin forever.
         setStatuses(prev => {
           const next = { ...prev }
-          if (next.itinerary === 'waiting' || next.itinerary === 'loading') next.itinerary = 'done'
-          if (next.stress_test === 'waiting' || next.stress_test === 'loading') next.stress_test = 'done'
+          for (const key of Object.keys(next)) {
+            if (next[key] === 'waiting' || next[key] === 'loading' || next[key] === 'enhancing') next[key] = 'done'
+          }
           return next
         })
-      },
-      (err) => setError(err.message || 'Search error'),
-      token,
-    )
+      }
+    const startStream = () => {
+      cleanupWorker.current = streamSearch(
+        searchData,
+        onEvent,
+        finalize,
+        (err) => setError(err.message || 'Search error'),
+        token,
+        () => {
+          // Stream severed before the server finished (instance rollout,
+          // proxy drop). Retry once — already-received sections are kept and
+          // simply overwritten as fresh events arrive.
+          interrupts += 1
+          if (interrupts <= 1) {
+            startStream()
+          } else {
+            setStreamWarning('The connection was interrupted — some sections may be incomplete. Re-run the search to fill them in.')
+            finalize()
+          }
+        },
+      )
+    }
+    startStream()
   }, [searchData])
 
   if (!searchData) return null
@@ -3866,6 +3892,14 @@ export default function ResultsPage() {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm flex items-center gap-2">
             <AlertCircle size={15}/>{error}
+          </div>
+        </div>
+      )}
+
+      {streamWarning && !error && (
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm flex items-center gap-2">
+            <AlertTriangle size={15}/>{streamWarning}
           </div>
         </div>
       )}

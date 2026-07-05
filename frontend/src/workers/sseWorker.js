@@ -9,6 +9,7 @@ self.onmessage = async ({ data: { url, body, headers } }) => {
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
+    let sawDone = false
 
     while (true) {
       const { done, value } = await reader.read()
@@ -20,11 +21,16 @@ self.onmessage = async ({ data: { url, body, headers } }) => {
         if (!line.startsWith('data: ')) continue   // skip keepalive comments
         try {
           const parsed = JSON.parse(line.slice(6))
+          if (parsed.type === 'done') sawDone = true
           self.postMessage(parsed)
         } catch (_) { /* skip malformed lines */ }
       }
     }
-    self.postMessage({ type: '__stream_end' })
+    // A stream that ends without the server's final `done` event was severed
+    // mid-run (instance rollout, proxy drop, network blip) — the page must be
+    // able to tell the difference so it can retry instead of leaving the
+    // not-yet-arrived sections blank forever.
+    self.postMessage({ type: sawDone ? '__stream_end' : '__interrupted' })
   } catch (err) {
     self.postMessage({ type: '__error', message: err.message })
   }

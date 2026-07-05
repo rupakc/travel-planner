@@ -3152,15 +3152,24 @@ _GETTING_AROUND_TABLE = {
 
 
 def get_static_getting_around(request: TravelSearchRequest) -> dict:
-    """Return instant transport options from lookup. Always returns universal options + destination-specific."""
-    dest = request.destination.lower()
+    """Return instant transport options from lookup. Always returns universal options + destination-specific.
+
+    Multi-city trips get the lookup for every stop (tagged with its city so
+    the UI can attribute and order the options), not just the final city.
+    """
+    cities = request.destinations or [request.destination]
     options = []
 
-    # Find destination-specific options
-    for key, dest_options in _GETTING_AROUND_TABLE.items():
-        if _match_destination(dest, key):
-            options.extend(dest_options)
-            break
+    for city in cities:
+        city_l = (city or "").split(",")[0].strip().lower()
+        for key, dest_options in _GETTING_AROUND_TABLE.items():
+            if _match_destination(city_l, key):
+                for opt in dest_options:
+                    tagged = dict(opt)
+                    if len(cities) > 1:
+                        tagged.setdefault("city", city.split(",")[0].strip())
+                    options.append(tagged)
+                break
 
     # Always add universal transport tips
     options.extend(_UNIVERSAL_TRANSPORT_TIPS)
