@@ -52,8 +52,15 @@ class TravelSearchRequest(BaseModel):
     )
     destinations: list[str] | None = Field(
         None,
-        description="Ordered city list for multi-city trips, e.g. ['Paris', 'Rome', 'Barcelona']. "
-        "destination (above) is always the primary/first city.",
+        description="Ordered journey list for multi-city trips, e.g. "
+        "['Paris', 'Rome', 'Barcelona']. Intermediate stops come first and the "
+        "FINAL destination (the 'To' field, i.e. `destination` above) is last.",
+    )
+    destination_nights: list[int | None] | None = Field(
+        None,
+        description="Optional nights per city, aligned with `destinations`. "
+        "None entries (and any leftover days) are split automatically. "
+        "Ignored for single-city trips.",
     )
     pace: str = Field(
         "balanced",
@@ -119,11 +126,15 @@ class TravelSearchRequest(BaseModel):
 
     @property
     def city_stays(self) -> list[dict] | None:
-        """Even allocation of trip days across cities for multi-city trips.
+        """Allocation of trip days across cities for multi-city trips.
 
-        Returns [{"city", "start_date", "end_date", "nights"}] where end_date
-        is the day the traveler moves on (= next city's start_date). The last
-        city's end_date is the return date. None for single-city trips.
+        Cities with an explicit entry in `destination_nights` get exactly
+        those days; the remaining days are split proportionally across the
+        rest. Falls back to a fully proportional split when the requested
+        nights don't fit the trip length. Returns [{"city", "start_date",
+        "end_date", "nights"}] where end_date is the day the traveler moves
+        on (= next city's start_date). The last city's end_date is the
+        return date. None for single-city trips.
         """
         if not self.is_multi_city:
             return None
@@ -132,21 +143,50 @@ class TravelSearchRequest(BaseModel):
             (self.return_date - self.departure_date).days if self.return_date else 2 * n
         )
         total_days = max(total_days, n)  # at least one day per city
-        # Proportional boundaries guarantee exact date coverage for any split
-        bounds = [round(i * total_days / n) for i in range(n + 1)]
+        allocation = self._allocate_days(n, total_days)
         stays = []
-        for i, city in enumerate(self.destinations):
-            start = self.departure_date + timedelta(days=bounds[i])
-            end = self.departure_date + timedelta(days=bounds[i + 1])
+        cursor = self.departure_date
+        for city, days in zip(self.destinations, allocation):
+            end = cursor + timedelta(days=days)
             stays.append(
                 {
                     "city": city,
-                    "start_date": start,
+                    "start_date": cursor,
                     "end_date": end,
-                    "nights": (end - start).days,
+                    "nights": days,
                 }
             )
+            cursor = end
         return stays
+
+    def _allocate_days(self, n: int, total_days: int) -> list[int]:
+        """Days per city, honouring explicit destination_nights when they fit."""
+        requested: list[int | None] = [None] * n
+        if self.destination_nights:
+            for i, nights in enumerate(self.destination_nights[:n]):
+                if isinstance(nights, int) and nights > 0:
+                    requested[i] = nights
+
+        fixed = sum(d for d in requested if d)
+        free_slots = sum(1 for d in requested if d is None)
+        remaining = total_days - fixed
+        # Requested nights must leave at least one day for every open city
+        # (and not exceed the trip when everything is pinned).
+        if (
+            any(requested)
+            and remaining >= free_slots
+            and (free_slots or remaining == 0)
+        ):
+            if not free_slots:
+                return [d for d in requested if d]
+            bounds = [round(i * remaining / free_slots) for i in range(free_slots + 1)]
+            free_days = [bounds[i + 1] - bounds[i] for i in range(free_slots)]
+            it = iter(free_days)
+            return [d if d is not None else next(it) for d in requested]
+
+        # Fully proportional fallback — exact date coverage for any split
+        bounds = [round(i * total_days / n) for i in range(n + 1)]
+        return [bounds[i + 1] - bounds[i] for i in range(n)]
 
     @property
     def flight_legs(self) -> list[dict] | None:

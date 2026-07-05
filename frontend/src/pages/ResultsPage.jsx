@@ -3102,8 +3102,9 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const num_travelers = Math.max(1, (form.adults || 0) + (form.seniors || 0) + (form.children || 0) + (form.infants || 0))
-    // Keep multi-city list in sync when the primary destination is edited
-    const destinations = form.destinations?.length > 1 ? [form.destination, ...form.destinations.slice(1)] : null
+    // The To field is the FINAL destination — keep it in the last slot of the
+    // journey-ordered list when edited (stops on the way stay in front)
+    const destinations = form.destinations?.length > 1 ? [...form.destinations.slice(0, -1), form.destination] : null
     onUpdateSearch({ ...form, num_travelers, destinations, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
   }
 

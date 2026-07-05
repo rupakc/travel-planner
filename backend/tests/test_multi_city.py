@@ -200,6 +200,48 @@ class TestFlightLegGrouping:
         assert FlightsAgent._group_legs(data, req.flight_legs) == data
 
 
+class TestDestinationNights:
+    def _req(self, nights=None):
+        return TravelSearchRequest(
+            **{
+                **MULTI,
+                "destination": "Barcelona",  # the To field = FINAL destination
+                "destinations": ["Paris", "Rome", "Barcelona"],
+                "departure_date": "2026-09-10",
+                "return_date": "2026-09-19",
+                "destination_nights": nights,
+            }
+        )
+
+    def test_final_destination_is_last_leg_before_home(self):
+        req = self._req()
+        legs = req.flight_legs
+        assert legs[0]["to"] == "Paris"
+        assert legs[-2]["to"] == "Barcelona"
+        assert legs[-1]["from"] == "Barcelona"  # fly home from the final stop
+
+    def test_explicit_nights_are_honoured(self):
+        req = self._req(nights=[2, 3, None])
+        stays = req.city_stays
+        assert [s["nights"] for s in stays] == [2, 3, 4]  # 9 days total
+        assert [s["city"] for s in stays] == ["Paris", "Rome", "Barcelona"]
+        # Dates stay contiguous
+        assert stays[0]["end_date"] == stays[1]["start_date"]
+        assert str(stays[-1]["end_date"]) == "2026-09-19"
+
+    def test_all_nights_pinned_must_sum_to_trip(self):
+        req = self._req(nights=[2, 3, 4])
+        assert [s["nights"] for s in req.city_stays] == [2, 3, 4]
+
+    def test_infeasible_nights_fall_back_to_proportional(self):
+        req = self._req(nights=[8, 8, None])  # 16 > 9 days
+        assert [s["nights"] for s in req.city_stays] == [3, 3, 3]
+
+    def test_no_nights_keeps_proportional_split(self):
+        req = self._req()
+        assert [s["nights"] for s in req.city_stays] == [3, 3, 3]
+
+
 class TestAiLegFill:
     @pytest.mark.anyio
     async def test_fills_only_empty_legs_with_matching_indexes(self, monkeypatch):

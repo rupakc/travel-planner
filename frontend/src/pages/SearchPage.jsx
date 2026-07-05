@@ -118,6 +118,8 @@ export default function SearchPage() {
     serendipity: 0.5,
   })
   // Multi-city: up to 3 additional cities after the primary destination
+  // Intermediate stops on the way to the final destination (the To field).
+  // Each: { city, nights } — nights optional; leftovers go to the final stop.
   const [extraStops, setExtraStops] = useState([])
 
   // Pre-fill from saved preferences
@@ -154,12 +156,21 @@ export default function SearchPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
     const totalTravelers = Math.max(1, form.adults + form.children + form.seniors + form.infants)
-    const stops = extraStops.map(s => s.trim()).filter(Boolean)
+    const stops = extraStops
+      .map(s => ({ city: (s.city || '').trim(), nights: s.nights }))
+      .filter(s => s.city)
+    const parseNights = (v) => {
+      const n = parseInt(v, 10)
+      return Number.isFinite(n) && n > 0 ? n : null
+    }
     const searchData = {
       ...form,
       num_travelers: totalTravelers,
       budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
-      destinations: stops.length ? [form.destination, ...stops] : null,
+      // Journey order: stops along the way first, the To city (final
+      // destination) last
+      destinations: stops.length ? [...stops.map(s => s.city), form.destination] : null,
+      destination_nights: stops.length ? [...stops.map(s => parseNights(s.nights)), null] : null,
     }
 
     // Two-way binding: sync search values back to preferences
@@ -265,18 +276,25 @@ export default function SearchPage() {
               />
             </div>
 
-            {/* Multi-city stops */}
+            {/* Intermediate stops — visited on the way to the To city */}
             <div className="space-y-3">
               {extraStops.map((stop, i) => (
                 <div key={i} className="flex items-end gap-2">
                   <div className="flex-1">
                     <AirportSearch
-                      label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Stop {i + 2}</span>}
-                      value={stop}
-                      onChange={v => setExtraStops(stops => stops.map((s, j) => (j === i ? v : s)))}
-                      placeholder="Next city…"
+                      label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Stop {i + 1} — on the way</span>}
+                      value={stop.city}
+                      onChange={v => setExtraStops(stops => stops.map((s, j) => (j === i ? { ...s, city: v } : s)))}
+                      placeholder="Stopover city…"
                       required
                     />
+                  </div>
+                  <div className="w-24">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Nights <span className="text-gray-300">(opt)</span></label>
+                    <input type="number" min="1" max="30" value={stop.nights}
+                      onChange={e => setExtraStops(stops => stops.map((s, j) => (j === i ? { ...s, nights: e.target.value } : s)))}
+                      placeholder="auto"
+                      className="w-full px-2.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm" />
                   </div>
                   <button type="button" title="Remove this stop"
                     onClick={() => setExtraStops(stops => stops.filter((_, j) => j !== i))}
@@ -287,14 +305,15 @@ export default function SearchPage() {
               ))}
               {extraStops.length < 3 && (
                 <button type="button"
-                  onClick={() => setExtraStops(stops => [...stops, ''])}
+                  onClick={() => setExtraStops(stops => [...stops, { city: '', nights: '' }])}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
-                  <Plus size={14} /> Add a stop (multi-city)
+                  <Plus size={14} /> Add a stop on the way (multi-city)
                 </button>
               )}
               {extraStops.length > 0 && (
                 <p className="text-xs text-gray-400">
-                  We'll optimise the city order, split nights between cities and plan inter-city travel automatically.
+                  Your route: {form.origin ? form.origin.split(',')[0] : 'Origin'} → {extraStops.filter(s => (s.city || '').trim()).map(s => s.city.split(',')[0]).join(' → ') || 'stops'} → <span className="font-medium text-gray-500">{form.destination ? form.destination.split(',')[0] : 'your destination'}</span>.
+                  Stops are visited on the way; the "To" city is your final destination. Nights left blank are split automatically.
                 </p>
               )}
             </div>

@@ -1322,7 +1322,9 @@ class ChatAgent:
             "departure_date (YYYY-MM-DD), return_date (YYYY-MM-DD or null), "
             "interests (list), nationality (string), residence_permits (list), "
             "existing_visas (list), budget_usd (number or null), num_travelers (int), "
-            "destinations (list of strings or null).\n"
+            "destinations (list of strings or null), "
+            "destination_nights (list of ints/nulls aligned with destinations when "
+            "the user gives per-city days, else null).\n"
             f"Use preferences and previously known context to fill missing fields. Today is {date.today().isoformat()}. "
             'Convert relative dates ("next week", "in June") to actual dates.\n'
             "IMPORTANT for origin: If the user has not specified an origin/departure city, "
@@ -1332,8 +1334,10 @@ class ChatAgent:
             "IMPORTANT for multi-city trips: If the user mentions multiple destinations "
             "(e.g. 'Paris then Rome', 'Tokyo → Kyoto → Osaka', 'X and Y', 'X + Y', "
             "'3 days Paris, 4 days Rome', '10-day trip: X days City1, Y days City2'), "
-            "set 'destination' to the FIRST city and 'destinations' to the full ordered list. "
-            "For single-city trips, set 'destinations' to null.\n"
+            "set 'destinations' to the full list in travel order — intermediate stops "
+            "first, the FINAL destination last — and set 'destination' to that FINAL "
+            "city (the trip's end goal; 'Rome via Paris' means destination=Rome, "
+            "destinations=['Paris','Rome']). For single-city trips, set 'destinations' to null.\n"
             "IMPORTANT for duration: If the user mentions a total duration (e.g. '10-day trip', "
             "'2 weeks', '15 days') or per-city days (e.g. '3 days Paris, 4 days Rome'), "
             "use that to set return_date = departure_date + (total_days - 1) nights. "
@@ -1385,6 +1389,12 @@ class ChatAgent:
                 if isinstance(raw_destinations, list) and len(raw_destinations) > 1
                 else None
             )
+            raw_nights = params.get("destination_nights")
+            nights_list = (
+                [n if isinstance(n, int) and n > 0 else None for n in raw_nights]
+                if destinations_list and isinstance(raw_nights, list)
+                else None
+            )
 
             return TravelSearchRequest(
                 origin=params.get("origin") or "",
@@ -1398,6 +1408,7 @@ class ChatAgent:
                 budget_usd=params.get("budget_usd"),
                 num_travelers=params.get("num_travelers") or 1,
                 destinations=destinations_list,
+                destination_nights=nights_list,
             )
         except Exception as e:
             logger.warning(f"Travel param extraction failed: {e}")

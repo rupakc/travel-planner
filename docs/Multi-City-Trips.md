@@ -4,24 +4,27 @@ Travel Planner supports full multi-stop journeys — e.g. **New York → Paris �
 
 ## Requesting a multi-city trip
 
-Add an ordered `destinations` list to the search request. The single `destination` field stays the primary (first) city for backwards compatibility:
+The **"To" city is the final destination**; any added stops are intermediate cities visited **on the way** there. The `destinations` list is the full journey in travel order — stops first, final destination last — and `destination` is that final city:
 
 ```json
 {
   "origin": "NYC",
-  "destination": "Paris",
+  "destination": "Barcelona",
   "destinations": ["Paris", "Rome", "Barcelona"],
   "departure_date": "2026-09-10",
   "return_date": "2026-09-19",
+  "destination_nights": [2, 3, null],
   "nationality": "American"
 }
 ```
 
-On the Search page, the destination field grows a stop editor: add stops in the order you want to visit them.
+`destination_nights` is optional and aligned with `destinations`: set exact nights for any stop and leave the rest `null` — unspecified cities (typically the final destination) share the remaining days automatically.
+
+On the Search page, enter your final destination in **To**, then add stops in the order you'll pass through them; each stop has an optional nights field.
 
 ## How days are allocated — `city_stays`
 
-Trip days are split across cities proportionally (`TravelSearchRequest.city_stays` in `backend/app/schemas/request.py`). For an *N*-city trip of *D* days, boundaries are computed as `round(i × D / N)` so every date is covered exactly once regardless of how unevenly the division falls:
+Cities with explicit `destination_nights` get exactly those days; the remaining days are split proportionally across the rest (`TravelSearchRequest.city_stays` in `backend/app/schemas/request.py`). With no nights specified, an *N*-city trip of *D* days uses `round(i × D / N)` boundaries so every date is covered exactly once regardless of how unevenly the division falls:
 
 | City | Start | End (move-on day) | Nights |
 |---|---|---|---|
