@@ -39,6 +39,11 @@ backend/data/
 node_modules/
 frontend/dist/
 
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
 # Logs
 *.log
 .logs/

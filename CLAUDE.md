@@ -9,12 +9,12 @@ AI-powered travel planning application that uses specialized Claude agents to pr
 The backend uses a **three-phase orchestrator pattern**:
 
 1. **Phase 0 (instant)** — Static lookup tables yield pre-computed results for visa, SIM, tips, and getting-around. These appear on the UI within ~1 second.
-2. **Phase 1 (parallel AI)** — Seven specialist agents run **in parallel** (flights, hotels, activities, visa, sim, tips, getting-around). As each completes, its result streams to the frontend. For agents with static fallbacks, error results are suppressed so the static data remains.
-3. **Phase 2 (sequential)** — The itinerary agent synthesises activities + hotels into a day-by-day plan. Starts as soon as both inputs are ready, with a 60-second timeout and template fallback.
+2. **Phase 1 (parallel AI)** — Twelve specialist agents run **in parallel** (flights, weather, hotels, activities, places-to-see, events, visa, sim, tips, emergency-card, getting-around, forex). As each completes, its result streams to the frontend. Two deferred agents (packing-list, pricing-advisor) start mid-phase as soon as their inputs are available. For agents with static fallbacks, error results are suppressed so the static data remains.
+3. **Phase 2 (sequential)** — The itinerary agent synthesises activities + hotels into a day-by-day plan. Starts as soon as both inputs are ready, with a 60-second timeout and template fallback. Once the itinerary is final, a stress-test agent adversarially audits the plan (pacing, timings, visa deadlines, weather clashes).
 
-Agent definitions live in `.agents/*.md` files using YAML frontmatter (name, description, tools, max_turns) and a markdown body for the system prompt. These are loaded by `backend/app/agents/loader.py` and executed via `claude_agent_sdk.query()` in `BaseAgent.execute()`.
+Agent definitions live in `.agents/*.md` files using YAML frontmatter (name, description, tools, max_turns) and a markdown body for the system prompt. These are loaded by `backend/app/agents/loader.py`; `BaseAgent.execute()` calls the Anthropic Messages API directly via `AsyncAnthropic` (Haiku model), behind a global concurrency semaphore (default 6) with exponential backoff on rate limits and a compact-retry when output hits the token cap.
 
-Each specialist agent subclass in `backend/app/agents/` overrides `run(request)` to build a user prompt and parse the JSON result. No raw Anthropic API calls — all execution goes through the SDK.
+Each specialist agent subclass in `backend/app/agents/` overrides `run(request)` to build a user prompt and parse the JSON result. All execution goes through `BaseAgent` — no per-agent API plumbing.
 
 ### SSE Streaming
 
@@ -77,7 +77,7 @@ backend/
       preferences.py  # User preference management
     agents/           # Python agent classes
       loader.py       # Reads .agents/*.md → AgentDefinition
-      base_agent.py   # BaseAgent — executes via claude_agent_sdk
+      base_agent.py   # BaseAgent — direct AsyncAnthropic API calls
       orchestrator.py # TravelOrchestrator — Phase 0/1/2 streaming
       chat_agent.py   # ChatAgent — conversational + auto-planning
       static_results.py # Lookup tables for instant visa/sim/tips/transport
@@ -187,6 +187,6 @@ All endpoints are under `/api`:
 
 ## Dependencies
 
-**Backend**: fastapi, uvicorn, pydantic, pydantic-settings, httpx, claude-agent-sdk, beautifulsoup4, feedparser, duckduckgo-search, sentence-transformers, scikit-learn, cachetools
+**Backend**: fastapi, uvicorn, pydantic, pydantic-settings, httpx, anthropic, beautifulsoup4, feedparser, duckduckgo-search, sentence-transformers, scikit-learn, cachetools
 
 **Frontend**: react, react-dom, react-router, @tanstack/react-query, axios, tailwindcss, lucide-react, date-fns, clsx, vite
