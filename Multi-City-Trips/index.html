@@ -997,19 +997,21 @@
 <h1 id="multi-city-trips">Multi-City Trips</h1>
 <p>Travel Planner supports full multi-stop journeys — e.g. <strong>New York → Paris → Rome → Barcelona → New York</strong> — with every section of the results page covering every stop, in the exact order you entered them.</p>
 <h2 id="requesting-a-multi-city-trip">Requesting a multi-city trip</h2>
-<p>Add an ordered <code>destinations</code> list to the search request. The single <code>destination</code> field stays the primary (first) city for backwards compatibility:</p>
+<p>The <strong>"To" city is the final destination</strong>; any added stops are intermediate cities visited <strong>on the way</strong> there. The <code>destinations</code> list is the full journey in travel order — stops first, final destination last — and <code>destination</code> is that final city:</p>
 <pre><code class="language-json">{
   &quot;origin&quot;: &quot;NYC&quot;,
-  &quot;destination&quot;: &quot;Paris&quot;,
+  &quot;destination&quot;: &quot;Barcelona&quot;,
   &quot;destinations&quot;: [&quot;Paris&quot;, &quot;Rome&quot;, &quot;Barcelona&quot;],
   &quot;departure_date&quot;: &quot;2026-09-10&quot;,
   &quot;return_date&quot;: &quot;2026-09-19&quot;,
+  &quot;destination_nights&quot;: [2, 3, null],
   &quot;nationality&quot;: &quot;American&quot;
 }
 </code></pre>
-<p>On the Search page, the destination field grows a stop editor: add stops in the order you want to visit them.</p>
+<p><code>destination_nights</code> is optional and aligned with <code>destinations</code>: set exact nights for any stop and leave the rest <code>null</code> — unspecified cities (typically the final destination) share the remaining days automatically.</p>
+<p>On the Search page, enter your final destination in <strong>To</strong>, then add stops in the order you'll pass through them; each stop has an optional nights field.</p>
 <h2 id="how-days-are-allocated-city_stays">How days are allocated — <code>city_stays</code></h2>
-<p>Trip days are split across cities proportionally (<code>TravelSearchRequest.city_stays</code> in <code>backend/app/schemas/request.py</code>). For an <em>N</em>-city trip of <em>D</em> days, boundaries are computed as <code>round(i × D / N)</code> so every date is covered exactly once regardless of how unevenly the division falls:</p>
+<p>Cities with explicit <code>destination_nights</code> get exactly those days; the remaining days are split proportionally across the rest (<code>TravelSearchRequest.city_stays</code> in <code>backend/app/schemas/request.py</code>). With no nights specified, an <em>N</em>-city trip of <em>D</em> days uses <code>round(i × D / N)</code> boundaries so every date is covered exactly once regardless of how unevenly the division falls:</p>
 <table>
 <thead>
 <tr>
