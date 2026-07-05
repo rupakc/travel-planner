@@ -1343,8 +1343,41 @@ def _find_dest_key(destination: str) -> str | None:
     return None
 
 
+def _static_emergency_entry(city: str) -> dict | None:
+    """One per-city emergency card entry, or None if the city is unknown."""
+    dest_key = _find_dest_key(city)
+    if not dest_key or dest_key not in _EMERGENCY_NUMBERS:
+        return None
+    return {
+        "city": city,
+        "emergency_numbers": _EMERGENCY_NUMBERS[dest_key],
+        "embassy": None,
+        "hospitals": [],
+        "local_phrases": [],
+        "local_laws": [],
+        "home_country_note": None,
+    }
+
+
 def get_static_emergency_card(request: TravelSearchRequest) -> dict | None:
-    """Return static emergency numbers for destination, or None if not found."""
+    """Return static emergency numbers for destination, or None if not found.
+
+    Multi-city trips get a per-city ``cities`` array covering every stop we
+    have data for; single-city trips keep the flat schema.
+    """
+    if request.is_multi_city:
+        entries = [
+            e
+            for e in (_static_emergency_entry(c) for c in request.destinations)
+            if e is not None
+        ]
+        if not entries:
+            return None
+        return {
+            "cities": entries,
+            "_static_only": True,  # frontend shows "Loading embassy details..."
+        }
+
     dest_key = _find_dest_key(request.destination)
     if not dest_key or dest_key not in _EMERGENCY_NUMBERS:
         return None

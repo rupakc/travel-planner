@@ -1867,15 +1867,12 @@ function PricingAdvisorBanner({ data }) {
 
 // ─── Emergency Card Section ───────────────────────────────────────────────────
 
-function printEmergencyCard(data, destination) {
-  const numbers = data?.emergency_numbers || {}
-  const phrases = data?.local_phrases || []
-  const laws = data?.local_laws || []
-  const hospitals = data?.hospitals || []
-  const embassy = data?.embassy
-
-  const win = window.open('', '_blank', 'width=820,height=700')
-  if (!win) return
+function emergencyCardBodyHtml(card) {
+  const numbers = card?.emergency_numbers || {}
+  const phrases = card?.local_phrases || []
+  const laws = card?.local_laws || []
+  const hospitals = card?.hospitals || []
+  const embassy = card?.embassy
 
   const lawsHtml = laws.map(l => `
     <div style="margin:4px 0;padding:6px 8px;border-radius:4px;background:${l.severity === 'critical' ? '#fee2e2' : '#fef3c7'};">
@@ -1889,7 +1886,35 @@ function printEmergencyCard(data, destination) {
       <td style="padding:4px 6px;border:1px solid #ddd;color:#555;">${p.phonetic}</td>
     </tr>`).join('')
 
-  win.document.write(`<!DOCTYPE html><html><head><title>Emergency Card — ${destination}</title>
+  return `
+    <h2>Emergency Numbers</h2>
+    <div class="nums">
+      <div class="num-box"><strong>${numbers.police || '—'}</strong>Police</div>
+      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>Ambulance</div>
+      <div class="num-box"><strong>${numbers.fire || '—'}</strong>Fire</div>
+      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>Tourist Police</div>
+    </div>
+    ${embassy ? `<h2>Embassy</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | After hours: ${embassy.emergency_after_hours || '—'}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
+    ${!embassy && card?.home_country_note ? `<p><em>${card.home_country_note}</em></p>` : ''}
+    ${hospitals.length ? `<h2>Hospitals</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
+    ${phrases.length ? `<h2>Essential Phrases</h2><table><tr><th>English</th><th>Local</th><th>Phonetic</th></tr>${phrasesHtml}</table>` : ''}
+    ${laws.length ? `<h2>Laws to Know</h2>${lawsHtml}` : ''}`
+}
+
+function printEmergencyCard(data, destination) {
+  const cities = Array.isArray(data?.cities) ? data.cities : null
+  const title = cities
+    ? cities.map(c => (c.city || '').split(',')[0].trim()).filter(Boolean).join(' → ')
+    : destination
+
+  const win = window.open('', '_blank', 'width=820,height=700')
+  if (!win) return
+
+  const bodyHtml = cities
+    ? cities.map(c => `<div class="city-card"><h1 style="margin-top:18px">📍 ${c.city}</h1>${emergencyCardBodyHtml(c)}</div>`).join('<hr style="margin:16px 0;border:none;border-top:2px solid #ddd"/>')
+    : emergencyCardBodyHtml(data)
+
+  win.document.write(`<!DOCTYPE html><html><head><title>Emergency Card — ${title}</title>
     <style>
       body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;font-size:13px;color:#111}
       h1{font-size:17px;margin-bottom:4px} h2{font-size:13px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
@@ -1902,36 +1927,21 @@ function printEmergencyCard(data, destination) {
       .disclaimer{font-size:10px;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
       @media print{button{display:none}}
     </style></head><body>
-    <h1>🚨 Emergency Card — ${destination}</h1>
+    <h1>🚨 Emergency Card — ${title}</h1>
     <p style="font-size:11px;color:#666;">Verify all details before travel — information may be outdated.</p>
-    <h2>Emergency Numbers</h2>
-    <div class="nums">
-      <div class="num-box"><strong>${numbers.police || '—'}</strong>Police</div>
-      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>Ambulance</div>
-      <div class="num-box"><strong>${numbers.fire || '—'}</strong>Fire</div>
-      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>Tourist Police</div>
-    </div>
-    ${embassy ? `<h2>Embassy</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | After hours: ${embassy.emergency_after_hours || '—'}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
-    ${hospitals.length ? `<h2>Hospitals</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
-    ${phrases.length ? `<h2>Essential Phrases</h2><table><tr><th>English</th><th>Local</th><th>Phonetic</th></tr>${phrasesHtml}</table>` : ''}
-    ${laws.length ? `<h2>Laws to Know</h2>${lawsHtml}` : ''}
+    ${bodyHtml}
     <div class="disclaimer">Information provided for general guidance only. Always verify current details with official sources. Embassy hours and hospital services may change.</div>
     <br/><button onclick="window.print()">🖨️ Print this card</button>
     </body></html>`)
   win.document.close()
 }
 
-function EmergencyCardSection({ data, status }) {
-  if (!data?.emergency_numbers && status === 'waiting') return null
-  if (!data) return <div className="p-4 text-sm text-gray-500">Emergency information unavailable</div>
-
-  const numbers = data.emergency_numbers || {}
-  const isEnhancing = data._static_only
-  const phrases = data.local_phrases || []
-  const laws = data.local_laws || []
-  const hospitals = data.hospitals || []
-  const embassy = data.embassy
-  const destination = data.destination || ''
+function EmergencyCityCard({ card }) {
+  const numbers = card.emergency_numbers || {}
+  const phrases = card.local_phrases || []
+  const laws = card.local_laws || []
+  const hospitals = card.hospitals || []
+  const embassy = card.embassy
 
   const numButtons = [
     { label: 'Police', value: numbers.police, color: 'bg-blue-100 text-blue-800' },
@@ -1941,21 +1951,7 @@ function EmergencyCardSection({ data, status }) {
   ]
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Subtitle / print row */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
-        <button onClick={() => printEmergencyCard(data, destination)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-          🖨️ Print Card
-        </button>
-      </div>
-
-      {/* Disclaimer */}
-      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        ⚠️ Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.
-      </p>
-
+    <div className="space-y-4">
       {/* Emergency numbers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {numButtons.map(({ label, value, color }) => (
@@ -1976,6 +1972,9 @@ function EmergencyCardSection({ data, status }) {
           {embassy.website && <a href={embassy.website} target="_blank" rel="noopener noreferrer"
             className="text-xs text-teal-600 hover:underline mt-0.5 block">🌐 {embassy.website}</a>}
         </div>
+      )}
+      {!embassy && card.home_country_note && (
+        <p className="text-xs text-gray-500 italic">🏠 {card.home_country_note}</p>
       )}
 
       {/* Hospitals */}
@@ -2040,6 +2039,45 @@ function EmergencyCardSection({ data, status }) {
             ))}
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function EmergencyCardSection({ data, status }) {
+  if (!data?.emergency_numbers && !data?.cities && status === 'waiting') return null
+  if (!data) return <div className="p-4 text-sm text-gray-500">Emergency information unavailable</div>
+
+  // Multi-city trips carry a per-stop `cities` array; single-city stays flat.
+  const cities = Array.isArray(data.cities) && data.cities.length ? data.cities : null
+  const isEnhancing = data._static_only
+  const destination = data.destination || ''
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Subtitle / print row */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
+        <button onClick={() => printEmergencyCard(data, destination)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          🖨️ Print Card
+        </button>
+      </div>
+
+      {/* Disclaimer */}
+      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        ⚠️ Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.
+      </p>
+
+      {cities ? (
+        cities.map((c, i) => (
+          <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-3">
+            <p className="text-sm font-bold text-gray-800 border-b border-gray-100 pb-2">📍 {c.city}</p>
+            <EmergencyCityCard card={c} />
+          </div>
+        ))
+      ) : (
+        <EmergencyCityCard card={data} />
       )}
     </div>
   )

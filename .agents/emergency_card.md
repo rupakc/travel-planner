@@ -69,3 +69,31 @@ Rules:
 - If phonetic pronunciation cannot be reliably provided for this language, set phonetic to "use translation app" rather than guessing
 - hospitals: 1–3 best international hospitals at the destination
 - Always include an after_hours emergency line for the embassy if known
+
+## Multi-city trips
+
+If the prompt is marked MULTI-CITY and lists the cities, return this shape instead — a top-level `cities` array with one complete entry per city, in trip order:
+
+```json
+{
+  "cities": [
+    {
+      "city": "Berlin, Germany",
+      "emergency_numbers": { "police": "110", "ambulance": "112", "fire": "112", "tourist_police": "110" },
+      "embassy": { "name": "...", "address": "...", "phone": "...", "emergency_after_hours": "...", "website": "...", "hours": "...", "note": "..." },
+      "hospitals": [ { "name": "...", "phone": "...", "address": "...", "notes": "..." } ],
+      "local_phrases": [ { "english": "...", "local": "...", "phonetic": "..." } ],
+      "local_laws": [ { "law": "...", "detail": "...", "severity": "warning" } ],
+      "home_country_note": null
+    }
+  ]
+}
+```
+
+Multi-city rules:
+- EVERY city listed in the prompt MUST have an entry, in the same order — never skip intermediate stops
+- `city` must be the full "City, Country" string as given in the prompt
+- `embassy` is the traveler's nearest embassy or consulate serving THAT city (a consulate in the city beats the capital's embassy)
+- 5 local_phrases per city, most critical first; if two cities share a language, repeat the phrases so each card is self-contained offline
+- 1-2 hospitals and 2-3 local_laws per city
+- Apply the home-country rule per city: a city in the traveler's home country gets embassy null and home_country_note set
