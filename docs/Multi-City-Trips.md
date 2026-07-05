@@ -68,7 +68,7 @@ Every result carries a `city` field, rendered as a 📍 city chip on each card s
 LLM output order is not trusted:
 
 - **Backend** — flight legs are sorted by `leg_index`; weather days are sorted by *(stay order, date)*.
-- **Frontend** — `orderSectionByCity` (`ResultsPage.jsx`) stable-sorts every city-tagged section list by the index of its city in your entered stop order, the moment results arrive.
+- **Frontend** — `orderSectionByCity` (`frontend/src/utils/orderSectionByCity.js`) stable-sorts every city-tagged section list by the index of its city in your entered stop order, the moment results arrive.
 
 The itinerary agent is instructed to visit cities **in exactly the order requested** — it never reorders your route.
 
