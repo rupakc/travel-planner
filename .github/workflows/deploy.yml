@@ -1,8 +1,18 @@
-name: Deploy
+# ─────────────────────────────────────────────────────────────────────────────
+# DECOMMISSIONED — the travel-planner GCP project has been deleted.
+#
+# The automatic `push: branches: [main]` trigger was removed so that no future
+# push can re-provision infrastructure. The job definitions are kept for
+# reference only; running them now would fail (project, Artifact Registry,
+# Terraform state bucket and Secret Manager secrets no longer exist).
+#
+# To bring the app back up you must first re-run
+# infrastructure/scripts/bootstrap.sh and repopulate the GitHub secrets.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Deploy (decommissioned)
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 env:
   REGISTRY: europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/travel-planner
