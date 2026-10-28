@@ -16,22 +16,23 @@ The core idea: instead of bouncing between a dozen tabs to piece together visa r
 
 ## What's in the app (current feature set)
 
-### Search results (15 sections)
+### Search results (16 sections)
 1. **Flights** — live prices via Google Flights (SerpAPI) with AI fallback; **per-leg search on multi-city trips** with one pick per leg
 2. **Weather** — day-by-day forecast for the travel dates; per-stay forecasts grouped by city on multi-city trips
 3. **Hotels** — neighbourhoods and accommodation across four budget tiers (≥ 3 per city on multi-city)
 4. **Activities** — things to do, scored and sorted by interest relevance (≥ 5 per city)
 5. **Places to See** — must-visit landmarks from live Google data + Claude synthesis (4–6 per city)
-6. **What's On (Events)** — festivals, concerts, exhibitions during the trip dates, with disruption flags
-7. **Visa** — entry requirements for the traveller's nationality (every country on multi-country routes)
-8. **SIM Cards** — local carrier options and eSIM availability
-9. **Travel Tips** — etiquette, safety, health, and practical advice
-10. **Safety & Emergency Card** — emergency numbers, embassy, hospitals, local phrases, local laws
-11. **Getting Around** — local and intercity transport (per-city + inter-city hops on multi-city)
-12. **Forex** — currency, exchange rates, payment tips
-13. **Itinerary** — day-by-day schedule (Cards or Timeline view), always in the user's stop order
-14. **Itinerary Health Check** — adversarial stress-test of the finished plan (pacing, timing, visa, weather, budget)
-15. **Packing List** — personalised checklist saved to My Plan
+6. **Free Walking Tours** — free and pay-what-you-wish tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope, each linking to the original tour page (≥ 4 per city where available)
+7. **What's On (Events)** — festivals, concerts, exhibitions during the trip dates, with disruption flags
+8. **Visa** — entry requirements for the traveller's nationality (every country on multi-country routes)
+9. **SIM Cards** — local carrier options and eSIM availability
+10. **Travel Tips** — etiquette, safety, health, and practical advice
+11. **Safety & Emergency Card** — emergency numbers, embassy, hospitals, local phrases, local laws
+12. **Getting Around** — local and intercity transport (per-city + inter-city hops on multi-city)
+13. **Forex** — currency, exchange rates, payment tips
+14. **Itinerary** — day-by-day schedule (Cards or Timeline view), always in the user's stop order
+15. **Itinerary Health Check** — adversarial stress-test of the finished plan (pacing, timing, visa, weather, budget)
+16. **Packing List** — personalised checklist saved to My Plan
 
 Every result on a multi-city trip carries a 📍 city label, and all sections follow the exact stop order entered.
 
@@ -43,7 +44,7 @@ Every result on a multi-city trip carries a 📍 city label, and all sections fo
 - **Surprise Me** — enter only origin + budget + interests → 5 curated destination cards with visa status, cost range, weather, and flight time
 
 ### Plan management
-- **My Plan drawer** — select flights, hotels, activities, packing list, SIM, tips, transport, itinerary slots; live cost total; save and reload named plans
+- **My Plan drawer** — select flights, hotels, activities, walking tours, packing list, SIM, tips, transport, itinerary slots; live cost total; save and reload named plans
 
 ### Chat
 - **Knowledge-only answers** — topic questions are answered instantly from the model's own expertise; specialist agents run only if the model fails to answer at all

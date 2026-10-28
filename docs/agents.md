@@ -14,6 +14,7 @@ Every agent is defined by a single file in `.agents/`. The file has a YAML front
   hotels.md
   activities.md
   places.md
+  walking_tours.md
   visa.md
   sim.md
   tips.md
@@ -120,7 +121,7 @@ If a static function returns no data for the destination (not in the lookup tabl
 
 ### Phase 1 — Parallel AI agents (8–15 seconds)
 
-Eleven agents run concurrently via `asyncio.create_task`. Each streams its result the moment it completes. Source field: `"ai"`.
+Thirteen agents run concurrently via `asyncio.create_task`. Each streams its result the moment it completes. Source field: `"ai"`.
 
 #### FlightsAgent
 
@@ -187,6 +188,28 @@ Eleven agents run concurrently via `asyncio.create_task`. Each streams its resul
 2. The formatted Serper context is injected into the Claude prompt so the model synthesises real Google data with its internal knowledge.
 3. After `execute()` returns, Tier 1 URL matching: Serper `/places` entries include official website URLs; these are matched to result items by name fuzzy match. Unmatched items get a TripAdvisor search URL.
 4. `enrich()` calls `SerperPlacesResolver.resolve_top_places()` to replace TripAdvisor fallback URLs with real official or review URLs for the top results.
+
+---
+
+#### WalkingToursAgent
+
+**File:** `backend/app/agents/walking_tours_agent.py` (crawler: `backend/app/services/walking_tours.py`, definition: `.agents/walking_tours.md`)
+
+**What it does:** Finds free and pay-what-you-wish walking tours at the destination. The tours themselves come from a crawl, not from the LLM.
+
+**Inputs:** destination city (or every stop on a multi-city trip), interests, travellers.
+
+**Returns:** `{"results": [{id, name, provider, provider_key, url, image_url, description, rating, review_count, duration, price_note, city, reason, top_pick}, ...], "sources": [{provider, provider_key, city, url, count, status}, ...]}` where `status` is `"ok"`, `"none"` or `"error"`.
+
+**Special behaviour:**
+1. For each city the crawler fetches the public city page of four providers in parallel: GuruWalk (`guruwalk.com/{slug}`), FreeTour.com (`freetour.com/{slug}`), FreeWalkingTour.com (`freewalkingtour.com/{slug}/`) and SANDEMANs NewEurope (`neweuropetours.eu/sandemans-tours/{slug}/`).
+2. GuruWalk and FreeTour are parsed from JSON-LD Event data; the other two from HTML cards, keeping only free or pay-what-you-wish tours.
+3. Requests use the honest User-Agent `VoyagerTravelPlanner/1.0` and a 12 s timeout; each city's whole crawl (discovery included) is capped at 15 s. Only the four city-page URL patterns above are fetched; they were verified as robots.txt-permitted on 2026-10-28.
+4. Results are cached per provider and city (`walking_tours:{provider}:{slug}`). When the slug misses, a DuckDuckGo `site:` search looks for the city page (GuruWalk and FreeTour only). Discovery only accepts city pages of those patterns whose slug shares a word with the requested city (or, for non-Latin names, whose listings name that city); site pages, language roots and `/search` are rejected.
+5. The LLM (Haiku) picks and explains the best tours for the traveller by candidate id only. URLs always come from the crawl, never the LLM.
+6. Every city is topped up to at least `min(4, available)` tours by rating. If the LLM fails, a rating × log(reviews) ranking is used. The agent returns `{"error": ...}` only when every provider fails.
+
+**Not wired into chat:** chat is knowledge-only, so only the Search pipeline and `POST /api/walking-tours` run this agent.
 
 ---
 
@@ -514,6 +537,7 @@ When `request.is_multi_city` is true, agents change behaviour:
 | flights | One search per leg via `serp_flights.search_multi_city` (parallel one-ways, retry, AI fill for empty legs); results grouped into ordered `legs` |
 | weather | Per-stay forecasts (`city_stays`); LLM fallback parses nested per-city output, assigns cities authoritatively by date range, sorts by stop order |
 | hotels / activities / places / events | Mandatory per-city quotas; every result tagged with `city` |
+| walking_tours | Each city crawled separately; every city topped up to at least `min(4, available)` tours |
 | getting_around | Intra-city options per city plus inter-city hops (train/bus/flight) tagged with a `city` route label |
 | visa | Evaluates every country on the route |
 | itinerary | Allocates days per `city_stays` and visits cities in exactly the user's order — never reorders |

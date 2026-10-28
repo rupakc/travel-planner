@@ -9,7 +9,7 @@ AI-powered travel planning application that uses specialized Claude agents to pr
 The backend uses a **three-phase orchestrator pattern**:
 
 1. **Phase 0 (instant)** — Static lookup tables yield pre-computed results for visa, SIM, tips, and getting-around. These appear on the UI within ~1 second.
-2. **Phase 1 (parallel AI)** — Twelve specialist agents run **in parallel** (flights, weather, hotels, activities, places-to-see, events, visa, sim, tips, emergency-card, getting-around, forex). As each completes, its result streams to the frontend. Two deferred agents (packing-list, pricing-advisor) start mid-phase as soon as their inputs are available. For agents with static fallbacks, error results are suppressed so the static data remains.
+2. **Phase 1 (parallel AI)** — Thirteen specialist agents run **in parallel** (flights, weather, hotels, activities, places-to-see, walking-tours, events, visa, sim, tips, emergency-card, getting-around, forex). As each completes, its result streams to the frontend. Two deferred agents (packing-list, pricing-advisor) start mid-phase as soon as their inputs are available. For agents with static fallbacks, error results are suppressed so the static data remains.
 3. **Phase 2 (sequential)** — The itinerary agent synthesises activities + hotels into a day-by-day plan. Starts as soon as both inputs are ready, with a 60-second timeout and template fallback. Once the itinerary is final, a stress-test agent adversarially audits the plan (pacing, timings, visa deadlines, weather clashes).
 
 Agent definitions live in `.agents/*.md` files using YAML frontmatter (name, description, tools, max_turns) and a markdown body for the system prompt. These are loaded by `backend/app/agents/loader.py`; `BaseAgent.execute()` calls the Anthropic Messages API directly via `AsyncAnthropic` (Haiku model), behind a global concurrency semaphore (default 6) with exponential backoff on rate limits and a compact-retry when output hits the token cap.
@@ -48,7 +48,7 @@ Agents backed by static lookup tables (visa, SIM, tips, getting-around) follow a
 - **State**: React context for auth/preferences (`AuthContext.jsx`), local state for selections
 - **Streaming**: Web Workers for SSE parsing (`sseWorker.js`, `chatWorker.js`)
 - **Pages**: `SearchPage` → `ResultsPage`, `ChatPage`, `PreferencesPage`
-- **My Plan**: Drawer widget on both ResultsPage and ChatPage for selecting flights, hotels, activities, SIM plans, tips, transport options, and itinerary slots. Plans are persisted to the backend.
+- **My Plan**: Drawer widget on both ResultsPage and ChatPage for selecting flights, hotels, activities, free walking tours, SIM plans, tips, transport options, and itinerary slots. Plans are persisted to the backend.
 
 ## Project Layout
 
@@ -58,6 +58,7 @@ Agents backed by static lookup tables (visa, SIM, tips, getting-around) follow a
   flights.md          # Flight search specialist
   activities.md       # Activities discovery + relevance scoring
   hotels.md           # Hotel search across budget tiers
+  walking_tours.md    # Free walking tours (picks from crawled provider listings)
   visa.md             # Visa/immigration requirements
   sim.md              # SIM card and eSIM recommendations
   tips.md             # Safety, culture, and practical tips
@@ -98,12 +99,13 @@ frontend/
     App.jsx           # Root component with routing
     pages/
       SearchPage.jsx  # Trip input form with preference pre-fill
-      ResultsPage.jsx # Streaming results with 8 sections + My Plan drawer
+      ResultsPage.jsx # Streaming results sections (incl. Free Walking Tours) + My Plan drawer
       ChatPage.jsx    # Chat interface with structured planning + My Plan drawer
       PreferencesPage.jsx # User preference management
     components/
       ui/             # Shared UI components (AirportSearch, NationalitySearch, TagInput)
       PlanViewModal.jsx # Modal for viewing/editing saved plans
+      WalkingToursSection.jsx # Free Walking Tours cards (link to the provider's tour page)
     context/
       AuthContext.jsx  # Auth state + two-way preference sync
     workers/
@@ -141,7 +143,7 @@ The frontend dev server runs on port **5174** and proxies `/api` requests to the
 - **Parallel-first execution.** Independent agents always run concurrently via `asyncio.gather` / `asyncio.create_task`. Only the itinerary agent depends on prior results.
 - **Static-first, AI-enhanced.** Visa, SIM, tips, and getting-around agents have curated static lookup tables that provide instant results. AI agents enhance these; if the AI fails, static data is retained (errors are suppressed for static-backed agents).
 - **Two-way preference binding.** Changes on the Search form sync back to Preferences on submit; saved Preferences pre-fill the Search form on load.
-- **My Plan selections.** Users can select individual items (flights, hotels, activities, SIM plans, tips, transport options, itinerary slots) into a plan drawer. Selections are saved/loaded via the plans API. Both ResultsPage and ChatPage support the full plan workflow, including the cost breakdown and calendar (.ics) / print-PDF export.
+- **My Plan selections.** Users can select individual items (flights, hotels, activities, free walking tours, SIM plans, tips, transport options, itinerary slots) into a plan drawer. Selections are saved/loaded via the plans API. Both ResultsPage and ChatPage support the full plan workflow, including the cost breakdown and calendar (.ics) / print-PDF export.
 - **Budget tiers are explicit.** Hotels must cover luxury, premium, mid-range, and budget options. Activities are scored 0.0–1.0 by interest relevance.
 
 ## API
@@ -160,6 +162,7 @@ All endpoints are under `/api`:
 | `POST /api/sim` | Recommend SIM/eSIM plans |
 | `POST /api/tips` | Safety and culture tips |
 | `POST /api/getting-around` | Local transportation options |
+| `POST /api/walking-tours` | Free walking tours crawled from public provider city pages |
 | `POST /api/itinerary` | Build day-by-day itinerary |
 | `POST /api/auth/login` | JWT login |
 | `GET /api/auth/me` | Current user info |

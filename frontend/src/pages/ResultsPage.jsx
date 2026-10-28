@@ -8,7 +8,7 @@ import {
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map as MapIcon, SlidersHorizontal, Wifi, Bath, Cloud,
   ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
-  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2
+  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch } from '../services/api'
@@ -17,6 +17,8 @@ import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
+import { safeUrl } from '../utils/planPrint'
+import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
@@ -36,6 +38,7 @@ const AGENT_CONFIG = {
   hotels:         { label: 'Hotels',           icon: Hotel,       color: 'purple'  },
   activities:     { label: 'Activities',       icon: MapPin,      color: 'green'   },
   places_to_see:  { label: 'Places to See',    icon: MapIcon,     color: 'lime'    },
+  walking_tours:  { label: 'Free Walking Tours', icon: Footprints, color: 'teal'   },
   events:         { label: "What's On",        icon: PartyPopper, color: 'fuchsia' },
   visa:           { label: 'Visa',             icon: Shield,      color: 'orange'  },
   sim:            { label: 'SIM Cards',        icon: Smartphone,  color: 'pink'    },
@@ -47,7 +50,7 @@ const AGENT_CONFIG = {
   emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
   packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
 }
-const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
+const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'walking_tours', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
 
 const COLOR_MAP = {
@@ -90,7 +93,7 @@ const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', events: "What's On", visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
+const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', walking_tours: 'Walking Tours', events: "What's On", visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
 
 function AgentBadge({ agent, status, onClick }) {
   const { icon: Icon, color } = AGENT_CONFIG[agent]
@@ -192,6 +195,11 @@ const LOADING_MESSAGES = {
     "Finding must-see attractions...",
     "Searching Google for top landmarks...",
     "Discovering iconic sites and hidden gems..."
+  ],
+  walking_tours: [
+    "Checking GuruWalk and FreeTour.com…",
+    "Reading SANDEMANs and FreeWalkingTour.com…",
+    "Picking tours for your interests…"
   ],
   events: [
     "Checking what's on during your dates...",
@@ -2833,6 +2841,19 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             </div>
           )}
 
+          {/* Selected walking tours */}
+          {(selections.walking_tours?.length > 0) && (
+            <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
+              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> Walking tours ({selections.walking_tours.length})</div>
+              <div className="space-y-2">
+                {selections.walking_tours.map((tour, i) => (
+                  <WalkingTourPlanRow key={tour.url || i} tour={tour}
+                    onRemove={t => onRemoveSelection('walking_tours', t)} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Selected SIM */}
           {selections.sim && (
             <div className="border border-pink-200 bg-pink-50 rounded-xl p-3">
@@ -3383,7 +3404,7 @@ export default function ResultsPage() {
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
-    flight: null, flights: [], hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [],
+    flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
@@ -3463,7 +3484,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -3521,7 +3542,7 @@ export default function ResultsPage() {
     if (!searchData || hasStarted.current) return
     hasStarted.current = true
 
-    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', events:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', stress_test:'waiting', packing_list:'waiting' }))
+    setStatuses(s => ({ ...s, flights:'loading', weather:'loading', hotels:'loading', activities:'loading', places_to_see:'loading', walking_tours:'loading', events:'loading', visa:'loading', sim:'loading', tips:'loading', emergency_card:'loading', getting_around:'loading', forex:'loading', itinerary:'waiting', stress_test:'waiting', packing_list:'waiting' }))
 
     if (cleanupWorker.current) cleanupWorker.current()
 
@@ -3610,7 +3631,7 @@ export default function ResultsPage() {
   if (!searchData) return null
 
   const completedCount = Object.values(statuses).filter(s => s === 'done' || s === 'enhancing').length
-  const selectedCount  = (selections.flight ? 1 : 0) + (selections.flights?.length || 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
+  const selectedCount  = (selections.flight ? 1 : 0) + (selections.flights?.length || 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.walking_tours?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
 
   const handleSelect = (type, value) => {
     if (type === 'activities') {
@@ -3637,6 +3658,11 @@ export default function ResultsPage() {
       setSelections(s => {
         const already = (s.places_to_see || []).some(p => p.name === value.name)
         return { ...s, places_to_see: already ? (s.places_to_see || []).filter(p => p.name !== value.name) : [...(s.places_to_see || []), value] }
+      })
+    } else if (type === 'walking_tours') {
+      setSelections(s => {
+        const already = (s.walking_tours || []).some(t => t.url === value.url)
+        return { ...s, walking_tours: already ? (s.walking_tours || []).filter(t => t.url !== value.url) : [...(s.walking_tours || []), value] }
       })
     } else if (type === 'flights') {
       // Multi-city: one flight per leg — clicking again deselects, picking
@@ -3671,6 +3697,8 @@ export default function ResultsPage() {
       setSelections(s => ({ ...s, tips: s.tips.filter(t => t.title !== value.title) }))
     } else if (type === 'places_to_see') {
       setSelections(s => ({ ...s, places_to_see: (s.places_to_see || []).filter(p => p.name !== value.name) }))
+    } else if (type === 'walking_tours') {
+      setSelections(s => ({ ...s, walking_tours: (s.walking_tours || []).filter(t => t.url !== value.url) }))
     } else if (type === 'events') {
       setSelections(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
@@ -3775,6 +3803,7 @@ export default function ResultsPage() {
       hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
+      walking_tours:  () => <WalkingToursSection data={data} {...sectionProps} />,
       events:         () => <EventsSection data={data} {...sectionProps} />,
       visa:           () => <VisaSection         data={data} />,
       sim:            () => <SimSection        data={data} {...sectionProps} />,

@@ -141,6 +141,7 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
     section('Itinerary', itineraryHtml(planItineraryDays(sel, itinerary), sel)),
     section('Activities', list(sel.activities, (a) => `${esc(a.name)}${Number(a.price_usd) > 0 ? ` <span class="amt">${usd(a.price_usd)}</span>` : ''}${a.location ? ` <span class="muted">· ${esc(a.location)}</span>` : ''}${link(a.booking_url, 'Book')}`)),
     section('Places to see', list(sel.places_to_see, (p) => `${esc(p.name)}${p.neighbourhood ? ` <span class="muted">· ${esc(p.neighbourhood)}</span>` : ''}`)),
+    section('Free walking tours', list(sel.walking_tours, (t) => `${esc(t.name)}${[t.provider, t.city].filter(Boolean).length ? ` <span class="muted">· ${esc([t.provider, t.city].filter(Boolean).join(' · '))}</span>` : ''}${link(t.url, 'View tour')}`)),
     section('Events', list(sel.events, (e) => `${esc(e.name)}${e.start_date ? ` <span class="muted">· ${esc(e.start_date)}${e.end_date && e.end_date !== e.start_date ? ` – ${esc(e.end_date)}` : ''}</span>` : ''}`)),
     section('SIM / eSIM', sel.sim ? `<p>${esc([sel.sim.provider, sel.sim.plan_name].filter(Boolean).join(' — '))}${Number(sel.sim.price_usd) > 0 ? ` <span class="amt">${usd(sel.sim.price_usd)}</span>` : ''}${link(sel.sim.url, 'Get plan')}</p>` : ''),
     section('Getting around', list(sel.getting_around, (t) => `${esc(t.name)}${t.price_info ? ` <span class="muted">· ${esc(t.price_info)}</span>` : ''}`)),

@@ -123,6 +123,8 @@ Events arrive out of order as agents complete. The frontend renders each section
 | `hotels` | 1 | ai | Parallel agent |
 | `activities` | 1 | ai | Parallel agent |
 | `places_to_see` | 1 | ai | Parallel agent (Serper + Claude synthesis) |
+| `walking_tours` | 1 | ai | Parallel agent (provider crawl + LLM picks by id) |
+| `events` | 1 | ai | Parallel agent (festivals, concerts, exhibitions) |
 | `forex` | 1 | ai | Parallel agent |
 | `pricing_advisor` | 1 / deferred | ai | Deferred — starts after core agents complete |
 | `packing_list` | 1 / deferred | ai | Deferred — starts after core agents complete |
@@ -527,6 +529,59 @@ Each results section is also exposed as a standalone endpoint (same request body
 | `POST /api/events` | What's On — festivals, concerts, exhibitions during the trip |
 | `POST /api/layover` | Layover excursion plan for long connections |
 | `POST /api/stress-test` | Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget) |
+| `POST /api/walking-tours` | Free walking tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope |
+
+### `POST /api/walking-tours`
+
+Free and pay-what-you-wish walking tours at the destination (every stop on multi-city trips). Tours are crawled from the providers' public city pages; the LLM only chooses and explains them by id, so every `url` is a real provider tour page. Same request body as `/api/search`.
+
+```json
+{
+  "origin": "NYC",
+  "destination": "Lisbon, Portugal",
+  "departure_date": "2026-04-01",
+  "return_date": "2026-04-08",
+  "interests": ["history", "food"],
+  "num_travelers": 2
+}
+```
+
+Response:
+
+```json
+{
+  "results": [
+    {
+      "id": "t3",
+      "name": "Lisbon Old Town Free Walking Tour",
+      "provider": "GuruWalk",
+      "provider_key": "guruwalk",
+      "url": "https://www.guruwalk.com/walks/...",
+      "image_url": "https://...",
+      "description": "Alfama, the cathedral and the viewpoints, with a local guide.",
+      "rating": 4.9,
+      "review_count": 1280,
+      "duration": "2h 30m",
+      "price_note": "Free (tip your guide)",
+      "city": "Lisbon",
+      "reason": "Covers the old-town history you asked for.",
+      "top_pick": true
+    }
+  ],
+  "sources": [
+    {
+      "provider": "GuruWalk",
+      "provider_key": "guruwalk",
+      "city": "Lisbon",
+      "url": "https://www.guruwalk.com/lisbon",
+      "count": 6,
+      "status": "ok"
+    }
+  ]
+}
+```
+
+`sources` has one entry per provider and city; `status` is `ok`, `none` (page found, no free tours) or `error`. Each city is topped up to at least `min(4, available)` tours. The endpoint returns `{"error": ...}` only when every provider fails.
 
 ## Taste Graph
 

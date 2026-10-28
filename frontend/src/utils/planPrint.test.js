@@ -125,6 +125,24 @@ describe('buildPlanPrintHtml', () => {
     expect(html).not.toContain('javascript:')
   })
 
+  it('includes selected walking tours with safe links', () => {
+    const html = build({ selections: { walking_tours: [
+      { name: 'Old Town <b>Tour</b>', provider: 'GuruWalk', city: 'Tokyo', url: 'https://www.guruwalk.com/walks/1-tour' },
+      { name: 'Sneaky Tour', provider: 'FreeTour.com', city: 'Tokyo', url: 'javascript:alert(1)' },
+    ] } })
+    expect(html).toContain('<h2>Free walking tours</h2>')
+    expect(html).toContain('Old Town &lt;b&gt;Tour&lt;/b&gt;')
+    expect(html).toContain('GuruWalk')
+    expect(html).toContain('<a href="https://www.guruwalk.com/walks/1-tour">View tour</a>')
+    expect(html).toContain('Sneaky Tour')
+    expect(html).not.toContain('javascript:')
+    expect(html.match(/View tour/g)).toHaveLength(1)
+  })
+
+  it('leaves out the walking tours section when none are selected', () => {
+    expect(build()).not.toContain('Free walking tours')
+  })
+
   it('locks the page down with a Content-Security-Policy', () => {
     const csp = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(build())?.[1]
     expect(csp).toContain("default-src 'none'")

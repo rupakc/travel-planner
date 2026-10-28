@@ -3,10 +3,11 @@ import {
   X, Plane, Hotel, MapPin, Smartphone, Calendar,
   Save, Trash2, Loader2, Check, PenLine, ExternalLink,
   ChevronDown, ChevronUp, DollarSign, Star, Lightbulb, Bus, Wifi,
-  PartyPopper, Share2
+  PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import PlanExport from './PlanExport'
+import { safeUrl } from '../utils/planPrint'
 
 const SECTION_COLORS = {
   sky:    'bg-sky-50 border-b border-sky-100 text-sky-800',
@@ -38,7 +39,7 @@ function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
 export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted }) {
   const [name, setName]           = useState(plan.name)
   const [sel,  setSel]            = useState(() => ({
-    flight: null, flights: [], hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [],
+    flight: null, flights: [], hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [], walking_tours: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
     ...(plan.selections || {}),
   }))
@@ -58,6 +59,8 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       setSel(s => ({ ...s, tips: (s.tips || []).filter(t => t.title !== value.title) }))
     } else if (type === 'getting_around') {
       setSel(s => ({ ...s, getting_around: (s.getting_around || []).filter(a => a.name !== value.name) }))
+    } else if (type === 'walking_tours') {
+      setSel(s => ({ ...s, walking_tours: (s.walking_tours || []).filter(t => t.url !== value.url) }))
     } else if (type === 'events') {
       setSel(s => ({ ...s, events: (s.events || []).filter(e => e.name !== value.name) }))
     } else if (type === 'itinerary_slots') {
@@ -119,7 +122,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
     } finally { setDeleting(false) }
   }
 
-  const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.itinerary_slots?.length
+  const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.walking_tours?.length || sel.itinerary_slots?.length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
@@ -373,6 +376,37 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     </button>
                   </div>
                 ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Walking tours */}
+          {sel.walking_tours?.length > 0 && (
+            <Section title={`Walking Tours (${sel.walking_tours.length})`} color="green" icon={Footprints}>
+              <div className="space-y-2">
+                {(sel.walking_tours || []).map((t, i) => {
+                  const href = safeUrl(t.url)
+                  return (
+                    <div key={t.url || i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
+                      <div className="flex-1 min-w-0 mr-2">
+                        {href ? (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:text-green-700 inline-flex items-center gap-1">
+                            {t.name}<ExternalLink size={11} className="shrink-0" />
+                          </a>
+                        ) : (
+                          <p className="text-sm font-medium text-gray-900">{t.name}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                          {t.provider && <span>{t.provider}</span>}
+                          {t.city && <span>{t.city}</span>}
+                        </div>
+                      </div>
+                      <button onClick={() => removeItem('walking_tours', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             </Section>
           )}

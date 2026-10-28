@@ -262,6 +262,37 @@ class PlacesResponse(BaseModel):
     results: list[PlaceResult] = []
 
 
+class WalkingTour(BaseModel):
+    id: str
+    name: str
+    provider: str
+    provider_key: str
+    url: str
+    image_url: str | None = None
+    description: str | None = None
+    rating: float | None = None
+    review_count: int | None = None
+    duration: str | None = None
+    price_note: str
+    city: str
+    reason: str | None = None
+    top_pick: bool = False
+
+
+class WalkingTourSource(BaseModel):
+    provider: str
+    provider_key: str
+    city: str
+    url: str
+    count: int = 0
+    status: str  # "ok" | "none" | "error"
+
+
+class WalkingToursResponse(BaseModel):
+    results: list[WalkingTour] = []
+    sources: list[WalkingTourSource] = []
+
+
 class WeatherDay(BaseModel):
     date: str
     description: str = ""
@@ -284,6 +315,7 @@ class TravelSearchResponse(BaseModel):
     hotels: dict = {}
     activities: dict = {}
     places_to_see: dict = {}
+    walking_tours: dict = {}
     visa: dict = {}
     sim: dict = {}
     tips: dict = {}

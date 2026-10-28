@@ -105,3 +105,14 @@ describe('computePlanCostBreakdown', () => {
     expect(computePlanCost(sel)).toBe(30)
   })
 })
+
+describe('walking tours selections', () => {
+  it('countSelections counts walking tours', () => {
+    const sel = { ...EMPTY_SELECTIONS, walking_tours: [{ url: 'https://a.example/1' }, { url: 'https://a.example/2' }] }
+    expect(countSelections(sel)).toBe(2)
+  })
+
+  it('EMPTY_SELECTIONS has walking_tours: []', () => {
+    expect(EMPTY_SELECTIONS.walking_tours).toEqual([])
+  })
+})
