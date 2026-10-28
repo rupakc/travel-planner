@@ -9,6 +9,7 @@ import asyncio
 import copy
 import json
 import logging
+import math
 import re
 import unicodedata
 import urllib.parse
@@ -56,8 +57,6 @@ PROVIDERS: dict[str, dict[str, Any]] = {
     },
 }
 
-_CityUrl = Callable[[str], str]
-
 
 def city_slug(city: str) -> str:
     ascii_city = unicodedata.normalize("NFKD", city).encode("ascii", "ignore").decode()
@@ -82,10 +81,16 @@ def _host_ok(url: str, domain: str) -> bool:
 
 
 def _num(value: Any, cast: Callable[[Any], Any]) -> Any:
-    try:
-        return cast(value) if value is not None else None
-    except (TypeError, ValueError):
+    """Cast ``value``; None for missing, invalid or non-finite numbers."""
+    if value is None:
         return None
+    try:
+        result = cast(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if isinstance(result, float) and not math.isfinite(result):
+        return None
+    return result
 
 
 def _rating_5(agg: dict) -> float | None:
@@ -96,6 +101,8 @@ def _rating_5(agg: dict) -> float | None:
     best = _num(agg.get("bestRating"), float)
     if best and best > 5:
         value = value * 5 / best
+    if not 0 <= value <= 5:
+        return None
     return round(value, 2)
 
 
@@ -298,6 +305,29 @@ _USER_AGENT = (
 _FETCH_TIMEOUT = 12.0
 _HEADERS = {"User-Agent": _USER_AGENT}
 _DISCOVERY_PROVIDERS = ("guruwalk", "freetour")
+# Total budget for one city's crawl (all providers, including discovery).
+_CITY_CRAWL_CAP = 15.0
+# One-segment paths on the discovery sites that are never city pages.
+_DENIED_SLUGS = frozenset(
+    {
+        "search",
+        "blog",
+        "about",
+        "help",
+        "login",
+        "signup",
+        "free-tours",
+        "ft",
+        "en",
+        "es",
+        "de",
+        "fr",
+        "it",
+        "pt",
+        "nl",
+        "pl",
+    }
+)
 
 
 def _ddgs_search(query: str, max_results: int) -> list:
@@ -305,10 +335,59 @@ def _ddgs_search(query: str, max_results: int) -> list:
     return list(DDGS().text(query, max_results=max_results))
 
 
+def _discovered_slug(url: str, provider_key: str) -> str | None:
+    """The slug of a discovered city-page URL, or None if it isn't one."""
+    domain = PROVIDERS[provider_key]["domain"]
+    m = re.match(rf"^https://www\.{re.escape(domain)}/([a-z0-9-]+)/?$", url)
+    if not m:
+        return None
+    slug = m.group(1)
+    if len(slug) == 2 or slug in _DENIED_SLUGS:
+        return None
+    return slug
+
+
+def _slug_matches_city(slug: str, city: str) -> bool:
+    """True if the slug shares a "-" token with the city's slug.
+
+    Cities without a Latin slug can't be checked here (see ``_page_locality_ok``).
+    """
+    wanted = city_slug(city)
+    if not wanted:
+        return True
+    return bool(set(slug.split("-")) & set(wanted.split("-")))
+
+
+def _page_locality_ok(html: str, city: str) -> bool:
+    """True if any JSON-LD event's addressLocality equals ``city``."""
+    want = city.strip().casefold()
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for script in soup.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string or script.get_text())
+            except ValueError:
+                continue
+            for ev in _iter_events(data):
+                loc = ev.get("location")
+                for place in loc if isinstance(loc, list) else [loc]:
+                    addr = place.get("address") if isinstance(place, dict) else None
+                    locality = (
+                        addr.get("addressLocality") if isinstance(addr, dict) else None
+                    )
+                    if (
+                        isinstance(locality, str)
+                        and locality.strip().casefold() == want
+                    ):
+                        return True
+    except Exception:
+        logger.warning("walking-tour locality check failed", exc_info=True)
+    return False
+
+
 async def _discover_city_url(provider_key: str, city: str) -> str | None:
     """Find a provider's city page via web search when the guessed slug 404s."""
     domain = PROVIDERS[provider_key]["domain"]
-    pattern = re.compile(rf"^https://www\.{re.escape(domain)}/[a-z0-9-]+/?$")
     query = f"site:{domain} {city} free walking tour"
     try:
         results = await asyncio.get_running_loop().run_in_executor(
@@ -319,7 +398,10 @@ async def _discover_city_url(provider_key: str, city: str) -> str | None:
         return None
     for result in results:
         href = result.get("href") if isinstance(result, dict) else None
-        if isinstance(href, str) and pattern.match(href):
+        if not isinstance(href, str):
+            continue
+        slug = _discovered_slug(href, provider_key)
+        if slug and _slug_matches_city(slug, city):
             return href
     return None
 
@@ -343,6 +425,20 @@ def _source(provider_key: str, city: str, url: str, count: int, status: str) -> 
     }
 
 
+async def _get(
+    client: httpx.AsyncClient, provider_key: str, url: str
+) -> httpx.Response:
+    resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+    if resp.status_code == 404:
+        logger.debug("walking-tour %s: 404 for %s", provider_key, url)
+    elif resp.status_code != 200:
+        # 403/429/5xx usually mean we're being blocked or rate limited.
+        logger.warning(
+            "walking-tour %s: HTTP %s for %s", provider_key, resp.status_code, url
+        )
+    return resp
+
+
 async def _fetch_provider(
     client: httpx.AsyncClient, provider_key: str, city: str, slug: str
 ) -> tuple[list[dict], dict]:
@@ -354,20 +450,35 @@ async def _fetch_provider(
         if cached is not None:
             cached_url, cached_tours = cached
             tours = copy.deepcopy(cached_tours)
+            for tour in tours:
+                tour["city"] = city
             return tours, _source(provider_key, city, cached_url, len(tours), "ok")
     try:
         resp = None
+        needs_locality = False
         if url:
-            resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+            resp = await _get(client, provider_key, url)
         if (resp is None or resp.status_code != 200) and (
             provider_key in _DISCOVERY_PROVIDERS
         ):
             found = await _discover_city_url(provider_key, city)
-            if found and found != url:
+            found_slug = _discovered_slug(found, provider_key) if found else None
+            if (
+                found
+                and found != url
+                and found_slug
+                and _slug_matches_city(found_slug, city)
+            ):
                 url = found
-                slug = slug or urllib.parse.urlparse(found).path.strip("/")
-                resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+                needs_locality = not slug
+                slug = slug or found_slug
+                resp = await _get(client, provider_key, url)
         if resp is None or resp.status_code != 200:
+            return [], _source(provider_key, city, url, 0, "none")
+        if needs_locality and not _page_locality_ok(resp.text, city):
+            logger.info(
+                "walking-tour discovery for %s: %s is not %s", provider_key, url, city
+            )
             return [], _source(provider_key, city, url, 0, "none")
         tours = _parse_provider(provider_key, resp.text, slug, city)
     except Exception:
@@ -390,12 +501,31 @@ async def fetch_city_tours(
     own_client = client is None
     if client is None:
         client = httpx.AsyncClient(follow_redirects=True)
+    tasks = {
+        key: asyncio.create_task(_fetch_provider(client, key, city, slug))
+        for key in PROVIDERS
+    }
     try:
-        results = await asyncio.gather(
-            *(_fetch_provider(client, key, city, slug) for key in PROVIDERS)
-        )
+        # Cap the whole city crawl (discovery included). Providers still
+        # running are cancelled before they can cache anything.
+        _, pending = await asyncio.wait(tasks.values(), timeout=_CITY_CRAWL_CAP)
+        for task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
+            logger.warning(
+                "walking-tour crawl for %s hit the %ss cap", city, _CITY_CRAWL_CAP
+            )
     finally:
+        for task in tasks.values():
+            task.cancel()
         if own_client:
             await client.aclose()
-    tours = [t for provider_tours, _ in results for t in provider_tours]
-    return tours, [source for _, source in results]
+    results = []
+    for key, task in tasks.items():
+        if task.cancelled() or task.exception() is not None:
+            url = PROVIDERS[key]["city_url"](slug) if slug else ""
+            results.append(([], _source(key, city, url, 0, "error")))
+        else:
+            results.append(task.result())
+    return [t for ts, _ in results for t in ts], [src for _, src in results]

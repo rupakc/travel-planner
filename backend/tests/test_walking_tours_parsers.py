@@ -207,3 +207,52 @@ def test_parse_freewalkingtour_strips_language_badge_prefix():
     assert [t["name"] for t in tours] == [
         "Welcome to Kraków! Old Town & Wawel Hill Guided Walking Tour"
     ]
+
+
+def _raw_ld(body: str) -> str:
+    return f'<script type="application/ld+json">{body}</script>'
+
+
+def test_non_finite_numbers_become_none_and_page_still_parses():
+    # json.loads accepts NaN/Infinity and turns 1e400 into inf.
+    body = (
+        "["
+        '{"@type": "Event", "name": "NaN tour", "url": "https://www.guruwalk.com/walks/1",'
+        ' "aggregateRating": {"ratingValue": NaN, "reviewCount": NaN}},'
+        '{"@type": "Event", "name": "Inf tour", "url": "https://www.guruwalk.com/walks/2",'
+        ' "aggregateRating": {"ratingValue": Infinity, "reviewCount": Infinity}},'
+        '{"@type": "Event", "name": "Huge tour", "url": "https://www.guruwalk.com/walks/3",'
+        ' "aggregateRating": {"ratingValue": 1e400, "reviewCount": 1e400}},'
+        '{"@type": "Event", "name": "Str tour", "url": "https://www.guruwalk.com/walks/4",'
+        ' "aggregateRating": {"ratingValue": "NaN", "reviewCount": "Infinity"}},'
+        '{"@type": "Event", "name": "Good tour", "url": "https://www.guruwalk.com/walks/5",'
+        ' "aggregateRating": {"ratingValue": 4.8, "reviewCount": 50}}'
+        "]"
+    )
+    tours = parse_jsonld_tours(_raw_ld(body), "guruwalk", "Lisbon")
+    assert [t["name"] for t in tours] == [
+        "NaN tour",
+        "Inf tour",
+        "Huge tour",
+        "Str tour",
+        "Good tour",
+    ]
+    for t in tours[:4]:
+        assert t["rating"] is None
+        assert t["review_count"] is None
+    assert tours[4]["rating"] == 4.8
+    assert tours[4]["review_count"] == 50
+    json.dumps(tours, allow_nan=False)  # must be valid JSON
+
+
+def test_rating_above_five_without_best_rating_is_none():
+    html = _ld([_event("Tour", "https://www.guruwalk.com/walks/1", rating=9.6)])
+    assert parse_jsonld_tours(html, "guruwalk", "Lisbon")[0]["rating"] is None
+
+
+def test_negative_rating_is_none_and_out_of_ten_still_normalised():
+    neg = _ld([_event("Tour", "https://www.guruwalk.com/walks/1", rating=-1)])
+    assert parse_jsonld_tours(neg, "guruwalk", "Lisbon")[0]["rating"] is None
+    ev = _event("Tour", "https://www.freetour.com/walks/1", rating=9.6)
+    ev["aggregateRating"]["bestRating"] = 10
+    assert parse_jsonld_tours(_ld([ev]), "freetour", "Lisbon")[0]["rating"] == 4.8

@@ -3,7 +3,11 @@ import math
 import re
 
 from ..schemas.request import TravelSearchRequest
-from ..services.walking_tours import fetch_city_tours, split_city_country
+from ..services.walking_tours import (
+    city_slug,
+    fetch_city_tours,
+    split_city_country,
+)
 from .base_agent import BaseAgent
 from .loader import load_agent_definition
 
@@ -149,6 +153,19 @@ def top_up(tours: list[dict], picked: list[dict]) -> list[dict]:
     return out
 
 
+def unique_destinations(destinations: list[str]) -> list[str]:
+    """Drop repeated cities (case-insensitive, by slug), keeping first order."""
+    seen: set[str] = set()
+    out = []
+    for dest in destinations:
+        name = split_city_country(dest)[0]
+        key = city_slug(name) or name.casefold()
+        if key not in seen:
+            seen.add(key)
+            out.append(dest)
+    return out
+
+
 class WalkingToursAgent(BaseAgent):
     """Crawls free-walking-tour sites and has the LLM pick the best fits."""
 
@@ -156,7 +173,7 @@ class WalkingToursAgent(BaseAgent):
         super().__init__(load_agent_definition(agents_dir, "walking_tours"))
 
     async def run(self, request: TravelSearchRequest) -> dict:
-        destinations = (
+        destinations = unique_destinations(
             request.destinations if request.is_multi_city else [request.destination]
         )
         crawls = await asyncio.gather(

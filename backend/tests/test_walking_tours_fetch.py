@@ -1,6 +1,8 @@
 """Tests for the walking-tour crawler (httpx.MockTransport, no network)."""
 
+import asyncio
 import json
+import logging
 
 import httpx
 import pytest
@@ -17,7 +19,7 @@ def _clear_cache():
     get_cache().clear()
 
 
-def _jsonld_page(domain: str, n: int = 2) -> str:
+def _jsonld_page(domain: str, n: int = 2, locality: str | None = None) -> str:
     events = [
         {
             "@type": "Event",
@@ -26,6 +28,12 @@ def _jsonld_page(domain: str, n: int = 2) -> str:
         }
         for i in range(n)
     ]
+    if locality is not None:
+        for ev in events:
+            ev["location"] = {
+                "@type": "Place",
+                "address": {"@type": "PostalAddress", "addressLocality": locality},
+            }
     return f'<script type="application/ld+json">{json.dumps(events)}</script>'
 
 
@@ -131,24 +139,24 @@ async def test_discovery_fallback_used_on_404(monkeypatch):
 
     async def fake_discover(provider_key, city):
         discovered.append((provider_key, city))
-        return "https://www.freetour.com/lisbon"
+        return "https://www.freetour.com/lisbon-portugal"
 
     monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.host == "www.freetour.com":
-            if request.url.path == "/lisbon":
+            if request.url.path == "/lisbon-portugal":
                 return httpx.Response(200, text=PAGES["www.freetour.com"])
             return httpx.Response(404)
         return _ok_handler(request)
 
     async with _client(handler) as client:
-        tours, sources = await fetch_city_tours("Lisboa X", client=client)
+        tours, sources = await fetch_city_tours("Lisbon", client=client)
     freetour = next(s for s in sources if s["provider_key"] == "freetour")
     assert freetour["status"] == "ok"
     assert freetour["count"] == 2
-    assert freetour["url"] == "https://www.freetour.com/lisbon"
-    assert discovered == [("freetour", "Lisboa X")]
+    assert freetour["url"] == "https://www.freetour.com/lisbon-portugal"
+    assert discovered == [("freetour", "Lisbon")]
     assert sum(t["provider_key"] == "freetour" for t in tours) == 2
 
 
@@ -176,13 +184,17 @@ async def test_discover_city_url_picks_first_matching_result(monkeypatch):
         return [
             {"href": "https://www.guruwalk.com/walks/1-some-tour"},
             {"href": "https://evil.example/guruwalk.com/x"},
-            {"href": "https://www.guruwalk.com/lisboa/"},
+            {"href": "https://www.guruwalk.com/search"},
+            {"href": "https://www.guruwalk.com/en"},
             {"href": "https://www.guruwalk.com/porto"},
+            {"href": "https://www.guruwalk.com/lisboa/"},
+            {"href": "https://www.guruwalk.com/lisbon-city/"},
+            {"href": "https://www.guruwalk.com/lisbon"},
         ]
 
     monkeypatch.setattr(walking_tours, "_ddgs_search", fake_search)
     url = await walking_tours._discover_city_url("guruwalk", "Lisbon")
-    assert url == "https://www.guruwalk.com/lisboa/"
+    assert url == "https://www.guruwalk.com/lisbon-city/"
     assert queries == ["site:guruwalk.com Lisbon free walking tour"]
 
 
@@ -241,7 +253,7 @@ async def test_empty_slug_uses_discovered_city_page(monkeypatch):
 
     def handler(request: httpx.Request) -> httpx.Response:
         requested.append(str(request.url))
-        return httpx.Response(200, text=PAGES["www.freetour.com"])
+        return httpx.Response(200, text=_jsonld_page("freetour.com", 2, "東京"))
 
     async with _client(handler) as client:
         tours, sources = await fetch_city_tours("東京", client=client)
@@ -280,3 +292,197 @@ async def test_empty_page_is_none_and_not_cached(monkeypatch):
         assert [s["count"] for s in sources] == [0] * 4
         await fetch_city_tours("Lisbon", client=client)
     assert len(calls) == 8
+
+
+# --- I1: discovery must not label another city's page with the user's city ---
+
+
+def _discovery_handler(path_ok: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "www.guruwalk.com":
+            if request.url.path == path_ok:
+                return httpx.Response(200, text=PAGES["www.guruwalk.com"])
+            return httpx.Response(404)
+        return httpx.Response(404)
+
+    return handler
+
+
+async def test_discovery_of_other_city_is_rejected(monkeypatch):
+    async def fake_discover(provider_key, city):
+        return "https://www.guruwalk.com/lisbon"
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+    async with _client(_discovery_handler("/lisbon")) as client:
+        tours, sources = await fetch_city_tours("Springfield", client=client)
+    assert sources[0]["status"] == "none"
+    assert tours == []
+    assert not any("lisbon" in k for k in get_cache())
+
+
+async def test_discovery_of_search_page_is_rejected(monkeypatch):
+    async def fake_discover(provider_key, city):
+        return "https://www.guruwalk.com/search"
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+    requested = []
+    inner = _discovery_handler("/search")
+
+    def handler(request):
+        requested.append(request.url.path)
+        return inner(request)
+
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("Lisbon", client=client)
+    assert "/search" not in requested
+    assert sources[0]["status"] == "none"
+
+
+async def test_discover_city_url_rejects_denied_and_language_slugs(monkeypatch):
+    def fake_search(query, max_results):
+        return [
+            {"href": "https://www.guruwalk.com/search"},
+            {"href": "https://www.guruwalk.com/blog"},
+            {"href": "https://www.guruwalk.com/es"},
+            {"href": "https://www.guruwalk.com/xy"},
+            {"href": "https://www.freetour.com/free-tours"},
+        ]
+
+    monkeypatch.setattr(walking_tours, "_ddgs_search", fake_search)
+    assert await walking_tours._discover_city_url("guruwalk", "Search") is None
+
+
+async def test_discovery_alternate_slug_sharing_a_token_is_accepted(monkeypatch):
+    async def fake_discover(provider_key, city):
+        return "https://www.guruwalk.com/new-york-city"
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+    async with _client(_discovery_handler("/new-york-city")) as client:
+        tours, sources = await fetch_city_tours("New York", client=client)
+    assert sources[0]["status"] == "ok"
+    assert sources[0]["url"] == "https://www.guruwalk.com/new-york-city"
+    assert all(t["city"] == "New York" for t in tours)
+
+
+async def test_empty_slug_rejects_page_for_other_locality(monkeypatch):
+    async def fake_discover(provider_key, city):
+        if provider_key == "freetour":
+            return "https://www.freetour.com/osaka"
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=_jsonld_page("freetour.com", 2, "大阪"))
+
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("東京", client=client)
+    assert sources[1]["status"] == "none"
+    assert tours == []
+    assert len(get_cache()) == 0
+
+
+async def test_empty_slug_without_locality_is_rejected(monkeypatch):
+    async def fake_discover(provider_key, city):
+        if provider_key == "freetour":
+            return "https://www.freetour.com/tokyo"
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=PAGES["www.freetour.com"])
+
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("東京", client=client)
+    assert sources[1]["status"] == "none"
+    assert tours == []
+
+
+# --- I2: per-city crawl cap ---
+
+
+async def test_city_crawl_is_capped_and_slow_providers_error(monkeypatch):
+    monkeypatch.setattr(walking_tours, "_CITY_CRAWL_CAP", 0.2)
+
+    async def no_discovery(provider_key, city):
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", no_discovery)
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host in ("www.guruwalk.com", "freewalkingtour.com"):
+            await asyncio.sleep(5)
+        return _ok_handler(request)
+
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("Lisbon", client=client)
+    assert loop.time() - start < 2
+    assert [s["status"] for s in sources] == ["error", "ok", "error", "ok"]
+    assert {t["provider_key"] for t in tours} == {"freetour", "sandemans"}
+    assert not any(
+        k.startswith(("walking_tours:guruwalk:", "walking_tours:freewalkingtour:"))
+        for k in get_cache()
+    )
+
+
+async def test_city_crawl_cap_includes_discovery(monkeypatch):
+    monkeypatch.setattr(walking_tours, "_CITY_CRAWL_CAP", 0.2)
+
+    async def slow_discovery(provider_key, city):
+        await asyncio.sleep(5)
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", slow_discovery)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("Lisbon", client=client)
+    assert loop.time() - start < 2
+    assert [s["status"] for s in sources] == ["error", "error", "none", "none"]
+    assert tours == []
+    assert len(get_cache()) == 0
+
+
+# --- M2: cache hits are relabelled with the requested city ---
+
+
+async def test_cache_hit_rewrites_city_label():
+    async with _client(_ok_handler) as client:
+        await fetch_city_tours("lisbon", client=client)
+        tours, sources = await fetch_city_tours("Lisbon", client=client)
+    assert tours and all(t["city"] == "Lisbon" for t in tours)
+    assert all(s["city"] == "Lisbon" for s in sources)
+
+
+# --- M7: blocking responses are visible in logs ---
+
+
+async def test_blocking_statuses_log_warning(monkeypatch, caplog):
+    async def no_discovery(provider_key, city):
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", no_discovery)
+    codes = {
+        "www.guruwalk.com": 403,
+        "www.freetour.com": 429,
+        "freewalkingtour.com": 503,
+        "www.neweuropetours.eu": 404,
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(codes[request.url.host])
+
+    caplog.set_level(logging.DEBUG, logger="app.services.walking_tours")
+    async with _client(handler) as client:
+        await fetch_city_tours("Lisbon", client=client)
+    warnings = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    for key, code in (("guruwalk", 403), ("freetour", 429), ("freewalkingtour", 503)):
+        assert any(key in m and str(code) in m for m in warnings), warnings
+    assert not any("sandemans" in m for m in warnings)
