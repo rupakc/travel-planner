@@ -1,5 +1,6 @@
 import asyncio
 import math
+import re
 
 from ..schemas.request import TravelSearchRequest
 from ..services.walking_tours import fetch_city_tours, split_city_country
@@ -8,6 +9,23 @@ from .loader import load_agent_definition
 
 _MAX_PER_CITY = 8
 _MAX_TOP_PICKS = 2
+_MIN_PER_CITY = 4
+_MAX_REASON_CHARS = 200
+_URL_RE = re.compile(r"https?://|www\.", re.I)
+
+
+def _one_line(text: object) -> str:
+    """Collapse whitespace/newlines and '|' so crawled text can't forge lines."""
+    return re.sub(r"[\s|]+", " ", str(text or "")).strip()
+
+
+def _clean_reason(reason: object) -> str | None:
+    if not isinstance(reason, str):
+        return None
+    text = reason.strip()
+    if not text or _URL_RE.search(text):
+        return None
+    return text[:_MAX_REASON_CHARS].rstrip()
 
 
 def build_prompt(
@@ -42,16 +60,16 @@ def build_prompt(
             " | ".join(
                 [
                     t["id"],
-                    str(t.get("name") or ""),
-                    str(t.get("provider") or ""),
+                    _one_line(t.get("name")),
+                    _one_line(t.get("provider")),
                     str(t.get("rating") if t.get("rating") is not None else "n/a"),
                     str(
                         t.get("review_count")
                         if t.get("review_count") is not None
                         else "n/a"
                     ),
-                    str(t.get("duration") or "n/a"),
-                    (t.get("description") or "")[:200],
+                    _one_line(t.get("duration")) or "n/a",
+                    _one_line(t.get("description"))[:200],
                 ]
             )
         )
@@ -98,19 +116,36 @@ def merge_recommendations(tours: list[dict], llm: dict) -> list[dict]:
         if counts.get(city, 0) >= _MAX_PER_CITY:
             continue
         counts[city] = counts.get(city, 0) + 1
-        reason = rec.get("reason")
         top = rec.get("top_pick") is True and tops.get(city, 0) < _MAX_TOP_PICKS
         if top:
             tops[city] = tops.get(city, 0) + 1
         out.append(
             {
                 **tour,
-                "reason": reason.strip()
-                if isinstance(reason, str) and reason.strip()
-                else None,
+                "reason": _clean_reason(rec.get("reason")),
                 "top_pick": top,
             }
         )
+    return out
+
+
+def top_up(tours: list[dict], picked: list[dict]) -> list[dict]:
+    """Fill each city up to min(4, available) from its rating-ranked tours."""
+    have = {t["id"] for t in picked}
+    cities = list(dict.fromkeys(t["city"] for t in tours))
+    out = list(picked)
+    for city in cities:
+        city_tours = [t for t in tours if t["city"] == city]
+        need = min(_MIN_PER_CITY, len(city_tours)) - sum(
+            1 for t in picked if t["city"] == city
+        )
+        for t in rank_fallback(city_tours):
+            if need <= 0:
+                break
+            if t["id"] not in have:
+                have.add(t["id"])
+                out.append(t)
+                need -= 1
     return out
 
 
@@ -136,5 +171,6 @@ class WalkingToursAgent(BaseAgent):
             return {"results": [], "sources": sources}
 
         llm = await self.execute(build_prompt(request, destinations, tours))
-        results = merge_recommendations(tours, llm) or rank_fallback(tours)
+        picked = merge_recommendations(tours, llm)
+        results = top_up(tours, picked) if picked else rank_fallback(tours)
         return {"results": results, "sources": sources}
