@@ -18,7 +18,7 @@ import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sa
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
 import { safeUrl } from '../utils/planPrint'
-import WalkingToursSection from '../components/WalkingToursSection'
+import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
@@ -2846,26 +2846,10 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
               <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> Walking tours ({selections.walking_tours.length})</div>
               <div className="space-y-2">
-                {selections.walking_tours.map((tour, i) => {
-                  const href = safeUrl(tour.url)
-                  return (
-                    <div key={tour.url || i} className="flex items-start justify-between border-b border-teal-100 last:border-0 pb-1.5 last:pb-0">
-                      <div className="flex-1 min-w-0 mr-2">
-                        <p className="text-xs font-medium text-gray-800">{tour.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                          {tour.provider && <span>{tour.provider}</span>}
-                          {tour.city && <span className="truncate">{tour.city}</span>}
-                        </div>
-                        {href ? (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
-                        ) : (
-                          <span className="text-xs text-gray-400 mt-0.5">{tour.url}</span>
-                        )}
-                      </div>
-                      <button onClick={() => onRemoveSelection('walking_tours', tour)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
-                    </div>
-                  )
-                })}
+                {selections.walking_tours.map((tour, i) => (
+                  <WalkingTourPlanRow key={tour.url || i} tour={tour}
+                    onRemove={t => onRemoveSelection('walking_tours', t)} />
+                ))}
               </div>
             </div>
           )}

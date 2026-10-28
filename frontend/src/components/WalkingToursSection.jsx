@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Star, Clock, Check, Plus, ExternalLink, MapPin } from 'lucide-react'
+import { Star, Clock, Check, Plus, ExternalLink, MapPin, X } from 'lucide-react'
 import { safeUrl } from '../utils/planPrint'
 
 const LINK_REL = 'noopener noreferrer'
@@ -75,6 +75,45 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
   )
 }
 
+// Top picks first within each city; cities keep their incoming (journey) order.
+function sortTopPicksPerCity(results) {
+  const groups = new Map()
+  for (const t of results) {
+    const key = cityName(t.city)
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(t)
+  }
+  return [...groups.values()].flatMap(group =>
+    [...group].sort((a, b) => Number(!!b.top_pick) - Number(!!a.top_pick)))
+}
+
+function sourceLabel(s, multiCity) {
+  const name = multiCity && s.city ? `${s.provider} · ${cityName(s.city)}` : s.provider
+  if (s.status === 'error') return `${name} (unavailable)`
+  if (s.status === 'none') return `${name} (0)`
+  return `${name} (${s.count})`
+}
+
+// One selected walking tour in the My Plan drawer.
+export function WalkingTourPlanRow({ tour, onRemove }) {
+  const href = safeUrl(tour.url)
+  return (
+    <div className="flex items-start justify-between border-b border-teal-100 last:border-0 pb-1.5 last:pb-0">
+      <div className="flex-1 min-w-0 mr-2">
+        <p className="text-xs font-medium text-gray-800">{tour.name}</p>
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+          {tour.provider && <span>{tour.provider}</span>}
+          {tour.city && <span className="truncate">{tour.city}</span>}
+        </div>
+        {href && (
+          <a href={href} target="_blank" rel={LINK_REL} className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
+        )}
+      </div>
+      <button type="button" aria-label={`Remove ${tour.name}`} onClick={() => onRemove(tour)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+    </div>
+  )
+}
+
 export default function WalkingToursSection({ data, selections, onSelect }) {
   if (data?.error) {
     return <div className="p-4 text-sm text-gray-500">Couldn't reach the walking-tour sites this time — the rest of your plan is unaffected.</div>
@@ -83,10 +122,11 @@ export default function WalkingToursSection({ data, selections, onSelect }) {
   if (!results.length) {
     return <div className="p-4 text-sm text-gray-500">No free walking tours listed for this destination on GuruWalk, FreeTour.com, SANDEMANs or FreeWalkingTour.com.</div>
   }
-  const sorted = [...results].sort((a, b) => Number(!!b.top_pick) - Number(!!a.top_pick))
+  const sorted = sortTopPicksPerCity(results)
   const showCity = new Set(results.map(t => cityName(t.city)).filter(Boolean)).size > 1
   const selected = selections?.walking_tours || []
   const sources = data?.sources || []
+  const multiCitySources = showCity || new Set(sources.map(s => cityName(s.city)).filter(Boolean)).size > 1
   return (
     <div className="p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -96,14 +136,14 @@ export default function WalkingToursSection({ data, selections, onSelect }) {
         ))}
       </div>
       {sources.length > 0 && (
-        <p className="text-xs text-gray-400 mt-3">
+        <p data-testid="walking-tours-sources" className="text-xs text-gray-400 mt-3">
           Searched:{' '}
           {sources.map((s, i) => {
-            const href = safeUrl(s.url)
-            const label = `${s.provider} (${s.count})`
+            const href = s.status === 'ok' ? safeUrl(s.url) : null
+            const label = sourceLabel(s, multiCitySources)
             return (
               <span key={`${s.provider_key}-${s.city}-${i}`}>
-                {i > 0 && ' · '}
+                {i > 0 && (multiCitySources ? ', ' : ' · ')}
                 {href
                   ? <a href={href} target="_blank" rel={LINK_REL} className="hover:underline">{label}</a>
                   : label}

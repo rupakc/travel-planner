@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import WalkingToursSection from './WalkingToursSection'
+import WalkingToursSection, { WalkingTourPlanRow } from './WalkingToursSection'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -120,5 +120,83 @@ describe('WalkingToursSection', () => {
     const a = [...container.querySelectorAll('a')].find(x => x.textContent.includes('GuruWalk (10)'))
     expect(a.getAttribute('href')).toBe('https://www.guruwalk.com/barcelona')
     expect(a.getAttribute('rel')).toContain('noopener')
+  })
+
+  it('sorts top picks first within each city, keeping journey order', () => {
+    const results = [
+      tour({ name: 'Lisbon plain', url: 'https://www.guruwalk.com/l1', city: 'Lisbon' }),
+      tour({ name: 'Lisbon star', url: 'https://www.guruwalk.com/l2', city: 'Lisbon', top_pick: true }),
+      tour({ name: 'Porto plain', url: 'https://www.guruwalk.com/p1', city: 'Porto' }),
+      tour({ name: 'Porto star', url: 'https://www.guruwalk.com/p2', city: 'Porto', top_pick: true }),
+      tour({ name: 'Lisbon late', url: 'https://www.guruwalk.com/l3', city: 'Lisbon' }),
+    ]
+    render({ data: { results, sources: [] } })
+    const names = [...container.querySelectorAll('h3')].map(h => h.textContent)
+    expect(names).toEqual(['Lisbon star', 'Lisbon plain', 'Lisbon late', 'Porto star', 'Porto plain'])
+  })
+
+  it('links only ok sources and labels none/error sources', () => {
+    const sources = [
+      { provider: 'GuruWalk', provider_key: 'guruwalk', city: 'Lisbon', url: 'https://www.guruwalk.com/lisbon', count: 10, status: 'ok' },
+      { provider: 'FreeTour.com', provider_key: 'freetour', city: 'Lisbon', url: 'https://www.freetour.com/lisbon', count: 0, status: 'none' },
+      { provider: 'SANDEMANs NewEurope', provider_key: 'sandemans', city: 'Lisbon', url: 'https://www.neweuropetours.eu/sandemans-tours/lisbon/', count: 0, status: 'error' },
+    ]
+    render({ data: { results: [tour({ city: 'Lisbon' })], sources } })
+    const footer = container.querySelector('[data-testid="walking-tours-sources"]')
+    expect(footer.textContent).toContain('GuruWalk (10)')
+    expect(footer.textContent).toContain('FreeTour.com (0)')
+    expect(footer.textContent).toContain('SANDEMANs NewEurope (unavailable)')
+    const links = [...footer.querySelectorAll('a')]
+    expect(links.map(a => a.textContent)).toEqual(['GuruWalk (10)'])
+    expect(links[0].getAttribute('href')).toBe('https://www.guruwalk.com/lisbon')
+  })
+
+  it('shows the city in source labels for multi-city results', () => {
+    const sources = [
+      { provider: 'GuruWalk', provider_key: 'guruwalk', city: 'Lisbon', url: 'https://www.guruwalk.com/lisbon', count: 10, status: 'ok' },
+      { provider: 'GuruWalk', provider_key: 'guruwalk', city: 'Porto', url: 'https://www.guruwalk.com/porto', count: 0, status: 'none' },
+    ]
+    const results = [tour({ city: 'Lisbon' }), tour({ city: 'Porto', url: 'https://www.guruwalk.com/p' })]
+    render({ data: { results, sources } })
+    const footer = container.querySelector('[data-testid="walking-tours-sources"]')
+    expect(footer.textContent).toContain('GuruWalk · Lisbon (10)')
+    expect(footer.textContent).toContain('GuruWalk · Porto (0)')
+    expect([...footer.querySelectorAll('a')].map(a => a.textContent)).toEqual(['GuruWalk · Lisbon (10)'])
+  })
+})
+
+describe('WalkingTourPlanRow', () => {
+  let container, root
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  it('links a safe url', () => {
+    act(() => root.render(<WalkingTourPlanRow tour={tour()} onRemove={() => {}} />))
+    const a = container.querySelector('a')
+    expect(a.getAttribute('href')).toBe('https://www.guruwalk.com/walks/564-free-tour')
+    expect(a.getAttribute('rel')).toContain('noopener')
+  })
+
+  it('renders no url text at all when the url is unsafe', () => {
+    act(() => root.render(<WalkingTourPlanRow tour={tour({ url: 'javascript:alert(1)' })} onRemove={() => {}} />))
+    expect(container.querySelector('a')).toBeNull()
+    expect(container.textContent).not.toContain('javascript')
+    expect(container.textContent).toContain('Free Tour of the Old Town')
+    expect(container.textContent).toContain('GuruWalk')
+  })
+
+  it('remove button calls onRemove with the tour', () => {
+    const onRemove = vi.fn()
+    const t = tour()
+    act(() => root.render(<WalkingTourPlanRow tour={t} onRemove={onRemove} />))
+    act(() => container.querySelector('button').click())
+    expect(onRemove).toHaveBeenCalledWith(t)
   })
 })
