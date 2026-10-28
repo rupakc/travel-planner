@@ -45,6 +45,37 @@ class TestMe:
         )
         assert r.status_code in (401, 403)
 
+    def test_me_with_expired_token(self, client):
+        from datetime import UTC, datetime, timedelta
+
+        import jwt
+
+        from app.core.auth import ALGORITHM, _secret
+
+        token = jwt.encode(
+            {"sub": "admin", "exp": datetime.now(UTC) - timedelta(minutes=1)},
+            _secret(),
+            algorithm=ALGORITHM,
+        )
+        r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 401
+
+    def test_me_rejects_token_signed_with_other_key(self, client):
+        import jwt
+
+        token = jwt.encode(
+            {"sub": "admin"}, "a-different-secret-that-is-32-bytes!", algorithm="HS256"
+        )
+        r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 401
+
+    def test_me_rejects_unsigned_alg_none_token(self, client):
+        import jwt
+
+        token = jwt.encode({"sub": "admin"}, None, algorithm="none")
+        r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 401
+
 
 class TestCreateAndChangePassword:
     def test_full_flow(self, client, admin_headers):
