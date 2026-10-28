@@ -6,6 +6,7 @@ import {
   PartyPopper, Share2
 } from 'lucide-react'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
+import PlanExport from './PlanExport'
 
 const SECTION_COLORS = {
   sky:    'bg-sky-50 border-b border-sky-100 text-sky-800',
@@ -163,6 +164,8 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
               <p className="text-sm">This plan has no saved selections yet.</p>
             </div>
           )}
+
+          <PlanExport planName={name} planId={plan.id} searchData={sd} selections={sel} source="saved_plan" className="mb-4" />
 
           {/* Flight */}
           {sel.flight && (
