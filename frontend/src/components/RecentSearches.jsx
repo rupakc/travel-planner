@@ -65,7 +65,7 @@ export default function RecentSearches({ entries, today, onLoad, onRerun, onRemo
   }
 
   return (
-    <section className="mb-6">
+    <section className="mb-6" data-tour="recent-searches">
       <h2>
         <button type="button" onClick={toggle} aria-expanded={open} aria-controls="recent-searches-list"
           className="w-full flex items-center gap-1.5 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 transition-colors">

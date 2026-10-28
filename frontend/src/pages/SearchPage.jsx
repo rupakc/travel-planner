@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
@@ -8,6 +9,8 @@ import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import TravelerPanel from '../components/ui/TravelerPanel'
 import RecentSearches from '../components/RecentSearches'
+import OnboardingTour from '../components/OnboardingTour'
+import useFirstRunTour from '../hooks/useFirstRunTour'
 import { discoverDestinations, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 
@@ -23,6 +26,26 @@ const INTERESTS = [
   { id: 'art',       label: '🎨 Art' },
   { id: 'family',    label: '👨‍👩‍👧 Family' },
 ]
+
+// First-run tour of the Search page, in page order (the nav is sticky, so
+// its step never scrolls). Steps whose element isn't on screen — no recent
+// searches yet, or the nav collapsed on a phone — are skipped.
+const SEARCH_TOUR_STEPS = [
+  { id: 'recent', target: '[data-tour="recent-searches"]', title: 'Pick up where you left off',
+    body: 'Your recent searches live here. Load one to tweak it, or run it again as it was.' },
+  { id: 'route', target: '[data-tour="route"]', title: 'Where are you headed?',
+    body: 'Enter where you\'re flying from and to. Add stops on the way for a multi-city trip.' },
+  { id: 'interests', target: '[data-tour="interests"]', title: 'Tell us what you love',
+    body: 'Your interests and the discovery dial shape every recommendation — from famous classics to hidden gems.' },
+  { id: 'preferences', target: '[data-tour="nav-preferences"]', title: 'We remember your details',
+    body: 'Nationality, visas, travelers and interests you use here are saved to Preferences, and they pre-fill this form next time.' },
+  { id: 'plan', target: '[data-tour="plan-button"]', title: 'Watch your trip come together',
+    body: 'Flights, hotels, visa, weather and more stream in section by section — the first results appear within seconds.' },
+  { id: 'my-plan', target: null, title: 'Build your plan',
+    body: 'Add the flights, hotels and activities you like to My Plan, see where the money goes, then add it to your calendar or save it as a PDF. Chat is there for any question along the way.' },
+]
+// A short pause after the page is ready so preference pre-fill settles
+const TOUR_START_DELAY_MS = 400
 
 const BUDGET_TO_USD = { low: 1000, medium: 3000, high: 8000 }
 const USD_TO_BUDGET = (usd) => {
@@ -88,8 +111,9 @@ function DestinationCard({ dest, onSelect }) {
 }
 
 export default function SearchPage() {
-  const { preferences, updatePreferences, token } = useAuth()
+  const { preferences, updatePreferences, token, user } = useAuth()
   const { setPendingSearchData, hasSearchResults } = useSearchData()
+  const location = useLocation()
 
   const today     = new Date().toISOString().split('T')[0]
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
@@ -125,6 +149,7 @@ export default function SearchPage() {
   const [extraStops, setExtraStops] = useState([])
 
   const [recentSearches, setRecentSearches] = useState([])
+  const [recentLoaded, setRecentLoaded] = useState(false)
   const [recentNotice, setRecentNotice] = useState(null)
   // While a loaded recent search is being edited it owns the form —
   // preferences arriving or re-syncing must not overwrite it. Cleared on submit.
@@ -139,10 +164,22 @@ export default function SearchPage() {
     getRecentSearches(token)
       .then(list => { if (seq === recentListSeq.current) setRecentSearches(list) })
       .catch(() => {})
+      .finally(() => setRecentLoaded(true))
   }
   // SearchPage stays mounted behind the results, so refetch whenever it is
   // shown again — searches refined on the Results page are saved from there
   useEffect(() => { if (!hasSearchResults) refreshRecentSearches() }, [token, hasSearchResults])
+
+  // First-run tour. SearchPage stays mounted behind Chat/Preferences and the
+  // results, so it may only show while the Search form itself is on screen.
+  // It opens by itself only for people new to the app — no search history —
+  // and waits for that history to load so the page has stopped shifting.
+  const tour = useFirstRunTour({
+    username: user?.username,
+    visible: location.pathname === '/' && !hasSearchResults && mode === 'known',
+    eligible: recentLoaded && recentSearches.length === 0,
+    delayMs: TOUR_START_DELAY_MS,
+  })
 
   // Pre-fill from saved preferences
   useEffect(() => {
@@ -291,6 +328,8 @@ export default function SearchPage() {
 
   return (
     <div>
+      <OnboardingTour open={tour.open} steps={SEARCH_TOUR_STEPS} onClose={tour.close} />
+
       {/* Hero */}
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-teal-700 text-xs font-semibold mb-4">
@@ -299,6 +338,10 @@ export default function SearchPage() {
         </div>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">Plan Your Perfect Trip</h1>
         <p className="text-slate-500 text-lg">Flights, hotels, activities, visa, SIM &amp; itinerary — all in one place.</p>
+        <button type="button" onClick={() => { setMode('known'); tour.start() }}
+          className="mt-2 text-sm font-medium text-teal-600 hover:text-teal-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
+          New here? Take a quick tour
+        </button>
       </div>
 
       {/* Form card */}
@@ -334,7 +377,7 @@ export default function SearchPage() {
             )}
 
             {/* Origin + Destination */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="route">
               <AirportSearch
                 label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> From</span>}
                 value={form.origin}
@@ -437,7 +480,7 @@ export default function SearchPage() {
             </div>
 
             {/* Interests */}
-            <div>
+            <div data-tour="interests">
               <label className={labelClass}>✨ Interests</label>
               <div className="flex flex-wrap gap-2 mt-1">
                 {INTERESTS.map(({ id, label }) => (
@@ -470,7 +513,7 @@ export default function SearchPage() {
               </div>
             </div>
 
-            <button type="submit"
+            <button type="submit" data-tour="plan-button"
               className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
               <Search size={18} /> Plan My Trip
             </button>

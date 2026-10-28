@@ -24,6 +24,7 @@ export default function NavBar() {
     return (
       <button
         key={path}
+        data-tour={`nav-${label.toLowerCase()}`}
         onClick={() => { navigate(path); onClick?.() }}
         className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all ${
           isActive
