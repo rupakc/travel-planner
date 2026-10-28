@@ -204,8 +204,8 @@ Thirteen agents run concurrently via `asyncio.create_task`. Each streams its res
 **Special behaviour:**
 1. For each city the crawler fetches the public city page of four providers in parallel: GuruWalk (`guruwalk.com/{slug}`), FreeTour.com (`freetour.com/{slug}`), FreeWalkingTour.com (`freewalkingtour.com/{slug}/`) and SANDEMANs NewEurope (`neweuropetours.eu/sandemans-tours/{slug}/`).
 2. GuruWalk and FreeTour are parsed from JSON-LD Event data; the other two from HTML cards, keeping only free or pay-what-you-wish tours.
-3. Requests use the honest User-Agent `VoyagerTravelPlanner/1.0`, a 12 s timeout, and only robots.txt-permitted city pages.
-4. Results are cached per provider and city (`walking_tours:{provider}:{slug}`). When the slug misses, a DuckDuckGo `site:` search finds the city page (GuruWalk and FreeTour only).
+3. Requests use the honest User-Agent `VoyagerTravelPlanner/1.0` and a 12 s timeout; each city's whole crawl (discovery included) is capped at 15 s. Only the four city-page URL patterns above are fetched; they were verified as robots.txt-permitted on 2026-10-28.
+4. Results are cached per provider and city (`walking_tours:{provider}:{slug}`). When the slug misses, a DuckDuckGo `site:` search looks for the city page (GuruWalk and FreeTour only). Discovery only accepts city pages of those patterns whose slug shares a word with the requested city (or, for non-Latin names, whose listings name that city); site pages, language roots and `/search` are rejected.
 5. The LLM (Haiku) picks and explains the best tours for the traveller by candidate id only. URLs always come from the crawl, never the LLM.
 6. Every city is topped up to at least `min(4, available)` tours by rating. If the LLM fails, a rating × log(reviews) ranking is used. The agent returns `{"error": ...}` only when every provider fails.
 

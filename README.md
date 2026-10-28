@@ -209,7 +209,7 @@ See the [Deployment Guide](DEPLOYMENT.md) for the full step-by-step.
 
 ## Built with
 
-- **AI** — [Anthropic Claude](https://anthropic.com) via the Agent SDK, 21 specialist agent definitions (13 parallel search agents, deferred pricing/packing agents, itinerary + adversarial health-check synthesis, chat, layover, and destination discovery)
+- **AI** — [Anthropic Claude](https://anthropic.com) via the Agent SDK, 22 specialist agent definitions (13 parallel search agents, deferred pricing/packing agents, itinerary + adversarial health-check synthesis, chat, layover, and destination discovery)
 - **Backend** — Python, FastAPI, SQLite
 - **Frontend** — React, Vite, Tailwind CSS
 - **Infrastructure** — Google Cloud Run, Terraform, GitHub Actions
