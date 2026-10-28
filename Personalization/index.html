@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -766,6 +766,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recent-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recent searches
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#search-dials-per-trip" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -965,6 +976,13 @@
 <p>Three layers tune results to the traveler: explicit <strong>preferences</strong>, per-search <strong>dials</strong>, and the learned <strong>Taste Graph</strong>.</p>
 <h2 id="preferences-explicit">Preferences (explicit)</h2>
 <p>Saved per account (<code>/api/preferences</code>, PreferencesPage): home airport, nationality, residence permits, existing visas, default budget, interests, and traveler mix. Preferences <strong>pre-fill the Search form</strong>, and edits made on the Search form <strong>sync back</strong> to preferences on submit — a two-way binding, so the app always remembers your latest defaults.</p>
+<h2 id="recent-searches">Recent searches</h2>
+<p>Every submitted search — from the Search form or refined in the Results page's <em>Search Criteria</em> panel — is saved to your account (<code>/api/recent-searches</code>, last 8, identical searches merged). They appear as cards in a collapsible <strong>Recent searches</strong> section above the Search form; its header shows the count, and whether it's open or closed is remembered per browser.</p>
+<ul>
+<li><strong>Click a card</strong> to load the whole search — route including multi-city stops, dates, interests, travelers, budget, visas — into the form, change what you need, then plan. A loaded search takes precedence over the preferences pre-fill.</li>
+<li><strong>Search again</strong> reruns it unchanged.</li>
+<li>If the dates have passed, loading moves them to start a week from today with the same trip length (and <em>Search again</em> is disabled).</li>
+</ul>
 <h2 id="search-dials-per-trip">Search dials (per trip)</h2>
 <ul>
 <li><strong>Pace</strong> — <code>relaxed | balanced | packed</code> controls how densely the itinerary schedules each day.</li>
@@ -1061,10 +1079,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>

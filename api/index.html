@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1092,6 +1092,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recent-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recent searches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recent searches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apirecent-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/recent-searches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apirecent-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/recent-searches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apirecent-searchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/recent-searches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#feedback" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1750,6 +1800,33 @@ data: {&quot;section&quot;: &quot;itinerary&quot;, &quot;data&quot;: {&quot;days
 <p>Auth required. Replaces all preferences. Request body: same shape as the response above.</p>
 <p><strong>Response 200</strong> — the saved preferences object.</p>
 <hr />
+<h2 id="recent-searches">Recent searches</h2>
+<h3 id="get-apirecent-searches"><code>GET /api/recent-searches</code></h3>
+<p>Auth required. The caller's last 8 submitted searches, most recent first.</p>
+<p><strong>Response 200</strong></p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: &quot;8a7339ac-da15-4af9-a990-dbf5ec9252f7&quot;,
+    &quot;search&quot;: {
+      &quot;origin&quot;: &quot;New York, USA (JFK)&quot;,
+      &quot;destination&quot;: &quot;Tokyo, Japan (HND)&quot;,
+      &quot;departure_date&quot;: &quot;2027-04-01&quot;,
+      &quot;return_date&quot;: &quot;2027-04-08&quot;,
+      &quot;stops&quot;: [{ &quot;city&quot;: &quot;Seoul, South Korea&quot;, &quot;nights&quot;: 2 }],
+      &quot;nationality&quot;: &quot;American&quot;,
+      &quot;interests&quot;: [&quot;food&quot;, &quot;history&quot;],
+      &quot;budget_usd&quot;: 3000,
+      &quot;adults&quot;: 2, &quot;children&quot;: 0, &quot;seniors&quot;: 0, &quot;infants&quot;: 0
+    },
+    &quot;last_used_at&quot;: &quot;2026-10-28T12:51:24.437628+00:00&quot;
+  }
+]
+</code></pre>
+<h3 id="post-apirecent-searches"><code>POST /api/recent-searches</code></h3>
+<p>Auth required. Body: the <code>search</code> object above (<code>origin</code>, <code>destination</code> and <code>departure_date</code> required). Identical searches merge and move to the top; history is capped at 8. <strong>Response 200</strong> — the saved entry.</p>
+<h3 id="delete-apirecent-searchesid"><code>DELETE /api/recent-searches/{id}</code></h3>
+<p>Auth required. Returns <code>204 No Content</code>, or <code>404</code> if the entry isn't the caller's.</p>
+<hr />
 <h2 id="feedback">Feedback</h2>
 <h3 id="post-apifeedback"><code>POST /api/feedback</code></h3>
 <p>Auth required.</p>
@@ -1975,10 +2052,10 @@ data: {&quot;section&quot;: &quot;itinerary&quot;, &quot;data&quot;: {&quot;days
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
