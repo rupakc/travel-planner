@@ -793,6 +793,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#export-calendar-and-printpdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export: calendar and print/PDF
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#saved-plans" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -977,6 +988,13 @@
 </ul>
 <p>The drawer shows a live cost total (<code>computePlanCost</code> sums flight legs, hotel nights, and per-person activity prices) and supports drag-and-drop from result cards.</p>
 <p>Under the plan name, <strong>Where the money goes</strong> breaks that total down by category — flights, hotel, activities, SIM — as a stacked bar plus one row per category with its amount and share, biggest first. The rows come from <code>computePlanCostBreakdown()</code> and <code>computePlanCost()</code> is defined as their sum, so the parts always add up to the total. Local transport only carries free-text fares, so it's left out and the drawer says so when transport options are selected.</p>
+<h2 id="export-calendar-and-printpdf">Export: calendar and print/PDF</h2>
+<p>The My Plan drawer (Results and Chat) and the saved-plan viewer have two export buttons:</p>
+<ul>
+<li><strong>Add to calendar</strong> downloads an <code>.ics</code> file (<code>buildPlanIcs</code> in <code>frontend/src/utils/planExport.js</code>) that Google Calendar, Apple Calendar and Outlook can import. It holds one event per itinerary slot (morning 09:00–12:00, afternoon 13:00–17:00, evening 18:00–21:00, or the slot's own duration), with your slot edits and notes. Flights are timed events from their departure time and duration (all-day when the time is unknown), the hotel is an all-day span from check-in to check-out, and selected local events cover their dates. Times are <em>floating</em> — they read as local time at the destination; a flight's description also gives its local arrival time and booking link. Event IDs come from the saved plan's id (or, for an unsaved plan, its route, dates and name), so two plans never overwrite each other's events and renaming a saved plan keeps its IDs. How a calendar app treats a re-import of the same file varies — some skip events they already have, some update them.</li>
+<li><strong>Print / PDF</strong> opens a clean, printable page of the whole plan (<code>buildPlanPrintHtml</code> in <code>frontend/src/utils/planPrint.js</code>): cost breakdown, flights, hotel, day-by-day itinerary, activities, places, events, SIM, transport and tips. Print it or choose <em>Save as PDF</em> in the print dialog. All plan text is HTML-escaped, only <code>http(s)</code> booking links are kept, and the page carries a Content-Security-Policy that lets nothing run except its own print button.</li>
+</ul>
+<p>When a saved plan is loaded into a drawer, export (and the cost breakdown, budget status and saving) use <strong>that plan's</strong> trip details and itinerary snapshot — never the itinerary of the search currently on screen, which may be a different trip.</p>
 <h2 id="saved-plans">Saved plans</h2>
 <p>Plans persist via <code>/api/plans</code> (SQLite). A saved plan embeds a <strong>snapshot of the generated itinerary</strong> (days + estimated cost) alongside the selections, so reopening a plan months later shows the schedule as it was — including any edits and notes you made to itinerary slots.</p>
 <p><code>PlanViewModal</code> renders a saved plan in full: per-leg flights, hotel, complete day-by-day itinerary, and every selected item, each removable individually.</p>
