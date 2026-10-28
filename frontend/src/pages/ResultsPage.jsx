@@ -22,6 +22,7 @@ import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import CostBreakdown from '../components/CostBreakdown'
+import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
@@ -2565,12 +2566,17 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
 
+  // The on-screen itinerary belongs to the plan being built from these
+  // results — never to a loaded saved plan, which may be a different trip
+  // and carries its own snapshot
+  const liveItinerary = loadedPlanId ? null : results?.itinerary
+
   // Full itinerary snapshot travels with the plan so the public share card
   // can render the complete day-by-day schedule
   const selectionsForSave = () => {
-    const days = results?.itinerary?.days
+    const days = liveItinerary?.days
     if (!days?.length) return selections
-    return { ...selections, itinerary: { days, total_estimated_cost_usd: results.itinerary.total_estimated_cost_usd } }
+    return { ...selections, itinerary: { days, total_estimated_cost_usd: liveItinerary.total_estimated_cost_usd } }
   }
 
   const save = async () => {
@@ -2708,6 +2714,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
           </div>
 
           <CostBreakdown selections={selections} searchData={searchData} />
+          <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
 
           {/* Selected flight */}
           {selections.flight && (
@@ -3381,6 +3388,9 @@ export default function ResultsPage() {
   })
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
+  // Trip details (dates, budget) of a saved plan loaded into the drawer — it
+  // may be a different trip from the results on screen
+  const [loadedPlanSearchData, setLoadedPlanSearchData] = useState(null)
   const [isFlightFilterOpen, setIsFlightFilterOpen] = useState(false)
   const [isFlightFilterLoading, setIsFlightFilterLoading] = useState(false)
   const [activeFlightFilterCount, setActiveFlightFilterCount] = useState(0)
@@ -3425,6 +3435,7 @@ export default function ResultsPage() {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
     setPlanName(plan.name)
     setLoadedPlanId(plan.id)
+    setLoadedPlanSearchData(plan.search_data || null)
   }
 
 
@@ -3439,6 +3450,7 @@ export default function ResultsPage() {
     setIsDone(false)
     setError(null)
     setLoadedPlanId(null)
+    setLoadedPlanSearchData(null)
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -4009,8 +4021,8 @@ export default function ResultsPage() {
         {selectedCount > 0 && (
           <span className="bg-white text-teal-700 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{selectedCount}</span>
         )}
-        {computePlanCost(selections, searchData) > 0 && (
-          <span className="text-teal-100 text-xs font-medium">${computePlanCost(selections, searchData).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+        {computePlanCost(selections, loadedPlanSearchData || searchData) > 0 && (
+          <span className="text-teal-100 text-xs font-medium">${computePlanCost(selections, loadedPlanSearchData || searchData).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
         )}
       </button>
 
@@ -4024,11 +4036,11 @@ export default function ResultsPage() {
         onRemoveSelection={handleRemoveSelection}
         onViewPlan={(plan) => setViewingPlan(plan)}
         token={token}
-        searchData={searchData}
+        searchData={loadedPlanSearchData || searchData}
         results={results}
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
-        onClearLoadedPlan={() => setLoadedPlanId(null)}
+        onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
       />
 

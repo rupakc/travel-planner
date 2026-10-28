@@ -16,6 +16,7 @@ import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
+import PlanExport from '../components/PlanExport'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
@@ -694,6 +695,7 @@ function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, 
           </div>
 
           <CostBreakdown selections={selections} searchData={searchContext} />
+          <PlanExport planName={planName} planId={loadedPlanId} searchData={searchContext} selections={selections} source="chat" />
 
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
@@ -1068,6 +1070,9 @@ export default function ChatPage() {
   const [isPlanOpen, setIsPlanOpen] = useState(false)
   const [planName, setPlanName] = useState('My Trip Plan')
   const [loadedPlanId, setLoadedPlanId] = useState(null)
+  // Trip details (dates, budget) of a saved plan loaded into the drawer —
+  // needed to date its hotel stay and price hotel nights
+  const [loadedPlanSearchData, setLoadedPlanSearchData] = useState(null)
   const [selections, setSelections] = useState({
     flight: null, hotel: null, activities: [], sim: null, tips: [], getting_around: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
@@ -1145,10 +1150,13 @@ export default function ChatPage() {
     prevCountRef.current = count
   }, [selections, loadedPlanId])
 
+  const planTrip = loadedPlanSearchData || lastSearchContext
+
   const handleLoadPlan = (plan) => {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
     setPlanName(plan.name)
     setLoadedPlanId(plan.id)
+    setLoadedPlanSearchData(plan.search_data || null)
   }
 
   const handleSelect = (type, value) => {
@@ -1534,7 +1542,7 @@ export default function ChatPage() {
 
       <div className="border-t border-gray-100 bg-white/90 backdrop-blur-md px-4 py-3">
         <div className="max-w-3xl mx-auto">
-          <BudgetTracker selections={selections} searchContext={lastSearchContext} />
+          <BudgetTracker selections={selections} searchContext={planTrip} />
           {messages.length > 0 && !isStreaming && (
             <div className="flex justify-end mb-2">
               <button onClick={clearChat} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500"><Trash2 size={12} /> Clear chat</button>
@@ -1564,7 +1572,7 @@ export default function ChatPage() {
       </div>
 
       {/* My Plan floating button */}
-      {(() => { const cost = computePlanCost(selections, lastSearchContext); return (
+      {(() => { const cost = computePlanCost(selections, planTrip); return (
       <button onClick={() => setIsPlanOpen(true)}
         className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-700 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
         <Bookmark size={14} />
@@ -1578,14 +1586,14 @@ export default function ChatPage() {
         isOpen={isPlanOpen}
         onClose={() => setIsPlanOpen(false)}
         selections={selections}
-        searchContext={lastSearchContext}
+        searchContext={planTrip}
         planName={planName}
         onPlanNameChange={setPlanName}
         onRemoveSelection={handleRemoveSelection}
         token={token}
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
-        onClearLoadedPlan={() => setLoadedPlanId(null)}
+        onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
       />
     </div>

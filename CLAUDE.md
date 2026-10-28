@@ -141,7 +141,7 @@ The frontend dev server runs on port **5174** and proxies `/api` requests to the
 - **Parallel-first execution.** Independent agents always run concurrently via `asyncio.gather` / `asyncio.create_task`. Only the itinerary agent depends on prior results.
 - **Static-first, AI-enhanced.** Visa, SIM, tips, and getting-around agents have curated static lookup tables that provide instant results. AI agents enhance these; if the AI fails, static data is retained (errors are suppressed for static-backed agents).
 - **Two-way preference binding.** Changes on the Search form sync back to Preferences on submit; saved Preferences pre-fill the Search form on load.
-- **My Plan selections.** Users can select individual items (flights, hotels, activities, SIM plans, tips, transport options, itinerary slots) into a plan drawer. Selections are saved/loaded via the plans API. Both ResultsPage and ChatPage support the full plan workflow.
+- **My Plan selections.** Users can select individual items (flights, hotels, activities, SIM plans, tips, transport options, itinerary slots) into a plan drawer. Selections are saved/loaded via the plans API. Both ResultsPage and ChatPage support the full plan workflow, including the cost breakdown and calendar (.ics) / print-PDF export.
 - **Budget tiers are explicit.** Hotels must cover luxury, premium, mid-range, and budget options. Activities are scored 0.0–1.0 by interest relevance.
 
 ## API
