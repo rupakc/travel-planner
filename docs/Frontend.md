@@ -112,6 +112,11 @@ Standard search form: destination (with airport typeahead), departure date, retu
 **Discover / Surprise Me mode**
 For users without a specific destination. Form collects origin, dates, nationality, budget, and interests. Calls `POST /api/discover`. Returns 5 destination cards, each showing estimated cost range, typical weather, visa status (with a "Verify" badge for unconfirmed entries), approximate flight time from origin, and the specific reasons this destination suits the user's interests. "Plan this trip" pre-fills the destination in the standard form and switches back to Known mode.
 
+**First-run tour**
+People new to the app — no search history yet — get a short tooltip tour of the Search page the first time they reach it (`components/OnboardingTour.jsx`; steps in `SEARCH_TOUR_STEPS` in `SearchPage.jsx`; when to show it in `hooks/useFirstRunTour.js`). In page order it covers recent searches, the route fields, interests, the Preferences tab (form ↔ preferences sync) and the Plan button, then ends on a centred card about My Plan and export. Steps point at elements by `data-tour` attribute; a step whose element isn't on screen when the tour opens (no recent searches, or the nav collapsed on a phone) is skipped.
+
+It is a proper dialog for keyboard and screen-reader users: each step is a fresh dialog that receives focus (so its title and text are announced), Tab stays inside it, Esc closes it from anywhere, and focus returns afterwards. It only shows while the Search form itself is visible — SearchPage stays mounted behind Chat and the results — and navigating away mid-tour hides it without marking it done. Completion is remembered per user in `localStorage` (`tp_tour_done:<username>`); "New here? Take a quick tour" under the page subtitle replays it for anyone.
+
 ---
 
 ### ResultsPage
