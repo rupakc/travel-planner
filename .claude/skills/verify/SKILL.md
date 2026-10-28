@@ -10,7 +10,7 @@ description: How to launch and drive this app locally to verify backend/chat cha
 ```bash
 cd backend
 DATA_DIR=$(mktemp -d) ADMIN_PASSWORD='verify-pw-123!' \
-JWT_SECRET_KEY='verify-secret-key-32chars-long!' \
+JWT_SECRET_KEY='verify-secret-key-at-least-32-bytes-long!' \
 python3 -m uvicorn app.main:app --port 8011
 ```
 

@@ -11,7 +11,7 @@ import tempfile
 _TEST_DATA_DIR = tempfile.mkdtemp(prefix="tp_test_")
 os.environ.setdefault("DATA_DIR", _TEST_DATA_DIR)
 os.environ["ADMIN_PASSWORD"] = "test-admin-pw!"
-os.environ["JWT_SECRET_KEY"] = "test-secret-key-32chars-long!!"
+os.environ["JWT_SECRET_KEY"] = "test-secret-key-at-least-32-bytes-long!"
 os.environ["LOG_FORMAT"] = "text"
 os.environ["BACKUP_BUCKET"] = ""
 
