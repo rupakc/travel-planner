@@ -222,6 +222,8 @@ def parse_freewalkingtour(html: str, slug: str, city: str) -> list[dict]:
                 else re.split(r"\bBook now\b", text)[0]
             )
             name = re.sub(_PWYW_NOTE, "", name_part, flags=re.I).strip()
+            # Cards show a "+N" extra-languages badge before the title.
+            name = re.sub(r"^\+\d+\s+", "", name)
             if not name:
                 continue
             img = card.find("img")

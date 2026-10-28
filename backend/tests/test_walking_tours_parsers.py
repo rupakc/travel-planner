@@ -190,3 +190,20 @@ def test_parsers_return_empty_on_garbage():
         assert parse_jsonld_tours(garbage, "guruwalk", "X") == []
         assert parse_freewalkingtour(garbage, "x", "X") == []
         assert parse_sandemans(garbage, "x", "X") == []
+
+
+def test_parse_freewalkingtour_strips_language_badge_prefix():
+    # Live cards render a "+1" extra-languages badge before the title.
+    html = (
+        "<html><body>"
+        + _card(
+            "/krakow/old-town-krakow/",
+            "Pay what you wish +1 Welcome to Kraków! Old Town & Wawel Hill "
+            "Guided Walking Tour 4.9 2039 reviews 2h 30m Book now",
+        )
+        + "</body></html>"
+    )
+    tours = parse_freewalkingtour(html, "krakow", "Kraków")
+    assert [t["name"] for t in tours] == [
+        "Welcome to Kraków! Old Town & Wawel Hill Guided Walking Tour"
+    ]
