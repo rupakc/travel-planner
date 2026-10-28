@@ -360,6 +360,43 @@ Auth required. Replaces all preferences. Request body: same shape as the respons
 
 ---
 
+## Recent searches
+
+### `GET /api/recent-searches`
+
+Auth required. The caller's last 8 submitted searches, most recent first.
+
+**Response 200**
+```json
+[
+  {
+    "id": "8a7339ac-da15-4af9-a990-dbf5ec9252f7",
+    "search": {
+      "origin": "New York, USA (JFK)",
+      "destination": "Tokyo, Japan (HND)",
+      "departure_date": "2027-04-01",
+      "return_date": "2027-04-08",
+      "stops": [{ "city": "Seoul, South Korea", "nights": 2 }],
+      "nationality": "American",
+      "interests": ["food", "history"],
+      "budget_usd": 3000,
+      "adults": 2, "children": 0, "seniors": 0, "infants": 0
+    },
+    "last_used_at": "2026-10-28T12:51:24.437628+00:00"
+  }
+]
+```
+
+### `POST /api/recent-searches`
+
+Auth required. Body: the `search` object above (`origin`, `destination` and `departure_date` required). Identical searches merge and move to the top; history is capped at 8. **Response 200** — the saved entry.
+
+### `DELETE /api/recent-searches/{id}`
+
+Auth required. Returns `204 No Content`, or `404` if the entry isn't the caller's.
+
+---
+
 ## Feedback
 
 ### `POST /api/feedback`

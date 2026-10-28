@@ -15,6 +15,7 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
+import CostBreakdown from '../components/CostBreakdown'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
@@ -556,7 +557,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
 
 // ─── My Plan Drawer (compact version for chat) ──────────────────────────────
 
-function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -569,8 +570,8 @@ function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChang
   const [isDragOverSaved, setIsDragOverSaved] = useState(false)
 
   const selectedCount = countSelections(selections)
-  const estimatedCost = computePlanCost(selections)
-  const budget = getBudgetStatus(estimatedCost, null)
+  const estimatedCost = computePlanCost(selections, searchContext)
+  const budget = getBudgetStatus(estimatedCost, searchContext?.budget_usd)
 
   const loadPlans = async () => {
     if (!token) return
@@ -691,6 +692,8 @@ function ChatPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChang
             <input type="text" value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
           </div>
+
+          <CostBreakdown selections={selections} searchData={searchContext} />
 
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
@@ -1561,7 +1564,7 @@ export default function ChatPage() {
       </div>
 
       {/* My Plan floating button */}
-      {(() => { const cost = computePlanCost(selections); return (
+      {(() => { const cost = computePlanCost(selections, lastSearchContext); return (
       <button onClick={() => setIsPlanOpen(true)}
         className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-700 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
         <Bookmark size={14} />
@@ -1575,6 +1578,7 @@ export default function ChatPage() {
         isOpen={isPlanOpen}
         onClose={() => setIsPlanOpen(false)}
         selections={selections}
+        searchContext={lastSearchContext}
         planName={planName}
         onPlanNameChange={setPlanName}
         onRemoveSelection={handleRemoveSelection}

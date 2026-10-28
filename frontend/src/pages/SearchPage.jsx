@@ -7,7 +7,9 @@ import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import TravelerPanel from '../components/ui/TravelerPanel'
-import { discoverDestinations } from '../services/api'
+import RecentSearches from '../components/RecentSearches'
+import { discoverDestinations, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
+import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 
 const INTERESTS = [
   { id: 'food',      label: '🍜 Food' },
@@ -86,8 +88,8 @@ function DestinationCard({ dest, onSelect }) {
 }
 
 export default function SearchPage() {
-  const { preferences, updatePreferences } = useAuth()
-  const { setPendingSearchData } = useSearchData()
+  const { preferences, updatePreferences, token } = useAuth()
+  const { setPendingSearchData, hasSearchResults } = useSearchData()
 
   const today     = new Date().toISOString().split('T')[0]
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
@@ -122,9 +124,29 @@ export default function SearchPage() {
   // Each: { city, nights } — nights optional; leftovers go to the final stop.
   const [extraStops, setExtraStops] = useState([])
 
+  const [recentSearches, setRecentSearches] = useState([])
+  const [recentNotice, setRecentNotice] = useState(null)
+  // While a loaded recent search is being edited it owns the form —
+  // preferences arriving or re-syncing must not overwrite it. Cleared on submit.
+  const loadedRecentRef = useRef(false)
+  // Bumped by every list fetch and delete, so a slow fetch can't resurrect
+  // a card the user has just removed
+  const recentListSeq = useRef(0)
+
+  const refreshRecentSearches = () => {
+    if (!token) return
+    const seq = ++recentListSeq.current
+    getRecentSearches(token)
+      .then(list => { if (seq === recentListSeq.current) setRecentSearches(list) })
+      .catch(() => {})
+  }
+  // SearchPage stays mounted behind the results, so refetch whenever it is
+  // shown again — searches refined on the Results page are saved from there
+  useEffect(() => { if (!hasSearchResults) refreshRecentSearches() }, [token, hasSearchResults])
+
   // Pre-fill from saved preferences
   useEffect(() => {
-    if (!preferences) return
+    if (!preferences || loadedRecentRef.current) return
     setForm(f => ({
       ...f,
       nationality: preferences.nationality || f.nationality,
@@ -153,8 +175,7 @@ export default function SearchPage() {
   const toggleInterest = (id) =>
     setForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const startSearch = (form, extraStops) => {
     const totalTravelers = Math.max(1, form.adults + form.children + form.seniors + form.infants)
     const stops = extraStops
       .map(s => ({ city: (s.city || '').trim(), nights: s.nights }))
@@ -195,7 +216,48 @@ export default function SearchPage() {
       num_travelers: totalTravelers,
       num_cities: 1 + stops.length,
     })
+    setRecentNotice(null)
+    loadedRecentRef.current = false
+    if (token) {
+      saveRecentSearch(token, toRecentSearch(searchData))
+        .then(refreshRecentSearches)
+        .catch(err => console.warn('Could not save recent search', err))
+    }
     setPendingSearchData(searchData)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    startSearch(form, extraStops)
+  }
+
+  const applyRecentSearch = (entry) => {
+    const restored = recentSearchToForm(entry.search, today)
+    loadedRecentRef.current = true
+    setForm(f => ({ ...f, ...restored.form }))
+    setExtraStops(restored.extraStops)
+    return restored
+  }
+
+  const handleLoadRecent = (entry) => {
+    const { datesShifted } = applyRecentSearch(entry)
+    const { route } = describeRecentSearch(entry.search)
+    setRecentNotice(datesShifted
+      ? `Loaded ${route}. Its dates had passed, so they now start next week with the same trip length — check them, then plan.`
+      : `Loaded ${route}. Change anything you like, then plan.`)
+    track('recent_search_load', 'search', { dates_shifted: datesShifted })
+  }
+
+  const handleRerunRecent = (entry) => {
+    const restored = applyRecentSearch(entry)
+    track('recent_search_rerun', 'search', {})
+    startSearch({ ...form, ...restored.form }, restored.extraStops)
+  }
+
+  const handleRemoveRecent = (entry) => {
+    recentListSeq.current++
+    setRecentSearches(list => list.filter(e => e.id !== entry.id))
+    deleteRecentSearch(token, entry.id).catch(refreshRecentSearches)
   }
 
   const handleDiscover = async () => {
@@ -256,7 +318,20 @@ export default function SearchPage() {
             </button>
           </div>
 
+          {mode === 'known' && (
+            <RecentSearches entries={recentSearches} today={today}
+              onLoad={handleLoadRecent} onRerun={handleRerunRecent} onRemove={handleRemoveRecent} />
+          )}
+
           {mode === 'known' && <form onSubmit={handleSubmit} className="space-y-6">
+
+            {recentNotice && (
+              <div role="status" className="flex items-start gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg text-sm text-teal-800">
+                <span className="flex-1">{recentNotice}</span>
+                <button type="button" onClick={() => setRecentNotice(null)} aria-label="Dismiss"
+                  className="text-teal-500 hover:text-teal-700 shrink-0 mt-0.5"><X size={14} /></button>
+              </div>
+            )}
 
             {/* Origin + Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

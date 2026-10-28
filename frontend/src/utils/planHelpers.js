@@ -48,28 +48,45 @@ export function generatePlanName(destination, interests = [], departureDate = nu
   return `The ${adj} ${dest} ${noun}`
 }
 
+// Prices arrive from AI agents and may be strings or junk like "varies"
+const price = (v) => {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
+function hotelCost(hotel, searchData) {
+  if (!hotel) return 0
+  if (price(hotel.total_price_usd)) return price(hotel.total_price_usd)
+  const nights =
+    searchData?.return_date && searchData?.departure_date
+      ? Math.max(1, (new Date(searchData.return_date) - new Date(searchData.departure_date)) / 86400000)
+      : 7
+  return price(hotel.price_per_night_usd) * nights
+}
+
+// Per-category split of the plan's cost, biggest first. Only categories with
+// a numeric price are included — local transport has free-text fares only.
+export function computePlanCostBreakdown(selections, searchData = null) {
+  const parts = [
+    {
+      key: 'flights',
+      label: 'Flights',
+      amount: price(selections?.flight?.price_usd) +
+        (selections?.flights || []).reduce((t, f) => t + price(f.price_usd), 0),
+    },
+    { key: 'hotel', label: 'Hotel', amount: hotelCost(selections?.hotel, searchData) },
+    {
+      key: 'activities',
+      label: 'Activities',
+      amount: (selections?.activities || []).reduce((t, a) => t + price(a.price_usd), 0),
+    },
+    { key: 'sim', label: 'SIM / eSIM', amount: price(selections?.sim?.price_usd) },
+  ]
+  return parts.filter((p) => p.amount > 0).sort((a, b) => b.amount - a.amount)
+}
+
 export function computePlanCost(selections, searchData = null) {
-  let total = 0
-  if (selections?.flight?.price_usd) total += Number(selections.flight.price_usd)
-  ;(selections?.flights || []).forEach((f) => {
-    if (f.price_usd) total += Number(f.price_usd)
-  })
-  if (selections?.hotel) {
-    if (selections.hotel.total_price_usd) {
-      total += Number(selections.hotel.total_price_usd)
-    } else if (selections.hotel.price_per_night_usd) {
-      const nights =
-        searchData?.return_date && searchData?.departure_date
-          ? Math.max(1, (new Date(searchData.return_date) - new Date(searchData.departure_date)) / 86400000)
-          : 7
-      total += Number(selections.hotel.price_per_night_usd) * nights
-    }
-  }
-  ;(selections?.activities || []).forEach((a) => {
-    if (a.price_usd) total += Number(a.price_usd)
-  })
-  if (selections?.sim?.price_usd) total += Number(selections.sim.price_usd)
-  return total
+  return computePlanCostBreakdown(selections, searchData).reduce((t, p) => t + p.amount, 0)
 }
 
 export function getBudgetStatus(cost, budgetUsd) {
