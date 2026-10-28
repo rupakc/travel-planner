@@ -5,6 +5,7 @@ Turns the HTML of a provider's city page into normalized tour dicts. No I/O.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -13,7 +14,11 @@ import urllib.parse
 from collections.abc import Callable
 from typing import Any
 
+import httpx
 from bs4 import BeautifulSoup
+from ddgs import DDGS
+
+from app.core.cache import get_cache
 
 logger = logging.getLogger(__name__)
 
@@ -277,3 +282,108 @@ def parse_sandemans(html: str, slug: str, city: str) -> list[dict]:
     except Exception:
         logger.warning("parse_sandemans failed", exc_info=True)
         return []
+
+
+# ---------------------------------------------------------------------------
+# Crawler — one request per provider per city, in parallel, cached
+# ---------------------------------------------------------------------------
+
+_USER_AGENT = (
+    "VoyagerTravelPlanner/1.0 (trip-planning assistant; "
+    "fetches city tour listings on behalf of a user)"
+)
+_FETCH_TIMEOUT = 12.0
+_HEADERS = {"User-Agent": _USER_AGENT}
+_DISCOVERY_PROVIDERS = ("guruwalk", "freetour")
+
+
+def _ddgs_search(query: str, max_results: int) -> list:
+    """Blocking DuckDuckGo search — each call gets its own DDGS instance."""
+    return list(DDGS().text(query, max_results=max_results))
+
+
+async def _discover_city_url(provider_key: str, city: str) -> str | None:
+    """Find a provider's city page via web search when the guessed slug 404s."""
+    domain = PROVIDERS[provider_key]["domain"]
+    pattern = re.compile(rf"^https://www\.{re.escape(domain)}/[a-z0-9-]+/?$")
+    query = f"site:{domain} {city} free walking tour"
+    try:
+        results = await asyncio.get_running_loop().run_in_executor(
+            None, _ddgs_search, query, 5
+        )
+    except Exception:
+        logger.warning("walking-tour discovery failed for %s", query, exc_info=True)
+        return None
+    for result in results:
+        href = result.get("href") if isinstance(result, dict) else None
+        if isinstance(href, str) and pattern.match(href):
+            return href
+    return None
+
+
+def _parse_provider(provider_key: str, html: str, slug: str, city: str) -> list[dict]:
+    if provider_key == "freewalkingtour":
+        return parse_freewalkingtour(html, slug, city)
+    if provider_key == "sandemans":
+        return parse_sandemans(html, slug, city)
+    return parse_jsonld_tours(html, provider_key, city)
+
+
+def _source(provider_key: str, city: str, url: str, count: int, status: str) -> dict:
+    return {
+        "provider": PROVIDERS[provider_key]["name"],
+        "provider_key": provider_key,
+        "city": city,
+        "url": url,
+        "count": count,
+        "status": status,
+    }
+
+
+async def _fetch_provider(
+    client: httpx.AsyncClient, provider_key: str, city: str, slug: str
+) -> tuple[list[dict], dict]:
+    url = PROVIDERS[provider_key]["city_url"](slug)
+    cache = get_cache()
+    key = f"walking_tours:{provider_key}:{slug}"
+    cached = cache.get(key)
+    if cached is not None:
+        cached_url, tours = cached
+        return list(tours), _source(provider_key, city, cached_url, len(tours), "ok")
+    try:
+        resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+        if resp.status_code != 200 and provider_key in _DISCOVERY_PROVIDERS:
+            found = await _discover_city_url(provider_key, city)
+            if found and found != url:
+                url = found
+                resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+        if resp.status_code != 200:
+            return [], _source(provider_key, city, url, 0, "none")
+        tours = _parse_provider(provider_key, resp.text, slug, city)
+    except Exception:
+        logger.warning("walking-tour fetch failed for %s", provider_key, exc_info=True)
+        return [], _source(provider_key, city, url, 0, "error")
+    cache[key] = (url, tours)
+    return list(tours), _source(provider_key, city, url, len(tours), "ok")
+
+
+async def fetch_city_tours(
+    city: str, *, client: httpx.AsyncClient | None = None
+) -> tuple[list[dict], list[dict]]:
+    """Fetch free walking tours for a city from all providers in parallel.
+
+    Returns ``(tours, sources)``; ``sources`` has one entry per provider.
+    """
+    slug = city_slug(city)
+    own_client = client is None
+    if client is None:
+        client = httpx.AsyncClient(follow_redirects=True)
+    try:
+        results = await asyncio.gather(
+            *(_fetch_provider(client, key, city, slug) for key in PROVIDERS)
+        )
+    finally:
+        if own_client:
+            await client.aclose()
+    tours = [t for provider_tours, _ in results for t in provider_tours]
+    return tours, [source for _, source in results]
