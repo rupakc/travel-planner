@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   Loader2, Download, Plane, Hotel, MapPin, Calendar, Users, Smartphone, Bus,
-  PartyPopper, Star, Clock, DollarSign, Lightbulb, Wifi,
+  PartyPopper, Star, Clock, DollarSign, Lightbulb, Wifi, Footprints,
 } from 'lucide-react'
 import { computePlanCost } from '../utils/planHelpers'
+import { safeUrl } from '../utils/planPrint'
 
 // Public, read-only trip card — reachable without login via /share/:token
 
@@ -168,6 +169,8 @@ function downloadCard(plan) {
     `${a.name}${a.city ? ` — ${city(a.city)}` : ''}${a.price_usd != null ? ` ($${a.price_usd})` : ''}`)
   listSection(`🎉 Local events (${(sel.events || []).length})`, sel.events, e =>
     `${e.name}${e.city ? ` — ${city(e.city)}` : ''}${e.start_date ? ` (${e.start_date})` : ''}`)
+  listSection(`🚶 Free walking tours (${(sel.walking_tours || []).length})`, sel.walking_tours, t =>
+    `${t.name}${t.city ? ` — ${city(t.city)}` : ''}${t.provider ? ` (${t.provider})` : ''}`)
   if (sel.sim) listSection('📶 Staying connected', [sel.sim], s2 =>
     `${s2.provider} ${s2.plan_name || ''}${s2.price_usd != null ? ` ($${s2.price_usd})` : ''}`)
   listSection(`🚇 Getting around (${(sel.getting_around || []).length})`, sel.getting_around, o =>
@@ -309,6 +312,7 @@ export default function SharePage() {
               {itinDays.length > 0 && <p className="flex items-center gap-2"><Calendar size={14} className="shrink-0" />Full {itinDays.length}-day itinerary below</p>}
               {sel.sim?.provider && <p className="flex items-center gap-2"><Smartphone size={14} className="shrink-0" />{sel.sim.provider}</p>}
               {(sel.getting_around || []).length > 0 && <p className="flex items-center gap-2"><Bus size={14} className="shrink-0" />{sel.getting_around.length} transport picks</p>}
+              {(sel.walking_tours || []).length > 0 && <p className="flex items-center gap-2"><Footprints size={14} className="shrink-0" />{sel.walking_tours.length} free walking tour{sel.walking_tours.length > 1 ? 's' : ''}</p>}
               {(sel.events || []).length > 0 && <p className="flex items-center gap-2"><PartyPopper size={14} className="shrink-0" />{sel.events.length} local event{sel.events.length > 1 ? 's' : ''}</p>}
             </div>
             <p className="text-white/70 text-xs pt-2">{plan.name}</p>
@@ -475,6 +479,28 @@ export default function SharePage() {
                   </p>
                 </li>
               ))}
+            </ul>
+          </DetailCard>
+        )}
+
+        {/* Free walking tours */}
+        {(sel.walking_tours || []).length > 0 && (
+          <DetailCard title={`Free Walking Tours (${sel.walking_tours.length})`} icon={Footprints} accent="text-green-700">
+            <ul className="space-y-2.5">
+              {sel.walking_tours.map((t, i) => {
+                const href = safeUrl(t.url)
+                return (
+                  <li key={t.url || i} className="text-sm">
+                    <p className="text-gray-800 font-medium">
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{t.name}</a>
+                      ) : t.name}
+                      {t.city && <span className="ml-1.5 text-xs text-indigo-600 font-semibold">{city(t.city)}</span>}
+                    </p>
+                    {t.provider && <p className="text-xs text-gray-500">{t.provider}</p>}
+                  </li>
+                )
+              })}
             </ul>
           </DetailCard>
         )}
