@@ -112,4 +112,20 @@ export async function discoverDestinations(data) {
   return res.data
 }
 
+const authHeaders = (token) => ({ headers: { Authorization: `Bearer ${token}` } })
+
+export async function getRecentSearches(token) {
+  const res = await api.get('/recent-searches', authHeaders(token))
+  return res.data
+}
+
+export async function saveRecentSearch(token, search) {
+  const res = await api.post('/recent-searches', search, authHeaders(token))
+  return res.data
+}
+
+export async function deleteRecentSearch(token, id) {
+  await api.delete(`/recent-searches/${encodeURIComponent(id)}`, authHeaders(token))
+}
+
 export default api

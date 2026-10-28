@@ -265,6 +265,24 @@ Get or update the current user's saved preferences (nationality, interests, budg
 
 ---
 
+## Recent searches
+
+### `GET /api/recent-searches`
+
+The current user's last 8 submitted searches, most recent first. Each entry is `{ "id", "search", "last_used_at" }`, where `search` is the Search form as submitted (origin, destination, dates, multi-city `stops` with optional `nights`, nationality, permits, visas, interests, budget, traveler mix, accessibility needs, serendipity).
+
+### `POST /api/recent-searches`
+
+Records a search; the Search page calls it on every submit. An identical search (interests in any order) is merged and moved back to the top instead of duplicated, and only the newest 8 entries are kept. Returns the saved entry.
+
+### `DELETE /api/recent-searches/{id}`
+
+Removes one of the caller's entries. `204 No Content`, or `404` if the entry doesn't exist or belongs to another user.
+
+**Auth required:** Yes (all three)
+
+---
+
 ## Feedback
 
 ### `POST /api/feedback`

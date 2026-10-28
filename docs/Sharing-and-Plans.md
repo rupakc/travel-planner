@@ -10,6 +10,8 @@ Both the Results page and Chat page carry a plan drawer. Anything in the results
 
 The drawer shows a live cost total (`computePlanCost` sums flight legs, hotel nights, and per-person activity prices) and supports drag-and-drop from result cards.
 
+Under the plan name, **Where the money goes** breaks that total down by category — flights, hotel, activities, SIM — as a stacked bar plus one row per category with its amount and share, biggest first. The rows come from `computePlanCostBreakdown()` and `computePlanCost()` is defined as their sum, so the parts always add up to the total. Local transport only carries free-text fares, so it's left out and the drawer says so when transport options are selected.
+
 ## Saved plans
 
 Plans persist via `/api/plans` (SQLite). A saved plan embeds a **snapshot of the generated itinerary** (days + estimated cost) alongside the selections, so reopening a plan months later shows the schedule as it was — including any edits and notes you made to itinerary slots.

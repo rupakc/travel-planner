@@ -11,7 +11,7 @@ import {
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
-import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered } from '../services/api'
+import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
@@ -21,6 +21,8 @@ import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
+import CostBreakdown from '../components/CostBreakdown'
+import { toRecentSearch } from '../utils/recentSearches'
 import PlanViewModal from '../components/PlanViewModal'
 import TripMap from '../components/TripMap'
 import TravelerPanel from '../components/ui/TravelerPanel'
@@ -2705,6 +2707,8 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
             )}
           </div>
 
+          <CostBreakdown selections={selections} searchData={searchData} />
+
           {/* Selected flight */}
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
@@ -3876,7 +3880,10 @@ export default function ResultsPage() {
         </div>
 
         {/* Search panel */}
-        <SearchPanel searchData={searchData} isOpen={isSearchPanelOpen} onToggle={() => setIsSearchPanelOpen(v=>!v)} onUpdateSearch={(sd) => { setIsSearchPanelOpen(false); setRemixInfo(null); runSearch(sd) }} />
+        <SearchPanel searchData={searchData} isOpen={isSearchPanelOpen} onToggle={() => setIsSearchPanelOpen(v=>!v)} onUpdateSearch={(sd) => {
+          setIsSearchPanelOpen(false); setRemixInfo(null); runSearch(sd)
+          if (token) saveRecentSearch(token, toRecentSearch(sd)).catch(err => console.warn('Could not save recent search', err))
+        }} />
 
         {/* Progress strip */}
         <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">

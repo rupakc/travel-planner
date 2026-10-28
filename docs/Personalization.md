@@ -6,6 +6,15 @@ Three layers tune results to the traveler: explicit **preferences**, per-search 
 
 Saved per account (`/api/preferences`, PreferencesPage): home airport, nationality, residence permits, existing visas, default budget, interests, and traveler mix. Preferences **pre-fill the Search form**, and edits made on the Search form **sync back** to preferences on submit — a two-way binding, so the app always remembers your latest defaults.
 
+## Recent searches
+
+Every submitted search — from the Search form or refined in the Results page's *Search Criteria* panel — is saved to your account (`/api/recent-searches`, last 8, identical searches merged). They appear as cards in a collapsible **Recent searches** section above the Search form; its header shows the count, and whether it's open or closed is remembered per browser.
+
+
+- **Click a card** to load the whole search — route including multi-city stops, dates, interests, travelers, budget, visas — into the form, change what you need, then plan. A loaded search takes precedence over the preferences pre-fill.
+- **Search again** reruns it unchanged.
+- If the dates have passed, loading moves them to start a week from today with the same trip length (and *Search again* is disabled).
+
 ## Search dials (per trip)
 
 - **Pace** — `relaxed | balanced | packed` controls how densely the itinerary schedules each day.

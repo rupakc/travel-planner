@@ -164,6 +164,8 @@ All endpoints are under `/api`:
 | `POST /api/auth/login` | JWT login |
 | `GET /api/auth/me` | Current user info |
 | `GET/PUT /api/preferences` | User preferences |
+| `GET/POST /api/recent-searches` | Last 8 submitted searches (per user) |
+| `DELETE /api/recent-searches/{id}` | Remove one recent search |
 | `GET/POST /api/plans` | Saved travel plans |
 | `GET/PUT/DELETE /api/plans/{id}` | Single plan CRUD |
 | `GET /health` | Health check |

@@ -29,6 +29,7 @@ from .api.routes.layover import router as layover_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
+from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .core.config import settings as _settings
@@ -37,6 +38,7 @@ from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
 from .db.database import create_tables
 from .db.plans_db import create_plans_table
 from .db.preferences_db import create_preferences_table
+from .db.recent_searches_db import create_recent_searches_table
 from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
@@ -55,6 +57,7 @@ async def lifespan(app: FastAPI):
     create_tables()
     create_plans_table()
     create_preferences_table()
+    create_recent_searches_table()
     from .db.feedback_db import create_feedback_table
     from .db.taste_db import create_taste_table
     from .db.users_db import create_users_table, seed_admin
@@ -101,6 +104,7 @@ app.include_router(analytics_router, prefix="/api", tags=["analytics"])
 app.include_router(chat_router, prefix="/api", tags=["chat"])
 app.include_router(plans_router, prefix="/api", tags=["plans"])
 app.include_router(preferences_router, prefix="/api", tags=["preferences"])
+app.include_router(recent_searches_router, prefix="/api", tags=["recent_searches"])
 app.include_router(airports_router, prefix="/api", tags=["airports"])
 app.include_router(nationalities_router, prefix="/api", tags=["nationalities"])
 app.include_router(search.router, prefix="/api", tags=["search"])

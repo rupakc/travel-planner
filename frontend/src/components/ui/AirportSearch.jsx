@@ -10,10 +10,21 @@ export default function AirportSearch({ label, value, onChange, placeholder = 'S
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
   const inputRef = useRef(null)
+  // Last value this component emitted. After a dropdown pick the display is
+  // a friendly label while the value is just the IATA code, so only values
+  // that came from outside (cleared, or loaded e.g. from a recent search)
+  // may replace the display text.
+  const emittedRef = useRef(value)
 
-  // Sync display when value is cleared externally
+  const emit = (v) => {
+    emittedRef.current = v
+    onChange(v)
+  }
+
   useEffect(() => {
-    if (!value) setDisplayText('')
+    if (value === emittedRef.current) return
+    emittedRef.current = value
+    setDisplayText(value || '')
   }, [value])
 
   const doSearch = useCallback(async (q) => {
@@ -32,7 +43,7 @@ export default function AirportSearch({ label, value, onChange, placeholder = 'S
   const handleChange = (e) => {
     const q = e.target.value
     setDisplayText(q)
-    onChange(q)           // store raw text until a dropdown item is picked
+    emit(q)               // store raw text until a dropdown item is picked
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => doSearch(q), 300)
   }
@@ -40,13 +51,13 @@ export default function AirportSearch({ label, value, onChange, placeholder = 'S
   const handleSelect = (airport) => {
     const label = `${airport.iata_code} — ${airport.city}, ${airport.country}`
     setDisplayText(label)
-    onChange(airport.iata_code)   // store IATA code as the form value
+    emit(airport.iata_code)   // store IATA code as the form value
     setResults([]); setIsOpen(false)
     inputRef.current?.blur()
   }
 
   const handleClear = () => {
-    setDisplayText(''); onChange(''); setResults([]); setIsOpen(false)
+    setDisplayText(''); emit(''); setResults([]); setIsOpen(false)
     inputRef.current?.focus()
   }
 
