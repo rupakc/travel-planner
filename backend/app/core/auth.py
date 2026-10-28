@@ -1,8 +1,9 @@
 from datetime import UTC, datetime, timedelta
 
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from jwt import PyJWTError
 
 from .config import settings
 
@@ -30,7 +31,7 @@ def decode_token(token: str) -> dict:
     """Decode and return JWT payload, or raise HTTPException 401."""
     try:
         return jwt.decode(token, _secret(), algorithms=[ALGORITHM])
-    except JWTError:
+    except PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
@@ -62,7 +63,7 @@ def get_optional_user(
         from ..db.users_db import get_user_by_username
 
         return get_user_by_username(username)
-    except JWTError:
+    except PyJWTError:
         return None
 
 
