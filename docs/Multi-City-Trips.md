@@ -56,6 +56,7 @@ Specialist prompts carry a **mandatory coverage** block with per-city quotas so 
 | Section | Per-city quota |
 |---|---|
 | Places to See | 4–6 (with per-city Serper search context) |
+| Walking Tours | each city crawled separately, topped up to ≥ min(4, available) |
 | Activities | ≥ 5 |
 | Hotels | ≥ 3 |
 | What's On (events) | 2–4 |

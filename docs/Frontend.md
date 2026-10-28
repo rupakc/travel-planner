@@ -10,7 +10,7 @@ The Travel Planner frontend is a React 18 single-page application built with Vit
 frontend/src/
 ├── pages/
 │   ├── SearchPage.jsx          — trip search form + "Surprise Me" discovery mode
-│   ├── ResultsPage.jsx         — streaming results, 13 sections, My Plan drawer
+│   ├── ResultsPage.jsx         — streaming results, 16 sections, My Plan drawer
 │   ├── ChatPage.jsx            — conversational AI assistant + auto-planning
 │   ├── PreferencesPage.jsx     — saved nationality, interests, budget
 │   ├── LoginPage.jsx
@@ -123,20 +123,25 @@ It is a proper dialog for keyboard and screen-reader users: each step is a fresh
 
 The main results view. Receives streaming events from `sseWorker.js` via `SearchDataContext` and renders sections as they arrive.
 
-**13 result sections** (in display order):
+**16 result sections** (in display order):
 1. Flights
 2. Weather
 3. Hotels
 4. Activities
 5. Places to See
-6. Visa
-7. SIM Cards
-8. Travel Tips
-9. Safety & Emergency Card
-10. Getting Around
-11. Forex
-12. Itinerary
-13. Packing List
+6. Free Walking Tours
+7. What's On (Events)
+8. Visa
+9. SIM Cards
+10. Travel Tips
+11. Safety & Emergency Card
+12. Getting Around
+13. Forex
+14. Itinerary
+15. Itinerary Health Check
+16. Packing List
+
+**Free Walking Tours** (`WalkingToursSection.jsx`) renders one card per tour with provider, rating, duration, price note and a short "why" for this traveller. Each card links to the original tour page (`safeUrl`, opens in a new tab). The chip is labelled "Walking Tours".
 
 **Additional UI elements:**
 
@@ -148,7 +153,7 @@ The main results view. Receives streaming events from `sseWorker.js` via `Search
 
 - **View switcher (Cards / Timeline)** — appears once the itinerary loads. Cards view shows each section as a card. Timeline view renders the itinerary as an interactive day grid: each day is a collapsible card with morning / afternoon / evening columns, a weather header, expandable activity cards, and a daily spend bar.
 
-- **My Plan drawer** — a slide-in panel for selecting and saving trip components. Supports flight, hotel, activities, places, SIM, tips, transport options, itinerary slots, and packing list. Shows a live cost total. Plans can be named, saved, and reloaded.
+- **My Plan drawer** — a slide-in panel for selecting and saving trip components. Supports flight, hotel, activities, places, free walking tours (`selections.walking_tours`, keyed by url), SIM, tips, transport options, itinerary slots, and packing list. Shows a live cost total. Plans can be named, saved, and reloaded.
 
 ---
 

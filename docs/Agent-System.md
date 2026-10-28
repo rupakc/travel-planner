@@ -1,6 +1,6 @@
 # Agent System
 
-Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each of the 15 specialist agents does, and how the system handles failures.
+Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each specialist agent does, and how the system handles failures.
 
 ---
 
@@ -74,7 +74,7 @@ All stream to the browser within 1 second with `source: 'static'`. The UI shows 
 
 ### Phase 1 — Parallel AI agents
 
-Thirteen agents run concurrently via `asyncio.gather()`. As each finishes, its result is yielded over SSE:
+Thirteen agents run concurrently (the `phase1_agents` dict in the orchestrator), plus two deferred agents. As each finishes, its result is yielded over SSE:
 
 | Agent | File | Purpose |
 |---|---|---|
@@ -82,6 +82,8 @@ Thirteen agents run concurrently via `asyncio.gather()`. As each finishes, its r
 | HotelsAgent | `hotels_agent.py` | Neighbourhoods and accommodation tiers |
 | ActivitiesAgent | `activities_agent.py` | Activities with interest-relevance scoring |
 | PlacesAgent | `places_agent.py` | Landmarks from Serper/Google + Claude synthesis |
+| WalkingToursAgent | `walking_tours_agent.py` | Free walking tours crawled from provider city pages; the LLM picks and explains them |
+| EventsAgent | `events_agent.py` | Festivals, concerts, and exhibitions during the trip dates |
 | VisaAgent | `visa_agent.py` | Entry requirements, documents, fees |
 | SimAgent | `sim_agent.py` | SIM cards, eSIM, local carriers |
 | TipsAgent | `tips_agent.py` | Etiquette, safety, health, local knowledge |
@@ -104,7 +106,7 @@ Thirteen agents run concurrently via `asyncio.gather()`. As each finishes, its r
 
 ---
 
-## All 15 agents in detail
+## Agents in detail
 
 ### FlightsAgent
 
@@ -133,6 +135,12 @@ Surfaces must-see landmarks, temples, museums, viewpoints, and markets using liv
 3. `SerperPlacesResolver` enriches the top results with TripAdvisor, Timeout, and Lonely Planet URLs
 
 Falls back to Claude-only results if `SERPER_KEY` is not configured.
+
+### WalkingToursAgent
+
+Finds free and pay-what-you-wish walking tours. Unlike most agents it does not ask the LLM for tours. For each destination city, `services/walking_tours.py` fetches the public city page of GuruWalk, FreeTour.com, FreeWalkingTour.com, and SANDEMANs NewEurope in parallel (JSON-LD Event data for the first two, HTML cards for the others, free or pay-what-you-wish only). It sends a `VoyagerTravelPlanner/1.0` User-Agent, uses a 12 s timeout, and only fetches city pages robots.txt allows. Results are cached per provider and city, and a DuckDuckGo `site:` search finds the city page when the slug misses (GuruWalk and FreeTour only).
+
+The LLM (Haiku) then picks and explains the best tours **by candidate id only** — every URL comes from the crawl, never the model. Each city is topped up to at least `min(4, available)` tours by rating; if the LLM fails, a rating × log(reviews) ranking is used. The agent returns an error only when every provider fails.
 
 ### VisaAgent
 
@@ -220,6 +228,7 @@ When `request.is_multi_city` is true, agents change behaviour:
 | flights | One search per leg via `serp_flights.search_multi_city` (parallel one-ways, retry, AI fill for empty legs); results grouped into ordered `legs` |
 | weather | Per-stay forecasts (`city_stays`); LLM fallback parses nested per-city output, assigns cities authoritatively by date range, sorts by stop order |
 | hotels / activities / places / events | Mandatory per-city quotas; every result tagged with `city` |
+| walking_tours | Each city crawled separately; every city topped up to at least `min(4, available)` tours |
 | getting_around | Intra-city options per city plus inter-city hops (train/bus/flight) tagged with a `city` route label |
 | visa | Evaluates every country on the route |
 | itinerary | Allocates days per `city_stays` and visits cities in exactly the user's order — never reorders |

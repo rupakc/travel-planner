@@ -21,6 +21,7 @@ The app uses a team of specialist AI agents that all run at the same time. Resul
 - **Hotels** — neighbourhood breakdowns and accommodation options across all budget levels
 - **Activities** — things to do, ranked by how well they match your stated interests
 - **Places to See** — must-visit landmarks, temples, museums, and viewpoints with ratings and links
+- **Free Walking Tours** — free and pay-what-you-wish tours from GuruWalk, FreeTour.com, FreeWalkingTour.com, and SANDEMANs NewEurope, picked for your interests and linking to the original tour page
 - **Day-by-day Itinerary** — a full schedule that logically groups your activities and accommodation
 - **Multi-city journeys** — enter ordered stops (Paris → Rome → Barcelona) and get flights **per leg** (pick one per leg with a running total), plus hotels, activities, weather, and everything else covering **every** stop in your exact order, each item tagged with its 📍 city
 - **What's On** — festivals, concerts, exhibitions, and sports events happening during your exact dates, flagged if they'll disrupt your plans (or make them better)
@@ -91,10 +92,10 @@ You submit: destination, dates, budget, nationality, interests
         │
         ▼ (Phase 0 already visible in browser)
 ┌─────────────────────────────────────────────────────────────┐
-│  PHASE 1 — 12 AI agents running in parallel (8–15 seconds)  │
+│  PHASE 1 — 13 AI agents running in parallel (8–15 seconds)  │
 │                                                             │
 │  Each agent runs at the same time and streams its result    │
-│  the moment it finishes — you don't wait for all 12:        │
+│  the moment it finishes — you don't wait for all 13:        │
 │                                                             │
 │  ✈  FlightsAgent      🏨 HotelsAgent                       │
 │  🎯 ActivitiesAgent   📍 PlacesAgent                       │
@@ -102,6 +103,7 @@ You submit: destination, dates, budget, nationality, interests
 │  💡 TipsAgent         💱 ForexAgent                        │
 │  🚌 GettingAroundAgent 🌤 WeatherAgent                     │
 │  🛡  EmergencyCardAgent 🎪 EventsAgent                      │
+│  🚶 WalkingToursAgent                                      │
 │                                                             │
 │  + 2 deferred agents (start as soon as their inputs land):  │
 │  💰 PricingAdvisorAgent — triggers when ≥ 3 flight prices   │
@@ -207,7 +209,7 @@ See the [Deployment Guide](DEPLOYMENT.md) for the full step-by-step.
 
 ## Built with
 
-- **AI** — [Anthropic Claude](https://anthropic.com) via the Agent SDK, 21 specialist agent definitions (12 parallel search agents, deferred pricing/packing agents, itinerary + adversarial health-check synthesis, chat, layover, and destination discovery)
+- **AI** — [Anthropic Claude](https://anthropic.com) via the Agent SDK, 21 specialist agent definitions (13 parallel search agents, deferred pricing/packing agents, itinerary + adversarial health-check synthesis, chat, layover, and destination discovery)
 - **Backend** — Python, FastAPI, SQLite
 - **Frontend** — React, Vite, Tailwind CSS
 - **Infrastructure** — Google Cloud Run, Terraform, GitHub Actions

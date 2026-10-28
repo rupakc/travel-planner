@@ -21,6 +21,7 @@ Within 30 seconds you have:
 - hotels broken down by neighbourhood and budget level
 - activities ranked by how well they match your interests
 - must-see landmarks and places with ratings and links
+- free walking tours, linked to the guide's own booking page
 - visa entry requirements for your passport
 - local emergency numbers, your country's embassy, and survival phrases
 - SIM card and eSIM options
@@ -48,6 +49,9 @@ A list of things to do, automatically sorted so the activities that match your s
 
 **Places to See**
 Landmark highlights — temples, museums, viewpoints, markets — with visitor ratings, how long to allow, and links to read more. Sourced from live Google data and summarised by AI.
+
+**Free Walking Tours**
+Free and pay-what-you-wish walking tours at your destination, collected from public listings on GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope. AI picks the ones that suit your interests and says why; each card links to the original tour page to book.
 
 **Day-by-day Itinerary**
 A logical schedule that fits your activities into mornings, afternoons, and evenings, keeps walking distances sensible, and links to your chosen accommodation area. View it as a timeline grid or read it as a day-by-day list, with weather shown for each day.
@@ -137,7 +141,7 @@ Every saved plan gets a public share page with the complete trip — flights per
 
 ## How it works
 
-The app uses a team of 15 specialist AI agents. When you search, they all run at the same time. As each one finishes, its results appear on your screen immediately — so you see flights within a few seconds, then hotels, then activities, and so on. You're never waiting for everything to load at once.
+The app uses a team of specialist AI agents — 13 run in parallel when you search, with two more (pricing advisor, packing list) starting as soon as their inputs are ready. As each one finishes, its results appear on your screen immediately — so you see flights within a few seconds, then hotels, then activities, and so on. You're never waiting for everything to load at once.
 
 Some results (like visa rules and emergency numbers) come from carefully maintained lookup tables and appear instantly, before any AI call has even finished. The AI agents then enhance these with more detail.
 
@@ -149,7 +153,7 @@ Once activities and hotels are ready, a final agent synthesises everything into 
 
 | Layer | Technology |
 |---|---|
-| AI | Anthropic Claude, 15 specialist agents |
+| AI | Anthropic Claude, 13 parallel specialist agents plus deferred and synthesis agents |
 | Backend | Python, FastAPI |
 | Frontend | React, Tailwind CSS |
 | Infrastructure | Google Cloud Run, Terraform, GitHub Actions |
