@@ -6,6 +6,7 @@ Turns the HTML of a provider's city page into normalized tour dicts. No I/O.
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import logging
 import re
@@ -343,28 +344,37 @@ def _source(provider_key: str, city: str, url: str, count: int, status: str) -> 
 async def _fetch_provider(
     client: httpx.AsyncClient, provider_key: str, city: str, slug: str
 ) -> tuple[list[dict], dict]:
-    url = PROVIDERS[provider_key]["city_url"](slug)
+    # An empty slug (non-ASCII city) must never build a provider root URL.
+    url = PROVIDERS[provider_key]["city_url"](slug) if slug else ""
     cache = get_cache()
-    key = f"walking_tours:{provider_key}:{slug}"
-    cached = cache.get(key)
-    if cached is not None:
-        cached_url, tours = cached
-        return list(tours), _source(provider_key, city, cached_url, len(tours), "ok")
+    if slug:
+        cached = cache.get(f"walking_tours:{provider_key}:{slug}")
+        if cached is not None:
+            cached_url, cached_tours = cached
+            tours = copy.deepcopy(cached_tours)
+            return tours, _source(provider_key, city, cached_url, len(tours), "ok")
     try:
-        resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
-        if resp.status_code != 200 and provider_key in _DISCOVERY_PROVIDERS:
+        resp = None
+        if url:
+            resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
+        if (resp is None or resp.status_code != 200) and (
+            provider_key in _DISCOVERY_PROVIDERS
+        ):
             found = await _discover_city_url(provider_key, city)
             if found and found != url:
                 url = found
+                slug = slug or urllib.parse.urlparse(found).path.strip("/")
                 resp = await client.get(url, headers=_HEADERS, timeout=_FETCH_TIMEOUT)
-        if resp.status_code != 200:
+        if resp is None or resp.status_code != 200:
             return [], _source(provider_key, city, url, 0, "none")
         tours = _parse_provider(provider_key, resp.text, slug, city)
     except Exception:
         logger.warning("walking-tour fetch failed for %s", provider_key, exc_info=True)
         return [], _source(provider_key, city, url, 0, "error")
-    cache[key] = (url, tours)
-    return list(tours), _source(provider_key, city, url, len(tours), "ok")
+    if not tours:
+        return [], _source(provider_key, city, url, 0, "none")
+    cache[f"walking_tours:{provider_key}:{slug}"] = (url, copy.deepcopy(tours))
+    return tours, _source(provider_key, city, url, len(tours), "ok")
 
 
 async def fetch_city_tours(

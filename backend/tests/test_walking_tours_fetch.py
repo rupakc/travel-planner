@@ -205,3 +205,78 @@ async def test_requests_send_honest_user_agent():
         await fetch_city_tours("Lisbon", client=client)
     assert len(agents) == 4
     assert all(a.startswith("VoyagerTravelPlanner/1.0") for a in agents)
+
+
+async def test_empty_slug_never_requests_provider_root(monkeypatch):
+    discovered = []
+
+    async def fake_discover(provider_key, city):
+        discovered.append(provider_key)
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+    requested = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(200, text="<html></html>")
+
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("東京", client=client)
+    assert requested == []
+    assert tours == []
+    assert [s["status"] for s in sources] == ["none"] * 4
+    assert discovered == ["guruwalk", "freetour"]
+    assert not any(k.endswith(":") for k in get_cache())
+
+
+async def test_empty_slug_uses_discovered_city_page(monkeypatch):
+    async def fake_discover(provider_key, city):
+        if provider_key == "freetour":
+            return "https://www.freetour.com/tokyo"
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", fake_discover)
+    requested = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(200, text=PAGES["www.freetour.com"])
+
+    async with _client(handler) as client:
+        tours, sources = await fetch_city_tours("東京", client=client)
+    assert requested == ["https://www.freetour.com/tokyo"]
+    assert sources[1]["status"] == "ok"
+    assert len(tours) == 2
+
+
+async def test_cached_tours_are_copy_safe():
+    async with _client(_ok_handler) as client:
+        first, _ = await fetch_city_tours("Lisbon", client=client)
+        first[0]["reason"] = "mutated"
+        first[0]["top_pick"] = True
+        second, _ = await fetch_city_tours("Lisbon", client=client)
+        assert second[0]["reason"] is None
+        assert second[0]["top_pick"] is False
+        second[0]["reason"] = "again"
+        third, _ = await fetch_city_tours("Lisbon", client=client)
+    assert third[0]["reason"] is None
+
+
+async def test_empty_page_is_none_and_not_cached(monkeypatch):
+    async def no_discovery(provider_key, city):
+        return None
+
+    monkeypatch.setattr(walking_tours, "_discover_city_url", no_discovery)
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.host)
+        return httpx.Response(200, text="<html><body>nothing</body></html>")
+
+    async with _client(handler) as client:
+        _, sources = await fetch_city_tours("Lisbon", client=client)
+        assert [s["status"] for s in sources] == ["none"] * 4
+        assert [s["count"] for s in sources] == [0] * 4
+        await fetch_city_tours("Lisbon", client=client)
+    assert len(calls) == 8
