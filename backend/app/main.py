@@ -32,6 +32,7 @@ from .api.routes.preferences import router as preferences_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
+from .api.routes.walking_tours import router as walking_tours_router
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
@@ -121,6 +122,7 @@ app.include_router(discover_router, prefix="/api", tags=["discover"])
 app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
 app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(events_router, prefix="/api", tags=["events"])
+app.include_router(walking_tours_router, prefix="/api", tags=["walking_tours"])
 app.include_router(layover_router, prefix="/api", tags=["layover"])
 
 

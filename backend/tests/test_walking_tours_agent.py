@@ -1,0 +1,263 @@
+"""Tests for the Free Walking Tours agent, orchestrator wiring, and route."""
+
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from app.schemas.request import TravelSearchRequest
+
+BASE = {
+    "origin": "New York, USA",
+    "destination": "Barcelona, Spain",
+    "departure_date": "2026-07-20",
+    "return_date": "2026-07-27",
+    "interests": ["history", "food"],
+    "nationality": "American",
+}
+
+PATCH_FETCH = "app.agents.walking_tours_agent.fetch_city_tours"
+
+
+def _tour(i, city="Barcelona", rating=4.5, reviews=100, **kw):
+    return {
+        "id": f"c{i}",
+        "name": f"Tour {i}",
+        "provider": "GuruWalk",
+        "provider_key": "guruwalk",
+        "url": f"https://www.guruwalk.com/walks/{i}",
+        "image_url": None,
+        "description": f"Description {i}",
+        "rating": rating,
+        "review_count": reviews,
+        "duration": "2h",
+        "price_note": "Free · tip-based",
+        "city": city,
+        "reason": None,
+        "top_pick": False,
+        **kw,
+    }
+
+
+def _source(status="ok", city="Barcelona", key="guruwalk"):
+    return {
+        "provider": "GuruWalk",
+        "provider_key": key,
+        "city": city,
+        "url": f"https://www.guruwalk.com/{city.lower()}",
+        "count": 3,
+        "status": status,
+    }
+
+
+def _agent(llm):
+    from app.agents.walking_tours_agent import WalkingToursAgent
+
+    agent = WalkingToursAgent.__new__(WalkingToursAgent)
+    agent.execute = AsyncMock(return_value=llm)
+    return agent
+
+
+def _crawl(tours, sources=None):
+    return AsyncMock(return_value=(tours, sources or [_source()]))
+
+
+class TestWalkingToursAgent:
+    @pytest.mark.anyio
+    async def test_agent_prompt_has_city_country_interests_candidates(self):
+        tours = [_tour(1), _tour(2), _tour(3)]
+        agent = _agent({"recommendations": []})
+        with patch(PATCH_FETCH, _crawl(tours)):
+            await agent.run(TravelSearchRequest(**BASE))
+        prompt = agent.execute.call_args[0][0]
+        assert "Barcelona" in prompt and "Spain" in prompt
+        assert "history, food" in prompt
+        for t in tours:
+            assert t["id"] in prompt
+        assert "Never" in prompt and "URL" in prompt
+
+    @pytest.mark.anyio
+    async def test_prompt_asks_for_country_when_unknown(self):
+        agent = _agent({"recommendations": []})
+        with patch(PATCH_FETCH, _crawl([_tour(1)])):
+            await agent.run(TravelSearchRequest(**{**BASE, "destination": "Barcelona"}))
+        assert "(identify the country)" in agent.execute.call_args[0][0]
+
+    @pytest.mark.anyio
+    async def test_agent_merges_llm_picks_in_order(self):
+        tours = [_tour(1), _tour(2), _tour(3)]
+        agent = _agent(
+            {
+                "recommendations": [
+                    {"id": "c3", "reason": "Great for history", "top_pick": True},
+                    {"id": "c1", "reason": "Food stops", "top_pick": False},
+                ]
+            }
+        )
+        with patch(PATCH_FETCH, _crawl(tours)):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        assert [r["id"] for r in out["results"]] == ["c3", "c1"]
+        assert out["results"][0]["reason"] == "Great for history"
+        assert out["results"][0]["top_pick"] is True
+        assert out["results"][1]["top_pick"] is False
+        assert out["sources"] == [_source()]
+
+    @pytest.mark.anyio
+    async def test_agent_ignores_unknown_and_duplicate_ids_and_llm_urls(self):
+        agent = _agent(
+            {
+                "recommendations": [
+                    {"id": "bogus", "reason": "x"},
+                    {"id": "c2", "reason": "ok", "url": "https://evil.example"},
+                    {
+                        "id": "c2",
+                        "reason": "dup",
+                        "url": "https://evil.example",
+                        "image_url": "https://evil.example/i.png",
+                    },
+                ]
+            }
+        )
+        with patch(PATCH_FETCH, _crawl([_tour(1), _tour(2)])):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        assert [r["id"] for r in out["results"]] == ["c2"]
+        assert out["results"][0]["url"] == "https://www.guruwalk.com/walks/2"
+        assert out["results"][0]["image_url"] is None
+        assert out["results"][0]["reason"] == "ok"
+
+    @pytest.mark.anyio
+    async def test_limits_enforced_per_city(self):
+        tours = [_tour(i) for i in range(12)]
+        recs = [{"id": f"c{i}", "reason": "r", "top_pick": True} for i in range(12)]
+        agent = _agent({"recommendations": recs})
+        with patch(PATCH_FETCH, _crawl(tours)):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        assert len(out["results"]) == 8
+        assert sum(r["top_pick"] for r in out["results"]) == 2
+
+    @pytest.mark.anyio
+    async def test_agent_falls_back_when_llm_errors(self):
+        tours = [
+            _tour(1, rating=4.0, reviews=10),
+            _tour(2, rating=4.9, reviews=500),
+            _tour(3, rating=None, reviews=None),
+        ]
+        agent = _agent({"error": "x"})
+        with patch(PATCH_FETCH, _crawl(tours)):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        assert "error" not in out
+        assert [r["id"] for r in out["results"]] == ["c2", "c1", "c3"]
+        assert all(
+            r["reason"] is None and r["top_pick"] is False for r in out["results"]
+        )
+
+    @pytest.mark.anyio
+    async def test_fallback_when_nothing_usable_and_caps_eight(self):
+        tours = [_tour(i, rating=4.0 + i / 100) for i in range(10)]
+        agent = _agent({"recommendations": [{"id": "bogus"}]})
+        with patch(PATCH_FETCH, _crawl(tours)):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        assert len(out["results"]) == 8
+        assert out["results"][0]["id"] == "c9"
+
+    @pytest.mark.anyio
+    async def test_agent_no_tours_skips_llm(self):
+        agent = _agent({"recommendations": []})
+        with patch(PATCH_FETCH, _crawl([], [_source("none")])):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        agent.execute.assert_not_awaited()
+        assert out["results"] == []
+        assert out["sources"][0]["status"] == "none"
+
+    @pytest.mark.anyio
+    async def test_all_providers_fail_returns_error(self):
+        agent = _agent({"recommendations": []})
+        with patch(PATCH_FETCH, _crawl([], [_source("error"), _source("error")])):
+            out = await agent.run(TravelSearchRequest(**BASE))
+        agent.execute.assert_not_awaited()
+        assert "error" in out
+
+    @pytest.mark.anyio
+    async def test_agent_multi_city_coverage(self):
+        async def fake(city, **_):
+            return [_tour(city[0], city=city)], [_source(city=city)]
+
+        crawl = AsyncMock(side_effect=fake)
+        agent = _agent({"recommendations": []})
+        with patch(PATCH_FETCH, crawl):
+            out = await agent.run(
+                TravelSearchRequest(
+                    **BASE, destinations=["Barcelona, Spain", "Madrid, Spain"]
+                )
+            )
+        assert crawl.await_count == 2
+        prompt = agent.execute.call_args[0][0]
+        assert "Barcelona" in prompt and "Madrid" in prompt
+        assert "per city" in prompt
+        assert {r["city"] for r in out["results"]} == {"Barcelona", "Madrid"}
+        assert len(out["sources"]) == 2
+
+    @pytest.mark.anyio
+    async def test_multi_city_crawls_run_concurrently(self):
+        import asyncio
+
+        active = 0
+        peak = 0
+
+        async def fake(city, **_):
+            nonlocal active, peak
+            active += 1
+            peak = max(peak, active)
+            await asyncio.sleep(0.01)
+            active -= 1
+            return [], [_source("none", city=city)]
+
+        agent = _agent({})
+        with patch(PATCH_FETCH, AsyncMock(side_effect=fake)):
+            await agent.run(
+                TravelSearchRequest(
+                    **BASE, destinations=["Barcelona, Spain", "Madrid, Spain"]
+                )
+            )
+        assert peak == 2
+
+
+class TestAgentDefinition:
+    def test_definition_loads(self):
+        from app.agents.loader import load_agent_definition
+        from app.core.config import settings
+
+        definition = load_agent_definition(settings.agents_dir, "walking_tours")
+        assert definition.name == "walking_tours"
+        assert "Never output URLs" in definition.system_prompt
+
+
+class TestOrchestratorWiring:
+    def test_orchestrator_wiring(self):
+        import inspect
+
+        from app.agents import orchestrator as orch_mod
+
+        source = inspect.getsource(orch_mod)
+        assert "self.walking_tours = WalkingToursAgent(agents_dir)" in source
+        assert "self.walking_tours.run(request)" in source
+        assert '"walking_tours": self.walking_tours' in source
+        assert "_STATIC_BACKED" in source
+        start = source.index("_STATIC_BACKED = {")
+        static_block = source[start : source.index("}", start)]
+        assert "walking_tours" not in static_block
+
+
+class TestWalkingToursRoute:
+    def test_route_returns_agent_result(self, client):
+        verdict = {"results": [{"id": "c1", "name": "Tour 1"}], "sources": []}
+        with patch(
+            "app.api.routes.walking_tours.WalkingToursAgent.run",
+            new=AsyncMock(return_value=verdict),
+        ):
+            resp = client.post("/api/walking-tours", json=BASE)
+        assert resp.status_code == 200
+        assert resp.json()["results"][0]["id"] == "c1"
+
+    def test_route_rejects_bad_body(self, client):
+        resp = client.post("/api/walking-tours", json={"origin": "NYC"})
+        assert resp.status_code == 422
