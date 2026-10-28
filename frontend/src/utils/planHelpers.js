@@ -116,6 +116,7 @@ export function countSelections(selections) {
     (selections?.hotel ? 1 : 0) +
     (selections?.activities?.length || 0) +
     (selections?.places_to_see?.length || 0) +
+    (selections?.walking_tours?.length || 0) +
     (selections?.sim ? 1 : 0) +
     (selections?.getting_around?.length || 0) +
     (selections?.tips?.length || 0) +
@@ -131,6 +132,7 @@ export const EMPTY_SELECTIONS = {
   hotel: null,
   activities: [],
   places_to_see: [],
+  walking_tours: [],
   sim: null,
   tips: [],
   getting_around: [],
