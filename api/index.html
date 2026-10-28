@@ -1250,6 +1250,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Section Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apiwalking-tours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/walking-tours
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1586,6 +1603,18 @@
 <td>1</td>
 <td>ai</td>
 <td>Parallel agent (Serper + Claude synthesis)</td>
+</tr>
+<tr>
+<td><code>walking_tours</code></td>
+<td>1</td>
+<td>ai</td>
+<td>Parallel agent (provider crawl + LLM picks by id)</td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td>1</td>
+<td>ai</td>
+<td>Parallel agent (festivals, concerts, exhibitions)</td>
 </tr>
 <tr>
 <td><code>forex</code></td>
@@ -1959,8 +1988,56 @@ data: {&quot;section&quot;: &quot;itinerary&quot;, &quot;data&quot;: {&quot;days
 <td><code>POST /api/stress-test</code></td>
 <td>Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget)</td>
 </tr>
+<tr>
+<td><code>POST /api/walking-tours</code></td>
+<td>Free walking tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope</td>
+</tr>
 </tbody>
 </table>
+<h3 id="post-apiwalking-tours"><code>POST /api/walking-tours</code></h3>
+<p>Free and pay-what-you-wish walking tours at the destination (every stop on multi-city trips). Tours are crawled from the providers' public city pages; the LLM only chooses and explains them by id, so every <code>url</code> is a real provider tour page. Same request body as <code>/api/search</code>.</p>
+<pre><code class="language-json">{
+  &quot;origin&quot;: &quot;NYC&quot;,
+  &quot;destination&quot;: &quot;Lisbon, Portugal&quot;,
+  &quot;departure_date&quot;: &quot;2026-04-01&quot;,
+  &quot;return_date&quot;: &quot;2026-04-08&quot;,
+  &quot;interests&quot;: [&quot;history&quot;, &quot;food&quot;],
+  &quot;num_travelers&quot;: 2
+}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;results&quot;: [
+    {
+      &quot;id&quot;: &quot;t3&quot;,
+      &quot;name&quot;: &quot;Lisbon Old Town Free Walking Tour&quot;,
+      &quot;provider&quot;: &quot;GuruWalk&quot;,
+      &quot;provider_key&quot;: &quot;guruwalk&quot;,
+      &quot;url&quot;: &quot;https://www.guruwalk.com/walks/...&quot;,
+      &quot;image_url&quot;: &quot;https://...&quot;,
+      &quot;description&quot;: &quot;Alfama, the cathedral and the viewpoints, with a local guide.&quot;,
+      &quot;rating&quot;: 4.9,
+      &quot;review_count&quot;: 1280,
+      &quot;duration&quot;: &quot;2h 30m&quot;,
+      &quot;price_note&quot;: &quot;Free (tip your guide)&quot;,
+      &quot;city&quot;: &quot;Lisbon&quot;,
+      &quot;reason&quot;: &quot;Covers the old-town history you asked for.&quot;,
+      &quot;top_pick&quot;: true
+    }
+  ],
+  &quot;sources&quot;: [
+    {
+      &quot;provider&quot;: &quot;GuruWalk&quot;,
+      &quot;provider_key&quot;: &quot;guruwalk&quot;,
+      &quot;city&quot;: &quot;Lisbon&quot;,
+      &quot;url&quot;: &quot;https://www.guruwalk.com/lisbon&quot;,
+      &quot;count&quot;: 6,
+      &quot;status&quot;: &quot;ok&quot;
+    }
+  ]
+}
+</code></pre>
+<p><code>sources</code> has one entry per provider and city; <code>status</code> is <code>ok</code>, <code>none</code> (page found, no free tours) or <code>error</code>. Each city is topped up to at least <code>min(4, available)</code> tours. The endpoint returns <code>{"error": ...}</code> only when every provider fails.</p>
 <h2 id="taste-graph">Taste Graph</h2>
 <h3 id="get-apitaste-profile"><code>GET /api/taste-profile</code></h3>
 <p>Returns the authenticated user's learned taste profile — signals mined from saved-plan selections (flight style, hotel tier, activity categories, budget band) plus the natural-language summary injected into agent prompts. <code>DELETE /api/taste-profile</code> resets it.</p>

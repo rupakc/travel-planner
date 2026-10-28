@@ -809,6 +809,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#walkingtoursagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WalkingToursAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#visaagent" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1277,6 +1288,7 @@
   hotels.md
   activities.md
   places.md
+  walking_tours.md
   visa.md
   sim.md
   tips.md
@@ -1428,7 +1440,7 @@ You are a flight search specialist...
 <p>If a static function returns no data for the destination (not in the lookup table), the section is skipped — no static event is emitted and the AI result will be the first data the user sees.</p>
 <hr />
 <h3 id="phase-1-parallel-ai-agents-815-seconds">Phase 1 — Parallel AI agents (8–15 seconds)</h3>
-<p>Eleven agents run concurrently via <code>asyncio.create_task</code>. Each streams its result the moment it completes. Source field: <code>"ai"</code>.</p>
+<p>Thirteen agents run concurrently via <code>asyncio.create_task</code>. Each streams its result the moment it completes. Source field: <code>"ai"</code>.</p>
 <h4 id="flightsagent">FlightsAgent</h4>
 <p><strong>File:</strong> <code>backend/app/agents/flights_agent.py</code></p>
 <p><strong>What it does:</strong> Searches for flights on the requested route. If a SerpAPI key is configured, it calls the Google Flights SerpAPI endpoint first; if that returns no results, it falls back to an LLM-generated response.</p>
@@ -1468,6 +1480,20 @@ You are a flight search specialist...
 2. The formatted Serper context is injected into the Claude prompt so the model synthesises real Google data with its internal knowledge.
 3. After <code>execute()</code> returns, Tier 1 URL matching: Serper <code>/places</code> entries include official website URLs; these are matched to result items by name fuzzy match. Unmatched items get a TripAdvisor search URL.
 4. <code>enrich()</code> calls <code>SerperPlacesResolver.resolve_top_places()</code> to replace TripAdvisor fallback URLs with real official or review URLs for the top results.</p>
+<hr />
+<h4 id="walkingtoursagent">WalkingToursAgent</h4>
+<p><strong>File:</strong> <code>backend/app/agents/walking_tours_agent.py</code> (crawler: <code>backend/app/services/walking_tours.py</code>, definition: <code>.agents/walking_tours.md</code>)</p>
+<p><strong>What it does:</strong> Finds free and pay-what-you-wish walking tours at the destination. The tours themselves come from a crawl, not from the LLM.</p>
+<p><strong>Inputs:</strong> destination city (or every stop on a multi-city trip), interests, travellers.</p>
+<p><strong>Returns:</strong> <code>{"results": [{id, name, provider, provider_key, url, image_url, description, rating, review_count, duration, price_note, city, reason, top_pick}, ...], "sources": [{provider, provider_key, city, url, count, status}, ...]}</code> where <code>status</code> is <code>"ok"</code>, <code>"none"</code> or <code>"error"</code>.</p>
+<p><strong>Special behaviour:</strong>
+1. For each city the crawler fetches the public city page of four providers in parallel: GuruWalk (<code>guruwalk.com/{slug}</code>), FreeTour.com (<code>freetour.com/{slug}</code>), FreeWalkingTour.com (<code>freewalkingtour.com/{slug}/</code>) and SANDEMANs NewEurope (<code>neweuropetours.eu/sandemans-tours/{slug}/</code>).
+2. GuruWalk and FreeTour are parsed from JSON-LD Event data; the other two from HTML cards, keeping only free or pay-what-you-wish tours.
+3. Requests use the honest User-Agent <code>VoyagerTravelPlanner/1.0</code> and a 12 s timeout; each city's whole crawl (discovery included) is capped at 15 s. Only the four city-page URL patterns above are fetched; they were verified as robots.txt-permitted on 2026-10-28.
+4. Results are cached per provider and city (<code>walking_tours:{provider}:{slug}</code>). When the slug misses, a DuckDuckGo <code>site:</code> search looks for the city page (GuruWalk and FreeTour only). Discovery only accepts city pages of those patterns whose slug shares a word with the requested city (or, for non-Latin names, whose listings name that city); site pages, language roots and <code>/search</code> are rejected.
+5. The LLM (Haiku) picks and explains the best tours for the traveller by candidate id only. URLs always come from the crawl, never the LLM.
+6. Every city is topped up to at least <code>min(4, available)</code> tours by rating. If the LLM fails, a rating × log(reviews) ranking is used. The agent returns <code>{"error": ...}</code> only when every provider fails.</p>
+<p><strong>Not wired into chat:</strong> chat is knowledge-only, so only the Search pipeline and <code>POST /api/walking-tours</code> run this agent.</p>
 <hr />
 <h4 id="visaagent">VisaAgent</h4>
 <p><strong>File:</strong> <code>backend/app/agents/visa_agent.py</code></p>
@@ -1680,6 +1706,10 @@ self.my_agent = MyAgent(agents_dir)
 <tr>
 <td>hotels / activities / places / events</td>
 <td>Mandatory per-city quotas; every result tagged with <code>city</code></td>
+</tr>
+<tr>
+<td>walking_tours</td>
+<td>Each city crawled separately; every city topped up to at least <code>min(4, available)</code> tours</td>
 </tr>
 <tr>
 <td>getting_around</td>

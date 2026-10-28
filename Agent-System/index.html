@@ -865,7 +865,7 @@
 
 
 <h1 id="agent-system">Agent System</h1>
-<p>Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each of the 15 specialist agents does, and how the system handles failures.</p>
+<p>Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each specialist agent does, and how the system handles failures.</p>
 <hr />
 <h2 id="how-agents-work">How agents work</h2>
 <h3 id="baseagent">BaseAgent</h3>
@@ -945,7 +945,7 @@ You are a specialist travel flights analyst...
 </ul>
 <p>All stream to the browser within 1 second with <code>source: 'static'</code>. The UI shows them as "Enhancing…" until AI results arrive.</p>
 <h3 id="phase-1-parallel-ai-agents">Phase 1 — Parallel AI agents</h3>
-<p>Thirteen agents run concurrently via <code>asyncio.gather()</code>. As each finishes, its result is yielded over SSE:</p>
+<p>Thirteen agents run concurrently (the <code>phase1_agents</code> dict in the orchestrator), plus two deferred agents. As each finishes, its result is yielded over SSE:</p>
 <table>
 <thead>
 <tr>
@@ -974,6 +974,16 @@ You are a specialist travel flights analyst...
 <td>PlacesAgent</td>
 <td><code>places_agent.py</code></td>
 <td>Landmarks from Serper/Google + Claude synthesis</td>
+</tr>
+<tr>
+<td>WalkingToursAgent</td>
+<td><code>walking_tours_agent.py</code></td>
+<td>Free walking tours crawled from provider city pages; the LLM picks and explains them</td>
+</tr>
+<tr>
+<td>EventsAgent</td>
+<td><code>events_agent.py</code></td>
+<td>Festivals, concerts, and exhibitions during the trip dates</td>
 </tr>
 <tr>
 <td>VisaAgent</td>
@@ -1029,7 +1039,7 @@ You are a specialist travel flights analyst...
 <h3 id="phase-2-itinerary-synthesis">Phase 2 — Itinerary synthesis</h3>
 <p><code>ItineraryAgent</code> starts once both activities and hotels are available. It synthesises a day-by-day schedule with morning / afternoon / evening slots, daily cost estimates, and weather-aware themes. Has a 60-second timeout with a template-based fallback.</p>
 <hr />
-<h2 id="all-15-agents-in-detail">All 15 agents in detail</h2>
+<h2 id="agents-in-detail">Agents in detail</h2>
 <h3 id="flightsagent">FlightsAgent</h3>
 <p>Generates guidance on flight options between the user's origin and destination. Covers typical routes, airlines, rough price ranges, and booking timing advice. Does not make live flight API calls — uses Claude's knowledge enriched by web search context.</p>
 <h3 id="hotelsagent">HotelsAgent</h3>
@@ -1050,6 +1060,9 @@ You are a specialist travel flights analyst...
 <li><code>SerperPlacesResolver</code> enriches the top results with TripAdvisor, Timeout, and Lonely Planet URLs</li>
 </ol>
 <p>Falls back to Claude-only results if <code>SERPER_KEY</code> is not configured.</p>
+<h3 id="walkingtoursagent">WalkingToursAgent</h3>
+<p>Finds free and pay-what-you-wish walking tours. Unlike most agents it does not ask the LLM for tours. For each destination city, <code>services/walking_tours.py</code> fetches the public city page of GuruWalk, FreeTour.com, FreeWalkingTour.com, and SANDEMANs NewEurope in parallel (JSON-LD Event data for the first two, HTML cards for the others, free or pay-what-you-wish only). It sends a <code>VoyagerTravelPlanner/1.0</code> User-Agent, uses a 12 s request timeout and caps each city's whole crawl at 15 s. It only fetches the four city-page URL patterns, which were verified as robots.txt-permitted on 2026-10-28. Results are cached per provider and city. When the slug misses, a DuckDuckGo <code>site:</code> search looks for the city page (GuruWalk and FreeTour only); discovery only accepts city pages of those patterns whose slug shares a word with the requested city (or, for non-Latin names, whose listings name that city), never site pages, language roots or <code>/search</code>.</p>
+<p>The LLM (Haiku) then picks and explains the best tours <strong>by candidate id only</strong> — every URL comes from the crawl, never the model. Each city is topped up to at least <code>min(4, available)</code> tours by rating; if the LLM fails, a rating × log(reviews) ranking is used. The agent returns an error only when every provider fails.</p>
 <h3 id="visaagent">VisaAgent</h3>
 <p>Entry requirements specific to the user's nationality: visa category (visa-free / on-arrival / e-visa / embassy), application process, required documents, processing times, fees, and any notable conditions.</p>
 <h3 id="simagent">SimAgent</h3>
@@ -1121,6 +1134,10 @@ You are a specialist travel flights analyst...
 <tr>
 <td>hotels / activities / places / events</td>
 <td>Mandatory per-city quotas; every result tagged with <code>city</code></td>
+</tr>
+<tr>
+<td>walking_tours</td>
+<td>Each city crawled separately; every city topped up to at least <code>min(4, available)</code> tours</td>
 </tr>
 <tr>
 <td>getting_around</td>

@@ -1064,13 +1064,14 @@
         │
         ▼ (Phase 0 results already in browser)
 ┌──────────────────────────────────────────────────────────────────────┐
-│  PHASE 1 — 11 specialist agents in parallel  (8–15 seconds)          │
+│  PHASE 1 — 13 specialist agents in parallel  (8–15 seconds)          │
 │                                                                      │
 │  asyncio.create_task() for each:                                     │
 │    FlightsAgent       HotelsAgent        ActivitiesAgent             │
-│    PlacesAgent        VisaAgent          SimAgent                    │
-│    TipsAgent          ForexAgent         GettingAroundAgent          │
-│    WeatherAgent       EmergencyCardAgent                             │
+│    PlacesAgent        WalkingToursAgent  EventsAgent                 │
+│    VisaAgent          SimAgent           TipsAgent                   │
+│    ForexAgent         GettingAroundAgent WeatherAgent                │
+│    EmergencyCardAgent                                                │
 │                                                                      │
 │  As each agent completes, its result is streamed immediately.        │
 │  Static-backed agents (visa, sim, tips, getting_around, forex,       │
@@ -1086,6 +1087,9 @@
 │                                                                      │
 │  PlacesAgent → Serper/Google Maps API → Claude synthesis →           │
 │    SerperPlacesResolver enriches top results with real URLs          │
+│                                                                      │
+│  WalkingToursAgent → crawls GuruWalk / FreeTour / FreeWalkingTour /  │
+│    SANDEMANs city pages → LLM picks by id (URLs come from the crawl) │
 │                                                                      │
 │  ForexAgent → 4 parallel web searches for live rates → LLM          │
 │    extracts structured JSON from real search snippets                │
@@ -1175,6 +1179,8 @@ Phase 1 (parallel AI, 8-15 s)
 
   PlacesAgent → Serper + Claude + Resolver ──────── (stream + enrich)
 
+  WalkingToursAgent → provider crawl + LLM pick ─── (stream)
+
   VisaAgent ─────────────────────────────────────── (stream / static fallback)
   SimAgent ──────────────────────────────────────── (stream / static fallback)
   TipsAgent ─────────────────────────────────────── (stream / static fallback)
@@ -1254,11 +1260,12 @@ Separate endpoint (not part of search stream)
 <p>In-memory caching via <code>cachetools</code> (TTL 30 minutes, max 500 entries). Cache keys are used for:</p>
 <ul>
 <li>Serper Places API responses (<code>serper:places_ctx:{destination}</code>) — avoids repeated external API calls within a session.</li>
-<li>The cache is shared process-wide, so repeated searches for the same destination within 30 minutes reuse the Serper data.</li>
+<li>Crawled walking-tour listings (<code>walking_tours:{provider}:{slug}</code>) — one entry per provider and city, so a repeat search or another trip to the same city does not re-fetch the provider pages.</li>
+<li>The cache is shared process-wide, so repeated searches for the same destination within 30 minutes reuse the Serper data and the crawled tours.</li>
 </ul>
 <hr />
 <h2 id="why-these-choices-were-made">Why these choices were made</h2>
-<p><strong>FastAPI over Django/Flask:</strong> Native async support is essential for running 11+ concurrent agent calls without blocking. FastAPI's <code>StreamingResponse</code> makes SSE straightforward to implement. The <code>asyncio.create_task</code> + queue pattern allows the orchestrator to stream each result the moment it arrives.</p>
+<p><strong>FastAPI over Django/Flask:</strong> Native async support is essential for running 13+ concurrent agent calls without blocking. FastAPI's <code>StreamingResponse</code> makes SSE straightforward to implement. The <code>asyncio.create_task</code> + queue pattern allows the orchestrator to stream each result the moment it arrives.</p>
 <p><strong>SQLite over PostgreSQL/MySQL:</strong> Zero infrastructure overhead. The GCS backup strategy handles durability. Cloud Run's ephemeral filesystem is the only risk, and the backup/restore lifecycle addresses it.</p>
 <p><strong>Sentence-transformers for relevance scoring:</strong> A deterministic, locally-run semantic similarity model gives meaningful activity ranking without an extra API call. It runs fast enough (&lt; 500ms) to not add noticeable latency to Phase 1.</p>
 <p><strong><code>.agents/*.md</code> for agent definitions:</strong> Keeping system prompts as markdown files with YAML frontmatter means prompt engineers can edit them without touching Python code. The frontmatter carries metadata (name, description, tools, max_turns) that the BaseAgent reads at load time.</p>
@@ -1273,7 +1280,7 @@ Separate endpoint (not part of search stream)
 <li><strong><code>flight_legs</code></strong> — origin → city₁ on the departure date, one inter-city hop per move-on day, last city → origin on the return date.</li>
 <li><strong><code>multi_city_context</code></strong> — a prompt block instructing every agent to cover all cities and tag each result with a <code>city</code> field.</li>
 </ul>
-<p>Flights run <strong>one parallel SerpAPI one-way search per leg</strong> (20 s timeout + one retry); legs that still come back empty are AI-filled with estimates so the UI never shows an empty leg. Weather forecasts each stay only for its own dates. Specialist prompts carry per-city minimum quotas (hotels ≥ 3, activities ≥ 5, places 4–6, events 2–4 per city).</p>
+<p>Flights run <strong>one parallel SerpAPI one-way search per leg</strong> (20 s timeout + one retry); legs that still come back empty are AI-filled with estimates so the UI never shows an empty leg. Weather forecasts each stay only for its own dates. Specialist prompts carry per-city minimum quotas (hotels ≥ 3, activities ≥ 5, places 4–6, events 2–4, walking tours ≥ min(4, available) per city).</p>
 <p><strong>Journey order is enforced twice</strong>: the backend sorts flight legs and weather days into the user's stop order, and the frontend stable-sorts every city-tagged section list by the entered stop order the moment results arrive (<code>orderSectionByCity</code>). The itinerary agent is explicitly forbidden from reordering the route. See <a href="../Multi-City-Trips/">Multi-City Trips</a>.</p>
 <h2 id="chat-design-knowledge-only-answers-agents-as-last-resort">Chat design: knowledge-only answers, agents as last resort</h2>
 <p>Chat topic queries are answered purely from the model's own knowledge and the SSE stream closes as soon as the answer ends. Specialist agents run <strong>only when the model fails to answer at all</strong> (stream error, empty response, or explicit refusal detected by <code>_NON_ANSWER_RE</code>). Structured planning requests ("plan a week in Lisbon") still run the full agent pipeline and stream section results into the conversation, with refinement diffing re-running only the agents whose inputs changed. See <a href="../Chat-Assistant/">Chat Assistant</a>.</p>
