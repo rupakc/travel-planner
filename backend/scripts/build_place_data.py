@@ -63,6 +63,7 @@ DISPLAY_NAME_MATCH_KM = 40
 DISPLAY_FIRST_LINK_KM = 40
 DISPLAY_NEAREST_KM = 15
 DISPLAY_SEARCH_KM = 50
+DISPLAY_ANY_LINK_RATIO = 10  # a much bigger near place linking it anywhere
 
 _MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station)\b")
 _ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
@@ -495,7 +496,28 @@ def _names_town(place: Place, folded_airport_name: str) -> bool:
     )
 
 
-def _computed_city(a: dict, places_near, first_link_places, municipality: str):
+def _linking_place(same, first_link_places, any_link_places):
+    """The best same-country place within 40 km whose first link is the
+    airport; a place within 15 km linking it in any position and scoring
+    ≥ 10× more wins (HLP: Jakarta, not Bekasi; EOH: Medellín)."""
+    first = _best(
+        p for d, p in same
+        if d <= DISPLAY_FIRST_LINK_KM and p.geonameid in first_link_places
+    )  # fmt: skip
+    bigger = _best(
+        p for d, p in same
+        if d <= DISPLAY_NEAREST_KM and p.geonameid in any_link_places
+    )  # fmt: skip
+    if bigger and (
+        first is None or bigger.score >= DISPLAY_ANY_LINK_RATIO * first.score
+    ):
+        return bigger
+    return first
+
+
+def _computed_city(
+    a: dict, places_near, first_link_places, municipality: str, any_link_places=()
+):
     """Display city chain for one airport (curated aside) as (city, rule)."""
     same = [(d, p) for d, p in places_near if p.country_code == a["country_code"]]
     folded_name = fold_place(a["name"])
@@ -504,9 +526,8 @@ def _computed_city(a: dict, places_near, first_link_places, municipality: str):
             p for d, p in same if d <= DISPLAY_NAME_MATCH_KM
             and _names_town(p, folded_name)
         )),
-        ("first-link", lambda: _best(
-            p for d, p in same if d <= DISPLAY_FIRST_LINK_KM
-            and p.geonameid in first_link_places
+        ("first-link", lambda: _linking_place(
+            same, first_link_places, any_link_places
         )),
         ("nearest", lambda: next(
             (p for d, p in same if d <= DISPLAY_NEAREST_KM), None
@@ -623,10 +644,15 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
     index = _airport_index(linkable)
 
     first_link_places: dict[str, set[str]] = defaultdict(set)
+    any_link_places: dict[str, set[str]] = defaultdict(set)
     for place in places:
         place.links, place.in_reach = link_airports(place, index)
         if place.in_reach and place.links:
             first_link_places[place.links[0][0]].add(place.geonameid)
+            # a place linking the airport in any position (HLP is Jakarta's
+            # second airport, Bekasi's first)
+            for iata, _km in place.links:
+                any_link_places[iata].add(place.geonameid)
         own = place.folded
         alts = (
             filter_alt_names(place.raw_alts, own)
@@ -658,6 +684,7 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
             near[iata],
             first_link_places.get(iata, set()),
             municipalities.get(iata, ""),
+            any_link_places.get(iata, set()),
         )
         cur = curated_rows.get(iata)
         if cur:

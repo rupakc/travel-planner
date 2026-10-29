@@ -4142,6 +4142,37 @@ AIRPORTS = [
     ("NUM", "OENN", "Neom Bay Airport", "Neom", "Saudi Arabia", "SA", 27.9243, 35.2936),
     # Served-city overrides (final review): the computed display city is a
     # suburb, hamlet or neighbouring town.
+    ("KZR", "LTBZ", "Zafer Airport", "Kütahya", "Turkey", "TR", 39.11111, 30.1304),
+    (
+        "QOW",
+        "DNIM",
+        "Sam Mbakwe International Cargo Airport",
+        "Owerri",
+        "Nigeria",
+        "NG",
+        5.42706,
+        7.20603,
+    ),
+    (
+        "CRK",
+        "RPLC",
+        "Clark International Airport",
+        "Angeles City",
+        "Philippines",
+        "PH",
+        15.186,
+        120.56,
+    ),
+    (
+        "CGB",
+        "SBCY",
+        "Marechal Rondon International Airport",
+        "Cuiabá",
+        "Brazil",
+        "BR",
+        -15.6529,
+        -56.1167,
+    ),
     (
         "BJC",
         "KBJC",

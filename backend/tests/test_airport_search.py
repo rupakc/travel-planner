@@ -108,3 +108,17 @@ def test_lower_case_three_letters_that_name_a_place_list_the_place_first(q, firs
 @pytest.mark.parametrize(("q", "first"), [("HUE", "HUE"), ("GOA", "GOA")])
 def test_upper_case_codes_still_come_first(q, first):
     assert _codes(q)[0] == first
+
+
+def test_koln_lists_cologne_first():
+    assert _codes("köln")[0] == "CGN"
+    assert _codes("koln")[0] == "CGN"
+
+
+def test_short_junk_queries_stay_small():
+    assert all(c not in _codes("sky") for c in ("MCO", "SFB", "MDT"))
+
+
+@pytest.mark.parametrize(("q", "codes"), [("yorkshire", ["LBA"]), ("sylt", ["GWT"])])
+def test_exact_hint_keeps_namesakes_abroad_out(q, codes):
+    assert _codes(q) == codes

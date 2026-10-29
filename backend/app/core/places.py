@@ -175,6 +175,7 @@ COUNTRY_ALIASES: dict[str, str] = {
     # saint_variants)
     "saint kitts": "KN", "saint barts": "BL", "saint barths": "BL",
     "saint maarten": "SX", "saint vincent": "VC",
+    "antigua": "AG", "turks and caicos": "TC", "ceylon": "LK",
 }  # fmt: skip
 
 
@@ -245,6 +246,33 @@ ISLAND_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "saint barts": ("BL", ("SBH",)),
     "st kitts": ("KN", ("SKB",)),
     "saint kitts": ("KN", ("SKB",)),
+    "sylt": ("DE", ("GWT",)),
+    "st thomas": ("VI", ("STT",)),
+    "st john": ("VI", ("STT",)),
+    "st croix": ("VI", ("STX",)),
+    "saint croix": ("VI", ("STX",)),
+    "praslin": ("SC", ("PRI", "SEZ")),
+    "nosy be": ("MG", ("NOS",)),
+    "isla margarita": ("VE", ("PMV",)),
+    "margarita island": ("VE", ("PMV",)),
+    "fernando de noronha": ("BR", ("FEN",)),
+    "porto santo": ("PT", ("PXO",)),
+    "terceira": ("PT", ("TER",)),
+    "lesbos": ("GR", ("MJT",)),
+    "lesvos": ("GR", ("MJT",)),
+    "bornholm": ("DK", ("RNN",)),
+    "shetland": ("GB", ("LSI",)),
+    "shetland islands": ("GB", ("LSI",)),
+    "grand cayman": ("KY", ("GCM",)),
+    "eleuthera": ("BS", ("ELH",)),
+    "nevis": ("KN", ("NEV", "SKB")),
+    "tortola": ("VG", ("EIS",)),
+    "ambergris caye": ("BZ", ("SPR",)),
+    "lanai": ("US", ("LNY",)),
+    "kangaroo island": ("AU", ("KGC",)),
+    "turks and caicos": ("TC", ("PLS", "GDT")),
+    "providenciales": ("TC", ("PLS",)),
+    "vieques": ("PR", ("VQS",)),
 }
 
 # Landmarks, parks and resorts (folded name) → (ISO country, the scheduled
@@ -262,7 +290,6 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "zion": ("US", ("SGU", "LAS")),
     "zion national park": ("US", ("SGU", "LAS")),
     "lake tahoe": ("US", ("RNO",)),
-    "napa valley": ("US", ("STS", "SFO", "OAK")),
     "key west": ("US", ("EYW",)),
     "chamonix": ("FR", ("GVA",)),
     "zermatt": ("CH", ("ZRH", "GVA")),
@@ -288,21 +315,15 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "masai mara": ("KE", ("NBO",)),
     "maasai mara": ("KE", ("NBO",)),
     "kruger national park": ("ZA", ("MQP",)),
-    "cinque terre": ("IT", ("PSA", "GOA")),
-    "amalfi coast": ("IT", ("NAP",)),
     "amalfi": ("IT", ("NAP",)),
     "positano": ("IT", ("NAP",)),
     "capri": ("IT", ("NAP",)),
-    "lake como": ("IT", ("MXP", "LIN", "BGY")),
-    "dolomites": ("IT", ("VRN", "BZO")),
     "cappadocia": ("TR", ("NAV", "ASR")),
     "pamukkale": ("TR", ("DNZ",)),
     "iguazu falls": ("AR", ("IGR", "IGU")),
     "torres del paine": ("CL", ("PNT", "PUQ")),
     "giza": ("EG", ("SPX", "CAI")),
     "pyramids of giza": ("EG", ("SPX", "CAI")),
-    "cotswolds": ("GB", ("BHX", "LHR")),
-    "lake district": ("GB", ("MAN",)),
     "mahe": ("SC", ("SEZ",)),
     "bariloche": ("AR", ("BRC",)),
     "khajuraho": ("IN", ("HJR",)),
@@ -316,7 +337,68 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "lucerne": ("CH", ("ZRH",)),
     "luzern": ("CH", ("ZRH",)),
     "kona": ("US", ("KOA",)),
+    "sun valley": ("US", ("SUN",)),
+    "huatulco": ("MX", ("HUX",)),
+    "jiuzhaigou": ("CN", ("JZH",)),
+    "alula": ("SA", ("ULH",)),
+    "al ula": ("SA", ("ULH",)),
+    "morzine": ("FR", ("GVA",)),
+    "vail": ("US", ("EGE",)),
 }
+
+# Regions that are not first-level divisions (counties, coasts, mountain
+# ranges, wine country) → (ISO country, the airports travellers use).
+REGION_HINTS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "yorkshire": ("GB", ("LBA",)),
+    "cornwall": ("GB", ("NQY",)),
+    "black forest": ("DE", ("FKB", "STR", "BSL")),
+    "lake district": ("GB", ("MAN",)),
+    "cotswolds": ("GB", ("BRS", "BHX")),
+    "provence": ("FR", ("MRS",)),
+    "french riviera": ("FR", ("NCE",)),
+    "cote dazur": ("FR", ("NCE",)),
+    "amalfi coast": ("IT", ("NAP",)),
+    "cinque terre": ("IT", ("PSA", "GOA")),
+    "algarve": ("PT", ("FAO",)),
+    "costa del sol": ("ES", ("AGP",)),
+    "lake como": ("IT", ("MXP", "BGY", "LIN")),
+    "dolomites": ("IT", ("VCE", "INN")),
+    "scottish highlands": ("GB", ("INV",)),
+    "napa": ("US", ("SFO", "OAK")),
+    "napa valley": ("US", ("SFO", "OAK")),
+}
+
+# Exonyms and other spellings (folded) whose own-name namesakes would win
+# (alternate names count only when no place has the name as its own) →
+# the GeoNames place id they mean, or "ambiguous". Each id is checked
+# against the seeded data by tests/test_place_resolution.py.
+EXONYMS: dict[str, int | str] = {
+    "cologne": 2886242, "bruges": 2800931, "mecca": 104515, "medina": 109223,
+    "gerona": 3121456, "londonderry": 2643736, "ghent": 2797656,
+    "leghorn": 3174659, "saragossa": 3104324, "la coruna": 3119841,
+    "lisboa": 2267057, "cracow": 3094802, "praha": 3067696, "wien": 2761369,
+    "kobenhavn": 2618425, "bruxelles": 2800866, "basle": 2661604,
+    "geneve": 2660646, "peking": 1816670, "calcutta": 1275004,
+    "madras": 1264527, "bangalore": 1277333, "poona": 1259229,
+    "benares": 1253405, "rangoon": 1298824, "nanking": 1799962,
+    "danzig": 3099434, "breslau": 3081368, "konigsberg": 554234,
+    "leningrad": 498817, "constantinople": 745044, "salonica": 734077,
+    "thessalonica": 734077, "nara": 1855612, "teheran": 112931,
+    "katmandu": 1283240, "kiev": 703448, "lvov": 702550, "lemberg": 702550,
+    "kharkov": 706483, "archangel": 581049, "tiflis": 611717,
+    "alma ata": 1526384, "frunze": 1528675, "jogja": 1621177,
+    "jogjakarta": 1621177, "djakarta": 1642911, "hualien": 1674504,
+    "turkmenbashi": 601594, "zihuatanejo": 3979673, "munchen": 2867714,
+    "seville": 2510911, "firenze": 3176959, "napoli": 3172394,
+    "torino": 3165524, "roma": 3169070, "milano": 3173435,
+    "venezia": 3164603, "nurnberg": 2861650, "pressburg": 3060972,
+    "fiume": 3191648, "marseilles": 2995469, "lyons": 2996944,
+    "aix": 3038354, "louvain": 2792482, "malines": 2791537,
+    "belgrad": 792680, "bucuresti": 683506, "sofiya": 727011,
+    "ismir": 311046, "quebec city": 6325494, "port elizabeth": 964420,
+    "genova": 3176219, "baroda": 1253573,
+    "odessa": "ambiguous", "smyrna": "ambiguous", "canton": 1809858,
+}  # fmt: skip
 
 
 # ── Airports a place owns (shared by the data generator and the runtime) ──

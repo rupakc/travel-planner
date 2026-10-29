@@ -642,3 +642,17 @@ def test_ecn_still_resolves_as_a_typed_code():
 )
 def test_retired_codes_map_to_their_replacement(typed, codes):
     assert lookup_city_iata(typed) == codes
+
+
+# ── Final re-review: no fake codes ──────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("typed", "codes"), [("Xqz", None), ("lhr", "LHR"), ("jfk", "JFK")]
+)
+def test_unresolved_lower_case_three_letters_only_real_codes(typed, codes):
+    assert lookup_city_iata(typed) == codes
+
+
+def test_all_caps_codes_still_pass_through():
+    assert lookup_city_iata("NYC") == "NYC"

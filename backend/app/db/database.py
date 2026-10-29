@@ -318,7 +318,9 @@ def three_letter_code(text: str) -> str | None:
         return text
     if not re.fullmatch(r"[A-Za-z]{3}", text) or _is_country_name(text):
         return None
-    return None if _lookup_place(text, 3) else text.upper()
+    if _lookup_place(text, 3) or not _is_scheduled_code(text.upper()):
+        return None
+    return text.upper()
 
 
 def _single_city_rows(
@@ -384,9 +386,22 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
         return _current_code(stripped)
     found = _lookup_place(stripped, max_codes)
     if found is None and re.fullmatch(r"[A-Za-z]{3}", stripped):
-        if not _is_country_name(stripped):
+        if not _is_country_name(stripped) and _is_scheduled_code(stripped.upper()):
             return stripped.upper()  # "lhr", "jfk": no place by that name
     return found
+
+
+def _is_scheduled_code(code: str) -> bool:
+    """The code is a scheduled airport in the DB (no fake codes: "Xqz")."""
+    try:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM airports WHERE iata_code = ? AND scheduled = 1",
+                (code,),
+            ).fetchone()
+    except sqlite3.Error:
+        return False
+    return row is not None
 
 
 def _current_code(code: str) -> str:
@@ -598,6 +613,12 @@ _HINT_SCORE = 5e9
 _OTHER_TOWN_SHARE = 0.1
 # A place-derived suggestion needs this share of the best match's score.
 _AUTOCOMPLETE_MIN_SHARE = 10
+# An alternate-name match ranks at this share of its place's score.
+_AUTOCOMPLETE_ALT_SHARE = 0.01
+# Queries this short suggest places only by exact name or with this many
+# people ("sky" is not every Skyline / Skyland).
+_SHORT_QUERY = 3
+_SHORT_QUERY_MIN_POPULATION = 100_000
 
 
 def _autocomplete_places(
@@ -611,7 +632,7 @@ def _autocomplete_places(
     ≥ 100k people by prefix from five letters ("münch" → München), else
     whole ("milano"). Only places scoring ≥ 1/10 of the best match count
     ("milan": not Milan, Michigan)."""
-    from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS
+    from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS, REGION_HINTS
 
     linked: dict[str, tuple] = {}
     name_score: dict[str, float] = {}
@@ -624,7 +645,11 @@ def _autocomplete_places(
             if known is None or (cls, -score, pos) < (known[0], -known[1], known[2]):
                 linked[code] = (cls, score, pos, None if hint else name, place_cc)
 
-    for name, (_cc, codes) in {**ISLAND_AIRPORTS, **DESTINATION_AIRPORTS}.items():
+    hints = {**ISLAND_AIRPORTS, **DESTINATION_AIRPORTS, **REGION_HINTS}
+    # an exactly typed hint keeps namesakes abroad out ("yorkshire": no
+    # Yorkshire, Virginia; "sylt": no Sylhet)
+    hint_country = hints[folded][0] if folded in hints else None
+    for name, (_cc, codes) in hints.items():
         # whole names, or prefixes from four letters ("par" is not Park City)
         if name == folded or (len(folded) >= 4 and name.startswith(folded)):
             add(name, codes, _HINT_SCORE, hint=True)
@@ -634,21 +659,29 @@ def _autocomplete_places(
     rows = conn.execute(
         "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code "
         "FROM place_names n JOIN places p ON p.geonameid = n.geonameid "
-        "WHERE p.population > 0 AND p.airports != '' AND ("
+        "WHERE p.population > 0 AND p.airports != '' "
+        "AND (length(:q) > :short OR n.name_folded = :q OR p.population >= :big) "
+        "AND ("
         "(n.tier = 0 AND n.name_folded >= :q AND n.name_folded < :end) "
         "OR (n.tier = 1 AND n.name_folded = :q AND length(:q) >= 4) "
         "OR (n.tier = 1 AND length(:q) >= 5 AND p.population >= 100000"
         " AND n.name_folded >= :q AND n.name_folded < :end)) "
         "ORDER BY p.score DESC LIMIT :n",
-        {"q": folded, "end": end, "n": _AUTOCOMPLETE_PLACES},
+        {
+            "q": folded,
+            "end": end,
+            "n": _AUTOCOMPLETE_PLACES,
+            "short": _SHORT_QUERY,
+            "big": _SHORT_QUERY_MIN_POPULATION,
+        },
     ).fetchall()
-    from .places_db import ALT_NAME_PENALTY
-
     scored = [
-        (r["score"] * (ALT_NAME_PENALTY if r["tier"] else 1.0), r) for r in rows
-    ]  # alternates at the resolver's penalty (Syracuse's stray "milan")
+        (r["score"] * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0), r) for r in rows
+    ]  # alternates rank far below own names (Syracuse's stray "milan")
     best = max((sc for sc, _ in scored), default=0)
     for sc, r in scored:
+        if hint_country and r["country_code"] != hint_country:
+            continue
         if sc * _AUTOCOMPLETE_MIN_SHARE >= best:
             add(r["name_folded"], r["airports"].split(), sc, r["country_code"])
     return linked, name_score
@@ -716,8 +749,8 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
             link = None  # a place suggests only airports in its own country
         if link:
             place_cls, place_score, place_pos, place_name, _cc = link
-            if place_name is not None and place_name != city:
-                place_score *= _OTHER_TOWN_SHARE
+            if place_name is not None and place_name != city and place_pos > 0:
+                place_score *= _OTHER_TOWN_SHARE  # its first link is its own
             if (place_cls, -place_score) < (cls, -score):
                 cls, score, pos = place_cls, place_score, place_pos
         elif cls == _OTHER and not (

@@ -103,7 +103,7 @@ def test_unknown_or_contradicted_places_resolve_to_nothing(text):
     assert resolve_place(text) is None
 
 
-# ── Alternate names compete at a calibrated penalty ─────────────────────────
+# ── Alternate names: only without an own-name candidate, plus EXONYMS ──────
 
 
 @pytest.mark.parametrize(
@@ -111,7 +111,7 @@ def test_unknown_or_contradicted_places_resolve_to_nothing(text):
     [
         ("Cancun", "MX"),  # not Changchun (an alternate name of it)
         ("Venice", "IT"),  # not Dayton (alternate) or Venice, Florida
-        ("Cologne", "DE"),  # Köln by its alternate name
+        ("Cologne", "DE"),  # Köln, by the EXONYMS map
         ("Bruges", "BE"),
         ("Mecca", "SA"),
         ("Nara", "JP"),
@@ -123,8 +123,9 @@ def test_alternate_names_resolve_famous_places(text, country):
     assert resolve_place(text).country_code == country
 
 
-def test_alt_name_penalty_is_the_calibrated_value():
-    assert places_db.ALT_NAME_PENALTY == 0.006
+def test_no_alternate_name_penalty_any_more():
+    assert not hasattr(places_db, "ALT_NAME_PENALTY")
+    assert not hasattr(places_db, "ALT_MIN_POPULATION")
     assert places_db.DOMINANCE == 3.0
 
 
@@ -158,13 +159,12 @@ def test_population_zero_places_never_resolve(extra_place):
     assert resolve_place("Zeroville").country_code == "FR"  # the 0 is no rival
 
 
-def test_alternate_match_competes_at_the_penalty(extra_place):
-    extra_place(990000003, "Altburg", "DE", 200_000, 2000, "BER", [("altname", 1)])
-    extra_place(990000004, "Altname", "FR", 5000, 20, "CDG", [("altname", 0)])
-    # 2000 × 0.006 = 12 against 20: within 3× → ambiguous
-    assert resolve("Altname").ambiguous
-    extra_place(990000005, "Bigalt", "IT", 200_000, 10**6, "FCO", [("altname", 1)])
-    assert resolve_place("Altname").country_code == "IT"
+def test_alternates_count_only_without_an_own_name_candidate(extra_place):
+    extra_place(990000003, "Altburg", "DE", 200_000, 10**9, "BER", [("altname", 1)])
+    extra_place(990000004, "Altname", "FR", 20_000, 20, "CDG", [("altname", 0)])
+    assert resolve_place("Altname").country_code == "FR"  # own name wins
+    extra_place(990000005, "Onlyalt", "IT", 50_000, 10**6, "FCO", [("altonly", 1)])
+    assert resolve_place("Altonly").country_code == "IT"  # no own name: alt
 
 
 # ── Countries, divisions, curated islands and destinations ─────────────────
@@ -357,3 +357,131 @@ def test_cities_named_like_a_division_keep_the_cities(text):
 
 def test_mahe_is_the_seychelles_island():
     assert resolve_place("Mahé").country_code == "SC"
+
+
+# ── Final re-review: exonyms, small places, hints, region hints ───────────
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Cologne", "DE", {"CGN"}),
+        ("Bruges", "BE", {"OST", "BRU"}),
+        ("Mecca", "SA", {"JED"}),
+        ("Medina", "SA", {"MED"}),
+        ("Gerona", "ES", {"GRO"}),
+        ("Londonderry", "GB", {"LDY"}),
+        ("Calcutta", "IN", {"CCU"}),
+        ("Madras", "IN", {"MAA"}),
+        ("Peking", "CN", {"PEK", "PKX"}),
+        ("Leghorn", "IT", {"PSA"}),
+        ("Saragossa", "ES", {"ZAZ"}),
+        ("Seville", "ES", {"SVQ"}),
+        ("Aix", "FR", {"MRS"}),
+        ("Jogja", "ID", {"YIA", "JOG"}),
+        ("Olbia", "IT", {"OLB"}),  # own name: Antalya's alternate never competes
+        ("Puno", "PE", {"JUL"}),
+        ("Hualien", "TW", {"HUN"}),
+        ("Turkmenbashi", "TM", {"KRW"}),
+        ("Zihuatanejo", "MX", {"ZIH"}),
+        ("Port Douglas", "AU", {"CNS"}),
+        ("Dili", "TL", {"DIL"}),
+    ],
+)
+def test_exonyms_and_own_names(text, country, first):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == country, place
+    assert place.airports[0] in first, place.airports
+
+
+@pytest.mark.parametrize("text", ["Odessa", "Smyrna"])
+def test_exonyms_marked_ambiguous(text):
+    result = resolve(text)
+    assert result.place is None and result.ambiguous
+
+
+def test_every_exonym_points_at_a_seeded_place():
+    from app.core.places import EXONYMS
+
+    assert len(EXONYMS) >= 60
+    with get_connection() as conn:
+        for name, target in EXONYMS.items():
+            assert name == name.lower().strip(), name
+            if target == "ambiguous":
+                continue
+            row = conn.execute(
+                "SELECT airports FROM places WHERE geonameid = ?", (target,)
+            ).fetchone()
+            assert row is not None, name
+
+
+@pytest.mark.parametrize(
+    ("text", "result"),
+    [
+        ("Gap", "FR"),  # Gap, France (fallback links only) dominates Gap, PA
+        ("Praslin", "SC"),
+        ("Antigua", "AG"),
+        ("Turks and Caicos", "TC"),
+        ("Ceylon", "LK"),
+    ],
+)
+def test_small_places_and_country_aliases(text, result):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == result, place
+
+
+def test_small_place_wins_only_alone(extra_place):
+    extra_place(990000021, "Tinytown", "DE", 3_000, 10**7, "BER", [("tinytown", 0)])
+    assert resolve_place("Tinytown").country_code == "DE"  # sole candidate
+    extra_place(990000022, "Tinytown", "FR", 2_000, 10, "CDG", [("tinytown", 0)])
+    assert resolve_place("Tinytown") is None  # < 15k and not alone
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Sylt", "DE", "GWT"),
+        ("St Thomas", "VI", "STT"),
+        ("St John", "VI", "STT"),
+        ("St Croix", "VI", "STX"),
+        ("Sun Valley", "US", "SUN"),
+        ("Yorkshire", "GB", "LBA"),
+        ("Cornwall", "GB", "NQY"),
+        ("Black Forest", "DE", "FKB"),
+        ("Lake District", "GB", "MAN"),
+        ("Cotswolds", "GB", "BRS"),
+        ("Provence", "FR", "MRS"),
+        ("French Riviera", "FR", "NCE"),
+        ("Côte d'Azur", "FR", "NCE"),
+        ("Amalfi Coast", "IT", "NAP"),
+        ("Cinque Terre", "IT", "PSA"),
+        ("Algarve", "PT", "FAO"),
+        ("Costa del Sol", "ES", "AGP"),
+        ("Lake Como", "IT", "MXP"),
+        ("Dolomites", "IT", "VCE"),
+        ("Scottish Highlands", "GB", "INV"),
+        ("Napa", "US", "SFO"),
+        ("Nosy Be", "MG", "NOS"),
+        ("Isla Margarita", "VE", "PMV"),
+        ("Fernando de Noronha", "BR", "FEN"),
+        ("Porto Santo", "PT", "PXO"),
+        ("Terceira", "PT", "TER"),
+        ("Lesbos", "GR", "MJT"),
+        ("Bornholm", "DK", "RNN"),
+        ("Shetland", "GB", "LSI"),
+        ("Grand Cayman", "KY", "GCM"),
+        ("Eleuthera", "BS", "ELH"),
+        ("Nevis", "KN", "NEV"),
+        ("Tortola", "VG", "EIS"),
+        ("Ambergris Caye", "BZ", "SPR"),
+        ("Huatulco", "MX", "HUX"),
+        ("Lanai", "US", "LNY"),
+        ("Kangaroo Island", "AU", "KGC"),
+        ("Jiuzhaigou", "CN", "JZH"),
+        ("AlUla", "SA", "ULH"),
+        ("Morzine", "FR", "GVA"),
+    ],
+)
+def test_final_re_review_hints(text, country, first):
+    place = resolve_place(text)
+    assert (place.country_code, place.airports[0]) == (country, first)

@@ -1198,3 +1198,21 @@ def test_own_airport_definition_is_shared():
     assert is_own_airport("hue", "huong tra", "phu bai international", True, 15)
     assert not is_own_airport("aqaba", "eilat", "ramon", False, 10)
     assert not is_own_airport("hue", "da nang", "da nang international", True, 80)
+
+
+def test_display_prefers_a_bigger_place_linking_the_airport_anywhere(tmp_path):
+    # HLP: Jakarta links CGK first and HLP second; the suburb Bekasi links HLP
+    # first. The display city is the highest-score place linking it at any
+    # position.
+    airports = [
+        _oa("HUB", _north(_LAT, 20), _LNG),
+        _oa("SEC", _north(_LAT, 10), _LNG, kind="medium_airport"),
+    ]
+    curated = [("HUB", "XHUB", "Hub", "Bigcity", "Xland", "XA", 0.0, 0.0)]
+    cities = [
+        _city(1, "Bigcity", _LAT, _LNG, 9_000_000, alts="A,B,C,D,E"),
+        _city(2, "Suburb", _north(_LAT, 16), _LNG, 900_000),
+    ]
+    r = _build(tmp_path, airports, cities, curated=curated)
+    assert _links(r, 1)[0] == "HUB" and "SEC" in _links(r, 1)
+    assert r.airports["SEC"]["city"] == "Bigcity"
