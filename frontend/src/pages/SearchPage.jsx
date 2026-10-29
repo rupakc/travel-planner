@@ -11,7 +11,9 @@ import TravelerPanel from '../components/ui/TravelerPanel'
 import RecentSearches from '../components/RecentSearches'
 import OnboardingTour from '../components/OnboardingTour'
 import useFirstRunTour from '../hooks/useFirstRunTour'
-import { discoverDestinations, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
+import { discoverDestinations, compareDestination, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
+import CompareTable from '../components/CompareTable'
+import { buildCompareRequests, compareErrorReason, apiReturnDate } from '../utils/compare'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 
 const INTERESTS = [
@@ -119,7 +121,7 @@ export default function SearchPage() {
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
   const twoWeeks  = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
 
-  const [mode, setMode] = useState('known')  // 'known' | 'discover'
+  const [mode, setMode] = useState('known')  // 'known' | 'discover' | 'compare'
   const [discoverForm, setDiscoverForm] = useState({
     origin: '',
     nationality: '',
@@ -147,6 +149,14 @@ export default function SearchPage() {
   // Intermediate stops on the way to the final destination (the To field).
   // Each: { city, nights } — nights optional; leftovers go to the final stop.
   const [extraStops, setExtraStops] = useState([])
+
+  // Compare mode: shared trip fields + 2-3 destinations, one summary call each
+  const [compareForm, setCompareForm] = useState(null)
+  const [compareError, setCompareError] = useState(null)
+  const [compareColumns, setCompareColumns] = useState(null)
+  const compareRequests = useRef([])
+  // Bumped on every run so responses from an older run are ignored
+  const compareRun = useRef(0)
 
   const [recentSearches, setRecentSearches] = useState([])
   const [recentLoaded, setRecentLoaded] = useState(false)
@@ -207,6 +217,19 @@ export default function SearchPage() {
       seniors: preferences.seniors ?? f.seniors,
       infants: preferences.infants ?? f.infants,
     }))
+    setCompareForm(c => c && ({
+      ...c,
+      nationality: preferences.nationality || c.nationality,
+      residence_permits: preferences.residence_permits?.length ? preferences.residence_permits : c.residence_permits,
+      existing_visas: preferences.existing_visas?.length ? preferences.existing_visas : c.existing_visas,
+      interests: preferences.interests?.length ? preferences.interests : c.interests,
+      budget_usd: preferences.budget_category ? (BUDGET_TO_USD[preferences.budget_category] || '') : c.budget_usd,
+      adults: preferences.adults ?? c.adults,
+      children: preferences.children ?? c.children,
+      seniors: preferences.seniors ?? c.seniors,
+      infants: preferences.infants ?? c.infants,
+      accessibility_needs: preferences.accessibility_needs?.length ? preferences.accessibility_needs : c.accessibility_needs,
+    }))
   }, [preferences])
 
   const toggleInterest = (id) =>
@@ -225,6 +248,7 @@ export default function SearchPage() {
       ...form,
       num_travelers: totalTravelers,
       budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
+      return_date: apiReturnDate(form.return_date),
       // Journey order: stops along the way first, the To city (final
       // destination) last
       destinations: stops.length ? [...stops.map(s => s.city), form.destination] : null,
@@ -297,6 +321,78 @@ export default function SearchPage() {
     deleteRecentSearch(token, entry.id).catch(refreshRecentSearches)
   }
 
+  // Entering Compare seeds it, once, from the known-destination form
+  const openCompare = () => {
+    setMode('compare')
+    setCompareForm(c => c || {
+      origin: form.origin, destinations: [form.destination, ''],
+      departure_date: form.departure_date, return_date: form.return_date,
+      nationality: form.nationality, residence_permits: form.residence_permits,
+      existing_visas: form.existing_visas, interests: form.interests,
+      budget_usd: form.budget_usd,
+      adults: form.adults, children: form.children, seniors: form.seniors, infants: form.infants,
+      accessibility_needs: form.accessibility_needs, serendipity: form.serendipity,
+    })
+  }
+
+  const setCompareDestination = (i, v) =>
+    setCompareForm(c => ({ ...c, destinations: c.destinations.map((d, j) => (j === i ? v : d)) }))
+
+  const loadCompareColumn = async (index) => {
+    const run = compareRun.current
+    const request = compareRequests.current[index]
+    const patch = (p) => setCompareColumns(cols => (cols ? cols.map((c, i) => (i === index ? { ...c, ...p } : c)) : cols))
+    patch({ status: 'loading', error: null })
+    try {
+      const summary = await compareDestination(request, token)
+      if (run === compareRun.current) patch({ status: 'done', summary })
+    } catch (err) {
+      if (run === compareRun.current) {
+        patch({ status: 'error', error: compareErrorReason(err) })
+      }
+    }
+  }
+
+  const retryCompareColumn = (index) => {
+    if (compareColumns?.[index]?.status === 'loading') return
+    loadCompareColumn(index)
+  }
+
+  const compareLoading = !!compareColumns?.some(c => c.status === 'loading')
+
+  const handleCompare = (e) => {
+    e.preventDefault()
+    if (compareLoading) return
+    const requests = buildCompareRequests(compareForm)
+    if (requests.length < 2) {
+      setCompareError('Add at least two different destinations to compare.')
+      return
+    }
+    setCompareError(null)
+    compareRun.current++
+    compareRequests.current = requests
+    setCompareColumns(requests.map(r => ({ destination: r.destination, status: 'loading' })))
+    track('compare_run', 'search', { count: requests.length })
+    requests.forEach((_, i) => loadCompareColumn(i))
+  }
+
+  // Runs the compared request as a normal full search, through startSearch
+  const handlePlanCompared = (index) => {
+    const request = compareRequests.current[index]
+    if (!request) return
+    // Only the fields Compare shows come from the compared request; the rest
+    // (permits, visas, accessibility, serendipity) stay as in the known form
+    const { destination, origin, departure_date, return_date, nationality, interests,
+      budget_usd, adults, children, seniors, infants } = request
+    // The compared request carries nulls; the form's inputs want ''
+    const planForm = { ...form, destination, origin, departure_date, return_date: return_date ?? '',
+      nationality, interests, budget_usd: budget_usd ?? '', adults, children, seniors, infants }
+    setForm(planForm)
+    setExtraStops([])
+    setMode('known')
+    startSearch(planForm, [])
+  }
+
   const handleDiscover = async () => {
     setDiscovering(true)
     setDiscoverError(null)
@@ -358,6 +454,11 @@ export default function SearchPage() {
               onClick={() => setMode('discover')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'discover' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
               Surprise me 🎲
+            </button>
+            <button type="button"
+              onClick={openCompare}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'compare' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              Compare ⚖️
             </button>
           </div>
 
@@ -613,6 +714,109 @@ export default function SearchPage() {
 
               {destinations && destinations.length === 0 && (
                 <p className="text-center text-gray-500 text-sm py-4">No destinations found — try different interests or a higher budget.</p>
+              )}
+            </div>
+          )}
+
+          {mode === 'compare' && compareForm && (
+            <div className="space-y-6">
+              <form onSubmit={handleCompare} className="space-y-6">
+                <p className="text-sm text-gray-500 text-center">Compare two or three destinations side by side — cost, flights, hotels, weather and visa — before you commit to a full plan.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <AirportSearch
+                    label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> From</span>}
+                    value={compareForm.origin}
+                    onChange={v => setCompareForm(c => ({ ...c, origin: v }))}
+                    placeholder="City or airport…"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  {compareForm.destinations.map((dest, i) => (
+                    <div key={i} className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <AirportSearch
+                          label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Destination {i + 1}</span>}
+                          value={dest}
+                          onChange={v => setCompareDestination(i, v)}
+                          placeholder="City or airport…"
+                        />
+                      </div>
+                      {compareForm.destinations.length > 2 && (
+                        <button type="button" title="Remove this destination" aria-label={`Remove destination ${i + 1}`}
+                          onClick={() => setCompareForm(c => ({ ...c, destinations: c.destinations.filter((_, j) => j !== i) }))}
+                          className="mb-1 p-2.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {compareForm.destinations.length < 3 && (
+                    <button type="button"
+                      onClick={() => setCompareForm(c => ({ ...c, destinations: [...c.destinations, ''] }))}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
+                      <Plus size={14} /> Add another
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Departure</span></label>
+                    <input type="date" required value={compareForm.departure_date} min={today}
+                      onChange={e => setCompareForm(c => ({ ...c, departure_date: e.target.value }))} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Return</span></label>
+                    <input type="date" value={compareForm.return_date} min={compareForm.departure_date}
+                      onChange={e => setCompareForm(c => ({ ...c, return_date: e.target.value }))} className={inputClass} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                  <NationalitySearch
+                    label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> Nationality</span>}
+                    value={compareForm.nationality}
+                    onChange={v => setCompareForm(c => ({ ...c, nationality: v }))}
+                    placeholder="American, Indian…"
+                    required
+                  />
+                  <div>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> Budget (USD)</span></label>
+                    <input type="number" value={compareForm.budget_usd} min="0" step="100"
+                      onChange={e => setCompareForm(c => ({ ...c, budget_usd: e.target.value }))}
+                      placeholder="Optional" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> Travelers</span></label>
+                    <TravelerPanel form={compareForm} setForm={setCompareForm} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>✨ Interests</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {INTERESTS.map(({ id, label }) => (
+                      <button key={id} type="button"
+                        onClick={() => setCompareForm(c => ({ ...c, interests: c.interests.includes(id) ? c.interests.filter(i => i !== id) : [...c.interests, id] }))}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${compareForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {compareError && <p role="alert" className="text-center text-red-500 text-sm">{compareError}</p>}
+
+                <button type="submit" disabled={compareLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base disabled:opacity-60 disabled:cursor-not-allowed">
+                  <Search size={18} /> {compareLoading ? 'Comparing…' : 'Compare destinations'}
+                </button>
+              </form>
+
+              {compareColumns && (
+                <CompareTable columns={compareColumns} onPlan={handlePlanCompared} onRetry={retryCompareColumn} />
               )}
             </div>
           )}
