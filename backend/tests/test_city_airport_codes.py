@@ -145,3 +145,23 @@ def test_calendar_params_keep_resolved_codes():
     params = _build_params("k", shifted, None)
     assert params["departure_id"].startswith("LHR,")
     assert params["arrival_id"] == "BER"
+
+
+def test_known_airport_prefix_wins_over_city():
+    assert lookup_city_iata("LGW — London, United Kingdom") == "LGW"
+    assert lookup_city_iata("lgw - London") == "LGW"
+
+
+def test_unknown_prefix_falls_back_to_city():
+    assert lookup_city_iata("ZZZ — Berlin, Germany") == "BER"
+
+
+def test_airports_db_does_not_import_agents():
+    import ast
+    from pathlib import Path
+
+    import app.db.database as db
+
+    tree = ast.parse(Path(db.__file__).read_text())
+    modules = [n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
+    assert not any("agents" in m for m in modules)

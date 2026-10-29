@@ -4,6 +4,8 @@ import re
 import sqlite3
 from pathlib import Path
 
+from ..core.places import _US_STATES
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,7 +129,7 @@ def lookup_iata(code: str) -> dict | None:
 
 
 # "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
-_IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
+_IATA_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
 # Other names people type for a country → its ISO code in the airports table.
 _COUNTRY_CODE_ALIASES: dict[str, str] = {
@@ -153,8 +155,6 @@ _COUNTRY_CODE_ALIASES: dict[str, str] = {
 
 def _country_matches(stated: str, country: str, country_code: str | None) -> bool:
     """Whether a typed country (name, ISO code, alias or US state) names a row's."""
-    from ..agents.static_results import _US_STATES
-
     code = (country_code or "").upper()
     if stated == country.lower() or stated.upper() == code:
         return True
@@ -169,18 +169,22 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     Germany") to up to ``max_codes`` comma-joined IATA codes (SerpAPI accepts
     multiple departure/arrival IDs), or None.
 
-    Exact, case-insensitive match on the city (first comma segment); a stated
+    A prefix code that is in the airports table is the traveller's pick and
+    is returned alone ("LGW — London, …" → "LGW"). Otherwise an exact,
+    case-insensitive match on the city (first comma segment); a stated
     country (last segment) restricts the match. Matches spanning more than one
     country are ambiguous and resolve to None. Seed data lists each city's
     primary airport first, so insertion order ranks the codes. Local DB only —
-    one indexed query, never a web lookup.
+    one indexed query (two index lookups), never a web lookup.
     """
     if not city or not city.strip():
         return None
     stripped = city.strip()
     if re.match(r"^[A-Za-z]{3}$", stripped):
         return stripped.upper()
-    text = _IATA_PREFIX_RE.sub("", stripped, count=1)
+    prefix = _IATA_PREFIX_RE.match(stripped)
+    code = prefix.group(1).upper() if prefix else ""
+    text = stripped[prefix.end() :] if prefix else stripped
     parts = [p.strip() for p in text.split(",") if p.strip()]
     if not parts:
         return None
@@ -189,13 +193,16 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     try:
         with get_connection() as conn:
             rows = conn.execute(
-                "SELECT iata_code, country, country_code FROM airports "
-                "WHERE city = :city COLLATE NOCASE ORDER BY id",
-                {"city": city_name},
+                "SELECT iata_code, city, country, country_code FROM airports "
+                "WHERE city = :city COLLATE NOCASE OR iata_code = :code ORDER BY id",
+                {"city": city_name, "code": code},
             ).fetchall()
     except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
         logger.debug("City airport lookup failed for %r: %s", city, exc)
         return None
+    if code and any(r["iata_code"] == code for r in rows):
+        return code
+    rows = [r for r in rows if r["city"].lower() == city_name.lower()]
     if stated:
         rows = [
             r for r in rows if _country_matches(stated, r["country"], r["country_code"])

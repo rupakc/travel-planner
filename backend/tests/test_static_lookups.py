@@ -359,11 +359,23 @@ def test_static_forex_busan_is_not_usd():
         ("Los Angeles, CA", "usa"),  # California agrees with the city map
         ("Paris, TX", None),
         ("Paris, Texas", None),
-        ("Paris, DE", None),  # the code's country disagrees with the city map
-        # unknown city: the ISO country, else a US state
-        ("Leipzig, DE", "germany"),
+        ("Paris, DE", None),  # ambiguous code; neither reading is France
+        ("Paris, GA", None),
+        # a known city in another country, named by a non-state ISO code
+        ("Cartagena, ES", "spain"),
+        ("Cartagena, CO", "colombia"),
+        # US cities whose state code is also an ISO country code
+        ("Denver, CO", "usa"),
+        ("Springfield, IL", "usa"),
+        ("Wilmington, DE", "usa"),
+        # unknown city: an ISO-only code names its country, a state-only code
+        # the USA, a code that is both is ambiguous
+        ("Trondheim, NO", "norway"),
         ("Hiroshima, JP", "japan"),
         ("Austin, TX", "usa"),
+        ("Smalltown, CO", None),
+        ("Leipzig, DE", None),
+        ("Leipzig, Germany", "germany"),
         ("Nowhere, ZZ", None),
     ],
 )
@@ -374,3 +386,10 @@ def test_iso_country_codes(destination, country):
 def test_every_table_country_has_an_iso_code():
     assert set(s._ISO_COUNTRY.values()) == set(s._known_countries())
     assert all(len(code) == 2 for code in s._ISO_COUNTRY)
+
+
+def test_us_state_module_is_shared():
+    from app.core.places import _US_STATES
+
+    assert s._US_STATES is _US_STATES
+    assert _US_STATES["tx"] == "texas"

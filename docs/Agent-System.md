@@ -72,7 +72,7 @@ Static lookup tables in `static_results.py` yield results before any AI call:
 
 All stream to the browser within 1 second with `source: 'static'`. The UI shows them as "Enhancing…" until AI results arrive.
 
-Destinations are matched to a table country by whole names only (`_place_country`): a stated country wins; otherwise the city map, but only when a trailing state, region or ISO 3166 alpha-2 code agrees with it ("Miami, FL", "Berlin, DE", "Toronto, CA" resolve; "Paris, TX" and "Paris, Texas" get no row). For a city not in the map, a two-letter code names the ISO code's country ("Leipzig, DE" → Germany), else a US state's ("Austin, TX" → USA).
+Destinations are matched to a table country by whole names only (`_place_country`): a stated country wins; otherwise the city map, but only when a trailing state, region or ISO 3166 alpha-2 code agrees with it ("Miami, FL", "Berlin, DE", "Toronto, CA" resolve; "Paris, TX" and "Paris, Texas" get no row). A known city with an ISO code for another country that is not also a US state code takes that country ("Cartagena, ES" → Spain). For a city not in the map, an ISO-only code names its country ("Trondheim, NO" → Norway) and a state-only code the USA ("Austin, TX"); a code that is both ("CO", "DE", "IL", …) names neither. The city map includes about 60 common US cities so "Denver, CO" or "Springfield, IL" resolve to the USA. `_US_STATES` lives in `backend/app/core/places.py`, shared with the airports DB.
 
 ### Phase 1 — Parallel AI agents
 
