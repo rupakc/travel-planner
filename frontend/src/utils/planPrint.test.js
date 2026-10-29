@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { createHash } from 'node:crypto'
 import { buildPlanPrintHtml, escapeHtml, safeUrl } from './planPrint'
+import { moveSlot, removeSlot } from './itineraryLayout'
 
 const searchData = {
   origin: 'New York, USA (JFK)',
@@ -167,5 +168,37 @@ describe('buildPlanPrintHtml', () => {
     const html = build()
     expect(html).toMatch(/<button[^>]*class="no-print"[^>]*>.*Print/)
     expect(html).toMatch(/@media print\s*{[^}]*\.no-print\s*{\s*display:\s*none/)
+  })
+})
+
+describe('arranged itinerary in print', () => {
+  const trip = {
+    days: [
+      { day_number: 1, city: 'Tokyo', slots: [
+        { time_of_day: 'morning', activity: 'Tsukiji Outer Market' },
+        { time_of_day: 'evening', activity: 'Shibuya Crossing' },
+      ] },
+      { day_number: 2, city: 'Tokyo', slots: [
+        { time_of_day: 'morning', activity: 'Meiji Shrine' },
+        { time_of_day: 'evening', activity: 'Izakaya crawl' },
+      ] },
+    ],
+  }
+  const html = (sel) => buildPlanPrintHtml({ planName: 'T', searchData, selections: sel, itinerary: trip })
+
+  it('shows a moved activity under its new day with its edit and note', () => {
+    const out = html({
+      itinerary_layout: moveSlot(trip, null, '1-morning', 2, 'evening'),
+      itinerary_edits: { '1-morning': { activity: 'Toyosu Market' } },
+      itinerary_notes: { '1-morning': 'Go early' },
+    })
+    const day2 = out.slice(out.indexOf('Day 2'))
+    expect(day2).toContain('Toyosu Market')
+    expect(day2).toContain('Go early')
+    expect(out.slice(0, out.indexOf('Day 2'))).not.toContain('Toyosu Market')
+  })
+
+  it('omits a removed activity', () => {
+    expect(html({ itinerary_layout: removeSlot(trip, null, '1-morning') })).not.toContain('Tsukiji Outer Market')
   })
 })

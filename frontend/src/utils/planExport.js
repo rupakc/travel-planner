@@ -1,3 +1,5 @@
+import { arrangeItinerary, slotKey } from './itineraryLayout'
+
 // Plan export: an iCalendar (.ics, RFC 5545) file of the trip, built from
 // the same selections the My Plan drawer shows.
 //
@@ -92,8 +94,12 @@ const shortPlace = (place) => (place || '').split(',')[0].trim()
  * saved with the plan, else the individually selected slots grouped by day.
  */
 export function planItineraryDays(selections, itinerary) {
-  if (itinerary?.days?.length) return itinerary.days
-  if (selections?.itinerary?.days?.length) return selections.itinerary.days
+  const arranged = (source) => {
+    const result = arrangeItinerary(source, selections?.itinerary_layout, selections?.itinerary_edits)
+    return result.changed ? result.days : source.days
+  }
+  if (itinerary?.days?.length) return arranged(itinerary)
+  if (selections?.itinerary?.days?.length) return arranged(selections.itinerary)
   const byDay = new Map()
   for (const slot of selections?.itinerary_slots || []) {
     if (!byDay.has(slot.day_number)) byDay.set(slot.day_number, { day_number: slot.day_number, date: slot.date, slots: [] })
@@ -118,7 +124,7 @@ function itineraryEvents(days, selections, searchData) {
     const date = dayDate(day, searchData)
     if (!date) continue
     for (const slot of day.slots || []) {
-      const key = `${day.day_number}-${slot.time_of_day}`
+      const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
       const edit = selections?.itinerary_edits?.[key] || {}
       const note = selections?.itinerary_notes?.[key]
       const hours = SLOT_HOURS[slot.time_of_day] || SLOT_HOURS.morning

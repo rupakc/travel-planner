@@ -8,6 +8,7 @@ import {
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import PlanExport from './PlanExport'
 import { safeUrl } from '../utils/planPrint'
+import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
 
 const SECTION_COLORS = {
   sky:    'bg-sky-50 border-b border-sky-100 text-sky-800',
@@ -440,14 +441,14 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
           {sel.itinerary?.days?.length > 0 && (
             <Section title={`Full Itinerary (${sel.itinerary.days.length} days)`} color="teal" icon={Calendar}>
               <div className="space-y-3">
-                {sel.itinerary.days.map((day, i) => (
+                {arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits).days.map((day, i) => (
                   <div key={i}>
                     <p className="text-xs font-bold text-teal-700">
                       Day {day.day_number}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${String(day.city).split(',')[0]}` : ''}{day.theme ? ` — ${day.theme}` : ''}
                     </p>
                     <ul className="mt-1 space-y-0.5">
                       {(day.slots || []).map((slot, j) => {
-                        const key = `${day.day_number}-${slot.time_of_day}`
+                        const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
                         const edit = sel.itinerary_edits?.[key] || {}
                         return (
                           <li key={j} className="text-xs text-gray-600">
