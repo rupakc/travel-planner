@@ -7,6 +7,12 @@
 export const PLANNER_KEYS = ['flights', 'stay', 'activities']
 const ACTIVITY_SHARE = 0.15
 const DEFAULT_NIGHTS = 7
+const STEP = 10 // slider step; defaults sit on this grid
+// Prices are fractional and summed/scaled, so compare with a little slack
+const EPSILON = 1e-9
+const fitsWithin = (amount, share) => amount <= share + EPSILON
+const ceilStep = (n) => Math.ceil(n / STEP - EPSILON) * STEP
+const roundStep = (n) => Math.round(n / STEP) * STEP
 
 const num = (v) => {
   if (typeof v !== 'number' && !(typeof v === 'string' && v.trim() !== '')) return null
@@ -72,12 +78,13 @@ export function defaultAllocation(searchData, results) {
   const r = results || {}
 
   const legCheapest = flightLegs(r.flights).map((leg) => cheapestFare(leg.fares)).filter((p) => p !== null)
-  const flights = legCheapest.length ? Math.round(legCheapest.reduce((t, p) => t + p, 0)) : 0
+  // Rounded up so the default shares cover the cheapest fare and the median hotel
+  const flights = legCheapest.length ? ceilStep(legCheapest.reduce((t, p) => t + p, 0)) : 0
 
   const nightlies = listOf(r.hotels).map((h) => positive(h.price_per_night_usd)).filter((p) => p !== null)
-  const stay = nightlies.length ? Math.round(median(nightlies) * tripNights(searchData)) : 0
+  const stay = nightlies.length ? ceilStep(median(nightlies) * tripNights(searchData)) : 0
 
-  return fitToTotal({ flights, stay, activities: Math.round(total * ACTIVITY_SHARE) }, total)
+  return fitToTotal({ flights, stay, activities: roundStep(total * ACTIVITY_SHARE) }, total)
 }
 
 const sumOf = (a) => a.flights + a.stay + a.activities + a.other
@@ -111,7 +118,7 @@ function fitFlights(section, share) {
     for (const f of leg.fares) {
       const p = positive(f.price_usd)
       if (p === null) continue
-      ;(p <= cap ? fits : over).add(flightKey(f))
+      ;(fitsWithin(p, cap) ? fits : over).add(flightKey(f))
     }
   })
   return { fits, over, count: fits.size, total: fits.size + over.size }
@@ -123,7 +130,7 @@ function fitHotels(section, share, nights) {
   for (const h of listOf(section)) {
     const nightly = positive(h.price_per_night_usd)
     if (!h.name || nightly === null) continue
-    ;(nightly * nights <= share ? fits : over).add(h.name)
+    ;(fitsWithin(nightly * nights, share) ? fits : over).add(h.name)
   }
   return { fits, over, count: fits.size, total: fits.size + over.size }
 }
@@ -144,7 +151,7 @@ function pickActivities(section, share) {
   let spent = 0
   for (const { a, p } of priced) {
     if (p === 0) picked.add(a.name)
-    else if (spent + p <= share) {
+    else if (fitsWithin(spent + p, share)) {
       picked.add(a.name)
       spent += p
     }

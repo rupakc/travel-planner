@@ -91,17 +91,54 @@ describe('BudgetPlanner', () => {
     expect(text()).toContain('Fits 1 activity ($0)')
   })
 
-  it('reports slider moves and announces the result politely', () => {
-    const onChange = vi.fn()
-    render({ onChange })
-    expect(container.querySelector('[aria-live="polite"]').textContent).toBe('')
-    act(() => setValue(slider('stay'), 1200))
-    expect(onChange).toHaveBeenCalledWith('stay', 1200)
-    render({ onChange, allocation: { ...allocation, stay: 1200, other: 700 }, fit: fit({ hotels: { fits: new Set(), over: new Set(), count: 5, total: 12 } }) })
-    expect(container.querySelector('[aria-live="polite"]').textContent).toBe('Stay budget $1,200 — 5 of 12 hotels fit')
-    act(() => setValue(slider('activities'), 300))
-    expect(onChange).toHaveBeenLastCalledWith('activities', 300)
-    expect(container.querySelector('[aria-live="polite"]').textContent).toBe('Activities budget $450 — fits 5 activities ($212)')
+  it('reports slider moves and announces the result politely once the slider settles', () => {
+    vi.useFakeTimers()
+    try {
+      const live = () => container.querySelector('[aria-live="polite"]').textContent
+      const onChange = vi.fn()
+      render({ onChange })
+      expect(live()).toBe('')
+      act(() => setValue(slider('stay'), 1200))
+      expect(onChange).toHaveBeenCalledWith('stay', 1200)
+      render({ onChange, allocation: { ...allocation, stay: 1200, other: 700 }, fit: fit({ hotels: { fits: new Set(), over: new Set(), count: 5, total: 12 } }) })
+      act(() => vi.advanceTimersByTime(300))
+      expect(live()).toBe('')
+      // another tick restarts the wait
+      act(() => setValue(slider('stay'), 1210))
+      act(() => vi.advanceTimersByTime(300))
+      expect(live()).toBe('')
+      act(() => vi.advanceTimersByTime(200))
+      expect(live()).toBe('Stay budget $1,200 — 5 of 12 hotels fit')
+      // new props alone don't re-announce
+      render({ onChange, allocation: { ...allocation, stay: 1300, other: 600 } })
+      expect(live()).toBe('Stay budget $1,200 — 5 of 12 hotels fit')
+      act(() => setValue(slider('activities'), 300))
+      expect(onChange).toHaveBeenLastCalledWith('activities', 300)
+      act(() => vi.advanceTimersByTime(500))
+      expect(live()).toBe('Activities budget $450 — fits 5 activities ($212)')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('announces Reset and a total edit right away', () => {
+    const live = () => container.querySelector('[aria-live="polite"]').textContent
+    render()
+    act(() => button('Reset').click())
+    expect(live()).toBe('Budget split reset to the suggested shares')
+    act(() => setValue(totalInput(), 3500))
+    act(() => totalInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    render({ allocation: { ...allocation, other: 1350 } })
+    expect(live()).toBe('Total budget $3,500')
+  })
+
+  it('points aria-controls at the body only while it is rendered', () => {
+    render()
+    const toggle = container.querySelector('button[aria-expanded]')
+    expect(toggle.getAttribute('aria-controls')).toBe('budget-planner-body')
+    expect(container.querySelector('#budget-planner-body')).not.toBeNull()
+    act(() => toggle.click())
+    expect(toggle.hasAttribute('aria-controls')).toBe(false)
   })
 
   it('commits an edited total on blur or Enter, ignoring junk', () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Wallet, ChevronDown, RotateCcw, Loader2 } from 'lucide-react'
 
 const usd = (n) => `$${Math.round(Number(n) || 0).toLocaleString()}`
@@ -13,6 +13,7 @@ const CATEGORIES = [
 const OTHER_BAR = 'bg-gray-300'
 const MIN_HOTELS_FITTING = 3
 const NARROW = '(max-width: 639px)'
+const ANNOUNCE_DELAY_MS = 500
 
 function fitText(key, fit) {
   if (key === 'flights') {
@@ -28,7 +29,6 @@ function fitText(key, fit) {
 }
 
 function announcement(key, allocation, fit) {
-  if (!key) return ''
   const name = { flights: 'Flight', stay: 'Stay', activities: 'Activities' }[key]
   const what = fitText(key, fit)
   return `${name} budget ${usd(allocation[key])} — ${key === 'activities' ? what.charAt(0).toLowerCase() + what.slice(1) : what}`
@@ -54,7 +54,24 @@ export default function BudgetPlanner({
     () => !(typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(NARROW)?.matches),
   )
   const [draftTotal, setDraftTotal] = useState(null)
-  const [lastMoved, setLastMoved] = useState(null)
+  // Live-region text. Slider moves are announced once the slider settles,
+  // from the props as they are then; Reset and total edits right away.
+  const [announced, setAnnounced] = useState('')
+  const announceTimer = useRef(null)
+  const latest = useRef({ allocation, fit })
+  useEffect(() => { latest.current = { allocation, fit } })
+  useEffect(() => () => clearTimeout(announceTimer.current), [])
+  const announceNow = (message) => {
+    clearTimeout(announceTimer.current)
+    setAnnounced(message)
+  }
+  const announceLater = (key) => {
+    clearTimeout(announceTimer.current)
+    announceTimer.current = setTimeout(
+      () => setAnnounced(announcement(key, latest.current.allocation, latest.current.fit)),
+      ANNOUNCE_DELAY_MS,
+    )
+  }
 
   const total = allocation.flights + allocation.stay + allocation.activities + allocation.other
   const parts = [...CATEGORIES.map((c) => ({ ...c, amount: allocation[c.key] })), { key: 'other', label: 'Everything else', bar: OTHER_BAR, amount: allocation.other }]
@@ -65,7 +82,10 @@ export default function BudgetPlanner({
     if (draftTotal === null) return
     const n = Number(draftTotal)
     setDraftTotal(null)
-    if (draftTotal.trim() !== '' && Number.isFinite(n) && n > 0 && Math.round(n) !== total) onTotalChange(Math.round(n))
+    if (draftTotal.trim() !== '' && Number.isFinite(n) && n > 0 && Math.round(n) !== total) {
+      onTotalChange(Math.round(n))
+      announceNow(`Total budget ${usd(n)}`)
+    }
   }
 
   return (
@@ -74,7 +94,7 @@ export default function BudgetPlanner({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-controls="budget-planner-body"
+        aria-controls={open ? 'budget-planner-body' : undefined}
         className="w-full flex items-center gap-2 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
       >
         <span className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-sky-500 to-purple-500 flex items-center justify-center">
@@ -108,7 +128,7 @@ export default function BudgetPlanner({
             <span className="text-xs text-gray-400">per person</span>
             <button
               type="button"
-              onClick={onReset}
+              onClick={() => { onReset(); announceNow('Budget split reset to the suggested shares') }}
               className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border bg-white text-gray-600 border-gray-200 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
             >
               <RotateCcw size={11} /> Reset
@@ -147,7 +167,7 @@ export default function BudgetPlanner({
                     value={allocation[c.key]}
                     aria-valuetext={`${usd(allocation[c.key])} for ${c.noun}`}
                     onChange={(e) => {
-                      setLastMoved(c.key)
+                      announceLater(c.key)
                       onChange(c.key, Number(e.target.value))
                     }}
                     className={`w-full mt-1 cursor-pointer ${c.accent}`}
@@ -194,7 +214,7 @@ export default function BudgetPlanner({
         </div>
       )}
 
-      <p aria-live="polite" className="sr-only">{announcement(lastMoved, allocation, fit)}</p>
+      <p aria-live="polite" className="sr-only">{announced}</p>
     </section>
   )
 }

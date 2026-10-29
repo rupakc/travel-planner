@@ -33,6 +33,14 @@ describe('budget planner on result cards', () => {
   const text = () => container.textContent
   const cardOf = (label) => [...container.querySelectorAll('.rounded-xl, tr')].find((c) => c.textContent.includes(label) && !c.querySelector('.rounded-xl'))
   const button = (t) => [...container.querySelectorAll('button')].find((b) => b.textContent.includes(t))
+  // The card's content is dimmed; the over-budget tag itself stays at full opacity
+  const isDimmed = (card) => card.className.includes(DIM) || !!card.querySelector(`.${DIM}`)
+  const tagOf = (card) => [...card.querySelectorAll('span')].find((el) => /^Over your \w+ budget$/.test(el.textContent))
+  const expectFullOpacityTag = (card) => {
+    const tag = tagOf(card)
+    expect(tag).toBeDefined()
+    expect(tag.closest(`.${DIM}`)).toBeNull()
+  }
 
   describe('HotelsSection', () => {
     const data = { results: [hotel('Fits Inn', 100), hotel('Pricey Palace', 400), hotel('Mystery Lodge', 'varies')] }
@@ -47,11 +55,12 @@ describe('budget planner on result cards', () => {
     it('dims and tags over-budget hotels but keeps them selectable; unknown prices untouched', () => {
       const onSelect = vi.fn()
       render(<HotelsSection data={data} selections={emptySel} onSelect={onSelect} budget={{ over, hideOver: false, onShowAll: () => {} }} />)
-      expect(cardOf('Pricey Palace').className).toContain(DIM)
+      expect(isDimmed(cardOf('Pricey Palace'))).toBe(true)
       expect(cardOf('Pricey Palace').textContent).toContain('Over your stay budget')
+      expectFullOpacityTag(cardOf('Pricey Palace'))
       expect(cardOf('Pricey Palace').textContent).toContain('Add to Plan')
-      expect(cardOf('Fits Inn').className).not.toContain(DIM)
-      expect(cardOf('Mystery Lodge').className).not.toContain(DIM)
+      expect(isDimmed(cardOf('Fits Inn'))).toBe(false)
+      expect(isDimmed(cardOf('Mystery Lodge'))).toBe(false)
       expect((text().match(/Over your stay budget/g) || []).length).toBe(1)
       act(() => cardOf('Pricey Palace').querySelector('button').click())
       expect(onSelect).toHaveBeenCalledWith('hotel', data.results[1])
@@ -59,7 +68,7 @@ describe('budget planner on result cards', () => {
 
     it('a selected over-budget hotel is tagged but not dimmed', () => {
       render(<HotelsSection data={data} selections={{ ...emptySel, hotel: data.results[1] }} onSelect={() => {}} budget={{ over, hideOver: false }} />)
-      expect(cardOf('Pricey Palace').className).not.toContain(DIM)
+      expect(isDimmed(cardOf('Pricey Palace'))).toBe(false)
       expect(cardOf('Pricey Palace').textContent).toContain('Added to Plan')
     })
 
@@ -83,9 +92,10 @@ describe('budget planner on result cards', () => {
       const data = { results: [cheap, dear] }
       const over = new Set([flightKey(dear)])
       render(<FlightsSection data={data} selections={emptySel} onSelect={() => {}} budget={{ over, hideOver: false }} />)
-      expect(cardOf('$900').className).toContain(DIM)
+      expect(isDimmed(cardOf('$900'))).toBe(true)
       expect(cardOf('$900').textContent).toContain('Over your flight budget')
-      expect(cardOf('$300').className).not.toContain(DIM)
+      expectFullOpacityTag(cardOf('$900'))
+      expect(isDimmed(cardOf('$300'))).toBe(false)
       render(<FlightsSection data={data} selections={emptySel} onSelect={() => {}} budget={{ over, hideOver: true }} />)
       expect(text()).not.toContain('$900')
       expect(text()).toContain('1 hidden — show all')
@@ -97,8 +107,9 @@ describe('budget planner on result cards', () => {
       const over = new Set([flightKey(b)])
       render(<FlightsSection data={{ results: [a, b] }} selections={emptySel} onSelect={() => {}} budget={{ over, hideOver: false }} />)
       const row = [...container.querySelectorAll('tbody tr')].find((r) => r.textContent.includes('AirB'))
-      expect(row.className).toContain(DIM)
+      expect(isDimmed(row)).toBe(true)
       expect(row.textContent).toContain('Over your flight budget')
+      expectFullOpacityTag(row)
       render(<FlightsSection data={{ results: [a, b] }} selections={emptySel} onSelect={() => {}} budget={{ over, hideOver: true }} />)
       expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
       expect(text()).toContain('1 hidden — show all')
@@ -113,12 +124,13 @@ describe('budget planner on result cards', () => {
       render(<FlightsSection data={data} selections={{ ...emptySel, flights: [a1] }} onSelect={() => {}} budget={{ over, hideOver: true }} />)
       expect(text()).not.toContain('$500')
       expect(text()).toContain('$900')
-      expect(cardOf('$900').className).not.toContain(DIM)
+      expect(isDimmed(cardOf('$900'))).toBe(false)
       expect(cardOf('$900').textContent).toContain('Added')
       expect((text().match(/hidden — show all/g) || []).length).toBe(1)
       render(<FlightsSection data={data} selections={emptySel} onSelect={() => {}} budget={{ over, hideOver: false }} />)
-      expect(cardOf('$500').className).toContain(DIM)
+      expect(isDimmed(cardOf('$500'))).toBe(true)
       expect(cardOf('$500').textContent).toContain('Add')
+      expectFullOpacityTag(cardOf('$500'))
     })
   })
 

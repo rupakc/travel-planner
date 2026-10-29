@@ -63,6 +63,46 @@ describe('defaultAllocation', () => {
     expect(sum(a)).toBe(3000)
   })
 
+  it('rounds flights and stay up to the next $10 and activities to the nearest $10', () => {
+    const r = {
+      flights: { results: [flight('A', 499.4), flight('B', 520)] },
+      hotels: { results: [hotel('H1', 100.3), hotel('H2', 120.45), hotel('H3', 300)] },
+    }
+    // 7 nights × median 120.45 = 843.15 → 850; 15% of 3333 = 499.95 → 500
+    const a = defaultAllocation(sd({ budget_usd: 3333 }), r)
+    expect(a).toEqual({ flights: 500, stay: 850, activities: 500, other: 1483 })
+    expect([a.flights, a.stay, a.activities].every((v) => v % 10 === 0)).toBe(true)
+  })
+
+  it('default shares cover the cheapest fare, the median hotel and each multi-city leg', () => {
+    const single = { flights: { results: [flight('A', 499.4), flight('B', 700)] }, hotels: { results: [hotel('H1', 99.99), hotel('H2', 120.45), hotel('H3', 300)] } }
+    const fit1 = fitResults(single, defaultAllocation(sd(), single), sd())
+    expect(fit1.flights.count).toBe(1)
+    expect([...fit1.hotels.fits]).toEqual(['H1', 'H2'])
+
+    const legs = {
+      flights: {
+        legs: [
+          { leg_index: 0, results: [flight('A0', 123.45, { leg_index: 0 })] },
+          { leg_index: 1, results: [flight('A1', 98.76, { leg_index: 1 })] },
+          { leg_index: 2, results: [flight('A2', 0.1 + 0.2, { leg_index: 2 })] },
+        ],
+      },
+    }
+    const a = defaultAllocation(sd(), legs)
+    expect(a.flights).toBe(230)
+    expect(fitResults(legs, a, sd()).flights.count).toBe(3)
+  })
+
+  it('fit comparisons tolerate floating-point noise', () => {
+    // 0.1 + 0.2 = 0.30000000000000004 > 0.3
+    const r = { flights: { results: [flight('F', 0.1 + 0.2)] }, hotels: { results: [hotel('H', (0.1 + 0.2) / 7)] }, activities: { results: [activity('A', 0.1 + 0.2, 1)] } }
+    const fit = fitResults(r, { flights: 0.3, stay: 0.3, activities: 0.3, other: 0 }, sd())
+    expect(fit.flights.count).toBe(1)
+    expect(fit.hotels.count).toBe(1)
+    expect([...fit.activities.picked]).toEqual(['A'])
+  })
+
   it('multi-city sums the cheapest priced fare per leg', () => {
     const r = {
       flights: {

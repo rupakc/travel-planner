@@ -419,7 +419,9 @@ function CityChip({ city }) {
 // dimmed, or hidden when "Show only what fits" is on; a selected card always
 // stays visible and undimmed, and unknown prices are never treated as over.
 
-const OVER_BUDGET_DIM = 'opacity-60 hover:opacity-100 focus-within:opacity-100'
+// Applied to the card's content, never to the card itself, so the
+// over-budget tag (outside the content) stays at full opacity
+const OVER_BUDGET_DIM = 'opacity-60 transition-opacity group-hover/budget:opacity-100 group-focus-within/budget:opacity-100'
 
 function OverBudgetTag({ children }) {
   return <span className="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">{children}</span>
@@ -480,31 +482,33 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
                   return (
                     <div key={i}
                       onClick={() => onSelect('flights', f)}
-                      className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
+                      className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} group/budget`}>
+                      {over && <div className="mb-2"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}
+                      <div className={dim ? OVER_BUDGET_DIM : undefined}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-base font-bold text-teal-700">{f.price_usd ? `$${Number(f.price_usd).toLocaleString()}` : '—'}</p>
+                            <p className="text-[10px] text-gray-400">per person</p>
+                          </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-base font-bold text-teal-700">{f.price_usd ? `$${Number(f.price_usd).toLocaleString()}` : '—'}</p>
-                          <p className="text-[10px] text-gray-400">per person</p>
+                        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {f.booking_url && (
+                              <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                                className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
+                                <ExternalLink size={11} /> Book
+                              </a>
+                            )}
+                            {f.source && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g, ' ')}</span>}
+                          </div>
+                          <button type="button" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
+                            {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                          </button>
                         </div>
-                      </div>
-                      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {over && <OverBudgetTag>Over your flight budget</OverBudgetTag>}
-                          {f.booking_url && (
-                            <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                              className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
-                              <ExternalLink size={11} /> Book
-                            </a>
-                          )}
-                          {f.source && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g, ' ')}</span>}
-                        </div>
-                        <button type="button" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
-                          {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
-                        </button>
                       </div>
                     </div>
                   )
@@ -554,25 +558,26 @@ export function FlightsSection({ data, selections, onSelect, pricingData, onLayo
           <tbody className="divide-y divide-gray-100">
             {legacyView.shown.map(({ item: f, i, over, dim }) => {
               const isSelected = isLegacySelected(f)
+              const dimCell = dim ? ` ${OVER_BUDGET_DIM}` : ''
               return (
                 <tr key={i} onClick={() => onSelect('flight', isSelected ? null : f)}
-                  className={`cursor-pointer transition-colors ${isSelected ? 'bg-teal-50 ring-1 ring-inset ring-teal-300' : 'hover:bg-gray-50'} ${dim ? OVER_BUDGET_DIM : ''}`}>
-                  <td className="px-3 py-3 text-center">
+                  className={`cursor-pointer transition-colors ${isSelected ? 'bg-teal-50 ring-1 ring-inset ring-teal-300' : 'hover:bg-gray-50'} group/budget`}>
+                  <td className={`px-3 py-3 text-center${dimCell}`}>
                     <div className={`w-4 h-4 rounded-full border-2 mx-auto flex items-center justify-center ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-gray-300'}`}>
                       {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium">{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}</td>
-                  <td className="px-4 py-3 text-right font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}{over && <div className="font-normal"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className={`px-4 py-3 font-medium${dimCell}`}>{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}</td>
+                  <td className="px-4 py-3 text-right font-bold text-teal-700"><span className={dimCell.trim() || undefined}>{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</span>{over && <div className="font-normal"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}</td>
+                  <td className={`px-4 py-3 text-center${dimCell}`}>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${f.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                       {f.stops === 0 ? 'Non-stop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-600">{f.duration_minutes ? `${Math.floor(f.duration_minutes/60)}h ${f.duration_minutes%60}m` : '—'}</td>
-                  <td className="px-4 py-3 text-center text-gray-500 text-xs">{f.departure_time || '—'} → {f.arrival_time || '—'}</td>
-                  <td className="px-4 py-3 text-center">{f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className={`px-4 py-3 text-center text-gray-600${dimCell}`}>{f.duration_minutes ? `${Math.floor(f.duration_minutes/60)}h ${f.duration_minutes%60}m` : '—'}</td>
+                  <td className={`px-4 py-3 text-center text-gray-500 text-xs${dimCell}`}>{f.departure_time || '—'} → {f.arrival_time || '—'}</td>
+                  <td className={`px-4 py-3 text-center${dimCell}`}>{f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}</td>
+                  <td className={`px-4 py-3 text-center${dimCell}`}>
                     {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-teal-500 hover:text-teal-700"><ExternalLink size={13} /></a>}
                   </td>
                 </tr>
@@ -598,46 +603,48 @@ export function FlightsSection({ data, selections, onSelect, pricingData, onLayo
         return (
           <div key={i}
             onClick={() => onSelect('flight', isSelected ? null : f)}
-            className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}
+            className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} group/budget`}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-gray-300'}`}>
-                  {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+            {over && <div className="mb-2"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}
+            <div className={dim ? OVER_BUDGET_DIM : undefined}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-gray-300'}`}>
+                    {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isOneWay ? 'bg-gray-100 text-gray-600' : 'bg-sky-100 text-sky-700'}`}>
+                    {isOneWay ? 'One-way' : 'Round-trip'}
+                  </span>
+                  {f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isOneWay ? 'bg-gray-100 text-gray-600' : 'bg-sky-100 text-sky-700'}`}>
-                  {isOneWay ? 'One-way' : 'Round-trip'}
-                </span>
-                {f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}
-                {over && <OverBudgetTag>Over your flight budget</OverBudgetTag>}
+                <div className="text-right">
+                  <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</p>
+                  <p className="text-xs text-gray-400">{isOneWay ? 'per person' : 'round-trip / person'}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</p>
-                <p className="text-xs text-gray-400">{isOneWay ? 'per person' : 'round-trip / person'}</p>
-              </div>
+
+              {/* Outbound leg */}
+              <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
+
+              {/* Return leg */}
+              {f.return && (
+                <>
+                  <div className="border-t border-dashed border-gray-200 my-2" />
+                  <FlightLeg leg={f.return} direction="return" onLayover={onLayover} />
+                </>
+              )}
+
+              {/* Booking link */}
+              {f.booking_url && (
+                <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                  <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
+                    <ExternalLink size={11} /> Book this flight
+                  </a>
+                  {isSelected && <span className="flex items-center gap-1 text-xs font-semibold text-teal-700"><Check size={12} /> Added to Plan</span>}
+                </div>
+              )}
             </div>
-
-            {/* Outbound leg */}
-            <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
-
-            {/* Return leg */}
-            {f.return && (
-              <>
-                <div className="border-t border-dashed border-gray-200 my-2" />
-                <FlightLeg leg={f.return} direction="return" onLayover={onLayover} />
-              </>
-            )}
-
-            {/* Booking link */}
-            {f.booking_url && (
-              <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-                <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
-                  <ExternalLink size={11} /> Book this flight
-                </a>
-                {isSelected && <span className="flex items-center gap-1 text-xs font-semibold text-teal-700"><Check size={12} /> Added to Plan</span>}
-              </div>
-            )}
           </div>
         )
       })}
@@ -832,41 +839,43 @@ export function HotelsSection({ data, selections, onSelect, budget = null }) {
         return (
           <div key={i}
             onClick={() => onSelect('hotel', isSelected ? null : h)}
-            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}>
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex-1 min-w-0 mr-2">
-                <h3 className="font-semibold text-gray-900 truncate">{h.name}</h3>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <p className="text-xs text-gray-500">{h.location}</p>
-                  {h.city && <CityChip city={h.city} />}
+            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'} group/budget`}>
+            {over && <div className="mb-2"><OverBudgetTag>Over your stay budget</OverBudgetTag></div>}
+            <div className={dim ? OVER_BUDGET_DIM : undefined}>
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h3 className="font-semibold text-gray-900 truncate">{h.name}</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <p className="text-xs text-gray-500">{h.location}</p>
+                    {h.city && <CityChip city={h.city} />}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-purple-700">${h.price_per_night_usd?.toLocaleString()}<span className="text-xs font-normal text-gray-500">/night</span></p>
+                  {h.total_price_usd && <p className="text-xs text-gray-400">${h.total_price_usd.toLocaleString()} total</p>}
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <p className="font-bold text-purple-700">${h.price_per_night_usd?.toLocaleString()}<span className="text-xs font-normal text-gray-500">/night</span></p>
-                {h.total_price_usd && <p className="text-xs text-gray-400">${h.total_price_usd.toLocaleString()} total</p>}
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <div className="flex">{[...Array(Math.round(h.star_rating || 0))].map((_, j) => <Star key={j} size={11} className="text-yellow-400 fill-yellow-400" />)}</div>
+                {h.review_score && <span className="text-xs text-gray-500">{h.review_score}/10</span>}
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <div className="flex">{[...Array(Math.round(h.star_rating || 0))].map((_, j) => <Star key={j} size={11} className="text-yellow-400 fill-yellow-400" />)}</div>
-              {h.review_score && <span className="text-xs text-gray-500">{h.review_score}/10</span>}
-              {over && <OverBudgetTag>Over your stay budget</OverBudgetTag>}
-            </div>
-            {h.amenities?.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-3">
-                {h.amenities.slice(0, 4).map(a => <span key={a} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{a}</span>)}
-                {h.amenities.length > 4 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{h.amenities.length-4}</span>}
+              {h.amenities?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {h.amenities.slice(0, 4).map(a => <span key={a} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{a}</span>)}
+                  {h.amenities.length > 4 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{h.amenities.length-4}</span>}
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-2">
+                  {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
+                  {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
+                  <FoundOnlineBadge item={h} />
+                </div>
+                <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
+                  {isSelected ? <><Check size={11}/> Added to Plan</> : <><Plus size={11}/> Add to Plan</>}
+                </button>
               </div>
-            )}
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-2">
-                {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
-                {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
-                <FoundOnlineBadge item={h} />
-              </div>
-              <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
-                {isSelected ? <><Check size={11}/> Added to Plan</> : <><Plus size={11}/> Add to Plan</>}
-              </button>
             </div>
           </div>
         )
