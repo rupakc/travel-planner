@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { haversineKm } from '../utils/geo'
 
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
@@ -23,16 +24,6 @@ function FitBounds({ positions }) {
     }
   }, []) // intentional: fit bounds once on mount
   return null
-}
-
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371
-  const dL = (lat2 - lat1) * Math.PI / 180
-  const dG = (lng2 - lng1) * Math.PI / 180
-  const a =
-    Math.sin(dL / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dG / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 function nearestNeighborOrder(stops) {
