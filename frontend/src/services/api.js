@@ -129,3 +129,9 @@ export async function deleteRecentSearch(token, id) {
 }
 
 export default api
+
+/** Per-destination lightweight summary for trip comparison. */
+export async function compareDestination(request, token = null) {
+  const res = await api.post('/compare/destination', request, token ? authHeaders(token) : undefined)
+  return res.data
+}
