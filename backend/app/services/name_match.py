@@ -57,21 +57,40 @@ def words(text: str) -> set[str]:
     return {w for w in clean.split() if len(w) > 2}
 
 
+# Words that never identify a specific place on their own. Stop words minus
+# the place-name parts (new / york / los / angeles / san / francisco), plus
+# a few generic venue words.
+GENERIC_WORDS = (STOP_WORDS - {"new", "york", "los", "angeles", "san", "francisco"}) | {
+    "museum",
+    "museums",
+    "park",
+    "market",
+    "walking",
+    "walk",
+    "experience",
+}
+
+
 def distinctive_words(name: str, exclude: Iterable[str] = ()) -> set[str]:
     """Distinctive words of ``name``.
 
-    Stop words are dropped (falling back to all words when only stop words
-    remain); then any ``exclude`` words (e.g. destination tokens) are removed.
-    May return an empty set — callers must treat that as "cannot match".
+    ``exclude`` words (e.g. destination tokens) are removed first, together
+    with stop words. Only if nothing remains does it fall back to the other
+    non-excluded words; and a set made only of generic words ("hotel",
+    "tour", "city", "museum", "the" …) is never distinctive. May return an
+    empty set — callers must treat that as "cannot match".
     """
     all_words = words(name)
-    name_words = all_words - STOP_WORDS
-    if not name_words:
-        name_words = all_words
     excluded: set[str] = set()
     for item in exclude:
         excluded |= words(item)
-    return name_words - excluded
+    remaining = all_words - excluded
+    name_words = remaining - STOP_WORDS
+    if not name_words:
+        name_words = remaining
+    if name_words <= GENERIC_WORDS:
+        return set()
+    return name_words
 
 
 def min_matches(name_words: set[str]) -> int:

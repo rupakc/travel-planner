@@ -127,6 +127,12 @@ async def resolve_top_places(
             place["info_url"] = url
             place["source"] = _url_to_source(url)
             # Evidence only when the result is really about this place
-            if name_matches_title(place.get("name", ""), title):
+            city = place.get("city")
+            exclude = (
+                (destination, city)
+                if isinstance(city, str) and city
+                else (destination,)
+            )
+            if name_matches_title(place.get("name", ""), title, exclude=exclude):
                 place["link_verified"] = True
     return data

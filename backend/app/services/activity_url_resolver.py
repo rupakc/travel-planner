@@ -67,6 +67,13 @@ def _is_trusted(url: str) -> bool:
         return False
 
 
+def _place_words(item: dict, destination: str) -> tuple[str, ...]:
+    """Destination (plus the item's own city on multi-city trips) — never
+    distinctive when matching a result title to the item's name."""
+    city = item.get("city")
+    return (destination, city) if isinstance(city, str) and city else (destination,)
+
+
 def _build_query(name: str, destination: str) -> str:
     short = " ".join(name.split()[:6])
     return f"{short} {destination} book tour"
@@ -235,7 +242,11 @@ async def resolve_top(
             activity = activities[idx]
             activity["booking_url"] = url
             # Evidence only when the result is really about this activity
-            if name_matches_title(activity.get("name", ""), title):
+            if name_matches_title(
+                activity.get("name", ""),
+                title,
+                exclude=_place_words(activity, destination),
+            ):
                 activity["link_verified"] = True
             used_urls.add(url)
             logger.info(

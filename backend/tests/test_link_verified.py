@@ -277,3 +277,117 @@ class TestNameMatchHelper:
         assert name_matches_title(
             "Park Hyatt Tokyo", "Park Hyatt Tokyo – Official", exclude=("Tokyo",)
         )
+
+
+# ── Exclusion applies before the generic-word fallback ────────────────
+
+
+class TestExcludeBeforeFallback:
+    def test_city_plus_generic_hotel_word_never_matches(self):
+        from app.services.name_match import distinctive_words, name_matches_title
+
+        assert distinctive_words("New York Hotel", exclude=("New York",)) == set()
+        assert not name_matches_title(
+            "New York Hotel", "Best Hotel Deals", exclude=("New York",)
+        )
+
+    def test_distinctive_hotel_still_matches_with_destination_excluded(self):
+        from app.services.name_match import name_matches_title
+
+        assert name_matches_title(
+            "Hotel Adlon Kempinski",
+            "Hotel Adlon Kempinski Berlin – Official Site",
+            exclude=("Berlin",),
+        )
+
+    def test_generic_words_alone_are_not_distinctive(self):
+        from app.services.name_match import distinctive_words
+
+        assert distinctive_words("The City Museum Tour") == set()
+        # place-name stop words still fall back when nothing is excluded
+        assert distinctive_words("New York") == {"new", "york"}
+
+    @pytest.mark.asyncio
+    async def test_hotel_new_york_vs_generic_deals_page(self):
+        from unittest.mock import patch
+
+        agent = HotelsAgent.__new__(HotelsAgent)
+        agent._destination = "New York"
+        page = _search_text(("Best Hotel Deals", "https://www.expedia.com/deals"))
+        with patch("app.agents.web_tools.execute_tool", AsyncMock(return_value=page)):
+            out = await agent._enrich_urls({"results": [{"name": "New York Hotel"}]})
+        assert out["results"][0]["link_verified"] is False
+
+
+class TestResolverDestinationExclusion:
+    @pytest.mark.asyncio
+    async def test_city_tour_vs_city_listing_upgrades_without_flag(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        url = "https://www.getyourguide.com/berlin-l17/"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Top Berlin Tours | GetYourGuide")
+        )
+        data = {"results": [{"name": "Berlin City Tour", "similarity_score": 0.9}]}
+        out = await resolve_top(resolver, data, "Berlin")
+        item = out["results"][0]
+        assert item["booking_url"] == url
+        assert "link_verified" not in item
+        assert item["link_checked"] is True
+
+    @pytest.mark.asyncio
+    async def test_distinctive_activity_matches(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        url = "https://www.getyourguide.com/berlin-l17/pergamon-t5"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Berlin: Pergamon Museum Guided Tour with Tickets")
+        )
+        data = {
+            "results": [
+                {"name": "Pergamon Museum Guided Tour", "similarity_score": 0.9}
+            ]
+        }
+        out = await resolve_top(resolver, data, "Berlin")
+        assert out["results"][0]["link_verified"] is True
+
+    @pytest.mark.asyncio
+    async def test_multi_city_item_city_is_excluded(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        url = "https://www.getyourguide.com/munich-l26/"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Munich City Tours | GetYourGuide")
+        )
+        data = {
+            "results": [
+                {
+                    "name": "Munich City Tour",
+                    "city": "Munich",
+                    "similarity_score": 0.9,
+                }
+            ]
+        }
+        out = await resolve_top(resolver, data, "Berlin")
+        assert "link_verified" not in out["results"][0]
+
+    @pytest.mark.asyncio
+    async def test_place_city_listing_not_flagged(self):
+        url = "https://www.tripadvisor.com/Attractions-g187323-Berlin.html"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Museum Island Berlin - Things to Do - Tripadvisor")
+        )
+        data = {"results": [{"name": "Berlin Museum"}]}
+        out = await resolve_top_places(resolver, data, "Berlin")
+        assert out["results"][0]["info_url"] == url
+        assert "link_verified" not in out["results"][0]
