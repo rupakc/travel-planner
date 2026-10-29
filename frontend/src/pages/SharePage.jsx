@@ -437,7 +437,7 @@ export default function SharePage() {
                     {slotsByDay[dayNum].map((slot, j) => (
                       <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
                         <span className="shrink-0 w-20 text-xs text-gray-400 capitalize mt-0.5">{slot.time_of_day}</span>
-                        <span>{slot.activity}{slot.location && <span className="text-gray-400 text-xs"> — {slot.location}</span>}</span>
+                        <span>{timeRange(slot) && <span className="text-teal-600 text-xs mr-1">{timeRange(slot)}</span>}{slot.activity}{slot.location && <span className="text-gray-400 text-xs"> — {slot.location}</span>}</span>
                       </li>
                     ))}
                   </ul>

@@ -8,7 +8,7 @@ import TripMap from './TripMap'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
-import { listedInScheduleOrder, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
+import { listedInScheduleOrder, pickedTimes, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
 
 // Custom MIME so the drawer (which treats application/json as a plan) never
 // mistakes an itinerary drag for a plan drop.
@@ -548,7 +548,7 @@ export default function ItinerarySection({
                             </div>
                           )}
                           <button type="button" aria-label={inPlan ? `Remove ${activity} from plan` : `Add ${activity} to plan`}
-                            onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
+                            onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost, ...pickedTimes(slot) })}
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                               inPlan
                                 ? 'bg-teal-600 text-white'

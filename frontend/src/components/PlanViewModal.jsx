@@ -423,6 +423,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <span className="text-xs font-semibold text-teal-600">Day {slot.day_number}</span>
                         <span className="text-xs text-gray-400 capitalize">{slot.time_of_day}</span>
+                        {timeRange(slot) && <span className="text-xs text-teal-600">{timeRange(slot)}</span>}
                       </div>
                       <p className="text-sm font-medium text-gray-900">{slot.activity}</p>
                       {slot.location && <p className="text-xs text-gray-500">{slot.location}</p>}
