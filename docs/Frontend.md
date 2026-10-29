@@ -154,7 +154,11 @@ The main results view. Receives streaming events from `sseWorker.js` via `Search
 
 - **Travel Confidence Score banner** — appears instantly at the top (Phase 0 static data). Shows an overall score (green / amber / red) with five sub-scores: visa ease, safety, English friendliness, cost vs budget, and tourist infrastructure. Expandable to show per-score notes.
 
-- **Flight Price Advisor banner** — appears inside the Flights section once the pricing agent has run. Shows whether current prices are above or below typical, a booking recommendation, and an SVG sparkline of the historical price curve.
+- **Flight Price Advisor banner** — appears inside the Flights section once the pricing agent has run. Shows whether current prices are above or below typical, a booking recommendation, and an SVG sparkline of the historical price curve. The sparkline's "Now" point is placed by the days until `searchData.departure_date`.
+
+- **Google Flights price chip** (`PriceInsightsChip` in `components/FareCalendarStrip.jsx`) — when `results.flights.price_insights` is present (live fares, single-city), a chip under the pricing banner reads e.g. "Fares are low right now · typical $420–$610", green / gray / amber for low / typical / high. This is Google's own data, not an AI estimate.
+
+- **Fare calendar** (`components/FareCalendarStrip.jsx`, helpers in `utils/fareCalendar.js`) — a "Fare calendar" pill next to Filters in the Flights header, shown only for signed-in users on single-city trips when `GET /health` reports `serpapi_configured` (read once per page load and cached in `services/api.js` → `getSerpapiConfigured`; a failed read is retried next time). Clicking it opens a strip under the banner that loads `POST /api/flights/fare-calendar`: 7 cells (weekday, date, cheapest fare or "—", difference from your dates such as "−$45"), the cheapest highlighted emerald and your dates outlined. While loading it shows a skeleton; on error it shows the API's string `detail` (including the 429 message) with Retry. Clicking another date asks inline — "Re-plan for Tue 3 Nov – Tue 10 Nov? This runs a new search." — and on confirm runs a full new search with both dates shifted (selections reset, as with Remix) and tracks `fare_calendar_replan` with the day `offset`. A new search closes the strip.
 
 - **Badge / chip strip** — a row of chips below the page header linking to each section. Wraps across multiple rows as needed. Each chip shows the section status (loading / enhancing / done / error).
 
@@ -204,12 +208,13 @@ Used by ResultsPage's Itinerary section. ChatPage has its own inline map (for ci
 
 ## Vite dev proxy
 
-In development, Vite proxies `/api/*` to `http://localhost:8001`. This mirrors the production nginx setup. Config in `vite.config.js`:
+In development, Vite proxies `/api/*` and `/health` to `http://localhost:8001`. This mirrors the production nginx setup. Config in `vite.config.js`:
 
 ```js
 server: {
   proxy: {
-    '/api': { target: 'http://localhost:8001', changeOrigin: true }
+    '/api': { target: 'http://localhost:8001', changeOrigin: true },
+    '/health': { target: 'http://localhost:8001', changeOrigin: true },
   }
 }
 ```

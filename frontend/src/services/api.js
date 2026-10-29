@@ -107,6 +107,32 @@ export async function searchActivitiesFiltered(searchData, filters) {
   return res.data
 }
 
+/**
+ * Cheapest live fare for departure dates ±3 days (same trip length).
+ * Single-city trips only; needs a signed-in user.
+ */
+export async function fetchFareCalendar(searchData, token) {
+  const res = await api.post('/flights/fare-calendar', searchData, token ? authHeaders(token) : undefined)
+  return res.data
+}
+
+// One /health read per page load; a failed read is not cached so it can retry.
+let serpapiConfigured = null
+
+/** Whether the backend has live flight data (SerpAPI) configured. */
+export function getSerpapiConfigured() {
+  if (!serpapiConfigured) {
+    serpapiConfigured = fetch('/health')
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then(data => data?.serpapi_configured === true)
+      .catch(() => {
+        serpapiConfigured = null
+        return false
+      })
+  }
+  return serpapiConfigured
+}
+
 export async function discoverDestinations(data) {
   const res = await api.post('/discover', data)
   return res.data

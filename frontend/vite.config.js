@@ -18,7 +18,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8001',
         changeOrigin: true,
-      }
+      },
+      // /health carries capability flags (e.g. serpapi_configured)
+      '/health': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+      },
     }
   }
 })
