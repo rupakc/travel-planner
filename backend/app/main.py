@@ -22,6 +22,7 @@ from .api.routes.airports import router as airports_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
+from .api.routes.compare import router as compare_router
 from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.feedback import router as feedback_router
@@ -119,6 +120,7 @@ app.include_router(getting_around.router, prefix="/api", tags=["getting_around"]
 app.include_router(forex.router, prefix="/api", tags=["forex"])
 app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
 app.include_router(discover_router, prefix="/api", tags=["discover"])
+app.include_router(compare_router, prefix="/api", tags=["compare"])
 app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
 app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(events_router, prefix="/api", tags=["events"])
