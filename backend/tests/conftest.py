@@ -24,6 +24,15 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 
+@pytest.fixture(scope="session", autouse=True)
+def place_data():
+    """Seed the place data once, before any test: lookups (airports, static
+    tables' country fallback) read it, whatever the test order."""
+    from app.db.seed_airports import seed
+
+    seed()
+
+
 @pytest.fixture(scope="session")
 def client():
     from app.main import app

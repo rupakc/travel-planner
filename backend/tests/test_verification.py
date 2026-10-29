@@ -30,7 +30,7 @@ def _req(**kw) -> TravelSearchRequest:
 
 
 REQ = _req()  # American → Tokyo: in the visa and emergency tables
-REQ_UNKNOWN = _req(nationality="Brazilian", destination="Atlantis")
+REQ_UNKNOWN = _req(nationality="Brazilian", destination="Xyzzyville")
 
 
 def _shape_ok(v: dict) -> None:
@@ -515,7 +515,8 @@ def test_emergency_missing_ai_numbers_unverified():
 
 def test_emergency_multi_city():
     req = _req(
-        destination="Tokyo", destinations=["Tokyo, Japan", "Paris, France", "Atlantis"]
+        destination="Tokyo",
+        destinations=["Tokyo, Japan", "Paris, France", "Xyzzyville"],
     )
     ok = {
         "cities": [
@@ -536,7 +537,7 @@ def test_emergency_multi_city():
     assert verify_section("emergency_card", ok, req)["level"] == "verified"
     partial = {
         "cities": ok["cities"]
-        + [{"city": "Atlantis", "emergency_numbers": {"police": "1"}}]
+        + [{"city": "Xyzzyville", "emergency_numbers": {"police": "1"}}]
     }
     assert verify_section("emergency_card", partial, req)["level"] == "partial"
     bad = {
@@ -854,14 +855,14 @@ async def test_weather_multi_city_all_llm_is_not_partial():
     agent = WeatherAgent.__new__(WeatherAgent)
     agent.execute = AsyncMock(
         return_value={
-            "days": [{"date": "2027-06-01", "city": "Atlantis"}],
+            "days": [{"date": "2027-06-01", "city": "Xyzzyville"}],
             "source": "open-meteo",
         }
     )
     req = _req(
         departure_date=date(2027, 6, 1),
         return_date=date(2027, 6, 5),
-        destinations=["Atlantis", "Lemuria"],
+        destinations=["Xyzzyville", "Lemuria"],
         destination_nights={},
     )
     out = await agent.run(req)
@@ -877,7 +878,7 @@ def test_static_emergency_entry_reuses_getter():
 
     entry = _static_emergency_entry("Tokyo, Japan")
     assert entry["emergency_numbers"] is get_static_emergency_numbers("Tokyo, Japan")
-    assert _static_emergency_entry("Atlantis") is None
+    assert _static_emergency_entry("Xyzzyville") is None
 
 
 # ── emergency: verified needs >= 2 numbers compared ───────────────────

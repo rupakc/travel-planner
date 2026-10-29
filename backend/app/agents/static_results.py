@@ -1502,8 +1502,13 @@ def _place_country(destination: str) -> str | None:
     ES").
     An unknown city with a code takes its country only when the code has a
     single reading across ISO and region codes ("Trondheim, NO", "Austin,
-    TX"; not "Leipzig, DE" or "Smalltown, PA"). Otherwise a single
+    TX"; not "Smalltown, PA"). Otherwise a single
     "<city> <country>" phrase like "Tokyo Japan". Never substring matching.
+
+    A city the map doesn't know first takes the country of the place it
+    resolves to in the GeoNames data (``places_db.resolve_place``: "Zermatt"
+    → switzerland, "Leipzig, DE" → germany), when the tables have that
+    country; a known city's rulings ("Paris, TX" → None) never get there.
     """
     place = normalise_place(destination)
     country, city = place["country"], place["city"]
@@ -1523,6 +1528,14 @@ def _place_country(destination: str) -> str | None:
         if country in _ISO_COUNTRY and country not in _US_STATES:
             return _ISO_COUNTRY[country]
         return None
+    if city:
+        # A city the curated map doesn't know: its country from the place
+        # data ("Zermatt", "Leipzig, DE"), when that country has table rows
+        from ..db.places_db import resolve_place
+
+        resolved = resolve_place(destination)
+        if resolved:
+            return _ISO_COUNTRY.get(resolved.country_code.lower())
     if city and country:
         # Unknown city: a full Canadian / Australian / Brazilian state or
         # province name ("Victoria, British Columbia"; US state names stay

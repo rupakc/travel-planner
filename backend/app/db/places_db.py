@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 # place's alternate must still beat small namesakes ("Venice", Florida).
 # Calibrated on tests/data/golden_places.csv (see task-3 report).
 ALT_NAME_PENALTY = 0.0135
+# Shorter alternate names are mostly abbreviations and never match.
+MIN_ALT_NAME_LENGTH = 4
 # The winner needs this many times the score of the next candidate.
 DOMINANCE = 3.0
 
@@ -235,7 +237,7 @@ def _name_candidates(conn: sqlite3.Connection, names: list[str]) -> list[Place]:
     """Places named so (own name, or alternate at a penalty); population-0
     places never count."""
     rows = conn.execute(
-        f"SELECT n.tier, {_PLACE_COLUMNS} FROM place_names n "
+        f"SELECT n.tier, n.name_folded, {_PLACE_COLUMNS} FROM place_names n "
         "JOIN places p ON p.geonameid = n.geonameid "
         f"WHERE n.name_folded IN ({','.join('?' * len(names))}) "
         "AND p.population > 0",
@@ -243,6 +245,8 @@ def _name_candidates(conn: sqlite3.Connection, names: list[str]) -> list[Place]:
     ).fetchall()
     best: dict[int, Place] = {}
     for row in rows:
+        if row["tier"] != 0 and len(row["name_folded"]) < MIN_ALT_NAME_LENGTH:
+            continue  # "can" (Caen), "bol": abbreviations, not names
         score = row["score"] * (1.0 if row["tier"] == 0 else ALT_NAME_PENALTY)
         known = best.get(row["geonameid"])
         if known is None or score > known.score:
