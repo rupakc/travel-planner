@@ -288,6 +288,11 @@ describe('transitLabel', () => {
     expect(transitLabel({ minutes: 15, mode: 'walk', km: 0.8 })).toBe('🚶 15 min walk · 0.8 km')
   })
 
+  it('omits distances under 100 m', () => {
+    expect(transitLabel({ minutes: 5, mode: 'walk', km: 0 })).toBe('🚶 5 min walk')
+    expect(transitLabel({ minutes: 5, mode: 'walk', km: 0.1 })).toBe('🚶 5 min walk · 0.1 km')
+  })
+
   it('describes a transit hop as approximate', () => {
     expect(transitLabel({ minutes: 25, mode: 'transit', km: 4 })).toBe('🚇 ~25 min by transit')
   })

@@ -122,10 +122,10 @@ export function timeRange(slot) {
   return slot?.start_time && slot?.end_time ? `${slot.start_time}–${slot.end_time}` : ''
 }
 
-/** "🚶 12 min walk · 0.9 km" / "🚇 ~25 min by transit", or "" when travel is unknown. */
+/** "🚶 12 min walk · 0.9 km" ("🚶 5 min walk" under 100 m) / "🚇 ~25 min by transit", or "" when travel is unknown. */
 export function transitLabel(transit) {
   if (!transit) return ''
-  return transit.mode === 'walk'
-    ? `🚶 ${transit.minutes} min walk · ${transit.km} km`
-    : `🚇 ~${transit.minutes} min by transit`
+  if (transit.mode !== 'walk') return `🚇 ~${transit.minutes} min by transit`
+  // km is rounded to 0.1, so anything shorter reads "0 km": leave it out
+  return transit.km >= 0.1 ? `🚶 ${transit.minutes} min walk · ${transit.km} km` : `🚶 ${transit.minutes} min walk`
 }
