@@ -1,13 +1,14 @@
-"""IATA code → region code (US state, Canadian province, Australian state,
+"""IATA code → region codes (US state, Canadian province, Australian state,
 Brazilian UF; lower-case, matching ``core.places`` region codes) for every
 seeded airport in the US, Canada, Australia and Brazil.
 
 The region is that of the city the seed lists the airport under, so a typed
 "City, ST" narrows correctly: IAD and DCA (physically in Virginia) serve
-"Washington D.C." and carry "dc".
+"Washington D.C." and carry "dc". An airport serving a city on a state
+line carries both states (MCI: Kansas City, Missouri and Kansas).
 """
 
-AIRPORT_REGION: dict[str, str] = {
+_PRIMARY_REGION: dict[str, str] = {
     # ── United States ──
     "ATL": "ga", "LAX": "ca", "ORD": "il", "DFW": "tx", "DEN": "co",
     "JFK": "ny", "SFO": "ca", "SEA": "wa", "LAS": "nv", "MCO": "fl",
@@ -38,3 +39,10 @@ AIRPORT_REGION: dict[str, str] = {
     "CBR": "act", "CNS": "qld", "DRW": "nt", "HBA": "tas", "OOL": "qld",
     "TSV": "qld",
 }  # fmt: skip
+
+_EXTRA_REGIONS: dict[str, set[str]] = {"MCI": {"ks"}}
+
+AIRPORT_REGION: dict[str, frozenset[str]] = {
+    code: frozenset({region} | _EXTRA_REGIONS.get(code, set()))
+    for code, region in _PRIMARY_REGION.items()
+}

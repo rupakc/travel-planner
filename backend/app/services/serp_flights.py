@@ -173,7 +173,8 @@ def _map_result(
 
 
 def _pick_diverse_outbounds(items: list, n: int = 3) -> list:
-    """Pick up to n diverse outbound options: cheapest, earliest, latest departure."""
+    """Pick up to n diverse outbound options: the lowest-priced one, then the
+    earliest and latest departures."""
     if not items:
         return []
 
@@ -194,8 +195,10 @@ def _pick_diverse_outbounds(items: list, n: int = 3) -> list:
         candidates.append(item)
         return True
 
-    # Cheapest (SerpAPI sorts best_flights by value, first = best price/quality)
-    add(items[0])
+    # Cheapest by price: Google lists best_flights (its own ranking) before
+    # other_flights, so the lowest fare can be anywhere in the list.
+    priced = [i for i in items if _is_number(i.get("price")) and i["price"] > 0]
+    add(min(priced, key=lambda i: i["price"]) if priced else items[0])
 
     if len(items) > 1:
         # Earliest departure

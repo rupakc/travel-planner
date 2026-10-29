@@ -434,3 +434,21 @@ def test_region_codes_table():
 )
 def test_accent_and_alias_spellings_resolve_country(destination, country):
     assert s._place_country(destination) == country
+
+
+@pytest.mark.parametrize(
+    ("destination", "country"),
+    [
+        ("Victoria, British Columbia", "canada"),
+        ("Sydney, New South Wales", "australia"),
+        ("Perth, Western Australia", "australia"),
+        ("Rio de Janeiro, Rio de Janeiro", "brazil"),
+        ("São Paulo, São Paulo", "brazil"),
+        ("Kansas City, Kansas", "usa"),
+        ("St Louis", "usa"),
+        ("St. Louis", "usa"),
+        ("Saint Louis", "usa"),
+    ],
+)
+def test_full_region_names_and_saint_spellings_resolve_country(destination, country):
+    assert s._place_country(destination) == country

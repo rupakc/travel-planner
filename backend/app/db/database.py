@@ -5,7 +5,7 @@ import re
 import sqlite3
 from pathlib import Path
 
-from ..core.places import _REGION_CODES, _US_STATES, CITY_ALIASES, fold_place
+from ..core.places import CITY_ALIASES, fold_place, saint_variants, stated_region
 from .airport_regions import AIRPORT_REGION
 
 logger = logging.getLogger(__name__)
@@ -157,13 +157,13 @@ _COUNTRY_CODE_ALIASES: dict[str, str] = {
 
 @functools.cache
 def _seed_country_codes() -> dict[str, str]:
-    """Seeded country name / ISO code (lowercase) → ISO code."""
+    """Seeded country name (folded) / ISO code (lowercase) → ISO code."""
     from .seed_airports import AIRPORTS
 
     table: dict[str, str] = {}
     for _iata, _icao, _name, _city, country, code, *_ in AIRPORTS:
         if code:
-            table[country.lower()] = code
+            table[fold_place(country)] = code
             table[code.lower()] = code
     return table
 
@@ -183,31 +183,36 @@ def _seed_accented_cities() -> dict[str, str]:
 
 def _city_spellings(name: str) -> set[str]:
     """The typed city name plus the seed spellings it may stand for:
-    accent-folded ("Zürich" → "zurich"), an alias ("Saigon" → "Ho Chi Minh
+    accent-folded ("Zürich" → "zurich"), its other St / St. / Saint
+    spellings ("St Louis" → "st. louis"), an alias ("Saigon" → "Ho Chi Minh
     City") or an accented seed name ("Alesund" → "Ålesund")."""
-    folded = fold_place(name)
-    spellings = {name, folded}
-    for table in (CITY_ALIASES, _seed_accented_cities()):
-        if folded in table:
-            spellings.add(table[folded])
+    spellings = {name}
+    for folded in saint_variants(fold_place(name)):
+        spellings.add(folded)
+        for table in (CITY_ALIASES, _seed_accented_cities()):
+            if folded in table:
+                spellings.add(table[folded])
     return spellings
 
 
-_US_STATE_CODES = {name: code for code, name in _US_STATES.items()}
-
-
-def _stated_place(stated: str) -> tuple[frozenset[str], str | None]:
-    """What a typed last segment names: ISO codes of countries it names
-    directly (country name, ISO code or alias) and the region code it names
-    (a US state / CA province / AU state / BR UF code, or a US state name).
-    Both empty → unrecognised ("Bavaria")."""
+def _stated_countries(stated: str) -> frozenset[str]:
+    """ISO codes of the countries a folded last segment names directly
+    (country name, ISO code or alias); empty when it names none."""
     codes = set()
     if stated in _seed_country_codes():
         codes.add(_seed_country_codes()[stated])
     if stated in _COUNTRY_CODE_ALIASES:
         codes.add(_COUNTRY_CODE_ALIASES[stated])
-    region = stated if stated in _REGION_CODES else _US_STATE_CODES.get(stated)
-    return frozenset(codes), region
+    return frozenset(codes)
+
+
+def _in_region(row: sqlite3.Row, region: tuple[str, frozenset[str]]) -> bool:
+    """The airport is in the stated region of one of the countries the region
+    can be in ("WA" in the US is Washington, in Australia Western Australia)."""
+    code, countries = region
+    return row["country_code"] in countries and code in AIRPORT_REGION.get(
+        row["iata_code"], ()
+    )
 
 
 def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
@@ -218,12 +223,14 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     A label prefix that is a code in the airports table is the traveller's
     pick and is returned alone ("LGW — London, …" → "LGW"); any other prefix
     stays part of the text. Otherwise an exact, case-insensitive match on the
-    city (first comma segment), also tried accent-folded and through
-    ``CITY_ALIASES`` ("Zürich", "Saigon", "Washington"). A last segment that
-    names a country, ISO code or alias restricts the match to that country;
-    one that names a region (state / province code, or a US state name)
-    restricts it to the airports of that region ("Portland, OR" → PDX). Both readings count
-    ("San Jose, CA": California; "Toronto, CA": Canada). An unrecognised
+    city (first comma segment), also tried accent-folded, with its other
+    St / St. / Saint spellings and through ``CITY_ALIASES`` ("Zürich",
+    "St Louis", "Saigon", "Washington"). A last segment that names a country,
+    ISO code or alias restricts the match to that country; one that names a
+    region (a US state / CA province / AU state / BR state, by code or full
+    name) restricts it to that region's airports, in a country that region
+    can be in ("Portland, OR" → PDX, "Perth, Western Australia" → PER). Both
+    readings count ("San Jose, CA": California; "Toronto, CA": Canada). An unrecognised
     segment ("Bavaria") is ignored. Web-saved rows (no country_code) count
     only when no coded row matches. Matches spanning more than one country,
     or more than one region with no region stated ("Portland"), are
@@ -257,24 +264,27 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     parts = [p.strip() for p in stripped.split(",") if p.strip()]
     wanted = {fold_place(n) for n in whole_names}
     rows = [r for r in rows if fold_place(r["city"]) in wanted]
-    stated = " ".join(parts[-1].lower().split()) if len(parts) > 1 else None
-    codes, region = _stated_place(stated) if stated else (frozenset(), None)
+    stated = fold_place(parts[-1]) if len(parts) > 1 else None
+    codes = _stated_countries(stated) if stated else frozenset()
+    region = stated_region(stated) if stated else None
     if codes or region:
         rows = [
             r
             for r in rows
             if r["country_code"] in codes
-            or r["country"].lower() == stated
-            or (region and AIRPORT_REGION.get(r["iata_code"]) == region)
+            or fold_place(r["country"]) == stated
+            or (region and _in_region(r, region))
         ]
     coded = [r for r in rows if r["country_code"]]
     rows = coded or rows
     countries = {r["country_code"] or r["country"].lower() for r in rows}
     if len(countries) != 1:
         return None
-    regions = {AIRPORT_REGION.get(r["iata_code"]) for r in rows} - {None}
-    if len(regions) > 1 and not region:  # "Portland": Oregon or Maine
-        return None
+    region_sets = [
+        AIRPORT_REGION[r["iata_code"]] for r in rows if r["iata_code"] in AIRPORT_REGION
+    ]
+    if not region and region_sets and not frozenset.intersection(*region_sets):
+        return None  # "Portland": Oregon or Maine; Kansas City MCI is both
     return ",".join(r["iata_code"] for r in rows[:max_codes])
 
 

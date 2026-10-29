@@ -40,6 +40,47 @@ def _region_codes() -> dict[str, frozenset[str]]:
     return {code: frozenset(countries) for code, countries in table.items()}
 
 
+# Full region names (accent-folded) → (region code, ISO country). US states
+# come from _US_STATES; "victoria" here is the Australian state.
+_REGION_NAMES: dict[str, tuple[str, str]] = {
+    **{name: (code, "US") for code, name in _US_STATES.items()},
+    "alberta": ("ab", "CA"), "british columbia": ("bc", "CA"),
+    "manitoba": ("mb", "CA"), "new brunswick": ("nb", "CA"),
+    "newfoundland and labrador": ("nl", "CA"), "nova scotia": ("ns", "CA"),
+    "northwest territories": ("nt", "CA"), "nunavut": ("nu", "CA"),
+    "ontario": ("on", "CA"), "prince edward island": ("pe", "CA"),
+    "quebec": ("qc", "CA"), "saskatchewan": ("sk", "CA"), "yukon": ("yt", "CA"),
+    "new south wales": ("nsw", "AU"), "victoria": ("vic", "AU"),
+    "queensland": ("qld", "AU"), "western australia": ("wa", "AU"),
+    "south australia": ("sa", "AU"), "tasmania": ("tas", "AU"),
+    "northern territory": ("nt", "AU"),
+    "australian capital territory": ("act", "AU"),
+    "acre": ("ac", "BR"), "alagoas": ("al", "BR"), "amapa": ("ap", "BR"),
+    "amazonas": ("am", "BR"), "bahia": ("ba", "BR"), "ceara": ("ce", "BR"),
+    "distrito federal": ("df", "BR"), "espirito santo": ("es", "BR"),
+    "goias": ("go", "BR"), "maranhao": ("ma", "BR"), "mato grosso": ("mt", "BR"),
+    "mato grosso do sul": ("ms", "BR"), "minas gerais": ("mg", "BR"),
+    "para": ("pa", "BR"), "paraiba": ("pb", "BR"), "parana": ("pr", "BR"),
+    "pernambuco": ("pe", "BR"), "piaui": ("pi", "BR"),
+    "rio de janeiro": ("rj", "BR"), "rio grande do norte": ("rn", "BR"),
+    "rio grande do sul": ("rs", "BR"), "rondonia": ("ro", "BR"),
+    "roraima": ("rr", "BR"), "santa catarina": ("sc", "BR"),
+    "sao paulo": ("sp", "BR"), "sergipe": ("se", "BR"), "tocantins": ("to", "BR"),
+}  # fmt: skip
+
+
+def stated_region(stated: str) -> tuple[str, frozenset[str]] | None:
+    """The region a folded last segment names, as (region code, ISO codes of
+    the countries it can be in): "wa" → ("wa", {US, AU}), "western australia"
+    → ("wa", {AU}), "washington" → ("wa", {US}). None for anything else."""
+    if stated in _REGION_CODES:
+        return stated, _REGION_CODES[stated]
+    if stated in _REGION_NAMES:
+        code, country = _REGION_NAMES[stated]
+        return code, frozenset({country})
+    return None
+
+
 # Region code (lowercase) → ISO alpha-2 codes of every country that uses it:
 # US states, Canadian provinces/territories, Australian states/territories and
 # Brazilian states. "wa" → {"US", "AU"}: Washington or Western Australia.
@@ -62,6 +103,19 @@ def fold_place(text: str) -> str:
     return " ".join(stripped.split())
 
 
+_SAINT_PREFIXES = ("st ", "st. ", "saint ")
+
+
+def saint_variants(folded: str) -> set[str]:
+    """A folded city name plus its other St / St. / Saint spellings
+    ("st louis" → {"st louis", "st. louis", "saint louis"})."""
+    for prefix in _SAINT_PREFIXES:
+        if folded.startswith(prefix):
+            rest = folded[len(prefix) :]
+            return {p + rest for p in _SAINT_PREFIXES}
+    return {folded}
+
+
 # Other spellings of a city (folded) → the city's name in the airports seed.
 CITY_ALIASES: dict[str, str] = {
     "washington": "Washington D.C.",
@@ -70,8 +124,6 @@ CITY_ALIASES: dict[str, str] = {
     "washington d.c.": "Washington D.C.",
     "washington d.c": "Washington D.C.",
     "dc": "Washington D.C.",
-    "saint petersburg": "St. Petersburg",
-    "st petersburg": "St. Petersburg",
     "new york city": "New York",
     "nyc": "New York",
     "saigon": "Ho Chi Minh City",

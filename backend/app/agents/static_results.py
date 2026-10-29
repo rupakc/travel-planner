@@ -9,7 +9,14 @@ provide enhanced, web-searched results.
 import functools
 import re
 
-from ..core.places import _REGION_CODES, _US_STATES, CITY_ALIASES, fold_place
+from ..core.places import (
+    _REGION_CODES,
+    _REGION_NAMES,
+    _US_STATES,
+    CITY_ALIASES,
+    fold_place,
+    saint_variants,
+)
 from ..schemas.request import TravelSearchRequest
 
 # ── Visa static lookup ────────────────────────────────────────────────────────
@@ -1334,6 +1341,11 @@ _CITY_TO_COUNTRY: dict[str, str] = {
 # is not Paris, France).
 _REGION_COUNTRY: dict[str, str] = {
     **{name: "usa" for name in _US_STATES.values()},
+    # Full US / Canadian / Australian / Brazilian state and province names
+    **{
+        name: {"US": "usa", "CA": "canada", "AU": "australia", "BR": "brazil"}[cc]
+        for name, (_, cc) in _REGION_NAMES.items()
+    },
     "us": "usa",
     "d.c.": "usa",
     "d c": "usa",
@@ -1438,15 +1450,19 @@ def _folded_city_map() -> dict[str, str]:
 
 
 def _city_country(city: str | None) -> str | None:
-    """The country key of a folded city name, directly or through
-    ``CITY_ALIASES`` ("saigon" → Ho Chi Minh City → vietnam)."""
+    """The country key of a folded city name, directly, under another
+    St / St. / Saint spelling ("st. louis") or through ``CITY_ALIASES``
+    ("saigon" → Ho Chi Minh City → vietnam)."""
     if not city:
         return None
     cities = _folded_city_map()
-    if city in cities:
-        return cities[city]
-    alias = CITY_ALIASES.get(city)
-    return cities.get(fold_place(alias)) if alias else None
+    for name in sorted(saint_variants(city)):
+        if name in cities:
+            return cities[name]
+        alias = CITY_ALIASES.get(name)
+        if alias and fold_place(alias) in cities:
+            return cities[fold_place(alias)]
+    return None
 
 
 def _word_phrases(segment: str) -> list[str]:
@@ -1512,8 +1528,14 @@ def _place_country(destination: str) -> str | None:
             return _ISO_COUNTRY[country]
         return None
     if city and country:
-        # Unknown city: a code with exactly one reading ("Austin, TX",
-        # "Trondheim, NO"); "Smalltown, PA" could be the USA or Brazil
+        # Unknown city: a full Canadian / Australian / Brazilian state or
+        # province name ("Victoria, British Columbia"; US state names stay
+        # out: "Tbilisi, Georgia") or a code with exactly one reading
+        # ("Austin, TX", "Trondheim, NO"); "Smalltown, PA" could be the USA
+        # or Brazil
+        region = _REGION_NAMES.get(country)
+        if region and region[1] != "US":
+            return _ISO_COUNTRY[region[1].lower()]
         readings = _code_readings(country)
         return readings.pop() if len(readings) == 1 else None
     if city and country is None:
