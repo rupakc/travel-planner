@@ -944,6 +944,7 @@ You are a specialist travel flights analyst...
 <li><code>get_confidence_score()</code> — safety / visa / budget / infrastructure score from <code>_DESTINATION_SCORES</code> (49 destinations)</li>
 </ul>
 <p>All stream to the browser within 1 second with <code>source: 'static'</code>. The UI shows them as "Enhancing…" until AI results arrive.</p>
+<p>Destinations are matched to a table country by whole names only (<code>_place_country</code>): a stated country wins; otherwise the city map, when a trailing state or region name, or an ISO / region code with a reading in the mapped country, agrees with it ("Miami, FL", "Berlin, DE", "Perth, WA", "Toronto, ON" resolve; "Paris, TX", "Paris, Texas" and "Paris, US" get no row). A known city with an ISO code for another country that is not a US state code takes that country ("Cartagena, ES" → Spain). For a city not in the map, a code resolves only when it has a single reading across ISO codes and the region codes in <code>backend/app/core/places.py</code> (US states, Canadian provinces/territories, Australian and Brazilian states): "Trondheim, NO" → Norway, "Austin, TX" → USA, but "Leipzig, DE", "Fremantle, WA" and "Smalltown, PA" get no row. The city map includes common US, Australian, Canadian and Brazilian cities so "Denver, CO", "Perth, WA" or "Belém, PA" resolve.</p>
 <h3 id="phase-1-parallel-ai-agents">Phase 1 — Parallel AI agents</h3>
 <p>Thirteen agents run concurrently (the <code>phase1_agents</code> dict in the orchestrator), plus two deferred agents. As each finishes, its result is yielded over SSE:</p>
 <table>
@@ -1111,7 +1112,7 @@ You are a specialist travel flights analyst...
 <li>Day number, date, theme, and city</li>
 <li>Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes</li>
 <li>Daily estimated cost</li>
-<li><code>duration_hours</code> on every slot and <code>lat</code>/<code>lng</code> on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (<code>utils/schedule.js</code>)</li>
+<li><code>duration_hours</code> on every slot and <code>lat</code>/<code>lng</code> on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (<code>utils/schedule.js</code>). The chat itinerary agent (<code>.agents/chat-itinerary.md</code>, <code>ChatItineraryAgent</code>) asks for the same fields</li>
 <li>Coordinates for the Timeline map view</li>
 </ul>
 <p>60-second timeout with a template-based fallback that distributes activities mechanically.</p>
