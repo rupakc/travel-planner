@@ -871,6 +871,47 @@
 <p><strong>Authentication:</strong> Most endpoints require a JWT Bearer token from the login response:</p>
 <pre><code>Authorization: Bearer &lt;token&gt;
 </code></pre>
+<p><strong>Rate limits:</strong> endpoints that call the AI agents are limited per caller — the signed-in user, or the client IP for anonymous requests — over a rolling 10-minute window. Every accepted request counts, including cached responses and requests later rejected as invalid (<code>422</code>) or unauthenticated (<code>401</code>); only requests answered with <code>429</code> do not.</p>
+<table>
+<thead>
+<tr>
+<th>Bucket</th>
+<th>Endpoints</th>
+<th>Default limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>search</td>
+<td><code>POST /api/search</code>, <code>POST /api/search/sync</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>chat</td>
+<td><code>POST /api/chat</code></td>
+<td>30</td>
+</tr>
+<tr>
+<td>compare</td>
+<td><code>POST /api/compare/destination</code></td>
+<td>30</td>
+</tr>
+<tr>
+<td>discover</td>
+<td><code>POST /api/discover</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>light_ai</td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> (and their <code>/filtered</code> variants), <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code></td>
+<td>60</td>
+</tr>
+</tbody>
+</table>
+<p>Each bucket is counted separately. Over the limit the API answers <code>429 Too Many Requests</code> with a <code>Retry-After</code> header (seconds) and:</p>
+<pre><code class="language-json">{&quot;detail&quot;: &quot;Too many requests — please wait 42 seconds and try again.&quot;}
+</code></pre>
+<p>Limits are configurable (see <a href="../Configuration/#rate-limit-variables">Configuration</a>). The counter is in-process, so each backend instance counts on its own.</p>
 <hr />
 <h2 id="auth-endpoints">Auth endpoints</h2>
 <h3 id="post-apiauthlogin"><code>POST /api/auth/login</code></h3>

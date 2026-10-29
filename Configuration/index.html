@@ -748,6 +748,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#rate-limit-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate-limit variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logging-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1326,6 +1337,56 @@
 </tbody>
 </table>
 <p>Comma-separated list of allowed CORS origins. In production, set this to your frontend's public URL. In local development, the default covers the Vite dev server (port 5174). In Cloud Run, Terraform sets this to the frontend Cloud Run service URL.</p>
+<hr />
+<h2 id="rate-limit-variables">Rate-limit variables</h2>
+<p>AI endpoints are limited per signed-in user (or client IP when anonymous) over a rolling window; see the <a href="../API-Reference/">API Reference</a> for which endpoints fall in which bucket. Over the limit the API returns <code>429</code> with a <code>Retry-After</code> header.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RATE_LIMIT_ENABLED</code></td>
+<td><code>true</code></td>
+<td><code>false</code> turns all limits off (the test suite does this)</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_WINDOW_SECONDS</code></td>
+<td><code>600</code></td>
+<td>Length of the rolling window</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_SEARCH</code></td>
+<td><code>10</code></td>
+<td><code>/api/search</code>, <code>/api/search/sync</code> per window</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_CHAT</code></td>
+<td><code>30</code></td>
+<td><code>/api/chat</code> per window</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_COMPARE</code></td>
+<td><code>30</code></td>
+<td><code>/api/compare/destination</code> per window</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_DISCOVER</code></td>
+<td><code>10</code></td>
+<td><code>/api/discover</code> per window</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_LIGHT_AI</code></td>
+<td><code>60</code></td>
+<td>Single-agent routes, <code>/*/filtered</code>, <code>/api/layover</code>, <code>/api/stress-test</code> per window</td>
+</tr>
+</tbody>
+</table>
+<p>Counters live in process memory: they reset on restart and are not shared between instances. Anonymous callers are keyed by the connecting client's address, so behind a reverse proxy all anonymous traffic shares one bucket unless the proxy's address is replaced (e.g. uvicorn <code>--proxy-headers</code>).</p>
 <hr />
 <h2 id="logging-variables">Logging variables</h2>
 <h3 id="log_format"><code>LOG_FORMAT</code></h3>
