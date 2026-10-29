@@ -122,22 +122,33 @@ function AgentBadge({ agent, status, onClick }) {
   )
 }
 
-function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
+export const sectionBodyId = (agent) => `section-body-${agent}`
+
+export function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
   const { label, icon: Icon, color } = AGENT_CONFIG[agent]
   const acc = SECTION_ACCENT[color] || SECTION_ACCENT.indigo
+  // The title is the keyboard toggle; the chip and actions stay outside it
+  // (no nested interactive elements). The row itself stays clickable for
+  // pointer users — the button stops propagation so a click toggles once.
   return (
     <div
       onClick={onToggle}
       className={`flex items-center gap-3 px-4 py-3.5 w-full text-left border-l-4 ${acc.line} ${acc.bg} bg-white cursor-pointer transition-colors hover:bg-gray-50/80 ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
     >
-      <Icon size={18} className={acc.icon} />
-      <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">{label}</h2>
+      <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">
+        <button type="button" aria-expanded={isOpen} aria-controls={isOpen ? sectionBodyId(agent) : undefined}
+          onClick={(e) => { e.stopPropagation(); onToggle() }}
+          className="flex items-center gap-3 w-full text-left rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+          <Icon size={18} className={acc.icon} aria-hidden="true" />
+          <span className="min-w-0">{label}</span>
+        </button>
+      </h2>
       {actions}
       <VerificationBadge verification={verification} />
       {status === 'loading'   && <Loader2 size={15} className="animate-spin text-gray-400" />}
       {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> Enhancing…</span>}
       {status === 'done'      && <CheckCircle2 size={15} className="text-teal-500 opacity-70" />}
-      <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      <ChevronDown size={16} aria-hidden="true" className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </div>
   )
 }
@@ -3790,7 +3801,9 @@ export default function ResultsPage() {
       <div key={agent} id={`section-${agent}`} className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem', ...extraStyle }}>
         <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} verification={results[agent]?.verification} />
         {isOpen && (
-          status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>
+          <div id={sectionBodyId(agent)}>
+            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>}
+          </div>
         )}
       </div>
     )
