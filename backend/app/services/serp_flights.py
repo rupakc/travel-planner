@@ -309,7 +309,9 @@ async def search(
 
     # Cache key — deterministic from search params
     filters_key = tuple(sorted((filters or {}).items()))
-    cache_key = f"serp:{origin_id}:{dest_id}:{dep_date}:{ret_date}:{hash(filters_key)}"
+    cache_key = _main_key(
+        origin_id, dest_id, dep_date, ret_date, request.num_travelers, filters_key
+    )
     cache = get_cache()
     if cache_key in cache:
         logger.info("SerpAPI cache hit for %s→%s", origin_id, dest_id)
@@ -402,6 +404,18 @@ def _cheapest(data: dict) -> float | None:
     return min(prices) if prices else None
 
 
+def _main_key(
+    origin_id: str,
+    dest_id: str,
+    dep: Any,
+    ret: Any,
+    num_travelers: int,
+    filters_key: tuple = (),
+) -> str:
+    """Main single-city search cache key (fares depend on the traveller count)."""
+    return f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{num_travelers}:{hash(filters_key)}"
+
+
 def _calendar_key(
     origin_id: str, dest_id: str, dep: Any, ret: Any, num_travelers: int
 ) -> str:
@@ -490,7 +504,9 @@ async def search_calendar(
         key = _calendar_key(origin_id, dest_id, dep, ret, request.num_travelers)
         if offset == 0:
             selected = _cached_selected_price(
-                cache.get(f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{hash(())}"),
+                cache.get(
+                    _main_key(origin_id, dest_id, dep, ret, request.num_travelers)
+                ),
                 cache.get(key),
             )
             if selected is not None:

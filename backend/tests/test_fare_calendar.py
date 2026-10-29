@@ -241,7 +241,7 @@ async def test_failures_are_not_cached():
 @pytest.mark.asyncio
 async def test_selected_date_reuses_cached_main_search():
     req = _req()
-    get_cache()[f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"] = {
+    get_cache()[serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)] = {
         "results": [{"price_usd": 777.0}, {"price_usd": 650.0}]
     }
     mock = AsyncMock(return_value=_serp([400]))
@@ -298,7 +298,7 @@ async def test_concurrent_calendars_share_in_flight_lookups():
 @pytest.mark.asyncio
 async def test_selected_date_prefers_cards_over_lowest_price_insight():
     """Google's lowest_price is only a fallback: the cards are real fares."""
-    get_cache()[f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"] = {
+    get_cache()[serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)] = {
         "results": [{"price_usd": 777.0}, {"price_usd": 650.0}],
         "price_insights": {"lowest_price": 598, "price_level": "typical"},
     }
@@ -311,7 +311,7 @@ async def test_selected_date_prefers_cards_over_lowest_price_insight():
 
 
 SELECTED_CAL_KEY = "serp-cal:JFK:NRT:2026-10-20:2026-10-27:2"
-SELECTED_MAIN_KEY = f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"
+SELECTED_MAIN_KEY = serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)
 
 
 def _route_calls(outbound_prices, return_prices, insights=None):
@@ -488,3 +488,14 @@ def test_route_returns_calendar(client, admin_headers, monkeypatch):
         "cheapest_usd",
         "is_selected",
     }
+
+
+async def test_main_search_cache_is_per_traveller_count():
+    """A cached 1-traveller search must not answer a 2-traveller one."""
+    mock = AsyncMock(return_value=_serp([300]))
+    with patch.object(serp_flights, "_call", mock):
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=1))
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=1))
+        assert mock.await_count == 1
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=2))
+    assert mock.await_count == 2
