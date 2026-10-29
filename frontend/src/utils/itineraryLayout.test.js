@@ -349,3 +349,19 @@ describe('fix round 1', () => {
     expect(arrangeItinerary(noTotal, l2).total_estimated_cost_usd).toBe(70 + 180 + 200)
   })
 })
+
+describe('fix round 2', () => {
+  it('offers no positions on days without a standard-time slot', () => {
+    const it0 = itinerary()
+    it0.days.push(
+      { day_number: 4, city: 'Kyoto', slots: [] },
+      { day_number: 5, city: 'Kyoto', slots: [{ time_of_day: 'late night', activity: 'Club' }] },
+    )
+    const days = new Set(moveTargets(it0, null, '3-morning').map((t) => t.day_number))
+    expect(days).toEqual(new Set([3]))
+    // a stored claim on such a day is ignored
+    const l = layoutOf(it0, { '3-morning': '4-morning' })
+    expect(arrangeItinerary(it0, l).changed).toBe(false)
+    expect(moveSlot(it0, null, '3-morning', 5, 'evening')).toBeNull()
+  })
+})

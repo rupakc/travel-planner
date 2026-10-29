@@ -50,19 +50,41 @@ function dayKeys(day) {
   })
 }
 
+// A slot is movable when its time is standard and it is the first slot of
+// that time on its day (its key is exactly "<day>-<tod>").
+const isMovableSlot = (day, slot, key) => TIMES.includes(slot.time_of_day) && key === slotKey(day.day_number, slot.time_of_day)
+
+// Sort rank of every slot of an ORIGINAL day: a movable slot ranks at its
+// time's index; any other slot ranks just after the movable slot preceding it
+// (-0.5 when none). "Free time" placeholders use the bare time index.
+export function slotRanks(day) {
+  const ranks = new Map()
+  let rank = -1
+  const keys = dayKeys(day)
+  slotsOf(day).forEach((slot, i) => {
+    if (isMovableSlot(day, slot, keys[i])) {
+      rank = TIMES.indexOf(slot.time_of_day)
+      ranks.set(keys[i], rank)
+    } else {
+      ranks.set(keys[i], rank + 0.5)
+    }
+  })
+  return ranks
+}
+
 const cityKey = (city) => String(city || '').split(',')[0].trim().toLowerCase()
 const sameCity = (a, b) => !cityKey(a) || !cityKey(b) || cityKey(a) === cityKey(b)
 
 // Index of the original itinerary: movable activities (standard time, unique
 // key) and every valid position. A movable activity's original position IS its key.
+// Positions exist only on days that have at least one standard-time slot.
 function buildModel(itinerary) {
-  const dayByNumber = new Map()
   const positions = []
   const posDay = new Map()
   const slotByKey = new Map()
   const movable = []
   for (const day of daysOf(itinerary)) {
-    dayByNumber.set(day.day_number, day)
+    if (!slotsOf(day).some((slot) => TIMES.includes(slot.time_of_day))) continue
     for (const tod of TIMES) {
       const pos = slotKey(day.day_number, tod)
       positions.push(pos)
@@ -73,7 +95,7 @@ function buildModel(itinerary) {
     const keys = dayKeys(day)
     slotsOf(day).forEach((slot, i) => {
       const key = keys[i]
-      if (TIMES.includes(slot.time_of_day) && key === slotKey(day.day_number, slot.time_of_day)) {
+      if (isMovableSlot(day, slot, key)) {
         slotByKey.set(key, slot)
         movable.push(key)
       }
@@ -183,13 +205,9 @@ export function arrangeItinerary(itinerary, layout, edits = {}) {
       if (key) entries.push({ rank, slot: { ...model.slotByKey.get(key), key, time_of_day: tod } })
     })
     const keys = dayKeys(day)
-    let rank = -1
+    const ranks = slotRanks(day)
     slotsOf(day).forEach((slot, i) => {
-      if (model.slotByKey.get(keys[i]) === slot) {
-        rank = TIMES.indexOf(slot.time_of_day)
-      } else {
-        entries.push({ rank: rank + 0.5, slot: { ...slot, key: keys[i] } })
-      }
+      if (!isMovableSlot(day, slot, keys[i])) entries.push({ rank: ranks.get(keys[i]), slot: { ...slot, key: keys[i] } })
     })
     const slots = entries.sort((a, b) => a.rank - b.rank).map((e) => e.slot)
     return {

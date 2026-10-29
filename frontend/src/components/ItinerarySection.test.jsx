@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { moveSlot, removeSlot } from '../utils/itineraryLayout'
+import { moveSlot, removeSlot, restoreSlot } from '../utils/itineraryLayout'
 import ItinerarySection from './ItinerarySection'
 
 vi.mock('../utils/analytics', () => ({ track: vi.fn() }))
@@ -51,6 +51,31 @@ function fire(el, type, dataTransfer) {
   Object.defineProperty(evt, 'dataTransfer', { value: dataTransfer })
   act(() => { el.dispatchEvent(evt) })
   return evt
+}
+
+// Minimal stand-in for ResultsPage: applies the layout mutators and keeps an undo stack.
+function Stateful({ data }) {
+  const [layout, setLayout] = useState(null)
+  const [history, setHistory] = useState([])
+  const push = (next) => { setHistory((h) => [...h, layout]); setLayout(next) }
+  return (
+    <ItinerarySection
+      data={data}
+      selections={{ itinerary_layout: layout }}
+      onNoteChange={() => {}} onSlotEdit={() => {}} onSlotPlan={() => {}}
+      onMoveSlot={(k, d, t) => push(moveSlot(data, layout, k, d, t))}
+      onRemoveSlot={(k) => push(removeSlot(data, layout, k))}
+      onRestoreSlot={(k) => push(restoreSlot(data, layout, k))}
+      onUndoLayout={() => { setLayout(history.at(-1)); setHistory((h) => h.slice(0, -1)) }}
+      onResetLayout={() => push(null)}
+      canUndo={history.length > 0}
+    />
+  )
+}
+
+const posOfLabel = (label) => {
+  const m = label.match(/^Day (\d+) · (\w+)/)
+  return `${m[1]}-${m[2].toLowerCase()}`
 }
 
 describe('ItinerarySection', () => {
@@ -109,7 +134,9 @@ describe('ItinerarySection', () => {
     render(handlers())
     const r = row('1-morning')
     expect(r.getAttribute('draggable')).toBe('true')
-    expect(r.querySelector('[aria-label="Drag to move Cathedral"]')).not.toBeNull()
+    const handle = r.querySelector('[data-drag-handle]')
+    expect(handle).not.toBeNull()
+    expect(handle.getAttribute('aria-hidden')).toBe('true')
   })
 
   it('drags with the custom MIME type and drops onto another slot', () => {
@@ -296,9 +323,117 @@ describe('ItinerarySection', () => {
     render({ ...handlers(), data })
     const odd = row('1-late night')
     expect(odd.getAttribute('draggable')).not.toBe('true')
-    expect(odd.querySelector('[aria-label^="Drag to move"]')).toBeNull()
+    expect(odd.querySelector('[data-drag-handle]')).toBeNull()
     expect(button('Move', odd)).toBeUndefined()
     expect(button('Plan', odd)).toBeDefined()
     expect(button('Move', row('1-morning'))).toBeDefined()
+  })
+  it('menu entries equal the accepted drop targets, with empty and odd-only days', () => {
+    const data = { days: [...ITIN.days, { day_number: 3, slots: [] }, { day_number: 4, slots: [slot('late night', 'Club')] }] }
+    render({ ...handlers(), data })
+    click(button('Move', row('1-morning')))
+    const menuTargets = [...container.querySelectorAll('[role="menuitem"]')]
+      .map((b) => b.textContent).filter((t) => t.startsWith('Day ')).map(posOfLabel)
+    act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
+    const dt = transfer()
+    fire(row('1-morning'), 'dragstart', dt)
+    const zones = [...container.querySelectorAll('[data-slot-key], [data-free-slot]')]
+    const accepted = zones
+      .filter((el) => fire(el, 'dragover', dt).defaultPrevented)
+      .map((el) => el.dataset.freeSlot || `${el.closest('[data-day]').dataset.day}-${el.dataset.time}`)
+    expect(accepted.sort()).toEqual(menuTargets.sort())
+    expect(menuTargets.some((p) => p.startsWith('3-') || p.startsWith('4-'))).toBe(false)
+  })
+
+  it('keeps the menu open on a blur with no related target and closes on outside mousedown or focus', () => {
+    render(handlers())
+    click(button('Move', row('1-morning')))
+    const item = container.querySelector('[role="menuitem"]')
+    act(() => { item.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null })) })
+    expect(container.querySelector('[role="menu"]')).not.toBeNull()
+    const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    item.dispatchEvent(md)
+    expect(md.defaultPrevented).toBe(true)
+    act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
+    expect(container.querySelector('[role="menu"]')).toBeNull()
+
+    click(button('Move', row('1-morning')))
+    const outside = button('Plan', row('2-morning'))
+    act(() => {
+      container.querySelector('[role="menuitem"]')
+        .dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }))
+    })
+    expect(container.querySelector('[role="menu"]')).toBeNull()
+  })
+
+  it('a row with its note open is not draggable', () => {
+    render(handlers())
+    click(button('Note', row('1-morning')))
+    expect(row('1-morning').querySelector('textarea')).not.toBeNull()
+    expect(row('1-morning').getAttribute('draggable')).not.toBe('true')
+    expect(row('1-morning').querySelector('[data-drag-handle]')).toBeNull()
+    const dt = transfer()
+    fire(row('1-morning'), 'dragstart', dt)
+    expect(dt.setData).not.toHaveBeenCalled()
+  })
+
+  it('focuses Undo after Remove from day and after restoring the last removed item', () => {
+    act(() => root.render(<Stateful data={ITIN} />))
+    click(button('Move', row('1-afternoon')))
+    click(button('Remove from day'))
+    expect(document.activeElement).toBe(button('Undo'))
+    click(button('Restore', container.querySelector('[data-removed-list]')))
+    expect(container.querySelector('[data-removed-list]')).toBeNull()
+    expect(document.activeElement).toBe(button('Undo'))
+  })
+
+  it('focuses the section when there is no Undo after a removal', () => {
+    const h = handlers()
+    delete h.onUndoLayout
+    render(h)
+    click(button('Move', row('1-afternoon')))
+    click(button('Remove from day'))
+    expect(document.activeElement).toBe(container.querySelector('[data-itinerary-section]'))
+  })
+
+  it('places Free time where its time belongs relative to odd slots', () => {
+    const data = { days: [{ day_number: 1, slots: [slot('morning', 'A'), slot('lunch', 'Lunch'), slot('evening', 'B')] }, ITIN.days[1]] }
+    const layout = removeSlot(data, null, '1-morning')
+    render({ ...handlers(), data, selections: { itinerary_layout: layout } })
+    const order = [...container.querySelector('[data-day="1"]').querySelectorAll('[data-slot-key], [data-free-slot]')]
+      .map((el) => el.dataset.freeSlot ? `free:${el.dataset.freeSlot}` : el.dataset.slotKey)
+    expect(order).toEqual(['free:1-morning', '1-lunch', 'free:1-afternoon', '1-evening'])
+  })
+
+  it('dragend clears the drag state', () => {
+    render(handlers())
+    const dt = transfer()
+    fire(row('1-morning'), 'dragstart', dt)
+    fire(row('2-afternoon'), 'dragover', dt)
+    expect(row('1-morning').className).toContain('opacity-50')
+    expect(row('2-afternoon').className).toContain('ring-teal-400')
+    fire(row('1-morning'), 'dragend', dt)
+    expect(row('1-morning').className).not.toContain('opacity-50')
+    expect(container.querySelector('.ring-teal-400')).toBeNull()
+    expect(fire(row('2-afternoon'), 'dragover', dt).defaultPrevented).toBe(false)
+  })
+
+  it('dropping a slot on its own position does nothing', () => {
+    const h = handlers()
+    render(h)
+    const dt = transfer()
+    fire(row('1-morning'), 'dragstart', dt)
+    expect(fire(row('1-morning'), 'dragover', dt).defaultPrevented).toBe(false)
+    fire(row('1-morning'), 'drop', dt)
+    expect(h.onMoveSlot).not.toHaveBeenCalled()
+  })
+
+  it('focuses the moved row\'s Move button after a menu move', () => {
+    act(() => root.render(<Stateful data={ITIN} />))
+    click(button('Move', row('1-morning')))
+    click(button('Day 2 · Evening'))
+    const moved = row('1-morning')
+    expect(moved.closest('[data-day]').dataset.day).toBe('2')
+    expect(document.activeElement).toBe(button('Move', moved))
   })
 })
