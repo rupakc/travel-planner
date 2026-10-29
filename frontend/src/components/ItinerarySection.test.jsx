@@ -554,6 +554,12 @@ describe('ItinerarySection', () => {
     })
   })
 
+  it('shows the original name for an empty-string activity edit', () => {
+    render({ ...handlers(), selections: { itinerary_edits: { '1-afternoon': { activity: '' } } } })
+    expect([...activities(0)].map(n => n.textContent)).toEqual(['Cathedral', 'Market', 'Tapas'])
+    expect(button('Plan', row('1-afternoon')).getAttribute('aria-label')).toBe('Add Market to plan')
+  })
+
   it('dragend clears the drag state', () => {
     render(handlers())
     const dt = transfer()

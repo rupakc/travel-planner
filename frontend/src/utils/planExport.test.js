@@ -212,6 +212,11 @@ describe('buildPlanIcs', () => {
     expect(field(out, 'DESCRIPTION')).toContain('https://example.com/book')
   })
 
+  it('uses the original name for an empty-string activity edit', () => {
+    const ics = build({ itinerary_edits: { '1-morning': { activity: '' } } })
+    expect(events(ics).some((e) => field(e, 'SUMMARY') === 'SUMMARY:Tsukiji Outer Market')).toBe(true)
+  })
+
   it('includes the itinerary\'s own slot notes', () => {
     const ics = build({}, { itinerary: { days: [{ day_number: 1, date: '2027-04-01', slots: [{ time_of_day: 'morning', activity: 'A', notes: 'Closed Mondays' }] }] } })
     expect(field(events(ics)[0], 'DESCRIPTION')).toContain('Closed Mondays')

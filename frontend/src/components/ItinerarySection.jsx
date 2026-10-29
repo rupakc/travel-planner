@@ -231,7 +231,7 @@ export default function ItinerarySection({
   const isMovable = (key) => (targetsByKey.get(key) || []).length > 0
   const findTarget = (key, dayNumber, tod) => (targetsByKey.get(key) || [])
     .find((t) => t.day_number === dayNumber && t.time_of_day === tod)
-  const activityName = (key, fallback) => edits?.[key]?.activity ?? fallback
+  const activityName = (key, fallback) => edits?.[key]?.activity || fallback
   const changeCount = editable ? layoutChangeCount(data, layout) : 0
 
   const move = (key, name, target, method) => {
@@ -382,7 +382,7 @@ export default function ItinerarySection({
               const pos = slotKey(day.day_number, slot.time_of_day)
 
               // Merge saved edits over original slot data
-              const activity = edit.activity  ?? slot.activity
+              const activity = edit.activity  || slot.activity
               const location = edit.location  ?? slot.location
               const cost     = edit.cost      ?? slot.estimated_cost_usd
               const inPlan   = selections.itinerary_slots?.some(s => s.key === key)

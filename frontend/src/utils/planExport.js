@@ -156,7 +156,7 @@ function itineraryEvents(days, selections, searchData) {
       ].filter(Boolean).join('\n')
       events.push({
         id: `slot-${key}`,
-        summary: edit.activity ?? slot.activity,
+        summary: edit.activity || slot.activity,
         location: edit.location ?? slot.location ?? day.city,
         description,
         start: icsDateTime(date, start),

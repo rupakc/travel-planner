@@ -33,7 +33,7 @@ function editedItinerary(itinerary, selections) {
           // the original description no longer matches an edited activity
           // (same test as the on-screen row: any falsy edit keeps it)
           ...(!edit.activity && notes !== undefined ? { notes } : {}),
-          activity: edit.activity ?? slot.activity,
+          activity: edit.activity || slot.activity,
           location: edit.location ?? slot.location,
           estimated_cost_usd: edit.cost ?? slot.estimated_cost_usd,
         }

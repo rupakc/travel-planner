@@ -108,6 +108,11 @@ describe('buildPlanPrintHtml', () => {
     expect(html).toContain('<span class="when">morning</span> Picked')
   })
 
+  it('uses the original name for an empty-string activity edit', () => {
+    const html = build({ selections: { ...selections, itinerary_edits: { '1-morning': { activity: '' } } } })
+    expect(html).toContain('Tsukiji Outer Market')
+  })
+
   it('applies itinerary edits and notes', () => {
     const html = build({
       selections: {

@@ -76,7 +76,7 @@ function itineraryHtml(days, selections) {
       const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
       const edit = selections?.itinerary_edits?.[key] || {}
       const note = selections?.itinerary_notes?.[key]
-      const activity = edit.activity ?? slot.activity
+      const activity = edit.activity || slot.activity
       const location = edit.location ?? slot.location
       const cost = edit.cost ?? slot.estimated_cost_usd
       const notes = [slot.notes, note].filter(Boolean).map((n) => `<div class="note">${esc(n)}</div>`).join('')

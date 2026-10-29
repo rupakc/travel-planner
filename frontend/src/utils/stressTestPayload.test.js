@@ -58,11 +58,11 @@ describe('buildStressTestPayload', () => {
     expect(p.itinerary.days[1].slots[0].notes).toBe('About Belem')
   })
 
-  it('keeps the original notes for an empty-string activity edit, as on screen', () => {
+  it('keeps the original name and notes for an empty-string activity edit, as on screen', () => {
     const edits = { '1-morning': { activity: '' } }
     const p = buildStressTestPayload(SEARCH, RESULTS, selections({ itinerary_edits: edits }))
     const s = p.itinerary.days[0].slots[0]
-    expect(s.activity).toBe('')
+    expect(s.activity).toBe('Castle')
     expect(s.notes).toBe('About Castle')
   })
 
