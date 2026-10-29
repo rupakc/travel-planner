@@ -178,6 +178,8 @@ All endpoints are under `/api`:
 | `GET/PUT/DELETE /api/plans/{id}` | Single plan CRUD |
 | `GET /health` | Health check |
 
+**Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/stress-test`, `/layover`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
+
 ### TravelSearchRequest
 
 ```json

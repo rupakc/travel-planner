@@ -2,7 +2,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import (
@@ -36,6 +36,7 @@ from .api.routes.taste import router as taste_router
 from .api.routes.walking_tours import router as walking_tours_router
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
+from .core.rate_limit import rate_limit
 from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
 from .db.database import create_tables
 from .db.plans_db import create_plans_table
@@ -99,33 +100,89 @@ app.add_middleware(AnalyticsMiddleware)
 app.add_middleware(RequestIdMiddleware)
 
 
+def _limited(bucket: str) -> list:
+    """Router dependencies applying one rate-limit bucket to every route."""
+    return [Depends(rate_limit(bucket))]
+
+
+# Every route on the routers marked _limited(...) calls an LLM; see
+# app/core/rate_limit.py and the rate_limit_* settings.
 app.include_router(auth_router, prefix="/api", tags=["auth"])
 app.include_router(admin_router, prefix="/api", tags=["admin"])
 app.include_router(feedback_router, prefix="/api", tags=["feedback"])
 app.include_router(analytics_router, prefix="/api", tags=["analytics"])
-app.include_router(chat_router, prefix="/api", tags=["chat"])
+app.include_router(
+    chat_router, prefix="/api", tags=["chat"], dependencies=_limited("chat")
+)
 app.include_router(plans_router, prefix="/api", tags=["plans"])
 app.include_router(preferences_router, prefix="/api", tags=["preferences"])
 app.include_router(recent_searches_router, prefix="/api", tags=["recent_searches"])
 app.include_router(airports_router, prefix="/api", tags=["airports"])
 app.include_router(nationalities_router, prefix="/api", tags=["nationalities"])
-app.include_router(search.router, prefix="/api", tags=["search"])
-app.include_router(flights.router, prefix="/api", tags=["flights"])
-app.include_router(hotels.router, prefix="/api", tags=["hotels"])
-app.include_router(activities.router, prefix="/api", tags=["activities"])
-app.include_router(visa.router, prefix="/api", tags=["visa"])
-app.include_router(sim.router, prefix="/api", tags=["sim"])
-app.include_router(tips.router, prefix="/api", tags=["tips"])
-app.include_router(getting_around.router, prefix="/api", tags=["getting_around"])
-app.include_router(forex.router, prefix="/api", tags=["forex"])
-app.include_router(itinerary.router, prefix="/api", tags=["itinerary"])
-app.include_router(discover_router, prefix="/api", tags=["discover"])
-app.include_router(compare_router, prefix="/api", tags=["compare"])
-app.include_router(stress_test_router, prefix="/api", tags=["stress_test"])
+app.include_router(
+    search.router, prefix="/api", tags=["search"], dependencies=_limited("search")
+)
+app.include_router(
+    flights.router, prefix="/api", tags=["flights"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    hotels.router, prefix="/api", tags=["hotels"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    activities.router,
+    prefix="/api",
+    tags=["activities"],
+    dependencies=_limited("light_ai"),
+)
+app.include_router(
+    visa.router, prefix="/api", tags=["visa"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    sim.router, prefix="/api", tags=["sim"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    tips.router, prefix="/api", tags=["tips"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    getting_around.router,
+    prefix="/api",
+    tags=["getting_around"],
+    dependencies=_limited("light_ai"),
+)
+app.include_router(
+    forex.router, prefix="/api", tags=["forex"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    itinerary.router,
+    prefix="/api",
+    tags=["itinerary"],
+    dependencies=_limited("light_ai"),
+)
+app.include_router(
+    discover_router, prefix="/api", tags=["discover"], dependencies=_limited("discover")
+)
+app.include_router(
+    compare_router, prefix="/api", tags=["compare"], dependencies=_limited("compare")
+)
+app.include_router(
+    stress_test_router,
+    prefix="/api",
+    tags=["stress_test"],
+    dependencies=_limited("light_ai"),
+)
 app.include_router(taste_router, prefix="/api", tags=["taste"])
-app.include_router(events_router, prefix="/api", tags=["events"])
-app.include_router(walking_tours_router, prefix="/api", tags=["walking_tours"])
-app.include_router(layover_router, prefix="/api", tags=["layover"])
+app.include_router(
+    events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    walking_tours_router,
+    prefix="/api",
+    tags=["walking_tours"],
+    dependencies=_limited("light_ai"),
+)
+app.include_router(
+    layover_router, prefix="/api", tags=["layover"], dependencies=_limited("light_ai")
+)
 
 
 @app.get("/health/agents")

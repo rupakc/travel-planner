@@ -4,6 +4,7 @@ import logging
 from ..schemas.request import TravelSearchRequest
 from .base_agent import ToolAgent, _URLSearchMixin
 from .loader import load_agent_definition
+from .static_results import _match_table_key, _normalise_nationality
 from .web_tools import execute_tool
 
 logger = logging.getLogger(__name__)
@@ -119,118 +120,14 @@ _DESTINATION_CURRENCY = {
     "croatia": ("EUR", "Euro", "€"),
 }
 
-_CITY_TO_COUNTRY = {
-    "tokyo": "japan",
-    "osaka": "japan",
-    "kyoto": "japan",
-    "bangkok": "thailand",
-    "phuket": "thailand",
-    "chiang mai": "thailand",
-    "mumbai": "india",
-    "delhi": "india",
-    "goa": "india",
-    "jaipur": "india",
-    "new york": "usa",
-    "nyc": "usa",
-    "los angeles": "usa",
-    "san francisco": "usa",
-    "miami": "usa",
-    "chicago": "usa",
-    "las vegas": "usa",
-    "hawaii": "usa",
-    "london": "uk",
-    "manchester": "uk",
-    "edinburgh": "uk",
-    "sydney": "australia",
-    "melbourne": "australia",
-    "paris": "france",
-    "lyon": "france",
-    "nice": "france",
-    "berlin": "germany",
-    "munich": "germany",
-    "frankfurt": "germany",
-    "rome": "italy",
-    "milan": "italy",
-    "venice": "italy",
-    "florence": "italy",
-    "barcelona": "spain",
-    "madrid": "spain",
-    "amsterdam": "netherlands",
-    "dubai": "uae",
-    "abu dhabi": "uae",
-    "bali": "indonesia",
-    "jakarta": "indonesia",
-    "kuala lumpur": "malaysia",
-    "penang": "malaysia",
-    "beijing": "china",
-    "shanghai": "china",
-    "seoul": "south korea",
-    "busan": "south korea",
-    "mexico city": "mexico",
-    "cancun": "mexico",
-    "istanbul": "turkey",
-    "antalya": "turkey",
-    "ankara": "turkey",
-    "zurich": "switzerland",
-    "geneva": "switzerland",
-    "toronto": "canada",
-    "vancouver": "canada",
-    "cairo": "egypt",
-    "cape town": "south africa",
-    "johannesburg": "south africa",
-    "manila": "philippines",
-    "ho chi minh city": "vietnam",
-    "hanoi": "vietnam",
-    "kathmandu": "nepal",
-    "male": "maldives",
-    "colombo": "sri lanka",
-    "prague": "czech republic",
-    "budapest": "hungary",
-    "warsaw": "poland",
-    "stockholm": "sweden",
-    "oslo": "norway",
-    "copenhagen": "denmark",
-    "moscow": "russia",
-    "buenos aires": "argentina",
-    "bogota": "colombia",
-    "lima": "peru",
-    "santiago": "chile",
-    "nairobi": "kenya",
-    "marrakech": "morocco",
-    "tel aviv": "israel",
-    "jerusalem": "israel",
-    "amman": "jordan",
-    "athens": "greece",
-    "lisbon": "portugal",
-    "vienna": "austria",
-    "dublin": "ireland",
-    "brussels": "belgium",
-    "helsinki": "finland",
-    "zagreb": "croatia",
-    "dubrovnik": "croatia",
-    "singapore": "singapore",
-}
-
 
 def _get_home_currency(nationality: str) -> tuple[str, str, str] | None:
-    nat = nationality.lower().strip()
-    if nat in _NATIONALITY_CURRENCY:
-        return _NATIONALITY_CURRENCY[nat]
-    for key, val in _NATIONALITY_CURRENCY.items():
-        if key in nat or nat in key:
-            return val
-    return None
+    return _NATIONALITY_CURRENCY.get(_normalise_nationality(nationality))
 
 
 def _resolve_destination_currency(destination: str) -> tuple[str, str, str] | None:
-    dest = destination.lower().strip()
-    country = _CITY_TO_COUNTRY.get(dest, dest)
-    if country in _DESTINATION_CURRENCY:
-        return _DESTINATION_CURRENCY[country]
-    for key, val in _DESTINATION_CURRENCY.items():
-        if key in dest or dest in key:
-            return val
-    return None
+    key = _match_table_key(destination, _DESTINATION_CURRENCY)
+    return _DESTINATION_CURRENCY[key] if key else None
 
 
 class ForexAgent(ToolAgent, _URLSearchMixin):
