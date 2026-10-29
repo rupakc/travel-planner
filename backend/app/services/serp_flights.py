@@ -173,7 +173,8 @@ def _map_result(
 
 
 def _pick_diverse_outbounds(items: list, n: int = 3) -> list:
-    """Pick up to n diverse outbound options: cheapest, earliest, latest departure."""
+    """Pick up to n diverse outbound options: the lowest-priced one, then the
+    earliest and latest departures."""
     if not items:
         return []
 
@@ -194,8 +195,10 @@ def _pick_diverse_outbounds(items: list, n: int = 3) -> list:
         candidates.append(item)
         return True
 
-    # Cheapest (SerpAPI sorts best_flights by value, first = best price/quality)
-    add(items[0])
+    # Cheapest by price: Google lists best_flights (its own ranking) before
+    # other_flights, so the lowest fare can be anywhere in the list.
+    priced = [i for i in items if _is_number(i.get("price")) and i["price"] > 0]
+    add(min(priced, key=lambda i: i["price"]) if priced else items[0])
 
     if len(items) > 1:
         # Earliest departure
@@ -309,7 +312,9 @@ async def search(
 
     # Cache key — deterministic from search params
     filters_key = tuple(sorted((filters or {}).items()))
-    cache_key = f"serp:{origin_id}:{dest_id}:{dep_date}:{ret_date}:{hash(filters_key)}"
+    cache_key = _main_key(
+        origin_id, dest_id, dep_date, ret_date, request.num_travelers, filters_key
+    )
     cache = get_cache()
     if cache_key in cache:
         logger.info("SerpAPI cache hit for %s→%s", origin_id, dest_id)
@@ -320,6 +325,7 @@ async def search(
     if not request.return_date:
         # ── One-way: single call ────────────────────────────────────────
         data = await _call(base_params)
+        _record_calendar_price(cache, request, filters, origin_id, dest_id, data)
         insights = _extract_price_insights(data)
         items = data.get("best_flights", []) + data.get("other_flights", [])
         trip_type = "one_way"
@@ -332,6 +338,7 @@ async def search(
     else:
         # ── Round-trip: call 1 (outbounds) + 3 parallel calls (returns) ─
         data1 = await _call(base_params)
+        _record_calendar_price(cache, request, filters, origin_id, dest_id, data1)
         insights = _extract_price_insights(data1)
         all_outbounds = data1.get("best_flights", []) + data1.get("other_flights", [])
 
@@ -400,23 +407,69 @@ def _cheapest(data: dict) -> float | None:
     return min(prices) if prices else None
 
 
-def _cached_selected_price(main: dict | None) -> float | None:
-    """Cheapest fare for the searched dates from the cached main search.
+def _main_key(
+    origin_id: str,
+    dest_id: str,
+    dep: Any,
+    ret: Any,
+    num_travelers: int,
+    filters_key: tuple = (),
+) -> str:
+    """Main single-city search cache key (fares depend on the traveller count)."""
+    return f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{num_travelers}:{hash(filters_key)}"
 
-    Prefers Google's `lowest_price` (the same kind of figure as the other
-    calendar dates); falls back to the cheapest mapped result.
+
+def _calendar_key(
+    origin_id: str, dest_id: str, dep: Any, ret: Any, num_travelers: int
+) -> str:
+    """Per-date fare calendar cache key (cheapest outbound-stage price)."""
+    return f"serp-cal:{origin_id}:{dest_id}:{dep}:{ret}:{num_travelers}"
+
+
+def _record_calendar_price(
+    cache: Any,
+    request: TravelSearchRequest,
+    filters: dict | None,
+    origin_id: str,
+    dest_id: str,
+    data: dict,
+) -> None:
+    """Store an unfiltered main search's cheapest outbound-stage price as the
+    fare calendar's entry for its dates, so the calendar never needs its own
+    call for them and agrees with the same fares."""
+    cheapest = _cheapest(data)
+    if filters or cheapest is None:
+        return
+    key = _calendar_key(
+        origin_id,
+        dest_id,
+        request.departure_date,
+        request.return_date,
+        request.num_travelers,
+    )
+    cache[key] = cheapest
+
+
+def _cached_selected_price(main: dict | None, outbound: float | None) -> float | None:
+    """Cheapest fare for the searched dates, from what is already cached.
+
+    The lower of the cheapest outbound-stage price for those dates
+    (``outbound``, the figure every other calendar date shows) and the
+    cheapest flight card of the cached main search, so the selected date
+    agrees with the cards. Google's ``lowest_price`` insight only when
+    neither is known; None when nothing is cached.
     """
-    if not isinstance(main, dict):
-        return None
-    lowest = (main.get("price_insights") or {}).get("lowest_price")
-    if _is_number(lowest) and lowest > 0:
-        return float(lowest)
-    prices = [
-        r["price_usd"]
-        for r in main.get("results", [])
-        if _is_number(r.get("price_usd")) and r["price_usd"] > 0
-    ]
-    return float(min(prices)) if prices else None
+    known = [outbound] if outbound is not None else []
+    if isinstance(main, dict):
+        known += [
+            float(r["price_usd"])
+            for r in main.get("results", [])
+            if _is_number(r.get("price_usd")) and r["price_usd"] > 0
+        ]
+    if known:
+        return min(known)
+    lowest = ((main or {}).get("price_insights") or {}).get("lowest_price")
+    return float(lowest) if _is_number(lowest) and lowest > 0 else None
 
 
 # Per-date lookups in progress, shared by overlapping calendar requests (a
@@ -433,7 +486,7 @@ async def search_calendar(
     at most 4 in flight per request; concurrent requests share in-flight
     lookups for the same date. Dates before tomorrow are skipped; a failed or
     empty date comes back as ``cheapest_usd: None``. The selected date reuses
-    the cached main search when there is one.
+    the cached main search when there is one (see ``_cached_selected_price``).
     """
     origin_id = request.origin_iata or request.origin
     dest_id = request.destination_iata or request.destination
@@ -451,14 +504,17 @@ async def search_calendar(
             "cheapest_usd": None,
             "is_selected": offset == 0,
         }
+        key = _calendar_key(origin_id, dest_id, dep, ret, request.num_travelers)
         if offset == 0:
             selected = _cached_selected_price(
-                cache.get(f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{hash(())}")
+                cache.get(
+                    _main_key(origin_id, dest_id, dep, ret, request.num_travelers)
+                ),
+                cache.get(key),
             )
             if selected is not None:
                 entry["cheapest_usd"] = selected
                 return entry
-        key = f"serp-cal:{origin_id}:{dest_id}:{dep}:{ret}:{request.num_travelers}"
         if key in cache:
             entry["cheapest_usd"] = cache[key]
             return entry

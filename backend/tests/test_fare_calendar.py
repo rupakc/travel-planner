@@ -241,7 +241,7 @@ async def test_failures_are_not_cached():
 @pytest.mark.asyncio
 async def test_selected_date_reuses_cached_main_search():
     req = _req()
-    get_cache()[f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"] = {
+    get_cache()[serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)] = {
         "results": [{"price_usd": 777.0}, {"price_usd": 650.0}]
     }
     mock = AsyncMock(return_value=_serp([400]))
@@ -296,10 +296,106 @@ async def test_concurrent_calendars_share_in_flight_lookups():
 
 
 @pytest.mark.asyncio
-async def test_selected_date_prefers_cached_lowest_price_insight():
-    get_cache()[f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"] = {
+async def test_selected_date_prefers_cards_over_lowest_price_insight():
+    """Google's lowest_price is only a fallback: the cards are real fares."""
+    get_cache()[serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)] = {
         "results": [{"price_usd": 777.0}, {"price_usd": 650.0}],
         "price_insights": {"lowest_price": 598, "price_level": "typical"},
+    }
+    mock = AsyncMock(return_value=_serp([400]))
+    with patch.object(serp_flights, "_call", mock):
+        out = await search_calendar(API_KEY, _req())
+    assert mock.await_count == 6
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == 650.0
+
+
+SELECTED_CAL_KEY = "serp-cal:JFK:NRT:2026-10-20:2026-10-27:2"
+SELECTED_MAIN_KEY = serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 2)
+
+
+def _route_calls(outbound_prices, return_prices, insights=None):
+    """Fake `_call`: outbound-stage calls (no departure_token) get
+    ``outbound_prices`` (with insights), return-stage calls ``return_prices``."""
+
+    async def fake_call(params):
+        if "departure_token" in params:
+            return {"best_flights": [_flight(p) for p in return_prices]}
+        data = {"best_flights": [_flight(p) for p in outbound_prices]}
+        if insights is not None:
+            data["price_insights"] = insights
+        return data
+
+    return fake_call
+
+
+@pytest.mark.asyncio
+async def test_round_trip_search_records_outbound_cheapest_for_calendar():
+    fake = _route_calls([700, 650], [690, 660])
+    with patch.object(serp_flights, "_call", side_effect=fake):
+        await search(API_KEY, _req())
+    assert get_cache()[SELECTED_CAL_KEY] == 650.0
+
+
+@pytest.mark.asyncio
+async def test_one_way_search_records_cheapest_for_calendar():
+    with patch.object(serp_flights, "_call", side_effect=_route_calls([420, 380], [])):
+        await search(API_KEY, _req(ret=None))
+    assert get_cache()["serp-cal:JFK:NRT:2026-10-20:None:2"] == 380.0
+
+
+@pytest.mark.asyncio
+async def test_filtered_search_does_not_record_calendar_price():
+    fake = _route_calls([700, 650], [690, 660])
+    with patch.object(serp_flights, "_call", side_effect=fake):
+        await search(API_KEY, _req(), filters={"max_stops": 0})
+    assert SELECTED_CAL_KEY not in get_cache()
+
+
+@pytest.mark.asyncio
+async def test_selected_date_matches_cheapest_card():
+    """Observed live: lowest_price $360 while the cheapest card was $341."""
+    fake = _route_calls(
+        [360, 380], [341, 355], insights={"lowest_price": 360, "price_level": "low"}
+    )
+    with patch.object(serp_flights, "_call", side_effect=fake):
+        main = await search(API_KEY, _req())
+        out = await search_calendar(API_KEY, _req())
+    cheapest_card = min(r["price_usd"] for r in main["results"])
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == cheapest_card == 341.0
+
+
+@pytest.mark.asyncio
+async def test_selected_date_uses_outbound_cheapest_without_cards():
+    get_cache()[SELECTED_MAIN_KEY] = {
+        "results": [],
+        "price_insights": {"lowest_price": 500},
+    }
+    get_cache()[SELECTED_CAL_KEY] = 450.0
+    mock = AsyncMock(return_value=_serp([400]))
+    with patch.object(serp_flights, "_call", mock):
+        out = await search_calendar(API_KEY, _req())
+    assert mock.await_count == 6
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == 450.0
+
+
+@pytest.mark.asyncio
+async def test_selected_date_takes_outbound_when_cheaper_than_cards():
+    get_cache()[SELECTED_MAIN_KEY] = {"results": [{"price_usd": 500.0}]}
+    get_cache()[SELECTED_CAL_KEY] = 450.0
+    with patch.object(serp_flights, "_call", AsyncMock(return_value=_serp([400]))):
+        out = await search_calendar(API_KEY, _req())
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == 450.0
+
+
+@pytest.mark.asyncio
+async def test_selected_date_lowest_price_only_when_nothing_else():
+    get_cache()[SELECTED_MAIN_KEY] = {
+        "results": [],
+        "price_insights": {"lowest_price": 598},
     }
     mock = AsyncMock(return_value=_serp([400]))
     with patch.object(serp_flights, "_call", mock):
@@ -392,3 +488,49 @@ def test_route_returns_calendar(client, admin_headers, monkeypatch):
         "cheapest_usd",
         "is_selected",
     }
+
+
+async def test_main_search_cache_is_per_traveller_count():
+    """A cached 1-traveller search must not answer a 2-traveller one."""
+    mock = AsyncMock(return_value=_serp([300]))
+    with patch.object(serp_flights, "_call", mock):
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=1))
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=1))
+        assert mock.await_count == 1
+        await serp_flights.search(API_KEY, _req(ret=None, travelers=2))
+    assert mock.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_selected_date_ignores_main_search_for_other_traveller_count():
+    get_cache()[serp_flights._main_key("JFK", "NRT", "2026-10-20", "2026-10-27", 1)] = {
+        "results": [{"price_usd": 100.0}],
+        "price_insights": {"lowest_price": 90},
+    }
+    mock = AsyncMock(return_value=_serp([400]))
+    with patch.object(serp_flights, "_call", mock):
+        out = await search_calendar(API_KEY, _req(travelers=2))
+    assert mock.await_count == 7  # selected date looked up live, not reused
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == 400.0
+
+
+@pytest.mark.asyncio
+async def test_cheapest_outbound_in_other_flights_is_return_priced():
+    """Google lists best_flights first; the cheapest fare may be in
+    other_flights and must still get a card."""
+    priced_tokens = []
+
+    async def fake_call(params):
+        if "departure_token" in params:
+            priced_tokens.append(params["departure_token"])
+            return {"best_flights": [_flight(1500)]}
+        return {
+            "best_flights": [_flight(1491), _flight(1600)],
+            "other_flights": [_flight("n/a"), _flight(0), _flight(1206)],
+        }
+
+    with patch.object(serp_flights, "_call", side_effect=fake_call):
+        await search(API_KEY, _req())
+    assert priced_tokens[0] == "tok1206"
+    assert len(priced_tokens) <= 3

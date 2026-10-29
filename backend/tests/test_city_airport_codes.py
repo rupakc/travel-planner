@@ -211,3 +211,193 @@ async def test_multi_city_leg_with_province_suffix(monkeypatch):
         pass  # every leg empty — only the resolved codes matter here
     assert calls[0] == ("JFK", "YYZ")
     assert ("YYZ", "CDG,ORY") in calls
+
+
+# ── State / province narrows a city's airports ─────────────────────────────
+
+
+def test_every_us_ca_au_br_airport_has_a_region():
+    from app.core.places import _REGION_CODES
+    from app.db.airport_regions import AIRPORT_REGION
+    from app.db.seed_airports import AIRPORTS
+
+    regional = {a[0]: a[5] for a in AIRPORTS if a[5] in ("US", "CA", "AU", "BR")}
+    missing = sorted(set(regional) - set(AIRPORT_REGION))
+    assert not missing, f"no region for {missing}"
+    assert set(AIRPORT_REGION) <= set(regional), "region for a non-seed airport"
+    for code, country in regional.items():
+        for region in AIRPORT_REGION[code]:
+            assert country in _REGION_CODES.get(region, ()), code
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Portland", None),  # Oregon and Maine: ambiguous
+        ("Portland, OR", "PDX"),
+        ("Portland, Oregon", "PDX"),
+        ("Portland, Maine", "PWM"),
+        ("Portland, ME", "PWM"),
+        ("Birmingham, AL", "BHM"),
+        ("Birmingham, UK", "BHX"),
+        ("San Jose, CA", "SJC"),  # California, not Costa Rica
+        ("Victoria, BC", "YYJ"),
+        ("Toronto, CA", "YYZ"),  # CA as Canada still names the country
+        ("Portland, TX", None),  # no Portland airport in Texas
+    ],
+)
+def test_state_narrows_city_airports(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+def test_springfield_il_when_seeded():
+    from app.db.seed_airports import AIRPORTS
+
+    if not any(a[3] == "Springfield" for a in AIRPORTS):
+        pytest.skip("no Springfield in the seed")
+    assert lookup_city_iata("Springfield, IL")
+
+
+def test_city_in_one_region_unaffected():
+    assert lookup_city_iata("London") == "LHR,LGW,STN"
+    assert lookup_city_iata("New York") == "JFK,LGA"
+    assert lookup_city_iata("Houston, TX") == "IAH,HOU"
+
+
+# ── Accent and alias spellings ─────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("text", "folded"),
+    [
+        (" São   Paulo ", "sao paulo"),
+        ("Zürich", "zurich"),
+        ("Straße", "strasse"),
+        ("Tromsø", "tromso"),
+        ("Łódź", "lodz"),
+        ("Ærø", "aero"),
+        ("Œuvre", "oeuvre"),
+        ("Đà Nẵng", "da nang"),
+        ("Diyarbakır", "diyarbakir"),
+        ("Þórshöfn", "thorshofn"),
+        ("Ålesund", "alesund"),
+    ],
+)
+def test_fold_place(text, folded):
+    from app.core.places import fold_place
+
+    assert fold_place(text) == folded
+
+
+def test_city_alias_targets_exist_in_seed():
+    from app.core.places import CITY_ALIASES
+    from app.db.seed_airports import AIRPORTS
+
+    seeded = {a[3] for a in AIRPORTS}
+    assert set(CITY_ALIASES.values()) <= seeded
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("São Paulo", "GRU,CGH"),
+        ("São Paulo, Brazil", "GRU,CGH"),
+        ("Zürich", "ZRH"),
+        ("Düsseldorf", "DUS"),
+        ("Kraków", "KRK"),
+        ("Malmö", "MMX"),
+        ("Reykjavík", "RKV,KEF"),
+        ("Washington", "IAD,DCA"),
+        ("Washington, DC", "IAD,DCA"),
+        ("Washington D.C.", "IAD,DCA"),
+        ("Washington DC", "IAD,DCA"),
+        ("Washington, D.C.", "IAD,DCA"),
+        ("Saint Petersburg", "LED"),
+        ("St Petersburg", "LED"),
+        ("St. Petersburg", "LED"),
+        ("Ålesund", "AES"),
+        ("Alesund", "AES"),
+        ("ålesund", "AES"),
+        ("Saigon", "SGN"),
+        ("Bombay", "BOM"),
+        ("New York City", "JFK,LGA"),
+        ("NYC", "NYC"),  # bare code wins
+    ],
+)
+def test_accent_and_alias_spellings(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+# ── Fix round 1: region sets, country-aware regions, full names, St./Saint ──
+
+
+@pytest.mark.parametrize(
+    "place",
+    ["Kansas City", "Kansas City, MO", "Kansas City, KS", "Kansas City, Kansas"],
+)
+def test_kansas_city_serves_both_states(place):
+    assert lookup_city_iata(place) == "MCI"
+
+
+@pytest.mark.parametrize(
+    "place",
+    ["Columbus, GA", "Charleston, WV", "Rochester, MN", "Jackson, WY"],
+)
+def test_city_in_another_state_is_not_the_seeded_one(place):
+    """Seeded: Columbus OH, Charleston SC, Rochester NY, Jackson MS."""
+    assert lookup_city_iata(place) is None
+
+
+def test_region_match_is_country_aware(extra_airports, monkeypatch):
+    from app.db import database
+
+    extra_airports("ZQE", "Testburg", "Australia", "AU")
+    extra_airports("ZQF", "Testburg", "United States", "US")
+    monkeypatch.setitem(database.AIRPORT_REGION, "ZQE", frozenset({"wa"}))
+    monkeypatch.setitem(database.AIRPORT_REGION, "ZQF", frozenset({"wa"}))
+    assert lookup_city_iata("Testburg, Western Australia") == "ZQE"
+    assert lookup_city_iata("Testburg, Washington") == "ZQF"
+    assert lookup_city_iata("Testburg, WA") is None  # either country
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Victoria, British Columbia", "YYJ"),
+        ("Toronto, Ontario", "YYZ"),
+        ("Montreal, Québec", "YUL"),
+        ("Sydney, New South Wales", "SYD"),
+        ("Perth, Western Australia", "PER"),
+        ("Melbourne, Victoria", "MEL"),
+        ("Rio de Janeiro, Rio de Janeiro", "GIG,SDU"),
+        ("São Paulo, São Paulo", "GRU,CGH"),
+        ("Sao Paulo, Sao Paulo", "GRU,CGH"),
+        ("Belém, Pará", "BEL"),
+        ("Brasilia, Distrito Federal", "BSB"),
+    ],
+)
+def test_full_region_names(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("St. Louis", "STL"),
+        ("St Louis", "STL"),
+        ("Saint Louis", "STL"),
+        ("saint louis, MO", "STL"),
+        ("St Petersburg", "LED"),
+        ("Saint Petersburg", "LED"),
+        ("St. Petersburg", "LED"),
+    ],
+)
+def test_st_and_saint_spellings(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+def test_every_airport_region_is_a_set():
+    from app.db.airport_regions import AIRPORT_REGION
+
+    assert AIRPORT_REGION["MCI"] == {"mo", "ks"}
+    assert all(isinstance(v, frozenset) and v for v in AIRPORT_REGION.values())
