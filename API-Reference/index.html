@@ -1095,6 +1095,37 @@
 - <code>500</code> — agent failed; retry</p>
 <p>Results are cached in memory for 30 minutes per unique request.</p>
 <hr />
+<h3 id="post-apicomparedestination"><code>POST /api/compare/destination</code></h3>
+<p>Lightweight summary of one destination, used by the Search page's Compare mode (one call per destination, in parallel). Runs flights, hotels (no URL enrichment), weather and visa concurrently with per-piece timeouts.</p>
+<p><strong>Auth required:</strong> Yes</p>
+<p><strong>Request body:</strong> a <code>TravelSearchRequest</code> for a single destination. <code>destinations</code> must be null or have at most one entry; multi-city requests return <code>422</code> ("Compare works with single destinations").</p>
+<p><strong>Response (200)</strong> — example for 2 adults, 7 nights, <code>budget_usd: 3000</code>:</p>
+<pre><code class="language-json">{
+  &quot;destination&quot;: &quot;Lisbon, Portugal&quot;,
+  &quot;label&quot;: &quot;Lisbon&quot;,
+  &quot;flight&quot;: {&quot;price_usd&quot;: 620, &quot;stops&quot;: 0, &quot;duration_minutes&quot;: 895, &quot;airline&quot;: &quot;TAP Air Portugal&quot;, &quot;source&quot;: &quot;google_flights&quot;},
+  &quot;hotel&quot;: {&quot;typical_nightly_usd&quot;: 110, &quot;cheapest_good_nightly_usd&quot;: 70, &quot;count&quot;: 5},
+  &quot;weather&quot;: {&quot;avg_high_c&quot;: 24.4, &quot;avg_low_c&quot;: 15.7, &quot;poor_days&quot;: 1, &quot;total_days&quot;: 7, &quot;source&quot;: &quot;open-meteo&quot;},
+  &quot;visa&quot;: {&quot;visa_type&quot;: &quot;visa-free&quot;, &quot;max_stay_days&quot;: 90, &quot;fee_usd&quot;: 0, &quot;processing_time&quot;: &quot;Not required&quot;, &quot;verified&quot;: true},
+  &quot;ease&quot;: {&quot;total&quot;: 80, &quot;grade&quot;: &quot;green&quot;, &quot;safety&quot;: 18, &quot;english&quot;: 15, &quot;infrastructure&quot;: 17, &quot;visa_ease&quot;: 10},
+  &quot;daily_cost_usd&quot;: 100,
+  &quot;estimate&quot;: {
+    &quot;total_usd&quot;: 1320,
+    &quot;flight_usd&quot;: 620,
+    &quot;stay_usd&quot;: 385,
+    &quot;daily_usd&quot;: 700,
+    &quot;included_in_daily&quot;: true,
+    &quot;nights&quot;: 7,
+    &quot;partial&quot;: false,
+    &quot;budget_status&quot;: &quot;under&quot;
+  },
+  &quot;missing&quot;: []
+}
+</code></pre>
+<p>Any piece that failed or timed out is <code>null</code> and its name is listed in <code>missing</code>; <code>ease</code>/<code>daily_cost_usd</code> are <code>null</code> for destinations outside the static tables. <code>flight.source</code> of <code>estimate</code> marks a non-live fare; <code>visa.verified</code> is true only for static-table data. <code>ease.grade</code> is <code>green</code> (≥ 71), <code>amber</code> (41–70) or <code>red</code> (≤ 40).</p>
+<p><strong>Estimate (per traveller):</strong> <code>flight_usd</code> is the cheapest fare (<code>flight.price_usd</code>, round trip, per person). <code>daily_usd</code> = <code>daily_cost_usd</code> × days (days = nights, min 1; nights default to 7 without a <code>return_date</code>). <code>daily_cost_usd</code> is an all-in daily budget that already includes lodging, so when it is known <code>total_usd = flight_usd + daily_usd</code> and <code>stay_usd</code> is shown for reference only (<code>included_in_daily: true</code>) — above, 620 + 700 = 1320. When the daily figure is unknown, <code>total_usd = flight_usd + stay_usd</code> and <code>included_in_daily</code> is <code>false</code>. <code>stay_usd</code> = typical nightly × nights × rooms ÷ travellers, with rooms = ⌈(adults + seniors) ÷ 2⌉ (falling back to ⌈num_travelers ÷ 2⌉) — above, 110 × 7 × 1 ÷ 2 = 385. <code>partial</code> is <code>true</code> when the flight or the daily figure is unknown; the total then sums only the known parts. <code>budget_status</code> compares <code>total_usd × num_travelers</code> with <code>budget_usd</code> (the party's budget): <code>over</code>, <code>under</code> (only for a complete estimate), or <code>null</code> with no budget or when a partial total is still within it.</p>
+<p><strong>Errors:</strong> <code>422</code> for multi-city or invalid requests; <code>502</code> when every piece failed.</p>
+<p><strong>Caching:</strong> only complete results (empty <code>missing</code>) are cached in the shared TTL cache, keyed on the full request; partial results and <code>502</code>s are never cached.</p>
 <h2 id="chat">Chat</h2>
 <h3 id="post-apichat-sse-streaming"><code>POST /api/chat</code> — SSE streaming</h3>
 <p>Conversational trip planning. The agent maintains session context and can trigger the full search pipeline when the message is trip-planning related.</p>

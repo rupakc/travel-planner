@@ -1,0 +1,1003 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Trip Comparison Implementation Plan - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#trip-comparison-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Trip Comparison Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Setup and Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../agents/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Agent System
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Frontend/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Frontend
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../deployment/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="trip-comparison-implementation-plan">Trip Comparison Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Let a user compare 2–3 destinations side by side for the same origin, dates and travellers — estimated trip cost, cheapest flight, typical hotel price, weather, visa, safety and ease — then start the full plan for the one they pick with one click.</p>
+<p><strong>Architecture:</strong> A new lightweight backend endpoint <code>POST /api/compare/destination</code> summarises ONE destination by running only the decision-relevant agents (flights, hotels, weather; visa only when the static table can't answer) in parallel plus the instant static scores, then reducing them to a compact summary with a pure, unit-tested function. The frontend adds a third Search-page mode, "Compare", that fires one request per destination in parallel and fills each column as it arrives.</p>
+<p><strong>Tech Stack:</strong> FastAPI + Pydantic v2, existing agents (<code>FlightsAgent</code>, <code>HotelsAgent</code>, <code>WeatherAgent</code>, <code>VisaAgent</code>), static tables in <code>backend/app/agents/static_results.py</code>, in-memory TTL cache (<code>backend/app/core/cache.py</code>); React 18 + Tailwind; pytest (asyncio_mode=auto), vitest.</p>
+<p><strong>Spec:</strong> Backlog item #1 in <code>Future_Improvements.md</code> ("Trip Comparison / Side-by-Side View"). Facts: <code>/private/tmp/claude-501/-Users-rupak-travel-planner/6a423640-de0e-4ae7-a160-af5d4cd4d6e9/scratchpad/research-1-28.md</code> Part A. Design choices are Claude's (user delegated them).</p>
+<h2 id="design-binding">Design (binding)</h2>
+<p>Options weighed:
+- (a) Run two or three full <code>/api/search</code> streams side by side — rejected: ~17 LLM calls each through a process-wide semaphore of 6 (each search ~2× slower), minutes of waiting, and the Results page holds only one result set.
+- (b) Reuse Discover (one LLM call guessing costs) — rejected: estimates only, no real flights/weather; exactly the "is this real?" problem.
+- (c) <strong>Per-destination lightweight summary endpoint</strong> — chosen: ~2–3 LLM calls per destination (flights unless SerpAPI is configured, hotels, visa only if not in the static table, weather only for cities Open-Meteo can't serve), real weather, static scores instant; parallel per destination; cacheable per request.</p>
+<p>Backend:
+- <code>POST /api/compare/destination</code>, auth required like other routes, body = <code>TravelSearchRequest</code> (single destination; <code>destinations</code> must be null/≤1 — multi-city is rejected with 422 "Compare works with single destinations").
+- Runs concurrently with per-piece timeouts: <code>FlightsAgent.run</code> (45 s), <code>HotelsAgent.run</code> (45 s; <strong>no enrich</strong> — URLs aren't needed for comparing), <code>WeatherAgent.run</code> (30 s), visa = <code>get_static_visa(request)</code> if it returns data else <code>VisaAgent.run</code> (30 s). A piece that fails or times out becomes <code>null</code> in the summary with its name listed in <code>missing</code>; the endpoint still returns 200 if at least one piece succeeded, else 502.
+- Summary (pure function <code>summarize_destination(request, flights, hotels, weather, visa, confidence) -&gt; dict</code> in <code>backend/app/services/compare.py</code>):
+  - <code>destination</code> (as given), <code>label</code> (city name: hotels/flights destination string's first comma segment if present, else request.destination)
+  - <code>flight</code>: cheapest valid fare <code>{price_usd, stops, duration_minutes, airline, source}</code> where stops/duration sum outbound + return; <code>price_usd &gt; 0</code> finite only; prefer non-<code>estimate</code> sources when any exist. <code>null</code> if none.
+  - <code>hotel</code>: <code>{typical_nightly_usd, cheapest_good_nightly_usd, count}</code> — typical = median nightly price of 3★–4★ hotels (fallback all priced hotels); cheapest_good = lowest nightly with <code>review_score &gt;= 7</code> (null if none). <code>null</code> if no priced hotels.
+  - <code>weather</code>: <code>{avg_high_c, avg_low_c, poor_days, total_days, source}</code> from <code>weather.days</code>; <code>null</code> if no days.
+  - <code>visa</code>: <code>{visa_type, max_stay_days, fee_usd, processing_time, verified}</code> — <code>verified = True</code> only when it came from the static table.
+  - <code>ease</code>: from <code>get_confidence_score(request)</code>: <code>{total, grade, safety, english, infrastructure, visa_ease}</code> (sub-score <code>score</code> values); <code>null</code> when the destination isn't in the table.
+  - <code>daily_cost_usd</code>: the table's <code>avg_daily_cost_usd</code> for the destination (expose via a small helper next to <code>get_confidence_score</code>; null when unknown).
+  - <code>estimate</code>: <code>{total_usd, flight_usd, stay_usd, daily_usd, nights}</code> per traveller — flight price + typical nightly × nights + daily cost × days (days = nights, min 1; nights from dates, default 7). Any missing part → that part null and <code>total_usd</code> = sum of known parts with <code>partial: true</code>. <code>budget_status</code>: <code>'under' | 'over' | null</code> vs <code>request.budget_usd</code>.
+  - <code>missing</code>: list of piece names that failed.
+  - All numbers coerced defensively (strings/junk → ignored).
+- Cache: key <code>"compare:" + md5(request.model_dump_json())</code> in the shared TTL cache; store only complete-enough results (≥1 piece) and never cache a 502.
+- Chat is untouched.</p>
+<p>Frontend:
+- SearchPage mode toggle gains <strong>"Compare"</strong> (third button). Its form: origin, 2–3 destination fields (AirportSearch; "Add another" up to 3; remove ×), departure/return dates, nationality, budget, travellers, interests — prefilled from the known-mode form/preferences the same way Discover prefills.
+- On "Compare", one <code>compareDestination(request)</code> call per destination in parallel (new function in <code>frontend/src/services/api.js</code>, axios like the others); each column shows its own loading/error state ("Couldn't load — Retry").
+- <strong>Comparison table</strong> (<code>frontend/src/components/CompareTable.jsx</code>): one column per destination; rows: Estimated trip cost per traveller (with budget chip; "partial" note), Cheapest flight (price · stops · duration · "estimate" badge when source is estimate), Hotel per night (typical / from), Weather (avg high/low °C, "N of M days poor", "climate estimate" when not Open-Meteo), Visa (type, fee, max stay; "Verified" vs "AI — check official site"), Travel Ease (total/100 + grade colour), Safety /20, English /20, Typical daily spend. Per numeric row the best value gets an emerald "Best" marker (lowest cost/price, fewest poor days, highest ease/safety/english); ties mark all; rows with &lt;2 known values mark none. Mobile: columns become stacked cards (no horizontal page scroll at 375px).
+- Each column has <strong>"Plan this trip"</strong>: switches to known mode with the form prefilled with that destination and the shared fields, and submits it (the normal full search).
+- Pure helpers in <code>frontend/src/utils/compare.js</code>: <code>buildCompareRequests(form) -&gt; TravelSearchRequest[]</code>, <code>bestByRow(summaries) -&gt; { [rowKey]: Set&lt;index&gt; }</code>, formatters. Unit-tested.
+- Analytics: <code>track('compare_run', 'search', { count })</code>, <code>track('compare_plan_clicked', 'search', { position })</code>.</p>
+<p>Non-goals: comparing saved plans, multi-city comparison, chat, sharing a comparison, more than 3 destinations.</p>
+<h2 id="global-constraints">Global Constraints</h2>
+<ul>
+<li>No new dependencies. Backend route registered in <code>backend/app/main.py</code> like the others; document it in CLAUDE.md's API table and <code>docs/API-Reference.md</code>.</li>
+<li>Backend tests: <code>cd backend &amp;&amp; python3 -m pytest -q</code> (baseline 333). Agents are mocked the established way: <code>Agent.__new__(Agent)</code> + <code>AsyncMock</code> on <code>run</code> / patching (see <code>backend/tests/test_walking_tours_agent.py</code>, <code>backend/tests/test_discover.py</code>); never call Anthropic in tests.</li>
+<li>Frontend: <code>NODE_OPTIONS=--experimental-require-module npx vitest run</code>, <code>npx eslint src/ --max-warnings 0</code>, <code>npm run build</code>. Component tests <code>createRoot</code> + <code>act</code>, mock <code>../utils/analytics</code>.</li>
+<li>Every external link (none expected) via <code>safeUrl</code>.</li>
+</ul>
+<h2 id="review-focus">Review Focus</h2>
+<ol>
+<li>One destination failing or timing out — other columns still render; the failed column offers Retry; endpoint returns partial data with <code>missing</code>.</li>
+<li>Junk agent output (string prices, missing outbound/return, empty lists) — summary never contains NaN or crashes.</li>
+<li>Destinations not in the static tables (no ease/daily cost/visa) — rows show "—", estimate marked partial, no "Best" on rows with &lt;2 values.</li>
+<li>Same destination entered twice / fewer than 2 destinations — form validation blocks submit with a message.</li>
+<li>"Plan this trip" — exactly the compared request (dates, travellers, budget, nationality, interests) runs as a normal search.</li>
+</ol>
+<hr />
+<h3 id="task-1-backend-summary-endpoint">Task 1: Backend summary + endpoint</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/services/compare.py</code> (<code>summarize_destination</code>), <code>backend/app/api/routes/compare.py</code>
+- Modify: <code>backend/app/agents/static_results.py</code> (add <code>get_destination_daily_cost(request) -&gt; float | None</code> beside <code>get_confidence_score</code>), <code>backend/app/main.py</code> (register router)
+- Test: <code>backend/tests/test_compare.py</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Failing tests:</strong> <code>summarize_destination</code> — cheapest fare with stops/duration summed and estimates de-preferred; hotel median of 3–4★ and cheapest review ≥7; weather averages and poor days; visa verified flag; ease sub-scores; estimate total and <code>partial</code>; budget_status under/over/null; junk values ignored; all-empty inputs → nulls without crashing. Route — mocked agents: happy path 200 with summary; one agent raising → 200 with <code>missing</code> naming it; all failing → 502; multi-city body → 422; static visa present → <code>VisaAgent.run</code> not called; second identical call served from cache (agents called once); unauthenticated → 401 like other protected routes.</li>
+<li>[ ] <strong>Step 2–4:</strong> implement; agent instances as module-level lazy singletons like <code>discover.py</code>; <code>asyncio.gather</code> with per-piece <code>asyncio.wait_for</code>. Full backend suite passes.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(compare): per-destination comparison summary endpoint</code>.</li>
+</ul>
+<h3 id="task-2-frontend-compare-helpers-table">Task 2: Frontend compare helpers + table</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/utils/compare.js</code> (+ <code>.test.js</code>), <code>frontend/src/components/CompareTable.jsx</code> (+ <code>.test.jsx</code>)
+- Modify: <code>frontend/src/services/api.js</code> (<code>compareDestination(request)</code>)</p>
+<p><strong>Interfaces — Produces:</strong> <code>buildCompareRequests(form)</code>, <code>bestByRow(summaries)</code>, <code>CompareTable({ columns, onPlan, onRetry })</code> where <code>columns = [{ destination, status: 'loading'|'done'|'error', summary? , error? }]</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Failing tests:</strong> requests share fields and differ only in destination, drop blanks and duplicates (case-insensitive); <code>bestByRow</code> picks lowest/highest per row, marks ties, skips rows with &lt;2 values; table renders one column per destination, loading skeleton, error with Retry calling <code>onRetry(index)</code>, "Best" markers, "estimate"/"Verified"/"climate estimate" labels, "—" for nulls, Plan button calls <code>onPlan(index)</code>.</li>
+<li>[ ] <strong>Step 2–4:</strong> implement; responsive (table on ≥md, stacked cards below). Suite + lint.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(compare): comparison table and helpers</code>.</li>
+</ul>
+<h3 id="task-3-search-page-compare-mode-docs">Task 3: Search page "Compare" mode, docs</h3>
+<p><strong>Files:</strong>
+- Modify: <code>frontend/src/pages/SearchPage.jsx</code> (mode toggle <code>'known'|'discover'|'compare'</code>, compare form, parallel calls, Plan this trip → known mode prefilled + submit through the existing submit path), <code>CLAUDE.md</code>, <code>docs/API-Reference.md</code>, <code>docs/Frontend.md</code>
+- [ ] <strong>Step 1:</strong> implement the mode, validation (≥2 distinct destinations, origin, dates, nationality), parallel calls with per-column state and Retry; preserve existing known/discover behaviour and the onboarding tour targets.
+- [ ] <strong>Step 2:</strong> suite, lint, build, backend suite.
+- [ ] <strong>Step 3: Commit</strong> <code>feat(compare): compare destinations from the Search page</code>.</p>
+<p>End-to-end (controller, Chrome): compare 3 real destinations (e.g. Barcelona, Lisbon, Rome from Berlin), check numbers against the APIs' raw output, one destination outside the static tables, Retry after a forced failure, Plan this trip → full search with the same parameters, 375px layout, console clean.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
