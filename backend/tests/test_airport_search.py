@@ -76,3 +76,35 @@ def test_unscheduled_airports_hidden_unless_code_typed():
 def test_limit_is_respected():
     assert len(_codes("s", limit=4)) == 4
     assert _codes("   ") == []
+
+
+# ── Final review: relevance of place-derived suggestions ────────────────────
+
+
+@pytest.mark.parametrize(
+    ("q", "allowed"),
+    [
+        ("milan", {"MXP", "LIN", "BGY"}),  # not Syracuse / Detroit / Windsor
+        ("cologne", {"CGN", "DUS", "DTM"}),  # not Minneapolis / Milan
+        ("munchen", {"MUC"}),  # not Zurich / Basel / Bern / Leipzig
+        ("dubai", {"DXB", "DWC", "SHJ"}),  # not Gorakhpur / Lucknow
+    ],
+)
+def test_place_suggestions_are_notable_and_own_country(q, allowed):
+    assert set(_codes(q)) <= allowed, _codes(q)
+
+
+def test_alternate_prefix_reaches_big_places():
+    assert _codes("münch")[0] == "MUC"
+    assert _codes("munch")[0] == "MUC"
+
+
+@pytest.mark.parametrize(("q", "first"), [("hue", "HUI"), ("goa", "GOI")])
+def test_lower_case_three_letters_that_name_a_place_list_the_place_first(q, first):
+    codes = _codes(q)
+    assert codes[0] == first, codes
+
+
+@pytest.mark.parametrize(("q", "first"), [("HUE", "HUE"), ("GOA", "GOA")])
+def test_upper_case_codes_still_come_first(q, first):
+    assert _codes(q)[0] == first

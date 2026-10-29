@@ -596,45 +596,61 @@ _HINT_SCORE = 5e9
 # A linked airport serving another town ranks at this share of the place's
 # score ("san": San Francisco's SFO before San Diego's Tijuana link).
 _OTHER_TOWN_SHARE = 0.1
+# A place-derived suggestion needs this share of the best match's score.
+_AUTOCOMPLETE_MIN_SHARE = 10
 
 
 def _autocomplete_places(
     conn: sqlite3.Connection, folded: str
-) -> tuple[dict[str, tuple[int, float, int, str | None]], dict[str, float]]:
+) -> tuple[dict[str, tuple], dict[str, float]]:
     """For the places (and curated islands / destinations) whose name starts
     with the folded query: their linked airports → (match class, place
     score, position in the place's links, place name or None for a curated
-    hint), and each matched name's best
-    score. Own names match by prefix; alternate names ("milano") whole."""
+    hint, the place's country or None for a hint), and each matched name's
+    best score. Own names match by prefix; alternate names of places with
+    ≥ 100k people by prefix from five letters ("münch" → München), else
+    whole ("milano"). Only places scoring ≥ 1/10 of the best match count
+    ("milan": not Milan, Michigan)."""
     from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS
 
-    linked: dict[str, tuple[int, float, int, str | None]] = {}
+    linked: dict[str, tuple] = {}
     name_score: dict[str, float] = {}
 
-    def add(name, codes, score, hint=False):
+    def add(name, codes, score, place_cc=None, hint=False):
         cls = _EXACT_NAME if name == folded else _NAME_PREFIX
         name_score[name] = max(score, name_score.get(name, 0.0))
         for pos, code in enumerate(codes):
             known = linked.get(code)
             if known is None or (cls, -score, pos) < (known[0], -known[1], known[2]):
-                linked[code] = (cls, score, pos, None if hint else name)
+                linked[code] = (cls, score, pos, None if hint else name, place_cc)
 
     for name, (_cc, codes) in {**ISLAND_AIRPORTS, **DESTINATION_AIRPORTS}.items():
-        if name.startswith(folded):
+        # whole names, or prefixes from four letters ("par" is not Park City)
+        if name == folded or (len(folded) >= 4 and name.startswith(folded)):
             add(name, codes, _HINT_SCORE, hint=True)
     if len(folded) < 2:
         return linked, name_score
+    end = folded + "\uffff"
     rows = conn.execute(
-        "SELECT n.name_folded, p.score, p.airports "
+        "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code "
         "FROM place_names n JOIN places p ON p.geonameid = n.geonameid "
         "WHERE p.population > 0 AND p.airports != '' AND ("
-        "(n.tier = 0 AND n.name_folded >= ? AND n.name_folded < ?) "
-        "OR (n.name_folded = ? AND length(?) >= 4)) "
-        "ORDER BY p.score DESC LIMIT ?",
-        (folded, folded + "\uffff", folded, folded, _AUTOCOMPLETE_PLACES),
+        "(n.tier = 0 AND n.name_folded >= :q AND n.name_folded < :end) "
+        "OR (n.tier = 1 AND n.name_folded = :q AND length(:q) >= 4) "
+        "OR (n.tier = 1 AND length(:q) >= 5 AND p.population >= 100000"
+        " AND n.name_folded >= :q AND n.name_folded < :end)) "
+        "ORDER BY p.score DESC LIMIT :n",
+        {"q": folded, "end": end, "n": _AUTOCOMPLETE_PLACES},
     ).fetchall()
-    for r in rows:
-        add(r["name_folded"], r["airports"].split(), r["score"])
+    from .places_db import ALT_NAME_PENALTY
+
+    scored = [
+        (r["score"] * (ALT_NAME_PENALTY if r["tier"] else 1.0), r) for r in rows
+    ]  # alternates at the resolver's penalty (Syracuse's stray "milan")
+    best = max((sc for sc, _ in scored), default=0)
+    for sc, r in scored:
+        if sc * _AUTOCOMPLETE_MIN_SHARE >= best:
+            add(r["name_folded"], r["airports"].split(), sc, r["country_code"])
     return linked, name_score
 
 
@@ -642,12 +658,15 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
     """Autocomplete: airports by IATA code, city, airport name or country,
     plus the airports linked to GeoNames places (and curated islands /
     destinations) whose folded name starts with the query ("kyoto" → KIX,
-    ITM; "zurich" → ZRH). Order: exact code, code prefix, exact city / place
-    name, name prefix, anything else; within a class the more notable place
-    first ("lon": London before Long Beach), its curated airports in curated
-    order, then its other links, then bigger airports (type_rank) and the
-    name. Airports without scheduled service only for their exact code.
-    Response rows: iata_code, name, city, country, country_code."""
+    ITM; "zurich" → ZRH). A place adds only its own-country airports, and
+    only places scoring ≥ 1/10 of the best match count. Order: exact code,
+    code prefix, exact city / place name, name prefix, anything else (a
+    lower-case three-letter text that names a place lists the place before
+    the code: "hue" → HUI, "HUE" → HUE); within a class the more notable
+    place first ("lon": London before Long Beach), its curated airports in
+    curated order, then its other links, then bigger airports (type_rank)
+    and the name. Airports without scheduled service only for their exact
+    code. Response rows: iata_code, name, city, country, country_code."""
     q = query.strip()
     if not q:
         return []
@@ -672,12 +691,18 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
             },
         ).fetchall()
     curated = _curated_rank()
+    place_first = (
+        len(q) == 3
+        and not q.isupper()
+        and any(v[0] == _EXACT_NAME for v in linked.values())
+    )
+    needle = folded if len(q) >= 3 else None
 
-    def rank(r: sqlite3.Row) -> tuple:
+    def rank(r: sqlite3.Row) -> tuple | None:
         code, city = r["iata_code"], fold_place(r["city"])
         score, pos = name_score.get(city, 0.0), 99
         if code == upper:
-            cls = _EXACT_CODE
+            cls = _NAME_PREFIX if place_first else _EXACT_CODE
         elif code.startswith(upper):
             cls = _CODE_PREFIX
         elif city == folded:
@@ -686,18 +711,30 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
             cls = _NAME_PREFIX
         else:
             cls, score = _OTHER, 0.0
-        if code in linked:
-            place_cls, place_score, place_pos, place_name = linked[code]
+        link = linked.get(code)
+        if link and link[4] is not None and link[4] != r["country_code"]:
+            link = None  # a place suggests only airports in its own country
+        if link:
+            place_cls, place_score, place_pos, place_name, _cc = link
             if place_name is not None and place_name != city:
                 place_score *= _OTHER_TOWN_SHARE
             if (place_cls, -place_score) < (cls, -score):
                 cls, score, pos = place_cls, place_score, place_pos
+        elif cls == _OTHER and not (
+            needle
+            and needle in " ".join(fold_place(r[k] or "") for k in ("name", "country"))
+        ):
+            return None  # matched only through a dropped place link
         type_rank = r["type_rank"] if r["type_rank"] is not None else 9
         return (cls, -score, curated.get(code, len(curated)), pos, type_rank, r["name"])
 
-    visible = [
-        r for r in rows if r["iata_code"] == upper or r["scheduled"] in (None, 1)
-    ]
-    visible.sort(key=rank)
+    ranked = []
+    for r in rows:
+        if r["iata_code"] != upper and r["scheduled"] not in (None, 1):
+            continue
+        key = rank(r)
+        if key is not None:
+            ranked.append((key, r))
+    ranked.sort(key=lambda kr: kr[0])
     keys = ("iata_code", "name", "city", "country", "country_code")
-    return [{k: r[k] for k in keys} for r in visible[:limit]]
+    return [{k: r[k] for k in keys} for _, r in ranked[:limit]]

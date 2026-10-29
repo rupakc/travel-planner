@@ -89,8 +89,13 @@ backend/
       request.py      # TravelSearchRequest
       travel.py       # Domain response models (incl. TransportOption, GettingAroundResponse)
     services/         # Business logic (searchers, rankers, builders)
-    core/             # Config, cache, retry utilities
+    core/             # Config, cache, retry utilities; places.py (fold, aliases, hints)
+    db/               # SQLite: database.py (lookups, autocomplete), places_db.py
+                      # (resolve_place), seed_airports.py (curated list + seeding)
+    db/data/          # Committed OurAirports + GeoNames data (see its README)
     tools/            # Search and data tools
+  scripts/
+    build_place_data.py # Offline generator for app/db/data (stdlib only)
   tests/              # Unit and integration tests
   requirements.txt    # Python dependencies
   pyproject.toml

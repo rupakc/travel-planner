@@ -238,7 +238,7 @@ SQLite was chosen for operational simplicity: no separate database process to ma
 - `static_results._place_country`: the curated city map first; an unknown city takes its resolved place's country ("Zermatt" → Switzerland).
 - `search_airports` (autocomplete): airports plus places by folded name prefix.
 
-Measured over the golden set: `lookup_city_iata` p50 0.54 ms / p95 0.76 ms, `_place_country` p50 0.47 ms / p95 0.71 ms, autocomplete 1.6–8 ms per query.
+Measured over the golden set (518 rows): `lookup_city_iata` p50 0.60 ms / p95 0.93 ms, `_place_country` p50 0.49 ms / p95 0.88 ms, autocomplete p50 2.6 ms / p95 8.4 ms per query (the first call in a process also loads small CSV-derived caches).
 
 ---
 
