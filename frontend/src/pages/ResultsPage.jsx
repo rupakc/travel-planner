@@ -29,7 +29,11 @@ import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import PlanViewModal from '../components/PlanViewModal'
-import TripMap from '../components/TripMap'
+import ItinerarySection from '../components/ItinerarySection'
+import {
+  arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
+  layoutChangeCount, syncPlannedSlots,
+} from '../utils/itineraryLayout'
 import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -2278,183 +2282,6 @@ function buildClientItinerary(activities, hotels, searchData) {
   return { days, total_estimated_cost_usd: Math.round(totalCost), source: 'template' }
 }
 
-function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPlan }) {
-  const [editingSlot, setEditingSlot] = useState(null) // key of slot being edited
-  const [openNote,    setOpenNote]    = useState(null)
-
-  if (!data?.days?.length) return <div className="p-4 text-sm text-gray-500">No itinerary available</div>
-
-  const slotIcons = { morning: '🌅', afternoon: '☀️', evening: '🌙' }
-
-  return (
-    <div className="p-4 space-y-4">
-      {/* Map at the top */}
-      <TripMap days={data.days} />
-
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        {data.total_estimated_cost_usd > 0 && (
-          <div className="flex items-center gap-2 p-2.5 bg-teal-50 rounded-lg border border-teal-200 text-sm">
-            <DollarSign size={13} className="text-teal-600" />
-            <span className="text-teal-800 font-medium">Est. itinerary cost: ${data.total_estimated_cost_usd.toLocaleString()}</span>
-          </div>
-        )}
-        {data.source === 'template' && (
-          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">Auto-generated — click any slot to edit</span>
-        )}
-      </div>
-
-      {data.days.map((day) => (
-        <div key={day.day_number} className="border border-gray-200 rounded-xl overflow-hidden">
-          {/* Day header */}
-          <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
-            <div>
-              <span className="font-bold">Day {day.day_number}</span>
-              {day.date && <span className="ml-2 text-teal-200 text-sm">{day.date}</span>}
-              {day.city && (
-                <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
-                  {day.city}
-                </span>
-              )}
-            </div>
-            <div className="text-right">
-              {day.theme && <p className="text-sm font-medium">{day.theme}</p>}
-              {day.daily_estimated_cost_usd > 0 && <p className="text-xs text-teal-200">${day.daily_estimated_cost_usd} est.</p>}
-            </div>
-          </div>
-
-          {/* Slots */}
-          <div className="divide-y divide-gray-100">
-            {day.slots?.map((slot, j) => {
-              const key = `${day.day_number}-${slot.time_of_day}`
-              const edit  = selections.itinerary_edits?.[key] || {}
-              const note  = selections.itinerary_notes?.[key] || ''
-              const isEditing  = editingSlot === key
-              const isNoteOpen = openNote === key
-
-              // Merge saved edits over original slot data
-              const activity = edit.activity  ?? slot.activity
-              const location = edit.location  ?? slot.location
-              const cost     = edit.cost      ?? slot.estimated_cost_usd
-
-              return (
-                <div key={j} className={`px-4 py-3 transition-colors ${isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'}`}>
-                  <div className="flex gap-3">
-                    {/* Time icon */}
-                    <div className="w-20 shrink-0 text-sm text-gray-500 font-medium capitalize flex items-center gap-1">
-                      <span>{slotIcons[slot.time_of_day]}</span>
-                      <span>{slot.time_of_day}</span>
-                    </div>
-
-                    {/* Content — view or edit */}
-                    <div className="flex-1 min-w-0">
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <div>
-                            <label className="text-xs text-teal-600 font-medium">Activity</label>
-                            <input
-                              autoFocus
-                              type="text"
-                              value={edit.activity ?? slot.activity}
-                              onChange={e => onSlotEdit(key, 'activity', e.target.value)}
-                              className="mt-0.5 w-full text-sm border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-xs text-teal-600 font-medium">Location</label>
-                              <input
-                                type="text"
-                                value={edit.location ?? slot.location ?? ''}
-                                onChange={e => onSlotEdit(key, 'location', e.target.value)}
-                                className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-teal-600 font-medium">Est. cost ($)</label>
-                              <input
-                                type="number"
-                                value={edit.cost ?? slot.estimated_cost_usd ?? ''}
-                                onChange={e => onSlotEdit(key, 'cost', e.target.value === '' ? null : Number(e.target.value))}
-                                className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs text-teal-600 font-medium">Personal note</label>
-                            <textarea
-                              value={note}
-                              onChange={e => onNoteChange(key, e.target.value)}
-                              placeholder="Add your note…"
-                              className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 resize-none bg-white"
-                              rows={2}
-                            />
-                          </div>
-                          <button onClick={() => setEditingSlot(null)}
-                            className="flex items-center gap-1 px-3 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold hover:bg-teal-700">
-                            <Check size={10}/> Done
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm font-medium text-gray-900">{activity}</p>
-                          {location && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><MapPin size={11}/>{location}</p>}
-                          {slot.notes && !edit.activity && <p className="text-sm text-gray-400 mt-1 italic">{slot.notes}</p>}
-                          {note && <p className="text-sm text-teal-600 mt-1 italic">📝 {note}</p>}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    {!isEditing && (
-                      <div className="shrink-0 flex flex-col items-end gap-1.5">
-                        {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
-                        <button onClick={() => { setEditingSlot(key); setOpenNote(null) }}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                          <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
-                        </button>
-                        <button onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
-                            <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
-                          </button>
-                        <button onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selections.itinerary_slots?.some(s => s.key === key)
-                              ? 'bg-teal-600 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
-                          }`}>
-                          {selections.itinerary_slots?.some(s => s.key === key)
-                            ? <><Check size={10}/> In Plan</>
-                            : <><Plus size={10}/> Plan</>
-                          }
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Inline note textarea when not in full edit mode */}
-                  {isNoteOpen && !isEditing && (
-                    <div className="mt-2 ml-23 pl-20">
-                      <textarea
-                        autoFocus
-                        value={note}
-                        onChange={e => onNoteChange(key, e.target.value)}
-                        placeholder="Add your personal note…"
-                        className="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none bg-amber-50"
-                        rows={2}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ─── My Plan Drawer ───────────────────────────────────────────────────────────
 
 // ─── Trip Stress-Test (Trip Health Check) ────────────────────────────────────
@@ -2490,7 +2317,7 @@ function StressScoreRing({ score, overall }) {
   )
 }
 
-function StressTestSection({ data }) {
+function StressTestSection({ data, layoutMoved = false }) {
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
@@ -2512,6 +2339,7 @@ function StressTestSection({ data }) {
           <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
           <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
+          {layoutMoved && <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>}
         </div>
       </div>
 
@@ -3407,10 +3235,14 @@ export default function ResultsPage() {
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
-    itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
+    itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null,
   })
   // Selections as they were just before "Add all to My Plan" (for Undo)
   const [packageUndo, setPackageUndo] = useState(null)
+  // Previous itinerary layouts (newest last, max 20) for the Undo button
+  const [layoutUndo, setLayoutUndoState] = useState([])
+  const undoRef = useRef([])
+  const setLayoutUndo = (stack) => { undoRef.current = stack; setLayoutUndoState(stack) }
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer — it
@@ -3462,9 +3294,51 @@ export default function ResultsPage() {
     setLoadedPlanId(plan.id)
     setLoadedPlanSearchData(plan.search_data || null)
     setPackageUndo(null)
+    setLayoutUndo([])
+  }
+
+  // Itinerary editing: every action computes the next layout from the ORIGINAL
+  // itinerary, records the previous one for Undo, and updates selections once.
+  const layoutRef = useRef(null)
+  useEffect(() => { layoutRef.current = selections.itinerary_layout }, [selections.itinerary_layout])
+  const commitLayout = (next, { undoable = true } = {}) => {
+    if (loadedPlanId) return false // selections belong to a saved plan, not this itinerary
+    const prev = layoutRef.current
+    if (next === prev) return false
+    layoutRef.current = next
+    if (undoable) setLayoutUndo([...undoRef.current.slice(-19), prev])
+    setSelections(s => ({
+      ...s,
+      itinerary_layout: next,
+      itinerary_slots: syncPlannedSlots(s.itinerary_slots, arrangeItinerary(results.itinerary, next, s.itinerary_edits)),
+    }))
+    return true
+  }
+  const handleMoveSlot = (key, day, tod, method) => {
+    const it = results.itinerary
+    const swap = !!moveTargets(it, layoutRef.current, key).find(t => t.day_number === day && t.time_of_day === tod)?.swapWith
+    if (commitLayout(moveSlot(it, layoutRef.current, key, day, tod))) track('itinerary_slot_moved', 'results', { method, swap })
+  }
+  const handleRemoveSlot = (key) => {
+    if (commitLayout(removeSlot(results.itinerary, layoutRef.current, key))) track('itinerary_slot_removed', 'results', {})
+  }
+  const handleRestoreSlot = (key) => { commitLayout(restoreSlot(results.itinerary, layoutRef.current, key)) }
+  const handleResetLayout = () => {
+    if (commitLayout(null)) track('itinerary_layout_reset', 'results', {})
+  }
+  const handleUndoLayout = () => {
+    const stack = undoRef.current
+    if (!stack.length || loadedPlanId) return
+    const prev = stack[stack.length - 1]
+    setLayoutUndo(stack.slice(0, -1))
+    commitLayout(prev, { undoable: false })
   }
 
 
+  const arrangedItinerary = useMemo(
+    () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
+    [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
+  )
   const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
   const handleApplyPackage = () => {
     if (!bestValue) return
@@ -3492,6 +3366,7 @@ export default function ResultsPage() {
     setLoadedPlanId(null)
     setLoadedPlanSearchData(null)
     setPackageUndo(null)
+    setLayoutUndo([])
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -3504,7 +3379,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -3831,8 +3706,14 @@ export default function ResultsPage() {
       emergency_card: () => <EmergencyCardSection data={data} status={status} />,
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
-      itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
-      stress_test:    () => <StressTestSection data={data} />,
+      itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
+        {...(loadedPlanId ? {
+          editingDisabledReason: 'Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.',
+        } : {
+          onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
+          onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
+        })} />,
+      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
@@ -4069,7 +3950,7 @@ export default function ResultsPage() {
           </div>
         ) : (
           <TimelineView
-            itineraryData={results.itinerary}
+            itineraryData={arrangedItinerary}
             weatherData={results.weather}
             searchData={searchData}
           />
@@ -4104,7 +3985,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null) }}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]) }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}

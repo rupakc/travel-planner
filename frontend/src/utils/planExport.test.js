@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { buildPlanIcs, icsEscape, icsFold, planItineraryDays } from './planExport'
+import { moveSlot, removeSlot } from './itineraryLayout'
 
 const NOW = new Date(Date.UTC(2026, 9, 28, 12, 0, 0))
 
@@ -231,5 +232,63 @@ describe('buildPlanIcs', () => {
       selections: {}, itinerary: { days: [{ day_number: 1, slots: [{ time_of_day: 'morning', activity: 'X' }] }] },
     })
     expect(events(ics)).toHaveLength(0)
+  })
+})
+
+describe('arranged itinerary', () => {
+  const trip = {
+    days: [
+      { day_number: 1, date: '2027-04-01', city: 'Tokyo', theme: 'Arrival', slots: [
+        { time_of_day: 'morning', activity: 'Tsukiji Outer Market', location: 'Tsukiji', estimated_cost_usd: 40 },
+        { time_of_day: 'evening', activity: 'Shibuya Crossing' },
+      ] },
+      { day_number: 2, date: '2027-04-02', city: 'Tokyo', theme: 'Culture', slots: [
+        { time_of_day: 'morning', activity: 'Meiji Shrine' },
+        { time_of_day: 'evening', activity: 'Izakaya crawl' },
+      ] },
+    ],
+  }
+  const swapped = moveSlot(trip, null, '1-morning', 2, 'evening')
+  const removed = removeSlot(trip, null, '1-morning')
+  const sel = {
+    itinerary_layout: swapped,
+    itinerary_edits: { '1-morning': { activity: 'Toyosu Market' } },
+    itinerary_notes: { '1-morning': 'Go early' },
+  }
+  const build = (selections, it = trip) => buildPlanIcs({ planName: 'T', searchData, selections, itinerary: it, now: NOW })
+
+  it('planItineraryDays applies the layout to the live itinerary and the snapshot', () => {
+    const days = planItineraryDays(sel, trip)
+    expect(days[1].slots.map((x) => x.activity)).toEqual(['Meiji Shrine', 'Tsukiji Outer Market'])
+    expect(days[0].slots.map((x) => x.activity)).toEqual(['Izakaya crawl', 'Shibuya Crossing'])
+    expect(planItineraryDays({ ...sel, itinerary: trip }, null)[1].slots[1].activity).toBe('Tsukiji Outer Market')
+  })
+
+  it('does not rearrange the itinerary_slots fallback', () => {
+    const slots = [{ day_number: 1, date: '2027-04-01', time_of_day: 'morning', activity: 'X' }]
+    const days = planItineraryDays({ itinerary_layout: swapped, itinerary_slots: slots }, null)
+    expect(days[0].slots[0].activity).toBe('X')
+  })
+
+  it('moves the .ics event with its UID, edit and note', () => {
+    const evs = events(build(sel))
+    const moved = evs.find((e) => field(e, 'UID').includes('slot-1-morning'))
+    expect(field(moved, 'SUMMARY')).toBe('SUMMARY:Toyosu Market')
+    expect(field(moved, 'DTSTART')).toBe('DTSTART:20270402T180000')
+    expect(field(moved, 'DTEND')).toBe('DTEND:20270402T210000')
+    expect(field(moved, 'DESCRIPTION')).toContain('Go early')
+    const partner = evs.find((e) => field(e, 'SUMMARY') === 'SUMMARY:Izakaya crawl')
+    expect(field(partner, 'DTSTART')).toBe('DTSTART:20270401T090000')
+  })
+
+  it('a removed activity produces no event', () => {
+    const evs = events(build({ itinerary_layout: removed }))
+    expect(evs).toHaveLength(3)
+    expect(evs.some((e) => field(e, 'SUMMARY') === 'SUMMARY:Tsukiji Outer Market')).toBe(false)
+  })
+
+  it('a layout from another itinerary is ignored', () => {
+    const other = { days: [{ day_number: 1, date: '2027-04-01', slots: [{ time_of_day: 'morning', activity: 'Other' }] }] }
+    expect(planItineraryDays({ itinerary_layout: swapped }, other)).toBe(other.days)
   })
 })
