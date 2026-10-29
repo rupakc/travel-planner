@@ -30,6 +30,7 @@ import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
+import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
 import {
   arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
   layoutChangeCount, syncPlannedSlots,
@@ -119,7 +120,7 @@ function AgentBadge({ agent, status, onClick }) {
   )
 }
 
-function SectionHeader({ agent, status, isOpen, onToggle, actions }) {
+function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
   const { label, icon: Icon, color } = AGENT_CONFIG[agent]
   const acc = SECTION_ACCENT[color] || SECTION_ACCENT.indigo
   return (
@@ -128,8 +129,9 @@ function SectionHeader({ agent, status, isOpen, onToggle, actions }) {
       className={`flex items-center gap-3 px-4 py-3.5 w-full text-left border-l-4 ${acc.line} ${acc.bg} bg-white cursor-pointer transition-colors hover:bg-gray-50/80 ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
     >
       <Icon size={18} className={acc.icon} />
-      <h2 className="font-semibold text-base text-slate-800 flex-1">{label}</h2>
+      <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">{label}</h2>
       {actions}
+      <VerificationBadge verification={verification} />
       {status === 'loading'   && <Loader2 size={15} className="animate-spin text-gray-400" />}
       {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> Enhancing…</span>}
       {status === 'done'      && <CheckCircle2 size={15} className="text-teal-500 opacity-70" />}
@@ -794,6 +796,8 @@ function HotelsSection({ data, selections, onSelect }) {
               <div className="flex items-center gap-2">
                 {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
                 {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
+                <FoundOnlineBadge item={h} />
+                <FoundOnlineBadge item={h} />
               </div>
               <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
@@ -1005,6 +1009,8 @@ function ActivitiesSection({ data, selections, onSelect, weatherData }) {
               {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
+              <FoundOnlineBadge item={a} />
+              <FoundOnlineBadge item={a} />
               {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
@@ -1082,6 +1088,7 @@ function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
                   <ExternalLink size={10} /> View details
                 </a>
               )}
+              <FoundOnlineBadge item={place} />
               {place.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {place.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {place.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
@@ -1364,6 +1371,7 @@ function VisaSection({ data }) {
   const typeColors = { 'visa-free':'bg-green-100 text-green-800 border-green-200','visa-on-arrival':'bg-blue-100 text-blue-800 border-blue-200','e-visa':'bg-yellow-100 text-yellow-800 border-yellow-200','visa-required':'bg-red-100 text-red-800 border-red-200' }
   return (
     <div className="p-4 space-y-5">
+      <VerificationConflictBanner verification={data?.verification} />
       {/* Visa Requirements */}
       {req && (
         <div className="space-y-3">
@@ -2072,6 +2080,7 @@ function EmergencyCardSection({ data, status }) {
 
   return (
     <div className="p-4 space-y-4">
+      <VerificationConflictBanner verification={data.verification} />
       {/* Subtitle / print row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
@@ -3774,7 +3783,7 @@ export default function ResultsPage() {
     })()
     return (
       <div key={agent} id={`section-${agent}`} className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem', ...extraStyle }}>
-        <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} />
+        <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} verification={results[agent]?.verification} />
         {isOpen && (
           status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>
         )}

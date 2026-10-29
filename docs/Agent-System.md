@@ -104,6 +104,16 @@ Thirteen agents run concurrently (the `phase1_agents` dict in the orchestrator),
 
 `ItineraryAgent` starts once both activities and hotels are available. It synthesises a day-by-day schedule with morning / afternoon / evening slots, daily cost estimates, and weather-aware themes. Has a 60-second timeout with a template-based fallback.
 
+### Source verification labels
+
+Right before every section is yielded, the orchestrator calls `_attach_verification(name, data, request, pending=False)` (logic in `backend/app/services/verification.py`), which adds `data["verification"]` = `{level, label, summary, checks[], items_verified, items_total, pending}` with `level` one of `verified`, `partial`, `unverified`, `conflict`. Error results get none. Labels come only from evidence the pipeline already holds, with no extra network calls or LLM passes:
+
+- **Flights**: `live_fare: true` on options mapped from SerpAPI Google Flights (never trusted from LLM output); all live is verified, a mix partial, none unverified.
+- **Hotels / activities / places**: enrichment sets `link_verified: true` when a listing was found online by name (or a trusted booking domain / search result supplied the link) and `false` for hotels it searched without a match; items beyond the enrichment cap are not counted. The first (pre-enrichment) yield is `pending: true`.
+- **Walking tours, weather**: verified from provider crawl results and the `open-meteo` source respectively.
+- **Visa, emergency card**: the AI result is compared with the static reference table. A match is verified; a differing visa type or emergency number is a `conflict` that names both values and links the official source. The AI data is never overwritten. No table entry means unverified.
+- **Static Phase 0 yields** (sim, tips, getting around, forex) are verified as curated reference data; their AI yields, the itinerary, stress test, packing list and pricing advisor are unverified.
+
 ---
 
 ## Agents in detail
