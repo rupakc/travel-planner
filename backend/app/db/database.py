@@ -290,26 +290,29 @@ def _curated_rank() -> dict[str, int]:
     return rank
 
 
-@functools.cache
-def _three_letter_places() -> frozenset[str]:
-    """Curated cities and islands / destinations whose name is three letters
-    ("Goa", "Kos", "Fes"): typed so, they are places, not codes."""
-    from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS
-    from .seed_airports import AIRPORTS
+def _is_country_name(text: str) -> bool:
+    from .places_db import country_names
 
-    names = {fold_place(a[3]) for a in AIRPORTS}
-    names |= ISLAND_AIRPORTS.keys() | DESTINATION_AIRPORTS.keys()
-    return frozenset(n for n in names if len(n) == 3)
+    return fold_place(text) in country_names()
 
 
-def looks_like_code(text: str) -> bool:
-    """A bare three-letter airport / metro code ("LHR", "lhr", "NYC"), not a
-    three-letter place name typed as a word ("Goa", "Kos"; "GOA" stays the
-    Genoa code)."""
+def code_first(text: str) -> bool:
+    """An ALL-CAPS three-letter input ("LHR", "NYC") is a code before any
+    place; a country name or alias ("USA", "UAE") never is."""
     text = text.strip()
-    if not re.fullmatch(r"[A-Za-z]{3}", text):
-        return False
-    return text.isupper() or fold_place(text) not in _three_letter_places()
+    return bool(re.fullmatch(r"[A-Z]{3}", text)) and not _is_country_name(text)
+
+
+def three_letter_code(text: str) -> str | None:
+    """The airport code a three-letter input stands for: an ALL-CAPS one as
+    typed; any other casing only when no place matches ("lhr" → LHR, but
+    "Hue" is Huế, "Goa" is Goa). None for anything else."""
+    text = text.strip()
+    if code_first(text):
+        return text
+    if not re.fullmatch(r"[A-Za-z]{3}", text) or _is_country_name(text):
+        return None
+    return None if _lookup_place(text, 3) else text.upper()
 
 
 def _single_city_rows(
@@ -371,8 +374,41 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     if not city or not city.strip():
         return None
     stripped = city.strip()
-    if looks_like_code(stripped):
-        return stripped.upper()
+    if code_first(stripped):
+        return stripped
+    found = _lookup_place(stripped, max_codes)
+    if found is None and re.fullmatch(r"[A-Za-z]{3}", stripped):
+        if not _is_country_name(stripped):
+            return stripped.upper()  # "lhr", "jfk": no place by that name
+    return found
+
+
+# A linked airport this close is the place's own, wherever its display city.
+_OWN_AIRPORT_KM = 25.0
+
+
+def _without_foreign_padding(place, codes, rows, typed) -> list[str]:
+    """A place's airports in its own country, its own airports first (named
+    after it, or within 25 km: "Hue" → HUI before Da Nang); an airport
+    abroad only when it is the place's own ("Basel" → BSL, in France) or
+    the place has no domestic airport at all ("Lviv" → Rzeszów)."""
+    from .places_db import airport_distance_km
+
+    names = {fold_place(place.name), fold_place(typed.split(",")[0])}
+    own = [
+        c
+        for c in codes
+        if fold_place(rows[c]["city"]) in names
+        or airport_distance_km(place, c) <= _OWN_AIRPORT_KM
+    ]
+    domestic = [c for c in codes if rows[c]["country_code"] == place.country_code]
+    if not domestic:
+        return codes
+    return own + [c for c in domestic if c not in own]
+
+
+def _lookup_place(stripped: str, max_codes: int) -> str | None:
+    """``lookup_city_iata`` steps 2–6 for a non-code text."""
     from .places_db import resolve
 
     prefix = _IATA_PREFIX_RE.match(stripped)
@@ -393,16 +429,19 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
                 return code
             resolution = resolve(stripped, conn)
             linked = resolution.place.airports if resolution.place else ()
-            # the place's airports that are scheduled, with their countries
-            linked_country = dict(
-                conn.execute(
-                    "SELECT iata_code, country_code FROM airports WHERE scheduled = 1"
+            # the place's airports that are scheduled, with country and city
+            linked_rows = {
+                r["iata_code"]: r
+                for r in conn.execute(
+                    "SELECT iata_code, country_code, city FROM airports"
+                    " WHERE scheduled = 1"
                     f" AND iata_code IN ({','.join('?' * len(linked))})",
                     linked,
-                ).fetchall()
-            )
+                )
+            }
+            linked_country = {c: r["country_code"] for c, r in linked_rows.items()}
     except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
-        logger.debug("City airport lookup failed for %r: %s", city, exc)
+        logger.debug("City airport lookup failed for %r: %s", stripped, exc)
         return None
     place = resolution.place
     place_codes = [c for c in place.airports if c in linked_country] if place else []
@@ -442,7 +481,7 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
                 if c not in codes and linked_country[c] == country
             ]
     elif place:
-        codes = place_codes
+        codes = _without_foreign_padding(place, place_codes, linked_rows, stripped)
     elif not resolution.ambiguous:
         dataset = _single_city_rows(sorted(matching, key=lambda r: r["id"]), stated)
         codes = [r["iata_code"] for r in dataset or ()]

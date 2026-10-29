@@ -9,6 +9,7 @@ divisions when a region or country is stated. Never a web lookup.
 import csv
 import functools
 import logging
+import math
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -42,7 +43,8 @@ DOMINANCE = 3.0
 _CODE_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
 _PLACE_COLUMNS = (
-    "p.geonameid, p.name, p.country_code, p.admin1, p.population, p.score, p.airports"
+    "p.geonameid, p.name, p.country_code, p.admin1, p.population, p.score, "
+    "p.airports, p.lat, p.lng"
 )
 
 
@@ -59,10 +61,12 @@ class Place:
     population: int = 0
     score: float = 0.0
     alternate: bool = False  # matched by an alternate name only
+    lat: float | None = None
+    lng: float | None = None
 
 
 @functools.cache
-def _country_names() -> dict[str, str]:
+def country_names() -> dict[str, str]:
     """Folded country name (dataset spelling) or alias → ISO code."""
     from .seed_airports import PLACE_DATA_DIR
 
@@ -77,15 +81,15 @@ def _country_names() -> dict[str, str]:
 
 @functools.cache
 def _iso_codes() -> frozenset[str]:
-    return frozenset(_country_names().values())
+    return frozenset(country_names().values())
 
 
 def stated_countries(stated: str) -> frozenset[str]:
     """ISO codes of the countries a folded segment names: a country name,
     alias or ISO code ("de" → {DE}); empty when it names none."""
     codes = set()
-    if stated in _country_names():
-        codes.add(_country_names()[stated])
+    if stated in country_names():
+        codes.add(country_names()[stated])
     if len(stated) == 2 and stated.upper() in _iso_codes():
         codes.add(stated.upper())
     return frozenset(codes)
@@ -203,6 +207,8 @@ def _row_place(row: sqlite3.Row, score: float, alternate: bool = False) -> Place
         population=row["population"],
         score=score,
         alternate=alternate,
+        lat=row["lat"],
+        lng=row["lng"],
     )
 
 
@@ -304,6 +310,51 @@ def _bigger_namesake(curated: Place, candidates: list[Place]) -> bool:
     )
 
 
+# Nearest linked airport farther than this: the place only has the
+# generator's distant fallback links (Bol, Chad → N'Djamena).
+REACH_KM = 100.0
+
+
+@functools.cache
+def _dataset_airports() -> tuple[dict[str, tuple[float, float]], tuple[str, ...]]:
+    """Every dataset airport → (lat, lng), and the unscheduled ones."""
+    from .seed_airports import PLACE_DATA_DIR
+
+    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    points = {r["iata"]: (float(r["lat"]), float(r["lng"])) for r in rows}
+    return points, tuple(r["iata"] for r in rows if r["scheduled"] == "0")
+
+
+def airport_distance_km(place: Place, code: str) -> float:
+    """Great-circle distance from the place to an airport (inf if unknown)."""
+    point = _dataset_airports()[0].get(code)
+    if point is None or place.lat is None or place.lng is None:
+        return math.inf
+    lat1, lng1, lat2, lng2 = map(math.radians, (place.lat, place.lng, *point))
+    h = (
+        math.sin((lat2 - lat1) / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin((lng2 - lng1) / 2) ** 2
+    )
+    return 2 * 6371.0 * math.asin(math.sqrt(h))
+
+
+def _reachable(candidates: list[Place]) -> list[Place]:
+    """Candidates with an airport within ``REACH_KM`` — linked, or one
+    without scheduled service (Odesa's ODS) — when any has one: a town with
+    an airport beats a namesake that only has a distant fallback ("Bol":
+    Croatia's island town, not Bol, Chad)."""
+    unscheduled = _dataset_airports()[1]
+    near = [
+        p
+        for p in candidates
+        if any(
+            airport_distance_km(p, c) <= REACH_KM for c in (*p.airports, *unscheduled)
+        )
+    ]
+    return near or candidates
+
+
 def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     city, stated, typed = _parse(_strip_known_prefix(conn, text))
     if not city:
@@ -311,10 +362,10 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     hint = _hint(city, stated, typed)
     if hint:
         return Resolution(hint)
-    if not stated and city in _country_names():
+    if not stated and city in country_names():
         # A country typed alone → its highest-scoring place (the capital, or
         # the main gateway city: Istanbul, Zürich, Sydney, New York City).
-        top = _top_place(conn, "p.country_code = ?", [_country_names()[city]])
+        top = _top_place(conn, "p.country_code = ?", [country_names()[city]])
         return Resolution(top[0] if top else None)
     names = _name_variants(city)
     candidates = _name_candidates(conn, names)
@@ -332,8 +383,8 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     curated = _curated_countries(names)
     preferred = [p for p in candidates if p.country_code in curated]
     if not preferred:
-        return _pick(candidates)
-    result = _pick(preferred)
+        return _pick(_reachable(candidates))
+    result = _pick(_reachable(preferred))
     if result.place and _bigger_namesake(result.place, candidates):
         return Resolution(None, ambiguous=True, contested=True)
     return result

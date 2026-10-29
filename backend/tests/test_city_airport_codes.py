@@ -536,3 +536,71 @@ def test_unscheduled_linked_airport_is_never_returned():
     finally:
         with get_connection() as conn:
             conn.execute("UPDATE airports SET scheduled = 1 WHERE iata_code = 'TSF'")
+
+
+# ── Fix round 1: code casing, country aliases, no foreign padding ──────────
+
+
+@pytest.mark.parametrize(
+    ("typed", "codes"),
+    [
+        ("Hue", "HUI,DAD"),  # place first: Huế (own airport first), not Humera
+        ("hue", "HUI,DAD"),
+        ("Bol", "BWK,SPU"),  # Bol, Croatia (own airport), not Bol, Chad
+        ("lhr", "LHR"),  # no such place: the code
+        ("jfk", "JFK"),
+        ("NYC", "NYC"),  # all caps: the code as typed
+        ("BER", "BER"),
+        ("HUE", "HUE"),
+        ("GOA", "GOA"),
+        ("Goa", "GOI,GOX"),
+    ],
+)
+def test_only_all_caps_three_letters_are_codes_first(typed, codes):
+    assert lookup_city_iata(typed) == codes
+
+
+@pytest.mark.parametrize(
+    ("typed", "first"),
+    [
+        ("USA", {"JFK", "LGA", "EWR"}),
+        ("usa", {"JFK", "LGA", "EWR"}),
+        ("UAE", {"AUH", "DXB", "DWC"}),
+        ("uae", {"AUH", "DXB", "DWC"}),
+        ("UK", {"LHR", "LCY", "LGW"}),
+        ("uk", {"LHR", "LCY", "LGW"}),
+    ],
+)
+def test_country_names_and_aliases_beat_codes(typed, first):
+    assert lookup_city_iata(typed).split(",")[0] in first
+
+
+def test_request_passes_picked_codes_straight_through():
+    """The autocomplete submits the picked airport's upper-case code."""
+    req = _req("LHR", "HUE")
+    assert (req.origin_iata, req.destination_iata) == ("LHR", "HUE")
+    req = _req("Hue", "lhr")
+    assert (req.origin_iata, req.destination_iata) == ("HUI,DAD", "LHR")
+    assert req.origin == "Hue"  # a place name is not rewritten as a code
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Victoria", "YYJ"),  # not Friday Harbor / Roche Harbor (US)
+        ("Detroit", "DTW"),  # not Windsor (CA)
+        ("Strasbourg", "SXB"),  # not Karlsruhe (DE)
+        ("Geneva", "GVA"),  # not Annecy (FR)
+        ("San Diego", "SAN,CLD"),  # not Tijuana (MX)
+        ("Switzerland", "ZRH"),  # not Friedrichshafen (DE)
+        ("Basel", "BSL"),  # BSL (in France) is Basel's own airport
+        ("Lviv", "RZE"),  # no domestic airport: the foreign fallback
+    ],
+)
+def test_no_foreign_padding(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+def test_niagara_falls_never_gets_foreign_padding():
+    codes = lookup_city_iata("Niagara Falls")
+    assert codes is None or codes.split(",")[0] in {"BUF", "IAG", "YYZ", "YHM"}

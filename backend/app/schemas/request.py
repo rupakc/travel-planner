@@ -5,11 +5,11 @@ from pydantic import BaseModel, Field, model_validator
 
 def _resolve_iata(value: str) -> str:
     """If value looks like a bare IATA code, resolve it to 'City, Country'."""
-    from ..db.database import looks_like_code, lookup_iata
+    from ..db.database import lookup_iata, three_letter_code
 
-    stripped = value.strip()
-    if looks_like_code(stripped):
-        info = lookup_iata(stripped)
+    code = three_letter_code(value)
+    if code:
+        info = lookup_iata(code)
         if info:
             return f"{info['city']}, {info['country']}"
     return value

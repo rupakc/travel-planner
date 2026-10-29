@@ -59,9 +59,10 @@ def test_golden_lookup(row):
         assert set(expected) <= set(codes), codes
     else:
         assert codes[0] in expected, codes
-    place = resolve_place(row["query"])
-    country = place.country_code if place else _airport(codes[0])["country_code"]
-    assert country == row["expected_country"]
+    if row["expected_country"]:  # empty for a bare code ("HUE")
+        place = resolve_place(row["query"])
+        country = place.country_code if place else _airport(codes[0])["country_code"]
+        assert country == row["expected_country"]
     if row["display_city"]:
         assert _airport(codes[0])["city"] == row["display_city"]
 
