@@ -1087,6 +1087,7 @@
 │   ├── TimelineView.jsx        — itinerary timeline grid (day cards, morning/afternoon/evening)
 │   ├── TripMap.jsx             — Leaflet map for itinerary activity stops
 │   ├── PlanViewModal.jsx       — modal for viewing/editing a saved plan
+│   ├── VerificationBadge.jsx   — source-verification chip + popover, conflict banner, Found-online tag
 │   └── FeedbackWidget.jsx      — floating feedback button on all pages
 ├── context/
 │   ├── AuthContext.jsx         — auth state, JWT token, user preferences sync
@@ -1098,6 +1099,7 @@
 │   └── api.js                  — Axios client + all API call functions
 ├── utils/
 │   ├── planHelpers.js          — plan name generation, cost calculation, selection counting
+│   ├── verification.js         — clear stale pending labels, strip link evidence from saved plans
 │   └── analytics.js            — frontend event tracking
 └── data/
     └── airports.js             — static airport/city data for typeahead
@@ -1211,6 +1213,7 @@ People new to the app — no search history yet — get a short tooltip tour of 
 15. Itinerary Health Check
 16. Packing List</p>
 <p><strong>Free Walking Tours</strong> (<code>WalkingToursSection.jsx</code>) renders one card per tour with provider, rating, duration, price note and a short "why" for this traveller. Each card links to the original tour page (<code>safeUrl</code>, opens in a new tab). The chip is labelled "Walking Tours".</p>
+<p><strong>Source verification labels</strong> — each section header shows a chip from <code>data.verification</code> (<code>VerificationBadge.jsx</code>): Verified, Partly verified, AI-generated, Check details, or a spinning "Checking…" while hotel/activity/place links are still being looked up (<code>pending</code>). Clicking the chip opens a popover with the summary and each check (pass / fail / note, with its source link where there is one); counts appear only in the check details (e.g. "1 of the 5 checked were found online by name"). Visa and emergency conflicts also show a rose <code>VerificationConflictBanner</code> (<code>role="status"</code>) in the section body. Items whose link was matched by name show a small "Found online" tag. When the stream ends with a section still pending, <code>finalize()</code> clears <code>pending</code> (copying the results). Results from the Flights / Hotels / Activities filter panels carry their own final label. Saved plans strip <code>link_verified</code> / <code>link_checked</code> from their items (<code>utils/verification.js</code>), since that evidence belongs to the live search. Chat does not show these labels.</p>
 <p><strong>Additional UI elements:</strong></p>
 <ul>
 <li>

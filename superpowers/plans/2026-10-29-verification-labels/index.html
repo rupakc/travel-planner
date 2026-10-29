@@ -1,0 +1,993 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Source Verification Labels Implementation Plan - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#source-verification-labels-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Source Verification Labels Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Setup and Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../agents/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Agent System
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Multi-City-Trips/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-City Trips
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Chat-Assistant/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Chat Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Personalization/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Personalization
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Sharing-and-Plans/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Plans & Sharing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Frontend/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Frontend
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../deployment/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans & Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="source-verification-labels-implementation-plan">Source Verification Labels Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Every Results section tells the traveller how much to trust it — "Verified" (real source or reference data agrees), "Partly verified" (some items confirmed online), "AI-generated — verify before booking", or "Conflicts with reference" — with the concrete checks behind the label, and hotel/activity/place cards show which items were found online.</p>
+<p><strong>Architecture:</strong> A pure backend function <code>verify_section(name, data, request)</code> derives a <code>verification</code> object from evidence the pipeline already produces — real data sources (Google Flights, Open-Meteo, crawled walking tours), the web searches enrichment already runs (now recorded per item as <code>link_verified</code>), and the curated static tables (visa, emergency numbers). The orchestrator attaches it to each section's <code>data</code> at every yield (initial, enriched, static), so it streams with the section, is cached with it, and needs no new event type. The frontend renders a chip in each section header with a popover of checks, plus per-item "Found online" badges.</p>
+<p><strong>Tech Stack:</strong> FastAPI orchestrator (SSE), existing enrichment (<code>backend/app/agents/hotels_agent.py</code>, <code>backend/app/services/activity_url_resolver.py</code>, <code>backend/app/services/places_url_resolver.py</code>), static tables (<code>backend/app/agents/static_results.py</code>); React 18 + Tailwind; pytest, vitest.</p>
+<p><strong>Spec:</strong> Backlog item #28 in <code>Future_Improvements.md</code> ("Hallucination Guardrails with Source Verification"). Facts: <code>/private/tmp/claude-501/-Users-rupak-travel-planner/6a423640-de0e-4ae7-a160-af5d4cd4d6e9/scratchpad/research-1-28.md</code> Part B. Design choices are Claude's (user delegated them).</p>
+<h2 id="design-binding">Design (binding)</h2>
+<p>Options weighed:
+- (a) A second LLM pass that "checks" the first — rejected: an LLM verifying an LLM can hallucinate the verification, adds ~15 calls and latency per search.
+- (b) New per-item web searches/fetches for every claim — rejected for v1: competes with enrichment for the DuckDuckGo rate limit, fetching LLM-supplied URLs is an SSRF risk, and adds seconds.
+- (c) <strong>Evidence-based labels from data the pipeline already has</strong> — chosen: zero added latency or network calls, deterministic and testable, and honest: when there's no evidence the label says so.</p>
+<p><code>verification</code> object (attached as <code>data["verification"]</code> on every yielded section dict that has no <code>error</code>):</p>
+<pre><code>{ &quot;level&quot;: &quot;verified&quot; | &quot;partial&quot; | &quot;unverified&quot; | &quot;conflict&quot;,
+  &quot;label&quot;: short UI text,
+  &quot;summary&quot;: one sentence,
+  &quot;checks&quot;: [ { &quot;label&quot;: str, &quot;status&quot;: &quot;pass&quot; | &quot;fail&quot; | &quot;info&quot;, &quot;detail&quot;: str, &quot;url&quot;: str | None } ],
+  &quot;items_verified&quot;: int | None, &quot;items_total&quot;: int | None,
+  &quot;pending&quot;: bool }   # true on the first hotels/activities/places yield while enrichment still runs
+</code></pre>
+<p>Labels: verified → "Verified", partial → "Partly verified", unverified → "AI-generated", conflict → "Check details".</p>
+<p>Per section (anything not listed → <code>unverified</code>, summary "Generated by AI from its training data — verify before booking."):
+- <strong>flights:</strong> all results <code>source</code> not <code>estimate</code> → verified ("Live fares from Google Flights"); mixed → partial; all estimate → unverified ("Estimated fares — prices change; check the airline").
+- <strong>hotels:</strong> enrichment sets <code>hotel["link_verified"] = True</code> when <code>_search_url</code> matched a listing by name, <code>False</code> when it searched and found nothing (untouched hotels beyond the enrich cap: key absent). verified if all searched found, partial if some, unverified if none; <code>items_verified/items_total</code> over searched hotels; check line "Found online by name: X of N". First (pre-enrich) yield → <code>pending: true</code>, level unverified.
+- <strong>activities:</strong> resolver marks <code>link_verified = True</code> on activities it upgraded to a trusted listing domain (getyourguide/viator/klook/tripadvisor/tiqets/musement); partial if any, else unverified with detail "Links are searches, not specific listings". Prices/ratings always an <code>info</code> check "Prices and ratings are AI estimates". Pending on first yield when enrichment will run.
+- <strong>places_to_see:</strong> resolver marks <code>link_verified = True</code> when it set <code>info_url</code> from a search result; same partial/unverified logic.
+- <strong>walking_tours:</strong> verified ("Listings crawled from the providers' own pages"), one pass check per <code>sources[]</code> entry with status ok (url included); providers that failed → info.
+- <strong>weather:</strong> <code>source == 'open-meteo'</code> → verified ("Open-Meteo forecast/climate data"); contains <code>llm-estimate</code> → partial or unverified accordingly.
+- <strong>visa:</strong> static-first. Phase-0 static yield → verified, label "Verified", check "Matches our reference table" + official_url. AI yield: if <code>get_static_visa(request)</code> exists — same <code>visa_type</code> (normalised: lowercase, hyphen/space-insensitive) → verified; different → <strong>conflict</strong>, summary "AI says <ai type>; our reference table says <table type>. Check the official site.", check status fail with the official_url; never override the AI data. No table entry → unverified ("No reference data for this nationality and destination — confirm on the official site", url = data official_url when present).
+- <strong>emergency_card:</strong> compare <code>emergency_numbers.police/ambulance/fire</code> with the static table for the destination when present: all equal → verified; any differ → conflict naming the field and both values; no table → unverified.
+- <strong>static-backed sim / tips / getting_around / forex Phase-0 yields:</strong> verified label "Reference data" is NOT used — level <code>verified</code>, label "Verified", summary "From our curated reference data (may lag recent changes)". Their AI yields → unverified.
+- <strong>itinerary, stress_test, packing_list, events, pricing_advisor:</strong> unverified (events add an <code>info</code> check per <code>date_certainty</code> distribution, e.g. "3 of 5 dates confirmed annual").
+- Error results (<code>{"error": …}</code>) get no verification (unchanged behaviour; cacheability unaffected — never put a key named <code>error</code> in verification).</p>
+<p>Orchestrator: one helper <code>_attach_verification(name, data, request, pending=False)</code> called right before every section yield listed in <code>orchestrator.py</code> (Phase 0 static yields, Phase 1 <code>ai</code> yield with <code>pending=True</code> for agents that have <code>enrich</code>, itinerary, stress_test, packing_list (static and ai), pricing_advisor, enriched re-yield with <code>pending=False</code>). Mutating <code>data</code> in place is acceptable only if the same dict isn't reused elsewhere; otherwise copy (implementer checks enrich input reuse).</p>
+<p>Frontend:
+- <code>frontend/src/components/VerificationBadge.jsx</code>: chip (emerald Verified / amber Partly verified / gray AI-generated / rose Check details; "Checking…" spinner when pending), button opening an accessible popover (Escape closes, focus returns) listing checks with pass/fail/info icons and links via <code>safeUrl</code>.
+- <code>SectionHeader</code> in <code>frontend/src/pages/ResultsPage.jsx</code> renders it for <code>results[agent]?.verification</code> (before the status icons). Static → AI transitions just re-render with the new object.
+- Per-item "Found online" emerald micro-badge on hotel, activity and place cards when <code>link_verified === true</code> (no badge otherwise — absence is not an accusation).
+- The section-level conflict also shows as a one-line rose banner inside the Visa / Emergency section body with the official link.
+- Chat untouched (knowledge-only; chat emitter doesn't call the helper).</p>
+<p>Non-goals: new network checks, LLM verifier, chat, exporting labels, changing which data is shown.</p>
+<h2 id="global-constraints">Global Constraints</h2>
+<ul>
+<li>No new dependencies; no new SSE event types; existing event shapes unchanged except the added <code>data.verification</code> key.</li>
+<li>Backend: <code>cd backend &amp;&amp; python3 -m pytest -q</code> (baseline whatever main has at branch time), agents mocked (never call Anthropic/DDG in tests). Frontend: vitest, eslint <code>--max-warnings 0</code>, build.</li>
+<li>Labels must never claim verification without evidence; when in doubt, <code>unverified</code>.</li>
+</ul>
+<h2 id="review-focus">Review Focus</h2>
+<ol>
+<li>Visa/emergency conflicts — shown as conflict with both values; AI data not overwritten; no false conflict from formatting differences ("Visa-free" vs "visa free", "112" vs " 112").</li>
+<li>Hotels beyond the enrichment cap or with empty names — not counted as "not found".</li>
+<li>Cached search replay — verification present and identical (it's inside data).</li>
+<li>Static → AI → enriched sequence — chip moves Checking… → final without flicker to a wrong level.</li>
+<li>Sections with <code>{error}</code> or missing lists — no verification, no crash.</li>
+</ol>
+<hr />
+<h3 id="task-1-evidence-flags-in-enrichment">Task 1: Evidence flags in enrichment</h3>
+<p><strong>Files:</strong> Modify <code>backend/app/agents/hotels_agent.py</code> (<code>_enrich_urls</code>), <code>backend/app/services/activity_url_resolver.py</code> (<code>resolve_top</code>), <code>backend/app/services/places_url_resolver.py</code>. Tests: extend <code>backend/tests/test_activities_urls.py</code> and add <code>backend/tests/test_link_verified.py</code> for hotels/places.
+- [ ] Failing tests (mock <code>_search_url</code> / Serper responses): hotel matched → <code>link_verified True</code> and booking_url replaced; searched but unmatched → <code>False</code>; nameless or beyond <code>_MAX_ENRICH</code> → key absent; activity upgraded to trusted domain → <code>True</code>, not upgraded → absent; place resolved → <code>True</code>.
+- [ ] Implement, full backend suite, commit <code>feat(verify): record which links enrichment confirmed online</code>.</p>
+<h3 id="task-2-verify_section-orchestrator-wiring">Task 2: verify_section + orchestrator wiring</h3>
+<p><strong>Files:</strong> Create <code>backend/app/services/verification.py</code>, <code>backend/tests/test_verification.py</code>; Modify <code>backend/app/agents/orchestrator.py</code>.
+- [ ] Failing tests per section rule above (incl. visa normalisation and conflict text, emergency comparison, hotels counts and pending, flights mixed sources, walking tours sources, weather sources, events date_certainty info, error data → None) and an orchestrator helper test (<code>_attach_verification</code> adds the object; doesn't add <code>error</code>; <code>_is_cacheable_run</code> from <code>backend/app/api/routes/search.py</code> still true for a run whose sections carry verification).
+- [ ] Implement, wire every yield point, full backend suite, commit <code>feat(verify): attach source verification to every search section</code>.</p>
+<h3 id="task-3-frontend-badge-popover-item-badges-docs">Task 3: Frontend badge, popover, item badges, docs</h3>
+<p><strong>Files:</strong> Create <code>frontend/src/components/VerificationBadge.jsx</code> (+ <code>.test.jsx</code>); Modify <code>frontend/src/pages/ResultsPage.jsx</code> (SectionHeader, hotel/activity/place cards, visa/emergency conflict banner), <code>docs/Frontend.md</code>, <code>docs/Agent-System.md</code>, <code>CLAUDE.md</code>.
+- [ ] Failing component tests: each level's chip text/colour class, pending spinner text, popover opens/closes with keyboard, checks listed with statuses, links sanitised, no render when verification missing.
+- [ ] Implement; suite, lint, build; commit <code>feat(verify): show verification labels on Results sections</code>.</p>
+<p>End-to-end (controller, Chrome): real search with an Indian passport to a table-covered destination (visa verified), a destination without table data (unverified), a forced conflict via a mocked static entry is NOT done in prod data — instead verify conflict rendering through the component test and one manual backend unit run; check hotels "X of N found online" matches cards' badges; cached replay identical; 375px; console clean.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
