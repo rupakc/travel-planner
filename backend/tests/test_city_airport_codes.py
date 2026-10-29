@@ -89,13 +89,21 @@ def test_country_aliases_accepted(place):
     assert lookup_city_iata(place).split(",")[0] == "LHR"
 
 
-@pytest.mark.parametrize("place", ["Paris, Texas", "Paris, TX", "Berlin, Japan"])
+@pytest.mark.parametrize("place", ["Berlin, Japan", "Xyzzyville, France"])
 def test_city_not_in_stated_country_resolves_to_nothing(place):
     assert lookup_city_iata(place) is None
 
 
+@pytest.mark.parametrize("place", ["Paris, Texas", "Paris, TX"])
+def test_paris_texas_is_the_texas_town_never_paris_france(place):
+    """Task 3: the Texas town's own nearest airports (Tyler, Dallas Love)."""
+    codes = lookup_city_iata(place)
+    assert codes == "TYR,DAL"
+    assert "CDG" not in codes
+
+
 def test_us_state_restricts_to_united_states():
-    assert lookup_city_iata("Denver, CO") == "DEN"  # CO: Colorado, not Colombia
+    assert lookup_city_iata("Denver, CO") == "DEN,BJC"  # Colorado, not Colombia
 
 
 def test_ambiguous_city_without_country(extra_airports):
@@ -109,7 +117,7 @@ def test_ambiguous_city_without_country(extra_airports):
 
 
 def test_unknown_city_and_codes():
-    assert lookup_city_iata("Atlantis") is None
+    assert lookup_city_iata("Xyzzyville") is None
     assert lookup_city_iata("") is None
     assert lookup_city_iata("lhr") == "LHR"
 
@@ -131,7 +139,7 @@ def test_request_codes_pass_through_unchanged():
 
 
 def test_request_unknown_city_leaves_codes_unset():
-    req = _req("Atlantis", "Paris, Texas")
+    req = _req("Xyzzyville", "Berlin, Japan")
     assert req.origin_iata is None
     assert req.destination_iata is None
 
@@ -189,9 +197,9 @@ def test_uncoded_row_alone_still_resolves(extra_airports):
 @pytest.mark.parametrize(
     ("place", "codes"),
     [
-        ("Toronto, ON", "YYZ"),
-        ("Vancouver, BC", "YVR"),
-        ("Munich, Bavaria", "MUC"),  # unrecognised region: city alone
+        ("Toronto, ON", "YYZ,YTZ,YHM"),
+        ("Vancouver, BC", "YVR,YYJ"),
+        ("Munich, Bavaria", "MUC"),  # Bavaria: a GeoNames admin1 name
         ("Perth, WA", "PER"),  # WA: Washington or Western Australia
     ],
 )
@@ -215,8 +223,8 @@ async def test_multi_city_leg_with_province_suffix(monkeypatch):
         await serp_flights.search_multi_city("k", req)
     except serp_flights.SerpAPIError:
         pass  # every leg empty — only the resolved codes matter here
-    assert calls[0] == ("JFK", "YYZ")
-    assert ("YYZ", "CDG,ORY") in calls
+    assert calls[0] == ("JFK", "YYZ,YTZ,YHM")
+    assert ("YYZ,YTZ,YHM", "CDG,ORY,BVA") in calls
 
 
 # ── State / province narrows a city's airports ─────────────────────────────
@@ -247,17 +255,17 @@ def test_every_us_ca_au_br_airport_has_a_region():
 @pytest.mark.parametrize(
     ("place", "codes"),
     [
-        ("Portland", None),  # Oregon and Maine: ambiguous
+        ("Portland", "PDX"),  # Oregon's dominates Maine's (Task 3)
         ("Portland, OR", "PDX"),
         ("Portland, Oregon", "PDX"),
         ("Portland, Maine", "PWM"),
         ("Portland, ME", "PWM"),
         ("Birmingham, AL", "BHM"),
-        ("Birmingham, UK", "BHX"),
-        ("San Jose, CA", "SJC"),  # California, not Costa Rica
+        ("Birmingham, UK", "BHX,MAN,EMA"),
+        ("San Jose, CA", "SJC,OAK,SFO"),  # California, not Costa Rica
         ("Victoria, BC", "YYJ"),
-        ("Toronto, CA", "YYZ"),  # CA as Canada still names the country
-        ("Portland, TX", None),  # no Portland airport in Texas
+        ("Toronto, CA", "YYZ,YTZ,YHM"),  # CA as Canada still names the country
+        ("Portland, TX", "CRP"),  # the Texas town flies from Corpus Christi
     ],
 )
 def test_state_narrows_city_airports(place, codes):
@@ -274,7 +282,7 @@ def test_springfield_il_when_seeded():
 
 def test_city_in_one_region_unaffected():
     assert lookup_city_iata("London") == "LHR,LGW,STN"
-    assert lookup_city_iata("New York") == "JFK,LGA"
+    assert lookup_city_iata("New York") == "JFK,LGA,EWR"
     assert lookup_city_iata("Houston, TX") == "IAH,HOU"
 
 
@@ -314,27 +322,27 @@ def test_city_alias_targets_exist_in_seed():
 @pytest.mark.parametrize(
     ("place", "codes"),
     [
-        ("São Paulo", "GRU,CGH"),
-        ("São Paulo, Brazil", "GRU,CGH"),
+        ("São Paulo", "GRU,CGH,VCP"),
+        ("São Paulo, Brazil", "GRU,CGH,VCP"),
         ("Zürich", "ZRH"),
-        ("Düsseldorf", "DUS"),
-        ("Kraków", "KRK"),
+        ("Düsseldorf", "DUS,CGN,NRN"),
+        ("Kraków", "KRK,KTW"),
         ("Malmö", "MMX"),
         ("Reykjavík", "RKV,KEF"),
-        ("Washington", "IAD,DCA"),
-        ("Washington, DC", "IAD,DCA"),
-        ("Washington D.C.", "IAD,DCA"),
-        ("Washington DC", "IAD,DCA"),
-        ("Washington, D.C.", "IAD,DCA"),
+        ("Washington", "IAD,DCA,BWI"),
+        ("Washington, DC", "IAD,DCA,BWI"),
+        ("Washington D.C.", "IAD,DCA,BWI"),
+        ("Washington DC", "IAD,DCA,BWI"),
+        ("Washington, D.C.", "IAD,DCA,BWI"),
         ("Saint Petersburg", "LED"),
         ("St Petersburg", "LED"),
         ("St. Petersburg", "LED"),
-        ("Ålesund", "AES"),
-        ("Alesund", "AES"),
-        ("ålesund", "AES"),
+        ("Ålesund", "AES,HOV"),
+        ("Alesund", "AES,HOV"),
+        ("ålesund", "AES,HOV"),
         ("Saigon", "SGN"),
-        ("Bombay", "BOM"),
-        ("New York City", "JFK,LGA"),
+        ("Bombay", "BOM,NMI"),
+        ("New York City", "JFK,LGA,EWR"),
         ("NYC", "NYC"),  # bare code wins
     ],
 )
@@ -354,12 +362,18 @@ def test_kansas_city_serves_both_states(place):
 
 
 @pytest.mark.parametrize(
-    "place",
-    ["Columbus, GA", "Charleston, WV", "Rochester, MN", "Jackson, WY"],
+    ("place", "codes"),
+    [
+        ("Columbus, GA", "CSG"),
+        ("Charleston, WV", "CRW"),
+        ("Rochester, MN", "RST"),
+        ("Jackson, WY", "JAC"),
+    ],
 )
-def test_city_in_another_state_is_not_the_seeded_one(place):
-    """Seeded: Columbus OH, Charleston SC, Rochester NY, Jackson MS."""
-    assert lookup_city_iata(place) is None
+def test_city_in_another_state_is_not_the_curated_one(place, codes):
+    """Curated: Columbus OH, Charleston SC, Rochester NY, Jackson MS; the
+    stated state's own town resolves through the place data (Task 3)."""
+    assert lookup_city_iata(place) == codes
 
 
 def test_region_match_is_country_aware(extra_airports):
@@ -374,14 +388,14 @@ def test_region_match_is_country_aware(extra_airports):
     ("place", "codes"),
     [
         ("Victoria, British Columbia", "YYJ"),
-        ("Toronto, Ontario", "YYZ"),
-        ("Montreal, Québec", "YUL"),
+        ("Toronto, Ontario", "YYZ,YTZ,YHM"),
+        ("Montreal, Québec", "YUL,YHU,YMX"),
         ("Sydney, New South Wales", "SYD,WSI"),
         ("Perth, Western Australia", "PER"),
-        ("Melbourne, Victoria", "MEL,AVV"),
+        ("Melbourne, Victoria", "MEL,AVV,MEB"),
         ("Rio de Janeiro, Rio de Janeiro", "GIG,SDU"),
-        ("São Paulo, São Paulo", "GRU,CGH"),
-        ("Sao Paulo, Sao Paulo", "GRU,CGH"),
+        ("São Paulo, São Paulo", "GRU,CGH,VCP"),
+        ("Sao Paulo, Sao Paulo", "GRU,CGH,VCP"),
         ("Belém, Pará", "BEL"),
         ("Brasilia, Distrito Federal", "BSB"),
     ],
@@ -393,10 +407,10 @@ def test_full_region_names(place, codes):
 @pytest.mark.parametrize(
     ("place", "codes"),
     [
-        ("St. Louis", "STL"),
-        ("St Louis", "STL"),
-        ("Saint Louis", "STL"),
-        ("saint louis, MO", "STL"),
+        ("St. Louis", "STL,BLV"),
+        ("St Louis", "STL,BLV"),
+        ("Saint Louis", "STL,BLV"),
+        ("saint louis, MO", "STL,BLV"),
         ("St Petersburg", "LED"),
         ("Saint Petersburg", "LED"),
         ("St. Petersburg", "LED"),
@@ -410,3 +424,115 @@ def test_every_airport_region_is_a_set():
     assert _seeded_regions("MCI") == {"mo", "ks"}
     assert _seeded_regions("IAD") == {"va", "dc"}
     assert isinstance(_seeded_regions("PDX"), frozenset)
+
+
+# ── Task 3: place resolution over the full dataset ─────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("place", "prefix"),
+    [
+        ("Paris", "CDG,ORY"),  # curated order first
+        ("London", "LHR,LGW,STN"),
+        ("Washington", "IAD,DCA"),
+        ("New York", "JFK,LGA,EWR"),
+        ("Frankfurt", "FRA"),
+    ],
+)
+def test_curated_codes_come_first(place, prefix):
+    assert lookup_city_iata(place).startswith(prefix)
+
+
+def test_frankfurt_is_fra_only():
+    assert lookup_city_iata("Frankfurt") == "FRA"  # HHN is 115 km away
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Valencia", None),  # Spain's or Venezuela's (bigger)
+        ("Valencia, Spain", "VLC"),
+        ("San Jose", None),
+        ("Springfield", None),
+        ("Springfield, IL", "SPI"),
+        ("Portland, ME", "PWM"),
+        ("Birmingham", "BHX,MAN,EMA"),
+        ("Birmingham, AL", "BHM"),
+        ("London, ON", "YXU"),
+        ("London, Ontario", "YXU"),
+        ("Sydney, Nova Scotia", "YQY"),
+        ("Kansas City, KS", "MCI"),
+        ("Perth, WA", "PER"),
+        ("Phnom Penh", "KTI"),
+        ("Siem Reap", "SAI"),
+        ("Chișinău", "RMO"),
+        ("Cancun", "CUN,CZM"),
+        ("Bali", "DPS"),
+        ("Ubud", "DPS"),
+        ("Caracas", "CCS"),
+        ("NYC", "NYC"),
+        ("LGW — London, United Kingdom", "LGW"),
+    ],
+)
+def test_plan_d_lookups(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+@pytest.mark.parametrize(
+    ("place", "airports"),
+    [
+        ("Milan", {"MXP", "LIN", "BGY"}),
+        ("Milano", {"MXP", "LIN", "BGY"}),
+        ("Tokyo", {"HND", "NRT"}),
+        ("Kyoto", {"ITM", "KIX"}),
+        ("Venice", {"VCE", "TSF"}),
+        ("Zermatt", {"ZRH", "GVA", "BRN", "SIR", "LUG"}),
+        ("Interlaken", {"ZRH", "GVA", "BRN", "SIR"}),
+        ("Interlaken, Switzerland", {"ZRH", "GVA", "BRN", "SIR"}),
+    ],
+)
+def test_places_reach_their_airports(place, airports):
+    codes = lookup_city_iata(place).split(",")
+    assert codes[0] in airports
+    if place.startswith("Mil"):
+        assert "MXP" in codes
+
+
+def test_foreign_links_do_not_join_curated_codes():
+    """Zürich's place also links Friedrichshafen (DE); curated ZRH stays alone."""
+    assert lookup_city_iata("Zürich") == "ZRH"
+    assert lookup_city_iata("Munich, Bavaria") == "MUC"
+
+
+@pytest.mark.parametrize(
+    ("typed", "codes"),
+    [("Goa", "GOI,GOX"), ("Kos", "KGS"), ("GOA", "GOA"), ("lhr", "LHR")],
+)
+def test_three_letter_place_names_are_places_not_codes(typed, codes):
+    assert lookup_city_iata(typed) == codes
+
+
+def test_request_keeps_a_three_letter_place_name():
+    req = _req("Goa", "Kos")
+    assert (req.origin, req.origin_iata) == ("Goa", "GOI,GOX")
+    assert (req.destination, req.destination_iata) == ("Kos", "KGS")
+
+
+def test_dataset_airport_city_is_the_last_resort(extra_airports):
+    """No curated row and no place: a dataset airport serving the typed city
+    by display name still resolves."""
+    extra_airports("ZQJ", "Qwertyburg", "Testland", "XT")
+    with get_connection() as conn:
+        conn.execute("UPDATE airports SET type_rank = 2 WHERE iata_code = 'ZQJ'")
+    assert lookup_city_iata("Qwertyburg") == "ZQJ"
+
+
+def test_unscheduled_linked_airport_is_never_returned():
+    with get_connection() as conn:
+        conn.execute("UPDATE airports SET scheduled = 0 WHERE iata_code = 'TSF'")
+    try:
+        assert "TSF" not in (lookup_city_iata("Venice") or "")
+        assert "TSF" not in (lookup_city_iata("Treviso") or "")
+    finally:
+        with get_connection() as conn:
+            conn.execute("UPDATE airports SET scheduled = 1 WHERE iata_code = 'TSF'")

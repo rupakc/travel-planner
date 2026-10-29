@@ -290,68 +290,33 @@ def _curated_rank() -> dict[str, int]:
     return rank
 
 
-def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
-    """Resolve a typed place ("Berlin", "Berlin, Germany", "BER — Berlin,
-    Germany") to up to ``max_codes`` comma-joined IATA codes (SerpAPI accepts
-    multiple departure/arrival IDs), or None.
+@functools.cache
+def _three_letter_places() -> frozenset[str]:
+    """Curated cities and islands / destinations whose name is three letters
+    ("Goa", "Kos", "Fes"): typed so, they are places, not codes."""
+    from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS
+    from .seed_airports import AIRPORTS
 
-    A label prefix that is a code in the airports table is the traveller's
-    pick and is returned alone ("LGW — London, …" → "LGW"); any other prefix
-    stays part of the text. Otherwise an exact, case-insensitive match on the
-    city (first comma segment), also tried accent-folded, with its other
-    St / St. / Saint spellings and through ``CITY_ALIASES`` ("Zürich",
-    "St Louis", "Saigon", "Washington"). A last segment that names a country,
-    ISO code or alias restricts the match to that country; one that names a
-    region (a US state / CA province / AU state / BR state, by code or full
-    name) restricts it to that region's airports, in a country that region
-    can be in ("Portland, OR" → PDX, "Perth, Western Australia" → PER). Both
-    readings count ("San Jose, CA": California; "Toronto, CA": Canada). An unrecognised
-    segment ("Bavaria") is ignored. Web-saved rows (no country_code) count
-    only when no coded row matches. Matches spanning more than one country,
-    or more than one region with no region stated ("Portland"), are
-    ambiguous and resolve to None. Seed data lists each city's primary
-    airport first, so insertion order ranks the codes. City matches use the
-    curated airports and web-saved rows only (dataset-only airports join in
-    with place resolution); airports without scheduled service are never
-    returned. Local DB only — one indexed query, never a web lookup.
-    """
-    if not city or not city.strip():
-        return None
-    stripped = city.strip()
-    if re.match(r"^[A-Za-z]{3}$", stripped):
-        return stripped.upper()
-    prefix = _IATA_PREFIX_RE.match(stripped)
-    code = prefix.group(1).upper() if prefix else ""
-    after_prefix = stripped[prefix.end() :] if prefix else stripped
-    whole_names = _city_spellings(stripped.split(",")[0].strip())
-    names = sorted(whole_names | _city_spellings(after_prefix.split(",")[0].strip()))
-    try:
-        with get_connection() as conn:
-            rows = conn.execute(
-                "SELECT id, iata_code, city, country, country_code, region, type_rank "
-                "FROM airports WHERE scheduled = 1 AND ("
-                f"city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
-                "OR iata_code = ?) ORDER BY id",
-                [*names, code],
-            ).fetchall()
-    except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
-        logger.debug("City airport lookup failed for %r: %s", city, exc)
-        return None
-    if code and any(r["iata_code"] == code for r in rows):
-        return code
-    parts = [p.strip() for p in stripped.split(",") if p.strip()]
-    wanted = {fold_place(n) for n in whole_names}
-    curated = _curated_rank()
-    rows = sorted(
-        (
-            r
-            for r in rows
-            if fold_place(r["city"]) in wanted
-            and (r["type_rank"] is None or r["iata_code"] in curated)
-        ),
-        key=lambda r: (curated.get(r["iata_code"], len(curated)), r["id"]),
-    )
-    stated = fold_place(parts[-1]) if len(parts) > 1 else None
+    names = {fold_place(a[3]) for a in AIRPORTS}
+    names |= ISLAND_AIRPORTS.keys() | DESTINATION_AIRPORTS.keys()
+    return frozenset(n for n in names if len(n) == 3)
+
+
+def looks_like_code(text: str) -> bool:
+    """A bare three-letter airport / metro code ("LHR", "lhr", "NYC"), not a
+    three-letter place name typed as a word ("Goa", "Kos"; "GOA" stays the
+    Genoa code)."""
+    text = text.strip()
+    if not re.fullmatch(r"[A-Za-z]{3}", text):
+        return False
+    return text.isupper() or fold_place(text) not in _three_letter_places()
+
+
+def _single_city_rows(
+    rows: list[sqlite3.Row], stated: str | None
+) -> list[sqlite3.Row] | None:
+    """The matching rows narrowed by the stated segment (country / region),
+    or None when they span countries, or regions with none stated."""
     codes = _stated_countries(stated) if stated else frozenset()
     region = stated_region(stated) if stated else None
     if codes or region:
@@ -370,7 +335,118 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     region_sets = [regions for r in rows if (regions := _row_regions(r))]
     if not region and region_sets and not frozenset.intersection(*region_sets):
         return None  # "Portland": Oregon or Maine; Kansas City MCI is both
-    return ",".join(r["iata_code"] for r in rows[:max_codes])
+    return rows
+
+
+def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
+    """Resolve a typed place ("Berlin", "Berlin, Germany", "BER — Berlin,
+    Germany", "Kyoto", "London, Ontario", "Sicily") to up to ``max_codes``
+    comma-joined scheduled IATA codes (SerpAPI accepts multiple departure /
+    arrival IDs), or None.
+
+    In order:
+    1. A bare three-letter code is returned as typed.
+    2. A label prefix that is a scheduled code in the airports table is the
+       traveller's pick and is returned alone ("LGW — London, …" → "LGW");
+       any other prefix stays part of the text.
+    3. A curated island / destination ("Sicily", "Kyoto") gives its airports.
+    4. The curated tier: curated airports (and web-saved rows) whose served
+       city is the typed city — case-insensitive, accent-folded, with its
+       St / Saint spellings and ``CITY_ALIASES`` — in curated order. A last
+       segment naming a country, ISO code or alias restricts them to that
+       country; a region (US state / CA province / AU state / BR state, by
+       code or name) to that region. Rows spanning countries, or regions
+       with none stated, give no curated answer.
+    5. Place resolution (``places_db.resolve``) over every GeoNames place.
+       With a curated answer, the place's linked airports follow the
+       curated codes when the place is in the same country ("New York" →
+       JFK,LGA,EWR); a bigger namesake abroad makes the name ambiguous
+       ("Valencia" → None). Without one, the place's airports ("Portland" →
+       PDX, "London, Ontario" → YXU, "Zermatt").
+    6. Last, the dataset airports whose display city is the typed city.
+
+    Airports without scheduled service are never returned. Local DB only —
+    never a web lookup.
+    """
+    if not city or not city.strip():
+        return None
+    stripped = city.strip()
+    if looks_like_code(stripped):
+        return stripped.upper()
+    from .places_db import resolve
+
+    prefix = _IATA_PREFIX_RE.match(stripped)
+    code = prefix.group(1).upper() if prefix else ""
+    after_prefix = stripped[prefix.end() :] if prefix else stripped
+    whole_names = _city_spellings(stripped.split(",")[0].strip())
+    names = sorted(whole_names | _city_spellings(after_prefix.split(",")[0].strip()))
+    try:
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT id, iata_code, city, country, country_code, region, type_rank "
+                "FROM airports WHERE scheduled = 1 AND ("
+                f"city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
+                "OR iata_code = ?)",
+                [*names, code],
+            ).fetchall()
+            if code and any(r["iata_code"] == code for r in rows):
+                return code
+            resolution = resolve(stripped, conn)
+            linked = resolution.place.airports if resolution.place else ()
+            # the place's airports that are scheduled, with their countries
+            linked_country = dict(
+                conn.execute(
+                    "SELECT iata_code, country_code FROM airports WHERE scheduled = 1"
+                    f" AND iata_code IN ({','.join('?' * len(linked))})",
+                    linked,
+                ).fetchall()
+            )
+    except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
+        logger.debug("City airport lookup failed for %r: %s", city, exc)
+        return None
+    place = resolution.place
+    place_codes = [c for c in place.airports if c in linked_country] if place else []
+    if place and place.geonameid is None:  # curated island / destination
+        return ",".join(place_codes[:max_codes]) or None
+    parts = [p.strip() for p in stripped.split(",") if p.strip()]
+    stated = fold_place(parts[-1]) if len(parts) > 1 else None
+    wanted = {fold_place(n) for n in whole_names}
+    matching = [r for r in rows if fold_place(r["city"]) in wanted]
+    curated_rank = _curated_rank()
+    curated = _single_city_rows(
+        sorted(
+            (
+                r
+                for r in matching
+                if r["type_rank"] is None or r["iata_code"] in curated_rank
+            ),
+            key=lambda r: (
+                curated_rank.get(r["iata_code"], len(curated_rank)),
+                r["id"],
+            ),
+        ),
+        stated,
+    )
+    codes: list[str] = []
+    if curated:
+        if resolution.contested:
+            return None  # "Valencia": Spain's, or Venezuela's bigger one
+        codes = [r["iata_code"] for r in curated]
+        country = curated[0]["country_code"]
+        if place and place.country_code == country:
+            # then the place's other airports in that country ("New York" →
+            # EWR; not Friedrichshafen for Zürich)
+            codes += [
+                c
+                for c in place_codes
+                if c not in codes and linked_country[c] == country
+            ]
+    elif place:
+        codes = place_codes
+    elif not resolution.ambiguous:
+        dataset = _single_city_rows(sorted(matching, key=lambda r: r["id"]), stated)
+        codes = [r["iata_code"] for r in dataset or ()]
+    return ",".join(codes[:max_codes]) or None
 
 
 def _web_search_iata(code: str) -> dict | None:

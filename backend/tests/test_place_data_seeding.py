@@ -353,9 +353,9 @@ def test_unscheduled_airport_is_never_returned(client, extra_airports_sched):
     assert database.lookup_city_iata("ZQG — Closedville") is None
 
 
-def test_dataset_only_airport_does_not_change_curated_city(client):
+def test_dataset_namesake_airport_does_not_change_curated_city(client):
     """YXU (London, Ontario) is in the dataset but not curated: "London"
-    keeps today's answer until Task 3's place resolution."""
+    keeps the curated answer ("London, Ontario" → YXU via the place data)."""
     assert _rows("SELECT city FROM airports WHERE iata_code = 'YXU'")[0][0] == (
         "London"
     )

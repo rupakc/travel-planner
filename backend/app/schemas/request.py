@@ -1,17 +1,14 @@
-import re
 from datetime import date, timedelta
 
 from pydantic import BaseModel, Field, model_validator
 
-_IATA_RE = re.compile(r"^[A-Z]{3}$")
-
 
 def _resolve_iata(value: str) -> str:
     """If value looks like a bare IATA code, resolve it to 'City, Country'."""
-    stripped = value.strip()
-    if _IATA_RE.match(stripped.upper()):
-        from ..db.database import lookup_iata
+    from ..db.database import looks_like_code, lookup_iata
 
+    stripped = value.strip()
+    if looks_like_code(stripped):
         info = lookup_iata(stripped)
         if info:
             return f"{info['city']}, {info['country']}"
@@ -21,12 +18,9 @@ def _resolve_iata(value: str) -> str:
 def _airport_codes(value: str) -> str | None:
     """IATA code(s) for an origin/destination: a bare code as typed, else the
     typed city's airports from the local DB (comma-joined; never the web)."""
-    stripped = value.strip()
-    if _IATA_RE.match(stripped.upper()):
-        return stripped.upper()
     from ..db.database import lookup_city_iata
 
-    return lookup_city_iata(stripped)
+    return lookup_city_iata(value.strip())
 
 
 class TravelSearchRequest(BaseModel):

@@ -37,7 +37,7 @@ ALT_NAME_PENALTY = 0.0135
 DOMINANCE = 3.0
 
 # "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
-_CODE_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
+_CODE_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
 _PLACE_COLUMNS = (
     "p.geonameid, p.name, p.country_code, p.admin1, p.population, p.score, p.airports"
@@ -123,9 +123,23 @@ def _hint(name: str, stated: list[str], display: str) -> Place | None:
     return Place(name=display, country_code=country, airports=airports)
 
 
+def _strip_known_prefix(conn: sqlite3.Connection, text: str) -> str:
+    """Drop a label prefix that is a scheduled airport code ("BER — Berlin,
+    Germany"); any other prefix stays part of the text."""
+    prefix = _CODE_PREFIX_RE.match(text)
+    if (
+        prefix
+        and conn.execute(
+            "SELECT 1 FROM airports WHERE iata_code = ? AND scheduled = 1",
+            (prefix.group(1).upper(),),
+        ).fetchone()
+    ):
+        return text[prefix.end() :]
+    return text
+
+
 def _parse(text: str) -> tuple[str, list[str], str]:
     """(folded city, folded stated segments after it, city as typed)."""
-    text = _CODE_PREFIX_RE.sub("", text, count=1)
     raw = [s.strip() for s in text.split(",") if fold_place(s)]
     if not raw:
         return "", [], ""
@@ -264,6 +278,8 @@ class Resolution:
 
     place: Place | None
     ambiguous: bool = False
+    # A bigger own-name namesake abroad rivals the curated city ("Valencia")
+    contested: bool = False
 
 
 def _pick(candidates: list[Place]) -> Resolution:
@@ -285,7 +301,7 @@ def _bigger_namesake(curated: Place, candidates: list[Place]) -> bool:
 
 
 def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
-    city, stated, typed = _parse(text)
+    city, stated, typed = _parse(_strip_known_prefix(conn, text))
     if not city:
         return Resolution(None)
     hint = _hint(city, stated, typed)
@@ -315,7 +331,7 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
         return _pick(candidates)
     result = _pick(preferred)
     if result.place and _bigger_namesake(result.place, candidates):
-        return Resolution(None, ambiguous=True)
+        return Resolution(None, ambiguous=True, contested=True)
     return result
 
 

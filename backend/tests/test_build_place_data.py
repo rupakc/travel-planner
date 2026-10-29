@@ -1024,7 +1024,8 @@ def test_committed_display_cities_never_empty_or_comma():
 # the query in that country, and its linked airports — exact (same list),
 # subset (all expected present) or first (the first link is one of them) —
 # plus, when given, the display city of the first expected airport. Rows with
-# scope "task3" need runtime name resolution and are checked by Task 3.
+# scope "task3" (lookup_city_iata) and "autocomplete" (search_airports) are
+# checked at runtime by tests/test_golden_places_runtime.py.
 
 _GOLDEN = _BACKEND / "tests" / "data" / "golden_places.csv"
 
