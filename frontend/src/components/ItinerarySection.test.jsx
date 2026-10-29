@@ -74,7 +74,7 @@ function Stateful({ data }) {
 }
 
 const posOfLabel = (label) => {
-  const m = label.match(/^Day (\d+) · (\w+)/)
+  const m = label.match(/Day (\d+) · (\w+)/)
   return `${m[1]}-${m[2].toLowerCase()}`
 }
 
@@ -94,7 +94,7 @@ describe('ItinerarySection', () => {
   const row = (key) => container.querySelector(`[data-slot-key="${key}"]`)
   const free = (pos) => container.querySelector(`[data-free-slot="${pos}"]`)
   const buttons = (scope = container) => [...scope.querySelectorAll('button')]
-  const button = (text, scope = container) => buttons(scope).find(b => b.textContent.trim() === text)
+  const button = (text, scope = document.body) => buttons(scope).find(b => b.textContent.trim() === text)
   const click = (el) => act(() => { el.click() })
   const activities = (dayIndex) => [...container.querySelectorAll('[data-day]')][dayIndex]
     .querySelectorAll('[data-slot-key] [data-activity]')
@@ -191,16 +191,22 @@ describe('ItinerarySection', () => {
     expect(move.getAttribute('aria-expanded')).toBe('false')
     click(move)
     expect(move.getAttribute('aria-expanded')).toBe('true')
-    const menu = container.querySelector('[role="menu"]')
-    expect([...menu.querySelectorAll('[role="menuitem"]')].map(b => b.textContent)).toEqual([
-      'Day 1 · Afternoon (swap with Forum)',
-      'Day 1 · Evening',
+    const menu = document.querySelector('[role="menu"]')
+    const items = [...menu.querySelectorAll('[role="menuitem"]')]
+    expect(items.map(b => b.textContent)).toEqual([
       'Remove from day',
+      'Afternoon (swap with Forum)',
+      'Evening',
     ])
-    expect(document.activeElement).toBe(menu.querySelector('[role="menuitem"]'))
-    click(button('Day 1 · Evening', menu))
+    expect(items.map(b => b.getAttribute('aria-label'))).toEqual([
+      null,
+      'Move to Day 1 · Afternoon (swap with Forum)',
+      'Move to Day 1 · Evening',
+    ])
+    expect(document.activeElement).toBe(items[0])
+    click(button('Evening', menu))
     expect(h.onMoveSlot).toHaveBeenCalledWith('1-morning', 1, 'evening', 'menu')
-    expect(container.querySelector('[role="menu"]')).toBeNull()
+    expect(document.querySelector('[role="menu"]')).toBeNull()
     expect(container.querySelector('[aria-live="polite"]').textContent).toBe('Moved Colosseum to Day 1 · Evening')
   })
 
@@ -208,9 +214,9 @@ describe('ItinerarySection', () => {
     render(handlers())
     const move = button('Move', row('1-morning'))
     click(move)
-    const item = container.querySelector('[role="menuitem"]')
+    const item = document.querySelector('[role="menuitem"]')
     act(() => { item.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
-    expect(container.querySelector('[role="menu"]')).toBeNull()
+    expect(document.querySelector('[role="menu"]')).toBeNull()
     expect(document.activeElement).toBe(move)
     expect(move.getAttribute('aria-expanded')).toBe('false')
   })
@@ -338,8 +344,8 @@ describe('ItinerarySection', () => {
     const data = { days: [...ITIN.days, { day_number: 3, slots: [] }, { day_number: 4, slots: [slot('late night', 'Club')] }] }
     render({ ...handlers(), data })
     click(button('Move', row('1-morning')))
-    const menuTargets = [...container.querySelectorAll('[role="menuitem"]')]
-      .map((b) => b.textContent).filter((t) => t.startsWith('Day ')).map(posOfLabel)
+    const menuTargets = [...document.querySelectorAll('[role="menuitem"]')]
+      .map((b) => b.getAttribute('aria-label') || '').filter((t) => t.startsWith('Move to Day ')).map(posOfLabel)
     act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
     const dt = transfer()
     fire(row('1-morning'), 'dragstart', dt)
@@ -354,22 +360,19 @@ describe('ItinerarySection', () => {
   it('keeps the menu open on a blur with no related target and closes on outside mousedown or focus', () => {
     render(handlers())
     click(button('Move', row('1-morning')))
-    const item = container.querySelector('[role="menuitem"]')
+    const item = document.querySelector('[role="menuitem"]')
     act(() => { item.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null })) })
-    expect(container.querySelector('[role="menu"]')).not.toBeNull()
+    expect(document.querySelector('[role="menu"]')).not.toBeNull()
     const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
     item.dispatchEvent(md)
     expect(md.defaultPrevented).toBe(true)
     act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
-    expect(container.querySelector('[role="menu"]')).toBeNull()
+    expect(document.querySelector('[role="menu"]')).toBeNull()
 
     click(button('Move', row('1-morning')))
     const outside = button('Plan', row('2-morning'))
-    act(() => {
-      container.querySelector('[role="menuitem"]')
-        .dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }))
-    })
-    expect(container.querySelector('[role="menu"]')).toBeNull()
+    act(() => { outside.focus() })
+    expect(document.querySelector('[role="menu"]')).toBeNull()
   })
 
   it('a row with its note open is not draggable', () => {
@@ -437,9 +440,81 @@ describe('ItinerarySection', () => {
   it('focuses the moved row\'s Move button after a menu move', () => {
     act(() => root.render(<Stateful data={ITIN} />))
     click(button('Move', row('1-morning')))
-    click(button('Day 2 · Evening'))
+    click(document.querySelector('[aria-label="Move to Day 2 · Evening"]'))
     const moved = row('1-morning')
     expect(moved.closest('[data-day]').dataset.day).toBe('2')
     expect(document.activeElement).toBe(button('Move', moved))
+  })
+  describe('menu placement and grouping', () => {
+    const viewport = { w: window.innerWidth, h: window.innerHeight }
+    const setViewport = (w, h) => {
+      Object.defineProperty(window, 'innerWidth', { value: w, configurable: true, writable: true })
+      Object.defineProperty(window, 'innerHeight', { value: h, configurable: true, writable: true })
+    }
+    const anchorAt = (el, top, right = 600) => {
+      el.getBoundingClientRect = () => ({ top, bottom: top + 30, left: right - 60, right, width: 60, height: 30, x: right - 60, y: top })
+    }
+    afterEach(() => setViewport(viewport.w, viewport.h))
+
+    it('opens fixed below the button, right-aligned, outside the clipping card', () => {
+      setViewport(1024, 800)
+      render(handlers())
+      const move = button('Move', row('1-morning'))
+      anchorAt(move, 100, 600)
+      click(move)
+      const menu = document.querySelector('[role="menu"]')
+      expect(menu.style.position).toBe('fixed')
+      expect(menu.style.top).toBe('134px')
+      expect(menu.style.bottom).toBe('')
+      expect(menu.style.left).toBe(`${600 - 256}px`)
+      expect(menu.style.maxHeight).toBe('360px')
+      expect(container.contains(menu)).toBe(false)
+    })
+
+    it('flips above when the button is near the bottom and stays in the viewport', () => {
+      setViewport(300, 800)
+      render(handlers())
+      const move = button('Move', row('1-morning'))
+      anchorAt(move, 700, 100)
+      click(move)
+      const menu = document.querySelector('[role="menu"]')
+      expect(menu.style.position).toBe('fixed')
+      expect(menu.style.top).toBe('')
+      expect(menu.style.bottom).toBe(`${800 - 700 + 4}px`)
+      expect(menu.style.maxHeight).toBe('360px')
+      expect(menu.style.left).toBe('8px')
+      expect(menu.style.width).toBe('256px')
+    })
+
+    it('puts Remove first and groups targets under day headings', () => {
+      render({ ...handlers(), data: MULTI })
+      click(button('Move', row('2-morning')))
+      const menu = document.querySelector('[role="menu"]')
+      expect(menu.querySelector('[role="menuitem"]').textContent).toBe('Remove from day')
+      expect(menu.querySelector('[role="separator"]')).not.toBeNull()
+      const headings = [...menu.querySelectorAll('[role="presentation"] > [role="presentation"]')].map((h) => h.textContent)
+      expect(headings).toEqual(['Day 2 · Florence'])
+      expect(button('Afternoon (swap with Duomo)', menu).getAttribute('aria-label')).toBe('Move to Day 2 · Afternoon (swap with Duomo)')
+
+      act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
+      render({ ...handlers() })
+      click(button('Move', row('1-morning')))
+      const days = [...document.querySelectorAll('[role="menu"] [role="presentation"] > [role="presentation"]')].map((h) => h.textContent)
+      expect(days).toEqual(['Day 1', 'Day 2'])
+    })
+
+    it('closes on scroll outside the menu and on resize, not on scroll inside it', () => {
+      render(handlers())
+      click(button('Move', row('1-morning')))
+      const menu = document.querySelector('[role="menu"]')
+      act(() => { menu.dispatchEvent(new Event('scroll')) })
+      expect(document.querySelector('[role="menu"]')).not.toBeNull()
+      act(() => { document.dispatchEvent(new Event('scroll')) })
+      expect(document.querySelector('[role="menu"]')).toBeNull()
+
+      click(button('Move', row('1-morning')))
+      act(() => { window.dispatchEvent(new Event('resize')) })
+      expect(document.querySelector('[role="menu"]')).toBeNull()
+    })
   })
 })

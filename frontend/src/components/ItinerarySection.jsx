@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
   GripVertical, ArrowRightLeft, Undo2, RotateCcw,
@@ -39,26 +40,55 @@ function dayRows(day, originalDay, isMovable, withPlaceholders) {
   return rows
 }
 
-// Rendered inside the wrapper that also holds its Move button. Closes on
-// Escape (returning focus), on a pointer press outside the wrapper, and when
-// focus moves to an element outside it. A blur with no related target is
-// ignored: Safari doesn't focus buttons on click, so it would close the menu
-// before the item's click fires.
-function MoveMenu({ label, items, onClose, onDismiss }) {
+const MENU_WIDTH = 256
+const MENU_MAX_HEIGHT = 360
+const MENU_MARGIN = 8 // from the viewport edges
+const MENU_GAP = 4 // from the Move button
+const MENU_MIN_BELOW = 240
+
+// Fixed placement next to the Move button: below and right-aligned, flipped
+// above when there's little room below and more above; kept on screen.
+function menuPlacement(rect, viewportWidth, viewportHeight) {
+  const below = viewportHeight - rect.bottom - MENU_GAP - MENU_MARGIN
+  const above = rect.top - MENU_GAP - MENU_MARGIN
+  const up = below < MENU_MIN_BELOW && above > below
+  const width = Math.min(MENU_WIDTH, viewportWidth - 2 * MENU_MARGIN)
+  const left = Math.max(MENU_MARGIN, Math.min(rect.right - width, viewportWidth - MENU_MARGIN - width))
+  const maxHeight = Math.max(0, Math.min(MENU_MAX_HEIGHT, up ? above : below))
+  return up
+    ? { position: 'fixed', left, width, maxHeight, bottom: viewportHeight - rect.top + MENU_GAP }
+    : { position: 'fixed', left, width, maxHeight, top: rect.bottom + MENU_GAP }
+}
+
+// Portalled to <body> with fixed positioning: the section cards clip
+// (overflow-hidden) and keep a transform from their entry animation, so an
+// in-place menu would be cut off. Closes on Escape (returning focus), a
+// pointer press outside the menu and its button, focus landing outside them,
+// window resize, and any scroll outside the menu. A blur with no new focus
+// target never closes it (Safari doesn't focus buttons on click).
+function MoveMenu({ label, anchorRect, getAnchor, removeItem, groups, onClose, onDismiss }) {
   const menuRef = useRef(null)
   useEffect(() => {
-    menuRef.current?.querySelector('[role="menuitem"]')?.focus()
+    menuRef.current?.querySelector('[role="menuitem"]')?.focus({ preventScroll: true })
   }, [])
   useEffect(() => {
-    const wrapper = menuRef.current?.parentElement
-    const onPress = (e) => { if (wrapper && !wrapper.contains(e.target)) onDismiss() }
+    const inside = (node) => menuRef.current?.contains(node) || getAnchor()?.contains(node)
+    const onPress = (e) => { if (!inside(e.target)) onDismiss() }
+    const onFocusIn = (e) => { if (e.target instanceof Node && !inside(e.target)) onDismiss() }
+    const onScroll = (e) => { if (!menuRef.current?.contains(e.target)) onDismiss() }
     document.addEventListener('pointerdown', onPress)
     document.addEventListener('mousedown', onPress)
+    document.addEventListener('focusin', onFocusIn)
+    document.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onDismiss)
     return () => {
       document.removeEventListener('pointerdown', onPress)
       document.removeEventListener('mousedown', onPress)
+      document.removeEventListener('focusin', onFocusIn)
+      document.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onDismiss)
     }
-  }, [onDismiss])
+  }, [getAnchor, onDismiss])
 
   const onKeyDown = (e) => {
     if (e.key === 'Escape') {
@@ -72,22 +102,37 @@ function MoveMenu({ label, items, onClose, onDismiss }) {
     const all = [...menuRef.current.querySelectorAll('[role="menuitem"]')]
     const at = all.indexOf(document.activeElement)
     const step = e.key === 'ArrowDown' ? 1 : -1
-    all[(at + step + all.length) % all.length]?.focus()
+    all[(at + step + all.length) % all.length]?.focus({ preventScroll: true })
   }
 
-  return (
+  const itemButton = (item, className) => (
+    <button key={item.id} type="button" role="menuitem" aria-label={item.ariaLabel} onClick={item.onSelect}
+      onMouseDown={(e) => e.preventDefault()}
+      className={`block w-full text-left px-3 py-1.5 text-xs focus:outline-none ${className}`}>
+      {item.label}
+    </button>
+  )
+
+  return createPortal(
     <div ref={menuRef} role="menu" aria-label={label} onKeyDown={onKeyDown}
-      className="absolute right-0 top-full mt-1 z-20 w-64 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-      {items.map((item) => (
-        <button key={item.id} type="button" role="menuitem" onClick={item.onSelect}
-          onMouseDown={(e) => e.preventDefault()}
-          className={`block w-full text-left px-3 py-1.5 text-xs focus:outline-none ${item.danger
-            ? 'text-red-600 border-t border-gray-100 hover:bg-red-50 focus:bg-red-50'
-            : 'text-gray-700 hover:bg-teal-50 focus:bg-teal-50'}`}>
-          {item.label}
-        </button>
+      style={menuPlacement(anchorRect, window.innerWidth, window.innerHeight)}
+      className="z-50 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+      {removeItem && (
+        <>
+          {itemButton(removeItem, 'text-red-600 hover:bg-red-50 focus:bg-red-50')}
+          {groups.length > 0 && <div role="separator" className="my-1 border-t border-gray-100" />}
+        </>
+      )}
+      {groups.map((group) => (
+        <div key={group.day_number} role="presentation">
+          <div role="presentation" className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            {group.heading}
+          </div>
+          {group.items.map((item) => itemButton(item, 'pl-5 text-gray-700 hover:bg-teal-50 focus:bg-teal-50'))}
+        </div>
       ))}
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -98,6 +143,7 @@ export default function ItinerarySection({
   const [editingSlot, setEditingSlot] = useState(null) // key of slot being edited
   const [openNote,    setOpenNote]    = useState(null)
   const [menuFor,     setMenuFor]     = useState(null) // key whose Move menu is open
+  const [menuAnchor,  setMenuAnchor]  = useState(null) // Move button's rect when it opened
   const [dragKey,     setDragKey]     = useState(null)
   const [dropAt,      setDropAt]      = useState(null) // highlighted position
   const [status,      setStatus]      = useState('')
@@ -284,29 +330,36 @@ export default function ItinerarySection({
               const cost     = edit.cost      ?? slot.estimated_cost_usd
               const inPlan   = selections.itinerary_slots?.some(s => s.key === key)
 
-              const menuItems = movable ? [
-                ...targetsByKey.get(key).map((t) => ({
+              const menuGroups = []
+              for (const t of movable ? targetsByKey.get(key) : []) {
+                let group = menuGroups.at(-1)
+                if (group?.day_number !== t.day_number) {
+                  const city = arranged.days.find((d) => d.day_number === t.day_number)?.city
+                  group = { day_number: t.day_number, heading: `Day ${t.day_number}${city ? ` · ${city}` : ''}`, items: [] }
+                  menuGroups.push(group)
+                }
+                const swap = t.swapWith ? ` (swap with ${activityName(t.swapWith.key, t.swapWith.activity)})` : ''
+                group.items.push({
                   id: slotKey(t.day_number, t.time_of_day),
-                  label: positionLabel(t.day_number, t.time_of_day)
-                    + (t.swapWith ? ` (swap with ${activityName(t.swapWith.key, t.swapWith.activity)})` : ''),
+                  label: `${timeLabel(t.time_of_day)}${swap}`,
+                  ariaLabel: `Move to ${positionLabel(t.day_number, t.time_of_day)}${swap}`,
                   onSelect: () => {
                     focusAfterRender.current = key
                     setMenuFor(null)
                     move(key, activity, t, 'menu')
                   },
-                })),
-                ...(onRemoveSlot ? [{
-                  id: 'remove',
-                  label: 'Remove from day',
-                  danger: true,
-                  onSelect: () => {
-                    focusAfterRender.current = FOCUS_UNDO
-                    setMenuFor(null)
-                    onRemoveSlot(key)
-                    setStatus(`Removed ${activity} from Day ${day.day_number}`)
-                  },
-                }] : []),
-              ] : []
+                })
+              }
+              const removeItem = movable && onRemoveSlot ? {
+                id: 'remove',
+                label: 'Remove from day',
+                onSelect: () => {
+                  focusAfterRender.current = FOCUS_UNDO
+                  setMenuFor(null)
+                  onRemoveSlot(key)
+                  setStatus(`Removed ${activity} from Day ${day.day_number}`)
+                },
+              } : null
 
               return (
                 <div key={key} data-slot-key={key} data-time={slot.time_of_day}
@@ -406,18 +459,19 @@ export default function ItinerarySection({
                             <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
                           </button>
                         {movable && (
-                          <div className="relative"
-                            onBlur={(e) => {
-                              if (menuOpen && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setMenuFor(null)
-                            }}>
+                          <div>
                             <button type="button" ref={(el) => { moveButtons.current[key] = el }}
                               aria-haspopup="menu" aria-expanded={menuOpen}
-                              onClick={() => setMenuFor(menuOpen ? null : key)}
+                              onClick={(e) => {
+                                setMenuAnchor(e.currentTarget.getBoundingClientRect())
+                                setMenuFor(menuOpen ? null : key)
+                              }}
                               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${menuOpen ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
                               <ArrowRightLeft size={10}/> Move
                             </button>
                             {menuOpen && (
-                              <MoveMenu label={`Move ${activity}`} items={menuItems} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
+                              <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} getAnchor={() => moveButtons.current[key]}
+                                removeItem={removeItem} groups={menuGroups} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
                             )}
                           </div>
                         )}
