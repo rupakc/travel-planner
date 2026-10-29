@@ -16,7 +16,7 @@ const CAPS = {
 }
 
 const num = (v) => {
-  if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null
+  if (typeof v !== 'number' && !(typeof v === 'string' && v.trim() !== '')) return null
   const n = Number(v)
   return Number.isFinite(n) ? n : null
 }
@@ -78,7 +78,7 @@ function pickFlight(flights) {
   const best = sortBy(pool, byAsc(flightStops), byAsc(flightDuration), byAsc(flightPrice))[0]
   const extra = flightPrice(best) - cheapest
   const reason =
-    extra > 0
+    Math.round(extra) > 0
       ? `Fewer stops or shorter for ${money(extra)} more than the cheapest fare`
       : 'Cheapest fare'
   return { item: best, reason }
@@ -89,7 +89,7 @@ function pickFlights(flightsSection) {
   if (flightsSection.legs?.length > 0) {
     const legs = []
     flightsSection.legs.forEach((leg, i) => {
-      const pick = pickFlight((leg?.results || []).filter(Boolean))
+      const pick = pickFlight((Array.isArray(leg?.results) ? leg.results : []).filter(Boolean))
       if (!pick) return
       const legIndex = pick.item.leg_index ?? leg.leg_index ?? i
       const item = pick.item.leg_index === legIndex ? pick.item : { ...pick.item, leg_index: legIndex }
@@ -127,7 +127,12 @@ function pickHotel(cands, searchData) {
   const best = sortBy(pool, byDesc(review), byAsc(nightly))[0]
   const stars = starsOf(best)
   const city = searchData?.destinations?.length > 1 ? best.city || searchData.destinations[0] : null
-  const label = stars > 0 ? `Mid-range (${stars}★), best-reviewed in its class` : 'Best-reviewed in its class'
+  const label =
+    stars === 3
+      ? 'Mid-range (3★), best-reviewed in its class'
+      : stars > 0
+        ? `${stars}★, best-reviewed in its class`
+        : 'Best-reviewed in its class'
   return { item: best, reason: city ? `${label} · ${city}` : label }
 }
 
@@ -149,7 +154,7 @@ function takePerCity(sorted, perCity, total) {
 function pickActivities(section) {
   const cands = listOf(section).filter((a) => {
     const p = num(a.price_usd)
-    return p !== null && p >= 0 && p <= MAX_ACTIVITY_PRICE
+    return a.name && p !== null && p >= 0 && p <= MAX_ACTIVITY_PRICE
   })
   const sorted = sortBy(cands, byDesc((a) => num(a.similarity_score)), byAsc((a) => num(a.price_usd)))
   return takePerCity(sorted, CAPS.activitiesPerCity, CAPS.activities).map((a) => {
@@ -261,16 +266,18 @@ export function buildBestValuePackage(results, searchData) {
 
 const keyed = (key) => (a, b) => a?.[key] != null && a[key] === b?.[key]
 const sameHotel = keyed('name')
-const sameSim = (a, b) => !!a && !!b && a.provider === b.provider && a.plan_name === b.plan_name
+const sameSim = (a, b) =>
+  !!a && !!b && (a.provider != null || a.plan_name != null) && a.provider === b.provider && a.plan_name === b.plan_name
 const IDENTITY = { activities: keyed('name'), places_to_see: keyed('name'), walking_tours: keyed('url') }
 
 export function applyPackage(selections, pkg) {
-  const next = { ...selections }
+  const sel = selections || {}
+  const next = { ...sel }
   const p = pkg.selections
   if (p.flight) next.flight = p.flight
   if (p.flights.length) {
     const covered = new Set(p.flights.map((f) => f.leg_index))
-    next.flights = [...(selections.flights || []).filter((f) => !covered.has(f.leg_index)), ...p.flights].sort(
+    next.flights = [...(sel.flights || []).filter((f) => !covered.has(f.leg_index)), ...p.flights].sort(
       (a, b) => a.leg_index - b.leg_index,
     )
   }
@@ -278,8 +285,10 @@ export function applyPackage(selections, pkg) {
   if (p.sim) next.sim = p.sim
   for (const [key, same] of Object.entries(IDENTITY)) {
     if (!p[key].length) continue
-    const existing = selections[key] || []
-    next[key] = [...existing, ...p[key].filter((x) => !existing.some((e) => same(e, x)))]
+    const existing = sel[key] || []
+    const added = []
+    for (const x of p[key]) if (![...existing, ...added].some((e) => same(e, x))) added.push(x)
+    next[key] = [...existing, ...added]
   }
   return next
 }

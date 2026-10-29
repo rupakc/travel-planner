@@ -371,3 +371,54 @@ describe('packageConflicts', () => {
     expect(packageConflicts(sel, p)).toEqual(['flight', 'SIM'])
   })
 })
+
+describe('fix round 1', () => {
+  it('whitespace and array prices are unknown, not free', () => {
+    const acts = [activity({ name: 'W', price_usd: ' ' }), activity({ name: 'Arr', price_usd: [] })]
+    const pkg = build({ ...fl([flight()]), activities: { results: acts } })
+    expect(pkg.selections.activities).toEqual([])
+    const f = build(fl([flight({ price_usd: ' ' })]))
+    expect(f).toBeNull()
+  })
+
+  it('nameless activities are skipped and package duplicates are applied once', () => {
+    const pkg = build({ ...fl([flight()]), activities: { results: [activity({ name: undefined }), activity({ name: 'D' }), activity({ name: 'D' })] } })
+    expect(pkg.selections.activities.map((a) => a.name)).toEqual(['D', 'D'])
+    const applied = applyPackage(EMPTY_SELECTIONS, pkg)
+    expect(applied.activities).toHaveLength(1)
+    expect(isPackageApplied(applied, pkg)).toBe(true)
+  })
+
+  it('hotel reason only says Mid-range for 3 stars', () => {
+    const four = build({ hotels: { results: [hotel({ star_rating: 4 })] } })
+    expect(itemsOf(four, 'hotel')[0].reason).toBe('4★, best-reviewed in its class')
+    const multi = build({ hotels: { results: [hotel({ star_rating: 4, city: 'Rome' })] } }, { ...searchData, destinations: ['Rome', 'X'] })
+    expect(itemsOf(multi, 'hotel')[0].reason).toBe('4★, best-reviewed in its class · Rome')
+  })
+
+  it('a sub-50-cent premium reads Cheapest fare', () => {
+    const a = flight({ flight_number: 'A', price_usd: 100, outbound: { airline: 'X', flight_number: 'A', stops: 1 } })
+    const b = flight({ flight_number: 'B', price_usd: 100.3, outbound: { airline: 'Y', flight_number: 'B', stops: 0 } })
+    const pkg = build(fl([a, b]))
+    expect(pkg.selections.flight).toBe(b)
+    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Cheapest fare')
+  })
+
+  it('SIM plans lacking identity never compare equal', () => {
+    const p = build({ ...fl([flight()]), sim: { plans: [{ price_usd: 5 }] } })
+    expect(packageConflicts({ ...EMPTY_SELECTIONS, sim: { price_usd: 9 } }, p)).toEqual(['SIM'])
+    expect(isPackageApplied({ ...EMPTY_SELECTIONS, flight: p.selections.flight, sim: { price_usd: 5 } }, p)).toBe(false)
+  })
+
+  it('applyPackage tolerates null selections', () => {
+    const l = { leg_index: 0, price_usd: 80, outbound: { airline: 'C', flight_number: '3', stops: 0 } }
+    const pkg = build({ flights: { legs: [{ leg_index: 0, results: [l] }], results: [l] }, activities: { results: [activity({ name: 'N' })] } })
+    expect(applyPackage(null, pkg).flights).toEqual([l])
+  })
+
+  it('non-array leg.results does not throw', () => {
+    const l1 = { leg_index: 1, price_usd: 80, outbound: { airline: 'C', flight_number: '3', stops: 0 } }
+    const pkg = build({ flights: { legs: [{ leg_index: 0, results: 'oops' }, { leg_index: 1, results: [l1] }] } })
+    expect(pkg.selections.flights).toEqual([l1])
+  })
+})
