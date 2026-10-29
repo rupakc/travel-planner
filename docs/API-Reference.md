@@ -10,6 +10,24 @@ The Travel Planner backend is a FastAPI application. All endpoints are under `/a
 Authorization: Bearer <token>
 ```
 
+**Rate limits:** endpoints that call the AI agents are limited per caller — the signed-in user, or the client IP for anonymous requests — over a rolling 10-minute window. Cached responses still count.
+
+| Bucket | Endpoints | Default limit |
+|---|---|---|
+| search | `POST /api/search`, `POST /api/search/sync` | 10 |
+| chat | `POST /api/chat` | 30 |
+| compare | `POST /api/compare/destination` | 30 |
+| discover | `POST /api/discover` | 10 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` (and their `/filtered` variants), `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
+
+Each bucket is counted separately. Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
+
+```json
+{"detail": "Too many requests — please wait 42 seconds and try again."}
+```
+
+Limits are configurable (see [Configuration](Configuration.md#rate-limit-variables)). The counter is in-process, so each backend instance counts on its own.
+
 ---
 
 ## Auth endpoints

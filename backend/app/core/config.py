@@ -38,6 +38,17 @@ class Settings(BaseSettings):
         ""  # Serper Google Search API key; enables Tier 2 activity URL resolution
     )
 
+    # Rate limits on AI endpoints: max requests per caller (signed-in user, or
+    # client IP when anonymous) per rolling window. RATE_LIMIT_ENABLED=false
+    # turns them off.
+    rate_limit_enabled: bool = True
+    rate_limit_window_seconds: int = 600
+    rate_limit_search: int = 10  # /search, /search/sync
+    rate_limit_chat: int = 30  # /chat
+    rate_limit_compare: int = 30  # /compare/destination
+    rate_limit_discover: int = 10  # /discover
+    rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
+
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"
     admin_password: str = ""

@@ -30,6 +30,7 @@ import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
+import { responseErrorMessage } from '../utils/httpError'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -3069,7 +3070,7 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
 function LayoverModal({ info, onClose }) {
   if (!info) return null
-  const { city, airport, duration_hours, status, data } = info
+  const { city, airport, duration_hours, status, data, message } = info
   const label = city || airport
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -3087,7 +3088,7 @@ function LayoverModal({ info, onClose }) {
             </div>
           )}
           {status === 'error' && (
-            <p className="text-sm text-red-600">Couldn't plan this layover right now — please try again.</p>
+            <p className="text-sm text-red-600">{message || "Couldn't plan this layover right now — please try again."}</p>
           )}
           {status === 'done' && data && (
             <>
@@ -3426,7 +3427,12 @@ export default function ResultsPage() {
           interests: searchData.interests || [],
         }),
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        // A string `detail` (e.g. the rate-limit message) is worth showing.
+        const message = await responseErrorMessage(res, null)
+        setLayoverInfo(prev => prev && { ...prev, status: 'error', message })
+        return
+      }
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setLayoverInfo(prev => prev && { ...prev, status: 'done', data })

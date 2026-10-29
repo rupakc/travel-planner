@@ -1,9 +1,11 @@
 // SSE Web Worker for chat streaming — parses text deltas off the main thread
+import { responseErrorMessage } from '../utils/httpError.js'
+
 self.onmessage = async ({ data: { url, body, headers } }) => {
   try {
     const response = await fetch(url, { method: 'POST', headers, body })
     if (!response.ok) {
-      self.postMessage({ type: '__error', message: `HTTP ${response.status}` })
+      self.postMessage({ type: '__error', message: await responseErrorMessage(response) })
       return
     }
     const reader = response.body.getReader()

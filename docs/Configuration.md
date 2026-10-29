@@ -111,6 +111,24 @@ Comma-separated list of allowed CORS origins. In production, set this to your fr
 
 ---
 
+## Rate-limit variables
+
+AI endpoints are limited per signed-in user (or client IP when anonymous) over a rolling window; see the [API Reference](API-Reference.md) for which endpoints fall in which bucket. Over the limit the API returns `429` with a `Retry-After` header.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `RATE_LIMIT_ENABLED` | `true` | `false` turns all limits off (the test suite does this) |
+| `RATE_LIMIT_WINDOW_SECONDS` | `600` | Length of the rolling window |
+| `RATE_LIMIT_SEARCH` | `10` | `/api/search`, `/api/search/sync` per window |
+| `RATE_LIMIT_CHAT` | `30` | `/api/chat` per window |
+| `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` per window |
+| `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` per window |
+| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/layover`, `/api/stress-test` per window |
+
+Counters live in process memory: they reset on restart and are not shared between instances. Anonymous callers are keyed by the connecting client's address, so behind a reverse proxy all anonymous traffic shares one bucket unless the proxy's address is replaced (e.g. uvicorn `--proxy-headers`).
+
+---
+
 ## Logging variables
 
 ### `LOG_FORMAT`
