@@ -1047,7 +1047,7 @@
 <p><code>flight_legs</code> decomposes the journey into one-way legs: origin → city₁ on the departure date, an inter-city hop on each move-on day, and last city → origin on the return date.</p>
 <p>The flights pipeline (<code>backend/app/services/serp_flights.py::search_multi_city</code>) then:</p>
 <ol>
-<li>Resolves every endpoint to IATA codes (<code>lookup_city_iata</code>: exact city match in the local airports DB, restricted by a recognised country or region in the last segment ("Toronto, ON" → YYZ), up to 3 airport codes per city, none when the city is ambiguous across countries; never a web lookup).</li>
+<li>Resolves every endpoint to IATA codes (<code>lookup_city_iata</code>: exact city match in the local airports DB, also accent-folded and through city aliases ("Zürich", "Washington"), restricted by a recognised country or region in the last segment ("Toronto, ON" → YYZ, "Portland, OR" → PDX), up to 3 airport codes per city, none when the city is ambiguous across countries or across regions with none given; never a web lookup).</li>
 <li>Fires <strong>parallel one-way Google Flights searches</strong> (SerpAPI, <code>type: "2"</code>) — one per leg, with a 20 s timeout and one retry per leg.</li>
 <li>Tags every result with <code>leg_index</code>, <code>leg_from</code>, <code>leg_to</code>, <code>leg_date</code>, and <code>city</code>, keeps the top 5 per leg, and sorts legs into the user's journey order before returning.</li>
 <li>Any leg SerpAPI cannot serve (timeout, zero results) is <strong>AI-filled</strong> with realistic estimates (<code>FlightsAgent._ai_fill_legs</code>, marked <code>source: "estimate"</code>), so no leg ever shows an empty row.</li>
