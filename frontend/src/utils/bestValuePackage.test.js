@@ -207,7 +207,7 @@ describe('activities', () => {
     expect(four.selections.activities.every((a) => a.price_usd <= 59)).toBe(true)
     const wide = build(acts(list.map((a) => ({ ...a, similarity_score: a.price_usd === 55 || a.price_usd === 59 ? 0.9 : 0.1 }))))
     expect(wide.selections.activities.map((a) => a.name).sort()).toEqual(['P39', 'P45'])
-    expect(itemsOf(pkg, 'activities')[0].reason).toBe('$39 · below the typical price here')
+    expect(itemsOf(pkg, 'activities')[0].reason).toBe('$39 · at or below the typical price here')
   })
 
   it('adds the interest note for similarity >= 0.5', () => {
@@ -453,7 +453,8 @@ describe('fix round 1', () => {
   })
 
   it('SIM plans lacking identity never compare equal', () => {
-    const p = build({ ...fl([flight()]), sim: { plans: [{ price_usd: 5 }] } })
+    const base = build({ ...fl([flight()]) })
+    const p = { ...base, selections: { ...base.selections, sim: { price_usd: 5 } } }
     expect(packageConflicts({ ...EMPTY_SELECTIONS, sim: { price_usd: 9 } }, p)).toEqual(['SIM'])
     expect(isPackageApplied({ ...EMPTY_SELECTIONS, flight: p.selections.flight, sim: { price_usd: 5 } }, p)).toBe(false)
   })
@@ -506,5 +507,24 @@ describe('multi-city first stop matching', () => {
     }
     const pkg = build(results, { ...sd(['LIS', 'OPO']), budget_usd: 1000 })
     expect(pkg.selections.hotel.name).toBe('CheapLis')
+  })
+
+  it('skips nameless hotels and unnamed SIM plans', () => {
+    const pkg = build({
+      hotels: { results: [hotel({ name: undefined, review_score: 10 }), hotel({ name: 'Named' })] },
+      sim: { plans: [{ price_usd: 5 }, { provider: 'P', plan_name: 'Q', price_usd: 9 }] },
+    })
+    expect(pkg.selections.hotel.name).toBe('Named')
+    expect(pkg.selections.sim.provider).toBe('P')
+  })
+
+  it('ignores nameless activities in the city median', () => {
+    const list = [
+      activity({ name: undefined, price_usd: 1 }), activity({ name: undefined, price_usd: 1 }),
+      activity({ name: undefined, price_usd: 1 }), activity({ name: 'A', price_usd: 40 }),
+      activity({ name: 'B', price_usd: 50 }),
+    ]
+    const pkg = build({ ...fl([flight()]), activities: { results: list } })
+    expect(pkg.selections.activities.map((a) => a.name)).toEqual(['A'])
   })
 })

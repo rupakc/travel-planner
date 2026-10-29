@@ -3409,7 +3409,7 @@ export default function ResultsPage() {
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
-  // Selections as they were just before "Add package to My Plan" (for Undo)
+  // Selections as they were just before "Add all to My Plan" (for Undo)
   const [packageUndo, setPackageUndo] = useState(null)
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
@@ -4026,11 +4026,12 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {isDone && (
+        {isDone && bestValue && (
           <div id="section-best_value" className="mb-5">
             <BestValuePackage
               pkg={bestValue}
               selections={selections}
+              searchData={searchData}
               onApply={handleApplyPackage}
               onUndo={handleUndoPackage}
               canUndo={!!packageUndo}
@@ -4103,7 +4104,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null) }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}

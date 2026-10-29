@@ -142,4 +142,22 @@ describe('BestValuePackage', () => {
     expect(hotelEl.getAttribute('href')).toBeNull()
     expect(container.innerHTML).not.toContain('javascript:')
   })
+
+  it('labels the package total and shows My Plan total only when it differs', () => {
+    render({ searchData })
+    expect(container.textContent).toContain('Package total')
+    expect(container.textContent).not.toContain('My Plan total')
+    const sel = applyPackage({}, pkg)
+    render({ searchData, selections: sel })
+    expect(container.textContent).not.toContain('My Plan total')
+    render({ searchData, selections: { ...sel, activities: [...sel.activities, { name: 'Extra', price_usd: 500 }] } })
+    expect(container.textContent).toContain('My Plan total: $')
+  })
+
+  it('keeps the live region mounted', () => {
+    render()
+    const live = container.querySelector('[aria-live]')
+    expect(live).not.toBeNull()
+    expect(live.className).not.toContain('empty:hidden')
+  })
 })

@@ -1,5 +1,6 @@
 import { Package, Plane, Hotel, MapPin, Smartphone, Footprints, Landmark, Check, Undo2 } from 'lucide-react'
 import { safeUrl } from '../utils/planPrint'
+import { computePlanCost } from '../utils/planHelpers'
 import { isPackageApplied, packageConflicts } from '../utils/bestValuePackage'
 
 const usd = (n) => `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
@@ -94,12 +95,14 @@ function Row({ entry }) {
   )
 }
 
-export default function BestValuePackage({ pkg, selections, onApply, onUndo, canUndo, disabledReason }) {
+export default function BestValuePackage({ pkg, selections, searchData, onApply, onUndo, canUndo, disabledReason }) {
   if (!pkg) return null
   const applied = isPackageApplied(selections, pkg)
   const conflicts = applied ? [] : packageConflicts(selections, pkg)
   const hasFlight = pkg.items.some((i) => i.type === 'flight' || i.type === 'flights')
   const disabled = applied || !!disabledReason
+  const planTotal = applied ? computePlanCost(selections, searchData) : null
+  const showPlanTotal = planTotal !== null && Math.round(planTotal) !== Math.round(pkg.total)
   const over = pkg.budget?.status === 'over'
 
   return (
@@ -121,6 +124,7 @@ export default function BestValuePackage({ pkg, selections, onApply, onUndo, can
       </ul>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-xs text-gray-500">Package total</span>
         <span className="text-base font-bold text-gray-900">{usd(pkg.total)}</span>
         {pkg.budget && (
           <span
@@ -132,6 +136,7 @@ export default function BestValuePackage({ pkg, selections, onApply, onUndo, can
           </span>
         )}
       </div>
+      {showPlanTotal && <p className="text-xs text-gray-600 mt-1">My Plan total: {usd(planTotal)}</p>}
       {hasFlight && <p className="text-xs text-gray-500 mt-1">Flight prices are per person</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -158,7 +163,7 @@ export default function BestValuePackage({ pkg, selections, onApply, onUndo, can
           </button>
         )}
       </div>
-      <div aria-live="polite" className="text-xs mt-1.5 empty:hidden">
+      <div aria-live="polite" className="text-xs mt-1.5">
         {disabledReason ? (
           <p className="text-amber-700">{disabledReason}</p>
         ) : conflicts.length > 0 ? (

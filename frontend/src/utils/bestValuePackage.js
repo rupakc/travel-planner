@@ -72,8 +72,9 @@ const flightDuration = (f) => {
 }
 
 const duration = (mins) => {
-  const h = Math.floor(mins / 60)
-  const m = Math.round(mins % 60)
+  const total = Math.round(mins)
+  const h = Math.floor(total / 60)
+  const m = total % 60
   return [h && `${h}h`, m && `${m}m`].filter(Boolean).join(' ')
 }
 
@@ -134,7 +135,7 @@ function firstStop(results, searchData) {
 }
 
 function hotelCandidates(hotelsSection, first) {
-  let cands = listOf(hotelsSection).filter((h) => nightly(h) > 0)
+  let cands = listOf(hotelsSection).filter((h) => h.name && nightly(h) > 0)
   if (first) {
     let inCity = cands.filter((h) => cityKey(h.city) === cityKey(first))
     if (!inCity.length) {
@@ -191,6 +192,7 @@ const median = (nums) => {
 
 function pickActivities(section) {
   const priced = listOf(section).filter((a) => {
+    if (!a.name) return false
     const p = num(a.price_usd)
     return p !== null && p >= 0
   })
@@ -205,7 +207,7 @@ function pickActivities(section) {
   const sorted = sortBy(cands, byDesc((a) => num(a.similarity_score)), byAsc((a) => num(a.price_usd)))
   return takePerCity(sorted, CAPS.activitiesPerCity, CAPS.activities).map((a) => {
     const p = num(a.price_usd)
-    const base = p === 0 ? 'Free' : p > ACTIVITY_PRICE_FLOOR ? `${money(p)} · below the typical price here` : money(p)
+    const base = p === 0 ? 'Free' : p > ACTIVITY_PRICE_FLOOR ? `${money(p)} · at or below the typical price here` : money(p)
     return { item: a, reason: num(a.similarity_score) >= 0.5 ? `${base} · matches your interests` : base }
   })
 }
@@ -240,7 +242,7 @@ function tripDays(searchData) {
 
 function pickSim(section, searchData) {
   const plans = section && !section.error && Array.isArray(section.plans) ? section.plans.filter(Boolean) : []
-  const priced = plans.filter((p) => num(p.price_usd) > 0)
+  const priced = plans.filter((p) => (p.provider || p.plan_name) && num(p.price_usd) > 0)
   if (!priced.length) return null
   const days = tripDays(searchData)
   const cheapest = (arr) => sortBy(arr, byAsc((p) => num(p.price_usd)))[0]
@@ -325,7 +327,7 @@ export function applyPackage(selections, pkg) {
   if (p.flights.length) {
     const covered = new Set(p.flights.map((f) => f.leg_index))
     next.flights = [...(sel.flights || []).filter((f) => !covered.has(f.leg_index)), ...p.flights].sort(
-      (a, b) => a.leg_index - b.leg_index,
+      (a, b) => (a.leg_index ?? 0) - (b.leg_index ?? 0),
     )
   }
   if (p.hotel) next.hotel = p.hotel
