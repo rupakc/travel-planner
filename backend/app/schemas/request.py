@@ -18,6 +18,17 @@ def _resolve_iata(value: str) -> str:
     return value
 
 
+def _airport_codes(value: str) -> str | None:
+    """IATA code(s) for an origin/destination: a bare code as typed, else the
+    typed city's airports from the local DB (comma-joined; never the web)."""
+    stripped = value.strip()
+    if _IATA_RE.match(stripped.upper()):
+        return stripped.upper()
+    from ..db.database import lookup_city_iata
+
+    return lookup_city_iata(stripped)
+
+
 class TravelSearchRequest(BaseModel):
     origin: str = Field(..., description="Origin airport or city code (e.g. NYC, LHR)")
     destination: str = Field(
@@ -256,14 +267,12 @@ class TravelSearchRequest(BaseModel):
 
     @model_validator(mode="after")
     def resolve_iata_codes(self) -> "TravelSearchRequest":
-        stripped_o = self.origin.strip()
-        if _IATA_RE.match(stripped_o.upper()):
-            self.origin_iata = stripped_o.upper()
+        # Codes for live flight search: typed codes as-is, typed cities
+        # ("Berlin", "BER — Berlin, Germany") via the local airports DB
+        self.origin_iata = _airport_codes(self.origin)
         self.origin = _resolve_iata(self.origin)
 
-        stripped_d = self.destination.strip()
-        if _IATA_RE.match(stripped_d.upper()):
-            self.destination_iata = stripped_d.upper()
+        self.destination_iata = _airport_codes(self.destination)
         self.destination = _resolve_iata(self.destination)
 
         # Multi-city stops are entered as bare IATA codes too ("AMS", "JFK") —

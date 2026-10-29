@@ -126,36 +126,83 @@ def lookup_iata(code: str) -> dict | None:
     return _web_search_iata(code)
 
 
-def lookup_city_iata(city: str, max_codes: int = 2) -> str | None:
-    """Resolve a city name (optionally 'City, Country') to IATA airport codes.
+# "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
+_IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
 
-    Returns up to max_codes codes comma-joined (SerpAPI accepts multiple
-    departure/arrival IDs), or None if the city isn't in the airports table.
-    Seed data lists major airports first, so row order is the tiebreaker.
+# Other names people type for a country → its ISO code in the airports table.
+_COUNTRY_CODE_ALIASES: dict[str, str] = {
+    "uk": "GB",
+    "england": "GB",
+    "scotland": "GB",
+    "wales": "GB",
+    "britain": "GB",
+    "great britain": "GB",
+    "usa": "US",
+    "america": "US",
+    "united states of america": "US",
+    "uae": "AE",
+    "holland": "NL",
+    "the netherlands": "NL",
+    "korea": "KR",
+    "republic of korea": "KR",
+    "czechia": "CZ",
+    "turkiye": "TR",
+    "türkiye": "TR",
+}
+
+
+def _country_matches(stated: str, country: str, country_code: str | None) -> bool:
+    """Whether a typed country (name, ISO code, alias or US state) names a row's."""
+    from ..agents.static_results import _US_STATES
+
+    code = (country_code or "").upper()
+    if stated == country.lower() or stated.upper() == code:
+        return True
+    if _COUNTRY_CODE_ALIASES.get(stated) == code and code:
+        return True
+    # "Denver, CO" / "Paris, Texas": a US state restricts to the United States
+    return code == "US" and (stated in _US_STATES or stated in _US_STATES.values())
+
+
+def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
+    """Resolve a typed place ("Berlin", "Berlin, Germany", "BER — Berlin,
+    Germany") to up to ``max_codes`` comma-joined IATA codes (SerpAPI accepts
+    multiple departure/arrival IDs), or None.
+
+    Exact, case-insensitive match on the city (first comma segment); a stated
+    country (last segment) restricts the match. Matches spanning more than one
+    country are ambiguous and resolve to None. Seed data lists each city's
+    primary airport first, so insertion order ranks the codes. Local DB only —
+    one indexed query, never a web lookup.
     """
     if not city or not city.strip():
         return None
     stripped = city.strip()
     if re.match(r"^[A-Za-z]{3}$", stripped):
         return stripped.upper()
-    parts = [p.strip() for p in stripped.split(",")]
-    city_name, country = parts[0], (parts[1] if len(parts) > 1 else None)
-    with get_connection() as conn:
-        if country:
-            rows = conn.execute(
-                "SELECT iata_code FROM airports WHERE lower(city) = :city "
-                "AND lower(country) = :country LIMIT :n",
-                {"city": city_name.lower(), "country": country.lower(), "n": max_codes},
-            ).fetchall()
-            if rows:
-                return ",".join(r["iata_code"] for r in rows)
-        rows = conn.execute(
-            "SELECT iata_code FROM airports WHERE lower(city) = :city LIMIT :n",
-            {"city": city_name.lower(), "n": max_codes},
-        ).fetchall()
-    if not rows:
+    text = _IATA_PREFIX_RE.sub("", stripped, count=1)
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    if not parts:
         return None
-    return ",".join(r["iata_code"] for r in rows)
+    city_name = parts[0]
+    stated = " ".join(parts[-1].lower().split()) if len(parts) > 1 else None
+    try:
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT iata_code, country, country_code FROM airports "
+                "WHERE city = :city COLLATE NOCASE ORDER BY id",
+                {"city": city_name},
+            ).fetchall()
+    except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
+        logger.debug("City airport lookup failed for %r: %s", city, exc)
+        return None
+    if stated:
+        rows = [
+            r for r in rows if _country_matches(stated, r["country"], r["country_code"])
+        ]
+    if not rows or len({r["country"] for r in rows}) > 1:
+        return None
+    return ",".join(r["iata_code"] for r in rows[:max_codes])
 
 
 def _web_search_iata(code: str) -> dict | None:
