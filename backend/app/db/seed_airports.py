@@ -21,8 +21,12 @@ logger = logging.getLogger(__name__)
 PLACE_DATA_DIR = Path(__file__).parent / "data"
 _DATA_FILES = ("airports.csv", "places.csv.gz", "admin1.csv")
 # Bump when the way the files are loaded changes, to force a reseed.
-_LOADER_FORMAT = "place-data-loader:1"
-_VERSION_KEY = "place_data_version"
+_LOADER_FORMAT = "place-data-loader:2"
+PLACE_VERSION_KEY = "place_data_version"
+# Regenerable from the committed data: never backed up or merged (backup.py).
+PLACE_TABLES = ("places", "place_names", "admin1")
+# A worker that finds another one seeding waits this long for its lock.
+SEED_LOCK_TIMEOUT_MS = 30_000
 
 _UPSERT_AIRPORT = """
     INSERT INTO airports (iata_code, icao_code, name, city, country,
@@ -4115,6 +4119,27 @@ AIRPORTS = [
         120.9781,
     ),
     ("UIH", "VVPC", "Phu Cat Airport", "Qui Nhon", "Vietnam", "VN", 13.955, 109.042),
+    (
+        "CXI",
+        "PLCH",
+        "Cassidy International Airport",
+        "Kiritimati",
+        "Kiribati",
+        "KI",
+        1.9863,
+        -157.35,
+    ),
+    (
+        "YIE",
+        "ZBES",
+        "Arxan Yi'ershi Airport",
+        "Arxan",
+        "China",
+        "CN",
+        47.3106,
+        119.9117,
+    ),
+    ("NUM", "OENN", "Neom Bay Airport", "Neom", "Saudi Arabia", "SA", 27.9243, 35.2936),
 ]
 
 
@@ -4155,8 +4180,8 @@ def _read_airports(data_dir: Path, curated) -> list[tuple]:
 
 
 def _read_places(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
-    """(places rows, place_names rows); tier 0 is the folded own name, tier 1
-    the folded alternate names."""
+    """(places rows, place_names rows); tier 0 is the folded own name and the
+    folded ASCII spelling, tier 1 the folded alternate names."""
     places, names = [], []
     with gzip.open(data_dir / "places.csv.gz", "rt", newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
@@ -4174,9 +4199,9 @@ def _read_places(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
                     r["airports"],
                 )
             )
-            own = fold_place(r["name"])
-            names.append((own, gid, 0))
-            alts = set(r["alt_names"].split("|")) - {own, ""}
+            primary = {fold_place(r["name"]), fold_place(r["ascii"])} - {""}
+            names.extend((name, gid, 0) for name in sorted(primary))
+            alts = set(r["alt_names"].split("|")) - primary - {""}
             names.extend((alt, gid, 1) for alt in sorted(alts))
     return places, names
 
@@ -4188,7 +4213,7 @@ def _read_admin1(data_dir: Path) -> list[tuple]:
 
 def _stored_version(conn) -> str | None:
     row = conn.execute(
-        "SELECT value FROM meta WHERE key = ?", (_VERSION_KEY,)
+        "SELECT value FROM meta WHERE key = ?", (PLACE_VERSION_KEY,)
     ).fetchone()
     return row["value"] if row else None
 
@@ -4218,6 +4243,7 @@ def seed(data_dir: Path = PLACE_DATA_DIR, curated=AIRPORTS) -> bool:
     places, names = _read_places(data_dir)
     admin1 = _read_admin1(data_dir)
     with get_connection() as conn:
+        conn.execute(f"PRAGMA busy_timeout={SEED_LOCK_TIMEOUT_MS}")
         conn.execute("BEGIN IMMEDIATE")
         if _stored_version(conn) == version:  # another worker just seeded
             return False
@@ -4248,7 +4274,7 @@ def seed(data_dir: Path = PLACE_DATA_DIR, curated=AIRPORTS) -> bool:
         conn.execute(
             "INSERT INTO meta (key, value) VALUES (?, ?) "
             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            (_VERSION_KEY, version),
+            (PLACE_VERSION_KEY, version),
         )
     logger.info(
         "Seeded place data (version %s): %d airports, %d places, %d names, "

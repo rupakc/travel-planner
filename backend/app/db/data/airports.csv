@@ -221,7 +221,7 @@ AZR,DAUA,Touat-Cheikh Sidi Mohamed Belkebir Airport,Adrar,Algeria,DZ,DZ-01,1,1,2
 AZS,MDCY,Samaná El Catey International Airport,Nagua,Dominican Republic,DO,DO-20,1,1,19.26926,-69.73740
 BAH,OBBI,Bahrain International Airport,Manama,Bahrain,BH,BH-15,0,1,26.26730,50.63764
 BAL,LTCJ,Batman Airport,Batman,Turkey,TR,TR-72,1,1,37.92900,41.11660
-BAQ,SKBQ,Ernesto Cortissoz International Airport,Barranquilla,Colombia,CO,CO-ATL,0,1,10.88960,-74.78080
+BAQ,SKBQ,Ernesto Cortissoz International Airport,Soledad,Colombia,CO,CO-ATL,0,1,10.88960,-74.78080
 BAR,ZJQH,Qionghai Bo'ao Airport,Qionghai,China,CN,CN-46,1,1,19.14095,110.45277
 BAS,AGGE,Ballalae Airport,Ballalae,Solomon Islands,SB,SB-WE,2,1,-6.99075,155.88666
 BAV,ZBOW,Baotou Donghe International Airport,Baotou,China,CN,CN-15,0,1,40.56000,109.99700
@@ -592,7 +592,7 @@ CIY,LICB,Comiso Airport,Comiso,Italy,IT,IT-82,1,1,36.99583,14.60889
 CJA,SPJR,Mayor General FAP Armando Revoredo Iglesias Airport,Cajamarca,Peru,PE,PE-CAJ,1,1,-7.13918,-78.48940
 CJB,VOCB,Coimbatore International Airport,Coimbatore,India,IN,IN-TN,0,1,11.03000,77.04340
 CJC,SCCF,El Loa Airport,Calama,Chile,CL,CL-AN,1,1,-22.49820,-68.90360
-CJJ,RKTU,Cheongju International Airport/Cheongju Air Base (K-59/G-513),Cheongju-si,South Korea,KR,KR-43,0,1,36.71556,127.50029
+CJJ,RKTU,Cheongju International Airport/Cheongju Air Base (K-59/G-513),Cheongju,South Korea,KR,KR-43,0,1,36.71556,127.50029
 CJL,OPCH,Chitral Airport,Chitral,Pakistan,PK,PK-KP,1,1,35.88621,71.79992
 CJM,VTSE,Chumphon Airport,Chumphon,Thailand,TH,TH-86,1,1,10.71120,99.36170
 CJN,WICN,Nusawiru Airport,Parigi,Indonesia,ID,ID-JB,2,1,-7.71990,108.48900
@@ -712,7 +712,7 @@ CWJ,ZPCW,Cangyuan Washan Airport,Xuelin,China,CN,CN-53,1,1,23.27633,99.37317
 CWL,EGFF,Cardiff International Airport,Cardiff,United Kingdom,GB,GB-WLS,0,1,51.39670,-3.34333
 CWS,,Center Island Airport,Friday Harbor,United States,US,US-WA,2,1,48.49005,-122.83161
 CXB,VGCB,Cox's Bazar Airport,Cox's Bazar,Bangladesh,BD,BD-B,1,1,21.45752,91.96326
-CXI,PLCH,Cassidy International Airport,London Village,Kiribati,KI,KI-L,0,1,1.98628,-157.35001
+CXI,PLCH,Cassidy International Airport,Kiritimati,Kiribati,KI,KI-L,0,1,1.98628,-157.35001
 CXJ,SBCX,Hugo Cantergiani Regional Airport,Caxias do Sul,Brazil,BR,BR-RS,1,1,-29.19718,-51.18765
 CXP,WAHL,Tunggul Wulung Airport,Purwokerto,Indonesia,ID,ID-JT,1,1,-7.64506,109.03400
 CXR,VVCR,Cam Ranh International Airport / Cam Ranh Air Base,Cam Ranh,Vietnam,VN,VN-SCC,0,1,11.99820,109.21900
@@ -2413,7 +2413,7 @@ NTX,WIDO,Ranai Airport,Ranai,Indonesia,ID,ID-KR,1,1,3.90871,108.38800
 NUE,EDDN,Nuremberg Airport,Nuremberg,Germany,DE,DE-BY,0,1,49.49870,11.07806
 NUI,PAQT,Nuiqsut Airport,Nuiqsut,United States,US,US-AK,1,1,70.21000,-151.00600
 NUL,PANU,Nulato Airport,Nulato,United States,US,US-AK,2,1,64.72930,-158.07400
-NUM,OENN,Neom Bay Airport,Sharma,Saudi Arabia,SA,SA-07,0,1,27.92426,35.29358
+NUM,OENN,Neom Bay Airport,Neom,Saudi Arabia,SA,SA-07,0,1,27.92426,35.29358
 NUP,PPIT,Nunapitchuk Airport,Nunapitchuk,United States,US,US-AK,2,1,60.90559,-162.44045
 NUS,NVSP,Norsup Airport,Norsup,Vanuatu,VU,VU-MAP,2,1,-16.07970,167.40100
 NUX,USMU,Novy Urengoy Airport,Novyy Urengoy,Russia,RU,RU-YAN,1,1,66.06940,76.52030
@@ -3388,7 +3388,7 @@ TST,VTST,Trang Airport,Trang,Thailand,TH,TH-92,1,1,7.50874,99.61660
 TSV,YBTL,Townsville Airport / RAAF Base Townsville,Townsville,Australia,AU,AU-QLD,1,1,-19.25290,146.76651
 TTA,GMAT,Tan Tan Airport,Tan-Tan,Morocco,MA,MA-10,1,1,28.44756,-11.16175
 TTE,WAEE,Sultan Babullah Airport,Ternate,Indonesia,ID,ID-MU,1,1,0.83101,127.38161
-TTJ,RJOR,Tottori Sand Dunes Conan Airport,Tottori-shi,Japan,JP,JP-31,1,1,35.53006,134.16502
+TTJ,RJOR,Tottori Sand Dunes Conan Airport,Tottori,Japan,JP,JP-31,1,1,35.53006,134.16502
 TTN,KTTN,Trenton Mercer Airport,Trenton,United States,US,US-NJ,1,1,40.27670,-74.81350
 TTS,FMNT,Tsaratanana Airport,Tsaratanana,Madagascar,MG,MG-M,2,1,-16.75106,47.61902
 TTT,RCFN,Taitung Airport,Taitung,Taiwan,TW,TW-TTT,1,1,22.75486,121.10179
@@ -3533,7 +3533,7 @@ VBY,ESSV,Visby Airport,Visby,Sweden,SE,SE-I,0,1,57.66280,18.34620
 VCA,VVCT,Can Tho International Airport,Can Tho,Vietnam,VN,VN-SW,0,1,10.08340,105.70937
 VCE,LIPZ,Venice Marco Polo Airport,Venice,Italy,IT,IT-34,0,1,45.50530,12.35190
 VCL,VVCA,Chu Lai Airport,Núi Thành,Vietnam,VN,VN-SCC,2,1,15.40330,108.70600
-VCP,SBKP,Viracopos International Airport,Campinas,Brazil,BR,BR-SP,0,1,-23.00740,-47.13450
+VCP,SBKP,Viracopos International Airport,Paulínia,Brazil,BR,BR-SP,0,1,-23.00740,-47.13450
 VCS,VVCS,Con Dao Airport,Con GJao,Vietnam,VN,VN-SE,1,1,8.73183,106.63300
 VCT,KVCT,Victoria Regional Airport,Victoria,United States,US,US-TX,1,1,28.85260,-96.91850
 VDC,SBVC,Glauber de Andrade Rocha Airport,Vitória da Conquista,Brazil,BR,BR-BA,1,1,-14.90789,-40.91480
@@ -3790,7 +3790,7 @@ YHY,CYHY,Hay River / Merlyn Carter Airport,Hay River,Canada,CA,CA-NT,1,1,60.8397
 YHZ,CYHZ,Halifax / Stanfield International Airport,Halifax,Canada,CA,CA-NS,0,1,44.88080,-63.50860
 YIA,WAHI,Yogyakarta International Airport,Yogyakarta,Indonesia,ID,ID-YO,0,1,-7.90534,110.05726
 YIC,ZSYC,Yichun Mingyueshan Airport,Yichun,China,CN,CN-36,1,1,27.80250,114.30620
-YIE,ZBES,Arxan Yi'ershi Airport,Wenquan,China,CN,CN-15,1,1,47.31060,119.91170
+YIE,ZBES,Arxan Yi'ershi Airport,Arxan,China,CN,CN-15,1,1,47.31060,119.91170
 YIF,CYIF,St Augustin Airport,Saint-Augustin,Canada,CA,CA-QC,1,1,51.21170,-58.65830
 YIH,ZHYC,Yichang Sanxia Airport,Yichang,China,CN,CN-42,1,1,30.55413,111.48256
 YIK,CYIK,Ivujivik Airport,Ivujivik,Canada,CA,CA-QC,2,1,62.41730,-77.92530

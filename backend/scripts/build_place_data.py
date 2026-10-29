@@ -39,9 +39,8 @@ EXCLUDED_FEATURE_CODES = frozenset({"PPLX", "PPLH", "PPLQ", "PPLW", "PPLCH"})
 
 # Linking reach (km) per airport type rank.
 LARGE_REACH_KM = 80
-LARGE_REACH_BIG_CITY_KM = 100  # population ≥ 1M and no large airport ≤ 50 km
+LARGE_REACH_BIG_CITY_KM = 100  # places with population ≥ 1M
 BIG_CITY_POPULATION = 1_000_000
-CLOSE_LARGE_KM = 50
 MEDIUM_REACH_KM = 50
 SMALL_REACH_KM = 30
 SAME_COUNTRY_FALLBACK_KM = 200
@@ -65,6 +64,7 @@ _GENERIC_WORDS = frozenset(
     "san santa saint st new port north south east west central island lake "
     "river airbase air base".split()
 )
+_ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
 _NON_WORD_RE = re.compile(r"[^\w ]")
 _AIRPORT_WORDS = frozenset({"airport", "international", "aerodrome", "airfield"})
 
@@ -98,6 +98,7 @@ PLACE_COLUMNS = [
     "lng",
     "airports",
     "alt_names",
+    "ascii",
 ]
 ADMIN1_COLUMNS = ["code", "name", "folded_name"]
 
@@ -308,8 +309,7 @@ def link_airports(
 ) -> tuple[list[tuple[str, float]], bool]:
     """A place's airports as ([(iata, km)], in_reach).
 
-    In reach per type: large 80 km (100 km for a 1M+ place with no large
-    airport within 50 km), medium 50 km, small 30 km; ranked by
+    In reach per type: large 80 km (100 km for a 1M+ place), medium 50 km, small 30 km; ranked by
     (foreign, not own, not curated, distance / reach), ≤ 3 — "own" being an
     airport whose display city is the place or whose name contains it. None
     in reach → large / medium airports within 200 km (own country) or 150 km (foreign), ranked by
@@ -317,8 +317,7 @@ def link_airports(
     Air bases (non-curated) count only when no civil airport is in reach.
     """
     nearby = index.within(place.lat, place.lng, SAME_COUNTRY_FALLBACK_KM)
-    close_large = any(a.type_rank == 0 and d <= CLOSE_LARGE_KM for d, a in nearby)
-    big = place.population >= BIG_CITY_POPULATION and not close_large
+    big = place.population >= BIG_CITY_POPULATION
     reach = {
         0: LARGE_REACH_BIG_CITY_KM if big else LARGE_REACH_KM,
         1: MEDIUM_REACH_KM,
@@ -353,10 +352,12 @@ def link_airports(
 def display_name(name: str, ascii_name: str = "") -> str:
     """A place name for display: the ASCII spelling when the name has letters
     beyond Latin Extended-A (scholarly transliterations like "Marsá Maţrūḩ"),
-    cut at the first comma."""
+    cut at the first comma, without a hyphenated East-Asian admin suffix
+    ("Cheongju-si" → "Cheongju", "Tottori-shi" → "Tottori")."""
     if ascii_name and any(ord(ch) > 0x17F for ch in name):
         name = ascii_name
-    return " ".join(name.split(",", 1)[0].split())
+    name = " ".join(name.split(",", 1)[0].split())
+    return _ADMIN_SUFFIX_RE.sub("", name) or name
 
 
 def airport_name_city(name: str) -> str:
@@ -463,7 +464,7 @@ def _computed_city(a: dict, places_near, first_link_places, municipality: str):
         place = pick()
         if place:
             return display_name(place.name, place.ascii_name), rule
-    city = clean_municipality(municipality)
+    city = display_name(clean_municipality(municipality))
     if city:
         return city, "municipality"
     return airport_name_city(a["name"]), "airport-name"
@@ -580,9 +581,8 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
             if place.population >= ALT_NAMES_MIN_POPULATION
             else []
         )
-        ascii_folded = fold_place(place.ascii_name)
-        if ascii_folded and ascii_folded != own and ascii_folded not in alts:
-            alts = sorted([*alts, ascii_folded])
+        # The ASCII spelling has its own column (loaded with the name).
+        alts = [alt for alt in alts if alt != fold_place(place.ascii_name)]
         result.places[place.geonameid] = {
             "geonameid": place.geonameid,
             "name": place.name,
@@ -594,6 +594,7 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
             "lng": place.lng,
             "airports": [iata for iata, _ in place.links],
             "alt_names": alts,
+            "ascii": place.ascii_name,
         }
 
     # Display city: curated, else the rule chain (never empty).
@@ -760,6 +761,7 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
                 _coord(p["lng"]),
                 " ".join(p["airports"]),
                 "|".join(p["alt_names"]),
+                p["ascii"],
             ]
             for p in result.places.values()
         ),

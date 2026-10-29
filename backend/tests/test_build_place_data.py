@@ -303,13 +303,17 @@ def test_large_reach_is_100km_for_million_cities_without_close_large(tmp_path):
     assert _links(r, 1) == ["MED", "FAR"]
 
 
-def test_million_city_with_a_close_large_keeps_80km(tmp_path):
+def test_million_city_reaches_100km_even_with_a_close_large(tmp_path):
+    # Kyoto / KIX: ITM is close, KIX 81 km away still links.
     airports = [
-        _oa("FAR", _north(_LAT, 90), _LNG),
-        _oa("NEA", _north(_LAT, 30), _LNG),
-        _oa("MED", _north(_LAT, 40), _LNG, kind="medium_airport"),
+        _oa("FAR", _north(_LAT, 90), _LNG),  # 0.9
+        _oa("NEA", _north(_LAT, 30), _LNG),  # 0.3
+        _oa("MED", _north(_LAT, 40), _LNG, kind="medium_airport"),  # 0.8
+        _oa("OUT", _north(_LAT, -105), _LNG),
     ]
     r = _build(tmp_path, airports, [_city(1, "Bigville", _LAT, _LNG, 2_000_000)])
+    assert _links(r, 1) == ["NEA", "MED", "FAR"]
+    r = _build(tmp_path / "small", airports, [_city(1, "Town", _LAT, _LNG, 999_999)])
     assert _links(r, 1) == ["NEA", "MED"]
 
 
@@ -582,9 +586,12 @@ def test_ascii_spelling_stored_at_any_population(tmp_path):
         ),
     ]
     r = _build(tmp_path, [], cities)
-    assert r.places["1"]["alt_names"] == ["zuerich"]
-    assert r.places["2"]["alt_names"] == []  # folds the same as the name
-    assert r.places["3"]["alt_names"] == ["big zuerich", "grosszurich"]
+    # The ASCII spelling has its own column at any population (loaded as a
+    # primary name) and is not repeated among the alternate names.
+    assert [r.places[g]["ascii"] for g in "123"] == ["Zuerich", "Xi'an", "Big Zuerich"]
+    assert r.places["1"]["alt_names"] == []
+    assert r.places["2"]["alt_names"] == []
+    assert r.places["3"]["alt_names"] == ["grosszurich"]
 
 
 # ── Airports ───────────────────────────────────────────────────────────────
@@ -677,6 +684,14 @@ def test_display_chain_only_uses_places_in_the_airports_country():
             "Del Carmen",
         ),
         ("Zürich", "Zurich", "Zürich"),
+        ("Cheongju-si", "Cheongju-si", "Cheongju"),
+        ("Tottori-shi", "Tottori-shi", "Tottori"),
+        ("Yangyang-gun", "Yangyang-gun", "Yangyang"),
+        ("Chūō-ku", "Chuo-ku", "Chūō"),
+        ("Shiraoi-cho", "Shiraoi-cho", "Shiraoi"),
+        ("Oki-machi", "Oki-machi", "Oki"),
+        ("Kami-mura", "Kami-mura", "Kami"),
+        ("Hamburg-Nord", "Hamburg-Nord", "Hamburg-Nord"),
     ],
 )
 def test_display_names_prefer_ascii_for_scholarly_transliterations(
@@ -858,6 +873,7 @@ def test_output_file_format(tmp_path):
         "lng",
         "airports",
         "alt_names",
+        "ascii",
     ]
     big = places[0]
     assert big["airports"] == "BBB AAA"  # curated BBB ranks first
@@ -976,7 +992,8 @@ def test_committed_places_link_only_scheduled_airports():
         ("NAV", "Nevşehir"),
         ("BUR", "Burbank"),
         ("ONT", "Ontario"),
-        ("CJJ", "Cheongju-si"),
+        ("CJJ", "Cheongju"),
+        ("TTJ", "Tottori"),
         # Curated served-city overrides (fix round 3).
         ("WSI", "Sydney"),
         ("AVV", "Melbourne"),

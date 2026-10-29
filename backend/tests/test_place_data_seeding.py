@@ -21,7 +21,8 @@ _AIRPORT_COLS = (
     "iata,icao,name,city,country,country_code,region,type_rank,scheduled,lat,lng"
 ).split(",")
 _PLACE_COLS = (
-    "geonameid,name,country_code,admin1,population,score,lat,lng,airports,alt_names"
+    "geonameid,name,country_code,admin1,population,score,lat,lng,airports,alt_names,"
+    "ascii"
 ).split(",")
 
 _AIRPORTS = [
@@ -36,11 +37,11 @@ _AIRPORTS = [
 ]  # fmt: skip
 _PLACES = [
     ["2950159", "Berlin", "DE", "16", "3426354", "900", "52.52", "13.41", "BER",
-     "berlino|berlim"],
+     "berlino|berlim", "Berlin"],
     ["1821306", "Phnom Penh", "KH", "12", "1573544", "500", "11.56", "104.92",
-     "KTI", ""],
+     "KTI", "", "Phnom Penh"],
     ["2867714", "München", "DE", "02", "1260391", "800", "48.14", "11.58", "",
-     "munich|muenchen"],
+     "muenchen", "Munich"],
 ]  # fmt: skip
 _ADMIN1 = [["DE.02", "Bavaria", "bavaria"], ["DE.16", "Berlin", "berlin"]]
 
@@ -191,7 +192,8 @@ def test_seed_loads_places_names_and_admin1(temp_db, data_dir):
         (r["name_folded"], r["tier"])
         for r in _rows("SELECT * FROM place_names WHERE geonameid = 2867714")
     }
-    assert names == {("munchen", 0), ("munich", 1), ("muenchen", 1)}
+    # The ASCII spelling loads as tier 0 with the name.
+    assert names == {("munchen", 0), ("munich", 0), ("muenchen", 1)}
     admin = _rows("SELECT * FROM admin1 WHERE code = 'DE.02'")[0]
     assert (admin["name"], admin["folded_name"]) == ("Bavaria", "bavaria")
 
@@ -378,3 +380,24 @@ def extra_airports_sched():
         conn.executemany(
             "DELETE FROM airports WHERE iata_code = ?", [(c,) for c in codes]
         )
+
+
+def test_seeding_waits_up_to_30s_for_another_workers_lock(
+    temp_db, data_dir, monkeypatch
+):
+    import contextlib
+
+    statements: list[str] = []
+    real = seed_airports.get_connection
+
+    @contextlib.contextmanager
+    def traced():
+        with real() as conn:
+            conn.set_trace_callback(statements.append)
+            yield conn
+
+    monkeypatch.setattr(seed_airports, "get_connection", traced)
+    seed_airports.seed(data_dir)
+    lock = statements.index("BEGIN IMMEDIATE")
+    assert "PRAGMA busy_timeout=30000" in statements[:lock]
+    assert seed_airports.SEED_LOCK_TIMEOUT_MS == 30_000

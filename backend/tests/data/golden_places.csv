@@ -44,7 +44,7 @@ Sarasota,SRQ,first,US,data,
 Tulum,TQO,first,MX,data,
 Veracruz,VER,first,MX,data,Veracruz
 Tirupati,TIR,first,IN,data,Tirupati
-Cheongju-si,CJJ,first,KR,data,Cheongju-si
+Cheongju-si,CJJ,first,KR,data,Cheongju
 Lianyungang,LYG,first,CN,data,Lianyungang
 Kolhāpur,KLH,first,IN,data,Kolhāpur
 Bellingham,BLI,first,US,data,Bellingham
@@ -317,3 +317,13 @@ San Salvador,SAL ILS,subset,SV,data,San Salvador
 Ilopango,ILS,first,SV,data,Ilopango
 Shigatse,RKZ,first,CN,task3,Shigatse
 Djerba,DJE,first,TN,task3,Djerba
+Kyoto,ITM KIX,subset,JP,data,
+Osaka,ITM KIX UKB,exact,JP,data,Osaka
+London,LHR LCY,subset,GB,data,London
+Paris,ORY CDG,subset,FR,data,Paris
+Tottori-shi,TTJ,first,JP,data,Tottori
+Wenquan,YIE,first,CN,data,Arxan
+Duba,NUM,first,SA,data,Neom
+Arxan,YIE,first,CN,task3,Arxan
+Kiritimati,CXI,first,KI,task3,Kiritimati
+London Village,CXI,first,KI,data,Kiritimati
