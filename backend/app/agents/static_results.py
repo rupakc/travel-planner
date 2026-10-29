@@ -6,6 +6,10 @@ immediate data (< 1 second) while AI agents run in the background to
 provide enhanced, web-searched results.
 """
 
+import functools
+import re
+import unicodedata
+
 from ..schemas.request import TravelSearchRequest
 
 # ── Visa static lookup ────────────────────────────────────────────────────────
@@ -1165,182 +1169,311 @@ _EMERGENCY_NUMBERS: dict[str, dict] = {
 }
 
 
-def _find_dest_key(destination: str) -> str | None:
-    """Find the matching key from a dest dict by iterating and using _match_destination."""
-    dest_lower = destination.lower()
-    # We need to call _match_destination which is defined below,
-    # so we inline the logic here to avoid forward-reference issues.
-    _city_to_country = {
-        "tokyo": "japan",
-        "osaka": "japan",
-        "kyoto": "japan",
-        "paris": "france",
-        "lyon": "france",
-        "nice": "france",
-        "bangkok": "thailand",
-        "phuket": "thailand",
-        "chiang mai": "thailand",
-        "bali": "indonesia",
-        "jakarta": "indonesia",
-        "london": "uk",
-        "manchester": "uk",
-        "edinburgh": "uk",
-        "new york": "usa",
-        "nyc": "usa",
-        "los angeles": "usa",
-        "san francisco": "usa",
-        "miami": "usa",
-        "chicago": "usa",
-        "las vegas": "usa",
-        "boston": "usa",
-        "seattle": "usa",
-        "hawaii": "usa",
-        "honolulu": "usa",
-        "dubai": "uae",
-        "abu dhabi": "uae",
-        "sydney": "australia",
-        "melbourne": "australia",
-        "rome": "italy",
-        "milan": "italy",
-        "venice": "italy",
-        "florence": "italy",
-        "barcelona": "spain",
-        "madrid": "spain",
-        "berlin": "germany",
-        "munich": "germany",
-        "frankfurt": "germany",
-        "amsterdam": "netherlands",
-        "mumbai": "india",
-        "delhi": "india",
-        "goa": "india",
-        "jaipur": "india",
-        "kathmandu": "nepal",
-        "male": "maldives",
-        "kuala lumpur": "malaysia",
-        "penang": "malaysia",
-        "beijing": "china",
-        "shanghai": "china",
-        "mexico city": "mexico",
-        "cancun": "mexico",
-        "singapore": "singapore",
-        "seoul": "south korea",
-        "busan": "south korea",
-        "lisbon": "portugal",
-        "porto": "portugal",
-        "athens": "greece",
-        "santorini": "greece",
-        "mykonos": "greece",
-        "istanbul": "turkey",
-        "ankara": "turkey",
-        "hanoi": "vietnam",
-        "ho chi minh": "vietnam",
-        "da nang": "vietnam",
-        "zurich": "switzerland",
-        "geneva": "switzerland",
-        "bern": "switzerland",
-        "auckland": "new zealand",
-        "queenstown": "new zealand",
-        "toronto": "canada",
-        "vancouver": "canada",
-        "montreal": "canada",
-        "rio de janeiro": "brazil",
-        "sao paulo": "brazil",
-        "buenos aires": "argentina",
-        "cape town": "south africa",
-        "johannesburg": "south africa",
-        "cairo": "egypt",
-        "luxor": "egypt",
-        "hurghada": "egypt",
-        "marrakech": "morocco",
-        "casablanca": "morocco",
-        "fes": "morocco",
-        "nairobi": "kenya",
-        "mombasa": "kenya",
-        "lima": "peru",
-        "cusco": "peru",
-        "machu picchu": "peru",
-        "bogota": "colombia",
-        "medellin": "colombia",
-        "cartagena": "colombia",
-        "reykjavik": "iceland",
-        "oslo": "norway",
-        "bergen": "norway",
-        "prague": "czechia",
-        "budapest": "hungary",
-        "warsaw": "poland",
-        "krakow": "poland",
-        "vienna": "austria",
-        "stockholm": "sweden",
-        "copenhagen": "denmark",
-        "phnom penh": "cambodia",
-        "siem reap": "cambodia",
-        "manila": "philippines",
-        "cebu": "philippines",
-        "palawan": "philippines",
-        "taipei": "taiwan",
-        "hong kong": "hong kong",
-        "dubrovnik": "croatia",
-        "zagreb": "croatia",
-        "split": "croatia",
-    }
-    resolved = _city_to_country.get(dest_lower, dest_lower)
-    # Additional country name aliases not in city_to_country
-    _country_aliases: dict[str, str] = {
-        "united kingdom": "uk",
-        "england": "uk",
-        "great britain": "uk",
-        "united states": "usa",
-        "united states of america": "usa",
-        "new york city": "usa",
-        "new york": "usa",
-        "united arab emirates": "uae",
-        "republic of korea": "south korea",
-        "democratic people": "south korea",
-        "czech republic": "czechia",
-        "czechia": "czechia",
-        "new zealand": "new zealand",
-        "south africa": "south africa",
-        "hong kong": "hong kong",
-        "south korea": "south korea",
-    }
-    # Strip comma-separated country suffixes: "Bangkok, Thailand" -> "bangkok"
-    primary = dest_lower.split(",")[0].strip()
+# ── Place matching ─────────────────────────────────────────────────────────────
 
-    # Try alias lookup first
-    if dest_lower in _country_aliases:
-        return _country_aliases[dest_lower]
-    if primary in _country_aliases:
-        return _country_aliases[primary]
+# City → table country key. The single source for every reference-table lookup.
+_CITY_TO_COUNTRY: dict[str, str] = {
+    "tokyo": "japan",
+    "osaka": "japan",
+    "kyoto": "japan",
+    "paris": "france",
+    "lyon": "france",
+    "nice": "france",
+    "bangkok": "thailand",
+    "phuket": "thailand",
+    "chiang mai": "thailand",
+    "bali": "indonesia",
+    "jakarta": "indonesia",
+    "london": "uk",
+    "manchester": "uk",
+    "edinburgh": "uk",
+    "new york": "usa",
+    "nyc": "usa",
+    "los angeles": "usa",
+    "san francisco": "usa",
+    "miami": "usa",
+    "chicago": "usa",
+    "las vegas": "usa",
+    "boston": "usa",
+    "seattle": "usa",
+    "hawaii": "usa",
+    "honolulu": "usa",
+    "dubai": "uae",
+    "abu dhabi": "uae",
+    "sydney": "australia",
+    "melbourne": "australia",
+    "rome": "italy",
+    "milan": "italy",
+    "venice": "italy",
+    "florence": "italy",
+    "barcelona": "spain",
+    "madrid": "spain",
+    "berlin": "germany",
+    "munich": "germany",
+    "frankfurt": "germany",
+    "amsterdam": "netherlands",
+    "mumbai": "india",
+    "delhi": "india",
+    "goa": "india",
+    "jaipur": "india",
+    "kathmandu": "nepal",
+    "male": "maldives",
+    "kuala lumpur": "malaysia",
+    "penang": "malaysia",
+    "beijing": "china",
+    "shanghai": "china",
+    "mexico city": "mexico",
+    "cancun": "mexico",
+    "singapore": "singapore",
+    "seoul": "south korea",
+    "busan": "south korea",
+    "lisbon": "portugal",
+    "porto": "portugal",
+    "athens": "greece",
+    "santorini": "greece",
+    "mykonos": "greece",
+    "istanbul": "turkey",
+    "ankara": "turkey",
+    "hanoi": "vietnam",
+    "ho chi minh": "vietnam",
+    "da nang": "vietnam",
+    "zurich": "switzerland",
+    "geneva": "switzerland",
+    "bern": "switzerland",
+    "auckland": "new zealand",
+    "queenstown": "new zealand",
+    "toronto": "canada",
+    "vancouver": "canada",
+    "montreal": "canada",
+    "rio de janeiro": "brazil",
+    "sao paulo": "brazil",
+    "buenos aires": "argentina",
+    "cape town": "south africa",
+    "johannesburg": "south africa",
+    "cairo": "egypt",
+    "luxor": "egypt",
+    "hurghada": "egypt",
+    "marrakech": "morocco",
+    "casablanca": "morocco",
+    "fes": "morocco",
+    "nairobi": "kenya",
+    "mombasa": "kenya",
+    "lima": "peru",
+    "cusco": "peru",
+    "machu picchu": "peru",
+    "bogota": "colombia",
+    "medellin": "colombia",
+    "cartagena": "colombia",
+    "reykjavik": "iceland",
+    "oslo": "norway",
+    "bergen": "norway",
+    "prague": "czechia",
+    "budapest": "hungary",
+    "warsaw": "poland",
+    "krakow": "poland",
+    "vienna": "austria",
+    "stockholm": "sweden",
+    "copenhagen": "denmark",
+    "phnom penh": "cambodia",
+    "siem reap": "cambodia",
+    "manila": "philippines",
+    "cebu": "philippines",
+    "palawan": "philippines",
+    "taipei": "taiwan",
+    "hong kong": "hong kong",
+    "dubrovnik": "croatia",
+    "zagreb": "croatia",
+    "split": "croatia",
+    "new york city": "usa",
+    "ho chi minh city": "vietnam",
+    "antalya": "turkey",
+    "colombo": "sri lanka",
+    "moscow": "russia",
+    "santiago": "chile",
+    "tel aviv": "israel",
+    "jerusalem": "israel",
+    "amman": "jordan",
+    "dublin": "ireland",
+    "brussels": "belgium",
+    "helsinki": "finland",
+}
 
-    resolved = _city_to_country.get(primary, primary)
+_US_STATES = {
+    "al": "alabama", "ak": "alaska", "az": "arizona", "ar": "arkansas",
+    "ca": "california", "co": "colorado", "ct": "connecticut", "de": "delaware",
+    "dc": "district of columbia", "fl": "florida", "ga": "georgia",
+    "hi": "hawaii", "id": "idaho", "il": "illinois", "in": "indiana",
+    "ia": "iowa", "ks": "kansas", "ky": "kentucky", "la": "louisiana",
+    "me": "maine", "md": "maryland", "ma": "massachusetts", "mi": "michigan",
+    "mn": "minnesota", "ms": "mississippi", "mo": "missouri", "mt": "montana",
+    "ne": "nebraska", "nv": "nevada", "nh": "new hampshire", "nj": "new jersey",
+    "nm": "new mexico", "ny": "new york", "nc": "north carolina",
+    "nd": "north dakota", "oh": "ohio", "ok": "oklahoma", "or": "oregon",
+    "pa": "pennsylvania", "ri": "rhode island", "sc": "south carolina",
+    "sd": "south dakota", "tn": "tennessee", "tx": "texas", "ut": "utah",
+    "vt": "vermont", "va": "virginia", "wa": "washington",
+    "wv": "west virginia", "wi": "wisconsin", "wy": "wyoming",
+}  # fmt: skip
 
-    seen: set[str] = set()
-    all_keys = []
-    for k in list(_DESTINATION_SCORES.keys()) + list(_EMERGENCY_NUMBERS.keys()):
-        if k not in seen:
-            seen.add(k)
-            all_keys.append(k)
+# A stated "country" that is really a state or region: the city-map fallback
+# applies only when the map agrees with the region's country ("Paris, Texas"
+# is not Paris, France).
+_REGION_COUNTRY: dict[str, str] = {
+    **{name: "usa" for pair in _US_STATES.items() for name in pair},
+    "us": "usa",
+    "kansai": "japan",
+    "kanto": "japan",
+    "catalonia": "spain",
+    "andalusia": "spain",
+    "tuscany": "italy",
+    "lombardy": "italy",
+    "veneto": "italy",
+    "bavaria": "germany",
+    "ile-de-france": "france",
+    "provence": "france",
+    "scotland": "uk",
+    "ontario": "canada",
+    "quebec": "canada",
+    "british columbia": "canada",
+    "new south wales": "australia",
+    "victoria": "australia",
+}
 
-    # Exact matches first (highest priority)
-    for key in all_keys:
-        if key == resolved or key == primary or key == dest_lower:
-            return key
-    # Resolved value contains key or key contains resolved (for "south korea" etc.)
-    for key in all_keys:
-        if len(key) >= 4 and (key in resolved or resolved in key):
-            return key
-    # dest_lower starts with key or primary starts with key (e.g. "france" in "france, europe")
-    for key in all_keys:
-        if len(key) >= 4 and (primary.startswith(key) or key.startswith(primary)):
-            return key
-        if len(key) >= 4 and (dest_lower.startswith(key) or key.startswith(dest_lower)):
-            return key
-    # Check if any word in dest_lower equals a key exactly (catches "japan" in "tokyo japan")
-    words = set(dest_lower.replace(",", " ").split())
-    for key in all_keys:
-        if key in words:
+
+# Other names for a table country key. Lookups compare whole names only.
+_COUNTRY_ALIASES: dict[str, str] = {
+    "united kingdom": "uk",
+    "england": "uk",
+    "great britain": "uk",
+    "united states": "usa",
+    "united states of america": "usa",
+    "united arab emirates": "uae",
+    "republic of korea": "south korea",
+    "korea": "south korea",
+    "czech republic": "czechia",
+}
+
+# "BCN — Barcelona, Spain" (the UI's airport label) → "Barcelona, Spain"
+_IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
+
+
+def _clean_place(text: str) -> str:
+    """Lowercase, strip accents, collapse whitespace, drop a leading "the"."""
+    folded = unicodedata.normalize("NFKD", text)
+    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    words = folded.lower().split()
+    if len(words) > 1 and words[0] == "the":
+        words = words[1:]
+    return " ".join(words)
+
+
+def _country_key(name: str) -> str:
+    return _COUNTRY_ALIASES.get(name, name)
+
+
+@functools.cache
+def _known_countries() -> frozenset[str]:
+    """Every country key any reference table or the city map knows about."""
+    tables = (
+        _DESTINATION_SCORES,
+        _EMERGENCY_NUMBERS,
+        _LOCAL_SIMS,
+        _DESTINATION_TIPS,
+        _GETTING_AROUND_TABLE,
+        _DEST_CURRENCY,
+        _FOREX_TABLE,
+    )
+    keys = {_country_key(k) for t in tables for k in t}
+    keys |= {dest for _, dest in _VISA_TABLE}
+    keys |= set(_CITY_TO_COUNTRY.values()) | set(_COUNTRY_ALIASES.values())
+    return frozenset(keys)
+
+
+def _word_phrases(segment: str) -> list[str]:
+    """Every run of whole words in a segment, longest first."""
+    words = segment.split()
+    return [
+        " ".join(words[i : i + n])
+        for n in range(len(words), 0, -1)
+        for i in range(len(words) - n + 1)
+    ]
+
+
+def normalise_place(destination: str) -> dict:
+    """Split a destination string into normalised city / country / tokens.
+
+    "BCN — Barcelona, Spain" → city "barcelona", country "spain";
+    "Japan" → city None, country "japan"; "Tokyo" → city "tokyo",
+    country None. Country names are returned as table keys ("United
+    Kingdom" → "uk"). ``tokens`` holds every whole word and phrase.
+    """
+    text = _IATA_PREFIX_RE.sub("", destination or "", count=1)
+    segments = [seg for seg in (_clean_place(s) for s in text.split(",")) if seg]
+    tokens = {phrase for seg in segments for phrase in _word_phrases(seg)}
+    if not segments:
+        return {"city": None, "country": None, "tokens": tokens}
+    first = _country_key(segments[0])
+    if first in _known_countries():
+        return {"city": None, "country": first, "tokens": tokens}
+    country = _country_key(segments[-1]) if len(segments) >= 2 else None
+    return {"city": segments[0], "country": country, "tokens": tokens}
+
+
+def _place_country(destination: str) -> str | None:
+    """The country key a destination names, or None.
+
+    A stated known country wins. Otherwise the city's country from the city
+    map — when nothing else is stated, or the stated part is a state/region
+    of that same country ("Miami, FL", "Kyoto, Kansai"), or some other
+    short code ("Paris, FR"). Otherwise a single "<city> <country>" phrase
+    like "Tokyo Japan". Never substring matching.
+    """
+    place = normalise_place(destination)
+    country, city = place["country"], place["city"]
+    if country in _known_countries():
+        return country
+    if city in _CITY_TO_COUNTRY:
+        mapped = _CITY_TO_COUNTRY[city]
+        if country is None:
+            return mapped
+        if country in _REGION_COUNTRY:
+            return mapped if _REGION_COUNTRY[country] == mapped else None
+        return mapped if len(country) <= 2 else None
+    if city and country is None:
+        for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
+            prefix = city.removesuffix(" " + name)
+            if prefix != city and prefix in _CITY_TO_COUNTRY:
+                return _country_key(name)
+    return None
+
+
+def _match_table_key(destination: str, keys) -> str | None:
+    """The key in ``keys`` naming the destination's country, or None."""
+    country = _place_country(destination)
+    if country is None:
+        return None
+    for key in keys:
+        if _country_key(key) == country:
             return key
     return None
+
+
+def _normalise_nationality(nationality: str) -> str:
+    return " ".join((nationality or "").lower().split())
+
+
+def find_visa_row(nationality: str, destination: str) -> dict | None:
+    """The _VISA_TABLE row for this exact nationality and destination."""
+    nat = _normalise_nationality(nationality)
+    dest_key = _match_table_key(destination, {dest for _, dest in _VISA_TABLE})
+    return _VISA_TABLE.get((nat, dest_key)) if dest_key else None
+
+
+def _find_dest_key(destination: str) -> str | None:
+    """Destination-scores / emergency-numbers key for a destination."""
+    return _match_table_key(
+        destination, list(_DESTINATION_SCORES) + list(_EMERGENCY_NUMBERS)
+    )
 
 
 def get_static_emergency_numbers(city: str) -> dict | None:
@@ -1427,7 +1560,7 @@ def get_confidence_score(request: TravelSearchRequest) -> dict | None:
     )
 
     # Dynamic visa_ease from _VISA_TABLE
-    nat_key = request.nationality.lower().strip()
+    nat_key = _normalise_nationality(request.nationality)
     visa_info = _VISA_TABLE.get((nat_key, dest_key)) or {}
     visa_type = visa_info.get("visa_type", "unknown")
     visa_score = {
@@ -1503,81 +1636,10 @@ def get_confidence_score(request: TravelSearchRequest) -> dict | None:
     }
 
 
-def _match_destination(destination: str, key_dest: str) -> bool:
-    """Fuzzy match destination against lookup key."""
-    dest = destination.lower()
-    key = key_dest.lower()
-    # Direct match or substring
-    if key in dest or dest in key:
-        return True
-    # Handle city -> country mapping for common cases
-    _city_to_country = {
-        "tokyo": "japan",
-        "osaka": "japan",
-        "kyoto": "japan",
-        "paris": "france",
-        "lyon": "france",
-        "nice": "france",
-        "bangkok": "thailand",
-        "phuket": "thailand",
-        "chiang mai": "thailand",
-        "bali": "indonesia",
-        "jakarta": "indonesia",
-        "london": "uk",
-        "manchester": "uk",
-        "edinburgh": "uk",
-        "new york": "usa",
-        "nyc": "usa",
-        "los angeles": "usa",
-        "san francisco": "usa",
-        "miami": "usa",
-        "chicago": "usa",
-        "las vegas": "usa",
-        "boston": "usa",
-        "seattle": "usa",
-        "hawaii": "usa",
-        "honolulu": "usa",
-        "dubai": "uae",
-        "abu dhabi": "uae",
-        "sydney": "australia",
-        "melbourne": "australia",
-        "rome": "italy",
-        "milan": "italy",
-        "venice": "italy",
-        "florence": "italy",
-        "barcelona": "spain",
-        "madrid": "spain",
-        "berlin": "germany",
-        "munich": "germany",
-        "frankfurt": "germany",
-        "amsterdam": "netherlands",
-        "mumbai": "india",
-        "delhi": "india",
-        "goa": "india",
-        "jaipur": "india",
-        "kathmandu": "nepal",
-        "male": "maldives",
-        "kuala lumpur": "malaysia",
-        "penang": "malaysia",
-        "beijing": "china",
-        "shanghai": "china",
-        "mexico city": "mexico",
-        "cancun": "mexico",
-        "singapore": "singapore",
-        "seoul": "south korea",
-        "busan": "south korea",
-    }
-    resolved = _city_to_country.get(dest, dest)
-    return key in resolved or resolved in key
-
-
 def get_static_visa(request: TravelSearchRequest) -> dict | None:
     """Return instant visa info from lookup table, or None if not found."""
-    nat = request.nationality.lower()
-    for (tbl_nat, tbl_dest), info in _VISA_TABLE.items():
-        if tbl_nat in nat and _match_destination(request.destination, tbl_dest):
-            return {"requirement": info}
-    return None
+    info = find_visa_row(request.nationality, request.destination)
+    return {"requirement": info} if info else None
 
 
 # ── SIM static lookup ─────────────────────────────────────────────────────────
@@ -1941,14 +2003,12 @@ _LOCAL_SIMS = {
 
 def get_static_sim(request: TravelSearchRequest) -> dict:
     """Return instant SIM plans from lookup. Always returns global eSIMs + local if known."""
-    dest = request.destination.lower()
     plans = []
 
     # Find local SIMs
-    for key, local_plans in _LOCAL_SIMS.items():
-        if _match_destination(dest, key):
-            plans.extend(local_plans)
-            break
+    key = _match_table_key(request.destination, _LOCAL_SIMS)
+    if key:
+        plans.extend(_LOCAL_SIMS[key])
 
     # Always add global eSIMs
     plans.extend(_GLOBAL_ESIMS)
@@ -2203,13 +2263,11 @@ _DESTINATION_TIPS = {
 
 def get_static_tips(request: TravelSearchRequest) -> dict:
     """Return instant tips from lookup. Always returns universal tips + destination-specific."""
-    dest = request.destination.lower()
     tips = []
 
-    for key, dest_tips in _DESTINATION_TIPS.items():
-        if _match_destination(dest, key):
-            tips.extend(dest_tips)
-            break
+    key = _match_table_key(request.destination, _DESTINATION_TIPS)
+    if key:
+        tips.extend(_DESTINATION_TIPS[key])
 
     tips.extend(_UNIVERSAL_TIPS)
     # Sort: danger, warning, info
@@ -3211,15 +3269,13 @@ def get_static_getting_around(request: TravelSearchRequest) -> dict:
     options = []
 
     for city in cities:
-        city_l = (city or "").split(",")[0].strip().lower()
-        for key, dest_options in _GETTING_AROUND_TABLE.items():
-            if _match_destination(city_l, key):
-                for opt in dest_options:
-                    tagged = dict(opt)
-                    if len(cities) > 1:
-                        tagged.setdefault("city", city.split(",")[0].strip())
-                    options.append(tagged)
-                break
+        key = _match_table_key(city or "", _GETTING_AROUND_TABLE)
+        if key:
+            for opt in _GETTING_AROUND_TABLE[key]:
+                tagged = dict(opt)
+                if len(cities) > 1:
+                    tagged.setdefault("city", city.split(",")[0].strip())
+                options.append(tagged)
 
     # Always add universal transport tips
     options.extend(_UNIVERSAL_TRANSPORT_TIPS)
@@ -3671,36 +3727,23 @@ _UNIVERSAL_MONEY_TIPS = [
 
 
 def _resolve_dest_currency(destination: str) -> dict | None:
-    dest = destination.lower()
-    for key, info in _DEST_CURRENCY.items():
-        if _match_destination(dest, key):
-            return info
-    return None
+    key = _match_table_key(destination, _DEST_CURRENCY)
+    return _DEST_CURRENCY[key] if key else None
 
 
 def _get_nat_currency(nationality: str) -> tuple[str, str, str] | None:
-    nat = nationality.lower().strip()
-    if nat in _NATIONALITY_TO_CURRENCY:
-        return _NATIONALITY_TO_CURRENCY[nat]
-    for key, val in _NATIONALITY_TO_CURRENCY.items():
-        if key in nat or nat in key:
-            return val
-    return None
+    return _NATIONALITY_TO_CURRENCY.get(_normalise_nationality(nationality))
 
 
 def get_static_forex(request: TravelSearchRequest) -> dict | None:
     """Return instant forex info from lookup tables."""
-    dest = request.destination.lower()
     local_currency = _resolve_dest_currency(request.destination)
     if not local_currency:
         return None
 
     # Find destination-specific forex data
-    forex_data = None
-    for key, data in _FOREX_TABLE.items():
-        if _match_destination(dest, key):
-            forex_data = data
-            break
+    forex_key = _match_table_key(request.destination, _FOREX_TABLE)
+    forex_data = _FOREX_TABLE[forex_key] if forex_key else None
 
     # Build response
     result = {"local_currency": local_currency}

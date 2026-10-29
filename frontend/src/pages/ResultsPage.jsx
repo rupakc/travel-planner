@@ -32,6 +32,7 @@ import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
+import { responseErrorMessage, axiosErrorDetail } from '../utils/httpError'
 import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
@@ -3160,9 +3161,11 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
 // ─── Layover Optimizer ──────────────────────────────────────────────────────
 
+const FILTER_ERROR_FALLBACK = "Couldn't apply filters — try again"
+
 function LayoverModal({ info, onClose }) {
   if (!info) return null
-  const { city, airport, duration_hours, status, data } = info
+  const { city, airport, duration_hours, status, data, message } = info
   const label = city || airport
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -3180,7 +3183,7 @@ function LayoverModal({ info, onClose }) {
             </div>
           )}
           {status === 'error' && (
-            <p className="text-sm text-red-600">Couldn't plan this layover right now — please try again.</p>
+            <p className="text-sm text-red-600">{message || "Couldn't plan this layover right now — please try again."}</p>
           )}
           {status === 'done' && data && (
             <>
@@ -3362,6 +3365,7 @@ export default function ResultsPage() {
   const [isActivityFilterOpen, setIsActivityFilterOpen] = useState(false)
   const [isActivityFilterLoading, setIsActivityFilterLoading] = useState(false)
   const [activeActivityFilterCount, setActiveActivityFilterCount] = useState(0)
+  const [filterErrors, setFilterErrors] = useState({})  // { flights|hotels|activities: message }
   const [confidenceData, setConfidenceData] = useState(null)
   const [pricingData, setPricingData] = useState(null)
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
@@ -3574,6 +3578,7 @@ export default function ResultsPage() {
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
+    setFilterErrors({})
     setConfidenceData(null)
     setPricingData(null)
     setView('cards')
@@ -3618,7 +3623,12 @@ export default function ResultsPage() {
           interests: searchData.interests || [],
         }),
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        // A string `detail` (e.g. the rate-limit message) is worth showing.
+        const message = await responseErrorMessage(res, null)
+        setLayoverInfo(prev => prev && { ...prev, status: 'error', message })
+        return
+      }
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setLayoverInfo(prev => prev && { ...prev, status: 'done', data })
@@ -3824,7 +3834,9 @@ export default function ResultsPage() {
 
   const handleApplyFlightFilters = async (filters) => {
     const filterCount = Object.keys(filters).length
+    const prevFilterCount = activeFlightFilterCount
     setActiveFlightFilterCount(filterCount)
+    setFilterErrors(e => ({ ...e, flights: null }))
     setIsFlightFilterLoading(true)
     setStatuses(s => ({ ...s, flights: 'loading' }))
     setIsFlightFilterOpen(false)
@@ -3834,6 +3846,8 @@ export default function ResultsPage() {
       setResults(r => ({ ...r, flights: data }))
       setStatuses(s => ({ ...s, flights: 'done' }))
     } catch (err) {
+      setActiveFlightFilterCount(prevFilterCount)  // results on screen are still the old ones
+      setFilterErrors(e => ({ ...e, flights: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
       setStatuses(s => ({ ...s, flights: 'done' }))
     } finally {
       setIsFlightFilterLoading(false)
@@ -3842,7 +3856,9 @@ export default function ResultsPage() {
 
   const handleApplyHotelFilters = async (filters) => {
     const filterCount = Object.keys(filters).length
+    const prevFilterCount = activeHotelFilterCount
     setActiveHotelFilterCount(filterCount)
+    setFilterErrors(e => ({ ...e, hotels: null }))
     setIsHotelFilterLoading(true)
     setStatuses(s => ({ ...s, hotels: 'loading' }))
     setIsHotelFilterOpen(false)
@@ -3852,6 +3868,8 @@ export default function ResultsPage() {
       setResults(r => ({ ...r, hotels: data }))
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } catch (err) {
+      setActiveHotelFilterCount(prevFilterCount)  // results on screen are still the old ones
+      setFilterErrors(e => ({ ...e, hotels: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } finally {
       setIsHotelFilterLoading(false)
@@ -3860,7 +3878,9 @@ export default function ResultsPage() {
 
   const handleApplyActivityFilters = async (filters) => {
     const filterCount = Object.keys(filters).length
+    const prevFilterCount = activeActivityFilterCount
     setActiveActivityFilterCount(filterCount)
+    setFilterErrors(e => ({ ...e, activities: null }))
     setIsActivityFilterLoading(true)
     setStatuses(s => ({ ...s, activities: 'loading' }))
     setIsActivityFilterOpen(false)
@@ -3870,6 +3890,8 @@ export default function ResultsPage() {
       setResults(r => ({ ...r, activities: data }))
       setStatuses(s => ({ ...s, activities: 'done' }))
     } catch (err) {
+      setActiveActivityFilterCount(prevFilterCount)  // results on screen are still the old ones
+      setFilterErrors(e => ({ ...e, activities: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
       setStatuses(s => ({ ...s, activities: 'done' }))
     } finally {
       setIsActivityFilterLoading(false)
@@ -3985,6 +4007,9 @@ export default function ResultsPage() {
         <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} verification={results[agent]?.verification} />
         {isOpen && (
           <div id={sectionBodyId(agent)}>
+            {filterErrors[agent] && (
+              <p role="alert" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{filterErrors[agent]}</p>
+            )}
             {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>}
           </div>
         )}

@@ -95,3 +95,29 @@ def test_discover_timeout_returns_504(client):
 def test_discover_missing_required_fields(client):
     r = client.post("/api/discover", json={"origin": "New York"})
     assert r.status_code == 422
+
+
+def test_discovery_visa_override_uses_exact_rows():
+    """Visa badges come from the exact _VISA_TABLE row for city + country."""
+    import asyncio
+
+    from app.agents.discovery_agent import DiscoveryAgent
+    from app.schemas.request import DiscoveryRequest
+
+    llm = {
+        "destinations": [
+            {"city": "Hiroshima", "country": "Japan", "visa_type": "visa-free"},
+            {"city": "Indianapolis", "country": "United States", "visa_type": "x"},
+            {"city": "Kiev", "country": "Ukraine", "visa_type": "visa-free"},
+        ]
+    }
+    agent = DiscoveryAgent.__new__(DiscoveryAgent)
+    agent.execute = AsyncMock(return_value=llm)
+    req = DiscoveryRequest(**{**_VALID_PAYLOAD, "nationality": "Indian"})
+    out = asyncio.run(agent.run(req))["destinations"]
+
+    assert out[0]["visa_type"] == "e-visa"  # ("indian", "japan") row
+    assert out[0]["visa_verified"] is True
+    assert out[1]["visa_type"] == "visa-required"  # ("indian", "usa"), not india
+    assert out[1]["visa_verified"] is True
+    assert out[2]["visa_verified"] is False  # "uk" ⊂ "ukraine" no longer matches
