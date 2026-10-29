@@ -140,5 +140,6 @@ export const EMPTY_SELECTIONS = {
   itinerary_notes: {},
   itinerary_edits: {},
   itinerary_slots: [],
+  itinerary_layout: null,
   packing_list: null,
 }
