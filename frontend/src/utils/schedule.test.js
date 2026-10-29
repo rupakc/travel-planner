@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { listedInScheduleOrder, scheduleDays, timeRange, transitLabel } from './schedule'
+import { listedInScheduleOrder, pickedTimes, scheduleDays, slotWhen, syncPlannedSlotTimes, timeRange, transitLabel } from './schedule'
 import { arrangeItinerary, moveSlot, removeSlot } from './itineraryLayout'
 
 // A point `km` north of `lat` (1° of latitude ≈ 111.19 km)
@@ -300,5 +300,44 @@ describe('transitLabel', () => {
   it('is empty when travel is unknown', () => {
     expect(transitLabel(null)).toBe('')
     expect(transitLabel(undefined)).toBe('')
+  })
+})
+
+describe('picked slot times', () => {
+  const it0 = { days: [day(1, [slot('morning', 'A', { duration_hours: 1.5 }), slot('afternoon', 'B')])] }
+  const sched = (layout = null) => scheduleDays(arranged(it0, layout))
+
+  it('pickedTimes snapshots the scheduled times and duration', () => {
+    const [d] = sched()
+    expect(pickedTimes(d.slots[0])).toEqual({
+      start_time: '09:00', end_time: '10:30', start_day_offset: 0, end_day_offset: 0, duration_hours: 1.5,
+    })
+  })
+
+  it('pickedTimes is empty for an untimed slot', () => {
+    expect(pickedTimes({ time_of_day: 'late night' })).toEqual({})
+    expect(pickedTimes(null)).toEqual({})
+  })
+
+  it('syncPlannedSlotTimes refreshes times after a move and keeps identity when unchanged', () => {
+    const [d0] = sched()
+    const picked = [{ key: '1-morning', day_number: 1, time_of_day: 'morning', activity: 'A', ...pickedTimes(d0.slots[0]) }]
+    const same = syncPlannedSlotTimes(picked, sched())
+    expect(same).toBe(picked)
+    const swapped = moveSlot(it0, null, '1-morning', 1, 'afternoon')
+    const moved = scheduleDays(arranged(it0, swapped))
+    const out = syncPlannedSlotTimes(picked, moved)
+    expect(out).not.toBe(picked)
+    expect(out[0]).toMatchObject({ start_time: '13:30', end_time: '15:00' })
+  })
+
+  it('syncPlannedSlotTimes leaves entries with no scheduled counterpart alone', () => {
+    const picked = [{ key: '9-morning', day_number: 9, time_of_day: 'morning', activity: 'X' }]
+    expect(syncPlannedSlotTimes(picked, sched())).toBe(picked)
+  })
+
+  it('slotWhen reads "Day 2 · Afternoon · 13:30–16:00", without times when absent', () => {
+    expect(slotWhen({ day_number: 2, time_of_day: 'afternoon', start_time: '13:30', end_time: '16:00' })).toBe('Day 2 · Afternoon · 13:30–16:00')
+    expect(slotWhen({ day_number: 2, time_of_day: 'afternoon' })).toBe('Day 2 · Afternoon')
   })
 })

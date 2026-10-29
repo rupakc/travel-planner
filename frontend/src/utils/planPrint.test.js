@@ -108,6 +108,12 @@ describe('buildPlanPrintHtml', () => {
     expect(html).toContain('<span class="when">morning</span> Picked')
   })
 
+  it('shows stored times for picked slots that carry them', () => {
+    const picked = { itinerary_slots: [{ key: '1-morning', day_number: 1, time_of_day: 'morning', activity: 'Picked', start_time: '10:15', end_time: '12:00' }] }
+    const html = build({ selections: picked, itinerary: null })
+    expect(html).toContain('<span class="when">morning</span> <span class="time">10:15–12:00</span> Picked')
+  })
+
   it('uses the original name for an empty-string activity edit', () => {
     const html = build({ selections: { ...selections, itinerary_edits: { '1-morning': { activity: '' } } } })
     expect(html).toContain('Tsukiji Outer Market')

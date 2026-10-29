@@ -363,6 +363,18 @@ describe('scheduled times', () => {
     expect(field(ev, 'DTEND')).toBe('DTEND:20270401T170000')
   })
 
+  it('exports individually picked slots at their stored times, past midnight included', () => {
+    const sel = { itinerary_slots: [
+      { key: '1-afternoon', day_number: 1, date: '2027-04-01', time_of_day: 'afternoon', activity: 'Picked', start_time: '13:30', end_time: '16:00', start_day_offset: 0, end_day_offset: 0 },
+      { key: '1-evening', day_number: 1, date: '2027-04-01', time_of_day: 'evening', activity: 'Late', start_time: '23:00', end_time: '01:00', start_day_offset: 0, end_day_offset: 1 },
+    ] }
+    const [a, b] = events(buildPlanIcs({ planName: 'T', searchData, selections: sel, now: NOW }))
+    expect(field(a, 'DTSTART')).toBe('DTSTART:20270401T133000')
+    expect(field(a, 'DTEND')).toBe('DTEND:20270401T160000')
+    expect(field(b, 'DTSTART')).toBe('DTSTART:20270401T230000')
+    expect(field(b, 'DTEND')).toBe('DTEND:20270402T010000')
+  })
+
   it('planItineraryDays schedules the arranged days and names edited activities in warnings', () => {
     const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
       { time_of_day: 'morning', activity: 'A', duration_hours: 5 },

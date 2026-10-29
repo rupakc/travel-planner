@@ -316,6 +316,7 @@ describe('ItinerarySection', () => {
     click(button('In Plan', r))
     expect(h.onSlotPlan).toHaveBeenCalledWith('1-morning', {
       key: '1-morning', day_number: 2, time_of_day: 'evening', activity: 'Cathedral tour', location: 'Cathedral St', estimated_cost_usd: 12,
+      start_time: '18:30', end_time: '20:30', start_day_offset: 0, end_day_offset: 0, duration_hours: 2,
     })
     click(button('Note ✓', r))
     const textarea = row('1-morning').querySelector('textarea')
