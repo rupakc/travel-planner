@@ -226,7 +226,7 @@ class TestSerperActivityResolver:
             resolver = SerperActivityResolver("test-key")
             result = await resolver.resolve("Tsukiji Food Tour", "Tokyo")
 
-        assert result == gyg_url
+        assert result == (gyg_url, "Result 0")
 
     @pytest.mark.asyncio
     async def test_skips_untrusted_returns_none(self):
@@ -306,7 +306,9 @@ class TestResolveTop:
             )
         }
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=url)
+        mock_resolver.resolve = AsyncMock(
+            return_value=(url, "Tsukiji Outer Market Food and Sushi Tour")
+        )
         result = await resolve_top(mock_resolver, data, "Tokyo")
         assert result["results"][0]["link_verified"] is True
         assert "link_verified" not in result["results"][1]
@@ -323,7 +325,9 @@ class TestResolveTop:
             )
         }
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(side_effect=[gyg_url, None])
+        mock_resolver.resolve = AsyncMock(
+            side_effect=[(gyg_url, "Tsukiji Outer Market Food Tour"), None]
+        )
 
         result = await resolve_top(mock_resolver, data, "Tokyo")
 
@@ -339,7 +343,7 @@ class TestResolveTop:
         data = {"results": activities}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=gyg_url)
+        mock_resolver.resolve = AsyncMock(return_value=(gyg_url, "Tsukiji tour"))
 
         result = await resolve_top(mock_resolver, data, "Tokyo")
 
@@ -378,7 +382,7 @@ class TestResolveTop:
         data = {"results": activities}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=same_url)
+        mock_resolver.resolve = AsyncMock(return_value=(same_url, "Generic page"))
 
         result = await resolve_top(mock_resolver, data, "Tokyo")
 
@@ -393,7 +397,7 @@ class TestResolveTop:
         data2 = {"results": [dict(activities[0])]}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=gyg_url)
+        mock_resolver.resolve = AsyncMock(return_value=(gyg_url, "Tsukiji tour"))
 
         await resolve_top(mock_resolver, data1, "Tokyo")
         await resolve_top(mock_resolver, data2, "Tokyo")

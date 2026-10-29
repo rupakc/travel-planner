@@ -2,6 +2,12 @@
 
 Upgrades Tier 1 platform search URLs to direct listing URLs for top activities.
 All resolver calls run in parallel; results are TTL-cached to protect quota.
+
+Evidence flags set here (and only here):
+- ``link_checked``: the activity was one of the top-N actually searched.
+- ``link_verified``: the chosen trusted result's title contains the
+  activity's distinctive name words (``services.name_match``). A trusted URL
+  whose title does not name the activity still upgrades the link, unflagged.
 """
 
 import asyncio
@@ -12,6 +18,7 @@ from urllib.parse import urlparse
 import httpx
 
 from ..core.cache import get_cache
+from .name_match import name_matches_title
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +77,9 @@ def _build_query(name: str, destination: str) -> str:
 
 @runtime_checkable
 class ActivityURLResolver(Protocol):
-    async def resolve(self, name: str, destination: str) -> str | None: ...
+    async def resolve(
+        self, name: str, destination: str
+    ) -> tuple[str, str] | None: ...  # (link, result title)
 
 
 # ── Implementations ────────────────────────────────────────────────────────────
@@ -88,7 +97,7 @@ class SerperActivityResolver:
     def __init__(self, api_key: str) -> None:
         self._key = api_key
 
-    async def resolve(self, name: str, destination: str) -> str | None:
+    async def resolve(self, name: str, destination: str) -> tuple[str, str] | None:
         try:
             resp = await _get_client().post(
                 _SERPER_URL,
@@ -107,7 +116,7 @@ class SerperActivityResolver:
             for item in resp.json().get("organic", []):
                 link = item.get("link", "")
                 if _is_trusted(link):
-                    return link
+                    return link, str(item.get("title") or "")
         except (httpx.RequestError, httpx.TimeoutException, ValueError) as exc:
             logger.warning("Serper resolve failed for %r: %s", name, exc)
         return None
@@ -123,7 +132,7 @@ class SerpAPIActivityResolver:
     def __init__(self, api_key: str) -> None:
         self._key = api_key
 
-    async def resolve(self, name: str, destination: str) -> str | None:
+    async def resolve(self, name: str, destination: str) -> tuple[str, str] | None:
         try:
             resp = await _get_client().get(
                 _SERPAPI_URL,
@@ -140,7 +149,7 @@ class SerpAPIActivityResolver:
             for item in resp.json().get("organic_results", []):
                 link = item.get("link", "")
                 if _is_trusted(link):
-                    return link
+                    return link, str(item.get("title") or "")
         except (httpx.RequestError, httpx.TimeoutException, ValueError) as exc:
             logger.warning("SerpAPI activity resolve failed for %r: %s", name, exc)
         return None
@@ -189,15 +198,24 @@ async def resolve_top(
 
     used_urls: set[str] = set()
 
-    async def resolve_one(idx: int, activity: dict) -> tuple[int, str | None]:
+    async def resolve_one(
+        idx: int, activity: dict
+    ) -> tuple[int, tuple[str, str] | None]:
         name = activity.get("name", "")
         cache_key = f"serper:activity:{name}:{destination}"
         cached = cache.get(cache_key)
         if cached is not None:
-            return idx, cached if cached else None
-        url = await resolver.resolve(name, destination)
-        cache[cache_key] = url or ""
-        return idx, url
+            if isinstance(cached, tuple):
+                return idx, cached
+            return idx, ((cached, "") if cached else None)
+        hit = await resolver.resolve(name, destination)
+        hit = tuple(hit) if hit else None
+        cache[cache_key] = hit or ""
+        return idx, hit
+
+    # Only the top-N actually searched count towards the section's totals
+    for i, _a in ranked:
+        activities[i]["link_checked"] = True
 
     results = await asyncio.gather(
         *[resolve_one(i, a) for i, a in ranked],
@@ -209,15 +227,21 @@ async def resolve_top(
         if isinstance(res, Exception):
             logger.warning("resolve_one raised: %s", res)
             continue
-        idx, url = res
+        idx, hit = res
+        if not hit:
+            continue
+        url, title = hit
         if url and url not in used_urls:
-            activities[idx]["booking_url"] = url
-            activities[idx]["link_verified"] = True
+            activity = activities[idx]
+            activity["booking_url"] = url
+            # Evidence only when the result is really about this activity
+            if name_matches_title(activity.get("name", ""), title):
+                activity["link_verified"] = True
             used_urls.add(url)
             logger.info(
                 "Tier 2 activity URL [%d] %r → %s",
                 idx,
-                activities[idx].get("name", ""),
+                activity.get("name", ""),
                 url,
             )
 

@@ -3,7 +3,7 @@ import logging
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
-from ..services.verification import verify_section
+from ..services.verification import attach_verification
 from .activities_agent import ActivitiesAgent
 from .base_agent import ToolAgent
 from .emergency_card_agent import EmergencyCardAgent
@@ -57,10 +57,7 @@ def _attach_verification(
     Never mutates ``data``: the same dict is reused by deferred agents,
     enrichment input and the static confidence lookup.
     """
-    verification = verify_section(name, data, request, pending=pending, source=source)
-    if verification is None:
-        return data
-    return {**data, "verification": verification}
+    return attach_verification(name, data, request, pending=pending, source=source)
 
 
 class TravelOrchestrator:

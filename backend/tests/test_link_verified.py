@@ -66,7 +66,10 @@ class TestPlaceLinkVerified:
     async def test_resolved_true_unresolved_absent(self):
         resolver = AsyncMock()
         resolver.resolve = AsyncMock(
-            side_effect=["https://www.tripadvisor.com/Attraction-x", None]
+            side_effect=[
+                ("https://www.tripadvisor.com/Attraction-x", "Senso-ji Temple"),
+                None,
+            ]
         )
         data = {"results": [{"name": "Senso-ji Temple"}, {"name": "Meiji Shrine"}]}
         out = await resolve_top_places(resolver, data, "Tokyo")
@@ -121,3 +124,156 @@ class TestModelSuppliedFlagStripped:
         # static TripAdvisor fallback sets info_url but is not evidence
         assert place["info_url"].startswith("https://www.tripadvisor.com/Search")
         assert "link_verified" not in place
+
+
+# ── Name-matched evidence (final-review fix wave) ─────────────────────
+
+
+def _search_text(*pairs: tuple[str, str]) -> str:
+    return "\n".join(f"Title: {t}\nURL: {u}" for t, u in pairs)
+
+
+class TestHotelNameMatchExcludesDestination:
+    @pytest.mark.asyncio
+    async def test_generic_city_name_does_not_match_city_listing(self):
+        from unittest.mock import patch
+
+        agent = HotelsAgent.__new__(HotelsAgent)
+        agent._destination = "Berlin"
+        listing = _search_text(
+            (
+                "Hotels in Berlin - Book Now",
+                "https://www.booking.com/city/de/berlin.html",
+            )
+        )
+        with patch(
+            "app.agents.web_tools.execute_tool", AsyncMock(return_value=listing)
+        ):
+            out = await agent._enrich_urls({"results": [{"name": "Hotel Berlin"}]})
+        hotel = out["results"][0]
+        assert hotel["link_verified"] is False
+        assert "booking_url" not in hotel
+
+    @pytest.mark.asyncio
+    async def test_distinctive_hotel_name_matches(self):
+        from unittest.mock import patch
+
+        agent = HotelsAgent.__new__(HotelsAgent)
+        agent._destination = "Berlin, Germany"
+        url = "https://www.booking.com/hotel/de/adlon-kempinski.html"
+        listing = _search_text(("Hotel Adlon Kempinski Berlin – Booking.com", url))
+        with patch(
+            "app.agents.web_tools.execute_tool", AsyncMock(return_value=listing)
+        ):
+            out = await agent._enrich_urls(
+                {"results": [{"name": "Hotel Adlon Kempinski Berlin"}]}
+            )
+        hotel = out["results"][0]
+        assert hotel["link_verified"] is True
+        assert hotel["booking_url"] == url
+
+
+class TestActivityNameMatchedEvidence:
+    @pytest.mark.asyncio
+    async def test_title_without_name_upgrades_url_without_flag(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        url = "https://www.getyourguide.com/tokyo-l193/sumo-show-t9"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(return_value=(url, "Tokyo Sumo Show with Dinner"))
+        data = {
+            "results": [
+                {"name": "Tsukiji Outer Market Food Tour", "similarity_score": 0.9}
+            ]
+        }
+        out = await resolve_top(resolver, data, "Tokyo")
+        item = out["results"][0]
+        assert item["booking_url"] == url
+        assert "link_verified" not in item
+        assert item["link_checked"] is True
+
+    @pytest.mark.asyncio
+    async def test_title_with_name_sets_flag(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        url = "https://www.getyourguide.com/tokyo-l193/tsukiji-t1"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Tokyo: Tsukiji Outer Market Food and Sushi Tour")
+        )
+        data = {
+            "results": [
+                {"name": "Tsukiji Outer Market Food Tour", "similarity_score": 0.9}
+            ]
+        }
+        out = await resolve_top(resolver, data, "Tokyo")
+        item = out["results"][0]
+        assert item["booking_url"] == url
+        assert item["link_verified"] is True
+        assert item["link_checked"] is True
+
+    @pytest.mark.asyncio
+    async def test_only_searched_items_marked_checked(self):
+        from app.core.cache import get_cache
+        from app.services.activity_url_resolver import resolve_top
+
+        get_cache().clear()
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(return_value=None)
+        data = {
+            "results": [
+                {"name": "Tsukiji Outer Market Food Tour", "similarity_score": 0.9},
+                {"name": "Unscored Activity Name"},
+            ]
+        }
+        out = await resolve_top(resolver, data, "Tokyo")
+        assert out["results"][0]["link_checked"] is True
+        assert "link_verified" not in out["results"][0]
+        assert "link_checked" not in out["results"][1]
+
+
+class TestPlaceNameMatchedEvidence:
+    @pytest.mark.asyncio
+    async def test_title_without_name_upgrades_url_without_flag(self):
+        url = "https://www.tripadvisor.com/Attractions-g1-Tokyo.html"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "THE 15 BEST Things to Do in Tokyo")
+        )
+        data = {"results": [{"name": "Senso-ji Temple"}]}
+        out = await resolve_top_places(resolver, data, "Tokyo")
+        place = out["results"][0]
+        assert place["info_url"] == url
+        assert "link_verified" not in place
+        assert place["link_checked"] is True
+
+    @pytest.mark.asyncio
+    async def test_title_with_name_sets_flag_and_short_names_unchecked(self):
+        url = "https://www.tripadvisor.com/Attraction-sensoji"
+        resolver = AsyncMock()
+        resolver.resolve = AsyncMock(
+            return_value=(url, "Senso-ji Temple (Asakusa) - Tripadvisor")
+        )
+        data = {"results": [{"name": "Senso-ji Temple"}, {"name": "Zoo"}]}
+        out = await resolve_top_places(resolver, data, "Tokyo")
+        assert out["results"][0]["link_verified"] is True
+        assert out["results"][0]["link_checked"] is True
+        assert "link_checked" not in out["results"][1]
+
+
+class TestNameMatchHelper:
+    def test_thresholds_and_exclusion(self):
+        from app.services.name_match import name_matches_title
+
+        assert name_matches_title("Senso-ji Temple", "Senso-ji Temple, Asakusa")
+        assert not name_matches_title("Senso-ji Temple", "Meiji Shrine")
+        assert not name_matches_title(
+            "Hotel Berlin", "Hotels in Berlin", exclude=("Berlin",)
+        )
+        assert name_matches_title(
+            "Park Hyatt Tokyo", "Park Hyatt Tokyo – Official", exclude=("Tokyo",)
+        )

@@ -103,7 +103,6 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
   }
 
   const checks = Array.isArray(verification.checks) ? verification.checks : []
-  const counted = verification.items_total != null && verification.items_verified != null
   return createPortal(
     <div ref={ref} id={id} role="dialog" aria-label={`Source verification: ${verification.label || ''}`}
       tabIndex={-1} onKeyDown={onKeyDown} onClick={(e) => e.stopPropagation()}
@@ -111,7 +110,6 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
       className="z-50 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-left text-xs text-gray-700 focus:outline-none">
       <p className="font-semibold text-sm text-gray-900">{verification.label}</p>
       {verification.summary && <p className="mt-1 text-gray-600">{verification.summary}</p>}
-      {counted && <p className="mt-1 text-gray-500">{verification.items_verified} of {verification.items_total} items found online</p>}
       {checks.length > 0 && (
         <ul className="mt-2 space-y-2">
           {checks.map((c, i) => {
@@ -170,7 +168,7 @@ export function VerificationConflictBanner({ verification }) {
   if (verification?.level !== 'conflict') return null
   const link = (verification.checks || []).map((c) => c.status === 'fail' ? safeUrl(c.url) : null).find(Boolean)
   return (
-    <div role="alert" className="flex items-start gap-2 text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+    <div role="status" className="flex items-start gap-2 text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
       <ShieldAlert size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
       <span>
         {verification.summary}

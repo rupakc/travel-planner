@@ -15,6 +15,7 @@ import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivi
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
+import { clearPendingVerification, stripLinkEvidence } from '../utils/verification'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
 import { buildBestValuePackage, applyPackage } from '../utils/bestValuePackage'
@@ -2418,10 +2419,12 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
   // Full itinerary snapshot travels with the plan so the public share card
   // can render the complete day-by-day schedule
+  // Saved plans keep the items, not this search's live link evidence
   const selectionsForSave = () => {
     const days = liveItinerary?.days
-    if (!days?.length) return selections
-    return { ...selections, itinerary: { days, total_estimated_cost_usd: liveItinerary.total_estimated_cost_usd } }
+    const saved = stripLinkEvidence(selections)
+    if (!days?.length) return saved
+    return { ...saved, itinerary: { days, total_estimated_cost_usd: liveItinerary.total_estimated_cost_usd } }
   }
 
   const save = async () => {
@@ -3492,9 +3495,11 @@ export default function ResultsPage() {
         setIsDone(true)
         // If itinerary never arrived, generate client-side fallback so section always renders
         setResults(prev => {
-          if (prev.itinerary?.days?.length) return prev
-          const fallback = buildClientItinerary(prev.activities, prev.hotels, searchData)
-          return fallback ? { ...prev, itinerary: fallback } : prev
+          // A section still awaiting link enrichment must not show "Checking…" forever
+          const settled = clearPendingVerification(prev)
+          if (settled.itinerary?.days?.length) return settled
+          const fallback = buildClientItinerary(settled.activities, settled.hotels, searchData)
+          return fallback ? { ...settled, itinerary: fallback } : settled
         })
         // Terminalize every section: anything still waiting/loading/enhancing
         // when the stream ends must not spin forever.

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from ...agents.hotels_agent import HotelsAgent
 from ...core.config import settings
 from ...schemas.request import HotelFilteredSearchRequest, TravelSearchRequest
+from ...services.verification import attach_verification
 
 router = APIRouter()
 
@@ -32,4 +33,5 @@ async def get_hotels_filtered(request: HotelFilteredSearchRequest):
     result = await agent.run(request, filters=filters if filters else None)
     if not result.get("error"):
         result = await agent.enrich(result)
-    return result
+    # Final (non-pending) label so the chip survives the section replacement
+    return attach_verification("hotels", result, request)

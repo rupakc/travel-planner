@@ -1,4 +1,11 @@
-"""Serper URL resolver for places — Phase 2 background URL enrichment."""
+"""Serper URL resolver for places — Phase 2 background URL enrichment.
+
+Evidence flags set here (and only here): ``link_checked`` on places actually
+searched; ``link_verified`` only when the chosen trusted result's title names
+the place (``services.name_match``). A trusted URL whose title does not name
+the place still upgrades ``info_url``, unflagged. Tier-1 official-site
+matches made in ``PlacesAgent.run`` are conservatively left unflagged.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +16,7 @@ import urllib.parse
 import httpx
 
 from ..core.cache import get_cache
+from .name_match import name_matches_title
 
 _SERPER_URL = "https://google.serper.dev/search"
 _TRUSTED_DOMAINS = frozenset(
@@ -55,11 +63,14 @@ class SerperPlacesResolver:
     def __init__(self, api_key: str) -> None:
         self._key = api_key
 
-    async def resolve(self, name: str, destination: str) -> str | None:
+    async def resolve(self, name: str, destination: str) -> tuple[str, str] | None:
+        """Return (link, result title) of the first trusted result, or None."""
         cache_key = f"serper:place:{name}:{destination}"
         cached = get_cache().get(cache_key)
         if cached is not None:
-            return cached or None
+            if isinstance(cached, tuple):
+                return cached
+            return (cached, "") if cached else None
         try:
             async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
                 resp = await client.post(
@@ -79,8 +90,9 @@ class SerperPlacesResolver:
                 for item in resp.json().get("organic", []):
                     url = item.get("link", "")
                     if _is_trusted(url):
-                        get_cache()[cache_key] = url
-                        return url
+                        hit = (url, str(item.get("title") or ""))
+                        get_cache()[cache_key] = hit
+                        return hit
         except Exception as exc:
             logger.warning("SerperPlacesResolver failed for %s: %s", name, exc)
         get_cache()[cache_key] = ""
@@ -96,18 +108,25 @@ async def resolve_top_places(
     top = results[:_TOP_N]
     seen_urls: set[str] = set()
 
-    async def resolve_one(idx: int, place: dict) -> tuple[int, str | None]:
+    async def resolve_one(idx: int, place: dict) -> tuple[int, tuple | None]:
         name = place.get("name", "")
         if len(name) < 4:
             return idx, None
-        url = await resolver.resolve(name, destination)
-        return idx, url
+        place["link_checked"] = True
+        hit = await resolver.resolve(name, destination)
+        return idx, (tuple(hit) if hit else None)
 
     resolved = await asyncio.gather(*(resolve_one(i, p) for i, p in enumerate(top)))
-    for idx, url in resolved:
+    for idx, hit in resolved:
+        if not hit:
+            continue
+        url, title = hit
         if url and url not in seen_urls:
             seen_urls.add(url)
-            results[idx]["info_url"] = url
-            results[idx]["link_verified"] = True
-            results[idx]["source"] = _url_to_source(url)
+            place = results[idx]
+            place["info_url"] = url
+            place["source"] = _url_to_source(url)
+            # Evidence only when the result is really about this place
+            if name_matches_title(place.get("name", ""), title):
+                place["link_verified"] = True
     return data

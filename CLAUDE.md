@@ -108,6 +108,7 @@ frontend/
       ui/             # Shared UI components (AirportSearch, NationalitySearch, TagInput)
       PlanViewModal.jsx # Modal for viewing/editing saved plans
       WalkingToursSection.jsx # Free Walking Tours cards (link to the provider's tour page)
+      VerificationBadge.jsx # Section source-verification chip + popover, conflict banner, Found-online tag
     context/
       AuthContext.jsx  # Auth state + two-way preference sync
     workers/

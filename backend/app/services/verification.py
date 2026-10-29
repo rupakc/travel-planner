@@ -30,6 +30,8 @@ _PENDING_SUMMARY = "Checking which links can be found online…"
 # Static-backed sections whose Phase-0 yield comes from a curated table
 _REFERENCE_SECTIONS = {"sim", "tips", "getting_around", "forex"}
 _EMERGENCY_FIELDS = ("police", "ambulance", "fire")
+# "Verified" needs at least this many of the fields compared (all matching)
+_MIN_EMERGENCY_COMPARED = 2
 
 
 def _check(label: str, status: str, detail: str, url: str | None = None) -> dict:
@@ -168,9 +170,11 @@ def _hotels(data: dict, pending: bool) -> dict:
 
 
 def _listings(data: dict, pending: bool, *, with_prices: bool) -> dict:
-    items = _items(data)
-    found = sum(1 for a in items if a.get("link_verified") is True)
-    total = len(items)
+    # Only the resolver's top-N searched items carry `link_checked`; the rest
+    # were never looked up, so they are not part of the totals.
+    searched = [a for a in _items(data) if a.get("link_checked") is True]
+    found = sum(1 for a in searched if a.get("link_verified") is True)
+    total = len(searched)
     counts = {"items_verified": found, "items_total": total, "pending": pending}
     if pending:
         return _result("unverified", _PENDING_SUMMARY, [], **counts)
@@ -179,11 +183,23 @@ def _listings(data: dict, pending: bool, *, with_prices: bool) -> dict:
             _check(
                 "Specific listings",
                 "pass",
-                f"{found} of {total} link to a specific listing found online",
+                f"{found} of the {total} checked were found online by name",
             )
         ]
-        summary = "Some links point to listings found online; the rest are searches."
+        summary = (
+            "Some links point to listings found online by name; the rest are searches."
+        )
         level = "partial"
+    elif total:
+        checks = [
+            _check(
+                "Specific listings",
+                "info",
+                f"None of the {total} checked were found online by name",
+            )
+        ]
+        summary = _DEFAULT_SUMMARY
+        level = "unverified"
     else:
         checks = [
             _check(
@@ -377,7 +393,9 @@ def _emergency(data: dict, request: TravelSearchRequest) -> dict:
         multi = False
 
     checks, conflicts = [], []
-    matched = 0
+    # matched = cities with >=2 numbers compared and all equal (fully checked);
+    # thin = cities where only one number could be compared (and it matched)
+    matched = thin = 0
     for city, entry in entries:
         ai = (
             entry.get("emergency_numbers")
@@ -403,10 +421,20 @@ def _emergency(data: dict, request: TravelSearchRequest) -> dict:
                 checks.append(
                     _check(f"{field.capitalize()} number{where}", "fail", text)
                 )
-        elif compared:
+        elif compared >= _MIN_EMERGENCY_COMPARED:
             matched += 1
             checks.append(
                 _check(f"Emergency numbers{where}", "pass", "Match our reference table")
+            )
+        elif compared:
+            thin += 1
+            checks.append(
+                _check(
+                    f"Emergency numbers{where}",
+                    "pass",
+                    f"The one number stated matches our reference table "
+                    f"(of {len(_EMERGENCY_FIELDS)})",
+                )
             )
         else:
             checks.append(
@@ -423,10 +451,10 @@ def _emergency(data: dict, request: TravelSearchRequest) -> dict:
         return _result(
             "verified", "Emergency numbers match our reference table.", checks
         )
-    if matched:
+    if matched or thin:
         return _result(
             "partial",
-            "Some emergency numbers match our reference table; others have no reference data.",
+            "Some emergency numbers match our reference table; others could not be compared.",
             checks,
         )
     return _result("unverified", _DEFAULT_SUMMARY, checks)
@@ -473,3 +501,22 @@ def verify_section(
             [_check("Reference data", "pass", "From our curated reference table")],
         )
     return _result("unverified", _DEFAULT_SUMMARY)
+
+
+def attach_verification(
+    name: str,
+    data,
+    request: TravelSearchRequest,
+    *,
+    pending: bool = False,
+    source: str = "ai",
+):
+    """Return a NEW dict with ``verification`` attached (or ``data`` unchanged).
+
+    Never mutates ``data``: the same dict may be reused elsewhere (deferred
+    agents, enrichment input, static confidence lookup).
+    """
+    verification = verify_section(name, data, request, pending=pending, source=source)
+    if verification is None:
+        return data
+    return {**data, "verification": verification}

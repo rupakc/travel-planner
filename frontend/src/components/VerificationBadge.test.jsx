@@ -77,7 +77,9 @@ describe('VerificationBadge', () => {
     expect(text).toContain('Passed')
     expect(text).toContain('Note')
     expect(text).toContain('Failed')
-    expect(text).toContain('2 of 5 items found online')
+    // counts live in the check details; no generic "X of Y items" line
+    expect(text).not.toContain('items found online')
+    expect(text).not.toContain('2 of 5')
     expect(document.activeElement).toBe(popover())
   })
 
@@ -169,7 +171,8 @@ describe('VerificationConflictBanner / FoundOnlineBadge', () => {
     act(() => root.render(<VerificationConflictBanner verification={conflict} />))
     expect(container.textContent).toContain('AI says e-visa')
     expect(container.querySelector('a').getAttribute('href')).toBe('https://official.gov/x')
-    expect(container.querySelector('[role="alert"]').className).toContain('rose')
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+    expect(container.querySelector('[role="status"]').className).toContain('rose')
     act(() => root.render(<VerificationConflictBanner verification={v()} />))
     expect(container.innerHTML).toBe('')
   })

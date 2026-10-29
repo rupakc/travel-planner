@@ -234,13 +234,54 @@ def test_hotels_pending():
 
 
 def test_activities_some_listings_partial_with_price_info():
-    data = {"results": [{"name": "A", "link_verified": True}, {"name": "B"}]}
+    data = {
+        "results": [
+            {"name": "A", "link_checked": True, "link_verified": True},
+            {"name": "B", "link_checked": True},
+        ]
+    }
     v = verify_section("activities", data, REQ)
     _shape_ok(v)
     assert v["level"] == "partial"
     assert (v["items_verified"], v["items_total"]) == (1, 2)
+    passes = [c for c in v["checks"] if c["status"] == "pass"]
+    assert passes[0]["detail"] == "1 of the 2 checked were found online by name"
     infos = [c for c in v["checks"] if c["status"] == "info"]
     assert any(c["detail"] == "Prices and ratings are AI estimates" for c in infos)
+
+
+def test_activities_totals_count_only_checked_items():
+    # 2 searched (top-N), 3 never searched — totals are over the 2 checked
+    data = {
+        "results": [
+            {"name": "A", "link_checked": True, "link_verified": True},
+            {"name": "B", "link_checked": True},
+            {"name": "C"},
+            {"name": "D"},
+            {"name": "E"},
+        ]
+    }
+    v = verify_section("activities", data, REQ)
+    assert (v["items_verified"], v["items_total"]) == (1, 2)
+    assert any("of the 2 checked" in c["detail"] for c in v["checks"])
+
+
+def test_activities_unchecked_flag_is_not_evidence():
+    data = {"results": [{"name": "A", "link_verified": True}]}
+    v = verify_section("activities", data, REQ)
+    assert v["level"] == "unverified"
+    assert (v["items_verified"], v["items_total"]) == (0, 0)
+
+
+def test_activities_checked_none_found_unverified():
+    data = {"results": [{"name": "A", "link_checked": True}, {"name": "B"}]}
+    v = verify_section("activities", data, REQ)
+    assert v["level"] == "unverified"
+    assert (v["items_verified"], v["items_total"]) == (0, 1)
+    assert any(
+        c["detail"] == "None of the 1 checked were found online by name"
+        for c in v["checks"]
+    )
 
 
 def test_activities_no_listings_unverified():
@@ -257,7 +298,7 @@ def test_activities_no_listings_unverified():
 
 def test_activities_all_listings_still_only_partial():
     # prices/ratings remain AI estimates even when every link is a listing
-    data = {"results": [{"link_verified": True}]}
+    data = {"results": [{"link_checked": True, "link_verified": True}]}
     assert verify_section("activities", data, REQ)["level"] == "partial"
 
 
@@ -267,9 +308,14 @@ def test_activities_pending():
 
 
 def test_places_partial_and_unverified():
-    v = verify_section("places_to_see", {"results": [{"link_verified": True}, {}]}, REQ)
+    v = verify_section(
+        "places_to_see",
+        {"results": [{"link_checked": True, "link_verified": True}, {}]},
+        REQ,
+    )
     _shape_ok(v)
     assert v["level"] == "partial"
+    assert (v["items_verified"], v["items_total"]) == (1, 1)
     v = verify_section("places_to_see", {"results": [{}, {}]}, REQ)
     assert v["level"] == "unverified"
     v = verify_section("places_to_see", {"results": [{}]}, REQ, pending=True)
@@ -832,3 +878,36 @@ def test_static_emergency_entry_reuses_getter():
     entry = _static_emergency_entry("Tokyo, Japan")
     assert entry["emergency_numbers"] is get_static_emergency_numbers("Tokyo, Japan")
     assert _static_emergency_entry("Atlantis") is None
+
+
+# ── emergency: verified needs >= 2 numbers compared ───────────────────
+
+
+def test_emergency_single_number_matched_is_partial():
+    v = verify_section("emergency_card", {"emergency_numbers": {"police": "110"}}, REQ)
+    assert v["level"] == "partial"
+    assert any(c["status"] == "pass" for c in v["checks"])
+
+
+def test_emergency_two_numbers_matched_is_verified():
+    data = {"emergency_numbers": {"police": "110", "ambulance": "119"}}
+    assert verify_section("emergency_card", data, REQ)["level"] == "verified"
+
+
+def test_emergency_single_number_mismatch_is_conflict():
+    v = verify_section("emergency_card", {"emergency_numbers": {"police": "999"}}, REQ)
+    assert v["level"] == "conflict"
+
+
+def test_emergency_multi_city_one_city_single_number_is_partial():
+    req = _req(destination="Tokyo", destinations=["Tokyo, Japan", "Paris, France"])
+    data = {
+        "cities": [
+            {
+                "city": "Tokyo, Japan",
+                "emergency_numbers": {"police": "110", "ambulance": "119"},
+            },
+            {"city": "Paris, France", "emergency_numbers": {"police": "17"}},
+        ]
+    }
+    assert verify_section("emergency_card", data, req)["level"] == "partial"
