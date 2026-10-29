@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
+from ..services.verification import verify_section
 from .activities_agent import ActivitiesAgent
 from .emergency_card_agent import EmergencyCardAgent
 from .events_agent import EventsAgent
@@ -22,6 +23,27 @@ from .walking_tours_agent import WalkingToursAgent
 from .weather_agent import WeatherAgent
 
 logger = logging.getLogger(__name__)
+
+# Sections whose first AI yield is followed by a URL-enrichment re-yield
+_ENRICH_PENDING = {"hotels", "activities", "places_to_see"}
+
+
+def _attach_verification(
+    name: str,
+    data,
+    request: TravelSearchRequest,
+    pending: bool = False,
+    source: str = "ai",
+):
+    """Return a NEW dict with ``verification`` attached (or ``data`` unchanged).
+
+    Never mutates ``data``: the same dict is reused by deferred agents,
+    enrichment input and the static confidence lookup.
+    """
+    verification = verify_section(name, data, request, pending=pending, source=source)
+    if verification is None:
+        return data
+    return {**data, "verification": verification}
 
 
 class TravelOrchestrator:
@@ -149,15 +171,15 @@ class TravelOrchestrator:
         static_forex = get_static_forex(request)
 
         if static_visa:
-            yield f"data: {json.dumps({'type': 'visa', 'data': static_visa, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'visa', 'data': _attach_verification('visa', static_visa, request, source='static'), 'source': 'static'})}\n\n"
         if static_sim:
-            yield f"data: {json.dumps({'type': 'sim', 'data': static_sim, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'sim', 'data': _attach_verification('sim', static_sim, request, source='static'), 'source': 'static'})}\n\n"
         if static_tips:
-            yield f"data: {json.dumps({'type': 'tips', 'data': static_tips, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'tips', 'data': _attach_verification('tips', static_tips, request, source='static'), 'source': 'static'})}\n\n"
         if static_getting_around:
-            yield f"data: {json.dumps({'type': 'getting_around', 'data': static_getting_around, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'getting_around', 'data': _attach_verification('getting_around', static_getting_around, request, source='static'), 'source': 'static'})}\n\n"
         if static_forex:
-            yield f"data: {json.dumps({'type': 'forex', 'data': static_forex, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'forex', 'data': _attach_verification('forex', static_forex, request, source='static'), 'source': 'static'})}\n\n"
 
         confidence = get_confidence_score(request)
         if confidence:
@@ -165,7 +187,7 @@ class TravelOrchestrator:
 
         static_emergency = get_static_emergency_card(request)
         if static_emergency:
-            yield f"data: {json.dumps({'type': 'emergency_card', 'data': static_emergency, 'source': 'static'})}\n\n"
+            yield f"data: {json.dumps({'type': 'emergency_card', 'data': _attach_verification('emergency_card', static_emergency, request, source='static'), 'source': 'static'})}\n\n"
 
         logger.info(
             "Static results yielded for visa/sim/tips/getting_around/forex/confidence/emergency_card"
@@ -246,6 +268,8 @@ class TravelOrchestrator:
         # Enrichment starts per-agent as soon as each Phase 1 result arrives
         enrich_queue: asyncio.Queue = asyncio.Queue()
         enrich_tasks = []
+        # Sections yielded with verification.pending=True awaiting a re-yield
+        awaiting_enrichment: set[str] = set()
 
         async def enrich_agent(name: str, agent, data: dict):
             import copy
@@ -268,7 +292,15 @@ class TravelOrchestrator:
             if name in _STATIC_BACKED and result.get("error"):
                 logger.info(f"Agent {name} errored, retaining Phase 0 static data")
             else:
-                yield f"data: {json.dumps({'type': name, 'data': result, 'source': 'ai'})}\n\n"
+                pending = (
+                    name in _ENRICH_PENDING
+                    and not result.get("error")
+                    and hasattr(phase1_agents.get(name), "enrich")
+                )
+                if pending:
+                    awaiting_enrichment.add(name)
+                section = _attach_verification(name, result, request, pending=pending)
+                yield f"data: {json.dumps({'type': name, 'data': section, 'source': 'ai'})}\n\n"
 
             # Start enrichment immediately for this agent
             if not result.get("error"):
@@ -410,7 +442,7 @@ class TravelOrchestrator:
                 itinerary = self._build_fallback_itinerary(
                     request, results.get("activities", {}), results.get("hotels", {})
                 )
-                yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
+                yield f"data: {json.dumps({'type': 'itinerary', 'data': _attach_verification('itinerary', itinerary, request)})}\n\n"
                 itinerary_done = True
                 yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'searching'})}\n\n"
                 start_stress_test(itinerary)
@@ -424,7 +456,7 @@ class TravelOrchestrator:
                     deferred_timeout,
                 )
                 fallback_packing = self._build_fallback_packing_list(request)
-                yield f"data: {json.dumps({'type': 'packing_list', 'data': fallback_packing, 'source': 'static'})}\n\n"
+                yield f"data: {json.dumps({'type': 'packing_list', 'data': _attach_verification('packing_list', fallback_packing, request, source='static'), 'source': 'static'})}\n\n"
                 packing_done = True
                 continue
 
@@ -451,7 +483,7 @@ class TravelOrchestrator:
                         results.get("activities", {}),
                         results.get("hotels", {}),
                     )
-                yield f"data: {json.dumps({'type': 'itinerary', 'data': itinerary})}\n\n"
+                yield f"data: {json.dumps({'type': 'itinerary', 'data': _attach_verification('itinerary', itinerary, request)})}\n\n"
                 itinerary_done = True
                 yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'searching'})}\n\n"
                 start_stress_test(itinerary)
@@ -466,7 +498,7 @@ class TravelOrchestrator:
                 # Errors are sent as section data too — the UI renders its
                 # graceful "health check unavailable" state instead of a
                 # section that never resolves.
-                yield f"data: {json.dumps({'type': 'stress_test', 'data': stress_result, 'source': 'ai'})}\n\n"
+                yield f"data: {json.dumps({'type': 'stress_test', 'data': _attach_verification('stress_test', stress_result, request), 'source': 'ai'})}\n\n"
                 if stress_result.get("error"):
                     yield f"data: {json.dumps({'type': 'agent_status', 'agent': 'stress_test', 'status': 'done'})}\n\n"
                 stress_done = True
@@ -492,11 +524,11 @@ class TravelOrchestrator:
                     logger.warning(f"Packing list agent failed: {e}")
                     packing_result = {"error": str(e)}
                 if not packing_result.get("error"):
-                    yield f"data: {json.dumps({'type': 'packing_list', 'data': packing_result, 'source': 'ai'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'packing_list', 'data': _attach_verification('packing_list', packing_result, request), 'source': 'ai'})}\n\n"
                 else:
                     # Never leave the section empty — a template list beats silence.
                     fallback_packing = self._build_fallback_packing_list(request)
-                    yield f"data: {json.dumps({'type': 'packing_list', 'data': fallback_packing, 'source': 'static'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'packing_list', 'data': _attach_verification('packing_list', fallback_packing, request, source='static'), 'source': 'static'})}\n\n"
                 packing_done = True
                 continue
 
@@ -511,7 +543,7 @@ class TravelOrchestrator:
                     logger.warning(f"Pricing advisor agent failed: {e}")
                     pricing_result = {"error": str(e)}
                 if not pricing_result.get("error"):
-                    yield f"data: {json.dumps({'type': 'pricing_advisor', 'data': pricing_result, 'source': 'ai'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'pricing_advisor', 'data': _attach_verification('pricing_advisor', pricing_result, request), 'source': 'ai'})}\n\n"
                 pricing_done = True
                 continue
 
@@ -519,8 +551,15 @@ class TravelOrchestrator:
                 name, enriched = await asyncio.wait_for(enrich_queue.get(), timeout=3)
                 enriched_count += 1
                 if enriched is not None:
-                    yield f"data: {json.dumps({'type': name, 'data': enriched, 'source': 'ai'})}\n\n"
+                    section = _attach_verification(name, enriched, request)
+                    yield f"data: {json.dumps({'type': name, 'data': section, 'source': 'ai'})}\n\n"
                     logger.info(f"Streamed enriched URLs for {name}")
+                elif name in awaiting_enrichment:
+                    # Enrichment failed — resolve the pending label on the
+                    # unenriched data rather than leaving "Checking…" forever.
+                    section = _attach_verification(name, results[name], request)
+                    yield f"data: {json.dumps({'type': name, 'data': section, 'source': 'ai'})}\n\n"
+                awaiting_enrichment.discard(name)
             except TimeoutError:
                 yield ": keepalive\n\n"
 
