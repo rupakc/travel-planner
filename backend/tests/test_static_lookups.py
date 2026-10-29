@@ -338,3 +338,39 @@ def test_home_currency_nationality_is_exact(resolve):
 def test_static_forex_busan_is_not_usd():
     fx = s.get_static_forex(_req("Busan"))
     assert fx["local_currency"]["code"] == "KRW"
+
+
+# ── ISO 3166 alpha-2 country codes ───────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("destination", "country"),
+    [
+        # ISO codes that are also US state codes (DE, CA, ID, IN)
+        ("Berlin, DE", "germany"),
+        ("Toronto, CA", "canada"),
+        ("Bali, ID", "indonesia"),
+        ("Delhi, IN", "india"),
+        ("Paris, FR", "france"),
+        ("Tokyo, JP", "japan"),
+        ("London, GB", "uk"),
+        ("Dubai, AE", "uae"),
+        ("Miami, FL", "usa"),
+        ("Los Angeles, CA", "usa"),  # California agrees with the city map
+        ("Paris, TX", None),
+        ("Paris, Texas", None),
+        ("Paris, DE", None),  # the code's country disagrees with the city map
+        # unknown city: the ISO country, else a US state
+        ("Leipzig, DE", "germany"),
+        ("Hiroshima, JP", "japan"),
+        ("Austin, TX", "usa"),
+        ("Nowhere, ZZ", None),
+    ],
+)
+def test_iso_country_codes(destination, country):
+    assert lookups(destination) == expected(country)
+
+
+def test_every_table_country_has_an_iso_code():
+    assert set(s._ISO_COUNTRY.values()) == set(s._known_countries())
+    assert all(len(code) == 2 for code in s._ISO_COUNTRY)

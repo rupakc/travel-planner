@@ -1335,9 +1335,32 @@ _REGION_COUNTRY: dict[str, str] = {
     "ontario": "canada",
     "quebec": "canada",
     "british columbia": "canada",
+    "on": "canada",
+    "qc": "canada",
+    "bc": "canada",
     "new south wales": "australia",
     "victoria": "australia",
 }
+
+
+# ISO 3166-1 alpha-2 code → table country key, for every table country.
+_ISO_COUNTRY: dict[str, str] = {
+    "ae": "uae", "ar": "argentina", "at": "austria", "au": "australia",
+    "be": "belgium", "br": "brazil", "ca": "canada", "ch": "switzerland",
+    "cl": "chile", "cn": "china", "co": "colombia", "cz": "czechia",
+    "de": "germany", "dk": "denmark", "eg": "egypt", "es": "spain",
+    "fi": "finland", "fr": "france", "gb": "uk", "gr": "greece",
+    "hk": "hong kong", "hr": "croatia", "hu": "hungary", "id": "indonesia",
+    "ie": "ireland", "il": "israel", "in": "india", "is": "iceland",
+    "it": "italy", "jo": "jordan", "jp": "japan", "ke": "kenya",
+    "kh": "cambodia", "kr": "south korea", "lk": "sri lanka", "ma": "morocco",
+    "mm": "myanmar", "mv": "maldives", "mx": "mexico", "my": "malaysia",
+    "nl": "netherlands", "no": "norway", "np": "nepal", "nz": "new zealand",
+    "pe": "peru", "ph": "philippines", "pl": "poland", "pt": "portugal",
+    "ru": "russia", "se": "sweden", "sg": "singapore", "th": "thailand",
+    "tr": "turkey", "tw": "taiwan", "us": "usa", "vn": "vietnam",
+    "za": "south africa",
+}  # fmt: skip
 
 
 # Other names for a table country key. Lookups compare whole names only.
@@ -1424,9 +1447,11 @@ def _place_country(destination: str) -> str | None:
 
     A stated known country wins. Otherwise the city's country from the city
     map — when nothing else is stated, or the stated part is a state/region
-    of that same country ("Miami, FL", "Kyoto, Kansai"), or some other
-    short code ("Paris, FR"). Otherwise a single "<city> <country>" phrase
-    like "Tokyo Japan". Never substring matching.
+    of that same country ("Miami, FL", "Kyoto, Kansai"), or an ISO
+    country code for that same country ("Berlin, DE", "Paris, FR"). An
+    unknown city with a two-letter code takes the ISO code's country
+    ("Leipzig, DE"), else a US state's ("Austin, TX"). Otherwise a single
+    "<city> <country>" phrase like "Tokyo Japan". Never substring matching.
     """
     place = normalise_place(destination)
     country, city = place["country"], place["city"]
@@ -1434,11 +1459,16 @@ def _place_country(destination: str) -> str | None:
         return country
     if city in _CITY_TO_COUNTRY:
         mapped = _CITY_TO_COUNTRY[city]
-        if country is None:
+        if country is None or _ISO_COUNTRY.get(country) == mapped:
             return mapped
         if country in _REGION_COUNTRY:
             return mapped if _REGION_COUNTRY[country] == mapped else None
-        return mapped if len(country) <= 2 else None
+        return None
+    if city and country and len(country) <= 2:
+        # Unknown city: an ISO code names its country, else a US state code
+        if country in _ISO_COUNTRY:
+            return _ISO_COUNTRY[country]
+        return "usa" if country in _US_STATES else None
     if city and country is None:
         for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
             prefix = city.removesuffix(" " + name)
