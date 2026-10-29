@@ -231,6 +231,15 @@ SQLite was chosen for operational simplicity: no separate database process to ma
 
 **Restore on startup:** On application start, if the local database files are missing or empty (as they will be on a fresh Cloud Run instance), the application downloads them from GCS before accepting traffic. This gives Cloud Run's stateless compute the behaviour of a persistent database.
 
+**Airport and place data.** The app DB (`airports.db`) also holds a comprehensive, regenerable dataset: every OurAirports airport with scheduled service (~4,000), every GeoNames place with ≥ 1,000 people (~162,000) with up to three linked airports each, their folded own and alternate names, and first-level divisions. It is generated offline (`backend/scripts/build_place_data.py`), committed under `backend/app/db/data/` (sources, licences and attribution in its README) and seeded at startup only when its version hash changes (~2 s; an unchanged startup checks it in ~5 ms). Backups exclude these tables. Every typed origin, destination and static-table lookup resolves through it, locally and synchronously:
+
+- `lookup_city_iata` (flights): code → known-code label → curated island / destination → curated served-city airports → `resolve_place` → airport display city.
+- `resolve_place` (`db/places_db.py`): one indexed name query plus one division query when something is stated; alternate names at a calibrated penalty, 3× dominance or nothing.
+- `static_results._place_country`: the curated city map first; an unknown city takes its resolved place's country ("Zermatt" → Switzerland).
+- `search_airports` (autocomplete): airports plus places by folded name prefix.
+
+Measured over the golden set: `lookup_city_iata` p50 0.54 ms / p95 0.76 ms, `_place_country` p50 0.47 ms / p95 0.71 ms, autocomplete 1.6–8 ms per query.
+
 ---
 
 ## Caching
