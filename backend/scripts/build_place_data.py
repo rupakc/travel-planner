@@ -65,7 +65,9 @@ DISPLAY_NEAREST_KM = 15
 DISPLAY_SEARCH_KM = 50
 DISPLAY_ANY_LINK_RATIO = 10  # a much bigger near place linking it anywhere
 
-_MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station)\b")
+_MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station|afb)\b")
+# Bases (not stations) never link when any civil airport is in fallback range
+_AIR_BASE_RE = re.compile(r"\b(air ?base|air force base|afb)\b")
 _ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
 _AIRPORT_WORDS = frozenset({"airport", "international", "aerodrome", "airfield"})
 
@@ -272,6 +274,10 @@ def is_military(folded_name: str) -> bool:
     )
 
 
+def _is_air_base(airport: LinkAirport) -> bool:
+    return airport.military and _AIR_BASE_RE.search(airport.folded_name) is not None
+
+
 def is_own(airport: LinkAirport, place: Place, distance: float) -> bool:
     """The airport is this place's own (``core.places.is_own_airport``)."""
     return is_own_airport(
@@ -370,6 +376,15 @@ def link_airports(
             fallback.append(((foreign,), weight, a, d, weight))
     if any(not t[2].military for t in in_reach):
         in_reach = [t for t in in_reach if not t[2].military]
+    civil_near = any(
+        not a.military
+        and d <= (SAME_COUNTRY_FALLBACK_KM if a.country_code == place.country_code
+                  else FALLBACK_KM)
+        for d, a in nearby
+    )  # fmt: skip
+    if civil_near:  # Cape May: ACY, never Dover AFB
+        in_reach = [t for t in in_reach if not _is_air_base(t[2])]
+        fallback = [t for t in fallback if not _is_air_base(t[2])]
     if not in_reach and not fallback:
         return [], False
     if in_reach and all(t[0][0] for t in in_reach):

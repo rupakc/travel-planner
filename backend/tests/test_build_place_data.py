@@ -1216,3 +1216,14 @@ def test_display_prefers_a_bigger_place_linking_the_airport_anywhere(tmp_path):
     r = _build(tmp_path, airports, cities, curated=curated)
     assert _links(r, 1)[0] == "HUB" and "SEC" in _links(r, 1)
     assert r.airports["SEC"]["city"] == "Bigcity"
+
+
+def test_air_force_bases_never_link_with_a_civil_airport_in_fallback_range(tmp_path):
+    # Cape May / DOV (Dover AFB, 60 km) vs ACY (civil, 120 km): ACY only.
+    airports = [
+        _oa("DOV", _north(_LAT, 60), _LNG, name="Dover Air Force Base"),
+        _oa("ACY", _north(_LAT, -120), _LNG, kind="medium_airport"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Cape May", _LAT, _LNG, 3_000)])
+    assert _links(r, 1) == ["ACY"]
+    assert _gen().is_military("dover afb")

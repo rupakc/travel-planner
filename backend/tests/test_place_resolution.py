@@ -155,7 +155,7 @@ def extra_place():
 def test_population_zero_places_never_resolve(extra_place):
     extra_place(990000001, "Zeroville", "DE", 0, 10**12, "BER", [("zeroville", 0)])
     assert resolve_place("Zeroville") is None
-    extra_place(990000002, "Zeroville", "FR", 1500, 10, "CDG", [("zeroville", 0)])
+    extra_place(990000002, "Zeroville", "FR", 6000, 10, "CDG", [("zeroville", 0)])
     assert resolve_place("Zeroville").country_code == "FR"  # the 0 is no rival
 
 
@@ -312,10 +312,16 @@ def test_alternate_name_rules(text, country, first):
     assert place.airports[0] in first, place.airports
 
 
-def test_small_places_do_not_compete_by_alternate_name(extra_place):
-    extra_place(990000011, "Bigalt", "DE", 90_000, 10**12, "BER", [("smallalt", 1)])
-    extra_place(990000012, "Smallalt", "FR", 2_000, 10, "CDG", [("smallalt", 0)])
-    assert resolve_place("Smallalt").country_code == "FR"
+def test_r3_a_far_bigger_alternate_joins_a_small_own_name(extra_place):
+    extra_place(990000011, "Bigalt", "DE", 200_000, 10**12, "BER", [("smallalt", 1)])
+    extra_place(990000012, "Smallalt", "FR", 6_000, 10, "CDG", [("smallalt", 0)])
+    assert resolve_place("Smallalt").country_code == "DE"  # ≥ 10×, ≥ 150k
+    extra_place(990000015, "Midalt", "DE", 90_000, 10**12, "BER", [("smallish", 1)])
+    extra_place(990000016, "Smallish", "FR", 6_000, 10, "CDG", [("smallish", 0)])
+    assert resolve_place("Smallish").country_code == "FR"  # 90k: too small
+    extra_place(990000013, "Ownbig", "FR", 30_000, 10, "CDG", [("ownbig", 0)])
+    extra_place(990000014, "Altbig", "DE", 900_000, 10**12, "BER", [("ownbig", 1)])
+    assert resolve_place("Ownbig").country_code == "FR"  # ≥ 20k blocks
 
 
 @pytest.mark.parametrize(
@@ -431,7 +437,7 @@ def test_small_places_and_country_aliases(text, result):
 
 
 def test_small_place_wins_only_alone(extra_place):
-    extra_place(990000021, "Tinytown", "DE", 3_000, 10**7, "BER", [("tinytown", 0)])
+    extra_place(990000021, "Tinytown", "DE", 6_000, 10**7, "BER", [("tinytown", 0)])
     assert resolve_place("Tinytown").country_code == "DE"  # sole candidate
     extra_place(990000022, "Tinytown", "FR", 2_000, 10, "CDG", [("tinytown", 0)])
     assert resolve_place("Tinytown") is None  # < 15k and not alone
@@ -483,5 +489,81 @@ def test_small_place_wins_only_alone(extra_place):
     ],
 )
 def test_final_re_review_hints(text, country, first):
+    place = resolve_place(text)
+    assert (place.country_code, place.airports[0]) == (country, first)
+
+
+# ── Blind-probe rulings R1–R8 ─────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Sudbury", "CA", "YSB"),  # R1/R3: the Sudbury with an airport
+        ("Knock", "IE", "NOC"),  # R1: "Ireland West Airport Knock"
+        ("Wagga Wagga", "AU", "WGA"),  # R1/R8: the town is a GeoNames PPLX
+        ("Lord Howe Island", "AU", "LDH"),
+        ("La Palma", "ES", "SPC"),  # R1: La Palma, CA has no airport of its own
+        ("La Gomera", "ES", "GMZ"),
+        ("Ixtapa", "MX", "ZIH"),
+    ],
+)
+def test_r1_airport_name_candidates(text, country, first):
+    place = resolve_place(text)
+    assert place is not None, text
+    assert (place.country_code, place.airports[0]) == (country, first)
+
+
+def test_r2_confidence_floor(extra_place):
+    # 1.2k people, only airport ~6,000 km away (fixture places sit at 0,0)
+    extra_place(990000031, "Farville", "DE", 1_200, 10**6, "BER", [("farville", 0)])
+    assert resolve_place("Farville") is None
+    extra_place(990000032, "Nearburg", "DE", 1_200, 10**6, "", [("nearburg", 0)])
+    assert resolve_place("Nearburg").country_code == "DE"  # no airport at all
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Bâle", "CH", {"BSL"}),  # R3: Basel ≥ 10× the 973-person Bale
+        ("Solo", "ID", {"SOC"}),  # R3: Surakarta
+        ("Sapa", "VN", {"HAN", "DIN"}),
+        ("Dalat", "VN", {"DLI"}),
+        ("Sion", "CH", {"SIR", "GVA", "BRN"}),
+        ("Olbia", "IT", {"OLB"}),
+    ],
+)
+def test_r3_alternates_and_exonyms(text, country, first):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == country, place
+    assert place.airports[0] in first, place.airports
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [("St. John's, Newfoundland", "CA"), ("George Town, Penang", "MY")],
+)
+def test_r5_qualifier_prefix_matches_a_division(text, country):
+    assert resolve_place(text).country_code == country
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Saba", "BQ", "SAB"),
+        ("Tanna", "VU", "TAH"),
+        ("Wallis", "WF", "WLS"),
+        ("Åland", "FI", "MHQ"),
+        ("Orkney", "GB", "KOI"),
+        ("Java", "ID", "CGK"),
+        ("Ilha Grande", "BR", "GIG"),
+        ("Monteverde", "CR", "LIR"),
+        ("Copper Canyon", "MX", "CUU"),
+        ("Mount Rainier", "US", "SEA"),
+        ("Cabo", "MX", "SJD"),
+        ("El Hierro", "ES", "VDE"),
+    ],
+)
+def test_blind_probe_hints(text, country, first):
     place = resolve_place(text)
     assert (place.country_code, place.airports[0]) == (country, first)

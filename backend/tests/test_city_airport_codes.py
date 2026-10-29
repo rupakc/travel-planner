@@ -656,3 +656,31 @@ def test_unresolved_lower_case_three_letters_only_real_codes(typed, codes):
 
 def test_all_caps_codes_still_pass_through():
     assert lookup_city_iata("NYC") == "NYC"
+
+
+# ── Blind-probe rulings: qualifier vs curated (R4), shorthand (R5) ────────
+
+
+@pytest.mark.parametrize(
+    ("place", "first"),
+    [
+        ("George Town, Penang", "PEN"),  # R4: not the curated Cayman row
+        ("SF", "SFO"),
+        ("LA", "LAX"),
+        ("KL", "KUL"),
+        ("HCMC", "SGN"),
+        ("NOLA", "MSY"),
+        ("Twin Cities", "MSP"),
+        ("St. John's, Newfoundland", "YYT"),
+        ("Wagga Wagga", "WGA"),
+        ("Knock", "NOC"),
+    ],
+)
+def test_blind_probe_lookups(place, first):
+    assert lookup_city_iata(place).split(",")[0] == first
+
+
+def test_lord_howe_and_wagga_have_countries():
+    from app.agents.static_results import _place_country
+
+    assert _place_country("Lord Howe Island") == "australia"

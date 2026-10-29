@@ -10,6 +10,7 @@ import csv
 import functools
 import logging
 import math
+import re
 import sqlite3
 from dataclasses import dataclass, replace
 
@@ -38,6 +39,20 @@ MIN_ALT_NAME_LENGTH = 4
 # A place this small wins only alone, curated or hinted ("Praslin", Saint
 # Lucia; "Gap", Pennsylvania).
 SMALL_PLACE_POPULATION = 15_000
+# R2: a winner this small whose nearest airport is over CONFIDENCE_KM away is
+# a guess (Monteverde, Italy for the Costa Rican cloud forest) → None.
+CONFIDENCE_POPULATION = 5_000
+CONFIDENCE_KM = 100.0
+# R3: an alternate-name place joins when the best own-name place is under
+# ALT_JOIN_POPULATION people and it has ALT_JOIN_RATIO× as many (Sapa, Solo,
+# Bâle); a bigger own-name place keeps alternates out (Olbia).
+ALT_JOIN_POPULATION = 20_000
+ALT_JOIN_RATIO = 10
+# ... and only an alternate-name place this big (Placencia, Belize is not
+# Piacenza's "Placencia"; Samaná is not Samana, Punjab)
+ALT_JOIN_MIN_POPULATION = 150_000
+# R1: words dropped from airport names before matching a typed name.
+_AIRPORT_GENERIC = frozenset({"airport", "international", "regional", "aerodrome"})
 # A town scoring at least 1/20 of a same-named division's top place keeps
 # the division out ("Canterbury" is the English city, not New Zealand's
 # region; "Florida", Uruguay is far smaller than Florida's Jacksonville).
@@ -193,6 +208,16 @@ def _stated_meanings(conn: sqlite3.Connection, stated: list[str]) -> list[_State
         segment, only_cc = lookups[row["folded_name"]]
         cc, _, admin = row["code"].partition(".")
         if only_cc is None or cc == only_cc:
+            found[segment].add((cc, admin))
+    for segment in stated:
+        if found[segment] or stated_countries(segment) or stated_region(segment):
+            continue
+        # "Newfoundland" → "Newfoundland and Labrador" (word-boundary prefix)
+        for row in conn.execute(
+            "SELECT code FROM admin1 WHERE folded_name >= ? AND folded_name < ?",
+            (segment + " ", segment + " \uffff"),
+        ):
+            cc, _, admin = row["code"].partition(".")
             found[segment].add((cc, admin))
     meanings = []
     for segment in stated:
@@ -395,21 +420,97 @@ def _exonym(conn: sqlite3.Connection, city: str) -> Place | str | None:
     return None
 
 
-def _winner(candidates: list[Place], curated: frozenset[str]) -> Resolution:
+@functools.cache
+def _airport_names() -> tuple[dict[str, tuple[str, ...]], dict[str, tuple]]:
+    """Scheduled airports by word-boundary prefixes of their folded name
+    without generic words ("La Palma Airport" → "la palma"), biggest type
+    first, and code → (country, folded display city, folded name)."""
+    from .seed_airports import PLACE_DATA_DIR
+
+    keys: dict[str, list[str]] = {}
+    info: dict[str, tuple] = {}
+    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
+        rows = [r for r in csv.DictReader(f) if r["scheduled"] == "1"]
+    rows.sort(key=lambda r: (int(r["type_rank"]), r["iata"]))
+    for r in rows:
+        folded = fold_place(r["name"])
+        info[r["iata"]] = (
+            r["country_code"],
+            fold_place(r["city"]),
+            folded,
+            int(r["type_rank"]),
+        )
+        words = [w for w in re.sub(r"[^\w ]", " ", folded).split()]
+        words = [w for w in words if w not in _AIRPORT_GENERIC]
+        for n in range(1, len(words) + 1):  # word-boundary prefixes
+            keys.setdefault(" ".join(words[:n]), []).append(r["iata"])
+    return {k: tuple(v) for k, v in keys.items()}, info
+
+
+def _airport_name_candidate(
+    city: str, stated: list[str], meanings: list["_Stated"]
+) -> Place | None:
+    """R1: scheduled airports named so, in one country (and any stated
+    country), as a candidate place."""
+    names, info = _airport_names()
+    codes = [
+        c
+        for c in names.get(city, ())
+        if all(
+            info[c][0] in m.countries or any(cc == info[c][0] for cc, _ in m.admin1)
+            for m in meanings
+        )
+    ]
+    if codes:  # the biggest type only (SPC, not Panama's small La Palma)
+        best = min(info[c][3] for c in codes)
+        codes = [c for c in codes if info[c][3] == best]
+    countries = {info[c][0] for c in codes}
+    if len(countries) != 1:
+        return None
+    return Place(name=city, country_code=countries.pop(), airports=tuple(codes[:3]))
+
+
+def _is_small(named: Place) -> bool:
+    """Every airport of an airport-name candidate is a small field."""
+    _names, info = _airport_names()
+    return all(info[c][3] >= 2 for c in named.airports)
+
+
+def _weak_against_airport(place: Place, small_airport: bool = False) -> bool:
+    """R1: a place an airport named like the text beats: under 15k people,
+    or every airport over 100 km away ("Wagga Wagga", "Lord Howe Island",
+    "Saba"-style islands whose namesakes are villages)."""
+    if not place.airports:
+        return True
+    far = min(airport_distance_km(place, c) for c in place.airports) > CONFIDENCE_KM
+    if small_airport:  # a small field (Lerwick / Tingwall) only beats a
+        return far  # namesake with no airport within 100 km
+    return place.population < SMALL_PLACE_POPULATION or far
+
+
+def _winner(
+    candidates: list[Place], curated: frozenset[str], qualified: bool = False
+) -> Resolution:
     """Dominance over all candidates; when none dominates, over those with an
     airport in reach. A place under ``SMALL_PLACE_POPULATION`` wins only
-    alone or in a curated country."""
+    alone or in a curated country; one under ``CONFIDENCE_POPULATION`` whose
+    nearest airport is over ``CONFIDENCE_KM`` away only alone with a stated
+    qualifier."""
     result = _pick(candidates)
     if result.ambiguous:
         result = _pick(_reachable(candidates))
     place = result.place
-    if (
-        place is not None
-        and place.population < SMALL_PLACE_POPULATION
-        and len(candidates) > 1
-        and place.country_code not in curated
-    ):
+    if place is None or place.country_code in curated:
+        return result
+    if place.population < SMALL_PLACE_POPULATION and len(candidates) > 1:
         return Resolution(None, ambiguous=True)
+    if (
+        place.population < CONFIDENCE_POPULATION
+        and place.airports
+        and not (qualified and len(candidates) == 1)
+        and min(airport_distance_km(place, c) for c in place.airports) > CONFIDENCE_KM
+    ):
+        return Resolution(None, ambiguous=True)  # R2: a guess
     return result
 
 
@@ -447,19 +548,40 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
         return Resolution(top[0] if top else None)
     own, alternates = _name_candidates(conn, names)
     own, alternates = admitted(own), admitted(alternates)
-    # alternates only when no place has the name as its own
-    candidates = own or alternates
+    # alternates only when no place has the name as its own, or (R3) when
+    # the own-name places are small and the alternate one far bigger
+    candidates = list(own or alternates)
+    biggest = max((p.population for p in own), default=0)
+    if own and biggest < ALT_JOIN_POPULATION:
+        candidates += [
+            p
+            for p in alternates
+            if p.population >= ALT_JOIN_RATIO * max(biggest, 1)
+            and p.population >= ALT_JOIN_MIN_POPULATION
+        ]
     town = max((p.score for p in own), default=0)
     if divisions and town * DIVISION_BLOCK_RATIO >= max(d.score for d in divisions):
         divisions = []  # "Santa Fe", "Canterbury": the cities, not the regions
     known = {p.geonameid for p in candidates}
     candidates += [d for d in admitted(divisions) if d.geonameid not in known]
+    named = _airport_name_candidate(city, stated, meanings)
+    if named is not None:
+        strong = [
+            p
+            for p in candidates
+            if p.division
+            or p.country_code in curated
+            or not _weak_against_airport(p, small_airport=_is_small(named))
+        ]
+        if not strong:
+            return Resolution(named)  # R1: "Wagga Wagga", "Lord Howe Island"
+        candidates = strong
     if meanings and not candidates:
         return Resolution(None)  # "Berlin, Japan"
     preferred = [p for p in candidates if p.country_code in curated]
     if not preferred:
-        return _winner(candidates, curated)
-    result = _winner(preferred, curated)
+        return _winner(candidates, curated, bool(stated))
+    result = _winner(preferred, curated, bool(stated))
     if result.place and _bigger_namesake(result.place, _reachable(candidates)):
         return Resolution(None, ambiguous=True, contested=True)
     return result

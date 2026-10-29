@@ -506,6 +506,15 @@ def _lookup_place(stripped: str, max_codes: int) -> str | None:
         stated,
     )
     codes: list[str] = []
+    if (
+        curated
+        and stated
+        and place
+        and place.country_code != curated[0]["country_code"]
+    ):
+        # R4: the stated qualifier puts the place in another country than
+        # the curated city ("George Town, Penang" is not Grand Cayman's)
+        curated = None
     if curated:
         if resolution.contested:
             return None  # "Valencia": Spain's, or Venezuela's bigger one
@@ -618,6 +627,9 @@ _AUTOCOMPLETE_ALT_SHARE = 0.01
 # Queries this short suggest places only by exact name or with this many
 # people ("sky" is not every Skyline / Skyland).
 _SHORT_QUERY = 3
+# An airport whose own name starts with the query ranks like a place of
+# this score, by size ("kili" → Kilimanjaro International before Kilis).
+_AIRPORT_NAME_SCORE = {0: 1e9, 1: 1e8, 2: 1e7}
 _SHORT_QUERY_MIN_POPULATION = 100_000
 
 
@@ -629,7 +641,7 @@ def _autocomplete_places(
     score, position in the place's links, place name or None for a curated
     hint, the place's country or None for a hint), and each matched name's
     best score. Own names match by prefix; alternate names of places with
-    ≥ 100k people by prefix from five letters ("münch" → München), else
+    ≥ 100k people by prefix from four letters ("münch" → München), else
     whole ("milano"). Only places scoring ≥ 1/10 of the best match count
     ("milan": not Milan, Michigan)."""
     from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS, REGION_HINTS
@@ -637,8 +649,10 @@ def _autocomplete_places(
     linked: dict[str, tuple] = {}
     name_score: dict[str, float] = {}
 
-    def add(name, codes, score, place_cc=None, hint=False):
-        cls = _EXACT_NAME if name == folded else _NAME_PREFIX
+    def add(name, codes, score, place_cc=None, hint=False, small=False):
+        # a village's exact name is only a prefix-class match ("bucu" is
+        # Bucharest's București before the hamlet Bucu)
+        cls = _EXACT_NAME if name == folded and not small else _NAME_PREFIX
         name_score[name] = max(score, name_score.get(name, 0.0))
         for pos, code in enumerate(codes):
             known = linked.get(code)
@@ -657,14 +671,15 @@ def _autocomplete_places(
         return linked, name_score
     end = folded + "\uffff"
     rows = conn.execute(
-        "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code "
+        "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code,"
+        " p.population "
         "FROM place_names n JOIN places p ON p.geonameid = n.geonameid "
         "WHERE p.population > 0 AND p.airports != '' "
         "AND (length(:q) > :short OR n.name_folded = :q OR p.population >= :big) "
         "AND ("
         "(n.tier = 0 AND n.name_folded >= :q AND n.name_folded < :end) "
         "OR (n.tier = 1 AND n.name_folded = :q AND length(:q) >= 4) "
-        "OR (n.tier = 1 AND length(:q) >= 5 AND p.population >= 100000"
+        "OR (n.tier = 1 AND length(:q) >= 4 AND p.population >= 100000"
         " AND n.name_folded >= :q AND n.name_folded < :end)) "
         "ORDER BY p.score DESC LIMIT :n",
         {
@@ -683,7 +698,13 @@ def _autocomplete_places(
         if hint_country and r["country_code"] != hint_country:
             continue
         if sc * _AUTOCOMPLETE_MIN_SHARE >= best:
-            add(r["name_folded"], r["airports"].split(), sc, r["country_code"])
+            add(
+                r["name_folded"],
+                r["airports"].split(),
+                sc,
+                r["country_code"],
+                small=r["population"] < 15_000,
+            )
     return linked, name_score
 
 
@@ -717,9 +738,9 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
             {
                 "upper": upper,
                 "code_prefix": f"{upper}%",
-                # one or two letters: prefixes only (a contains-match on
-                # "a" is most of the table)
-                "like": f"{q}%" if len(q) < 3 else f"%{q}%",
+                # up to three letters: prefixes only (a contains-match on
+                # "a" is most of the table; "sky" is in many airport names)
+                "like": f"{q}%" if len(q) < 4 else f"%{q}%",
                 **{f"p{i}": code for i, code in enumerate(linked)},
             },
         ).fetchall()
@@ -729,7 +750,7 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         and not q.isupper()
         and any(v[0] == _EXACT_NAME for v in linked.values())
     )
-    needle = folded if len(q) >= 3 else None
+    needle = folded if len(q) >= 4 else None
 
     def rank(r: sqlite3.Row) -> tuple | None:
         code, city = r["iata_code"], fold_place(r["city"])
@@ -742,6 +763,11 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
             cls = _EXACT_NAME
         elif city.startswith(folded):
             cls = _NAME_PREFIX
+        elif needle and fold_place(r["name"] or "").startswith(needle):
+            # the airport's own name ("kili" → Kilimanjaro International),
+            # ranked like a place of its size
+            cls = _NAME_PREFIX
+            score = _AIRPORT_NAME_SCORE.get(r["type_rank"], 0.0)
         else:
             cls, score = _OTHER, 0.0
         link = linked.get(code)
@@ -759,7 +785,8 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         ):
             return None  # matched only through a dropped place link
         type_rank = r["type_rank"] if r["type_rank"] is not None else 9
-        return (cls, -score, curated.get(code, len(curated)), pos, type_rank, r["name"])
+        # R7: a place's bigger airport before its smaller ones ("bucu" → OTP)
+        return (cls, -score, type_rank, curated.get(code, len(curated)), pos, r["name"])
 
     ranked = []
     for r in rows:
@@ -769,5 +796,8 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         if key is not None:
             ranked.append((key, r))
     ranked.sort(key=lambda kr: kr[0])
+    if ranked and ranked[0][0][0] < _OTHER:
+        # R7: no padding with mere "contains" matches below real ones
+        ranked = [kr for kr in ranked if kr[0][0] < _OTHER]
     keys = ("iata_code", "name", "city", "country", "country_code")
     return [{k: r[k] for k in keys} for _, r in ranked[:limit]]

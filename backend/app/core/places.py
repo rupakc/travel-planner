@@ -150,6 +150,12 @@ CITY_ALIASES: dict[str, str] = {
     "saigon": "Ho Chi Minh City",
     "bombay": "Mumbai",
     "rio": "Rio de Janeiro",
+    "sf": "San Francisco",
+    "la": "Los Angeles",
+    "kl": "Kuala Lumpur",
+    "hcmc": "Ho Chi Minh City",
+    "nola": "New Orleans",
+    "twin cities": "Minneapolis",
     "fez": "Fes",
     "venezia": "Venice",
 }
@@ -273,6 +279,19 @@ ISLAND_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "turks and caicos": ("TC", ("PLS", "GDT")),
     "providenciales": ("TC", ("PLS",)),
     "vieques": ("PR", ("VQS",)),
+    "saba": ("BQ", ("SAB",)),
+    "tanna": ("VU", ("TAH",)),
+    "wallis": ("WF", ("WLS",)),
+    "wallis and futuna": ("WF", ("WLS",)),
+    "aland": ("FI", ("MHQ",)),
+    "aland islands": ("FI", ("MHQ",)),
+    "orkney": ("GB", ("KOI",)),
+    "orkney islands": ("GB", ("KOI",)),
+    "java": ("ID", ("CGK", "SUB", "YIA")),
+    "ilha grande": ("BR", ("GIG",)),
+    "el hierro": ("ES", ("VDE",)),
+    "la palma": ("ES", ("SPC",)),
+    "la gomera": ("ES", ("GMZ",)),
 }
 
 # Landmarks, parks and resorts (folded name) → (ISO country, the scheduled
@@ -344,6 +363,16 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "al ula": ("SA", ("ULH",)),
     "morzine": ("FR", ("GVA",)),
     "vail": ("US", ("EGE",)),
+    "monteverde": ("CR", ("LIR", "SJO")),
+    "copper canyon": ("MX", ("CUU",)),
+    "mount rainier": ("US", ("SEA",)),
+    "cabo": ("MX", ("SJD",)),
+    "ixtapa": ("MX", ("ZIH",)),
+    "sapa": ("VN", ("HAN", "DIN")),
+    "sa pa": ("VN", ("HAN", "DIN")),
+    "placencia": ("BZ", ("PLJ",)),
+    "samana": ("DO", ("AZS",)),
+    "knock": ("IE", ("NOC",)),
 }
 
 # Regions that are not first-level divisions (counties, coasts, mountain
@@ -366,6 +395,7 @@ REGION_HINTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "scottish highlands": ("GB", ("INV",)),
     "napa": ("US", ("SFO", "OAK")),
     "napa valley": ("US", ("SFO", "OAK")),
+    "kyushu": ("JP", ("FUK",)),
 }
 
 # Exonyms and other spellings (folded) whose own-name namesakes would win
@@ -396,7 +426,8 @@ EXONYMS: dict[str, int | str] = {
     "aix": 3038354, "louvain": 2792482, "malines": 2791537,
     "belgrad": 792680, "bucuresti": 683506, "sofiya": 727011,
     "ismir": 311046, "quebec city": 6325494, "port elizabeth": 964420,
-    "genova": 3176219, "baroda": 1253573,
+    "genova": 3176219, "baroda": 1253573, "sion": 2658576, "dalat": 1584071,
+    "sudbury": 5964700,
     "odessa": "ambiguous", "smyrna": "ambiguous", "canton": 1809858,
 }  # fmt: skip
 

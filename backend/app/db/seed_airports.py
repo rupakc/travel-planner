@@ -4142,6 +4142,16 @@ AIRPORTS = [
     ("NUM", "OENN", "Neom Bay Airport", "Neom", "Saudi Arabia", "SA", 27.9243, 35.2936),
     # Served-city overrides (final review): the computed display city is a
     # suburb, hamlet or neighbouring town.
+    (
+        "WGA",
+        "YSWG",
+        "Wagga Wagga Airport",
+        "Wagga Wagga",
+        "Australia",
+        "AU",
+        -35.1653,
+        147.466,
+    ),  # the town is a GeoNames PPLX, not a place row
     ("KZR", "LTBZ", "Zafer Airport", "Kütahya", "Turkey", "TR", 39.11111, 30.1304),
     (
         "QOW",

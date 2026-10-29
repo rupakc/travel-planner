@@ -122,3 +122,15 @@ def test_short_junk_queries_stay_small():
 @pytest.mark.parametrize(("q", "codes"), [("yorkshire", ["LBA"]), ("sylt", ["GWT"])])
 def test_exact_hint_keeps_namesakes_abroad_out(q, codes):
     assert _codes(q) == codes
+
+
+@pytest.mark.parametrize(
+    ("q", "code", "within"), [("kili", "JRO", 2), ("bucu", "OTP", 1)]
+)
+def test_r7_prefix_matches_prefer_big_airports(q, code, within):
+    assert code in _codes(q)[:within], _codes(q)
+
+
+def test_r7_no_padding_below_relevance():
+    # nothing that only contains the text when real prefix matches exist
+    assert "PHX" not in _codes("sky")
