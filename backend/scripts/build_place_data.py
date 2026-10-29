@@ -17,6 +17,7 @@ import csv
 import gzip
 import io
 import math
+import re
 import sys
 import time
 import unicodedata
@@ -47,7 +48,25 @@ SAME_COUNTRY_FALLBACK_KM = 200
 FALLBACK_KM = 150
 MAX_LINKS = 3
 MAX_FALLBACK_LINKS = 2
-DISPLAY_CITY_NEAR_KM = 30
+ADMIN1_TIE_RATIO = 1.25
+ADMIN1_PROXY_KM = 50  # an airport's admin1 = that of the nearest place within
+
+# Display-city chain distances (km).
+DISPLAY_NAME_MATCH_KM = 40
+DISPLAY_FIRST_LINK_KM = 40
+DISPLAY_NEAREST_KM = 15
+DISPLAY_SEARCH_KM = 50
+
+_MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station)\b")
+# Words that alone never identify a place inside an airport name.
+_GENERIC_WORDS = frozenset(
+    "airport international regional national municipal domestic airfield "
+    "aerodrome field airstrip airpark county city town de del la le el al "
+    "san santa saint st new port north south east west central island lake "
+    "river airbase air base".split()
+)
+_NON_WORD_RE = re.compile(r"[^\w ]")
+_AIRPORT_WORDS = frozenset({"airport", "international", "aerodrome", "airfield"})
 
 ALT_NAMES_MIN_POPULATION = 15_000
 ALT_NAME_MAX_LEN = 40
@@ -100,11 +119,20 @@ def notability_score(population: int, alt_name_count: int, feature_code: str) ->
     return population * (alt_name_count + 1) ** 2 * capital
 
 
+# Non-letters an alternate name may contain: spaces, apostrophes, dashes, dots.
+_NAME_PUNCTUATION = frozenset(" '’‘ʼʻ`-–—.·")
+
+
 def is_latin(text: str) -> bool:
-    """Every letter in the text is a Latin-script letter."""
-    return all(
-        not ch.isalpha() or unicodedata.name(ch, "").startswith("LATIN") for ch in text
-    )
+    """A plain Latin-script name: Latin letters (with accents), spaces,
+    apostrophes, dashes and dots only — no digits, brackets or symbols."""
+    for ch in text:
+        if ch.isalpha():
+            if not unicodedata.name(ch, "").startswith("LATIN"):
+                return False
+        elif not (unicodedata.combining(ch) or ch in _NAME_PUNCTUATION):
+            return False
+    return True
 
 
 def _is_code(text: str) -> bool:
@@ -117,16 +145,15 @@ def _is_url(text: str) -> bool:
 
 
 def filter_alt_names(raw: str, own_folded: str) -> list[str]:
-    """GeoNames' comma-joined alternate names, kept when Latin-script, ≤ 40
-    characters and not a URL or code; folded, de-duplicated, sorted and
-    without the place's own folded name."""
+    """GeoNames' comma-joined alternate names, kept when plain Latin-script
+    (see ``is_latin``), ≤ 40 characters and not a URL or code; folded,
+    de-duplicated, sorted and without the place's own folded name."""
     kept = set()
     for name in raw.split(","):
         name = name.strip()
         if (
             not name
             or len(name) > ALT_NAME_MAX_LEN
-            or "|" in name
             or _is_url(name)
             or _is_code(name)
             or not is_latin(name)
@@ -150,28 +177,20 @@ def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return 2 * _EARTH_RADIUS_KM * math.asin(min(1.0, math.sqrt(h)))
 
 
-# ── Airport index and linking ──────────────────────────────────────────────
+# ── Spatial index ──────────────────────────────────────────────────────────
 
 
-@dataclass(frozen=True)
-class LinkAirport:
-    iata: str
-    type_rank: int
-    lat: float
-    lng: float
-    country_code: str = ""
+class GeoIndex:
+    """Items with ``lat``/``lng`` bucketed in 1° cells for radius queries."""
 
-
-class AirportIndex:
-    """Scheduled airports bucketed in 1° cells for radius queries."""
-
-    def __init__(self, airports: list[LinkAirport]):
-        self._cells: dict[tuple[int, int], list[LinkAirport]] = defaultdict(list)
-        for a in airports:
-            self._cells[(math.floor(a.lat), math.floor(a.lng))].append(a)
+    def __init__(self, items, key):
+        self._key = key
+        self._cells: dict[tuple[int, int], list] = defaultdict(list)
+        for item in items:
+            self._cells[(math.floor(item.lat), math.floor(item.lng))].append(item)
 
     def within(self, lat: float, lng: float, radius_km: float):
-        """(distance, airport) pairs within the radius, nearest first."""
+        """(distance, item) pairs within the radius, nearest first."""
         dlat = math.ceil(radius_km / _KM_PER_DEG_LAT)
         extreme = abs(lat) + dlat + 1
         if extreme >= 89:
@@ -191,45 +210,155 @@ class AirportIndex:
         found = []
         for y in range(base_lat - dlat, base_lat + dlat + 1):
             for x in lng_cells:
-                for a in self._cells.get((y, x), ()):
-                    d = distance_km(lat, lng, a.lat, a.lng)
+                for item in self._cells.get((y, x), ()):
+                    d = distance_km(lat, lng, item.lat, item.lng)
                     if d <= radius_km:
-                        found.append((d, a))
-        found.sort(key=lambda pair: (pair[0], pair[1].iata))
+                        found.append((d, item))
+        found.sort(key=lambda pair: (pair[0], self._key(pair[1])))
         return found
 
 
+@dataclass(frozen=True)
+class LinkAirport:
+    iata: str
+    type_rank: int
+    lat: float
+    lng: float
+    country_code: str = ""
+    curated: bool = False
+    folded_name: str = ""
+    display: str = ""  # folded provisional display city
+    admin1: str = ""  # GeoNames admin1 of the nearest same-country place
+
+
+@dataclass
+class Place:
+    geonameid: str
+    name: str
+    ascii_name: str
+    country_code: str
+    admin1: str
+    population: int
+    score: int
+    lat: float
+    lng: float
+    folded: str
+    raw_alts: str = ""
+    links: list = field(default_factory=list)  # [(iata, km)]
+    in_reach: bool = False
+
+    @property
+    def rank(self) -> tuple:
+        return (self.score, self.population, -_int(self.geonameid))
+
+
+def _airport_index(airports) -> GeoIndex:
+    return GeoIndex(airports, key=lambda a: a.iata)
+
+
+# ── Linking ────────────────────────────────────────────────────────────────
+
+
+def is_military(folded_name: str) -> bool:
+    """An airport named only as an air base / air station (OurAirports marks
+    some as scheduled). Joint civil fields ("Cheongju International Airport/
+    Cheongju Air Base") also say "airport" and are not military."""
+    return (
+        _MILITARY_RE.search(folded_name) is not None
+        and " airport" not in f" {folded_name}"
+    )
+
+
+def words_in(folded_name: str, folded_text: str) -> bool:
+    """The folded name occurs as whole words in the folded text, and is not
+    made only of generic airport/geography words."""
+    if not folded_name or set(folded_name.split()) <= _GENERIC_WORDS:
+        return False
+    words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
+    return f" {folded_name} " in f" {words} "
+
+
+def is_own(airport: LinkAirport, place: Place) -> bool:
+    """The airport is this place's own: its display city is the place, or
+    its name contains the place name ("Basel" for BSL in France)."""
+    return airport.display == place.folded or words_in(
+        place.folded, airport.folded_name
+    )
+
+
+def _prefer_same_admin1(ranked: list, place: Place) -> list:
+    """Swap neighbours so a same-admin1 airport goes first when the two are
+    near-equal (weights within 1.25×) and in the same preference group."""
+    ranked = list(ranked)
+    for i in range(len(ranked) - 1):
+        (ga, wa, a), (gb, wb, b) = ranked[i], ranked[i + 1]
+        if (
+            ga == gb
+            and a.admin1 != place.admin1
+            and b.admin1 == place.admin1
+            and wb <= ADMIN1_TIE_RATIO * wa
+        ):
+            ranked[i], ranked[i + 1] = ranked[i + 1], ranked[i]
+    return ranked
+
+
 def link_airports(
-    lat: float, lng: float, population: int, index: AirportIndex, country_code: str = ""
-) -> list[tuple[str, float]]:
-    """A place's airports as (iata, km): those in reach for their type
-    (large 80 km, or 100 km for a 1M+ place with no large airport within
-    50 km; medium 50 km; small 30 km), ranked by (type, distance), ≤ 3.
-    None in reach → the place's own country's large/medium airports within
-    200 km (≤ 2, by type then distance); else the nearest large/medium
-    airports in any country within 150 km (≤ 2)."""
-    nearby = index.within(lat, lng, SAME_COUNTRY_FALLBACK_KM)
+    place: Place, index: GeoIndex
+) -> tuple[list[tuple[str, float]], bool]:
+    """A place's airports as ([(iata, km)], in_reach).
+
+    In reach per type: large 80 km (100 km for a 1M+ place with no large
+    airport within 50 km), medium 50 km, small 30 km; ranked by
+    (foreign, not own, not curated, distance / reach), ≤ 3 — "own" being an
+    airport whose display city is the place or whose name contains it. None in reach → large /
+    medium airports within 200 km (own country) or 150 km (foreign), ranked by
+    (foreign, distance), ≤ 2. Near-equal neighbours prefer the place's admin1.
+    """
+    nearby = index.within(place.lat, place.lng, SAME_COUNTRY_FALLBACK_KM)
     close_large = any(a.type_rank == 0 and d <= CLOSE_LARGE_KM for d, a in nearby)
-    big = population >= BIG_CITY_POPULATION and not close_large
+    big = place.population >= BIG_CITY_POPULATION and not close_large
     reach = {
         0: LARGE_REACH_BIG_CITY_KM if big else LARGE_REACH_KM,
         1: MEDIUM_REACH_KM,
         2: SMALL_REACH_KM,
     }
-    in_reach = sorted(
-        (a.type_rank, d, a.iata) for d, a in nearby if d <= reach[a.type_rank]
-    )
-    if in_reach:
-        return [(iata, d) for _, d, iata in in_reach[:MAX_LINKS]]
-    own = sorted(
-        (a.type_rank, d, a.iata)
-        for d, a in nearby
-        if a.type_rank <= 1 and country_code and a.country_code == country_code
-    )
-    if own:
-        return [(iata, d) for _, d, iata in own[:MAX_FALLBACK_LINKS]]
-    fallback = [(a.iata, d) for d, a in nearby if a.type_rank <= 1 and d <= FALLBACK_KM]
-    return fallback[:MAX_FALLBACK_LINKS]
+    in_reach = []
+    fallback = []
+    for d, a in nearby:
+        own = is_own(a, place)
+        foreign = a.country_code != place.country_code and not own
+        if d <= reach[a.type_rank]:
+            weight = d / reach[a.type_rank]
+            in_reach.append(((foreign, not own, not a.curated), weight, a, d))
+        elif a.type_rank <= 1 and d <= (
+            FALLBACK_KM if foreign else SAME_COUNTRY_FALLBACK_KM
+        ):
+            fallback.append(((foreign,), d, a, d))
+    if not in_reach and not fallback:
+        return [], False
+    pool, limit = (in_reach, MAX_LINKS) if in_reach else (fallback, MAX_FALLBACK_LINKS)
+    pool.sort(key=lambda t: (t[0], t[1], t[2].iata))
+    dist = {t[2].iata: t[3] for t in pool}
+    ranked = _prefer_same_admin1([(g, w, a) for g, w, a, _ in pool], place)
+    return [(a.iata, dist[a.iata]) for _, _, a in ranked[:limit]], bool(in_reach)
+
+
+# ── Display names ──────────────────────────────────────────────────────────
+
+
+def display_name(name: str, ascii_name: str = "") -> str:
+    """A place name for display: the ASCII spelling when the name has letters
+    beyond Latin Extended-A (scholarly transliterations like "Marsá Maţrūḩ"),
+    cut at the first comma."""
+    if ascii_name and any(ord(ch) > 0x17F for ch in name):
+        name = ascii_name
+    return " ".join(name.split(",", 1)[0].split())
+
+
+def airport_name_city(name: str) -> str:
+    """Last-resort display city: the airport name without generic words."""
+    words = [w for w in name.split() if w.lower() not in _AIRPORT_WORDS]
+    return " ".join(words) or name.strip()
 
 
 # ── Source readers ─────────────────────────────────────────────────────────
@@ -250,6 +379,30 @@ def _int(text: str) -> int:
         return int(text)
     except ValueError:
         return 0
+
+
+def _read_places(cities_path: Path) -> list[Place]:
+    places = []
+    for f in _read_tsv(Path(cities_path)):
+        if len(f) < 15 or f[7] in EXCLUDED_FEATURE_CODES:
+            continue
+        population = _int(f[14])
+        places.append(
+            Place(
+                geonameid=f[0],
+                name=f[1],
+                ascii_name=f[2],
+                country_code=f[8],
+                admin1=f[10],
+                population=population,
+                score=notability_score(population, _raw_alt_count(f[3]), f[7]),
+                lat=float(f[4]),
+                lng=float(f[5]),
+                folded=fold_place(f[1]),
+                raw_alts=f[3],
+            )
+        )
+    return places
 
 
 # ── Build ──────────────────────────────────────────────────────────────────
@@ -278,6 +431,38 @@ def _curated_country_names(curated) -> dict[str, str]:
         if row[5]:
             names.setdefault(row[5], row[4])
     return names
+
+
+def _best(candidates):
+    """The highest-ranked place of an iterable, or None."""
+    return max(candidates, key=lambda p: p.rank, default=None)
+
+
+def _computed_city(a: dict, places_near, first_link_places, municipality: str):
+    """Display city chain for one airport (curated aside) as (city, rule)."""
+    same = [(d, p) for d, p in places_near if p.country_code == a["country_code"]]
+    folded_name = fold_place(a["name"])
+    steps = (
+        ("name", lambda: _best(
+            p for d, p in same if d <= DISPLAY_NAME_MATCH_KM
+            and words_in(p.folded, folded_name)
+        )),
+        ("first-link", lambda: _best(
+            p for d, p in same if d <= DISPLAY_FIRST_LINK_KM
+            and p.geonameid in first_link_places
+        )),
+        ("nearest", lambda: next(
+            (p for d, p in same if d <= DISPLAY_NEAREST_KM), None
+        )),
+    )  # fmt: skip
+    for rule, pick in steps:
+        place = pick()
+        if place:
+            return display_name(place.name, place.ascii_name), rule
+    city = clean_municipality(municipality)
+    if city:
+        return city, "municipality"
+    return airport_name_city(a["name"]), "airport-name"
 
 
 def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildResult:
@@ -341,76 +526,92 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
             "lng": float(cur[7]),
         }
 
-    index = AirportIndex(
-        [
-            LinkAirport(
-                a["iata"], a["type_rank"], a["lat"], a["lng"], a["country_code"]
-            )
-            for a in airports.values()
-            if a["scheduled"]
-        ]
-    )
+    places = _read_places(cities_path)
+    place_index = GeoIndex(places, key=lambda p: _int(p.geonameid))
+    near = {
+        iata: place_index.within(a["lat"], a["lng"], DISPLAY_SEARCH_KM)
+        for iata, a in airports.items()
+    }
 
-    # Places, their links and, per airport, the best same-country place that
-    # links it first (``first_place``) or links it from within 30 km
-    # (``near_place``).
-    airport_country = {code: a["country_code"] for code, a in airports.items()}
-    first_place: dict[str, tuple[tuple, str]] = {}
-    near_place: dict[str, tuple[tuple, str]] = {}
-    for f in _read_tsv(Path(cities_path)):
-        if len(f) < 15 or f[7] in EXCLUDED_FEATURE_CODES:
+    # Airports that places link to: scheduled, and not air bases unless
+    # curated. A provisional display city (curated, else the display chain
+    # without its link-dependent step) marks an airport as a place's own
+    # ("Basel" → BSL, "Bol" → BWK).
+    linkable = []
+    for iata, a in airports.items():
+        folded_name = fold_place(a["name"])
+        if not a["scheduled"] or (
+            iata not in curated_rows and is_military(folded_name)
+        ):
             continue
-        gid, name, ascii_name, raw_alts = f[0], f[1], f[2], f[3]
-        country = f[8]
-        lat, lng, population = float(f[4]), float(f[5]), _int(f[14])
-        score = notability_score(population, _raw_alt_count(raw_alts), f[7])
-        links = link_airports(lat, lng, population, index, country)
-        own_folded = fold_place(name)
+        same = [(d, p) for d, p in near[iata] if p.country_code == a["country_code"]]
+        if iata in curated_rows:
+            display = fold_place(curated_rows[iata][3])
+        else:  # the display chain without its link-dependent step
+            city, _ = _computed_city(a, near[iata], set(), municipalities[iata])
+            display = fold_place(city)
+        admin1 = same[0][1].admin1 if same and same[0][0] <= ADMIN1_PROXY_KM else ""
+        linkable.append(
+            LinkAirport(
+                iata,
+                a["type_rank"],
+                a["lat"],
+                a["lng"],
+                a["country_code"],
+                iata in curated_rows,
+                folded_name,
+                display,
+                admin1,
+            )
+        )
+    index = _airport_index(linkable)
+
+    first_link_places: dict[str, set[str]] = defaultdict(set)
+    for place in places:
+        place.links, place.in_reach = link_airports(place, index)
+        if place.in_reach and place.links:
+            first_link_places[place.links[0][0]].add(place.geonameid)
+        own = place.folded
         alts = (
-            filter_alt_names(raw_alts, own_folded)
-            if population >= ALT_NAMES_MIN_POPULATION
+            filter_alt_names(place.raw_alts, own)
+            if place.population >= ALT_NAMES_MIN_POPULATION
             else []
         )
-        ascii_folded = fold_place(ascii_name)
-        if ascii_folded and ascii_folded != own_folded and ascii_folded not in alts:
+        ascii_folded = fold_place(place.ascii_name)
+        if ascii_folded and ascii_folded != own and ascii_folded not in alts:
             alts = sorted([*alts, ascii_folded])
-        result.places[gid] = {
-            "geonameid": gid,
-            "name": name,
-            "country_code": country,
-            "admin1": f[10],
-            "population": population,
-            "score": score,
-            "lat": lat,
-            "lng": lng,
-            "airports": [iata for iata, _ in links],
+        result.places[place.geonameid] = {
+            "geonameid": place.geonameid,
+            "name": place.name,
+            "country_code": place.country_code,
+            "admin1": place.admin1,
+            "population": place.population,
+            "score": place.score,
+            "lat": place.lat,
+            "lng": place.lng,
+            "airports": [iata for iata, _ in place.links],
             "alt_names": alts,
         }
-        rank = (score, population, -_int(gid))
-        for position, (iata, d) in enumerate(links):
-            if airport_country[iata] != country:
-                continue
-            for table, applies in (
-                (first_place, position == 0),
-                (near_place, d <= DISPLAY_CITY_NEAR_KM),
-            ):
-                if applies and (iata not in table or rank > table[iata][0]):
-                    table[iata] = (rank, name)
 
-    # Display city: curated; else the top-scoring same-country place whose
-    # first airport this is; else the top-scoring same-country place within
-    # 30 km that links it; else the cleaned municipality.
-    best_place = {**near_place, **first_place}
+    # Display city: curated, else the rule chain (never empty).
+    computed: dict[str, tuple[str, str]] = {}
     fallback_large = []
     for iata, a in airports.items():
+        computed[iata] = _computed_city(
+            a,
+            near[iata],
+            first_link_places.get(iata, set()),
+            municipalities.get(iata, ""),
+        )
         cur = curated_rows.get(iata)
         if cur:
             a["city"] = cur[3]
-        elif iata in best_place:
-            a["city"] = best_place[iata][1]
         else:
-            a["city"] = clean_municipality(municipalities.get(iata, ""))
-            if a["type_rank"] == 0:
+            a["city"] = computed[iata][0]
+            if a["type_rank"] == 0 and computed[iata][1] in (
+                "municipality",
+                "airport-name",
+            ):
                 fallback_large.append(iata)
     result.airports = dict(sorted(airports.items()))
     result.places = dict(sorted(result.places.items(), key=lambda kv: _int(kv[0])))
@@ -424,14 +625,14 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
         oa_by_iata,
         missing,
         fallback_large,
-        best_place,
+        computed,
         municipalities,
     )
     return result
 
 
 def _conflict_report(
-    result, curated_rows, oa_by_iata, missing, fallback_large, best_place, munis
+    result, curated_rows, oa_by_iata, missing, fallback_large, computed, munis
 ):
     lines = []
     unscheduled = sorted(
@@ -481,6 +682,7 @@ def _conflict_report(
     lines.append("")
     lines.append(
         f"## Large airports whose display city fell back to the municipality "
+        f"or the airport name "
         f"({len(fallback_large)})"
     )
     for iata in sorted(fallback_large):
@@ -492,11 +694,9 @@ def _conflict_report(
     lines.append("")
     differs = []
     for iata, cur in sorted(curated_rows.items()):
-        computed = best_place.get(iata, (None, None))[1] or clean_municipality(
-            munis.get(iata, "")
-        )
-        if computed and fold_place(computed) != fold_place(cur[3]):
-            differs.append(f"{iata}  curated {cur[3]!r} vs computed {computed!r}")
+        city, rule = computed[iata]
+        if fold_place(city) != fold_place(cur[3]):
+            differs.append(f"{iata}  curated {cur[3]!r} vs computed {city!r} ({rule})")
     lines.append(
         f"## Curated display city differs from the computed one ({len(differs)}, "
         "informational; curated wins)"

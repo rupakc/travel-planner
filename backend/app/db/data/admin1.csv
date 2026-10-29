@@ -173,7 +173,7 @@ AZ.08,Astara,astara
 AZ.09,Baki,baki
 AZ.10,Balakan District,balakan district
 AZ.11,Barda,barda
-AZ.12,Beyləqan,beyləqan
+AZ.12,Beyləqan,beyleqan
 AZ.13,Bilasuvar District,bilasuvar district
 AZ.14,Jabrayil,jabrayil
 AZ.15,Jalilabad,jalilabad
@@ -190,7 +190,7 @@ AZ.25,Ismayilli District,ismayilli district
 AZ.26,Kalbajar,kalbajar
 AZ.27,Kurdamir District,kurdamir district
 AZ.28,Lachin Rayon,lachin rayon
-AZ.29,Lənkəran,lənkəran
+AZ.29,Lənkəran,lenkeran
 AZ.30,Lankaran Sahari,lankaran sahari
 AZ.31,Lerik District,lerik district
 AZ.32,Masally,masally
@@ -1296,7 +1296,7 @@ ID.31,North Sulawesi,north sulawesi
 ID.32,South Sumatra,south sumatra
 ID.33,Banten,banten
 ID.34,Gorontalo,gorontalo
-ID.35,Bangka–Belitung Islands,bangka–belitung islands
+ID.35,Bangka–Belitung Islands,bangka belitung islands
 ID.36,Papua,papua
 ID.37,Riau,riau
 ID.38,South Sulawesi,south sulawesi
@@ -2166,13 +2166,13 @@ MT.08,Il-Fgura,il fgura
 MT.09,Floriana,floriana
 MT.10,Il-Fontana,il fontana
 MT.11,Ghajnsielem,ghajnsielem
-MT.12,L-Għarb,l għarb
-MT.13,Ħal Għargħur,ħal għargħur
-MT.14,L-Għasri,l għasri
-MT.15,Ħal Għaxaq,ħal għaxaq
+MT.12,L-Għarb,l gharb
+MT.13,Ħal Għargħur,hal gharghur
+MT.14,L-Għasri,l ghasri
+MT.15,Ħal Għaxaq,hal ghaxaq
 MT.16,Il-Gudja,il gudja
 MT.17,Il-Gżira,il gzira
-MT.18,Il-Ħamrun,il ħamrun
+MT.18,Il-Ħamrun,il hamrun
 MT.19,L-Iklin,l iklin
 MT.20,L-Imdina,l imdina
 MT.21,L-Imġarr,l imgarr
@@ -2188,7 +2188,7 @@ MT.30,Luqa,luqa
 MT.31,Il-Marsa,il marsa
 MT.32,Marsaskala,marsaskala
 MT.33,Marsaxlokk,marsaxlokk
-MT.34,Il-Mellieħa,il mellieħa
+MT.34,Il-Mellieħa,il mellieha
 MT.35,Il-Mosta,il mosta
 MT.36,Il-Munxar,il munxar
 MT.37,In-Nadur,in nadur
@@ -2215,11 +2215,11 @@ MT.57,Is-Swieqi,is swieqi
 MT.58,Tarxien,tarxien
 MT.59,Ta’ Xbiex,ta xbiex
 MT.60,Valletta,valletta
-MT.61,Ix-Xagħra,ix xagħra
+MT.61,Ix-Xagħra,ix xaghra
 MT.62,Ix-Xewkija,ix xewkija
-MT.63,Ix-Xgħajra,ix xgħajra
-MT.64,Ħaż-Żabbar,ħaz zabbar
-MT.65,Ħaż-Żebbuġ,ħaz zebbug
+MT.63,Ix-Xgħajra,ix xghajra
+MT.64,Ħaż-Żabbar,haz zabbar
+MT.65,Ħaż-Żebbuġ,haz zebbug
 MT.66,Iż-Żebbuġ,iz zebbug
 MT.67,Iż-Żejtun,iz zejtun
 MT.68,Iż-Żurrieq,iz zurrieq
@@ -2828,7 +2828,7 @@ RU.64,Sakhalin Oblast,sakhalin oblast
 RU.65,Samara Oblast,samara oblast
 RU.66,St. Petersburg,st petersburg
 RU.67,Saratov Oblast,saratov oblast
-RU.68,North Ossetia–Alania,north ossetia–alania
+RU.68,North Ossetia–Alania,north ossetia alania
 RU.69,Smolensk Oblast,smolensk oblast
 RU.70,Stavropol Kray,stavropol kray
 RU.71,Sverdlovsk Oblast,sverdlovsk oblast
@@ -2972,14 +2972,14 @@ SI.22,Dol pri Ljubljani,dol pri ljubljani
 SI.24,Municipality of Dornava,municipality of dornava
 SI.25,Municipality of Dravograd,municipality of dravograd
 SI.26,Municipality of Duplek,municipality of duplek
-SI.27,Municipality of Gorenja Vas–Poljane,municipality of gorenja vas–poljane
+SI.27,Municipality of Gorenja Vas–Poljane,municipality of gorenja vas poljane
 SI.28,Municipality of Gorišnica,municipality of gorisnica
 SI.29,Municipality of Gornja Radgona,municipality of gornja radgona
 SI.30,Municipality of Gornji Grad,municipality of gornji grad
 SI.31,Municipality of Gornji Petrovci,municipality of gornji petrovci
 SI.32,Municipality of Grosuplje,municipality of grosuplje
 SI.34,Municipality of Hrastnik,municipality of hrastnik
-SI.35,Municipality of Hrpelje–Kozina,municipality of hrpelje–kozina
+SI.35,Municipality of Hrpelje–Kozina,municipality of hrpelje kozina
 SI.36,Municipality of Idrija,municipality of idrija
 SI.37,Municipality of Ig,municipality of ig
 SI.38,Municipality of Ilirska Bistrica,municipality of ilirska bistrica
@@ -3024,7 +3024,7 @@ SI.91,Pivka,pivka
 SI.92,Municipality of Podčetrtek,municipality of podcetrtek
 SI.94,Municipality of Postojna,municipality of postojna
 SI.97,Municipality of Puconci,municipality of puconci
-SI.98,Municipality of Rače–Fram,municipality of race–fram
+SI.98,Municipality of Rače–Fram,municipality of race fram
 SI.99,Municipality of Radeče,municipality of radece
 SI.A1,Municipality of Radenci,municipality of radenci
 SI.A2,Municipality of Radlje ob Dravi,municipality of radlje ob dravi
@@ -3075,13 +3075,13 @@ SI.F9,Municipality of Cerkvenjak,municipality of cerkvenjak
 SI.G1,Destrnik,destrnik
 SI.G2,Municipality of Dobje,municipality of dobje
 SI.G3,Dobrna,dobrna
-SI.G4,Municipality of Dobrova–Polhov Gradec,municipality of dobrova–polhov gradec
+SI.G4,Municipality of Dobrova–Polhov Gradec,municipality of dobrova polhov gradec
 SI.G5,Municipality of Dobrovnik,municipality of dobrovnik
 SI.G6,Dolenjske Toplice,dolenjske toplice
 SI.G7,Municipality of Domžale,municipality of domzale
 SI.G8,Grad,grad
 SI.G9,Hajdina,hajdina
-SI.H1,Municipality of Hoče–Slivnica,municipality of hoce–slivnica
+SI.H1,Municipality of Hoče–Slivnica,municipality of hoce slivnica
 SI.H2,Municipality of Hodoš,municipality of hodos
 SI.H3,Municipality of Horjul,municipality of horjul
 SI.H4,Municipality of Jesenice,municipality of jesenice
@@ -3103,7 +3103,7 @@ SI.J1,Municipality of Majšperk,municipality of majsperk
 SI.J2,Urban Municipality of Maribor,urban municipality of maribor
 SI.J3,Municipality of Markovci,municipality of markovci
 SI.J4,Municipality of Miklavž na Dravskem Polju,municipality of miklavz na dravskem polju
-SI.J5,Municipality of Miren–Kostanjevica,municipality of miren–kostanjevica
+SI.J5,Municipality of Miren–Kostanjevica,municipality of miren kostanjevica
 SI.J6,Municipality of Mirna Peč,municipality of mirna pec
 SI.J7,Urban Municipality of Novo Mesto,urban municipality of novo mesto
 SI.J8,Municipality of Oplotnica,municipality of oplotnica
@@ -3122,7 +3122,7 @@ SI.L2,Municipality of Ribnica na Pohorju,municipality of ribnica na pohorju
 SI.L3,Municipality of Ruše,municipality of ruse
 SI.L4,Municipality of Šalovci,municipality of salovci
 SI.L5,Municipality of Selnica ob Dravi,municipality of selnica ob dravi
-SI.L6,Municipality of Šempeter–Vrtojba,municipality of sempeter–vrtojba
+SI.L6,Municipality of Šempeter–Vrtojba,municipality of sempeter vrtojba
 SI.L7,Sentjur,sentjur
 SI.L8,Municipality of Slovenska Bistrica,municipality of slovenska bistrica
 SI.L9,Municipality of Šmartno pri Litiji,municipality of smartno pri litiji
@@ -3147,13 +3147,13 @@ SI.N9,Municipality of Apače,municipality of apace
 SI.O1,Municipality of Cirkulane,municipality of cirkulane
 SI.O2,Gorje,gorje
 SI.O3,Municipality of Kostanjevica na Krki,municipality of kostanjevica na krki
-SI.O4,Log–Dragomer,log–dragomer
+SI.O4,Log–Dragomer,log dragomer
 SI.O5,Municipality of Makole,municipality of makole
 SI.O6,Municipality of Mirna,municipality of mirna
-SI.O7,Municipality of Mokronog–Trebelno,municipality of mokronog–trebelno
+SI.O7,Municipality of Mokronog–Trebelno,municipality of mokronog trebelno
 SI.O8,Municipality of Poljčane,municipality of poljcane
 SI.O9,Municipality of Rečica ob Savinji,municipality of recica ob savinji
-SI.P1,Municipality of Renče–Vogrsko,municipality of rence–vogrsko
+SI.P1,Municipality of Renče–Vogrsko,municipality of rence vogrsko
 SI.P2,Municipality of Šentrupert,municipality of sentrupert
 SI.P3,Municipality of Šmarješke Toplice,municipality of smarjeske toplice
 SI.P4,Municipality of Središče ob Dravi,municipality of sredisce ob dravi

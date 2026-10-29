@@ -17,23 +17,29 @@ regenerates it at runtime.
 
   > Contains data from GeoNames (geonames.org), CC BY 4.0
 
+  Licence: https://creativecommons.org/licenses/by/4.0/. **The GeoNames data here is modified**: places are filtered (feature codes, alternate names), names are folded, scored and linked to airports, and some are used as airport display cities. GeoNames does not endorse these changes.
+
 Snapshot date of both sources: **2026-10-29**.
 
 ## How the data is derived
 
-- **Display city.** For curated airports, the curated city. Otherwise, only places in the airport's own country count:
-  1. the highest-scoring place whose first linked airport is this airport;
-  2. else the highest-scoring place within 30 km that links it;
-  3. else the OurAirports municipality, cleaned: the text before the first `(` or `,`, and `A` for `A/B`. The municipality on its own is never trusted, because it gives the airport's physical location ("Ferno (VA)" for MXP), not the city it serves.
+- **Display city.** For curated airports, the curated city. Otherwise the first of these rules that applies, using only places in the airport's own country (never empty):
+  1. the highest-scoring place within 40 km whose folded name occurs as whole words in the folded airport name ("Verona" for "Verona Villafranca Airport"); names made only of generic words such as "International" or "San" never match;
+  2. the highest-scoring place within 40 km whose first in-reach linked airport is this airport;
+  3. the nearest place within 15 km;
+  4. the OurAirports municipality, cleaned: the text before the first `(` or `,`, and `A` for `A/B`;
+  5. the airport name without "Airport", "International", "Aerodrome" and "Airfield".
+
+  A place name with letters beyond Latin Extended-A (scholarly transliterations such as "Marsá Maţrūḩ") is shown in its GeoNames ASCII spelling, and every display name is cut at its first comma. The municipality on its own is never trusted first, because it gives the airport's physical location ("Ferno (VA)" for MXP), not the city it serves.
 - **Country name.** The OurAirports country name. For countries that appear in the curated list, the curated spelling is used instead ("United States", "United Kingdom").
 - **Score.** `population × (alternate_name_count + 1)² × (3 if PPLC)`, where the alternate-name count is the raw count. It ranks namesakes so that the famous one wins: Portland US-OR ≫ Portland US-ME, and Interlaken CH ≫ Interlaken US.
-- **Linking (place → airports).** Only scheduled airports are linked. Each airport type has a reach:
+- **Linking (place → airports).** Only scheduled airports are linked, and not those named as an air base, air force base/station or air station (unless curated or also named an "airport"). Each airport type has a reach:
   - large: 80 km, or 100 km when the place has ≥ 1M people and no large airport within 50 km;
   - medium: 50 km;
   - small: 30 km.
 
-  Linked airports are ranked by (type, distance), and up to 3 are kept. If no airport is in reach, the place's own country's large or medium airports within 200 km are used (up to 2, by type then distance). If there are none, the nearest large or medium airports in any country within 150 km are used (up to 2).
-- **Folding.** Names are folded with `app.core.places.fold_place`, the same function the runtime uses: accents are stripped, ß→ss, ø→o and so on, text is lower-cased, `.` and `-` become spaces, apostrophe variants (`'` `’` `‘` `ʼ` `ʻ` `` ` ``) are dropped, and whitespace is collapsed.
+  Airports in reach are ranked by (foreign, not the place's own, not curated, distance ÷ reach), and up to 3 are kept. An airport is the place's *own* when its display city is the place or its name contains the place name; an own airport across a border is not foreign (Basel → BSL in France). Among two neighbours in the same group whose distance ÷ reach are within 1.25× of each other, the one in the place's admin1 goes first (an airport's admin1 is that of the nearest same-country place within 50 km). If no airport is in reach, large or medium airports within 200 km (own country) or 150 km (foreign) are used, ranked by (foreign, distance), up to 2.
+- **Folding.** Names are folded with `app.core.places.fold_place`, the same function the runtime uses: accents are stripped, ß→ss, ø→o and so on, text is lower-cased, `.`, `·` and every dash become spaces, apostrophe and quote variants (`'` `’` `‘` `ʼ` `ʻ` `` ` `` `ʹ` `“` `”`) and invisible format characters (ZWNJ, LRM) are dropped, ə/ɛ→e, ħ→h, ƶ→z, and whitespace is collapsed. Alternate names are kept only when made of Latin letters, spaces, apostrophes, dashes and dots (no digits, brackets or symbols). The ASCII spelling is stored for every place whose name folds differently.
 
 ## Regenerating
 
@@ -61,11 +67,11 @@ python3 -I backend/scripts/build_place_data.py \
 
 The script prints its summary and a conflict report to stdout. The report is not committed. For this snapshot:
 
-- **Totals.** 4,014 airports (4,010 scheduled), 162,014 places (6,424 with no airport), 155,243 alt-name pairs and 3,865 admin1 rows.
+- **Totals.** 4,014 airports (4,010 scheduled), 162,014 places (6,424 with no airport), 154,035 alt-name pairs and 3,865 admin1 rows.
 - **Curated list corrections.** Stale curated codes were replaced with the scheduled OurAirports codes, keeping the curated city: FRU→BSZ, PBI→DJT, KIV→RMO, TIP→MJI, PNH→KTI, REP→SAI, ULN→UBN, DKR→DSS, NIY→FNA, MYK→JMK, ANT→RUN, CMR→NSI, KHO→MSU, ETH→ETM and RAJ→HSR. The swapped CTU/TFU entries and INC's coordinates were also fixed.
 - **Curated codes missing from OurAirports.** None.
 - **Curated codes not scheduled in OurAirports (4).** KBP, IEV, LWO and ODS. Ukrainian airspace is closed. They are kept with `scheduled=0` so they return when service resumes.
 - **Curated vs OurAirports country mismatches (1).** BSL. The EuroAirport is on French soil and serves Basel; this is correct.
 - **Curated coordinates more than 25 km from OurAirports.** None.
-- **Large airports whose display city fell back to the municipality (1).** ROP, "Rota Island" (MP). This is correct: GeoNames has no Rota town with ≥ 1,000 people.
-- **Curated display city vs computed city.** Informational only; the curated city wins. Most differences are spelling ("Köln" vs "Cologne") or a neighbouring city.
+- **Large airports whose display city fell back to the municipality (8).** DQM Duqm, MFU Mfuwe, NUM Sharma, OCS Corisco Island, RMF Marsa Alam, ROP Rota Island, RSI Hanak and SCR Malung-Sälen. All are acceptable: no GeoNames place of ≥ 1,000 people near them names or primarily uses them.
+- **Curated display city vs computed city (88).** Informational only; the curated city wins. 44 are airport-name matches, which are often the airport's own town rather than the city it serves (LTN → Luton, NRT → Narita, ICN → Incheon) or a person's name in the airport name (BGY → Caravaggio). 44 are first-link picks, which can be a suburb for a metropolitan airport (CDG → Saint-Denis, SVO → Mytishchi). Curating the served city stays necessary for major airports.

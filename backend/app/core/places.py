@@ -87,26 +87,40 @@ def stated_region(stated: str) -> tuple[str, frozenset[str]] | None:
 _REGION_CODES: dict[str, frozenset[str]] = _region_codes()
 
 
-# Letters NFKD does not decompose into a base letter + combining mark, the
-# punctuation that separates words in place names ("St. Louis", "Winston-Salem")
-# and apostrophe variants, which are dropped ("Xi’an" → "xian").
+# Letters NFKD does not decompose into a base letter + combining mark, word
+# separators ("St. Louis", "Winston-Salem", "Sant·Joan") and apostrophe and
+# quote variants, which are dropped ("Xi’an" → "xian").
 _TRANSLITERATE = str.maketrans(
     {"ß": "ss", "ø": "o", "æ": "ae", "œ": "oe", "ł": "l", "đ": "d", "ı": "i",
-     "þ": "th", "ð": "d", ".": " ", "-": " ",
-     "'": None, "’": None, "‘": None, "ʼ": None, "ʻ": None, "`": None}
+     "þ": "th", "ð": "d", "ə": "e", "ɛ": "e", "ħ": "h", "ƶ": "z",
+     ".": " ", "·": " ",
+     "'": None, "’": None, "‘": None, "ʼ": None, "ʻ": None, "`": None,
+     "ʹ": None, "“": None, "”": None}
 )  # fmt: skip
+
+
+def _fold_char(ch: str) -> str:
+    """Drop combining marks and invisible format characters (ZWNJ, LRM);
+    every dash (hyphen, en/em dash, …) separates words."""
+    if unicodedata.combining(ch):
+        return ""
+    category = unicodedata.category(ch)
+    if category == "Cf":
+        return ""
+    if category == "Pd":
+        return " "
+    return ch
 
 
 def fold_place(text: str) -> str:
     """Accent-free, lower-case, single-spaced form of a place name for
     matching: "  São Paulo" → "sao paulo", "Straße" → "strasse",
     "St. Louis" → "st louis", "Winston-Salem" → "winston salem",
-    "St. John's" → "st johns". The runtime
-    lookups and the offline data generator share this one definition."""
+    "St. John's" → "st johns". The runtime lookups and the offline data
+    generator share this one definition."""
     lowered = (text or "").lower().translate(_TRANSLITERATE)
     decomposed = unicodedata.normalize("NFKD", lowered)
-    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
-    return " ".join(stripped.split())
+    return " ".join("".join(map(_fold_char, decomposed)).split())
 
 
 _SAINT_PREFIXES = ("st ", "st. ", "saint ")
