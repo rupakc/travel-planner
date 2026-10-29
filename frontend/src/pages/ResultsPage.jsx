@@ -11,7 +11,7 @@ import {
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
-import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch } from '../services/api'
+import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
@@ -30,6 +30,7 @@ import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
+import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -2337,7 +2338,11 @@ function StressScoreRing({ score, overall }) {
   )
 }
 
-function StressTestSection({ data, layoutMoved = false }) {
+// `recheck` ({ data, stale }) is a re-run against the edited itinerary; it
+// only applies while the layout differs from the original.
+export function StressTestSection({ data: original, layoutMoved = false, recheck = null, rechecking = false, recheckError = null, onRecheck }) {
+  const rechecked = layoutMoved && recheck?.data ? recheck : null
+  const data = rechecked ? rechecked.data : original
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
@@ -2359,7 +2364,22 @@ function StressTestSection({ data, layoutMoved = false }) {
           <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
           <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
-          {layoutMoved && <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>}
+          {layoutMoved && (rechecked ? (
+            rechecked.stale
+              ? <p className="text-[11px] text-amber-600 mt-1">Your plan changed since this check — re-check again</p>
+              : <p className="text-[11px] text-teal-700 mt-1">Checked against your edited itinerary</p>
+          ) : (
+            <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>
+          ))}
+          {layoutMoved && (!rechecked || rechecked.stale) && (
+            <button type="button" onClick={onRecheck} disabled={rechecking}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-default">
+              {rechecking
+                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />Re-checking…</>
+                : <><RefreshCw size={12} aria-hidden="true" />Re-check my edited plan</>}
+            </button>
+          )}
+          {layoutMoved && recheckError && <p role="alert" className="text-[11px] text-rose-600 mt-1">{recheckError}</p>}
         </div>
       </div>
 
@@ -3286,6 +3306,16 @@ export default function ResultsPage() {
   const [remixInfo, setRemixInfo] = useState(null)  // { label, before } while comparing a remixed run
   const [layoverInfo, setLayoverInfo] = useState(null)  // { city, airport, duration_hours, status, data }
   const [pendingScrollTarget, setPendingScrollTarget] = useState(null)
+  // Health Check re-run against the edited itinerary: { data, forLayoutFingerprint }.
+  // Kept apart from results.stress_test, which stays the original audit.
+  const [recheck, setRecheck] = useState(null)
+  const [recheckRun, setRecheckRun] = useState({ running: false, error: null })
+  const recheckSeq = useRef(0) // drops responses that land after a clear
+  const clearRecheck = () => {
+    recheckSeq.current += 1
+    setRecheck(null)
+    setRecheckRun({ running: false, error: null })
+  }
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -3318,6 +3348,7 @@ export default function ResultsPage() {
     setLoadedPlanSearchData(plan.search_data || null)
     setPackageUndo(null)
     setLayoutUndo([])
+    clearRecheck()
   }
 
   // Itinerary editing: every action computes the next layout from the ORIGINAL
@@ -3347,6 +3378,7 @@ export default function ResultsPage() {
   }
   const handleRestoreSlot = (key) => { commitLayout(restoreSlot(results.itinerary, layoutRef.current, key)) }
   const handleResetLayout = () => {
+    clearRecheck()
     if (commitLayout(null)) track('itinerary_layout_reset', 'results', {})
   }
   const handleUndoLayout = () => {
@@ -3362,6 +3394,31 @@ export default function ResultsPage() {
     () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
     [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
+  const recheckStale = useMemo(
+    () => !!recheck && recheck.forLayoutFingerprint !== recheckFingerprint(results.itinerary, selections),
+    [recheck, results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
+  )
+  const handleRecheck = async () => {
+    if (recheckRun.running || !results.itinerary) return
+    const seq = ++recheckSeq.current
+    const forLayoutFingerprint = recheckFingerprint(results.itinerary, selections)
+    const payload = buildStressTestPayload(searchData, results, selections)
+    setRecheckRun({ running: true, error: null })
+    track('health_recheck_run', 'results', {})
+    try {
+      const data = await recheckStressTest(payload, token)
+      if (seq !== recheckSeq.current) return
+      if (!data || typeof data !== 'object' || data.error) {
+        setRecheckRun({ running: false, error: recheckErrorMessage(null) })
+        return
+      }
+      setRecheck({ data, forLayoutFingerprint })
+      setRecheckRun({ running: false, error: null })
+    } catch (err) {
+      if (seq !== recheckSeq.current) return
+      setRecheckRun({ running: false, error: recheckErrorMessage(err) })
+    }
+  }
   const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
   const handleApplyPackage = () => {
     if (!bestValue) return
@@ -3390,6 +3447,7 @@ export default function ResultsPage() {
     setLoadedPlanSearchData(null)
     setPackageUndo(null)
     setLayoutUndo([])
+    clearRecheck()
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -3738,7 +3796,9 @@ export default function ResultsPage() {
           onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
           onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
         })} />,
-      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0} />,
+      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0}
+        recheck={recheck ? { data: recheck.data, stale: recheckStale } : null}
+        rechecking={recheckRun.running} recheckError={recheckRun.error} onRecheck={handleRecheck} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
@@ -4012,7 +4072,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]) }}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]); clearRecheck() }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}
