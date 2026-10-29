@@ -153,8 +153,7 @@ def search_nationalities(query: str, limit: int = 10) -> list[dict]:
         FROM nationalities
         WHERE
             nationality LIKE :like COLLATE NOCASE
-            OR country  LIKE :like COLLATE NOCASE)
-          AND (COALESCE(scheduled, 1) = 1 OR iata_code = :upper)
+            OR country  LIKE :like COLLATE NOCASE
         ORDER BY
             CASE
                 WHEN nationality LIKE :starts COLLATE NOCASE THEN 0
