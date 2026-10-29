@@ -3,12 +3,12 @@ import { track } from '../utils/analytics'
 
 const DASH = '—'
 
-const GRADE_COLORS = {
-  A: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  B: 'bg-teal-50 text-teal-700 border-teal-200',
-  C: 'bg-amber-50 text-amber-700 border-amber-200',
+// Backend Travel Ease grade (static_results.get_confidence_score) -> chip
+const GRADES = {
+  green: { label: 'Easy', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  amber: { label: 'Moderate', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+  red: { label: 'Hard', cls: 'bg-red-50 text-red-700 border-red-200' },
 }
-const gradeClass = (g) => GRADE_COLORS[String(g || '').charAt(0).toUpperCase()] || 'bg-red-50 text-red-700 border-red-200'
 
 const Badge = ({ children, tone = 'slate' }) => {
   const tones = {
@@ -28,7 +28,7 @@ const temp = (v) => (num(v) ? `${Math.round(v)}°` : DASH)
 // Each row: key (matches bestByRow where numeric), label, render(summary) -> node | null
 const ROWS = [
   {
-    key: 'estimate', label: 'Est. trip cost / traveller',
+    key: 'estimate', label: 'Est. trip cost / person',
     render: (s) => {
       const e = s.estimate
       if (!e || !num(e.total_usd)) return null
@@ -44,7 +44,7 @@ const ROWS = [
     },
   },
   {
-    key: 'flight', label: 'Cheapest flight',
+    key: 'flight', label: 'Cheapest flight / person',
     render: (s) => {
       const f = s.flight
       if (!f) return null
@@ -104,16 +104,20 @@ const ROWS = [
   },
   {
     key: 'ease', label: 'Travel Ease',
-    render: (s) => !num(s.ease?.total) ? null : (
-      <>
-        <span className="font-semibold">{Math.round(s.ease.total)}/100</span>
-        {s.ease.grade && <span className={`ml-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${gradeClass(s.ease.grade)}`}>{s.ease.grade}</span>}
-      </>
-    ),
+    render: (s) => {
+      if (!num(s.ease?.total)) return null
+      const g = GRADES[s.ease.grade]
+      return (
+        <>
+          <span className="font-semibold">{Math.round(s.ease.total)}/100</span>
+          {g && <span className={`ml-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${g.cls}`}>{g.label}</span>}
+        </>
+      )
+    },
   },
   { key: 'safety', label: 'Safety', render: (s) => (num(s.ease?.safety) ? `${s.ease.safety}/20` : null) },
   { key: 'english', label: 'English', render: (s) => (num(s.ease?.english) ? `${s.ease.english}/20` : null) },
-  { key: 'daily', label: 'Typical daily spend', render: (s) => (num(s.daily_cost_usd) ? `${fmtUsd(s.daily_cost_usd)} / day` : null) },
+  { key: 'daily', label: 'Typical daily spend / person', render: (s) => (num(s.daily_cost_usd) ? `${fmtUsd(s.daily_cost_usd)} / day` : null) },
 ]
 
 function Skeleton() {
@@ -154,6 +158,7 @@ function Header({ col, index, onRetry }) {
         <div className="mt-1 text-xs text-red-600">
           Couldn&apos;t load{' '}
           <button type="button" onClick={() => onRetry(index)} className="underline font-semibold">Retry</button>
+          {typeof col.error === 'string' && col.error && <div className="text-slate-500 font-normal">{col.error}</div>}
         </div>
       )}
       {col.status === 'done' && col.summary?.missing?.length > 0 && (

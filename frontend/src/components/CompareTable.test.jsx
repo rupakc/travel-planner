@@ -15,7 +15,7 @@ const summary = (over = {}) => ({
   hotel: { typical_nightly_usd: 120, cheapest_good_nightly_usd: 80, count: 5 },
   weather: { avg_high_c: 20, avg_low_c: 12, poor_days: 2, total_days: 7, source: 'climate-table' },
   visa: { visa_type: 'Visa-free', max_stay_days: 90, fee_usd: 0, processing_time: null, verified: true },
-  ease: { total: 85, grade: 'A', safety: 18, english: 10, infrastructure: 18, visa_ease: 20 },
+  ease: { total: 85, grade: 'green', safety: 18, english: 10, infrastructure: 18, visa_ease: 20 },
   daily_cost_usd: 150,
   estimate: { total_usd: 2200, partial: true, budget_status: 'under' },
   missing: [],
@@ -95,7 +95,7 @@ describe('CompareTable', () => {
     ], { onPlan, onRetry })
     const cards = container.querySelectorAll('.md\\:hidden > div')
     expect(cards).toHaveLength(3)
-    expect(cards[0].textContent).toContain('Est. trip cost / traveller')
+    expect(cards[0].textContent).toContain('Est. trip cost / person')
     const estRow = (card) => [...card.children].find((r) => r.textContent.includes('Est. trip cost')).textContent
     expect(estRow(cards[0])).not.toContain('Best')
     expect(estRow(cards[1])).toContain('Best')
@@ -146,6 +146,37 @@ describe('CompareTable', () => {
     act(() => buttons[1].click())
     expect(onPlan).toHaveBeenCalledWith(1)
     expect(track).toHaveBeenCalledWith('compare_plan_clicked', 'search', { position: 1 })
+  })
+
+  it('colours the Travel Ease grade from the backend green/amber/red value', () => {
+    const easeCell = (grade) => {
+      render([{ destination: 'A', status: 'done', summary: summary({ ease: { total: 50, grade, safety: 10, english: 10 } }) }])
+      return [...table().querySelectorAll('tbody tr')].find((r) => r.textContent.includes('Travel Ease')).querySelector('td')
+    }
+    expect(easeCell('green').innerHTML).toContain('emerald')
+    expect(easeCell('green').textContent).toContain('Easy')
+    expect(easeCell('amber').innerHTML).toContain('amber')
+    expect(easeCell('amber').textContent).toContain('Moderate')
+    expect(easeCell('red').innerHTML).toContain('red')
+    expect(easeCell('red').textContent).toContain('Hard')
+    for (const g of ['green', 'amber', 'red']) expect(easeCell(g).textContent).not.toContain(g)
+    expect(easeCell('weird').textContent).toBe('50/100')
+  })
+
+  it('labels per-person cost rows', () => {
+    render([{ destination: 'A', status: 'done', summary: summary() }])
+    const labels = [...table().querySelectorAll('tbody th')].map((th) => th.textContent)
+    expect(labels).toContain('Est. trip cost / person')
+    expect(labels).toContain('Cheapest flight / person')
+    expect(labels).toContain('Typical daily spend / person')
+  })
+
+  it('shows the stored failure reason under Couldn\'t load', () => {
+    render([{ destination: 'A', status: 'error', error: 'Please check the trip details' }, { destination: 'B', status: 'error', error: { detail: 'obj' } }])
+    const heads = table().querySelectorAll('thead th')
+    expect(heads[1].textContent).toContain('Please check the trip details')
+    expect(heads[2].textContent).not.toContain('[object Object]')
+    expect(heads[2].textContent).toContain('Couldn')
   })
 
   it('also renders stacked cards for mobile', () => {

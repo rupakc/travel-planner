@@ -29,6 +29,8 @@ export function buildCompareRequests(form) {
     ...shared,
     num_travelers: travelers,
     budget_usd: Number.isFinite(budget) ? budget : null,
+    // A blank date input is '' — the API wants null (one-way), not a 422
+    return_date: shared.return_date || null,
     destination,
     destinations: null,
     destination_nights: null,
@@ -39,7 +41,8 @@ const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
 // rowKey -> [extractor, which value is best: 'min' (lowest) | 'max' (highest)]
 export const ROW_RULES = {
-  estimate: [(s) => num(s?.estimate?.total_usd), 'min'],
+  // A partial total omits unknown costs, so it can't be called the cheapest
+  estimate: [(s) => (s?.estimate?.partial === true ? null : num(s?.estimate?.total_usd)), 'min'],
   flight: [(s) => num(s?.flight?.price_usd), 'min'],
   hotel: [(s) => num(s?.hotel?.typical_nightly_usd), 'min'],
   weather: [(s) => num(s?.weather?.poor_days), 'min'],
@@ -75,4 +78,18 @@ export function fmtDuration(minutes) {
   const m = num(minutes)
   if (m === null || m <= 0) return null
   return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
+}
+
+/**
+ * Short, human reason for a failed compare call: the API's string `detail`
+ * when there is one, otherwise a generic hint by status. Always a string.
+ * @param {unknown} err axios error (or anything thrown)
+ */
+export function compareErrorReason(err) {
+  const res = err && typeof err === 'object' ? err.response : null
+  const detail = res?.data?.detail
+  if (typeof detail === 'string' && detail.trim()) return detail.trim()
+  const status = res?.status
+  if (typeof status === 'number' && status >= 400 && status < 500) return 'Please check the trip details'
+  return 'Service unavailable — try again'
 }

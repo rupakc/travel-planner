@@ -183,7 +183,9 @@ class TestSummarize:
             "visa_ease": 20,
         }
 
-    def test_estimate_complete_and_budget_status(self):
+    def test_estimate_daily_spend_is_all_in(self):
+        # avg_daily_cost_usd is an all-in daily budget (lodging included), so the
+        # stay is shown for reference but not added to the total.
         flights = {"results": [_fare(1000)]}
         hotels = {"results": [_hotel(100, 3)]}
         s = summarize_destination(
@@ -193,23 +195,38 @@ class TestSummarize:
         assert s["daily_cost_usd"] == 120  # Tokyo -> japan table
         assert est["nights"] == 7
         assert est["stay_usd"] == 700 and est["daily_usd"] == 840
-        assert est["total_usd"] == 2540 and est["partial"] is False
+        assert est["included_in_daily"] is True
+        assert est["flight_usd"] == s["flight"]["price_usd"] == 1000
+        assert est["total_usd"] == 1840 and est["partial"] is False
         assert est["budget_status"] == "under"
         over = summarize_destination(
-            _req(budget_usd=2000), flights, hotels, None, None, None
+            _req(budget_usd=1500), flights, hotels, None, None, None
         )
         assert over["estimate"]["budget_status"] == "over"
         none = summarize_destination(_req(), flights, hotels, None, None, None)
         assert none["estimate"]["budget_status"] is None
 
+    def test_stay_counts_when_daily_spend_unknown(self):
+        s = summarize_destination(
+            _req(destination="Zzyzx Nowhere"),
+            {"results": [_fare(400)]},
+            {"results": [_hotel(100, 3)]},
+            None,
+            None,
+            None,
+        )
+        est = s["estimate"]
+        assert est["included_in_daily"] is False
+        assert est["total_usd"] == 1100 and est["partial"] is True
+
     def test_budget_depends_on_party_size(self):
         flights = {"results": [_fare(1000)]}
         hotels = {"results": [_hotel(100, 3)]}
         one = summarize_destination(
-            _req(budget_usd=4000), flights, hotels, None, None, None
+            _req(budget_usd=3000), flights, hotels, None, None, None
         )
         two = summarize_destination(
-            _req(budget_usd=4000, num_travelers=2), flights, hotels, None, None, None
+            _req(budget_usd=3000, num_travelers=2), flights, hotels, None, None, None
         )
         assert one["estimate"]["budget_status"] == "under"
         assert two["estimate"]["budget_status"] == "over"
@@ -223,6 +240,25 @@ class TestSummarize:
             for n in (1, 2, 3, 4)
         }
         assert stay == {1: 700, 2: 350, 3: pytest.approx(466.67, abs=0.01), 4: 350}
+
+    def test_rooms_come_from_adults_and_seniors(self):
+        hotels = {"results": [_hotel(100, 3)]}
+
+        def stay(**kw):
+            return summarize_destination(_req(**kw), None, hotels, None, None, None)[
+                "estimate"
+            ]["stay_usd"]
+
+        # 2 adults + 2 children share one room: 700 / 4 travellers
+        assert stay(num_travelers=4, adults=2, children=2) == 175
+        # 3 adults need two rooms: 1400 / 3
+        assert stay(num_travelers=3, adults=3) == pytest.approx(466.67, abs=0.01)
+        # 1 adult + 1 senior + 1 infant: one room over 3 travellers
+        assert stay(num_travelers=3, adults=1, seniors=1, infants=1) == pytest.approx(
+            233.33, abs=0.01
+        )
+        # adults/seniors explicitly zero -> fall back to num_travelers
+        assert stay(num_travelers=4, adults=0, seniors=0, children=4) == 350
 
     def test_partial_budget_status(self):
         flights = {"results": [_fare(400)]}

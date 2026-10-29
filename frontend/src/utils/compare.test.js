@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { buildCompareRequests, bestByRow, fmtUsd, fmtDuration } from './compare'
+import { buildCompareRequests, bestByRow, fmtUsd, fmtDuration, compareErrorReason } from './compare'
 
 const base = {
   origin: 'NYC', departure_date: '2026-04-01', return_date: '2026-04-08',
@@ -26,6 +26,10 @@ describe('buildCompareRequests', () => {
   it('empty budget becomes null', () => {
     expect(buildCompareRequests({ ...base, budget_usd: '', destinations: ['Rome'] })[0].budget_usd).toBeNull()
   })
+  it('blank return date becomes null (one-way), set one is kept', () => {
+    expect(buildCompareRequests({ ...base, return_date: '', destinations: ['Rome'] })[0].return_date).toBeNull()
+    expect(buildCompareRequests({ ...base, destinations: ['Rome'] })[0].return_date).toBe('2026-04-08')
+  })
 })
 
 const s = (over) => ({
@@ -49,6 +53,38 @@ describe('bestByRow', () => {
     expect(best.flight).toBeUndefined()
     expect(best.daily).toBeUndefined()
     expect(best.estimate).toBeDefined()
+  })
+  it('never awards Best cost to a partial estimate', () => {
+    const best = bestByRow([
+      s({ estimate: { total_usd: 400, partial: true } }),
+      s({ estimate: { total_usd: 1000, partial: false } }),
+      s({ estimate: { total_usd: 1200, partial: false } }),
+    ])
+    expect([...best.estimate]).toEqual([1])
+    const onlyOneComplete = bestByRow([
+      s({ estimate: { total_usd: 400, partial: true } }),
+      s({ estimate: { total_usd: 1000, partial: false } }),
+    ])
+    expect(onlyOneComplete.estimate).toBeUndefined()
+  })
+})
+
+describe('compareErrorReason', () => {
+  const httpErr = (status, data) => ({ response: { status, data } })
+  it('uses a string detail', () => {
+    expect(compareErrorReason(httpErr(422, { detail: 'Compare supports single destinations only' })))
+      .toBe('Compare supports single destinations only')
+    expect(compareErrorReason(httpErr(502, { detail: 'All sources failed' }))).toBe('All sources failed')
+  })
+  it('generic text for non-string 4xx detail', () => {
+    expect(compareErrorReason(httpErr(422, { detail: [{ loc: ['body', 'return_date'], msg: 'bad' }] })))
+      .toBe('Please check the trip details')
+    expect(compareErrorReason(httpErr(400, {}))).toBe('Please check the trip details')
+  })
+  it('generic text for 5xx and network errors', () => {
+    expect(compareErrorReason(httpErr(500, { detail: { x: 1 } }))).toBe('Service unavailable — try again')
+    expect(compareErrorReason(new Error('Network Error'))).toBe('Service unavailable — try again')
+    expect(compareErrorReason(undefined)).toBe('Service unavailable — try again')
   })
 })
 

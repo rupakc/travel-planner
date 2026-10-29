@@ -13,7 +13,7 @@ import OnboardingTour from '../components/OnboardingTour'
 import useFirstRunTour from '../hooks/useFirstRunTour'
 import { discoverDestinations, compareDestination, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
 import CompareTable from '../components/CompareTable'
-import { buildCompareRequests } from '../utils/compare'
+import { buildCompareRequests, compareErrorReason } from '../utils/compare'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 
 const INTERESTS = [
@@ -248,6 +248,7 @@ export default function SearchPage() {
       ...form,
       num_travelers: totalTravelers,
       budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
+      return_date: form.return_date || null,  // blank date input -> one-way, not a 422
       // Journey order: stops along the way first, the To city (final
       // destination) last
       destinations: stops.length ? [...stops.map(s => s.city), form.destination] : null,
@@ -347,7 +348,7 @@ export default function SearchPage() {
       if (run === compareRun.current) patch({ status: 'done', summary })
     } catch (err) {
       if (run === compareRun.current) {
-        patch({ status: 'error', error: err.response?.data?.detail || "Couldn't load this destination" })
+        patch({ status: 'error', error: compareErrorReason(err) })
       }
     }
   }
@@ -357,8 +358,11 @@ export default function SearchPage() {
     loadCompareColumn(index)
   }
 
+  const compareLoading = !!compareColumns?.some(c => c.status === 'loading')
+
   const handleCompare = (e) => {
     e.preventDefault()
+    if (compareLoading) return
     const requests = buildCompareRequests(compareForm)
     if (requests.length < 2) {
       setCompareError('Add at least two different destinations to compare.')
@@ -380,8 +384,9 @@ export default function SearchPage() {
     // (permits, visas, accessibility, serendipity) stay as in the known form
     const { destination, origin, departure_date, return_date, nationality, interests,
       budget_usd, adults, children, seniors, infants } = request
-    const planForm = { ...form, destination, origin, departure_date, return_date, nationality,
-      interests, budget_usd, adults, children, seniors, infants }
+    // The compared request carries nulls; the form's inputs want ''
+    const planForm = { ...form, destination, origin, departure_date, return_date: return_date ?? '',
+      nationality, interests, budget_usd: budget_usd ?? '', adults, children, seniors, infants }
     setForm(planForm)
     setExtraStops([])
     setMode('known')
@@ -804,9 +809,9 @@ export default function SearchPage() {
 
                 {compareError && <p role="alert" className="text-center text-red-500 text-sm">{compareError}</p>}
 
-                <button type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
-                  <Search size={18} /> Compare destinations
+                <button type="submit" disabled={compareLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base disabled:opacity-60 disabled:cursor-not-allowed">
+                  <Search size={18} /> {compareLoading ? 'Comparing…' : 'Compare destinations'}
                 </button>
               </form>
 

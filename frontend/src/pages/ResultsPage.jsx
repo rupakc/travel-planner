@@ -2975,6 +2975,7 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
   const [form, setForm] = useState({
     ...searchData,
     budget_usd: searchData.budget_usd ?? '',
+    return_date: searchData.return_date ?? '',  // one-way searches carry null
     adults: searchData.adults ?? Math.max(1, searchData.num_travelers ?? 1),
     seniors: searchData.seniors ?? 0,
     children: searchData.children ?? 0,

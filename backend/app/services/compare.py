@@ -182,7 +182,32 @@ def _label(request: TravelSearchRequest, flights: dict | None, hotels: dict | No
     return request.destination
 
 
+def _rooms(request: TravelSearchRequest) -> int:
+    """Rooms needed, assuming two grown-ups per room (children/infants share).
+
+    Uses adults + seniors when the request set them to something non-zero;
+    otherwise falls back to two travellers per room.
+    """
+    explicit = {"adults", "seniors"} & request.model_fields_set
+    grown_ups = (request.adults or 0) + (request.seniors or 0)
+    if explicit and grown_ups > 0:
+        return math.ceil(grown_ups / 2)
+    return math.ceil(max(request.num_travelers, 1) / 2)
+
+
 def _estimate(request, flight, hotel, daily_cost) -> dict:
+    """Per-traveller trip cost estimate.
+
+    ``avg_daily_cost_usd`` in static_results._DESTINATION_SCORES is an
+    *all-in* daily budget, lodging included: get_confidence_score divides the
+    whole trip budget by ``days * avg_daily_cost_usd`` ("your budget covers
+    ~N days"), and the figures (Cambodia 35, Vietnam 45, Switzerland 250) are
+    per-person all-in budgets — they could not cover food/transport/sights on
+    top of a mid-range room.  So when the daily figure is known the total is
+    flight + daily × days and the stay is reported for reference only
+    (``included_in_daily``).  When it is unknown the stay is the best lodging
+    figure we have, so it is added (and the estimate is partial).
+    """
     nights = (
         (request.return_date - request.departure_date).days
         if request.return_date
@@ -193,15 +218,17 @@ def _estimate(request, flight, hotel, daily_cost) -> dict:
     flight_usd = flight["price_usd"] if flight else None
     nightly = hotel["typical_nightly_usd"] if hotel else None
     n = max(request.num_travelers, 1)
-    # A nightly price is per room; assume one room per two travellers.
+    # A nightly price is per room; split the party's rooms across travellers.
     stay_usd = (
-        _round(nightly * nights * math.ceil(n / 2) / n, 2)
+        _round(nightly * nights * _rooms(request) / n, 2)
         if nightly is not None
         else None
     )
     daily_usd = _round(daily_cost * days, 2) if daily_cost is not None else None
-    parts = [p for p in (flight_usd, stay_usd, daily_usd) if p is not None]
-    partial = len(parts) < 3
+    included_in_daily = daily_usd is not None
+    lodging_or_daily = daily_usd if included_in_daily else stay_usd
+    parts = [p for p in (flight_usd, lodging_or_daily) if p is not None]
+    partial = flight_usd is None or daily_usd is None
     total = _round(sum(parts), 2) if parts else None
 
     budget = _positive(request.budget_usd)
@@ -218,6 +245,7 @@ def _estimate(request, flight, hotel, daily_cost) -> dict:
         "flight_usd": flight_usd,
         "stay_usd": stay_usd,
         "daily_usd": daily_usd,
+        "included_in_daily": included_in_daily,
         "nights": nights,
         "partial": partial,
         "budget_status": status,

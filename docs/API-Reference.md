@@ -201,27 +201,37 @@ Lightweight summary of one destination, used by the Search page's Compare mode (
 
 **Request body:** a `TravelSearchRequest` for a single destination. `destinations` must be null or have at most one entry; multi-city requests return `422` ("Compare works with single destinations").
 
-**Response (200):**
+**Response (200)** — example for 2 adults, 7 nights, `budget_usd: 3000`:
 ```json
 {
   "destination": "Lisbon, Portugal",
   "label": "Lisbon",
-  "flight": {"price_usd": 120, "stops": 0, "duration_minutes": 480, "airline": "TAP", "source": "serpapi"},
-  "hotel": {"typical_nightly_usd": 110, "cheapest_good_nightly_usd": 70, "count": 12},
-  "weather": {"avg_high_c": 24, "avg_low_c": 15, "poor_days": 1, "total_days": 7, "source": "open-meteo"},
-  "visa": {"visa_type": "visa-free", "max_stay_days": 90, "fee_usd": 0, "processing_time": "none", "verified": true},
-  "ease": {"total": 82, "grade": "B", "safety": 17, "english": 15, "infrastructure": 16, "visa_ease": 18},
-  "daily_cost_usd": 95,
-  "estimate": {"total_usd": 1450, "flight_usd": 240, "stay_usd": 770, "daily_usd": 665, "nights": 7, "partial": false},
-  "budget_status": "under",
+  "flight": {"price_usd": 620, "stops": 0, "duration_minutes": 895, "airline": "TAP Air Portugal", "source": "google_flights"},
+  "hotel": {"typical_nightly_usd": 110, "cheapest_good_nightly_usd": 70, "count": 5},
+  "weather": {"avg_high_c": 24.4, "avg_low_c": 15.7, "poor_days": 1, "total_days": 7, "source": "open-meteo"},
+  "visa": {"visa_type": "visa-free", "max_stay_days": 90, "fee_usd": 0, "processing_time": "Not required", "verified": true},
+  "ease": {"total": 80, "grade": "green", "safety": 18, "english": 15, "infrastructure": 17, "visa_ease": 10},
+  "daily_cost_usd": 100,
+  "estimate": {
+    "total_usd": 1320,
+    "flight_usd": 620,
+    "stay_usd": 385,
+    "daily_usd": 700,
+    "included_in_daily": true,
+    "nights": 7,
+    "partial": false,
+    "budget_status": "under"
+  },
   "missing": []
 }
 ```
-Any piece that failed or timed out is `null` and its name is listed in `missing`; `ease`/`daily_cost_usd` are `null` for destinations outside the static tables, and `estimate.partial` is `true` when a part is unknown. `flight.source` of `estimate` marks a non-live fare; `visa.verified` is true only for static-table data.
+Any piece that failed or timed out is `null` and its name is listed in `missing`; `ease`/`daily_cost_usd` are `null` for destinations outside the static tables. `flight.source` of `estimate` marks a non-live fare; `visa.verified` is true only for static-table data. `ease.grade` is `green` (≥ 71), `amber` (41–70) or `red` (≤ 40).
+
+**Estimate (per traveller):** `flight_usd` is the cheapest fare (`flight.price_usd`, round trip, per person). `daily_usd` = `daily_cost_usd` × days (days = nights, min 1; nights default to 7 without a `return_date`). `daily_cost_usd` is an all-in daily budget that already includes lodging, so when it is known `total_usd = flight_usd + daily_usd` and `stay_usd` is shown for reference only (`included_in_daily: true`) — above, 620 + 700 = 1320. When the daily figure is unknown, `total_usd = flight_usd + stay_usd` and `included_in_daily` is `false`. `stay_usd` = typical nightly × nights × rooms ÷ travellers, with rooms = ⌈(adults + seniors) ÷ 2⌉ (falling back to ⌈num_travelers ÷ 2⌉) — above, 110 × 7 × 1 ÷ 2 = 385. `partial` is `true` when the flight or the daily figure is unknown; the total then sums only the known parts. `budget_status` compares `total_usd × num_travelers` with `budget_usd` (the party's budget): `over`, `under` (only for a complete estimate), or `null` with no budget or when a partial total is still within it.
 
 **Errors:** `422` for multi-city or invalid requests; `502` when every piece failed.
 
-**Caching:** results with at least one piece are cached in the shared TTL cache keyed on the full request; a `502` is never cached.
+**Caching:** only complete results (empty `missing`) are cached in the shared TTL cache, keyed on the full request; partial results and `502`s are never cached.
 
 ## Chat
 
