@@ -87,16 +87,19 @@ def stated_region(stated: str) -> tuple[str, frozenset[str]] | None:
 _REGION_CODES: dict[str, frozenset[str]] = _region_codes()
 
 
-# Letters NFKD does not decompose into a base letter + combining mark.
+# Letters NFKD does not decompose into a base letter + combining mark, and the
+# punctuation that separates words in place names ("St. Louis", "Winston-Salem").
 _TRANSLITERATE = str.maketrans(
     {"ß": "ss", "ø": "o", "æ": "ae", "œ": "oe", "ł": "l", "đ": "d", "ı": "i",
-     "þ": "th", "ð": "d"}
+     "þ": "th", "ð": "d", ".": " ", "-": " "}
 )  # fmt: skip
 
 
 def fold_place(text: str) -> str:
     """Accent-free, lower-case, single-spaced form of a place name for
-    matching: "  São Paulo" → "sao paulo", "Straße" → "strasse"."""
+    matching: "  São Paulo" → "sao paulo", "Straße" → "strasse",
+    "St. Louis" → "st louis", "Winston-Salem" → "winston salem". The runtime
+    lookups and the offline data generator share this one definition."""
     lowered = (text or "").lower().translate(_TRANSLITERATE)
     decomposed = unicodedata.normalize("NFKD", lowered)
     stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
