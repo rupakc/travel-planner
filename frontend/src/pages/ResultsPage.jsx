@@ -20,6 +20,8 @@ import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricVa
 import { track } from '../utils/analytics'
 import { buildBestValuePackage, applyPackage } from '../utils/bestValuePackage'
 import BestValuePackage from '../components/BestValuePackage'
+import BudgetPlanner from '../components/BudgetPlanner'
+import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flightKey } from '../utils/budgetPlanner'
 import { safeUrl } from '../utils/planPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
@@ -412,7 +414,41 @@ function CityChip({ city }) {
 }
 
 // Multi-city flights: one group per leg, users pick one flight per leg
-function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLayover }) {
+// ─── Budget planner card states ──────────────────────────────────────────────
+// `budget` props are null until the planner is in use. Over-budget cards are
+// dimmed, or hidden when "Show only what fits" is on; a selected card always
+// stays visible and undimmed, and unknown prices are never treated as over.
+
+const OVER_BUDGET_DIM = 'opacity-60 hover:opacity-100 focus-within:opacity-100'
+
+function OverBudgetTag({ children }) {
+  return <span className="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">{children}</span>
+}
+
+function HiddenByBudgetRow({ count, onShowAll }) {
+  if (!count) return null
+  return (
+    <button type="button" onClick={onShowAll}
+      className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+      {count} hidden — show all
+    </button>
+  )
+}
+
+// Splits items into shown ones (with an `over` flag) and a hidden count
+function budgetView(items, budget, keyOf, isSelected) {
+  const shown = []
+  let hidden = 0
+  items.forEach((item, i) => {
+    const over = !!budget?.over.has(keyOf(item))
+    const selected = isSelected(item)
+    if (over && budget.hideOver && !selected) hidden += 1
+    else shown.push({ item, i, over, dim: over && !selected })
+  })
+  return { shown, hidden }
+}
+
+function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLayover, budget = null }) {
   const chosen = selections.flights || []
   const chosenTotal = chosen.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0)
   return (
@@ -435,14 +471,16 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
               <div className="border border-dashed border-gray-300 rounded-xl px-4 py-3 text-xs text-gray-500">
                 No flights found for this leg — check trains/buses in Getting Around
               </div>
-            ) : (
+            ) : (() => {
+              const { shown, hidden } = budgetView(leg.results, budget, flightKey, f => chosen.some(x => sameFlight(x, f)))
+              return (
               <div className="space-y-2">
-                {leg.results.map((f, i) => {
+                {shown.map(({ item: f, i, over, dim }) => {
                   const isSelected = chosen.some(x => sameFlight(x, f))
                   return (
                     <div key={i}
                       onClick={() => onSelect('flights', f)}
-                      className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'}`}>
+                      className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
@@ -453,7 +491,8 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
                         </div>
                       </div>
                       <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {over && <OverBudgetTag>Over your flight budget</OverBudgetTag>}
                           {f.booking_url && (
                             <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                               className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
@@ -470,8 +509,10 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
                     </div>
                   )
                 })}
+                <HiddenByBudgetRow count={hidden} onShowAll={budget?.onShowAll} />
               </div>
-            )}
+              )
+            })()}
           </div>
         )
       })}
@@ -479,9 +520,9 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
   )
 }
 
-function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) {
+export function FlightsSection({ data, selections, onSelect, pricingData, onLayover, budget = null }) {
   if (data?.legs?.length) {
-    return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} onLayover={onLayover} />
+    return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} onLayover={onLayover} budget={budget} />
   }
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
@@ -491,6 +532,8 @@ function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) 
 
   if (!isRoundTripFormat) {
     // Legacy flat format fallback
+    const isLegacySelected = (f) => !!selected && selected.airline === f.airline && selected.price_usd === f.price_usd
+    const legacyView = budgetView(data.results, budget, flightKey, isLegacySelected)
     return (
       <div>
       {pricingData && <div className="px-4 pt-4"><PricingAdvisorBanner data={pricingData} /></div>}
@@ -509,18 +552,18 @@ function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) 
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data.results.map((f, i) => {
-              const isSelected = selected && selected.airline === f.airline && selected.price_usd === f.price_usd
+            {legacyView.shown.map(({ item: f, i, over, dim }) => {
+              const isSelected = isLegacySelected(f)
               return (
                 <tr key={i} onClick={() => onSelect('flight', isSelected ? null : f)}
-                  className={`cursor-pointer transition-colors ${isSelected ? 'bg-teal-50 ring-1 ring-inset ring-teal-300' : 'hover:bg-gray-50'}`}>
+                  className={`cursor-pointer transition-colors ${isSelected ? 'bg-teal-50 ring-1 ring-inset ring-teal-300' : 'hover:bg-gray-50'} ${dim ? OVER_BUDGET_DIM : ''}`}>
                   <td className="px-3 py-3 text-center">
                     <div className={`w-4 h-4 rounded-full border-2 mx-auto flex items-center justify-center ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-gray-300'}`}>
                       {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium">{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}</td>
-                  <td className="px-4 py-3 text-right font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</td>
+                  <td className="px-4 py-3 text-right font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}{over && <div className="font-normal"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${f.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                       {f.stops === 0 ? 'Non-stop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`}
@@ -538,24 +581,27 @@ function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) 
           </tbody>
         </table>
       </div>
+      {legacyView.hidden > 0 && <div className="p-4"><HiddenByBudgetRow count={legacyView.hidden} onShowAll={budget?.onShowAll} /></div>}
       </div>
     )
   }
 
   // Round-trip card layout
+  const isRoundTripSelected = (f) => !!(selected && selected === f || (selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline))
+  const roundTripView = budgetView(data.results, budget, flightKey, isRoundTripSelected)
   return (
     <div className="space-y-3 p-4">
       {pricingData && <PricingAdvisorBanner data={pricingData} />}
-      {data.results.map((f, i) => {
-        const isSelected = selected && selected === f || (selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline)
+      {roundTripView.shown.map(({ item: f, i, over, dim }) => {
+        const isSelected = isRoundTripSelected(f)
         const isOneWay = f.trip_type === 'one_way' || !f.return
         return (
           <div key={i}
             onClick={() => onSelect('flight', isSelected ? null : f)}
-            className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'}`}
+            className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}
           >
             <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-teal-600 bg-teal-600' : 'border-gray-300'}`}>
                   {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                 </div>
@@ -563,6 +609,7 @@ function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) 
                   {isOneWay ? 'One-way' : 'Round-trip'}
                 </span>
                 {f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}
+                {over && <OverBudgetTag>Over your flight budget</OverBudgetTag>}
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</p>
@@ -594,6 +641,7 @@ function FlightsSection({ data, selections, onSelect, pricingData, onLayover }) 
           </div>
         )
       })}
+      <HiddenByBudgetRow count={roundTripView.hidden} onShowAll={budget?.onShowAll} />
     </div>
   )
 }
@@ -772,17 +820,19 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   )
 }
 
-export function HotelsSection({ data, selections, onSelect }) {
+export function HotelsSection({ data, selections, onSelect, budget = null }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
   const selected = selections.hotel
+  const isHotelSelected = (h) => !!selected && selected.name === h.name
+  const { shown, hidden } = budgetView(data.results, budget, h => h.name, isHotelSelected)
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-      {data.results.map((h, i) => {
-        const isSelected = selected && selected.name === h.name
+      {shown.map(({ item: h, i, over, dim }) => {
+        const isSelected = isHotelSelected(h)
         return (
           <div key={i}
             onClick={() => onSelect('hotel', isSelected ? null : h)}
-            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'}`}>
+            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'} ${dim ? OVER_BUDGET_DIM : ''}`}>
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1 min-w-0 mr-2">
                 <h3 className="font-semibold text-gray-900 truncate">{h.name}</h3>
@@ -796,9 +846,10 @@ export function HotelsSection({ data, selections, onSelect }) {
                 {h.total_price_usd && <p className="text-xs text-gray-400">${h.total_price_usd.toLocaleString()} total</p>}
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <div className="flex">{[...Array(Math.round(h.star_rating || 0))].map((_, j) => <Star key={j} size={11} className="text-yellow-400 fill-yellow-400" />)}</div>
               {h.review_score && <span className="text-xs text-gray-500">{h.review_score}/10</span>}
+              {over && <OverBudgetTag>Over your stay budget</OverBudgetTag>}
             </div>
             {h.amenities?.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
@@ -820,6 +871,7 @@ export function HotelsSection({ data, selections, onSelect }) {
           </div>
         )
       })}
+      {hidden > 0 && <div className="md:col-span-2"><HiddenByBudgetRow count={hidden} onShowAll={budget?.onShowAll} /></div>}
     </div>
   )
 }
@@ -986,7 +1038,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   )
 }
 
-export function ActivitiesSection({ data, selections, onSelect, weatherData }) {
+export function ActivitiesSection({ data, selections, onSelect, weatherData, budget = null }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found — try different interests or adjusting dates</div>
   const catColors = { food:'bg-orange-100 text-orange-700',history:'bg-amber-100 text-amber-700',adventure:'bg-red-100 text-red-700',culture:'bg-purple-100 text-purple-700',nature:'bg-green-100 text-green-700',shopping:'bg-pink-100 text-pink-700',nightlife:'bg-indigo-100 text-indigo-700',wellness:'bg-teal-100 text-teal-700',art:'bg-violet-100 text-violet-700',family:'bg-blue-100 text-blue-700',general:'bg-gray-100 text-gray-700' }
   const poorDays = weatherData?.poor_weather_day_count ?? 0
@@ -1023,6 +1075,7 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData }) {
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
+              {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">Fits your budget</span>}
               {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
@@ -3316,6 +3369,18 @@ export default function ResultsPage() {
     setRecheck(null)
     setRecheckRun({ running: false, error: null })
   }
+  // Budget planner: until the user moves a slider or edits the total
+  // ("touched"), the allocation follows the defaults for the loaded results
+  // and nothing on the page is capped; the panel still shows counts.
+  const [budgetEdit, setBudgetEdit] = useState(null) // the user's allocation once touched
+  const [budgetShowOnlyFits, setBudgetShowOnlyFits] = useState(false)
+  const budgetTrackTimer = useRef(null)
+  useEffect(() => () => clearTimeout(budgetTrackTimer.current), [])
+  const resetBudgetPlanner = () => {
+    clearTimeout(budgetTrackTimer.current)
+    setBudgetEdit(null)
+    setBudgetShowOnlyFits(false)
+  }
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -3424,7 +3489,50 @@ export default function ResultsPage() {
       setRecheckRun({ running: false, error: recheckErrorMessage(err), forFingerprint: forLayoutFingerprint })
     }
   }
-  const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
+  const defaultBudget = useMemo(
+    () => defaultAllocation(searchData, { flights: results.flights, hotels: results.hotels }),
+    [searchData, results.flights, results.hotels],
+  )
+  const budgetTouched = !!budgetEdit
+  const budgetAllocation = budgetEdit || defaultBudget
+  const budgetFit = useMemo(
+    () => (budgetAllocation ? fitResults(results, budgetAllocation, searchData) : null),
+    [budgetAllocation, results, searchData],
+  )
+  const trackBudgetChange = (key) => {
+    clearTimeout(budgetTrackTimer.current)
+    budgetTrackTimer.current = setTimeout(() => track('budget_planner_changed', 'results', { key }), 1000)
+  }
+  const handleBudgetChange = (key, value) => {
+    const base = budgetEdit || defaultBudget
+    if (!base) return
+    const total = base.flights + base.stay + base.activities + base.other
+    setBudgetEdit(reallocate(base, key, value, total))
+    trackBudgetChange(key)
+  }
+  const handleBudgetTotalChange = (total) => {
+    const base = budgetEdit || defaultBudget
+    if (!base) return
+    setBudgetEdit(withTotal(base, total))
+    trackBudgetChange('total')
+  }
+  const handleFindCheaperHotels = (maxNightly) => {
+    track('budget_planner_cheaper_hotels', 'results', {})
+    handleApplyHotelFilters({ max_price_per_night_usd: maxNightly })
+  }
+  // Cards react once the planner is in use: touched, or "Show only what fits" on
+  const budgetCards = budgetFit && (budgetTouched || budgetShowOnlyFits)
+  const showAllBudget = () => setBudgetShowOnlyFits(false)
+  const hotelBudget = budgetCards ? { over: budgetFit.hotels.over, hideOver: budgetShowOnlyFits, onShowAll: showAllBudget } : null
+  const flightBudget = budgetCards ? { over: budgetFit.flights.over, hideOver: budgetShowOnlyFits, onShowAll: showAllBudget } : null
+  const activityBudget = budgetCards ? { picked: budgetFit.activities.picked } : null
+
+  const bestValue = useMemo(
+    () => (isDone
+      ? buildBestValuePackage(results, searchData, budgetTouched && budgetFit ? { caps: capsFromFit(budgetFit) } : undefined)
+      : null),
+    [isDone, results, searchData, budgetTouched, budgetFit],
+  )
   const handleApplyPackage = () => {
     if (!bestValue) return
     setPackageUndo(selections)
@@ -3453,6 +3561,7 @@ export default function ResultsPage() {
     setPackageUndo(null)
     setLayoutUndo([])
     clearRecheck()
+    resetBudgetPlanner()
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -3781,10 +3890,10 @@ export default function ResultsPage() {
     if (status === 'waiting') return null
     const data = results[agent]
     const renderers = {
-      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} onLayover={handleLayover} />,
+      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} onLayover={handleLayover} budget={flightBudget} />,
       weather:        () => <WeatherSection    data={data} />,
-      hotels:         () => <HotelsSection     data={data} {...sectionProps} />,
-      activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} />,
+      hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} />,
+      activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} budget={activityBudget} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
       walking_tours:  () => <WalkingToursSection data={data} {...sectionProps} />,
       events:         () => <EventsSection data={data} {...sectionProps} />,
@@ -4009,6 +4118,22 @@ export default function ResultsPage() {
               onUndo={handleUndoPackage}
               canUndo={!!packageUndo}
               disabledReason={loadedPlanSearchData ? 'A saved plan is open. Click New in My Plan to add a package.' : null}
+            />
+          </div>
+        )}
+
+        {isDone && budgetAllocation && budgetFit && (
+          <div id="section-budget_planner" className="mb-5">
+            <BudgetPlanner
+              allocation={budgetAllocation}
+              fit={budgetFit}
+              onChange={handleBudgetChange}
+              onTotalChange={handleBudgetTotalChange}
+              onReset={() => { clearTimeout(budgetTrackTimer.current); setBudgetEdit(null) }}
+              showOnlyFits={budgetShowOnlyFits}
+              onShowOnlyFitsChange={setBudgetShowOnlyFits}
+              onFindCheaperHotels={handleFindCheaperHotels}
+              findingCheaperHotels={isHotelFilterLoading}
             />
           </div>
         )}
