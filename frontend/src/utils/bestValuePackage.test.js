@@ -35,7 +35,7 @@ describe('flight pick', () => {
     const oneStop = flight({ flight_number: 'B', price_usd: 500, outbound: { airline: 'Y', flight_number: 'B', stops: 1, duration_minutes: 700 } })
     const pkg = build(fl([twoStop, oneStop]))
     expect(pkg.selections.flight).toBe(oneStop)
-    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Fewer stops or shorter for $20 more than the cheapest fare')
+    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Fewer stops for $20 more than the cheapest fare')
   })
 
   it('takes the cheapest fare when the direct one is outside 15%', () => {
@@ -63,6 +63,41 @@ describe('flight pick', () => {
     const slow = flight({ flight_number: 'S', price_usd: 400, outbound: { airline: 'X', flight_number: 'S', stops: 0, duration_minutes: 900 } })
     const fast = flight({ flight_number: 'F', price_usd: 420, outbound: { airline: 'X', flight_number: 'F', stops: 0, duration_minutes: 500 } })
     expect(build(fl([slow, fast])).selections.flight).toBe(fast)
+  })
+
+  it('does not chase 5 minutes: $169 beats $183 when both are direct', () => {
+    const mk = (n, price, out, ret) => flight({ flight_number: n, price_usd: price, outbound: { airline: 'X', flight_number: n, stops: 0, duration_minutes: out }, return: { stops: 0, duration_minutes: ret } })
+    const cheap = mk('C', 169, 155, 165)
+    const dear = mk('D', 183, 155, 160)
+    const pkg = build(fl([dear, cheap]))
+    expect(pkg.selections.flight).toBe(cheap)
+    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Cheapest fare')
+  })
+
+  it('takes a pricier same-stops fare that saves 90+ minutes', () => {
+    const mk = (n, price, dur) => flight({ flight_number: n, price_usd: price, outbound: { airline: 'X', flight_number: n, stops: 1, duration_minutes: dur }, return: undefined })
+    const slow = mk('S', 400, 600)
+    const fast = mk('F', 430, 480)
+    const pkg = build(fl([slow, fast]))
+    expect(pkg.selections.flight).toBe(fast)
+    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Saves 2h of travel for $30 more than the cheapest fare')
+  })
+
+  it('ignores a fare that saves only 60 minutes or has unknown duration', () => {
+    const mk = (n, price, dur) => flight({ flight_number: n, price_usd: price, outbound: { airline: 'X', flight_number: n, stops: 1, duration_minutes: dur }, return: undefined })
+    const slow = mk('S', 400, 600)
+    expect(build(fl([slow, mk('F', 430, 540)])).selections.flight).toBe(slow)
+    expect(build(fl([slow, mk('U', 430, null)])).selections.flight).toBe(slow)
+  })
+
+  it('among several qualifying fares takes the shortest, then cheapest; formats h and m', () => {
+    const mk = (n, price, dur) => flight({ flight_number: n, price_usd: price, outbound: { airline: 'X', flight_number: n, stops: 1, duration_minutes: dur }, return: undefined })
+    const slow = mk('S', 400, 600)
+    const a = mk('A', 410, 500)
+    const b = mk('B', 430, 400)
+    const pkg = build(fl([slow, a, b]))
+    expect(pkg.selections.flight).toBe(b)
+    expect(itemsOf(pkg, 'flight')[0].reason).toBe('Saves 3h 20m of travel for $30 more than the cheapest fare')
   })
 
   it('multi-city: one per leg into selections.flights', () => {
@@ -155,10 +190,24 @@ describe('activities', () => {
     expect(itemsOf(pkg, 'activities')[0].reason.startsWith('Free')).toBe(true)
   })
 
-  it('excludes prices over $30, including strings', () => {
-    const pkg = build(acts([activity({ name: 'S', price_usd: '45' }), activity({ name: 'T', price_usd: 31 }), activity({ name: 'OK', price_usd: '12' })]))
-    expect(pkg.selections.activities.map((a) => a.name)).toEqual(['OK'])
+  it('keeps the $30 floor for the cap, including string prices', () => {
+    const list = [activity({ name: 'S', price_usd: '45' }), activity({ name: 'T', price_usd: 60 }), activity({ name: 'U', price_usd: 90 }), activity({ name: 'OK', price_usd: '12' })]
+    const pkg = build(acts(list))
+    expect(pkg.selections.activities.map((a) => a.name)).toEqual(['OK', 'S'])
     expect(itemsOf(pkg, 'activities')[0].reason).toBe('$12')
+  })
+
+  it('uses the per-city median as the cap when everything is pricey', () => {
+    const prices = [39, 45, 48, 52, 55, 58, 59]
+    const list = prices.map((p) => activity({ name: `P${p}`, price_usd: p, similarity_score: 0.1 }))
+    const pkg = build(acts(list.slice().reverse()))
+    // all eligible are 39..52; 2 per city cap picks the cheapest two (equal similarity)
+    expect(pkg.selections.activities.map((a) => a.name)).toEqual(['P39', 'P45'])
+    const four = build(acts(prices.map((p, i) => activity({ name: `P${p}`, price_usd: p, city: `C${i}` }))))
+    expect(four.selections.activities.every((a) => a.price_usd <= 59)).toBe(true)
+    const wide = build(acts(list.map((a) => ({ ...a, similarity_score: a.price_usd === 55 || a.price_usd === 59 ? 0.9 : 0.1 }))))
+    expect(wide.selections.activities.map((a) => a.name).sort()).toEqual(['P39', 'P45'])
+    expect(itemsOf(pkg, 'activities')[0].reason).toBe('$39 · below the typical price here')
   })
 
   it('adds the interest note for similarity >= 0.5', () => {
@@ -166,17 +215,16 @@ describe('activities', () => {
     expect(itemsOf(pkg, 'activities')[0].reason).toBe('$12 · matches your interests')
   })
 
-  it('caps at 3 per city and 6 overall, best similarity first', () => {
+  it('caps at 2 per city and 4 overall, best similarity first', () => {
     const list = []
     for (const city of ['A', 'B', 'C']) {
       for (let i = 0; i < 4; i++) list.push(activity({ name: `${city}${i}`, city, similarity_score: 0.9 - i * 0.1 }))
     }
     const pkg = build(acts(list))
     const names = pkg.selections.activities.map((a) => a.name)
-    expect(names).toHaveLength(6)
-    expect(names).toEqual(['A0', 'B0', 'C0', 'A1', 'B1', 'C1'])
+    expect(names).toEqual(['A0', 'B0', 'C0', 'A1'])
     const one = build(acts(list.filter((a) => a.city === 'A')))
-    expect(one.selections.activities.map((a) => a.name)).toEqual(['A0', 'A1', 'A2'])
+    expect(one.selections.activities.map((a) => a.name)).toEqual(['A0', 'A1'])
   })
 })
 

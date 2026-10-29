@@ -5,11 +5,12 @@ import { computePlanCost, getBudgetStatus, sameFlight } from './planHelpers'
 // number is coerced and anything non-finite counts as unknown.
 
 const FLIGHT_PRICE_WINDOW = 1.15
-const MAX_ACTIVITY_PRICE = 30
+const ACTIVITY_PRICE_FLOOR = 30
+const MIN_TIME_SAVED_MINUTES = 90
 const MIN_CHEAP_HOTEL_REVIEW = 7
 const CAPS = {
-  activitiesPerCity: 3,
-  activities: 6,
+  activitiesPerCity: 2,
+  activities: 4,
   walkingTours: 3,
   placesPerCity: 2,
   places: 4,
@@ -69,18 +70,36 @@ const flightDuration = (f) => {
   return out + (num(f.return?.duration_minutes) ?? 0)
 }
 
+const duration = (mins) => {
+  const h = Math.floor(mins / 60)
+  const m = Math.round(mins % 60)
+  return [h && `${h}h`, m && `${m}m`].filter(Boolean).join(' ')
+}
+
 function pickFlight(flights) {
   let cands = flights.filter((f) => flightPrice(f) > 0)
   if (cands.some((f) => f.source !== 'estimate')) cands = cands.filter((f) => f.source !== 'estimate')
   if (!cands.length) return null
-  const cheapest = Math.min(...cands.map(flightPrice))
-  const pool = cands.filter((f) => flightPrice(f) <= cheapest * FLIGHT_PRICE_WINDOW)
-  const best = sortBy(pool, byAsc(flightStops), byAsc(flightDuration), byAsc(flightPrice))[0]
-  const extra = flightPrice(best) - cheapest
-  const reason =
-    Math.round(extra) > 0
-      ? `Fewer stops or shorter for ${money(extra)} more than the cheapest fare`
-      : 'Cheapest fare'
+  const cheapestOverall = sortBy(cands, byAsc(flightPrice), byAsc(flightStops))[0]
+  const cheapestPrice = flightPrice(cheapestOverall)
+  const pool = cands.filter((f) => flightPrice(f) <= cheapestPrice * FLIGHT_PRICE_WINDOW)
+  const fewest = Math.min(...pool.map(flightStops))
+  const group = pool.filter((f) => flightStops(f) === fewest)
+  const base = sortBy(group, byAsc(flightPrice), byAsc(flightDuration))[0]
+  const baseDuration = flightDuration(base)
+  const faster = group.filter((f) => {
+    const d = flightDuration(f)
+    return d !== null && baseDuration !== null && flightPrice(f) > flightPrice(base) && baseDuration - d >= MIN_TIME_SAVED_MINUTES
+  })
+  const best = faster.length ? sortBy(faster, byAsc(flightDuration), byAsc(flightPrice))[0] : base
+  const extra = Math.round(flightPrice(best) - cheapestPrice)
+  let reason = 'Cheapest fare'
+  if (extra > 0) {
+    reason =
+      flightStops(best) < flightStops(cheapestOverall)
+        ? `Fewer stops for ${money(extra)} more than the cheapest fare`
+        : `Saves ${duration(baseDuration - flightDuration(best))} of travel for ${money(extra)} more than the cheapest fare`
+  }
   return { item: best, reason }
 }
 
@@ -151,15 +170,29 @@ function takePerCity(sorted, perCity, total) {
   return out
 }
 
+const median = (nums) => {
+  const v = nums.slice().sort((x, y) => x - y)
+  const mid = Math.floor(v.length / 2)
+  return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2
+}
+
 function pickActivities(section) {
-  const cands = listOf(section).filter((a) => {
+  const priced = listOf(section).filter((a) => {
     const p = num(a.price_usd)
-    return a.name && p !== null && p >= 0 && p <= MAX_ACTIVITY_PRICE
+    return p !== null && p >= 0
   })
+  // Cap = the pricier of $30 and the typical (median) price in the same city
+  const byCity = new Map()
+  for (const a of priced) {
+    const k = a.city ?? ''
+    byCity.set(k, [...(byCity.get(k) || []), num(a.price_usd)])
+  }
+  const cap = new Map([...byCity].map(([k, prices]) => [k, Math.max(ACTIVITY_PRICE_FLOOR, median(prices))]))
+  const cands = priced.filter((a) => a.name && num(a.price_usd) <= cap.get(a.city ?? ''))
   const sorted = sortBy(cands, byDesc((a) => num(a.similarity_score)), byAsc((a) => num(a.price_usd)))
   return takePerCity(sorted, CAPS.activitiesPerCity, CAPS.activities).map((a) => {
     const p = num(a.price_usd)
-    const base = p === 0 ? 'Free' : money(p)
+    const base = p === 0 ? 'Free' : p > ACTIVITY_PRICE_FLOOR ? `${money(p)} · below the typical price here` : money(p)
     return { item: a, reason: num(a.similarity_score) >= 0.5 ? `${base} · matches your interests` : base }
   })
 }
