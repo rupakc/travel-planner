@@ -3394,10 +3394,15 @@ export default function ResultsPage() {
     () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
     [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
-  const recheckStale = useMemo(
-    () => !!recheck && recheck.forLayoutFingerprint !== recheckFingerprint(results.itinerary, selections),
-    [recheck, results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
+  // Fingerprint of the itinerary as edited now; only needed to judge an
+  // existing re-check result or error.
+  const currentRecheckFingerprint = useMemo(
+    () => (recheck || recheckRun.error ? recheckFingerprint(results.itinerary, selections) : null),
+    [recheck, recheckRun.error, results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
+  const recheckStale = !!recheck && recheck.forLayoutFingerprint !== currentRecheckFingerprint
+  // An error belongs to the attempt that failed: hide it once the plan changes.
+  const recheckError = recheckRun.error && recheckRun.forFingerprint === currentRecheckFingerprint ? recheckRun.error : null
   const handleRecheck = async () => {
     if (recheckRun.running || !results.itinerary) return
     const seq = ++recheckSeq.current
@@ -3409,14 +3414,14 @@ export default function ResultsPage() {
       const data = await recheckStressTest(payload, token)
       if (seq !== recheckSeq.current) return
       if (!data || typeof data !== 'object' || data.error) {
-        setRecheckRun({ running: false, error: recheckErrorMessage(null) })
+        setRecheckRun({ running: false, error: recheckErrorMessage(null), forFingerprint: forLayoutFingerprint })
         return
       }
       setRecheck({ data, forLayoutFingerprint })
       setRecheckRun({ running: false, error: null })
     } catch (err) {
       if (seq !== recheckSeq.current) return
-      setRecheckRun({ running: false, error: recheckErrorMessage(err) })
+      setRecheckRun({ running: false, error: recheckErrorMessage(err), forFingerprint: forLayoutFingerprint })
     }
   }
   const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
@@ -3798,7 +3803,7 @@ export default function ResultsPage() {
         })} />,
       stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0}
         recheck={recheck ? { data: recheck.data, stale: recheckStale } : null}
-        rechecking={recheckRun.running} recheckError={recheckRun.error} onRecheck={handleRecheck} />,
+        rechecking={recheckRun.running} recheckError={recheckError} onRecheck={handleRecheck} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]

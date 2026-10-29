@@ -24,11 +24,13 @@ function editedItinerary(itinerary, selections) {
       ...day,
       slots: (day.slots || []).map((slot) => {
         const edit = edits[slot.key] || {}
-        const { notes, ...rest } = slot
+        // `key` is client-only layout bookkeeping
+        const { notes, key: _key, ...rest } = slot
         return {
           ...rest,
           // the original description no longer matches an edited activity
-          ...(edit.activity == null && notes !== undefined ? { notes } : {}),
+          // (same test as the on-screen row: any falsy edit keeps it)
+          ...(!edit.activity && notes !== undefined ? { notes } : {}),
           activity: edit.activity ?? slot.activity,
           location: edit.location ?? slot.location,
           estimated_cost_usd: edit.cost ?? slot.estimated_cost_usd,

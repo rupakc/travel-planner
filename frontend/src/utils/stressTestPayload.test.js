@@ -58,6 +58,23 @@ describe('buildStressTestPayload', () => {
     expect(p.itinerary.days[1].slots[0].notes).toBe('About Belem')
   })
 
+  it('keeps the original notes for an empty-string activity edit, as on screen', () => {
+    const edits = { '1-morning': { activity: '' } }
+    const p = buildStressTestPayload(SEARCH, RESULTS, selections({ itinerary_edits: edits }))
+    const s = p.itinerary.days[0].slots[0]
+    expect(s.activity).toBe('')
+    expect(s.notes).toBe('About Castle')
+  })
+
+  it('strips the client-only key from every slot', () => {
+    const layout = moveSlot(ITIN, null, '1-morning', 2, 'evening')
+    for (const sel of [selections(), selections({ itinerary_layout: layout })]) {
+      const slots = buildStressTestPayload(SEARCH, RESULTS, sel).itinerary.days.flatMap((d) => d.slots)
+      expect(slots.length).toBeGreaterThan(0)
+      for (const s of slots) expect(s).not.toHaveProperty('key')
+    }
+  })
+
   it('excludes removed activities and layout bookkeeping', () => {
     const layout = removeSlot(ITIN, null, '1-afternoon')
     const p = buildStressTestPayload(SEARCH, RESULTS, selections({ itinerary_layout: layout }))
