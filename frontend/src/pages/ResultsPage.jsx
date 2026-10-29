@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, startTransition } from 'react'
+import { useState, useEffect, useRef, useMemo, startTransition } from 'react'
 import {
   ArrowLeft, Plane, Hotel, MapPin, Shield, Smartphone,
   Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
@@ -17,6 +17,8 @@ import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
+import { buildBestValuePackage, applyPackage } from '../utils/bestValuePackage'
+import BestValuePackage from '../components/BestValuePackage'
 import { safeUrl } from '../utils/planPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
@@ -3407,6 +3409,8 @@ export default function ResultsPage() {
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
   })
+  // Selections as they were just before "Add all to My Plan" (for Undo)
+  const [packageUndo, setPackageUndo] = useState(null)
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer — it
@@ -3457,8 +3461,23 @@ export default function ResultsPage() {
     setPlanName(plan.name)
     setLoadedPlanId(plan.id)
     setLoadedPlanSearchData(plan.search_data || null)
+    setPackageUndo(null)
   }
 
+
+  const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
+  const handleApplyPackage = () => {
+    if (!bestValue) return
+    setPackageUndo(selections)
+    setSelections(s => applyPackage(s, bestValue))
+    track('best_value_package_applied', 'results', { items: countSelections(bestValue.selections) })
+  }
+  const handleUndoPackage = () => {
+    if (!packageUndo) return
+    setSelections(packageUndo)
+    setPackageUndo(null)
+    track('best_value_package_undone', 'results', {})
+  }
 
   const hasStarted = useRef(false)
   const cleanupWorker = useRef(null)
@@ -3472,6 +3491,7 @@ export default function ResultsPage() {
     setError(null)
     setLoadedPlanId(null)
     setLoadedPlanSearchData(null)
+    setPackageUndo(null)
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -4006,6 +4026,20 @@ export default function ResultsPage() {
           </div>
         )}
 
+        {isDone && bestValue && (
+          <div id="section-best_value" className="mb-5">
+            <BestValuePackage
+              pkg={bestValue}
+              selections={selections}
+              searchData={searchData}
+              onApply={handleApplyPackage}
+              onUndo={handleUndoPackage}
+              canUndo={!!packageUndo}
+              disabledReason={loadedPlanSearchData ? 'A saved plan is open. Click New in My Plan to add a package.' : null}
+            />
+          </div>
+        )}
+
         {/* Tab switcher — only show once itinerary is loaded */}
         {results.itinerary?.days?.length > 0 && (
           <div className="flex gap-1 p-1 bg-white rounded-lg border border-gray-200 shadow-sm max-w-fit mb-4">
@@ -4070,7 +4104,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null) }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}
