@@ -1,5 +1,6 @@
 """Place-name reference data shared by the airports DB and the static tables."""
 
+import re
 import unicodedata
 
 # US state code → state name
@@ -282,3 +283,48 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "cotswolds": ("GB", ("BHX", "LHR")),
     "lake district": ("GB", ("MAN",)),
 }
+
+
+# ── Airports a place owns (shared by the data generator and the runtime) ──
+
+# Words that alone never identify a place inside an airport name.
+GENERIC_PLACE_WORDS = frozenset(
+    "airport international regional national municipal domestic airfield "
+    "aerodrome field airstrip airpark county city town de del la le el al "
+    "san santa saint st new port north south east west central island lake "
+    "river airbase air base".split()
+)
+_NON_WORD_RE = re.compile(r"[^\w ]")
+
+# A same-country airport this close is the place's own, whatever its name.
+OWN_AIRPORT_KM = 25
+
+# Airports never linked to places: reachable only via a third country
+# (Ercan, northern Cyprus: flights only via Turkey).
+NEVER_LINK: frozenset[str] = frozenset({"ECN"})
+
+
+def words_in(folded_name: str, folded_text: str) -> bool:
+    """The folded name occurs as whole words in the folded text, and is not
+    made only of generic airport/geography words."""
+    if not folded_name or set(folded_name.split()) <= GENERIC_PLACE_WORDS:
+        return False
+    words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
+    return f" {folded_name} " in f" {words} "
+
+
+def is_own_airport(
+    place: str,
+    airport_city: str,
+    airport_name: str,
+    same_country: bool,
+    distance_km: float,
+) -> bool:
+    """An airport is a place's own (all names folded) when its display city
+    is the place, its name contains the place name ("Basel" for BSL in
+    France), or it is in the same country within ``OWN_AIRPORT_KM``."""
+    return (
+        airport_city == place
+        or words_in(place, airport_name)
+        or (same_country and distance_km <= OWN_AIRPORT_KM)
+    )

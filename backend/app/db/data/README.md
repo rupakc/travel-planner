@@ -24,7 +24,7 @@ Snapshot date of both sources: **2026-10-29**.
 ## How the data is derived
 
 - **Display city.** For curated airports, the curated city. Otherwise the first of these rules that applies, using only places in the airport's own country (never empty):
-  1. the highest-scoring place within 40 km whose folded name occurs as whole words in the folded airport name ("Verona" for "Verona Villafranca Airport"); names made only of generic words such as "International" or "San" never match;
+  1. the highest-scoring place within 40 km whose folded name occurs as whole words in the folded airport name ("Verona" for "Verona Villafranca Airport"); names made only of generic words such as "International" or "San" never match, nor a name followed by "County", "Parish", "Province", "District" or "Region" (MSN "Dane County Regional" is Madison's);
   2. the highest-scoring place within 40 km whose first in-reach linked airport is this airport;
   3. the nearest place within 15 km;
   4. the OurAirports municipality, cleaned: the text before the first `(` or `,`, and `A` for `A/B`;
@@ -38,7 +38,9 @@ Snapshot date of both sources: **2026-10-29**.
   - medium: 50 km;
   - small: 30 km.
 
-  Airports in reach are ranked by (foreign, not the place's own, not curated, distance ÷ reach), and up to 3 are kept. An airport is the place's *own* when its display city is the place or its name contains the place name; an own airport across a border is not foreign (Basel → BSL in France). Among two neighbours in the same group whose distance ÷ reach are within 1.25× of each other, the one in the place's admin1 goes first (an airport's admin1 is that of the nearest same-country place within 50 km). If no airport is in reach, large or medium airports within 200 km (own country) or 150 km (foreign) are used, ranked by (foreign, distance), up to 2.
+  Airports in reach are ranked by (foreign, not named for the place, small, not curated — counted only among airports named for the place —, effective distance), and up to 3 are kept. The effective distance is the distance in km, × 0.3 for a large airport (a large airport leads a medium one unless the medium is over 3.3× nearer: Arvada → DEN, Providence → PVD) and × 0.8 again for another place's curated large airport (Makkah → JED). An airport is *named for* the place when its display city is the place or its name contains the place name (Treviso → TSF; Basel → BSL in France). An airport is the place's *own* (`app.core.places.is_own_airport`, shared with the runtime) when it is named for it or lies in the same country within 25 km; an own airport across a border is not foreign. Among two neighbours not named for the place whose effective distances are within 1.25× of each other, the one in the place's admin1 goes first (an airport's admin1 is that of the nearest same-country place within 50 km). `NEVER_LINK` airports (ECN, reachable only via Turkey) are never linked.
+
+  When the only airports in reach are foreign and not the place's own, large or medium airports in the place's own country within 200 km come first (≤ 2), then the foreign ones (Kingston, Ontario → YOW; Hof → ERF, NUE). If no airport is in reach, large or medium airports within 200 km (own country) or 150 km (foreign) are used, ranked by (foreign, distance with a large airport at × 0.75), up to 2.
 - **Folding.** Names are folded with `app.core.places.fold_place`, the same function the runtime uses: accents are stripped, ß→ss, ø→o and so on, text is lower-cased, `.`, `·` and every dash become spaces, apostrophe and quote variants (`'` `’` `‘` `ʼ` `ʻ` `` ` `` `ʹ` `“` `”`) and invisible format characters (ZWNJ, LRM) are dropped, ə/ɛ→e, ħ→h, ƶ→z, and whitespace is collapsed. Alternate names are kept only when made of Latin letters, spaces, apostrophes, dashes and dots (no digits, brackets or symbols).
 
 ## Regenerating
@@ -61,7 +63,7 @@ python3 -I backend/scripts/build_place_data.py \
 `-I` runs Python isolated, so nothing is imported from the current or data directories. The script adds `backend/` to its own path to import `fold_place` and the curated list. It uses only the standard library, takes about 5 seconds, and produces byte-identical output for the same inputs: rows are sorted, and the gzip mtime is 0. Then:
 
 1. Run `pytest tests/test_build_place_data.py` from `backend/` to spot-check the data.
-2. Commit the three files. The total must stay ≤ 8 MB. The 2026-10-29 snapshot is about 5.7 MB.
+2. Commit the three files. The total must stay ≤ 8 MB. The 2026-10-29 snapshot is about 6.0 MB.
 
 ## Conflict report (2026-10-29 snapshot)
 
@@ -74,4 +76,4 @@ The script prints its summary and a conflict report to stdout. The report is not
 - **Curated vs OurAirports country mismatches (1).** BSL. The EuroAirport is on French soil and serves Basel; this is correct.
 - **Curated coordinates more than 25 km from OurAirports.** None.
 - **Large airports whose display city fell back to the municipality (7).** DQM Duqm, MFU Mfuwe, OCS Corisco Island, RMF Marsa Alam, ROP Rota Island, RSI Hanak and SCR Malung-Sälen. All are acceptable: no GeoNames place of ≥ 1,000 people near them names or primarily uses them.
-- **Curated display city vs computed city (102).** Informational only; the curated city wins. 45 are airport-name matches, which are often the airport's own town rather than the city it serves (LTN → Luton, NRT → Narita, ICN → Incheon) or a person's name in the airport name (BGY → Caravaggio). 56 are first-link picks, which can be a suburb for a metropolitan airport (CDG → Saint-Denis, SVO → Mytishchi). Curating the served city stays necessary for major airports; the curated list includes served-city overrides for large airports whose computed city was a nearby town (WSI Sydney, AVV Melbourne, THR Tehran, NLU Mexico City, DXN Noida, DJE Djerba, GSM Qeshm, LXA Lhasa, RKZ Shigatse, YNT Yantai, UIH Qui Nhon, CXI Kiritimati, YIE Arxan, NUM Neom).
+- **Curated display city vs computed city (109).** Informational only; the curated city wins. 45 are airport-name matches, which are often the airport's own town rather than the city it serves (LTN → Luton, NRT → Narita, ICN → Incheon) or a person's name in the airport name (BGY → Caravaggio). 56 are first-link picks, which can be a suburb for a metropolitan airport (CDG → Saint-Denis, SVO → Mytishchi). Curating the served city stays necessary for major airports; the curated list includes served-city overrides for large airports whose computed city was a nearby town (WSI Sydney, AVV Melbourne, THR Tehran, NLU Mexico City, DXN Noida, DJE Djerba, GSM Qeshm, LXA Lhasa, RKZ Shigatse, YNT Yantai, UIH Qui Nhon, CXI Kiritimati, YIE Arxan, NUM Neom) and, after the final review, for airports whose computed city was a suburb or a neighbouring town (BJC Broomfield, BWK Bol, CLD Carlsbad, WUX Wuxi, SPX Giza, CCE Cairo, NAT Natal, PTP Pointe-à-Pitre, HLA Johannesburg).

@@ -31,7 +31,12 @@ _BACKEND = Path(__file__).resolve().parents[1]
 if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
-from app.core.places import fold_place  # noqa: E402
+from app.core.places import (  # noqa: E402
+    NEVER_LINK,
+    fold_place,
+    is_own_airport,
+    words_in,
+)
 
 TYPE_RANK = {"large_airport": 0, "medium_airport": 1, "small_airport": 2}
 OTHER_TYPE_RANK = 9
@@ -47,6 +52,9 @@ SAME_COUNTRY_FALLBACK_KM = 200
 FALLBACK_KM = 150
 MAX_LINKS = 3
 MAX_FALLBACK_LINKS = 2
+IN_REACH_TYPE_FACTOR = {0: 0.3, 1: 1.0, 2: 1.0}  # distance multipliers
+CURATED_HUB_FACTOR = 0.8  # a curated large airport at 4/5 of that
+FALLBACK_LARGE_FACTOR = 0.75  # a large fallback airport counts at 3/4 distance
 ADMIN1_TIE_RATIO = 1.25
 ADMIN1_PROXY_KM = 50  # an airport's admin1 = that of the nearest place within
 
@@ -57,15 +65,7 @@ DISPLAY_NEAREST_KM = 15
 DISPLAY_SEARCH_KM = 50
 
 _MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station)\b")
-# Words that alone never identify a place inside an airport name.
-_GENERIC_WORDS = frozenset(
-    "airport international regional national municipal domestic airfield "
-    "aerodrome field airstrip airpark county city town de del la le el al "
-    "san santa saint st new port north south east west central island lake "
-    "river airbase air base".split()
-)
 _ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
-_NON_WORD_RE = re.compile(r"[^\w ]")
 _AIRPORT_WORDS = frozenset({"airport", "international", "aerodrome", "airfield"})
 
 ALT_NAMES_MIN_POPULATION = 15_000
@@ -271,21 +271,27 @@ def is_military(folded_name: str) -> bool:
     )
 
 
-def words_in(folded_name: str, folded_text: str) -> bool:
-    """The folded name occurs as whole words in the folded text, and is not
-    made only of generic airport/geography words."""
-    if not folded_name or set(folded_name.split()) <= _GENERIC_WORDS:
-        return False
-    words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
-    return f" {folded_name} " in f" {words} "
+def is_own(airport: LinkAirport, place: Place, distance: float) -> bool:
+    """The airport is this place's own (``core.places.is_own_airport``)."""
+    return is_own_airport(
+        place.folded,
+        airport.display,
+        airport.folded_name,
+        airport.country_code == place.country_code,
+        distance,
+    )
 
 
-def is_own(airport: LinkAirport, place: Place) -> bool:
-    """The airport is this place's own: its display city is the place, or
-    its name contains the place name ("Basel" for BSL in France)."""
-    return airport.display == place.folded or words_in(
+def _own_rank(airport: LinkAirport, place: Place) -> int:
+    """0 when the airport is named for the place (display city or airport
+    name: Treviso → TSF before VCE, Basel → BSL abroad), else 1. Own by
+    distance alone (``is_own``'s 25 km clause) does not lift an airport in
+    the ranking: a suburb's field must not lead its hub (Arvada: DEN, not
+    BJC)."""
+    named = airport.display == place.folded or words_in(
         place.folded, airport.folded_name
     )
+    return 0 if named else 1
 
 
 def _prefer_same_admin1(ranked: list, place: Place) -> list:
@@ -296,6 +302,7 @@ def _prefer_same_admin1(ranked: list, place: Place) -> list:
         (ga, wa, a), (gb, wb, b) = ranked[i], ranked[i + 1]
         if (
             ga == gb
+            and ga[1:2] == (1,)  # airports named for the place keep their order
             and a.admin1 != place.admin1
             and b.admin1 == place.admin1
             and wb <= ADMIN1_TIE_RATIO * wa
@@ -309,12 +316,18 @@ def link_airports(
 ) -> tuple[list[tuple[str, float]], bool]:
     """A place's airports as ([(iata, km)], in_reach).
 
-    In reach per type: large 80 km (100 km for a 1M+ place), medium 50 km, small 30 km; ranked by
-    (foreign, not own, not curated, distance / reach), ≤ 3 — "own" being an
-    airport whose display city is the place or whose name contains it. None
-    in reach → large / medium airports within 200 km (own country) or 150 km (foreign), ranked by
-    (foreign, distance), ≤ 2. Near-equal neighbours prefer the place's admin1.
-    Air bases (non-curated) count only when no civil airport is in reach.
+    In reach per type: large 80 km (100 km for a 1M+ place), medium 50 km,
+    small 30 km; ranked by (foreign, not named for the place, small, not
+    curated (among named ones only), distance with large airports at 0.3 and
+    other places' curated large ones at 0.24), ≤ 3. "Own"
+    (``core.places.is_own_airport``): display city is the place, name
+    contains it, or same country within 25 km. With no same-country (or own)
+    airport in reach, large / medium airports within 200 km in the place's
+    country come first, then the foreign ones in reach. Nothing in reach →
+    large / medium within 200 km (own country) or 150 km (foreign), ranked
+    by (foreign, distance, large airports at 3/4 distance), ≤ 2. Near-equal neighbours prefer the
+    place's admin1. Air bases (non-curated) count only when no civil airport
+    is in reach; ``NEVER_LINK`` airports never link.
     """
     nearby = index.within(place.lat, place.lng, SAME_COUNTRY_FALLBACK_KM)
     big = place.population >= BIG_CITY_POPULATION
@@ -326,24 +339,52 @@ def link_airports(
     in_reach = []
     fallback = []
     for d, a in nearby:
-        own = is_own(a, place)
-        foreign = a.country_code != place.country_code and not own
+        if a.iata in NEVER_LINK:
+            continue
+        own_rank = _own_rank(a, place)
+        foreign = a.country_code != place.country_code and not is_own(a, place, d)
         if d <= reach[a.type_rank]:
-            weight = d / reach[a.type_rank]
-            in_reach.append(((foreign, not own, not a.curated), weight, a, d))
+            # a large airport leads a medium one unless the medium is over
+            # 3.3× nearer (Arvada: DEN before BJC; Providence: PVD before BOS)
+            weight = d * IN_REACH_TYPE_FACTOR[a.type_rank]
+            if a.curated and a.type_rank == 0 and own_rank:
+                weight *= CURATED_HUB_FACTOR  # Makkah: JED before Ta'if
+            # curated breaks ties only among airports named for the place
+            # (Doha: DOH before DIA); otherwise a curated hub must not lead
+            # the town's own nearer field (Providence: PVD, not BOS)
+            group = (
+                foreign,
+                own_rank,
+                a.type_rank == 2,
+                own_rank == 0 and not a.curated,
+            )
+            in_reach.append((group, weight, a, d, weight))
         elif a.type_rank <= 1 and d <= (
             FALLBACK_KM if foreign else SAME_COUNTRY_FALLBACK_KM
         ):
-            fallback.append(((foreign,), d, a, d))
+            # a large airport counts at 3/4 of its distance: it leads a
+            # medium one up to 1.33× nearer (Zaozhuang keeps Linyi, Plymouth
+            # keeps Exeter; St Moritz / Davos → ZRH via destination hints)
+            weight = d * (FALLBACK_LARGE_FACTOR if a.type_rank == 0 else 1)
+            fallback.append(((foreign,), weight, a, d, weight))
     if any(not t[2].military for t in in_reach):
         in_reach = [t for t in in_reach if not t[2].military]
     if not in_reach and not fallback:
         return [], False
+    if in_reach and all(t[0][0] for t in in_reach):
+        # only foreign airports in reach: the same-country fallback first
+        home = sorted((t for t in fallback if not t[0][0]), key=_link_key)
+        pool = home[:MAX_FALLBACK_LINKS] + sorted(in_reach, key=_link_key)
+        return [(t[2].iata, t[3]) for t in pool[:MAX_LINKS]], True
     pool, limit = (in_reach, MAX_LINKS) if in_reach else (fallback, MAX_FALLBACK_LINKS)
-    pool.sort(key=lambda t: (t[0], t[1], t[2].iata))
+    pool.sort(key=_link_key)
     dist = {t[2].iata: t[3] for t in pool}
-    ranked = _prefer_same_admin1([(g, w, a) for g, w, a, _ in pool], place)
+    ranked = _prefer_same_admin1([(g, w, a) for g, _, a, _, w in pool], place)
     return [(a.iata, dist[a.iata]) for _, _, a in ranked[:limit]], bool(in_reach)
+
+
+def _link_key(t):
+    return (t[0], t[1], t[2].iata)
 
 
 # ── Display names ──────────────────────────────────────────────────────────
@@ -443,6 +484,17 @@ def _best(candidates):
     return max(candidates, key=lambda p: p.rank, default=None)
 
 
+# "Dane County Regional": a place named only as the county / district
+# the airport is named after is not its city.
+_DIVISION_WORDS = ("county", "parish", "province", "district", "region")
+
+
+def _names_town(place: Place, folded_airport_name: str) -> bool:
+    return words_in(place.folded, folded_airport_name) and not any(
+        words_in(f"{place.folded} {w}", folded_airport_name) for w in _DIVISION_WORDS
+    )
+
+
 def _computed_city(a: dict, places_near, first_link_places, municipality: str):
     """Display city chain for one airport (curated aside) as (city, rule)."""
     same = [(d, p) for d, p in places_near if p.country_code == a["country_code"]]
@@ -450,7 +502,7 @@ def _computed_city(a: dict, places_near, first_link_places, municipality: str):
     steps = (
         ("name", lambda: _best(
             p for d, p in same if d <= DISPLAY_NAME_MATCH_KM
-            and words_in(p.folded, folded_name)
+            and _names_town(p, folded_name)
         )),
         ("first-link", lambda: _best(
             p for d, p in same if d <= DISPLAY_FIRST_LINK_KM

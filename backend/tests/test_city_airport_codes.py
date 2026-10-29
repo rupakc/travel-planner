@@ -96,9 +96,10 @@ def test_city_not_in_stated_country_resolves_to_nothing(place):
 
 @pytest.mark.parametrize("place", ["Paris, Texas", "Paris, TX"])
 def test_paris_texas_is_the_texas_town_never_paris_france(place):
-    """Task 3: the Texas town's own nearest airports (Tyler, Dallas Love)."""
+    """The Texas town flies from Dallas (final-review link order: a large
+    airport leads a medium one unless that is over 3.3× nearer)."""
     codes = lookup_city_iata(place)
-    assert codes == "TYR,DAL"
+    assert codes == "DAL,DFW"
     assert "CDG" not in codes
 
 
@@ -261,7 +262,7 @@ def test_every_us_ca_au_br_airport_has_a_region():
         ("Portland, Maine", "PWM"),
         ("Portland, ME", "PWM"),
         ("Birmingham, AL", "BHM"),
-        ("Birmingham, UK", "BHX,MAN,EMA"),
+        ("Birmingham, UK", "BHX,EMA,MAN"),
         ("San Jose, CA", "SJC,OAK,SFO"),  # California, not Costa Rica
         ("Victoria, BC", "YYJ"),
         ("Toronto, CA", "YYZ,YTZ,YHM"),  # CA as Canada still names the country
@@ -456,7 +457,7 @@ def test_frankfurt_is_fra_only():
         ("Springfield", None),
         ("Springfield, IL", "SPI"),
         ("Portland, ME", "PWM"),
-        ("Birmingham", "BHX,MAN,EMA"),
+        ("Birmingham", "BHX,EMA,MAN"),
         ("Birmingham, AL", "BHM"),
         ("London, ON", "YXU"),
         ("London, Ontario", "YXU"),

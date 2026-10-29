@@ -385,7 +385,7 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     if not preferred:
         return _pick(_reachable(candidates))
     result = _pick(_reachable(preferred))
-    if result.place and _bigger_namesake(result.place, candidates):
+    if result.place and _bigger_namesake(result.place, _reachable(candidates)):
         return Resolution(None, ambiguous=True, contested=True)
     return result
 

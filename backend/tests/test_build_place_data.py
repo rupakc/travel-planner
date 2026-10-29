@@ -300,7 +300,8 @@ def test_large_reach_is_100km_for_million_cities_without_close_large(tmp_path):
         _oa("MED", _north(_LAT, 40), _LNG, kind="medium_airport"),  # 40/50 = 0.8
     ]
     r = _build(tmp_path, airports, [_city(1, "Bigville", _LAT, _LNG, 2_000_000)])
-    assert _links(r, 1) == ["MED", "FAR"]
+    # A large airport counts at 0.3 of its distance (27 < 40, final review).
+    assert _links(r, 1) == ["FAR", "MED"]
 
 
 def test_million_city_reaches_100km_even_with_a_close_large(tmp_path):
@@ -312,7 +313,7 @@ def test_million_city_reaches_100km_even_with_a_close_large(tmp_path):
         _oa("OUT", _north(_LAT, -105), _LNG),
     ]
     r = _build(tmp_path, airports, [_city(1, "Bigville", _LAT, _LNG, 2_000_000)])
-    assert _links(r, 1) == ["NEA", "MED", "FAR"]
+    assert _links(r, 1) == ["NEA", "FAR", "MED"]  # 9, 27, 40
     r = _build(tmp_path / "small", airports, [_city(1, "Town", _LAT, _LNG, 999_999)])
     assert _links(r, 1) == ["NEA", "MED"]
 
@@ -336,8 +337,8 @@ def test_medium_and_small_reach(tmp_path):
         _oa("SOT", _north(_LAT, -35), _LNG, kind="small_airport"),
     ]
     r = _build(tmp_path, airports, [_city(1, "Village", _LAT, _LNG, 5_000)])
-    # SIN 25/30 = 0.83 of its reach, MIN 45/50 = 0.9.
-    assert _links(r, 1) == ["SIN", "MIN"]
+    # Small airports rank after medium / large ones (final review).
+    assert _links(r, 1) == ["MIN", "SIN"]
 
 
 def test_links_keep_at_most_three_ranked_by_distance_over_reach(tmp_path):
@@ -349,13 +350,18 @@ def test_links_keep_at_most_three_ranked_by_distance_over_reach(tmp_path):
         _oa("ME2", _north(_LAT, -12), _LNG, kind="medium_airport"),  # 0.24
     ]
     r = _build(tmp_path, airports, [_city(1, "Village", _LAT, _LNG, 5_000)])
-    assert _links(r, 1) == ["SM1", "ME1", "ME2"]
+    # SM1, ME1 and ME2 lie within 15 km, so the village is their display
+    # city: they are named for it and lead; among them small ranks last
+    # (final review).
+    assert _links(r, 1) == ["ME1", "ME2", "SM1"]
 
 
-def test_curated_airports_rank_before_other_airports(tmp_path):
+def test_curated_airports_win_only_a_tie(tmp_path):
+    # Final review link key: (foreign, not own, small, distance / reach),
+    # curated only as the last tie-break.
     airports = [
-        _oa("NON", _north(_LAT, 20), _LNG),
-        _oa("CUR", _north(_LAT, -60), _LNG),
+        _oa("NON", _north(_LAT, 40), _LNG),
+        _oa("CUR", _north(_LAT, -40), _LNG),
     ]
     curated = [("CUR", "XCUR", "Cur", "Bigcity", "Xland", "XA", 0.0, 0.0)]
     r = _build(
@@ -367,7 +373,7 @@ def test_curated_airports_rank_before_other_airports(tmp_path):
 def test_the_places_own_airport_ranks_before_curated_ones(tmp_path):
     airports = [
         _oa("OWN", _north(_LAT, 30), _LNG, name="Fortville International Airport"),
-        _oa("CUR", _north(_LAT, -20), _LNG),
+        _oa("CUR", _north(_LAT, -26), _LNG),
     ]
     curated = [("CUR", "XCUR", "Cur", "Bigcity", "Xland", "XA", 0.0, 0.0)]
     r = _build(
@@ -465,7 +471,8 @@ def test_fallback_ranks_own_country_first_then_by_distance(tmp_path):
         _oa("OUT", _north(_LAT, -210), _LNG),
     ]
     r = _build(tmp_path, airports, [_city(1, "Remote", _LAT, _LNG, 5_000)])
-    # Own country within 200 km by distance (not type); small airports never.
+    # Own country within 200 km by distance, a large one at 3/4 of it
+    # (190 × 0.75 = 142 > MED's 120); small airports never.
     assert _links(r, 1) == ["MED", "LAR"]
 
 
@@ -478,7 +485,7 @@ def test_fallback_uses_foreign_airports_within_150km(tmp_path):
         _oa("FAR", _north(_LAT, -160), _LNG, cc="XB"),
     ]
     r = _build(tmp_path, airports, [_city(1, "Remote", _LAT, _LNG, 5_000)])
-    assert _links(r, 1) == ["MED", "LAR"]
+    assert _links(r, 1) == ["LAR", "LA3"]  # (foreign, type_rank, distance)
 
 
 def test_own_country_fallback_beats_a_nearer_foreign_one(tmp_path):
@@ -858,8 +865,8 @@ def test_output_file_format(tmp_path):
         "lng",
     ]
     assert [r["iata"] for r in rows] == ["AAA", "BBB"]
-    # AAA: nobody links it first and no place is within 15 km → municipality.
-    assert rows[0]["city"] == "Suburb" and rows[1]["city"] == "Bee"
+    # AAA (large, 20 × 0.3) leads BBB (medium, 45): Bigtown links it first.
+    assert rows[0]["city"] == "Bigtown" and rows[1]["city"] == "Bee"
     with gzip.open(out / "places.csv.gz", "rt", encoding="utf-8", newline="") as f:
         places = list(csv.DictReader(f))
     assert list(places[0]) == [
@@ -876,7 +883,7 @@ def test_output_file_format(tmp_path):
         "ascii",
     ]
     big = places[0]
-    assert big["airports"] == "BBB AAA"  # curated BBB ranks first
+    assert big["airports"] == "AAA BBB"  # curated counts only among named
     assert big["alt_names"] == "big town|grossstadt"
     with open(out / "admin1.csv", encoding="utf-8", newline="") as f:
         assert list(csv.reader(f))[0] == ["code", "name", "folded_name"]
@@ -1074,3 +1081,120 @@ def test_golden_place_links(row):
     if row["display_city"]:
         city = _committed_airports()[expected[0]]["city"]
         assert fold_place(city) == fold_place(row["display_city"])
+
+
+# ── Final review fixes: own airports, fallback, link order, display ────────
+
+
+def test_foreign_only_in_reach_takes_the_same_country_fallback_first(tmp_path):
+    # Kingston, Ontario / ART (Watertown NY, 45 km) or Hof / KLV (CZ, 72 km):
+    # with no same-country airport in reach, the same-country fallback comes
+    # first.
+    airports = [
+        _oa("FOR", _north(_LAT, 45), _LNG, cc="XB"),
+        _oa("HOM", _north(_LAT, -120), _LNG, kind="medium_airport"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Kingston", _LAT, _LNG, 120_000)])
+    assert _links(r, 1) == ["HOM", "FOR"]
+
+
+def test_foreign_own_airport_in_reach_needs_no_fallback(tmp_path):
+    airports = [
+        _oa("BSL", _north(_LAT, 8), _LNG, cc="XB", name="EuroAirport Basel"),
+        _oa("HOM", _north(_LAT, -120), _LNG, kind="medium_airport"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Basel", _LAT, _LNG, 170_000)])
+    assert _links(r, 1) == ["BSL"]
+
+
+def test_curated_airport_leads_a_nearer_unnamed_field(tmp_path):
+    # Cincinnati: Lunken is nearer, CVG is curated; neither is named for the
+    # place in this fixture, so curated leads; FAR (30 km) comes last.
+    airports = [
+        _oa("LUK", _north(_LAT, 8), _LNG, kind="medium_airport"),
+        _oa("CVG", _north(_LAT, 20), _LNG),
+        _oa("FAR", _north(_LAT, -30), _LNG, kind="medium_airport"),
+    ]
+    curated = [("CVG", "XCVG", "C", "Cincinnati", "Xland", "XA", 0.0, 0.0)]
+    r = _build(
+        tmp_path,
+        airports,
+        [_city(1, "Cincinnati", _LAT, _LNG, 300_000)],
+        curated=curated,
+    )
+    assert _links(r, 1) == ["CVG", "LUK", "FAR"]
+
+
+def test_foreign_airport_within_25km_is_not_own(tmp_path):
+    airports = [
+        _oa("FOR", _north(_LAT, 10), _LNG, cc="XB"),
+        _oa("HOM", _north(_LAT, -40), _LNG, kind="medium_airport"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Aqaba", _LAT, _LNG, 100_000)])
+    assert _links(r, 1) == ["HOM", "FOR"]
+
+
+def test_small_airports_rank_last(tmp_path):
+    # Destin: the executive field (small, 28 km) after VPS (medium, 45 km).
+    airports = [
+        _oa("SML", _north(_LAT, 28), _LNG, kind="small_airport"),
+        _oa("MED", _north(_LAT, 45), _LNG, kind="medium_airport"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Destin", _LAT, _LNG, 13_000)])
+    assert _links(r, 1) == ["MED", "SML"]
+
+
+def test_fallback_large_airport_counts_at_three_quarters_distance(tmp_path):
+    airports = [
+        _oa("MED", _north(_LAT, 90), _LNG, kind="medium_airport"),
+        _oa("LAR", _north(_LAT, -115), _LNG),  # 115 × 0.75 = 86 < 90
+        _oa("FOR", _north(_LAT, 140), _LNG, cc="XB"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Resort", _LAT, _LNG, 5_000)])
+    assert _links(r, 1) == ["LAR", "MED"]
+
+
+def test_never_linked_airports_are_skipped(tmp_path):
+    from app.core.places import NEVER_LINK
+
+    assert "ECN" in NEVER_LINK  # Ercan: reachable only via Turkey
+    airports = [
+        _oa("ECN", _north(_LAT, 10), _LNG),
+        _oa("LCA", _north(_LAT, -45), _LNG),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Nicosia", _LAT, _LNG, 200_000)])
+    assert _links(r, 1) == ["LCA"]
+    assert r.airports["ECN"]["scheduled"] == 1  # still a known code
+
+
+def test_display_ignores_a_county_named_in_the_airport_name(tmp_path):
+    # MSN "Dane County Regional": the hamlet Dane is only the county's name;
+    # Madison links MSN first.
+    airports = [_oa("MSN", _LAT, _LNG, kind="medium_airport",
+                    name="Dane County Regional Airport")]  # fmt: skip
+    cities = [
+        _city(1, "Dane", _north(_LAT, 12), _LNG, 1_000),
+        _city(2, "Madison", _north(_LAT, -8), _LNG, 250_000, alts="A,B,C"),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.airports["MSN"]["city"] == "Madison"
+
+
+def test_display_name_match_kept_when_comparable(tmp_path):
+    airports = [_oa("VRN", _LAT, _LNG, name="Verona Villafranca Airport")]
+    cities = [
+        _city(1, "Verona", _north(_LAT, 10), _LNG, 250_000),
+        _city(2, "Villafranca", _north(_LAT, -2), _LNG, 30_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.airports["VRN"]["city"] == "Verona"
+
+
+def test_own_airport_definition_is_shared():
+    from app.core.places import OWN_AIRPORT_KM, is_own_airport
+
+    assert OWN_AIRPORT_KM == 25
+    assert is_own_airport("basel", "mulhouse", "euroairport basel mulhouse", False, 8)
+    assert is_own_airport("hue", "huong tra", "phu bai international", True, 15)
+    assert not is_own_airport("aqaba", "eilat", "ramon", False, 10)
+    assert not is_own_airport("hue", "da nang", "da nang international", True, 80)
