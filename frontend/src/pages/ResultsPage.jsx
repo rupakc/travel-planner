@@ -758,7 +758,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   )
 }
 
-function HotelsSection({ data, selections, onSelect }) {
+export function HotelsSection({ data, selections, onSelect }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
   const selected = selections.hotel
   return (
@@ -796,7 +796,6 @@ function HotelsSection({ data, selections, onSelect }) {
               <div className="flex items-center gap-2">
                 {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
                 {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
-                <FoundOnlineBadge item={h} />
                 <FoundOnlineBadge item={h} />
               </div>
               <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
@@ -973,7 +972,7 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   )
 }
 
-function ActivitiesSection({ data, selections, onSelect, weatherData }) {
+export function ActivitiesSection({ data, selections, onSelect, weatherData }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found — try different interests or adjusting dates</div>
   const catColors = { food:'bg-orange-100 text-orange-700',history:'bg-amber-100 text-amber-700',adventure:'bg-red-100 text-red-700',culture:'bg-purple-100 text-purple-700',nature:'bg-green-100 text-green-700',shopping:'bg-pink-100 text-pink-700',nightlife:'bg-indigo-100 text-indigo-700',wellness:'bg-teal-100 text-teal-700',art:'bg-violet-100 text-violet-700',family:'bg-blue-100 text-blue-700',general:'bg-gray-100 text-gray-700' }
   const poorDays = weatherData?.poor_weather_day_count ?? 0
@@ -1010,7 +1009,6 @@ function ActivitiesSection({ data, selections, onSelect, weatherData }) {
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
               {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
-              <FoundOnlineBadge item={a} />
               {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
               {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
               {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
@@ -1024,7 +1022,7 @@ function ActivitiesSection({ data, selections, onSelect, weatherData }) {
   )
 }
 
-function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
+export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No places found</div>
   const catColors = { Landmark:'bg-lime-100 text-lime-700', 'Temple/Mosque/Church':'bg-violet-100 text-violet-700', Museum:'bg-sky-100 text-sky-700', Viewpoint:'bg-cyan-100 text-cyan-700', 'Park/Garden':'bg-green-100 text-green-700', Market:'bg-orange-100 text-orange-700', 'Palace/Castle':'bg-amber-100 text-amber-700', 'Natural Wonder':'bg-teal-100 text-teal-700', 'Historic District':'bg-rose-100 text-rose-700', Monument:'bg-gray-100 text-gray-700' }
   const poorDays = weatherData?.poor_weather_day_count ?? 0

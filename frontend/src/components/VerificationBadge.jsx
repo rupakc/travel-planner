@@ -95,7 +95,7 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
     const items = [...ref.current.querySelectorAll(FOCUSABLE)]
     const active = document.activeElement
     const atStart = active === ref.current || active === items[0]
-    const atEnd = active === items[items.length - 1] || items.length === 0 || active === ref.current
+    const atEnd = items.length === 0 || active === items[items.length - 1]
     if (e.shiftKey ? atStart : atEnd) {
       e.preventDefault()
       onClose()

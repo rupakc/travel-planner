@@ -108,6 +108,22 @@ describe('VerificationBadge', () => {
     expect(popover()).toBeNull()
   })
 
+  it('Tab from the dialog moves to the first link and keeps it open; Shift+Tab from it closes', () => {
+    render(<VerificationBadge verification={v()} />)
+    act(() => button().click())
+    key(popover(), 'Tab')
+    expect(popover()).not.toBeNull()
+    const link = popover().querySelector('a')
+    // jsdom has no sequential focus navigation, so an unprevented Tab is the browser's move to the link
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+    act(() => { popover().dispatchEvent(ev) })
+    expect(ev.defaultPrevented).toBe(false)
+    link.focus()
+    key(link, 'Tab', { shiftKey: true })
+    expect(popover()).toBeNull()
+    expect(document.activeElement).toBe(button())
+  })
+
   it('tabbing past the last link closes it and returns focus to the chip', () => {
     render(<VerificationBadge verification={v()} />)
     act(() => button().click())
