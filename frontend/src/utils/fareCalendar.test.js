@@ -110,3 +110,14 @@ describe('daysUntil', () => {
     expect(daysUntil('Tokyo, Japan', now)).toBe(0)
   })
 })
+
+describe('year boundary', () => {
+  it('shifts, counts and labels dates across Dec → Jan', () => {
+    expect(shiftDates('2026-12-30', '2027-01-03', 3)).toEqual({ departure_date: '2027-01-02', return_date: '2027-01-06' })
+    expect(shiftDates('2027-01-01', '2027-01-05', -3)).toEqual({ departure_date: '2026-12-29', return_date: '2027-01-02' })
+    expect(dayOffset('2026-12-30', '2027-01-02')).toBe(3)
+    expect(formatDay('2027-01-01')).toBe('Fri 1 Jan')
+    expect(formatTripRange('2026-12-31', '2027-01-07')).toBe('Thu 31 Dec – Thu 7 Jan')
+    expect(daysUntil('2027-01-02', new Date(2026, 11, 30, 23, 0))).toBe(3)
+  })
+})

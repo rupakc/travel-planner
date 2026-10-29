@@ -37,7 +37,7 @@ import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from 
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
-import { daysUntil } from '../utils/fareCalendar'
+import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
 import {
   arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
@@ -531,19 +531,25 @@ export function FlightsSection({ data, selections, onSelect, pricingData, depart
   if (data?.legs?.length) {
     return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} departureDate={departureDate} onLayover={onLayover} budget={budget} />
   }
-  // Google Flights' own price verdict (live data, single-city only) and the
-  // opt-in fare calendar sit under the pricing banner, above the flights.
-  const fareInsights = (
-    <>
-      <PriceInsightsChip insights={data?.price_insights} />
-      {fareCalendar}
-    </>
+  // The pricing banner, Google Flights' own price verdict (live data,
+  // single-city only) and the opt-in fare calendar sit above the flights in
+  // one fixed slot, so the calendar keeps its state (and its request) when
+  // results arrive, change layout or empty out.
+  const hasHeader = !!(pricingData || priceInsightsChip(data?.price_insights) || fareCalendar)
+  return (
+    <div>
+      <div className={hasHeader ? 'px-4 pt-4' : undefined}>
+        {pricingData ? <PricingAdvisorBanner data={pricingData} departureDate={departureDate} /> : null}
+        <PriceInsightsChip insights={data?.price_insights} />
+        {fareCalendar}
+      </div>
+      <FlightResults data={data} selections={selections} onSelect={onSelect} onLayover={onLayover} budget={budget} hasHeader={hasHeader} />
+    </div>
   )
-  const noFlights = <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
-  if (!data?.results?.length) {
-    // Nearby dates may still have fares — keep the calendar reachable
-    return fareCalendar ? <div><div className="px-4 pt-4">{fareCalendar}</div>{noFlights}</div> : noFlights
-  }
+}
+
+function FlightResults({ data, selections, onSelect, onLayover, budget = null, hasHeader }) {
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
   // Detect format: new round-trip (has outbound/return objects) vs legacy flat
@@ -555,12 +561,6 @@ export function FlightsSection({ data, selections, onSelect, pricingData, depart
     const legacyView = budgetView(data.results, budget, flightKey, isLegacySelected)
     return (
       <div>
-      {(pricingData || data.price_insights || fareCalendar) && (
-        <div className="px-4 pt-4">
-          {pricingData && <PricingAdvisorBanner data={pricingData} departureDate={departureDate} />}
-          {fareInsights}
-        </div>
-      )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
@@ -615,9 +615,7 @@ export function FlightsSection({ data, selections, onSelect, pricingData, depart
   const isRoundTripSelected = (f) => !!(selected && selected === f || (selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline))
   const roundTripView = budgetView(data.results, budget, flightKey, isRoundTripSelected)
   return (
-    <div className="space-y-3 p-4">
-      {pricingData && <PricingAdvisorBanner data={pricingData} departureDate={departureDate} />}
-      {fareInsights}
+    <div className={`space-y-3 px-4 pb-4 ${hasHeader ? '' : 'pt-4'}`}>
       {roundTripView.shown.map(({ item: f, i, over, dim }) => {
         const isSelected = isRoundTripSelected(f)
         const isOneWay = f.trip_type === 'one_way' || !f.return

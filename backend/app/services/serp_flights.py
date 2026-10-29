@@ -398,15 +398,40 @@ def _cheapest(data: dict) -> float | None:
     return min(prices) if prices else None
 
 
+def _cached_selected_price(main: dict | None) -> float | None:
+    """Cheapest fare for the searched dates from the cached main search.
+
+    Prefers Google's `lowest_price` (the same kind of figure as the other
+    calendar dates); falls back to the cheapest mapped result.
+    """
+    if not isinstance(main, dict):
+        return None
+    lowest = (main.get("price_insights") or {}).get("lowest_price")
+    if _is_number(lowest) and lowest > 0:
+        return float(lowest)
+    prices = [
+        r["price_usd"]
+        for r in main.get("results", [])
+        if _is_number(r.get("price_usd")) and r["price_usd"] > 0
+    ]
+    return float(min(prices)) if prices else None
+
+
+# Per-date lookups in progress, shared by overlapping calendar requests (a
+# double-mounted component, two tabs) so each date costs one SerpAPI call.
+_calendar_inflight: dict[str, asyncio.Task] = {}
+
+
 async def search_calendar(
     api_key: str, request: TravelSearchRequest, window: int = 3
 ) -> dict:
     """Cheapest real fare for departure dates ±window days, same trip length.
 
     One outbound call per date (its price is already the round-trip total),
-    at most 4 in flight. Dates before tomorrow are skipped; a failed or empty
-    date comes back as ``cheapest_usd: None``. The selected date reuses the
-    cached main search when there is one.
+    at most 4 in flight per request; concurrent requests share in-flight
+    lookups for the same date. Dates before tomorrow are skipped; a failed or
+    empty date comes back as ``cheapest_usd: None``. The selected date reuses
+    the cached main search when there is one.
     """
     origin_id = request.origin_iata or request.origin
     dest_id = request.destination_iata or request.destination
@@ -425,31 +450,39 @@ async def search_calendar(
             "is_selected": offset == 0,
         }
         if offset == 0:
-            main = cache.get(f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{hash(())}")
-            prices = [
-                r["price_usd"]
-                for r in (main or {}).get("results", [])
-                if _is_number(r.get("price_usd")) and r["price_usd"] > 0
-            ]
-            if prices:
-                entry["cheapest_usd"] = float(min(prices))
+            selected = _cached_selected_price(
+                cache.get(f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{hash(())}")
+            )
+            if selected is not None:
+                entry["cheapest_usd"] = selected
                 return entry
         key = f"serp-cal:{origin_id}:{dest_id}:{dep}:{ret}:{request.num_travelers}"
         if key in cache:
             entry["cheapest_usd"] = cache[key]
             return entry
-        shifted = request.model_copy(update={"departure_date": dep, "return_date": ret})
+        task = _calendar_inflight.get(key)
+        if task is None:
+            shifted = request.model_copy(
+                update={"departure_date": dep, "return_date": ret}
+            )
+            task = asyncio.ensure_future(lookup(key, shifted))
+            _calendar_inflight[key] = task
+            task.add_done_callback(lambda _t, k=key: _calendar_inflight.pop(k, None))
+        # shield: one caller going away must not cancel the shared lookup
+        entry["cheapest_usd"] = await asyncio.shield(task)
+        return entry
+
+    async def lookup(key: str, shifted: TravelSearchRequest) -> float | None:
         try:
             async with sem:
                 data = await _call(_build_params(api_key, shifted, None))
-        except SerpAPIError as exc:
-            logger.warning("Fare calendar %s failed: %s", dep, exc)
-            return entry
-        cheapest = _cheapest(data)
+            cheapest = _cheapest(data)
+        except Exception as exc:  # one bad date never fails the calendar
+            logger.warning("Fare calendar %s failed: %s", shifted.departure_date, exc)
+            return None
         if cheapest is not None:
             cache[key] = cheapest
-        entry["cheapest_usd"] = cheapest
-        return entry
+        return cheapest
 
     offsets = [
         o

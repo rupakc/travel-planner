@@ -271,6 +271,78 @@ async def test_concurrency_is_limited_to_four():
     assert peak == 4
 
 
+@pytest.mark.asyncio
+async def test_concurrent_calendars_share_in_flight_lookups():
+    """Two overlapping requests (StrictMode double mount, two tabs) make one
+    SerpAPI call per date between them."""
+    import asyncio
+
+    calls = []
+
+    async def fake_call(params):
+        calls.append(params["outbound_date"])
+        await asyncio.sleep(0.01)
+        return _serp([400])
+
+    with patch.object(serp_flights, "_call", side_effect=fake_call):
+        a, b = await asyncio.gather(
+            search_calendar(API_KEY, _req()), search_calendar(API_KEY, _req())
+        )
+    assert len(calls) <= 7
+    assert sorted(calls) == sorted(set(calls))
+    assert a == b
+    assert all(d["cheapest_usd"] == 400.0 for d in a["dates"])
+    assert serp_flights._calendar_inflight == {}
+
+
+@pytest.mark.asyncio
+async def test_selected_date_prefers_cached_lowest_price_insight():
+    get_cache()[f"serp:JFK:NRT:2026-10-20:2026-10-27:{hash(())}"] = {
+        "results": [{"price_usd": 777.0}, {"price_usd": 650.0}],
+        "price_insights": {"lowest_price": 598, "price_level": "typical"},
+    }
+    mock = AsyncMock(return_value=_serp([400]))
+    with patch.object(serp_flights, "_call", mock):
+        out = await search_calendar(API_KEY, _req())
+    assert mock.await_count == 6
+    selected = next(d for d in out["dates"] if d["is_selected"])
+    assert selected["cheapest_usd"] == 598.0
+
+
+@pytest.mark.asyncio
+async def test_any_error_for_one_date_is_null():
+    async def fake_call(params):
+        if params["outbound_date"] == "2026-10-18":
+            raise ValueError("Expecting value: line 1 column 1")  # non-JSON 200
+        if params["outbound_date"] == "2026-10-19":
+            return {"best_flights": "garbage"}
+        return _serp([400])
+
+    with patch.object(serp_flights, "_call", side_effect=fake_call):
+        out = await search_calendar(API_KEY, _req())
+    prices = {d["departure_date"]: d["cheapest_usd"] for d in out["dates"]}
+    assert prices["2026-10-18"] is None
+    assert prices["2026-10-19"] is None
+    assert prices["2026-10-20"] == 400.0
+    assert len(out["dates"]) == 7
+
+
+@pytest.mark.asyncio
+async def test_window_crosses_the_year_boundary():
+    mock = AsyncMock(return_value=_serp([400]))
+    with patch.object(serp_flights, "_call", mock):
+        out = await search_calendar(API_KEY, _req(dep="2026-12-30", ret="2027-01-03"))
+    assert [(d["departure_date"], d["return_date"]) for d in out["dates"]] == [
+        ("2026-12-27", "2026-12-31"),
+        ("2026-12-28", "2027-01-01"),
+        ("2026-12-29", "2027-01-02"),
+        ("2026-12-30", "2027-01-03"),
+        ("2026-12-31", "2027-01-04"),
+        ("2027-01-01", "2027-01-05"),
+        ("2027-01-02", "2027-01-06"),
+    ]
+
+
 # ── Route ─────────────────────────────────────────────────────────────────────
 
 _BODY = {

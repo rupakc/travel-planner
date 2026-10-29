@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { act } from 'react'
+import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { FlightsSection } from './ResultsPage'
 
@@ -58,5 +58,20 @@ describe('FlightsSection fare insights', () => {
       fareCalendar={<div data-testid="fare-slot">calendar</div>} />)
     expect(container.querySelector('[data-testid="fare-slot"]')).not.toBeNull()
     expect(container.textContent).toContain('No flights found')
+  })
+
+  it('keeps the fare calendar mounted when results arrive or change layout', () => {
+    let mounts = 0
+    function Probe() {
+      useEffect(() => { mounts += 1 }, [])
+      return <div data-testid="fare-slot">calendar</div>
+    }
+    const props = { selections: emptySel, onSelect: () => {}, fareCalendar: <Probe /> }
+    render(<FlightsSection data={{ results: [] }} {...props} />)
+    render(<FlightsSection data={{ results: [rt('1', 500)], price_insights: INSIGHTS }} {...props} />)
+    render(<FlightsSection data={{ results: [legacy('1', 500)] }} {...props} pricingData={null} />)
+    render(<FlightsSection data={{ results: [] }} {...props} />)
+    expect(mounts).toBe(1)
+    expect(container.querySelector('[data-testid="fare-slot"]')).not.toBeNull()
   })
 })
