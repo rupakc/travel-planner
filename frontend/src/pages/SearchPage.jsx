@@ -217,6 +217,19 @@ export default function SearchPage() {
       seniors: preferences.seniors ?? f.seniors,
       infants: preferences.infants ?? f.infants,
     }))
+    setCompareForm(c => c && ({
+      ...c,
+      nationality: preferences.nationality || c.nationality,
+      residence_permits: preferences.residence_permits?.length ? preferences.residence_permits : c.residence_permits,
+      existing_visas: preferences.existing_visas?.length ? preferences.existing_visas : c.existing_visas,
+      interests: preferences.interests?.length ? preferences.interests : c.interests,
+      budget_usd: preferences.budget_category ? (BUDGET_TO_USD[preferences.budget_category] || '') : c.budget_usd,
+      adults: preferences.adults ?? c.adults,
+      children: preferences.children ?? c.children,
+      seniors: preferences.seniors ?? c.seniors,
+      infants: preferences.infants ?? c.infants,
+      accessibility_needs: preferences.accessibility_needs?.length ? preferences.accessibility_needs : c.accessibility_needs,
+    }))
   }, [preferences])
 
   const toggleInterest = (id) =>
@@ -339,6 +352,11 @@ export default function SearchPage() {
     }
   }
 
+  const retryCompareColumn = (index) => {
+    if (compareColumns?.[index]?.status === 'loading') return
+    loadCompareColumn(index)
+  }
+
   const handleCompare = (e) => {
     e.preventDefault()
     const requests = buildCompareRequests(compareForm)
@@ -358,12 +376,16 @@ export default function SearchPage() {
   const handlePlanCompared = (index) => {
     const request = compareRequests.current[index]
     if (!request) return
-    track('compare_plan_clicked', 'search', { position: index })
-    const { destinations: _d, destination_nights: _n, ...planForm } = request
-    setForm(f => ({ ...f, ...planForm }))
+    // Only the fields Compare shows come from the compared request; the rest
+    // (permits, visas, accessibility, serendipity) stay as in the known form
+    const { destination, origin, departure_date, return_date, nationality, interests,
+      budget_usd, adults, children, seniors, infants } = request
+    const planForm = { ...form, destination, origin, departure_date, return_date, nationality,
+      interests, budget_usd, adults, children, seniors, infants }
+    setForm(planForm)
     setExtraStops([])
     setMode('known')
-    startSearch({ ...form, ...planForm }, [])
+    startSearch(planForm, [])
   }
 
   const handleDiscover = async () => {
@@ -789,7 +811,7 @@ export default function SearchPage() {
               </form>
 
               {compareColumns && (
-                <CompareTable columns={compareColumns} onPlan={handlePlanCompared} onRetry={loadCompareColumn} />
+                <CompareTable columns={compareColumns} onPlan={handlePlanCompared} onRetry={retryCompareColumn} />
               )}
             </div>
           )}
