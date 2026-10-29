@@ -1111,6 +1111,7 @@ You are a specialist travel flights analyst...
 <li>Day number, date, theme, and city</li>
 <li>Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes</li>
 <li>Daily estimated cost</li>
+<li><code>duration_hours</code> on every slot and <code>lat</code>/<code>lng</code> on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (<code>utils/schedule.js</code>)</li>
 <li>Coordinates for the Timeline map view</li>
 </ul>
 <p>60-second timeout with a template-based fallback that distributes activities mechanically.</p>
