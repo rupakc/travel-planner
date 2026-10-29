@@ -155,6 +155,8 @@ The main results view. Receives streaming events from `sseWorker.js` via `Search
 
 - **My Plan drawer** — a slide-in panel for selecting and saving trip components. Supports flight, hotel, activities, places, free walking tours (`selections.walking_tours`, keyed by url), SIM, tips, transport options, itinerary slots, and packing list. Shows a live cost total. Plans can be named, saved, and reloaded.
 
+- **Best-value package card** — shown after "Remix this trip" once the search finishes. Deterministic rules (`utils/bestValuePackage.js`, no extra agent) pick real listed items: a balanced flight per leg, one 3-4 star well-reviewed hotel, cheap/free activities, free walking tours and places, and a SIM plan covering the trip. The total matches the My Plan drawer. "Add package to My Plan" merges without duplicates in one update; Undo restores the selections from just before the click (cleared by a new search, remix, or loaded plan). Disabled while a saved plan is open (click New in My Plan).
+
 ---
 
 ### ChatPage
