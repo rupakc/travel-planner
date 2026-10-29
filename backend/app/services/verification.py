@@ -129,13 +129,17 @@ def _hotels(data: dict, pending: bool) -> dict:
     searched = [h for h in _items(data) if isinstance(h.get("link_verified"), bool)]
     found = sum(1 for h in searched if h["link_verified"] is True)
     total = len(searched)
-    checks = [
-        _check(
-            "Hotel listings",
-            "pass" if found else "info",
-            f"Found online by name: {found} of {total}",
-        )
-    ]
+    checks = (
+        [
+            _check(
+                "Hotel listings",
+                "pass" if found else "info",
+                f"Found online by name: {found} of {total}",
+            )
+        ]
+        if total
+        else []
+    )
     counts = {"items_verified": found, "items_total": total, "pending": pending}
     if pending:
         return _result("unverified", _PENDING_SUMMARY, [], **counts)
@@ -150,6 +154,13 @@ def _hotels(data: dict, pending: bool) -> dict:
         return _result(
             "partial",
             "Some hotels were found online by name; verify the rest before booking.",
+            checks,
+            **counts,
+        )
+    if not total:
+        return _result(
+            "unverified",
+            "No hotels were checked online — verify before booking.",
             checks,
             **counts,
         )
@@ -345,7 +356,10 @@ def _compare_numbers(ai: dict, ref: dict) -> tuple[list[tuple[str, str, str]], i
         if not a or not r:
             continue
         compared += 1
-        if a != r:
+        # "112 or 911" lists alternatives: any digit group matching passes;
+        # whole-value digits still cover formatting like "1-1-9" or " 112".
+        candidates = {a, *re.findall(r"\d+", str(ai.get(field)))}
+        if r not in candidates:
             mismatches.append(
                 (field, str(ai.get(field)).strip(), str(ref.get(field)).strip())
             )

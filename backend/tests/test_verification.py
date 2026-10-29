@@ -617,8 +617,10 @@ class _FakeAgent:
         self._result = result
         self._enriched = enriched
         self._raises = enrich_raises
+        self.calls: list[dict] = []
 
     async def run(self, request, **kw):
+        self.calls.append(kw)
         return copy.deepcopy(self._result)
 
     async def enrich(self, data):
@@ -687,3 +689,146 @@ async def test_stream_run_attaches_verification_everywhere():
         assert of(t), t
     # emergency AI errored → only the static yield, verified
     assert [v["level"] for v in of("emergency_card")] == ["verified"]
+
+    # downstream agents never see the UI-only verification object
+    for agent in (orch.itinerary, orch.stress_test, orch.packing_list):
+        assert agent.calls, agent
+        assert not _contains_key(agent.calls, "verification")
+
+
+def _contains_key(obj, key) -> bool:
+    if isinstance(obj, dict):
+        return key in obj or any(_contains_key(v, key) for v in obj.values())
+    if isinstance(obj, list):
+        return any(_contains_key(v, key) for v in obj)
+    return False
+
+
+async def test_stream_run_noop_enrich_is_not_pending():
+    from app.agents.base_agent import ToolAgent
+    from app.agents.orchestrator import TravelOrchestrator
+
+    class _NoopHotels(ToolAgent):  # inherits the base no-op enrich
+        async def run(self, request, **kw):
+            return {"results": [{"name": "A"}]}
+
+    orch = TravelOrchestrator.__new__(TravelOrchestrator)
+    orch.hotels = _NoopHotels.__new__(_NoopHotels)
+    for attr in [
+        "flights",
+        "activities",
+        "places",
+        "visa",
+        "emergency_card",
+        "weather",
+        "walking_tours",
+        "events",
+        "sim",
+        "tips",
+        "getting_around",
+        "forex",
+        "pricing_advisor",
+        "itinerary",
+        "packing_list",
+        "stress_test",
+    ]:
+        setattr(orch, attr, _FakeAgent({"ok": True}))
+    orch.itinerary = _FakeAgent({"days": [{"day": 1}]})
+
+    events = []
+    async for chunk in orch.stream_run(REQ):
+        if chunk.startswith("data: "):
+            events.append(json.loads(chunk[6:]))
+    hotels = [e["data"]["verification"] for e in events if e.get("type") == "hotels"]
+    assert hotels and all(v["pending"] is False for v in hotels)
+
+
+def test_enrich_does_work():
+    from app.agents.activities_agent import ActivitiesAgent
+    from app.agents.base_agent import ToolAgent
+    from app.agents.hotels_agent import HotelsAgent
+    from app.agents.orchestrator import _enrich_does_work
+    from app.agents.places_agent import PlacesAgent
+    from app.agents.weather_agent import WeatherAgent
+
+    class _Noop(ToolAgent):
+        pass
+
+    for cls in (HotelsAgent, ActivitiesAgent, PlacesAgent):
+        assert _enrich_does_work(cls.__new__(cls)), cls
+    assert not _enrich_does_work(_Noop.__new__(_Noop))
+    assert not _enrich_does_work(WeatherAgent.__new__(WeatherAgent))
+    assert not _enrich_does_work(None)
+
+
+# ── fix round 1 ───────────────────────────────────────────────────────
+
+
+def test_emergency_alternatives_match_any_digit_group():
+    data = {
+        "emergency_numbers": {"police": "110 or 112", "ambulance": "119", "fire": "119"}
+    }
+    assert verify_section("emergency_card", data, REQ)["level"] == "verified"
+
+
+def test_emergency_alternatives_none_matching_conflict():
+    data = {
+        "emergency_numbers": {"police": "911 or 112", "ambulance": "119", "fire": "119"}
+    }
+    v = verify_section("emergency_card", data, REQ)
+    assert v["level"] == "conflict"
+    assert "911 or 112" in v["summary"] and "110" in v["summary"]
+
+
+def test_hotels_none_checked_has_no_zero_of_zero_line():
+    v = verify_section("hotels", {"results": [{"name": "A"}]}, REQ)
+    assert v["level"] == "unverified"
+    assert v["checks"] == []
+    assert "No hotels were checked online" in v["summary"]
+
+
+async def test_weather_llm_cannot_claim_open_meteo():
+    from unittest.mock import AsyncMock
+
+    from app.agents.weather_agent import WeatherAgent
+
+    agent = WeatherAgent.__new__(WeatherAgent)
+    agent.execute = AsyncMock(return_value={"days": [], "source": "open-meteo"})
+    req = _req(departure_date=date(2027, 6, 1), return_date=date(2027, 6, 5))
+    out = await agent.run(req)
+    assert out["source"] == "llm-estimate"
+    assert verify_section("weather", out, req)["level"] == "unverified"
+
+
+async def test_weather_multi_city_all_llm_is_not_partial():
+    from unittest.mock import AsyncMock
+
+    from app.agents.weather_agent import WeatherAgent
+
+    agent = WeatherAgent.__new__(WeatherAgent)
+    agent.execute = AsyncMock(
+        return_value={
+            "days": [{"date": "2027-06-01", "city": "Atlantis"}],
+            "source": "open-meteo",
+        }
+    )
+    req = _req(
+        departure_date=date(2027, 6, 1),
+        return_date=date(2027, 6, 5),
+        destinations=["Atlantis", "Lemuria"],
+        destination_nights={},
+    )
+    out = await agent.run(req)
+    assert out["source"] == "llm-estimate"
+    assert verify_section("weather", out, req)["level"] == "unverified"
+
+
+def test_static_emergency_entry_reuses_getter():
+    from app.agents.static_results import (
+        _static_emergency_entry,
+        get_static_emergency_numbers,
+    )
+
+    entry = _static_emergency_entry("Tokyo, Japan")
+    assert entry["emergency_numbers"] is get_static_emergency_numbers("Tokyo, Japan")
+    assert _static_emergency_entry("Atlantis") is None

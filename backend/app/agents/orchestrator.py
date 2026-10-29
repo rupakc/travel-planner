@@ -5,6 +5,7 @@ from datetime import timedelta
 from ..schemas.request import TravelSearchRequest
 from ..services.verification import verify_section
 from .activities_agent import ActivitiesAgent
+from .base_agent import ToolAgent
 from .emergency_card_agent import EmergencyCardAgent
 from .events_agent import EventsAgent
 from .flights_agent import FlightsAgent
@@ -26,6 +27,22 @@ logger = logging.getLogger(__name__)
 
 # Sections whose first AI yield is followed by a URL-enrichment re-yield
 _ENRICH_PENDING = {"hotels", "activities", "places_to_see"}
+
+
+def _enrich_does_work(agent) -> bool:
+    """True when the agent's enrichment actually changes data.
+
+    The orchestrator schedules enrichment for every agent with ``enrich``;
+    ``ToolAgent.enrich`` delegates to ``_enrich_urls``, whose base version
+    is a no-op — so only agents overriding either one will re-yield
+    improved data.
+    """
+    enrich = getattr(type(agent), "enrich", None)
+    if enrich is None:
+        return False
+    if enrich is not ToolAgent.enrich:
+        return True
+    return type(agent)._enrich_urls is not ToolAgent._enrich_urls
 
 
 def _attach_verification(
@@ -295,7 +312,7 @@ class TravelOrchestrator:
                 pending = (
                     name in _ENRICH_PENDING
                     and not result.get("error")
-                    and hasattr(phase1_agents.get(name), "enrich")
+                    and _enrich_does_work(phase1_agents.get(name))
                 )
                 if pending:
                     awaiting_enrichment.add(name)

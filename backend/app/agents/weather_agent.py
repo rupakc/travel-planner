@@ -123,7 +123,13 @@ class WeatherAgent(BaseAgent):
             "days": all_days,
             "poor_weather_day_count": poor_count,
             "cities": [s["city"] for s in stays],
-            "source": "open-meteo" if not missing else "open-meteo+llm-estimate",
+            "source": (
+                "open-meteo"
+                if not missing
+                else "llm-estimate"
+                if len(missing) == len(stays)
+                else "open-meteo+llm-estimate"
+            ),
         }
 
     async def _llm_estimate_cities(
@@ -245,5 +251,7 @@ class WeatherAgent(BaseAgent):
         )
         result = await self.execute(prompt)
         if "error" not in result:
-            result.setdefault("source", "llm-estimate")
+            # Only real Open-Meteo data may carry "open-meteo" — never trust
+            # a provenance the model wrote itself.
+            result["source"] = "llm-estimate"
         return result
