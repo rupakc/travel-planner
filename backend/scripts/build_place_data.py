@@ -43,10 +43,11 @@ BIG_CITY_POPULATION = 1_000_000
 CLOSE_LARGE_KM = 50
 MEDIUM_REACH_KM = 50
 SMALL_REACH_KM = 30
+SAME_COUNTRY_FALLBACK_KM = 200
 FALLBACK_KM = 150
 MAX_LINKS = 3
 MAX_FALLBACK_LINKS = 2
-DISPLAY_CITY_KM = 80
+DISPLAY_CITY_NEAR_KM = 30
 
 ALT_NAMES_MIN_POPULATION = 15_000
 ALT_NAME_MAX_LEN = 40
@@ -158,6 +159,7 @@ class LinkAirport:
     type_rank: int
     lat: float
     lng: float
+    country_code: str = ""
 
 
 class AirportIndex:
@@ -198,13 +200,15 @@ class AirportIndex:
 
 
 def link_airports(
-    lat: float, lng: float, population: int, index: AirportIndex
+    lat: float, lng: float, population: int, index: AirportIndex, country_code: str = ""
 ) -> list[tuple[str, float]]:
     """A place's airports as (iata, km): those in reach for their type
     (large 80 km, or 100 km for a 1M+ place with no large airport within
     50 km; medium 50 km; small 30 km), ranked by (type, distance), ≤ 3.
-    None in reach → the nearest large/medium airports within 150 km (≤ 2)."""
-    nearby = index.within(lat, lng, FALLBACK_KM)
+    None in reach → the place's own country's large/medium airports within
+    200 km (≤ 2, by type then distance); else the nearest large/medium
+    airports in any country within 150 km (≤ 2)."""
+    nearby = index.within(lat, lng, SAME_COUNTRY_FALLBACK_KM)
     close_large = any(a.type_rank == 0 and d <= CLOSE_LARGE_KM for d, a in nearby)
     big = population >= BIG_CITY_POPULATION and not close_large
     reach = {
@@ -217,7 +221,14 @@ def link_airports(
     )
     if in_reach:
         return [(iata, d) for _, d, iata in in_reach[:MAX_LINKS]]
-    fallback = [(a.iata, d) for d, a in nearby if a.type_rank <= 1]
+    own = sorted(
+        (a.type_rank, d, a.iata)
+        for d, a in nearby
+        if a.type_rank <= 1 and country_code and a.country_code == country_code
+    )
+    if own:
+        return [(iata, d) for _, d, iata in own[:MAX_FALLBACK_LINKS]]
+    fallback = [(a.iata, d) for d, a in nearby if a.type_rank <= 1 and d <= FALLBACK_KM]
     return fallback[:MAX_FALLBACK_LINKS]
 
 
@@ -332,30 +343,41 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
 
     index = AirportIndex(
         [
-            LinkAirport(a["iata"], a["type_rank"], a["lat"], a["lng"])
+            LinkAirport(
+                a["iata"], a["type_rank"], a["lat"], a["lng"], a["country_code"]
+            )
             for a in airports.values()
             if a["scheduled"]
         ]
     )
 
-    # Places, their links and the best linking place per airport.
-    best_place: dict[str, tuple[tuple, str]] = {}
+    # Places, their links and, per airport, the best same-country place that
+    # links it first (``first_place``) or links it from within 30 km
+    # (``near_place``).
+    airport_country = {code: a["country_code"] for code, a in airports.items()}
+    first_place: dict[str, tuple[tuple, str]] = {}
+    near_place: dict[str, tuple[tuple, str]] = {}
     for f in _read_tsv(Path(cities_path)):
         if len(f) < 15 or f[7] in EXCLUDED_FEATURE_CODES:
             continue
-        gid, name, raw_alts = f[0], f[1], f[3]
+        gid, name, ascii_name, raw_alts = f[0], f[1], f[2], f[3]
+        country = f[8]
         lat, lng, population = float(f[4]), float(f[5]), _int(f[14])
         score = notability_score(population, _raw_alt_count(raw_alts), f[7])
-        links = link_airports(lat, lng, population, index)
+        links = link_airports(lat, lng, population, index, country)
+        own_folded = fold_place(name)
         alts = (
-            filter_alt_names(raw_alts, fold_place(name))
+            filter_alt_names(raw_alts, own_folded)
             if population >= ALT_NAMES_MIN_POPULATION
             else []
         )
+        ascii_folded = fold_place(ascii_name)
+        if ascii_folded and ascii_folded != own_folded and ascii_folded not in alts:
+            alts = sorted([*alts, ascii_folded])
         result.places[gid] = {
             "geonameid": gid,
             "name": name,
-            "country_code": f[8],
+            "country_code": country,
             "admin1": f[10],
             "population": population,
             "score": score,
@@ -365,14 +387,20 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
             "alt_names": alts,
         }
         rank = (score, population, -_int(gid))
-        for iata, d in links:
-            if d <= DISPLAY_CITY_KM and (
-                iata not in best_place or rank > best_place[iata][0]
+        for position, (iata, d) in enumerate(links):
+            if airport_country[iata] != country:
+                continue
+            for table, applies in (
+                (first_place, position == 0),
+                (near_place, d <= DISPLAY_CITY_NEAR_KM),
             ):
-                best_place[iata] = (rank, name)
+                if applies and (iata not in table or rank > table[iata][0]):
+                    table[iata] = (rank, name)
 
-    # Display city: curated, else the top-scoring linking place, else the
-    # cleaned municipality.
+    # Display city: curated; else the top-scoring same-country place whose
+    # first airport this is; else the top-scoring same-country place within
+    # 30 km that links it; else the cleaned municipality.
+    best_place = {**near_place, **first_place}
     fallback_large = []
     for iata, a in airports.items():
         cur = curated_rows.get(iata)

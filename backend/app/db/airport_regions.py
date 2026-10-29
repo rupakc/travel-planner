@@ -23,7 +23,7 @@ _PRIMARY_REGION: dict[str, str] = {
     "ABQ": "nm", "OKC": "ok", "MEM": "tn", "GRR": "mi", "TUL": "ok",
     "BOI": "id", "ELP": "tx", "LIT": "ar", "JAN": "ms", "BHM": "al",
     "SDF": "ky", "LEX": "ky", "CHS": "sc", "SAV": "ga", "JAX": "fl",
-    "RSW": "fl", "PBI": "fl", "PWM": "me", "ORF": "va", "RIC": "va",
+    "RSW": "fl", "DJT": "fl", "PWM": "me", "ORF": "va", "RIC": "va",
     "ROC": "ny", "SYR": "ny", "TYS": "tn", "DSM": "ia", "GEG": "wa",
     "BZN": "mt", "FAI": "ak", "KOA": "hi", "OGG": "hi", "LIH": "hi",
     "BGR": "me",

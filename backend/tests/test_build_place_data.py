@@ -38,6 +38,12 @@ def _gen():
         ("Bad Homburg vor der Höhe", "bad homburg vor der hohe"),
         ("MÜNCHEN", "munchen"),
         ("Łódź", "lodz"),
+        ("Xi’an", "xian"),
+        ("St. John's", "st johns"),
+        ("Nuku‘alofa", "nukualofa"),
+        ("Hawaiʻi", "hawaii"),
+        ("Ma`ale", "maale"),
+        ("Taʼizz", "taizz"),
     ],
 )
 def test_fold_place_punctuation_and_accents(text, folded):
@@ -315,22 +321,40 @@ def test_links_keep_at_most_three_ranked_by_type_then_distance(tmp_path):
     assert _links(r, 1) == ["LA1", "LA2", "ME1"]
 
 
-def test_fallback_150km_nearest_large_or_medium_at_most_two(tmp_path):
+def test_fallback_prefers_own_country_within_200km_by_type_then_distance(tmp_path):
     airports = [
         _oa("SMA", _north(_LAT, 100), _LNG, kind="small_airport"),
         _oa("MED", _north(_LAT, 120), _LNG, kind="medium_airport"),
-        _oa("LAR", _north(_LAT, -140), _LNG),
-        _oa("LA3", _north(_LAT, 145), _LNG),
-        _oa("OUT", _north(_LAT, -160), _LNG),
+        _oa("FOR", _north(_LAT, 110), _LNG, cc="XB"),
+        _oa("LAR", _north(_LAT, -190), _LNG),
+        _oa("LA3", _north(_LAT, 195), _LNG),
+        _oa("OUT", _north(_LAT, -210), _LNG),
     ]
     r = _build(tmp_path, airports, [_city(1, "Remote", _LAT, _LNG, 5_000)])
+    # Large before medium, beyond 150 km; the nearer foreign airport loses.
+    assert _links(r, 1) == ["LAR", "LA3"]
+
+
+def test_fallback_any_country_within_150km_when_none_at_home(tmp_path):
+    airports = [
+        _oa("SMA", _north(_LAT, 100), _LNG, kind="small_airport", cc="XB"),
+        _oa("MED", _north(_LAT, 120), _LNG, kind="medium_airport", cc="XB"),
+        _oa("LAR", _north(_LAT, -140), _LNG, cc="XB"),
+        _oa("LA3", _north(_LAT, 145), _LNG, cc="XB"),
+        _oa("FAR", _north(_LAT, -160), _LNG, cc="XB"),
+    ]
+    r = _build(tmp_path, airports, [_city(1, "Remote", _LAT, _LNG, 5_000)])
+    # Nearest first (not by type), small airports excluded, ≤ 2.
     assert _links(r, 1) == ["MED", "LAR"]
 
 
-def test_nothing_within_150km_links_nothing(tmp_path):
+def test_nothing_in_fallback_range_links_nothing(tmp_path):
     r = _build(
         tmp_path,
-        [_oa("OUT", _north(_LAT, 160), _LNG)],
+        [
+            _oa("OWN", _north(_LAT, 210), _LNG),
+            _oa("FOR", _north(_LAT, -160), _LNG, cc="XB"),
+        ],
         [_city(1, "Remote", _LAT, _LNG, 5_000)],
     )
     assert _links(r, 1) == []
@@ -405,10 +429,30 @@ def test_place_row_fields(tmp_path):
     assert r.places["8"]["score"] == 14_999 * 9
 
 
+def test_ascii_spelling_stored_at_any_population(tmp_path):
+    cities = [
+        _city(1, "Zürich", _LAT, _LNG, 2_000, ascii_name="Zuerich"),
+        _city(2, "Xi’an", _LAT, _LNG, 2_000, ascii_name="Xi'an"),
+        _city(
+            3,
+            "Big Zürich",
+            _LAT,
+            _LNG,
+            50_000,
+            ascii_name="Big Zuerich",
+            alts="Big Zuerich,Grosszurich",
+        ),
+    ]
+    r = _build(tmp_path, [], cities)
+    assert r.places["1"]["alt_names"] == ["zuerich"]
+    assert r.places["2"]["alt_names"] == []  # folds the same as the name
+    assert r.places["3"]["alt_names"] == ["big zuerich", "grosszurich"]
+
+
 # ── Airports ───────────────────────────────────────────────────────────────
 
 
-def test_computed_display_city_is_the_top_scoring_linking_place(tmp_path):
+def test_computed_display_city_is_the_top_scoring_place_linking_it_first(tmp_path):
     airports = [
         _oa("AAA", _north(_LAT, 20), _LNG, municipality="Suburb (XY)"),
         _oa("RMT", 40.0, 40.0, municipality="Far Town (Ward 3), Hills"),
@@ -422,6 +466,58 @@ def test_computed_display_city_is_the_top_scoring_linking_place(tmp_path):
     # No place links RMT → cleaned municipality.
     assert r.airports["RMT"]["city"] == "Far Town"
     assert any("RMT" in line for line in r.report)
+
+
+def test_display_city_ignores_famous_places_in_other_countries(tmp_path):
+    # A border airport in XB next to a famous XA city that links it first.
+    airports = [_oa("BRD", _LAT, _LNG, cc="XB", municipality="Bordertown")]
+    cities = [
+        _city(1, "Famous", _north(_LAT, 10), _LNG, 2_000_000, alts="A,B,C,D"),
+        _city(2, "Village", _north(_LAT, -5), _LNG, 1_500, cc="XB"),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.airports["BRD"]["city"] == "Village"
+
+
+def test_display_city_prefers_places_whose_first_airport_it_is(tmp_path):
+    # Bigtown links MAIN first and SIDE second; Sidetown (25 km past SIDE)
+    # links SIDE first.
+    airports = [
+        _oa("MAIN", _LAT, _LNG),
+        _oa("SIDE", _north(_LAT, 25), _LNG),
+    ]
+    cities = [
+        _city(1, "Bigtown", _LAT, _LNG, 900_000, alts="A,B,C"),
+        _city(2, "Sidetown", _north(_LAT, 50), _LNG, 3_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert _links(r, 2)[0] == "SIDE"
+    assert r.airports["SIDE"]["city"] == "Sidetown"
+
+
+def test_display_city_falls_back_to_a_near_place_then_municipality(tmp_path):
+    # Nobody links SIDE first; Bigtown (25 km) links it second → Bigtown.
+    # FAR is linked second only by a place 40 km away → municipality.
+    airports = [
+        _oa("MAIN", _LAT, _LNG),
+        _oa("SIDE", _north(_LAT, 25), _LNG, kind="medium_airport"),
+        _oa("HUB", 30.0, 30.0),
+        _oa(
+            "FAR",
+            _north(30.0, 40),
+            30.0,
+            kind="medium_airport",
+            municipality="Farm (X)",
+        ),
+    ]
+    cities = [
+        _city(1, "Bigtown", _LAT, _LNG, 900_000, alts="A,B,C"),
+        _city(2, "Hubtown", 30.0, 30.0, 900_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.airports["SIDE"]["city"] == "Bigtown"
+    assert _links(r, 2) == ["HUB", "FAR"]  # FAR second, 40 km away
+    assert r.airports["FAR"]["city"] == "Farm"
 
 
 def test_curated_display_city_wins_over_computed(tmp_path):
@@ -602,17 +698,35 @@ def test_committed_data_size_within_budget():
 
 
 @pytest.mark.parametrize(
-    ("iata", "city"), [("MXP", "Milan"), ("BRU", "Brussels"), ("CCS", "Caracas")]
+    ("iata", "city"),
+    [
+        ("MXP", "Milan"),
+        ("BRU", "Brussels"),
+        ("CCS", "Caracas"),
+        ("JMK", "Mykonos"),
+        ("RUN", "Saint-Denis"),
+        ("DJT", "West Palm Beach"),
+    ],
 )
 def test_committed_display_cities(iata, city):
     assert _committed_airports()[iata]["city"] == city
 
 
-@pytest.mark.parametrize(
-    ("iata", "scheduled"), [("KTI", "1"), ("SAI", "1"), ("PNH", "0"), ("REP", "0")]
-)
-def test_committed_scheduled_flags(iata, scheduled):
-    assert _committed_airports()[iata]["scheduled"] == scheduled
+@pytest.mark.parametrize("iata", ["KTI", "SAI", "BSZ", "RMO", "UBN", "DSS", "FNA"])
+def test_committed_replacement_codes_are_scheduled(iata):
+    assert _committed_airports()[iata]["scheduled"] == "1"
+
+
+@pytest.mark.parametrize("iata", ["PNH", "REP", "FRU", "PBI", "KIV", "ULN", "DKR"])
+def test_committed_obsolete_codes_are_not_scheduled(iata):
+    # Dropped from the curated list, so absent (or unscheduled if OA lists it).
+    assert _committed_airports().get(iata, {}).get("scheduled") != "1"
+
+
+@pytest.mark.parametrize("iata", ["GIB", "BTS", "BTH", "AQJ", "DJT"])
+def test_committed_display_city_is_in_the_airports_own_country(iata):
+    airport = _committed_airports()[iata]
+    assert _places(airport["city"], airport["country_code"]), airport
 
 
 def test_committed_milan_links_mxp_and_lin():
@@ -620,9 +734,11 @@ def test_committed_milan_links_mxp_and_lin():
     assert {"MXP", "LIN"} <= set(milan["airports"].split())
 
 
-def test_committed_zermatt_has_airports():
+def test_committed_zermatt_links_swiss_airports():
     (zermatt,) = _places("Zermatt", "CH")
-    assert zermatt["airports"].split()
+    codes = zermatt["airports"].split()
+    assert codes
+    assert all(_committed_airports()[c]["country_code"] == "CH" for c in codes)
 
 
 def test_committed_scores_rank_namesakes():

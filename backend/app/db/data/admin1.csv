@@ -138,7 +138,7 @@ AR.22,Santiago del Estero,santiago del estero
 AR.23,Tierra del Fuego,tierra del fuego
 AR.24,Tucuman,tucuman
 AS.010,Eastern District,eastern district
-AS.020,Manu'a,manu'a
+AS.020,Manu'a,manua
 AS.030,Rose Island,rose island
 AS.040,Swains Island,swains island
 AS.050,Western District,western district
@@ -337,9 +337,9 @@ BM.03,Hamilton city,hamilton city
 BM.04,Paget,paget
 BM.05,Pembroke,pembroke
 BM.06,Saint George,saint george
-BM.07,Saint Georgeʼs,saint georgeʼs
+BM.07,Saint Georgeʼs,saint georges
 BM.08,Sandys,sandys
-BM.09,Smithʼs,smithʼs
+BM.09,Smithʼs,smiths
 BM.10,Southampton,southampton
 BM.11,Warwick,warwick
 BN.01,Belait,belait
@@ -407,7 +407,7 @@ BS.41,East Grand Bahama,east grand bahama
 BS.42,Grand Cay,grand cay
 BS.43,Hope Town,hope town
 BS.44,Mangrove Cay,mangrove cay
-BS.45,Moore’s Island,moore’s island
+BS.45,Moore’s Island,moores island
 BS.46,North Abaco,north abaco
 BS.47,North Andros,north andros
 BS.48,North Eleuthera,north eleuthera
@@ -454,7 +454,7 @@ BW.16,Lobatse,lobatse
 BW.17,Selibe Phikwe,selibe phikwe
 BW.18,Sowa Town,sowa town
 BY.01,Brest,brest
-BY.02,Homyel’ Voblasc’,homyel’ voblasc’
+BY.02,Homyel’ Voblasc’,homyel voblasc
 BY.03,Grodnenskaya,grodnenskaya
 BY.04,Minsk City,minsk city
 BY.05,Minsk,minsk
@@ -520,7 +520,7 @@ CF.13,Ouham-Pendé,ouham pende
 CF.14,Vakaga,vakaga
 CF.15,Nana-Grébizi,nana grebizi
 CF.16,Sangha-Mbaéré,sangha mbaere
-CF.17,Ombella-M'Poko,ombella m'poko
+CF.17,Ombella-M'Poko,ombella mpoko
 CF.18,Bangui,bangui
 CF.19,Mambéré,mambere
 CF.20,Ouham-Fafa,ouham fafa
@@ -581,7 +581,7 @@ CK.11695124,Aitutaki,aitutaki
 CK.11695126,Atiu,atiu
 CK.11695127,Mangaia,mangaia
 CK.11695384,Manihiki,manihiki
-CK.11695385,Ma'uke,ma'uke
+CK.11695385,Ma'uke,mauke
 CK.11695386,Mitiaro,mitiaro
 CK.11695387,Palmerston,palmerston
 CK.11695388,Penrhyn,penrhyn
@@ -595,7 +595,7 @@ CL.04,Araucania,araucania
 CL.05,Atacama,atacama
 CL.06,Biobio,biobio
 CL.07,Coquimbo Region,coquimbo region
-CL.08,O'Higgins Region,o'higgins region
+CL.08,O'Higgins Region,ohiggins region
 CL.10,Region of Magallanes,region of magallanes
 CL.11,Maule Region,maule region
 CL.12,Santiago Metropolitan,santiago metropolitan
@@ -832,7 +832,7 @@ DZ.23,Guelma,guelma
 DZ.24,Jijel,jijel
 DZ.25,Laghouat,laghouat
 DZ.26,Mascara,mascara
-DZ.27,M'Sila,m'sila
+DZ.27,M'Sila,msila
 DZ.29,Oum el Bouaghi,oum el bouaghi
 DZ.30,Sidi Bel Abbès,sidi bel abbes
 DZ.31,Skikda,skikda
@@ -974,7 +974,7 @@ ET.53,Tigray,tigray
 ET.55,Central Ethiopia Regional State,central ethiopia regional state
 ET.56,South Ethiopia Regional State,south ethiopia regional state
 ET.SI,Sidama Region,sidama region
-ET.SW,South West Ethiopia Peoples' Region,south west ethiopia peoples' region
+ET.SW,South West Ethiopia Peoples' Region,south west ethiopia peoples region
 FI.01,Uusimaa,uusimaa
 FI.02,Southwest Finland,southwest finland
 FI.04,Satakunta,satakunta
@@ -1019,7 +1019,7 @@ FR.53,Brittany,brittany
 FR.75,New Aquitaine,new aquitaine
 FR.76,Occitanie,occitanie
 FR.84,Auvergne-Rhône-Alpes,auvergne rhone alpes
-FR.93,Provence-Alpes-Côte d'Azur,provence alpes cote d'azur
+FR.93,Provence-Alpes-Côte d'Azur,provence alpes cote dazur
 FR.94,Corsica,corsica
 GA.01,Estuaire,estuaire
 GA.02,Haut-Ogooué,haut ogooue
@@ -1248,7 +1248,7 @@ HT.10,Nord-Est,nord est
 HT.11,Ouest,ouest
 HT.12,Sud,sud
 HT.13,Sud-Est,sud est
-HT.14,Grand'Anse,grand'anse
+HT.14,Grand'Anse,grandanse
 HT.15,Nippes,nippes
 HU.01,Bács-Kiskun,bacs kiskun
 HU.02,Baranya,baranya
@@ -1490,7 +1490,7 @@ JO.15,Mafraq,mafraq
 JO.16,Amman,amman
 JO.17,Zarqa,zarqa
 JO.18,Irbid,irbid
-JO.19,Ma’an,ma’an
+JO.19,Ma’an,maan
 JO.20,Ajloun,ajloun
 JO.21,Aqaba,aqaba
 JO.22,Jerash,jerash
@@ -1571,7 +1571,7 @@ KE.34,Marsabit County,marsabit county
 KE.35,Meru County,meru county
 KE.36,Migori County,migori county
 KE.37,Mombasa County,mombasa county
-KE.38,Murang'A,murang'a
+KE.38,Murang'A,muranga
 KE.39,Nakuru County,nakuru county
 KE.40,Nandi,nandi
 KE.41,Narok County,narok county
@@ -1648,7 +1648,7 @@ KP.03,South Hamgyong,south hamgyong
 KP.06,South Hwanghae,south hwanghae
 KP.07,North Hwanghae,north hwanghae
 KP.09,Kangwŏn-do,kangwon do
-KP.11,P'yŏngan-bukto,p'yongan bukto
+KP.11,P'yŏngan-bukto,pyongan bukto
 KP.12,Pyongyang,pyongyang
 KP.13,Yanggang-do,yanggang do
 KP.14,Nampo,nampo
@@ -1782,9 +1782,9 @@ LS.11,Butha-Buthe,butha buthe
 LS.12,Leribe,leribe
 LS.13,Mafeteng District,mafeteng district
 LS.14,Maseru District,maseru district
-LS.15,Mohale's Hoek District,mohale's hoek district
+LS.15,Mohale's Hoek District,mohales hoek district
 LS.16,Mokhotlong District,mokhotlong district
-LS.17,Qacha's Nek District,qacha's nek district
+LS.17,Qacha's Nek District,qachas nek district
 LS.18,Quthing,quthing
 LS.19,Thaba-Tseka,thaba tseka
 LT.56,Alytus,alytus
@@ -1867,7 +1867,7 @@ LY.74,Nalut,nalut
 LY.75,Sabha District,sabha district
 LY.76,Surt,surt
 LY.77,Tripoli,tripoli
-LY.78,Wadi ash Shati',wadi ash shati'
+LY.78,Wadi ash Shati',wadi ash shati
 LY.79,Al Butnan,al butnan
 LY.80,Jabal al Gharbi,jabal al gharbi
 LY.81,Al Jafarah,al jafarah
@@ -1954,7 +1954,7 @@ MG.12,Vakinankaratra,vakinankaratra
 MG.13,Itasy,itasy
 MG.14,Bongolava,bongolava
 MG.21,Upper Matsiatra,upper matsiatra
-MG.22,Amoron'i Mania,amoron'i mania
+MG.22,Amoron'i Mania,amoroni mania
 MG.24,Ihorombe,ihorombe
 MG.25,Atsimo-Atsinanana,atsimo atsinanana
 MG.26,Fitovinany Region,fitovinany region
@@ -2181,7 +2181,7 @@ MT.23,L-Imsida,l imsida
 MT.24,Mtarfa,mtarfa
 MT.25,Senglea,senglea
 MT.26,Il-Kalkara,il kalkara
-MT.27,Ta’ Kerċem,ta’ kercem
+MT.27,Ta’ Kerċem,ta kercem
 MT.28,Kirkop,kirkop
 MT.29,Lija,lija
 MT.30,Luqa,luqa
@@ -2206,14 +2206,14 @@ MT.48,Saint John,saint john
 MT.49,Saint Julian,saint julian
 MT.50,Saint Lawrence,saint lawrence
 MT.51,Saint Lucia,saint lucia
-MT.52,Saint Paul’s Bay,saint paul’s bay
+MT.52,Saint Paul’s Bay,saint pauls bay
 MT.53,Saint Venera,saint venera
 MT.54,Sannat,sannat
 MT.55,Is-Siġġiewi,is siggiewi
 MT.56,Tas-Sliema,tas sliema
 MT.57,Is-Swieqi,is swieqi
 MT.58,Tarxien,tarxien
-MT.59,Ta’ Xbiex,ta’ xbiex
+MT.59,Ta’ Xbiex,ta xbiex
 MT.60,Valletta,valletta
 MT.61,Ix-Xagħra,ix xagħra
 MT.62,Ix-Xewkija,ix xewkija
@@ -2450,7 +2450,7 @@ NZ.E7,Auckland,auckland
 NZ.E8,Bay of Plenty,bay of plenty
 NZ.E9,Canterbury,canterbury
 NZ.F1,Gisborne,gisborne
-NZ.F2,Hawke's Bay Region,hawke's bay region
+NZ.F2,Hawke's Bay Region,hawkes bay region
 NZ.F3,Manawatu-Wanganui,manawatu wanganui
 NZ.F4,Marlborough,marlborough
 NZ.F5,Nelson Region,nelson region
@@ -2803,7 +2803,7 @@ RU.37,Kostroma Oblast,kostroma oblast
 RU.38,Krasnodar Krai,krasnodar krai
 RU.40,Kurgan Oblast,kurgan oblast
 RU.41,Kursk Oblast,kursk oblast
-RU.42,Leningradskaya Oblast',leningradskaya oblast'
+RU.42,Leningradskaya Oblast',leningradskaya oblast
 RU.43,Lipetsk Oblast,lipetsk oblast
 RU.44,Magadan Oblast,magadan oblast
 RU.45,Mariy-El Republic,mariy el republic
@@ -2862,8 +2862,8 @@ SA.05,Medina Region,medina region
 SA.06,Eastern Province,eastern province
 SA.08,Al-Qassim Region,al qassim region
 SA.10,Riyadh Region,riyadh region
-SA.11,'Asir Region,'asir region
-SA.13,Ha'il Region,ha'il region
+SA.11,'Asir Region,asir region
+SA.13,Ha'il Region,hail region
 SA.14,Mecca Region,mecca region
 SA.15,Northern Borders Region,northern borders region
 SA.16,Najran Region,najran region
@@ -3288,7 +3288,7 @@ TD.17,Moyen-Chari,moyen chari
 TD.18,Hadjer-Lamis,hadjer lamis
 TD.19,Mandoul,mandoul
 TD.20,Mayo-Kebbi Ouest,mayo kebbi ouest
-TD.21,N’Djaména,n’djamena
+TD.21,N’Djaména,ndjamena
 TD.22,Barh el Gazel,barh el gazel
 TD.23,Borkou,borkou
 TD.25,Sila,sila
@@ -3436,7 +3436,7 @@ TN.39,Manouba,manouba
 TO.01,Haapai,haapai
 TO.02,Tongatapu,tongatapu
 TO.03,Vavau,vavau
-TO.EU,ʻEua,ʻeua
+TO.EU,ʻEua,eua
 TO.NI,Niuas,niuas
 TR.02,Adıyaman Province,adiyaman province
 TR.03,Afyonkarahisar Province,afyonkarahisar province
@@ -3778,15 +3778,15 @@ VU.18,Shefa,shefa
 WF.98611,Alo,alo
 WF.98612,Sigave,sigave
 WF.98613,Uvea,uvea
-WS.01,A'ana,a'ana
+WS.01,A'ana,aana
 WS.02,Aiga-i-le-Tai,aiga i le tai
 WS.03,Atua,atua
-WS.04,Fa'asaleleaga,fa'asaleleaga
-WS.05,Gaga'emauga,gaga'emauga
-WS.06,Va'a-o-Fonoti,va'a o fonoti
-WS.07,Gaga'ifomauga,gaga'ifomauga
+WS.04,Fa'asaleleaga,faasaleleaga
+WS.05,Gaga'emauga,gagaemauga
+WS.06,Va'a-o-Fonoti,vaa o fonoti
+WS.07,Gaga'ifomauga,gagaifomauga
 WS.08,Palauli,palauli
-WS.09,Satupa'itea,satupa'itea
+WS.09,Satupa'itea,satupaitea
 WS.10,Tuamasaga,tuamasaga
 WS.11,Vaisigano,vaisigano
 XK.10096138,Ferizaj,ferizaj
@@ -3804,17 +3804,17 @@ YE.05,Shabwah,shabwah
 YE.08,Al Hudaydah,al hudaydah
 YE.10,Al Mahwit Governorate,al mahwit governorate
 YE.11,Dhamār,dhamar
-YE.14,Ma’rib,ma’rib
-YE.15,Şa‘dah,sa‘dah
+YE.14,Ma’rib,marib
+YE.15,Şa‘dah,sadah
 YE.16,Sanaa Governorate,sanaa governorate
-YE.18,Aḑ Ḑāli‘,ad dali‘
+YE.18,Aḑ Ḑāli‘,ad dali
 YE.19,Omran,omran
 YE.20,Al Bayda,al bayda
 YE.21,Al Jawf,al jawf
 YE.22,Ḩajjah,hajjah
 YE.23,Ibb Governorate,ibb governorate
 YE.24,Laḩij,lahij
-YE.25,Ta‘izz,ta‘izz
+YE.25,Ta‘izz,taizz
 YE.26,Amanat Alasimah,amanat alasimah
 YE.27,Raymah,raymah
 YE.28,Soqatra,soqatra
@@ -3830,7 +3830,7 @@ YT.97609,Kani-Kéli,kani keli
 YT.97610,Koungou,koungou
 YT.97611,Mamoudzou,mamoudzou
 YT.97612,Mtsamboro,mtsamboro
-YT.97613,M'Tsangamouji,m'tsangamouji
+YT.97613,M'Tsangamouji,mtsangamouji
 YT.97614,Ouangani,ouangani
 YT.97615,Pamandzi,pamandzi
 YT.97616,Sada,sada
