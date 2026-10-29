@@ -1,8 +1,11 @@
+import functools
 import json
 import logging
 import re
 import sqlite3
 from pathlib import Path
+
+from ..core.places import _REGION_CODES, _US_STATES
 
 logger = logging.getLogger(__name__)
 
@@ -126,36 +129,115 @@ def lookup_iata(code: str) -> dict | None:
     return _web_search_iata(code)
 
 
-def lookup_city_iata(city: str, max_codes: int = 2) -> str | None:
-    """Resolve a city name (optionally 'City, Country') to IATA airport codes.
+# "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
+_IATA_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
-    Returns up to max_codes codes comma-joined (SerpAPI accepts multiple
-    departure/arrival IDs), or None if the city isn't in the airports table.
-    Seed data lists major airports first, so row order is the tiebreaker.
+# Other names people type for a country → its ISO code in the airports table.
+_COUNTRY_CODE_ALIASES: dict[str, str] = {
+    "uk": "GB",
+    "england": "GB",
+    "scotland": "GB",
+    "wales": "GB",
+    "britain": "GB",
+    "great britain": "GB",
+    "usa": "US",
+    "america": "US",
+    "united states of america": "US",
+    "uae": "AE",
+    "holland": "NL",
+    "the netherlands": "NL",
+    "korea": "KR",
+    "republic of korea": "KR",
+    "czechia": "CZ",
+    "turkiye": "TR",
+    "türkiye": "TR",
+}
+
+
+@functools.cache
+def _seed_country_codes() -> dict[str, str]:
+    """Seeded country name / ISO code (lowercase) → ISO code."""
+    from .seed_airports import AIRPORTS
+
+    table: dict[str, str] = {}
+    for _iata, _icao, _name, _city, country, code, *_ in AIRPORTS:
+        if code:
+            table[country.lower()] = code
+            table[code.lower()] = code
+    return table
+
+
+def _stated_country_codes(stated: str) -> frozenset[str] | None:
+    """ISO codes a typed last segment can name, or None when it isn't a
+    recognised country name, ISO code, alias or region code ("Bavaria")."""
+    codes = set(_REGION_CODES.get(stated, ()))  # "wa": Washington / W. Australia
+    if stated in _seed_country_codes():
+        codes.add(_seed_country_codes()[stated])
+    if stated in _COUNTRY_CODE_ALIASES:
+        codes.add(_COUNTRY_CODE_ALIASES[stated])
+    if stated in _US_STATES.values():  # "Paris, Texas"
+        codes.add("US")
+    return frozenset(codes) or None
+
+
+def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
+    """Resolve a typed place ("Berlin", "Berlin, Germany", "BER — Berlin,
+    Germany") to up to ``max_codes`` comma-joined IATA codes (SerpAPI accepts
+    multiple departure/arrival IDs), or None.
+
+    A label prefix that is a code in the airports table is the traveller's
+    pick and is returned alone ("LGW — London, …" → "LGW"); any other prefix
+    stays part of the text. Otherwise an exact, case-insensitive match on the
+    city (first comma segment). A last segment that names a country, ISO
+    code, alias or region code restricts the match; an unrecognised one
+    ("Bavaria") is ignored. Web-saved rows (no country_code) count only when
+    no coded row matches. Matches spanning more than one country are
+    ambiguous and resolve to None. Seed data lists each city's primary
+    airport first, so insertion order ranks the codes. Local DB only — one
+    indexed query, never a web lookup.
     """
     if not city or not city.strip():
         return None
     stripped = city.strip()
     if re.match(r"^[A-Za-z]{3}$", stripped):
         return stripped.upper()
-    parts = [p.strip() for p in stripped.split(",")]
-    city_name, country = parts[0], (parts[1] if len(parts) > 1 else None)
-    with get_connection() as conn:
-        if country:
+    prefix = _IATA_PREFIX_RE.match(stripped)
+    code = prefix.group(1).upper() if prefix else ""
+    after_prefix = stripped[prefix.end() :] if prefix else stripped
+    try:
+        with get_connection() as conn:
             rows = conn.execute(
-                "SELECT iata_code FROM airports WHERE lower(city) = :city "
-                "AND lower(country) = :country LIMIT :n",
-                {"city": city_name.lower(), "country": country.lower(), "n": max_codes},
+                "SELECT iata_code, city, country, country_code FROM airports "
+                "WHERE city = :whole COLLATE NOCASE OR city = :after COLLATE NOCASE "
+                "OR iata_code = :code ORDER BY id",
+                {
+                    "whole": stripped.split(",")[0].strip(),
+                    "after": after_prefix.split(",")[0].strip(),
+                    "code": code,
+                },
             ).fetchall()
-            if rows:
-                return ",".join(r["iata_code"] for r in rows)
-        rows = conn.execute(
-            "SELECT iata_code FROM airports WHERE lower(city) = :city LIMIT :n",
-            {"city": city_name.lower(), "n": max_codes},
-        ).fetchall()
-    if not rows:
+    except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
+        logger.debug("City airport lookup failed for %r: %s", city, exc)
         return None
-    return ",".join(r["iata_code"] for r in rows)
+    if code and any(r["iata_code"] == code for r in rows):
+        return code
+    parts = [p.strip() for p in stripped.split(",") if p.strip()]
+    city_name = parts[0].lower()
+    rows = [r for r in rows if r["city"].lower() == city_name]
+    stated = " ".join(parts[-1].lower().split()) if len(parts) > 1 else None
+    codes = _stated_country_codes(stated) if stated else None
+    if codes:
+        rows = [
+            r
+            for r in rows
+            if r["country_code"] in codes or r["country"].lower() == stated
+        ]
+    coded = [r for r in rows if r["country_code"]]
+    rows = coded or rows
+    countries = {r["country_code"] or r["country"].lower() for r in rows}
+    if len(countries) != 1:
+        return None
+    return ",".join(r["iata_code"] for r in rows[:max_codes])
 
 
 def _web_search_iata(code: str) -> dict | None:

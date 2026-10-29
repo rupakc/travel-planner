@@ -14,7 +14,8 @@ Build a complete day-by-day travel plan from your own knowledge. Include everyth
 - Name specific real places — never generic ones
 - Activity descriptions ≤ 20 words
 - `city` and `country` MANDATORY on every day object
-- `lat`/`lng` in decimal degrees on every slot/place that names a specific location
+- `duration_hours`: required on every slot — realistic hours spent on the activity (used to estimate start and end times)
+- `lat`, `lng`: required on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel (decimal degrees; used to estimate travel time between stops). Also on every `places_to_see` entry
 - `hotel`: include only on the FIRST day in each city (not on travel days)
 - `places_to_see`: 2–3 entries per non-travel day
 - `dining`: 2 entries per non-travel day
@@ -67,9 +68,9 @@ Build a complete day-by-day travel plan from your own knowledge. Include everyth
         "tier": "budget",
         "highlight": "string"
       },
-      "morning":   { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "cost_usd": 0.0, "tip": "string" },
-      "afternoon": { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "cost_usd": 0.0, "tip": "string" },
-      "evening":   { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "cost_usd": 0.0, "tip": "string" },
+      "morning":   { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "duration_hours": 0.0, "cost_usd": 0.0, "tip": "string" },
+      "afternoon": { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "duration_hours": 0.0, "cost_usd": 0.0, "tip": "string" },
+      "evening":   { "activity": "string", "place": "string", "lat": 0.0, "lng": 0.0, "duration_hours": 0.0, "cost_usd": 0.0, "tip": "string" },
       "places_to_see": [
         { "name": "string", "category": "string", "lat": 0.0, "lng": 0.0, "entry_usd": 0.0, "why": "string" }
       ],

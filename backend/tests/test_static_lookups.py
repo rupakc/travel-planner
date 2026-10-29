@@ -338,3 +338,79 @@ def test_home_currency_nationality_is_exact(resolve):
 def test_static_forex_busan_is_not_usd():
     fx = s.get_static_forex(_req("Busan"))
     assert fx["local_currency"]["code"] == "KRW"
+
+
+# ── ISO 3166 alpha-2 country codes ───────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("destination", "country"),
+    [
+        # ISO codes that are also US state codes (DE, CA, ID, IN)
+        ("Berlin, DE", "germany"),
+        ("Toronto, CA", "canada"),
+        ("Bali, ID", "indonesia"),
+        ("Delhi, IN", "india"),
+        ("Paris, FR", "france"),
+        ("Tokyo, JP", "japan"),
+        ("London, GB", "uk"),
+        ("Dubai, AE", "uae"),
+        ("Miami, FL", "usa"),
+        ("Los Angeles, CA", "usa"),  # California agrees with the city map
+        ("Paris, TX", None),
+        ("Paris, Texas", None),
+        ("Paris, DE", None),  # ambiguous code; neither reading is France
+        ("Paris, GA", None),
+        # a known city in another country, named by a non-state ISO code
+        ("Cartagena, ES", "spain"),
+        ("Cartagena, CO", "colombia"),
+        # US cities whose state code is also an ISO country code
+        ("Denver, CO", "usa"),
+        ("Springfield, IL", "usa"),
+        ("Wilmington, DE", "usa"),
+        # unknown city: an ISO-only code names its country, a state-only code
+        # the USA, a code that is both is ambiguous
+        ("Trondheim, NO", "norway"),
+        ("Hiroshima, JP", "japan"),
+        ("Austin, TX", "usa"),
+        ("Smalltown, CO", None),
+        ("Leipzig, DE", None),
+        ("Leipzig, Germany", "germany"),
+        ("Nowhere, ZZ", None),
+        ("Paris, US", None),  # US reads as the USA, the city map says France
+        # regional codes beyond US states (Canada, Australia, Brazil)
+        ("Perth, WA", "australia"),
+        ("Seattle, WA", "usa"),
+        ("Toronto, ON", "canada"),
+        ("Fremantle, WA", None),  # Washington or Western Australia
+        ("Charlottetown, PE", None),  # Peru, PEI or Pernambuco
+        ("St. John's, NL", None),  # Netherlands or Newfoundland
+        ("Belém, PA", "brazil"),
+        ("Florianópolis, SC", "brazil"),
+        ("Smalltown, PA", None),  # Pennsylvania or Pará
+        ("Sydney, NSW", "australia"),
+    ],
+)
+def test_iso_country_codes(destination, country):
+    assert lookups(destination) == expected(country)
+
+
+def test_every_table_country_has_an_iso_code():
+    assert set(s._ISO_COUNTRY.values()) == set(s._known_countries())
+    assert all(len(code) == 2 for code in s._ISO_COUNTRY)
+
+
+def test_us_state_module_is_shared():
+    from app.core.places import _US_STATES
+
+    assert s._US_STATES is _US_STATES
+    assert _US_STATES["tx"] == "texas"
+
+
+def test_region_codes_table():
+    from app.core.places import _REGION_CODES
+
+    assert _REGION_CODES["wa"] == {"US", "AU"}
+    assert _REGION_CODES["pe"] == {"CA", "BR"}
+    assert _REGION_CODES["nsw"] == {"AU"}
+    assert sum("BR" in c for c in _REGION_CODES.values()) == 27

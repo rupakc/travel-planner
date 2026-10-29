@@ -437,6 +437,10 @@ When flights come from Google Flights (SerpAPI) on a single-city trip, the resul
 
 `price_level` is `low`, `typical` or `high`.
 
+### Airport codes for live flights
+
+Live flight search (`/api/flights`, the search stream and the fare calendar) needs airport codes. The request validator sets them from `origin` / `destination`: a bare three-letter code is used as typed; a UI label whose code prefix is in the airports DB ("LGW — London, United Kingdom") uses that code alone (an unknown prefix stays part of the text); any other text ("Berlin", "Berlin, Germany") is looked up by exact city name in the local airports DB (`lookup_city_iata`, one indexed query, never a web lookup). A last comma segment restricts the match when it is recognised: a country name, ISO code, common alias such as "UK", a US state name, or a region code from `core/places.py` (US states, Canadian provinces, Australian and Brazilian states — "Perth, WA" may be Washington or Western Australia and finds PER). An unrecognised segment ("Munich, Bavaria") is ignored. Web-saved airport rows (no `country_code`) count only when no seeded row matches the city. Up to 3 airports are sent comma-joined, primary first ("London" → `LHR,LGW,STN`); the booking link uses the first. A city that is unknown, not in the stated country ("Paris, Texas") or in more than one country with no country given resolves to nothing, and flights fall back to AI estimates.
+
 ### `POST /api/flights/fare-calendar`
 
 Auth required (`401` without a valid token); `light_ai` rate-limit bucket. Body: the same `TravelSearchRequest` as `/api/search`.

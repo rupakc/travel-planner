@@ -10,6 +10,7 @@ import functools
 import re
 import unicodedata
 
+from ..core.places import _REGION_CODES, _US_STATES
 from ..schemas.request import TravelSearchRequest
 
 # ── Visa static lookup ────────────────────────────────────────────────────────
@@ -1296,30 +1297,44 @@ _CITY_TO_COUNTRY: dict[str, str] = {
     "dublin": "ireland",
     "brussels": "belgium",
     "helsinki": "finland",
-}
-
-_US_STATES = {
-    "al": "alabama", "ak": "alaska", "az": "arizona", "ar": "arkansas",
-    "ca": "california", "co": "colorado", "ct": "connecticut", "de": "delaware",
-    "dc": "district of columbia", "fl": "florida", "ga": "georgia",
-    "hi": "hawaii", "id": "idaho", "il": "illinois", "in": "indiana",
-    "ia": "iowa", "ks": "kansas", "ky": "kentucky", "la": "louisiana",
-    "me": "maine", "md": "maryland", "ma": "massachusetts", "mi": "michigan",
-    "mn": "minnesota", "ms": "mississippi", "mo": "missouri", "mt": "montana",
-    "ne": "nebraska", "nv": "nevada", "nh": "new hampshire", "nj": "new jersey",
-    "nm": "new mexico", "ny": "new york", "nc": "north carolina",
-    "nd": "north dakota", "oh": "ohio", "ok": "oklahoma", "or": "oregon",
-    "pa": "pennsylvania", "ri": "rhode island", "sc": "south carolina",
-    "sd": "south dakota", "tn": "tennessee", "tx": "texas", "ut": "utah",
-    "vt": "vermont", "va": "virginia", "wa": "washington",
-    "wv": "west virginia", "wi": "wisconsin", "wy": "wyoming",
+    # Common US metros and tourist cities, so "Denver, CO" or "Springfield, IL"
+    # isn't read as Colombia or Israel
+    "denver": "usa", "springfield": "usa", "wilmington": "usa",
+    "san diego": "usa", "atlanta": "usa", "philadelphia": "usa",
+    "phoenix": "usa", "houston": "usa", "dallas": "usa", "austin": "usa",
+    "san antonio": "usa", "fort worth": "usa", "washington": "usa",
+    "washington dc": "usa", "orlando": "usa", "tampa": "usa",
+    "fort lauderdale": "usa", "key west": "usa", "new orleans": "usa",
+    "nashville": "usa", "memphis": "usa", "charlotte": "usa",
+    "raleigh": "usa", "detroit": "usa", "minneapolis": "usa",
+    "st louis": "usa", "saint louis": "usa", "kansas city": "usa",
+    "salt lake city": "usa", "portland": "usa", "sacramento": "usa",
+    "oakland": "usa", "anchorage": "usa", "baltimore": "usa",
+    "pittsburgh": "usa", "cleveland": "usa", "cincinnati": "usa",
+    "columbus": "usa", "milwaukee": "usa",
+    "albuquerque": "usa", "tucson": "usa", "el paso": "usa", "omaha": "usa",
+    "louisville": "usa", "buffalo": "usa", "savannah": "usa",
+    "charleston": "usa", "napa": "usa", "palm springs": "usa",
+    "sedona": "usa", "aspen": "usa", "maui": "usa", "juneau": "usa",
+    "miami beach": "usa", "scottsdale": "usa", "boise": "usa",
+    "providence": "usa", "hartford": "usa", "jacksonville": "usa",
+    "oklahoma city": "usa", "santa barbara": "usa",
+    # Major Australian, Canadian and Brazilian cities, so "Perth, WA" or
+    # "Belém, PA" resolve through their region codes (accents are folded)
+    "perth": "australia", "adelaide": "australia", "brisbane": "australia",
+    "darwin": "australia", "hobart": "australia", "cairns": "australia",
+    "gold coast": "australia", "calgary": "canada", "ottawa": "canada",
+    "quebec city": "canada", "halifax": "canada", "salvador": "brazil",
+    "florianopolis": "brazil", "recife": "brazil", "brasilia": "brazil",
+    "belem": "brazil", "manaus": "brazil", "fortaleza": "brazil",
+    "maceio": "brazil",
 }  # fmt: skip
 
 # A stated "country" that is really a state or region: the city-map fallback
 # applies only when the map agrees with the region's country ("Paris, Texas"
 # is not Paris, France).
 _REGION_COUNTRY: dict[str, str] = {
-    **{name: "usa" for pair in _US_STATES.items() for name in pair},
+    **{name: "usa" for name in _US_STATES.values()},
     "us": "usa",
     "kansai": "japan",
     "kanto": "japan",
@@ -1338,6 +1353,34 @@ _REGION_COUNTRY: dict[str, str] = {
     "new south wales": "australia",
     "victoria": "australia",
 }
+
+
+# ISO 3166-1 alpha-2 code → table country key, for every table country.
+_ISO_COUNTRY: dict[str, str] = {
+    "ae": "uae", "ar": "argentina", "at": "austria", "au": "australia",
+    "be": "belgium", "br": "brazil", "ca": "canada", "ch": "switzerland",
+    "cl": "chile", "cn": "china", "co": "colombia", "cz": "czechia",
+    "de": "germany", "dk": "denmark", "eg": "egypt", "es": "spain",
+    "fi": "finland", "fr": "france", "gb": "uk", "gr": "greece",
+    "hk": "hong kong", "hr": "croatia", "hu": "hungary", "id": "indonesia",
+    "ie": "ireland", "il": "israel", "in": "india", "is": "iceland",
+    "it": "italy", "jo": "jordan", "jp": "japan", "ke": "kenya",
+    "kh": "cambodia", "kr": "south korea", "lk": "sri lanka", "ma": "morocco",
+    "mm": "myanmar", "mv": "maldives", "mx": "mexico", "my": "malaysia",
+    "nl": "netherlands", "no": "norway", "np": "nepal", "nz": "new zealand",
+    "pe": "peru", "ph": "philippines", "pl": "poland", "pt": "portugal",
+    "ru": "russia", "se": "sweden", "sg": "singapore", "th": "thailand",
+    "tr": "turkey", "tw": "taiwan", "us": "usa", "vn": "vietnam",
+    "za": "south africa",
+}  # fmt: skip
+
+
+def _code_readings(code: str) -> set[str]:
+    """Every table country a short code can name: its ISO country plus each
+    country using it as a region code ("wa" → usa, australia)."""
+    readings = {_ISO_COUNTRY[code]} if code in _ISO_COUNTRY else set()
+    readings |= {_ISO_COUNTRY[c.lower()] for c in _REGION_CODES.get(code, ())}
+    return readings
 
 
 # Other names for a table country key. Lookups compare whole names only.
@@ -1424,9 +1467,14 @@ def _place_country(destination: str) -> str | None:
 
     A stated known country wins. Otherwise the city's country from the city
     map — when nothing else is stated, or the stated part is a state/region
-    of that same country ("Miami, FL", "Kyoto, Kansai"), or some other
-    short code ("Paris, FR"). Otherwise a single "<city> <country>" phrase
-    like "Tokyo Japan". Never substring matching.
+    of that same country ("Miami, FL", "Kyoto, Kansai"), or an ISO
+    country or region code with a reading in that same country ("Berlin, DE",
+    "Perth, WA"), or an ISO code that is not a US state code ("Cartagena,
+    ES").
+    An unknown city with a code takes its country only when the code has a
+    single reading across ISO and region codes ("Trondheim, NO", "Austin,
+    TX"; not "Leipzig, DE" or "Smalltown, PA"). Otherwise a single
+    "<city> <country>" phrase like "Tokyo Japan". Never substring matching.
     """
     place = normalise_place(destination)
     country, city = place["country"], place["city"]
@@ -1436,9 +1484,21 @@ def _place_country(destination: str) -> str | None:
         mapped = _CITY_TO_COUNTRY[city]
         if country is None:
             return mapped
+        readings = _code_readings(country)
+        if mapped in readings:  # "Perth, WA", "Berlin, DE", "Denver, CO"
+            return mapped
         if country in _REGION_COUNTRY:
             return mapped if _REGION_COUNTRY[country] == mapped else None
-        return mapped if len(country) <= 2 else None
+        # "Cartagena, ES": an ISO code that can't be a US state names its
+        # country (the known city outweighs a Brazilian/Canadian reading)
+        if country in _ISO_COUNTRY and country not in _US_STATES:
+            return _ISO_COUNTRY[country]
+        return None
+    if city and country:
+        # Unknown city: a code with exactly one reading ("Austin, TX",
+        # "Trondheim, NO"); "Smalltown, PA" could be the USA or Brazil
+        readings = _code_readings(country)
+        return readings.pop() if len(readings) == 1 else None
     if city and country is None:
         for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
             prefix = city.removesuffix(" " + name)

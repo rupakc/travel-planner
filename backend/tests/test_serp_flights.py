@@ -283,3 +283,11 @@ class TestSearchRoundtrip:
         assert r["outbound"]["airline"] == "British Airways"
         assert r["return"]["airline"] == "American Airlines"
         assert r["price_usd"] == 850.0
+
+
+def test_booking_url_uses_first_code_of_a_list():
+    from app.services.serp_flights import _google_flights_url
+
+    url = _google_flights_url("LHR,LGW,STN", "BER", "2026-12-01", "2026-12-08")
+    assert "flt=LHR.BER.2026-12-01*BER.LHR.2026-12-08" in url
+    assert "," not in url.split("#flt=")[1].split(";")[0]

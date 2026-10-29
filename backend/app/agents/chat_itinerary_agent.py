@@ -6,7 +6,7 @@ from .base_agent import _MAX_RETRIES, BaseAgent, _get_client
 from .loader import load_agent_definition
 
 # Haiku generates at ~150 tokens/s vs Sonnet's ~37 tokens/s.
-# With the concise prompt schema (no notes/duration_hours), an 11-day multi-city
+# With the concise prompt schema (no notes), an 11-day multi-city
 # itinerary uses ~2500-3500 tokens — well within Haiku's 8192 output limit.
 # This cuts generation time from ~100s to ~20-25s.
 _MODEL = "claude-haiku-4-5-20251001"
@@ -138,7 +138,10 @@ class ChatItineraryAgent(BaseAgent):
                 "3. Insert one TRAVEL DAY between each city pair (is_travel_day: true).\n"
                 "4. Include hotel on the FIRST day of each city's stay only.\n"
                 "5. Include 2–3 places_to_see and 2 dining entries per non-travel day.\n"
-                "6. Add lat/lng for every named slot and place.\n"
+                "6. Give duration_hours on every slot (realistic hours spent there). "
+                "Add lat/lng coordinates (decimal degrees) on every slot; for slots "
+                "without a specific place, use approximate coordinates of the "
+                "neighbourhood or the hotel. Add lat/lng on every place too.\n"
                 "7. Include intercity_travel with 2–3 transport options per leg.\n"
                 "8. Use YOUR OWN KNOWLEDGE for all recommendations.\n"
                 "9. Keep activity descriptions under 20 words.\n"
@@ -159,7 +162,10 @@ class ChatItineraryAgent(BaseAgent):
                 "1. Day 1: arrival, check-in, gentle intro. Last day: departure.\n"
                 "2. Include hotel on Day 1 only.\n"
                 "3. Include 2–3 places_to_see and 2 dining entries per non-travel day.\n"
-                "4. Add lat/lng for every named slot and place.\n"
+                "4. Give duration_hours on every slot (realistic hours spent there). "
+                "Add lat/lng coordinates (decimal degrees) on every slot; for slots "
+                "without a specific place, use approximate coordinates of the "
+                "neighbourhood or the hotel. Add lat/lng on every place too.\n"
                 "5. intercity_travel should have one entry: origin → destination (flight or train).\n"
                 "6. Keep activity descriptions under 20 words.\n"
             )

@@ -72,6 +72,8 @@ Static lookup tables in `static_results.py` yield results before any AI call:
 
 All stream to the browser within 1 second with `source: 'static'`. The UI shows them as "Enhancing…" until AI results arrive.
 
+Destinations are matched to a table country by whole names only (`_place_country`): a stated country wins; otherwise the city map, when a trailing state or region name, or an ISO / region code with a reading in the mapped country, agrees with it ("Miami, FL", "Berlin, DE", "Perth, WA", "Toronto, ON" resolve; "Paris, TX", "Paris, Texas" and "Paris, US" get no row). A known city with an ISO code for another country that is not a US state code takes that country ("Cartagena, ES" → Spain). For a city not in the map, a code resolves only when it has a single reading across ISO codes and the region codes in `backend/app/core/places.py` (US states, Canadian provinces/territories, Australian and Brazilian states): "Trondheim, NO" → Norway, "Austin, TX" → USA, but "Leipzig, DE", "Fremantle, WA" and "Smalltown, PA" get no row. The city map includes common US, Australian, Canadian and Brazilian cities so "Denver, CO", "Perth, WA" or "Belém, PA" resolve.
+
 ### Phase 1 — Parallel AI agents
 
 Thirteen agents run concurrently (the `phase1_agents` dict in the orchestrator), plus two deferred agents. As each finishes, its result is yielded over SSE:
@@ -215,7 +217,7 @@ Phase 2 synthesis. Receives activities, hotels, the full search context, and wea
 - Day number, date, theme, and city
 - Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes
 - Daily estimated cost
-- `duration_hours` on every slot and `lat`/`lng` on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (`utils/schedule.js`)
+- `duration_hours` on every slot and `lat`/`lng` on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (`utils/schedule.js`). The chat itinerary agent (`.agents/chat-itinerary.md`, `ChatItineraryAgent`) asks for the same fields
 - Coordinates for the Timeline map view
 
 60-second timeout with a template-based fallback that distributes activities mechanically.
