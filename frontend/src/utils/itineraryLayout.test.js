@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   TIMES, slotKey, itineraryFingerprint, activeLayout, arrangeItinerary, moveTargets,
-  moveSlot, removeSlot, restoreSlot, layoutChangeCount, syncPlannedSlots,
+  moveSlot, removeSlot, restoreSlot, layoutChangeCount, syncPlannedSlots, citiesCompatible,
 } from './itineraryLayout'
 import { EMPTY_SELECTIONS } from './planHelpers'
 
@@ -363,5 +363,32 @@ describe('fix round 2', () => {
     const l = layoutOf(it0, { '3-morning': '4-morning' })
     expect(arrangeItinerary(it0, l).changed).toBe(false)
     expect(moveSlot(it0, null, '3-morning', 5, 'evening')).toBeNull()
+  })
+})
+
+describe('fix round 3: place-name city matching', () => {
+  it('treats overlapping place-name sets as the same city', () => {
+    expect(citiesCompatible('Montserrat & Barcelona', 'Barcelona')).toBe(true)
+    expect(citiesCompatible('Montserrat & Barcelona', 'Barcelona, Spain')).toBe(true)
+    expect(citiesCompatible('Lisbon', 'Porto')).toBe(false)
+    expect(citiesCompatible('Lisbon & Sintra', 'Lisbon')).toBe(true)
+    expect(citiesCompatible('Lisbon & Sintra', 'Porto')).toBe(false)
+    expect(citiesCompatible('Sintra and Cascais', 'cascais, Portugal')).toBe(true)
+    expect(citiesCompatible('Rome / Vatican', 'Vatican City')).toBe(false)
+    expect(citiesCompatible('Florence + Pisa', 'Pisa')).toBe(true)
+    expect(citiesCompatible('', 'Porto')).toBe(true)
+    expect(citiesCompatible(undefined, undefined)).toBe(true)
+  })
+
+  it('allows moves and applies stored layouts across Barcelona and a day trip day', () => {
+    const it0 = { days: [mkDay(1, 'Barcelona'), mkDay(2, 'Montserrat & Barcelona'), mkDay(3, 'Girona')] }
+    expect(moveTargets(it0, null, '1-morning').some((t) => t.day_number === 2)).toBe(true)
+    expect(moveTargets(it0, null, '2-morning').some((t) => t.day_number === 1)).toBe(true)
+    expect(moveTargets(it0, null, '2-morning').some((t) => t.day_number === 3)).toBe(false)
+    const l = layoutOf(it0, { '1-morning': '2-morning', '2-morning': '1-morning' })
+    const a = arrangeItinerary(it0, l)
+    expect(a.changed).toBe(true)
+    expect(find(a, '1-morning').day).toBe(2)
+    expect(find(a, '2-morning').day).toBe(1)
   })
 })

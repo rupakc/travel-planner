@@ -64,33 +64,65 @@ function menuPlacement(rect, viewportWidth, viewportHeight) {
 // (overflow-hidden) and keep a transform from their entry animation, so an
 // in-place menu would be cut off. Closes on Escape (returning focus), a
 // pointer press outside the menu and its button, focus landing outside them,
-// window resize, and any scroll outside the menu. A blur with no new focus
-// target never closes it (Safari doesn't focus buttons on click).
-function MoveMenu({ label, anchorRect, getAnchor, removeItem, groups, onClose, onDismiss }) {
+// Tab/Shift+Tab (focus goes back to the button), and the button scrolling
+// fully out of view; otherwise it follows the button on scroll/resize. A blur
+// with no new focus target never closes it (Safari doesn't focus buttons on click).
+const offScreen = (rect) => rect.bottom < 0 || rect.top > window.innerHeight
+  || rect.right < 0 || rect.left > window.innerWidth
+
+function MoveMenu({ label, anchorRect, anchorKey, getAnchor, removeItem, groups, onClose, onDismiss }) {
   const menuRef = useRef(null)
+  const [rect, setRect] = useState(anchorRect)
   useEffect(() => {
-    menuRef.current?.querySelector('[role="menuitem"]')?.focus({ preventScroll: true })
+    // First MOVE target, so open-then-Enter can never remove the activity.
+    const menu = menuRef.current
+    const first = menu?.querySelector('[data-move-target]') || menu?.querySelector('[role="menuitem"]')
+    first?.focus({ preventScroll: true })
   }, [])
   useEffect(() => {
-    const inside = (node) => menuRef.current?.contains(node) || getAnchor()?.contains(node)
+    const anchor = () => getAnchor(anchorKey)
+    const inside = (node) => menuRef.current?.contains(node) || anchor()?.contains(node)
     const onPress = (e) => { if (!inside(e.target)) onDismiss() }
     const onFocusIn = (e) => { if (e.target instanceof Node && !inside(e.target)) onDismiss() }
-    const onScroll = (e) => { if (!menuRef.current?.contains(e.target)) onDismiss() }
+    // Follow the button on page scroll/resize (once per frame); close only
+    // when the button has left the viewport entirely.
+    let pending = false
+    let frame = 0
+    const follow = (e) => {
+      if (e.type === 'scroll' && menuRef.current?.contains(e.target)) return
+      if (pending) return
+      pending = true
+      frame = window.requestAnimationFrame(() => {
+        pending = false
+        const el = anchor()
+        if (!el) return
+        const next = el.getBoundingClientRect()
+        if (offScreen(next)) onDismiss()
+        else setRect(next)
+      })
+    }
     document.addEventListener('pointerdown', onPress)
     document.addEventListener('mousedown', onPress)
     document.addEventListener('focusin', onFocusIn)
-    document.addEventListener('scroll', onScroll, true)
-    window.addEventListener('resize', onDismiss)
+    document.addEventListener('scroll', follow, true)
+    window.addEventListener('resize', follow)
     return () => {
+      if (pending) window.cancelAnimationFrame(frame)
       document.removeEventListener('pointerdown', onPress)
       document.removeEventListener('mousedown', onPress)
       document.removeEventListener('focusin', onFocusIn)
-      document.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('resize', onDismiss)
+      document.removeEventListener('scroll', follow, true)
+      window.removeEventListener('resize', follow)
     }
-  }, [getAnchor, onDismiss])
+  }, [anchorKey, getAnchor, onDismiss])
 
   const onKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      // No preventDefault: focus returns to the Move button and the browser
+      // carries on tabbing from there.
+      onClose()
+      return
+    }
     if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
@@ -107,6 +139,7 @@ function MoveMenu({ label, anchorRect, getAnchor, removeItem, groups, onClose, o
 
   const itemButton = (item, className) => (
     <button key={item.id} type="button" role="menuitem" aria-label={item.ariaLabel} onClick={item.onSelect}
+      data-move-target={item.isTarget ? '' : undefined}
       onMouseDown={(e) => e.preventDefault()}
       className={`block w-full text-left px-3 py-1.5 text-xs focus:outline-none ${className}`}>
       {item.label}
@@ -115,7 +148,7 @@ function MoveMenu({ label, anchorRect, getAnchor, removeItem, groups, onClose, o
 
   return createPortal(
     <div ref={menuRef} role="menu" aria-label={label} onKeyDown={onKeyDown}
-      style={menuPlacement(anchorRect, window.innerWidth, window.innerHeight)}
+      style={menuPlacement(rect, window.innerWidth, window.innerHeight)}
       className="z-50 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg py-1">
       {removeItem && (
         <>
@@ -152,10 +185,16 @@ export default function ItinerarySection({
   const sectionRef = useRef(null)
   const focusAfterRender = useRef(null) // slot key (its Move button) or FOCUS_UNDO
   const dismissMenu = useCallback(() => setMenuFor(null), [])
+  const getMoveButton = useCallback((key) => moveButtons.current[key], [])
 
   const layout = selections.itinerary_layout
   const edits = selections.itinerary_edits
   const editable = typeof onMoveSlot === 'function'
+  // Editing switched off (e.g. a saved plan opened): drop any open menu.
+  if (!editable && (menuFor !== null || menuAnchor !== null)) {
+    setMenuFor(null)
+    setMenuAnchor(null)
+  }
   const arranged = useMemo(() => arrangeItinerary(data, layout, edits), [data, layout, edits])
   // One source of truth for drag validity AND the Move menu (city rule included).
   const targetsByKey = useMemo(() => {
@@ -342,6 +381,7 @@ export default function ItinerarySection({
                 group.items.push({
                   id: slotKey(t.day_number, t.time_of_day),
                   label: `${timeLabel(t.time_of_day)}${swap}`,
+                  isTarget: true,
                   ariaLabel: `Move to ${positionLabel(t.day_number, t.time_of_day)}${swap}`,
                   onSelect: () => {
                     focusAfterRender.current = key
@@ -470,7 +510,7 @@ export default function ItinerarySection({
                               <ArrowRightLeft size={10}/> Move
                             </button>
                             {menuOpen && (
-                              <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} getAnchor={() => moveButtons.current[key]}
+                              <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} anchorKey={key} getAnchor={getMoveButton}
                                 removeItem={removeItem} groups={menuGroups} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
                             )}
                           </div>

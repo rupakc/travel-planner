@@ -72,8 +72,25 @@ export function slotRanks(day) {
   return ranks
 }
 
-const cityKey = (city) => String(city || '').split(',')[0].trim().toLowerCase()
-const sameCity = (a, b) => !cityKey(a) || !cityKey(b) || cityKey(a) === cityKey(b)
+// A day's place names: "Montserrat & Barcelona, Spain" -> {montserrat, barcelona}.
+function placeNames(city) {
+  return new Set(
+    String(city || '')
+      .split(/&|\/|\+|\band\b/i)
+      .map((part) => part.split(',')[0].trim().toLowerCase())
+      .filter(Boolean),
+  )
+}
+
+// City rule: two days are compatible when their place-name sets share a name,
+// or either day has no city (single-city trips, day trips like "X & Barcelona").
+export function citiesCompatible(a, b) {
+  const left = placeNames(a)
+  const right = placeNames(b)
+  if (!left.size || !right.size) return true
+  for (const name of left) if (right.has(name)) return true
+  return false
+}
 
 // Index of the original itinerary: movable activities (standard time, unique
 // key) and every valid position. A movable activity's original position IS its key.
@@ -119,7 +136,7 @@ function resolve(model, layout) {
       }
       if (
         typeof want === 'string' && model.posDay.has(want)
-        && sameCity(model.posDay.get(key).city, model.posDay.get(want).city)
+        && citiesCompatible(model.posDay.get(key).city, model.posDay.get(want).city)
       ) desired = want
     }
     if (!taken.has(desired)) {
@@ -248,7 +265,7 @@ export function moveTargets(itinerary, layout, key) {
   for (const pos of model.positions) {
     if (pos === from) continue
     const day = model.posDay.get(pos)
-    if (!sameCity(fromDay.city, day.city)) continue
+    if (!citiesCompatible(fromDay.city, day.city)) continue
     const occupant = occupantOf(resolved, pos)
     targets.push({
       day_number: day.day_number,

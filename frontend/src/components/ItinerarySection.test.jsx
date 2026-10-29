@@ -203,7 +203,7 @@ describe('ItinerarySection', () => {
       'Move to Day 1 · Afternoon (swap with Forum)',
       'Move to Day 1 · Evening',
     ])
-    expect(document.activeElement).toBe(items[0])
+    expect(document.activeElement).toBe(items[1]) // first move target, never Remove
     click(button('Evening', menu))
     expect(h.onMoveSlot).toHaveBeenCalledWith('1-morning', 1, 'evening', 'menu')
     expect(document.querySelector('[role="menu"]')).toBeNull()
@@ -503,18 +503,95 @@ describe('ItinerarySection', () => {
       expect(days).toEqual(['Day 1', 'Day 2'])
     })
 
-    it('closes on scroll outside the menu and on resize, not on scroll inside it', () => {
-      render(handlers())
-      click(button('Move', row('1-morning')))
-      const menu = document.querySelector('[role="menu"]')
-      act(() => { menu.dispatchEvent(new Event('scroll')) })
-      expect(document.querySelector('[role="menu"]')).not.toBeNull()
-      act(() => { document.dispatchEvent(new Event('scroll')) })
-      expect(document.querySelector('[role="menu"]')).toBeNull()
+    describe('following the page', () => {
+      beforeEach(() => {
+        setViewport(1024, 800)
+        vi.stubGlobal('requestAnimationFrame', (cb) => { cb(0); return 1 })
+        vi.stubGlobal('cancelAnimationFrame', () => {})
+      })
+      afterEach(() => vi.unstubAllGlobals())
 
-      click(button('Move', row('1-morning')))
-      act(() => { window.dispatchEvent(new Event('resize')) })
-      expect(document.querySelector('[role="menu"]')).toBeNull()
+      it('repositions on page scroll while the button is visible, ignores scroll inside the menu', () => {
+        render(handlers())
+        const move = button('Move', row('1-morning'))
+        anchorAt(move, 100)
+        click(move)
+        const menu = document.querySelector('[role="menu"]')
+        expect(menu.style.top).toBe('134px')
+        act(() => { menu.dispatchEvent(new Event('scroll')) })
+        expect(document.querySelector('[role="menu"]')).not.toBeNull()
+        anchorAt(move, 40)
+        act(() => { document.dispatchEvent(new Event('scroll')) })
+        expect(document.querySelector('[role="menu"]')).not.toBeNull()
+        expect(document.querySelector('[role="menu"]').style.top).toBe('74px')
+        anchorAt(move, 300)
+        act(() => { window.dispatchEvent(new Event('resize')) })
+        expect(document.querySelector('[role="menu"]').style.top).toBe('334px')
+      })
+
+      it('closes once the button has scrolled entirely out of view', () => {
+        render(handlers())
+        const move = button('Move', row('1-morning'))
+        anchorAt(move, 100)
+        click(move)
+        anchorAt(move, -200)
+        act(() => { document.dispatchEvent(new Event('scroll')) })
+        expect(document.querySelector('[role="menu"]')).toBeNull()
+
+        anchorAt(move, 100)
+        click(move)
+        anchorAt(move, 900)
+        act(() => { window.dispatchEvent(new Event('resize')) })
+        expect(document.querySelector('[role="menu"]')).toBeNull()
+      })
     })
+
+    it('does not re-subscribe its listeners on every render', () => {
+      const h = handlers()
+      render(h)
+      click(button('Move', row('1-morning')))
+      const add = vi.spyOn(document, 'addEventListener')
+      render({ ...h, selections: { itinerary_notes: {} } })
+      expect(add.mock.calls.filter(([type]) => type === 'scroll')).toEqual([])
+      expect(document.querySelector('[role="menu"]')).not.toBeNull()
+    })
+  })
+  it('Tab and Shift+Tab close the menu and hand focus to the Move button', () => {
+    render(handlers())
+    for (const shiftKey of [false, true]) {
+      const move = button('Move', row('1-morning'))
+      click(move)
+      const item = document.querySelectorAll('[role="menuitem"]')[1]
+      const evt = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true })
+      act(() => { item.dispatchEvent(evt) })
+      expect(evt.defaultPrevented).toBe(false)
+      expect(document.querySelector('[role="menu"]')).toBeNull()
+      expect(document.activeElement).toBe(move)
+    }
+  })
+
+  it('focuses the first move target on open, never Remove from day', () => {
+    const data = { days: [{ day_number: 1, city: 'Rome', slots: [slot('morning', 'A'), slot('afternoon', 'B'), slot('evening', 'C')] }] }
+    let layout = removeSlot(data, null, '1-afternoon')
+    layout = removeSlot(data, layout, '1-evening')
+    // a movable slot always has targets on its own day, so Remove is never focused first
+    render({ ...handlers(), data, selections: { itinerary_layout: layout } })
+    expect(button('Move', row('1-morning'))).toBeDefined()
+    click(button('Move', row('1-morning')))
+    const items = [...document.querySelectorAll('[role="menuitem"]')]
+    expect(items.map((b) => b.textContent)).toEqual(['Remove from day', 'Afternoon', 'Evening'])
+    expect(document.activeElement).toBe(items[1])
+  })
+
+  it('clears an open menu when editing becomes unavailable', () => {
+    const h = handlers()
+    render(h)
+    click(button('Move', row('1-morning')))
+    expect(document.querySelector('[role="menu"]')).not.toBeNull()
+    render({ onNoteChange: h.onNoteChange, onSlotEdit: h.onSlotEdit, onSlotPlan: h.onSlotPlan })
+    expect(document.querySelector('[role="menu"]')).toBeNull()
+    render(h)
+    expect(document.querySelector('[role="menu"]')).toBeNull()
+    expect(button('Move', row('1-morning')).getAttribute('aria-expanded')).toBe('false')
   })
 })
