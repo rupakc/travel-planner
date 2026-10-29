@@ -605,3 +605,40 @@ def test_no_foreign_padding(place, codes):
 def test_niagara_falls_never_gets_foreign_padding():
     codes = lookup_city_iata("Niagara Falls")
     assert codes is None or codes.split(",")[0] in {"BUF", "IAG", "YYZ", "YHM"}
+
+
+# ── Final review: no foreign padding, shared own airports, retired codes ──
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Nicosia", "LCA"),  # never Ercan (ECN), reachable only via Turkey
+        ("Nicosia, Cyprus", "LCA"),
+        ("Cyprus", "LCA"),
+        ("Aqaba", "AQJ"),  # no Eilat (IL) or Taba (EG) padding
+        ("Bandar Seri Begawan", "BWN"),  # no Limbang (MY)
+        ("Kingston, Ontario", "YOW,YPQ"),  # same-country fallback, not ART
+        ("Kingston, ON", "YOW,YPQ"),
+        ("Arvada", "DEN,BJC"),  # the hub leads the suburb's field
+    ],
+)
+def test_final_review_no_foreign_or_distance_padding(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+@pytest.mark.parametrize("place", ["Hof", "Hof, Germany"])
+def test_hof_flies_from_germany(place):
+    assert set(lookup_city_iata(place).split(",")) <= {"NUE", "ERF", "LEJ"}
+
+
+def test_ecn_still_resolves_as_a_typed_code():
+    assert lookup_city_iata("ECN") == "ECN"
+
+
+@pytest.mark.parametrize(
+    ("typed", "codes"),
+    [("PNH", "KTI"), ("REP", "SAI"), ("PBI — West Palm Beach, United States", "DJT")],
+)
+def test_retired_codes_map_to_their_replacement(typed, codes):
+    assert lookup_city_iata(typed) == codes

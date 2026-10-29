@@ -124,7 +124,7 @@ def test_alternate_names_resolve_famous_places(text, country):
 
 
 def test_alt_name_penalty_is_the_calibrated_value():
-    assert places_db.ALT_NAME_PENALTY == 0.0135
+    assert places_db.ALT_NAME_PENALTY == 0.006
     assert places_db.DOMINANCE == 3.0
 
 
@@ -159,11 +159,11 @@ def test_population_zero_places_never_resolve(extra_place):
 
 
 def test_alternate_match_competes_at_the_penalty(extra_place):
-    extra_place(990000003, "Altburg", "DE", 5000, 1000, "BER", [("altname", 1)])
+    extra_place(990000003, "Altburg", "DE", 200_000, 2000, "BER", [("altname", 1)])
     extra_place(990000004, "Altname", "FR", 5000, 20, "CDG", [("altname", 0)])
-    # 1000 × 0.0135 = 13.5 against 20: within 3× → ambiguous
+    # 2000 × 0.006 = 12 against 20: within 3× → ambiguous
     assert resolve("Altname").ambiguous
-    extra_place(990000005, "Bigalt", "IT", 5000, 10**6, "FCO", [("altname", 1)])
+    extra_place(990000005, "Bigalt", "IT", 200_000, 10**6, "FCO", [("altname", 1)])
     assert resolve_place("Altname").country_code == "IT"
 
 
@@ -255,3 +255,105 @@ def test_resolution_uses_at_most_two_queries():
         assert resolve_place("Munich, Bavaria", conn).airports[0] == "MUC"
     selects = [s for s in statements if s.lstrip().upper().startswith("SELECT")]
     assert len(selects) == 2
+
+
+# ── Final review: regions, saint countries, alternates, hints ─────────────
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "airports"),
+    [
+        ("Florida", "US", {"MCO", "MIA", "TPA", "FLL", "JAX"}),  # not Florida, UY
+        ("Florida, USA", "US", {"MCO", "MIA", "TPA", "FLL", "JAX"}),
+        ("Andalusia", "ES", {"AGP", "SVQ", "XRY"}),  # not Andalusia, AL
+        ("Normandy", "FR", {"CFR", "DOL", "URO", "LEH"}),  # not Normandy, MO
+        ("Scotland", "GB", {"EDI", "GLA", "PIK"}),  # its own top place
+        ("Wales", "GB", {"CWL", "BRS"}),
+        ("Northern Ireland", "GB", {"BFS", "BHD"}),
+    ],
+)
+def test_division_names_are_candidates(text, country, airports):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == country, place
+    assert place.airports and place.airports[0] in airports, place.airports
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [
+        ("St Lucia", "LC"),
+        ("Saint Lucia", "LC"),
+        ("St Vincent", "VC"),
+        ("St Kitts", "KN"),
+        ("St Barts", "BL"),
+        ("St Barths", "BL"),
+        ("St Maarten", "SX"),
+        ("St. Lucia", "LC"),
+    ],
+)
+def test_saint_forms_of_countries(text, country):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == country, place
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Rio", "BR", {"GIG", "SDU"}),
+        ("Rio, Brazil", "BR", {"GIG", "SDU"}),
+        ("Port Douglas", "AU", {"CNS"}),  # not Douglas, Isle of Man (26k)
+        ("Dili", "TL", {"DIL"}),  # a capital beats Delhi's alternate "dili"
+        ("Lucerne", "CH", {"ZRH"}),
+    ],
+)
+def test_alternate_name_rules(text, country, first):
+    place = resolve_place(text)
+    assert place is not None and place.country_code == country, place
+    assert place.airports[0] in first, place.airports
+
+
+def test_small_places_do_not_compete_by_alternate_name(extra_place):
+    extra_place(990000011, "Bigalt", "DE", 90_000, 10**12, "BER", [("smallalt", 1)])
+    extra_place(990000012, "Smallalt", "FR", 2_000, 10, "CDG", [("smallalt", 0)])
+    assert resolve_place("Smallalt").country_code == "FR"
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Elba", "IT", "EBA"),
+        ("Elba, Italy", "IT", "EBA"),
+        ("Gozo", "MT", "MLA"),
+        ("Formentera", "ES", "IBZ"),
+        ("Siargao", "PH", "IAO"),
+        ("Koh Lanta", "TH", "KBV"),
+        ("Nusa Penida", "ID", "DPS"),
+        ("Gili Islands", "ID", "LOP"),
+        ("Martha's Vineyard", "US", "MVY"),
+        ("Jackson Hole", "US", "JAC"),
+        ("Los Cabos", "MX", "SJD"),
+        ("Cabo San Lucas", "MX", "SJD"),
+        ("St Moritz", "CH", "ZRH"),
+        ("Davos", "CH", "ZRH"),
+        ("Park City", "US", "SLC"),
+        ("Kona", "US", "KOA"),
+    ],
+)
+def test_final_review_hints(text, country, first):
+    place = resolve_place(text)
+    assert (place.country_code, place.airports[0]) == (country, first)
+
+
+def test_fez_is_fes():
+    assert resolve_place("Fez").country_code == "MA"
+
+
+@pytest.mark.parametrize("text", ["Santa Fe"])
+def test_cities_named_like_a_division_keep_the_cities(text):
+    """Santa Fe, NM vs Santa Fe, AR (both ≥ 100k-class cities): the
+    province's top place (Rosario) does not join."""
+    assert resolve(text).place is None
+
+
+def test_mahe_is_the_seychelles_island():
+    assert resolve_place("Mahé").country_code == "SC"

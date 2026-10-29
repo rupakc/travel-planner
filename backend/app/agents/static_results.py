@@ -7,13 +7,13 @@ provide enhanced, web-searched results.
 """
 
 import functools
-import re
 
 from ..core.places import (
     _REGION_CODES,
     _REGION_NAMES,
     _US_STATES,
     CITY_ALIASES,
+    CODE_PREFIX_RE,
     COUNTRY_ALIASES,
     fold_place,
     saint_variants,
@@ -1405,9 +1405,6 @@ _COUNTRY_ALIASES: dict[str, str] = {
     if iso.lower() in _ISO_COUNTRY and _ISO_COUNTRY[iso.lower()] != name
 }
 
-# "BCN — Barcelona, Spain" (the UI's airport label) → "Barcelona, Spain"
-_IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
-
 
 def _clean_place(text: str) -> str:
     """Lowercase, strip accents, collapse whitespace, drop a leading "the"."""
@@ -1479,7 +1476,7 @@ def normalise_place(destination: str) -> dict:
     country None. Country names are returned as table keys ("United
     Kingdom" → "uk"). ``tokens`` holds every whole word and phrase.
     """
-    text = _IATA_PREFIX_RE.sub("", destination or "", count=1)
+    text = CODE_PREFIX_RE.sub("", destination or "", count=1)
     segments = [seg for seg in (_clean_place(s) for s in text.split(",")) if seg]
     tokens = {phrase for seg in segments for phrase in _word_phrases(seg)}
     if not segments:

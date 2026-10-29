@@ -7,9 +7,20 @@ import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..core.places import CITY_ALIASES, fold_place, saint_variants, stated_region
+from ..core.places import (
+    CITY_ALIASES,
+    CODE_PREFIX_RE,
+    NEVER_LINK,
+    fold_place,
+    saint_variants,
+    stated_region,
+)
 from .airport_regions import airport_regions
+
+if TYPE_CHECKING:
+    from .places_db import Place
 
 logger = logging.getLogger(__name__)
 
@@ -212,10 +223,6 @@ def _replaced_code_info(code: str) -> dict | None:
     return {"iata_code": code, **dict(row)} if row else None
 
 
-# "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
-_IATA_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
-
-
 @functools.cache
 def _seed_accented_cities() -> dict[str, str]:
     """Folded name → seeded city name, for seeded names with accents
@@ -374,7 +381,7 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
         return None
     stripped = city.strip()
     if code_first(stripped):
-        return stripped
+        return _current_code(stripped)
     found = _lookup_place(stripped, max_codes)
     if found is None and re.fullmatch(r"[A-Za-z]{3}", stripped):
         if not _is_country_name(stripped):
@@ -382,35 +389,47 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     return found
 
 
-# A linked airport this close is the place's own, wherever its display city.
-_OWN_AIRPORT_KM = 25.0
+def _current_code(code: str) -> str:
+    """A retired code the old curated list used ("PNH") → its replacement
+    (KTI); any other code as given."""
+    from .seed_airports import REPLACED_CODES
+
+    return REPLACED_CODES.get(code.upper(), code)
 
 
-def _without_foreign_padding(place, codes, rows, typed) -> list[str]:
-    """A place's airports in its own country, its own airports first (named
-    after it, or within 25 km: "Hue" → HUI before Da Nang); an airport
-    abroad only when it is the place's own ("Basel" → BSL, in France) or
-    the place has no domestic airport at all ("Lviv" → Rzeszów)."""
+def _without_foreign_padding(
+    place: "Place", codes: list[str], rows: dict[str, sqlite3.Row]
+) -> list[str]:
+    """A place's airports in the generator's order, without foreign ones —
+    except the place's own (``core.places.is_own_airport``: "Basel" → BSL,
+    in France) — unless it has no domestic airport at all ("Lviv" →
+    Rzeszów)."""
+    from ..core.places import is_own_airport
     from .places_db import airport_distance_km
 
-    names = {fold_place(place.name), fold_place(typed.split(",")[0])}
-    own = [
-        c
-        for c in codes
-        if fold_place(rows[c]["city"]) in names
-        or airport_distance_km(place, c) <= _OWN_AIRPORT_KM
-    ]
+    folded = fold_place(place.name)
     domestic = [c for c in codes if rows[c]["country_code"] == place.country_code]
     if not domestic:
         return codes
-    return own + [c for c in domestic if c not in own]
+    return [
+        c
+        for c in codes
+        if c in domestic
+        or is_own_airport(
+            folded,
+            fold_place(rows[c]["city"]),
+            fold_place(rows[c]["name"]),
+            False,
+            airport_distance_km(place, c),
+        )
+    ]
 
 
 def _lookup_place(stripped: str, max_codes: int) -> str | None:
     """``lookup_city_iata`` steps 2–6 for a non-code text."""
     from .places_db import resolve
 
-    prefix = _IATA_PREFIX_RE.match(stripped)
+    prefix = CODE_PREFIX_RE.match(stripped)
     code = prefix.group(1).upper() if prefix else ""
     after_prefix = stripped[prefix.end() :] if prefix else stripped
     whole_names = _city_spellings(stripped.split(",")[0].strip())
@@ -426,13 +445,19 @@ def _lookup_place(stripped: str, max_codes: int) -> str | None:
             ).fetchall()
             if code and any(r["iata_code"] == code for r in rows):
                 return code
+            if code and _current_code(code) != code:
+                return _current_code(code)  # "PBI — West Palm Beach" → DJT
             resolution = resolve(stripped, conn)
-            linked = resolution.place.airports if resolution.place else ()
+            linked = [
+                c
+                for c in (resolution.place.airports if resolution.place else ())
+                if c not in NEVER_LINK
+            ]
             # the place's airports that are scheduled, with country and city
             linked_rows = {
                 r["iata_code"]: r
                 for r in conn.execute(
-                    "SELECT iata_code, country_code, city FROM airports"
+                    "SELECT iata_code, country_code, city, name FROM airports"
                     " WHERE scheduled = 1"
                     f" AND iata_code IN ({','.join('?' * len(linked))})",
                     linked,
@@ -480,7 +505,7 @@ def _lookup_place(stripped: str, max_codes: int) -> str | None:
                 if c not in codes and linked_country[c] == country
             ]
     elif place:
-        codes = _without_foreign_padding(place, place_codes, linked_rows, stripped)
+        codes = _without_foreign_padding(place, place_codes, linked_rows)
     elif not resolution.ambiguous:
         dataset = _single_city_rows(sorted(matching, key=lambda r: r["id"]), stated)
         codes = [r["iata_code"] for r in dataset or ()]

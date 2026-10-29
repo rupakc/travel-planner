@@ -149,6 +149,9 @@ CITY_ALIASES: dict[str, str] = {
     "nyc": "New York",
     "saigon": "Ho Chi Minh City",
     "bombay": "Mumbai",
+    "rio": "Rio de Janeiro",
+    "fez": "Fes",
+    "venezia": "Venice",
 }
 
 
@@ -168,6 +171,10 @@ COUNTRY_ALIASES: dict[str, str] = {
     "russian federation": "RU", "viet nam": "VN", "the bahamas": "BS",
     "the gambia": "GM", "republic of ireland": "IE", "dr congo": "CD",
     "drc": "CD",
+    # short forms of Saint countries (St / St. spellings come from
+    # saint_variants)
+    "saint kitts": "KN", "saint barts": "BL", "saint barths": "BL",
+    "saint maarten": "SX", "saint vincent": "VC",
 }  # fmt: skip
 
 
@@ -224,6 +231,20 @@ ISLAND_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "easter island": ("CL", ("IPC",)),
     "isle of skye": ("GB", ("INV",)),
     "whitsundays": ("AU", ("PPP", "HTI")),
+    "elba": ("IT", ("EBA", "PSA", "FLR")),
+    "gozo": ("MT", ("MLA",)),
+    "formentera": ("ES", ("IBZ",)),
+    "siargao": ("PH", ("IAO",)),
+    "koh lanta": ("TH", ("KBV",)),
+    "ko lanta": ("TH", ("KBV",)),
+    "nusa penida": ("ID", ("DPS",)),
+    "gili islands": ("ID", ("LOP", "DPS")),
+    "gili": ("ID", ("LOP", "DPS")),
+    "marthas vineyard": ("US", ("MVY",)),
+    "st barts": ("BL", ("SBH",)),
+    "saint barts": ("BL", ("SBH",)),
+    "st kitts": ("KN", ("SKB",)),
+    "saint kitts": ("KN", ("SKB",)),
 }
 
 # Landmarks, parks and resorts (folded name) → (ISO country, the scheduled
@@ -282,6 +303,19 @@ DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
     "pyramids of giza": ("EG", ("SPX", "CAI")),
     "cotswolds": ("GB", ("BHX", "LHR")),
     "lake district": ("GB", ("MAN",)),
+    "mahe": ("SC", ("SEZ",)),
+    "bariloche": ("AR", ("BRC",)),
+    "khajuraho": ("IN", ("HJR",)),
+    "jackson hole": ("US", ("JAC",)),
+    "los cabos": ("MX", ("SJD",)),
+    "cabo san lucas": ("MX", ("SJD",)),
+    "st moritz": ("CH", ("ZRH", "LUG")),
+    "saint moritz": ("CH", ("ZRH", "LUG")),
+    "davos": ("CH", ("ZRH", "ACH")),
+    "park city": ("US", ("SLC",)),
+    "lucerne": ("CH", ("ZRH",)),
+    "luzern": ("CH", ("ZRH",)),
+    "kona": ("US", ("KOA",)),
 }
 
 
@@ -328,3 +362,7 @@ def is_own_airport(
         or words_in(place, airport_name)
         or (same_country and distance_km <= OWN_AIRPORT_KM)
     )
+
+
+# "BER — Berlin, Germany" (the UI's airport label): the code prefix.
+CODE_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")

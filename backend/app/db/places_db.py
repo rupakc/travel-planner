@@ -10,13 +10,13 @@ import csv
 import functools
 import logging
 import math
-import re
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from ..core.places import (
     _REGION_NAMES,
     CITY_ALIASES,
+    CODE_PREFIX_RE,
     COUNTRY_ALIASES,
     DESTINATION_AIRPORTS,
     ISLAND_AIRPORTS,
@@ -33,14 +33,19 @@ logger = logging.getLogger(__name__)
 # than own names ("Cancun" is also an alternate of Changchun), but a famous
 # place's alternate must still beat small namesakes ("Venice", Florida).
 # Calibrated on tests/data/golden_places.csv (see task-3 report).
-ALT_NAME_PENALTY = 0.0135
+ALT_NAME_PENALTY = 0.006
 # Shorter alternate names are mostly abbreviations and never match.
 MIN_ALT_NAME_LENGTH = 4
+# Only places this populous compete by an alternate name (Venezia, Köln,
+# Brugge, Makkah, Odesa, Nara; not Douglas, Isle of Man for "Port Douglas").
+ALT_MIN_POPULATION = 100_000
+# A town scoring at least 1/20 of a same-named division's top place keeps
+# the division out ("Canterbury" is the English city, not New Zealand's
+# region; "Florida", Uruguay is far smaller than Florida's Jacksonville).
+DIVISION_BLOCK_RATIO = 20
 # The winner needs this many times the score of the next candidate.
 DOMINANCE = 3.0
 
-# "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
-_CODE_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
 _PLACE_COLUMNS = (
     "p.geonameid, p.name, p.country_code, p.admin1, p.population, p.score, "
@@ -61,6 +66,7 @@ class Place:
     population: int = 0
     score: float = 0.0
     alternate: bool = False  # matched by an alternate name only
+    division: bool = False  # stands for a first-level division ("Florida")
     lat: float | None = None
     lng: float | None = None
 
@@ -88,8 +94,9 @@ def stated_countries(stated: str) -> frozenset[str]:
     """ISO codes of the countries a folded segment names: a country name,
     alias or ISO code ("de" → {DE}); empty when it names none."""
     codes = set()
-    if stated in country_names():
-        codes.add(country_names()[stated])
+    for variant in saint_variants(stated):
+        if variant in country_names():
+            codes.add(country_names()[variant])
     if len(stated) == 2 and stated.upper() in _iso_codes():
         codes.add(stated.upper())
     return frozenset(codes)
@@ -118,7 +125,14 @@ class _Stated:
 def _hint(name: str, stated: list[str], display: str) -> Place | None:
     """A curated island / destination for the folded name, unless a stated
     country names another country."""
-    hint = ISLAND_AIRPORTS.get(name) or DESTINATION_AIRPORTS.get(name)
+    hint = next(
+        (
+            ISLAND_AIRPORTS.get(v) or DESTINATION_AIRPORTS.get(v)
+            for v in sorted(saint_variants(name))
+            if v in ISLAND_AIRPORTS or v in DESTINATION_AIRPORTS
+        ),
+        None,
+    )
     if not hint:
         return None
     country, airports = hint
@@ -132,7 +146,7 @@ def _hint(name: str, stated: list[str], display: str) -> Place | None:
 def _strip_known_prefix(conn: sqlite3.Connection, text: str) -> str:
     """Drop a label prefix that is a scheduled airport code ("BER — Berlin,
     Germany"); any other prefix stays part of the text."""
-    prefix = _CODE_PREFIX_RE.match(text)
+    prefix = CODE_PREFIX_RE.match(text)
     if (
         prefix
         and conn.execute(
@@ -251,8 +265,11 @@ def _name_candidates(conn: sqlite3.Connection, names: list[str]) -> list[Place]:
     ).fetchall()
     best: dict[int, Place] = {}
     for row in rows:
-        if row["tier"] != 0 and len(row["name_folded"]) < MIN_ALT_NAME_LENGTH:
-            continue  # "can" (Caen), "bol": abbreviations, not names
+        if row["tier"] != 0 and (
+            len(row["name_folded"]) < MIN_ALT_NAME_LENGTH
+            or row["population"] < ALT_MIN_POPULATION
+        ):
+            continue  # "can" (Caen): abbreviations; small towns' alternates
         score = row["score"] * (1.0 if row["tier"] == 0 else ALT_NAME_PENALTY)
         known = best.get(row["geonameid"])
         if known is None or score > known.score:
@@ -269,16 +286,21 @@ def _top_place(conn: sqlite3.Connection, where: str, params: list) -> list[Place
     return [_row_place(r, r["score"]) for r in rows]
 
 
-def _region_candidates(conn: sqlite3.Connection, name: str) -> list[Place]:
-    """An admin1 name typed alone ("Bavaria") → its two top places; a name
-    several countries use for a division counts as no region."""
+def _division_candidates(conn: sqlite3.Connection, names: list[str]) -> list[Place]:
+    """First-level divisions with one of these names ("Florida", "Scotland",
+    "Andalusia") as candidates: each stands for its top place, scored as
+    that place, so it competes with towns of the same name."""
     rows = conn.execute(
-        "SELECT code FROM admin1 WHERE folded_name = ?", (name,)
+        f"SELECT code FROM admin1 WHERE folded_name IN ({','.join('?' * len(names))})",
+        names,
     ).fetchall()
-    if len(rows) != 1:
-        return []
-    cc, _, admin = rows[0]["code"].partition(".")
-    return _top_place(conn, "p.country_code = ? AND p.admin1 = ?", [cc, admin])
+    found = []
+    for row in rows:
+        cc, _, admin = row["code"].partition(".")
+        top = _top_place(conn, "p.country_code = ? AND p.admin1 = ?", [cc, admin])
+        if top:  # the division stands for its top place (ruling I1)
+            found.append(replace(top[0], division=True))
+    return found
 
 
 @dataclass(frozen=True)
@@ -304,6 +326,7 @@ def _bigger_namesake(curated: Place, candidates: list[Place]) -> bool:
     return any(
         p.country_code != curated.country_code
         and not p.alternate
+        and not p.division
         and p.population >= curated.population
         and DOMINANCE * p.score > curated.score
         for p in candidates
@@ -355,6 +378,33 @@ def _reachable(candidates: list[Place]) -> list[Place]:
     return near or candidates
 
 
+def _country_alone(city: str) -> str | None:
+    """The ISO code of a country typed alone, by name, alias or a St /
+    Saint form ("St Lucia")."""
+    for variant in sorted(saint_variants(city)):
+        if variant in country_names():
+            return country_names()[variant]
+    return None
+
+
+def _capital_over_alternates(
+    conn: sqlite3.Connection, candidates: list[Place]
+) -> Place | None:
+    """When only alternate-name rivals make an own-name place ambiguous and
+    that place is its country's top place (the capital or gateway: Dili vs
+    Delhi's alternate "dili"), it wins."""
+    own = max(
+        (p for p in candidates if not p.alternate), key=lambda p: p.score, default=None
+    )
+    if own is None:
+        return None
+    rivals = [p for p in candidates if p is not own and DOMINANCE * p.score > own.score]
+    if not rivals or any(not p.alternate for p in rivals):
+        return None
+    top = _top_place(conn, "p.country_code = ?", [own.country_code])
+    return own if top and top[0].geonameid == own.geonameid else None
+
+
 def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     city, stated, typed = _parse(_strip_known_prefix(conn, text))
     if not city:
@@ -362,13 +412,23 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     hint = _hint(city, stated, typed)
     if hint:
         return Resolution(hint)
-    if not stated and city in country_names():
+    names = _name_variants(city)
+    curated = _curated_countries(names)
+    country = _country_alone(city) if not stated else None
+    divisions = [] if curated else _division_candidates(conn, names)
+    official = city in country_names() and city not in COUNTRY_ALIASES
+    if country and (official or not divisions):
         # A country typed alone → its highest-scoring place (the capital, or
         # the main gateway city: Istanbul, Zürich, Sydney, New York City).
-        top = _top_place(conn, "p.country_code = ?", [country_names()[city]])
+        # A division wins over an alias ("Scotland" → Glasgow, not London).
+        top = _top_place(conn, "p.country_code = ?", [country])
         return Resolution(top[0] if top else None)
-    names = _name_variants(city)
     candidates = _name_candidates(conn, names)
+    town = max((p.score for p in candidates if not p.alternate), default=0)
+    if divisions and town * DIVISION_BLOCK_RATIO >= max(d.score for d in divisions):
+        divisions = []  # "Santa Fe", "Canterbury": the cities, not the regions
+    known = {p.geonameid for p in candidates}
+    candidates += [d for d in divisions if d.geonameid not in known]
     if stated:
         meanings = _stated_meanings(conn, stated)
         candidates = [
@@ -378,12 +438,15 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
         ]
         if meanings and not candidates:
             return Resolution(None)  # "Berlin, Japan"
-    elif not candidates:
-        return _pick(_region_candidates(conn, city))
-    curated = _curated_countries(names)
     preferred = [p for p in candidates if p.country_code in curated]
     if not preferred:
-        return _pick(_reachable(candidates))
+        pool = _reachable(candidates)
+        result = _pick(pool)
+        if result.ambiguous:
+            capital = _capital_over_alternates(conn, pool)
+            if capital:
+                return Resolution(capital)
+        return result
     result = _pick(_reachable(preferred))
     if result.place and _bigger_namesake(result.place, _reachable(candidates)):
         return Resolution(None, ambiguous=True, contested=True)
@@ -394,10 +457,15 @@ def resolve_place(text: str, conn: sqlite3.Connection | None = None) -> Place | 
     """The place a typed text names, or None when unknown or ambiguous.
 
     1. A curated island / destination ("Sicily", "Machu Picchu") wins.
-    2. A country typed alone ("Japan") → its highest-scoring place.
+    2. A country typed alone ("Japan", "St Lucia") → its highest-scoring
+       place; an alias that is also a division name ("Scotland") is the
+       division.
     3. Candidates: places whose own or alternate name (folded, with its
-       St / Saint spellings) is the city; alternates compete at
-       ``ALT_NAME_PENALTY`` of their score; population-0 places never count.
+       St / Saint spellings) is the city; alternates count only for places
+       of ≥ 100k people, at ``ALT_NAME_PENALTY`` of their score;
+       population-0 places never count. Unless a curated city has the
+       name, first-level divisions so named join as their top place
+       ("Florida" → Florida's top place, not Florida, Uruguay).
     4. Stated segments filter them: a country (name, alias, ISO code), a
        region code (US / CA / AU / BR) or any first-level division name
        ("Bavaria", "Ontario", "England"); every reading counts ("CA":
@@ -406,8 +474,8 @@ def resolve_place(text: str, conn: sqlite3.Connection | None = None) -> Place | 
        there, unless a bigger own-name namesake elsewhere is within the
        dominance window ("Valencia": Spain or Venezuela → None).
     6. Winner: ``DOMINANCE`` × the next candidate's score, else None
-       ("Springfield", "San Jose"). A division name typed alone resolves to
-       its dominant place.
+       ("Springfield", "San Jose"); a country's top place is not made
+       ambiguous by alternate names alone ("Dili").
     """
     return resolve(text, conn).place
 
