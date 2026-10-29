@@ -405,6 +405,50 @@ describe('ItinerarySection', () => {
     expect(document.activeElement).toBe(container.querySelector('[data-itinerary-section]'))
   })
 
+  it('after any Restore focuses Undo when enabled, else the section', () => {
+    const h = handlers()
+    const layout = removeSlot(ITIN, removeSlot(ITIN, null, '1-afternoon'), '1-evening')
+    render({ ...h, selections: { itinerary_layout: layout }, canUndo: true })
+    click(button('Restore', container.querySelector('[data-removed-list]')))
+    expect(document.activeElement).toBe(button('Undo'))
+    render({ ...h, selections: { itinerary_layout: layout }, canUndo: false })
+    click(buttons(container.querySelector('[data-removed-list]')).filter((b) => b.textContent.trim() === 'Restore')[1])
+    expect(document.activeElement).toBe(container.querySelector('[data-itinerary-section]'))
+  })
+
+  it('focuses the section after Reset or Undo hides the toolbar', () => {
+    act(() => root.render(<Stateful data={ITIN} />))
+    click(button('Move', row('1-afternoon')))
+    click(button('Remove from day'))
+    click(button('Undo'))
+    expect(button('Undo')).toBeUndefined()
+    expect(document.activeElement).toBe(container.querySelector('[data-itinerary-section]'))
+    click(button('Move', row('1-afternoon')))
+    click(button('Remove from day'))
+    click(button('Move', row('1-morning')))
+    click(button('Remove from day'))
+    click(button('Undo'))
+    expect(document.activeElement).toBe(button('Undo'))
+    click(button('Reset'))
+    expect(document.activeElement).toBe(button('Undo'))
+  })
+
+  it('exposes day headings as labelled groups, a labelled Move button and a group toolbar', () => {
+    act(() => root.render(<Stateful data={ITIN} />))
+    click(button('Move', row('1-afternoon')))
+    expect(button('Move', row('1-afternoon')).getAttribute('aria-label')).toBe('Move Market')
+    const groups = [...document.querySelectorAll('[role="menu"] [role="group"]')]
+    expect(groups.length).toBeGreaterThan(0)
+    for (const g of groups) {
+      const label = document.getElementById(g.getAttribute('aria-labelledby'))
+      expect(label.textContent).toMatch(/^Day \d/)
+      expect(g.querySelector('[role="menuitem"]')).not.toBeNull()
+    }
+    click(button('Remove from day'))
+    expect(container.querySelector('[role="toolbar"]')).toBeNull()
+    expect(container.querySelector('[role="group"][aria-label="Itinerary changes"]')).not.toBeNull()
+  })
+
   it('places Free time where its time belongs relative to odd slots', () => {
     const data = { days: [{ day_number: 1, slots: [slot('morning', 'A'), slot('lunch', 'Lunch'), slot('evening', 'B')] }, ITIN.days[1]] }
     const layout = removeSlot(data, null, '1-morning')
@@ -492,14 +536,14 @@ describe('ItinerarySection', () => {
       const menu = document.querySelector('[role="menu"]')
       expect(menu.querySelector('[role="menuitem"]').textContent).toBe('Remove from day')
       expect(menu.querySelector('[role="separator"]')).not.toBeNull()
-      const headings = [...menu.querySelectorAll('[role="presentation"] > [role="presentation"]')].map((h) => h.textContent)
+      const headings = [...menu.querySelectorAll('[role="group"] > [id]')].map((h) => h.textContent)
       expect(headings).toEqual(['Day 2 · Florence'])
       expect(button('Afternoon (swap with Duomo)', menu).getAttribute('aria-label')).toBe('Move to Day 2 · Afternoon (swap with Duomo)')
 
       act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) })
       render({ ...handlers() })
       click(button('Move', row('1-morning')))
-      const days = [...document.querySelectorAll('[role="menu"] [role="presentation"] > [role="presentation"]')].map((h) => h.textContent)
+      const days = [...document.querySelectorAll('[role="menu"] [role="group"] > [id]')].map((h) => h.textContent)
       expect(days).toEqual(['Day 1', 'Day 2'])
     })
 

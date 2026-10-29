@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
@@ -72,6 +72,7 @@ const offScreen = (rect) => rect.bottom < 0 || rect.top > window.innerHeight
 
 function MoveMenu({ label, anchorRect, anchorKey, getAnchor, removeItem, groups, onClose, onDismiss }) {
   const menuRef = useRef(null)
+  const idBase = useId()
   const [rect, setRect] = useState(anchorRect)
   useEffect(() => {
     // First MOVE target, so open-then-Enter can never remove the activity.
@@ -157,8 +158,8 @@ function MoveMenu({ label, anchorRect, anchorKey, getAnchor, removeItem, groups,
         </>
       )}
       {groups.map((group) => (
-        <div key={group.day_number} role="presentation">
-          <div role="presentation" className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+        <div key={group.day_number} role="group" aria-labelledby={`${idBase}-day-${group.day_number}`}>
+          <div id={`${idBase}-day-${group.day_number}`} className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
             {group.heading}
           </div>
           {group.items.map((item) => itemButton(item, 'pl-5 text-gray-700 hover:bg-teal-50 focus:bg-teal-50'))}
@@ -289,7 +290,7 @@ export default function ItinerarySection({
 
       {/* Layout toolbar */}
       {editable && (changeCount > 0 || canUndo) && (
-        <div role="toolbar" aria-label="Itinerary changes"
+        <div role="group" aria-label="Itinerary changes"
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-200 bg-teal-50/60 text-xs">
           {changeCount > 0 && (
             <span className="font-medium text-teal-800">{changeCount} {changeCount === 1 ? 'change' : 'changes'}</span>
@@ -297,14 +298,14 @@ export default function ItinerarySection({
           <span className="flex-1" />
           {onUndoLayout && (
             <button type="button" ref={undoButton} disabled={!canUndo}
-              onClick={() => { onUndoLayout(); setStatus('Undid the last change') }}
+              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onUndoLayout(); setStatus('Undid the last change') }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-600">
               <Undo2 size={10} /> Undo
             </button>
           )}
           {changeCount > 0 && onResetLayout && (
             <button type="button"
-              onClick={() => { onResetLayout(); setStatus('Itinerary reset to the original order') }}
+              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onResetLayout(); setStatus('Itinerary reset to the original order') }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700">
               <RotateCcw size={10} /> Reset
             </button>
@@ -501,7 +502,7 @@ export default function ItinerarySection({
                         {movable && (
                           <div>
                             <button type="button" ref={(el) => { moveButtons.current[key] = el }}
-                              aria-haspopup="menu" aria-expanded={menuOpen}
+                              aria-label={`Move ${activity}`} aria-haspopup="menu" aria-expanded={menuOpen}
                               onClick={(e) => {
                                 setMenuAnchor(e.currentTarget.getBoundingClientRect())
                                 setMenuFor(menuOpen ? null : key)
@@ -566,7 +567,7 @@ export default function ItinerarySection({
                     <button type="button" disabled={!canRestore}
                       title={canRestore ? undefined : `No free time left on Day ${originalDay?.day_number} — move or remove something there first`}
                       onClick={() => {
-                        if (removed.length === 1) focusAfterRender.current = FOCUS_UNDO
+                        focusAfterRender.current = FOCUS_UNDO
                         onRestoreSlot(key)
                         setStatus(`Restored ${name}`)
                       }}

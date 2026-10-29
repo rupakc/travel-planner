@@ -3335,6 +3335,10 @@ export default function ResultsPage() {
   }
 
 
+  const arrangedItinerary = useMemo(
+    () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
+    [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
+  )
   const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
   const handleApplyPackage = () => {
     if (!bestValue) return
@@ -3946,7 +3950,7 @@ export default function ResultsPage() {
           </div>
         ) : (
           <TimelineView
-            itineraryData={arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits)}
+            itineraryData={arrangedItinerary}
             weatherData={results.weather}
             searchData={searchData}
           />
@@ -3981,7 +3985,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null) }}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]) }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}

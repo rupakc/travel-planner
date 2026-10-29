@@ -76,8 +76,9 @@ export function slotRanks(day) {
 function placeNames(city) {
   return new Set(
     String(city || '')
+      .split(',')[0]
       .split(/&|\/|\+|\band\b/i)
-      .map((part) => part.split(',')[0].trim().toLowerCase())
+      .map((part) => part.trim().toLowerCase())
       .filter(Boolean),
   )
 }

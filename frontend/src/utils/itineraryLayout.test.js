@@ -377,6 +377,9 @@ describe('fix round 3: place-name city matching', () => {
     expect(citiesCompatible('Rome / Vatican', 'Vatican City')).toBe(false)
     expect(citiesCompatible('Florence + Pisa', 'Pisa')).toBe(true)
     expect(citiesCompatible('', 'Porto')).toBe(true)
+    expect(citiesCompatible('Sarajevo, Bosnia and Herzegovina', 'Mostar, Bosnia and Herzegovina')).toBe(false)
+    expect(citiesCompatible('Basseterre, St Kitts & Nevis', 'Charlestown, St Kitts & Nevis')).toBe(false)
+    expect(citiesCompatible('Montserrat & Barcelona, Spain', 'Barcelona')).toBe(true)
     expect(citiesCompatible(undefined, undefined)).toBe(true)
   })
 
