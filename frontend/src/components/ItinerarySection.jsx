@@ -93,7 +93,7 @@ function MoveMenu({ label, items, onClose, onDismiss }) {
 
 export default function ItinerarySection({
   data, selections, onNoteChange, onSlotEdit, onSlotPlan,
-  onMoveSlot, onRemoveSlot, onRestoreSlot, onUndoLayout, onResetLayout, canUndo = false,
+  onMoveSlot, onRemoveSlot, onRestoreSlot, onUndoLayout, onResetLayout, canUndo = false, editingDisabledReason = '',
 }) {
   const [editingSlot, setEditingSlot] = useState(null) // key of slot being edited
   const [openNote,    setOpenNote]    = useState(null)
@@ -185,6 +185,7 @@ export default function ItinerarySection({
 
   return (
     <div ref={sectionRef} data-itinerary-section tabIndex={editable ? -1 : undefined} className="p-4 space-y-4 focus:outline-none">
+      {editingDisabledReason && <p data-editing-disabled className="text-xs text-gray-500">{editingDisabledReason}</p>}
       {/* Map at the top */}
       <TripMap days={arranged.days} />
 

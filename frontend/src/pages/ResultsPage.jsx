@@ -3240,7 +3240,9 @@ export default function ResultsPage() {
   // Selections as they were just before "Add all to My Plan" (for Undo)
   const [packageUndo, setPackageUndo] = useState(null)
   // Previous itinerary layouts (newest last, max 20) for the Undo button
-  const [layoutUndo, setLayoutUndo] = useState([])
+  const [layoutUndo, setLayoutUndoState] = useState([])
+  const undoRef = useRef([])
+  const setLayoutUndo = (stack) => { undoRef.current = stack; setLayoutUndoState(stack) }
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer — it
@@ -3298,12 +3300,13 @@ export default function ResultsPage() {
   // Itinerary editing: every action computes the next layout from the ORIGINAL
   // itinerary, records the previous one for Undo, and updates selections once.
   const layoutRef = useRef(null)
-  layoutRef.current = selections.itinerary_layout
+  useEffect(() => { layoutRef.current = selections.itinerary_layout }, [selections.itinerary_layout])
   const commitLayout = (next, { undoable = true } = {}) => {
+    if (loadedPlanId) return false // selections belong to a saved plan, not this itinerary
     const prev = layoutRef.current
     if (next === prev) return false
     layoutRef.current = next
-    if (undoable) setLayoutUndo(u => [...u.slice(-19), prev])
+    if (undoable) setLayoutUndo([...undoRef.current.slice(-19), prev])
     setSelections(s => ({
       ...s,
       itinerary_layout: next,
@@ -3324,9 +3327,10 @@ export default function ResultsPage() {
     if (commitLayout(null)) track('itinerary_layout_reset', 'results', {})
   }
   const handleUndoLayout = () => {
-    if (!layoutUndo.length) return
-    const prev = layoutUndo[layoutUndo.length - 1]
-    setLayoutUndo(u => u.slice(0, -1))
+    const stack = undoRef.current
+    if (!stack.length || loadedPlanId) return
+    const prev = stack[stack.length - 1]
+    setLayoutUndo(stack.slice(0, -1))
     commitLayout(prev, { undoable: false })
   }
 
@@ -3699,8 +3703,12 @@ export default function ResultsPage() {
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
-        onMoveSlot={handleMoveSlot} onRemoveSlot={handleRemoveSlot} onRestoreSlot={handleRestoreSlot}
-        onUndoLayout={handleUndoLayout} onResetLayout={handleResetLayout} canUndo={layoutUndo.length > 0} />,
+        {...(loadedPlanId ? {
+          editingDisabledReason: 'Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.',
+        } : {
+          onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
+          onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
+        })} />,
       stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }

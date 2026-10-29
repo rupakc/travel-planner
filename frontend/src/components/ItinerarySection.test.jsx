@@ -130,6 +130,12 @@ describe('ItinerarySection', () => {
     expect(container.querySelector('[aria-live]')).toBeNull()
   })
 
+  it('shows the editing-disabled note and no Move buttons without move callbacks', () => {
+    render({ onNoteChange: vi.fn(), onSlotEdit: vi.fn(), onSlotPlan: vi.fn(), editingDisabledReason: 'Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.' })
+    expect(container.textContent).toContain('Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.')
+    expect(button('Move')).toBeUndefined()
+  })
+
   it('makes movable rows draggable with a handle', () => {
     render(handlers())
     const r = row('1-morning')
