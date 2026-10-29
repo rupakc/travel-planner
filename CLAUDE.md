@@ -147,6 +147,7 @@ The frontend dev server runs on port **5174** and proxies `/api` requests to the
 - **Static-first, AI-enhanced.** Visa, SIM, tips, and getting-around agents have curated static lookup tables that provide instant results. AI agents enhance these; if the AI fails, static data is retained (errors are suppressed for static-backed agents).
 - **Two-way preference binding.** Changes on the Search form sync back to Preferences on submit; saved Preferences pre-fill the Search form on load.
 - **My Plan selections.** Users can select individual items (flights, hotels, activities, free walking tours, SIM plans, tips, transport options, itinerary slots) into a plan drawer, or add the whole rule-based best-value package from the Results page in one click (with Undo). Selections are saved/loaded via the plans API. Moved/removed itinerary activities persist as an overlay in `selections.itinerary_layout` (keyed by original slot, fingerprinted to the itinerary), and display, export and share follow it. Both ResultsPage and ChatPage support the full plan workflow, including the cost breakdown and calendar (.ics) / print-PDF export.
+- **Trip comparison.** The Search page's third mode, "Compare", takes 2–3 destinations plus shared trip fields and calls `POST /api/compare/destination` once per destination in parallel (per-column loading/error + Retry); results render in `CompareTable` and "Plan this trip" runs the compared request as a normal full search. Pure helpers live in `frontend/src/utils/compare.js`.
 - **Budget tiers are explicit.** Hotels must cover luxury, premium, mid-range, and budget options. Activities are scored 0.0–1.0 by interest relevance.
 
 ## API
@@ -165,6 +166,7 @@ All endpoints are under `/api`:
 | `POST /api/sim` | Recommend SIM/eSIM plans |
 | `POST /api/tips` | Safety and culture tips |
 | `POST /api/getting-around` | Local transportation options |
+| `POST /api/compare/destination` | Lightweight one-destination trip summary (cost, flight, hotel, weather, visa, ease) for the Search page's Compare mode |
 | `POST /api/walking-tours` | Free walking tours crawled from public provider city pages |
 | `POST /api/itinerary` | Build day-by-day itinerary |
 | `POST /api/auth/login` | JWT login |

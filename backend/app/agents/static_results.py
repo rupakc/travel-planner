@@ -1401,6 +1401,15 @@ def get_static_emergency_card(request: TravelSearchRequest) -> dict | None:
     }
 
 
+def get_destination_daily_cost(request: TravelSearchRequest) -> float | None:
+    """Typical daily spend (USD) for the destination, or None if not in our data."""
+    dest_key = _find_dest_key(request.destination)
+    if not dest_key or dest_key not in _DESTINATION_SCORES:
+        return None
+    cost = _DESTINATION_SCORES[dest_key].get("avg_daily_cost_usd")
+    return float(cost) if cost else None
+
+
 def get_confidence_score(request: TravelSearchRequest) -> dict | None:
     """Compute travel confidence score. Returns None if destination not in our data."""
     dest_key = _find_dest_key(request.destination)
