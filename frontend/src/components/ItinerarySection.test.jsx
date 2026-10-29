@@ -433,6 +433,25 @@ describe('ItinerarySection', () => {
     expect(document.activeElement).toBe(button('Undo'))
   })
 
+  it('names every row action and Restore after its activity, keeping the visible text', () => {
+    const layout = removeSlot(ITIN, null, '1-afternoon')
+    const selections = {
+      itinerary_layout: layout,
+      itinerary_edits: { '1-morning': { activity: 'Cathedral tour' } },
+      itinerary_notes: { '1-morning': 'bring hat' },
+      itinerary_slots: [{ key: '1-morning' }],
+    }
+    render({ ...handlers(), selections })
+    const label = (text, scope) => button(text, scope).getAttribute('aria-label')
+    expect(label('Edited', row('1-morning'))).toBe('Edit Cathedral tour')
+    expect(label('Note ✓', row('1-morning'))).toBe('Edit note for Cathedral tour')
+    expect(label('In Plan', row('1-morning'))).toBe('Remove Cathedral tour from plan')
+    expect(label('Edit', row('1-evening'))).toBe('Edit Tapas')
+    expect(label('Note', row('1-evening'))).toBe('Add note to Tapas')
+    expect(label('Plan', row('1-evening'))).toBe('Add Tapas to plan')
+    expect(label('Restore', container.querySelector('[data-removed-list]'))).toBe('Restore Market')
+  })
+
   it('exposes day headings as labelled groups, a labelled Move button and a group toolbar', () => {
     act(() => root.render(<Stateful data={ITIN} />))
     click(button('Move', row('1-afternoon')))

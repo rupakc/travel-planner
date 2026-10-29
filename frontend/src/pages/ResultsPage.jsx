@@ -11,7 +11,7 @@ import {
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
-import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch } from '../services/api'
+import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
@@ -31,6 +31,7 @@ import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
 import { responseErrorMessage, axiosErrorDetail } from '../utils/httpError'
+import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -123,22 +124,33 @@ function AgentBadge({ agent, status, onClick }) {
   )
 }
 
-function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
+export const sectionBodyId = (agent) => `section-body-${agent}`
+
+export function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
   const { label, icon: Icon, color } = AGENT_CONFIG[agent]
   const acc = SECTION_ACCENT[color] || SECTION_ACCENT.indigo
+  // The title is the keyboard toggle; the chip and actions stay outside it
+  // (no nested interactive elements). The row itself stays clickable for
+  // pointer users — the button stops propagation so a click toggles once.
   return (
     <div
       onClick={onToggle}
       className={`flex items-center gap-3 px-4 py-3.5 w-full text-left border-l-4 ${acc.line} ${acc.bg} bg-white cursor-pointer transition-colors hover:bg-gray-50/80 ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
     >
-      <Icon size={18} className={acc.icon} />
-      <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">{label}</h2>
+      <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">
+        <button type="button" aria-expanded={isOpen} aria-controls={isOpen ? sectionBodyId(agent) : undefined}
+          onClick={(e) => { e.stopPropagation(); onToggle() }}
+          className="flex items-center gap-3 w-full text-left rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+          <Icon size={18} className={acc.icon} aria-hidden="true" />
+          <span className="min-w-0">{label}</span>
+        </button>
+      </h2>
       {actions}
       <VerificationBadge verification={verification} />
       {status === 'loading'   && <Loader2 size={15} className="animate-spin text-gray-400" />}
       {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> Enhancing…</span>}
       {status === 'done'      && <CheckCircle2 size={15} className="text-teal-500 opacity-70" />}
-      <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      <ChevronDown size={16} aria-hidden="true" className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </div>
   )
 }
@@ -2327,7 +2339,11 @@ function StressScoreRing({ score, overall }) {
   )
 }
 
-function StressTestSection({ data, layoutMoved = false }) {
+// `recheck` ({ data, stale }) is a re-run against the edited itinerary; it
+// only applies while the layout differs from the original.
+export function StressTestSection({ data: original, layoutMoved = false, recheck = null, rechecking = false, recheckError = null, onRecheck }) {
+  const rechecked = layoutMoved && recheck?.data ? recheck : null
+  const data = rechecked ? rechecked.data : original
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
@@ -2349,7 +2365,22 @@ function StressTestSection({ data, layoutMoved = false }) {
           <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
           <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
-          {layoutMoved && <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>}
+          {layoutMoved && (rechecked ? (
+            rechecked.stale
+              ? <p className="text-[11px] text-amber-600 mt-1">Your plan changed since this check — re-check again</p>
+              : <p className="text-[11px] text-teal-700 mt-1">Checked against your edited itinerary</p>
+          ) : (
+            <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>
+          ))}
+          {layoutMoved && (!rechecked || rechecked.stale) && (
+            <button type="button" onClick={onRecheck} disabled={rechecking}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-default">
+              {rechecking
+                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />Re-checking…</>
+                : <><RefreshCw size={12} aria-hidden="true" />Re-check my edited plan</>}
+            </button>
+          )}
+          {layoutMoved && recheckError && <p role="alert" className="text-[11px] text-rose-600 mt-1">{recheckError}</p>}
         </div>
       </div>
 
@@ -3279,6 +3310,16 @@ export default function ResultsPage() {
   const [remixInfo, setRemixInfo] = useState(null)  // { label, before } while comparing a remixed run
   const [layoverInfo, setLayoverInfo] = useState(null)  // { city, airport, duration_hours, status, data }
   const [pendingScrollTarget, setPendingScrollTarget] = useState(null)
+  // Health Check re-run against the edited itinerary: { data, forLayoutFingerprint }.
+  // Kept apart from results.stress_test, which stays the original audit.
+  const [recheck, setRecheck] = useState(null)
+  const [recheckRun, setRecheckRun] = useState({ running: false, error: null })
+  const recheckSeq = useRef(0) // drops responses that land after a clear
+  const clearRecheck = () => {
+    recheckSeq.current += 1
+    setRecheck(null)
+    setRecheckRun({ running: false, error: null })
+  }
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -3311,6 +3352,7 @@ export default function ResultsPage() {
     setLoadedPlanSearchData(plan.search_data || null)
     setPackageUndo(null)
     setLayoutUndo([])
+    clearRecheck()
   }
 
   // Itinerary editing: every action computes the next layout from the ORIGINAL
@@ -3340,6 +3382,7 @@ export default function ResultsPage() {
   }
   const handleRestoreSlot = (key) => { commitLayout(restoreSlot(results.itinerary, layoutRef.current, key)) }
   const handleResetLayout = () => {
+    clearRecheck()
     if (commitLayout(null)) track('itinerary_layout_reset', 'results', {})
   }
   const handleUndoLayout = () => {
@@ -3355,6 +3398,36 @@ export default function ResultsPage() {
     () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
     [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
+  // Fingerprint of the itinerary as edited now; only needed to judge an
+  // existing re-check result or error.
+  const currentRecheckFingerprint = useMemo(
+    () => (recheck || recheckRun.error ? recheckFingerprint(results.itinerary, selections) : null),
+    [recheck, recheckRun.error, results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
+  )
+  const recheckStale = !!recheck && recheck.forLayoutFingerprint !== currentRecheckFingerprint
+  // An error belongs to the attempt that failed: hide it once the plan changes.
+  const recheckError = recheckRun.error && recheckRun.forFingerprint === currentRecheckFingerprint ? recheckRun.error : null
+  const handleRecheck = async () => {
+    if (recheckRun.running || !results.itinerary) return
+    const seq = ++recheckSeq.current
+    const forLayoutFingerprint = recheckFingerprint(results.itinerary, selections)
+    const payload = buildStressTestPayload(searchData, results, selections)
+    setRecheckRun({ running: true, error: null })
+    track('health_recheck_run', 'results', {})
+    try {
+      const data = await recheckStressTest(payload, token)
+      if (seq !== recheckSeq.current) return
+      if (!data || typeof data !== 'object' || data.error) {
+        setRecheckRun({ running: false, error: recheckErrorMessage(null), forFingerprint: forLayoutFingerprint })
+        return
+      }
+      setRecheck({ data, forLayoutFingerprint })
+      setRecheckRun({ running: false, error: null })
+    } catch (err) {
+      if (seq !== recheckSeq.current) return
+      setRecheckRun({ running: false, error: recheckErrorMessage(err), forFingerprint: forLayoutFingerprint })
+    }
+  }
   const bestValue = useMemo(() => (isDone ? buildBestValuePackage(results, searchData) : null), [isDone, results, searchData])
   const handleApplyPackage = () => {
     if (!bestValue) return
@@ -3383,6 +3456,7 @@ export default function ResultsPage() {
     setLoadedPlanSearchData(null)
     setPackageUndo(null)
     setLayoutUndo([])
+    clearRecheck()
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -3749,7 +3823,9 @@ export default function ResultsPage() {
           onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
           onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
         })} />,
-      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0} />,
+      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0}
+        recheck={recheck ? { data: recheck.data, stale: recheckStale } : null}
+        rechecking={recheckRun.running} recheckError={recheckError} onRecheck={handleRecheck} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
@@ -3811,11 +3887,13 @@ export default function ResultsPage() {
     return (
       <div key={agent} id={`section-${agent}`} className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem', ...extraStyle }}>
         <SectionHeader agent={agent} status={status} isOpen={isOpen} onToggle={() => toggleSection(agent)} actions={filterAction} verification={results[agent]?.verification} />
-        {filterErrors[agent] && (
-          <p role="alert" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{filterErrors[agent]}</p>
-        )}
         {isOpen && (
-          status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>
+          <div id={sectionBodyId(agent)}>
+            {filterErrors[agent] && (
+              <p role="alert" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{filterErrors[agent]}</p>
+            )}
+            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>}
+          </div>
         )}
       </div>
     )
@@ -4024,7 +4102,7 @@ export default function ResultsPage() {
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
-        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]) }}
+        onClearSelections={() => { setSelections({ ...EMPTY_SELECTIONS }); setPackageUndo(null); setLayoutUndo([]); clearRecheck() }}
       />
 
       {layoverInfo && <LayoverModal info={layoverInfo} onClose={() => setLayoverInfo(null)} />}
