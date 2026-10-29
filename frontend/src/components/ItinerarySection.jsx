@@ -1,26 +1,176 @@
-import { useState } from 'react'
-import { DollarSign, Check, MapPin, PenLine, MessageSquare, Plus } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
+  GripVertical, ArrowRightLeft, Undo2, RotateCcw,
+} from 'lucide-react'
 import TripMap from './TripMap'
+import {
+  TIMES, slotKey, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
+} from '../utils/itineraryLayout'
 
-export default function ItinerarySection({ data, selections, onNoteChange, onSlotEdit, onSlotPlan }) {
+// Custom MIME so the drawer (which treats application/json as a plan) never
+// mistakes an itinerary drag for a plan drop.
+const SLOT_MIME = 'application/x-itinerary-slot'
+const DROP_HIGHLIGHT = 'ring-2 ring-teal-400 bg-teal-50'
+const SLOT_ICONS = { morning: '🌅', afternoon: '☀️', evening: '🌙' }
+
+const timeLabel = (tod) => tod.charAt(0).toUpperCase() + tod.slice(1)
+const positionLabel = (dayNumber, tod) => `Day ${dayNumber} · ${timeLabel(tod)}`
+const carriesSlot = (e) => Array.from(e.dataTransfer?.types || []).includes(SLOT_MIME)
+
+// Rows for one arranged day: its slots plus a "Free time" row for every
+// standard time no movable activity occupies (only on days that originally
+// had at least one standard-time slot).
+function dayRows(day, originalDay, isMovable, withPlaceholders) {
+  const slots = day.slots || []
+  const hasStandard = (originalDay?.slots || []).some((s) => TIMES.includes(s.time_of_day))
+  const occupied = new Set(slots.filter((s) => isMovable(s.key)).map((s) => s.time_of_day))
+  const rows = []
+  let next = 0
+  const fillUntil = (rank) => {
+    for (; next < rank; next += 1) {
+      const tod = TIMES[next]
+      if (withPlaceholders && hasStandard && !occupied.has(tod)) rows.push({ free: tod })
+    }
+  }
+  for (const slot of slots) {
+    const rank = TIMES.indexOf(slot.time_of_day)
+    if (rank >= 0) fillUntil(rank + 1)
+    rows.push({ slot })
+  }
+  fillUntil(TIMES.length)
+  return rows
+}
+
+function MoveMenu({ label, items, onClose }) {
+  const menuRef = useRef(null)
+  useEffect(() => {
+    menuRef.current?.querySelector('[role="menuitem"]')?.focus()
+  }, [])
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      e.stopPropagation()
+      onClose()
+      return
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    const all = [...menuRef.current.querySelectorAll('[role="menuitem"]')]
+    const at = all.indexOf(document.activeElement)
+    const step = e.key === 'ArrowDown' ? 1 : -1
+    all[(at + step + all.length) % all.length]?.focus()
+  }
+
+  return (
+    <div ref={menuRef} role="menu" aria-label={label} onKeyDown={onKeyDown}
+      className="absolute right-0 top-full mt-1 z-20 w-64 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+      {items.map((item) => (
+        <button key={item.id} type="button" role="menuitem" onClick={item.onSelect}
+          className={`block w-full text-left px-3 py-1.5 text-xs focus:outline-none ${item.danger
+            ? 'text-red-600 border-t border-gray-100 hover:bg-red-50 focus:bg-red-50'
+            : 'text-gray-700 hover:bg-teal-50 focus:bg-teal-50'}`}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export default function ItinerarySection({
+  data, selections, onNoteChange, onSlotEdit, onSlotPlan,
+  onMoveSlot, onRemoveSlot, onRestoreSlot, onUndoLayout, onResetLayout, canUndo = false,
+}) {
   const [editingSlot, setEditingSlot] = useState(null) // key of slot being edited
   const [openNote,    setOpenNote]    = useState(null)
+  const [menuFor,     setMenuFor]     = useState(null) // key whose Move menu is open
+  const [dragKey,     setDragKey]     = useState(null)
+  const [dropAt,      setDropAt]      = useState(null) // highlighted position
+  const [status,      setStatus]      = useState('')
+  const moveButtons = useRef({})
+  const focusAfterRender = useRef(null)
+
+  const layout = selections.itinerary_layout
+  const edits = selections.itinerary_edits
+  const editable = typeof onMoveSlot === 'function'
+  const arranged = useMemo(() => arrangeItinerary(data, layout, edits), [data, layout, edits])
+  // One source of truth for drag validity AND the Move menu (city rule included).
+  const targetsByKey = useMemo(() => {
+    const map = new Map()
+    if (!editable) return map
+    for (const day of arranged.days) {
+      for (const slot of day.slots || []) map.set(slot.key, moveTargets(data, layout, slot.key))
+    }
+    return map
+  }, [editable, arranged, data, layout])
+
+  useEffect(() => {
+    if (!focusAfterRender.current) return
+    moveButtons.current[focusAfterRender.current]?.focus()
+    focusAfterRender.current = null
+  })
 
   if (!data?.days?.length) return <div className="p-4 text-sm text-gray-500">No itinerary available</div>
 
-  const slotIcons = { morning: '🌅', afternoon: '☀️', evening: '🌙' }
+  const isMovable = (key) => (targetsByKey.get(key) || []).length > 0
+  const findTarget = (key, dayNumber, tod) => (targetsByKey.get(key) || [])
+    .find((t) => t.day_number === dayNumber && t.time_of_day === tod)
+  const activityName = (key, fallback) => edits?.[key]?.activity ?? fallback
+  const changeCount = editable ? layoutChangeCount(data, layout) : 0
+
+  const move = (key, name, target, method) => {
+    onMoveSlot(key, target.day_number, target.time_of_day, method)
+    const swap = target.swapWith ? ` (swapped with ${activityName(target.swapWith.key, target.swapWith.activity)})` : ''
+    setStatus(`Moved ${name} to ${positionLabel(target.day_number, target.time_of_day)}${swap}`)
+  }
+
+  const closeMenu = (key) => {
+    setMenuFor(null)
+    moveButtons.current[key]?.focus()
+  }
+
+  const dropZoneProps = (dayNumber, tod) => {
+    if (!editable) return {}
+    const pos = slotKey(dayNumber, tod)
+    return {
+      onDragOver: (e) => {
+        if (!dragKey || !carriesSlot(e) || !findTarget(dragKey, dayNumber, tod)) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        if (dropAt !== pos) setDropAt(pos)
+      },
+      onDragLeave: (e) => {
+        if (e.currentTarget.contains(e.relatedTarget)) return
+        setDropAt((at) => (at === pos ? null : at))
+      },
+      onDrop: (e) => {
+        if (!carriesSlot(e)) return
+        const key = e.dataTransfer.getData(SLOT_MIME)
+        const target = key && findTarget(key, dayNumber, tod)
+        setDropAt(null)
+        setDragKey(null)
+        if (!target) return
+        e.preventDefault()
+        const slot = arranged.days.flatMap((d) => d.slots || []).find((s) => s.key === key)
+        move(key, activityName(key, slot?.activity), target, 'drag')
+      },
+    }
+  }
+
+  const removed = arranged.removed || []
 
   return (
     <div className="p-4 space-y-4">
       {/* Map at the top */}
-      <TripMap days={data.days} />
+      <TripMap days={arranged.days} />
 
       {/* Header row */}
       <div className="flex items-center justify-between">
-        {data.total_estimated_cost_usd > 0 && (
+        {arranged.total_estimated_cost_usd > 0 && (
           <div className="flex items-center gap-2 p-2.5 bg-teal-50 rounded-lg border border-teal-200 text-sm">
             <DollarSign size={13} className="text-teal-600" />
-            <span className="text-teal-800 font-medium">Est. itinerary cost: ${data.total_estimated_cost_usd.toLocaleString()}</span>
+            <span className="text-teal-800 font-medium">Est. itinerary cost: ${arranged.total_estimated_cost_usd.toLocaleString()}</span>
           </div>
         )}
         {data.source === 'template' && (
@@ -28,8 +178,33 @@ export default function ItinerarySection({ data, selections, onNoteChange, onSlo
         )}
       </div>
 
-      {data.days.map((day) => (
-        <div key={day.day_number} className="border border-gray-200 rounded-xl overflow-hidden">
+      {/* Layout toolbar */}
+      {editable && (changeCount > 0 || canUndo) && (
+        <div role="toolbar" aria-label="Itinerary changes"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-200 bg-teal-50/60 text-xs">
+          {changeCount > 0 && (
+            <span className="font-medium text-teal-800">{changeCount} {changeCount === 1 ? 'change' : 'changes'}</span>
+          )}
+          <span className="flex-1" />
+          {onUndoLayout && (
+            <button type="button" disabled={!canUndo}
+              onClick={() => { onUndoLayout(); setStatus('Undid the last change') }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-600">
+              <Undo2 size={10} /> Undo
+            </button>
+          )}
+          {changeCount > 0 && onResetLayout && (
+            <button type="button"
+              onClick={() => { onResetLayout(); setStatus('Itinerary reset to the original order') }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700">
+              <RotateCcw size={10} /> Reset
+            </button>
+          )}
+        </div>
+      )}
+
+      {arranged.days.map((day, dayIndex) => (
+        <div key={day.day_number} data-day={day.day_number} className="border border-gray-200 rounded-xl overflow-hidden">
           {/* Day header */}
           <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
             <div>
@@ -49,24 +224,86 @@ export default function ItinerarySection({ data, selections, onNoteChange, onSlo
 
           {/* Slots */}
           <div className="divide-y divide-gray-100">
-            {day.slots?.map((slot, j) => {
-              const key = `${day.day_number}-${slot.time_of_day}`
-              const edit  = selections.itinerary_edits?.[key] || {}
+            {dayRows(day, data.days[dayIndex], isMovable, editable).map((row) => {
+              if (row.free) {
+                const pos = slotKey(day.day_number, row.free)
+                return (
+                  <div key={`free-${pos}`} data-free-slot={pos} {...dropZoneProps(day.day_number, row.free)}
+                    className={`px-4 py-3 transition-colors ${dropAt === pos ? DROP_HIGHLIGHT : ''}`}>
+                    <div className="flex gap-3 items-center">
+                      <span className="w-4 shrink-0" />
+                      <div className="w-20 shrink-0 text-sm text-gray-400 font-medium capitalize flex items-center gap-1">
+                        <span>{SLOT_ICONS[row.free]}</span>
+                        <span>{row.free}</span>
+                      </div>
+                      <p className="flex-1 text-sm text-gray-400 italic border border-dashed border-gray-200 rounded-lg px-3 py-1.5">Free time</p>
+                    </div>
+                  </div>
+                )
+              }
+
+              const { slot } = row
+              const key = slot.key
+              const edit  = edits?.[key] || {}
               const note  = selections.itinerary_notes?.[key] || ''
               const isEditing  = editingSlot === key
               const isNoteOpen = openNote === key
+              const movable = isMovable(key)
+              const menuOpen = menuFor === key
+              const pos = slotKey(day.day_number, slot.time_of_day)
 
               // Merge saved edits over original slot data
               const activity = edit.activity  ?? slot.activity
               const location = edit.location  ?? slot.location
               const cost     = edit.cost      ?? slot.estimated_cost_usd
+              const inPlan   = selections.itinerary_slots?.some(s => s.key === key)
+
+              const menuItems = movable ? [
+                ...targetsByKey.get(key).map((t) => ({
+                  id: slotKey(t.day_number, t.time_of_day),
+                  label: positionLabel(t.day_number, t.time_of_day)
+                    + (t.swapWith ? ` (swap with ${activityName(t.swapWith.key, t.swapWith.activity)})` : ''),
+                  onSelect: () => {
+                    focusAfterRender.current = key
+                    setMenuFor(null)
+                    move(key, activity, t, 'menu')
+                  },
+                })),
+                ...(onRemoveSlot ? [{
+                  id: 'remove',
+                  label: 'Remove from day',
+                  danger: true,
+                  onSelect: () => {
+                    setMenuFor(null)
+                    onRemoveSlot(key)
+                    setStatus(`Removed ${activity} from Day ${day.day_number}`)
+                  },
+                }] : []),
+              ] : []
 
               return (
-                <div key={j} className={`px-4 py-3 transition-colors ${isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'}`}>
+                <div key={key} data-slot-key={key}
+                  draggable={movable && !isEditing ? true : undefined}
+                  onDragStart={movable && !isEditing ? (e) => {
+                    e.dataTransfer.setData(SLOT_MIME, key)
+                    e.dataTransfer.effectAllowed = 'move'
+                    setDragKey(key)
+                    setMenuFor(null)
+                  } : undefined}
+                  onDragEnd={movable ? () => { setDragKey(null); setDropAt(null) } : undefined}
+                  {...(movable ? dropZoneProps(day.day_number, slot.time_of_day) : {})}
+                  className={`px-4 py-3 transition-colors ${dropAt === pos && movable ? DROP_HIGHLIGHT : isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'} ${dragKey === key ? 'opacity-50' : ''}`}>
                   <div className="flex gap-3">
+                    {editable && (movable && !isEditing ? (
+                      <span aria-label={`Drag to move ${activity}`} title="Drag to move"
+                        className="w-4 shrink-0 flex items-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
+                        <GripVertical size={14} aria-hidden="true" />
+                      </span>
+                    ) : <span className="w-4 shrink-0" />)}
+
                     {/* Time icon */}
                     <div className="w-20 shrink-0 text-sm text-gray-500 font-medium capitalize flex items-center gap-1">
-                      <span>{slotIcons[slot.time_of_day]}</span>
+                      <span>{SLOT_ICONS[slot.time_of_day]}</span>
                       <span>{slot.time_of_day}</span>
                     </div>
 
@@ -121,7 +358,7 @@ export default function ItinerarySection({ data, selections, onNoteChange, onSlo
                         </div>
                       ) : (
                         <>
-                          <p className="text-sm font-medium text-gray-900">{activity}</p>
+                          <p data-activity className="text-sm font-medium text-gray-900">{activity}</p>
                           {location && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><MapPin size={11}/>{location}</p>}
                           {slot.notes && !edit.activity && <p className="text-sm text-gray-400 mt-1 italic">{slot.notes}</p>}
                           {note && <p className="text-sm text-teal-600 mt-1 italic">📝 {note}</p>}
@@ -141,13 +378,27 @@ export default function ItinerarySection({ data, selections, onNoteChange, onSlo
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
                             <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
                           </button>
+                        {movable && (
+                          <div className="relative"
+                            onBlur={(e) => { if (menuOpen && !e.currentTarget.contains(e.relatedTarget)) setMenuFor(null) }}>
+                            <button type="button" ref={(el) => { moveButtons.current[key] = el }}
+                              aria-haspopup="menu" aria-expanded={menuOpen}
+                              onClick={() => setMenuFor(menuOpen ? null : key)}
+                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${menuOpen ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
+                              <ArrowRightLeft size={10}/> Move
+                            </button>
+                            {menuOpen && (
+                              <MoveMenu label={`Move ${activity}`} items={menuItems} onClose={() => closeMenu(key)} />
+                            )}
+                          </div>
+                        )}
                         <button onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selections.itinerary_slots?.some(s => s.key === key)
+                            inPlan
                               ? 'bg-teal-600 text-white'
                               : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
                           }`}>
-                          {selections.itinerary_slots?.some(s => s.key === key)
+                          {inPlan
                             ? <><Check size={10}/> In Plan</>
                             : <><Plus size={10}/> Plan</>
                           }
@@ -175,6 +426,35 @@ export default function ItinerarySection({ data, selections, onNoteChange, onSlo
           </div>
         </div>
       ))}
+
+      {/* Removed activities */}
+      {removed.length > 0 && (
+        <div data-removed-list className="border border-dashed border-gray-300 rounded-xl p-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Removed</p>
+          <ul className="space-y-1.5">
+            {removed.map(({ key, slot }) => {
+              const name = activityName(key, slot.activity)
+              const originalDay = data.days.find((d) => slotKey(d.day_number, slot.time_of_day) === key)
+              const canRestore = restoreSlot(data, layout, key) !== layout
+              return (
+                <li key={key} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-gray-600 truncate">{name}</span>
+                  {onRestoreSlot && (
+                    <button type="button" disabled={!canRestore}
+                      title={canRestore ? undefined : `No free time left on Day ${originalDay?.day_number} — move or remove something there first`}
+                      onClick={() => { onRestoreSlot(key); setStatus(`Restored ${name}`) }}
+                      className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700 disabled:opacity-40 disabled:hover:bg-gray-100 disabled:hover:text-gray-600">
+                      <RotateCcw size={10}/> Restore
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {editable && <p aria-live="polite" className="sr-only">{status}</p>}
     </div>
   )
 }
