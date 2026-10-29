@@ -193,6 +193,36 @@ Results are cached in memory for 30 minutes per unique request.
 
 ---
 
+### `POST /api/compare/destination`
+
+Lightweight summary of one destination, used by the Search page's Compare mode (one call per destination, in parallel). Runs flights, hotels (no URL enrichment), weather and visa concurrently with per-piece timeouts.
+
+**Auth required:** Yes
+
+**Request body:** a `TravelSearchRequest` for a single destination. `destinations` must be null or have at most one entry; multi-city requests return `422` ("Compare works with single destinations").
+
+**Response (200):**
+```json
+{
+  "destination": "Lisbon, Portugal",
+  "label": "Lisbon",
+  "flight": {"price_usd": 120, "stops": 0, "duration_minutes": 480, "airline": "TAP", "source": "serpapi"},
+  "hotel": {"typical_nightly_usd": 110, "cheapest_good_nightly_usd": 70, "count": 12},
+  "weather": {"avg_high_c": 24, "avg_low_c": 15, "poor_days": 1, "total_days": 7, "source": "open-meteo"},
+  "visa": {"visa_type": "visa-free", "max_stay_days": 90, "fee_usd": 0, "processing_time": "none", "verified": true},
+  "ease": {"total": 82, "grade": "B", "safety": 17, "english": 15, "infrastructure": 16, "visa_ease": 18},
+  "daily_cost_usd": 95,
+  "estimate": {"total_usd": 1450, "flight_usd": 240, "stay_usd": 770, "daily_usd": 665, "nights": 7, "partial": false},
+  "budget_status": "under",
+  "missing": []
+}
+```
+Any piece that failed or timed out is `null` and its name is listed in `missing`; `ease`/`daily_cost_usd` are `null` for destinations outside the static tables, and `estimate.partial` is `true` when a part is unknown. `flight.source` of `estimate` marks a non-live fare; `visa.verified` is true only for static-table data.
+
+**Errors:** `422` for multi-city or invalid requests; `502` when every piece failed.
+
+**Caching:** results with at least one piece are cached in the shared TTL cache keyed on the full request; a `502` is never cached.
+
 ## Chat
 
 ### `POST /api/chat` — SSE streaming
