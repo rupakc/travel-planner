@@ -6,6 +6,7 @@
 
 import { computePlanCostBreakdown } from './planHelpers'
 import { planItineraryDays } from './planExport'
+import { slotKey } from './itineraryLayout'
 import { toRecentSearch, describeRecentSearch } from './recentSearches'
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
@@ -71,7 +72,7 @@ function itineraryHtml(days, selections) {
   if (!days.length) return ''
   return days.map((day) => {
     const slots = (day.slots || []).map((slot) => {
-      const key = `${day.day_number}-${slot.time_of_day}`
+      const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
       const edit = selections?.itinerary_edits?.[key] || {}
       const note = selections?.itinerary_notes?.[key]
       const activity = edit.activity ?? slot.activity

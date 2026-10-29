@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { computePlanCost } from '../utils/planHelpers'
 import { safeUrl } from '../utils/planPrint'
+import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
 
 // Public, read-only trip card — reachable without login via /share/:token
 
@@ -144,20 +145,21 @@ function downloadCard(plan) {
     if (bits) add(bits, { size: 27, color: dim, indent: 30, gap: 6 })
   }
 
-  const itinDays = sel.itinerary?.days || []
+  const arranged = sel.itinerary?.days?.length ? arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits) : null
+  const itinDays = arranged?.days || []
   if (itinDays.length) {
     section(`📅 Itinerary — ${itinDays.length} days`)
     for (const day of itinDays) {
       add(`Day ${day.day_number}${day.date ? ` · ${day.date}` : ''}${day.city ? ` · ${city(day.city)}` : ''}${day.theme ? ` — ${day.theme}` : ''}`, { size: 30, weight: 700, gap: 6 })
       for (const slot of day.slots || []) {
-        const key = `${day.day_number}-${slot.time_of_day}`
+        const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
         const edit = sel.itinerary_edits?.[key] || {}
         const note = sel.itinerary_notes?.[key]
         add(`${slot.time_of_day}: ${edit.activity ?? slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
       }
       space(10)
     }
-    if (sel.itinerary?.total_estimated_cost_usd > 0) add(`Est. itinerary cost: $${Number(sel.itinerary.total_estimated_cost_usd).toLocaleString()} / person`, { size: 28, weight: 600, gap: 6 })
+    if (arranged?.total_estimated_cost_usd > 0) add(`Est. itinerary cost: $${Number(arranged.total_estimated_cost_usd).toLocaleString()} / person`, { size: 28, weight: 600, gap: 6 })
   }
 
   const listSection = (title, items, fmt) => {
@@ -268,7 +270,8 @@ export default function SharePage() {
   const [c1, c2] = pickGradient(plan.name)
   const travelers = sd.num_travelers || 1
   const totalCost = computePlanCost(sel, sd)
-  const itinDays = sel.itinerary?.days || []
+  const arranged = sel.itinerary?.days?.length ? arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits) : null
+  const itinDays = arranged?.days || []
   const legFlights = sel.flights || []
 
   // Fallback itinerary from individually-selected slots when no full snapshot
@@ -392,7 +395,7 @@ export default function SharePage() {
                   {day.theme && <p className="text-xs text-gray-400 italic">{day.theme}</p>}
                   <ul className="mt-1.5 space-y-1">
                     {(day.slots || []).map((slot, j) => {
-                      const key = `${day.day_number}-${slot.time_of_day}`
+                      const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
                       const edit = sel.itinerary_edits?.[key] || {}
                       const note = sel.itinerary_notes?.[key]
                       return (
@@ -409,9 +412,9 @@ export default function SharePage() {
                   </ul>
                 </div>
               ))}
-              {sel.itinerary?.total_estimated_cost_usd > 0 && (
+              {arranged?.total_estimated_cost_usd > 0 && (
                 <p className="text-xs font-semibold text-teal-700 pt-2 border-t border-gray-100">
-                  Est. itinerary cost: ${Number(sel.itinerary.total_estimated_cost_usd).toLocaleString()} / person
+                  Est. itinerary cost: ${Number(arranged.total_estimated_cost_usd).toLocaleString()} / person
                 </p>
               )}
             </div>
