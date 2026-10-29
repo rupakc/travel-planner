@@ -168,7 +168,8 @@ describe('CompareTable', () => {
     const labels = [...table().querySelectorAll('tbody th')].map((th) => th.textContent)
     expect(labels).toContain('Est. trip cost / person')
     expect(labels).toContain('Cheapest flight / person')
-    expect(labels).toContain('Typical daily spend / person')
+    expect(labels).toContain('Typical daily spend / person (incl. stay)')
+    expect(labels).toContain('Hotel / night (per room)')
   })
 
   it('shows the stored failure reason under Couldn\'t load', () => {

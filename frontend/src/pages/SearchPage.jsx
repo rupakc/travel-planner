@@ -13,7 +13,7 @@ import OnboardingTour from '../components/OnboardingTour'
 import useFirstRunTour from '../hooks/useFirstRunTour'
 import { discoverDestinations, compareDestination, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
 import CompareTable from '../components/CompareTable'
-import { buildCompareRequests, compareErrorReason } from '../utils/compare'
+import { buildCompareRequests, compareErrorReason, apiReturnDate } from '../utils/compare'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 
 const INTERESTS = [
@@ -248,7 +248,7 @@ export default function SearchPage() {
       ...form,
       num_travelers: totalTravelers,
       budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null,
-      return_date: form.return_date || null,  // blank date input -> one-way, not a 422
+      return_date: apiReturnDate(form.return_date),
       // Journey order: stops along the way first, the To city (final
       // destination) last
       destinations: stops.length ? [...stops.map(s => s.city), form.destination] : null,

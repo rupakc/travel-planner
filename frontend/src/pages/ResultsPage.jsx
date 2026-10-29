@@ -28,6 +28,7 @@ import TagInput from '../components/ui/TagInput'
 import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
+import { apiReturnDate } from '../utils/compare'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import {
@@ -2991,7 +2992,7 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
     // The To field is the FINAL destination — keep it in the last slot of the
     // journey-ordered list when edited (stops on the way stay in front)
     const destinations = form.destinations?.length > 1 ? [...form.destinations.slice(0, -1), form.destination] : null
-    onUpdateSearch({ ...form, num_travelers, destinations, budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
+    onUpdateSearch({ ...form, num_travelers, destinations, return_date: apiReturnDate(form.return_date), budget_usd: form.budget_usd ? parseFloat(form.budget_usd) : null })
   }
 
   return (

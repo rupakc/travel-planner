@@ -1,6 +1,13 @@
 // Pure helpers for the trip-comparison feature.
 
 /**
+ * A cleared <input type="date"> is ''; the API wants null (one-way / open
+ * ended), otherwise TravelSearchRequest rejects the request with a 422.
+ * @param {string|null|undefined} value
+ */
+export const apiReturnDate = (value) => value || null
+
+/**
  * Build one TravelSearchRequest per destination. Mirrors the shape the
  * known-destination search builds (SearchPage.startSearch) so "Plan this
  * trip" can run the exact compared request. Only `destination` varies; blank
@@ -29,8 +36,7 @@ export function buildCompareRequests(form) {
     ...shared,
     num_travelers: travelers,
     budget_usd: Number.isFinite(budget) ? budget : null,
-    // A blank date input is '' — the API wants null (one-way), not a 422
-    return_date: shared.return_date || null,
+    return_date: apiReturnDate(shared.return_date),
     destination,
     destinations: null,
     destination_nights: null,

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { buildCompareRequests, bestByRow, fmtUsd, fmtDuration, compareErrorReason } from './compare'
+import { buildCompareRequests, bestByRow, fmtUsd, fmtDuration, compareErrorReason, apiReturnDate } from './compare'
 
 const base = {
   origin: 'NYC', departure_date: '2026-04-01', return_date: '2026-04-08',
@@ -66,6 +66,15 @@ describe('bestByRow', () => {
       s({ estimate: { total_usd: 1000, partial: false } }),
     ])
     expect(onlyOneComplete.estimate).toBeUndefined()
+  })
+})
+
+describe('apiReturnDate', () => {
+  it('turns a blank or missing date into null and keeps a real one', () => {
+    expect(apiReturnDate('')).toBeNull()
+    expect(apiReturnDate(null)).toBeNull()
+    expect(apiReturnDate(undefined)).toBeNull()
+    expect(apiReturnDate('2026-04-08')).toBe('2026-04-08')
   })
 })
 

@@ -60,7 +60,7 @@ const ROWS = [
     },
   },
   {
-    key: 'hotel', label: 'Hotel / night',
+    key: 'hotel', label: 'Hotel / night (per room)',
     render: (s) => {
       const h = s.hotel
       if (!h) return null
@@ -117,7 +117,7 @@ const ROWS = [
   },
   { key: 'safety', label: 'Safety', render: (s) => (num(s.ease?.safety) ? `${s.ease.safety}/20` : null) },
   { key: 'english', label: 'English', render: (s) => (num(s.ease?.english) ? `${s.ease.english}/20` : null) },
-  { key: 'daily', label: 'Typical daily spend / person', render: (s) => (num(s.daily_cost_usd) ? `${fmtUsd(s.daily_cost_usd)} / day` : null) },
+  { key: 'daily', label: 'Typical daily spend / person (incl. stay)', render: (s) => (num(s.daily_cost_usd) ? `${fmtUsd(s.daily_cost_usd)} / day` : null) },
 ]
 
 function Skeleton() {
