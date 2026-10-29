@@ -1,5 +1,6 @@
 """Unit tests for activity URL generation and Serper/SerpAPI resolver."""
 
+from datetime import date
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -225,7 +226,7 @@ class TestSerperActivityResolver:
             resolver = SerperActivityResolver("test-key")
             result = await resolver.resolve("Tsukiji Food Tour", "Tokyo")
 
-        assert result == gyg_url
+        assert result == (gyg_url, "Result 0")
 
     @pytest.mark.asyncio
     async def test_skips_untrusted_returns_none(self):
@@ -278,6 +279,62 @@ class TestSerperActivityResolver:
 
 class TestResolveTop:
     @pytest.mark.asyncio
+    async def test_trusted_original_url_without_upgrade_has_no_flag(self):
+        data = {
+            "results": [
+                {
+                    "name": "Tsukiji Outer Market Food Tour",
+                    "similarity_score": 0.9,
+                    "booking_url": "https://www.getyourguide.com/tokyo-l193/x-t1",
+                }
+            ]
+        }
+        mock_resolver = AsyncMock()
+        mock_resolver.resolve = AsyncMock(return_value=None)
+        result = await resolve_top(mock_resolver, data, "Tokyo")
+        assert "link_verified" not in result["results"][0]
+
+    @pytest.mark.asyncio
+    async def test_duplicate_resolved_url_flags_only_first(self):
+        url = "https://www.getyourguide.com/tokyo-l193/same-t1"
+        data = {
+            "results": _make_activities(
+                [
+                    ("Tsukiji Outer Market Food Tour", 0.95),
+                    ("Tsukiji Market Sushi Tour", 0.9),
+                ]
+            )
+        }
+        mock_resolver = AsyncMock()
+        mock_resolver.resolve = AsyncMock(
+            return_value=(url, "Tsukiji Outer Market Food and Sushi Tour")
+        )
+        result = await resolve_top(mock_resolver, data, "Tokyo")
+        assert result["results"][0]["link_verified"] is True
+        assert "link_verified" not in result["results"][1]
+
+    @pytest.mark.asyncio
+    async def test_link_verified_only_when_upgraded(self):
+        gyg_url = "https://www.getyourguide.com/tokyo-l193/tsukiji-tour-t123"
+        data = {
+            "results": _make_activities(
+                [
+                    ("Tsukiji Outer Market Food Tour", 0.95),
+                    ("Shibuya Night Walk Tour", 0.9),
+                ]
+            )
+        }
+        mock_resolver = AsyncMock()
+        mock_resolver.resolve = AsyncMock(
+            side_effect=[(gyg_url, "Tsukiji Outer Market Food Tour"), None]
+        )
+
+        result = await resolve_top(mock_resolver, data, "Tokyo")
+
+        assert result["results"][0]["link_verified"] is True
+        assert "link_verified" not in result["results"][1]
+
+    @pytest.mark.asyncio
     async def test_upgrades_top_activity_url(self):
         gyg_url = "https://www.getyourguide.com/tokyo-l193/tsukiji-tour-t123"
         activities = _make_activities(
@@ -286,7 +343,7 @@ class TestResolveTop:
         data = {"results": activities}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=gyg_url)
+        mock_resolver.resolve = AsyncMock(return_value=(gyg_url, "Tsukiji tour"))
 
         result = await resolve_top(mock_resolver, data, "Tokyo")
 
@@ -325,7 +382,7 @@ class TestResolveTop:
         data = {"results": activities}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=same_url)
+        mock_resolver.resolve = AsyncMock(return_value=(same_url, "Generic page"))
 
         result = await resolve_top(mock_resolver, data, "Tokyo")
 
@@ -340,7 +397,7 @@ class TestResolveTop:
         data2 = {"results": [dict(activities[0])]}
 
         mock_resolver = AsyncMock()
-        mock_resolver.resolve = AsyncMock(return_value=gyg_url)
+        mock_resolver.resolve = AsyncMock(return_value=(gyg_url, "Tsukiji tour"))
 
         await resolve_top(mock_resolver, data1, "Tokyo")
         await resolve_top(mock_resolver, data2, "Tokyo")
@@ -410,3 +467,28 @@ class TestActivitiesAgentEnrich:
 
         assert "_destination" not in result
         assert result["results"][0]["booking_url"] == gyg_url
+
+
+class TestModelSuppliedFlagStripped:
+    @pytest.mark.asyncio
+    async def test_activities_run_strips_model_flag(self):
+        from app.agents.activities_agent import ActivitiesAgent
+        from app.schemas.request import TravelSearchRequest
+
+        agent = ActivitiesAgent.__new__(ActivitiesAgent)
+        agent.execute = AsyncMock(
+            return_value={
+                "results": [
+                    {"name": "Tsukiji Outer Market Food Tour", "link_verified": True}
+                ]
+            }
+        )
+        req = TravelSearchRequest.model_construct(
+            origin="NYC",
+            destination="Tokyo",
+            departure_date=date(2026, 4, 1),
+            return_date=date(2026, 4, 8),
+            nationality="American",
+        )
+        result = await agent.run(req)
+        assert "link_verified" not in result["results"][0]

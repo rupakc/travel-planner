@@ -5,7 +5,7 @@ from urllib.parse import quote_plus, urlparse
 
 from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, strip_link_verified
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             lines.append("--- END FILTERS ---")
             prompt += "\n".join(lines)
 
-        result = await self.execute(prompt)
+        result = strip_link_verified(await self.execute(prompt))
         destination = request.destination
         # Store destination as metadata — travels to enrich(), popped there (not serialised)
         result["_destination"] = destination

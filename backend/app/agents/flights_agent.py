@@ -31,6 +31,16 @@ def _url_to_source(url: str) -> str:
     return host or "web"
 
 
+def strip_live_fare(data: dict) -> dict:
+    """Drop any model-supplied `live_fare` — only the SerpAPI mapper may set it."""
+    results = data.get("results") if isinstance(data, dict) else None
+    if isinstance(results, list):
+        for item in results:
+            if isinstance(item, dict):
+                item.pop("live_fare", None)
+    return data
+
+
 class FlightsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "flights"))
@@ -135,7 +145,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         self._origin = request.origin
         self._destination = request.destination
-        return await self.execute(prompt)
+        return strip_live_fare(await self.execute(prompt))
 
     async def _run_multi_city(
         self, request: TravelSearchRequest, filters: dict | None = None
@@ -203,7 +213,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         self._origin = request.origin
         self._destination = request.destination
-        data = await self.execute(prompt)
+        data = strip_live_fare(await self.execute(prompt))
         return self._group_legs(data, legs)
 
     async def _ai_fill_legs(
@@ -232,7 +242,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         )
         self._origin = request.origin
         self._destination = request.destination
-        data = await self.execute(prompt)
+        data = strip_live_fare(await self.execute(prompt))
         if "error" in data:
             logger.warning("AI leg fill failed: %s", data.get("error"))
             return {}

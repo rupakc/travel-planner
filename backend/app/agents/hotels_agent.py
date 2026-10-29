@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, strip_link_verified
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,8 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
             prompt += "\n".join(lines)
 
         self._destination = request.destination
-        return await self.execute(prompt)
+        self._destinations = tuple(request.destinations or ())
+        return strip_link_verified(await self.execute(prompt))
 
     _MAX_ENRICH = 12
 
@@ -122,6 +123,10 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
         hotels = data.get("results", [])
         if not hotels:
             return data
+
+        # Destination words never count as distinctive: "Hotel Berlin" must
+        # not match a "Hotels in Berlin" listing page.
+        exclude = (self._destination or "", *getattr(self, "_destinations", ()))
 
         for hotel in hotels[: self._MAX_ENRICH]:
             name = hotel.get("name", "")
@@ -137,6 +142,7 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
             url = await self._search_url(
                 f"{name} {self._destination} {hint} book",
                 match_name=name,
+                exclude_words=exclude,
             )
 
             # Fallback: try the hotel's official website
@@ -144,8 +150,10 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
                 url = await self._search_url(
                     f"{name} {self._destination} official website",
                     match_name=name,
+                    exclude_words=exclude,
                 )
 
+            hotel["link_verified"] = bool(url)
             if url:
                 hotel["booking_url"] = url
                 hotel["source"] = _url_to_source(url)

@@ -5,6 +5,12 @@ import re
 
 import anthropic
 
+from ..services.name_match import (
+    STOP_WORDS,
+    distinctive_words,
+    match_score,
+    min_matches,
+)
 from .loader import AgentDefinition
 
 logger = logging.getLogger(__name__)
@@ -206,46 +212,12 @@ class _URLSearchMixin:
             return False
         return not any(d in url for d in cls._JUNK_DOMAINS)
 
-    _STOP_WORDS = frozenset(
-        {
-            "the",
-            "and",
-            "for",
-            "tour",
-            "tours",
-            "with",
-            "from",
-            "hotel",
-            "hotels",
-            "book",
-            "booking",
-            "tickets",
-            "city",
-            "best",
-            "top",
-            "guide",
-            "travel",
-            "trip",
-            "official",
-            "site",
-            "website",
-            "new",
-            "york",
-            "los",
-            "angeles",
-            "san",
-            "francisco",
-            "airline",
-            "airlines",
-            "international",
-            "airways",
-            "air",
-            "lines",
-        }
-    )
+    _STOP_WORDS = STOP_WORDS
 
     @staticmethod
-    async def _search_url(query: str, match_name: str = "") -> str | None:
+    async def _search_url(
+        query: str, match_name: str = "", exclude_words: tuple[str, ...] = ()
+    ) -> str | None:
         """Search and return the best matching URL.
 
         Matching uses word overlap on distinctive words (common/stop words
@@ -274,40 +246,28 @@ class _URLSearchMixin:
         if not match_name:
             return pairs[0][1]
 
-        import re
-
-        clean = re.sub(r"[^a-zA-Z0-9\s]", " ", match_name).lower()
-        all_words = {w for w in clean.split() if len(w) > 2}
-        name_words = all_words - _URLSearchMixin._STOP_WORDS
+        # Shared with the activity/place resolvers (services.name_match).
+        # ``exclude_words`` (e.g. destination tokens) never count as
+        # distinctive; a name with nothing distinctive left cannot match.
+        name_words = distinctive_words(match_name, exclude_words)
         if not name_words:
-            name_words = all_words
-
-        # For short names (1-2 words), require all to match.
-        # For longer names, require at least half.
-        if len(name_words) <= 2:
-            min_matches = len(name_words)
-        else:
-            min_matches = max(2, len(name_words) // 2)
+            return None
+        needed = min_matches(name_words)
 
         best_url = None
         best_score = 0
         for title, url in pairs:
-            title_text = re.sub(r"[^a-zA-Z0-9\s]", " ", title).lower()
-            title_words = {w for w in title_text.split() if len(w) > 2}
-            score = len(name_words & title_words)
+            score = match_score(name_words, title)
             if score > best_score:
                 best_score = score
                 best_url = url
 
-        if best_url and best_score >= min_matches:
+        if best_url and best_score >= needed:
             return best_url
 
         # Fallback: check URL path for distinctive name words
-        for title, url in pairs:
-            url_path = re.sub(r"[^a-zA-Z0-9\s]", " ", url).lower()
-            path_words = {w for w in url_path.split() if len(w) > 2}
-            path_score = len(name_words & path_words)
-            if path_score >= min_matches:
+        for _title, url in pairs:
+            if match_score(name_words, url) >= needed:
                 return url
 
         # No good match found — return None so caller can try alternatives
@@ -332,3 +292,14 @@ class _URLSearchMixin:
                 pairs.append((title, url))
             i += 1
         return pairs
+
+
+def strip_link_verified(data: dict) -> dict:
+    """Drop model-supplied evidence flags — only URL enrichment may set them."""
+    results = data.get("results") if isinstance(data, dict) else None
+    if isinstance(results, list):
+        for item in results:
+            if isinstance(item, dict):
+                item.pop("link_verified", None)
+                item.pop("link_checked", None)
+    return data

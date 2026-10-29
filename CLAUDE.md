@@ -22,6 +22,8 @@ The search endpoint (`POST /api/search`) returns a `text/event-stream` response.
 
 The chat endpoint (`POST /api/chat`) streams similarly via `chatWorker.js`. When the chat agent detects a trip-planning request (via regex patterns), it auto-triggers the same specialist agents and streams structured `section_result` events instead of plain text.
 
+Every non-error section streamed by `/api/search` carries `data.verification` (`level`: verified / partial / unverified / conflict, plus `label`, `summary`, `checks`, `pending`), computed by `backend/app/services/verification.py` from existing evidence only. The frontend renders it as a chip + popover in the section header (`VerificationBadge.jsx`); chat does not use it.
+
 ### Static Fallback Pattern
 
 Agents backed by static lookup tables (visa, SIM, tips, getting-around) follow a **static-first, AI-enhanced** pattern:
@@ -106,6 +108,7 @@ frontend/
       ui/             # Shared UI components (AirportSearch, NationalitySearch, TagInput)
       PlanViewModal.jsx # Modal for viewing/editing saved plans
       WalkingToursSection.jsx # Free Walking Tours cards (link to the provider's tour page)
+      VerificationBadge.jsx # Section source-verification chip + popover, conflict banner, Found-online tag
     context/
       AuthContext.jsx  # Auth state + two-way preference sync
     workers/

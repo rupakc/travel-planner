@@ -1343,14 +1343,22 @@ def _find_dest_key(destination: str) -> str | None:
     return None
 
 
-def _static_emergency_entry(city: str) -> dict | None:
-    """One per-city emergency card entry, or None if the city is unknown."""
+def get_static_emergency_numbers(city: str) -> dict | None:
+    """Reference emergency numbers for a city/country, or None if unknown."""
     dest_key = _find_dest_key(city)
     if not dest_key or dest_key not in _EMERGENCY_NUMBERS:
         return None
+    return _EMERGENCY_NUMBERS[dest_key]
+
+
+def _static_emergency_entry(city: str) -> dict | None:
+    """One per-city emergency card entry, or None if the city is unknown."""
+    numbers = get_static_emergency_numbers(city)
+    if numbers is None:
+        return None
     return {
         "city": city,
-        "emergency_numbers": _EMERGENCY_NUMBERS[dest_key],
+        "emergency_numbers": numbers,
         "embassy": None,
         "hospitals": [],
         "local_phrases": [],

@@ -162,6 +162,8 @@ def _map_result(
         "return": return_leg,
         "booking_url": _google_flights_url(origin, destination, dep_date, ret_date),
         "source": "google_flights",
+        # Evidence for the verification label — set only here, never by the LLM
+        "live_fare": True,
         "carbon_emissions_grams": carbon.get("this_flight"),
         "often_delayed": first_flight.get("often_delayed_by_over_30_min", False),
     }
