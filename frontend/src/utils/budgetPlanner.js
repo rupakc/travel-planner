@@ -11,7 +11,8 @@ const STEP = 10 // slider step; defaults sit on this grid
 // Prices are fractional and summed/scaled, so compare with a little slack
 const EPSILON = 1e-9
 const fitsWithin = (amount, share) => amount <= share + EPSILON
-const ceilStep = (n) => Math.ceil(n / STEP - EPSILON) * STEP
+const ceilStep = (n) => Math.ceil((n - EPSILON) / STEP) * STEP
+const floorStep = (n) => Math.floor((n + EPSILON) / STEP) * STEP
 const roundStep = (n) => Math.round(n / STEP) * STEP
 
 const num = (v) => {
@@ -71,6 +72,16 @@ function fitToTotal({ flights, stay, activities }, total) {
   return { ...parts, other: total - (parts.flights + parts.stay + parts.activities) }
 }
 
+// Defaults that overshoot the total give way in order: activities (to 0),
+// then stay (to 0); flights shrink only when the fare alone exceeds the total.
+// Shrunk shares snap down to the $10 grid; `other` takes what is left.
+function defaultsWithin({ flights, stay, activities }, total) {
+  const f = Math.min(flights, total)
+  const s = Math.min(stay, floorStep(total - f))
+  const a = Math.min(activities, floorStep(total - f - s))
+  return { flights: f, stay: s, activities: a, other: total - f - s - a }
+}
+
 export function defaultAllocation(searchData, results) {
   const budget = positive(searchData?.budget_usd)
   if (budget === null) return null
@@ -84,7 +95,7 @@ export function defaultAllocation(searchData, results) {
   const nightlies = listOf(r.hotels).map((h) => positive(h.price_per_night_usd)).filter((p) => p !== null)
   const stay = nightlies.length ? ceilStep(median(nightlies) * tripNights(searchData)) : 0
 
-  return fitToTotal({ flights, stay, activities: roundStep(total * ACTIVITY_SHARE) }, total)
+  return defaultsWithin({ flights, stay, activities: roundStep(total * ACTIVITY_SHARE) }, total)
 }
 
 const sumOf = (a) => a.flights + a.stay + a.activities + a.other

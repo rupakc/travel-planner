@@ -94,6 +94,42 @@ describe('defaultAllocation', () => {
     expect(fitResults(legs, a, sd()).flights.count).toBe(3)
   })
 
+  it('overshoot keeps the cheapest fare: $300 total, $280 fare, no hotels', () => {
+    const r = { flights: { results: [flight('F', 280)] } }
+    const a = defaultAllocation(sd({ budget_usd: 300 }), r)
+    expect(a.flights).toBe(280)
+    expect(sum(a)).toBe(300)
+    expect(Object.values(a).every((v) => Number.isInteger(v) && v >= 0)).toBe(true)
+    expect(fitResults(r, a, sd()).flights.count).toBe(1)
+  })
+
+  it('overshoot shrinks activities, then stay, before flights', () => {
+    const r = { flights: { results: [flight('F', 280)] }, hotels: { results: [hotel('H', 40)] } }
+    const a = defaultAllocation(sd({ budget_usd: 500 }), r)
+    expect(a).toEqual({ flights: 280, stay: 220, activities: 0, other: 0 })
+    expect(fitResults(r, a, sd()).flights.count).toBe(1)
+  })
+
+  it('overshoot snaps the shrunk shares to the $10 grid', () => {
+    const r = { flights: { results: [flight('F', 280)] } }
+    // 15% of 315 = 47.25 → 50; only 35 left → activities 30, other 5
+    expect(defaultAllocation(sd({ budget_usd: 315 }), r)).toEqual({ flights: 280, stay: 0, activities: 30, other: 5 })
+  })
+
+  it('a fare above the total gets the whole total and does not fit', () => {
+    const r = { flights: { results: [flight('F', 350)] }, hotels: { results: [hotel('H', 40)] } }
+    const a = defaultAllocation(sd({ budget_usd: 300 }), r)
+    expect(a).toEqual({ flights: 300, stay: 0, activities: 0, other: 0 })
+    expect(fitResults(r, a, sd()).flights.count).toBe(0)
+  })
+
+  it('a fare just under an off-grid total still fits', () => {
+    const r = { flights: { results: [flight('F', 296)] } }
+    const a = defaultAllocation(sd({ budget_usd: 299 }), r)
+    expect(a.flights).toBe(299)
+    expect(fitResults(r, a, sd()).flights.count).toBe(1)
+  })
+
   it('fit comparisons tolerate floating-point noise', () => {
     // 0.1 + 0.2 = 0.30000000000000004 > 0.3
     const r = { flights: { results: [flight('F', 0.1 + 0.2)] }, hotels: { results: [hotel('H', (0.1 + 0.2) / 7)] }, activities: { results: [activity('A', 0.1 + 0.2, 1)] } }
@@ -116,14 +152,9 @@ describe('defaultAllocation', () => {
     expect(defaultAllocation(sd(), r).flights).toBe(250)
   })
 
-  it('scales flights/stay/activities down so other is never negative', () => {
+  it('when the defaults overshoot, activities then stay give way so other is never negative', () => {
     const a = defaultAllocation(sd({ budget_usd: 1000 }), results)
-    expect(sum(a)).toBe(1000)
-    expect(a.other).toBeGreaterThanOrEqual(0)
-    expect(a.flights).toBeLessThan(650)
-    expect(a.stay).toBeLessThan(1050)
-    // proportions kept (within rounding)
-    expect(a.stay / a.flights).toBeCloseTo(1050 / 650, 1)
+    expect(a).toEqual({ flights: 650, stay: 350, activities: 0, other: 0 })
   })
 
   it('missing or errored sections allocate 0', () => {
