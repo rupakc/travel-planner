@@ -43,7 +43,7 @@ import {
   arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
   layoutChangeCount, syncPlannedSlots,
 } from '../utils/itineraryLayout'
-import { scheduleDays, syncPlannedSlotTimes } from '../utils/schedule'
+import { scheduleDays, slotWhen, timeRange, syncPlannedSlotTimes } from '../utils/schedule'
 import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -2922,7 +2922,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                   <div key={i} className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-xs font-medium text-gray-800 truncate">{slot.activity}</p>
-                      <p className="text-xs text-teal-500">Day {slot.day_number} · {slot.time_of_day}</p>
+                      <p className="text-xs text-teal-500">{timeRange(slot) ? slotWhen(slot) : `Day ${slot.day_number} · ${slot.time_of_day}`}</p>
                     </div>
                     <button onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12}/></button>
                   </div>

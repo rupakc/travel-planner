@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { listedInScheduleOrder, pickedTimes, scheduleDays, syncPlannedSlotTimes, timeRange, transitLabel } from './schedule'
+import { listedInScheduleOrder, pickedTimes, scheduleDays, slotWhen, syncPlannedSlotTimes, timeRange, transitLabel } from './schedule'
 import { arrangeItinerary, moveSlot, removeSlot } from './itineraryLayout'
 
 // A point `km` north of `lat` (1° of latitude ≈ 111.19 km)
@@ -334,5 +334,10 @@ describe('picked slot times', () => {
   it('syncPlannedSlotTimes leaves entries with no scheduled counterpart alone', () => {
     const picked = [{ key: '9-morning', day_number: 9, time_of_day: 'morning', activity: 'X' }]
     expect(syncPlannedSlotTimes(picked, sched())).toBe(picked)
+  })
+
+  it('slotWhen reads "Day 2 · Afternoon · 13:30–16:00", without times when absent', () => {
+    expect(slotWhen({ day_number: 2, time_of_day: 'afternoon', start_time: '13:30', end_time: '16:00' })).toBe('Day 2 · Afternoon · 13:30–16:00')
+    expect(slotWhen({ day_number: 2, time_of_day: 'afternoon' })).toBe('Day 2 · Afternoon')
   })
 })

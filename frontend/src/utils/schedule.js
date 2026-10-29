@@ -162,3 +162,9 @@ export function syncPlannedSlotTimes(itinerarySlots, scheduledDays) {
   })
   return changed ? out : itinerarySlots
 }
+
+/** "Day 2 · Afternoon · 13:30–16:00" for a picked itinerary entry; the times are left out when it has none. */
+export function slotWhen(slot) {
+  const tod = slot?.time_of_day ? slot.time_of_day.charAt(0).toUpperCase() + slot.time_of_day.slice(1) : ''
+  return [`Day ${slot?.day_number}`, tod, timeRange(slot)].filter(Boolean).join(' · ')
+}
