@@ -30,6 +30,10 @@ import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
+import {
+  arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
+  layoutChangeCount, syncPlannedSlots,
+} from '../utils/itineraryLayout'
 import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -2313,7 +2317,7 @@ function StressScoreRing({ score, overall }) {
   )
 }
 
-function StressTestSection({ data }) {
+function StressTestSection({ data, layoutMoved = false }) {
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
@@ -2335,6 +2339,7 @@ function StressTestSection({ data }) {
           <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
           <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
+          {layoutMoved && <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>}
         </div>
       </div>
 
@@ -3230,10 +3235,12 @@ export default function ResultsPage() {
   const [planName,   setPlanName]   = useState('My Trip Plan')
   const [selections, setSelections] = useState({
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
-    itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [],
+    itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null,
   })
   // Selections as they were just before "Add all to My Plan" (for Undo)
   const [packageUndo, setPackageUndo] = useState(null)
+  // Previous itinerary layouts (newest last, max 20) for the Undo button
+  const [layoutUndo, setLayoutUndo] = useState([])
   const [viewingPlan, setViewingPlan] = useState(null)  // plan object when modal is open
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer — it
@@ -3285,6 +3292,42 @@ export default function ResultsPage() {
     setLoadedPlanId(plan.id)
     setLoadedPlanSearchData(plan.search_data || null)
     setPackageUndo(null)
+    setLayoutUndo([])
+  }
+
+  // Itinerary editing: every action computes the next layout from the ORIGINAL
+  // itinerary, records the previous one for Undo, and updates selections once.
+  const layoutRef = useRef(null)
+  layoutRef.current = selections.itinerary_layout
+  const commitLayout = (next, { undoable = true } = {}) => {
+    const prev = layoutRef.current
+    if (next === prev) return false
+    layoutRef.current = next
+    if (undoable) setLayoutUndo(u => [...u.slice(-19), prev])
+    setSelections(s => ({
+      ...s,
+      itinerary_layout: next,
+      itinerary_slots: syncPlannedSlots(s.itinerary_slots, arrangeItinerary(results.itinerary, next, s.itinerary_edits)),
+    }))
+    return true
+  }
+  const handleMoveSlot = (key, day, tod, method) => {
+    const it = results.itinerary
+    const swap = !!moveTargets(it, layoutRef.current, key).find(t => t.day_number === day && t.time_of_day === tod)?.swapWith
+    if (commitLayout(moveSlot(it, layoutRef.current, key, day, tod))) track('itinerary_slot_moved', 'results', { method, swap })
+  }
+  const handleRemoveSlot = (key) => {
+    if (commitLayout(removeSlot(results.itinerary, layoutRef.current, key))) track('itinerary_slot_removed', 'results', {})
+  }
+  const handleRestoreSlot = (key) => { commitLayout(restoreSlot(results.itinerary, layoutRef.current, key)) }
+  const handleResetLayout = () => {
+    if (commitLayout(null)) track('itinerary_layout_reset', 'results', {})
+  }
+  const handleUndoLayout = () => {
+    if (!layoutUndo.length) return
+    const prev = layoutUndo[layoutUndo.length - 1]
+    setLayoutUndo(u => u.slice(0, -1))
+    commitLayout(prev, { undoable: false })
   }
 
 
@@ -3315,6 +3358,7 @@ export default function ResultsPage() {
     setLoadedPlanId(null)
     setLoadedPlanSearchData(null)
     setPackageUndo(null)
+    setLayoutUndo([])
     setActiveFlightFilterCount(0)
     setActiveHotelFilterCount(0)
     setActiveActivityFilterCount(0)
@@ -3327,7 +3371,7 @@ export default function ResultsPage() {
     if (preloadSelections) {
       setSelections(preloadSelections)
     } else {
-      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [] })
+      setSelections({ flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [], itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null })
     }
 
     // Small delay so state resets before the effect re-fires
@@ -3654,8 +3698,10 @@ export default function ResultsPage() {
       emergency_card: () => <EmergencyCardSection data={data} status={status} />,
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
-      itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan} />,
-      stress_test:    () => <StressTestSection data={data} />,
+      itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
+        onMoveSlot={handleMoveSlot} onRemoveSlot={handleRemoveSlot} onRestoreSlot={handleRestoreSlot}
+        onUndoLayout={handleUndoLayout} onResetLayout={handleResetLayout} canUndo={layoutUndo.length > 0} />,
+      stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0} />,
       packing_list:   () => <PackingListSection data={data} status={status} selections={selections} onSavePacking={(state) => setSelections(s => ({ ...s, packing_list: state }))} />,
     }
     const isOpen = !collapsedSections[agent]
@@ -3892,7 +3938,7 @@ export default function ResultsPage() {
           </div>
         ) : (
           <TimelineView
-            itineraryData={results.itinerary}
+            itineraryData={arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits)}
             weatherData={results.weather}
             searchData={searchData}
           />
