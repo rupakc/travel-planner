@@ -78,8 +78,15 @@ const duration = (mins) => {
   return [h && `${h}h`, m && `${m}m`].filter(Boolean).join(' ')
 }
 
-function pickFlight(flights) {
-  let cands = flights.filter((f) => flightPrice(f) > 0)
+// Keep only items the caps allow; if none are allowed, keep them all
+const capped = (items, allow) => {
+  if (!allow) return items
+  const kept = items.filter(allow)
+  return kept.length ? kept : items
+}
+
+function pickFlight(flights, allow) {
+  let cands = capped(flights.filter((f) => flightPrice(f) > 0), allow)
   if (cands.some((f) => f.source !== 'estimate')) cands = cands.filter((f) => f.source !== 'estimate')
   if (!cands.length) return null
   const cheapestOverall = sortBy(cands, byAsc(flightPrice), byAsc(flightStops))[0]
@@ -105,12 +112,12 @@ function pickFlight(flights) {
   return { item: best, reason }
 }
 
-function pickFlights(flightsSection) {
+function pickFlights(flightsSection, allow) {
   if (!flightsSection || flightsSection.error) return { single: null, legs: [] }
   if (flightsSection.legs?.length > 0) {
     const legs = []
     flightsSection.legs.forEach((leg, i) => {
-      const pick = pickFlight((Array.isArray(leg?.results) ? leg.results : []).filter(Boolean))
+      const pick = pickFlight((Array.isArray(leg?.results) ? leg.results : []).filter(Boolean), allow)
       if (!pick) return
       const legIndex = pick.item.leg_index ?? leg.leg_index ?? i
       const item = pick.item.leg_index === legIndex ? pick.item : { ...pick.item, leg_index: legIndex }
@@ -118,7 +125,7 @@ function pickFlights(flightsSection) {
     })
     return { single: null, legs: legs.sort((a, b) => a.item.leg_index - b.item.leg_index) }
   }
-  return { single: pickFlight(listOf(flightsSection)), legs: [] }
+  return { single: pickFlight(listOf(flightsSection), allow), legs: [] }
 }
 
 // ---- hotels ----
@@ -258,11 +265,13 @@ function pickSim(section, searchData) {
 
 // ---- builder ----
 
-export function buildBestValuePackage(results, searchData) {
+// caps (optional, from the budget planner): { hotel(h) => bool, flight(f) => bool }
+// limit the hotel and flight pools; a pool with nothing allowed is left as is.
+export function buildBestValuePackage(results, searchData, { caps } = {}) {
   const r = results || {}
-  const flights = pickFlights(r.flights)
+  const flights = pickFlights(r.flights, caps?.flight)
   const first = firstStop(r, searchData)
-  const hotelCands = hotelCandidates(r.hotels, first)
+  const hotelCands = capped(hotelCandidates(r.hotels, first), caps?.hotel)
   let hotel = pickHotel(hotelCands, first)
   if (!flights.single && !flights.legs.length && !hotel) return null
 
