@@ -477,6 +477,89 @@ describe('ItinerarySection', () => {
     expect(order).toEqual(['free:1-morning', '1-lunch', 'free:1-afternoon', '1-evening'])
   })
 
+  describe('estimated times', () => {
+    const KM_PER_DEG = (6371 * Math.PI) / 180
+    const at = (km) => ({ lat: 41.38 + km / 1.3 / KM_PER_DEG, lng: 2.17 })
+    const GEO = {
+      days: [
+        { day_number: 1, slots: [
+          { ...slot('morning', 'Cathedral'), ...at(0) },
+          { ...slot('afternoon', 'Market'), ...at(0.8) },
+          { ...slot('evening', 'Tapas'), ...at(4.8) },
+        ] },
+        { day_number: 2, slots: [slot('morning', 'Long walk'), slot('afternoon', 'Late lunch')] },
+      ],
+    }
+    GEO.days[1].slots[0].duration_hours = 5
+    const timeOf = (key) => row(key).querySelector('[data-slot-time]')?.textContent
+
+    it('shows each row\'s start–end under its time of day', () => {
+      render(handlers())
+      expect(timeOf('1-morning')).toBe('09:00–11:00')
+      expect(timeOf('1-afternoon')).toBe('13:30–15:30')
+      expect(timeOf('1-evening')).toBe('18:30–20:30')
+      expect(container.textContent).toContain('Times are estimates based on typical durations and distances.')
+    })
+
+    it('re-times activities after a move', () => {
+      const layout = moveSlot(ITIN, null, '1-morning', 2, 'afternoon') // swaps with Park Guell
+      render({ ...handlers(), selections: { itinerary_layout: layout } })
+      expect(timeOf('1-morning')).toBe('13:30–15:30')
+      expect(timeOf('2-afternoon')).toBe('09:00–11:00')
+    })
+
+    it('shows travel between stops outside the draggable rows', () => {
+      render({ ...handlers(), data: GEO })
+      const lines = [...container.querySelectorAll('[data-day="1"] [data-transit]')]
+      expect(lines.map((l) => l.textContent)).toEqual(['🚶 15 min walk · 0.8 km', '🚇 ~25 min by transit'])
+      for (const line of lines) {
+        expect(line.closest('[data-slot-key]')).toBeNull()
+        expect(line.closest('[draggable]')).toBeNull()
+      }
+      // unknown coordinates: no line at all
+      expect(container.querySelector('[data-day="2"] [data-transit]')).toBeNull()
+    })
+
+    it('hides travel lines on a day listed out of its timed order', () => {
+      const data = { days: [
+        { day_number: 1, slots: [{ ...slot('evening', 'Tapas'), ...at(0.8) }, { ...slot('morning', 'Cathedral'), ...at(0) }] },
+        { ...GEO.days[0], day_number: 2 },
+      ] }
+      render({ ...handlers(), data })
+      // Tapas (listed first) is timed after Cathedral: no line may claim travel from a stop shown below it
+      expect(row('1-evening').querySelector('[data-slot-time]').textContent).toBe('18:30–20:30')
+      expect(container.querySelector('[data-day="1"] [data-transit]')).toBeNull()
+      expect(container.querySelectorAll('[data-day="2"] [data-transit]')).toHaveLength(2)
+    })
+
+    it('flags a tight day, naming the edited activity', () => {
+      const edits = { '2-afternoon': { activity: 'Tapas lunch' } }
+      render({ ...handlers(), data: GEO, selections: { itinerary_edits: edits } })
+      const warning = container.querySelector('[data-day="2"] [data-schedule-warnings]')
+      expect(warning.textContent).toContain('Tight schedule')
+      expect(warning.textContent).toContain('Tapas lunch starts at 14:20 — later than planned')
+      expect(container.querySelector('[data-day="1"] [data-schedule-warnings]')).toBeNull()
+    })
+
+    it('a transit line does not get in the way of dropping on the next row or a placeholder', () => {
+      const h = handlers()
+      const layout = removeSlot(GEO, null, '1-afternoon')
+      render({ ...h, data: GEO, selections: { itinerary_layout: layout } })
+      const dt = transfer()
+      fire(row('1-morning'), 'dragstart', dt)
+      const spot = free('1-afternoon')
+      expect(fire(spot, 'dragover', dt).defaultPrevented).toBe(true)
+      fire(spot, 'drop', dt)
+      expect(h.onMoveSlot).toHaveBeenCalledWith('1-morning', 1, 'afternoon', 'drag')
+    })
+  })
+
+  it('shows the original name for an empty-string activity edit', () => {
+    render({ ...handlers(), selections: { itinerary_edits: { '1-afternoon': { activity: '' } } } })
+    expect([...activities(0)].map(n => n.textContent)).toEqual(['Cathedral', 'Market', 'Tapas'])
+    expect(button('Plan', row('1-afternoon')).getAttribute('aria-label')).toBe('Add Market to plan')
+  })
+
   it('dragend clears the drag state', () => {
     render(handlers())
     const dt = transfer()

@@ -77,12 +77,10 @@ class ItineraryAgent(BaseAgent):
                 "    afternoon: 'Arrive [City B], check in, light walk'\n"
                 "    evening: 'First dinner in [City B] — [local dish]'\n"
                 "- Keep all activities geographically within each day's city\n"
-                "- Add lat/lng coordinates (decimal degrees) to every slot\n"
+                "- Add lat/lng coordinates (decimal degrees) on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel\n"
             )
         else:
-            multi_city_block = (
-                "\nAdd lat/lng coordinates (decimal degrees) to every slot.\n"
-            )
+            multi_city_block = "\nAdd lat/lng coordinates (decimal degrees) on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel.\n"
 
         pace_guidance = {
             "relaxed": (
@@ -108,6 +106,7 @@ class ItineraryAgent(BaseAgent):
             f"Available activities:\n{activities_summary}\n\n"
             f"Create a {nights + 1}-day itinerary (arrival day through departure day).\n"
             f"Each day: exactly 3 time slots (morning, afternoon, evening).\n"
+            f"Give duration_hours on every slot (realistic hours spent there).\n"
             f"Day 1 = arrival from {request.origin}. Last day = departure back to {request.origin}.\n"
             f"Include daily_estimated_cost_usd and total_estimated_cost_usd.\n"
             f"Group geographically close activities on the same day.\n"

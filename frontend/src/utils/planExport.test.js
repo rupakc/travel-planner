@@ -66,8 +66,10 @@ describe('icsFold', () => {
 
 describe('planItineraryDays', () => {
   it('prefers the full itinerary, then the saved snapshot', () => {
-    expect(planItineraryDays({}, itinerary)).toBe(itinerary.days)
-    expect(planItineraryDays({ itinerary }, null)).toBe(itinerary.days)
+    // same days, now carrying estimated times (they used to be the very same objects)
+    expect(planItineraryDays({}, itinerary)).toMatchObject(itinerary.days)
+    expect(planItineraryDays({ itinerary }, null)).toMatchObject(itinerary.days)
+    expect(planItineraryDays({}, itinerary)[0].slots[0]).toMatchObject({ start_time: '09:00', end_time: '11:00' })
   })
 
   it('falls back to individually selected slots grouped by day', () => {
@@ -108,10 +110,10 @@ describe('buildPlanIcs', () => {
     expect(field(market, 'DTSTART')).toBe('DTSTART:20270401T090000')
     expect(field(market, 'DTEND')).toBe('DTEND:20270401T110000')
     expect(field(market, 'LOCATION')).toBe('LOCATION:Tsukiji\\, Tokyo')
-    expect(field(crossing, 'DTSTART')).toBe('DTSTART:20270401T180000')
+    expect(field(crossing, 'DTSTART')).toBe('DTSTART:20270401T183000')
     expect(field(crossing, 'DTEND')).toBe('DTEND:20270401T210000')
     // Day 2 has no date: derived from the trip's departure date
-    expect(field(shrine, 'DTSTART')).toBe('DTSTART:20270402T130000')
+    expect(field(shrine, 'DTSTART')).toBe('DTSTART:20270402T133000')
   })
 
   it('applies the user\'s slot edits and notes', () => {
@@ -210,6 +212,11 @@ describe('buildPlanIcs', () => {
     expect(field(out, 'DESCRIPTION')).toContain('https://example.com/book')
   })
 
+  it('uses the original name for an empty-string activity edit', () => {
+    const ics = build({ itinerary_edits: { '1-morning': { activity: '' } } })
+    expect(events(ics).some((e) => field(e, 'SUMMARY') === 'SUMMARY:Tsukiji Outer Market')).toBe(true)
+  })
+
   it('includes the itinerary\'s own slot notes', () => {
     const ics = build({}, { itinerary: { days: [{ day_number: 1, date: '2027-04-01', slots: [{ time_of_day: 'morning', activity: 'A', notes: 'Closed Mondays' }] }] } })
     expect(field(events(ics)[0], 'DESCRIPTION')).toContain('Closed Mondays')
@@ -217,7 +224,7 @@ describe('buildPlanIcs', () => {
 
   it('lets a long evening slot run past midnight', () => {
     const ics = build({}, { itinerary: { days: [{ day_number: 1, date: '2027-04-01', slots: [{ time_of_day: 'evening', activity: 'Night tour', duration_hours: 8 }] }] } })
-    expect(field(events(ics)[0], 'DTEND')).toBe('DTEND:20270402T020000')
+    expect(field(events(ics)[0], 'DTEND')).toBe('DTEND:20270402T023000')
   })
 
   it('gives a same-day trip\'s hotel a single night', () => {
@@ -274,7 +281,7 @@ describe('arranged itinerary', () => {
     const evs = events(build(sel))
     const moved = evs.find((e) => field(e, 'UID').includes('slot-1-morning'))
     expect(field(moved, 'SUMMARY')).toBe('SUMMARY:Toyosu Market')
-    expect(field(moved, 'DTSTART')).toBe('DTSTART:20270402T180000')
+    expect(field(moved, 'DTSTART')).toBe('DTSTART:20270402T183000')
     expect(field(moved, 'DTEND')).toBe('DTEND:20270402T210000')
     expect(field(moved, 'DESCRIPTION')).toContain('Go early')
     const partner = evs.find((e) => field(e, 'SUMMARY') === 'SUMMARY:Izakaya crawl')
@@ -289,6 +296,80 @@ describe('arranged itinerary', () => {
 
   it('a layout from another itinerary is ignored', () => {
     const other = { days: [{ day_number: 1, date: '2027-04-01', slots: [{ time_of_day: 'morning', activity: 'Other' }] }] }
-    expect(planItineraryDays({ itinerary_layout: swapped }, other)).toBe(other.days)
+    expect(planItineraryDays({ itinerary_layout: swapped }, other)).toMatchObject(other.days)
+    expect(planItineraryDays({ itinerary_layout: swapped }, other)[0].slots[0].key).toBe('1-morning')
+  })
+})
+
+describe('scheduled times', () => {
+  const build = (it, selections = {}) => buildPlanIcs({ planName: 'T', searchData, selections, itinerary: it, now: NOW })
+  const KM_PER_DEG = (6371 * Math.PI) / 180
+
+  it('uses the scheduled start and end, including travel from the previous stop', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'morning', activity: 'A', duration_hours: 4.5, lat: 35.6, lng: 139.7 },
+      // 4 km after the 1.3 detour: 25 min by transit
+      { time_of_day: 'afternoon', activity: 'B', duration_hours: 2, lat: 35.6 + 4 / 1.3 / KM_PER_DEG, lng: 139.7 },
+    ] }] }
+    const b = events(build(it)).find((e) => field(e, 'SUMMARY') === 'SUMMARY:B')
+    expect(field(b, 'DTSTART')).toBe('DTSTART:20270401T135500')
+    expect(field(b, 'DTEND')).toBe('DTEND:20270401T155500')
+  })
+
+  it('rolls a stop that starts after midnight onto the next day', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'evening', activity: 'Night tour', duration_hours: 8 },
+      { time_of_day: 'late night', activity: 'Club', duration_hours: 1 },
+    ] }] }
+    const club = events(build(it)).find((e) => field(e, 'SUMMARY') === 'SUMMARY:Club')
+    expect(field(club, 'DTSTART')).toBe('DTSTART:20270402T025000')
+    expect(field(club, 'DTEND')).toBe('DTEND:20270402T035000')
+  })
+
+  it('dates each event by its scheduled day offset', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'morning', activity: 'A', duration_hours: 12 },
+      { time_of_day: 'afternoon', activity: 'B', duration_hours: 12 },
+      { time_of_day: 'evening', activity: 'C', duration_hours: 12 },
+    ] }] }
+    const evs = events(build(it))
+    const when = (name) => {
+      const ev = evs.find((e) => field(e, 'SUMMARY') === `SUMMARY:${name}`)
+      return [field(ev, 'DTSTART'), field(ev, 'DTEND')]
+    }
+    expect(when('A')).toEqual(['DTSTART:20270401T090000', 'DTEND:20270401T210000'])
+    expect(when('B')).toEqual(['DTSTART:20270401T212000', 'DTEND:20270402T092000'])
+    // starts after 09:00 on the next day: the offset, not the clock, says so
+    expect(when('C')).toEqual(['DTSTART:20270402T094000', 'DTEND:20270402T214000'])
+  })
+
+  it('keeps a day listed out of order on its own date', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'evening', activity: 'C', duration_hours: 1 },
+      { time_of_day: 'morning', activity: 'A', duration_hours: 12 },
+    ] }] }
+    const evs = events(build(it))
+    const c = evs.find((e) => field(e, 'SUMMARY') === 'SUMMARY:C')
+    const a = evs.find((e) => field(e, 'SUMMARY') === 'SUMMARY:A')
+    expect(field(c, 'DTSTART')).toBe('DTSTART:20270401T212000')
+    expect(field(a, 'DTSTART')).toBe('DTSTART:20270401T090000')
+    expect(field(a, 'DTEND')).toBe('DTEND:20270401T210000')
+  })
+
+  it('keeps the fixed slot hours for individually picked slots', () => {
+    const sel = { itinerary_slots: [{ key: '1-afternoon', day_number: 1, date: '2027-04-01', time_of_day: 'afternoon', activity: 'Picked' }] }
+    const [ev] = events(buildPlanIcs({ planName: 'T', searchData, selections: sel, now: NOW }))
+    expect(field(ev, 'DTSTART')).toBe('DTSTART:20270401T130000')
+    expect(field(ev, 'DTEND')).toBe('DTEND:20270401T170000')
+  })
+
+  it('planItineraryDays schedules the arranged days and names edited activities in warnings', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'morning', activity: 'A', duration_hours: 5 },
+      { time_of_day: 'afternoon', activity: 'B' },
+    ] }] }
+    const [day] = planItineraryDays({ itinerary_edits: { '1-afternoon': { activity: 'Tile Museum' } } }, it)
+    expect(day.slots[1].start_time).toBe('14:20')
+    expect(day.schedule_warnings).toEqual(['Tile Museum starts at 14:20 — later than planned'])
   })
 })

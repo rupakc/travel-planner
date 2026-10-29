@@ -7,6 +7,7 @@ import {
 import { computePlanCost } from '../utils/planHelpers'
 import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
+import { scheduleDays, timeRange } from '../utils/schedule'
 
 // Public, read-only trip card — reachable without login via /share/:token
 
@@ -146,7 +147,7 @@ function downloadCard(plan) {
   }
 
   const arranged = sel.itinerary?.days?.length ? arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits) : null
-  const itinDays = arranged?.days || []
+  const itinDays = arranged ? scheduleDays(arranged.days, sel.itinerary_edits) : []
   if (itinDays.length) {
     section(`📅 Itinerary — ${itinDays.length} days`)
     for (const day of itinDays) {
@@ -155,7 +156,8 @@ function downloadCard(plan) {
         const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
         const edit = sel.itinerary_edits?.[key] || {}
         const note = sel.itinerary_notes?.[key]
-        add(`${slot.time_of_day}: ${edit.activity ?? slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
+        const range = timeRange(slot)
+        add(`${slot.time_of_day}${range ? ` ${range}` : ''}: ${edit.activity || slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
       }
       space(10)
     }
@@ -271,7 +273,7 @@ export default function SharePage() {
   const travelers = sd.num_travelers || 1
   const totalCost = computePlanCost(sel, sd)
   const arranged = sel.itinerary?.days?.length ? arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits) : null
-  const itinDays = arranged?.days || []
+  const itinDays = arranged ? scheduleDays(arranged.days, sel.itinerary_edits) : []
   const legFlights = sel.flights || []
 
   // Fallback itinerary from individually-selected slots when no full snapshot
@@ -400,9 +402,12 @@ export default function SharePage() {
                       const note = sel.itinerary_notes?.[key]
                       return (
                         <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
-                          <span className="shrink-0 w-20 text-xs text-gray-400 capitalize mt-0.5">{slot.time_of_day}</span>
+                          <span className="shrink-0 w-20 text-xs text-gray-400 mt-0.5">
+                            <span className="capitalize">{slot.time_of_day}</span>
+                            {timeRange(slot) && <span className="block text-[11px] tabular-nums">{timeRange(slot)}</span>}
+                          </span>
                           <span className="min-w-0">
-                            {edit.activity ?? slot.activity}
+                            {edit.activity || slot.activity}
                             {(edit.location ?? slot.location) && <span className="text-gray-400 text-xs"> — {edit.location ?? slot.location}</span>}
                             {note && <span className="block text-xs text-teal-600 italic">📝 {note}</span>}
                           </span>

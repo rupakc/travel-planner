@@ -97,6 +97,22 @@ describe('buildPlanPrintHtml', () => {
     expect(html).not.toContain('<h2>Tips')
   })
 
+  it('shows each activity\'s estimated times next to its time of day', () => {
+    const html = build()
+    expect(html).toContain('<span class="when">morning</span> <span class="time">09:00–12:00</span>')
+  })
+
+  it('shows no times for individually picked slots', () => {
+    const picked = { itinerary_slots: [{ key: '1-morning', day_number: 1, time_of_day: 'morning', activity: 'Picked' }] }
+    const html = build({ selections: picked, itinerary: null })
+    expect(html).toContain('<span class="when">morning</span> Picked')
+  })
+
+  it('uses the original name for an empty-string activity edit', () => {
+    const html = build({ selections: { ...selections, itinerary_edits: { '1-morning': { activity: '' } } } })
+    expect(html).toContain('Tsukiji Outer Market')
+  })
+
   it('applies itinerary edits and notes', () => {
     const html = build({
       selections: {

@@ -1,5 +1,6 @@
 import { arrangeItinerary } from './itineraryLayout'
 import { apiReturnDate } from './compare'
+import { scheduleDays } from './schedule'
 
 const RECHECK_FALLBACK = "Couldn't re-check — try again"
 
@@ -11,8 +12,9 @@ const withoutVerification = (section) => {
 
 /**
  * The itinerary as the user now sees it: arranged by their layout, with
- * removed activities left out and their edits (activity/location/cost) applied
- * — the same overrides ItinerarySection shows.
+ * removed activities left out, their edits (activity/location/cost) applied
+ * and estimated start/end times and travel between stops added — what
+ * ItinerarySection shows.
  */
 function editedItinerary(itinerary, selections) {
   const edits = selections?.itinerary_edits || {}
@@ -20,7 +22,7 @@ function editedItinerary(itinerary, selections) {
     arrangeItinerary(itinerary, selections?.itinerary_layout, edits)
   return {
     ...arranged,
-    days: arranged.days.map((day) => ({
+    days: scheduleDays(arranged.days, edits).map((day) => ({
       ...day,
       slots: (day.slots || []).map((slot) => {
         const edit = edits[slot.key] || {}
@@ -31,7 +33,7 @@ function editedItinerary(itinerary, selections) {
           // the original description no longer matches an edited activity
           // (same test as the on-screen row: any falsy edit keeps it)
           ...(!edit.activity && notes !== undefined ? { notes } : {}),
-          activity: edit.activity ?? slot.activity,
+          activity: edit.activity || slot.activity,
           location: edit.location ?? slot.location,
           estimated_cost_usd: edit.cost ?? slot.estimated_cost_usd,
         }
