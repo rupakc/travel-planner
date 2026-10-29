@@ -1,8 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
 from ...agents.flights_agent import FlightsAgent
+from ...core.auth import get_current_user
 from ...core.config import settings
 from ...schemas.request import FlightFilteredSearchRequest, TravelSearchRequest
+from ...services.serp_flights import search_calendar
 from ...services.verification import attach_verification
 
 router = APIRouter()
@@ -37,3 +39,21 @@ async def get_flights_filtered(request: FlightFilteredSearchRequest):
         result = await agent.enrich(result)
     # Final (non-pending) label so the chip survives the section replacement
     return attach_verification("flights", result, request)
+
+
+@router.post("/flights/fare-calendar")
+async def get_fare_calendar(
+    request: TravelSearchRequest, _user: dict = Depends(get_current_user)
+):
+    """Cheapest live fare for departure dates ±3 days (same trip length)."""
+    if request.is_multi_city:
+        raise HTTPException(
+            status_code=422,
+            detail="Fare calendar is only available for single-destination trips.",
+        )
+    if not settings.serpapi_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Fare calendar needs live flight data, which isn't configured.",
+        )
+    return await search_calendar(settings.serpapi_key, request)
