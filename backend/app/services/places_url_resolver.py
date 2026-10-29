@@ -108,5 +108,6 @@ async def resolve_top_places(
         if url and url not in seen_urls:
             seen_urls.add(url)
             results[idx]["info_url"] = url
+            results[idx]["link_verified"] = True
             results[idx]["source"] = _url_to_source(url)
     return data

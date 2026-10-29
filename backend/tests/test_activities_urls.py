@@ -278,6 +278,25 @@ class TestSerperActivityResolver:
 
 class TestResolveTop:
     @pytest.mark.asyncio
+    async def test_link_verified_only_when_upgraded(self):
+        gyg_url = "https://www.getyourguide.com/tokyo-l193/tsukiji-tour-t123"
+        data = {
+            "results": _make_activities(
+                [
+                    ("Tsukiji Outer Market Food Tour", 0.95),
+                    ("Shibuya Night Walk Tour", 0.9),
+                ]
+            )
+        }
+        mock_resolver = AsyncMock()
+        mock_resolver.resolve = AsyncMock(side_effect=[gyg_url, None])
+
+        result = await resolve_top(mock_resolver, data, "Tokyo")
+
+        assert result["results"][0]["link_verified"] is True
+        assert "link_verified" not in result["results"][1]
+
+    @pytest.mark.asyncio
     async def test_upgrades_top_activity_url(self):
         gyg_url = "https://www.getyourguide.com/tokyo-l193/tsukiji-tour-t123"
         activities = _make_activities(

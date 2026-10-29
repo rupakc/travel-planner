@@ -146,6 +146,7 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
                     match_name=name,
                 )
 
+            hotel["link_verified"] = bool(url)
             if url:
                 hotel["booking_url"] = url
                 hotel["source"] = _url_to_source(url)

@@ -212,6 +212,7 @@ async def resolve_top(
         idx, url = res
         if url and url not in used_urls:
             activities[idx]["booking_url"] = url
+            activities[idx]["link_verified"] = True
             used_urls.add(url)
             logger.info(
                 "Tier 2 activity URL [%d] %r → %s",
