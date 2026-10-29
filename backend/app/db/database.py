@@ -3,10 +3,12 @@ import json
 import logging
 import re
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from ..core.places import CITY_ALIASES, fold_place, saint_variants, stated_region
-from .airport_regions import AIRPORT_REGION
+from .airport_regions import airport_regions
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +21,32 @@ def _db_path() -> Path:
     return p / "airports.db"
 
 
-def get_connection() -> sqlite3.Connection:
+@contextmanager
+def get_connection() -> Iterator[sqlite3.Connection]:
+    """A connection to the app DB: commits when the block succeeds, rolls
+    back when it raises, and is always closed."""
     conn = sqlite3.connect(str(_db_path()))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA busy_timeout=5000")
-    return conn
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        yield conn
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+# Columns added to ``airports`` after the first release; existing DBs gain
+# them in place (web-saved rows default to scheduled).
+_AIRPORT_MIGRATIONS = {
+    "region": "TEXT",
+    "type_rank": "INTEGER",
+    "scheduled": "INTEGER DEFAULT 1",
+}
 
 
 def create_tables():
@@ -54,7 +75,43 @@ def create_tables():
             );
             CREATE INDEX IF NOT EXISTS idx_nationalities_name    ON nationalities(nationality COLLATE NOCASE);
             CREATE INDEX IF NOT EXISTS idx_nationalities_country ON nationalities(country COLLATE NOCASE);
+
+            -- GeoNames places (cities1000) and the airports each one links to
+            -- (space-separated IATA codes, best first); see app/db/data/README.md
+            CREATE TABLE IF NOT EXISTS places (
+                geonameid    INTEGER PRIMARY KEY,
+                name         TEXT NOT NULL,
+                country_code TEXT NOT NULL,
+                admin1       TEXT,
+                population   INTEGER,
+                score        INTEGER,
+                lat          REAL,
+                lng          REAL,
+                airports     TEXT
+            );
+            -- Folded place names: tier 0 = the place's own name, 1 = alternate
+            CREATE TABLE IF NOT EXISTS place_names (
+                name_folded TEXT NOT NULL,
+                geonameid   INTEGER NOT NULL,
+                tier        INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_place_names_folded
+                ON place_names(name_folded);
+            -- GeoNames first-level divisions, code "US.OR", "DE.02", "GB.ENG"
+            CREATE TABLE IF NOT EXISTS admin1 (
+                code        TEXT PRIMARY KEY,
+                name        TEXT NOT NULL,
+                folded_name TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS meta (
+                key   TEXT PRIMARY KEY,
+                value TEXT
+            );
         """)
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(airports)")}
+        for column, decl in _AIRPORT_MIGRATIONS.items():
+            if column not in existing:
+                conn.execute(f"ALTER TABLE airports ADD COLUMN {column} {decl}")
 
 
 def is_nationalities_seeded() -> bool:
@@ -100,15 +157,6 @@ def search_nationalities(query: str, limit: int = 10) -> list[dict]:
             },
         ).fetchall()
     return [dict(r) for r in rows]
-
-
-def is_seeded() -> bool:
-    try:
-        with get_connection() as conn:
-            row = conn.execute("SELECT COUNT(*) AS n FROM airports").fetchone()
-            return row["n"] > 0
-    except Exception:
-        return False
 
 
 def lookup_iata(code: str) -> dict | None:
@@ -206,13 +254,22 @@ def _stated_countries(stated: str) -> frozenset[str]:
     return frozenset(codes)
 
 
+def _row_regions(row: sqlite3.Row) -> frozenset[str]:
+    return airport_regions(row["iata_code"], row["country_code"], row["region"])
+
+
 def _in_region(row: sqlite3.Row, region: tuple[str, frozenset[str]]) -> bool:
     """The airport is in the stated region of one of the countries the region
     can be in ("WA" in the US is Washington, in Australia Western Australia)."""
     code, countries = region
-    return row["country_code"] in countries and code in AIRPORT_REGION.get(
-        row["iata_code"], ()
-    )
+    return row["country_code"] in countries and code in _row_regions(row)
+
+
+@functools.cache
+def _curated_codes() -> frozenset[str]:
+    from .seed_airports import AIRPORTS
+
+    return frozenset(a[0] for a in AIRPORTS)
 
 
 def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
@@ -235,8 +292,10 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     only when no coded row matches. Matches spanning more than one country,
     or more than one region with no region stated ("Portland"), are
     ambiguous and resolve to None. Seed data lists each city's primary
-    airport first, so insertion order ranks the codes. Local DB only — one
-    indexed query, never a web lookup.
+    airport first, so insertion order ranks the codes. City matches use the
+    curated airports and web-saved rows only (dataset-only airports join in
+    with place resolution); airports without scheduled service are never
+    returned. Local DB only — one indexed query, never a web lookup.
     """
     if not city or not city.strip():
         return None
@@ -251,9 +310,10 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     try:
         with get_connection() as conn:
             rows = conn.execute(
-                "SELECT iata_code, city, country, country_code FROM airports "
-                f"WHERE city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
-                "OR iata_code = ? ORDER BY id",
+                "SELECT iata_code, city, country, country_code, region, type_rank "
+                "FROM airports WHERE scheduled = 1 AND ("
+                f"city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
+                "OR iata_code = ?) ORDER BY id",
                 [*names, code],
             ).fetchall()
     except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
@@ -263,7 +323,12 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
         return code
     parts = [p.strip() for p in stripped.split(",") if p.strip()]
     wanted = {fold_place(n) for n in whole_names}
-    rows = [r for r in rows if fold_place(r["city"]) in wanted]
+    rows = [
+        r
+        for r in rows
+        if fold_place(r["city"]) in wanted
+        and (r["type_rank"] is None or r["iata_code"] in _curated_codes())
+    ]
     stated = fold_place(parts[-1]) if len(parts) > 1 else None
     codes = _stated_countries(stated) if stated else frozenset()
     region = stated_region(stated) if stated else None
@@ -280,9 +345,7 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     countries = {r["country_code"] or r["country"].lower() for r in rows}
     if len(countries) != 1:
         return None
-    region_sets = [
-        AIRPORT_REGION[r["iata_code"]] for r in rows if r["iata_code"] in AIRPORT_REGION
-    ]
+    region_sets = [regions for r in rows if (regions := _row_regions(r))]
     if not region and region_sets and not frozenset.intersection(*region_sets):
         return None  # "Portland": Oregon or Maine; Kansas City MCI is both
     return ",".join(r["iata_code"] for r in rows[:max_codes])

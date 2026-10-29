@@ -33,12 +33,18 @@ def extra_airports():
     """Insert test-only airports; removed afterwards."""
     codes: list[str] = []
 
-    def add(code: str, city: str, country: str, country_code: str | None) -> None:
+    def add(
+        code: str,
+        city: str,
+        country: str,
+        country_code: str | None,
+        region: str | None = None,
+    ) -> None:
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO airports (iata_code, name, city, country, country_code)"
-                " VALUES (?, ?, ?, ?, ?)",
-                (code, f"{city} Test Airport", city, country, country_code),
+                "INSERT INTO airports (iata_code, name, city, country, country_code,"
+                " region) VALUES (?, ?, ?, ?, ?, ?)",
+                (code, f"{city} Test Airport", city, country, country_code, region),
             )
         codes.append(code)
 
@@ -216,17 +222,25 @@ async def test_multi_city_leg_with_province_suffix(monkeypatch):
 # ── State / province narrows a city's airports ─────────────────────────────
 
 
+def _seeded_regions(code: str) -> frozenset[str]:
+    from app.db.airport_regions import airport_regions
+
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT country_code, region FROM airports WHERE iata_code = ?", (code,)
+        ).fetchone()
+    return airport_regions(code, row["country_code"], row["region"])
+
+
 def test_every_us_ca_au_br_airport_has_a_region():
     from app.core.places import _REGION_CODES
-    from app.db.airport_regions import AIRPORT_REGION
     from app.db.seed_airports import AIRPORTS
 
     regional = {a[0]: a[5] for a in AIRPORTS if a[5] in ("US", "CA", "AU", "BR")}
-    missing = sorted(set(regional) - set(AIRPORT_REGION))
+    missing = sorted(code for code in regional if not _seeded_regions(code))
     assert not missing, f"no region for {missing}"
-    assert set(AIRPORT_REGION) <= set(regional), "region for a non-seed airport"
     for code, country in regional.items():
-        for region in AIRPORT_REGION[code]:
+        for region in _seeded_regions(code):
             assert country in _REGION_CODES.get(region, ()), code
 
 
@@ -348,13 +362,9 @@ def test_city_in_another_state_is_not_the_seeded_one(place):
     assert lookup_city_iata(place) is None
 
 
-def test_region_match_is_country_aware(extra_airports, monkeypatch):
-    from app.db import database
-
-    extra_airports("ZQE", "Testburg", "Australia", "AU")
-    extra_airports("ZQF", "Testburg", "United States", "US")
-    monkeypatch.setitem(database.AIRPORT_REGION, "ZQE", frozenset({"wa"}))
-    monkeypatch.setitem(database.AIRPORT_REGION, "ZQF", frozenset({"wa"}))
+def test_region_match_is_country_aware(extra_airports):
+    extra_airports("ZQE", "Testburg", "Australia", "AU", "AU-WA")
+    extra_airports("ZQF", "Testburg", "United States", "US", "US-WA")
     assert lookup_city_iata("Testburg, Western Australia") == "ZQE"
     assert lookup_city_iata("Testburg, Washington") == "ZQF"
     assert lookup_city_iata("Testburg, WA") is None  # either country
@@ -397,7 +407,6 @@ def test_st_and_saint_spellings(place, codes):
 
 
 def test_every_airport_region_is_a_set():
-    from app.db.airport_regions import AIRPORT_REGION
-
-    assert AIRPORT_REGION["MCI"] == {"mo", "ks"}
-    assert all(isinstance(v, frozenset) and v for v in AIRPORT_REGION.values())
+    assert _seeded_regions("MCI") == {"mo", "ks"}
+    assert _seeded_regions("IAD") == {"va", "dc"}
+    assert isinstance(_seeded_regions("PDX"), frozenset)
