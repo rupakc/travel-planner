@@ -261,3 +261,67 @@ def test_city_in_one_region_unaffected():
     assert lookup_city_iata("London") == "LHR,LGW,STN"
     assert lookup_city_iata("New York") == "JFK,LGA"
     assert lookup_city_iata("Houston, TX") == "IAH,HOU"
+
+
+# ── Accent and alias spellings ─────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("text", "folded"),
+    [
+        (" São   Paulo ", "sao paulo"),
+        ("Zürich", "zurich"),
+        ("Straße", "strasse"),
+        ("Tromsø", "tromso"),
+        ("Łódź", "lodz"),
+        ("Ærø", "aero"),
+        ("Œuvre", "oeuvre"),
+        ("Đà Nẵng", "da nang"),
+        ("Diyarbakır", "diyarbakir"),
+        ("Þórshöfn", "thorshofn"),
+        ("Ålesund", "alesund"),
+    ],
+)
+def test_fold_place(text, folded):
+    from app.core.places import fold_place
+
+    assert fold_place(text) == folded
+
+
+def test_city_alias_targets_exist_in_seed():
+    from app.core.places import CITY_ALIASES
+    from app.db.seed_airports import AIRPORTS
+
+    seeded = {a[3] for a in AIRPORTS}
+    assert set(CITY_ALIASES.values()) <= seeded
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("São Paulo", "GRU,CGH"),
+        ("São Paulo, Brazil", "GRU,CGH"),
+        ("Zürich", "ZRH"),
+        ("Düsseldorf", "DUS"),
+        ("Kraków", "KRK"),
+        ("Malmö", "MMX"),
+        ("Reykjavík", "RKV,KEF"),
+        ("Washington", "IAD,DCA"),
+        ("Washington, DC", "IAD,DCA"),
+        ("Washington D.C.", "IAD,DCA"),
+        ("Washington DC", "IAD,DCA"),
+        ("Washington, D.C.", "IAD,DCA"),
+        ("Saint Petersburg", "LED"),
+        ("St Petersburg", "LED"),
+        ("St. Petersburg", "LED"),
+        ("Ålesund", "AES"),
+        ("Alesund", "AES"),
+        ("ålesund", "AES"),
+        ("Saigon", "SGN"),
+        ("Bombay", "BOM"),
+        ("New York City", "JFK,LGA"),
+        ("NYC", "NYC"),  # bare code wins
+    ],
+)
+def test_accent_and_alias_spellings(place, codes):
+    assert lookup_city_iata(place) == codes

@@ -1,5 +1,7 @@
 """Place-name reference data shared by the airports DB and the static tables."""
 
+import unicodedata
+
 # US state code → state name
 _US_STATES = {
     "al": "alabama", "ak": "alaska", "az": "arizona", "ar": "arkansas",
@@ -42,3 +44,36 @@ def _region_codes() -> dict[str, frozenset[str]]:
 # US states, Canadian provinces/territories, Australian states/territories and
 # Brazilian states. "wa" → {"US", "AU"}: Washington or Western Australia.
 _REGION_CODES: dict[str, frozenset[str]] = _region_codes()
+
+
+# Letters NFKD does not decompose into a base letter + combining mark.
+_TRANSLITERATE = str.maketrans(
+    {"ß": "ss", "ø": "o", "æ": "ae", "œ": "oe", "ł": "l", "đ": "d", "ı": "i",
+     "þ": "th", "ð": "d"}
+)  # fmt: skip
+
+
+def fold_place(text: str) -> str:
+    """Accent-free, lower-case, single-spaced form of a place name for
+    matching: "  São Paulo" → "sao paulo", "Straße" → "strasse"."""
+    lowered = (text or "").lower().translate(_TRANSLITERATE)
+    decomposed = unicodedata.normalize("NFKD", lowered)
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return " ".join(stripped.split())
+
+
+# Other spellings of a city (folded) → the city's name in the airports seed.
+CITY_ALIASES: dict[str, str] = {
+    "washington": "Washington D.C.",
+    "washington dc": "Washington D.C.",
+    "washington d c": "Washington D.C.",
+    "washington d.c.": "Washington D.C.",
+    "washington d.c": "Washington D.C.",
+    "dc": "Washington D.C.",
+    "saint petersburg": "St. Petersburg",
+    "st petersburg": "St. Petersburg",
+    "new york city": "New York",
+    "nyc": "New York",
+    "saigon": "Ho Chi Minh City",
+    "bombay": "Mumbai",
+}

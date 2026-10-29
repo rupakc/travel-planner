@@ -5,7 +5,7 @@ import re
 import sqlite3
 from pathlib import Path
 
-from ..core.places import _REGION_CODES, _US_STATES
+from ..core.places import _REGION_CODES, _US_STATES, CITY_ALIASES, fold_place
 from .airport_regions import AIRPORT_REGION
 
 logger = logging.getLogger(__name__)
@@ -168,6 +168,31 @@ def _seed_country_codes() -> dict[str, str]:
     return table
 
 
+@functools.cache
+def _seed_accented_cities() -> dict[str, str]:
+    """Folded name → seeded city name, for seeded names with accents
+    ("alesund" → "Ålesund"); NOCASE matching only folds ASCII case."""
+    from .seed_airports import AIRPORTS
+
+    return {
+        fold_place(city): city
+        for _iata, _icao, _name, city, *_ in AIRPORTS
+        if fold_place(city) != city.lower()
+    }
+
+
+def _city_spellings(name: str) -> set[str]:
+    """The typed city name plus the seed spellings it may stand for:
+    accent-folded ("Zürich" → "zurich"), an alias ("Saigon" → "Ho Chi Minh
+    City") or an accented seed name ("Alesund" → "Ålesund")."""
+    folded = fold_place(name)
+    spellings = {name, folded}
+    for table in (CITY_ALIASES, _seed_accented_cities()):
+        if folded in table:
+            spellings.add(table[folded])
+    return spellings
+
+
 _US_STATE_CODES = {name: code for code, name in _US_STATES.items()}
 
 
@@ -193,10 +218,11 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     A label prefix that is a code in the airports table is the traveller's
     pick and is returned alone ("LGW — London, …" → "LGW"); any other prefix
     stays part of the text. Otherwise an exact, case-insensitive match on the
-    city (first comma segment). A last segment that names a country, ISO
-    code or alias restricts the match to that country; one that names a
-    region (state / province code, or a US state name) restricts it to the
-    airports of that region ("Portland, OR" → PDX). Both readings count
+    city (first comma segment), also tried accent-folded and through
+    ``CITY_ALIASES`` ("Zürich", "Saigon", "Washington"). A last segment that
+    names a country, ISO code or alias restricts the match to that country;
+    one that names a region (state / province code, or a US state name)
+    restricts it to the airports of that region ("Portland, OR" → PDX). Both readings count
     ("San Jose, CA": California; "Toronto, CA": Canada). An unrecognised
     segment ("Bavaria") is ignored. Web-saved rows (no country_code) count
     only when no coded row matches. Matches spanning more than one country,
@@ -213,17 +239,15 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     prefix = _IATA_PREFIX_RE.match(stripped)
     code = prefix.group(1).upper() if prefix else ""
     after_prefix = stripped[prefix.end() :] if prefix else stripped
+    whole_names = _city_spellings(stripped.split(",")[0].strip())
+    names = sorted(whole_names | _city_spellings(after_prefix.split(",")[0].strip()))
     try:
         with get_connection() as conn:
             rows = conn.execute(
                 "SELECT iata_code, city, country, country_code FROM airports "
-                "WHERE city = :whole COLLATE NOCASE OR city = :after COLLATE NOCASE "
-                "OR iata_code = :code ORDER BY id",
-                {
-                    "whole": stripped.split(",")[0].strip(),
-                    "after": after_prefix.split(",")[0].strip(),
-                    "code": code,
-                },
+                f"WHERE city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
+                "OR iata_code = ? ORDER BY id",
+                [*names, code],
             ).fetchall()
     except sqlite3.Error as exc:  # table missing (unseeded DB) → unresolved
         logger.debug("City airport lookup failed for %r: %s", city, exc)
@@ -231,8 +255,8 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     if code and any(r["iata_code"] == code for r in rows):
         return code
     parts = [p.strip() for p in stripped.split(",") if p.strip()]
-    city_name = parts[0].lower()
-    rows = [r for r in rows if r["city"].lower() == city_name]
+    wanted = {fold_place(n) for n in whole_names}
+    rows = [r for r in rows if fold_place(r["city"]) in wanted]
     stated = " ".join(parts[-1].lower().split()) if len(parts) > 1 else None
     codes, region = _stated_place(stated) if stated else (frozenset(), None)
     if codes or region:

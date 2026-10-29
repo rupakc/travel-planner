@@ -8,9 +8,8 @@ provide enhanced, web-searched results.
 
 import functools
 import re
-import unicodedata
 
-from ..core.places import _REGION_CODES, _US_STATES
+from ..core.places import _REGION_CODES, _US_STATES, CITY_ALIASES, fold_place
 from ..schemas.request import TravelSearchRequest
 
 # ── Visa static lookup ────────────────────────────────────────────────────────
@@ -1303,7 +1302,7 @@ _CITY_TO_COUNTRY: dict[str, str] = {
     "san diego": "usa", "atlanta": "usa", "philadelphia": "usa",
     "phoenix": "usa", "houston": "usa", "dallas": "usa", "austin": "usa",
     "san antonio": "usa", "fort worth": "usa", "washington": "usa",
-    "washington dc": "usa", "orlando": "usa", "tampa": "usa",
+    "washington dc": "usa", "washington d.c.": "usa", "orlando": "usa", "tampa": "usa",
     "fort lauderdale": "usa", "key west": "usa", "new orleans": "usa",
     "nashville": "usa", "memphis": "usa", "charlotte": "usa",
     "raleigh": "usa", "detroit": "usa", "minneapolis": "usa",
@@ -1336,6 +1335,8 @@ _CITY_TO_COUNTRY: dict[str, str] = {
 _REGION_COUNTRY: dict[str, str] = {
     **{name: "usa" for name in _US_STATES.values()},
     "us": "usa",
+    "d.c.": "usa",
+    "d c": "usa",
     "kansai": "japan",
     "kanto": "japan",
     "catalonia": "spain",
@@ -1402,9 +1403,7 @@ _IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
 
 def _clean_place(text: str) -> str:
     """Lowercase, strip accents, collapse whitespace, drop a leading "the"."""
-    folded = unicodedata.normalize("NFKD", text)
-    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
-    words = folded.lower().split()
+    words = fold_place(text).split()
     if len(words) > 1 and words[0] == "the":
         words = words[1:]
     return " ".join(words)
@@ -1430,6 +1429,24 @@ def _known_countries() -> frozenset[str]:
     keys |= {dest for _, dest in _VISA_TABLE}
     keys |= set(_CITY_TO_COUNTRY.values()) | set(_COUNTRY_ALIASES.values())
     return frozenset(keys)
+
+
+@functools.cache
+def _folded_city_map() -> dict[str, str]:
+    """``_CITY_TO_COUNTRY`` with accent-folded keys."""
+    return {fold_place(city): country for city, country in _CITY_TO_COUNTRY.items()}
+
+
+def _city_country(city: str | None) -> str | None:
+    """The country key of a folded city name, directly or through
+    ``CITY_ALIASES`` ("saigon" → Ho Chi Minh City → vietnam)."""
+    if not city:
+        return None
+    cities = _folded_city_map()
+    if city in cities:
+        return cities[city]
+    alias = CITY_ALIASES.get(city)
+    return cities.get(fold_place(alias)) if alias else None
 
 
 def _word_phrases(segment: str) -> list[str]:
@@ -1466,7 +1483,7 @@ def _place_country(destination: str) -> str | None:
     """The country key a destination names, or None.
 
     A stated known country wins. Otherwise the city's country from the city
-    map — when nothing else is stated, or the stated part is a state/region
+    map (accent-folded, or through ``CITY_ALIASES``: "Saigon") — when nothing else is stated, or the stated part is a state/region
     of that same country ("Miami, FL", "Kyoto, Kansai"), or an ISO
     country or region code with a reading in that same country ("Berlin, DE",
     "Perth, WA"), or an ISO code that is not a US state code ("Cartagena,
@@ -1480,8 +1497,8 @@ def _place_country(destination: str) -> str | None:
     country, city = place["country"], place["city"]
     if country in _known_countries():
         return country
-    if city in _CITY_TO_COUNTRY:
-        mapped = _CITY_TO_COUNTRY[city]
+    mapped = _city_country(city)
+    if mapped:
         if country is None:
             return mapped
         readings = _code_readings(country)
@@ -1502,7 +1519,7 @@ def _place_country(destination: str) -> str | None:
     if city and country is None:
         for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
             prefix = city.removesuffix(" " + name)
-            if prefix != city and prefix in _CITY_TO_COUNTRY:
+            if prefix != city and _city_country(prefix):
                 return _country_key(name)
     return None
 
