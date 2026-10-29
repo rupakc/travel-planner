@@ -491,11 +491,12 @@ export default function ItinerarySection({
                     {!isEditing && (
                       <div className="shrink-0 flex flex-col items-end gap-1.5">
                         {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
-                        <button onClick={() => { setEditingSlot(key); setOpenNote(null) }}
+                        <button type="button" aria-label={`Edit ${activity}`} onClick={() => { setEditingSlot(key); setOpenNote(null) }}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
                           <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
                         </button>
-                        <button onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
+                        <button type="button" aria-label={note ? `Edit note for ${activity}` : `Add note to ${activity}`}
+                            onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
                             <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
                           </button>
@@ -516,7 +517,8 @@ export default function ItinerarySection({
                             )}
                           </div>
                         )}
-                        <button onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
+                        <button type="button" aria-label={inPlan ? `Remove ${activity} from plan` : `Add ${activity} to plan`}
+                          onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             inPlan
                               ? 'bg-teal-600 text-white'
@@ -564,7 +566,7 @@ export default function ItinerarySection({
                 <li key={key} className="flex items-center justify-between gap-2 text-sm">
                   <span className="text-gray-600 truncate">{name}</span>
                   {onRestoreSlot && (
-                    <button type="button" disabled={!canRestore}
+                    <button type="button" disabled={!canRestore} aria-label={`Restore ${name}`}
                       title={canRestore ? undefined : `No free time left on Day ${originalDay?.day_number} — move or remove something there first`}
                       onClick={() => {
                         focusAfterRender.current = FOCUS_UNDO

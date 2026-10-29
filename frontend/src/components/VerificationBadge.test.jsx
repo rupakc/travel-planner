@@ -126,6 +126,17 @@ describe('VerificationBadge', () => {
     expect(document.activeElement).toBe(button())
   })
 
+  it('Shift+Tab from the dialog container itself closes it and returns focus to the chip', () => {
+    render(<VerificationBadge verification={v()} />)
+    act(() => button().click())
+    expect(document.activeElement).toBe(popover())
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })
+    act(() => { popover().dispatchEvent(ev) })
+    expect(ev.defaultPrevented).toBe(true)
+    expect(popover()).toBeNull()
+    expect(document.activeElement).toBe(button())
+  })
+
   it('tabbing past the last link closes it and returns focus to the chip', () => {
     render(<VerificationBadge verification={v()} />)
     act(() => button().click())
