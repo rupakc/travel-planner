@@ -48,6 +48,9 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "time_of_day": "afternoon",
           "activity": "Check into hotel, explore Shinjuku neighbourhood",
           "location": "Shinjuku",
+          "city": "Tokyo",
+          "lat": 35.6938,
+          "lng": 139.7034,
           "duration_hours": 3.0,
           "notes": "Rest and acclimatise after the flight",
           "estimated_cost_usd": 20.0
@@ -56,6 +59,9 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
           "time_of_day": "evening",
           "activity": "Welcome dinner at a local izakaya",
           "location": "Shinjuku",
+          "city": "Tokyo",
+          "lat": 35.6938,
+          "lng": 139.7004,
           "duration_hours": 2.0,
           "notes": "Try yakitori and local sake",
           "estimated_cost_usd": 35.0
@@ -82,4 +88,5 @@ Rules:
 - `daily_estimated_cost_usd` = sum of all slot costs
 - `total_estimated_cost_usd` = sum of all daily costs
 - `city`: the city name this day/slot takes place in (always include)
-- `lat`, `lng`: approximate decimal-degree coordinates of the activity location (always include when a specific place is named)
+- `duration_hours`: required on every slot — realistic hours spent on the activity (used to estimate start and end times)
+- `lat`, `lng`: required on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel (approximate decimal degrees; used to estimate travel time between stops)

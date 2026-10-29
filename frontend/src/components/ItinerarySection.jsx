@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
@@ -8,6 +8,7 @@ import TripMap from './TripMap'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
+import { listedInScheduleOrder, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
 
 // Custom MIME so the drawer (which treats application/json as a plan) never
 // mistakes an itinerary drag for a plan drop.
@@ -197,6 +198,11 @@ export default function ItinerarySection({
     setMenuAnchor(null)
   }
   const arranged = useMemo(() => arrangeItinerary(data, layout, edits), [data, layout, edits])
+  // Estimated times follow every move, removal and rename
+  const scheduledDays = useMemo(() => scheduleDays(arranged.days, edits), [arranged, edits])
+  const hasTimes = scheduledDays.some((day) => (day.slots || []).some((slot) => slot.start_time))
+  // A travel line must come from the stop listed above it: none on days listed out of timed order
+  const outOfOrderDays = new Set(scheduledDays.filter((day) => !listedInScheduleOrder(day)).map((day) => day.day_number))
   // One source of truth for drag validity AND the Move menu (city rule included).
   const targetsByKey = useMemo(() => {
     const map = new Map()
@@ -225,7 +231,7 @@ export default function ItinerarySection({
   const isMovable = (key) => (targetsByKey.get(key) || []).length > 0
   const findTarget = (key, dayNumber, tod) => (targetsByKey.get(key) || [])
     .find((t) => t.day_number === dayNumber && t.time_of_day === tod)
-  const activityName = (key, fallback) => edits?.[key]?.activity ?? fallback
+  const activityName = (key, fallback) => edits?.[key]?.activity || fallback
   const changeCount = editable ? layoutChangeCount(data, layout) : 0
 
   const move = (key, name, target, method) => {
@@ -288,6 +294,8 @@ export default function ItinerarySection({
         )}
       </div>
 
+      {hasTimes && <p data-times-note className="text-xs text-gray-400">Times are estimates based on typical durations and distances.</p>}
+
       {/* Layout toolbar */}
       {editable && (changeCount > 0 || canUndo) && (
         <div role="group" aria-label="Itinerary changes"
@@ -313,7 +321,7 @@ export default function ItinerarySection({
         </div>
       )}
 
-      {arranged.days.map((day, dayIndex) => (
+      {scheduledDays.map((day, dayIndex) => (
         <div key={day.day_number} data-day={day.day_number} className="border border-gray-200 rounded-xl overflow-hidden">
           {/* Day header */}
           <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
@@ -331,6 +339,15 @@ export default function ItinerarySection({
               {day.daily_estimated_cost_usd > 0 && <p className="text-xs text-teal-200">${day.daily_estimated_cost_usd} est.</p>}
             </div>
           </div>
+
+          {day.schedule_warnings?.length > 0 && (
+            <div data-schedule-warnings className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800">
+              <span className="inline-block mb-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 font-semibold">Tight schedule</span>
+              <ul className="list-disc pl-4 space-y-0.5">
+                {day.schedule_warnings.map((warning, i) => <li key={i}>{warning}</li>)}
+              </ul>
+            </div>
+          )}
 
           {/* Slots */}
           <div className="divide-y divide-gray-100">
@@ -365,7 +382,7 @@ export default function ItinerarySection({
               const pos = slotKey(day.day_number, slot.time_of_day)
 
               // Merge saved edits over original slot data
-              const activity = edit.activity  ?? slot.activity
+              const activity = edit.activity  || slot.activity
               const location = edit.location  ?? slot.location
               const cost     = edit.cost      ?? slot.estimated_cost_usd
               const inPlan   = selections.itinerary_slots?.some(s => s.key === key)
@@ -402,151 +419,165 @@ export default function ItinerarySection({
                 },
               } : null
 
+              const range = timeRange(slot)
+              const transit = outOfOrderDays.has(day.day_number) ? '' : transitLabel(slot.transit_from_prev)
+
               return (
-                <div key={key} data-slot-key={key} data-time={slot.time_of_day}
-                  draggable={canDrag ? true : undefined}
-                  onDragStart={canDrag ? (e) => {
-                    e.dataTransfer.setData(SLOT_MIME, key)
-                    e.dataTransfer.effectAllowed = 'move'
-                    setDragKey(key)
-                    setMenuFor(null)
-                  } : undefined}
-                  onDragEnd={movable ? () => { setDragKey(null); setDropAt(null) } : undefined}
-                  {...(movable ? dropZoneProps(day.day_number, slot.time_of_day) : {})}
-                  className={`px-4 py-3 transition-colors ${dropAt === pos && movable ? DROP_HIGHLIGHT : isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'} ${dragKey === key ? 'opacity-50' : ''}`}>
-                  <div className="flex gap-3">
-                    {editable && (canDrag ? (
-                      <span data-drag-handle aria-hidden="true" title="Drag to move"
-                        className="w-4 shrink-0 flex items-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
-                        <GripVertical size={14} aria-hidden="true" />
-                      </span>
-                    ) : <span className="w-4 shrink-0" />)}
+                <Fragment key={key}>
+                  {/* Travel from the previous stop: outside the row, so drag and drop targets stay rows */}
+                  {transit && (
+                    <p data-transit className="px-4 py-1 text-[11px] text-gray-400 bg-gray-50/60 tabular-nums">
+                      <span className="inline-block w-4 mr-3" aria-hidden="true" />{transit}
+                    </p>
+                  )}
+                  <div data-slot-key={key} data-time={slot.time_of_day}
+                    draggable={canDrag ? true : undefined}
+                    onDragStart={canDrag ? (e) => {
+                      e.dataTransfer.setData(SLOT_MIME, key)
+                      e.dataTransfer.effectAllowed = 'move'
+                      setDragKey(key)
+                      setMenuFor(null)
+                    } : undefined}
+                    onDragEnd={movable ? () => { setDragKey(null); setDropAt(null) } : undefined}
+                    {...(movable ? dropZoneProps(day.day_number, slot.time_of_day) : {})}
+                    className={`px-4 py-3 transition-colors ${dropAt === pos && movable ? DROP_HIGHLIGHT : isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'} ${dragKey === key ? 'opacity-50' : ''}`}>
+                    <div className="flex gap-3">
+                      {editable && (canDrag ? (
+                        <span data-drag-handle aria-hidden="true" title="Drag to move"
+                          className="w-4 shrink-0 flex items-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
+                          <GripVertical size={14} aria-hidden="true" />
+                        </span>
+                      ) : <span className="w-4 shrink-0" />)}
 
-                    {/* Time icon */}
-                    <div className="w-20 shrink-0 text-sm text-gray-500 font-medium capitalize flex items-center gap-1">
-                      <span>{SLOT_ICONS[slot.time_of_day]}</span>
-                      <span>{slot.time_of_day}</span>
-                    </div>
+                      {/* Time icon, label and estimated times */}
+                      <div className="w-20 shrink-0">
+                        <div className="text-sm text-gray-500 font-medium capitalize flex items-center gap-1">
+                          <span>{SLOT_ICONS[slot.time_of_day]}</span>
+                          <span>{slot.time_of_day}</span>
+                        </div>
+                        {range && <p data-slot-time className="mt-0.5 text-[11px] text-gray-400 tabular-nums">{range}</p>}
+                      </div>
 
-                    {/* Content — view or edit */}
-                    <div className="flex-1 min-w-0">
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <div>
-                            <label className="text-xs text-teal-600 font-medium">Activity</label>
-                            <input
-                              autoFocus
-                              type="text"
-                              value={edit.activity ?? slot.activity}
-                              onChange={e => onSlotEdit(key, 'activity', e.target.value)}
-                              className="mt-0.5 w-full text-sm border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
+                      {/* Content — view or edit */}
+                      <div className="flex-1 min-w-0">
+                        {isEditing ? (
+                          <div className="space-y-2">
                             <div>
-                              <label className="text-xs text-teal-600 font-medium">Location</label>
+                              <label className="text-xs text-teal-600 font-medium">Activity</label>
                               <input
+                                autoFocus
                                 type="text"
-                                value={edit.location ?? slot.location ?? ''}
-                                onChange={e => onSlotEdit(key, 'location', e.target.value)}
-                                className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
+                                value={edit.activity ?? slot.activity}
+                                onChange={e => onSlotEdit(key, 'activity', e.target.value)}
+                                className="mt-0.5 w-full text-sm border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
                               />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-teal-600 font-medium">Location</label>
+                                <input
+                                  type="text"
+                                  value={edit.location ?? slot.location ?? ''}
+                                  onChange={e => onSlotEdit(key, 'location', e.target.value)}
+                                  className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-teal-600 font-medium">Est. cost ($)</label>
+                                <input
+                                  type="number"
+                                  value={edit.cost ?? slot.estimated_cost_usd ?? ''}
+                                  onChange={e => onSlotEdit(key, 'cost', e.target.value === '' ? null : Number(e.target.value))}
+                                  className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
+                                />
+                              </div>
                             </div>
                             <div>
-                              <label className="text-xs text-teal-600 font-medium">Est. cost ($)</label>
-                              <input
-                                type="number"
-                                value={edit.cost ?? slot.estimated_cost_usd ?? ''}
-                                onChange={e => onSlotEdit(key, 'cost', e.target.value === '' ? null : Number(e.target.value))}
-                                className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
+                              <label className="text-xs text-teal-600 font-medium">Personal note</label>
+                              <textarea
+                                value={note}
+                                onChange={e => onNoteChange(key, e.target.value)}
+                                placeholder="Add your note…"
+                                className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 resize-none bg-white"
+                                rows={2}
                               />
                             </div>
+                            <button onClick={() => setEditingSlot(null)}
+                              className="flex items-center gap-1 px-3 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold hover:bg-teal-700">
+                              <Check size={10}/> Done
+                            </button>
                           </div>
-                          <div>
-                            <label className="text-xs text-teal-600 font-medium">Personal note</label>
-                            <textarea
-                              value={note}
-                              onChange={e => onNoteChange(key, e.target.value)}
-                              placeholder="Add your note…"
-                              className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 resize-none bg-white"
-                              rows={2}
-                            />
-                          </div>
-                          <button onClick={() => setEditingSlot(null)}
-                            className="flex items-center gap-1 px-3 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold hover:bg-teal-700">
-                            <Check size={10}/> Done
+                        ) : (
+                          <>
+                            <p data-activity className="text-sm font-medium text-gray-900">{activity}</p>
+                            {location && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><MapPin size={11}/>{location}</p>}
+                            {slot.notes && !edit.activity && <p className="text-sm text-gray-400 mt-1 italic">{slot.notes}</p>}
+                            {note && <p className="text-sm text-teal-600 mt-1 italic">📝 {note}</p>}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      {!isEditing && (
+                        <div className="shrink-0 flex flex-col items-end gap-1.5">
+                          {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
+                          <button type="button" aria-label={`Edit ${activity}`} onClick={() => { setEditingSlot(key); setOpenNote(null) }}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
+                            <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
+                          </button>
+                          <button type="button" aria-label={note ? `Edit note for ${activity}` : `Add note to ${activity}`}
+                              onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
+                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
+                              <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
+                            </button>
+                          {movable && (
+                            <div>
+                              <button type="button" ref={(el) => { moveButtons.current[key] = el }}
+                                aria-label={`Move ${activity}`} aria-haspopup="menu" aria-expanded={menuOpen}
+                                onClick={(e) => {
+                                  setMenuAnchor(e.currentTarget.getBoundingClientRect())
+                                  setMenuFor(menuOpen ? null : key)
+                                }}
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${menuOpen ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
+                                <ArrowRightLeft size={10}/> Move
+                              </button>
+                              {menuOpen && (
+                                <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} anchorKey={key} getAnchor={getMoveButton}
+                                  removeItem={removeItem} groups={menuGroups} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
+                              )}
+                            </div>
+                          )}
+                          <button type="button" aria-label={inPlan ? `Remove ${activity} from plan` : `Add ${activity} to plan`}
+                            onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                              inPlan
+                                ? 'bg-teal-600 text-white'
+                                : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
+                            }`}>
+                            {inPlan
+                              ? <><Check size={10}/> In Plan</>
+                              : <><Plus size={10}/> Plan</>
+                            }
                           </button>
                         </div>
-                      ) : (
-                        <>
-                          <p data-activity className="text-sm font-medium text-gray-900">{activity}</p>
-                          {location && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><MapPin size={11}/>{location}</p>}
-                          {slot.notes && !edit.activity && <p className="text-sm text-gray-400 mt-1 italic">{slot.notes}</p>}
-                          {note && <p className="text-sm text-teal-600 mt-1 italic">📝 {note}</p>}
-                        </>
                       )}
                     </div>
 
-                    {/* Actions */}
-                    {!isEditing && (
-                      <div className="shrink-0 flex flex-col items-end gap-1.5">
-                        {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
-                        <button type="button" aria-label={`Edit ${activity}`} onClick={() => { setEditingSlot(key); setOpenNote(null) }}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                          <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
-                        </button>
-                        <button type="button" aria-label={note ? `Edit note for ${activity}` : `Add note to ${activity}`}
-                            onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
-                            <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
-                          </button>
-                        {movable && (
-                          <div>
-                            <button type="button" ref={(el) => { moveButtons.current[key] = el }}
-                              aria-label={`Move ${activity}`} aria-haspopup="menu" aria-expanded={menuOpen}
-                              onClick={(e) => {
-                                setMenuAnchor(e.currentTarget.getBoundingClientRect())
-                                setMenuFor(menuOpen ? null : key)
-                              }}
-                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${menuOpen ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                              <ArrowRightLeft size={10}/> Move
-                            </button>
-                            {menuOpen && (
-                              <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} anchorKey={key} getAnchor={getMoveButton}
-                                removeItem={removeItem} groups={menuGroups} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
-                            )}
-                          </div>
-                        )}
-                        <button type="button" aria-label={inPlan ? `Remove ${activity} from plan` : `Add ${activity} to plan`}
-                          onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost })}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            inPlan
-                              ? 'bg-teal-600 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
-                          }`}>
-                          {inPlan
-                            ? <><Check size={10}/> In Plan</>
-                            : <><Plus size={10}/> Plan</>
-                          }
-                        </button>
+                    {/* Inline note textarea when not in full edit mode */}
+                    {isNoteOpen && !isEditing && (
+                      <div className="mt-2 ml-23 pl-20">
+                        <textarea
+                          autoFocus
+                          value={note}
+                          onChange={e => onNoteChange(key, e.target.value)}
+                          placeholder="Add your personal note…"
+                          className="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none bg-amber-50"
+                          rows={2}
+                        />
                       </div>
                     )}
                   </div>
-
-                  {/* Inline note textarea when not in full edit mode */}
-                  {isNoteOpen && !isEditing && (
-                    <div className="mt-2 ml-23 pl-20">
-                      <textarea
-                        autoFocus
-                        value={note}
-                        onChange={e => onNoteChange(key, e.target.value)}
-                        placeholder="Add your personal note…"
-                        className="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none bg-amber-50"
-                        rows={2}
-                      />
-                    </div>
-                  )}
-                </div>
+                </Fragment>
               )
             })}
           </div>

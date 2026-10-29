@@ -1,4 +1,5 @@
 import { arrangeItinerary, slotKey } from './itineraryLayout'
+import { scheduleDays } from './schedule'
 
 // Plan export: an iCalendar (.ics, RFC 5545) file of the trip, built from
 // the same selections the My Plan drawer shows.
@@ -14,6 +15,12 @@ const SLOT_HOURS = {
 const SLOT_ORDER = ['morning', 'afternoon', 'evening']
 
 const pad = (n) => String(n).padStart(2, '0')
+const dayOffset = (n) => (Number.isInteger(n) && n > 0 ? n : 0)
+// "HH:MM" -> minutes past midnight, or null
+const clockMinutes = (hhmm) => {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm || '')
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null
+}
 const isIsoDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
 
 // Date-only arithmetic in UTC so daylight-saving changes can't skew it
@@ -91,12 +98,14 @@ const shortPlace = (place) => (place || '').split(',')[0].trim()
 
 /**
  * The plan's day-by-day itinerary: the live one if given, else the snapshot
- * saved with the plan, else the individually selected slots grouped by day.
+ * saved with the plan — arranged by the user's layout and given estimated
+ * times (see scheduleDays) — else the individually selected slots grouped by
+ * day, which carry no times.
  */
 export function planItineraryDays(selections, itinerary) {
   const arranged = (source) => {
-    const result = arrangeItinerary(source, selections?.itinerary_layout, selections?.itinerary_edits)
-    return result.changed ? result.days : source.days
+    const edits = selections?.itinerary_edits || {}
+    return scheduleDays(arrangeItinerary(source, selections?.itinerary_layout, edits).days, edits)
   }
   if (itinerary?.days?.length) return arranged(itinerary)
   if (selections?.itinerary?.days?.length) return arranged(selections.itinerary)
@@ -127,9 +136,17 @@ function itineraryEvents(days, selections, searchData) {
       const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
       const edit = selections?.itinerary_edits?.[key] || {}
       const note = selections?.itinerary_notes?.[key]
-      const hours = SLOT_HOURS[slot.time_of_day] || SLOT_HOURS.morning
-      const start = hours.start * 60
-      const end = slot.duration_hours > 0 ? start + Math.round(slot.duration_hours * 60) : hours.end * 60
+      let start = clockMinutes(slot.start_time)
+      let end = clockMinutes(slot.end_time)
+      if (start != null && end != null) {
+        // Scheduled clock times wrap at midnight; the day offsets say which day
+        start += dayOffset(slot.start_day_offset) * 1440
+        end += dayOffset(slot.end_day_offset) * 1440
+      } else {
+        const hours = SLOT_HOURS[slot.time_of_day] || SLOT_HOURS.morning
+        start = hours.start * 60
+        end = slot.duration_hours > 0 ? start + Math.round(slot.duration_hours * 60) : hours.end * 60
+      }
       const cost = edit.cost ?? slot.estimated_cost_usd
       const description = [
         day.theme && `Day ${day.day_number}: ${day.theme}`,
@@ -139,7 +156,7 @@ function itineraryEvents(days, selections, searchData) {
       ].filter(Boolean).join('\n')
       events.push({
         id: `slot-${key}`,
-        summary: edit.activity ?? slot.activity,
+        summary: edit.activity || slot.activity,
         location: edit.location ?? slot.location ?? day.city,
         description,
         start: icsDateTime(date, start),

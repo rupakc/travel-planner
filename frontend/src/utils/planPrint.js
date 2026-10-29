@@ -6,6 +6,7 @@
 
 import { computePlanCostBreakdown } from './planHelpers'
 import { planItineraryDays } from './planExport'
+import { timeRange } from './schedule'
 import { slotKey } from './itineraryLayout'
 import { toRecentSearch, describeRecentSearch } from './recentSearches'
 
@@ -75,11 +76,13 @@ function itineraryHtml(days, selections) {
       const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
       const edit = selections?.itinerary_edits?.[key] || {}
       const note = selections?.itinerary_notes?.[key]
-      const activity = edit.activity ?? slot.activity
+      const activity = edit.activity || slot.activity
       const location = edit.location ?? slot.location
       const cost = edit.cost ?? slot.estimated_cost_usd
       const notes = [slot.notes, note].filter(Boolean).map((n) => `<div class="note">${esc(n)}</div>`).join('')
-      return `<li><span class="when">${esc(slot.time_of_day)}</span> ${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${notes}</li>`
+      const range = timeRange(slot)
+      const time = range ? `<span class="time">${esc(range)}</span> ` : ''
+      return `<li><span class="when">${esc(slot.time_of_day)}</span> ${time}${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${notes}</li>`
     }).join('')
     const heading = [`Day ${day.day_number}`, day.date, day.city, day.theme].filter(Boolean).map(esc).join(' · ')
     return `<div class="day"><h3>${heading}</h3><ul>${slots}</ul></div>`

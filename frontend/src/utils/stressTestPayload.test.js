@@ -58,11 +58,11 @@ describe('buildStressTestPayload', () => {
     expect(p.itinerary.days[1].slots[0].notes).toBe('About Belem')
   })
 
-  it('keeps the original notes for an empty-string activity edit, as on screen', () => {
+  it('keeps the original name and notes for an empty-string activity edit, as on screen', () => {
     const edits = { '1-morning': { activity: '' } }
     const p = buildStressTestPayload(SEARCH, RESULTS, selections({ itinerary_edits: edits }))
     const s = p.itinerary.days[0].slots[0]
-    expect(s.activity).toBe('')
+    expect(s.activity).toBe('Castle')
     expect(s.notes).toBe('About Castle')
   })
 
@@ -108,6 +108,18 @@ describe('buildStressTestPayload', () => {
   it('normalises return_date via apiReturnDate', () => {
     expect(buildStressTestPayload(SEARCH, RESULTS, selections()).return_date).toBeNull()
     expect(buildStressTestPayload({ ...SEARCH, return_date: '2027-05-03' }, RESULTS, selections()).return_date).toBe('2027-05-03')
+  })
+})
+
+describe('buildStressTestPayload — times', () => {
+  it('sends each slot\'s estimated start, end and travel from the previous stop', () => {
+    const layout = moveSlot(ITIN, null, '1-morning', 2, 'evening')
+    const p = buildStressTestPayload(SEARCH, RESULTS, selections({ itinerary_layout: layout }))
+    expect(p.itinerary.days[0].slots.map((s) => [s.activity, s.start_time, s.end_time])).toEqual([
+      ['Tram 28', '13:30', '15:30'], ['Fado', '18:30', '20:30'],
+    ])
+    expect(p.itinerary.days[1].slots[2]).toMatchObject({ activity: 'Castle', start_time: '18:30', end_time: '20:30', transit_from_prev: null })
+    expect(p.itinerary.days[0]).toHaveProperty('schedule_warnings', [])
   })
 })
 
