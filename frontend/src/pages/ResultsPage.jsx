@@ -43,6 +43,7 @@ import {
   arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
   layoutChangeCount, syncPlannedSlots,
 } from '../utils/itineraryLayout'
+import { scheduleDays, syncPlannedSlotTimes } from '../utils/schedule'
 import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -3464,11 +3465,17 @@ export default function ResultsPage() {
     if (next === prev) return false
     layoutRef.current = next
     if (undoable) setLayoutUndo([...undoRef.current.slice(-19), prev])
-    setSelections(s => ({
-      ...s,
-      itinerary_layout: next,
-      itinerary_slots: syncPlannedSlots(s.itinerary_slots, arrangeItinerary(results.itinerary, next, s.itinerary_edits)),
-    }))
+    setSelections(s => {
+      const arranged = arrangeItinerary(results.itinerary, next, s.itinerary_edits)
+      return {
+        ...s,
+        itinerary_layout: next,
+        itinerary_slots: syncPlannedSlotTimes(
+          syncPlannedSlots(s.itinerary_slots, arranged),
+          scheduleDays(arranged.days, s.itinerary_edits),
+        ),
+      }
+    })
     return true
   }
   const handleMoveSlot = (key, day, tod, method) => {

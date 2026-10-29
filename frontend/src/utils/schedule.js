@@ -129,3 +129,36 @@ export function transitLabel(transit) {
   // km is rounded to 0.1, so anything shorter reads "0 km": leave it out
   return transit.km >= 0.1 ? `🚶 ${transit.minutes} min walk · ${transit.km} km` : `🚶 ${transit.minutes} min walk`
 }
+
+const PICKED_FIELDS = ['start_time', 'end_time', 'start_day_offset', 'end_day_offset', 'duration_hours']
+
+/** The timing of a scheduled slot, to store with a picked itinerary entry; {} when it is untimed. */
+export function pickedTimes(slot) {
+  if (!slot?.start_time || !slot?.end_time) return {}
+  const out = {}
+  for (const field of PICKED_FIELDS) if (slot[field] !== undefined) out[field] = slot[field]
+  return out
+}
+
+/**
+ * Refresh the stored times of picked itinerary entries (by key) from scheduled
+ * days. Entries with no timed counterpart are kept; the same array comes back
+ * when nothing changed.
+ */
+export function syncPlannedSlotTimes(itinerarySlots, scheduledDays) {
+  const timed = new Map()
+  for (const day of scheduledDays || []) {
+    for (const slot of day.slots || []) {
+      const times = pickedTimes(slot)
+      if (times.start_time) timed.set(slot.key, times)
+    }
+  }
+  let changed = false
+  const out = (itinerarySlots || []).map((entry) => {
+    const times = timed.get(entry?.key)
+    if (!times || Object.keys(times).every((f) => entry[f] === times[f])) return entry
+    changed = true
+    return { ...entry, ...times }
+  })
+  return changed ? out : itinerarySlots
+}
