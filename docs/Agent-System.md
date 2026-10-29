@@ -215,7 +215,7 @@ Phase 2 synthesis. Receives activities, hotels, the full search context, and wea
 - Day number, date, theme, and city
 - Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes
 - Daily estimated cost
-- `duration_hours` on every slot and `lat`/`lng` on every slot naming a place — the frontend derives estimated times and travel between stops from them (`utils/schedule.js`)
+- `duration_hours` on every slot and `lat`/`lng` on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (`utils/schedule.js`)
 - Coordinates for the Timeline map view
 
 60-second timeout with a template-based fallback that distributes activities mechanically.

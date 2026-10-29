@@ -520,6 +520,18 @@ describe('ItinerarySection', () => {
       expect(container.querySelector('[data-day="2"] [data-transit]')).toBeNull()
     })
 
+    it('hides travel lines on a day listed out of its timed order', () => {
+      const data = { days: [
+        { day_number: 1, slots: [{ ...slot('evening', 'Tapas'), ...at(0.8) }, { ...slot('morning', 'Cathedral'), ...at(0) }] },
+        { ...GEO.days[0], day_number: 2 },
+      ] }
+      render({ ...handlers(), data })
+      // Tapas (listed first) is timed after Cathedral: no line may claim travel from a stop shown below it
+      expect(row('1-evening').querySelector('[data-slot-time]').textContent).toBe('18:30–20:30')
+      expect(container.querySelector('[data-day="1"] [data-transit]')).toBeNull()
+      expect(container.querySelectorAll('[data-day="2"] [data-transit]')).toHaveLength(2)
+    })
+
     it('flags a tight day, naming the edited activity', () => {
       const edits = { '2-afternoon': { activity: 'Tapas lunch' } }
       render({ ...handlers(), data: GEO, selections: { itinerary_edits: edits } })

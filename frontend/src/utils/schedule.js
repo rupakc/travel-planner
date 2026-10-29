@@ -8,8 +8,6 @@ import { haversineKm } from './geo'
 
 // Minutes past midnight each standard time starts at, at the earliest
 const ANCHORS = { morning: 9 * 60, afternoon: 13 * 60 + 30, evening: 18 * 60 + 30 }
-/** No scheduled day starts earlier than this (minutes past midnight). */
-export const EARLIEST_START = ANCHORS.morning
 const DEFAULT_MINUTES = { morning: 180, afternoon: 180, evening: 150 }
 // Duplicate and non-standard slots (e.g. "late night") have no default of their own
 const OTHER_DEFAULT_MINUTES = 120
@@ -78,7 +76,15 @@ function scheduleDay(day, edits) {
     const earliest = prev ? prev.end + (transit ? transit.minutes : UNKNOWN_TRAVEL_MINUTES) : 0
     const start = Math.max(anchor ?? 0, earliest)
     const end = start + durationMinutes(slot)
-    out[i] = { ...slot, start_time: clock(start), end_time: clock(end), transit_from_prev: transit }
+    out[i] = {
+      ...slot,
+      start_time: clock(start),
+      end_time: clock(end),
+      // whole days past the trip day the clock time falls on (past midnight)
+      start_day_offset: Math.floor(start / 1440),
+      end_day_offset: Math.floor(end / 1440),
+      transit_from_prev: transit,
+    }
 
     if (anchor != null && start - anchor > LATE_MINUTES) {
       const name = edits?.[slot.key]?.activity || slot.activity || 'An activity'
@@ -91,7 +97,17 @@ function scheduleDay(day, edits) {
 }
 
 /**
- * Add estimated `start_time`, `end_time` and `transit_from_prev` to every slot
+ * True when a day's slots are listed in the order scheduleDays times them, so
+ * each slot's `transit_from_prev` is from a stop listed above it.
+ */
+export function listedInScheduleOrder(day) {
+  const ranks = [...slotRanks(day).values()]
+  return ranks.every((rank, i) => i === 0 || ranks[i - 1] <= rank)
+}
+
+/**
+ * Add estimated `start_time`, `end_time` (with `start_day_offset` /
+ * `end_day_offset`: whole days past the trip day) and `transit_from_prev` to every slot
  * of arranged days, and `schedule_warnings` to every day. `edits` (by slot key)
  * only rename activities in warnings; durations and coordinates always come
  * from the slot itself. Returns new objects; days with no standard-time slot

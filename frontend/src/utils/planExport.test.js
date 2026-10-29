@@ -321,6 +321,23 @@ describe('scheduled times', () => {
     expect(field(club, 'DTEND')).toBe('DTEND:20270402T035000')
   })
 
+  it('dates each event by its scheduled day offset', () => {
+    const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
+      { time_of_day: 'morning', activity: 'A', duration_hours: 12 },
+      { time_of_day: 'afternoon', activity: 'B', duration_hours: 12 },
+      { time_of_day: 'evening', activity: 'C', duration_hours: 12 },
+    ] }] }
+    const evs = events(build(it))
+    const when = (name) => {
+      const ev = evs.find((e) => field(e, 'SUMMARY') === `SUMMARY:${name}`)
+      return [field(ev, 'DTSTART'), field(ev, 'DTEND')]
+    }
+    expect(when('A')).toEqual(['DTSTART:20270401T090000', 'DTEND:20270401T210000'])
+    expect(when('B')).toEqual(['DTSTART:20270401T212000', 'DTEND:20270402T092000'])
+    // starts after 09:00 on the next day: the offset, not the clock, says so
+    expect(when('C')).toEqual(['DTSTART:20270402T094000', 'DTEND:20270402T214000'])
+  })
+
   it('keeps a day listed out of order on its own date', () => {
     const it = { days: [{ day_number: 1, date: '2027-04-01', slots: [
       { time_of_day: 'evening', activity: 'C', duration_hours: 1 },

@@ -455,7 +455,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                           <li key={j} className="text-xs text-gray-600">
                             <span className="capitalize text-gray-400">{slot.time_of_day}</span>
                             {timeRange(slot) && <span className="text-gray-400 tabular-nums"> {timeRange(slot)}</span>}
-                            <span className="text-gray-400">:</span> {edit.activity ?? slot.activity}
+                            <span className="text-gray-400">:</span> {edit.activity || slot.activity}
                             {sel.itinerary_notes?.[key] && <span className="text-teal-600 italic"> — 📝 {sel.itinerary_notes[key]}</span>}
                           </li>
                         )

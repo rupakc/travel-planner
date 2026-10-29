@@ -8,7 +8,7 @@ import TripMap from './TripMap'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
-import { scheduleDays, timeRange, transitLabel } from '../utils/schedule'
+import { listedInScheduleOrder, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
 
 // Custom MIME so the drawer (which treats application/json as a plan) never
 // mistakes an itinerary drag for a plan drop.
@@ -201,6 +201,8 @@ export default function ItinerarySection({
   // Estimated times follow every move, removal and rename
   const scheduledDays = useMemo(() => scheduleDays(arranged.days, edits), [arranged, edits])
   const hasTimes = scheduledDays.some((day) => (day.slots || []).some((slot) => slot.start_time))
+  // A travel line must come from the stop listed above it: none on days listed out of timed order
+  const outOfOrderDays = new Set(scheduledDays.filter((day) => !listedInScheduleOrder(day)).map((day) => day.day_number))
   // One source of truth for drag validity AND the Move menu (city rule included).
   const targetsByKey = useMemo(() => {
     const map = new Map()
@@ -418,7 +420,7 @@ export default function ItinerarySection({
               } : null
 
               const range = timeRange(slot)
-              const transit = transitLabel(slot.transit_from_prev)
+              const transit = outOfOrderDays.has(day.day_number) ? '' : transitLabel(slot.transit_from_prev)
 
               return (
                 <Fragment key={key}>

@@ -77,10 +77,10 @@ class ItineraryAgent(BaseAgent):
                 "    afternoon: 'Arrive [City B], check in, light walk'\n"
                 "    evening: 'First dinner in [City B] — [local dish]'\n"
                 "- Keep all activities geographically within each day's city\n"
-                "- Add lat/lng coordinates (decimal degrees) to every slot that names a specific place\n"
+                "- Add lat/lng coordinates (decimal degrees) on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel\n"
             )
         else:
-            multi_city_block = "\nAdd lat/lng coordinates (decimal degrees) to every slot that names a specific place.\n"
+            multi_city_block = "\nAdd lat/lng coordinates (decimal degrees) on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel.\n"
 
         pace_guidance = {
             "relaxed": (

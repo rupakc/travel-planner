@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { scheduleDays, timeRange, transitLabel } from './schedule'
+import { listedInScheduleOrder, scheduleDays, timeRange, transitLabel } from './schedule'
 import { arrangeItinerary, moveSlot, removeSlot } from './itineraryLayout'
 
 // A point `km` north of `lat` (1° of latitude ≈ 111.19 km)
@@ -245,6 +245,32 @@ describe('scheduleDays — layout', () => {
     const out = scheduleDays(days)
     expect(out[0]).toBe(days[0])
     expect(out[1]).toBe(days[1])
+  })
+})
+
+describe('scheduleDays — day offsets', () => {
+  it('counts the days past the trip day each start and end falls on', () => {
+    const [d] = scheduleDays(arranged({ days: [day(1, [
+      slot('morning', 'A', { duration_hours: 12 }),
+      slot('afternoon', 'B', { duration_hours: 12 }),
+      slot('evening', 'C', { duration_hours: 12 }),
+    ])] }))
+    expect(d.slots.map((s) => [s.start_time, s.start_day_offset, s.end_time, s.end_day_offset])).toEqual([
+      ['09:00', 0, '21:00', 0],
+      ['21:20', 0, '09:20', 1],
+      ['09:40', 1, '21:40', 1],
+    ])
+  })
+})
+
+describe('listedInScheduleOrder', () => {
+  it('is true when slots are listed in the order they are timed', () => {
+    expect(listedInScheduleOrder(day(1, [slot('morning', 'A'), slot('lunch', 'L'), slot('evening', 'C')]))).toBe(true)
+    expect(listedInScheduleOrder(day(1, []))).toBe(true)
+  })
+
+  it('is false when a later-timed slot is listed first', () => {
+    expect(listedInScheduleOrder(day(1, [slot('evening', 'C'), slot('morning', 'A')]))).toBe(false)
   })
 })
 

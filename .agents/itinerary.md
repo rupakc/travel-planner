@@ -89,4 +89,4 @@ Rules:
 - `total_estimated_cost_usd` = sum of all daily costs
 - `city`: the city name this day/slot takes place in (always include)
 - `duration_hours`: required on every slot — realistic hours spent on the activity (used to estimate start and end times)
-- `lat`, `lng`: approximate decimal-degree coordinates of the activity location — required on every slot that names a specific place (used to estimate travel time between stops)
+- `lat`, `lng`: required on every slot; for slots without a specific place, use approximate coordinates of the neighbourhood or the hotel (approximate decimal degrees; used to estimate travel time between stops)

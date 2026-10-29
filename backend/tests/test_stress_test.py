@@ -155,6 +155,26 @@ class TestSummarizeTimes:
         assert "min" not in prompt.split("Castle", 1)[1].split("\n", 1)[0]
 
 
+class TestSummarizeTransitBool:
+    def test_rejects_bool_minutes(self):
+        itinerary = {
+            "days": [
+                {
+                    "day_number": 1,
+                    "slots": [
+                        {
+                            "time_of_day": "morning",
+                            "activity": "Castle",
+                            "transit_from_prev": {"minutes": True, "mode": "walk"},
+                        }
+                    ],
+                }
+            ]
+        }
+        prompt = StressTestAgent.build_prompt(_request(), itinerary, None, None, None)
+        assert "from previous stop" not in prompt
+
+
 class TestRunGuards:
     @pytest.mark.anyio
     async def test_no_itinerary_returns_error(self):

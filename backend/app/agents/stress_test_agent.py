@@ -97,12 +97,11 @@ class StressTestAgent(BaseAgent):
                 if cost is not None:
                     bits.append(f"${cost}")
                 transit = slot.get("transit_from_prev")
-                if isinstance(transit, dict) and isinstance(
-                    transit.get("minutes"), (int, float)
-                ):
+                minutes = transit.get("minutes") if isinstance(transit, dict) else None
+                if isinstance(minutes, (int, float)) and not isinstance(minutes, bool):
                     mode = transit.get("mode")
                     mode = mode if mode in ("walk", "transit") else "travel"
-                    bits.append(f"({transit['minutes']} min {mode} from previous stop)")
+                    bits.append(f"({minutes} min {mode} from previous stop)")
                 slots.append(" ".join(str(b) for b in bits))
             date_str = day.get("date") or ""
             weekday = ""

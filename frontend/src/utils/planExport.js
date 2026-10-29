@@ -1,5 +1,5 @@
 import { arrangeItinerary, slotKey } from './itineraryLayout'
-import { EARLIEST_START, scheduleDays } from './schedule'
+import { scheduleDays } from './schedule'
 
 // Plan export: an iCalendar (.ics, RFC 5545) file of the trip, built from
 // the same selections the My Plan drawer shows.
@@ -15,6 +15,7 @@ const SLOT_HOURS = {
 const SLOT_ORDER = ['morning', 'afternoon', 'evening']
 
 const pad = (n) => String(n).padStart(2, '0')
+const dayOffset = (n) => (Number.isInteger(n) && n > 0 ? n : 0)
 // "HH:MM" -> minutes past midnight, or null
 const clockMinutes = (hhmm) => {
   const m = /^(\d{2}):(\d{2})$/.exec(hhmm || '')
@@ -138,10 +139,9 @@ function itineraryEvents(days, selections, searchData) {
       let start = clockMinutes(slot.start_time)
       let end = clockMinutes(slot.end_time)
       if (start != null && end != null) {
-        // Clock times wrap at midnight. A day's schedule never starts before
-        // EARLIEST_START, so an earlier clock time is past midnight.
-        if (start < EARLIEST_START) start += 1440
-        while (end <= start) end += 1440
+        // Scheduled clock times wrap at midnight; the day offsets say which day
+        start += dayOffset(slot.start_day_offset) * 1440
+        end += dayOffset(slot.end_day_offset) * 1440
       } else {
         const hours = SLOT_HOURS[slot.time_of_day] || SLOT_HOURS.morning
         start = hours.start * 60

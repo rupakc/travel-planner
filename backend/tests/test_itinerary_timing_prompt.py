@@ -19,7 +19,8 @@ BASE = {
 
 DURATION = "duration_hours on every slot"
 COORDS = (
-    "lat/lng coordinates (decimal degrees) to every slot that names a specific place"
+    "lat/lng coordinates (decimal degrees) on every slot; for slots without a "
+    "specific place, use approximate coordinates of the neighbourhood or the hotel"
 )
 
 
@@ -49,4 +50,7 @@ async def test_multi_city_prompt_asks_for_durations_and_coordinates():
 def test_agent_definition_requires_durations_and_coordinates():
     text = (Path(__file__).parents[2] / ".agents" / "itinerary.md").read_text()
     assert "`duration_hours`: required on every slot" in text
-    assert "required on every slot that names a specific place" in text
+    assert (
+        "`lat`, `lng`: required on every slot; for slots without a specific place, "
+        "use approximate coordinates of the neighbourhood or the hotel" in text
+    )

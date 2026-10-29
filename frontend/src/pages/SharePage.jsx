@@ -157,7 +157,7 @@ function downloadCard(plan) {
         const edit = sel.itinerary_edits?.[key] || {}
         const note = sel.itinerary_notes?.[key]
         const range = timeRange(slot)
-        add(`${slot.time_of_day}${range ? ` ${range}` : ''}: ${edit.activity ?? slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
+        add(`${slot.time_of_day}${range ? ` ${range}` : ''}: ${edit.activity || slot.activity}${note ? ` (📝 ${note})` : ''}`, { size: 27, color: dim, indent: 30, gap: 4 })
       }
       space(10)
     }
@@ -407,7 +407,7 @@ export default function SharePage() {
                             {timeRange(slot) && <span className="block text-[11px] tabular-nums">{timeRange(slot)}</span>}
                           </span>
                           <span className="min-w-0">
-                            {edit.activity ?? slot.activity}
+                            {edit.activity || slot.activity}
                             {(edit.location ?? slot.location) && <span className="text-gray-400 text-xs"> — {edit.location ?? slot.location}</span>}
                             {note && <span className="block text-xs text-teal-600 italic">📝 {note}</span>}
                           </span>
