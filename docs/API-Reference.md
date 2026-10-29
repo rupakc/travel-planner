@@ -18,7 +18,7 @@ Authorization: Bearer <token>
 | chat | `POST /api/chat` | 30 |
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` (and their `/filtered` variants), `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` (and their `/filtered` variants), `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
 
 Each bucket is counted separately. Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -407,7 +407,8 @@ Each results section is also exposed as a standalone endpoint (same request body
 
 | Endpoint | Returns |
 |---|---|
-| `POST /api/flights` | Flight options (supports stop/price/time filters; multi-city returns ordered `legs`) |
+| `POST /api/flights` | Flight options (supports stop/price/time filters; multi-city returns ordered `legs`). With live fares (SerpAPI) a single-city result may also carry `price_insights` |
+| `POST /api/flights/fare-calendar` | Cheapest live fare for departure dates ±3 days (see below) |
 | `POST /api/hotels` | Hotels across four budget tiers (bed/price/wifi/distance filters) |
 | `POST /api/activities` | Interest-ranked activities (category/price/date/rating filters) |
 | `POST /api/visa` | Entry requirements for the traveler's nationality |
@@ -420,6 +421,48 @@ Each results section is also exposed as a standalone endpoint (same request body
 | `POST /api/layover` | Layover excursion plan for long connections |
 | `POST /api/stress-test` | Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget) |
 | `POST /api/walking-tours` | Free walking tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope |
+
+### Flight `price_insights`
+
+When flights come from Google Flights (SerpAPI) on a single-city trip, the result may include Google's own price verdict, taken from the outbound search response (no extra calls). Fields are kept only when well-formed; the object is omitted when there is no usable `price_level` or `lowest_price`. Model-generated flight results never carry it (stripped like `live_fare`), and it does not change the section's verification label.
+
+```json
+"price_insights": {
+  "lowest_price": 512,
+  "price_level": "low",
+  "typical_price_range": [600, 820],
+  "price_history": [[1727740800, 650], [1727827200, 512]]
+}
+```
+
+`price_level` is `low`, `typical` or `high`.
+
+### `POST /api/flights/fare-calendar`
+
+Auth required (`401` without a valid token); `light_ai` rate-limit bucket. Body: the same `TravelSearchRequest` as `/api/search`.
+
+For each departure date from 3 days before to 3 days after the requested one, it makes one Google Flights outbound search (SerpAPI) with the return date shifted by the same amount, so the trip length stays the same, and takes the cheapest `price` (for a round trip that is already the round-trip total). There are no return-leg calls, so this is at most 7 calls, run 4 at a time. Overlapping requests for the same dates (a second tab, a double-mounted component) share the lookups already in flight, so each date costs one call. Dates before tomorrow are skipped. The requested date reuses the cached main flight search when there is one, preferring its `price_insights.lowest_price` and falling back to the cheapest result. Each date's price is cached for 30 minutes (`serp-cal:{origin}:{dest}:{dep}:{ret}:{travelers}`). A date that fails for any reason (HTTP error, timeout, unreadable response) or has no flights comes back as `null`; the calendar as a whole never fails, and failures are not cached.
+
+```json
+{
+  "dates": [
+    {"departure_date": "2026-10-31", "return_date": "2026-11-07", "cheapest_usd": 610.0, "is_selected": false},
+    {"departure_date": "2026-11-03", "return_date": "2026-11-10", "cheapest_usd": 565.0, "is_selected": true},
+    {"departure_date": "2026-11-04", "return_date": "2026-11-11", "cheapest_usd": null, "is_selected": false}
+  ],
+  "currency": "USD",
+  "source": "google_flights"
+}
+```
+
+Errors (string `detail`):
+
+| Status | When |
+|---|---|
+| `401` | Not signed in |
+| `422` | Multi-city request (`"Fare calendar is only available for single-destination trips."`) or invalid body |
+| `429` | Rate limit (see above) |
+| `503` | `{"detail": "Fare calendar needs live flight data, which isn't configured."}` — `SERPAPI_KEY` is not set |
 
 ### `POST /api/walking-tours`
 
@@ -496,4 +539,4 @@ Ingests batched client-side usage events (up to 50 per call). Returns `204`.
 
 ### `GET /health`
 
-Liveness check. Returns `{"status": "ok"}`. Used by Cloud Run health probes and Cloud Monitoring uptime checks. No auth required.
+Liveness check. Returns `{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false}`; the Results page reads `serpapi_configured` once per page load to decide whether to offer the fare calendar. Used by Cloud Run health probes and Cloud Monitoring uptime checks. No auth required.

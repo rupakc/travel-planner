@@ -13,3 +13,13 @@ def test_health_has_request_id(client):
 def test_health_propagates_request_id(client):
     r = client.get("/health", headers={"X-Request-ID": "my-custom-id"})
     assert r.headers.get("x-request-id") == "my-custom-id"
+
+
+def test_health_reports_serpapi_configured(client, monkeypatch):
+    """The frontend reads this (no LLM call) to offer the fare calendar."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "serpapi_key", "")
+    assert client.get("/health").json()["serpapi_configured"] is False
+    monkeypatch.setattr(settings, "serpapi_key", "k")
+    assert client.get("/health").json()["serpapi_configured"] is True

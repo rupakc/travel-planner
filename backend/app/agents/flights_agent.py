@@ -32,7 +32,10 @@ def _url_to_source(url: str) -> str:
 
 
 def strip_live_fare(data: dict) -> dict:
-    """Drop any model-supplied `live_fare` — only the SerpAPI mapper may set it."""
+    """Drop model-supplied fare evidence — only the SerpAPI mapper may set
+    per-result `live_fare` or the top-level Google Flights `price_insights`."""
+    if isinstance(data, dict):
+        data.pop("price_insights", None)
     results = data.get("results") if isinstance(data, dict) else None
     if isinstance(results, list):
         for item in results:

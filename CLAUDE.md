@@ -161,6 +161,7 @@ All endpoints are under `/api`:
 | `POST /api/search/sync` | Non-streaming search (testing) |
 | `POST /api/chat` | SSE streaming chat with auto-planning |
 | `POST /api/flights` | Search flights for a route |
+| `POST /api/flights/fare-calendar` | Cheapest live fare for departure dates ±3 days (same trip length); auth, single-city, needs `SERPAPI_KEY` (503 otherwise) |
 | `POST /api/activities` | Discover activities at destination |
 | `POST /api/hotels` | Find hotels across budget tiers |
 | `POST /api/visa` | Check visa requirements |
@@ -177,7 +178,7 @@ All endpoints are under `/api`:
 | `DELETE /api/recent-searches/{id}` | Remove one recent search |
 | `GET/POST /api/plans` | Saved travel plans |
 | `GET/PUT/DELETE /api/plans/{id}` | Single plan CRUD |
-| `GET /health` | Health check |
+| `GET /health` | Health check (also reports `serpapi_configured`) |
 
 **Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/stress-test`, `/layover`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
 

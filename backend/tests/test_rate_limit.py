@@ -224,6 +224,7 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/stress-test"): "light_ai",
     ("POST", "/api/flights"): "light_ai",
     ("POST", "/api/flights/filtered"): "light_ai",
+    ("POST", "/api/flights/fare-calendar"): "light_ai",
     ("POST", "/api/hotels"): "light_ai",
     ("POST", "/api/hotels/filtered"): "light_ai",
     ("POST", "/api/activities"): "light_ai",

@@ -7,6 +7,7 @@ agent. Falls back gracefully — callers catch SerpAPIError and use the AI path.
 import asyncio
 import logging
 import time
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
@@ -226,6 +227,43 @@ def _post_filter_arrival(results: list, filters: dict | None) -> list:
     return filtered
 
 
+_PRICE_LEVELS = {"low", "typical", "high"}
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _extract_price_insights(data: dict) -> dict | None:
+    """Google Flights' own low/typical/high verdict for this search, if present.
+
+    Only well-formed fields are kept; returns None when nothing usable is left.
+    """
+    raw = data.get("price_insights")
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    if _is_number(raw.get("lowest_price")):
+        out["lowest_price"] = raw["lowest_price"]
+    if raw.get("price_level") in _PRICE_LEVELS:
+        out["price_level"] = raw["price_level"]
+    rng = raw.get("typical_price_range")
+    if isinstance(rng, list) and len(rng) == 2 and all(_is_number(v) for v in rng):
+        out["typical_price_range"] = rng
+    history = raw.get("price_history")
+    if isinstance(history, list):
+        points = [
+            p
+            for p in history
+            if isinstance(p, list) and len(p) == 2 and all(_is_number(v) for v in p)
+        ]
+        if points:
+            out["price_history"] = points
+    if "price_level" not in out and "lowest_price" not in out:
+        return None
+    return out
+
+
 async def _call(params: dict) -> dict:
     """Make one SerpAPI request. Raises SerpAPIError on HTTP error or timeout."""
     t0 = time.monotonic()
@@ -280,6 +318,7 @@ async def search(
     if not request.return_date:
         # ── One-way: single call ────────────────────────────────────────
         data = await _call(base_params)
+        insights = _extract_price_insights(data)
         items = data.get("best_flights", []) + data.get("other_flights", [])
         trip_type = "one_way"
         results = []
@@ -291,6 +330,7 @@ async def search(
     else:
         # ── Round-trip: call 1 (outbounds) + 3 parallel calls (returns) ─
         data1 = await _call(base_params)
+        insights = _extract_price_insights(data1)
         all_outbounds = data1.get("best_flights", []) + data1.get("other_flights", [])
 
         if not all_outbounds:
@@ -338,9 +378,119 @@ async def search(
         results = results[:12]
 
     results = _post_filter_arrival(results, filters)
-    payload = {"results": results}
+    payload: dict[str, Any] = {"results": results}
+    if insights:
+        payload["price_insights"] = insights
     cache[cache_key] = payload
     return payload
+
+
+def _today() -> date:
+    return date.today()
+
+
+def _cheapest(data: dict) -> float | None:
+    prices = [
+        float(item["price"])
+        for item in data.get("best_flights", []) + data.get("other_flights", [])
+        if _is_number(item.get("price")) and item["price"] > 0
+    ]
+    return min(prices) if prices else None
+
+
+def _cached_selected_price(main: dict | None) -> float | None:
+    """Cheapest fare for the searched dates from the cached main search.
+
+    Prefers Google's `lowest_price` (the same kind of figure as the other
+    calendar dates); falls back to the cheapest mapped result.
+    """
+    if not isinstance(main, dict):
+        return None
+    lowest = (main.get("price_insights") or {}).get("lowest_price")
+    if _is_number(lowest) and lowest > 0:
+        return float(lowest)
+    prices = [
+        r["price_usd"]
+        for r in main.get("results", [])
+        if _is_number(r.get("price_usd")) and r["price_usd"] > 0
+    ]
+    return float(min(prices)) if prices else None
+
+
+# Per-date lookups in progress, shared by overlapping calendar requests (a
+# double-mounted component, two tabs) so each date costs one SerpAPI call.
+_calendar_inflight: dict[str, asyncio.Task] = {}
+
+
+async def search_calendar(
+    api_key: str, request: TravelSearchRequest, window: int = 3
+) -> dict:
+    """Cheapest real fare for departure dates ±window days, same trip length.
+
+    One outbound call per date (its price is already the round-trip total),
+    at most 4 in flight per request; concurrent requests share in-flight
+    lookups for the same date. Dates before tomorrow are skipped; a failed or
+    empty date comes back as ``cheapest_usd: None``. The selected date reuses
+    the cached main search when there is one.
+    """
+    origin_id = request.origin_iata or request.origin
+    dest_id = request.destination_iata or request.destination
+    tomorrow = _today() + timedelta(days=1)
+    cache = get_cache()
+    sem = asyncio.Semaphore(4)
+
+    async def price_for(offset: int) -> dict:
+        shift = timedelta(days=offset)
+        dep = request.departure_date + shift
+        ret = request.return_date + shift if request.return_date else None
+        entry = {
+            "departure_date": str(dep),
+            "return_date": str(ret) if ret else None,
+            "cheapest_usd": None,
+            "is_selected": offset == 0,
+        }
+        if offset == 0:
+            selected = _cached_selected_price(
+                cache.get(f"serp:{origin_id}:{dest_id}:{dep}:{ret}:{hash(())}")
+            )
+            if selected is not None:
+                entry["cheapest_usd"] = selected
+                return entry
+        key = f"serp-cal:{origin_id}:{dest_id}:{dep}:{ret}:{request.num_travelers}"
+        if key in cache:
+            entry["cheapest_usd"] = cache[key]
+            return entry
+        task = _calendar_inflight.get(key)
+        if task is None:
+            shifted = request.model_copy(
+                update={"departure_date": dep, "return_date": ret}
+            )
+            task = asyncio.ensure_future(lookup(key, shifted))
+            _calendar_inflight[key] = task
+            task.add_done_callback(lambda _t, k=key: _calendar_inflight.pop(k, None))
+        # shield: one caller going away must not cancel the shared lookup
+        entry["cheapest_usd"] = await asyncio.shield(task)
+        return entry
+
+    async def lookup(key: str, shifted: TravelSearchRequest) -> float | None:
+        try:
+            async with sem:
+                data = await _call(_build_params(api_key, shifted, None))
+            cheapest = _cheapest(data)
+        except Exception as exc:  # one bad date never fails the calendar
+            logger.warning("Fare calendar %s failed: %s", shifted.departure_date, exc)
+            return None
+        if cheapest is not None:
+            cache[key] = cheapest
+        return cheapest
+
+    offsets = [
+        o
+        for o in range(-window, window + 1)
+        if request.departure_date + timedelta(days=o) >= tomorrow
+    ]
+    dates = await asyncio.gather(*[price_for(o) for o in offsets])
+    return {"dates": list(dates), "currency": "USD", "source": "google_flights"}
 
 
 async def search_multi_city(

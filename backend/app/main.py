@@ -221,4 +221,9 @@ async def health_agents():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "travel-planner-backend"}
+    return {
+        "status": "ok",
+        "service": "travel-planner-backend",
+        # Cheap capability flag: the UI offers the fare calendar only when set
+        "serpapi_configured": bool(_settings.serpapi_key),
+    }

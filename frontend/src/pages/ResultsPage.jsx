@@ -11,7 +11,7 @@ import {
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
-import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest } from '../services/api'
+import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest, getSerpapiConfigured } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
@@ -36,6 +36,8 @@ import { responseErrorMessage, axiosErrorDetail } from '../utils/httpError'
 import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
+import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
+import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
 import {
   arrangeItinerary, moveTargets, moveSlot, removeSlot, restoreSlot,
@@ -451,12 +453,12 @@ function budgetView(items, budget, keyOf, isSelected) {
   return { shown, hidden }
 }
 
-function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLayover, budget = null }) {
+function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, departureDate, onLayover, budget = null }) {
   const chosen = selections.flights || []
   const chosenTotal = chosen.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0)
   return (
     <div className="p-4 space-y-5">
-      {pricingData && <PricingAdvisorBanner data={pricingData} />}
+      {pricingData && <PricingAdvisorBanner data={pricingData} departureDate={departureDate} />}
       <div className="flex items-center justify-between bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-sm">
         <span className="text-sky-800 font-medium">✈️ Multi-city trip — pick one flight per leg ({chosen.length}/{legs.length} selected)</span>
         {chosenTotal > 0 && <span className="text-sky-700 font-bold">${chosenTotal.toLocaleString()} total</span>}
@@ -525,10 +527,28 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, onLa
   )
 }
 
-export function FlightsSection({ data, selections, onSelect, pricingData, onLayover, budget = null }) {
+export function FlightsSection({ data, selections, onSelect, pricingData, departureDate, fareCalendar = null, onLayover, budget = null }) {
   if (data?.legs?.length) {
-    return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} onLayover={onLayover} budget={budget} />
+    return <MultiCityFlightsSection legs={data.legs} selections={selections} onSelect={onSelect} pricingData={pricingData} departureDate={departureDate} onLayover={onLayover} budget={budget} />
   }
+  // The pricing banner, Google Flights' own price verdict (live data,
+  // single-city only) and the opt-in fare calendar sit above the flights in
+  // one fixed slot, so the calendar keeps its state (and its request) when
+  // results arrive, change layout or empty out.
+  const hasHeader = !!(pricingData || priceInsightsChip(data?.price_insights) || fareCalendar)
+  return (
+    <div>
+      <div className={hasHeader ? 'px-4 pt-4' : undefined}>
+        {pricingData ? <PricingAdvisorBanner data={pricingData} departureDate={departureDate} /> : null}
+        <PriceInsightsChip insights={data?.price_insights} />
+        {fareCalendar}
+      </div>
+      <FlightResults data={data} selections={selections} onSelect={onSelect} onLayover={onLayover} budget={budget} hasHeader={hasHeader} />
+    </div>
+  )
+}
+
+function FlightResults({ data, selections, onSelect, onLayover, budget = null, hasHeader }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
   const selected = selections.flight
 
@@ -541,7 +561,6 @@ export function FlightsSection({ data, selections, onSelect, pricingData, onLayo
     const legacyView = budgetView(data.results, budget, flightKey, isLegacySelected)
     return (
       <div>
-      {pricingData && <div className="px-4 pt-4"><PricingAdvisorBanner data={pricingData} /></div>}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
@@ -596,8 +615,7 @@ export function FlightsSection({ data, selections, onSelect, pricingData, onLayo
   const isRoundTripSelected = (f) => !!(selected && selected === f || (selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline))
   const roundTripView = budgetView(data.results, budget, flightKey, isRoundTripSelected)
   return (
-    <div className="space-y-3 p-4">
-      {pricingData && <PricingAdvisorBanner data={pricingData} />}
+    <div className={`space-y-3 px-4 pb-4 ${hasHeader ? '' : 'pt-4'}`}>
       {roundTripView.shown.map(({ item: f, i, over, dim }) => {
         const isSelected = isRoundTripSelected(f)
         const isOneWay = f.trip_type === 'one_way' || !f.return
@@ -1909,7 +1927,7 @@ function PricingSparkline({ trendData, daysUntilDeparture }) {
   )
 }
 
-function PricingAdvisorBanner({ data }) {
+function PricingAdvisorBanner({ data, departureDate }) {
   const [expanded, setExpanded] = useState(false)
   if (!data?.trend_data?.length) return null
 
@@ -1923,16 +1941,15 @@ function PricingAdvisorBanner({ data }) {
     ? 'bg-green-100 text-green-800'
     : 'bg-amber-100 text-amber-800'
 
-  const today = new Date()
-  const depDate = new Date(data.route?.split('→')[1]?.trim() || today)
-  const daysUntil = Math.max(0, Math.round((depDate - today) / 86400000))
+  // `data.route` is "Origin → Destination" — the date comes from the search.
+  const daysToDeparture = daysUntil(departureDate)
 
   return (
     <div className={`rounded-xl border ${c.bg} ${c.border} px-4 py-3 mb-4`}>
       <div className="flex items-start gap-4 flex-wrap">
         {/* Sparkline */}
         <div className="shrink-0">
-          <PricingSparkline trendData={data.trend_data} daysUntilDeparture={daysUntil} />
+          <PricingSparkline trendData={data.trend_data} daysUntilDeparture={daysToDeparture} />
         </div>
         {/* Text */}
         <div className="flex-1 min-w-0">
@@ -3368,6 +3385,14 @@ export default function ResultsPage() {
   const [filterErrors, setFilterErrors] = useState({})  // { flights|hotels|activities: message }
   const [confidenceData, setConfidenceData] = useState(null)
   const [pricingData, setPricingData] = useState(null)
+  // Fare calendar: offered only with live flight data (SerpAPI) on the backend
+  const [serpapiConfigured, setSerpapiConfigured] = useState(false)
+  const [isFareCalendarOpen, setIsFareCalendarOpen] = useState(false)
+  useEffect(() => {
+    let active = true
+    getSerpapiConfigured().then(ok => { if (active) setSerpapiConfigured(ok) })
+    return () => { active = false }
+  }, [])
   const [view, setView] = useState('cards')  // 'cards' | 'timeline'
   const [remixInfo, setRemixInfo] = useState(null)  // { label, before } while comparing a remixed run
   const [layoverInfo, setLayoverInfo] = useState(null)  // { city, airport, duration_hours, status, data }
@@ -3581,6 +3606,7 @@ export default function ResultsPage() {
     setFilterErrors({})
     setConfidenceData(null)
     setPricingData(null)
+    setIsFareCalendarOpen(false)
     setView('cards')
     hasStarted.current = false
     pendingSelections.current = preloadSelections
@@ -3635,6 +3661,15 @@ export default function ResultsPage() {
     } catch {
       setLayoverInfo(prev => prev && { ...prev, status: 'error' })
     }
+  }
+
+  // Re-plan on a date picked in the fare calendar: a full new search, which
+  // resets selections exactly like Remix does.
+  const handleFareReplan = ({ departure_date, return_date, offset }) => {
+    track('fare_calendar_replan', 'results', { offset })
+    setRemixInfo(null)
+    runSearch({ ...searchData, departure_date, return_date })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleRemix = (preset) => {
@@ -3915,13 +3950,16 @@ export default function ResultsPage() {
   }
 
   const sectionProps = { selections, onSelect: handleSelect }
+  // Single-city trips, signed in (the endpoint needs auth), live fares configured
+  const canShowFareCalendar = serpapiConfigured && !!token && !(searchData?.destinations?.length > 1)
 
   const renderSectionCard = (agent, extraStyle = {}) => {
     const status = statuses[agent]
     if (status === 'waiting') return null
     const data = results[agent]
     const renderers = {
-      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} onLayover={handleLayover} budget={flightBudget} />,
+      flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} departureDate={searchData.departure_date} onLayover={handleLayover} budget={flightBudget}
+        fareCalendar={canShowFareCalendar && isFareCalendarOpen ? <FareCalendarStrip searchData={searchData} token={token} onReplan={handleFareReplan} /> : null} />,
       weather:        () => <WeatherSection    data={data} />,
       hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} budget={activityBudget} />,
@@ -3957,6 +3995,17 @@ export default function ResultsPage() {
               title="Clear flight filters"
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
+            </button>
+          )}
+          {canShowFareCalendar && (
+            <button onClick={e => {
+              e.stopPropagation()
+              if (!isFareCalendarOpen) setCollapsedSections(prev => ({ ...prev, flights: false }))
+              setIsFareCalendarOpen(v => !v)
+            }}
+              aria-pressed={isFareCalendarOpen}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm transition-all border border-white/20 ${isFareCalendarOpen ? 'bg-white/40' : 'bg-white/20 hover:bg-white/30'}`}>
+              <CalendarDays size={12} /><span>Fare calendar</span>
             </button>
           )}
           <button onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
