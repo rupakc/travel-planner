@@ -63,6 +63,48 @@ describe('CompareTable', () => {
     expect(table().textContent).not.toContain('climate estimate')
   })
 
+  it('null-safe weather temperatures', () => {
+    const w = (over) => ({ avg_high_c: null, avg_low_c: null, poor_days: 1, total_days: 7, source: 'open-meteo', ...over })
+    render([{ destination: 'A', status: 'done', summary: summary({ weather: w() }) }])
+    const row = () => [...table().querySelectorAll('tbody tr')].find((r) => r.textContent.includes('Weather')).textContent
+    expect(row()).not.toContain('0°')
+    expect(row()).not.toContain('NaN')
+    expect(row()).toContain('—')
+    expect(row()).toContain('1 of 7 days poor')
+    render([{ destination: 'A', status: 'done', summary: summary({ weather: w({ avg_high_c: 21.4 }) }) }])
+    expect(row()).toContain('21°')
+    expect(row()).toContain('—')
+    expect(row()).not.toContain('NaN')
+  })
+
+  it('flight estimate badge appears in the flight row only when source is estimate', () => {
+    render([{ destination: 'A', status: 'done', summary: summary({ weather: { avg_high_c: 1, avg_low_c: 0, poor_days: 0, total_days: 3, source: 'open-meteo' }, estimate: { total_usd: 1 }, flight: { price_usd: 900, stops: 0, duration_minutes: 60, airline: 'X', source: 'estimate' } }) }])
+    const rowText = (label) => [...table().querySelectorAll('tbody tr')].find((r) => r.textContent.includes(label)).textContent
+    expect(rowText('Cheapest flight')).toContain('estimate')
+    expect(rowText('Weather')).not.toContain('estimate')
+    expect(rowText('Hotel')).not.toContain('estimate')
+  })
+
+  it('stacked cards render labels, Best, Retry and Plan callbacks', () => {
+    const onPlan = vi.fn()
+    const onRetry = vi.fn()
+    render([
+      { destination: 'A', status: 'done', summary: summary({ estimate: { total_usd: 3000 } }) },
+      { destination: 'B', status: 'done', summary: summary({ estimate: { total_usd: 2000 } }) },
+      { destination: 'C', status: 'error' },
+    ], { onPlan, onRetry })
+    const cards = container.querySelectorAll('.md\\:hidden > div')
+    expect(cards).toHaveLength(3)
+    expect(cards[0].textContent).toContain('Est. trip cost / traveller')
+    const estRow = (card) => [...card.children].find((r) => r.textContent.includes('Est. trip cost')).textContent
+    expect(estRow(cards[0])).not.toContain('Best')
+    expect(estRow(cards[1])).toContain('Best')
+    act(() => [...cards[1].querySelectorAll('button')].find((b) => b.textContent === 'Plan this trip').click())
+    expect(onPlan).toHaveBeenCalledWith(1)
+    act(() => [...cards[2].querySelectorAll('button')].find((b) => b.textContent === 'Retry').click())
+    expect(onRetry).toHaveBeenCalledWith(2)
+  })
+
   it('shows dashes for null data and no Best with a single column', () => {
     render([{ destination: 'X', status: 'done', summary: summary({ flight: null, hotel: null, weather: null, visa: null, ease: null, daily_cost_usd: null }) }])
     expect(table().textContent).toContain('—')

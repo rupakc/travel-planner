@@ -23,6 +23,7 @@ const Badge = ({ children, tone = 'slate' }) => {
 const Best = () => <Badge tone="emerald">Best</Badge>
 
 const num = (v) => typeof v === 'number' && Number.isFinite(v)
+const temp = (v) => (num(v) ? `${Math.round(v)}°` : DASH)
 
 // Each row: key (matches bestByRow where numeric), label, render(summary) -> node | null
 const ROWS = [
@@ -78,7 +79,7 @@ const ROWS = [
       if (!w) return null
       return (
         <>
-          <span className="font-semibold">{Math.round(w.avg_high_c)}° / {Math.round(w.avg_low_c)}°C</span>
+          <span className="font-semibold">{temp(w.avg_high_c)} / {temp(w.avg_low_c)}{num(w.avg_high_c) || num(w.avg_low_c) ? 'C' : ''}</span>
           {w.source !== 'open-meteo' && <Badge tone="amber">climate estimate</Badge>}
           <div className="text-xs text-slate-500">{w.poor_days} of {w.total_days} days poor</div>
         </>
@@ -103,16 +104,16 @@ const ROWS = [
   },
   {
     key: 'ease', label: 'Travel Ease',
-    render: (s) => s.ease && num(s.ease.total) && (
+    render: (s) => !num(s.ease?.total) ? null : (
       <>
         <span className="font-semibold">{Math.round(s.ease.total)}/100</span>
         {s.ease.grade && <span className={`ml-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${gradeClass(s.ease.grade)}`}>{s.ease.grade}</span>}
       </>
     ),
   },
-  { key: 'safety', label: 'Safety', render: (s) => num(s.ease?.safety) && `${s.ease.safety}/20` },
-  { key: 'english', label: 'English', render: (s) => num(s.ease?.english) && `${s.ease.english}/20` },
-  { key: 'daily', label: 'Typical daily spend', render: (s) => num(s.daily_cost_usd) && `${fmtUsd(s.daily_cost_usd)} / day` },
+  { key: 'safety', label: 'Safety', render: (s) => (num(s.ease?.safety) ? `${s.ease.safety}/20` : null) },
+  { key: 'english', label: 'English', render: (s) => (num(s.ease?.english) ? `${s.ease.english}/20` : null) },
+  { key: 'daily', label: 'Typical daily spend', render: (s) => (num(s.daily_cost_usd) ? `${fmtUsd(s.daily_cost_usd)} / day` : null) },
 ]
 
 function Skeleton() {

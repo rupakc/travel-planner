@@ -9,6 +9,7 @@
  * @param {object} form shared fields plus `destinations: string[]`
  */
 export function buildCompareRequests(form) {
+  // `destination` and `extraStops` are destructured only to keep them out of `shared`
   const { destinations = [], destination: _d, extraStops: _s, ...shared } = form || {}
   const seen = new Set()
   const unique = []
@@ -36,7 +37,7 @@ export function buildCompareRequests(form) {
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
-// rowKey -> [extractor, 'min' | 'max']
+// rowKey -> [extractor, which value is best: 'min' (lowest) | 'max' (highest)]
 export const ROW_RULES = {
   estimate: [(s) => num(s?.estimate?.total_usd), 'min'],
   flight: [(s) => num(s?.flight?.price_usd), 'min'],
@@ -50,8 +51,8 @@ export const ROW_RULES = {
 
 /**
  * For each numeric row, the set of column indexes holding the best value.
- * Ties mark every tied column; rows with fewer than two known values (or
- * where all values are equal across just one column) are omitted.
+ * Ties mark every tied column. Rows with fewer than two known (finite
+ * numeric) values are omitted.
  * @param {Array<object|null>} summaries indexed by column
  * @returns {{[rowKey: string]: Set<number>}}
  */
