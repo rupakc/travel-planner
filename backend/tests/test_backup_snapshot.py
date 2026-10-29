@@ -116,3 +116,44 @@ def test_merge_skips_place_tables_and_version(tmp_path):
         }
     finally:
         conn.close()
+
+
+def test_merge_of_an_old_schema_backup_keeps_its_airport_rows(tmp_path):
+    """A backup taken before the airports table gained region / type_rank /
+    scheduled still merges: columns are named, not positional."""
+    from app.db.backup import _merge_gcs_into_local
+
+    remote = tmp_path / "remote.db"
+    conn = sqlite3.connect(remote)
+    conn.executescript("""
+        CREATE TABLE airports (id INTEGER PRIMARY KEY, iata_code TEXT UNIQUE,
+            icao_code TEXT, name TEXT, city TEXT, country TEXT,
+            country_code TEXT, latitude REAL, longitude REAL);
+        INSERT INTO airports VALUES (7, 'XWB', NULL, 'Webtown Airport',
+            'Webtown', 'Freedonia', NULL, NULL, NULL);
+    """)
+    conn.commit()
+    conn.close()
+    local = tmp_path / "local.db"
+    conn = sqlite3.connect(local)
+    conn.executescript("""
+        CREATE TABLE airports (id INTEGER PRIMARY KEY, iata_code TEXT UNIQUE,
+            icao_code TEXT, name TEXT, city TEXT, country TEXT,
+            country_code TEXT, latitude REAL, longitude REAL, region TEXT,
+            type_rank INTEGER, scheduled INTEGER DEFAULT 1);
+    """)
+    conn.commit()
+    conn.close()
+
+    class _Blob:
+        def download_to_filename(self, dest):
+            Path(dest).write_bytes(remote.read_bytes())
+
+    _merge_gcs_into_local(_Blob(), local)
+    conn = sqlite3.connect(local)
+    try:
+        assert conn.execute(
+            "SELECT iata_code, city, scheduled FROM airports"
+        ).fetchall() == [("XWB", "Webtown", 1)]
+    finally:
+        conn.close()

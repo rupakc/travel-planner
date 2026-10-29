@@ -4142,6 +4142,15 @@ AIRPORTS = [
     ("NUM", "OENN", "Neom Bay Airport", "Neom", "Saudi Arabia", "SA", 27.9243, 35.2936),
 ]
 
+# Codes the old curated list used that are retired or wrong → the code that
+# replaced them (OurAirports, confirmed live). Bare retired codes resolve to
+# the replacement's city without a web search (database.lookup_iata).
+REPLACED_CODES: dict[str, str] = {
+    "PNH": "KTI", "REP": "SAI", "FRU": "BSZ", "PBI": "DJT", "KIV": "RMO",
+    "TIP": "MJI", "ULN": "UBN", "DKR": "DSS", "NIY": "FNA", "ANT": "RUN",
+    "CMR": "NSI", "KHO": "MSU", "ETH": "ETM", "RAJ": "HSR",
+}  # fmt: skip
+
 
 def place_data_version(data_dir: Path = PLACE_DATA_DIR) -> str:
     """Hash of the committed place-data files plus the loader format; a
@@ -4257,7 +4266,6 @@ def seed(data_dir: Path = PLACE_DATA_DIR, curated=AIRPORTS) -> bool:
             if r["iata_code"] not in dataset
         ]
         conn.executemany("UPDATE airports SET scheduled = 0 WHERE iata_code = ?", stale)
-        conn.execute("UPDATE airports SET scheduled = 1 WHERE scheduled IS NULL")
         conn.execute("DELETE FROM places")
         conn.execute("DELETE FROM place_names")
         conn.execute("DELETE FROM admin1")

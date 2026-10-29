@@ -401,3 +401,92 @@ def test_seeding_waits_up_to_30s_for_another_workers_lock(
     lock = statements.index("BEGIN IMMEDIATE")
     assert "PRAGMA busy_timeout=30000" in statements[:lock]
     assert seed_airports.SEED_LOCK_TIMEOUT_MS == 30_000
+
+
+# ── Task 2 review fixes ──────────────────────────────────────────────────────
+
+
+def test_existing_db_migration_keeps_user_tables(temp_db, data_dir):
+    _make_old_schema_db(temp_db)
+    conn = sqlite3.connect(temp_db)
+    conn.executescript("""
+        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT);
+        INSERT INTO users VALUES ('u1', 'alice');
+        CREATE TABLE plans (id TEXT PRIMARY KEY, user_id TEXT, name TEXT);
+        INSERT INTO plans VALUES ('p1', 'u1', 'Tokyo trip');
+    """)
+    conn.commit()
+    conn.close()
+    seed_airports.seed(data_dir)
+    assert [tuple(r) for r in _rows("SELECT * FROM users")] == [("u1", "alice")]
+    assert [tuple(r) for r in _rows("SELECT * FROM plans")] == [
+        ("p1", "u1", "Tokyo trip")
+    ]
+
+
+def test_seed_returns_false_when_another_worker_seeded_first(
+    temp_db, data_dir, monkeypatch
+):
+    """Between the first version check and the lock, another worker stores
+    the version: this worker must not load again."""
+    database.create_tables()
+    version = seed_airports.place_data_version(data_dir)
+    real = seed_airports._stored_version
+    calls = []
+
+    def racing(conn):
+        calls.append(1)
+        if len(calls) == 1:  # the unlocked check: nothing stored yet
+            with sqlite3.connect(temp_db) as other:
+                other.execute(
+                    "INSERT INTO meta (key, value) VALUES (?, ?)",
+                    (seed_airports.PLACE_VERSION_KEY, version),
+                )
+            return None
+        return real(conn)
+
+    monkeypatch.setattr(seed_airports, "_stored_version", racing)
+    assert seed_airports.seed(data_dir) is False
+    assert len(calls) == 2
+    assert _rows("SELECT COUNT(*) FROM places")[0][0] == 0
+
+
+def test_adding_a_column_another_worker_added_is_tolerated(temp_db):
+    database.create_tables()
+    with get_connection() as conn:
+        database._add_column(conn, "region", "TEXT")  # already there: no-op
+        with pytest.raises(sqlite3.OperationalError):
+            database._add_column(conn, "extra", "INTEGER PRIMARY KEY")
+
+
+def test_curated_tier_ranks_by_curated_position_not_row_id(
+    temp_db, data_dir, monkeypatch
+):
+    """On a migrated DB a city's new primary airport can have a higher id
+    than its other airports; curated order still wins."""
+    seed_airports.seed(data_dir)
+    with get_connection() as conn:
+        conn.executemany(
+            "INSERT INTO airports (iata_code, name, city, country, country_code,"
+            " type_rank, scheduled) VALUES (?, ?, 'Rankville', 'Testland', 'XT',"
+            " 0, 1)",
+            [("ZZB", "Second"), ("ZZA", "Primary")],
+        )
+    monkeypatch.setattr(database, "_curated_rank", lambda: {"ZZA": 0, "ZZB": 1})
+    assert database.lookup_city_iata("Rankville") == "ZZA,ZZB"
+
+
+def test_autocomplete_hides_unscheduled_airports_unless_code_typed(client):
+    codes = [r["iata_code"] for r in database.search_airports("kiev")]
+    assert "KBP" not in codes and "IEV" not in codes
+    assert [r["iata_code"] for r in database.search_airports("KBP")][:1] == ["KBP"]
+
+
+def test_known_obsolete_code_needs_no_web_search(client, monkeypatch):
+    def _fail(*_a, **_kw):
+        raise AssertionError("no web search for a known code")
+
+    monkeypatch.setattr(database, "_web_search_iata", _fail)
+    info = database.lookup_iata("PNH")
+    assert (info["city"], info["country"]) == ("Phnom Penh", "Cambodia")
+    assert database.lookup_iata("KBP")["city"] == "Kiev"  # unscheduled row

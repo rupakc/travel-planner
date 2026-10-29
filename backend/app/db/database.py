@@ -111,7 +111,17 @@ def create_tables():
         existing = {r["name"] for r in conn.execute("PRAGMA table_info(airports)")}
         for column, decl in _AIRPORT_MIGRATIONS.items():
             if column not in existing:
-                conn.execute(f"ALTER TABLE airports ADD COLUMN {column} {decl}")
+                _add_column(conn, column, decl)
+
+
+def _add_column(conn: sqlite3.Connection, column: str, decl: str) -> None:
+    """Add a column to ``airports``; a worker starting at the same time may
+    have added it first, which is fine."""
+    try:
+        conn.execute(f"ALTER TABLE airports ADD COLUMN {column} {decl}")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc):
+            raise
 
 
 def is_nationalities_seeded() -> bool:
@@ -137,7 +147,8 @@ def search_nationalities(query: str, limit: int = 10) -> list[dict]:
         FROM nationalities
         WHERE
             nationality LIKE :like COLLATE NOCASE
-            OR country  LIKE :like COLLATE NOCASE
+            OR country  LIKE :like COLLATE NOCASE)
+          AND (COALESCE(scheduled, 1) = 1 OR iata_code = :upper)
         ORDER BY
             CASE
                 WHEN nationality LIKE :starts COLLATE NOCASE THEN 0
@@ -175,7 +186,25 @@ def lookup_iata(code: str) -> dict | None:
         ).fetchone()
     if row:
         return dict(row)
+    replaced = _replaced_code_info(code)
+    if replaced:
+        return replaced
     return _web_search_iata(code)
+
+
+def _replaced_code_info(code: str) -> dict | None:
+    """A retired code the old curated list used ("PNH", now KTI): the city
+    and country of its replacement, so it never needs a web search."""
+    from .seed_airports import REPLACED_CODES
+
+    if code not in REPLACED_CODES:
+        return None
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT city, country FROM airports WHERE iata_code = ?",
+            (REPLACED_CODES[code],),
+        ).fetchone()
+    return {"iata_code": code, **dict(row)} if row else None
 
 
 # "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
@@ -266,10 +295,15 @@ def _in_region(row: sqlite3.Row, region: tuple[str, frozenset[str]]) -> bool:
 
 
 @functools.cache
-def _curated_codes() -> frozenset[str]:
+def _curated_rank() -> dict[str, int]:
+    """Curated code → its position in the curated list, which ranks a city's
+    airports (row ids don't: upserts keep old ids on migrated DBs)."""
     from .seed_airports import AIRPORTS
 
-    return frozenset(a[0] for a in AIRPORTS)
+    rank: dict[str, int] = {}
+    for a in AIRPORTS:
+        rank.setdefault(a[0], len(rank))
+    return rank
 
 
 def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
@@ -310,7 +344,7 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     try:
         with get_connection() as conn:
             rows = conn.execute(
-                "SELECT iata_code, city, country, country_code, region, type_rank "
+                "SELECT id, iata_code, city, country, country_code, region, type_rank "
                 "FROM airports WHERE scheduled = 1 AND ("
                 f"city COLLATE NOCASE IN ({','.join('?' * len(names))}) "
                 "OR iata_code = ?) ORDER BY id",
@@ -323,12 +357,16 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
         return code
     parts = [p.strip() for p in stripped.split(",") if p.strip()]
     wanted = {fold_place(n) for n in whole_names}
-    rows = [
-        r
-        for r in rows
-        if fold_place(r["city"]) in wanted
-        and (r["type_rank"] is None or r["iata_code"] in _curated_codes())
-    ]
+    curated = _curated_rank()
+    rows = sorted(
+        (
+            r
+            for r in rows
+            if fold_place(r["city"]) in wanted
+            and (r["type_rank"] is None or r["iata_code"] in curated)
+        ),
+        key=lambda r: (curated.get(r["iata_code"], len(curated)), r["id"]),
+    )
     stated = fold_place(parts[-1]) if len(parts) > 1 else None
     codes = _stated_countries(stated) if stated else frozenset()
     region = stated_region(stated) if stated else None
@@ -439,11 +477,12 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
         SELECT iata_code, name, city, country, country_code
         FROM airports
         WHERE
-            iata_code = :upper
+            (iata_code = :upper
             OR iata_code LIKE :like_upper
             OR city     LIKE :like COLLATE NOCASE
             OR name     LIKE :like COLLATE NOCASE
-            OR country  LIKE :like COLLATE NOCASE
+            OR country  LIKE :like COLLATE NOCASE)
+          AND (COALESCE(scheduled, 1) = 1 OR iata_code = :upper)
         ORDER BY
             CASE
                 WHEN iata_code = :upper              THEN 0

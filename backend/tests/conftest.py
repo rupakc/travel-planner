@@ -4,11 +4,15 @@ Env vars must be set at module level (before any app imports) so pydantic-settin
 reads them during Settings() instantiation at collection time.
 """
 
+import atexit
 import os
+import shutil
 import tempfile
 
 # ─── Set test env vars BEFORE any app imports ─────────────────────────────────
 _TEST_DATA_DIR = tempfile.mkdtemp(prefix="tp_test_")
+# The session DB holds the whole place dataset (~23 MB): never leave it behind.
+atexit.register(shutil.rmtree, _TEST_DATA_DIR, ignore_errors=True)
 os.environ.setdefault("DATA_DIR", _TEST_DATA_DIR)
 os.environ["ADMIN_PASSWORD"] = "test-admin-pw!"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-at-least-32-bytes-long!"

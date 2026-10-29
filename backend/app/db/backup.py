@@ -226,6 +226,19 @@ def _strip_place_data(conn: sqlite3.Connection) -> None:
     conn.execute("VACUUM")
 
 
+def _shared_columns(conn: sqlite3.Connection, table: str) -> list[str]:
+    """Quoted names of the columns ``table`` has in both main and gcs_db."""
+    remote = {
+        r[1]
+        for r in conn.execute(f"PRAGMA gcs_db.table_info({table})")  # nosec B608
+    }
+    return [
+        '"' + r[1].replace('"', '""') + '"'
+        for r in conn.execute(f"PRAGMA main.table_info({table})")  # nosec B608
+        if r[1] in remote
+    ]
+
+
 def _merge_gcs_into_local(blob, local_path: Path) -> None:
     """Download blob to a temp file and INSERT OR IGNORE all its rows into local_path.
 
@@ -255,10 +268,13 @@ def _merge_gcs_into_local(blob, local_path: Path) -> None:
                 where = " WHERE key != ?" if table == "meta" else ""
                 params = (PLACE_VERSION_KEY,) if table == "meta" else ()
                 try:
-                    # table name comes from sqlite_master, not user input — safe  # nosec B608
+                    # Named columns both copies have: a backup from before a
+                    # column was added still merges. Table and column names
+                    # come from sqlite_master / table_info, not user input.
+                    cols = ", ".join(_shared_columns(conn, table))
                     cur = conn.execute(
-                        f"INSERT OR IGNORE INTO main.{table} "  # nosec B608
-                        f"SELECT * FROM gcs_db.{table}{where}",
+                        f"INSERT OR IGNORE INTO main.{table} ({cols}) "  # nosec B608
+                        f"SELECT {cols} FROM gcs_db.{table}{where}",
                         params,
                     )
                     merged_total += cur.rowcount
