@@ -8,6 +8,8 @@ import { haversineKm } from './geo'
 
 // Minutes past midnight each standard time starts at, at the earliest
 const ANCHORS = { morning: 9 * 60, afternoon: 13 * 60 + 30, evening: 18 * 60 + 30 }
+/** No scheduled day starts earlier than this (minutes past midnight). */
+export const EARLIEST_START = ANCHORS.morning
 const DEFAULT_MINUTES = { morning: 180, afternoon: 180, evening: 150 }
 // Duplicate and non-standard slots (e.g. "late night") have no default of their own
 const OTHER_DEFAULT_MINUTES = 120
@@ -97,4 +99,17 @@ function scheduleDay(day, edits) {
  */
 export function scheduleDays(days, edits = {}) {
   return (Array.isArray(days) ? days : []).map((day) => scheduleDay(day, edits))
+}
+
+/** "09:00–12:00" for a timed slot, else "". */
+export function timeRange(slot) {
+  return slot?.start_time && slot?.end_time ? `${slot.start_time}–${slot.end_time}` : ''
+}
+
+/** "🚶 12 min walk · 0.9 km" / "🚇 ~25 min by transit", or "" when travel is unknown. */
+export function transitLabel(transit) {
+  if (!transit) return ''
+  return transit.mode === 'walk'
+    ? `🚶 ${transit.minutes} min walk · ${transit.km} km`
+    : `🚇 ~${transit.minutes} min by transit`
 }

@@ -104,6 +104,57 @@ class TestBuildPrompt:
         assert "Day 1" in prompt
 
 
+class TestSummarizeTimes:
+    def _prompt(self, slots):
+        itinerary = {
+            "days": [{"day_number": 1, "date": _DEP.isoformat(), "slots": slots}]
+        }
+        return StressTestAgent.build_prompt(_request(), itinerary, None, None, None)
+
+    def test_prints_estimated_times_and_travel(self):
+        prompt = self._prompt(
+            [
+                {
+                    "time_of_day": "morning",
+                    "activity": "Castle",
+                    "start_time": "09:00",
+                    "end_time": "12:00",
+                    "transit_from_prev": None,
+                },
+                {
+                    "time_of_day": "afternoon",
+                    "activity": "Tram 28",
+                    "start_time": "13:30",
+                    "end_time": "15:30",
+                    "transit_from_prev": {"minutes": 25, "mode": "transit", "km": 4},
+                },
+            ]
+        )
+        assert "morning 09:00–12:00: Castle" in prompt
+        assert "afternoon 13:30–15:30: Tram 28" in prompt
+        assert "(25 min transit from previous stop)" in prompt
+        assert "Castle (" not in prompt
+
+    def test_without_times_keeps_the_old_format(self):
+        prompt = self._prompt([{"time_of_day": "morning", "activity": "Castle"}])
+        assert "morning: Castle" in prompt
+
+    def test_ignores_malformed_time_fields(self):
+        prompt = self._prompt(
+            [
+                {
+                    "time_of_day": "morning",
+                    "activity": "Castle",
+                    "start_time": 9,
+                    "end_time": None,
+                    "transit_from_prev": {"minutes": "lots"},
+                }
+            ]
+        )
+        assert "morning: Castle" in prompt
+        assert "min" not in prompt.split("Castle", 1)[1].split("\n", 1)[0]
+
+
 class TestRunGuards:
     @pytest.mark.anyio
     async def test_no_itinerary_returns_error(self):

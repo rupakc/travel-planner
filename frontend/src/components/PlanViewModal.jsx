@@ -9,6 +9,7 @@ import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import PlanExport from './PlanExport'
 import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
+import { scheduleDays, timeRange } from '../utils/schedule'
 
 const SECTION_COLORS = {
   sky:    'bg-sky-50 border-b border-sky-100 text-sky-800',
@@ -441,7 +442,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
           {sel.itinerary?.days?.length > 0 && (
             <Section title={`Full Itinerary (${sel.itinerary.days.length} days)`} color="teal" icon={Calendar}>
               <div className="space-y-3">
-                {arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits).days.map((day, i) => (
+                {scheduleDays(arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits).days, sel.itinerary_edits).map((day, i) => (
                   <div key={i}>
                     <p className="text-xs font-bold text-teal-700">
                       Day {day.day_number}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${String(day.city).split(',')[0]}` : ''}{day.theme ? ` — ${day.theme}` : ''}
@@ -452,7 +453,9 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                         const edit = sel.itinerary_edits?.[key] || {}
                         return (
                           <li key={j} className="text-xs text-gray-600">
-                            <span className="capitalize text-gray-400">{slot.time_of_day}:</span> {edit.activity ?? slot.activity}
+                            <span className="capitalize text-gray-400">{slot.time_of_day}</span>
+                            {timeRange(slot) && <span className="text-gray-400 tabular-nums"> {timeRange(slot)}</span>}
+                            <span className="text-gray-400">:</span> {edit.activity ?? slot.activity}
                             {sel.itinerary_notes?.[key] && <span className="text-teal-600 italic"> — 📝 {sel.itinerary_notes[key]}</span>}
                           </li>
                         )

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { scheduleDays } from './schedule'
+import { scheduleDays, timeRange, transitLabel } from './schedule'
 import { arrangeItinerary, moveSlot, removeSlot } from './itineraryLayout'
 
 // A point `km` north of `lat` (1° of latitude ≈ 111.19 km)
@@ -245,5 +245,29 @@ describe('scheduleDays — layout', () => {
     const out = scheduleDays(days)
     expect(out[0]).toBe(days[0])
     expect(out[1]).toBe(days[1])
+  })
+})
+
+describe('timeRange', () => {
+  it('formats a timed slot as "start–end" and is empty otherwise', () => {
+    expect(timeRange({ start_time: '09:00', end_time: '12:00' })).toBe('09:00–12:00')
+    expect(timeRange({ start_time: '09:00' })).toBe('')
+    expect(timeRange({})).toBe('')
+    expect(timeRange(null)).toBe('')
+  })
+})
+
+describe('transitLabel', () => {
+  it('describes a walk with its distance', () => {
+    expect(transitLabel({ minutes: 15, mode: 'walk', km: 0.8 })).toBe('🚶 15 min walk · 0.8 km')
+  })
+
+  it('describes a transit hop as approximate', () => {
+    expect(transitLabel({ minutes: 25, mode: 'transit', km: 4 })).toBe('🚇 ~25 min by transit')
+  })
+
+  it('is empty when travel is unknown', () => {
+    expect(transitLabel(null)).toBe('')
+    expect(transitLabel(undefined)).toBe('')
   })
 })

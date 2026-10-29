@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { scheduleDays, timeRange } from '../utils/schedule'
 
 const TIME_COLS = [
   { key: 'morning',   label: 'Morning',   icon: '🌅', border: 'border-sky-400',    bg: 'bg-sky-50',    text: 'text-sky-700',    dot: 'bg-sky-400' },
@@ -41,12 +42,14 @@ function normalizeTimeOfDay(str) {
 function ActivityCard({ slot, col }) {
   const [expanded, setExpanded] = useState(false)
   const hasDetails = slot.notes || slot.duration_hours || slot.estimated_cost_usd != null
+  const range = timeRange(slot)
 
   return (
     <div
       onClick={() => hasDetails && setExpanded(e => !e)}
       className={`border-l-4 ${col.border} ${col.bg} rounded-r-lg p-2.5 transition-all ${hasDetails ? 'cursor-pointer hover:brightness-95' : ''}`}
     >
+      {range && <p data-slot-time className="text-[11px] font-medium text-gray-500 tabular-nums">{range}</p>}
       <p className={`text-sm font-semibold ${col.text} leading-snug line-clamp-2`} title={slot.activity}>
         {slot.activity}
       </p>
@@ -185,7 +188,7 @@ function DayCard({ dayData, weatherDay }) {
 }
 
 export default function TimelineView({ itineraryData, weatherData }) {
-  const days = itineraryData?.days || []
+  const days = useMemo(() => scheduleDays(itineraryData?.days), [itineraryData])
   const weatherDays = weatherData?.days || []
 
   const weatherMap = useMemo(() => {

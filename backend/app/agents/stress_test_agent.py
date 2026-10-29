@@ -85,13 +85,24 @@ class StressTestAgent(BaseAgent):
                 activity = slot.get("activity") or "?"
                 dur = slot.get("duration_hours")
                 cost = slot.get("estimated_cost_usd")
-                bits = [f"{slot.get('time_of_day', '?')}: {activity}"]
+                when = slot.get("time_of_day", "?")
+                start, end = slot.get("start_time"), slot.get("end_time")
+                if isinstance(start, str) and isinstance(end, str) and start and end:
+                    when = f"{when} {start}–{end}"
+                bits = [f"{when}: {activity}"]
                 if slot.get("location"):
                     bits.append(f"@ {slot['location']}")
                 if dur:
                     bits.append(f"{dur}h")
                 if cost is not None:
                     bits.append(f"${cost}")
+                transit = slot.get("transit_from_prev")
+                if isinstance(transit, dict) and isinstance(
+                    transit.get("minutes"), (int, float)
+                ):
+                    mode = transit.get("mode")
+                    mode = mode if mode in ("walk", "transit") else "travel"
+                    bits.append(f"({transit['minutes']} min {mode} from previous stop)")
                 slots.append(" ".join(str(b) for b in bits))
             date_str = day.get("date") or ""
             weekday = ""
