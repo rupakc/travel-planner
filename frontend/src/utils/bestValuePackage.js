@@ -25,7 +25,8 @@ const num = (v) => {
 const listOf = (section) =>
   section && !section.error && Array.isArray(section.results) ? section.results.filter(Boolean) : []
 
-const cityKey = (v) => String(v ?? '').trim().toLowerCase()
+// 'Lisbon, Portugal' and 'Lisbon' are the same city
+const cityKey = (v) => String(v ?? '').split(',')[0].trim().toLowerCase()
 
 // Unknown numbers sort last
 const byDesc = (get) => (a, b) => {
@@ -124,17 +125,29 @@ function pickFlights(flightsSection) {
 const nightly = (h) => num(h.price_per_night_usd)
 const review = (h) => num(h.review_score)
 
-function hotelCandidates(hotelsSection, searchData) {
+// Multi-city only. The search form stores IATA codes in destinations, so the
+// flight leg's destination name is preferred.
+function firstStop(results, searchData) {
+  if (!(searchData?.destinations?.length > 1)) return null
+  const to = results?.flights?.legs?.[0]?.to
+  return typeof to === 'string' && to.trim() ? to : searchData.destinations[0]
+}
+
+function hotelCandidates(hotelsSection, first) {
   let cands = listOf(hotelsSection).filter((h) => nightly(h) > 0)
-  const first = searchData?.destinations?.length > 1 ? searchData.destinations[0] : null
   if (first) {
-    const inCity = cands.filter((h) => cityKey(h.city) === cityKey(first))
+    let inCity = cands.filter((h) => cityKey(h.city) === cityKey(first))
+    if (!inCity.length) {
+      // Agents emit hotels in journey order, so the first tagged one is the first stop
+      const tagged = cands.find((h) => cityKey(h.city))
+      if (tagged) inCity = cands.filter((h) => cityKey(h.city) === cityKey(tagged.city))
+    }
     if (inCity.length) cands = inCity
   }
   return cands
 }
 
-function pickHotel(cands, searchData) {
+function pickHotel(cands, first) {
   if (!cands.length) return null
   const starsOf = (h) => {
     const s = num(h.star_rating)
@@ -145,7 +158,7 @@ function pickHotel(cands, searchData) {
   if (!pool.length) pool = cands
   const best = sortBy(pool, byDesc(review), byAsc(nightly))[0]
   const stars = starsOf(best)
-  const city = searchData?.destinations?.length > 1 ? best.city || searchData.destinations[0] : null
+  const city = first ? best.city || first : null
   const label =
     stars === 3
       ? 'Mid-range (3★), best-reviewed in its class'
@@ -161,7 +174,7 @@ function takePerCity(sorted, perCity, total) {
   const counts = new Map()
   const out = []
   for (const x of sorted) {
-    const k = x.city ?? ''
+    const k = cityKey(x.city)
     if ((counts.get(k) || 0) >= perCity) continue
     counts.set(k, (counts.get(k) || 0) + 1)
     out.push(x)
@@ -184,11 +197,11 @@ function pickActivities(section) {
   // Cap = the pricier of $30 and the typical (median) price in the same city
   const byCity = new Map()
   for (const a of priced) {
-    const k = a.city ?? ''
+    const k = cityKey(a.city)
     byCity.set(k, [...(byCity.get(k) || []), num(a.price_usd)])
   }
   const cap = new Map([...byCity].map(([k, prices]) => [k, Math.max(ACTIVITY_PRICE_FLOOR, median(prices))]))
-  const cands = priced.filter((a) => a.name && num(a.price_usd) <= cap.get(a.city ?? ''))
+  const cands = priced.filter((a) => a.name && num(a.price_usd) <= cap.get(cityKey(a.city)))
   const sorted = sortBy(cands, byDesc((a) => num(a.similarity_score)), byAsc((a) => num(a.price_usd)))
   return takePerCity(sorted, CAPS.activitiesPerCity, CAPS.activities).map((a) => {
     const p = num(a.price_usd)
@@ -246,8 +259,9 @@ function pickSim(section, searchData) {
 export function buildBestValuePackage(results, searchData) {
   const r = results || {}
   const flights = pickFlights(r.flights)
-  const hotelCands = hotelCandidates(r.hotels, searchData)
-  let hotel = pickHotel(hotelCands, searchData)
+  const first = firstStop(r, searchData)
+  const hotelCands = hotelCandidates(r.hotels, first)
+  let hotel = pickHotel(hotelCands, first)
   if (!flights.single && !flights.legs.length && !hotel) return null
 
   const activities = pickActivities(r.activities)

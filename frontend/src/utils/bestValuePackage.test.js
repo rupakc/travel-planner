@@ -470,3 +470,41 @@ describe('fix round 1', () => {
     expect(pkg.selections.flights).toEqual([l1])
   })
 })
+
+describe('multi-city first stop matching', () => {
+  const lis = hotel({ name: 'Lis', city: 'Lisbon', review_score: 7 })
+  const opo = hotel({ name: 'Opo', city: 'Porto, Portugal', review_score: 10 })
+  const sd = (destinations) => ({ ...searchData, destinations })
+
+  it('(a) IATA destinations: uses flights.legs[0].to', () => {
+    const results = {
+      flights: { legs: [{ leg_index: 0, to: 'Lisbon, Portugal', results: [flight({ leg_index: 0 })] }] },
+      hotels: { results: [opo, lis] },
+    }
+    const pkg = build(results, sd(['LIS', 'OPO']))
+    expect(pkg.selections.hotel).toBe(lis)
+    expect(itemsOf(pkg, 'hotel')[0].reason).toContain('Lisbon')
+  })
+
+  it('(b) names match by first comma segment', () => {
+    const l = hotel({ name: 'L', city: 'Lisbon, Portugal', review_score: 6 })
+    const pkg = build({ hotels: { results: [opo, l] } }, sd(['Lisbon', 'Porto']))
+    expect(pkg.selections.hotel).toBe(l)
+  })
+
+  it('(c) codes with no legs: first city-tagged hotel decides', () => {
+    const pkg = build({ hotels: { results: [lis, opo, hotel({ name: 'Lis2', city: 'lisbon', review_score: 9 })] } }, sd(['LIS', 'OPO']))
+    expect(pkg.selections.hotel.name).toBe('Lis2')
+  })
+
+  it('(d) budget swap stays in the first city', () => {
+    const cheapOpo = hotel({ name: 'CheapOpo', city: 'Porto', price_per_night_usd: 10, review_score: 9 })
+    const cheapLis = hotel({ name: 'CheapLis', city: 'Lisbon', star_rating: 2, price_per_night_usd: 40, review_score: 8 })
+    const results = {
+      flights: { legs: [{ leg_index: 0, to: 'Lisbon', results: [flight({ leg_index: 0, price_usd: 500 })] }] },
+      hotels: { results: [hotel({ name: 'BigLis', city: 'Lisbon', price_per_night_usd: 300 }), cheapOpo, cheapLis] },
+    }
+    const pkg = build(results, { ...sd(['LIS', 'OPO']), budget_usd: 1000 })
+    expect(pkg.selections.hotel.name).toBe('CheapLis')
+  })
+})
