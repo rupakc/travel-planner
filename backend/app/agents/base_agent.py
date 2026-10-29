@@ -332,3 +332,13 @@ class _URLSearchMixin:
                 pairs.append((title, url))
             i += 1
         return pairs
+
+
+def strip_link_verified(data: dict) -> dict:
+    """Drop any model-supplied `link_verified` — only URL enrichment may set it."""
+    results = data.get("results") if isinstance(data, dict) else None
+    if isinstance(results, list):
+        for item in results:
+            if isinstance(item, dict):
+                item.pop("link_verified", None)
+    return data

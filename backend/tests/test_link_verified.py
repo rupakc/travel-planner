@@ -1,5 +1,6 @@
 """Evidence flag `link_verified` set by hotel and place enrichment."""
 
+from datetime import date
 from unittest.mock import AsyncMock
 
 import pytest
@@ -42,6 +43,13 @@ class TestHotelLinkVerified:
         assert out["results"][0]["link_verified"] is True
 
     @pytest.mark.asyncio
+    async def test_official_website_fallback_replaces_booking_url(self):
+        agent = _agent(AsyncMock(side_effect=[None, "https://hotelx.jp/"]))
+        data = {"results": [{"name": "Hotel X", "booking_url": "https://old"}]}
+        out = await agent._enrich_urls(data)
+        assert out["results"][0]["booking_url"] == "https://hotelx.jp/"
+
+    @pytest.mark.asyncio
     async def test_nameless_and_beyond_cap_have_no_flag(self):
         agent = _agent(
             AsyncMock(return_value="https://www.booking.com/hotel/jp/x.html")
@@ -64,3 +72,52 @@ class TestPlaceLinkVerified:
         out = await resolve_top_places(resolver, data, "Tokyo")
         assert out["results"][0]["link_verified"] is True
         assert "link_verified" not in out["results"][1]
+
+
+class TestModelSuppliedFlagStripped:
+    @pytest.mark.asyncio
+    async def test_hotels_run_strips_flag_incl_nameless_and_beyond_cap(self):
+        from app.schemas.request import TravelSearchRequest
+
+        agent = HotelsAgent.__new__(HotelsAgent)
+        hotels = [{"name": "", "link_verified": True}] + [
+            {"name": f"H{i}", "link_verified": True} for i in range(20)
+        ]
+        agent.execute = AsyncMock(return_value={"results": hotels})
+        req = TravelSearchRequest.model_construct(
+            origin="NYC",
+            destination="Tokyo",
+            departure_date=date(2026, 4, 1),
+            return_date=date(2026, 4, 8),
+            nationality="American",
+        )
+        out = await agent.run(req)
+        assert all("link_verified" not in h for h in out["results"])
+
+    @pytest.mark.asyncio
+    async def test_places_run_strips_flag_and_static_info_url_unflagged(self):
+        from unittest.mock import patch
+
+        from app.agents.places_agent import PlacesAgent
+        from app.schemas.request import TravelSearchRequest
+
+        agent = PlacesAgent.__new__(PlacesAgent)
+        agent.execute = AsyncMock(
+            return_value={
+                "results": [{"name": "Senso-ji Temple", "link_verified": True}]
+            }
+        )
+        req = TravelSearchRequest.model_construct(
+            origin="NYC",
+            destination="Tokyo",
+            departure_date=date(2026, 4, 1),
+            return_date=date(2026, 4, 8),
+            nationality="American",
+        )
+        with patch("app.agents.places_agent.settings") as s:
+            s.serper_key = ""
+            out = await agent.run(req)
+        place = out["results"][0]
+        # static TripAdvisor fallback sets info_url but is not evidence
+        assert place["info_url"].startswith("https://www.tripadvisor.com/Search")
+        assert "link_verified" not in place

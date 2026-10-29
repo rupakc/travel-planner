@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, strip_link_verified
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class HotelsAgent(ToolAgent, _URLSearchMixin):
             prompt += "\n".join(lines)
 
         self._destination = request.destination
-        return await self.execute(prompt)
+        return strip_link_verified(await self.execute(prompt))
 
     _MAX_ENRICH = 12
 
