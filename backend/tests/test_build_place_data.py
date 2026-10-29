@@ -1050,7 +1050,7 @@ def test_golden_set_shape():
         rows = list(csv.DictReader(f))
     assert len(rows) >= 200
     assert {r["match"] for r in rows} <= {"exact", "subset", "first", "none"}
-    assert {r["scope"] for r in rows} == {"data", "task3"}
+    assert {r["scope"] for r in rows} == {"data", "task3", "autocomplete"}
     airports = _committed_airports()
     for r in rows:
         for code in r["expected_airports"].split():
