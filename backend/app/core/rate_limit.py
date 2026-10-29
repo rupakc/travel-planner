@@ -16,29 +16,30 @@ from fastapi import Depends, HTTPException, Request
 from .auth import get_optional_user
 from .config import settings
 
-# Sweep keys that have gone quiet once the map grows past this many keys.
-_PRUNE_THRESHOLD = 10_000
-
 
 class SlidingWindowLimiter:
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock = clock
         self._hits: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
+        self._last_sweep = clock()
 
     def hit(self, key: str, limit: int, window: float) -> int | None:
         """Record a request. Returns None if allowed, else seconds to wait."""
         with self._lock:
             now = self._clock()
+            if now - self._last_sweep >= window:  # drop idle keys once a window
+                self._prune_locked(now, window)
             hits = self._hits.setdefault(key, deque())
             while hits and hits[0] <= now - window:
                 hits.popleft()
             if len(hits) >= limit:
-                oldest = hits[0] if hits else now
-                return max(1, math.ceil(oldest + window - now))
+                if limit <= 0:
+                    return max(1, math.ceil(window))
+                # A slot frees when the hit `limit` places from the end expires.
+                freed_at = hits[len(hits) - limit] + window
+                return max(1, math.ceil(freed_at - now))
             hits.append(now)
-            if len(self._hits) > _PRUNE_THRESHOLD:
-                self._prune_locked(now, window)
             return None
 
     def prune(self, window: float) -> None:
@@ -47,6 +48,7 @@ class SlidingWindowLimiter:
             self._prune_locked(self._clock(), window)
 
     def _prune_locked(self, now: float, window: float) -> None:
+        self._last_sweep = now
         for key in [k for k, h in self._hits.items() if not h or h[-1] <= now - window]:
             del self._hits[key]
 

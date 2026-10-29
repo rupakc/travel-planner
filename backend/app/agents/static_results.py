@@ -1286,6 +1286,57 @@ _CITY_TO_COUNTRY: dict[str, str] = {
     "split": "croatia",
     "new york city": "usa",
     "ho chi minh city": "vietnam",
+    "antalya": "turkey",
+    "colombo": "sri lanka",
+    "moscow": "russia",
+    "santiago": "chile",
+    "tel aviv": "israel",
+    "jerusalem": "israel",
+    "amman": "jordan",
+    "dublin": "ireland",
+    "brussels": "belgium",
+    "helsinki": "finland",
+}
+
+_US_STATES = {
+    "al": "alabama", "ak": "alaska", "az": "arizona", "ar": "arkansas",
+    "ca": "california", "co": "colorado", "ct": "connecticut", "de": "delaware",
+    "dc": "district of columbia", "fl": "florida", "ga": "georgia",
+    "hi": "hawaii", "id": "idaho", "il": "illinois", "in": "indiana",
+    "ia": "iowa", "ks": "kansas", "ky": "kentucky", "la": "louisiana",
+    "me": "maine", "md": "maryland", "ma": "massachusetts", "mi": "michigan",
+    "mn": "minnesota", "ms": "mississippi", "mo": "missouri", "mt": "montana",
+    "ne": "nebraska", "nv": "nevada", "nh": "new hampshire", "nj": "new jersey",
+    "nm": "new mexico", "ny": "new york", "nc": "north carolina",
+    "nd": "north dakota", "oh": "ohio", "ok": "oklahoma", "or": "oregon",
+    "pa": "pennsylvania", "ri": "rhode island", "sc": "south carolina",
+    "sd": "south dakota", "tn": "tennessee", "tx": "texas", "ut": "utah",
+    "vt": "vermont", "va": "virginia", "wa": "washington",
+    "wv": "west virginia", "wi": "wisconsin", "wy": "wyoming",
+}  # fmt: skip
+
+# A stated "country" that is really a state or region: the city-map fallback
+# applies only when the map agrees with the region's country ("Paris, Texas"
+# is not Paris, France).
+_REGION_COUNTRY: dict[str, str] = {
+    **{name: "usa" for pair in _US_STATES.items() for name in pair},
+    "us": "usa",
+    "kansai": "japan",
+    "kanto": "japan",
+    "catalonia": "spain",
+    "andalusia": "spain",
+    "tuscany": "italy",
+    "lombardy": "italy",
+    "veneto": "italy",
+    "bavaria": "germany",
+    "ile-de-france": "france",
+    "provence": "france",
+    "scotland": "uk",
+    "ontario": "canada",
+    "quebec": "canada",
+    "british columbia": "canada",
+    "new south wales": "australia",
+    "victoria": "australia",
 }
 
 
@@ -1371,16 +1422,23 @@ def normalise_place(destination: str) -> dict:
 def _place_country(destination: str) -> str | None:
     """The country key a destination names, or None.
 
-    A stated known country wins; otherwise the city's country from the city
-    map (so "Miami, FL" still resolves); otherwise a single "<city> <country>"
-    phrase like "Tokyo Japan". Never substring matching.
+    A stated known country wins. Otherwise the city's country from the city
+    map — when nothing else is stated, or the stated part is a state/region
+    of that same country ("Miami, FL", "Kyoto, Kansai"), or some other
+    short code ("Paris, FR"). Otherwise a single "<city> <country>" phrase
+    like "Tokyo Japan". Never substring matching.
     """
     place = normalise_place(destination)
     country, city = place["country"], place["city"]
     if country in _known_countries():
         return country
     if city in _CITY_TO_COUNTRY:
-        return _CITY_TO_COUNTRY[city]
+        mapped = _CITY_TO_COUNTRY[city]
+        if country is None:
+            return mapped
+        if country in _REGION_COUNTRY:
+            return mapped if _REGION_COUNTRY[country] == mapped else None
+        return mapped if len(country) <= 2 else None
     if city and country is None:
         for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
             prefix = city.removesuffix(" " + name)
@@ -3674,13 +3732,7 @@ def _resolve_dest_currency(destination: str) -> dict | None:
 
 
 def _get_nat_currency(nationality: str) -> tuple[str, str, str] | None:
-    nat = nationality.lower().strip()
-    if nat in _NATIONALITY_TO_CURRENCY:
-        return _NATIONALITY_TO_CURRENCY[nat]
-    for key, val in _NATIONALITY_TO_CURRENCY.items():
-        if key in nat or nat in key:
-            return val
-    return None
+    return _NATIONALITY_TO_CURRENCY.get(_normalise_nationality(nationality))
 
 
 def get_static_forex(request: TravelSearchRequest) -> dict | None:

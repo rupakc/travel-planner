@@ -73,6 +73,49 @@ def test_stale_keys_are_pruned():
     assert "old" not in limiter._hits
 
 
+def test_idle_keys_are_swept_once_a_window_passes():
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(clock=clock)
+    limiter.hit("idle", limit=5, window=60)
+    clock.now += 30
+    limiter.hit("other", limit=5, window=60)
+    assert "idle" in limiter._hits  # still inside its window
+    clock.now += 31
+    limiter.hit("other", limit=5, window=60)
+    assert "idle" not in limiter._hits  # swept without any size threshold
+    assert "other" in limiter._hits
+
+
+def test_sweep_runs_at_most_once_per_window(monkeypatch):
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(clock=clock)
+    sweeps = []
+    real = limiter._prune_locked
+    monkeypatch.setattr(
+        limiter, "_prune_locked", lambda now, w: (sweeps.append(now), real(now, w))
+    )
+    for i in range(50):
+        clock.now += 1
+        limiter.hit(f"k{i}", limit=5, window=60)
+    assert len(sweeps) == 0
+    for i in range(20):
+        clock.now += 1
+        limiter.hit(f"j{i}", limit=5, window=60)
+    assert len(sweeps) == 1
+
+
+def test_retry_after_when_limit_lowered_below_recorded_hits():
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(clock=clock)
+    for _ in range(3):
+        limiter.hit("k", limit=3, window=60)
+        clock.now += 10  # hits at 1000, 1010, 1020; now 1030
+    # Limit drops to 1: a slot frees only when the newest hit (1020) expires.
+    assert limiter.hit("k", limit=1, window=60) == 50
+    # Limit 2: the slot frees when the middle hit (1010) expires.
+    assert limiter.hit("k", limit=2, window=60) == 40
+
+
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
 

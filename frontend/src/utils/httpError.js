@@ -14,3 +14,19 @@ export async function responseErrorMessage(response, fallback = `HTTP ${response
   }
   return fallback
 }
+
+/**
+ * The API's string `detail` and HTTP status from an axios error; `detail` is
+ * null unless the server sent a non-blank string, `status` null when there
+ * was no response (network error).
+ * @param {unknown} err
+ * @returns {{ detail: string|null, status: number|null }}
+ */
+export function axiosErrorDetail(err) {
+  const res = err && typeof err === 'object' ? err.response : null
+  const detail = res?.data?.detail
+  return {
+    detail: typeof detail === 'string' && detail.trim() ? detail.trim() : null,
+    status: typeof res?.status === 'number' ? res.status : null,
+  }
+}

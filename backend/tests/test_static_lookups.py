@@ -275,3 +275,66 @@ def test_single_city_to_country_map():
     """The two duplicated maps were merged into one module-level map."""
     assert s._CITY_TO_COUNTRY["tokyo"] == "japan"
     assert s._CITY_TO_COUNTRY["dubrovnik"] == "croatia"
+
+
+# ── City-map fallback when the stated "country" isn't a country ─────────────
+
+
+@pytest.mark.parametrize(
+    ("destination", "country"),
+    [
+        ("Paris, Texas", None),  # US state that disagrees with the city map
+        ("Paris, TX", None),
+        ("Miami, FL", "usa"),
+        ("Miami, Florida", "usa"),
+        ("Honolulu, Hawaii", "usa"),
+        ("Paris, France", "france"),
+        ("Paris, FR", "france"),  # other short codes fall back to the map
+        ("Toronto, ON", "canada"),
+        ("Kyoto, Kansai", "japan"),
+        ("Barcelona, Catalonia", "spain"),
+        ("Barcelona, Europe", None),  # not a code, state or region
+        ("Tokyo, Somewhere", None),
+    ],
+)
+def test_city_map_fallback_only_for_codes_states_and_regions(destination, country):
+    assert lookups(destination) == expected(country)
+
+
+# ── Currency lookups (static forex + forex agent) ────────────────────────────
+
+
+def test_forex_agent_destination_currency_is_exact():
+    from app.agents.forex_agent import _resolve_destination_currency
+
+    assert _resolve_destination_currency("Busan")[0] == "KRW"  # "usa" ⊂ "busan"
+    assert _resolve_destination_currency("Busan, South Korea")[0] == "KRW"
+    assert _resolve_destination_currency("Lusaka, Zambia") is None
+    assert _resolve_destination_currency("Indianapolis, United States")[0] == "USD"
+    assert _resolve_destination_currency("Colombo")[0] == "LKR"
+    assert _resolve_destination_currency("PRG — Prague, Czech Republic")[0] == "CZK"
+
+
+@pytest.mark.parametrize(
+    "resolve",
+    [
+        "app.agents.forex_agent._get_home_currency",
+        "app.agents.static_results._get_nat_currency",
+    ],
+)
+def test_home_currency_nationality_is_exact(resolve):
+    import importlib
+
+    module, name = resolve.rsplit(".", 1)
+    fn = getattr(importlib.import_module(module), name)
+    assert fn("American")[0] == "USD"
+    assert fn("  american ")[0] == "USD"
+    assert fn("South Korean")[0] == "KRW"
+    assert fn("North Korean") is None  # "korean" ⊂ "north korean"
+    assert fn("American Samoan") is None
+    assert fn("Indian")[0] == "INR"
+
+
+def test_static_forex_busan_is_not_usd():
+    fx = s.get_static_forex(_req("Busan"))
+    assert fx["local_currency"]["code"] == "KRW"

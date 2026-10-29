@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { responseErrorMessage } from './httpError'
+import { responseErrorMessage, axiosErrorDetail } from './httpError'
 
 const jsonResponse = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -25,5 +25,25 @@ describe('responseErrorMessage', () => {
 
   it('ignores a blank detail', async () => {
     expect(await responseErrorMessage(jsonResponse(429, { detail: '   ' }))).toBe('HTTP 429')
+  })
+})
+
+describe('axiosErrorDetail', () => {
+  const httpErr = (status, data) => Object.assign(new Error(`Request failed with status code ${status}`), { response: { status, data } })
+
+  it('returns the string detail and status of a 429', () => {
+    expect(axiosErrorDetail(httpErr(429, { detail: ' Too many requests — please wait 5 seconds and try again. ' })))
+      .toEqual({ detail: 'Too many requests — please wait 5 seconds and try again.', status: 429 })
+  })
+
+  it('drops non-string or blank details but keeps the status', () => {
+    expect(axiosErrorDetail(httpErr(422, { detail: [{ msg: 'bad' }] }))).toEqual({ detail: null, status: 422 })
+    expect(axiosErrorDetail(httpErr(500, { detail: '  ' }))).toEqual({ detail: null, status: 500 })
+    expect(axiosErrorDetail(httpErr(502, '<html>'))).toEqual({ detail: null, status: 502 })
+  })
+
+  it('handles network errors and non-errors', () => {
+    expect(axiosErrorDetail(new Error('Network Error'))).toEqual({ detail: null, status: null })
+    expect(axiosErrorDetail(undefined)).toEqual({ detail: null, status: null })
   })
 })

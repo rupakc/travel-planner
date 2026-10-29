@@ -10,7 +10,7 @@ The Travel Planner backend is a FastAPI application. All endpoints are under `/a
 Authorization: Bearer <token>
 ```
 
-**Rate limits:** endpoints that call the AI agents are limited per caller — the signed-in user, or the client IP for anonymous requests — over a rolling 10-minute window. Cached responses still count.
+**Rate limits:** endpoints that call the AI agents are limited per caller — the signed-in user, or the client IP for anonymous requests — over a rolling 10-minute window. Every accepted request counts, including cached responses and requests later rejected as invalid (`422`) or unauthenticated (`401`); only requests answered with `429` do not.
 
 | Bucket | Endpoints | Default limit |
 |---|---|---|
