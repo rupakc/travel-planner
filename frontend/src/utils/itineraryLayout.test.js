@@ -177,7 +177,6 @@ describe('safety', () => {
     const a = arrangeItinerary(it0, l)
     expect(a.changed).toBe(false)
     expect(find(a, '1-morning')).not.toBeNull()
-    expect(moveSlot(it0, l, '1-evening', 1, 'morning')).toBe(l)
     expect(layoutChangeCount(it0, l)).toBe(0)
   })
 
@@ -235,7 +234,7 @@ describe('costs', () => {
     expect(a.days[0].daily_estimated_cost_usd).toBe(100 + 10)
     expect(a.days[1].daily_estimated_cost_usd).toBe(999)
     expect(a.days[2].daily_estimated_cost_usd).toBe(60)
-    expect(a.total_estimated_cost_usd).toBe(110 + 999 + 60)
+    expect(a.total_estimated_cost_usd).toBe(180 - 60 + 110) // original total, delta of the changed day only
   })
 
   it('leaves numbers identical when nothing changed', () => {
@@ -266,5 +265,87 @@ describe('syncPlannedSlots', () => {
     const same = syncPlannedSlots(slots, arrangeItinerary(it0, null))
     expect(same).toEqual(slots)
     expect(same[0]).toBe(slots[0])
+  })
+})
+
+describe('fix round 1', () => {
+  it('ignores a stored cross-city position', () => {
+    const it0 = itinerary()
+    const l = layoutOf(it0, { '1-morning': '3-morning' })
+    const a = arrangeItinerary(it0, l)
+    expect(a.changed).toBe(false)
+    expect(find(a, '1-morning').day).toBe(1)
+    expect(layoutChangeCount(it0, l)).toBe(0)
+  })
+
+  it('treats a stale layout as empty for the mutators', () => {
+    const it0 = itinerary()
+    const stale = { fingerprint: 'old', positions: { '1-morning': null } }
+    const moved = moveSlot(it0, stale, '1-evening', 1, 'morning')
+    expect(moved).toEqual(moveSlot(it0, null, '1-evening', 1, 'morning'))
+    expect(moved.fingerprint).toBe(itineraryFingerprint(it0))
+    expect(Object.keys(moved.positions).sort()).toEqual(['1-evening', '1-morning'])
+    const removed = removeSlot(it0, stale, '2-morning')
+    expect(removed).toEqual({ fingerprint: itineraryFingerprint(it0), positions: { '2-morning': null } })
+    expect(moveTargets(it0, stale, '1-morning')).toEqual(moveTargets(it0, null, '1-morning'))
+    expect(moveTargets(it0, { positions: 'x' }, '1-morning')).toEqual(moveTargets(it0, null, '1-morning'))
+  })
+
+  it('keeps an odd-time slot after the standard slot that preceded it', () => {
+    const it0 = itinerary()
+    it0.days[0].slots = [
+      { time_of_day: 'morning', activity: 'A' },
+      { time_of_day: 'late night', activity: 'Karaoke' },
+      { time_of_day: 'evening', activity: 'B' },
+    ]
+    it0.days[1].slots = it0.days[1].slots.slice(0, 2)
+    const l = moveSlot(it0, null, '1-evening', 2, 'evening')
+    const a = arrangeItinerary(it0, l)
+    expect(a.days[0].slots.map((s) => s.activity)).toEqual(['A', 'Karaoke'])
+    // odd slot with nothing before it goes first
+    const it1 = itinerary()
+    it1.days[0].slots.unshift({ time_of_day: 'dawn', activity: 'Run' })
+    const a1 = arrangeItinerary(it1, moveSlot(it1, null, '1-evening', 1, 'morning'))
+    expect(a1.days[0].slots.map((s) => s.activity)).toEqual(['Run', 'D1 evening', 'D1 afternoon', 'D1 morning'])
+  })
+
+  it('gives duplicate time_of_day slots unique, unmovable keys', () => {
+    const it0 = itinerary()
+    it0.days[0].slots.push({ time_of_day: 'morning', activity: 'Dup1' }, { time_of_day: 'morning', activity: 'Dup2' })
+    const keys = arrangeItinerary(it0, null).days[0].slots.map((s) => s.key)
+    expect(keys).toEqual(['1-morning', '1-afternoon', '1-evening', '1-morning#2', '1-morning#3'])
+    expect(moveTargets(it0, null, '1-morning#2')).toEqual([])
+    expect(moveTargets(it0, null, '1-afternoon').some((t) => t.swapWith?.key?.includes('#'))).toBe(false)
+    const a = arrangeItinerary(it0, moveSlot(it0, null, '1-evening', 1, 'morning'))
+    expect(a.days[0].slots.map((s) => s.key).filter((k) => k.includes('#'))).toEqual(['1-morning#2', '1-morning#3'])
+    expect(new Set(a.days[0].slots.map((s) => s.key)).size).toBe(5)
+  })
+
+  it('applies a delta to the original total when changed', () => {
+    const mk = () => {
+      const it0 = {
+        days: [
+          { day_number: 1, city: 'X', daily_estimated_cost_usd: 100, slots: [
+            { time_of_day: 'morning', activity: 'A', estimated_cost_usd: 30 },
+            { time_of_day: 'afternoon', activity: 'B', estimated_cost_usd: 70 },
+          ] },
+          { day_number: 2, city: 'X', daily_estimated_cost_usd: 150, slots: [
+            { time_of_day: 'morning', activity: 'C', estimated_cost_usd: 150 },
+          ] },
+          { day_number: 3, city: 'X', daily_estimated_cost_usd: 200, slots: [] },
+        ],
+        total_estimated_cost_usd: 500,
+      }
+      return it0
+    }
+    const it0 = mk()
+    const l = moveSlot(it0, null, '1-morning', 2, 'afternoon')
+    expect(arrangeItinerary(it0, l).total_estimated_cost_usd).toBe(500)
+    const a = arrangeItinerary(it0, l, { '1-morning': { cost: 50 } })
+    expect(a.total_estimated_cost_usd).toBe(520)
+    const noTotal = mk()
+    delete noTotal.total_estimated_cost_usd
+    const l2 = moveSlot(noTotal, null, '1-morning', 2, 'afternoon')
+    expect(arrangeItinerary(noTotal, l2).total_estimated_cost_usd).toBe(70 + 180 + 200)
   })
 })

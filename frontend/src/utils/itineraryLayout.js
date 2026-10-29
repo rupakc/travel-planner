@@ -38,6 +38,18 @@ export function activeLayout(itinerary, layout) {
   return layout
 }
 
+// Keys of a day's slots, in order. The first slot with a given time keeps
+// "<day>-<tod>"; later ones with the same time get "#2", "#3", ... suffixes.
+function dayKeys(day) {
+  const counts = new Map()
+  return slotsOf(day).map((slot) => {
+    const base = slotKey(day.day_number, slot.time_of_day)
+    const n = (counts.get(base) || 0) + 1
+    counts.set(base, n)
+    return n === 1 ? base : `${base}#${n}`
+  })
+}
+
 const cityKey = (city) => String(city || '').split(',')[0].trim().toLowerCase()
 const sameCity = (a, b) => !cityKey(a) || !cityKey(b) || cityKey(a) === cityKey(b)
 
@@ -57,17 +69,15 @@ function buildModel(itinerary) {
       posDay.set(pos, day)
     }
   }
-  const seen = new Set()
   for (const day of daysOf(itinerary)) {
-    for (const slot of slotsOf(day)) {
-      const key = slotKey(day.day_number, slot.time_of_day)
-      if (seen.has(key)) continue
-      seen.add(key)
-      if (TIMES.includes(slot.time_of_day)) {
+    const keys = dayKeys(day)
+    slotsOf(day).forEach((slot, i) => {
+      const key = keys[i]
+      if (TIMES.includes(slot.time_of_day) && key === slotKey(day.day_number, slot.time_of_day)) {
         slotByKey.set(key, slot)
         movable.push(key)
       }
-    }
+    })
   }
   return { posDay, positions, slotByKey, movable }
 }
@@ -85,7 +95,10 @@ function resolve(model, layout) {
         map.set(key, null)
         continue
       }
-      if (typeof want === 'string' && model.posDay.has(want)) desired = want
+      if (
+        typeof want === 'string' && model.posDay.has(want)
+        && sameCity(model.posDay.get(key).city, model.posDay.get(want).city)
+      ) desired = want
     }
     if (!taken.has(desired)) {
       taken.add(desired)
@@ -122,12 +135,17 @@ function slotCost(slot, edits) {
   return isCost(cost) ? cost : 0
 }
 
+const withKeys = (day) => {
+  const keys = dayKeys(day)
+  return slotsOf(day).map((slot, i) => ({ ...slot, key: keys[i] }))
+}
+
 function plainArrangement(itinerary) {
   return {
     ...itinerary,
     days: daysOf(itinerary).map((day) => ({
       ...day,
-      slots: slotsOf(day).map((slot) => ({ ...slot, key: slotKey(day.day_number, slot.time_of_day) })),
+      slots: withKeys(day),
     })),
     removed: [],
     changed: false,
@@ -155,17 +173,25 @@ export function arrangeItinerary(itinerary, layout, edits = {}) {
 
   const days = daysOf(itinerary).map((day) => {
     if (!changedDays.has(day.day_number)) {
-      return { ...day, slots: slotsOf(day).map((slot) => ({ ...slot, key: slotKey(day.day_number, slot.time_of_day) })) }
+      return { ...day, slots: withKeys(day) }
     }
-    const slots = []
-    for (const tod of TIMES) {
+    // Odd-time and duplicate slots stay put: sorted just after the standard
+    // time that preceded them in the original day (before everything if none).
+    const entries = []
+    TIMES.forEach((tod, rank) => {
       const key = placed.get(slotKey(day.day_number, tod))
-      if (key) slots.push({ ...model.slotByKey.get(key), key, time_of_day: tod })
-    }
-    for (const slot of slotsOf(day)) {
-      const key = slotKey(day.day_number, slot.time_of_day)
-      if (!model.slotByKey.has(key) || model.slotByKey.get(key) !== slot) slots.push({ ...slot, key })
-    }
+      if (key) entries.push({ rank, slot: { ...model.slotByKey.get(key), key, time_of_day: tod } })
+    })
+    const keys = dayKeys(day)
+    let rank = -1
+    slotsOf(day).forEach((slot, i) => {
+      if (model.slotByKey.get(keys[i]) === slot) {
+        rank = TIMES.indexOf(slot.time_of_day)
+      } else {
+        entries.push({ rank: rank + 0.5, slot: { ...slot, key: keys[i] } })
+      }
+    })
+    const slots = entries.sort((a, b) => a.rank - b.rank).map((e) => e.slot)
     return {
       ...day,
       slots,
@@ -173,12 +199,18 @@ export function arrangeItinerary(itinerary, layout, edits = {}) {
     }
   })
 
-  const total = days.reduce((sum, day) => {
-    const daily = isCost(day.daily_estimated_cost_usd)
-      ? day.daily_estimated_cost_usd
-      : daySlotCost(day, edits)
-    return sum + daily
-  }, 0)
+  const dayCost = (day) => (isCost(day.daily_estimated_cost_usd) ? day.daily_estimated_cost_usd : daySlotCost(day, edits))
+  let total
+  if (isCost(itinerary.total_estimated_cost_usd)) {
+    total = itinerary.total_estimated_cost_usd
+    daysOf(itinerary).forEach((original, i) => {
+      if (!changedDays.has(original.day_number)) return
+      const before = isCost(original.daily_estimated_cost_usd) ? original.daily_estimated_cost_usd : daySlotCost(original, {})
+      total += days[i].daily_estimated_cost_usd - before
+    })
+  } else {
+    total = days.reduce((sum, day) => sum + dayCost(day), 0)
+  }
 
   return { ...itinerary, days, total_estimated_cost_usd: total, removed, changed: true }
 }
@@ -210,13 +242,12 @@ export function moveTargets(itinerary, layout, key) {
 }
 
 export function moveSlot(itinerary, layout, key, dayNumber, timeOfDay) {
-  if (layout && !activeLayout(itinerary, layout)) return layout
   const target = moveTargets(itinerary, layout, key).find(
     (t) => t.day_number === dayNumber && t.time_of_day === timeOfDay,
   )
   if (!target) return layout
   const model = buildModel(itinerary)
-  const resolved = resolve(model, layout)
+  const resolved = resolve(model, activeLayout(itinerary, layout))
   const from = resolved.get(key)
   const to = slotKey(dayNumber, timeOfDay)
   if (target.swapWith) resolved.set(target.swapWith.key, from)
@@ -225,9 +256,8 @@ export function moveSlot(itinerary, layout, key, dayNumber, timeOfDay) {
 }
 
 export function removeSlot(itinerary, layout, key) {
-  if (layout && !activeLayout(itinerary, layout)) return layout
   const model = buildModel(itinerary)
-  const resolved = resolve(model, layout)
+  const resolved = resolve(model, activeLayout(itinerary, layout))
   if (!resolved.get(key)) return layout
   resolved.set(key, null)
   return layoutFrom(itinerary, resolved)
