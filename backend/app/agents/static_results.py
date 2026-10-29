@@ -14,6 +14,7 @@ from ..core.places import (
     _REGION_NAMES,
     _US_STATES,
     CITY_ALIASES,
+    COUNTRY_ALIASES,
     fold_place,
     saint_variants,
 )
@@ -1396,17 +1397,12 @@ def _code_readings(code: str) -> set[str]:
     return readings
 
 
-# Other names for a table country key. Lookups compare whole names only.
+# Other names for a table country key, from the shared alias map ("england",
+# "holland", "turkiye"). Lookups compare whole names only.
 _COUNTRY_ALIASES: dict[str, str] = {
-    "united kingdom": "uk",
-    "england": "uk",
-    "great britain": "uk",
-    "united states": "usa",
-    "united states of america": "usa",
-    "united arab emirates": "uae",
-    "republic of korea": "south korea",
-    "korea": "south korea",
-    "czech republic": "czechia",
+    name: _ISO_COUNTRY[iso.lower()]
+    for name, iso in COUNTRY_ALIASES.items()
+    if iso.lower() in _ISO_COUNTRY and _ISO_COUNTRY[iso.lower()] != name
 }
 
 # "BCN — Barcelona, Spain" (the UI's airport label) → "Barcelona, Spain"

@@ -1,3 +1,4 @@
+import csv
 import functools
 import json
 import logging
@@ -103,6 +104,11 @@ def create_tables():
                 name        TEXT NOT NULL,
                 folded_name TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_places_country_score
+                ON places(country_code, score);
+            CREATE INDEX IF NOT EXISTS idx_places_admin1_score
+                ON places(country_code, admin1, score);
+            CREATE INDEX IF NOT EXISTS idx_admin1_folded ON admin1(folded_name);
             CREATE TABLE IF NOT EXISTS meta (
                 key   TEXT PRIMARY KEY,
                 value TEXT
@@ -210,40 +216,6 @@ def _replaced_code_info(code: str) -> dict | None:
 # "BER — Berlin, Germany" (the UI's airport label) → "Berlin, Germany"
 _IATA_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")
 
-# Other names people type for a country → its ISO code in the airports table.
-_COUNTRY_CODE_ALIASES: dict[str, str] = {
-    "uk": "GB",
-    "england": "GB",
-    "scotland": "GB",
-    "wales": "GB",
-    "britain": "GB",
-    "great britain": "GB",
-    "usa": "US",
-    "america": "US",
-    "united states of america": "US",
-    "uae": "AE",
-    "holland": "NL",
-    "the netherlands": "NL",
-    "korea": "KR",
-    "republic of korea": "KR",
-    "czechia": "CZ",
-    "turkiye": "TR",
-    "türkiye": "TR",
-}
-
-
-@functools.cache
-def _seed_country_codes() -> dict[str, str]:
-    """Seeded country name (folded) / ISO code (lowercase) → ISO code."""
-    from .seed_airports import AIRPORTS
-
-    table: dict[str, str] = {}
-    for _iata, _icao, _name, _city, country, code, *_ in AIRPORTS:
-        if code:
-            table[fold_place(country)] = code
-            table[code.lower()] = code
-    return table
-
 
 @functools.cache
 def _seed_accented_cities() -> dict[str, str]:
@@ -275,12 +247,9 @@ def _city_spellings(name: str) -> set[str]:
 def _stated_countries(stated: str) -> frozenset[str]:
     """ISO codes of the countries a folded last segment names directly
     (country name, ISO code or alias); empty when it names none."""
-    codes = set()
-    if stated in _seed_country_codes():
-        codes.add(_seed_country_codes()[stated])
-    if stated in _COUNTRY_CODE_ALIASES:
-        codes.add(_COUNTRY_CODE_ALIASES[stated])
-    return frozenset(codes)
+    from .places_db import stated_countries
+
+    return stated_countries(stated)
 
 
 def _row_regions(row: sqlite3.Row) -> frozenset[str]:
@@ -292,6 +261,21 @@ def _in_region(row: sqlite3.Row, region: tuple[str, frozenset[str]]) -> bool:
     can be in ("WA" in the US is Washington, in Australia Western Australia)."""
     code, countries = region
     return row["country_code"] in countries and code in _row_regions(row)
+
+
+@functools.cache
+def _curated_city_countries() -> dict[str, frozenset[str]]:
+    """Folded curated served-city name → ISO codes of its curated airports
+    with scheduled service (Odessa's ODS has none: no Ukraine hint)."""
+    from .seed_airports import AIRPORTS, PLACE_DATA_DIR
+
+    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
+        unscheduled = {r["iata"] for r in csv.DictReader(f) if r["scheduled"] == "0"}
+    table: dict[str, set[str]] = {}
+    for iata, _icao, _name, city, _country, code, *_ in AIRPORTS:
+        if code and iata not in unscheduled:
+            table.setdefault(fold_place(city), set()).add(code)
+    return {city: frozenset(codes) for city, codes in table.items()}
 
 
 @functools.cache
