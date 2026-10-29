@@ -23,6 +23,8 @@ _HOTELS_TIMEOUT = 45
 _WEATHER_TIMEOUT = 30
 _VISA_TIMEOUT = 30
 
+# HotelsAgent and VisaAgent keep per-request fields on the instance; sharing
+# them is only safe because compare never calls enrich().
 _flights_agent: FlightsAgent | None = None
 _hotels_agent: HotelsAgent | None = None
 _weather_agent: WeatherAgent | None = None
@@ -92,16 +94,20 @@ async def compare_destination(
     if cached := cache.get(cache_key):
         return cached
 
+    # Build every agent first so a failing factory can't strand coroutines.
     static_visa = get_static_visa(request)
+    flights_agent = get_flights_agent()
+    hotels_agent = get_hotels_agent()
+    weather_agent = get_weather_agent()
+    visa_agent = None if static_visa else get_visa_agent()
+
     visa_task = (
-        asyncio.sleep(0, result=static_visa)
-        if static_visa
-        else get_visa_agent().run(request)
+        visa_agent.run(request) if visa_agent else asyncio.sleep(0, result=static_visa)
     )
     flights, hotels, weather, visa = await asyncio.gather(
-        _piece("flights", get_flights_agent().run(request), _FLIGHTS_TIMEOUT),
-        _piece("hotels", get_hotels_agent().run(request), _HOTELS_TIMEOUT),
-        _piece("weather", get_weather_agent().run(request), _WEATHER_TIMEOUT),
+        _piece("flights", flights_agent.run(request), _FLIGHTS_TIMEOUT),
+        _piece("hotels", hotels_agent.run(request), _HOTELS_TIMEOUT),
+        _piece("weather", weather_agent.run(request), _WEATHER_TIMEOUT),
         _piece("visa", visa_task, _VISA_TIMEOUT),
     )
 
@@ -119,5 +125,6 @@ async def compare_destination(
         get_confidence_score(request),
         visa_verified=static_visa is not None,
     )
-    cache[cache_key] = summary
+    if not summary["missing"]:  # only complete results are cached
+        cache[cache_key] = summary
     return summary

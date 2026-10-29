@@ -192,7 +192,13 @@ def _estimate(request, flight, hotel, daily_cost) -> dict:
     days = max(nights, 1)
     flight_usd = flight["price_usd"] if flight else None
     nightly = hotel["typical_nightly_usd"] if hotel else None
-    stay_usd = _round(nightly * nights, 2) if nightly is not None else None
+    n = max(request.num_travelers, 1)
+    # A nightly price is per room; assume one room per two travellers.
+    stay_usd = (
+        _round(nightly * nights * math.ceil(n / 2) / n, 2)
+        if nightly is not None
+        else None
+    )
     daily_usd = _round(daily_cost * days, 2) if daily_cost is not None else None
     parts = [p for p in (flight_usd, stay_usd, daily_usd) if p is not None]
     partial = len(parts) < 3

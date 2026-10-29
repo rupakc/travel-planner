@@ -1,5 +1,6 @@
 """Tests for the trip-comparison summary and /api/compare/destination."""
 
+import asyncio
 import math
 from datetime import date
 from unittest.mock import AsyncMock, patch
@@ -201,6 +202,50 @@ class TestSummarize:
         none = summarize_destination(_req(), flights, hotels, None, None, None)
         assert none["estimate"]["budget_status"] is None
 
+    def test_budget_depends_on_party_size(self):
+        flights = {"results": [_fare(1000)]}
+        hotels = {"results": [_hotel(100, 3)]}
+        one = summarize_destination(
+            _req(budget_usd=4000), flights, hotels, None, None, None
+        )
+        two = summarize_destination(
+            _req(budget_usd=4000, num_travelers=2), flights, hotels, None, None, None
+        )
+        assert one["estimate"]["budget_status"] == "under"
+        assert two["estimate"]["budget_status"] == "over"
+
+    def test_stay_cost_is_per_room_shared_by_two(self):
+        hotels = {"results": [_hotel(100, 3)]}
+        stay = {
+            n: summarize_destination(
+                _req(num_travelers=n), None, hotels, None, None, None
+            )["estimate"]["stay_usd"]
+            for n in (1, 2, 3, 4)
+        }
+        assert stay == {1: 700, 2: 350, 3: pytest.approx(466.67, abs=0.01), 4: 350}
+
+    def test_partial_budget_status(self):
+        flights = {"results": [_fare(400)]}
+        under = summarize_destination(
+            _req(destination="Zzyzx Nowhere", budget_usd=5000),
+            flights,
+            None,
+            None,
+            None,
+            None,
+        )
+        over = summarize_destination(
+            _req(destination="Zzyzx Nowhere", budget_usd=100),
+            flights,
+            None,
+            None,
+            None,
+            None,
+        )
+        assert under["estimate"]["partial"] is True
+        assert under["estimate"]["budget_status"] is None
+        assert over["estimate"]["budget_status"] == "over"
+
     def test_estimate_partial_for_unknown_destination(self):
         s = summarize_destination(
             _req(destination="Zzyzx Nowhere"),
@@ -334,10 +379,21 @@ def test_agent_error_result_counts_as_failure(client, admin_headers, agents):
     assert r.status_code == 200 and "flights" in r.json()["missing"]
 
 
-def test_timeout_is_partial(client, admin_headers, agents):
-    agents["weather"].return_value.run = AsyncMock(side_effect=TimeoutError())
-    r = _post(client, admin_headers)
+def test_timeout_is_partial_and_cancels_agent(client, admin_headers, agents):
+    cancelled = []
+
+    async def slow(request):
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    agents["weather"].return_value.run = slow
+    with patch("app.api.routes.compare._WEATHER_TIMEOUT", 0.01):
+        r = _post(client, admin_headers)
     assert r.status_code == 200 and "weather" in r.json()["missing"]
+    assert cancelled == [True]
 
 
 def test_all_failing_is_502_and_not_cached(client, admin_headers, agents):
@@ -363,3 +419,25 @@ def test_second_identical_call_served_from_cache(client, admin_headers, agents):
     assert first.json() == second.json()
     agents["flights"].return_value.run.assert_called_once()
     agents["hotels"].return_value.run.assert_called_once()
+
+
+def test_partial_result_not_cached(client, admin_headers, agents):
+    agents["hotels"].return_value.run = AsyncMock(side_effect=RuntimeError("boom"))
+    assert "hotels" in _post(client, admin_headers).json()["missing"]
+    agents["hotels"].return_value.run = AsyncMock(return_value=_HOTELS)
+    second = _post(client, admin_headers).json()
+    assert second["missing"] == [] and second["hotel"] is not None
+
+
+def test_factory_failure_leaves_no_unawaited_coroutines(client, admin_headers, agents):
+    import warnings
+
+    agents["weather"].side_effect = RuntimeError("ctor failed")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        with pytest.raises(RuntimeError):
+            _post(client, admin_headers, destination="Zzyzx Nowhere")
+        import gc
+
+        gc.collect()
+    assert not [w for w in caught if "never awaited" in str(w.message)]
