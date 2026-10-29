@@ -35,7 +35,7 @@ _PRIMARY_REGION: dict[str, str] = {
     "GRU": "sp", "CGH": "sp", "GIG": "rj", "SDU": "rj", "BSB": "df",
     "SSA": "ba", "FOR": "ce", "REC": "pe", "BEL": "pa", "MAO": "am",
     # ── Australia ──
-    "SYD": "nsw", "MEL": "vic", "BNE": "qld", "PER": "wa", "ADL": "sa",
+    "SYD": "nsw", "WSI": "nsw", "MEL": "vic", "AVV": "vic", "BNE": "qld", "PER": "wa", "ADL": "sa",
     "CBR": "act", "CNS": "qld", "DRW": "nt", "HBA": "tas", "OOL": "qld",
     "TSV": "qld",
 }  # fmt: skip

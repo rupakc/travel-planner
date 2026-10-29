@@ -406,7 +406,7 @@ def test_foreign_airport_whose_curated_city_is_the_place_counts_as_its_own(tmp_p
     assert _links(r, 1) == ["BSL", "HOM"]
 
 
-def test_air_bases_are_not_linked_unless_curated(tmp_path):
+def test_air_bases_are_not_linked_when_a_civil_airport_is_in_reach(tmp_path):
     airports = [
         _oa("MIL", _north(_LAT, 5), _LNG, name="Xyz Air Base"),
         _oa("AFS", _north(_LAT, 6), _LNG, name="Hindon Air Force Station"),
@@ -420,6 +420,18 @@ def test_air_bases_are_not_linked_unless_curated(tmp_path):
     assert sorted(_links(r, 1)) == ["CUR", "JNT"]
     # Excluded from linking only: the rows stay in airports.csv.
     assert r.airports["MIL"]["scheduled"] == 1
+
+
+def test_air_base_is_linked_when_no_civil_airport_is_in_reach(tmp_path):
+    # Bareilly / BEK: the only airport in reach is an air force station; the
+    # civil airports are fallback distance away.
+    airports = [
+        _oa("BEK", _north(_LAT, 5), _LNG, kind="medium_airport",
+            name="Bareilly Air Force Station"),
+        _oa("MZS", _north(_LAT, 60), _LNG, kind="medium_airport"),
+    ]  # fmt: skip
+    r = _build(tmp_path, airports, [_city(1, "Bareilly", _LAT, _LNG, 900_000)])
+    assert _links(r, 1) == ["BEK"]
 
 
 @pytest.mark.parametrize(
@@ -965,19 +977,22 @@ def test_committed_places_link_only_scheduled_airports():
         ("BUR", "Burbank"),
         ("ONT", "Ontario"),
         ("CJJ", "Cheongju-si"),
+        # Curated served-city overrides (fix round 3).
+        ("WSI", "Sydney"),
+        ("AVV", "Melbourne"),
+        ("THR", "Tehran"),
+        ("NLU", "Mexico City"),
+        ("DXN", "Noida"),
+        ("DJE", "Djerba"),
+        ("GSM", "Qeshm"),
+        ("LXA", "Lhasa"),
+        ("RKZ", "Shigatse"),
+        ("YNT", "Yantai"),
+        ("UIH", "Qui Nhon"),
     ],
 )
-def test_committed_non_curated_large_airport_display_cities(iata, city):
+def test_committed_large_airport_display_cities(iata, city):
     assert _committed_airports()[iata]["city"] == city
-
-
-@pytest.mark.xfail(
-    reason="known gap: Sydney's GeoNames point is 45 km from WSI, beyond the "
-    "40 km name-match rule; needs a curated row",
-    strict=True,
-)
-def test_committed_western_sydney_display_city():
-    assert _committed_airports()["WSI"]["city"] == "Sydney"
 
 
 def test_committed_display_cities_never_empty_or_comma():

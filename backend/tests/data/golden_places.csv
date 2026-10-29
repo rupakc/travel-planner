@@ -300,3 +300,20 @@ Lisboa,LIS,first,PT,task3,
 "Toronto, CA",YYZ,first,CA,task3,
 Frankfurt,FRA,exact,DE,task3,
 Zermatt,BRN LUG GVA ZRH,first,CH,task3,
+Bareilly,BEK,first,IN,data,Bareilly
+Broomfield,BJC,first,US,data,Broomfield
+Houmt Souk,DJE,first,TN,data,Djerba
+Lhasa,LXA,first,CN,data,Lhasa
+Melbourne,MEL AVV,subset,AU,data,Melbourne
+Mexico City,MEX NLU,subset,MX,data,Mexico City
+Noida,DXN DEL,subset,IN,data,Noida
+Qeshm,GSM,first,IR,data,Qeshm
+Sydney,SYD WSI,subset,AU,data,Sydney
+Tehran,THR IKA,subset,IR,data,Tehran
+Xigazê,RKZ,first,CN,data,Shigatse
+Yantai,YNT,first,CN,data,Yantai
+Qui Nhon,UIH,first,VN,data,Qui Nhon
+San Salvador,SAL ILS,subset,SV,data,San Salvador
+Ilopango,ILS,first,SV,data,Ilopango
+Shigatse,RKZ,first,CN,task3,Shigatse
+Djerba,DJE,first,TN,task3,Djerba

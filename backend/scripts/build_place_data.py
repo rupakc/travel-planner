@@ -229,6 +229,7 @@ class LinkAirport:
     folded_name: str = ""
     display: str = ""  # folded provisional display city
     admin1: str = ""  # GeoNames admin1 of the nearest same-country place
+    military: bool = False  # an air base, linked only without civil cover
 
 
 @dataclass
@@ -310,9 +311,10 @@ def link_airports(
     In reach per type: large 80 km (100 km for a 1M+ place with no large
     airport within 50 km), medium 50 km, small 30 km; ranked by
     (foreign, not own, not curated, distance / reach), ≤ 3 — "own" being an
-    airport whose display city is the place or whose name contains it. None in reach → large /
-    medium airports within 200 km (own country) or 150 km (foreign), ranked by
+    airport whose display city is the place or whose name contains it. None
+    in reach → large / medium airports within 200 km (own country) or 150 km (foreign), ranked by
     (foreign, distance), ≤ 2. Near-equal neighbours prefer the place's admin1.
+    Air bases (non-curated) count only when no civil airport is in reach.
     """
     nearby = index.within(place.lat, place.lng, SAME_COUNTRY_FALLBACK_KM)
     close_large = any(a.type_rank == 0 and d <= CLOSE_LARGE_KM for d, a in nearby)
@@ -334,6 +336,8 @@ def link_airports(
             FALLBACK_KM if foreign else SAME_COUNTRY_FALLBACK_KM
         ):
             fallback.append(((foreign,), d, a, d))
+    if any(not t[2].military for t in in_reach):
+        in_reach = [t for t in in_reach if not t[2].military]
     if not in_reach and not fallback:
         return [], False
     pool, limit = (in_reach, MAX_LINKS) if in_reach else (fallback, MAX_FALLBACK_LINKS)
@@ -533,16 +537,14 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
         for iata, a in airports.items()
     }
 
-    # Airports that places link to: scheduled, and not air bases unless
-    # curated. A provisional display city (curated, else the display chain
+    # Airports that places link to: scheduled ones; non-curated air bases are
+    # marked and only linked when no civil airport is in reach. A provisional display city (curated, else the display chain
     # without its link-dependent step) marks an airport as a place's own
     # ("Basel" → BSL, "Bol" → BWK).
     linkable = []
     for iata, a in airports.items():
         folded_name = fold_place(a["name"])
-        if not a["scheduled"] or (
-            iata not in curated_rows and is_military(folded_name)
-        ):
+        if not a["scheduled"]:
             continue
         same = [(d, p) for d, p in near[iata] if p.country_code == a["country_code"]]
         if iata in curated_rows:
@@ -562,6 +564,7 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
                 folded_name,
                 display,
                 admin1,
+                iata not in curated_rows and is_military(folded_name),
             )
         )
     index = _airport_index(linkable)
