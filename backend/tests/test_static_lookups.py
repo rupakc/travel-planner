@@ -377,6 +377,18 @@ def test_static_forex_busan_is_not_usd():
         ("Leipzig, DE", None),
         ("Leipzig, Germany", "germany"),
         ("Nowhere, ZZ", None),
+        ("Paris, US", None),  # US reads as the USA, the city map says France
+        # regional codes beyond US states (Canada, Australia, Brazil)
+        ("Perth, WA", "australia"),
+        ("Seattle, WA", "usa"),
+        ("Toronto, ON", "canada"),
+        ("Fremantle, WA", None),  # Washington or Western Australia
+        ("Charlottetown, PE", None),  # Peru, PEI or Pernambuco
+        ("St. John's, NL", None),  # Netherlands or Newfoundland
+        ("Belém, PA", "brazil"),
+        ("Florianópolis, SC", "brazil"),
+        ("Smalltown, PA", None),  # Pennsylvania or Pará
+        ("Sydney, NSW", "australia"),
     ],
 )
 def test_iso_country_codes(destination, country):
@@ -393,3 +405,12 @@ def test_us_state_module_is_shared():
 
     assert s._US_STATES is _US_STATES
     assert _US_STATES["tx"] == "texas"
+
+
+def test_region_codes_table():
+    from app.core.places import _REGION_CODES
+
+    assert _REGION_CODES["wa"] == {"US", "AU"}
+    assert _REGION_CODES["pe"] == {"CA", "BR"}
+    assert _REGION_CODES["nsw"] == {"AU"}
+    assert sum("BR" in c for c in _REGION_CODES.values()) == 27

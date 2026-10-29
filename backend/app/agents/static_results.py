@@ -10,7 +10,7 @@ import functools
 import re
 import unicodedata
 
-from ..core.places import _US_STATES
+from ..core.places import _REGION_CODES, _US_STATES
 from ..schemas.request import TravelSearchRequest
 
 # ── Visa static lookup ────────────────────────────────────────────────────────
@@ -1319,13 +1319,22 @@ _CITY_TO_COUNTRY: dict[str, str] = {
     "miami beach": "usa", "scottsdale": "usa", "boise": "usa",
     "providence": "usa", "hartford": "usa", "jacksonville": "usa",
     "oklahoma city": "usa", "santa barbara": "usa",
+    # Major Australian, Canadian and Brazilian cities, so "Perth, WA" or
+    # "Belém, PA" resolve through their region codes (accents are folded)
+    "perth": "australia", "adelaide": "australia", "brisbane": "australia",
+    "darwin": "australia", "hobart": "australia", "cairns": "australia",
+    "gold coast": "australia", "calgary": "canada", "ottawa": "canada",
+    "quebec city": "canada", "halifax": "canada", "salvador": "brazil",
+    "florianopolis": "brazil", "recife": "brazil", "brasilia": "brazil",
+    "belem": "brazil", "manaus": "brazil", "fortaleza": "brazil",
+    "maceio": "brazil",
 }  # fmt: skip
 
 # A stated "country" that is really a state or region: the city-map fallback
 # applies only when the map agrees with the region's country ("Paris, Texas"
 # is not Paris, France).
 _REGION_COUNTRY: dict[str, str] = {
-    **{name: "usa" for pair in _US_STATES.items() for name in pair},
+    **{name: "usa" for name in _US_STATES.values()},
     "us": "usa",
     "kansai": "japan",
     "kanto": "japan",
@@ -1341,9 +1350,6 @@ _REGION_COUNTRY: dict[str, str] = {
     "ontario": "canada",
     "quebec": "canada",
     "british columbia": "canada",
-    "on": "canada",
-    "qc": "canada",
-    "bc": "canada",
     "new south wales": "australia",
     "victoria": "australia",
 }
@@ -1368,9 +1374,13 @@ _ISO_COUNTRY: dict[str, str] = {
     "za": "south africa",
 }  # fmt: skip
 
-# Two-letter codes that are both a table country's ISO code and a US state
-# ("CO": Colombia / Colorado) — on their own they name no country.
-_AMBIGUOUS_CODES = frozenset(_ISO_COUNTRY) & frozenset(_US_STATES)
+
+def _code_readings(code: str) -> set[str]:
+    """Every table country a short code can name: its ISO country plus each
+    country using it as a region code ("wa" → usa, australia)."""
+    readings = {_ISO_COUNTRY[code]} if code in _ISO_COUNTRY else set()
+    readings |= {_ISO_COUNTRY[c.lower()] for c in _REGION_CODES.get(code, ())}
+    return readings
 
 
 # Other names for a table country key. Lookups compare whole names only.
@@ -1458,11 +1468,12 @@ def _place_country(destination: str) -> str | None:
     A stated known country wins. Otherwise the city's country from the city
     map — when nothing else is stated, or the stated part is a state/region
     of that same country ("Miami, FL", "Kyoto, Kansai"), or an ISO
-    country code for that same country ("Berlin, DE", "Paris, FR"), or an
-    ISO code that is not also a US state code ("Cartagena, ES"). An unknown
-    city with a two-letter code takes the ISO code's country ("Trondheim,
-    NO") or a US state's ("Austin, TX"), but not when the code could be
-    either ("Leipzig, DE"). Otherwise a single
+    country or region code with a reading in that same country ("Berlin, DE",
+    "Perth, WA"), or an ISO code that is not a US state code ("Cartagena,
+    ES").
+    An unknown city with a code takes its country only when the code has a
+    single reading across ISO and region codes ("Trondheim, NO", "Austin,
+    TX"; not "Leipzig, DE" or "Smalltown, PA"). Otherwise a single
     "<city> <country>" phrase like "Tokyo Japan". Never substring matching.
     """
     place = normalise_place(destination)
@@ -1471,20 +1482,23 @@ def _place_country(destination: str) -> str | None:
         return country
     if city in _CITY_TO_COUNTRY:
         mapped = _CITY_TO_COUNTRY[city]
-        if country is None or _ISO_COUNTRY.get(country) == mapped:
+        if country is None:
+            return mapped
+        readings = _code_readings(country)
+        if mapped in readings:  # "Perth, WA", "Berlin, DE", "Denver, CO"
             return mapped
         if country in _REGION_COUNTRY:
             return mapped if _REGION_COUNTRY[country] == mapped else None
-        # "Cartagena, ES": an ISO code that can't be a state names the country
-        return _ISO_COUNTRY.get(country) if len(country) <= 2 else None
-    if city and country and len(country) <= 2:
-        # Unknown city: an ISO-only code names its country, a state-only code
-        # the USA; a code that is both ("Smalltown, CO") names neither
-        if country in _AMBIGUOUS_CODES:
-            return None
-        if country in _ISO_COUNTRY:
+        # "Cartagena, ES": an ISO code that can't be a US state names its
+        # country (the known city outweighs a Brazilian/Canadian reading)
+        if country in _ISO_COUNTRY and country not in _US_STATES:
             return _ISO_COUNTRY[country]
-        return "usa" if country in _US_STATES else None
+        return None
+    if city and country:
+        # Unknown city: a code with exactly one reading ("Austin, TX",
+        # "Trondheim, NO"); "Smalltown, PA" could be the USA or Brazil
+        readings = _code_readings(country)
+        return readings.pop() if len(readings) == 1 else None
     if city and country is None:
         for name in sorted(_known_countries() | _COUNTRY_ALIASES.keys()):
             prefix = city.removesuffix(" " + name)

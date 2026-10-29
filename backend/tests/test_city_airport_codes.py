@@ -33,7 +33,7 @@ def extra_airports():
     """Insert test-only airports; removed afterwards."""
     codes: list[str] = []
 
-    def add(code: str, city: str, country: str, country_code: str) -> None:
+    def add(code: str, city: str, country: str, country_code: str | None) -> None:
         with get_connection() as conn:
             conn.execute(
                 "INSERT INTO airports (iata_code, name, city, country, country_code)"
@@ -152,8 +152,9 @@ def test_known_airport_prefix_wins_over_city():
     assert lookup_city_iata("lgw - London") == "LGW"
 
 
-def test_unknown_prefix_falls_back_to_city():
-    assert lookup_city_iata("ZZZ — Berlin, Germany") == "BER"
+def test_unknown_prefix_keeps_text_whole():
+    """Only a known airport code counts as a label prefix."""
+    assert lookup_city_iata("ZZZ — Berlin, Germany") is None
 
 
 def test_airports_db_does_not_import_agents():
@@ -165,3 +166,48 @@ def test_airports_db_does_not_import_agents():
     tree = ast.parse(Path(db.__file__).read_text())
     modules = [n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
     assert not any("agents" in m for m in modules)
+
+
+def test_web_saved_row_does_not_make_city_ambiguous(extra_airports):
+    """Web-resolved rows carry an LLM country name and no country_code."""
+    extra_airports("BQH", "London", "UK", None)
+    assert lookup_city_iata("London") == "LHR,LGW,STN"
+    assert lookup_city_iata("London, UK") == "LHR,LGW,STN"
+
+
+def test_uncoded_row_alone_still_resolves(extra_airports):
+    extra_airports("ZQD", "Webville", "Freedonia", None)
+    assert lookup_city_iata("Webville") == "ZQD"
+
+
+@pytest.mark.parametrize(
+    ("place", "codes"),
+    [
+        ("Toronto, ON", "YYZ"),
+        ("Vancouver, BC", "YVR"),
+        ("Munich, Bavaria", "MUC"),  # unrecognised region: city alone
+        ("Perth, WA", "PER"),  # WA: Washington or Western Australia
+    ],
+)
+def test_region_suffix_does_not_reject_the_city(place, codes):
+    assert lookup_city_iata(place) == codes
+
+
+@pytest.mark.anyio
+async def test_multi_city_leg_with_province_suffix(monkeypatch):
+    from app.services import serp_flights
+
+    calls = []
+
+    async def fake_call(params):
+        calls.append((params["departure_id"], params["arrival_id"]))
+        return {"best_flights": [], "other_flights": []}
+
+    monkeypatch.setattr(serp_flights, "_call", fake_call)
+    req = _req("JFK", "Paris, France", destinations=["Toronto, ON", "Paris, France"])
+    try:
+        await serp_flights.search_multi_city("k", req)
+    except serp_flights.SerpAPIError:
+        pass  # every leg empty — only the resolved codes matter here
+    assert calls[0] == ("JFK", "YYZ")
+    assert ("YYZ", "CDG,ORY") in calls

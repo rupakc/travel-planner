@@ -130,6 +130,8 @@ def _map_leg(flights_arr: list, layovers: list, date_str: str) -> dict:
 def _google_flights_url(
     origin: str, destination: str, dep_date: str, ret_date: str | None
 ) -> str:
+    # A resolved city can carry several codes ("LHR,LGW,STN"); the link takes one
+    origin, destination = origin.split(",")[0], destination.split(",")[0]
     base = f"https://www.google.com/flights#flt={origin}.{destination}.{dep_date}"
     if ret_date:
         base += f"*{destination}.{origin}.{ret_date}"

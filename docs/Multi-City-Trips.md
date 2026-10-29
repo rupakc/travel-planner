@@ -40,7 +40,7 @@ Each stay's `end_date` is the day the traveler moves on — it equals the next c
 
 The flights pipeline (`backend/app/services/serp_flights.py::search_multi_city`) then:
 
-1. Resolves every endpoint to IATA codes (`lookup_city_iata`: exact city match in the local airports DB, restricted to the stated country, up to 3 airport codes per city, none when the city is ambiguous across countries; never a web lookup).
+1. Resolves every endpoint to IATA codes (`lookup_city_iata`: exact city match in the local airports DB, restricted by a recognised country or region in the last segment ("Toronto, ON" → YYZ), up to 3 airport codes per city, none when the city is ambiguous across countries; never a web lookup).
 2. Fires **parallel one-way Google Flights searches** (SerpAPI, `type: "2"`) — one per leg, with a 20 s timeout and one retry per leg.
 3. Tags every result with `leg_index`, `leg_from`, `leg_to`, `leg_date`, and `city`, keeps the top 5 per leg, and sorts legs into the user's journey order before returning.
 4. Any leg SerpAPI cannot serve (timeout, zero results) is **AI-filled** with realistic estimates (`FlightsAgent._ai_fill_legs`, marked `source: "estimate"`), so no leg ever shows an empty row.
