@@ -12,7 +12,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 - `docker-compose.yml` now builds the backend from the repo root, so `docker compose up --build` works.
 - `get_optional_user` treats a deactivated user's token as anonymous.
 - Removed the unused `knowledge_planner.py` and the unused `tools` / `max_turns` agent frontmatter fields.
-- Place resolution (GeoNames `allCountries`, CC BY 4.0): countries resolve by their native and other-language names ("Deutschland", "Brasil", "Nippon", "Suomi"; KSA, PRC, ROK and ROC as qualifiers); a suburb no longer beats a namesake with its own airport ("Peoria" → PIA); 14,186 notable islands, parks, mountains, regions and sites resolve to their airports ("Kakadu" → DRW, "Grand Teton" → JAC). See [Place and Airport Data](Place-and-Airport-Data.md).
+- Place resolution (GeoNames `allCountries`, CC BY 4.0): countries resolve by their native and other-language names ("Deutschland", "Brasil", "Nippon", "Suomi"; KSA, PRC, ROK and ROC, and names that are also a town's, as qualifiers only); a suburb no longer beats a namesake with its own named airport ("Peoria" → PIA, "Pontevedra" → Spain); 26,329 notable islands, parks, glaciers, caves, mountains, regions, sites and famous districts resolve to their airports ("Kakadu" → DRW, "Grand Teton" → JAC, "Ealing" → LHR). See [Place and Airport Data](Place-and-Airport-Data.md).
 
 ---
 

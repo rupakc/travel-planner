@@ -199,31 +199,57 @@ SAINT_EXCEPTIONS: frozenset[str] = frozenset(_HINTS["saint_exceptions"])
 # ── Non-town features (islands, parks, mountains…): their short names ─────
 
 # A feature's name without a generic part is a primary name too ("Kakadu
-# National Park" → "kakadu", "Mount Everest" → "everest"). Only these words:
-# "Death Valley", "Rocky Mountains" and "Monte Rosa" keep their whole names.
-_FEATURE_PREFIXES = ("mount ", "mt ", "lake ", "ko ", "koh ", "isle of ", "pulau ")
+# National Park" → "kakadu", "Mount Everest" → "everest", "Isola
+# Stromboli" → "stromboli", "Annapurna I" → "annapurna"), in English and
+# the other languages GeoNames names features in. "Death Valley" and
+# "Rocky Mountains" keep their whole names.
+_FEATURE_PREFIXES = (
+    "mount ", "mt ", "lake ", "ko ", "koh ", "isle of ", "pulau ",
+    "isola ", "isla ", "ilha ", "ile ", "insel ", "gunung ", "mont ", "monte ",
+    "monti ", "cerro ", "pico ", "pic ", "piz ", "lago ", "lac ", "laguna ",
+    "parque nacional ", "parc national ", "nationalpark ", "national park ",
+    "zona arqueologica ",
+)  # fmt: skip
 _FEATURE_SUFFIXES = (
     " national park",
     " national reserve",
     " game reserve",
     " nature reserve",
+    " nationalpark",
     " islands",
     " island",
+    " insel",
     " atoll",
     " peninsula",
+    " peak",
+    " see",
 )
+# "de", "del", "de la"… after a prefix ("Parc national de la Vanoise")
+_CONNECTORS = ("de la ", "de los ", "de las ", "del ", "de ", "des ", "du ",
+               "da ", "do ", "dos ", "di ", "della ", "dei ")  # fmt: skip
+_ROMAN_SUFFIX_RE = re.compile(r" (i|ii|iii|iv|v)$")
 
 
 def feature_short_names(folded: str) -> set[str]:
-    """The folded feature name without a generic prefix or suffix (empty
-    when it has none, or nothing is left)."""
+    """The folded feature name without a generic prefix (and a following
+    "de", "di"…), a generic suffix or a trailing Roman numeral (empty when
+    it has none, or nothing is left)."""
     short = set()
     for prefix in _FEATURE_PREFIXES:
-        if folded.startswith(prefix) and folded[len(prefix) :].strip():
-            short.add(folded[len(prefix) :])
+        if folded.startswith(prefix):
+            rest = folded[len(prefix) :]
+            for connector in _CONNECTORS:
+                if rest.startswith(connector):
+                    rest = rest[len(connector) :]
+                    break
+            if rest.strip():
+                short.add(rest)
     for suffix in _FEATURE_SUFFIXES:
         if folded.endswith(suffix) and folded[: -len(suffix)].strip():
             short.add(folded[: -len(suffix)])
+    roman = _ROMAN_SUFFIX_RE.sub("", folded)
+    if roman != folded and roman.strip():
+        short.add(roman)
     return short
 
 
@@ -259,6 +285,14 @@ def words_in(folded_name: str, folded_text: str) -> bool:
         return False
     words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
     return f" {folded_name} " in f" {words} "
+
+
+def is_named_airport(place: str, airport_city: str, airport_name: str) -> bool:
+    """The airport is named for the place (all folded): its display city is
+    the place or its name contains the place name. The suburb rule's "own"
+    (never distance alone: Pontevedra, Buenos Aires is near EZE, not its
+    own airport's town)."""
+    return airport_city == place or words_in(place, airport_name)
 
 
 def is_own_airport(

@@ -37,9 +37,9 @@ from app.core.places import (  # noqa: E402
     AIRPORT_NAME_WORDS,
     COUNTRY_ALIASES,
     NEVER_LINK,
-    OWN_AIRPORT_KM,
     QUALIFIER_COUNTRY_ALIASES,
     fold_place,
+    is_named_airport,
     is_own_airport,
     words_in,
 )
@@ -89,6 +89,9 @@ _KM_PER_DEG_LAT = 110.5  # a little under the true minimum, so cells over-cover
 # suburb (Concord, NH flies from Manchester's MHT; Newport from Cardiff's).
 SATELLITE_KM = 60
 SATELLITE_OWNER_RATIO = 10
+# ... and a deep suburb (satellite=2) when the owner scores this many times
+# more (Pontevedra, Buenos Aires; Spain's Pontevedra is only a satellite).
+SATELLITE_DEEP_RATIO = 100
 
 # Country names from GeoNames allCountries: the political entities' names.
 COUNTRY_FEATURE_CODES = frozenset(
@@ -115,11 +118,27 @@ FEATURE_CODES = frozenset(
         "ANS", "RUIN", "HSTS", "MNMT",  # ancient / historical sites, monuments
         "DSRT",  # deserts
         "GRGE", "CNYN",  # gorges, canyons
+        "GLCR", "CAPE", "FJD", "CAVE",  # glaciers, capes, fjords, caves
     }
 )  # fmt: skip
 ISLAND_CODES = frozenset({"ISL", "ISLS", "ATOL"})
 # Notability = GeoNames' alternate-name count; calibrated (see the README).
+# Parks, reserves, resorts, glaciers, capes, fjords and caves are rarely
+# translated, so they count from FEATURE_LOW_NOTABILITY.
 FEATURE_MIN_NOTABILITY = 10
+FEATURE_LOW_NOTABILITY = 5
+FEATURE_LOW_CODES = frozenset(
+    {"PRK", "RESN", "RESW", "RESF", "RSRT", "GLCR", "CAPE", "FJD", "CAVE"}
+)
+# Famous districts (Bondi, Ealing, Frankston): populated rows that are not
+# places (sections of places, or seats GeoNames gives no people), with this many
+# alternate names or (sections) this many people; they take the airports of
+# the highest-scoring place within DISTRICT_PARENT_KM.
+DISTRICT_MIN_NOTABILITY = 10
+DISTRICT_MIN_POPULATION = 10_000
+DISTRICT_PARENT_KM = 50
+DISTRICT_EXCLUDED_CODES = frozenset({"PPLH", "PPLQ", "PPLW", "PPLCH"})
+DISTRICT_SEAT_CODES = frozenset({"PPLA2", "PPLA3", "PPLA4", "PPLA5"})
 FEATURE_AIRPORT_KM = 250  # large / medium airports linked within
 FEATURE_LARGE_FACTOR = 0.5  # a large airport ranks at half its distance
 # An airport on an island: within this distance of the island's point, and
@@ -129,7 +148,7 @@ ISLAND_AIRPORT_KM = 50
 # populated places, administrative divisions and the listed feature codes.
 SHARED_NAME_CLASSES = frozenset({"P", "A"})
 
-COUNTRY_COLUMNS = ["code", "name", "names"]
+COUNTRY_COLUMNS = ["code", "name", "names", "qualifier_names"]
 FEATURE_COLUMNS = [
     "geonameid",
     "name",
@@ -142,6 +161,7 @@ FEATURE_COLUMNS = [
     "lng",
     "airports",
     "alt_names",
+    "population",
 ]
 AIRPORT_COLUMNS = [
     "iata",
@@ -539,7 +559,11 @@ def _iter_geonames_all(path: Path, keep=None):
     for which ``keep(row)`` holds; by default country entities and listed
     features."""
     wanted = COUNTRY_FEATURE_CODES | FEATURE_CODES
-    keep = keep or (lambda f: f[7] in wanted)
+    keep = keep or (
+        lambda f: (
+            f[7] in wanted or (f[6] == "P" and f[7] not in DISTRICT_EXCLUDED_CODES)
+        )
+    )
     path = Path(path)
 
     def rows(lines):
@@ -570,6 +594,7 @@ class Feature:
     lat: float
     lng: float
     raw_alts: str = ""
+    population: int = 0
 
 
 def _country_name_candidates(rows) -> dict[str, set[str]]:
@@ -598,20 +623,27 @@ def _country_name_candidates(rows) -> dict[str, set[str]]:
     return found
 
 
-def country_names(rows, official: dict[str, str], places) -> tuple[dict, list[str]]:
-    """ISO code → sorted folded country names from GeoNames, and the report.
+def country_names(
+    rows, official: dict[str, str], places
+) -> tuple[dict, dict, list[str]]:
+    """(ISO code → sorted folded country names from GeoNames, ISO code →
+    qualifier-only names, the report).
 
     ``official`` maps the names the resolver already knows (OurAirports and
     curated spellings, aliases) to their code: those are not repeated, and
     another country's name is never taken. A name two countries carry, or
     the own name of a place with ≥ 15,000 people (Brasília's "Brasilia" for
-    Brazil), is dropped and reported."""
-    big_places = defaultdict(list)
+    Brazil), is dropped and reported. The own name of a smaller place
+    ("Eretria", Greece for Eritrea; "Coria", Spain for Korea) names the
+    country only as a qualifier ("Asmara, Eretria"); typed alone it stays
+    the town. Countries' own native names that collide are curated aliases
+    (hints.json: "nederland")."""
+    place_names = defaultdict(list)
     for p in places:
-        if p.population >= COUNTRY_NAME_PLACE_POPULATION:
-            for own in {p.folded, fold_place(p.ascii_name)}:
-                big_places[own].append(p)
+        for own in {p.folded, fold_place(p.ascii_name)}:
+            place_names[own].append(p)
     names: dict[str, list[str]] = defaultdict(list)
+    qualifiers: dict[str, list[str]] = defaultdict(list)
     shared, collisions = [], []
     for name, codes in sorted(_country_name_candidates(rows).items()):
         if name in official:
@@ -620,12 +652,15 @@ def country_names(rows, official: dict[str, str], places) -> tuple[dict, list[st
             shared.append(f"{name}  {' '.join(sorted(codes))}")
             continue
         code = next(iter(codes))
-        if name in big_places:
-            best = max(big_places[name], key=lambda p: p.rank)
-            collisions.append(
-                f"{name}  {code} vs {best.name} ({best.country_code}, "
-                f"{best.population:,})"
-            )
+        if name in place_names:
+            best = max(place_names[name], key=lambda p: p.rank)
+            if best.population >= COUNTRY_NAME_PLACE_POPULATION:
+                collisions.append(
+                    f"{name}  {code} vs {best.name} ({best.country_code}, "
+                    f"{best.population:,})"
+                )
+            else:
+                qualifiers[code].append(name)
             continue
         names[code].append(name)
     report = [f"## Country names two countries share, dropped ({len(shared)})"]
@@ -635,34 +670,79 @@ def country_names(rows, official: dict[str, str], places) -> tuple[dict, list[st
         f"({len(collisions)})"
     )
     report += collisions + [""]
-    return names, report
+    report.append(
+        f"## Country names that are a smaller place's own name, qualifier only "
+        f"({sum(len(v) for v in qualifiers.values())})"
+    )
+    report.append("")
+    return names, qualifiers, report
 
 
-def read_geonames_all(path) -> tuple[list[list[str]], list[Feature]]:
+def feature_threshold(feature_code: str) -> int:
+    """The notability a listed feature needs (see the README calibration)."""
+    if feature_code in FEATURE_LOW_CODES:
+        return FEATURE_LOW_NOTABILITY
+    return FEATURE_MIN_NOTABILITY
+
+
+def _is_district(f: list[str], place_ids) -> bool:
+    """A famous populated row that is not a place: a section of a place
+    (PPLX) with ≥ 10 alternate names or ≥ 10,000 people, or an
+    administrative seat with no population and ≥ 10 alternate names
+    (Ealing, a London borough)."""
+    if f[6] != "P" or f[7] in DISTRICT_EXCLUDED_CODES or f[0] in place_ids:
+        return False
+    notable = _raw_alt_count(f[3]) >= DISTRICT_MIN_NOTABILITY
+    if f[7] == "PPLX":
+        return notable or _int(f[14]) >= DISTRICT_MIN_POPULATION
+    # an administrative seat GeoNames gives no population (a London borough)
+    return notable and f[7] in DISTRICT_SEAT_CODES and _int(f[14]) == 0
+
+
+def read_geonames_all(path, place_ids=frozenset()):
     """One streaming pass over allCountries: (country entity rows, notable
-    listed features)."""
-    countries, notable = [], []
+    listed features, famous districts)."""
+    countries, notable, districts = [], [], []
     for f in _iter_geonames_all(path):
         if f[7] in COUNTRY_FEATURE_CODES:
             countries.append(f)
             continue
         notability = _raw_alt_count(f[3])
-        if notability >= FEATURE_MIN_NOTABILITY:
-            notable.append(
-                Feature(
-                    geonameid=f[0],
-                    name=f[1],
-                    ascii_name=f[2],
-                    country_code=f[8],
-                    admin1=f[10],
-                    feature_code=f[7],
-                    notability=notability,
-                    lat=float(f[4]),
-                    lng=float(f[5]),
-                    raw_alts=f[3],
-                )
+        if f[7] in FEATURE_CODES:
+            if notability < feature_threshold(f[7]):
+                continue
+            target = notable
+        elif _is_district(f, place_ids):
+            target = districts
+        else:
+            continue
+        target.append(
+            Feature(
+                geonameid=f[0],
+                name=f[1],
+                ascii_name=f[2],
+                country_code=f[8],
+                admin1=f[10],
+                feature_code=f[7],
+                notability=notability,
+                lat=float(f[4]),
+                lng=float(f[5]),
+                raw_alts=f[3],
+                population=_int(f[14]),
             )
-    return countries, notable
+        )
+    return countries, notable, districts
+
+
+def district_airports(district: Feature, place_index: GeoIndex) -> list[str]:
+    """The airports of the highest-scoring place with airports within
+    ``DISTRICT_PARENT_KM`` in the district's country (Bondi → Sydney's)."""
+    parent = _best(
+        p
+        for d, p in place_index.within(district.lat, district.lng, DISTRICT_PARENT_KM)
+        if p.country_code == district.country_code and p.links
+    )
+    return [iata for iata, _km in parent.links] if parent else []
 
 
 def _first_word(folded: str) -> str:
@@ -734,7 +814,7 @@ class BuildResult:
     airports: dict[str, dict] = field(default_factory=dict)
     places: dict[str, dict] = field(default_factory=dict)
     admin1: list[tuple[str, str, str]] = field(default_factory=list)
-    countries: list[tuple[str, str, list[str]]] = field(default_factory=list)
+    countries: list[tuple[str, str, list[str], list[str]]] = field(default_factory=list)
     features: dict[str, dict] = field(default_factory=dict)
     report: list[str] = field(default_factory=list)
 
@@ -975,29 +1055,38 @@ def build(
                 "airport-name",
             ):
                 fallback_large.append(iata)
-    satellites = _satellites(places, airports, place_index)
+    satellites = _satellites(places, airports)
     for place in places:
-        result.places[place.geonameid]["satellite"] = int(place.geonameid in satellites)
+        result.places[place.geonameid]["satellite"] = satellites.get(place.geonameid, 0)
     result.airports = dict(sorted(airports.items()))
     result.places = dict(sorted(result.places.items(), key=lambda kv: _int(kv[0])))
 
-    country_rows, notable = read_geonames_all(all_path) if all_path else ([], [])
+    country_rows, notable, districts = (
+        read_geonames_all(all_path, {p.geonameid for p in places if p.population})
+        if all_path
+        else ([], [], [])
+    )
     official = {fold_place(n): c for c, n in oa_countries.items()}
     official.update(
         (fold_place(a["country"]), a["country_code"]) for a in airports.values()
     )
     official.update(COUNTRY_ALIASES)
     official.update(QUALIFIER_COUNTRY_ALIASES)
-    names, names_report = country_names(country_rows, official, places)
+    names, qualifier_names, names_report = country_names(country_rows, official, places)
     # every country, airport or not (Andorra, Liechtenstein, San Marino)
     result.countries = [
-        (c, n, names.get(c, [])) for c, n in sorted(oa_countries.items())
+        (c, n, names.get(c, []), qualifier_names.get(c, []))
+        for c, n in sorted(oa_countries.items())
     ]
     islands = [f for f in notable if f.feature_code in ISLAND_CODES]
     on_island = island_airports(islands, linkable)
     linked = {}
-    for feature in notable:
-        codes = link_feature(feature, index, on_island)
+    tagged = [(f, False) for f in notable] + [(f, True) for f in districts]
+    for feature, is_district in tagged:
+        if is_district:
+            codes = district_airports(feature, place_index)
+        else:
+            codes = link_feature(feature, index, on_island)
         if not codes:
             continue
         alts = filter_alt_names(feature.raw_alts, fold_place(feature.name))
@@ -1028,6 +1117,7 @@ def build(
             "lng": feature.lng,
             "airports": codes,
             "alt_names": alts,
+            "population": feature.population,
         }
     names_report += [
         f"## Feature alternate names that are another row's own name, dropped "
@@ -1055,11 +1145,15 @@ def build(
     return result
 
 
-def _satellites(places, airports: dict[str, dict], place_index: GeoIndex) -> set[str]:
-    """Places whose first airport is not their own but the own airport of a
-    place scoring ≥ ``SATELLITE_OWNER_RATIO``× more within ``SATELLITE_KM``
+def _satellites(places, airports: dict[str, dict]) -> dict[str, int]:
+    """Places whose first airport is not named for them but for a place
+    scoring ≥ ``SATELLITE_OWNER_RATIO``× more within ``SATELLITE_KM``
     (Peoria, Arizona flies from Phoenix's PHX; Peoria, Illinois has PIA).
-    "Own" is ``core.places.is_own_airport`` with the final display city."""
+    Named = ``core.places.is_named_airport`` with the final display city:
+    never distance alone, so a suburb next to a hub (Pontevedra, Buenos
+    Aires and EZE) is a satellite too, and a town near another town's
+    airport is not that town's satellite. Value 2: a deep suburb, whose
+    owner scores ≥ ``SATELLITE_DEEP_RATIO``× more; 1 otherwise."""
     by_name: dict[str, list[Place]] = defaultdict(list)
     for p in places:
         by_name[p.folded].append(p)
@@ -1076,30 +1170,26 @@ def _satellites(places, airports: dict[str, dict], place_index: GeoIndex) -> set
                     for p in by_name.get(" ".join(words[i:j]), ()):
                         if words_in(p.folded, name):
                             found[p.geonameid] = p
-            for _d, p in place_index.within(a["lat"], a["lng"], OWN_AIRPORT_KM):
-                if p.country_code == a["country_code"]:
-                    found[p.geonameid] = p
             owners[iata] = list(found.values())
         return owners[iata]
 
-    satellites = set()
+    satellites: dict[str, int] = {}
     for p in places:
         if not p.links:
             continue
-        iata, km = p.links[0]
+        iata = p.links[0][0]
         a = airports[iata]
-        same = a["country_code"] == p.country_code
-        if is_own_airport(
-            p.folded, fold_place(a["city"]), fold_place(a["name"]), same, km
-        ):
+        if is_named_airport(p.folded, fold_place(a["city"]), fold_place(a["name"])):
             continue
-        if any(
-            q is not p
+        ratios = [
+            q.score / max(p.score, 1)
+            for q in owners_of(iata)
+            if q is not p
             and q.score >= SATELLITE_OWNER_RATIO * p.score
             and distance_km(p.lat, p.lng, q.lat, q.lng) <= SATELLITE_KM
-            for q in owners_of(iata)
-        ):
-            satellites.add(p.geonameid)
+        ]
+        if ratios:
+            satellites[p.geonameid] = 2 if max(ratios) >= SATELLITE_DEEP_RATIO else 1
     return satellites
 
 
@@ -1260,6 +1350,7 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
                 _coord(f["lng"]),
                 " ".join(f["airports"]),
                 "|".join(f["alt_names"]),
+                f["population"],
             ]
             for f in result.features.values()
         ),
@@ -1268,7 +1359,8 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
     admin1 = _csv_text(ADMIN1_COLUMNS, result.admin1)
     (out_dir / "admin1.csv").write_bytes(admin1.encode("utf-8"))
     countries = _csv_text(
-        COUNTRY_COLUMNS, ((c, n, "|".join(names)) for c, n, names in result.countries)
+        COUNTRY_COLUMNS,
+        ((c, n, "|".join(names), "|".join(q)) for c, n, names, q in result.countries),
     )
     (out_dir / "countries.csv").write_bytes(countries.encode("utf-8"))
 
@@ -1284,9 +1376,13 @@ def _summary(result: BuildResult, seconds: float) -> list[str]:
         f"(no airports {sum(1 for p in places if not p['airports'])})",
         f"alt-name pairs: {sum(len(p['alt_names']) for p in places)}",
         f"admin1: {len(result.admin1)}",
-        f"satellites: {sum(p['satellite'] for p in places)}",
-        f"country names: {sum(len(n) for _c, _n, n in result.countries)}",
-        f"features: {len(result.features)} (notability ≥ {FEATURE_MIN_NOTABILITY})",
+        f"satellites: {sum(p['satellite'] > 0 for p in places)} "
+        f"(deep {sum(p['satellite'] == 2 for p in places)})",
+        f"country names: {sum(len(row[2]) for row in result.countries)} "
+        f"(qualifier only {sum(len(row[3]) for row in result.countries)})",
+        f"features: {len(result.features)} (notability ≥ {FEATURE_MIN_NOTABILITY}, "
+        f"{FEATURE_LOW_NOTABILITY} for {', '.join(sorted(FEATURE_LOW_CODES))}; "
+        f"districts {sum(f['feature_code'] not in FEATURE_CODES for f in result.features.values())})",
         f"generated in {seconds:.1f} s",
         "",
     ]

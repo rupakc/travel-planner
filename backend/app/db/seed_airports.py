@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 PLACE_DATA_DIR = Path(__file__).parent / "data"
 _DATA_FILES = ("airports.csv", "places.csv.gz", "admin1.csv", "features.csv.gz")
 # Bump when the way the files are loaded changes, to force a reseed.
-_LOADER_FORMAT = "place-data-loader:3"
+_LOADER_FORMAT = "place-data-loader:4"
 PLACE_VERSION_KEY = "place_data_version"
 # Regenerable from the committed data: never backed up or merged (backup.py).
 PLACE_TABLES = ("places", "place_names", "admin1", "features", "feature_names")
@@ -4364,6 +4364,7 @@ def _read_features(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
                     float(r["lat"]),
                     float(r["lng"]),
                     r["airports"],
+                    int(r.get("population") or 0),
                 )
             )
             primary = {fold_place(r["name"]), fold_place(r["ascii"])} - {""}
@@ -4445,7 +4446,10 @@ def seed(data_dir: Path = PLACE_DATA_DIR, curated=AIRPORTS) -> bool:
         )
         conn.execute("CREATE INDEX idx_place_names_folded ON place_names(name_folded)")
         conn.executemany(
-            "INSERT INTO features VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", features
+            "INSERT INTO features (geonameid, name, country_code, admin1,"
+            " feature_code, notability, lat, lng, airports, population)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            features,
         )
         conn.executemany(
             "INSERT INTO feature_names (name_folded, geonameid, tier) VALUES (?, ?, ?)",

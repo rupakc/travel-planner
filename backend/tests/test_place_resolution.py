@@ -757,7 +757,8 @@ _PIA = (40.66, -89.69)  # a town at PIA flies from its own airport
 def test_satellite_leader_yields_to_a_town_with_its_own_airport(extra_place):
     names = [("satburg", 0)]
     extra_place(990000101, "Satburg", "US", 190_000, 4 * 10**8, "PHX", names, 1)
-    extra_place(990000102, "Satburg", "US", 115_000, 10**8, "PIA", names, at=_PIA)
+    # named "Peoria" so PIA (Peoria's airport) is named for it
+    extra_place(990000102, "Peoria", "US", 115_000, 10**8, "PIA", names, at=_PIA)
     place = resolve_place("Satburg")
     assert place.airports == ("PIA",)  # Peoria: PIA, not Phoenix's PHX
 
@@ -793,7 +794,9 @@ def extra_feature():
     def add(gid, name, cc, notability, airports, names, at=(-13.0, 132.5)):
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO features VALUES (?, ?, ?, '', 'PRK', ?, ?, ?, ?)",
+                "INSERT INTO features (geonameid, name, country_code, admin1,"
+                " feature_code, notability, lat, lng, airports)"
+                " VALUES (?, ?, ?, '', 'PRK', ?, ?, ?, ?)",
                 (gid, name, cc, notability, *at, airports),
             )
             conn.executemany(
@@ -885,7 +888,7 @@ def test_autocomplete_suggests_features_after_towns():
         ("Naxos", {"JNX"}),
         ("Lefkada", {"PVK"}),
         ("Borneo", {"BKI", "KCH"}),
-        ("Blue Mountains", None),  # Australia, Jamaica, the US: no guess
+        ("Blue Mountains", {"SYD", "WSI"}),  # the City of Blue Mountains, NSW
         ("Ede", None),
         ("Concord", None),
         ("Newport", {"BRS", "CWL"}),
@@ -927,3 +930,21 @@ def fold_place_name(text):
 def test_lake_garda_and_sardegna_hints(text, first):
     place = resolve_place(text)
     assert place.country_code == "IT" and place.airports[0] in first
+
+
+def test_ambiguous_features_with_only_small_towns_give_none():
+    # Mount Olympus: Cyprus and Greece (and a 6.7k Utah town) → no guess
+    assert resolve_place("Mount Olympus") is None
+
+
+@pytest.mark.parametrize("text", ["Eretria", "Coria", "Grenade", "Cameron"])
+def test_colliding_country_names_are_qualifiers_only(text):
+    from app.core.places import fold_place
+
+    assert fold_place(text) not in places_db.country_names()
+    place = resolve_place(text)
+    assert place is None or place.country_code not in {"ER", "KR", "GD", "CM"}
+
+
+def test_colliding_country_names_still_qualify():
+    assert places_db.stated_countries("eretria") == {"ER"}

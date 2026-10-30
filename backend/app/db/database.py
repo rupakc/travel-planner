@@ -1,3 +1,4 @@
+import bisect
 import csv
 import functools
 import json
@@ -127,7 +128,8 @@ def create_tables():
                 notability   INTEGER,
                 lat          REAL,
                 lng          REAL,
-                airports     TEXT
+                airports     TEXT,
+                population   INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS feature_names (
                 name_folded TEXT NOT NULL,
@@ -153,12 +155,15 @@ def create_tables():
         existing = {r["name"] for r in conn.execute("PRAGMA table_info(places)")}
         if "satellite" not in existing:  # places tables from before the flag
             _add_column(conn, "satellite", "INTEGER NOT NULL DEFAULT 0", "places")
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(features)")}
+        if "population" not in existing:  # features tables before districts
+            _add_column(conn, "population", "INTEGER NOT NULL DEFAULT 0", "features")
 
 
 def _add_column(
     conn: sqlite3.Connection, column: str, decl: str, table: str = "airports"
 ) -> None:
-    """Add a column to ``airports`` (or ``places``); a worker starting at the
+    """Add a column to ``airports`` (or another table); a worker starting at the
     same time may have added it first, which is fine."""
     try:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
@@ -677,46 +682,80 @@ _SHORT_QUERY_MIN_POPULATION = 100_000
 # when no real town matches, ranked below any town match.
 _AUTOCOMPLETE_FEATURES = 3
 _FEATURE_SCORE = 1.0
-# A suburb set aside by the suburb rule ranks at this share of its score,
-# below the namesake with its own airport ("peoria": PIA before PHX).
-_SATELLITE_SHARE = 0.01
+# A suburb set aside by the suburb rule ranks at this share of its
+# namesake's score: just below the namesake with its own airport, and still
+# listed ("peoria": PIA before PHX).
+_SATELLITE_SHARE = 0.5
+# Country-name prefixes count from this many letters ("deuts" → Germany).
+_COUNTRY_PREFIX = 5
 
 
-def _country_name_place(folded: str):
+@functools.cache
+def _other_country_names() -> tuple[str, ...]:
+    """Countries' other names and aliases (not official names), sorted."""
+    from .places_db import _official_country_name, country_names
+
+    return tuple(sorted(n for n in country_names() if not _official_country_name(n)))
+
+
+def _country_name_place(folded: str, prefix: bool = False):
     """The resolved place (the gateway city) for a query that is a
     country's other name or alias ("deutschland", "nippon", "holland"), or
+    with ``prefix`` starts only such names of one country ("deuts"), or
     None. Official names keep matching the airports' country column."""
-    from .places_db import _official_country_name, country_names, resolve_place
+    from .places_db import country_names, resolve_place
 
-    if len(folded) < _SHORT_QUERY + 1 or folded not in country_names():
+    if len(folded) < (_COUNTRY_PREFIX if prefix else _SHORT_QUERY + 1):
         return None
-    if _official_country_name(folded):
+    names = _other_country_names()
+    if prefix:
+        start = bisect.bisect_left(names, folded)
+        matches = []
+        for name in names[start:]:
+            if not name.startswith(folded):
+                break
+            matches.append(name)
+        if not matches or len({country_names()[n] for n in matches}) != 1:
+            return None
+        name = min(matches, key=len)
+    elif folded in names:
+        name = folded
+    else:
         return None
-    place = resolve_place(folded)
+    place = resolve_place(name)
     return place if place and place.airports else None
 
 
-def _outscored_satellites(rows: list[sqlite3.Row], folded: str) -> set[int]:
-    """Rows (by id()) of exact own-name matches that the resolver's suburb
-    rule sets aside ("peoria": Arizona's Phoenix suburb below Illinois)."""
+def _suburb_scores(rows: list[sqlite3.Row]) -> dict[int, float]:
+    """Row id() → lowered score for own-name matches the resolver's suburb
+    rule sets aside, per matched name ("peori" / "peoria": Arizona's
+    Phoenix suburb ranks just below Peoria, Illinois, and stays listed)."""
     from .places_db import Place, _without_outscored_satellites
 
-    exact = {
-        id(r): Place(
-            name=r["name"],
-            country_code=r["country_code"],
-            airports=tuple(r["airports"].split()),
-            population=r["population"],
-            score=float(r["score"]),
-            lat=r["lat"],
-            lng=r["lng"],
-            satellite=bool(r["satellite"]),
-        )
-        for r in rows
-        if r["tier"] == 0 and r["name_folded"] == folded
-    }
-    kept = {id(p) for p in _without_outscored_satellites(list(exact.values()))}
-    return {key for key, place in exact.items() if id(place) not in kept}
+    groups: dict[str, dict[int, Place]] = {}
+    for r in rows:
+        if r["tier"] == 0:
+            groups.setdefault(r["name_folded"], {})[id(r)] = Place(
+                name=r["name"],
+                country_code=r["country_code"],
+                airports=tuple(r["airports"].split()),
+                population=r["population"],
+                score=float(r["score"]),
+                lat=r["lat"],
+                lng=r["lng"],
+                satellite=int(r["satellite"]),
+            )
+    lowered: dict[int, float] = {}
+    for group in groups.values():
+        kept = _without_outscored_satellites(list(group.values()))
+        if len(kept) == len(group):
+            continue
+        leader = max(p.score for p in kept)
+        kept_ids = {id(p) for p in kept}
+        for key, place in group.items():
+            if id(place) not in kept_ids:
+                lowered[key] = min(place.score, leader * _SATELLITE_SHARE)
+    return lowered
 
 
 def _autocomplete_places(
@@ -787,12 +826,11 @@ def _autocomplete_places(
             "small": SMALL_PLACE_POPULATION,
         },
     ).fetchall()
-    outscored = _outscored_satellites(rows, folded)
+    lowered = _suburb_scores(rows)
     scored = [
         (
-            r["score"]
-            * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0)
-            * (_SATELLITE_SHARE if id(r) in outscored else 1.0),
+            lowered.get(id(r), r["score"])
+            * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0),
             r,
         )
         for r in rows
@@ -821,15 +859,23 @@ def _autocomplete_places(
                 small=r["population"] < SMALL_PLACE_POPULATION,
             )
     hinted = any(link[3] is None for link in linked.values())
+    if not own and not hinted:
+        # a prefix of one country's other names ("deuts" → Germany), with
+        # the towns that also start so still listed below it
+        prefix_country = _country_name_place(folded, prefix=True)
+        if prefix_country is not None:
+            add(folded + "\u2026", prefix_country.airports, _HINT_SCORE, hint=True)
+            hinted = True
     if not own and not hinted and len(folded) > _SHORT_QUERY:
         # no real town or curated hint by that name: notable features
         # ("kakadu" → Darwin; "sylt" stays the hint's GWT alone)
         for r in conn.execute(
             "SELECT DISTINCT n.name_folded, f.airports, f.country_code, f.notability"
             " FROM feature_names n JOIN features f ON f.geonameid = n.geonameid"
-            " WHERE n.tier = 0 AND n.name_folded >= ? AND n.name_folded < ?"
-            " AND f.airports != '' ORDER BY f.notability DESC, n.name_folded"
-            " LIMIT ?",
+            " WHERE n.name_folded >= ? AND n.name_folded < ?"
+            " AND (n.tier = 0 OR length(n.name_folded) >= 4)"
+            " AND f.airports != '' ORDER BY n.tier, f.notability DESC,"
+            " n.name_folded LIMIT ?",
             (folded, end, _AUTOCOMPLETE_FEATURES),
         ):
             if hint_country and r["country_code"] != hint_country:

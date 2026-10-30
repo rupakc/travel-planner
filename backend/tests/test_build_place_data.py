@@ -1245,7 +1245,7 @@ def test_outputs_include_every_country(tmp_path):
     gen.write_outputs(gen.build(oa, cities, admin1, curated), out)
     with open(out / "countries.csv", encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
-    assert list(rows[0]) == ["code", "name", "names"]
+    assert list(rows[0]) == ["code", "name", "names", "qualifier_names"]
     assert {r["code"] for r in rows} == {"XA", "XB"}
 
 
@@ -1287,7 +1287,11 @@ def _alts(n, stem="Alt"):
 
 
 def _names(result, code):
-    return dict((c, n) for c, _name, n in result.countries)[code]
+    return {row[0]: row[2] for row in result.countries}[code]
+
+
+def _qualifier_names(result, code):
+    return {row[0]: row[3] for row in result.countries}[code]
 
 
 def test_country_names_from_political_entities(tmp_path):
@@ -1323,7 +1327,7 @@ def test_country_names_leave_codes_and_known_names_to_the_aliases(tmp_path):
 
 def test_country_names_empty_without_allcountries(tmp_path):
     r = _build(tmp_path, [], [])
-    assert [n for _c, _name, n in r.countries] == [[], []]
+    assert [row[2:] for row in r.countries] == [([], []), ([], [])]
 
 
 def test_allcountries_zip_is_streamed(tmp_path):
@@ -1354,7 +1358,19 @@ def test_satellite_places_fly_from_a_bigger_places_own_airport(tmp_path):
     ]
     r = _build(tmp_path, airports, cities)
     sat = {g: r.places[g]["satellite"] for g in "12345"}
-    assert sat == {"1": 0, "2": 1, "3": 0, "4": 0, "5": 0}
+    # Bigcity scores 120× Suburb: a deep suburb (2)
+    assert sat == {"1": 0, "2": 2, "3": 0, "4": 0, "5": 0}
+
+
+def test_satellite_of_a_modestly_bigger_owner_is_an_ordinary_one(tmp_path):
+    # Pontevedra, Spain and Santiago's SCQ: 10–100× is satellite 1
+    airports = [_oa("SCQ", _LAT, _LNG, name="Santiago Airport")]
+    cities = [
+        _city(1, "Santiago", _LAT, _LNG, 300_000, alts="A,B"),  # 2.7M
+        _city(2, "Pontevedra", _north(_LAT, 50), _LNG, 90_000),  # 30×
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.places["2"]["satellite"] == 1
 
 
 def test_satellite_needs_an_owner_scoring_ten_times_more(tmp_path):
@@ -1453,7 +1469,7 @@ def test_feature_output_format_and_determinism(tmp_path):
         rows_out = list(csv.DictReader(f))
     assert list(rows_out[0]) == [
         "geonameid", "name", "ascii", "country_code", "admin1", "feature_code",
-        "notability", "lat", "lng", "airports", "alt_names",
+        "notability", "lat", "lng", "airports", "alt_names", "population",
     ]  # fmt: skip
     assert rows_out[0]["airports"] == "AAA"
 
@@ -1489,7 +1505,11 @@ def _committed_features() -> list[dict]:
     ],
 )
 def test_committed_country_names(code, name):
-    assert name in _committed_countries()[code]
+    from app.core.places import COUNTRY_ALIASES
+
+    # native names are curated aliases (they beat any town); the rest are
+    # GeoNames names in countries.csv
+    assert name in _committed_countries()[code] or COUNTRY_ALIASES[name] == code
 
 
 def test_committed_country_names_are_unique_and_not_big_place_names():
@@ -1503,9 +1523,9 @@ def test_committed_country_names_are_unique_and_not_big_place_names():
 @pytest.mark.parametrize(
     ("name", "cc", "admin1", "satellite"),
     [
-        ("Peoria", "US", "AZ", "1"),  # PHX is Phoenix's
+        ("Peoria", "US", "AZ", "1"),  # PHX is Phoenix's (10–100×)
         ("Peoria", "US", "IL", "0"),  # PIA is its own
-        ("Glendale", "US", "AZ", "0"),  # PHX is 20 km away: its own too
+        ("Glendale", "US", "AZ", "1"),  # PHX is near, but Phoenix's
         ("Phoenix", "US", "AZ", "0"),
     ],
 )
@@ -1559,3 +1579,80 @@ def test_committed_feature_airports_rank_near_ones_first(name, cc, airport, with
         if f["name"] == name and f["country_code"] == cc
     ]
     assert airport in row["airports"].split()[:within], row["airports"]
+
+
+# ── Final-check round: I1 own-by-name, I2 qualifier names, I3 coverage ────
+
+
+def test_country_names_that_name_a_town_are_qualifiers_only(tmp_path):
+    # Eretria (GR, 4k) is also an alternate name of Eritrea: as a qualifier
+    # it is the country ("Asmara, Eretria"), alone it stays the town
+    rows = [
+        _geo(1, "Xland", 0, 0, "PCLI", fclass="A", alts="Xlandia,Smallton"),
+    ]
+    cities = [_city(9, "Smallton", _LAT, _LNG, 4_000)]
+    r = _build_all(tmp_path, [], cities, rows)
+    assert _names(r, "XA") == ["xlandia"]
+    assert _qualifier_names(r, "XA") == ["smallton"]
+
+
+def test_suburb_within_25km_of_a_hub_is_a_satellite(tmp_path):
+    # Pontevedra, Buenos Aires: EZE is near but not named for it
+    airports = [_oa("HUB", _LAT, _LNG, name="Bigcity International Airport")]
+    cities = [
+        _city(1, "Bigcity", _LAT, _LNG, 3_000_000, alts="A,B,C"),
+        _city(2, "Nearburb", _north(_LAT, 15), _LNG, 100_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.places["2"]["satellite"] == 2
+
+
+def test_satellite_owner_is_decided_by_name_not_distance(tmp_path):
+    # the airport is 10 km from a big town not named in it: that town is no
+    # owner, so the small town using it is no satellite
+    airports = [_oa("FLD", _LAT, _LNG, name="Fieldton Airport")]
+    cities = [
+        _city(1, "Bigtown", _north(_LAT, 10), _LNG, 2_000_000, alts="A,B"),
+        _city(2, "Fieldton", _north(_LAT, -30), _LNG, 20_000),
+        _city(3, "Other", _north(_LAT, 20), _LNG, 10_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.airports["FLD"]["city"] == "Fieldton"
+    assert r.places["3"]["satellite"] == 0  # FLD is Fieldton's, not Bigtown's
+    assert r.places["1"]["satellite"] == 0
+
+
+@pytest.mark.parametrize(
+    ("fcode", "alts", "kept"),
+    [
+        ("PRK", 6, True),  # parks, reserves, resorts: from 5
+        ("GLCR", 5, True),
+        ("CAPE", 6, True),
+        ("FJD", 6, True),
+        ("CAVE", 6, True),
+        ("RSRT", 5, True),
+        ("MT", 6, False),  # other classes: from 10
+        ("PRK", 4, False),
+    ],
+)
+def test_per_class_notability_thresholds(tmp_path, fcode, alts, kept):
+    rows = [_geo(50, "Thing", _LAT, _LNG, fcode, alts=_alts(alts))]
+    r = _build_all(tmp_path, [_oa("AAA", _LAT, _LNG)], [], rows)
+    assert ("50" in r.features) == kept
+
+
+def test_famous_districts_take_their_parent_citys_airports(tmp_path):
+    airports = [
+        _oa("CTY", _north(_LAT, 12), _LNG, name="Bigcity Airport"),
+        _oa("NEAR", _north(_LAT, -5), _LNG, kind="small_airport"),
+    ]
+    cities = [_city(1, "Bigcity", _north(_LAT, 8), _LNG, 4_000_000, alts="A,B,C")]
+    rows = [
+        _geo(60, "Beachside", _LAT, _LNG, "PPLX", fclass="P", alts=_alts(12)),
+        _geo(61, "Quiet Quarter", _LAT, _LNG, "PPLX", fclass="P", alts=_alts(3)),
+    ]
+    r = _build_all(tmp_path, airports, cities, rows)
+    district = r.features["60"]
+    assert district["feature_code"] == "PPLX"
+    assert district["airports"] == r.places["1"]["airports"]  # Bigcity's links
+    assert "61" not in r.features

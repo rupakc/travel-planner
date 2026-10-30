@@ -383,7 +383,7 @@ def test_static_forex_busan_is_not_usd():
         ("Perth, WA", "australia"),
         ("Seattle, WA", "usa"),
         ("Toronto, ON", "canada"),
-        ("Fremantle, WA", None),  # Washington or Western Australia
+        ("Fremantle, WA", "australia"),  # a Perth district in the place data
         ("Charlottetown, PE", "canada"),  # Task 3: PEI per the place data
         ("St. John's, NL", "canada"),  # Task 3: Newfoundland per the place data
         ("Belém, PA", "brazil"),

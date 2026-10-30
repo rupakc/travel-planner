@@ -172,3 +172,26 @@ def test_autocomplete_recognises_country_names(q, first, never):
 def test_autocomplete_official_country_queries_unchanged():
     # an official country name keeps matching the airports' country column
     assert len(_codes("germany")) == 10
+
+
+def test_autocomplete_country_name_prefixes():
+    assert _codes("deuts")[0] == "BER"
+    assert _codes("sveri")[0] == "ARN"
+
+
+def test_autocomplete_suburb_rule_on_prefixes():
+    codes = _codes("peori")
+    assert codes[0] == "PIA"
+
+
+def test_autocomplete_feature_alternates_and_short_names():
+    assert "JTR" in _codes("sifnos")
+
+
+@pytest.mark.parametrize(
+    ("q", "both"),
+    [("pontevedra", ({"VGO", "SCQ"}, {"EZE", "AEP"})), ("redmond", ({"SEA"}, {"RDM"}))],
+)
+def test_autocomplete_keeps_namesakes_the_resolver_cannot_split(q, both):
+    codes = set(_codes(q))
+    assert all(codes & side for side in both), codes
