@@ -54,7 +54,10 @@ def get_current_user(
 def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict | None:
-    """Like get_current_user but returns None instead of raising 401."""
+    """Like get_current_user but returns None instead of raising 401.
+
+    A deactivated user is treated as anonymous.
+    """
     if not credentials:
         return None
     try:
@@ -62,7 +65,8 @@ def get_optional_user(
         username = payload.get("sub", "")
         from ..db.users_db import get_user_by_username
 
-        return get_user_by_username(username)
+        user = get_user_by_username(username)
+        return user if user and user.get("is_active") else None
     except PyJWTError:
         return None
 

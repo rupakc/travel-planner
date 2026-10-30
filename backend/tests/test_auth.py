@@ -322,3 +322,56 @@ class TestAdminRBAC:
             "/api/auth/login", json={"username": "deactme", "password": "pass1234"}
         )
         assert r.status_code == 200
+
+
+class TestOptionalUserInactive:
+    def _token_for(self, client, admin_headers, username):
+        client.post(
+            "/api/admin/users",
+            json={"username": username, "password": "pass1234", "is_admin": False},
+            headers=admin_headers,
+        )
+        r = client.post(
+            "/api/auth/login", json={"username": username, "password": "pass1234"}
+        )
+        return r.json()["access_token"]
+
+    def test_inactive_user_token_is_anonymous(self, client, admin_headers):
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        from app.core.auth import get_optional_user
+
+        token = self._token_for(client, admin_headers, "optinactive")
+        creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        assert get_optional_user(creds)["username"] == "optinactive"
+        client.delete("/api/admin/users/optinactive", headers=admin_headers)
+        assert get_optional_user(creds) is None
+
+    def test_active_user_unchanged(self, client, admin_headers):
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        from app.core.auth import get_optional_user
+
+        token = self._token_for(client, admin_headers, "optactive")
+        creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        user = get_optional_user(creds)
+        assert user["username"] == "optactive" and user["is_active"] is True
+
+    def test_inactive_user_rate_limited_by_ip(self, client, admin_headers, monkeypatch):
+        from app.core.rate_limit import _caller_key
+
+        token = self._token_for(client, admin_headers, "optratelimit")
+        client.delete("/api/admin/users/optratelimit", headers=admin_headers)
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        from app.core.auth import get_optional_user
+
+        user = get_optional_user(
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        )
+
+        class _Req:
+            class client:
+                host = "1.2.3.4"
+
+        assert _caller_key(_Req, user) == "ip:1.2.3.4"
