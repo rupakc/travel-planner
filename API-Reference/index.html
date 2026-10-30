@@ -1621,7 +1621,7 @@
 </tr>
 </tbody>
 </table>
-<p>Each bucket is counted separately. Over the limit the API answers <code>429 Too Many Requests</code> with a <code>Retry-After</code> header (seconds) and:</p>
+<p>Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's <strong>search</strong> bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly <code>delta</code> saying roughly how many minutes to wait, then <code>done</code> (no <code>429</code>, no <code>error</code>). Over the limit the API answers <code>429 Too Many Requests</code> with a <code>Retry-After</code> header (seconds) and:</p>
 <pre><code class="language-json">{&quot;detail&quot;: &quot;Too many requests — please wait 42 seconds and try again.&quot;}
 </code></pre>
 <p>Limits are configurable (see <a href="../Configuration/#rate-limits">Configuration</a>). The counter is in-process, so each backend process counts on its own.</p>

@@ -1326,6 +1326,7 @@
 <li>Proactive warnings, checked in parallel while the itinerary builds: rainy or rough-weather days (weather agent) and major events or disruptions on the trip dates (events agent).</li>
 <li><code>session_context_update</code>, <code>suggestions</code> (tappable follow-up chips) and <code>planning_done</code>.</li>
 </ol>
+<p>Each full plan also takes one token from the caller's <code>search</code> rate-limit bucket (shared with <code>/api/search</code>); over that limit the chat streams a friendly "try again in about N minutes" <code>delta</code> and <code>done</code> instead of planning. Questions answered from knowledge cost only the <code>chat</code> bucket.</p>
 <p>The frontend renders this as a <code>TripPlanView</code>: a Leaflet map, day cards, a budget tracker, suggestion and follow-up chips, and retry actions. Items can be added to the chat's My Plan drawer, which has the same features as on the Results page.</p>
 <p><strong>Clarifying questions with slot memory.</strong> If only the origin is missing, the chat asks exactly that ("Which city will you be flying from?"), remembers everything else and resumes when the user answers.</p>
 <p><code>section_result</code> events (with per-section <code>agent_status</code>) are used only in the specialist fallback and the refinement path (<code>_run_specialist_agents</code>), where individual specialists run with a 45 s timeout each.</p>
