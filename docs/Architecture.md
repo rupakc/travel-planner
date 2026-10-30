@@ -1,290 +1,151 @@
 # Architecture
 
-This page explains how Travel Planner is structured end to end: from the moment a user submits a search to the moment the last itinerary line appears on screen.
+How Travel Planner fits together, from a submitted search to the last section on screen.
 
 ---
 
-## The three-phase orchestration flow
+## Components
 
 ```
-User submits search (destination, dates, budget, nationality, interests)
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  PHASE 0 — Instant static data  (< 1 second)                         │
-│                                                                      │
-│  static_results.py                                                   │
-│  ├── visa category map   (_VISA_TABLE, nationality × destination)    │
-│  ├── SIM card data       (carrier plans per destination)             │
-│  ├── country travel tips (safety, culture, practical)                │
-│  ├── transport modes     (_GETTING_AROUND_TABLE)                     │
-│  ├── forex baseline      (currency pair lookup)                      │
-│  ├── emergency card      (_EMERGENCY_NUMBERS, 40+ destinations)      │
-│  └── confidence score    (_DESTINATION_SCORES, 49 destinations)      │
-│      └── sub-scores: safety / visa_complexity / budget / infra       │
-│                                                                      │
-│  All 7 results streamed to browser immediately as SSE events         │
-│  Source field on each event: "static"                                │
-└──────────────────────────────────────────────────────────────────────┘
-        │
-        ▼ (Phase 0 results already in browser)
-┌──────────────────────────────────────────────────────────────────────┐
-│  PHASE 1 — 13 specialist agents in parallel  (8–15 seconds)          │
-│                                                                      │
-│  asyncio.create_task() for each:                                     │
-│    FlightsAgent       HotelsAgent        ActivitiesAgent             │
-│    PlacesAgent        WalkingToursAgent  EventsAgent                 │
-│    VisaAgent          SimAgent           TipsAgent                   │
-│    ForexAgent         GettingAroundAgent WeatherAgent                │
-│    EmergencyCardAgent                                                │
-│                                                                      │
-│  As each agent completes, its result is streamed immediately.        │
-│  Static-backed agents (visa, sim, tips, getting_around, forex,       │
-│  emergency_card): if the AI result contains {"error": ...}, the      │
-│  error is suppressed and the Phase 0 static data is retained.        │
-│                                                                      │
-│  Post-stream enrichment: agents with an enrich() method (Activities, │
-│  Places, Forex) run URL resolution in the background concurrently    │
-│  with Phase 2. Enriched results are streamed as a second update.     │
-│                                                                      │
-│  ActivitiesAgent result → sentence-transformers cosine similarity    │
-│    scored against user interests → sorted list                       │
-│                                                                      │
-│  PlacesAgent → Serper/Google Maps API → Claude synthesis →           │
-│    SerperPlacesResolver enriches top results with real URLs          │
-│                                                                      │
-│  WalkingToursAgent → crawls GuruWalk / FreeTour / FreeWalkingTour /  │
-│    SANDEMANs city pages → LLM picks by id (URLs come from the crawl) │
-│                                                                      │
-│  ForexAgent → 4 parallel web searches for live rates → LLM          │
-│    extracts structured JSON from real search snippets                │
-│                                                                      │
-│  WeatherAgent → Open-Meteo API (CITY_COORDS, ≤16 days out) or        │
-│    LLM seasonal estimate fallback                                    │
-└──────────────────────────────────────────────────────────────────────┘
-        │
-        │  Deferred tasks start as soon as their preconditions are met:
-        │
-        │  PricingAdvisorAgent: triggers when ≥ 3 flight prices available
-        │    → route + avg_price + days_until_departure → recommendation
-        │    → SVG sparkline trend data  (timeout: 45 s)
-        │
-        │  PackingListAgent: triggers when activities ready AND
-        │    weather done (or failed)
-        │    → destination + weather summary + activity names
-        │    → categorised checklist  (timeout: 45 s)
-        │
-        ▼ (Phase 1 results already streaming to browser)
-┌──────────────────────────────────────────────────────────────────────┐
-│  PHASE 2 — Itinerary synthesis  (5–15 seconds)                       │
-│                                                                      │
-│  ItineraryAgent                                                      │
-│    Inputs: activities results + hotels results                       │
-│    Output: structured day-by-day plan                                │
-│    Starts: as soon as BOTH activities AND hotels results arrive       │
-│    Timeout: 60 seconds → template fallback (_build_fallback_         │
-│             itinerary, fully local, no AI call)                      │
-│                                                                      │
-│  Runs concurrently with deferred tasks and URL enrichment.           │
-│  Streamed as final section SSE event.                                │
-└──────────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-  Browser renders complete trip plan
-  (done event: {"type": "done"})
+Browser (React 18 SPA, Vite)
+  ├── sseWorker.js  ── POST /api/search  (SSE)
+  ├── chatWorker.js ── POST /api/chat    (SSE)
+  └── axios         ── everything else  (JSON)
+            │
+            ▼
+FastAPI backend (uvicorn, one process)
+  ├── middleware: CORS, request logging, X-Request-ID
+  ├── routers: one per domain, rate-limit dependency on AI routes
+  ├── TravelOrchestrator ── Phase 0 static tables
+  │                       ├── Phase 1: 13 specialist agents in parallel (+2 deferred)
+  │                       └── Phase 2: itinerary → stress test
+  ├── ChatAgent ── routing, knowledge answers, comprehensive planning
+  ├── services: SerpAPI flights, Serper places, link resolvers,
+  │             walking-tour crawler, verification, compare
+  ├── TTLCache (in memory, 30 min)
+  └── SQLite: $DATA_DIR/airports.db (12 tables) ── optional GCS backup every 60 s
+            │
+            ▼
+External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
+          Open-Meteo, walking-tour provider sites
 ```
 
----
-
-## Static-first design philosophy
-
-Phase 0 exists because some data does not benefit from being generated by a language model. A lookup table for visa categories is faster, cheaper, and more deterministic than asking Claude whether a German passport holder needs a visa for Thailand. Static data is pre-computed, served instantly, and gives the user something to read while the AI agents run. This also makes the application feel significantly faster than a pure AI approach.
-
-The confidence score (`_DESTINATION_SCORES`) gives the UI four numeric sub-scores (safety, visa complexity, budget, infrastructure) that render as a dashboard widget while the main content loads.
-
-The same philosophy applies to the ItineraryAgent's template fallback: if the model is slow or unavailable, the application degrades gracefully rather than timing out with an error. The fallback itinerary is built entirely from already-available activities and hotels data with no additional API calls.
+In the container setup, nginx serves the built frontend and proxies `/api/` and `/health` to the backend.
 
 ---
 
-## SSE streaming mechanism
+## The search pipeline
 
-The backend uses FastAPI's `StreamingResponse` with `text/event-stream` content type. Every event follows a consistent JSON envelope:
+`POST /api/search` (`backend/app/api/routes/search.py`) checks the cache, then streams `TravelOrchestrator.stream_run()` (`backend/app/agents/orchestrator.py`).
+
+### Phase 0: static data (instant)
+
+Lookup tables in `backend/app/agents/static_results.py` produce, in this order: visa, sim, tips, getting_around and forex; then a `confidence` event (the Travel Ease grade); then emergency_card. All carry `source: "static"`, and the UI marks those sections "Enhancing…" until the AI version arrives.
+
+### Phase 1: thirteen agents in parallel
+
+flights, weather, hotels, activities, places_to_see, walking_tours, events, visa, sim, tips, emergency_card, getting_around and forex start together. Each has a 240 s ceiling. A section is yielded as soon as its agent finishes, with `source: "ai"`.
+
+- **Static-backed agents** (visa, sim, tips, getting_around, forex, emergency_card): if the AI result is an error, it is not yielded, so the Phase 0 data stays. The frontend also refuses to replace valid data with an error.
+- **URL enrichment**: hotels, activities and places_to_see are yielded first with `verification.pending = true`, then again after their links have been searched and checked.
+- **Deferred agents**: `packing_list` starts once activities and weather are both in (template fallback after 120 s or on error). `pricing_advisor` starts once flights have at least 3 results (skipped after 120 s or on error).
+
+### Phase 2: itinerary and stress test
+
+The itinerary agent starts as soon as activities and hotels are both in, not after all of Phase 1. After 60 s, or on an empty or malformed result, a template itinerary built from the available activities is used instead. Once the itinerary is final, the stress-test agent audits it (pacing, timings, visa deadlines, weather clashes) with a 90 s timeout.
+
+The stream always ends with `{"type": "done"}`. While agents run, the server sends `: keepalive` comments.
+
+`POST /api/search/sync` runs the same agents sequentially and returns one JSON object; it is meant for testing.
+
+### Caching
+
+A complete, error-free run is stored as its list of SSE events in the TTL cache for 30 minutes, keyed by the md5 of the request JSON (which includes the user's Taste Graph context), and replayed instantly on a repeat. Runs with any error are never cached.
+
+---
+
+## SSE envelope
 
 ```
-data: {"type": "visa",            "data": {...}, "source": "static"}\n\n
-data: {"type": "confidence",      "data": {...}, "source": "static"}\n\n
-data: {"type": "agent_status",    "agent": "flights", "status": "searching"}\n\n
-data: {"type": "flights",         "data": {...}, "source": "ai"}\n\n
-data: {"type": "activities",      "data": {...}, "source": "ai"}\n\n
-data: {"type": "packing_list",    "data": {...}, "source": "ai"}\n\n
-data: {"type": "itinerary",       "data": {...}}\n\n
-data: {"type": "done"}\n\n
-: keepalive
+data: {"type": "visa", "data": {...}, "source": "static"}
+
+data: {"type": "agent_status", "agent": "flights", "status": "searching"}
+
+data: {"type": "flights", "data": {..., "verification": {...}}, "source": "ai"}
+
+data: {"type": "itinerary", "data": {...}}
+
+data: {"type": "done"}
 ```
 
-Key conventions:
-
-- **`source: "static"`** — data came from a lookup table; the UI renders it with an "Enhancing..." badge.
-- **`source: "ai"`** — data came from an AI agent; the UI replaces static content and shows "Done".
-- **`agent_status` events** — sent before Phase 1 starts, one per agent. The UI uses these to show progress spinners.
-- **keepalive comments** (`: keepalive`) — sent every 3 seconds when waiting for slow agents, preventing proxy timeouts.
-
-Each event is flushed immediately. The browser receives and renders sections progressively rather than waiting for the full response.
+The full list of event types is in [API Reference](API-Reference.md#post-apisearch). The frontend parses the stream in a Web Worker (`frontend/src/workers/sseWorker.js`) so that large JSON payloads do not block rendering. If the stream ends without `done`, the worker reports an interruption and the page says so.
 
 ---
 
-## Web Worker pattern
+## Source verification
 
-Parsing a high-frequency SSE stream on the browser's main thread risks blocking UI rendering. Travel Planner uses a dedicated Web Worker (`sseWorker.js`) to handle the SSE connection and parse incoming events off the main thread. Parsed section data is posted back to the main thread via `postMessage`, where React state updates trigger re-renders. This keeps the UI responsive throughout the streaming period.
-
-The same pattern is used for the chat interface (`chatWorker.js`), which may trigger the full specialist-agent pipeline if it detects a trip-planning intent in user messages.
+Every non-error section streamed by `/api/search`, and the responses of `/api/{flights,hotels,activities}/filtered`, carry `data.verification`: `{level, label, summary, checks[], items_verified, items_total, pending}`. `backend/app/services/verification.py` computes it from evidence the pipeline already holds: live SerpAPI fares, link checks from enrichment, crawl provenance, Open-Meteo provenance, and comparisons with the static visa and emergency tables. It makes no network or LLM calls. The levels are `verified` ("Verified"), `partial` ("Partly verified"), `unverified` ("AI-generated") and `conflict` ("Check details"). See [Agent System](Agent-System.md#source-verification) for the per-section rules. Chat does not use verification.
 
 ---
 
-## Agent dependency diagram
+## Models
 
-```
-Phase 0 (static, instant)
-──────────────────────────────────────────────────────────────
-  static_results.py → visa / sim / tips / getting_around /
-                       forex / emergency_card / confidence
-
-Phase 1 (parallel AI, 8-15 s)
-──────────────────────────────────────────────────────────────
-  FlightsAgent ──────────────────────────────────────── (stream)
-               └─ ≥3 prices ready → PricingAdvisorAgent (deferred)
-
-  HotelsAgent ──────────────────────────────────────── (stream)
-              └─────────────────────────────────────► ItineraryAgent (P2)
-
-  ActivitiesAgent → relevance scoring ────────────── (stream)
-                  └───────────────────────────────► ItineraryAgent (P2)
-                  └─ activities ready + weather done → PackingListAgent
-
-  PlacesAgent → Serper + Claude + Resolver ──────── (stream + enrich)
-
-  WalkingToursAgent → provider crawl + LLM pick ─── (stream)
-
-  VisaAgent ─────────────────────────────────────── (stream / static fallback)
-  SimAgent ──────────────────────────────────────── (stream / static fallback)
-  TipsAgent ─────────────────────────────────────── (stream / static fallback)
-  ForexAgent → web searches → LLM ───────────────── (stream + enrich)
-  GettingAroundAgent ─────────────────────────────── (stream / static fallback)
-  WeatherAgent (Open-Meteo / LLM estimate) ───────── (stream)
-               └─ done/failed → unblocks PackingListAgent
-
-  EmergencyCardAgent ─────────────────────────────── (stream / static fallback)
-
-Phase 1 deferred (start mid-Phase-1 when preconditions met)
-──────────────────────────────────────────────────────────────
-  PricingAdvisorAgent (45 s timeout) ─────────────── (stream)
-  PackingListAgent    (45 s timeout) ─────────────── (stream)
-
-Phase 2 (sequential, starts when activities + hotels ready)
-──────────────────────────────────────────────────────────────
-  ItineraryAgent (60 s timeout → template fallback) ─ (stream)
-
-Separate endpoint (not part of search stream)
-──────────────────────────────────────────────────────────────
-  DiscoveryAgent (POST /api/discover, sync) ──────── (response)
-```
-
----
-
-## Deferred tasks
-
-Two agents are not launched at the start of Phase 1. They are triggered mid-Phase-1 as soon as their inputs become available.
-
-**PricingAdvisorAgent**
-
-- Trigger: `flights` result arrives AND contains ≥ 3 entries with `price_usd`.
-- Inputs: flight results, computed average price, days until departure.
-- Output: booking timing recommendation + SVG sparkline price trend data.
-- Timeout: 45 seconds. If it times out or fails, the section is omitted (no fallback).
-
-**PackingListAgent**
-
-- Trigger: `activities` result arrives AND `weather` result arrives (or has failed).
-- Inputs: destination, trip duration, traveler context, weather summary (avg high temp + poor-day count), first 8 activity names.
-- Output: categorised checklist — Documents, Clothing, Electronics, Medications, Activity Gear, Destination-Specific.
-- Saved to My Plan; checkbox state persisted in localStorage on the frontend.
-- Timeout: 45 seconds. If it times out or fails, the section is omitted.
-
-Both deferred agents are also started unconditionally at the beginning of Phase 2 as a safety net, in case their trigger conditions were met but not caught during Phase 1 processing (e.g., if the queue was processed very quickly).
-
----
-
-## SQLite + GCS backup strategy
-
-Travel Planner uses four SQLite databases:
-
-| Database | Contents |
+| Use | Model |
 |---|---|
-| `users.db` | User accounts, hashed passwords, roles |
-| `plans.db` | Saved trip plans per user |
-| `preferences.db` | User travel preferences |
-| `feedback.db` | User feedback on plans |
+| Every specialist agent (`BaseAgent`), the chat-itinerary agent, chat routing, parameter extraction and plan actions, `/health/agents` | `claude-haiku-4-5-20251001` |
+| Chat conversational answers and planning narrative | `claude-sonnet-4-6` |
 
-SQLite was chosen for operational simplicity: no separate database process to manage, no connection pooling, no migrations to coordinate. For the expected scale of this application (hundreds to low thousands of users), SQLite is more than sufficient.
-
-**Backup mechanism:** A background task runs every 5 minutes and uploads all four database files to a Google Cloud Storage bucket. A SIGTERM handler also triggers a final backup before the process exits (important for Cloud Run deployments, which send SIGTERM before terminating instances).
-
-**Restore on startup:** On application start, if the local database files are missing or empty (as they will be on a fresh Cloud Run instance), the application downloads them from GCS before accepting traffic. This gives Cloud Run's stateless compute the behaviour of a persistent database.
-
-**Airport and place data.** The app DB (`airports.db`) also holds a comprehensive, regenerable dataset: every OurAirports airport with scheduled service (~4,000), every GeoNames place with ≥ 1,000 people (~162,000) with up to three linked airports each, their folded own and alternate names, and first-level divisions. It is generated offline (`backend/scripts/build_place_data.py`), committed under `backend/app/db/data/` (sources, licences and attribution in its README) and seeded at startup only when its version hash changes (~2 s; an unchanged startup checks it in ~5 ms). Backups exclude these tables. Every typed origin, destination and static-table lookup resolves through it, locally and synchronously:
-
-- `lookup_city_iata` (flights): code → known-code label → curated island / destination → curated served-city airports → `resolve_place` → airport display city.
-- `resolve_place` (`db/places_db.py`): one indexed name query plus one division query when something is stated; alternate names only when no place has the name as its own (plus the curated exonyms in `db/data/hints.json`), whole-name airport matches, 3× dominance or nothing; "City Country" without a comma and generic affixes ("… Island", "… city") are retried when the text names nothing as typed.
-- `static_results._place_country`: the curated city map first; an unknown city takes its resolved place's country ("Zermatt" → Switzerland).
-- `search_airports` (autocomplete): airports plus places by folded name prefix.
-
-Measured over the golden set plus fresh probes (3,639 calls): `lookup_city_iata` p50 0.61 ms / p95 0.87 ms / p99 1.1 ms; autocomplete p50 1.9 ms / p95 6.3 ms per query. The airport-name index is built from the seeded DB at startup; small CSV-derived caches load on first use.
+`BaseAgent.execute()` makes one `AsyncAnthropic.messages.create` call per attempt with `max_tokens` 16384, behind a global semaphore (`AGENT_MAX_CONCURRENCY`, default 6). See [Agent System](Agent-System.md).
 
 ---
 
-## Caching
+## Persistence
 
-In-memory caching via `cachetools` (TTL 30 minutes, max 500 entries). Cache keys are used for:
+There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`), opened in WAL mode with `synchronous=NORMAL` and a 5 s busy timeout. Despite its name it holds every table:
 
-- Serper Places API responses (`serper:places_ctx:{destination}`) — avoids repeated external API calls within a session.
-- Crawled walking-tour listings (`walking_tours:{provider}:{slug}`) — one entry per provider and city, so a repeat search or another trip to the same city does not re-fetch the provider pages.
-- The cache is shared process-wide, so repeated searches for the same destination within 30 minutes reuse the Serper data and the crawled tours.
+| Table | Holds |
+|---|---|
+| `airports` | Airports from OurAirports plus the curated list (IATA, ICAO, name, served city, country, coordinates, region, rank, `scheduled`) |
+| `places` | GeoNames places with their linked airports |
+| `place_names` | Folded own and alternate names for place lookup |
+| `admin1` | First-level divisions (states, provinces) |
+| `meta` | Key/value, including `place_data_version` |
+| `nationalities` | 202 nationality → country rows for the nationality typeahead |
+| `users` | Accounts: bcrypt hash, `is_admin`, `is_first_login`, `is_active` |
+| `plans` | Saved plans: search data, selections (JSON), share token |
+| `preferences` | Saved preferences per user |
+| `recent_searches` | Up to 8 per user |
+| `feedback` | Feedback widget submissions |
+| `taste_signals` | Taste Graph signals mined from saved plans |
 
----
+The first six are reference data seeded from files committed to the repo; see [Place and Airport Data](Place-and-Airport-Data.md).
 
-## Why these choices were made
+### Backups (optional)
 
-**FastAPI over Django/Flask:** Native async support is essential for running 13+ concurrent agent calls without blocking. FastAPI's `StreamingResponse` makes SSE straightforward to implement. The `asyncio.create_task` + queue pattern allows the orchestrator to stream each result the moment it arrives.
-
-**SQLite over PostgreSQL/MySQL:** Zero infrastructure overhead. The GCS backup strategy handles durability. Cloud Run's ephemeral filesystem is the only risk, and the backup/restore lifecycle addresses it.
-
-**Sentence-transformers for relevance scoring:** A deterministic, locally-run semantic similarity model gives meaningful activity ranking without an extra API call. It runs fast enough (< 500ms) to not add noticeable latency to Phase 1.
-
-**`.agents/*.md` for agent definitions:** Keeping system prompts as markdown files with YAML frontmatter means prompt engineers can edit them without touching Python code. The frontmatter carries metadata (name, description, tools, max_turns) that the BaseAgent reads at load time.
-
-**Web Worker for SSE:** The alternative — parsing SSE on the main thread — causes frame drops on low-end devices during peak streaming. The worker approach is a small amount of complexity for a meaningful UX improvement.
-
-**Deferred agent pattern:** PricingAdvisorAgent and PackingListAgent need data from other agents before they can run. Rather than waiting for all of Phase 1 to finish, they trigger as soon as their inputs are available, hiding their latency behind the remaining Phase 1 agents.
-
-**Static-backed agent suppression:** For agents with Phase 0 static data (visa, sim, tips, getting_around, forex, emergency_card), an AI failure is silently suppressed. The user already has correct static data on screen; replacing it with an error would be a regression. Both the orchestrator (backend) and the SSE event handler (frontend) enforce this invariant independently.
-
+`backend/app/db/backup.py` is active only when `BACKUP_BUCKET` is set. At startup it restores every `*.db` under `sqlite-backups/` in the bucket. Every 60 s it uploads a snapshot, using GCS generation checks: if another instance wrote newer data, it merges that data with `INSERT OR IGNORE` first, and it skips uploads during a 150 s startup window. On shutdown it forces one final upload. Snapshots leave out the regenerable place tables and the place-data version, so a restored database reseeds them on start. This was built for Cloud Run's ephemeral disk; locally it is off.
 
 ---
 
-## Multi-city execution model
+## Cache
 
-Multi-city trips (`destinations: ["Paris", "Rome", "Barcelona"]`) reuse the same three-phase pipeline with three derived structures on `TravelSearchRequest`:
+One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE_MAXSIZE` 500, TTL `CACHE_TTL_SECONDS` 1800) holds full search runs, discover and compare results (complete ones only), the `/health/agents` result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart.
 
-- **`city_stays`** — trip days split proportionally across cities (`round(i × days / n)` boundaries, exact date coverage for any split). Each stay's `end_date` is the move-on day.
-- **`flight_legs`** — origin → city₁ on the departure date, one inter-city hop per move-on day, last city → origin on the return date.
-- **`multi_city_context`** — a prompt block instructing every agent to cover all cities and tag each result with a `city` field.
+---
 
-Flights run **one parallel SerpAPI one-way search per leg** (20 s timeout + one retry); legs that still come back empty are AI-filled with estimates so the UI never shows an empty leg. Weather forecasts each stay only for its own dates. Specialist prompts carry per-city minimum quotas (hotels ≥ 3, activities ≥ 5, places 4–6, events 2–4, walking tours ≥ min(4, available) per city).
+## Authentication and access
 
-**Journey order is enforced twice**: the backend sorts flight legs and weather days into the user's stop order, and the frontend stable-sorts every city-tagged section list by the entered stop order the moment results arrive (`orderSectionByCity`). The itinerary agent is explicitly forbidden from reordering the route. See [Multi-City Trips](Multi-City-Trips.md).
+- `POST /api/auth/login` returns an HS256 JWT valid for 24 h (`backend/app/core/auth.py`). Passwords are bcrypt-hashed. There is no registration endpoint; admins create users.
+- Most routes require a valid token (`get_current_user`). Admin routes also require `is_admin`.
+- `/api/search`, `/api/search/sync`, `/api/discover` and every single-agent ("light_ai") route accept **anonymous** calls. They use `get_optional_user`: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except `/share/:token`.
 
-## Chat design: knowledge-only answers, agents as last resort
+## Rate limiting
 
-Chat topic queries are answered purely from the model's own knowledge and the SSE stream closes as soon as the answer ends. Specialist agents run **only when the model fails to answer at all** (stream error, empty response, or explicit refusal detected by `_NON_ANSWER_RE`). Structured planning requests ("plan a week in Lisbon") still run the full agent pipeline and stream section results into the conversation, with refinement diffing re-running only the agents whose inputs changed. See [Chat Assistant](Chat-Assistant.md).
+`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, light_ai 60. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits).
 
-**Why:** running agents for every chat question made responses feel slow and heavy; a background-verification design held the stream open for up to ~40 s after the answer. Knowledge-only answering keeps chat conversational while the Search page remains the live-data surface.
+## Middleware
+
+- CORS from `CORS_ORIGINS`.
+- `AnalyticsMiddleware` logs every request as JSON, except `/health`, `/docs`, `/openapi.json` and `/redoc`.
+- `RequestIdMiddleware` propagates or creates `X-Request-ID`.
+
+UI analytics events are batched by the frontend (`utils/analytics.js`, every 5 s or 10 events) and posted to `POST /api/analytics/events`, which logs them to stdout.

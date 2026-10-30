@@ -1,72 +1,51 @@
 # Contributing
 
-## Local Setup
+## Setup
 
 ```bash
 # Backend
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-cp .env.example .env  # set ANTHROPIC_API_KEY
+# create backend/.env with ANTHROPIC_API_KEY, JWT_SECRET_KEY, ADMIN_PASSWORD
 
 # Frontend
 cd frontend
 npm install
+
+# Optional: pre-commit hooks
+make install-hooks
 ```
 
-## Running Servers
+Run both servers with `./start.sh` (backend 8001, frontend 5174) and stop them with `./stop.sh`. Details: [Setup and Installation](Setup-and-Installation.md).
 
-```bash
-./start.sh   # starts backend (8001) + frontend (5174)
-./stop.sh    # stops both
-```
+## Workflow
 
-## Code Style
+1. Branch off `main`.
+2. Make the change with tests: `backend/tests/` for Python, `*.test.js(x)` next to the code for the frontend.
+3. Run the checks locally with `make ci` from the repo root: lint (ruff and ESLint), the security scans and both test suites, mirroring CI. See [Testing and CI](Testing-and-CI.md).
+4. Push and open a pull request to `main`. CI (`ci.yml`) runs lint, security audits, both test suites with the 70% backend coverage gate, and an image build with a Trivy scan.
+5. Merging to `main` publishes the docs site (`docs.yml`). It does **not** deploy the app: `deploy.yml` is manual-only and decommissioned (see [Deployment](Deployment.md)).
 
-- **Backend**: `ruff` for linting and formatting (`ruff check`, `ruff format`)
-- **Frontend**: ESLint with project config (`npx eslint src/`)
-- **No comments** unless the WHY is non-obvious
-- **No error handling** for scenarios that can't happen
-- **No abstractions** beyond what the task requires
+Merged PRs are listed in the [Changelog](Changelog.md).
 
-## Tests
+## Code style
 
-```bash
-# Backend
-cd backend
-pytest --cov=app --cov-fail-under=70 -q
+- **Backend**: ruff for lint and format (`ruff check`, `ruff format`), Python 3.12, Pydantic v2 models for request and response shapes.
+- **Frontend**: ESLint with the project config; import lucide icons that shadow globals (Map, Image, History…) under an alias. Tailwind utility classes; keep pure logic in `src/utils/` where it can be unit-tested.
+- Comment only where the reason is not obvious from the code.
+- No error handling for cases that cannot happen, and no abstractions beyond what the task needs.
 
-# Frontend unit
-cd frontend
-npx vitest run
+## Conventions
 
-# E2E (requires docker compose up)
-docker compose up -d
-cd frontend && npx playwright test
-docker compose down
-```
+- **Agent prompts are config.** Change agent behaviour in `.agents/<name>.md` (name and description frontmatter plus the prompt). The Python class builds the user prompt and parses the JSON. See [Agent System](Agent-System.md#adding-an-agent) for adding an agent.
+- **Agents return JSON**, parsed by `BaseAgent._parse_json`.
+- **Parallel first.** Independent agents run concurrently; only the itinerary and stress test depend on other results.
+- **Static first.** Visa, SIM, tips, getting around, forex and the emergency card have static tables; an AI failure must never replace valid static data with an error.
+- **Verification from evidence only.** `services/verification.py` must stay pure (no network or LLM calls) and must never put an `error` key in the verification object.
+- **Place data is generated.** Do not hand-edit `airports.csv`, `places.csv.gz`, `admin1.csv` or `countries.csv`; regenerate them (see [Place and Airport Data](Place-and-Airport-Data.md#regenerating-the-data)). `hints.json` is hand-curated; add a golden-set case for every hint you add.
+- **Prompts pair a city with its country** ("Lisbon, Portugal"), so agents do not guess the wrong namesake.
 
-Coverage gate: 70% minimum on backend (`--cov-fail-under=70`). There is no enforced gate for frontend unit tests.
+## Licence
 
-## Adding Agents
-
-See [Agent System](agents.md) for instructions on adding new specialist agents.
-
-## CI Pipeline
-
-Each push runs the following stages in order:
-
-1. **Lint** — `ruff check` (backend) and `eslint` (frontend)
-2. **Security scan** — `bandit` on the backend source tree
-3. **Test** — `pytest --cov` with the 70% gate (backend) + `vitest run` (frontend)
-4. **Build** — Docker image build for backend and Vite production build for frontend
-5. **Deploy** — automatic deploy to Cloud Run on merge to `main`
-
-All five stages must pass before a PR can be merged.
-
-## Pull Request Flow
-
-1. Branch off `main`
-2. CI runs automatically on push
-3. All CI checks must pass before merge
-4. Merge to `main` triggers automatic deploy
+The project is released under the MIT License (`LICENSE`). Place data contains data from GeoNames (geonames.org), CC BY 4.0, and must keep that attribution; OurAirports data is public domain.

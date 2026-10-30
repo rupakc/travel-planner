@@ -1,16 +1,19 @@
 # API Reference
 
-The Travel Planner backend is a FastAPI application. All endpoints are under `/api/`. Interactive documentation (Swagger UI) is available at `/docs` on any running instance.
+The backend is a FastAPI app (`backend/app/main.py`). Every endpoint is under `/api` except `/health` and `/health/agents`. A running instance serves Swagger UI at `/docs`, ReDoc at `/redoc` and the schema at `/openapi.json`; locally that is http://localhost:8001/docs.
 
-**Live API:** `https://travel-planner-backend-2hrxgxqboa-ew.a.run.app`
-**Local API:** `http://localhost:8001`
+**Authentication.** Send the token from `POST /api/auth/login` as `Authorization: Bearer <token>`. Tokens are HS256 JWTs valid for 24 hours. In the tables below:
 
-**Authentication:** Most endpoints require a JWT Bearer token from the login response:
-```
-Authorization: Bearer <token>
-```
+- **user**: a valid token for an active user is required (`401` otherwise).
+- **admin**: the user must also be an admin (`403` otherwise).
+- **optional**: anonymous calls are allowed. With a valid token for an active user, the Taste Graph is applied and rate limits count per user; otherwise (including a deactivated user's token) the caller is anonymous and counted per IP.
+- **none**: no token needed.
 
-**Rate limits:** endpoints that call the AI agents are limited per caller — the signed-in user, or the client IP for anonymous requests — over a rolling 10-minute window. Every accepted request counts, including cached responses and requests later rejected as invalid (`422`) or unauthenticated (`401`); only requests answered with `429` do not.
+---
+
+## Rate limits
+
+Endpoints that call the AI agents are rate-limited per caller (the signed-in user, or the client IP for anonymous requests) over a sliding 10-minute window (`backend/app/core/rate_limit.py`). Every accepted request counts, including cached responses and requests later rejected as invalid (`422`) or unauthenticated (`401`); only requests answered with `429` do not.
 
 | Bucket | Endpoints | Default limit |
 |---|---|---|
@@ -18,7 +21,7 @@ Authorization: Bearer <token>
 | chat | `POST /api/chat` | 30 |
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` (and their `/filtered` variants), `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
 
 Each bucket is counted separately. Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -26,69 +29,110 @@ Each bucket is counted separately. Over the limit the API answers `429 Too Many 
 {"detail": "Too many requests — please wait 42 seconds and try again."}
 ```
 
-Limits are configurable (see [Configuration](Configuration.md#rate-limit-variables)). The counter is in-process, so each backend instance counts on its own.
+Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The counter is in-process, so each backend process counts on its own.
 
 ---
 
-## Auth endpoints
+## Endpoint index
 
-### `POST /api/auth/login`
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/auth/login` | none | Username and password → JWT |
+| POST | `/api/auth/change-password` | user | Change own password; returns a new token |
+| GET | `/api/auth/me` | user | Current user |
+| POST | `/api/admin/users` | admin | Create a user with a temporary password |
+| GET | `/api/admin/users` | admin | List users (no password hashes) |
+| DELETE | `/api/admin/users/{username}` | admin | Deactivate a user (not yourself) |
+| POST | `/api/admin/users/{username}/reactivate` | admin | Reactivate a user |
+| POST | `/api/admin/users/{username}/reset-password` | admin | Set a new password |
+| POST | `/api/feedback` | user | Submit feedback |
+| GET | `/api/admin/feedback` | admin | List feedback (filters `page`, `category`, `min_rating`) |
+| POST | `/api/analytics/events` | user | Batch of up to 50 UI events, logged as JSON; `204` |
+| POST | `/api/search` | optional | SSE streaming search (all agents) |
+| POST | `/api/search/sync` | optional | Same run, one JSON response (testing) |
+| POST | `/api/discover` | optional | 5 destination suggestions |
+| POST | `/api/compare/destination` | user | One-destination summary for Compare mode |
+| POST | `/api/chat` | user | SSE chat with plan commands and planning |
+| GET, POST | `/api/plans` | user | List own plans; save a plan |
+| GET, PUT, DELETE | `/api/plans/{id}` | user | Get, rename/update, delete own plan |
+| POST | `/api/plans/{id}/share` | user | Create (or return) the public share token |
+| DELETE | `/api/plans/{id}/share` | user | Revoke the share token (no UI uses it) |
+| GET | `/api/share/{token}` | none | Public, sanitised shared plan |
+| GET, PUT | `/api/preferences` | user | Get or update preferences |
+| GET, POST | `/api/recent-searches` | user | Last 8 searches; record one |
+| DELETE | `/api/recent-searches/{id}` | user | Remove one (`204`, or `404`) |
+| GET, DELETE | `/api/taste-profile` | user | Learned taste profile; reset it |
+| GET | `/api/airports/search?q=&limit=` | none | Airport and place typeahead |
+| GET | `/api/nationalities/search?q=&limit=` | none | Nationality typeahead |
+| POST | `/api/flights`, `/api/flights/filtered` | optional | Flights agent; with filters |
+| POST | `/api/flights/fare-calendar` | user | Cheapest live fare for departure ±3 days |
+| POST | `/api/hotels`, `/api/hotels/filtered` | optional | Hotels agent; with filters |
+| POST | `/api/activities`, `/api/activities/filtered` | optional | Activities agent; with filters |
+| POST | `/api/visa`, `/api/sim`, `/api/tips`, `/api/getting-around`, `/api/forex` | optional | Single specialist agents |
+| POST | `/api/itinerary` | optional | Itinerary agent |
+| POST | `/api/events` | optional | Events agent (no frontend caller) |
+| POST | `/api/walking-tours` | optional | Crawled free walking tours |
+| POST | `/api/layover` | optional | Layover mini-plan |
+| POST | `/api/stress-test` | optional | Audit an itinerary |
+| GET | `/health` | none | Liveness and `serpapi_configured` |
+| GET | `/health/agents` | none | Deep check with one tiny Haiku call (cached 5 min) |
 
-Authenticate and receive a JWT access token.
+The single-agent routes accept anonymous calls; only the rate limit protects them.
 
-**Auth required:** No
+---
 
-**Request body:**
+## Auth
+
+### POST /api/auth/login
+
 ```json
-{
-  "username": "admin",
-  "password": "your-password"
-}
+{ "username": "admin", "password": "your-password" }
 ```
 
-**Response:**
+Response (`401` for wrong credentials or an inactive account):
+
 ```json
 {
   "access_token": "eyJ...",
   "token_type": "bearer",
-  "requires_password_change": false,
-  "user": { "id": 1, "username": "admin", "role": "admin" }
+  "user": { "username": "admin", "is_admin": true, "requires_password_change": false }
 }
 ```
 
-If `requires_password_change` is `true`, the frontend redirects to `/change-password` before allowing further navigation.
+If `requires_password_change` is `true`, the frontend sends the user to `/change-password` first.
 
----
-
-### `POST /api/auth/change-password`
-
-**Auth required:** Yes
+### POST /api/auth/change-password
 
 ```json
-{ "current_password": "old", "new_password": "new" }
+{ "current_password": "old", "new_password": "at-least-8-chars" }
 ```
 
-**Response:** `200 OK` — `{"message": "Password changed successfully"}`
+Returns `{"access_token": "...", "token_type": "bearer"}` with a fresh token. `400` if the current password is wrong or the new one is shorter than 8 characters.
+
+### GET /api/auth/me
+
+Returns `{ "username", "is_admin", "requires_password_change" }`.
+
+There is no registration endpoint. Admins create users:
+
+### POST /api/admin/users
+
+```json
+{ "username": "newuser", "password": "TemporaryPassword123", "email": null, "is_admin": false }
+```
+
+`201` with the user (no password hash). The new user must change the password on first login. `409` for a duplicate username or email, `400` for a password under 8 characters. `POST /api/admin/users/{username}/reset-password` takes `{"new_password": "..."}`.
 
 ---
 
-### `GET /api/auth/me`
+## Search
 
-Returns the currently authenticated user's profile.
+### POST /api/search
 
-**Auth required:** Yes
+The main endpoint. It streams results as Server-Sent Events. **Auth:** optional. Responses for a complete, error-free run are cached for 30 minutes and replayed instantly.
 
----
+**Request body** (`TravelSearchRequest`, `backend/app/schemas/request.py`):
 
-## Search (primary trip planning)
-
-### `POST /api/search` — SSE streaming
-
-The core endpoint. Submits a trip search and streams results in real time via Server-Sent Events.
-
-**Auth required:** Yes
-
-**Request body:**
 ```json
 {
   "origin": "London",
@@ -98,69 +142,45 @@ The core endpoint. Submits a trip search and streams results in real time via Se
   "nationality": "British",
   "interests": ["food", "history", "nature"],
   "budget_usd": 4000,
-  "num_travelers": 1,
+  "num_travelers": 2,
+  "adults": 2, "children": 0, "seniors": 0, "infants": 0,
+  "accessibility_needs": [],
   "residence_permits": [],
-  "existing_visas": []
+  "existing_visas": [],
+  "destinations": null,
+  "destination_nights": null,
+  "pace": "balanced",
+  "serendipity": 0.5
 }
 ```
 
-**Response:** `Content-Type: text/event-stream`
+`destinations` and `destination_nights` describe a multi-city trip (see [Multi-City Trips](Multi-City-Trips.md)). `taste_context` is set by the server from the user's Taste Graph; a client value is ignored. `origin` and `destination` may be city names, typeahead labels or airport codes; the validator resolves them to airport codes for live flight search (see [Place and Airport Data](Place-and-Airport-Data.md)).
 
-Each event:
-```
-data: {"type": "<event_type>", "data": <object>, "source": "static"|"ai"}\n\n
-```
+**Response:** `Content-Type: text/event-stream`. Each event is `data: {JSON}\n\n`, and `: keepalive` comments are sent while agents run.
 
-The final event:
-```
-data: {"type": "done"}\n\n
-```
-
-**Event types and phases:**
-
-| Event type | Phase | Source | Description |
+| Event | Phase | `source` | Notes |
 |---|---|---|---|
-| `confidence` | 0 | static | Travel confidence score (safety / visa / budget / infrastructure) |
-| `visa` | 0 then 1 | static → ai | Visa requirements |
-| `sim` | 0 then 1 | static → ai | SIM card options |
-| `tips` | 0 then 1 | static → ai | Travel tips |
-| `getting_around` | 0 then 1 | static → ai | Local transport |
-| `emergency_card` | 0 then 1 | static → ai | Emergency numbers, embassy, phrases, local laws |
-| `flights` | 1 | ai | Flights guidance |
-| `weather` | 1 | ai | Forecast for travel dates |
-| `hotels` | 1 | ai | Hotels by neighbourhood and budget tier |
-| `activities` | 1 | ai | Activities, relevance-sorted |
-| `places_to_see` | 1 | ai | Must-visit landmarks |
-| `walking_tours` | 1 | ai | Free walking tours crawled from provider city pages |
-| `events` | 1 | ai | What's On: festivals, concerts, exhibitions |
-| `forex` | 1 | ai | Currency and payment tips |
-| `pricing_advisor` | 1 (deferred) | ai | Flight price trend and booking recommendation |
-| `packing_list` | 1 (deferred) | ai | Personalised packing checklist |
-| `itinerary` | 2 | ai | Day-by-day schedule |
+| `visa`, `sim`, `tips`, `getting_around`, `forex` | 0, then 1 | `static`, then `ai` | Static-backed; an AI error is not sent, so the static data stays |
+| `confidence` | 0 | `static` | Travel Ease grade: total out of 100 and green/amber/red, from visa ease, safety, English friendliness, cost vs budget and tourist infrastructure |
+| `emergency_card` | 0, then 1 | `static`, then `ai` | Static-backed |
+| `agent_status` | — | — | `{agent, status: "searching" \| "done"}` for the 15 agents at start, and for `stress_test` |
+| `flights`, `weather`, `hotels`, `activities`, `places_to_see`, `walking_tours`, `events` | 1 | `ai` | `hotels`, `activities` and `places_to_see` are sent twice: before and after link enrichment |
+| `packing_list` | deferred | `ai` (`static` for the template fallback) | Starts when activities and weather are in |
+| `pricing_advisor` | deferred | `ai` | Starts when flights have at least 3 results; skipped on error or after 120 s |
+| `itinerary` | 2 | none | Starts when activities and hotels are in; template fallback after 60 s |
+| `stress_test` | after the itinerary | `ai` | 90 s timeout; on error an error section is sent |
+| `done` | — | — | Always last |
 
-**Static-backed events** (visa, sim, tips, getting_around, emergency_card): Phase 0 sends static data immediately. Phase 1 replaces it with AI-enriched data. If Phase 1 fails, the static data is retained — no error is shown for these sections.
+Every non-error section carries `data.verification` (see [Agent System](Agent-System.md#source-verification)). An agent that fails sends `{"error": "..."}` as its data (except the static-backed ones), so the UI can show "not available" instead of waiting.
 
-**Deferred events**: `pricing_advisor` triggers when ≥ 3 flight prices are available; `packing_list` triggers when activities are ready and weather is done.
+### POST /api/search/sync
 
-On agent failure, the event is still emitted with `"error": true` in the data so the frontend can show "not available" rather than hang.
+Same request and agents, run sequentially; returns a single JSON object. For testing only.
 
----
+### POST /api/discover
 
-### `POST /api/search/sync`
+*Surprise me.* **Auth:** optional. Returns 5 destination suggestions.
 
-Same as `/api/search` but waits for all agents and returns a single JSON response. For testing only — too slow for production use.
-
----
-
-## Destination Discovery
-
-### `POST /api/discover`
-
-The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destination suggestions without needing a specific destination input.
-
-**Auth required:** Yes
-
-**Request body:**
 ```json
 {
   "origin": "JFK",
@@ -169,16 +189,12 @@ The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destina
   "return_date": "2026-08-08",
   "budget_usd": 3000,
   "interests": ["food", "history"],
-  "adults": 1,
-  "children": 0,
-  "seniors": 0,
-  "infants": 0
+  "adults": 1, "children": 0, "seniors": 0, "infants": 0
 }
 ```
 
-`return_date` is optional (for one-way or open-ended trips).
+`return_date` and `budget_usd` are optional. Response:
 
-**Response:**
 ```json
 {
   "destinations": [
@@ -190,7 +206,7 @@ The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destina
       "visa_type": "visa-free",
       "visa_verified": true,
       "weather_emoji": "☀️",
-      "weather_description": "Warm and sunny, 22–26°C in August — typical for the season",
+      "weather_description": "Warm and sunny, 22–26°C in August",
       "flight_duration_hours": 7.5,
       "flight_duration_label": "~7h 30m from New York",
       "match_reasons": ["Exceptional food scene", "Rich Age of Discovery history"],
@@ -200,22 +216,13 @@ The "Surprise Me" endpoint. Given a traveller profile, returns 5 curated destina
 }
 ```
 
-`visa_verified: true` means the visa type was confirmed from the authoritative `_VISA_TABLE` lookup. `visa_verified: false` means the AI's guess was not verifiable — the frontend shows an amber "Verify" badge.
+`visa_verified: true` means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: `422` invalid request, `504` after 30 s, `500` agent failure. Results are cached for 30 minutes.
 
-**Errors:**
-- `422` — missing required fields
-- `504` — agent timed out (> 30 seconds); retry
-- `500` — agent failed; retry
+### POST /api/compare/destination
 
-Results are cached in memory for 30 minutes per unique request.
+Lightweight summary of one destination, used by the Search page's Compare mode (one call per destination, in parallel). Runs flights, hotels (no URL enrichment), weather and visa concurrently with per-piece timeouts (flights and hotels 45 s, weather and visa 30 s). The visa piece uses the static visa table when it has an entry.
 
----
-
-### `POST /api/compare/destination`
-
-Lightweight summary of one destination, used by the Search page's Compare mode (one call per destination, in parallel). Runs flights, hotels (no URL enrichment), weather and visa concurrently with per-piece timeouts.
-
-**Auth required:** Yes
+**Auth:** user. **Bucket:** compare.
 
 **Request body:** a `TravelSearchRequest` for a single destination. `destinations` must be null or have at most one entry; multi-city requests return `422` ("Compare works with single destinations").
 
@@ -251,176 +258,110 @@ Any piece that failed or timed out is `null` and its name is listed in `missing`
 
 **Caching:** only complete results (empty `missing`) are cached in the shared TTL cache, keyed on the full request; partial results and `502`s are never cached.
 
+---
+
 ## Chat
 
-### `POST /api/chat` — SSE streaming
+### POST /api/chat
 
-Conversational trip planning. The agent maintains session context and can trigger the full search pipeline when the message is trip-planning related.
+**Auth:** user. Streams SSE.
 
-**Auth required:** Yes
-
-**Request body:**
 ```json
 {
-  "messages": [
-    { "role": "user", "content": "Plan a 5-day trip to Bangkok for two people" }
-  ],
+  "messages": [{ "role": "user", "content": "Plan a 5-day trip to Bangkok for two people" }],
   "selections": {},
   "search_results": {},
   "session_context": {}
 }
 ```
 
-**Response:** `Content-Type: text/event-stream`
-
-Events include plain text chunks, structured planning sections (same types as `/api/search`), and a final `done` event.
+Event types: `delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. A planning request streams `planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done`; `section_result` appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback `delta`, `error` and `done`. See [Chat Assistant](Chat-Assistant.md).
 
 ---
 
-## Plans
+## Plans and sharing
 
-### `GET /api/plans`
+### GET /api/plans, POST /api/plans
 
-List all saved plans for the current user.
+List the caller's plans, or save one. Saving records Taste Graph signals.
 
-**Auth required:** Yes
-
----
-
-### `POST /api/plans`
-
-Save a new plan.
-
-**Auth required:** Yes
-
-**Request body:**
 ```json
 {
   "name": "The Rainy Tokyo Adventure",
-  "search_data": { "destination": "Tokyo", "departure_date": "2026-04-01", ... },
+  "search_data": { "origin": "London", "destination": "Tokyo", "departure_date": "2026-04-01" },
   "selections": {
-    "flight": { ... },
-    "hotel": { ... },
-    "activities": [ ... ],
-    "packing_list": { ... }
+    "flight": {},
+    "hotel": {},
+    "activities": [],
+    "itinerary_slots": [],
+    "itinerary": {},
+    "itinerary_layout": {},
+    "itinerary_edits": {},
+    "itinerary_notes": {}
   }
 }
 ```
 
----
+### GET, PUT, DELETE /api/plans/{id}
 
-### `GET /api/plans/{id}` / `PUT /api/plans/{id}` / `DELETE /api/plans/{id}`
+Get, update (name and/or selections) or delete one of the caller's plans; `404` for another user's plan.
 
-Retrieve, update, or delete a specific plan. Must be the plan's owner.
+### POST /api/plans/{id}/share and GET /api/share/{token}
 
----
-
-## Preferences
-
-### `GET /api/preferences` / `PUT /api/preferences`
-
-Get or update the current user's saved preferences (nationality, interests, budget, residence permits, existing visas). These pre-fill the search form on next visit.
-
-**Auth required:** Yes
+`POST` returns `{"share_token": "..."}` (the existing token if there is one). `GET /api/share/{token}` needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. `DELETE /api/plans/{id}/share` revokes the token. See [Sharing and Plans](Sharing-and-Plans.md).
 
 ---
 
-## Recent searches
+## Preferences, recent searches, taste profile
 
-### `GET /api/recent-searches`
+### GET, PUT /api/preferences
 
-The current user's last 8 submitted searches, most recent first. Each entry is `{ "id", "search", "last_used_at" }`, where `search` is the Search form as submitted (origin, destination, dates, multi-city `stops` with optional `nights`, nationality, permits, visas, interests, budget, traveler mix, accessibility needs, serendipity).
+The caller's preferences: `budget_category`, `nationality`, `current_residence`, `residence_permits`, `existing_visas`, `interests`, `num_travelers`, `adults`, `children`, `seniors`, `infants`, `accessibility_needs`. They pre-fill the Search form, and the Search form writes back to them.
 
-### `POST /api/recent-searches`
+### GET, POST /api/recent-searches; DELETE /api/recent-searches/{id}
 
-Records a search; the Search page calls it on every submit. An identical search (interests in any order) is merged and moved back to the top instead of duplicated, and only the newest 8 entries are kept. Returns the saved entry.
+`GET` returns the caller's last 8 searches, newest first, each `{ "id", "search", "last_used_at" }`, where `search` is the Search form as submitted (route with multi-city `stops` and optional `nights`, dates, nationality, permits, visas, interests, budget, traveller mix, accessibility needs, serendipity). `POST` records one: an identical search (interests in any order) is moved back to the top instead of duplicated, and only the newest 8 are kept. `DELETE` returns `204`, or `404` if the entry does not exist or belongs to someone else.
 
-### `DELETE /api/recent-searches/{id}`
+### GET, DELETE /api/taste-profile
 
-Removes one of the caller's entries. `204 No Content`, or `404` if the entry doesn't exist or belongs to another user.
-
-**Auth required:** Yes (all three)
+`GET` returns the learned signals (flight style, hotel tier, activity categories, budget band) and the summary injected into agent prompts. `DELETE` resets them.
 
 ---
 
-## Feedback
+## Feedback and analytics
 
-### `POST /api/feedback`
-
-Submit a feedback rating from the floating widget.
-
-**Auth required:** Yes
-
-**Request body:**
-```json
-{
-  "page": "results",
-  "rating": 4,
-  "category": "content",
-  "message": "Great activity suggestions!"
-}
-```
-
----
-
-### `GET /api/admin/feedback`
-
-View all submitted feedback. Admin only.
-
-**Auth required:** Yes (admin)
-
----
-
-## Admin
-
-### `GET /api/admin/users`
-
-List all user accounts (without password hashes).
-
-**Auth required:** Yes (admin)
-
----
-
-### `POST /api/admin/users`
-
-Create a new user. The user is flagged as requiring a password change on first login.
-
-**Auth required:** Yes (admin)
+### POST /api/feedback
 
 ```json
-{ "username": "newuser", "password": "TemporaryPassword123", "role": "user" }
+{ "page": "results", "rating": 4, "category": "praise", "message": "Great activity suggestions!" }
 ```
 
-**Roles:** `"user"`, `"admin"`
+`rating` is 1–5; `category` is `bug`, `feature_request`, `general` or `praise`; `message` (optional) is at most 500 characters; `metadata` is an optional object. Returns `201`. Admins read feedback with `GET /api/admin/feedback?page=&category=&min_rating=`.
+
+### POST /api/analytics/events
+
+Up to 50 batched UI events per call, written to the log as JSON. Returns `204`.
 
 ---
 
-### `PATCH /api/admin/users/{user_id}` / `DELETE /api/admin/users/{user_id}`
+## Single-agent and helper endpoints
 
-Deactivate/reactivate or delete a user account. Admin only.
-
----
-
-## Section Endpoints
-
-Each results section is also exposed as a standalone endpoint (same request body as `/api/search`, plus per-domain filters):
+Each takes the `TravelSearchRequest` body of `/api/search` unless noted. **Auth:** optional (except the fare calendar). Bucket: light_ai.
 
 | Endpoint | Returns |
 |---|---|
-| `POST /api/flights` | Flight options (supports stop/price/time filters; multi-city returns ordered `legs`). With live fares (SerpAPI) a single-city result may also carry `price_insights` |
-| `POST /api/flights/fare-calendar` | Cheapest live fare for departure dates ±3 days (see below) |
-| `POST /api/hotels` | Hotels across four budget tiers (bed/price/wifi/distance filters) |
-| `POST /api/activities` | Interest-ranked activities (category/price/date/rating filters) |
-| `POST /api/visa` | Entry requirements for the traveler's nationality |
-| `POST /api/sim` | SIM/eSIM plans |
-| `POST /api/tips` | Safety, culture & practical tips |
-| `POST /api/getting-around` | Local + inter-city transportation options |
-| `POST /api/forex` | Currency & money guidance |
+| `POST /api/flights` | Flight options; multi-city returns ordered `legs`. Live single-city results may carry `price_insights` |
+| `POST /api/flights/filtered` | Flights with `max_stops`, `max_price_usd`, `departure_time_earliest/latest`, `arrival_time_earliest/latest`; enriched and verification-labelled |
+| `POST /api/hotels` | Hotels across budget tiers |
+| `POST /api/hotels/filtered` | Hotels with `num_beds`, `max_price_per_night_usd`, `wifi_quality`, `max_distance_from_center_km`, `private_washroom` |
+| `POST /api/activities` | Interest-ranked activities |
+| `POST /api/activities/filtered` | Activities with `filter_interests`, `max_price_usd`, `available_from/to`, `min_rating` |
+| `POST /api/visa`, `/api/sim`, `/api/tips`, `/api/getting-around`, `/api/forex` | The corresponding specialist result |
 | `POST /api/itinerary` | Day-by-day itinerary |
-| `POST /api/events` | What's On — festivals, concerts, exhibitions during the trip |
-| `POST /api/layover` | Layover excursion plan for long connections |
-| `POST /api/stress-test` | Adversarial itinerary health check (pacing, timing, visa deadlines, weather, budget) |
-| `POST /api/walking-tours` | Free walking tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope |
+| `POST /api/events` | What's On during the trip |
+| `POST /api/walking-tours` | Crawled free walking tours (see below) |
+| `POST /api/layover` | Layover plan. Own body: `city`, `duration_hours` (> 0, ≤ 48), `nationality`, optional `airport`, `arrival_time` (`HH:MM`) and `interests` |
+| `POST /api/stress-test` | Audit of an itinerary. Body: the search request plus `itinerary` (required) and optional `flights`, `visa` and `weather` |
 
 ### Flight `price_insights`
 
@@ -437,29 +378,7 @@ When flights come from Google Flights (SerpAPI) on a single-city trip, the resul
 
 `price_level` is `low`, `typical` or `high`.
 
-### Airport codes for live flights
-
-Live flight search (`/api/flights`, the search stream and the fare calendar) needs airport codes. The request validator sets them from `origin` / `destination` with `lookup_city_iata` (`backend/app/db/database.py`), local DB only, never a web lookup. Up to 3 scheduled airports are sent comma-joined, best first; the booking link uses the first. In order:
-
-1. **An ALL-CAPS three-letter code** is used as typed ("LHR", "NYC", "GOA"; the autocomplete submits picked airports this way). Any other casing tries places first and falls back to the code only when it is a scheduled airport (no fake codes): "Hue" → `HUI,DAD`, "Goa" → `GOI,GOX`, "lhr" → `LHR`. Country names and aliases beat codes in any casing: "USA", "UAE", "uk" → the country's gateway airports.
-2. **A UI label whose code prefix is a scheduled airport** ("LGW — London, United Kingdom") uses that code alone; an unknown prefix stays part of the text.
-3. **A curated island, destination or region** (`ISLAND_AIRPORTS` / `DESTINATION_AIRPORTS` / `REGION_HINTS` in `core/places.py`, exact names: "Yorkshire" → `LBA`, "Algarve" → `FAO`): "Sicily" → `CTA,PMO,TPS`, "Bali" → `DPS`, "Machu Picchu" → `CUZ`, "Kyoto" → `KIX,ITM`, unless a stated country names another country.
-4. **The curated tier**: airports from the curated list (`db/seed_airports.py`) whose served city is the typed city, in curated order ("London" → `LHR,LGW,STN`). The city is also tried accent-folded (`fold_place`: "Zürich", "Kraków"), with its St / St. / Saint spellings and through `CITY_ALIASES` ("Washington", "Saigon", "Bombay"). A last comma segment that names a country, ISO code or alias ("UK", "England", "Holland"; one shared map, `COUNTRY_ALIASES`) keeps that country; a region code or name (US states, Canadian provinces, Australian and Brazilian states) keeps that region, in any country that code can mean ("Perth, WA": Washington or Western Australia; "Toronto, CA": Canada, "San Jose, CA": California).
-5. **Place resolution** (`resolve_place`, `db/places_db.py`) over every GeoNames place with ≥ 1,000 people, which links each place to its nearby scheduled airports (see `backend/app/db/data/README.md`):
-   - **Candidates.** Places whose own name (or ASCII spelling) is the typed city; places with it as an alternate name only when no place has that own name ("Hualien" → Hualien City; "Olbia" is Olbia, not Antalya's alternate), or when the own-name places are under 20k and the alternate one ≥ 10× and ≥ 150k ("Solo" → Surakarta, "Bâle" → Basel). Population-0 places never count.
-   - **Exonyms, hints, aliases** live in `backend/app/db/data/hints.json`: exonyms map to a GeoNames place id or "ambiguous" ("Cologne" → Köln; "Odessa", "Canton" → ambiguous unless qualified); islands, destinations and regions map to their airports; shorthand aliases (SF, LA, KL, HCMC, NOLA, Twin Cities). Generic affixes reach hints and exonyms ("Zanzibar Island", "Isla de Margarita", "Banff National Park"), and St/Saint variants too ("Saint Thomas" → `STT`; "Saint John" is listed as an exception); " city" may reach any place ("Tokyo city").
-   - **Airport names.** A scheduled airport whose whole name (or a "/"- or dash-separated part), without "Airport", "International", "Regional", "Aerodrome", "Airfield", equals the text is a candidate; it beats places under 15k or without an airport within 100 km, never a place of 40k+ ("Wagga Wagga" → `WGA`, "Lord Howe Island" → `LDH`; "Kota" stays Kota, Rajasthan).
-   - **Divisions.** Unless a curated city has the name, first-level divisions so named join as their top place ("Florida" → Jacksonville, "Scotland" → Edinburgh), but not against a town scoring ≥ 1/20 of it ("Canterbury", "Santa Fe").
-   - **Countries.** A country typed alone (the full country list, `countries.csv`, also in a St / Saint form) resolves to its top place or a gateway hint ("Japan" → Tokyo; "Andorra" → `LEU`, "Monaco" → `NCE`, "Liechtenstein" → `ZRH`).
-   - **Qualifiers.** A stated segment filters candidates: a country, a region code (US, CA, AU, BR, Indian state), or any first-level division name, also by word-boundary prefix ("St. John's, Newfoundland"). A code with several readings narrows to the one with own-name places ("Ontario, CA" → `ONT`; "Mumbai, MH" → `BOM`). A qualifier that puts the place in another country than the curated city drops the curated answer ("George Town, Penang" → `PEN`). Without a comma, trailing words that name a country or region are read as the qualifier when the text names nothing as typed ("Chicago IL" → `ORD`, "Berlin Germany" → `BER`).
-   - **Winner.** 3× the score of the next candidate (score = population × notability), else ambiguous: "Portland" → `PDX`, "Birmingham" → `BHX…`, but "Springfield" and "San Jose" → nothing. A place under 15k wins only alone, in a curated country or through a hint; one under 5k whose nearest airport is over 100 km away resolves to nothing unless a qualifier was stated.
-   - With a curated answer, the place's other airports in the same country follow it ("New York" → `JFK,LGA,EWR`, "Washington" → `IAD,DCA,BWI`); a bigger own-name namesake abroad makes the name ambiguous ("Valencia": Spain or the larger Valencia, Venezuela → nothing; "Valencia, Spain" → `VLC`).
-   - Without one, the place's airports in the generator's order, never padded with foreign ones: an airport abroad only when it is the place's own (named for it: "Basel" → `BSL`, in France) or when the place has no domestic airport ("Lviv" → `RZE`). "Victoria" → `YYJ`, "Detroit" → `DTW`, "Geneva" → `GVA`. Among namesakes, one with an airport within 100 km beats one that only has a distant fallback ("Bol" → Bol, Croatia, `BWK`). Examples: "Portland, ME" → `PWM`, "Columbus, GA" → `CSG`, "Zermatt", "Ubud" → `DPS`, "Paris, Texas" → `TYR,DAL` (never CDG).
-6. **Last**, any airport whose display city is the typed city.
-
-Airports without scheduled service are never returned. Text that names no place, contradicts its stated country ("Berlin, Japan") or is ambiguous resolves to nothing, and flights fall back to AI estimates. Measured on the golden set plus 568 fresh probes (3,639 calls): `lookup_city_iata` p50 0.61 ms, p95 0.87 ms, p99 1.1 ms per call, so the handlers keep calling it synchronously. Retired codes map to their replacement ("PNH" → `KTI`, "PBI — West Palm Beach, …" → `DJT`); Ercan (ECN) is never suggested for a place, only when typed.
-
-### `POST /api/flights/fare-calendar`
+### POST /api/flights/fare-calendar
 
 Auth required (`401` without a valid token); `light_ai` rate-limit bucket. Body: the same `TravelSearchRequest` as `/api/search`.
 
@@ -486,7 +405,7 @@ Errors (string `detail`):
 | `429` | Rate limit (see above) |
 | `503` | `{"detail": "Fare calendar needs live flight data, which isn't configured."}` — `SERPAPI_KEY` is not set |
 
-### `POST /api/walking-tours`
+### POST /api/walking-tours
 
 Free and pay-what-you-wish walking tours at the destination (every stop on multi-city trips). Tours are crawled from the providers' public city pages; the LLM only chooses and explains them by id, so every `url` is a real provider tour page. Same request body as `/api/search`.
 
@@ -538,27 +457,26 @@ Response:
 
 `sources` has one entry per provider and city; `status` is `ok`, `none` (page found, no free tours) or `error`. Each city is topped up to at least `min(4, available)` tours. The endpoint returns `{"error": ...}` only when every provider fails.
 
-## Taste Graph
+---
 
-### `GET /api/taste-profile`
+## Reference data
 
-Returns the authenticated user's learned taste profile — signals mined from saved-plan selections (flight style, hotel tier, activity categories, budget band) plus the natural-language summary injected into agent prompts. `DELETE /api/taste-profile` resets it.
+### GET /api/airports/search?q=&limit=
 
-## Analytics
+Airport and place typeahead (`limit` 1–50, default 10). Matches airport codes, cities, names and countries, plus GeoNames places and curated hints by folded name prefix ("kyoto" → ITM, KIX; "milan" → MXP, LIN, BGY). Rows: `iata_code, name, city, country, country_code`. Ordering and rules: [Place and Airport Data](Place-and-Airport-Data.md#autocomplete).
 
-### `POST /api/analytics/events`
+### GET /api/nationalities/search?q=&limit=
 
-Ingests batched client-side usage events (up to 50 per call). Returns `204`.
+Nationality typeahead over 202 seeded rows.
 
-## Reference Data
-
-| Endpoint | Returns |
-|---|---|
-| `GET /api/airports/search?q=&limit=` | Airport typeahead: codes, airport cities and names, plus GeoNames places by folded name prefix and curated islands / destinations through their airports ("kyoto" → KIX, ITM; "zurich" → ZRH). A place adds only its own-country airports, and only places scoring ≥ 1/10 of the best match count ("milan" → MXP, LIN, BGY only). Order: exact code, code prefix, exact city / place name, prefix, other — a lower-case three-letter text that names a place lists the place first ("hue" → HUI; "HUE" → HUE); within a class the more notable place first ("lon": London's airports before Long Beach). Unscheduled airports only for their exact code. Rows: `iata_code, name, city, country, country_code`. |
-| `GET /api/nationalities?q=` | Nationality typeahead search |
+---
 
 ## Health
 
-### `GET /health`
+### GET /health
 
-Liveness check. Returns `{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false}`; the Results page reads `serpapi_configured` once per page load to decide whether to offer the fare calendar. Used by Cloud Run health probes and Cloud Monitoring uptime checks. No auth required.
+`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false}`. No auth. The Results page reads `serpapi_configured` once per page load to decide whether to offer the fare calendar; Docker Compose uses this endpoint as the backend healthcheck.
+
+### GET /health/agents
+
+A deep check: one tiny Haiku call, cached for 5 minutes. Reports `llm` status, `serpapi_configured` and `backup_configured`.

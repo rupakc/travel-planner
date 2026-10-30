@@ -24,16 +24,24 @@ plugins:
             show_source: true
 
 nav:
-  - Home: index.md
-  - Setup and Installation: Setup-and-Installation.md
-  - Configuration: Configuration.md
-  - Architecture: architecture.md
-  - Agent System: agents.md
-  - Multi-City Trips: Multi-City-Trips.md
-  - Chat Assistant: Chat-Assistant.md
-  - Personalization: Personalization.md
-  - Plans & Sharing: Sharing-and-Plans.md
-  - Frontend: Frontend.md
-  - API Reference: api.md
-  - Deployment: deployment.md
-  - Contributing: contributing.md
+  - Home: Home.md
+  - Getting started:
+      - Setup and Installation: Setup-and-Installation.md
+      - Configuration: Configuration.md
+  - Using the app:
+      - Trip Planning Features: Trip-Planning-Features.md
+      - Multi-City Trips: Multi-City-Trips.md
+      - Chat Assistant: Chat-Assistant.md
+      - Personalization: Personalization.md
+      - Sharing and Plans: Sharing-and-Plans.md
+  - Internals:
+      - Architecture: Architecture.md
+      - Agent System: Agent-System.md
+      - Place and Airport Data: Place-and-Airport-Data.md
+      - Frontend: Frontend.md
+      - API Reference: API-Reference.md
+  - Operations:
+      - Testing and CI: Testing-and-CI.md
+      - Deployment: Deployment.md
+      - Contributing: Contributing.md
+      - Changelog: Changelog.md

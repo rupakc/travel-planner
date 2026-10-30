@@ -1,231 +1,109 @@
 # Deployment
 
-Travel Planner is deployed on Google Cloud Platform. The backend and frontend each run as separate Cloud Run services. Infrastructure is managed with Terraform. Deployments are triggered by GitHub Actions.
+## Current state: decommissioned
 
----
+Travel Planner ran on Google Cloud Run until **2026-08-30**, when production was decommissioned (PR #1, "chore: decommission GCP deploy pipeline"):
 
-## Overview
+- The GCP project was deleted, together with its Cloud Run services, Artifact Registry, Terraform state bucket, backup bucket and Secret Manager secrets. The old frontend and backend URLs no longer resolve.
+- `.github/workflows/deploy.yml` is renamed **"Deploy (decommissioned)"**. Its `push` trigger was removed, so it runs only by hand (`workflow_dispatch`), and a run would fail because the project and secrets no longer exist.
+- `infrastructure/` (bootstrap scripts and Terraform) is kept unchanged for reference.
+- The backend still contains the GCS backup code (`backend/app/db/backup.py`); it does nothing unless `BACKUP_BUCKET` is set.
 
-```
-GitHub (push to main)
-    │
-    ▼
-GitHub Actions CI/CD
-    ├── Build + push backend Docker image → Artifact Registry
-    ├── Build + push frontend Docker image → Artifact Registry
-    ├── Run terraform plan + apply
-    └── Cloud Run services updated with new image tags
-
-Cloud Run (backend)          Cloud Run (frontend nginx)
-    port 8001                    port 8080
-    ├── FastAPI app              ├── Serves built React SPA
-    ├── SQLite databases         └── Proxies /api/* to backend
-    ├── GCS backup every 5m
-    └── GCS restore on start
-```
-
----
-
-## Prerequisites
-
-- GCP project with billing enabled
-- `gcloud` CLI authenticated (`gcloud auth application-default login`)
-- Terraform >= 1.5 installed
-- GitHub repository with Actions enabled
-- Anthropic API key
-
----
-
-## Step 1: Bootstrap GCP
-
-Before Terraform can run, a few manual one-time steps are needed to create the state bucket and enable APIs.
+There is no hosted instance. To use the app, run it locally (see [Setup and Installation](Setup-and-Installation.md)):
 
 ```bash
-# Set your project
-export PROJECT_ID=your-gcp-project-id
-gcloud config set project $PROJECT_ID
-
-# Enable required APIs
-gcloud services enable \
-  run.googleapis.com \
-  artifactregistry.googleapis.com \
-  secretmanager.googleapis.com \
-  storage.googleapis.com \
-  cloudresourcemanager.googleapis.com
-
-# Create Terraform state bucket
-gsutil mb -l europe-west1 gs://${PROJECT_ID}-tf-state
-
-# Create SQLite backup bucket
-gsutil mb -l europe-west1 gs://${PROJECT_ID}-db-backup
+./start.sh                       # dev servers on :8001 and :5174
+# or
+docker compose up --build        # containers on :8001 and :8080
 ```
+
+The documentation site (https://rupakc.github.io/travel-planner/) is separate and still published by `docs.yml`; see [Testing and CI](Testing-and-CI.md#workflows).
 
 ---
 
-## Step 2: Populate secrets in Secret Manager
+## What the retained setup deploys
 
-Terraform reads these secrets at plan/apply time and injects them into Cloud Run as environment variables. Create them before first Terraform run:
+| Piece | Where |
+|---|---|
+| Backend image | `backend/Dockerfile` (python:3.12-slim, built from the repo root; copies `backend/` and `.agents/`; uvicorn on 8001, 1 worker) |
+| Frontend image | `frontend/Dockerfile` (node:20-alpine build, nginx:alpine on 8080; `BACKEND_URL` templated into `nginx.conf.template`) |
+| Cloud Run backend | `travel-planner-backend`, 2 vCPU / 2 GiB, **min = max = 1 instance** (the SQLite file and the in-process rate limiter assume a single process) |
+| Cloud Run frontend | `travel-planner-frontend`, 1 vCPU / 512 MiB, 0–3 instances |
+| Storage | `<project>-sqlite-backup` bucket for SQLite snapshots; `<project>-tf-state` for Terraform state |
+| Secrets | Secret Manager: `anthropic-api-key`, `jwt-secret-key`, `admin-password`, `serpapi-key`, `serper-key` |
+| Other modules | Artifact Registry, IAM, monitoring (uptime check on `/health`, alert policies, log metrics, dashboard), project APIs |
+
+Terraform lives in `infrastructure/terraform/` (modules `artifact_registry`, `backend_service`, `frontend_service`, `iam`, `monitoring`, `project`, `secrets`, `storage`). The backend service sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `BACKUP_BUCKET` and `CORS_ORIGINS` (the frontend URL), and injects the secrets as environment variables.
+
+Cloud Run's disk is ephemeral, which is why backups exist: on start the backend restores the database from the bucket, uploads a snapshot every 60 s and uploads once more on shutdown (see [Architecture](Architecture.md#backups-optional)).
+
+---
+
+## Redeploying to GCP
+
+A redeploy creates a **new** project; nothing from the old one can be recovered from GCP. These steps follow the retained scripts and workflow; they have not been run since the decommissioning, so expect to fix drift (provider versions, API changes).
+
+### 1. Bootstrap the project
+
+You need the `gcloud` CLI, authenticated, and a billing account.
 
 ```bash
-# Anthropic API key
-echo -n "sk-ant-api03-..." | gcloud secrets create ANTHROPIC_API_KEY --data-file=-
-
-# JWT secret (generate a strong one)
-python3 -c "import secrets; print(secrets.token_hex(32))" | \
-  gcloud secrets create JWT_SECRET_KEY --data-file=-
-
-# Admin password
-echo -n "YourSecureAdminPassword" | gcloud secrets create ADMIN_PASSWORD --data-file=-
+BILLING_ACCOUNT=XXXXXX-XXXXXX-XXXXXX bash infrastructure/scripts/bootstrap.sh
+# optional: PROJECT_NAME=travel-planner REGION=europe-west1
 ```
 
----
+`bootstrap.sh` creates the project `<PROJECT_NAME>-prod`, links billing, enables the Cloud Run, Artifact Registry, Secret Manager, Storage, IAM, Resource Manager, Compute, Monitoring and Logging APIs, creates the versioned `<project>-tf-state` bucket, and creates a `github-actions-sa` service account with deploy roles. It writes a key file, `github-sa-key.json`, to the current directory. Keep it out of git and delete it once it is stored as a secret.
 
-## Step 3: Configure Terraform variables
-
-Edit `infrastructure/terraform/terraform.tfvars`:
-
-```hcl
-project_id       = "your-gcp-project-id"
-region           = "europe-west1"
-backup_bucket    = "your-gcp-project-id-db-backup"
-tf_state_bucket  = "your-gcp-project-id-tf-state"
-```
-
----
-
-## Step 4: Add GitHub Actions secrets
-
-In your GitHub repository settings → Secrets and variables → Actions:
+### 2. Add the GitHub repository secrets
 
 | Secret | Value |
 |---|---|
-| `GCP_PROJECT_ID` | Your GCP project ID |
-| `GCP_SA_KEY` | JSON key for a GCP service account with Cloud Run Admin, Artifact Registry Writer, and Secret Manager Accessor roles |
+| `GCP_PROJECT_ID` | The new project ID (`<PROJECT_NAME>-prod`) |
+| `GCP_SA_KEY` | Contents of `github-sa-key.json` |
+| `ANTHROPIC_API_KEY` | Anthropic key |
+| `JWT_SECRET_KEY` | A random secret, for example `openssl rand -hex 32` |
+| `ADMIN_PASSWORD` | Password for the seeded admin |
+| `SERPAPI_KEY` | SerpAPI key (live flights, fare calendar) |
+| `SERPER_KEY` | Serper key (Places to See, link resolution) |
 
----
+The workflow's bootstrap job copies the last five into Secret Manager. (`infrastructure/scripts/populate-secrets.sh` does the same interactively, after Terraform has created the secret shells; you need one or the other, not both.) `bootstrap.sh` also prints `TF_STATE_BUCKET` and `GCP_BILLING_ACCOUNT`; the current workflow derives the state bucket from the project ID and does not read either.
 
-## Step 5: First deployment
+Also check the `terraform` job's environment in `deploy.yml`: `TF_VAR_admin_email` is hard-coded and receives monitoring alerts. See `infrastructure/terraform/terraform.tfvars.example` for the Terraform variables (`project_id`, `region`, `admin_email`, `backend_image`, `frontend_image`, `frontend_url`).
 
-Push to `main`. GitHub Actions will:
+### 3. Re-enable and run the workflow
 
-1. Build the backend image and push to Artifact Registry
-2. Build the frontend image and push to Artifact Registry
-3. Run `terraform init` and `terraform apply` — this creates the Cloud Run services, sets environment variables from Secret Manager, and configures IAM
-4. Both Cloud Run services are live
+Edit `.github/workflows/deploy.yml`: remove the DECOMMISSIONED banner, rename it, and, if you want automatic deploys again, restore the trigger:
 
-After the first deployment, get the service URLs:
-
-```bash
-cd infrastructure/terraform
-terraform output backend_url
-terraform output frontend_url
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 ```
 
----
+Then run it from the Actions tab (or push to `main`). Its three jobs:
 
-## Cloud Run configuration
+1. **bootstrap**: enables the APIs, creates the Terraform state bucket and the `travel-planner` Artifact Registry repository if missing, and upserts the Secret Manager secrets from the GitHub secrets.
+2. **push-images**: builds both images with Buildx (`docker buildx build -f backend/Dockerfile .` and `frontend/`), tagged with the commit SHA and `latest`, and pushes them to `europe-west1-docker.pkg.dev/<project>/travel-planner`.
+3. **terraform**: `init` against the state bucket, `validate`, imports resources that exist in GCP but not in state, reads the frontend URL for `CORS_ORIGINS`, then `plan` and `apply`, and prints both service URLs.
 
-**Backend service:**
+On the very first apply the frontend does not exist yet, so CORS falls back to localhost; run the workflow a second time to pick up the frontend URL.
 
-| Setting | Value |
-|---|---|
-| Container port | 8001 |
-| CPU | 2 vCPU |
-| Memory | 2 GiB |
-| Min instances | 1 (to avoid cold start delay) |
-| Max instances | 10 |
-| Startup probe | `GET /api/health/ready` |
-| Timeout | 300s (needed for long SSE streams) |
-| Concurrency | 80 |
+### 4. After the first deploy
 
-**Frontend service:**
-
-| Setting | Value |
-|---|---|
-| Container port | 8080 |
-| CPU | 1 vCPU |
-| Memory | 512 MiB |
-| Min instances | 0 |
-| Max instances | 5 |
-
-The frontend nginx config proxies `/api/*` to the backend Cloud Run URL. The backend URL is baked into the nginx config at build time via a Docker build argument set by Terraform.
+- Sign in as `admin` with `ADMIN_PASSWORD` and create users from the Admin page; there is no self-registration.
+- Check `GET /health` and `GET /health/agents` on the backend URL.
+- The place data seeds itself on the first start (about 2 s). Backups leave the place tables out, so every restore reseeds them.
 
 ---
 
-## SQLite backup/restore lifecycle
+## Deploying elsewhere
 
-**On startup (Cloud Run container start):**
+Any host that can run the two containers works. Requirements:
 
-1. Application checks for existing database files in `DATA_DIR`
-2. If any are missing or empty (fresh container), downloads from GCS backup bucket
-3. Startup probe (`/api/health/ready`) passes only after databases are confirmed accessible
-4. Cloud Run's startup probe retries until the probe passes, so the container does not receive traffic until restore is complete
+- One backend process (rate limits and the SQLite file are per-process), with a persistent volume for `DATA_DIR`, or `BACKUP_BUCKET` and GCS credentials if the disk is ephemeral.
+- `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` and `ADMIN_PASSWORD` set; `SERPAPI_KEY` and `SERPER_KEY` optional.
+- `CORS_ORIGINS` set to the frontend's origin, and `BACKEND_URL` for the frontend container.
+- If the backend sits behind a proxy, run uvicorn with `--proxy-headers` so anonymous rate limits key on real client IPs.
 
-**During runtime:**
-
-- A background `asyncio` task runs every 5 minutes, uploading all four `.db` files to GCS
-- Each upload is atomic — the file is written to a `.tmp` key and renamed, so a partial upload cannot corrupt the backup
-
-**On shutdown (SIGTERM from Cloud Run):**
-
-- Cloud Run sends SIGTERM 10 seconds before hard-killing the container
-- A SIGTERM handler triggers an immediate GCS backup before the process exits
-- This ensures the most recent data (up to the last 5 minutes) is preserved even on instance scale-down
-
----
-
-## Monitoring and logging
-
-**Cloud Logging:** All logs are in JSON format (set via `LOG_FORMAT=json`) and automatically ingested by Cloud Logging. Use the Log Explorer with filter `resource.type="cloud_run_revision"` to query logs.
-
-**Key log fields (structlog):**
-
-| Field | Description |
-|---|---|
-| `agent` | Which agent emitted the log |
-| `phase` | 0, 1, or 2 |
-| `duration_ms` | Agent call duration |
-| `retry_count` | Number of retries before success |
-| `user_id` | Authenticated user (hashed, not plain) |
-
-**Cloud Run metrics:** CPU utilisation, request count, request latency, and container instance count are available in the Cloud Run console under "Metrics". Set up alerting policies for P99 latency > 40s or error rate > 1%.
-
----
-
-## Rollback procedure
-
-If a deployment introduces a regression:
-
-**Option 1: GitHub Actions redeploy**
-
-Revert the commit and push to `main`. GitHub Actions will rebuild and redeploy from the reverted code.
-
-**Option 2: Cloud Run traffic split (fastest)**
-
-Cloud Run keeps the previous revision. To instantly roll back without a build:
-
-```bash
-# Find the previous revision name
-gcloud run revisions list --service travel-planner-backend --region europe-west1
-
-# Route 100% traffic to the previous revision
-gcloud run services update-traffic travel-planner-backend \
-  --region europe-west1 \
-  --to-revisions PREVIOUS_REVISION_NAME=100
-```
-
-Replace `PREVIOUS_REVISION_NAME` with the revision from the list output.
-
-**Option 3: Database restore**
-
-If you need to restore the SQLite databases to a previous state (e.g. after a bad migration):
-
-```bash
-# List available backups
-gsutil ls gs://your-backup-bucket/
-
-# Download a specific backup
-gsutil cp gs://your-backup-bucket/users.db.backup ./users.db
-```
-
-Then restart the Cloud Run service with `gcloud run services update` to trigger a new container start, which will restore from the updated backup.
+`docker-compose.yml` is a working single-host example (see [Setup and Installation](Setup-and-Installation.md#option-c-docker-compose)).

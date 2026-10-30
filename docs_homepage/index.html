@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Travel Planner — AI-powered trip planning with 15 specialist agents, real-time streaming, and intelligent itinerary synthesis. Flights, hotels, visa, packing list, emergency card, timeline view and more." />
+  <meta name="description" content="Travel Planner — open-source AI trip planning: Claude agents run in parallel and stream flights, hotels, activities, visa, SIM, forex, an emergency card and an editable day-by-day itinerary. Run it locally with Docker Compose." />
   <title>Travel Planner — AI-Powered Trip Planning</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -231,6 +231,7 @@
     .card.amber .card-icon { background: #fffbeb; }
     .card h3 { font-size: 1.02rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
     .card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; }
+    .step-body code, .card code { font-size: 0.85em; background: var(--bg-subtle); padding: 0.05rem 0.3rem; border-radius: 4px; }
 
     /* ── ARCHITECTURE ──────────────────────────────────────────── */
     #architecture { background: var(--bg-subtle); }
@@ -428,122 +429,153 @@
     Travel Planner
   </span>
   <div class="nav-links">
+    <a href="#whats-new">What&apos;s new</a>
     <a href="#features">Features</a>
     <a href="#architecture">Architecture</a>
     <a href="#agents">Agents</a>
     <a href="#quickstart">Quick Start</a>
-    <a href="https://github.com/rupakc/travel-planner/wiki">Wiki</a>
-    <a class="nav-cta" href="https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app">Open App &rarr;</a>
+    <a href="Home/">Docs</a>
+    <a class="nav-cta" href="https://github.com/rupakc/travel-planner">GitHub &rarr;</a>
   </div>
 </nav>
 
 <div class="hero">
   <div class="hero-blob"></div>
   <div class="hero-badge fade-up fade-up-d1"><span class="hero-badge-dot"></span> Open Source &middot; MIT License</div>
-  <h1 class="fade-up fade-up-d2">Plan any trip in<br/><span class="grad">under 30 seconds</span></h1>
+  <h1 class="fade-up fade-up-d2">A complete trip plan,<br/><span class="grad">streamed section by section</span></h1>
   <p class="hero-sub fade-up fade-up-d3">
-    Fifteen specialist AI agents run in parallel and stream a complete trip plan
-    directly to your browser &mdash; flights, hotels, visa, activities, packing list,
-    emergency card, forex, weather, and a full day-by-day itinerary, all in one go.
+    Thirteen specialist Claude agents run in parallel and stream a full trip plan to the browser &mdash;
+    flights, weather, hotels, activities, walking tours, events, visa, SIM, forex, an emergency card,
+    a packing list and a day-by-day itinerary you can rearrange, then audit.
   </p>
   <div class="hero-buttons fade-up fade-up-d4">
-    <a class="btn btn-primary" href="https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app">&#9992; Open the App</a>
+    <a class="btn btn-primary" href="#quickstart">&#9654; Run it locally</a>
     <a class="btn btn-ghost" href="https://github.com/rupakc/travel-planner">&#9733; View on GitHub</a>
-    <a class="btn btn-ghost" href="https://github.com/rupakc/travel-planner/wiki">Read the Wiki</a>
+    <a class="btn btn-ghost" href="Home/">Read the docs</a>
   </div>
 </div>
 
 <div class="stats-strip">
   <div class="stats-inner">
-    <div class="stat"><div class="stat-num">15</div><div class="stat-label">Specialist AI Agents</div></div>
-    <div class="stat"><div class="stat-num">13</div><div class="stat-label">Result sections</div></div>
-    <div class="stat"><div class="stat-num">&lt;15s</div><div class="stat-label">Parallel agent execution</div></div>
+    <div class="stat"><div class="stat-num">13</div><div class="stat-label">Agents in parallel</div></div>
+    <div class="stat"><div class="stat-num">16</div><div class="stat-label">Result sections</div></div>
     <div class="stat"><div class="stat-num">3</div><div class="stat-label">Orchestration phases</div></div>
-    <div class="stat"><div class="stat-num">100+</div><div class="stat-label">Countries supported</div></div>
+    <div class="stat"><div class="stat-num">162k</div><div class="stat-label">Places resolved to airports</div></div>
+    <div class="stat"><div class="stat-num">4,014</div><div class="stat-label">Airports</div></div>
     <div class="stat"><div class="stat-num">SSE</div><div class="stat-label">Real-time streaming</div></div>
   </div>
 </div>
+
+<section id="whats-new" style="background: var(--bg-subtle);">
+  <div class="section-inner">
+    <div class="section-label">What&apos;s new</div>
+    <div class="section-title">Recent highlights</div>
+    <p class="section-subtitle">Shipped in October 2026. The <a href="Changelog/">changelog</a> lists every merged pull request.</p>
+    <div class="card-grid">
+      <div class="card teal">
+        <div class="card-icon">&#127757;</div>
+        <h3>Comprehensive place data</h3>
+        <p>Type &ldquo;Milano&rdquo;, &ldquo;Portland, ME&rdquo; or &ldquo;Zermatt&rdquo; and get the right airports, from 162,014 GeoNames places and 4,014 OurAirports airports, resolved locally. Ambiguous names like &ldquo;Valencia&rdquo; are left unresolved rather than guessed.</p>
+      </div>
+      <div class="card sky">
+        <div class="card-icon">&#128197;</div>
+        <h3>Fare calendar</h3>
+        <p>The cheapest live fare for departures three days either side of your dates, with the trip length kept the same, plus Google Flights&apos; own low / typical / high price verdict.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">&#128176;</div>
+        <h3>Budget planner</h3>
+        <p>Split the budget into flight, stay and activity shares per person and see at once which hotels, fares and activities fit. Runs entirely in the browser.</p>
+      </div>
+      <div class="card violet">
+        <div class="card-icon">&#9878;</div>
+        <h3>Trip comparison</h3>
+        <p>Compare two or three destinations side by side: estimated cost, flight, hotel, weather, visa and a Travel Ease grade, with the best value in each row marked.</p>
+      </div>
+      <div class="card coral">
+        <div class="card-icon">&#128336;</div>
+        <h3>Timed itinerary</h3>
+        <p>Every activity gets an estimated start and end time, with travel time from the previous stop. Times follow your edits and carry into calendar export and shared plans.</p>
+      </div>
+      <div class="card rose">
+        <div class="card-icon">&#9989;</div>
+        <h3>Verification labels</h3>
+        <p>Each section says how much of it is backed by evidence: Verified, Partly verified, AI-generated, or Check details when the AI disagrees with curated reference data.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">&#9995;</div>
+        <h3>Drag-and-drop itinerary</h3>
+        <p>Move, swap and remove activities with drag-and-drop or the keyboard, add notes and edits, then re-check the edited plan with the health-check agent.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="features">
   <div class="section-inner">
     <div class="section-label">Features</div>
     <div class="section-title">Everything a trip plan needs</div>
-    <p class="section-subtitle">From visa requirements to day-by-day schedules, each piece of your journey is handled by an agent purpose-built for that exact domain.</p>
+    <p class="section-subtitle">Each part of the journey is handled by an agent built for that domain, and the results arrive as soon as each one finishes.</p>
     <div class="card-grid">
       <div class="card sky">
         <div class="card-icon">&#9889;</div>
         <h3>Real-time streaming</h3>
-        <p>Results stream section by section via Server-Sent Events. Flights appear before hotels finish generating &mdash; no blank screen waiting.</p>
+        <p>Results stream section by section via Server-Sent Events, parsed in a Web Worker. Static reference data appears within a second; AI results replace it as they finish.</p>
       </div>
       <div class="card coral">
         <div class="card-icon">&#129302;</div>
-        <h3>21 specialist agents</h3>
-        <p>Flights, hotels, activities, events, visa, SIM cards, forex, weather, packing list, emergency card, places to see, layovers, chat and more &mdash; each with its own system prompt, running in parallel.</p>
+        <h3>22 agent definitions</h3>
+        <p>Flights, weather, hotels, activities, places, walking tours, events, visa, SIM, tips, emergency card, transport, forex, packing, pricing, itinerary, stress test, discovery, layovers and chat &mdash; each a prompt file you can edit.</p>
       </div>
       <div class="card teal">
         <div class="card-icon">&#128197;</div>
-        <h3>Intelligent itinerary</h3>
-        <p>A synthesis agent cross-references hotel neighbourhoods and ranked activities to build a coherent day-by-day schedule, not just a list.</p>
+        <h3>Itinerary you can shape</h3>
+        <p>A synthesis agent builds the day-by-day plan from hotels and activities. Rearrange it, edit slots, add notes, view it as cards, a timeline or a map, then run the health check.</p>
       </div>
       <div class="card violet">
         <div class="card-icon">&#127919;</div>
-        <h3>Interest-aware ranking</h3>
-        <p>Activities are scored with sentence-transformer cosine similarity against your interests. A foodie sees different results than a museum enthusiast.</p>
-      </div>
-      <div class="card teal">
-        <div class="card-icon">&#128274;</div>
-        <h3>Safety &amp; emergency card</h3>
-        <p>Emergency numbers, nearest international hospitals, your country&apos;s embassy, 10 survival phrases in the local language, and local laws to know &mdash; printable in one click.</p>
+        <h3>Three ways to search</h3>
+        <p>Plan a known route with up to three stops, let &ldquo;Surprise me&rdquo; suggest five destinations, or compare two or three side by side. Recent searches are one click away.</p>
       </div>
       <div class="card amber">
-        <div class="card-icon">&#127959;</div>
-        <h3>Surprise Me — destination discovery</h3>
-        <p>No destination in mind? Describe your budget and interests and get 5 personalised suggestions with visa status, cost estimates, and flight durations. One click to plan.</p>
-      </div>
-      <div class="card sky">
         <div class="card-icon">&#128203;</div>
-        <h3>Smart packing list</h3>
-        <p>A personalised checklist built from your destination, weather forecast, and planned activities. Essential items flagged; check off items and they persist across sessions.</p>
-      </div>
-      <div class="card violet">
-        <div class="card-icon">&#128200;</div>
-        <h3>Flight price advisor</h3>
-        <p>Whether current prices are above or below typical for your route, when to book, and an SVG sparkline showing the historical price trend — based on training data patterns.</p>
-      </div>
-      <div class="card coral">
-        <div class="card-icon">&#128336;</div>
-        <h3>Timeline view</h3>
-        <p>See your itinerary as a visual morning / afternoon / evening grid with weather for each day — not just a list, but a proper calendar you can scan at a glance.</p>
+        <h3>My Plan</h3>
+        <p>Pick flights, hotels, activities and itinerary slots into a plan, see where the money goes, export to your calendar or a printable PDF, and save it &mdash; or add the best-value package in one click.</p>
       </div>
       <div class="card rose">
-        <div class="card-icon">&#128274;</div>
-        <h3>Secure multi-user auth</h3>
-        <p>JWT HS256 tokens, bcrypt passwords, admin-created accounts with forced first-login password change and role-based access control.</p>
-      </div>
-      <div class="card amber">
-        <div class="card-icon">&#128190;</div>
-        <h3>Save &amp; revisit plans</h3>
-        <p>Authenticated users can bookmark any trip plan. Stored in SQLite with automatic Cloud Storage backup every 5 minutes for durability.</p>
+        <div class="card-icon">&#128279;</div>
+        <h3>Share links</h3>
+        <p>Every saved plan can get a public read-only link with the whole trip, without personal details, downloadable as a full-page PNG.</p>
       </div>
       <div class="card sky">
         <div class="card-icon">&#128506;</div>
         <h3>Multi-city journeys</h3>
-        <p>Paris &rarr; Rome &rarr; Barcelona in one search: flights per leg with one pick each, per-city coverage in every section, weather per stay, and your exact stop order guaranteed throughout.</p>
+        <p>Paris &rarr; Rome &rarr; Barcelona in one search: flights per leg, per-city coverage in every section, weather per stay, and your stop order kept throughout.</p>
       </div>
       <div class="card teal">
         <div class="card-icon">&#128172;</div>
         <h3>Conversational advisor</h3>
-        <p>Chat answers travel questions instantly from the model&apos;s own expertise, plans full trips with live per-section progress, and re-runs only the affected sections when you say &ldquo;make it cheaper&rdquo;.</p>
+        <p>Chat answers travel questions from the model&apos;s own knowledge, plans whole trips with a map and day cards, and re-runs only the affected parts when you say &ldquo;make it cheaper&rdquo;.</p>
       </div>
       <div class="card violet">
         <div class="card-icon">&#129504;</div>
-        <h3>Taste Graph personalization</h3>
-        <p>The app learns your style from what you select &mdash; non-stop flights, boutique hotels, food-first activities &mdash; and ranks matching options higher on every future search. No forms.</p>
+        <h3>Taste Graph</h3>
+        <p>Learns your style from the plans you save &mdash; non-stop flights, boutique hotels, food-first activities &mdash; and ranks matching options higher. Preferences and the search form stay in sync.</p>
+      </div>
+      <div class="card coral">
+        <div class="card-icon">&#128737;</div>
+        <h3>Safety &amp; emergency card</h3>
+        <p>Emergency numbers per city, your embassy, hospitals, survival phrases and local laws, checked against curated numbers and printable in one click.</p>
       </div>
       <div class="card rose">
-        <div class="card-icon">&#128444;</div>
-        <h3>Shareable trip card</h3>
-        <p>Every saved plan gets a public share page with the complete trip &mdash; flights per leg, hotel, full itinerary with your notes &mdash; downloadable as a single full-page PNG.</p>
+        <div class="card-icon">&#128274;</div>
+        <h3>Accounts and limits</h3>
+        <p>JWT and bcrypt, admin-created accounts with temporary passwords, an admin page, a feedback widget, and per-user rate limits on every AI endpoint.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">&#128190;</div>
+        <h3>One small database</h3>
+        <p>Everything lives in a single SQLite file, with optional Cloud Storage backup every 60 seconds. Place data seeds itself on first start in about two seconds.</p>
       </div>
     </div>
   </div>
@@ -553,37 +585,36 @@
   <div class="section-inner">
     <div class="section-label">Architecture</div>
     <div class="section-title">Three-phase orchestration</div>
-    <p class="section-subtitle">Static data first, 11 agents in parallel, then itinerary synthesis &mdash; designed so the user always sees something within one second of submitting. Results stream section by section rather than making you wait for everything at once.</p>
+    <p class="section-subtitle">Static data first, thirteen agents in parallel, then itinerary synthesis and an adversarial audit &mdash; so something useful is on screen within a second of submitting.</p>
     <div class="arch-row">
       <div class="arch-phase">
         <div class="arch-phase-num p0">0</div>
         <h3>Static lookup</h3>
-        <p>Visa categories, SIM basics, country tips, emergency numbers, transport modes, and the Travel Confidence Score come from pre-computed tables &mdash; no AI needed, no waiting.</p>
+        <p>Visa, SIM, tips, transport, forex, the emergency card and the Travel Ease grade come from curated tables &mdash; no AI, no waiting. If an AI agent later fails, this data stays.</p>
         <span class="arch-timing sky">&lt; 1 second</span>
       </div>
       <div class="arch-phase">
         <div class="arch-phase-num p1">1</div>
-        <h3>12 parallel agents</h3>
+        <h3>13 parallel agents</h3>
         <ul>
-          <li>FlightsAgent (per-leg on multi-city)</li>
-          <li>HotelsAgent</li>
-          <li>ActivitiesAgent</li>
-          <li>PlacesAgent &amp; EventsAgent</li>
-          <li>VisaAgent &amp; SimAgent</li>
-          <li>TipsAgent &amp; ForexAgent</li>
-          <li>GettingAroundAgent</li>
-          <li>WeatherAgent</li>
-          <li>EmergencyCardAgent</li>
-          <li>+ PricingAdvisorAgent (deferred)</li>
-          <li>+ PackingListAgent (deferred)</li>
+          <li>Flights (per leg on multi-city)</li>
+          <li>Weather &amp; Hotels</li>
+          <li>Activities &amp; Places to See</li>
+          <li>Walking Tours &amp; Events</li>
+          <li>Visa &amp; SIM</li>
+          <li>Tips &amp; Forex</li>
+          <li>Getting Around</li>
+          <li>Emergency Card</li>
+          <li>+ Pricing Advisor (deferred)</li>
+          <li>+ Packing List (deferred)</li>
         </ul>
-        <span class="arch-timing coral">8 &ndash; 15 seconds</span>
+        <span class="arch-timing coral">streams as each finishes</span>
       </div>
       <div class="arch-phase">
         <div class="arch-phase-num p2">2</div>
-        <h3>Synthesis</h3>
-        <p>The ItineraryAgent ingests hotels and ranked activities and produces a structured day-by-day plan (in your exact stop order on multi-city trips). The StressTestAgent then audits it adversarially &mdash; pacing, timing, visa deadlines, weather clashes, budget. 60 s timeout with template fallback for resilience.</p>
-        <span class="arch-timing teal">5 &ndash; 15 seconds</span>
+        <h3>Synthesis &amp; audit</h3>
+        <p>The itinerary agent starts as soon as hotels and activities are in and builds the day-by-day plan in your stop order (60 s timeout, template fallback). The stress-test agent then audits pacing, timings, visa deadlines and weather clashes.</p>
+        <span class="arch-timing teal">then the health check</span>
       </div>
     </div>
   </div>
@@ -593,67 +624,79 @@
   <div class="section-inner">
     <div class="section-label">Agent System</div>
     <div class="section-title">Meet the specialists</div>
-    <p class="section-subtitle">Every agent runs independently, has its own retry logic, and writes to its own SSE event key &mdash; so a single slow API never blocks the rest.</p>
+    <p class="section-subtitle">Each agent is a prompt file plus a small Python class. All of them share one execution path with retries, a concurrency cap and JSON parsing, and each streams to its own section.</p>
     <div class="agents-grid">
       <div class="agent-card">
         <div class="agent-icon" style="background:#e0f2fe;">&#9992;</div>
-        <div><h4>FlightsAgent</h4><p>Routes, airlines, approximate fares, and booking tips for your dates.</p></div>
+        <div><h4>Flights</h4><p>Live Google Flights fares via SerpAPI when configured, AI estimates otherwise; one search per leg on multi-city trips.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#fff7ed;">&#127968;</div>
-        <div><h4>HotelsAgent</h4><p>Accommodation options by neighbourhood, star rating, and budget range.</p></div>
+        <div><h4>Hotels</h4><p>Options across luxury, premium, mid-range and budget tiers, with links checked online.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#ccfbf1;">&#127966;</div>
-        <div><h4>ActivitiesAgent</h4><p>Things to do, ranked by cosine similarity to your stated interests.</p></div>
+        <div><h4>Activities</h4><p>Things to do, each scored 0&ndash;1 for relevance to your interests and sorted by it.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#e0f2fe;">&#128205;</div>
-        <div><h4>PlacesAgent</h4><p>Must-visit landmarks, temples, museums, and viewpoints with real ratings and links via Serper + Claude synthesis.</p></div>
+        <div><h4>Places to See</h4><p>Landmarks, museums and viewpoints, using Google Places data via Serper when configured.</p></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:#ede9fe;">&#128694;</div>
+        <div><h4>Walking Tours</h4><p>Free tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs; the model only picks and explains them.</p></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:#fff1f2;">&#127881;</div>
+        <div><h4>Events</h4><p>Festivals, concerts and markets during your dates.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#ede9fe;">&#128196;</div>
-        <div><h4>VisaAgent</h4><p>Entry requirements, visa categories, processing times, and e-visa links.</p></div>
+        <div><h4>Visa</h4><p>Entry requirements for your nationality, checked against a curated visa table.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#fff1f2;">&#128242;</div>
-        <div><h4>SimAgent</h4><p>Local SIM card options, data plans, and coverage by carrier.</p></div>
+        <div><h4>SIM</h4><p>Local SIM cards and global eSIMs with data plans.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#fffbeb;">&#128178;</div>
-        <div><h4>ForexAgent</h4><p>Live exchange rates from 4 parallel web searches, best practices for withdrawals, and tipping customs.</p></div>
+        <div><h4>Forex</h4><p>Exchange rates from parallel web searches, where to exchange, and card, cash and ATM advice.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#e0f2fe;">&#128652;</div>
-        <div><h4>GettingAroundAgent</h4><p>Metro, bus, taxi apps, ride-hailing, and intercity transport options.</p></div>
+        <div><h4>Getting Around</h4><p>Metro, buses, taxis, ride-hailing and inter-city transport.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#ccfbf1;">&#128161;</div>
-        <div><h4>TipsAgent</h4><p>Cultural etiquette, safety advice, health notes, and practical local knowledge for your destination.</p></div>
+        <div><h4>Tips</h4><p>Etiquette, safety, scams and money tips for the destination.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#e0f2fe;">&#9925;</div>
-        <div><h4>WeatherAgent</h4><p>Live forecast from Open-Meteo API for trips up to 16 days out; seasonal estimate for future dates.</p></div>
+        <div><h4>Weather</h4><p>Open-Meteo forecast for trips up to 16 days out; a seasonal estimate beyond that.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#fff1f2;">&#128737;</div>
-        <div><h4>EmergencyCardAgent</h4><p>Emergency numbers, nearest international hospitals, embassy details, 10 local survival phrases, and critical laws. Printable.</p></div>
+        <div><h4>Emergency Card</h4><p>Emergency numbers, embassy, hospitals, phrases and local laws. Printable.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#fffbeb;">&#128200;</div>
-        <div><h4>PricingAdvisorAgent</h4><p>Analyses flight prices vs historical patterns and tells you whether to book now or wait, with an SVG sparkline trend chart.</p></div>
+        <div><h4>Pricing Advisor</h4><p>Whether fares look high or low for the route and when to book, with a sparkline.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#ccfbf1;">&#127890;</div>
-        <div><h4>PackingListAgent</h4><p>Personalised checklist based on destination, weather, and planned activities. Checkbox state persists across sessions.</p></div>
+        <div><h4>Packing List</h4><p>A checklist built from the destination, the forecast and your activities.</p></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:#e0f2fe;">&#128467;</div>
+        <div><h4>Itinerary</h4><p>Day-by-day plan with morning, afternoon and evening slots, durations and coordinates.</p></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:#fff7ed;">&#129658;</div>
+        <div><h4>Stress Test</h4><p>Audits the finished plan for pacing, timing, visa and weather problems, and re-checks your edits.</p></div>
       </div>
       <div class="agent-card">
         <div class="agent-icon" style="background:#e0f2fe;">&#127758;</div>
-        <div><h4>DiscoveryAgent</h4><p>Powers "Surprise Me" — suggests 5 personalised destinations with visa status, cost range, and flight duration from your origin.</p></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon" style="background:#ccfbf1;">&#128161;</div>
-        <div><h4>ItineraryAgent</h4><p>Synthesises hotel location and ranked activities into a day-by-day schedule. Timeline View renders this as a visual grid.</p></div>
+        <div><h4>Discovery</h4><p>&ldquo;Surprise me&rdquo;: five destinations with visa status, cost range and flight time from your origin.</p></div>
       </div>
     </div>
   </div>
@@ -662,19 +705,20 @@
 <section id="stack" style="background: var(--bg-subtle);">
   <div class="section-inner">
     <div class="section-label">Tech Stack</div>
-    <div class="section-title">Production-grade from day one</div>
-    <p class="section-subtitle">Every component chosen deliberately &mdash; no duct tape, no "we'll replace this later."</p>
+    <div class="section-title">What it is built with</div>
+    <p class="section-subtitle">A FastAPI backend calling Claude, a React single-page app, and one SQLite file.</p>
     <div class="stack-grid">
       <div class="stack-group">
         <h4>Backend</h4>
         <div class="badge-list">
-          <span class="badge sky">Python 3.11</span>
+          <span class="badge sky">Python 3.12</span>
           <span class="badge sky">FastAPI</span>
           <span class="badge sky">Anthropic SDK</span>
+          <span class="badge sky">Claude Haiku 4.5</span>
+          <span class="badge sky">Claude Sonnet 4.6 (chat)</span>
           <span class="badge sky">Pydantic v2</span>
           <span class="badge sky">SQLite</span>
-          <span class="badge sky">sentence-transformers</span>
-          <span class="badge sky">JWT &amp; bcrypt</span>
+          <span class="badge sky">PyJWT &amp; bcrypt</span>
         </div>
       </div>
       <div class="stack-group">
@@ -682,21 +726,23 @@
         <div class="badge-list">
           <span class="badge coral">React 18</span>
           <span class="badge coral">Vite 6</span>
-          <span class="badge coral">Tailwind CSS 4</span>
-          <span class="badge coral">React Router 7</span>
+          <span class="badge coral">Tailwind CSS 3.4</span>
+          <span class="badge coral">React Router 6</span>
+          <span class="badge coral">Leaflet</span>
           <span class="badge coral">Web Workers</span>
           <span class="badge coral">SSE</span>
         </div>
       </div>
       <div class="stack-group">
-        <h4>Infrastructure</h4>
+        <h4>Data &amp; tooling</h4>
         <div class="badge-list">
-          <span class="badge teal">GCP Cloud Run</span>
-          <span class="badge teal">Terraform</span>
-          <span class="badge teal">Cloud Storage</span>
-          <span class="badge teal">Secret Manager</span>
-          <span class="badge violet">Docker</span>
+          <span class="badge teal">GeoNames</span>
+          <span class="badge teal">OurAirports</span>
+          <span class="badge teal">SerpAPI (optional)</span>
+          <span class="badge teal">Open-Meteo</span>
+          <span class="badge violet">Docker Compose</span>
           <span class="badge violet">GitHub Actions</span>
+          <span class="badge violet">Terraform (GCP, retained)</span>
         </div>
       </div>
     </div>
@@ -706,8 +752,8 @@
 <section id="quickstart">
   <div class="section-inner">
     <div class="section-label">Quick Start</div>
-    <div class="section-title">Up and running in 5 minutes</div>
-    <p class="section-subtitle">Docker Compose handles the full stack. Three commands and you're done.</p>
+    <div class="section-title">Run it on your machine</div>
+    <p class="section-subtitle">There is no hosted instance; the app runs locally. You need an Anthropic API key, and Docker or Python 3.12 with Node 20.</p>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
@@ -715,40 +761,42 @@
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-body"><h4>Configure environment</h4><p>Copy the example env file and set your Anthropic API key, a JWT secret, and an admin password. That's all that's required to start.</p></div>
+        <div class="step-body"><h4>Provide your keys</h4><p>Export your Anthropic API key (and optionally a JWT secret and admin password) or put them in a root <code>.env</code> file.</p></div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-body"><h4>Start with Docker Compose</h4><p>Builds both backend and frontend containers, wires them together, and exposes the app on port 8080.</p></div>
+        <div class="step-body"><h4>Start with Docker Compose</h4><p>Builds both containers, wires them together and serves the app on port 8080. Sign in as <code>admin</code>.</p></div>
       </div>
     </div>
     <pre><span class="c-comment"># 1. Clone</span>
 <span class="c-cmd">git clone</span> <span class="c-url">https://github.com/rupakc/travel-planner.git</span>
 <span class="c-cmd">cd</span> travel-planner
 
-<span class="c-comment"># 2. Configure</span>
-<span class="c-cmd">cp</span> .env.example backend/.env
-<span class="c-comment">#    Set ANTHROPIC_API_KEY, JWT_SECRET_KEY, ADMIN_PASSWORD in backend/.env</span>
+<span class="c-comment"># 2. Keys</span>
+<span class="c-cmd">export</span> ANTHROPIC_API_KEY=sk-ant-...
+<span class="c-cmd">export</span> ADMIN_PASSWORD=choose-a-password   <span class="c-comment"># default: admin-dev-password</span>
 
 <span class="c-comment"># 3. Run</span>
 <span class="c-cmd">docker compose up</span> --build
 
-<span class="c-comment"># Frontend  → </span><span class="c-url">http://localhost:8080</span>
-<span class="c-comment"># API       → </span><span class="c-url">http://localhost:8001</span>
-<span class="c-comment"># API docs  → </span><span class="c-url">http://localhost:8001/docs</span></pre>
+<span class="c-comment"># App       → </span><span class="c-url">http://localhost:8080</span>
+<span class="c-comment"># API docs  → </span><span class="c-url">http://localhost:8001/docs</span>
+
+<span class="c-comment"># Without Docker: create backend/.env with the keys, then</span>
+<span class="c-cmd">./start.sh</span>   <span class="c-comment"># → http://localhost:5174</span></pre>
     <p style="margin-top:1.25rem;color:var(--text-muted);font-size:0.9rem;">
-      For non-Docker setup, detailed configuration options, and GCP Cloud Run deployment see the <a href="https://github.com/rupakc/travel-planner/wiki">project wiki</a>.
+      Full instructions, configuration and troubleshooting are in the <a href="Setup-and-Installation/">setup guide</a>.
     </p>
   </div>
 </section>
 
 <div class="cta-strip">
-  <h2>Try it now or build your own</h2>
-  <p>The app is live and free to use &mdash; or fork the repo, swap in your own agents, and deploy to Cloud Run in minutes.</p>
+  <h2>Run it, read it, build on it</h2>
+  <p>Start it locally in a few minutes, swap in your own agent prompts, or redeploy it with the retained Terraform setup.</p>
   <div class="hero-buttons">
-    <a class="btn btn-primary" href="https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app">&#9992; Open the App</a>
+    <a class="btn btn-primary" href="Setup-and-Installation/">&#9654; Setup guide</a>
     <a class="btn btn-ghost" href="https://github.com/rupakc/travel-planner">&#9733; Star on GitHub</a>
-    <a class="btn btn-ghost" href="https://github.com/rupakc/travel-planner/wiki/Setup-and-Installation">Setup Guide &rarr;</a>
+    <a class="btn btn-ghost" href="Home/">Developer docs &rarr;</a>
   </div>
 </div>
 
@@ -756,37 +804,42 @@
   <div class="section-inner">
     <div class="section-label">Resources</div>
     <div class="section-title">Where to go next</div>
-    <p class="section-subtitle">Everything you need to understand, extend, and deploy the project.</p>
+    <p class="section-subtitle">Everything you need to understand, run and extend the project.</p>
     <div class="links-grid">
-      <a class="link-card" href="https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app">
-        <span class="link-card-label">Live App</span>
-        <span class="link-card-title">Open Travel Planner</span>
-        <span class="link-card-desc">The app is live — log in with your account and plan a trip right now.</span>
-      </a>
       <a class="link-card" href="https://github.com/rupakc/travel-planner">
         <span class="link-card-label">Source</span>
         <span class="link-card-title">GitHub Repository</span>
         <span class="link-card-desc">Browse the code, open issues, submit pull requests.</span>
       </a>
-      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki">
+      <a class="link-card" href="Home/">
         <span class="link-card-label">Documentation</span>
-        <span class="link-card-title">Project Wiki</span>
-        <span class="link-card-desc">Architecture, setup guide, API reference, deployment runbook.</span>
+        <span class="link-card-title">Developer Docs</span>
+        <span class="link-card-desc">Setup, configuration, architecture, features and the full API reference.</span>
       </a>
-      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/Agent-System">
+      <a class="link-card" href="Trip-Planning-Features/">
+        <span class="link-card-label">Features</span>
+        <span class="link-card-title">Trip Planning Features</span>
+        <span class="link-card-desc">Search modes, every results section, the itinerary editor and My Plan.</span>
+      </a>
+      <a class="link-card" href="Agent-System/">
         <span class="link-card-label">Deep Dive</span>
         <span class="link-card-title">Agent System</span>
-        <span class="link-card-desc">How all 15 specialist agents work, the three-phase orchestration, retry logic, and static fallbacks.</span>
+        <span class="link-card-desc">The 22 agent definitions, three-phase orchestration, retries, static fallbacks and verification.</span>
       </a>
-      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/API-Reference">
+      <a class="link-card" href="API-Reference/">
         <span class="link-card-label">Reference</span>
         <span class="link-card-title">API Reference</span>
-        <span class="link-card-desc">All REST endpoints, request/response shapes, SSE event schema.</span>
+        <span class="link-card-desc">Every endpoint, request and response shapes, SSE events and rate limits.</span>
       </a>
-      <a class="link-card" href="https://github.com/rupakc/travel-planner/wiki/Deployment">
+      <a class="link-card" href="Place-and-Airport-Data/">
+        <span class="link-card-label">Data</span>
+        <span class="link-card-title">Place and Airport Data</span>
+        <span class="link-card-desc">GeoNames and OurAirports data and how typed places resolve to airports.</span>
+      </a>
+      <a class="link-card" href="Deployment/">
         <span class="link-card-label">Ops</span>
-        <span class="link-card-title">Deployment Guide</span>
-        <span class="link-card-desc">GCP Cloud Run, Terraform modules, GitHub Actions CI/CD.</span>
+        <span class="link-card-title">Deployment</span>
+        <span class="link-card-desc">Production is decommissioned; how to redeploy with the retained Terraform and workflow.</span>
       </a>
       <a class="link-card" href="https://github.com/rupakc/travel-planner/issues">
         <span class="link-card-label">Community</span>
@@ -804,6 +857,7 @@
   </div>
   <p>Built with Python, FastAPI, React, and Claude &mdash; <a href="https://github.com/rupakc/travel-planner">github.com/rupakc/travel-planner</a></p>
   <p style="margin-top:0.4rem;">Released under the MIT License.</p>
+  <p style="margin-top:0.4rem;">Place data contains data from <a href="https://www.geonames.org/">GeoNames</a> (geonames.org), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Airport data: <a href="https://ourairports.com/">OurAirports</a> (public domain).</p>
 </footer>
 
 </body>

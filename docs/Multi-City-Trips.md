@@ -20,7 +20,9 @@ The **"To" city is the final destination**; any added stops are intermediate cit
 
 `destination_nights` is optional and aligned with `destinations`: set exact nights for any stop and leave the rest `null` — unspecified cities (typically the final destination) share the remaining days automatically.
 
-On the Search page, enter your final destination in **To**, then add stops in the order you'll pass through them; each stop has an optional nights field.
+On the Search page, enter your final destination in **To**, then add up to **3 stops** in the order you'll pass through them (4 cities in all); each stop has an optional nights field (1–30).
+
+**Single-city only:** the fare calendar, Google's price insights and Compare mode work only for single-destination trips. `POST /api/flights/fare-calendar` and `POST /api/compare/destination` answer multi-city requests with `422`.
 
 ## How days are allocated — `city_stays`
 
@@ -40,7 +42,7 @@ Each stay's `end_date` is the day the traveler moves on — it equals the next c
 
 The flights pipeline (`backend/app/services/serp_flights.py::search_multi_city`) then:
 
-1. Resolves every endpoint to IATA codes (`lookup_city_iata`: exact city match in the local airports DB, also accent-folded and through city aliases ("Zürich", "Washington"), restricted by a recognised country or region in the last segment ("Toronto, ON" → YYZ, "Portland, OR" → PDX), up to 3 airport codes per city, none when the city is ambiguous across countries or across regions with none given; never a web lookup).
+1. Resolves every endpoint to up to 3 scheduled airport codes with `lookup_city_iata` (local database only; see [Place and Airport Data](Place-and-Airport-Data.md)). A city that is ambiguous, such as "Valencia" without a country, resolves to nothing, and that leg falls back to an AI estimate.
 2. Fires **parallel one-way Google Flights searches** (SerpAPI, `type: "2"`) — one per leg, with a 20 s timeout and one retry per leg.
 3. Tags every result with `leg_index`, `leg_from`, `leg_to`, `leg_date`, and `city`, keeps the top 5 per leg, and sorts legs into the user's journey order before returning.
 4. Any leg SerpAPI cannot serve (timeout, zero results) is **AI-filled** with realistic estimates (`FlightsAgent._ai_fill_legs`, marked `source: "estimate"`), so no leg ever shows an empty row.
