@@ -234,11 +234,11 @@ SQLite was chosen for operational simplicity: no separate database process to ma
 **Airport and place data.** The app DB (`airports.db`) also holds a comprehensive, regenerable dataset: every OurAirports airport with scheduled service (~4,000), every GeoNames place with ≥ 1,000 people (~162,000) with up to three linked airports each, their folded own and alternate names, and first-level divisions. It is generated offline (`backend/scripts/build_place_data.py`), committed under `backend/app/db/data/` (sources, licences and attribution in its README) and seeded at startup only when its version hash changes (~2 s; an unchanged startup checks it in ~5 ms). Backups exclude these tables. Every typed origin, destination and static-table lookup resolves through it, locally and synchronously:
 
 - `lookup_city_iata` (flights): code → known-code label → curated island / destination → curated served-city airports → `resolve_place` → airport display city.
-- `resolve_place` (`db/places_db.py`): one indexed name query plus one division query when something is stated; alternate names at a calibrated penalty, 3× dominance or nothing.
+- `resolve_place` (`db/places_db.py`): one indexed name query plus one division query when something is stated; alternate names only when no place has the name as its own (plus the curated exonyms in `db/data/hints.json`), whole-name airport matches, 3× dominance or nothing; "City Country" without a comma and generic affixes ("… Island", "… city") are retried when the text names nothing as typed.
 - `static_results._place_country`: the curated city map first; an unknown city takes its resolved place's country ("Zermatt" → Switzerland).
 - `search_airports` (autocomplete): airports plus places by folded name prefix.
 
-Measured over the golden set (518 rows): `lookup_city_iata` p50 0.60 ms / p95 0.93 ms, `_place_country` p50 0.49 ms / p95 0.88 ms, autocomplete p50 2.6 ms / p95 8.4 ms per query (the first call in a process also loads small CSV-derived caches).
+Measured over the golden set plus fresh probes (3,639 calls): `lookup_city_iata` p50 0.61 ms / p95 0.87 ms / p99 1.1 ms; autocomplete p50 1.9 ms / p95 6.3 ms per query. The airport-name index is built from the seeded DB at startup; small CSV-derived caches load on first use.
 
 ---
 

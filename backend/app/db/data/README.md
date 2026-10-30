@@ -9,6 +9,8 @@ regenerates it at runtime.
 | `airports.csv` | One row per airport: `iata, icao, name, city, country, country_code, region, type_rank, scheduled, lat, lng`. Every OurAirports large/medium/small airport with scheduled service and an IATA code (`scheduled=1`), plus every code in the curated list (`backend/app/db/seed_airports.py`). Curated codes that OurAirports lacks or lists as unscheduled are kept with `scheduled=0`. |
 | `places.csv.gz` | One row per GeoNames populated place with ≥ 1,000 people, except the feature codes PPLX, PPLH, PPLQ, PPLW and PPLCH: `geonameid, name, country_code, admin1, population, score, lat, lng, airports, alt_names, ascii`. `airports` holds up to 3 space-separated IATA codes, ranked. `alt_names` is a `\|`-joined list of folded Latin-script alternate names, kept only for places with ≥ 15,000 people. `ascii` is GeoNames' ASCII spelling of the name, present for every place; the app loads it as a primary name together with `name`, so it is not repeated in `alt_names`. |
 | `admin1.csv` | GeoNames first-level administrative divisions: `code` (e.g. `US.OR`, `GB.ENG`), `name`, `folded_name`. |
+| `countries.csv` | Every OurAirports country, `code`, `name`, also those with no scheduled airport (Andorra, Liechtenstein): the resolver's country names. Written by the generator. |
+| `hints.json` | Hand-curated, not generated: tourist islands, destinations and regions with their airports, exonyms (GeoNames place ids), city and country aliases, and the names whose St/Saint variants must not borrow a hint. Keys are folded names; a test checks every code is scheduled and every exonym id exists. |
 
 ## Sources and licences
 
@@ -25,7 +27,7 @@ Snapshot date of both sources: **2026-10-29**.
 
 - **Display city.** For curated airports, the curated city. Otherwise the first of these rules that applies, using only places in the airport's own country (never empty):
   1. the highest-scoring place within 40 km whose folded name occurs as whole words in the folded airport name ("Verona" for "Verona Villafranca Airport"); names made only of generic words such as "International" or "San" never match, nor a name followed by "County", "Parish", "Province", "District" or "Region" (MSN "Dane County Regional" is Madison's);
-  2. the highest-scoring place within 40 km whose first in-reach linked airport is this airport;
+  2. the highest-scoring place within 40 km whose first in-reach linked airport is this airport, unless a place within 15 km that links the airport in any position scores at least 10× more (`DISPLAY_ANY_LINK_RATIO`: HLP → Jakarta, not Bekasi);
   3. the nearest place within 15 km;
   4. the OurAirports municipality, cleaned: the text before the first `(` or `,`, and `A` for `A/B`;
   5. the airport name without "Airport", "International", "Aerodrome" and "Airfield".
@@ -33,7 +35,7 @@ Snapshot date of both sources: **2026-10-29**.
   A place name with letters beyond Latin Extended-A (scholarly transliterations such as "Marsá Maţrūḩ") is shown in its GeoNames ASCII spelling, every display name is cut at its first comma, and a hyphenated East-Asian admin suffix (-si, -shi, -gun, -ku, -cho, -machi, -mura) is removed ("Cheongju-si" → "Cheongju"). The municipality on its own is never trusted first, because it gives the airport's physical location ("Ferno (VA)" for MXP), not the city it serves.
 - **Country name.** The OurAirports country name. For countries that appear in the curated list, the curated spelling is used instead ("United States", "United Kingdom").
 - **Score.** `population × (alternate_name_count + 1)² × (3 if PPLC)`, where the alternate-name count is the raw count. It ranks namesakes so that the famous one wins: Portland US-OR ≫ Portland US-ME, and Interlaken CH ≫ Interlaken US.
-- **Linking (place → airports).** Only scheduled airports are linked. Airports named as an air base, air force base/station or air station (unless curated or also named an "airport") are linked only when no civil airport is in reach of the place (Bareilly → BEK). Each airport type has a reach:
+- **Linking (place → airports).** Only scheduled airports are linked. Airports named as an air base, air force base/station or air station (unless curated or also named an "airport") are linked only when no civil airport is in reach of the place (Bareilly → BEK); air *bases* ("Air Base", "Air Force Base", "AFB") never link when any civil airport is within fallback range (Cape May → ACY, not Dover AFB). Each airport type has a reach:
   - large: 80 km, or 100 km when the place has ≥ 1M people (Kyoto → KIX at 81 km);
   - medium: 50 km;
   - small: 30 km.
