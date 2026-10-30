@@ -58,11 +58,11 @@ function scheduleDay(day, edits) {
   const slots = Array.isArray(day?.slots) ? day.slots : []
   if (!slots.some((slot) => TIMES.includes(slot.time_of_day))) return day
 
-  // slotRanks lists ranks in slot order. A whole rank is the first slot of a
-  // standard time and starts no earlier than that time's anchor; a fractional
-  // one (duplicate or non-standard time) simply follows the stop before it.
+  // A whole rank is the first slot of a standard time and starts no earlier
+  // than that time's anchor; a fractional one (duplicate or non-standard time)
+  // simply follows the stop before it.
   const ranks = [...slotRanks(day).values()]
-  const order = slots.map((_, i) => i).sort((a, b) => ranks[a] - ranks[b])
+  const order = scheduleOrder(day)
 
   const out = [...slots]
   const warnings = []
@@ -94,6 +94,16 @@ function scheduleDay(day, edits) {
   }
   if (prev && prev.end > DAY_END) warnings.push(`Day ${day.day_number} runs past 23:00`)
   return { ...day, slots: out, schedule_warnings: warnings }
+}
+
+/**
+ * Indexes of a day's slots in the order scheduleDays times them (morning →
+ * afternoon → evening, by slotRanks; ties keep their listed order).
+ */
+export function scheduleOrder(day) {
+  // slotRanks lists ranks in slot order
+  const ranks = [...slotRanks(day).values()]
+  return ranks.map((_, i) => i).sort((a, b) => ranks[a] - ranks[b])
 }
 
 /**
