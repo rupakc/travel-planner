@@ -62,7 +62,7 @@
 
 See the [Changelog](docs/Changelog.md) for the full history.
 
-- **Comprehensive place data.** Any town in the world (GeoNames, 162k places) resolves to nearby airports (OurAirports, 4,014 airports), and autocomplete suggests places as well as airports.
+- **Comprehensive place data.** Any town in the world (GeoNames, 162k places), about 32k notable islands, parks, resorts, regions, mountains, sites and famous districts, and country names in their own languages ("Deutschland", "Nippon") resolve to nearby airports (OurAirports, 4,014 airports); autocomplete suggests places as well as airports.
 - **Fare calendar** and Google Flights price insights.
 - **Timed itinerary**, with estimated times kept when you pick slots into your plan.
 - **Budget planner**, **best-value package** and **side-by-side comparison**.
