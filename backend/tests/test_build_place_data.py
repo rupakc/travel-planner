@@ -1294,15 +1294,15 @@ def test_country_names_from_political_entities(tmp_path):
     rows = [
         _geo(1, "Republic of Xland", 0, 0, "PCLI", fclass="A",
              alts="Xlandia,Ksenland,Xländ,XLD,XL,Ксландия,http://x.example,"
-                  "Bigtown,Yland,Shared,Zz"),
+                  "Bigtown,Yland,Shared,Zz,Xlan,Xlndr"),
         _geo(2, "Yland", 1, 1, "PCLI", cc="XB", fclass="A", alts="Shared,Ylandia"),
         _geo(3, "Xland Island", 2, 2, "ISL", alts="Not A Country Name"),
     ]  # fmt: skip
     cities = [_city(9, "Bigtown", _LAT, _LNG, 20_000)]
     r = _build_all(tmp_path, [], cities, rows)
     # name, ascii and Latin alternates, folded; not the codes, scripts, URLs,
-    # names under 4 letters, another country's name, names two countries
-    # share, or a 15k+ place's own name ("Bigtown")
+    # names under 5 letters or without a vowel, another country's name,
+    # names two countries share, or a 15k+ place's own name ("Bigtown")
     assert _names(r, "XA") == ["ksenland", "republic of xland", "xlandia"]
     assert _names(r, "XB") == ["ylandia"]
     assert any("bigtown" in line for line in r.report)
@@ -1357,6 +1357,17 @@ def test_satellite_places_fly_from_a_bigger_places_own_airport(tmp_path):
     assert sat == {"1": 0, "2": 1, "3": 0, "4": 0, "5": 0}
 
 
+def test_satellite_needs_an_owner_scoring_ten_times_more(tmp_path):
+    # Concord, NH flies from Manchester's MHT: a peer town, not a suburb
+    airports = [_oa("MHT", _LAT, _LNG, name="Manchester Airport")]
+    cities = [
+        _city(1, "Manchester", _LAT, _LNG, 110_000, alts="A"),  # score 440k
+        _city(2, "Concord", _north(_LAT, 30), _LNG, 60_000),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.places["2"]["satellite"] == 0
+
+
 def test_satellite_needs_the_owner_to_score_higher(tmp_path):
     # the airport is named for the smaller town; the big neighbour flying
     # from it is not a satellite of the smaller town
@@ -1400,10 +1411,26 @@ def test_island_airports_on_the_island_come_first(tmp_path):
     ]
     rows = [
         _geo(20, "Bigisle", _LAT, _LNG, "ISL", alts=_alts(12)),
-        _geo(21, "Islet", _north(_LAT, 44), _LNG, "ISL"),  # not notable
+        _geo(21, "Otherisle", _north(_LAT, 44), _LNG, "ISL", alts=_alts(11)),
+        _geo(22, "Rock", _north(_LAT, 9), _LNG, "ISL"),  # not notable: no claim
     ]
     r = _build_all(tmp_path, airports, [], rows)
     assert r.features["20"]["airports"] == ["ISA", "HUB", "NBR"]
+    assert r.features["21"]["airports"] == ["NBR", "HUB"]
+
+
+def test_feature_alternates_that_name_other_rows_are_dropped(tmp_path):
+    airports = [_oa("AAA", _LAT, _LNG)]
+    rows = [
+        _geo(30, "Abajo Range", _LAT, _LNG, "MTS",
+             alts=_alts(12) + ",Blue Hills,Sierra Abajo"),
+        _geo(31, "Blue Hills", _north(_LAT, 3000), _LNG, "MTS"),  # not notable
+        _geo(32, "Sierra Abajo", 0, 0, "STM"),  # a stream: not a listed code
+    ]  # fmt: skip
+    r = _build_all(tmp_path, airports, [], rows)
+    alts = r.features["30"]["alt_names"]
+    assert "blue hills" not in alts and "sierra abajo" in alts
+    assert any("another row's own name, dropped (1)" in line for line in r.report)
 
 
 def test_feature_output_format_and_determinism(tmp_path):

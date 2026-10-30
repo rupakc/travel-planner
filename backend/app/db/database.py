@@ -673,6 +673,10 @@ _SHORT_QUERY = 3
 # this score, by size ("kili" → Kilimanjaro International before Kilis).
 _AIRPORT_NAME_SCORE = {0: 1e9, 1: 1e8, 2: 1e7}
 _SHORT_QUERY_MIN_POPULATION = 100_000
+# Non-town features (islands, parks, mountains…) suggested per query, only
+# when no real town matches, ranked below any town match.
+_AUTOCOMPLETE_FEATURES = 3
+_FEATURE_SCORE = 1.0
 
 
 def _autocomplete_places(
@@ -693,8 +697,8 @@ def _autocomplete_places(
     name_score: dict[str, float] = {}
 
     def add(name, codes, score, place_cc=None, hint=False, small=False):
-        # a village's exact name is only a prefix-class match ("bucu" is
-        # Bucharest's București before the hamlet Bucu)
+        # a village's (or a feature's) exact name is only a prefix-class
+        # match ("bucu" is Bucharest's București before the hamlet Bucu)
         cls = _EXACT_NAME if name == folded and not small else _NAME_PREFIX
         name_score[name] = max(score, name_score.get(name, 0.0))
         for pos, code in enumerate(codes):
@@ -762,6 +766,27 @@ def _autocomplete_places(
                 sc,
                 r["country_code"],
                 small=r["population"] < SMALL_PLACE_POPULATION,
+            )
+    hinted = any(link[3] is None for link in linked.values())
+    if not own and not hinted and len(folded) > _SHORT_QUERY:
+        # no real town or curated hint by that name: notable features
+        # ("kakadu" → Darwin; "sylt" stays the hint's GWT alone)
+        for r in conn.execute(
+            "SELECT DISTINCT n.name_folded, f.airports, f.country_code, f.notability"
+            " FROM feature_names n JOIN features f ON f.geonameid = n.geonameid"
+            " WHERE n.tier = 0 AND n.name_folded >= ? AND n.name_folded < ?"
+            " AND f.airports != '' ORDER BY f.notability DESC, n.name_folded"
+            " LIMIT ?",
+            (folded, end, _AUTOCOMPLETE_FEATURES),
+        ):
+            if hint_country and r["country_code"] != hint_country:
+                continue
+            add(
+                r["name_folded"],
+                r["airports"].split(),
+                _FEATURE_SCORE,
+                r["country_code"],
+                small=True,
             )
     return linked, name_score
 

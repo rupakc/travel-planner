@@ -41,8 +41,8 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
 - **Validation**: Pydantic v2 models in `backend/app/schemas/` (`request.py`: `TravelSearchRequest` resolves origin/destination to airport codes)
 - **Config**: pydantic-settings with `.env` support (`backend/app/core/config.py`); every setting has a default
 - **Auth**: JWT (HS256, PyJWT, 24 h) + bcrypt. **No self-registration** — admins create users (`api/routes/admin.py`). `/search`, `/discover` and single-agent routes accept anonymous calls via `get_optional_user` (inactive users count as anonymous)
-- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 12 tables (airports, places, place_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals). Optional GCS backup (`BACKUP_BUCKET`) every 60 s + on shutdown
-- **Place data**: OurAirports + GeoNames files committed in `backend/app/db/data/`, versioned seed at startup; `lookup_city_iata` / `resolve_place` resolve typed places to airports locally
+- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 14 tables (airports, places, place_names, features, feature_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals). Optional GCS backup (`BACKUP_BUCKET`) every 60 s + on shutdown
+- **Place data**: OurAirports + GeoNames files committed in `backend/app/db/data/`, versioned seed at startup; `lookup_city_iata` / `resolve_place` resolve typed places to airports locally; country names in any language (`countries.csv` `names`), suburbs yield to namesakes with their own airport (`places.satellite`), and notable islands/parks/mountains resolve via `features.csv.gz`
 - **Caching**: in-memory cachetools TTLCache (TTL 30 min, max 500 entries)
 - **Rate limits**: in-process sliding window (`core/rate_limit.py`)
 - **Logging**: stdlib logging, JSON unless `LOG_FORMAT` is set to something other than `json`

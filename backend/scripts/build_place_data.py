@@ -83,15 +83,20 @@ ALT_NAME_MAX_LEN = 40
 _EARTH_RADIUS_KM = 6371.0088
 _KM_PER_DEG_LAT = 110.5  # a little under the true minimum, so cells over-cover
 
-# Satellite: a place whose first airport is another, bigger place's own
-# within this distance (Peoria, Arizona: PHX is Phoenix's).
+# Satellite: a place whose first airport is the own airport of a place at
+# least SATELLITE_OWNER_RATIO× its score within SATELLITE_KM (Peoria,
+# Arizona: PHX is Phoenix's). A comparable neighbour does not make a town a
+# suburb (Concord, NH flies from Manchester's MHT; Newport from Cardiff's).
 SATELLITE_KM = 60
+SATELLITE_OWNER_RATIO = 10
 
 # Country names from GeoNames allCountries: the political entities' names.
 COUNTRY_FEATURE_CODES = frozenset(
     {"PCLI", "PCLD", "PCLF", "PCLS", "PCL", "PCLIX", "TERR"}
 )
-COUNTRY_NAME_MIN_LEN = 4  # folded; shorter ones are mostly noise ("y", "pai")
+# folded letters; shorter ones are mostly noise ("pain", "some", "kili";
+# "Eire" is a curated alias)
+COUNTRY_NAME_MIN_LEN = 5
 # A country name that is also the own name of a place this big is the place's.
 COUNTRY_NAME_PLACE_POPULATION = 15_000
 
@@ -117,8 +122,11 @@ ISLAND_CODES = frozenset({"ISL", "ISLS", "ATOL"})
 FEATURE_MIN_NOTABILITY = 10
 FEATURE_AIRPORT_KM = 250  # large / medium airports linked within
 # An airport on an island: within this distance of the island's point, and
-# that island is the nearest island point to the airport.
+# that island is the nearest notable island point to the airport.
 ISLAND_AIRPORT_KM = 50
+# Rows whose primary names make a feature's alternate name ambiguous:
+# populated places, administrative divisions and the listed feature codes.
+SHARED_NAME_CLASSES = frozenset({"P", "A"})
 
 COUNTRY_COLUMNS = ["code", "name", "names"]
 FEATURE_COLUMNS = [
@@ -525,16 +533,18 @@ def _read_places(cities_path: Path) -> list[Place]:
     return places
 
 
-def _iter_geonames_all(path: Path):
+def _iter_geonames_all(path: Path, keep=None):
     """Rows of GeoNames ``allCountries`` (the .zip, streamed, or its .txt)
-    whose feature code is a country entity or a listed feature."""
+    for which ``keep(row)`` holds; by default country entities and listed
+    features."""
     wanted = COUNTRY_FEATURE_CODES | FEATURE_CODES
+    keep = keep or (lambda f: f[7] in wanted)
     path = Path(path)
 
     def rows(lines):
         for line in lines:
             f = line.rstrip("\r\n").split("\t")
-            if len(f) >= 15 and f[7] in wanted:
+            if len(f) >= 15 and keep(f):
                 yield f
 
     if path.suffix == ".zip":
@@ -564,7 +574,8 @@ class Feature:
 def _country_name_candidates(rows) -> dict[str, set[str]]:
     """Folded name → ISO codes of the country entities carrying it: the
     name, the ASCII name and the Latin-script alternates (≤ 40 characters,
-    ≥ 4 letters folded, no URL, no all-caps code: "KSA", "PRC" are curated
+    ≥ 5 letters folded with a vowel — not consonant-only transliterations
+    like "qndh" —, no URL, no all-caps code: "KSA", "PRC" are curated
     aliases, as ISO-3 codes would collide with airport codes)."""
     found: dict[str, set[str]] = defaultdict(set)
     for f in rows:
@@ -579,7 +590,9 @@ def _country_name_candidates(rows) -> dict[str, set[str]]:
             ):
                 continue
             folded = fold_place(name)
-            if len(folded.replace(" ", "")) >= COUNTRY_NAME_MIN_LEN:
+            if len(folded.replace(" ", "")) >= COUNTRY_NAME_MIN_LEN and any(
+                v in folded for v in "aeiou"
+            ):
                 found[folded].add(f[8])
     return found
 
@@ -624,23 +637,14 @@ def country_names(rows, official: dict[str, str], places) -> tuple[dict, list[st
     return names, report
 
 
-@dataclass(frozen=True)
-class IslandPoint:
-    geonameid: str
-    lat: float
-    lng: float
-
-
-def read_geonames_all(path) -> tuple[list[list[str]], list[Feature], list]:
+def read_geonames_all(path) -> tuple[list[list[str]], list[Feature]]:
     """One streaming pass over allCountries: (country entity rows, notable
-    listed features, every island's point)."""
-    countries, notable, islands = [], [], []
+    listed features)."""
+    countries, notable = [], []
     for f in _iter_geonames_all(path):
         if f[7] in COUNTRY_FEATURE_CODES:
             countries.append(f)
             continue
-        if f[7] in ISLAND_CODES:
-            islands.append(IslandPoint(f[0], float(f[4]), float(f[5])))
         notability = _raw_alt_count(f[3])
         if notability >= FEATURE_MIN_NOTABILITY:
             notable.append(
@@ -657,13 +661,40 @@ def read_geonames_all(path) -> tuple[list[list[str]], list[Feature], list]:
                     raw_alts=f[3],
                 )
             )
-    return countries, notable, islands
+    return countries, notable
+
+
+def _first_word(folded: str) -> str:
+    return folded.split(" ", 1)[0]
+
+
+def shared_alt_names(path, alt_names: dict[str, list[str]]) -> dict[str, set[str]]:
+    """Folded alternate name → ids of the other allCountries rows (populated
+    places, divisions, listed features) whose own name it is: a second pass.
+    "Blue Mountains" is Abajo Mountains' alternate and the Australian
+    range's name; "El Chaltén" is Cerro Fitzroy's and the town's."""
+    wanted = {alt for alts in alt_names.values() for alt in alts}
+    firsts = {_first_word(alt) for alt in wanted}
+
+    def keep(f):
+        if f[6] not in SHARED_NAME_CLASSES and f[7] not in FEATURE_CODES:
+            return False
+        # cheap pre-check on the first word before folding
+        head = f[2].lower().replace("-", " ").replace(".", " ").split(" ", 1)[0]
+        return head in firsts or _first_word(fold_place(f[1])) in firsts
+
+    holders: dict[str, set[str]] = defaultdict(set)
+    for f in _iter_geonames_all(path, keep):
+        for own in {fold_place(f[1]), fold_place(f[2])} & wanted:
+            holders[own].add(f[0])
+    return holders
 
 
 def island_airports(islands, airports) -> dict[str, str]:
-    """Airport → the island it is on: the nearest island point, within
-    ``ISLAND_AIRPORT_KM``. GeoNames has points, not outlines, so a big
-    island whose point is far from its airports gets none this way."""
+    """Airport → the notable island it is on: the nearest notable island
+    point, within ``ISLAND_AIRPORT_KM``. GeoNames has points, not outlines,
+    so a big island whose point is far from its airports gets none this
+    way."""
     index = GeoIndex(islands, key=lambda i: _int(i.geonameid))
     on = {}
     for a in airports:
@@ -946,9 +977,7 @@ def build(
     result.airports = dict(sorted(airports.items()))
     result.places = dict(sorted(result.places.items(), key=lambda kv: _int(kv[0])))
 
-    country_rows, notable, islands = (
-        read_geonames_all(all_path) if all_path else ([], [], [])
-    )
+    country_rows, notable = read_geonames_all(all_path) if all_path else ([], [])
     official = {fold_place(n): c for c, n in oa_countries.items()}
     official.update(
         (fold_place(a["country"]), a["country_code"]) for a in airports.values()
@@ -960,13 +989,29 @@ def build(
     result.countries = [
         (c, n, names.get(c, [])) for c, n in sorted(oa_countries.items())
     ]
+    islands = [f for f in notable if f.feature_code in ISLAND_CODES]
     on_island = island_airports(islands, linkable)
+    linked = {}
     for feature in notable:
         codes = link_feature(feature, index, on_island)
         if not codes:
             continue
         alts = filter_alt_names(feature.raw_alts, fold_place(feature.name))
-        alts = [alt for alt in alts if alt != fold_place(feature.ascii_name)]
+        linked[feature.geonameid] = (
+            feature,
+            codes,
+            [alt for alt in alts if alt != fold_place(feature.ascii_name)],
+        )
+    holders = (
+        shared_alt_names(all_path, {g: alts for g, (_f, _c, alts) in linked.items()})
+        if all_path
+        else {}
+    )
+    shared_alts = 0
+    for gid, (feature, codes, all_alts) in linked.items():
+        # an alternate that is another row's own name is ambiguous
+        alts = [a for a in all_alts if not holders.get(a, set()) - {gid}]
+        shared_alts += len(all_alts) - len(alts)
         result.features[feature.geonameid] = {
             "geonameid": feature.geonameid,
             "name": feature.name,
@@ -980,6 +1025,11 @@ def build(
             "airports": codes,
             "alt_names": alts,
         }
+    names_report += [
+        f"## Feature alternate names that are another row's own name, dropped "
+        f"({shared_alts})",
+        "",
+    ]
     result.features = dict(sorted(result.features.items(), key=lambda kv: _int(kv[0])))
 
     result.admin1 = sorted(
@@ -1003,9 +1053,9 @@ def build(
 
 def _satellites(places, airports: dict[str, dict], place_index: GeoIndex) -> set[str]:
     """Places whose first airport is not their own but the own airport of a
-    higher-scoring place within ``SATELLITE_KM`` (Peoria, Arizona flies from
-    Phoenix's PHX; Peoria, Illinois has PIA). "Own" is
-    ``core.places.is_own_airport`` with the final display city."""
+    place scoring ≥ ``SATELLITE_OWNER_RATIO``× more within ``SATELLITE_KM``
+    (Peoria, Arizona flies from Phoenix's PHX; Peoria, Illinois has PIA).
+    "Own" is ``core.places.is_own_airport`` with the final display city."""
     by_name: dict[str, list[Place]] = defaultdict(list)
     for p in places:
         by_name[p.folded].append(p)
@@ -1041,7 +1091,7 @@ def _satellites(places, airports: dict[str, dict], place_index: GeoIndex) -> set
             continue
         if any(
             q is not p
-            and q.score > p.score
+            and q.score >= SATELLITE_OWNER_RATIO * p.score
             and distance_km(p.lat, p.lng, q.lat, q.lng) <= SATELLITE_KM
             for q in owners_of(iata)
         ):

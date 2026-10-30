@@ -65,7 +65,8 @@
   "antigua": "AG",
   "turks and caicos": "TC",
   "ceylon": "LK",
-  "dprk": "KP"
+  "dprk": "KP",
+  "eire": "IE"
  },
  "qualifier_country_aliases": {
   "ksa": "SA",
@@ -721,6 +722,13 @@
    "TW",
    [
     "MZG"
+   ]
+  ],
+  "borneo": [
+   "MY",
+   [
+    "BKI",
+    "KCH"
    ]
   ]
  },
