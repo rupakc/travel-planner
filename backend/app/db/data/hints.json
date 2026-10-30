@@ -1336,6 +1336,27 @@
    [
     "SLC"
    ]
+  ],
+  "palm beach": [
+   "US",
+   [
+    "DJT"
+   ]
+  ],
+  "paddington": [
+   "GB",
+   [
+    "LHR",
+    "LCY",
+    "LGW"
+   ]
+  ],
+  "pinheiros": [
+   "BR",
+   [
+    "CGH",
+    "GRU"
+   ]
   ]
  },
  "regions": {
