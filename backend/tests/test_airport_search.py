@@ -195,3 +195,15 @@ def test_autocomplete_feature_alternates_and_short_names():
 def test_autocomplete_keeps_namesakes_the_resolver_cannot_split(q, both):
     codes = set(_codes(q))
     assert all(codes & side for side in both), codes
+
+
+@pytest.mark.parametrize(
+    ("q", "first"),
+    [
+        ("ealing", "LHR"),  # the London borough, not Ealing, NZ's TIU
+        ("peoria", "PIA"),
+        ("kakadu", "DRW"),
+    ],
+)
+def test_autocomplete_leads_with_the_resolved_answer(q, first):
+    assert _codes(q)[0] == first

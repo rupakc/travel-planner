@@ -38,6 +38,7 @@ from app.core.places import (  # noqa: E402
     COUNTRY_ALIASES,
     NEVER_LINK,
     QUALIFIER_COUNTRY_ALIASES,
+    feature_short_names,
     fold_place,
     is_named_airport,
     is_own_airport,
@@ -122,13 +123,16 @@ FEATURE_CODES = frozenset(
     }
 )  # fmt: skip
 ISLAND_CODES = frozenset({"ISL", "ISLS", "ATOL"})
+# Classes admitted from notability 5 only with a name no other row has.
+WEAK_CHECK_CODES = ISLAND_CODES | {"DSRT"}
 # Notability = GeoNames' alternate-name count; calibrated (see the README).
-# Parks, reserves, resorts, glaciers, capes, fjords and caves are rarely
-# translated, so they count from FEATURE_LOW_NOTABILITY.
+# Parks, reserves, resorts, glaciers, capes, fjords, caves, islands and
+# deserts are rarely translated, so they count from FEATURE_LOW_NOTABILITY.
 FEATURE_MIN_NOTABILITY = 10
 FEATURE_LOW_NOTABILITY = 5
 FEATURE_LOW_CODES = frozenset(
     {"PRK", "RESN", "RESW", "RESF", "RSRT", "GLCR", "CAPE", "FJD", "CAVE"}
+    | {"ISL", "ISLS", "ATOL", "DSRT"}  # islands and deserts too (Comino, Namib)
 )
 # Famous districts (Bondi, Ealing, Frankston): populated rows that are not
 # places (sections of places, or seats GeoNames gives no people), with this many
@@ -771,6 +775,13 @@ def shared_alt_names(path, alt_names: dict[str, list[str]]) -> dict[str, set[str
     return holders
 
 
+def _primary_names(feature: Feature) -> set[str]:
+    """A feature's folded own and ASCII names and their short forms (as the
+    loader indexes them)."""
+    names = {fold_place(feature.name), fold_place(feature.ascii_name)} - {""}
+    return names | {s for n in names for s in feature_short_names(n)}
+
+
 def island_airports(islands, airports) -> dict[str, str]:
     """Airport → the notable island it is on: the nearest notable island
     point, within ``ISLAND_AIRPORT_KM``. GeoNames has points, not outlines,
@@ -1078,7 +1089,13 @@ def build(
         (c, n, names.get(c, []), qualifier_names.get(c, []))
         for c, n in sorted(oa_countries.items())
     ]
-    islands = [f for f in notable if f.feature_code in ISLAND_CODES]
+    # airports sit on islands notable at the standard threshold: with the
+    # lower one, islets near the coast claimed MFA (Mafia) and MHC (Chiloé)
+    islands = [
+        f
+        for f in notable
+        if f.feature_code in ISLAND_CODES and f.notability >= FEATURE_MIN_NOTABILITY
+    ]
     on_island = island_airports(islands, linkable)
     linked = {}
     tagged = [(f, False) for f in notable] + [(f, True) for f in districts]
@@ -1095,13 +1112,30 @@ def build(
             codes,
             [alt for alt in alts if alt != fold_place(feature.ascii_name)],
         )
+    # a weakly notable island or desert (5–9 alternate names) whose own or
+    # short name is another row's own name is ambiguous ("Sugarloaf" Island,
+    # California among the Sugarloaf mountains)
+    weak_names = {
+        g: sorted(_primary_names(f))
+        for g, (f, _c, _a) in linked.items()
+        if f.feature_code in WEAK_CHECK_CODES and f.notability < FEATURE_MIN_NOTABILITY
+    }
     holders = (
-        shared_alt_names(all_path, {g: alts for g, (_f, _c, alts) in linked.items()})
+        shared_alt_names(
+            all_path,
+            {
+                g: [*alts, *weak_names.get(g, [])]
+                for g, (_f, _c, alts) in linked.items()
+            },
+        )
         if all_path
         else {}
     )
-    shared_alts = 0
+    shared_alts = weak_dropped = 0
     for gid, (feature, codes, all_alts) in linked.items():
+        if any(holders.get(n, set()) - {gid} for n in weak_names.get(gid, ())):
+            weak_dropped += 1
+            continue
         # an alternate that is another row's own name is ambiguous
         alts = [a for a in all_alts if not holders.get(a, set()) - {gid}]
         shared_alts += len(all_alts) - len(alts)
@@ -1122,6 +1156,9 @@ def build(
     names_report += [
         f"## Feature alternate names that are another row's own name, dropped "
         f"({shared_alts})",
+        "",
+        f"## Weakly notable islands / deserts whose name another row has, "
+        f"dropped ({weak_dropped})",
         "",
     ]
     result.features = dict(sorted(result.features.items(), key=lambda kv: _int(kv[0])))

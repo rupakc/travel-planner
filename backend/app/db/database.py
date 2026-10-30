@@ -981,5 +981,55 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
     if ranked and ranked[0][0][0] < _OTHER:
         # R7: no padding with mere "contains" matches below real ones
         ranked = [kr for kr in ranked if kr[0][0] < _OTHER]
+    rows_out = [r for _, r in ranked]
+    resolved = _resolved_answer(q)
+    if resolved:
+        # the resolver's own answer leads ("ealing" → LHR, not Ealing, NZ)
+        found = {r["iata_code"]: r for r in rows_out}
+        missing = [c for c in resolved if c not in found]
+        if missing:
+            with get_connection() as conn:
+                for r in conn.execute(
+                    "SELECT iata_code, name, city, country, country_code"
+                    " FROM airports WHERE scheduled = 1 AND iata_code IN"
+                    f" ({','.join('?' * len(missing))})",
+                    missing,
+                ):
+                    found[r["iata_code"]] = r
+        lead = [found[c] for c in resolved if c in found]
+        rows_out = lead + [r for r in rows_out if r["iata_code"] not in resolved]
     keys = ("iata_code", "name", "city", "country", "country_code")
-    return [{k: r[k] for k in keys} for _, r in ranked[:limit]]
+    return [{k: r[k] for k in keys} for r in rows_out[:limit]]
+
+
+def _resolved_answer(query: str) -> list[str]:
+    """The airports ``lookup_city_iata`` gives for a whole typed name of at
+    least four letters, when it resolves by an own name to a real town
+    (≥ 15k people), or to a curated hint, feature or district while no
+    real town's name starts so; else []. A village's answer does not lead
+    ("bucu": Bucharest, not the hamlet Bucu), nor an alternate name's
+    ("peori"), nor a district over towns ("vila": Vila Velha…)."""
+    from .places_db import SMALL_PLACE_POPULATION, resolve
+
+    if len(query) < _SHORT_QUERY + 1 or "," in query:
+        return []
+    place = resolve(query).place
+    if place is None or place.alternate:
+        return []
+    if place.geonameid is not None:
+        if place.population < SMALL_PLACE_POPULATION:
+            return []
+    else:
+        folded = fold_place(query)
+        with get_connection() as conn:
+            town = conn.execute(
+                "SELECT 1 FROM place_names n JOIN places p"
+                " ON p.geonameid = n.geonameid WHERE n.tier = 0"
+                " AND n.name_folded >= ? AND n.name_folded < ?"
+                " AND p.population >= ? LIMIT 1",
+                (folded, folded + "\uffff", SMALL_PLACE_POPULATION),
+            ).fetchone()
+        if town:
+            return []
+    codes = lookup_city_iata(query)
+    return codes.split(",") if codes else []

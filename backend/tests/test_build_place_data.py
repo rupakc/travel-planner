@@ -1631,6 +1631,10 @@ def test_satellite_owner_is_decided_by_name_not_distance(tmp_path):
         ("FJD", 6, True),
         ("CAVE", 6, True),
         ("RSRT", 5, True),
+        ("ISL", 6, True),  # islands and deserts: from 5
+        ("ATOL", 5, True),
+        ("ISLS", 5, True),
+        ("DSRT", 5, True),
         ("MT", 6, False),  # other classes: from 10
         ("PRK", 4, False),
     ],
@@ -1656,3 +1660,19 @@ def test_famous_districts_take_their_parent_citys_airports(tmp_path):
     assert district["feature_code"] == "PPLX"
     assert district["airports"] == r.places["1"]["airports"]  # Bigcity's links
     assert "61" not in r.features
+
+
+def test_weak_islands_with_a_shared_name_are_dropped(tmp_path):
+    # Sugarloaf Island (6 alternate names) among the Sugarloaf mountains
+    airports = [_oa("AAA", _LAT, _LNG)]
+    rows = [
+        _geo(70, "Sugartop Island", _LAT, _LNG, "ISL", alts=_alts(6)),
+        _geo(71, "Sugartop", _north(_LAT, 900), _LNG, "MT"),  # not notable
+        _geo(72, "Lonely Island", _LAT, _LNG, "ISL", alts=_alts(6)),
+        _geo(73, "Famous Island", _LAT, _LNG, "ISL", alts=_alts(12)),
+        _geo(74, "Famous", _north(_LAT, 900), _LNG, "MT"),
+    ]
+    r = _build_all(tmp_path, airports, [], rows)
+    assert "70" not in r.features  # weak, and "sugartop" is another row's
+    assert "72" in r.features
+    assert "73" in r.features  # notable at 10: kept
