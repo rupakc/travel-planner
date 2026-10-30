@@ -684,3 +684,20 @@ def test_lord_howe_and_wagga_have_countries():
     from app.agents.static_results import _place_country
 
     assert _place_country("Lord Howe Island") == "australia"
+
+
+@pytest.mark.parametrize(
+    ("place", "first"),
+    [
+        ("Ontario, CA", "ONT"),
+        ("Mumbai, MH", "BOM"),
+        ("Berlin Germany", "BER"),
+        ("Chicago IL", "ORD"),
+        ("Portland Maine", "PWM"),
+        ("Tokyo city", "HND"),
+        ("Monte Carlo", "NCE"),
+        ("Liechtenstein", "ZRH"),
+    ],
+)
+def test_g_lookups(place, first):
+    assert first in lookup_city_iata(place).split(",")[:2]

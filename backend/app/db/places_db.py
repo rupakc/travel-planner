@@ -16,13 +16,16 @@ from dataclasses import dataclass, replace
 
 from ..core.places import (
     _REGION_NAMES,
+    AIRPORT_NAME_WORDS,
     CITY_ALIASES,
     CODE_PREFIX_RE,
     COUNTRY_ALIASES,
     DESTINATION_AIRPORTS,
     EXONYMS,
+    GENERIC_PLACE_WORDS,
     ISLAND_AIRPORTS,
     REGION_HINTS,
+    SAINT_EXCEPTIONS,
     fold_place,
     saint_variants,
     stated_region,
@@ -51,8 +54,8 @@ ALT_JOIN_RATIO = 10
 # ... and only an alternate-name place this big (Placencia, Belize is not
 # Piacenza's "Placencia"; Samaná is not Samana, Punjab)
 ALT_JOIN_MIN_POPULATION = 150_000
-# R1: words dropped from airport names before matching a typed name.
-_AIRPORT_GENERIC = frozenset({"airport", "international", "regional", "aerodrome"})
+# R1: an airport-name match never drops a place this big.
+R1_NEVER_DROP_POPULATION = 40_000
 # A town scoring at least 1/20 of a same-named division's top place keeps
 # the division out ("Canterbury" is the English city, not New Zealand's
 # region; "Florida", Uruguay is far smaller than Florida's Jacksonville).
@@ -87,10 +90,15 @@ class Place:
 
 @functools.cache
 def country_names() -> dict[str, str]:
-    """Folded country name (dataset spelling) or alias → ISO code."""
+    """Folded country name or alias → ISO code: every country in the
+    committed country list (also those with no airport: Andorra), the
+    dataset's curated spellings, and the aliases."""
     from .seed_airports import PLACE_DATA_DIR
 
     table: dict[str, str] = {}
+    with open(PLACE_DATA_DIR / "countries.csv", newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            table[fold_place(row["name"])] = row["code"]
     with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             if row["country_code"]:
@@ -139,10 +147,16 @@ class _Stated:
 def _hint(name: str, stated: list[str], display: str) -> Place | None:
     """A curated island / destination / region for the folded name, unless
     a stated country names another country."""
-    # the exact folded name only: "St John" is the USVI island, "Saint
-    # John" the New Brunswick city
+    # the name, then its St / Saint spellings — except listed names ("Saint
+    # John" is the New Brunswick city, not St John, USVI)
     tables = (ISLAND_AIRPORTS, DESTINATION_AIRPORTS, REGION_HINTS)
-    hint = next((table[name] for table in tables if name in table), None)
+    spellings = [name]
+    if name not in SAINT_EXCEPTIONS:
+        spellings += sorted(saint_variants(name) - {name})
+    hint = next((table[n] for n in spellings for table in tables if n in table), None)
+    if not hint:  # any affix form of a hinted name ("Isla de Margarita")
+        stripped = _stripped_hints()
+        hint = next((stripped[n] for n in spellings if n in stripped), None)
     if not hint:
         return None
     country, airports = hint
@@ -229,6 +243,22 @@ def _stated_meanings(conn: sqlite3.Connection, stated: list[str]) -> list[_State
         if countries or admin1:
             meanings.append(_Stated(countries, frozenset(admin1)))
     return meanings
+
+
+def _single_reading(meanings: list[_Stated], own: list[Place]) -> list[_Stated]:
+    """A stated code with several readings ("CA": Canada or California;
+    "MH": Marshall Islands or Maharashtra) keeps them all, unless the city
+    has own-name places under one reading only: then that reading wins
+    ("Ontario, CA" → Ontario, California, not the province)."""
+    narrowed = []
+    for m in meanings:
+        readings = [_Stated(frozenset({c}), frozenset()) for c in m.countries]
+        readings += [_Stated(frozenset(), frozenset({a})) for a in m.admin1]
+        hits = [
+            r for r in readings if any(r.admits(p.country_code, p.admin1) for p in own)
+        ]
+        narrowed.append(hits[0] if len(readings) > 1 and len(hits) == 1 else m)
+    return narrowed
 
 
 def _row_place(row: sqlite3.Row, score: float, alternate: bool = False) -> Place:
@@ -420,31 +450,59 @@ def _exonym(conn: sqlite3.Connection, city: str) -> Place | str | None:
     return None
 
 
-@functools.cache
-def _airport_names() -> tuple[dict[str, tuple[str, ...]], dict[str, tuple]]:
-    """Scheduled airports by word-boundary prefixes of their folded name
-    without generic words ("La Palma Airport" → "la palma"), biggest type
-    first, and code → (country, folded display city, folded name)."""
-    from .seed_airports import PLACE_DATA_DIR
+# per DB file (tests switch DBs): path → (name keys, airport info)
+_AIRPORT_NAME_INDEX: dict[str, tuple[dict[str, tuple[str, ...]], dict[str, tuple]]] = {}
+# "Lerwick / Tingwall Airport", "Bohol–Panglao International": whole parts
+_NAME_PARTS_RE = re.compile(r"\s*[/–—-]\s*")
 
+
+def _airport_names(
+    conn: sqlite3.Connection | None = None,
+) -> tuple[dict[str, tuple[str, ...]], dict[str, tuple]]:
+    """Scheduled dataset airports by WHOLE folded name without generic words
+    ("La Palma Airport" → "la palma"; each "/"- or dash-separated part counts
+    on its own), biggest type first, and code → (country, folded display
+    city, folded name, type_rank). Built once from the seeded airports
+    table (warmed at startup)."""
+    from .database import _db_path
+
+    db = str(_db_path())
+    if db in _AIRPORT_NAME_INDEX:
+        return _AIRPORT_NAME_INDEX[db]
+    if conn is None:
+        with get_connection() as own:
+            return _airport_names(own)
+    rows = conn.execute(
+        "SELECT iata_code, name, city, country_code, type_rank FROM airports"
+        " WHERE scheduled = 1 AND type_rank IS NOT NULL"
+        " ORDER BY type_rank, iata_code"
+    ).fetchall()
     keys: dict[str, list[str]] = {}
     info: dict[str, tuple] = {}
-    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
-        rows = [r for r in csv.DictReader(f) if r["scheduled"] == "1"]
-    rows.sort(key=lambda r: (int(r["type_rank"]), r["iata"]))
     for r in rows:
-        folded = fold_place(r["name"])
-        info[r["iata"]] = (
+        info[r["iata_code"]] = (
             r["country_code"],
             fold_place(r["city"]),
-            folded,
-            int(r["type_rank"]),
+            fold_place(r["name"]),
+            r["type_rank"],
         )
-        words = [w for w in re.sub(r"[^\w ]", " ", folded).split()]
-        words = [w for w in words if w not in _AIRPORT_GENERIC]
-        for n in range(1, len(words) + 1):  # word-boundary prefixes
-            keys.setdefault(" ".join(words[:n]), []).append(r["iata"])
-    return {k: tuple(v) for k, v in keys.items()}, info
+        for part in {r["name"], *_NAME_PARTS_RE.split(r["name"])}:
+            words = re.sub(r"[^\w ]", " ", fold_place(part)).split()
+            key = " ".join(w for w in words if w not in AIRPORT_NAME_WORDS)
+            # no fragments or generic words ("Tête-à-la-Baleine" is not "a")
+            if len(key) < 4 or key in GENERIC_PLACE_WORDS:
+                continue
+            if r["iata_code"] not in keys.get(key, ()):
+                keys.setdefault(key, []).append(r["iata_code"])
+    _AIRPORT_NAME_INDEX[db] = ({k: tuple(v) for k, v in keys.items()}, info)
+    return _AIRPORT_NAME_INDEX[db]
+
+
+def warm(conn: sqlite3.Connection | None = None) -> None:
+    """Build the in-memory airport-name index now (startup), not on the
+    first request; call again after a reseed."""
+    _AIRPORT_NAME_INDEX.clear()
+    _airport_names(conn)
 
 
 def _airport_name_candidate(
@@ -480,6 +538,8 @@ def _weak_against_airport(place: Place, small_airport: bool = False) -> bool:
     """R1: a place an airport named like the text beats: under 15k people,
     or every airport over 100 km away ("Wagga Wagga", "Lord Howe Island",
     "Saba"-style islands whose namesakes are villages)."""
+    if place.population >= R1_NEVER_DROP_POPULATION:
+        return False  # "Kota" (1.0M) stays Kota whatever an airport is called
     if not place.airports:
         return True
     far = min(airport_distance_km(place, c) for c in place.airports) > CONFIDENCE_KM
@@ -547,6 +607,7 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
         top = _top_place(conn, "p.country_code = ?", [country])
         return Resolution(top[0] if top else None)
     own, alternates = _name_candidates(conn, names)
+    meanings = _single_reading(meanings, own)
     own, alternates = admitted(own), admitted(alternates)
     # alternates only when no place has the name as its own, or (R3) when
     # the own-name places are small and the alternate one far bigger
@@ -615,15 +676,119 @@ def resolve_place(text: str, conn: sqlite3.Connection | None = None) -> Place | 
     return resolve(text, conn).place
 
 
+# Generic affixes around a name ("Zanzibar Island", "Isla de Margarita",
+# "Banff National Park", "Tokyo city"), tried only when the text as typed
+# names nothing.
+_AFFIX_SUFFIXES = (
+    " islands",
+    " island",
+    " national park",
+    " np",
+    " peninsula",
+    " city",
+)
+_AFFIX_PREFIXES = ("isla de ", "ile de ", "city of ")
+
+
+def _strip_affixes(folded: str) -> str:
+    for suffix in _AFFIX_SUFFIXES:
+        if folded.endswith(suffix) and len(folded) > len(suffix):
+            return folded[: -len(suffix)]
+    for prefix in _AFFIX_PREFIXES:
+        if folded.startswith(prefix) and len(folded) > len(prefix):
+            return folded[len(prefix) :]
+    return folded
+
+
+@functools.cache
+def _stripped_hints() -> dict[str, tuple[str, tuple[str, ...]]]:
+    """Hints by their affix-free key ("margarita island" → "margarita")."""
+    table = {}
+    for hints in (REGION_HINTS, DESTINATION_AIRPORTS, ISLAND_AIRPORTS):
+        for key, hint in hints.items():
+            stripped = _strip_affixes(key)
+            if stripped != key:
+                table[stripped] = hint
+    return table
+
+
+# Affixes after which any place may answer ("Tokyo city"); after the others
+# ("Arches National Park", "Pemba Island") only a hint or exonym may, never
+# a namesake town.
+_PLACE_AFFIXES = (" city", "city of ")
+
+
+def _affix_variants(text: str) -> list[tuple[str, bool]]:
+    """The text with a generic affix removed from its city segment, and
+    whether an ordinary place may answer for it."""
+    city, _, rest = text.partition(",")
+    folded = fold_place(city)
+    variants = []
+    for suffix in _AFFIX_SUFFIXES:
+        if folded.endswith(suffix) and len(folded) > len(suffix):
+            variants.append((folded[: -len(suffix)], suffix in _PLACE_AFFIXES))
+    for prefix in _AFFIX_PREFIXES:
+        if folded.startswith(prefix) and len(folded) > len(prefix):
+            variants.append((folded[len(prefix) :], prefix in _PLACE_AFFIXES))
+    return [(v + ("," + rest if rest else ""), ok) for v, ok in variants]
+
+
+def no_comma_readings(text: str) -> list[str]:
+    """ "City Country" / "City ST" typed without a comma ("Berlin Germany",
+    "Chicago IL", "Sydney Nova Scotia") → "City, Qualifier" readings, the
+    longest qualifier first; only when the trailing words name a country,
+    alias or region."""
+    if "," in text:
+        return []
+    words = text.split()
+    readings = []
+    for k in (3, 2, 1):
+        if len(words) <= k:
+            continue
+        tail = fold_place(" ".join(words[-k:]))
+        if stated_countries(tail) or stated_region(tail):
+            readings.append(" ".join(words[:-k]) + ", " + " ".join(words[-k:]))
+    return readings
+
+
+def _resolve_any(conn: sqlite3.Connection, text: str) -> Resolution:
+    """The text as typed; when it names nothing, without a generic affix,
+    then read "City Qualifier" as "City, Qualifier"."""
+    result = _resolve(conn, text)
+    if result.place or result.ambiguous:
+        return result
+    for variant, places_too in _affix_variants(text) + [
+        (r, True) for r in no_comma_readings(text)
+    ]:
+        retry = _resolve(conn, variant)
+        if not (retry.place or retry.ambiguous):
+            continue
+        if places_too or (retry.place and retry.place.geonameid is None):
+            return retry
+        if retry.place and _exonym(conn, fold_place(variant.split(",")[0])):
+            return retry  # an exonym under the affix
+    return result
+
+
+def names_something_as_typed(text: str) -> bool:
+    """The text resolves (or is ambiguous) without affix or comma rewrites."""
+    try:
+        with get_connection() as conn:
+            result = _resolve(conn, text)
+    except sqlite3.Error:
+        return False
+    return bool(result.place or result.ambiguous)
+
+
 def resolve(text: str, conn: sqlite3.Connection | None = None) -> Resolution:
     """``resolve_place`` with the reason when there is no place."""
     if not text or not text.strip():
         return Resolution(None)
     try:
         if conn is not None:
-            return _resolve(conn, text)
+            return _resolve_any(conn, text)
         with get_connection() as own:
-            return _resolve(own, text)
+            return _resolve_any(own, text)
     except sqlite3.Error as exc:  # tables missing (unseeded DB) → unresolved
         logger.debug("Place resolution failed for %r: %s", text, exc)
         return Resolution(None)

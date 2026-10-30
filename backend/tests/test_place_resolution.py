@@ -567,3 +567,111 @@ def test_r5_qualifier_prefix_matches_a_division(text, country):
 def test_blind_probe_hints(text, country, first):
     place = resolve_place(text)
     assert (place.country_code, place.airports[0]) == (country, first)
+
+
+# ── G1–G7: whole-name airports, all countries, readings, affixes ─────────
+
+
+@pytest.mark.parametrize(
+    ("text", "bad"),
+    [
+        ("Kota", "BKI"),  # not Kota Kinabalu: whole airport names only
+        ("Beni", "BEM"),  # not Beni Mellal, Morocco
+        ("Kurchatov", "CEK"),
+        ("Cape", "CPT"),
+        ("Fort", "FLL"),
+        ("Lake", "HII"),
+    ],
+)
+def test_g1_airport_name_prefixes_are_not_candidates(text, bad):
+    place = resolve_place(text)
+    assert place is None or bad not in place.airports, place
+
+
+def test_g1_kota_is_kota_rajasthan():
+    place = resolve_place("Kota")
+    assert place.country_code == "IN" and place.population > 500_000
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Andorra", {"LEU", "BCN", "TLS"}),
+        ("Monaco", {"NCE"}),
+        ("Monte Carlo", {"NCE"}),
+        ("Liechtenstein", {"ZRH"}),
+        ("San Marino", {"RMI", "BLQ"}),
+        ("Vatican", {"FCO"}),
+    ],
+)
+def test_g2_countries_without_an_airport(text, first):
+    place = resolve_place(text)
+    assert place is not None and place.airports[0] in first, place
+
+
+def test_g2_country_list_is_complete():
+    assert places_db.stated_countries("andorra") == {"AD"}
+    assert places_db.stated_countries("liechtenstein") == {"LI"}
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [("Ontario, CA", "US"), ("Mumbai, MH", "IN"), ("Panaji, Goa", "IN")],
+)
+def test_g3_qualifier_readings(text, country):
+    assert resolve_place(text).country_code == country
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Saint Thomas", "STT"),  # St/Saint variants reach the hint again
+        ("Zanzibar Island", "ZNZ"),
+        ("Banff National Park", "YYC"),
+        ("Isla de Margarita", "PMV"),
+        ("Nosy Be Island", "NOS"),
+        ("Tokyo city", "HND"),
+        ("Mandalay city", "MDL"),
+    ],
+)
+def test_g4_generic_affixes(text, first):
+    assert resolve_place(text).airports[0] == first
+
+
+def test_g4_saint_john_stays_new_brunswick():
+    assert resolve_place("Saint John").country_code == "CA"
+
+
+def test_g4_hints_live_in_a_data_file():
+    import json
+
+    from app.core import places
+
+    data = json.loads(places._HINTS_FILE.read_text(encoding="utf-8"))
+    assert {"islands", "destinations", "regions", "exonyms", "city_aliases",
+            "country_aliases", "saint_exceptions"} <= set(data)  # fmt: skip
+    for table in ("islands", "destinations", "regions"):
+        for name, (country, codes) in data[table].items():
+            assert name == places.fold_place(name) and len(country) == 2 and codes
+    assert places.EXONYMS["canton"] == "ambiguous"  # Guangzhou via "Canton, China"
+    assert resolve_place("Canton, China").country_code == "CN"
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [
+        ("Berlin Germany", "DE"),
+        ("Chicago IL", "US"),
+        ("Sydney Nova Scotia", "CA"),
+        ("Portland Maine", "US"),
+        ("Helsinki Finland", "FI"),
+        ("Goa India", "IN"),
+    ],
+)
+def test_g6_no_comma_qualifiers(text, country):
+    assert resolve_place(text).country_code == country
+
+
+def test_g6_real_names_with_country_words_are_untouched():
+    assert resolve_place("Panama City").country_code == "PA"
+    assert resolve_place("Mexico City").country_code == "MX"

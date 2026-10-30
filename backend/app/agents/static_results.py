@@ -1344,7 +1344,13 @@ _REGION_COUNTRY: dict[str, str] = {
     **{name: "usa" for name in _US_STATES.values()},
     # Full US / Canadian / Australian / Brazilian state and province names
     **{
-        name: {"US": "usa", "CA": "canada", "AU": "australia", "BR": "brazil"}[cc]
+        name: {
+            "US": "usa",
+            "CA": "canada",
+            "AU": "australia",
+            "BR": "brazil",
+            "IN": "india",
+        }[cc]
         for name, (_, cc) in _REGION_NAMES.items()
     },
     "us": "usa",

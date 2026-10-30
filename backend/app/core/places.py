@@ -1,7 +1,9 @@
 """Place-name reference data shared by the airports DB and the static tables."""
 
+import json
 import re
 import unicodedata
+from pathlib import Path
 
 # US state code → state name
 _US_STATES = {
@@ -22,6 +24,21 @@ _US_STATES = {
 }  # fmt: skip
 
 _CANADIAN_PROVINCES = "ab bc mb nb nl ns nt nu on pe qc sk yt".split()
+# Indian states and union territories (ISO 3166-2:IN) → GeoNames admin1 name
+_INDIAN_STATES = {
+    "an": "andaman and nicobar", "ap": "andhra pradesh",
+    "ar": "arunachal pradesh", "as": "assam", "br": "bihar", "ch": "chandigarh",
+    "ct": "chhattisgarh", "cg": "chhattisgarh",
+    "dh": "dadra and nagar haveli and daman and diu", "dl": "delhi",
+    "ga": "goa", "gj": "gujarat", "hp": "himachal pradesh", "hr": "haryana",
+    "jh": "jharkhand", "jk": "jammu and kashmir", "ka": "karnataka",
+    "kl": "kerala", "la": "ladakh", "ld": "lakshadweep", "mh": "maharashtra",
+    "ml": "meghalaya", "mn": "manipur", "mp": "madhya pradesh", "mz": "mizoram",
+    "nl": "nagaland", "od": "odisha", "pb": "punjab", "py": "puducherry",
+    "rj": "rajasthan", "sk": "sikkim", "tg": "telangana", "ts": "telangana",
+    "tn": "tamil nadu", "tr": "tripura", "up": "uttar pradesh",
+    "ut": "uttarakhand", "wb": "west bengal",
+}  # fmt: skip
 _AUSTRALIAN_STATES = "wa sa nt nsw vic qld tas act".split()
 _BRAZILIAN_STATES = (
     "ac al ap am ba ce df es go ma mt ms mg pa pb pr pe pi rj rn rs ro rr sc sp se to"
@@ -35,6 +52,7 @@ def _region_codes() -> dict[str, frozenset[str]]:
         ("CA", _CANADIAN_PROVINCES),
         ("AU", _AUSTRALIAN_STATES),
         ("BR", _BRAZILIAN_STATES),
+        ("IN", _INDIAN_STATES),
     ):
         for code in codes:
             table.setdefault(code, set()).add(country)
@@ -67,6 +85,7 @@ _REGION_NAMES: dict[str, tuple[str, str]] = {
     "rio grande do sul": ("rs", "BR"), "rondonia": ("ro", "BR"),
     "roraima": ("rr", "BR"), "santa catarina": ("sc", "BR"),
     "sao paulo": ("sp", "BR"), "sergipe": ("se", "BR"), "tocantins": ("to", "BR"),
+    **{name: (code, "IN") for code, name in _INDIAN_STATES.items()},
 }  # fmt: skip
 
 
@@ -137,302 +156,49 @@ def saint_variants(folded: str) -> set[str]:
     return {folded}
 
 
+# ── Curated hints, aliases and exonyms: backend/app/db/data/hints.json ────
+# (loaded once; folded keys; see its "_about" entry and the schema test).
+_HINTS_FILE = Path(__file__).resolve().parents[1] / "db" / "data" / "hints.json"
+
+
+def _load_hints() -> dict:
+    with open(_HINTS_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+_HINTS = _load_hints()
+
+
+def _airport_table(name: str) -> dict[str, tuple[str, tuple[str, ...]]]:
+    return {k: (v[0], tuple(v[1])) for k, v in _HINTS[name].items()}
+
+
 # Other spellings of a city (folded) → the city's name in the airports seed.
-CITY_ALIASES: dict[str, str] = {
-    "washington": "Washington D.C.",
-    "washington dc": "Washington D.C.",
-    "washington d c": "Washington D.C.",
-    "washington d.c.": "Washington D.C.",
-    "washington d.c": "Washington D.C.",
-    "dc": "Washington D.C.",
-    "new york city": "New York",
-    "nyc": "New York",
-    "saigon": "Ho Chi Minh City",
-    "bombay": "Mumbai",
-    "rio": "Rio de Janeiro",
-    "sf": "San Francisco",
-    "la": "Los Angeles",
-    "kl": "Kuala Lumpur",
-    "hcmc": "Ho Chi Minh City",
-    "nola": "New Orleans",
-    "twin cities": "Minneapolis",
-    "fez": "Fes",
-    "venezia": "Venice",
-}
-
-
-# Other names people type for a country (folded) → ISO alpha-2 code. The one
-# alias map for the airports DB and the static reference tables; official
-# names come from the dataset (airports) and the tables themselves.
-COUNTRY_ALIASES: dict[str, str] = {
-    "uk": "GB", "united kingdom": "GB", "britain": "GB", "great britain": "GB",
-    "england": "GB", "scotland": "GB", "wales": "GB", "northern ireland": "GB",
-    "usa": "US", "america": "US", "united states": "US",
-    "united states of america": "US", "uae": "AE",
-    "united arab emirates": "AE", "holland": "NL", "the netherlands": "NL",
-    "korea": "KR", "south korea": "KR", "republic of korea": "KR",
-    "czechia": "CZ", "czech republic": "CZ", "turkiye": "TR",
-    "burma": "MM", "ivory coast": "CI", "swaziland": "SZ",
-    "macedonia": "MK", "east timor": "TL", "cabo verde": "CV",
-    "russian federation": "RU", "viet nam": "VN", "the bahamas": "BS",
-    "the gambia": "GM", "republic of ireland": "IE", "dr congo": "CD",
-    "drc": "CD",
-    # short forms of Saint countries (St / St. spellings come from
-    # saint_variants)
-    "saint kitts": "KN", "saint barts": "BL", "saint barths": "BL",
-    "saint maarten": "SX", "saint vincent": "VC",
-    "antigua": "AG", "turks and caicos": "TC", "ceylon": "LK",
-}  # fmt: skip
-
-
-# Tourist islands and island groups (folded name) → (ISO country, their
-# scheduled airports, best first). Checked before place resolution: the
-# island is not a town, or a namesake town would win ("Bali" → Bari).
-ISLAND_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
-    "crete": ("GR", ("HER", "CHQ")),
-    "santorini": ("GR", ("JTR",)),
-    "rhodes": ("GR", ("RHO",)),
-    "corfu": ("GR", ("CFU",)),
-    "kos": ("GR", ("KGS",)),
-    "zakynthos": ("GR", ("ZTH",)),
-    "zante": ("GR", ("ZTH",)),
-    "kefalonia": ("GR", ("EFL",)),
-    "cephalonia": ("GR", ("EFL",)),
-    "sicily": ("IT", ("CTA", "PMO", "TPS")),
-    "sardinia": ("IT", ("CAG", "OLB", "AHO")),
-    "corsica": ("FR", ("AJA", "BIA", "FSC")),
-    "mallorca": ("ES", ("PMI",)),
-    "majorca": ("ES", ("PMI",)),
-    "menorca": ("ES", ("MAH",)),
-    "minorca": ("ES", ("MAH",)),
-    "tenerife": ("ES", ("TFS", "TFN")),
-    "gran canaria": ("ES", ("LPA",)),
-    "lanzarote": ("ES", ("ACE",)),
-    "fuerteventura": ("ES", ("FUE",)),
-    "madeira": ("PT", ("FNC",)),
-    "azores": ("PT", ("PDL", "TER")),
-    "maui": ("US", ("OGG",)),
-    "oahu": ("US", ("HNL",)),
-    "big island": ("US", ("KOA", "ITO")),
-    "kauai": ("US", ("LIH",)),
-    "galapagos": ("EC", ("GPS", "SCY")),
-    "galapagos islands": ("EC", ("GPS", "SCY")),
-    "bali": ("ID", ("DPS",)),
-    "lombok": ("ID", ("LOP",)),
-    "zanzibar": ("TZ", ("ZNZ",)),
-    "bora bora": ("PF", ("BOB",)),
-    "tahiti": ("PF", ("PPT",)),
-    "moorea": ("PF", ("MOZ", "PPT")),
-    "langkawi": ("MY", ("LGK",)),
-    "penang": ("MY", ("PEN",)),
-    "koh samui": ("TH", ("USM",)),
-    "ko samui": ("TH", ("USM",)),
-    "koh phangan": ("TH", ("USM",)),
-    "koh tao": ("TH", ("USM",)),
-    "phi phi": ("TH", ("HKT", "KBV")),
-    "boracay": ("PH", ("MPH", "KLO")),
-    "palawan": ("PH", ("PPS",)),
-    "jeju": ("KR", ("CJU",)),
-    "jeju island": ("KR", ("CJU",)),
-    "okinawa": ("JP", ("OKA",)),
-    "easter island": ("CL", ("IPC",)),
-    "isle of skye": ("GB", ("INV",)),
-    "whitsundays": ("AU", ("PPP", "HTI")),
-    "elba": ("IT", ("EBA", "PSA", "FLR")),
-    "gozo": ("MT", ("MLA",)),
-    "formentera": ("ES", ("IBZ",)),
-    "siargao": ("PH", ("IAO",)),
-    "koh lanta": ("TH", ("KBV",)),
-    "ko lanta": ("TH", ("KBV",)),
-    "nusa penida": ("ID", ("DPS",)),
-    "gili islands": ("ID", ("LOP", "DPS")),
-    "gili": ("ID", ("LOP", "DPS")),
-    "marthas vineyard": ("US", ("MVY",)),
-    "st barts": ("BL", ("SBH",)),
-    "saint barts": ("BL", ("SBH",)),
-    "st kitts": ("KN", ("SKB",)),
-    "saint kitts": ("KN", ("SKB",)),
-    "sylt": ("DE", ("GWT",)),
-    "st thomas": ("VI", ("STT",)),
-    "st john": ("VI", ("STT",)),
-    "st croix": ("VI", ("STX",)),
-    "saint croix": ("VI", ("STX",)),
-    "praslin": ("SC", ("PRI", "SEZ")),
-    "nosy be": ("MG", ("NOS",)),
-    "isla margarita": ("VE", ("PMV",)),
-    "margarita island": ("VE", ("PMV",)),
-    "fernando de noronha": ("BR", ("FEN",)),
-    "porto santo": ("PT", ("PXO",)),
-    "terceira": ("PT", ("TER",)),
-    "lesbos": ("GR", ("MJT",)),
-    "lesvos": ("GR", ("MJT",)),
-    "bornholm": ("DK", ("RNN",)),
-    "shetland": ("GB", ("LSI",)),
-    "shetland islands": ("GB", ("LSI",)),
-    "grand cayman": ("KY", ("GCM",)),
-    "eleuthera": ("BS", ("ELH",)),
-    "nevis": ("KN", ("NEV", "SKB")),
-    "tortola": ("VG", ("EIS",)),
-    "ambergris caye": ("BZ", ("SPR",)),
-    "lanai": ("US", ("LNY",)),
-    "kangaroo island": ("AU", ("KGC",)),
-    "turks and caicos": ("TC", ("PLS", "GDT")),
-    "providenciales": ("TC", ("PLS",)),
-    "vieques": ("PR", ("VQS",)),
-    "saba": ("BQ", ("SAB",)),
-    "tanna": ("VU", ("TAH",)),
-    "wallis": ("WF", ("WLS",)),
-    "wallis and futuna": ("WF", ("WLS",)),
-    "aland": ("FI", ("MHQ",)),
-    "aland islands": ("FI", ("MHQ",)),
-    "orkney": ("GB", ("KOI",)),
-    "orkney islands": ("GB", ("KOI",)),
-    "java": ("ID", ("CGK", "SUB", "YIA")),
-    "ilha grande": ("BR", ("GIG",)),
-    "el hierro": ("ES", ("VDE",)),
-    "la palma": ("ES", ("SPC",)),
-    "la gomera": ("ES", ("GMZ",)),
-}
-
-# Landmarks, parks and resorts (folded name) → (ISO country, the scheduled
-# airports travellers use, best first): the name is not a large town, or a
-# namesake elsewhere would win, or the nearest airport is not the usual one.
-DESTINATION_AIRPORTS: dict[str, tuple[str, tuple[str, ...]]] = {
-    "machu picchu": ("PE", ("CUZ",)),
-    "petra": ("JO", ("AQJ", "AMM")),
-    "uluru": ("AU", ("AYQ",)),
-    "ayers rock": ("AU", ("AYQ",)),
-    "yosemite": ("US", ("FAT",)),
-    "yosemite national park": ("US", ("FAT",)),
-    "grand canyon": ("US", ("FLG", "LAS", "PHX")),
-    "yellowstone": ("US", ("JAC", "BZN", "WYS")),
-    "zion": ("US", ("SGU", "LAS")),
-    "zion national park": ("US", ("SGU", "LAS")),
-    "lake tahoe": ("US", ("RNO",)),
-    "key west": ("US", ("EYW",)),
-    "chamonix": ("FR", ("GVA",)),
-    "zermatt": ("CH", ("ZRH", "GVA")),
-    "interlaken": ("CH", ("ZRH", "BRN", "GVA")),
-    "hallstatt": ("AT", ("SZG", "LNZ")),
-    "banff": ("CA", ("YYC",)),
-    "lake louise": ("CA", ("YYC",)),
-    "jasper": ("CA", ("YEG",)),
-    "whistler": ("CA", ("YVR",)),
-    "manali": ("IN", ("KUU",)),
-    "taj mahal": ("IN", ("AGR", "DEL")),
-    "kyoto": ("JP", ("KIX", "ITM")),
-    "goa": ("IN", ("GOI", "GOX")),
-    "queenstown": ("NZ", ("ZQN",)),
-    "leon": ("MX", ("BJX",)),
-    "angkor wat": ("KH", ("SAI",)),
-    "angkor": ("KH", ("SAI",)),
-    "ha long bay": ("VN", ("HPH", "HAN")),
-    "halong bay": ("VN", ("HPH", "HAN")),
-    "bagan": ("MM", ("NYU",)),
-    "everest base camp": ("NP", ("LUA", "KTM")),
-    "serengeti": ("TZ", ("JRO",)),
-    "masai mara": ("KE", ("NBO",)),
-    "maasai mara": ("KE", ("NBO",)),
-    "kruger national park": ("ZA", ("MQP",)),
-    "amalfi": ("IT", ("NAP",)),
-    "positano": ("IT", ("NAP",)),
-    "capri": ("IT", ("NAP",)),
-    "cappadocia": ("TR", ("NAV", "ASR")),
-    "pamukkale": ("TR", ("DNZ",)),
-    "iguazu falls": ("AR", ("IGR", "IGU")),
-    "torres del paine": ("CL", ("PNT", "PUQ")),
-    "giza": ("EG", ("SPX", "CAI")),
-    "pyramids of giza": ("EG", ("SPX", "CAI")),
-    "mahe": ("SC", ("SEZ",)),
-    "bariloche": ("AR", ("BRC",)),
-    "khajuraho": ("IN", ("HJR",)),
-    "jackson hole": ("US", ("JAC",)),
-    "los cabos": ("MX", ("SJD",)),
-    "cabo san lucas": ("MX", ("SJD",)),
-    "st moritz": ("CH", ("ZRH", "LUG")),
-    "saint moritz": ("CH", ("ZRH", "LUG")),
-    "davos": ("CH", ("ZRH", "ACH")),
-    "park city": ("US", ("SLC",)),
-    "lucerne": ("CH", ("ZRH",)),
-    "luzern": ("CH", ("ZRH",)),
-    "kona": ("US", ("KOA",)),
-    "sun valley": ("US", ("SUN",)),
-    "huatulco": ("MX", ("HUX",)),
-    "jiuzhaigou": ("CN", ("JZH",)),
-    "alula": ("SA", ("ULH",)),
-    "al ula": ("SA", ("ULH",)),
-    "morzine": ("FR", ("GVA",)),
-    "vail": ("US", ("EGE",)),
-    "monteverde": ("CR", ("LIR", "SJO")),
-    "copper canyon": ("MX", ("CUU",)),
-    "mount rainier": ("US", ("SEA",)),
-    "cabo": ("MX", ("SJD",)),
-    "ixtapa": ("MX", ("ZIH",)),
-    "sapa": ("VN", ("HAN", "DIN")),
-    "sa pa": ("VN", ("HAN", "DIN")),
-    "placencia": ("BZ", ("PLJ",)),
-    "samana": ("DO", ("AZS",)),
-    "knock": ("IE", ("NOC",)),
-}
-
-# Regions that are not first-level divisions (counties, coasts, mountain
-# ranges, wine country) → (ISO country, the airports travellers use).
-REGION_HINTS: dict[str, tuple[str, tuple[str, ...]]] = {
-    "yorkshire": ("GB", ("LBA",)),
-    "cornwall": ("GB", ("NQY",)),
-    "black forest": ("DE", ("FKB", "STR", "BSL")),
-    "lake district": ("GB", ("MAN",)),
-    "cotswolds": ("GB", ("BRS", "BHX")),
-    "provence": ("FR", ("MRS",)),
-    "french riviera": ("FR", ("NCE",)),
-    "cote dazur": ("FR", ("NCE",)),
-    "amalfi coast": ("IT", ("NAP",)),
-    "cinque terre": ("IT", ("PSA", "GOA")),
-    "algarve": ("PT", ("FAO",)),
-    "costa del sol": ("ES", ("AGP",)),
-    "lake como": ("IT", ("MXP", "BGY", "LIN")),
-    "dolomites": ("IT", ("VCE", "INN")),
-    "scottish highlands": ("GB", ("INV",)),
-    "napa": ("US", ("SFO", "OAK")),
-    "napa valley": ("US", ("SFO", "OAK")),
-    "kyushu": ("JP", ("FUK",)),
-}
-
-# Exonyms and other spellings (folded) whose own-name namesakes would win
-# (alternate names count only when no place has the name as its own) →
-# the GeoNames place id they mean, or "ambiguous". Each id is checked
-# against the seeded data by tests/test_place_resolution.py.
-EXONYMS: dict[str, int | str] = {
-    "cologne": 2886242, "bruges": 2800931, "mecca": 104515, "medina": 109223,
-    "gerona": 3121456, "londonderry": 2643736, "ghent": 2797656,
-    "leghorn": 3174659, "saragossa": 3104324, "la coruna": 3119841,
-    "lisboa": 2267057, "cracow": 3094802, "praha": 3067696, "wien": 2761369,
-    "kobenhavn": 2618425, "bruxelles": 2800866, "basle": 2661604,
-    "geneve": 2660646, "peking": 1816670, "calcutta": 1275004,
-    "madras": 1264527, "bangalore": 1277333, "poona": 1259229,
-    "benares": 1253405, "rangoon": 1298824, "nanking": 1799962,
-    "danzig": 3099434, "breslau": 3081368, "konigsberg": 554234,
-    "leningrad": 498817, "constantinople": 745044, "salonica": 734077,
-    "thessalonica": 734077, "nara": 1855612, "teheran": 112931,
-    "katmandu": 1283240, "kiev": 703448, "lvov": 702550, "lemberg": 702550,
-    "kharkov": 706483, "archangel": 581049, "tiflis": 611717,
-    "alma ata": 1526384, "frunze": 1528675, "jogja": 1621177,
-    "jogjakarta": 1621177, "djakarta": 1642911, "hualien": 1674504,
-    "turkmenbashi": 601594, "zihuatanejo": 3979673, "munchen": 2867714,
-    "seville": 2510911, "firenze": 3176959, "napoli": 3172394,
-    "torino": 3165524, "roma": 3169070, "milano": 3173435,
-    "venezia": 3164603, "nurnberg": 2861650, "pressburg": 3060972,
-    "fiume": 3191648, "marseilles": 2995469, "lyons": 2996944,
-    "aix": 3038354, "louvain": 2792482, "malines": 2791537,
-    "belgrad": 792680, "bucuresti": 683506, "sofiya": 727011,
-    "ismir": 311046, "quebec city": 6325494, "port elizabeth": 964420,
-    "genova": 3176219, "baroda": 1253573, "sion": 2658576, "dalat": 1584071,
-    "sudbury": 5964700,
-    "odessa": "ambiguous", "smyrna": "ambiguous", "canton": 1809858,
-}  # fmt: skip
+CITY_ALIASES: dict[str, str] = dict(_HINTS["city_aliases"])
+# Other names people type for a country (folded) → ISO alpha-2 code: the one
+# alias map for the airports DB and the static reference tables.
+COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["country_aliases"])
+# Tourist islands and island groups → (ISO country, scheduled airports).
+ISLAND_AIRPORTS = _airport_table("islands")
+# Landmarks, parks, resorts and airportless countries → (country, airports).
+DESTINATION_AIRPORTS = _airport_table("destinations")
+# Regions that are not first-level divisions → (country, airports).
+REGION_HINTS = _airport_table("regions")
+# Exonyms whose own-name namesakes would win → GeoNames place id or
+# "ambiguous" (each id is checked against the seeded data by a test).
+EXONYMS: dict[str, int | str] = dict(_HINTS["exonyms"])
+# Names whose St / Saint variants must not borrow a hint ("Saint John", New
+# Brunswick, is not St John, USVI).
+SAINT_EXCEPTIONS: frozenset[str] = frozenset(_HINTS["saint_exceptions"])
 
 
 # ── Airports a place owns (shared by the data generator and the runtime) ──
+
+# Words an airport name adds to the place it names ("La Palma Airport"): the
+# one list for the generator's name-derived display and runtime name matches.
+AIRPORT_NAME_WORDS = frozenset(
+    {"airport", "international", "regional", "aerodrome", "airfield"}
+)
 
 # Words that alone never identify a place inside an airport name.
 GENERIC_PLACE_WORDS = frozenset(

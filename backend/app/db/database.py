@@ -384,6 +384,17 @@ def lookup_city_iata(city: str, max_codes: int = 3) -> str | None:
     stripped = city.strip()
     if code_first(stripped):
         return _current_code(stripped)
+    from .places_db import names_something_as_typed, no_comma_readings
+
+    readings = no_comma_readings(stripped)
+    if readings and not _curated_city_named(stripped):
+        if not names_something_as_typed(stripped):
+            # "Chicago IL", "Berlin Germany": read as "City, Qualifier" so
+            # the curated tier and the qualifier apply
+            for reading in readings:
+                found = _lookup_place(reading, max_codes)
+                if found:
+                    return found
     found = _lookup_place(stripped, max_codes)
     if found is None and re.fullmatch(r"[A-Za-z]{3}", stripped):
         if not _is_country_name(stripped) and _is_scheduled_code(stripped.upper()):
@@ -402,6 +413,11 @@ def _is_scheduled_code(code: str) -> bool:
     except sqlite3.Error:
         return False
     return row is not None
+
+
+def _curated_city_named(text: str) -> bool:
+    """A curated served city has exactly this (folded) name."""
+    return fold_place(text) in _curated_city_countries()
 
 
 def _current_code(code: str) -> str:
@@ -645,6 +661,7 @@ def _autocomplete_places(
     whole ("milano"). Only places scoring ≥ 1/10 of the best match count
     ("milan": not Milan, Michigan)."""
     from ..core.places import DESTINATION_AIRPORTS, ISLAND_AIRPORTS, REGION_HINTS
+    from .places_db import SMALL_PLACE_POPULATION
 
     linked: dict[str, tuple] = {}
     name_score: dict[str, float] = {}
@@ -681,20 +698,35 @@ def _autocomplete_places(
         "OR (n.tier = 1 AND n.name_folded = :q AND length(:q) >= 4) "
         "OR (n.tier = 1 AND length(:q) >= 4 AND p.population >= 100000"
         " AND n.name_folded >= :q AND n.name_folded < :end)) "
-        "ORDER BY p.score DESC LIMIT :n",
+        # own names of real towns first, then by score (alternates of big
+        # places before villages: "münch" reaches München)
+        "ORDER BY (n.tier = 0 AND p.population >= :small) DESC, p.score DESC "
+        "LIMIT :n",
         {
             "q": folded,
             "end": end,
             "n": _AUTOCOMPLETE_PLACES,
             "short": _SHORT_QUERY,
             "big": _SHORT_QUERY_MIN_POPULATION,
+            "small": SMALL_PLACE_POPULATION,
         },
     ).fetchall()
     scored = [
         (r["score"] * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0), r) for r in rows
     ]  # alternates rank far below own names (Syracuse's stray "milan")
-    best = max((sc for sc, _ in scored), default=0)
+    # the share threshold counts own names of real towns when there are any
+    # ("kota": Kota, Rajasthan, not Malay "Kota …" alternates of megacities);
+    # villages alone don't set it ("cologne": Köln, not Cologne, Minnesota)
+    own = [
+        sc
+        for sc, r in scored
+        if not r["tier"] and r["population"] >= SMALL_PLACE_POPULATION
+    ]
+    best = max(own or [sc for sc, _ in scored], default=0)
+    best_own = max(own, default=0)
     for sc, r in scored:
+        if r["tier"] and r["name_folded"] != folded and sc < best_own:
+            continue  # an alternate prefix must beat every own-name match
         if hint_country and r["country_code"] != hint_country:
             continue
         if sc * _AUTOCOMPLETE_MIN_SHARE >= best:
@@ -703,7 +735,7 @@ def _autocomplete_places(
                 r["airports"].split(),
                 sc,
                 r["country_code"],
-                small=r["population"] < 15_000,
+                small=r["population"] < SMALL_PLACE_POPULATION,
             )
     return linked, name_score
 

@@ -56,6 +56,9 @@ configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
 async def lifespan(app: FastAPI):
     await restore_from_gcs(_settings.backup_bucket, _settings.data_dir)
     seed_airports()
+    from .db.places_db import warm as warm_place_index
+
+    warm_place_index()  # airport-name index, built once from the seeded DB
     seed_nationalities()
     create_tables()
     create_plans_table()

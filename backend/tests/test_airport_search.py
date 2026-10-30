@@ -134,3 +134,17 @@ def test_r7_prefix_matches_prefer_big_airports(q, code, within):
 def test_r7_no_padding_below_relevance():
     # nothing that only contains the text when real prefix matches exist
     assert "PHX" not in _codes("sky")
+
+
+@pytest.mark.parametrize(
+    ("q", "want"),
+    [
+        ("kota", {"JAI", "KQH", "KBR", "BKI"}),
+        ("ciud", {"CJS", "PZO", "AGT", "CVM", "MEX", "CEN"}),
+        ("vila", {"VIX", "VNX", "VRL", "FEN", "OPO", "MMO"}),
+        ("sant", {"SCL", "SDQ", "VVI", "JTR", "QRO", "JBQ", "SDU"}),
+    ],
+)
+def test_g5_four_letter_prefixes_are_own_names(q, want):
+    codes = _codes(q)
+    assert codes and set(codes[:4]) <= want, codes

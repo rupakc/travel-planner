@@ -1227,3 +1227,22 @@ def test_air_force_bases_never_link_with_a_civil_airport_in_fallback_range(tmp_p
     r = _build(tmp_path, airports, [_city(1, "Cape May", _LAT, _LNG, 3_000)])
     assert _links(r, 1) == ["ACY"]
     assert _gen().is_military("dover afb")
+
+
+def test_outputs_include_every_country(tmp_path):
+    # countries with no airport (Andorra) are known to the resolver too
+    gen = _gen()
+    (oa, cities, admin1), curated = _sample_sources(tmp_path)
+    out = tmp_path / "out"
+    gen.write_outputs(gen.build(oa, cities, admin1, curated), out)
+    with open(out / "countries.csv", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert list(rows[0]) == ["code", "name"]
+    assert {r["code"] for r in rows} == {"XA", "XB"}
+
+
+def test_committed_country_list_has_airportless_countries():
+    path = _BACKEND / "app" / "db" / "data" / "countries.csv"
+    with open(path, encoding="utf-8", newline="") as f:
+        codes = {r["code"] for r in csv.DictReader(f)}
+    assert {"AD", "LI", "SM", "VA", "MC"} <= codes

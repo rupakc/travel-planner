@@ -8,7 +8,8 @@ The source files are untrusted data: they are only parsed as CSV / text.
         --ourairports DIR --geonames-cities FILE --geonames-admin1 FILE \\
         --out backend/app/db/data > conflicts.txt
 
-Outputs ``airports.csv``, ``places.csv.gz`` and ``admin1.csv`` in ``--out``;
+Outputs ``airports.csv``, ``places.csv.gz``, ``admin1.csv`` and
+``countries.csv`` in ``--out``;
 the conflict report goes to stdout. See ``backend/app/db/data/README.md``.
 """
 
@@ -32,6 +33,7 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 from app.core.places import (  # noqa: E402
+    AIRPORT_NAME_WORDS,
     NEVER_LINK,
     fold_place,
     is_own_airport,
@@ -69,7 +71,6 @@ _MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station|af
 # Bases (not stations) never link when any civil airport is in fallback range
 _AIR_BASE_RE = re.compile(r"\b(air ?base|air force base|afb)\b")
 _ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
-_AIRPORT_WORDS = frozenset({"airport", "international", "aerodrome", "airfield"})
 
 ALT_NAMES_MIN_POPULATION = 15_000
 ALT_NAME_MAX_LEN = 40
@@ -77,6 +78,7 @@ ALT_NAME_MAX_LEN = 40
 _EARTH_RADIUS_KM = 6371.0088
 _KM_PER_DEG_LAT = 110.5  # a little under the true minimum, so cells over-cover
 
+COUNTRY_COLUMNS = ["code", "name"]
 AIRPORT_COLUMNS = [
     "iata",
     "icao",
@@ -419,7 +421,7 @@ def display_name(name: str, ascii_name: str = "") -> str:
 
 def airport_name_city(name: str) -> str:
     """Last-resort display city: the airport name without generic words."""
-    words = [w for w in name.split() if w.lower() not in _AIRPORT_WORDS]
+    words = [w for w in name.split() if w.lower() not in AIRPORT_NAME_WORDS]
     return " ".join(words) or name.strip()
 
 
@@ -475,6 +477,7 @@ class BuildResult:
     airports: dict[str, dict] = field(default_factory=dict)
     places: dict[str, dict] = field(default_factory=dict)
     admin1: list[tuple[str, str, str]] = field(default_factory=list)
+    countries: list[tuple[str, str]] = field(default_factory=list)
     report: list[str] = field(default_factory=list)
 
 
@@ -569,6 +572,8 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
     oa_countries = {
         r["code"]: r["name"] for r in _read_csv(oa_dir / "countries.csv") if r["code"]
     }
+    # every country, airport or not (Andorra, Liechtenstein, San Marino)
+    result.countries = sorted(oa_countries.items())
     oa_by_iata = {
         r["iata_code"].strip(): r
         for r in _read_csv(oa_dir / "airports.csv")
@@ -867,6 +872,8 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
             gz.write(places.encode("utf-8"))
     admin1 = _csv_text(ADMIN1_COLUMNS, result.admin1)
     (out_dir / "admin1.csv").write_bytes(admin1.encode("utf-8"))
+    countries = _csv_text(COUNTRY_COLUMNS, result.countries)
+    (out_dir / "countries.csv").write_bytes(countries.encode("utf-8"))
 
 
 def _summary(result: BuildResult, seconds: float) -> list[str]:
