@@ -1,5 +1,5 @@
 {
- "_about": "Curated place hints, loaded once by app/core/places.py. Keys are folded names (core.places.fold_place). islands / destinations / regions: name -> [ISO country, [scheduled IATA codes, best first]]. exonyms: name -> GeoNames place id or \"ambiguous\". city_aliases: name -> the curated city it stands for. country_aliases: name -> ISO code. saint_exceptions: names whose St/Saint variants must not borrow a hint.",
+ "_about": "Curated place hints, loaded once by app/core/places.py. Keys are folded names (core.places.fold_place). islands / destinations / regions: name -> [ISO country, [scheduled IATA codes, best first]]. exonyms: name -> GeoNames place id or \"ambiguous\". city_aliases: name -> the curated city it stands for. country_aliases: name -> ISO code. qualifier_country_aliases: name -> ISO code, recognised only as a qualifier (\"Riyadh, KSA\"), because each is also a scheduled airport code typed alone (KSA Kosrae, PRC Prescott, ROK Rockhampton, ROC Rochester). saint_exceptions: names whose St/Saint variants must not borrow a hint.",
  "city_aliases": {
   "washington": "Washington D.C.",
   "washington dc": "Washington D.C.",
@@ -64,7 +64,14 @@
   "saint vincent": "VC",
   "antigua": "AG",
   "turks and caicos": "TC",
-  "ceylon": "LK"
+  "ceylon": "LK",
+  "dprk": "KP"
+ },
+ "qualifier_country_aliases": {
+  "ksa": "SA",
+  "prc": "CN",
+  "rok": "KR",
+  "roc": "TW"
  },
  "islands": {
   "crete": [

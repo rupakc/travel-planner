@@ -881,6 +881,7 @@ def test_output_file_format(tmp_path):
         "airports",
         "alt_names",
         "ascii",
+        "satellite",
     ]
     big = places[0]
     assert big["airports"] == "AAA BBB"  # curated counts only among named
@@ -919,12 +920,19 @@ def _top_score(name, cc, admin1=None):
     return max(int(p["score"]) for p in _places(name, cc, admin1))
 
 
+_COMMITTED_FILES = (
+    "airports.csv",
+    "places.csv.gz",
+    "admin1.csv",
+    "countries.csv",
+    "features.csv.gz",
+)
+
+
 def test_committed_data_size_within_budget():
-    total = sum(
-        (_DATA / f).stat().st_size
-        for f in ("airports.csv", "places.csv.gz", "admin1.csv")
-    )
-    assert total <= 8 * 1024 * 1024
+    total = sum((_DATA / f).stat().st_size for f in _COMMITTED_FILES)
+    assert total <= 9 * 1024 * 1024
+    assert (_DATA / "features.csv.gz").stat().st_size <= 3 * 1024 * 1024
 
 
 @pytest.mark.parametrize(
@@ -1237,7 +1245,7 @@ def test_outputs_include_every_country(tmp_path):
     gen.write_outputs(gen.build(oa, cities, admin1, curated), out)
     with open(out / "countries.csv", encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
-    assert list(rows[0]) == ["code", "name"]
+    assert list(rows[0]) == ["code", "name", "names"]
     assert {r["code"] for r in rows} == {"XA", "XB"}
 
 
@@ -1246,3 +1254,252 @@ def test_committed_country_list_has_airportless_countries():
     with open(path, encoding="utf-8", newline="") as f:
         codes = {r["code"] for r in csv.DictReader(f)}
     assert {"AD", "LI", "SM", "VA", "MC"} <= codes
+
+
+# ── allCountries: country names, satellites, non-town features ─────────────
+
+
+def _geo(
+    gid, name, lat, lng, fcode, cc="XA", alts="", fclass="T", pop=0, ascii_name=None
+):
+    """One GeoNames allCountries row (same 19 columns as cities1000)."""
+    return [
+        str(gid), name, ascii_name or name, alts, str(lat), str(lng), fclass,
+        fcode, cc, "", "01", "", "", "", str(pop), "", "10", "Etc/UTC",
+        "2026-01-01",
+    ]  # fmt: skip
+
+
+def _all_file(tmp_path, rows, name="allCountries.txt"):
+    path = tmp_path / name
+    path.write_text("".join("\t".join(r) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def _build_all(tmp_path, airports, cities, all_rows, curated=(), **kw):
+    oa, cities_path, admin1_path = _write_sources(tmp_path, airports, cities, **kw)
+    all_path = _all_file(tmp_path, all_rows)
+    return _gen().build(oa, cities_path, admin1_path, list(curated), all_path)
+
+
+def _alts(n, stem="Alt"):
+    return ",".join(f"{stem}{chr(97 + i // 26)}{chr(97 + i % 26)}" for i in range(n))
+
+
+def _names(result, code):
+    return dict((c, n) for c, _name, n in result.countries)[code]
+
+
+def test_country_names_from_political_entities(tmp_path):
+    rows = [
+        _geo(1, "Republic of Xland", 0, 0, "PCLI", fclass="A",
+             alts="Xlandia,Ksenland,Xländ,XLD,XL,Ксландия,http://x.example,"
+                  "Bigtown,Yland,Shared,Zz"),
+        _geo(2, "Yland", 1, 1, "PCLI", cc="XB", fclass="A", alts="Shared,Ylandia"),
+        _geo(3, "Xland Island", 2, 2, "ISL", alts="Not A Country Name"),
+    ]  # fmt: skip
+    cities = [_city(9, "Bigtown", _LAT, _LNG, 20_000)]
+    r = _build_all(tmp_path, [], cities, rows)
+    # name, ascii and Latin alternates, folded; not the codes, scripts, URLs,
+    # names under 4 letters, another country's name, names two countries
+    # share, or a 15k+ place's own name ("Bigtown")
+    assert _names(r, "XA") == ["ksenland", "republic of xland", "xlandia"]
+    assert _names(r, "XB") == ["ylandia"]
+    assert any("bigtown" in line for line in r.report)
+
+
+def test_country_names_leave_codes_and_known_names_to_the_aliases(tmp_path):
+    from app.core.places import COUNTRY_ALIASES
+
+    # all-caps codes never come from GeoNames; the curated alias covers DPRK
+    assert COUNTRY_ALIASES["dprk"] == "KP"
+    rows = [
+        _geo(1, "North Korea", 0, 0, "PCLI", cc="KP", fclass="A",
+             alts="DPRK,NKOR,Choson"),
+    ]  # fmt: skip
+    r = _build_all(tmp_path, [], [], rows, countries={"KP": "North Korea"})
+    assert _names(r, "KP") == ["choson"]
+
+
+def test_country_names_empty_without_allcountries(tmp_path):
+    r = _build(tmp_path, [], [])
+    assert [n for _c, _name, n in r.countries] == [[], []]
+
+
+def test_allcountries_zip_is_streamed(tmp_path):
+    import zipfile
+
+    rows = [_geo(1, "Xland", 0, 0, "PCLI", fclass="A", alts="Xlandia")]
+    txt = _all_file(tmp_path, rows)
+    zpath = tmp_path / "allCountries.zip"
+    with zipfile.ZipFile(zpath, "w") as z:
+        z.write(txt, "allCountries.txt")
+    oa, cities_path, admin1_path = _write_sources(tmp_path, [], [])
+    r = _gen().build(oa, cities_path, admin1_path, [], zpath)
+    assert _names(r, "XA") == ["xlandia"]
+
+
+def test_satellite_places_fly_from_a_bigger_places_own_airport(tmp_path):
+    airports = [
+        _oa("BIG", _LAT, _LNG, name="Bigcity International Airport"),
+        _oa("OWN", _north(_LAT, -150), _LNG, kind="medium_airport",
+            name="Owntown Airport"),
+    ]  # fmt: skip
+    cities = [
+        _city(1, "Bigcity", _LAT, _LNG, 1_500_000, alts="A,B,C"),
+        _city(2, "Suburb", _north(_LAT, 40), _LNG, 200_000),  # BIG, 40 km
+        _city(3, "Owntown", _north(_LAT, -150), _LNG, 100_000),  # its own
+        _city(4, "Village", _north(_LAT, 1000), _LNG, 2_000),  # no airport
+        _city(5, "Outer", _north(_LAT, 75), _LNG, 50_000),  # owner 75 km away
+    ]
+    r = _build(tmp_path, airports, cities)
+    sat = {g: r.places[g]["satellite"] for g in "12345"}
+    assert sat == {"1": 0, "2": 1, "3": 0, "4": 0, "5": 0}
+
+
+def test_satellite_needs_the_owner_to_score_higher(tmp_path):
+    # the airport is named for the smaller town; the big neighbour flying
+    # from it is not a satellite of the smaller town
+    airports = [_oa("SMT", _LAT, _LNG, name="Smalltown Airport")]
+    cities = [
+        _city(1, "Smalltown", _LAT, _LNG, 20_000),
+        _city(2, "Bigcity", _north(_LAT, 40), _LNG, 900_000, alts="A,B"),
+    ]
+    r = _build(tmp_path, airports, cities)
+    assert r.places["2"]["satellite"] == 0
+
+
+def test_features_keep_notable_ones_with_an_airport_in_reach(tmp_path):
+    airports = [
+        _oa("LRG", _north(_LAT, 200), _LNG),
+        _oa("MED", _north(_LAT, 30), _LNG, kind="medium_airport"),
+        _oa("FOR", _north(_LAT, -50), _LNG, cc="XB"),
+        _oa("SML", _north(_LAT, 20), _LNG, kind="small_airport"),
+    ]
+    rows = [
+        _geo(10, "Great Park", _LAT, _LNG, "PRK", alts=_alts(15) + ",Grand Parc"),
+        _geo(11, "Dull Hill", _LAT, _LNG, "MT", alts=_alts(9)),  # not notable
+        _geo(12, "Far Peak", _north(_LAT, 2000), _LNG, "PK", alts=_alts(30)),
+        _geo(13, "Big Stream", _LAT, _LNG, "STM", alts=_alts(30)),  # not listed
+    ]
+    r = _build_all(tmp_path, airports, [], rows)
+    assert set(r.features) == {"10"}
+    park = r.features["10"]
+    # same country first, then type (large / medium only), then distance
+    assert park["airports"] == ["LRG", "MED", "FOR"]
+    assert park["notability"] == 16
+    assert park["feature_code"] == "PRK"
+    assert "grand parc" in park["alt_names"] and "great park" not in park["alt_names"]
+
+
+def test_island_airports_on_the_island_come_first(tmp_path):
+    airports = [
+        _oa("HUB", _north(_LAT, 120), _LNG),
+        _oa("ISA", _north(_LAT, 10), _LNG, kind="small_airport"),  # on the island
+        _oa("NBR", _north(_LAT, 45), _LNG, kind="medium_airport"),  # near Islet
+    ]
+    rows = [
+        _geo(20, "Bigisle", _LAT, _LNG, "ISL", alts=_alts(12)),
+        _geo(21, "Islet", _north(_LAT, 44), _LNG, "ISL"),  # not notable
+    ]
+    r = _build_all(tmp_path, airports, [], rows)
+    assert r.features["20"]["airports"] == ["ISA", "HUB", "NBR"]
+
+
+def test_feature_output_format_and_determinism(tmp_path):
+    gen = _gen()
+    airports = [_oa("AAA", _LAT, _LNG)]
+    rows = [_geo(10, "Great Park", _LAT, _LNG, "PRK", alts=_alts(12))]
+    oa, cities_path, admin1_path = _write_sources(tmp_path, airports, [])
+    all_path = _all_file(tmp_path, rows)
+    outs = []
+    for name in ("one", "two"):
+        out = tmp_path / name
+        gen.write_outputs(gen.build(oa, cities_path, admin1_path, [], all_path), out)
+        outs.append(out)
+    for fname in ("features.csv.gz", "countries.csv", "places.csv.gz"):
+        assert (outs[0] / fname).read_bytes() == (outs[1] / fname).read_bytes()
+    raw = (outs[0] / "features.csv.gz").read_bytes()
+    assert raw[4:8] == b"\0\0\0\0"
+    with gzip.open(io.BytesIO(raw), "rt", encoding="utf-8", newline="") as f:
+        rows_out = list(csv.DictReader(f))
+    assert list(rows_out[0]) == [
+        "geonameid", "name", "ascii", "country_code", "admin1", "feature_code",
+        "notability", "lat", "lng", "airports", "alt_names",
+    ]  # fmt: skip
+    assert rows_out[0]["airports"] == "AAA"
+
+
+# ── Committed allCountries-derived data ────────────────────────────────────
+
+
+@functools.cache
+def _committed_countries() -> dict[str, list[str]]:
+    with open(_DATA / "countries.csv", encoding="utf-8", newline="") as f:
+        return {r["code"]: r["names"].split("|") for r in csv.DictReader(f)}
+
+
+@functools.cache
+def _committed_features() -> list[dict]:
+    raw = (_DATA / "features.csv.gz").read_bytes()
+    with gzip.open(io.BytesIO(raw), "rt", encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+@pytest.mark.parametrize(
+    ("code", "name"),
+    [
+        ("DE", "deutschland"),
+        ("BR", "brasil"),
+        ("ES", "espana"),
+        ("JP", "nippon"),
+        ("IT", "italia"),
+        ("FI", "suomi"),
+        ("GR", "ellada"),
+        ("GR", "hellas"),
+        ("TR", "tuerkiye"),
+    ],
+)
+def test_committed_country_names(code, name):
+    assert name in _committed_countries()[code]
+
+
+def test_committed_country_names_are_unique_and_not_big_place_names():
+    seen = {}
+    for code, names in _committed_countries().items():
+        for name in filter(None, names):
+            assert seen.setdefault(name, code) == code, name
+    assert "brasilia" not in seen  # Brasília's own name
+
+
+@pytest.mark.parametrize(
+    ("name", "cc", "admin1", "satellite"),
+    [
+        ("Peoria", "US", "AZ", "1"),  # PHX is Phoenix's
+        ("Peoria", "US", "IL", "0"),  # PIA is its own
+        ("Glendale", "US", "AZ", "0"),  # PHX is 20 km away: its own too
+        ("Phoenix", "US", "AZ", "0"),
+    ],
+)
+def test_committed_satellites(name, cc, admin1, satellite):
+    (place,) = [p for p in _places(name, cc, admin1) if int(p["population"]) > 50_000]
+    assert place["satellite"] == satellite
+
+
+@pytest.mark.parametrize(
+    ("name", "cc", "airport"),
+    [
+        ("Kakadu National Park", "AU", "DRW"),
+        ("Mount Everest", "NP", "KTM"),
+        ("Arches National Park", "US", "GJT"),
+        ("Sylt", "DE", "GWT"),
+    ],
+)
+def test_committed_features(name, cc, airport):
+    rows = [
+        f
+        for f in _committed_features()
+        if f["name"] == name and f["country_code"] == cc
+    ]
+    assert rows, name
+    assert airport in rows[0]["airports"].split()

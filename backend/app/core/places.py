@@ -178,6 +178,10 @@ CITY_ALIASES: dict[str, str] = dict(_HINTS["city_aliases"])
 # Other names people type for a country (folded) → ISO alpha-2 code: the one
 # alias map for the airports DB and the static reference tables.
 COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["country_aliases"])
+# Country abbreviations that are also scheduled airport codes (KSA Kosrae,
+# PRC Prescott, ROK Rockhampton, ROC Rochester): a country only as a
+# qualifier ("Riyadh, KSA", "Beijing PRC"); typed alone they stay codes.
+QUALIFIER_COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["qualifier_country_aliases"])
 # Tourist islands and island groups → (ISO country, scheduled airports).
 ISLAND_AIRPORTS = _airport_table("islands")
 # Landmarks, parks, resorts and airportless countries → (country, airports).
@@ -190,6 +194,37 @@ EXONYMS: dict[str, int | str] = dict(_HINTS["exonyms"])
 # Names whose St / Saint variants must not borrow a hint ("Saint John", New
 # Brunswick, is not St John, USVI).
 SAINT_EXCEPTIONS: frozenset[str] = frozenset(_HINTS["saint_exceptions"])
+
+
+# ── Non-town features (islands, parks, mountains…): their short names ─────
+
+# A feature's name without a generic part is a primary name too ("Kakadu
+# National Park" → "kakadu", "Mount Everest" → "everest"). Only these words:
+# "Death Valley", "Rocky Mountains" and "Monte Rosa" keep their whole names.
+_FEATURE_PREFIXES = ("mount ", "mt ", "lake ", "ko ", "koh ", "isle of ", "pulau ")
+_FEATURE_SUFFIXES = (
+    " national park",
+    " national reserve",
+    " game reserve",
+    " nature reserve",
+    " islands",
+    " island",
+    " atoll",
+    " peninsula",
+)
+
+
+def feature_short_names(folded: str) -> set[str]:
+    """The folded feature name without a generic prefix or suffix (empty
+    when it has none, or nothing is left)."""
+    short = set()
+    for prefix in _FEATURE_PREFIXES:
+        if folded.startswith(prefix) and folded[len(prefix) :].strip():
+            short.add(folded[len(prefix) :])
+    for suffix in _FEATURE_SUFFIXES:
+        if folded.endswith(suffix) and folded[: -len(suffix)].strip():
+            short.add(folded[: -len(suffix)])
+    return short
 
 
 # ── Airports a place owns (shared by the data generator and the runtime) ──

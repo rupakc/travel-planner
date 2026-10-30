@@ -6,10 +6,10 @@ The source files are untrusted data: they are only parsed as CSV / text.
 
     python3 -I backend/scripts/build_place_data.py \\
         --ourairports DIR --geonames-cities FILE --geonames-admin1 FILE \\
-        --out backend/app/db/data > conflicts.txt
+        --geonames-all allCountries.zip --out backend/app/db/data > conflicts.txt
 
-Outputs ``airports.csv``, ``places.csv.gz``, ``admin1.csv`` and
-``countries.csv`` in ``--out``;
+Outputs ``airports.csv``, ``places.csv.gz``, ``admin1.csv``,
+``countries.csv`` and ``features.csv.gz`` in ``--out``;
 the conflict report goes to stdout. See ``backend/app/db/data/README.md``.
 """
 
@@ -22,6 +22,7 @@ import re
 import sys
 import time
 import unicodedata
+import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -34,7 +35,10 @@ if str(_BACKEND) not in sys.path:
 
 from app.core.places import (  # noqa: E402
     AIRPORT_NAME_WORDS,
+    COUNTRY_ALIASES,
     NEVER_LINK,
+    OWN_AIRPORT_KM,
+    QUALIFIER_COUNTRY_ALIASES,
     fold_place,
     is_own_airport,
     words_in,
@@ -71,6 +75,7 @@ _MILITARY_RE = re.compile(r"\b(air ?base|air force (base|station)|air station|af
 # Bases (not stations) never link when any civil airport is in fallback range
 _AIR_BASE_RE = re.compile(r"\b(air ?base|air force base|afb)\b")
 _ADMIN_SUFFIX_RE = re.compile(r"-(si|shi|gun|ku|cho|machi|mura)$", re.IGNORECASE)
+_NON_WORD_RE = re.compile(r"[^\w ]")  # as in core.places.words_in
 
 ALT_NAMES_MIN_POPULATION = 15_000
 ALT_NAME_MAX_LEN = 40
@@ -78,7 +83,57 @@ ALT_NAME_MAX_LEN = 40
 _EARTH_RADIUS_KM = 6371.0088
 _KM_PER_DEG_LAT = 110.5  # a little under the true minimum, so cells over-cover
 
-COUNTRY_COLUMNS = ["code", "name"]
+# Satellite: a place whose first airport is another, bigger place's own
+# within this distance (Peoria, Arizona: PHX is Phoenix's).
+SATELLITE_KM = 60
+
+# Country names from GeoNames allCountries: the political entities' names.
+COUNTRY_FEATURE_CODES = frozenset(
+    {"PCLI", "PCLD", "PCLF", "PCLS", "PCL", "PCLIX", "TERR"}
+)
+COUNTRY_NAME_MIN_LEN = 4  # folded; shorter ones are mostly noise ("y", "pai")
+# A country name that is also the own name of a place this big is the place's.
+COUNTRY_NAME_PLACE_POPULATION = 15_000
+
+# Non-town features kept from allCountries (GeoNames feature codes).
+FEATURE_CODES = frozenset(
+    {
+        "ISL", "ISLS", "ATOL",  # islands, archipelagos, atolls (not ISLT)
+        "PEN",  # peninsulas
+        "PRK", "RESN", "RESW", "RESF",  # parks and reserves
+        "RSRT",  # resorts (GeoNames has no separate ski-area code)
+        "RGN", "AREA", "CST",  # regions, areas, coasts
+        "MT", "MTS", "PK", "VLC",  # mountains, ranges, peaks, volcanoes
+        "VAL",  # valleys
+        "LK",  # lakes
+        "BCH",  # beaches
+        "ANS", "RUIN", "HSTS", "MNMT",  # ancient / historical sites, monuments
+        "DSRT",  # deserts
+        "GRGE", "CNYN",  # gorges, canyons
+    }
+)  # fmt: skip
+ISLAND_CODES = frozenset({"ISL", "ISLS", "ATOL"})
+# Notability = GeoNames' alternate-name count; calibrated (see the README).
+FEATURE_MIN_NOTABILITY = 10
+FEATURE_AIRPORT_KM = 250  # large / medium airports linked within
+# An airport on an island: within this distance of the island's point, and
+# that island is the nearest island point to the airport.
+ISLAND_AIRPORT_KM = 50
+
+COUNTRY_COLUMNS = ["code", "name", "names"]
+FEATURE_COLUMNS = [
+    "geonameid",
+    "name",
+    "ascii",
+    "country_code",
+    "admin1",
+    "feature_code",
+    "notability",
+    "lat",
+    "lng",
+    "airports",
+    "alt_names",
+]
 AIRPORT_COLUMNS = [
     "iata",
     "icao",
@@ -104,6 +159,7 @@ PLACE_COLUMNS = [
     "airports",
     "alt_names",
     "ascii",
+    "satellite",
 ]
 ADMIN1_COLUMNS = ["code", "name", "folded_name"]
 
@@ -469,6 +525,172 @@ def _read_places(cities_path: Path) -> list[Place]:
     return places
 
 
+def _iter_geonames_all(path: Path):
+    """Rows of GeoNames ``allCountries`` (the .zip, streamed, or its .txt)
+    whose feature code is a country entity or a listed feature."""
+    wanted = COUNTRY_FEATURE_CODES | FEATURE_CODES
+    path = Path(path)
+
+    def rows(lines):
+        for line in lines:
+            f = line.rstrip("\r\n").split("\t")
+            if len(f) >= 15 and f[7] in wanted:
+                yield f
+
+    if path.suffix == ".zip":
+        with zipfile.ZipFile(path) as z:
+            member = next(n for n in sorted(z.namelist()) if n.endswith(".txt"))
+            with z.open(member) as raw:
+                yield from rows(io.TextIOWrapper(raw, encoding="utf-8", newline=""))
+    else:
+        with open(path, encoding="utf-8", newline="") as f:
+            yield from rows(f)
+
+
+@dataclass
+class Feature:
+    geonameid: str
+    name: str
+    ascii_name: str
+    country_code: str
+    admin1: str
+    feature_code: str
+    notability: int
+    lat: float
+    lng: float
+    raw_alts: str = ""
+
+
+def _country_name_candidates(rows) -> dict[str, set[str]]:
+    """Folded name → ISO codes of the country entities carrying it: the
+    name, the ASCII name and the Latin-script alternates (≤ 40 characters,
+    ≥ 4 letters folded, no URL, no all-caps code: "KSA", "PRC" are curated
+    aliases, as ISO-3 codes would collide with airport codes)."""
+    found: dict[str, set[str]] = defaultdict(set)
+    for f in rows:
+        for name in [f[1], f[2], *f[3].split(",")]:
+            name = name.strip()
+            if (
+                not name
+                or len(name) > ALT_NAME_MAX_LEN
+                or _is_url(name)
+                or _is_code(name)
+                or not is_latin(name)
+            ):
+                continue
+            folded = fold_place(name)
+            if len(folded.replace(" ", "")) >= COUNTRY_NAME_MIN_LEN:
+                found[folded].add(f[8])
+    return found
+
+
+def country_names(rows, official: dict[str, str], places) -> tuple[dict, list[str]]:
+    """ISO code → sorted folded country names from GeoNames, and the report.
+
+    ``official`` maps the names the resolver already knows (OurAirports and
+    curated spellings, aliases) to their code: those are not repeated, and
+    another country's name is never taken. A name two countries carry, or
+    the own name of a place with ≥ 15,000 people (Brasília's "Brasilia" for
+    Brazil), is dropped and reported."""
+    big_places = defaultdict(list)
+    for p in places:
+        if p.population >= COUNTRY_NAME_PLACE_POPULATION:
+            for own in {p.folded, fold_place(p.ascii_name)}:
+                big_places[own].append(p)
+    names: dict[str, list[str]] = defaultdict(list)
+    shared, collisions = [], []
+    for name, codes in sorted(_country_name_candidates(rows).items()):
+        if name in official:
+            continue
+        if len(codes) > 1:
+            shared.append(f"{name}  {' '.join(sorted(codes))}")
+            continue
+        code = next(iter(codes))
+        if name in big_places:
+            best = max(big_places[name], key=lambda p: p.rank)
+            collisions.append(
+                f"{name}  {code} vs {best.name} ({best.country_code}, "
+                f"{best.population:,})"
+            )
+            continue
+        names[code].append(name)
+    report = [f"## Country names two countries share, dropped ({len(shared)})"]
+    report += shared + [""]
+    report.append(
+        f"## Country names that are a 15k+ place's own name, dropped "
+        f"({len(collisions)})"
+    )
+    report += collisions + [""]
+    return names, report
+
+
+@dataclass(frozen=True)
+class IslandPoint:
+    geonameid: str
+    lat: float
+    lng: float
+
+
+def read_geonames_all(path) -> tuple[list[list[str]], list[Feature], list]:
+    """One streaming pass over allCountries: (country entity rows, notable
+    listed features, every island's point)."""
+    countries, notable, islands = [], [], []
+    for f in _iter_geonames_all(path):
+        if f[7] in COUNTRY_FEATURE_CODES:
+            countries.append(f)
+            continue
+        if f[7] in ISLAND_CODES:
+            islands.append(IslandPoint(f[0], float(f[4]), float(f[5])))
+        notability = _raw_alt_count(f[3])
+        if notability >= FEATURE_MIN_NOTABILITY:
+            notable.append(
+                Feature(
+                    geonameid=f[0],
+                    name=f[1],
+                    ascii_name=f[2],
+                    country_code=f[8],
+                    admin1=f[10],
+                    feature_code=f[7],
+                    notability=notability,
+                    lat=float(f[4]),
+                    lng=float(f[5]),
+                    raw_alts=f[3],
+                )
+            )
+    return countries, notable, islands
+
+
+def island_airports(islands, airports) -> dict[str, str]:
+    """Airport → the island it is on: the nearest island point, within
+    ``ISLAND_AIRPORT_KM``. GeoNames has points, not outlines, so a big
+    island whose point is far from its airports gets none this way."""
+    index = GeoIndex(islands, key=lambda i: _int(i.geonameid))
+    on = {}
+    for a in airports:
+        found = index.within(a.lat, a.lng, ISLAND_AIRPORT_KM)
+        if found:
+            on[a.iata] = found[0][1].geonameid
+    return on
+
+
+def link_feature(feature: Feature, index: GeoIndex, on_island: dict) -> list[str]:
+    """A feature's airports: those on it (an island's, nearest first), then
+    large / medium airports within 250 km ranked by (foreign, type,
+    distance), ≤ 3. Air bases and ``NEVER_LINK`` airports never link."""
+    nearby = [
+        (d, a)
+        for d, a in index.within(feature.lat, feature.lng, FEATURE_AIRPORT_KM)
+        if a.iata not in NEVER_LINK and not a.military
+    ]
+    own = [a.iata for d, a in nearby if on_island.get(a.iata) == feature.geonameid]
+    ranked = sorted(
+        ((a.country_code != feature.country_code, a.type_rank, d, a.iata)
+         for d, a in nearby if a.type_rank <= 1),
+    )  # fmt: skip
+    codes = own + [t[3] for t in ranked if t[3] not in own]
+    return codes[:MAX_LINKS]
+
+
 # ── Build ──────────────────────────────────────────────────────────────────
 
 
@@ -477,7 +699,8 @@ class BuildResult:
     airports: dict[str, dict] = field(default_factory=dict)
     places: dict[str, dict] = field(default_factory=dict)
     admin1: list[tuple[str, str, str]] = field(default_factory=list)
-    countries: list[tuple[str, str]] = field(default_factory=list)
+    countries: list[tuple[str, str, list[str]]] = field(default_factory=list)
+    features: dict[str, dict] = field(default_factory=dict)
     report: list[str] = field(default_factory=list)
 
 
@@ -561,10 +784,13 @@ def _computed_city(
     return airport_name_city(a["name"]), "airport-name"
 
 
-def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildResult:
+def build(
+    oa_dir: Path, cities_path: Path, admin1_path: Path, curated, all_path=None
+) -> BuildResult:
     """Read the sources and compute every output row plus the conflict report.
     ``curated`` is ``seed_airports.AIRPORTS``-shaped: (iata, icao, name, city,
-    country, country_code, lat, lng)."""
+    country, country_code, lat, lng). ``all_path`` is GeoNames allCountries
+    (.zip or .txt): country names and features; without it both are empty."""
     oa_dir = Path(oa_dir)
     result = BuildResult()
     curated_rows = _curated_by_code(curated)
@@ -572,8 +798,6 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
     oa_countries = {
         r["code"]: r["name"] for r in _read_csv(oa_dir / "countries.csv") if r["code"]
     }
-    # every country, airport or not (Andorra, Liechtenstein, San Marino)
-    result.countries = sorted(oa_countries.items())
     oa_by_iata = {
         r["iata_code"].strip(): r
         for r in _read_csv(oa_dir / "airports.csv")
@@ -716,22 +940,113 @@ def build(oa_dir: Path, cities_path: Path, admin1_path: Path, curated) -> BuildR
                 "airport-name",
             ):
                 fallback_large.append(iata)
+    satellites = _satellites(places, airports, place_index)
+    for place in places:
+        result.places[place.geonameid]["satellite"] = int(place.geonameid in satellites)
     result.airports = dict(sorted(airports.items()))
     result.places = dict(sorted(result.places.items(), key=lambda kv: _int(kv[0])))
+
+    country_rows, notable, islands = (
+        read_geonames_all(all_path) if all_path else ([], [], [])
+    )
+    official = {fold_place(n): c for c, n in oa_countries.items()}
+    official.update(
+        (fold_place(a["country"]), a["country_code"]) for a in airports.values()
+    )
+    official.update(COUNTRY_ALIASES)
+    official.update(QUALIFIER_COUNTRY_ALIASES)
+    names, names_report = country_names(country_rows, official, places)
+    # every country, airport or not (Andorra, Liechtenstein, San Marino)
+    result.countries = [
+        (c, n, names.get(c, [])) for c, n in sorted(oa_countries.items())
+    ]
+    on_island = island_airports(islands, linkable)
+    for feature in notable:
+        codes = link_feature(feature, index, on_island)
+        if not codes:
+            continue
+        alts = filter_alt_names(feature.raw_alts, fold_place(feature.name))
+        alts = [alt for alt in alts if alt != fold_place(feature.ascii_name)]
+        result.features[feature.geonameid] = {
+            "geonameid": feature.geonameid,
+            "name": feature.name,
+            "ascii": feature.ascii_name,
+            "country_code": feature.country_code,
+            "admin1": feature.admin1,
+            "feature_code": feature.feature_code,
+            "notability": feature.notability,
+            "lat": feature.lat,
+            "lng": feature.lng,
+            "airports": codes,
+            "alt_names": alts,
+        }
+    result.features = dict(sorted(result.features.items(), key=lambda kv: _int(kv[0])))
 
     result.admin1 = sorted(
         (f[0], f[1], fold_place(f[1])) for f in _read_tsv(Path(admin1_path)) if f[0]
     )
-    result.report = _conflict_report(
-        result,
-        curated_rows,
-        oa_by_iata,
-        missing,
-        fallback_large,
-        computed,
-        municipalities,
+    result.report = (
+        _conflict_report(
+            result,
+            curated_rows,
+            oa_by_iata,
+            missing,
+            fallback_large,
+            computed,
+            municipalities,
+        )
+        + [""]
+        + names_report
     )
     return result
+
+
+def _satellites(places, airports: dict[str, dict], place_index: GeoIndex) -> set[str]:
+    """Places whose first airport is not their own but the own airport of a
+    higher-scoring place within ``SATELLITE_KM`` (Peoria, Arizona flies from
+    Phoenix's PHX; Peoria, Illinois has PIA). "Own" is
+    ``core.places.is_own_airport`` with the final display city."""
+    by_name: dict[str, list[Place]] = defaultdict(list)
+    for p in places:
+        by_name[p.folded].append(p)
+    owners: dict[str, list[Place]] = {}
+
+    def owners_of(iata: str) -> list[Place]:
+        if iata not in owners:
+            a = airports[iata]
+            city, name = fold_place(a["city"]), fold_place(a["name"])
+            found = {p.geonameid: p for p in by_name.get(city, ())}
+            words = _NON_WORD_RE.sub(" ", name).split()
+            for i in range(len(words)):  # places the airport name names
+                for j in range(i + 1, len(words) + 1):
+                    for p in by_name.get(" ".join(words[i:j]), ()):
+                        if words_in(p.folded, name):
+                            found[p.geonameid] = p
+            for _d, p in place_index.within(a["lat"], a["lng"], OWN_AIRPORT_KM):
+                if p.country_code == a["country_code"]:
+                    found[p.geonameid] = p
+            owners[iata] = list(found.values())
+        return owners[iata]
+
+    satellites = set()
+    for p in places:
+        if not p.links:
+            continue
+        iata, km = p.links[0]
+        a = airports[iata]
+        same = a["country_code"] == p.country_code
+        if is_own_airport(
+            p.folded, fold_place(a["city"]), fold_place(a["name"]), same, km
+        ):
+            continue
+        if any(
+            q is not p
+            and q.score > p.score
+            and distance_km(p.lat, p.lng, q.lat, q.lng) <= SATELLITE_KM
+            for q in owners_of(iata)
+        ):
+            satellites.add(p.geonameid)
+    return satellites
 
 
 def _conflict_report(
@@ -823,6 +1138,15 @@ def _csv_text(header: list[str], rows) -> str:
     return buf.getvalue()
 
 
+def _write_gzip(path: Path, text: str) -> None:
+    """Deterministic gzip: no file name, mtime 0."""
+    with open(path, "wb") as raw:
+        with gzip.GzipFile(
+            filename="", mode="wb", fileobj=raw, compresslevel=9, mtime=0
+        ) as gz:
+            gz.write(text.encode("utf-8"))
+
+
 def write_outputs(result: BuildResult, out_dir: Path) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -861,18 +1185,37 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
                 " ".join(p["airports"]),
                 "|".join(p["alt_names"]),
                 p["ascii"],
+                p["satellite"],
             ]
             for p in result.places.values()
         ),
     )
-    with open(out_dir / "places.csv.gz", "wb") as raw:
-        with gzip.GzipFile(
-            filename="", mode="wb", fileobj=raw, compresslevel=9, mtime=0
-        ) as gz:
-            gz.write(places.encode("utf-8"))
+    _write_gzip(out_dir / "places.csv.gz", places)
+    features = _csv_text(
+        FEATURE_COLUMNS,
+        (
+            [
+                f["geonameid"],
+                f["name"],
+                f["ascii"],
+                f["country_code"],
+                f["admin1"],
+                f["feature_code"],
+                f["notability"],
+                _coord(f["lat"]),
+                _coord(f["lng"]),
+                " ".join(f["airports"]),
+                "|".join(f["alt_names"]),
+            ]
+            for f in result.features.values()
+        ),
+    )
+    _write_gzip(out_dir / "features.csv.gz", features)
     admin1 = _csv_text(ADMIN1_COLUMNS, result.admin1)
     (out_dir / "admin1.csv").write_bytes(admin1.encode("utf-8"))
-    countries = _csv_text(COUNTRY_COLUMNS, result.countries)
+    countries = _csv_text(
+        COUNTRY_COLUMNS, ((c, n, "|".join(names)) for c, n, names in result.countries)
+    )
     (out_dir / "countries.csv").write_bytes(countries.encode("utf-8"))
 
 
@@ -887,6 +1230,9 @@ def _summary(result: BuildResult, seconds: float) -> list[str]:
         f"(no airports {sum(1 for p in places if not p['airports'])})",
         f"alt-name pairs: {sum(len(p['alt_names']) for p in places)}",
         f"admin1: {len(result.admin1)}",
+        f"satellites: {sum(p['satellite'] for p in places)}",
+        f"country names: {sum(len(n) for _c, _n, n in result.countries)}",
+        f"features: {len(result.features)} (notability ≥ {FEATURE_MIN_NOTABILITY})",
         f"generated in {seconds:.1f} s",
         "",
     ]
@@ -897,6 +1243,9 @@ def main(argv=None) -> int:
     parser.add_argument("--ourairports", required=True, type=Path)
     parser.add_argument("--geonames-cities", required=True, type=Path)
     parser.add_argument("--geonames-admin1", required=True, type=Path)
+    parser.add_argument(
+        "--geonames-all", required=True, type=Path, help="allCountries.zip or .txt"
+    )
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args(argv)
 
@@ -904,7 +1253,11 @@ def main(argv=None) -> int:
 
     start = time.perf_counter()
     result = build(
-        args.ourairports, args.geonames_cities, args.geonames_admin1, AIRPORTS
+        args.ourairports,
+        args.geonames_cities,
+        args.geonames_admin1,
+        AIRPORTS,
+        args.geonames_all,
     )
     write_outputs(result, args.out)
     seconds = time.perf_counter() - start

@@ -136,7 +136,9 @@ def extra_place():
     def add(gid, name, cc, population, score, airports, names):
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO places VALUES (?, ?, ?, '', ?, ?, 0, 0, ?)",
+                "INSERT INTO places (geonameid, name, country_code, admin1,"
+                " population, score, lat, lng, airports)"
+                " VALUES (?, ?, ?, '', ?, ?, 0, 0, ?)",
                 (gid, name, cc, population, score, airports),
             )
             conn.executemany(

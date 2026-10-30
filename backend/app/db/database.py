@@ -99,7 +99,8 @@ def create_tables():
                 score        INTEGER,
                 lat          REAL,
                 lng          REAL,
-                airports     TEXT
+                airports     TEXT,
+                satellite    INTEGER NOT NULL DEFAULT 0
             );
             -- Folded place names: tier 0 = the place's own name, 1 = alternate
             CREATE TABLE IF NOT EXISTS place_names (
@@ -115,6 +116,26 @@ def create_tables():
                 name        TEXT NOT NULL,
                 folded_name TEXT NOT NULL
             );
+            -- GeoNames non-town features (islands, parks, mountains…) and
+            -- their airports; feature_names as place_names
+            CREATE TABLE IF NOT EXISTS features (
+                geonameid    INTEGER PRIMARY KEY,
+                name         TEXT NOT NULL,
+                country_code TEXT NOT NULL,
+                admin1       TEXT,
+                feature_code TEXT NOT NULL,
+                notability   INTEGER,
+                lat          REAL,
+                lng          REAL,
+                airports     TEXT
+            );
+            CREATE TABLE IF NOT EXISTS feature_names (
+                name_folded TEXT NOT NULL,
+                geonameid   INTEGER NOT NULL,
+                tier        INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_feature_names_folded
+                ON feature_names(name_folded);
             CREATE INDEX IF NOT EXISTS idx_places_country_score
                 ON places(country_code, score);
             CREATE INDEX IF NOT EXISTS idx_places_admin1_score
@@ -129,13 +150,18 @@ def create_tables():
         for column, decl in _AIRPORT_MIGRATIONS.items():
             if column not in existing:
                 _add_column(conn, column, decl)
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(places)")}
+        if "satellite" not in existing:  # places tables from before the flag
+            _add_column(conn, "satellite", "INTEGER NOT NULL DEFAULT 0", "places")
 
 
-def _add_column(conn: sqlite3.Connection, column: str, decl: str) -> None:
-    """Add a column to ``airports``; a worker starting at the same time may
-    have added it first, which is fine."""
+def _add_column(
+    conn: sqlite3.Connection, column: str, decl: str, table: str = "airports"
+) -> None:
+    """Add a column to ``airports`` (or ``places``); a worker starting at the
+    same time may have added it first, which is fine."""
     try:
-        conn.execute(f"ALTER TABLE airports ADD COLUMN {column} {decl}")
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
     except sqlite3.OperationalError as exc:
         if "duplicate column name" not in str(exc):
             raise
