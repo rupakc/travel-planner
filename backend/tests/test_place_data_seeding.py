@@ -50,6 +50,7 @@ _FEATURE_COLS = (
     "geonameid,name,ascii,country_code,admin1,feature_code,notability,lat,lng,"
     "airports,alt_names"
 ).split(",")
+_DISTRICT_COLS = [*_FEATURE_COLS, "population", "contested"]
 _FEATURES = [
     ["2078127", "Kakadu National Park", "Kakadu National Park", "AU", "03", "PRK",
      "58", "-13.0", "132.5", "DRW", "parc national de kakadu"],
@@ -618,3 +619,22 @@ def test_feature_short_names(name, short):
     from app.core.places import feature_short_names
 
     assert feature_short_names(name) == short
+
+
+def test_contested_district_names_load_as_tier_2(temp_db, data_dir):
+    with gzip.open(
+        data_dir / "features.csv.gz", "wt", newline="", encoding="utf-8"
+    ) as f:
+        csv.writer(f).writerows(
+            [
+                _DISTRICT_COLS,
+                ["90", "Centro", "Centro", "BR", "27", "PPLX", "2", "-23.5",
+                 "-46.6", "GRU", "", "300000", "centro"],
+            ]
+        )  # fmt: skip
+    seed_airports.seed(data_dir)
+    names = {
+        (r["name_folded"], r["tier"])
+        for r in _rows("SELECT * FROM feature_names WHERE geonameid = 90")
+    }
+    assert names == {("centro", 2)}

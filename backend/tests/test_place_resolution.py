@@ -791,13 +791,13 @@ def test_two_comparable_satellites_stay_ambiguous(extra_place):
 def extra_feature():
     ids: list[int] = []
 
-    def add(gid, name, cc, notability, airports, names, at=(-13.0, 132.5)):
+    def add(gid, name, cc, notability, airports, names, at=(-13.0, 132.5), code="PRK"):
         with get_connection() as conn:
             conn.execute(
                 "INSERT INTO features (geonameid, name, country_code, admin1,"
                 " feature_code, notability, lat, lng, airports)"
-                " VALUES (?, ?, ?, '', 'PRK', ?, ?, ?, ?)",
-                (gid, name, cc, notability, *at, airports),
+                " VALUES (?, ?, ?, '', ?, ?, ?, ?, ?)",
+                (gid, name, cc, code, notability, *at, airports),
             )
             conn.executemany(
                 "INSERT INTO feature_names VALUES (?, ?, ?)",
@@ -948,3 +948,26 @@ def test_colliding_country_names_are_qualifiers_only(text):
 
 def test_colliding_country_names_still_qualify():
     assert places_db.stated_countries("eretria") == {"ER"}
+
+
+def test_a_contested_district_name_gives_none_not_a_town(extra_place, extra_feature):
+    extra_feature(
+        990000301, "Qzcentro", "BR", 12, "GRU", [("qzcentro", 2)], code="PPLX"
+    )
+    extra_place(990000302, "Qzcentro", "PT", 2_000, 10**6, "LIS", [("qzcentro", 0)])
+    assert resolve("Qzcentro").place is None
+    assert resolve("Qzcentro").ambiguous
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Vila", "VLI"),  # Port Vila's alternate name blocks the Albanian peak
+        ("Tongren", "TEN"),  # Guizhou's own Tongren Fenghuang airport
+        ("Newport", "BRS"),  # Wales: Newport, RI is far smaller
+    ],
+)
+def test_alternate_towns_and_own_airport_namesakes(text, first):
+    from app.db.database import lookup_city_iata
+
+    assert lookup_city_iata(text).split(",")[0] == first

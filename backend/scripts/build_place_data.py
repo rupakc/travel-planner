@@ -143,6 +143,13 @@ DISTRICT_MIN_POPULATION = 10_000
 DISTRICT_PARENT_KM = 50
 DISTRICT_EXCLUDED_CODES = frozenset({"PPLH", "PPLQ", "PPLW", "PPLCH"})
 DISTRICT_SEAT_CODES = frozenset({"PPLA2", "PPLA3", "PPLA4", "PPLA5"})
+# Contested district names: namesakes are other sections (PPLX; for a seat
+# also other seats) farther than DISTRICT_NAMESAKE_KM, those within
+# DISTRICT_NAMESAKE_MERGE_KM of each other counted once ("Centar",
+# "Chinatown", "Altstadt" → None; see ``district_keeps_name``).
+NAMESAKE_SEAT_CODES = frozenset({"PPLA", "PPLA2", "PPLA3", "PPLA4", "PPLA5", "PPLC"})
+DISTRICT_NAMESAKE_KM = 50
+DISTRICT_NAMESAKE_MERGE_KM = 20
 FEATURE_AIRPORT_KM = 250  # large / medium airports linked within
 FEATURE_LARGE_FACTOR = 0.5  # a large airport ranks at half its distance
 # An airport on an island: within this distance of the island's point, and
@@ -166,6 +173,7 @@ FEATURE_COLUMNS = [
     "airports",
     "alt_names",
     "population",
+    "contested",
 ]
 AIRPORT_COLUMNS = [
     "iata",
@@ -706,11 +714,16 @@ def _is_district(f: list[str], place_ids) -> bool:
 def read_geonames_all(path, place_ids=frozenset()):
     """One streaming pass over allCountries: (country entity rows, notable
     listed features, famous districts)."""
-    countries, notable, districts = [], [], []
+    countries, notable, districts, sections = [], [], [], []
     for f in _iter_geonames_all(path):
         if f[7] in COUNTRY_FEATURE_CODES:
             countries.append(f)
             continue
+        if f[6] == "P" and (f[7] == "PPLX" or f[7] in NAMESAKE_SEAT_CODES):
+            sections.append(
+                (f[0], f[7], float(f[4]), float(f[5]), _raw_alt_count(f[3]),
+                 f[1], f[2])
+            )  # fmt: skip
         notability = _raw_alt_count(f[3])
         if f[7] in FEATURE_CODES:
             if notability < feature_threshold(f[7]):
@@ -735,7 +748,58 @@ def read_geonames_all(path, place_ids=frozenset()):
                 population=_int(f[14]),
             )
         )
-    return countries, notable, districts
+    return countries, notable, districts, sections
+
+
+def district_keeps_name(k: int, b: int, t: int) -> bool:
+    """A district keeps a bare name with k namesakes whose best notability
+    is b, its own being t (calibrated in the final blind check)."""
+    return (
+        k == 0
+        or (k <= 3 and t > b)
+        or (k <= 8 and t >= 10 and t >= 2 * b)
+        or (t >= 30 and t >= 2 * b)
+    )
+
+
+def contested_names(districts, sections) -> dict[str, list[str]]:
+    """District id → its own folded names that are contested: other
+    sections (PPLX; for a seat also other seats) carry them farther than
+    50 km away, too many or too notable for the district to keep them."""
+    wanted = {
+        n for d in districts for n in {fold_place(d.name), fold_place(d.ascii_name)}
+    }
+    by_name: dict[str, list[tuple]] = defaultdict(list)
+    for row in sections:
+        for n in {fold_place(row[5]), fold_place(row[6])} & wanted:
+            by_name[n].append(row)
+    contested: dict[str, list[str]] = {}
+    for d in districts:
+        codes = {"PPLX"} | (NAMESAKE_SEAT_CODES if d.feature_code != "PPLX" else set())
+        names = []
+        for n in sorted({fold_place(d.name), fold_place(d.ascii_name)} - {""}):
+            far = sorted(
+                (
+                    r
+                    for r in by_name.get(n, ())
+                    if r[0] != d.geonameid
+                    and r[1] in codes
+                    and distance_km(d.lat, d.lng, r[2], r[3]) > DISTRICT_NAMESAKE_KM
+                ),
+                key=lambda r: (-r[4], _int(r[0])),
+            )
+            groups: list[tuple] = []
+            for r in far:
+                if not any(
+                    distance_km(r[2], r[3], g[2], g[3]) < DISTRICT_NAMESAKE_MERGE_KM
+                    for g in groups
+                ):
+                    groups.append(r)
+            best = max((g[4] for g in groups), default=0)
+            if not district_keeps_name(len(groups), best, d.notability):
+                names.append(n)
+        contested[d.geonameid] = names
+    return contested
 
 
 def district_airports(district: Feature, place_index: GeoIndex) -> list[str]:
@@ -1072,11 +1136,12 @@ def build(
     result.airports = dict(sorted(airports.items()))
     result.places = dict(sorted(result.places.items(), key=lambda kv: _int(kv[0])))
 
-    country_rows, notable, districts = (
+    country_rows, notable, districts, sections = (
         read_geonames_all(all_path, {p.geonameid for p in places if p.population})
         if all_path
-        else ([], [], [])
+        else ([], [], [], [])
     )
+    contested = contested_names(districts, sections)
     official = {fold_place(n): c for c, n in oa_countries.items()}
     official.update(
         (fold_place(a["country"]), a["country_code"]) for a in airports.values()
@@ -1152,6 +1217,7 @@ def build(
             "airports": codes,
             "alt_names": alts,
             "population": feature.population,
+            "contested": contested.get(gid, []),
         }
     names_report += [
         f"## Feature alternate names that are another row's own name, dropped "
@@ -1388,6 +1454,7 @@ def write_outputs(result: BuildResult, out_dir: Path) -> None:
                 " ".join(f["airports"]),
                 "|".join(f["alt_names"]),
                 f["population"],
+                "|".join(f["contested"]),
             ]
             for f in result.features.values()
         ),
@@ -1419,7 +1486,8 @@ def _summary(result: BuildResult, seconds: float) -> list[str]:
         f"(qualifier only {sum(len(row[3]) for row in result.countries)})",
         f"features: {len(result.features)} (notability ≥ {FEATURE_MIN_NOTABILITY}, "
         f"{FEATURE_LOW_NOTABILITY} for {', '.join(sorted(FEATURE_LOW_CODES))}; "
-        f"districts {sum(f['feature_code'] not in FEATURE_CODES for f in result.features.values())})",
+        f"districts {sum(f['feature_code'] not in FEATURE_CODES for f in result.features.values())}; "
+        f"contested names {sum(len(f['contested']) for f in result.features.values())})",
         f"generated in {seconds:.1f} s",
         "",
     ]

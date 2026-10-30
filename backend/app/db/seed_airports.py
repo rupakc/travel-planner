@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 PLACE_DATA_DIR = Path(__file__).parent / "data"
 _DATA_FILES = ("airports.csv", "places.csv.gz", "admin1.csv", "features.csv.gz")
 # Bump when the way the files are loaded changes, to force a reseed.
-_LOADER_FORMAT = "place-data-loader:4"
+_LOADER_FORMAT = "place-data-loader:5"
 PLACE_VERSION_KEY = "place_data_version"
 # Regenerable from the committed data: never backed up or merged (backup.py).
 PLACE_TABLES = ("places", "place_names", "admin1", "features", "feature_names")
@@ -4345,7 +4345,8 @@ def _read_places(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
 def _read_features(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
     """(features rows, feature_names rows), none without the file. Tier 0 is
     the folded name, the folded ASCII spelling and both without a generic
-    part ("Kakadu National Park" → "kakadu"); tier 1 the alternates."""
+    part ("Kakadu National Park" → "kakadu"); tier 1 the alternates; tier 2 a
+    district's contested own names ("Centar")."""
     path = data_dir / "features.csv.gz"
     if not path.exists():
         return [], []
@@ -4369,8 +4370,15 @@ def _read_features(data_dir: Path) -> tuple[list[tuple], list[tuple]]:
             )
             primary = {fold_place(r["name"]), fold_place(r["ascii"])} - {""}
             primary |= {s for n in primary for s in feature_short_names(n)}
+            # a district's contested names (shared with many sections
+            # elsewhere: "Centar", "Chinatown") are tier 2: matched, but
+            # they make a bare query ambiguous
+            contested = set((r.get("contested") or "").split("|")) - {""}
+            contested |= {s for n in contested for s in feature_short_names(n)}
+            names.extend((name, gid, 2) for name in sorted(primary & contested))
+            primary -= contested
             names.extend((name, gid, 0) for name in sorted(primary))
-            alts = set(r["alt_names"].split("|")) - primary - {""}
+            alts = set(r["alt_names"].split("|")) - primary - contested - {""}
             names.extend((alt, gid, 1) for alt in sorted(alts))
     return features, names
 

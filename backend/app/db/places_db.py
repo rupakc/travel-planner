@@ -101,6 +101,7 @@ class Place:
     satellite: int = 0  # 1: flies from a ≥10× bigger neighbour's airport; 2: ≥100×
     feature: bool = False  # a non-town feature (geonameid is None)
     feature_code: str = ""  # its GeoNames feature code ("ISL", "PRK", "PPLX")
+    contested: bool = False  # matched only by a contested district name
 
 
 @functools.cache
@@ -658,6 +659,43 @@ def _without_outscored_satellites(candidates: list[Place]) -> list[Place]:
     return [p for p in candidates if not (p.satellite and p.score > best.score)]
 
 
+# A namesake flying from an airport named for it wins over a top candidate
+# that does not, when within this score ratio and a comparable size.
+OWN_AIRPORT_NAMESAKE_RATIO = 5
+OWN_AIRPORT_NAMESAKE_FAR_KM = 75.0
+
+
+def _own_airport_namesake(candidates: list[Place]) -> tuple[list[Place], bool]:
+    """When the top candidate would win (≥ 3× the next) without an airport
+    named for it, and a comparable namesake (score within 5×, ≥ 1/3 of the
+    people) flies from its own named airport: the namesake leads if the
+    top's nearest airport is over ``OWN_AIRPORT_NAMESAKE_FAR_KM`` away
+    ("Tongren": Guizhou's Tongren Fenghuang, not Qinghai's Xining 95 km
+    off), otherwise the name is ambiguous ("Salisbury": Wiltshire or
+    Maryland). (candidates, ambiguous)."""
+    if len(candidates) < 2:
+        return candidates, False
+    top = max(candidates, key=lambda p: p.score)
+    if top.division or _flies_from_its_own_airport(top):
+        return candidates, False
+    own = [
+        p
+        for p in candidates
+        if p is not top
+        and not p.division
+        and p.score * OWN_AIRPORT_NAMESAKE_RATIO >= top.score >= DOMINANCE * p.score
+        and p.population * DOMINANCE >= top.population
+        and _flies_from_its_own_airport(p)
+    ]
+    if len(own) != 1:
+        return candidates, False
+    best = own[0]
+    nearest = min((airport_distance_km(top, c) for c in top.airports), default=math.inf)
+    if nearest <= OWN_AIRPORT_NAMESAKE_FAR_KM:
+        return candidates, True
+    return [p for p in candidates if p is best or p.score < best.score], False
+
+
 def _winner(
     candidates: list[Place], curated: frozenset[str], qualified: bool = False
 ) -> Resolution:
@@ -666,7 +704,11 @@ def _winner(
     alone or in a curated country; one under ``CONFIDENCE_POPULATION`` whose
     nearest airport is over ``CONFIDENCE_KM`` away only alone with a stated
     qualifier."""
-    candidates = _without_outscored_satellites(candidates)
+    candidates, contested = _own_airport_namesake(
+        _without_outscored_satellites(candidates)
+    )
+    if contested:
+        return Resolution(None, ambiguous=True)
     result = _pick(candidates)
     if result.ambiguous:
         result = _pick(_reachable(candidates))
@@ -685,6 +727,14 @@ def _winner(
     return result
 
 
+def _alt_count(place: Place) -> int:
+    """A place's GeoNames alternate-name count, from its score (population
+    × (count + 1)², × 3 for a capital: an estimate)."""
+    if place.population <= 0:
+        return 0
+    return max(0, round(math.sqrt(place.score / place.population)) - 1)
+
+
 def _features(
     conn: sqlite3.Connection, names: list[str], meanings: list["_Stated"]
 ) -> list[Place]:
@@ -697,7 +747,7 @@ def _features(
         " FROM feature_names n JOIN features f ON f.geonameid = n.geonameid"
         f" WHERE n.name_folded IN ({','.join('?' * len(names))})"
         " AND f.airports != ''"
-        " AND (n.tier = 0 OR length(n.name_folded) >= ?)"  # not "ber"
+        " AND (n.tier != 1 OR length(n.name_folded) >= ?)"  # not "ber"
         " GROUP BY f.geonameid",
         [*names, MIN_ALT_NAME_LENGTH],
     ).fetchall()
@@ -724,6 +774,7 @@ def _features(
             lng=r["lng"],
             feature=True,
             feature_code=r["feature_code"],
+            contested=r["tier"] == 2,
         )
         for r in rows
     ]
@@ -797,12 +848,34 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     def blocks(p: Place) -> bool:  # a real town keeps its name
         return p.division or p.population >= FEATURE_TOWN_POPULATION
 
-    if named is None and not curated and not any(blocks(p) for p in candidates):
+    # an alternate-name town of 15k+ with at least twice the alternate
+    # names of the best feature blocks the feature path and competes ("Vila"
+    # is Port Vila (35), not an Albanian peak (12); "St. Martin" stays the
+    # island (96), not Saint-Martin-d'Hères (18))
+    big_alternates = [
+        p
+        for p in alternates
+        if p.population >= FEATURE_TOWN_POPULATION
+        and p.geonameid not in {c.geonameid for c in candidates}
+    ]
+    found = _features(conn, names, meanings) if named is None and not curated else []
+    if (
+        found
+        and all(f.contested for f in found)
+        and not any(blocks(p) for p in candidates if not p.alternate)
+    ):
+        # a district name shared with many elsewhere ("Centar", "Chinatown",
+        # "Downtown"): no guess, and no town elsewhere either
+        return Resolution(None, ambiguous=True)
+    notable = max((f.score for f in found), default=0)
+    big_alternates = [p for p in big_alternates if _alt_count(p) >= 2 * notable]
+    if big_alternates and found and not any(blocks(p) for p in candidates):
+        candidates += big_alternates
+    if found and not any(blocks(p) for p in candidates):
         # no real town by that name, even by an alternate name ("Jiddah" is
         # Jeddah's): a notable island, park, mountain or district ("Kakadu";
         # "Arches": the park, not the French village; "Ealing"), unless a
         # town so named is at it (Paros: the island's own town)
-        found = _features(conn, names, meanings)
         towns = candidates
         if found and not any(
             _km(p.lat, p.lng, f.lat, f.lng) <= FEATURE_TOWN_KM

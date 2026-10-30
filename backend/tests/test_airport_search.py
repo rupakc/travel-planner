@@ -207,3 +207,9 @@ def test_autocomplete_keeps_namesakes_the_resolver_cannot_split(q, both):
 )
 def test_autocomplete_leads_with_the_resolved_answer(q, first):
     assert _codes(q)[0] == first
+
+
+def test_a_district_prefix_beats_a_country_alternate_name_prefix():
+    # "Jordaan" is Jordan's Afrikaans name and Amsterdam's district
+    assert _codes("jordaa")[0] == "AMS"
+    assert _codes("deuts")[0] == "BER"  # a curated native name still leads

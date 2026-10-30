@@ -1470,6 +1470,7 @@ def test_feature_output_format_and_determinism(tmp_path):
     assert list(rows_out[0]) == [
         "geonameid", "name", "ascii", "country_code", "admin1", "feature_code",
         "notability", "lat", "lng", "airports", "alt_names", "population",
+        "contested",
     ]  # fmt: skip
     assert rows_out[0]["airports"] == "AAA"
 
@@ -1676,3 +1677,35 @@ def test_weak_islands_with_a_shared_name_are_dropped(tmp_path):
     assert "70" not in r.features  # weak, and "sugartop" is another row's
     assert "72" in r.features
     assert "73" in r.features  # notable at 10: kept
+
+
+def _district(gid, name, lat, alts=0, pop=20_000, fcode="PPLX"):
+    return _geo(gid, name, lat, _LNG, fcode, fclass="P", alts=_alts(alts), pop=pop)
+
+
+def test_contested_district_names(tmp_path):
+    # k namesake districts (other PPLX rows > 50 km away, merged within
+    # 20 km), b their best notability, t the district's own
+    airports = [_oa("CTY", _LAT, _LNG, name="Bigcity Airport")]
+    cities = [_city(1, "Bigcity", _LAT, _LNG, 4_000_000, alts="A,B,C")]
+    far = [_north(_LAT, 1000 * i) for i in range(1, 6)]
+    rows = [
+        _district(80, "Centro", _LAT, alts=2),  # 4 equal namesakes: contested
+        *[_district(800 + i, "Centro", lat, alts=2) for i, lat in enumerate(far[:4])],
+        _district(81, "Uniquetown", _LAT),  # k = 0: kept
+        _district(82, "Oldtown", _LAT, alts=40),  # famous: t ≥ 30 and ≥ 2b
+        *[_district(820 + i, "Oldtown", lat, alts=3) for i, lat in enumerate(far)],
+        _district(83, "Twinpark", _LAT, alts=4),  # k = 1, t > b: kept
+        _district(830, "Twinpark", far[0], alts=1),
+        _district(84, "Nearby", _LAT, alts=1),  # namesake within 50 km: none
+        _district(840, "Nearby", _north(_LAT, 30), alts=5),
+    ]
+    r = _build_all(tmp_path, airports, cities, rows)
+    contested = {g: r.features[g]["contested"] for g in ("80", "81", "82", "83", "84")}
+    assert contested == {
+        "80": ["centro"],
+        "81": [],
+        "82": [],
+        "83": [],
+        "84": [],
+    }

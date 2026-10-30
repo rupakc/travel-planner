@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from ..core.places import (
     CITY_ALIASES,
     CODE_PREFIX_RE,
+    COUNTRY_ALIASES,
     NEVER_LINK,
     fold_place,
     saint_variants,
@@ -698,6 +699,24 @@ def _other_country_names() -> tuple[str, ...]:
     return tuple(sorted(n for n in country_names() if not _official_country_name(n)))
 
 
+def _own_name_prefix(folded: str) -> bool:
+    """A town's or a feature's (district's) own name starts with the text."""
+    end = folded + "\uffff"
+    with get_connection() as conn:
+        return bool(
+            conn.execute(
+                "SELECT 1 FROM place_names WHERE tier = 0 AND name_folded >= ?"
+                " AND name_folded < ? LIMIT 1",
+                (folded, end),
+            ).fetchone()
+            or conn.execute(
+                "SELECT 1 FROM feature_names WHERE tier = 0 AND name_folded >= ?"
+                " AND name_folded < ? LIMIT 1",
+                (folded, end),
+            ).fetchone()
+        )
+
+
 def _country_name_place(folded: str, prefix: bool = False):
     """The resolved place (the gateway city) for a query that is a
     country's other name or alias ("deutschland", "nippon", "holland"), or
@@ -718,6 +737,8 @@ def _country_name_place(folded: str, prefix: bool = False):
         if not matches or len({country_names()[n] for n in matches}) != 1:
             return None
         name = min(matches, key=len)
+        if name not in COUNTRY_ALIASES and _own_name_prefix(folded):
+            return None  # "jordaa": Amsterdam's Jordaan, not Jordan's Afrikaans
     elif folded in names:
         name = folded
     else:
