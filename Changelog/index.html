@@ -1248,6 +1248,7 @@
 <li><code>docker-compose.yml</code> now builds the backend from the repo root, so <code>docker compose up --build</code> works.</li>
 <li><code>get_optional_user</code> treats a deactivated user's token as anonymous.</li>
 <li>Removed the unused <code>knowledge_planner.py</code> and the unused <code>tools</code> / <code>max_turns</code> agent frontmatter fields.</li>
+<li>Place resolution (GeoNames <code>allCountries</code>, CC BY 4.0): countries resolve by their native and other-language names ("Deutschland", "Brasil", "Nippon", "Suomi"; KSA, PRC, ROK and ROC, and names that are also a town's, as qualifiers only); a suburb no longer beats a namesake with its own named airport ("Peoria" → PIA, "Pontevedra" → Spain); 31,995 notable islands, parks, glaciers, caves, mountains, regions, sites and famous districts resolve to their airports ("Kakadu" → DRW, "Grand Teton" → JAC, "Ealing" → LHR); district names many cities share give no answer ("Centar", "Chinatown"). See <a href="../Place-and-Airport-Data/">Place and Airport Data</a>.</li>
 </ul>
 <hr />
 <h2 id="pull-requests">Pull requests</h2>

@@ -956,6 +956,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#suburbs-satellite-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suburbs (satellite places)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-town-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-town features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1298,14 +1320,14 @@
 </tr>
 <tr>
 <td><a href="https://www.geonames.org/">GeoNames</a></td>
-<td><code>cities1000.txt</code>, <code>admin1CodesASCII.txt</code></td>
+<td><code>cities1000.txt</code>, <code>admin1CodesASCII.txt</code>, <code>allCountries.zip</code></td>
 <td><a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Attribution:</strong> Contains data from GeoNames (geonames.org), CC BY 4.0. The GeoNames data has been modified (filtered, name-folded, scored and linked to airports), and GeoNames does not endorse these changes. Airport data comes from OurAirports.</p>
+<p><strong>Attribution:</strong> Contains data from GeoNames (geonames.org), CC BY 4.0. The GeoNames data has been modified (filtered, name-folded, scored and linked to airports; country names, non-town features and districts extracted; a suburb flag derived), and GeoNames does not endorse these changes. Airport data comes from OurAirports. In <code>countries.csv</code> the <code>code</code> and <code>name</code> columns are OurAirports data and the <code>names</code> and <code>qualifier_names</code> columns GeoNames data.</p>
 <p>The app footer shows "Place data © GeoNames (CC BY 4.0) · Airport data: OurAirports". <code>backend/app/db/data/README.md</code> holds the full source, licence and derivation notes.</p>
-<p><strong>Snapshot date</strong> of both sources: <strong>2026-10-29</strong>.</p>
+<p><strong>Snapshot date:</strong> <strong>2026-10-29</strong> for OurAirports, <code>cities1000</code> and <code>admin1CodesASCII</code>; <strong>2026-10-30</strong> for <code>allCountries</code>.</p>
 <hr />
 <h2 id="committed-files">Committed files</h2>
 <p><code>backend/app/db/data/</code>:</p>
@@ -1325,8 +1347,13 @@
 </tr>
 <tr>
 <td><code>places.csv.gz</code></td>
-<td>5.5 MB</td>
-<td>162,014 GeoNames places with at least 1,000 people (excluding sections of places and historical, abandoned or destroyed places), each linked to up to 3 ranked airports, with folded alternate names for places of 15k or more</td>
+<td>5.6 MB</td>
+<td>162,014 GeoNames places with at least 1,000 people (excluding sections of places and historical, abandoned or destroyed places), each linked to up to 3 ranked airports, with folded alternate names for places of 15k or more and a <code>satellite</code> flag (see <a href="#suburbs-satellite-places">Suburbs</a>)</td>
+</tr>
+<tr>
+<td><code>features.csv.gz</code></td>
+<td>1.7 MB</td>
+<td>31,995 notable GeoNames features that are not towns (islands, parks, resorts, regions, mountains, glaciers, caves, lakes, sites…) and famous districts, each with up to 3 airports</td>
 </tr>
 <tr>
 <td><code>admin1.csv</code></td>
@@ -1335,8 +1362,8 @@
 </tr>
 <tr>
 <td><code>countries.csv</code></td>
-<td>3.5 KB</td>
-<td>Every OurAirports country, used for country names in resolution</td>
+<td>265 KB</td>
+<td>Every OurAirports country, with 18,071 native and other-language names from GeoNames (and 99 qualifier-only ones) ("Deutschland", "Brasil", "Nippon")</td>
 </tr>
 <tr>
 <td><code>hints.json</code></td>
@@ -1350,7 +1377,7 @@
 </tr>
 </tbody>
 </table>
-<p>The total is about 6 MB (the limit is 8 MB). In addition, <code>backend/app/db/seed_airports.py</code> holds a curated list of 402 airports with served-city overrides, and <code>REPLACED_CODES</code> maps 14 retired codes to their replacements (for example PNH → KTI).</p>
+<p>The total is about 7 MB (the limit is 9 MB). In addition, <code>backend/app/db/seed_airports.py</code> holds a curated list of 402 airports with served-city overrides, and <code>REPLACED_CODES</code> maps 14 retired codes to their replacements (for example PNH → KTI).</p>
 <h3 id="hintsjson">hints.json</h3>
 <p>Curated knowledge the open data lacks:</p>
 <table>
@@ -1364,18 +1391,18 @@
 <tbody>
 <tr>
 <td><code>islands</code></td>
-<td>104</td>
-<td>Islands and their airports ("Sicily" → CTA, PMO, TPS)</td>
+<td>106</td>
+<td>Islands and their airports ("Sicily" and "Sardegna" → CTA, PMO, TPS / CAG, OLB, AHO; "Borneo" → BKI, KCH)</td>
 </tr>
 <tr>
 <td><code>destinations</code></td>
-<td>82</td>
+<td>88</td>
 <td>Places without a useful airport of their own ("Machu Picchu" → CUZ, "Kyoto" → KIX, ITM; "Zermatt" → ZRH, GVA; "Monte Carlo" → NCE)</td>
 </tr>
 <tr>
 <td><code>regions</code></td>
-<td>20</td>
-<td>Regions ("Algarve" → FAO)</td>
+<td>22</td>
+<td>Regions ("Algarve" → FAO; "Lake Garda" → VRN, BGY, VCE)</td>
 </tr>
 <tr>
 <td><code>exonyms</code></td>
@@ -1389,8 +1416,13 @@
 </tr>
 <tr>
 <td><code>country_aliases</code></td>
-<td>43</td>
-<td>"UK", "England", "Holland"…</td>
+<td>84</td>
+<td>"UK", "England", "Holland", "DPRK", "Eire", and countries' own native names verified against GeoNames, which win over any town of that name ("Deutschland", "Nederland" — not Nederland, Texas —, "España", "Nippon", "Suomi", "Hellas", "Sverige", "Misr", "Maroc"…)</td>
+</tr>
+<tr>
+<td><code>qualifier_country_aliases</code></td>
+<td>4</td>
+<td>KSA, PRC, ROK, ROC: countries only as a qualifier ("Riyadh, KSA", "Beijing PRC"), because typed alone each is a scheduled airport code (Kosrae, Prescott, Rockhampton, Rochester)</td>
 </tr>
 <tr>
 <td><code>saint_exceptions</code></td>
@@ -1401,21 +1433,22 @@
 </table>
 <hr />
 <h2 id="regenerating-the-data">Regenerating the data</h2>
-<p><code>backend/scripts/build_place_data.py</code> is standard-library only and deterministic (sorted rows, gzip mtime 0); it takes about 5 s and treats the downloaded sources as untrusted input. Download the OurAirports CSVs and GeoNames <code>cities1000.zip</code> / <code>admin1CodesASCII.txt</code> into a directory of their own, then from the repo root:</p>
+<p><code>backend/scripts/build_place_data.py</code> is standard-library only and deterministic (sorted rows, gzip mtime 0); it takes about a minute and treats the downloaded sources as untrusted input. Download the OurAirports CSVs and GeoNames <code>cities1000.zip</code> / <code>admin1CodesASCII.txt</code> / <code>allCountries.zip</code> (423 MB, streamed, not unzipped) into a directory of their own, then from the repo root:</p>
 <pre><code class="language-bash">python3 -I backend/scripts/build_place_data.py \
     --ourairports /path/to/ourairports-src \
     --geonames-cities /path/to/geonames-src/extracted/cities1000.txt \
     --geonames-admin1 /path/to/geonames-src/admin1CodesASCII.txt \
+    --geonames-all /path/to/geonames-src/allCountries.zip \
     --out backend/app/db/data &gt; conflicts.txt
 </code></pre>
-<p>The script writes <code>airports.csv</code>, <code>places.csv.gz</code>, <code>admin1.csv</code> and <code>countries.csv</code>, and prints a summary and a conflict report to stdout (not committed). Then run <code>python3 -m pytest tests/test_build_place_data.py</code> from <code>backend/</code>, update the snapshot date in the data README, and commit the four files. <code>hints.json</code> is edited by hand.</p>
+<p>The script writes <code>airports.csv</code>, <code>places.csv.gz</code>, <code>admin1.csv</code>, <code>countries.csv</code> and <code>features.csv.gz</code>, and prints a summary and a conflict report to stdout (not committed). Then run <code>python3 -m pytest tests/test_build_place_data.py</code> from <code>backend/</code>, update the snapshot date in the data README, and commit the five files. The data README holds the derivation rules, including the notability threshold calibration for features. <code>hints.json</code> is edited by hand.</p>
 <hr />
 <h2 id="versioned-seeding">Versioned seeding</h2>
-<p>At startup, <code>seed()</code> in <code>backend/app/db/seed_airports.py</code> loads the files into the <code>airports</code>, <code>places</code>, <code>place_names</code> and <code>admin1</code> tables of <code>$DATA_DIR/airports.db</code>.</p>
+<p>At startup, <code>seed()</code> in <code>backend/app/db/seed_airports.py</code> loads the files into the <code>airports</code>, <code>places</code>, <code>place_names</code>, <code>features</code>, <code>feature_names</code> and <code>admin1</code> tables of <code>$DATA_DIR/airports.db</code>. <code>feature_names</code> holds each feature's name, its ASCII spelling and both without a generic part ("Kakadu National Park" → "kakadu", "Mount Everest" → "everest") as tier 0, and its alternate names as tier 1.</p>
 <ul>
-<li>The <strong>data version</strong> is the sha256 of a loader tag plus the bytes of <code>airports.csv</code>, <code>places.csv.gz</code> and <code>admin1.csv</code>, truncated to 16 hex characters and stored as <code>meta.place_data_version</code>.</li>
+<li>The <strong>data version</strong> is the sha256 of a loader tag (<code>place-data-loader:3</code>) plus the bytes of <code>airports.csv</code>, <code>places.csv.gz</code>, <code>admin1.csv</code> and <code>features.csv.gz</code>, truncated to 16 hex characters and stored as <code>meta.place_data_version</code>. An older <code>places</code> table gains its <code>satellite</code> column in place.</li>
 <li>If the stored version matches, seeding is skipped (about 5 ms).</li>
-<li>Otherwise one <code>BEGIN IMMEDIATE</code> transaction (waiting up to 30 s for another worker's lock) upserts the airports, sets <code>scheduled = 0</code> on old rows missing from the dataset, and rebuilds places, place names and divisions with their indexes. On an empty database this takes about 2 s and produces about 316,000 name rows and a database of about 29 MB.</li>
+<li>Otherwise one <code>BEGIN IMMEDIATE</code> transaction (waiting up to 30 s for another worker's lock) upserts the airports, sets <code>scheduled = 0</code> on old rows missing from the dataset, and rebuilds places, place names and divisions with their indexes. On an empty database this takes about 2.5 s and produces about 316,000 place-name rows, 113,000 feature-name rows and a database of about 33 MB.</li>
 <li>Backups leave these tables and the version out, so a restored database reseeds them.</li>
 </ul>
 <p>It can also be run by hand: <code>cd backend &amp;&amp; python -m app.db.seed_airports</code>. After seeding, <code>places_db.warm()</code> builds an in-memory airport-name index (about 0.06 s).</p>
@@ -1431,14 +1464,23 @@
 <li><strong>GeoNames place resolution</strong> (<code>resolve_place</code>, <code>backend/app/db/places_db.py</code>):</li>
 <li>Candidates are places whose own name matches. Alternate names count only when no place has that own name, or when the own-name places are small (under 20k) and the alternate one is at least 10× bigger and 150k or more.</li>
 <li>Exonyms from <code>hints.json</code> map an English name to a specific place, or mark it ambiguous.</li>
-<li>A country typed alone gives its top place; a first-level division ("Florida", "Scotland") joins as its top place unless a town of that name is comparably notable.</li>
-<li>Stated qualifiers (country, ISO code, alias, US/CA/AU/BR/IN region code or a division name) filter the candidates. A qualifier that contradicts every candidate gives <code>None</code>.</li>
+<li>A country typed alone gives its top place; a first-level division ("Florida", "Scotland") joins as its top place unless a town of that name is comparably notable. Country names include the native and other-language names in <code>countries.csv</code> ("Deutschland" → BER, "Nippon" → HND); a name that is also the own name of a town of 15k or more stays the town's ("Columbia", South Carolina), unless it is the country's own name, curated as an alias ("Nederland" → AMS, not Nederland, Texas).</li>
+<li>Country names that are also a town's own name ("Eretria", "Coria", "Grenade") name the country only as a qualifier; typed alone they stay the town.</li>
+<li>Stated qualifiers (country name in any of those forms, ISO code, alias, a qualifier-only alias such as KSA, US/CA/AU/BR/IN region code or a division name) filter the candidates ("Berlin, Deutschland", "Riyadh, KSA"). A qualifier that contradicts every candidate gives <code>None</code>.</li>
 <li>An airport whose whole name equals the text can win ("Wagga Wagga" → WGA), but never over a place of 40k or more.</li>
+<li><strong>Suburbs yield to towns with their own airport.</strong> When the top candidate is a <a href="#suburbs-satellite-places">satellite</a> and the best candidate whose first airport is its own scores at least 1/10 of it, the satellites scoring above that town drop out ("Peoria" → PIA, Illinois, not the Phoenix suburb).</li>
+<li><strong>A namesake with its own named airport.</strong> When the top candidate would win without an airport named for it, and one comparable namesake (score within 5×, at least a third of the people) flies from its own named airport, that namesake leads if the top's nearest airport is over 75 km away ("Tongren" → TEN, Guizhou); otherwise the name is ambiguous ("Salisbury").</li>
 <li><strong>The winner must score 3× the next candidate</strong> (score = population × notability). A place under 15k wins only alone or through a hint; one under 5k with no airport within 100 km gives <code>None</code>.</li>
+<li><strong>Non-town features.</strong> When no candidate is a town of 15k or more (and no division or curated city has the name), a notable <a href="#non-town-features">feature</a> by that name answers with its airports ("Kakadu" → DRW; "Arches" → the national park's CNY, not the French village), unless a town of that name lies within 50 km of it (Paros, Naxos: the island town and its airport). Of several features, the most notable needs 3× the next one's notability; otherwise the answer is <code>None</code>, even when small towns share the name ("Mount Olympus": Cyprus or Greece). Districts answer the same way ("Ealing" → LHR, "Manly" → SYD), except by a contested name that many sections elsewhere share: then the answer is <code>None</code>, never another town ("Centar", "Chinatown", "Downtown"). An alternate-name town of 15k or more with at least twice the best feature's alternate names blocks the feature path and competes ("Vila" → Port Vila's VLI, not an Albanian peak); one known only by its people (not by alternate names) must have 3× the people of every town of that name, alternate names included ("Legazpi" stays the Philippine city).</li>
 <li>The place's linked airports are returned. With a curated city in the same country they are appended to the curated codes ("New York" → JFK, LGA, EWR); otherwise foreign airports are dropped unless the place has no domestic one.</li>
 <li><strong>Last resort</strong>: dataset airports whose display city matches.</li>
 </ol>
 <p>Text without a comma is also tried as "City, Qualifier" when the last words name a country or region ("Chicago IL", "Berlin Germany"). Generic affixes are retried too ("Zanzibar Island", "Banff National Park", "Tokyo city").</p>
+<h3 id="suburbs-satellite-places">Suburbs (satellite places)</h3>
+<p>A place is a <em>satellite</em> when its first airport is not named for it but for a place scoring at least 10× more within 60 km: Peoria, Arizona flies from Phoenix's PHX, while Peoria, Illinois has PIA. "Named" is <code>core.places.is_named_airport</code>: the airport's display city is the place or its name names the place, never distance alone. A <em>deep suburb</em> (owner ≥ 100× bigger) drops out when a namesake that is an ordinary satellite or flies from its named airport scores more ("Pontevedra" → Spain's SCQ, VGO, not the Buenos Aires suburb). A satellite that would win yields to a namesake with its named airport scoring ≥ 1/10 of it ("Peoria" → PIA); comparable namesakes stay ambiguous ("Redmond", "Darien"). Two comparable suburbs stay ambiguous ("Glendale": California and Arizona → <code>None</code>), and a satellite keeps its lead over a far smaller namesake.</p>
+<h3 id="non-town-features">Non-town features</h3>
+<p><code>features.csv.gz</code> holds 31,995 GeoNames features that are not towns: islands, archipelagos and atolls, peninsulas, parks and reserves, resorts, regions and coasts, mountains, ranges, peaks and volcanoes, valleys, lakes, beaches, ancient and historical sites, ruins and monuments, deserts, gorges and canyons, glaciers, capes, fjords and caves, plus 7,306 famous districts that take their city's airports (Ealing, Manly, Frankston, Shinjuku). Only notable ones are kept: at least 10 GeoNames alternate names (5 for parks, reserves, resorts, glaciers, capes, fjords, caves, islands and deserts; such a weakly notable island or desert is dropped when another GeoNames row has its name), and an airport. Names also match without generic words in several languages ("Isola Stromboli" → "stromboli", "Parque Nacional de Doñana" → "donana", "Killington Peak", "Annapurna I"); after an island, park or peninsula affix only a feature of that kind answers ("San Blas Islands" is not Argentina's San Blas). Their airports are those on the island (for islands), then large and medium airports within 250 km, same country first, by distance with a large airport counted at half its distance (Florida Keys → EYW, then MIA; Lake Tahoe → RNO before Truckee). The data README has the calibration (5 → 83k features and 3.6 MB; 10 → 14k and 0.9 MB; 20 → 1.3k).</p>
+<p>Curated hints still come first; features answer names the hints do not cover ("Grand Teton" → JAC, "Crater Lake" → MFR, "Mount Rushmore" → RAP, "Tikal" → FRS, "Haida Gwaii" → YZP). Vast regions give a single point, so their airports can be rough (Sumatra → PKU, Pekanbaru); big islands with several gateways are curated ("Borneo" → BKI, KCH).</p>
 <h3 id="examples">Examples</h3>
 <p>Results from the current data:</p>
 <table>
@@ -1515,6 +1557,36 @@
 <td>None</td>
 <td>The stated country contradicts the place</td>
 </tr>
+<tr>
+<td><code>Deutschland</code></td>
+<td>BER</td>
+<td>GeoNames country name</td>
+</tr>
+<tr>
+<td><code>Riyadh KSA</code></td>
+<td>RUH</td>
+<td>No-comma qualifier; KSA alone stays Kosrae's code</td>
+</tr>
+<tr>
+<td><code>Peoria</code></td>
+<td>PIA</td>
+<td>Peoria, Arizona is a Phoenix suburb (satellite)</td>
+</tr>
+<tr>
+<td><code>Glendale</code></td>
+<td>None</td>
+<td>Two comparable suburbs</td>
+</tr>
+<tr>
+<td><code>Kakadu</code></td>
+<td>DRW</td>
+<td>Notable national park, no town of that name</td>
+</tr>
+<tr>
+<td><code>Everest</code></td>
+<td>KTM, LUA, TPJ</td>
+<td>Mount Everest (a feature)</td>
+</tr>
 </tbody>
 </table>
 <h3 id="bare-airport-codes">Bare airport codes</h3>
@@ -1526,6 +1598,11 @@
 <p><code>GET /api/airports/search?q=&amp;limit=</code> (<code>search_airports</code> in <code>backend/app/db/database.py</code>; default 10 results, at most 50):</p>
 <ul>
 <li>Matches airports by code, city, airport name or country, plus the airports of GeoNames places and curated hints whose folded name starts with the query ("kyoto" → ITM, KIX, …; "milan" → MXP, LIN, BGY).</li>
+<li>From the fourth letter, when no town of 15k or more and no curated hint matches, up to 3 notable features whose name starts with the query add their airports, below every town match ("kakadu" → DRW, MNG).</li>
+<li>A country's other name or alias suggests the airports of the place the resolver picks for it, and keeps namesakes abroad out ("deutschland" → BER, not Deutschlandsberg's GRZ; "nederland" → AMS, RTM). From five letters, a prefix of one country's other names suggests that gateway first (a GeoNames other-language name yields to a town or district whose own name starts so: "jordaa" → Amsterdam's Jordaan, not Jordan) and still lists the towns ("deuts" → BER, then GRZ). Official names still match the airports' country column ("germany" lists German airports).</li>
+<li>The suburb rule applies to every matched name: a satellite the resolver sets aside ranks just below its namesake, and stays listed ("peori" → PIA, PHX; "pontevedra" → SCQ, EZE, VGO, AEP).</li>
+<li>Features also match by alternate and short names ("sifnos" → JTR).</li>
+<li>When the whole query (four letters or more) resolves by its own name to a town of 15k or more, or to a curated hint, feature or district while no real town's name starts so, <code>lookup_city_iata</code>'s answer leads the list ("ealing" → LHR before Ealing, New Zealand's TIU; "peoria" → PIA).</li>
 <li>Alternate names count for places of 100k or more from the fourth letter ("münch" → München).</li>
 <li>A place contributes only its own-country airports, and only places scoring at least 1/10 of the best match count.</li>
 <li>Order: exact code, code prefix, exact name, name prefix, then the rest. Lower-case three-letter text that names a place lists the place first ("hue" → HUI; "HUE" → HUE). Within a class, the more notable place comes first, then curated order, then the bigger airport.</li>
@@ -1535,9 +1612,10 @@
 <hr />
 <h2 id="quality">Quality</h2>
 <ul>
-<li><strong>Golden set.</strong> <code>backend/tests/data/golden_places.csv</code> has 693 cases (400 resolution, 275 data, 18 autocomplete; 541 "first code matches", 94 exact, 50 subset and 8 expected <code>None</code>). <code>tests/test_golden_places_runtime.py</code> runs them all and forbids web calls.</li>
+<li><strong>Golden set.</strong> <code>backend/tests/data/golden_places.csv</code> has 736 cases (443 resolution, 275 data, 18 autocomplete; 578 "first code matches", 98 exact, 50 subset and 10 expected <code>None</code>). <code>tests/test_golden_places_runtime.py</code> runs them all and forbids web calls.</li>
 <li><strong>Fresh blind probe.</strong> On inputs not used during development, about 1.7% resolved to a wrong airport. More inputs now resolve to <code>None</code> by design: when a name is genuinely ambiguous, no answer (and an AI-estimated fare) is better than a confident wrong airport.</li>
-<li><strong>Speed.</strong> <code>lookup_city_iata</code> takes well under 2 ms per call (p50 about 0.6 ms), so request handlers call it synchronously.</li>
+<li><strong>Country names, suburbs and features (2026-10-30).</strong> Measured on the five earlier probe sets (2,484 inputs) and a fresh blind set of 451: on the earlier sets no input gained a wrong airport and one was fixed (Peoria); on the fresh set the 8 wrong answers (7 also on <code>main</code>) were fixed. These figures hold for those sets only.</li>
+<li><strong>Speed.</strong> <code>lookup_city_iata</code> takes about 0.8 ms per call at p50 and under 2.5 ms at p99 (warm), so request handlers call it synchronously.</li>
 </ul>
 
 
