@@ -60,11 +60,25 @@ def _bucket_limit(bucket: str) -> int:
     return getattr(settings, f"rate_limit_{bucket}")
 
 
-def _caller_key(request: Request, user: dict | None) -> str:
+def caller_key(request: Request, user: dict | None) -> str:
+    """Whose budget a request draws on: the signed-in user, else the client IP."""
     if user and user.get("username"):
         return f"user:{user['username']}"
     host = request.client.host if request.client else "unknown"
     return f"ip:{host}"
+
+
+def try_consume(bucket: str, key: str) -> int | None:
+    """Take one ``bucket`` token for caller ``key`` (see caller_key).
+
+    Returns None when allowed (or limiting is disabled), else the seconds
+    until a token frees up.
+    """
+    if not settings.rate_limit_enabled:
+        return None
+    return limiter.hit(
+        f"{bucket}:{key}", _bucket_limit(bucket), settings.rate_limit_window_seconds
+    )
 
 
 def rate_limit(bucket: str) -> Callable:
@@ -74,12 +88,7 @@ def rate_limit(bucket: str) -> Callable:
     async def enforce(
         request: Request, user: dict | None = Depends(get_optional_user)
     ) -> None:
-        if not settings.rate_limit_enabled:
-            return
-        key = f"{bucket}:{_caller_key(request, user)}"
-        wait = limiter.hit(
-            key, _bucket_limit(bucket), settings.rate_limit_window_seconds
-        )
+        wait = try_consume(bucket, caller_key(request, user))
         if wait is not None:
             raise HTTPException(
                 status_code=429,

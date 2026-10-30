@@ -1,13 +1,14 @@
 import json
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ...agents.chat_agent import ChatAgent
 from ...core.auth import get_current_user
 from ...core.config import settings
+from ...core.rate_limit import caller_key
 from ...db.preferences_db import get_preferences
 from ...db.taste_db import derive_taste_context
 
@@ -29,8 +30,16 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
-    """Stream a conversational travel planning response."""
+async def chat(
+    request: ChatRequest,
+    http_request: Request,
+    user: dict = Depends(get_current_user),
+):
+    """Stream a conversational travel planning response.
+
+    The route itself costs one ``chat`` token; the agent also takes one
+    ``search`` token (same caller key) when it starts a full trip plan.
+    """
     prefs = get_preferences(user["username"])
     try:
         taste = derive_taste_context(user["username"])
@@ -50,6 +59,7 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
                 search_results=request.search_results,
                 session_context=request.session_context,
                 taste_context=taste,
+                rate_limit_key=caller_key(http_request, user),
             ):
                 yield f"data: {chunk}\n\n"
         except Exception as e:

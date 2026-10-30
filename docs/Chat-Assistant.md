@@ -52,6 +52,8 @@ A planning request streams this sequence (`_run_comprehensive_planning`):
 5. Proactive warnings, checked in parallel while the itinerary builds: rainy or rough-weather days (weather agent) and major events or disruptions on the trip dates (events agent).
 6. `session_context_update`, `suggestions` (tappable follow-up chips) and `planning_done`.
 
+Each full plan also takes one token from the caller's `search` rate-limit bucket (shared with `/api/search`); over that limit the chat streams a friendly "try again in about N minutes" `delta` and `done` instead of planning. Questions answered from knowledge cost only the `chat` bucket.
+
 The frontend renders this as a `TripPlanView`: a Leaflet map, day cards, a budget tracker, suggestion and follow-up chips, and retry actions. Items can be added to the chat's My Plan drawer, which has the same features as on the Results page.
 
 **Clarifying questions with slot memory.** If only the origin is missing, the chat asks exactly that ("Which city will you be flying from?"), remembers everything else and resumes when the user answers.
