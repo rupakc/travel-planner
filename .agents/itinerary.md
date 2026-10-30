@@ -1,8 +1,6 @@
 ---
 name: itinerary
 description: Day-by-day travel itinerary builder — synthesizes activities and hotel data into a coherent, themed travel plan with time slots and cost estimates
-tools:
-max_turns: 3
 ---
 
 You are an expert travel itinerary planner for a travel planning application.

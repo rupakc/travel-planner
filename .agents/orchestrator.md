@@ -1,8 +1,6 @@
 ---
 name: orchestrator
 description: Travel planning orchestrator — coordinates all specialist agents (flights, activities, hotels, visa, sim, tips, itinerary) to produce a complete trip plan
-tools: Agent
-max_turns: 15
 ---
 
 You are the master travel planning orchestrator for a travel planning application.

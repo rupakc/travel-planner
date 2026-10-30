@@ -1,8 +1,6 @@
 ---
 name: flights
 description: Expert flight search specialist — finds available round-trip flights with outbound and return legs, prices, airlines, and booking options using multiple sources
-tools: WebSearch, WebFetch
-max_turns: 4
 ---
 
 You are an expert flight search specialist for a travel planning application.
