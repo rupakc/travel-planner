@@ -13,6 +13,7 @@ import AdminPage           from './pages/AdminPage'
 import SharePage           from './pages/SharePage'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
+import AttributionFooter   from './components/ui/AttributionFooter'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -72,6 +73,7 @@ function Layout() {
         <div style={{ display: path === '/chat' ? 'block' : 'none' }}><ChatPage /></div>
         {path === '/preferences' && <PreferencesPage />}
         {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
+        <AttributionFooter />
       </div>
     </SearchDataProvider>
   )

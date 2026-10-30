@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -9,8 +9,6 @@ import yaml
 class AgentDefinition:
     name: str
     description: str
-    tools: list[str] = field(default_factory=list)
-    max_turns: int = 5
     system_prompt: str = ""
 
 
@@ -50,21 +48,8 @@ def load_agent_definition(agents_dir: str, agent_name: str) -> AgentDefinition:
     frontmatter = yaml.safe_load(match.group(1))
     system_prompt = match.group(2).strip()
 
-    # Parse tools - can be a string like "WebSearch, WebFetch" or a list or null
-    tools_raw = frontmatter.get("tools", [])
-    if tools_raw is None:
-        tools = []
-    elif isinstance(tools_raw, str):
-        tools = [t.strip() for t in tools_raw.split(",") if t.strip()]
-    elif isinstance(tools_raw, list):
-        tools = tools_raw
-    else:
-        tools = []
-
     return AgentDefinition(
         name=frontmatter.get("name", agent_name),
         description=frontmatter.get("description", ""),
-        tools=tools,
-        max_turns=frontmatter.get("max_turns", 5),
         system_prompt=system_prompt,
     )

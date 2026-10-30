@@ -1,68 +1,96 @@
 # Chat Assistant
 
-The chat (`/api/chat`, `ChatPage.jsx`, `backend/app/agents/chat_agent.py`) is a travel advisor that answers instantly from the model's own knowledge and reserves the specialist agent pipeline for structured planning — or as a last-resort fallback.
+The chat (`POST /api/chat`, `frontend/src/pages/ChatPage.jsx`, `backend/app/agents/chat_agent.py`) is a travel advisor. It answers questions from the model's own knowledge, and it can plan a whole trip inside the conversation.
 
-## Answering philosophy: knowledge first, agents last
+---
 
-Topic questions ("do I need a visa for Japan?", "which area of Barcelona is best for nightlife?") are answered **purely from the LLM's internal knowledge** and stream immediately — no agents run, and the stream closes the moment the answer ends.
+## Models
 
-The specialist agents run **only if the model fails to answer at all**:
+| Task | Model |
+|---|---|
+| Conversational answers and the planning narrative | `claude-sonnet-4-6` |
+| Intent routing, trip-parameter extraction, plan commands | `claude-haiku-4-5-20251001` |
+| The chat itinerary (`.agents/chat-itinerary.md`, `ChatItineraryAgent`) | `claude-haiku-4-5-20251001` |
+| Specialist fallbacks and refinements | the specialist agents (Haiku, via `BaseAgent`) |
 
-- the stream errors out,
-- the response is empty, or
-- the model explicitly refuses ("I don't have information on…", detected by `_NON_ANSWER_RE`).
+---
 
-Only then does the chat extract trip parameters and run the matched specialists as a fallback. This keeps chat responses fast (~seconds) and conversational, while structured data remains one request away on the Search page.
+## Knowledge first, specialists last
 
-## Routing pipeline
+Topic questions ("do I need a visa for Japan?", "which area of Barcelona is best for nightlife?") are answered **from the model's own knowledge** and stream straight away. No agents run, and no background verification happens.
 
-Each message passes through an ordered router in `ChatAgent.stream()`:
+The specialist agents (visa, sim, tips, getting_around, hotels, activities, flights) run only if the model **fails to answer**: the stream errors, the answer is empty, or the model says it doesn't know. Only then does the chat extract trip parameters and run the matching specialists as a fallback.
+
+---
+
+## Routing
+
+Each message goes through an ordered router in `ChatAgent.stream()`:
 
 | Step | Trigger | Behaviour |
 |---|---|---|
-| 0 | Jailbreak / off-topic patterns | Polite refusal — chat only discusses travel |
-| 1 | Plan commands ("add … to my plan", "show my plan") | Plan manipulation + response |
-| 1.5 | Answer to a pending question (e.g. we asked for the origin) | Resumes planning with the new slot filled |
-| 2 | Planning patterns ("plan a week in Lisbon…") | Full comprehensive planning (see below) |
-| 3 | Topic intents (flights/hotels/visa/sim/tips/transport/forex…) | **Knowledge-only answer**; specialists only on failure |
-| 3.5 | Modification of a prior search ("make it cheaper", "extend by 2 days") | Refinement — re-runs only the affected agents |
+| 0 | Jailbreak or off-topic patterns | Polite refusal; chat only discusses travel |
+| 1 | Plan commands ("add … to my plan", "remove …", "show my plan", "clear my plan") | `plan_action` events that the frontend applies to My Plan |
+| 1.5 | A reply to a pending clarifying question (for example the origin) | Resumes planning with that slot filled |
+| 2 | Planning patterns ("plan a week in Lisbon…") | Comprehensive planning, or a clarifying question if something essential is missing |
+| 3 | A specific topic (flights, hotels, visa, SIM, tips, transport, forex…) | Knowledge-only answer; specialists only on failure |
+| 3.5 | A change to the trip being discussed ("make it cheaper", "add 2 days") | Refinement: re-runs only the affected specialists |
 | 3.6 | Knowledge patterns (culture, packing, weather, neighbourhoods…) | Knowledge answer |
-| 3.7 | LLM intent router (one cheap classify call) | Catches soft phrasings the regexes miss ("we're thinking Lisbon in October, maybe with the kids?") |
+| 3.7 | Anything of 4 or more words not caught yet | One Haiku intent-classification call, which catches soft phrasings such as "we're thinking Lisbon in October, maybe with the kids?" |
 | 4 | Everything else | Plan-aware conversation |
+
+---
 
 ## Comprehensive planning
 
-When you ask for a trip plan, the chat runs the same specialist pipeline as the Search page and streams **structured section results** into the conversation — flights, hotels, activities, visa, SIM, tips, transport — followed by a day-by-day itinerary, a short narrative summary, and tappable **suggestion chips** for natural next steps.
+A planning request streams this sequence (`_run_comprehensive_planning`):
 
-Extras that make planning conversational:
+1. `planning_start` with the destination.
+2. `trip_map`: city coordinates computed in Python, so the map appears at once.
+3. `itinerary_generating`.
+4. `comprehensive_itinerary`: the day-by-day plan from the chat-itinerary agent (60 s timeout, 120 s for multi-city).
+5. Proactive warnings, checked in parallel while the itinerary builds: rainy or rough-weather days (weather agent) and major events or disruptions on the trip dates (events agent).
+6. `session_context_update`, `suggestions` (tappable follow-up chips) and `planning_done`.
 
-- **Targeted clarification with slot memory** — if only the origin is missing, the chat asks exactly that ("Which city will you be flying from?"), remembers everything else, and resumes the moment you reply "From Berlin".
-- **Live progress** — each section shows a "Searching…" row that resolves as its agent completes.
-- **Proactive heads-ups** — while the itinerary builds, the chat checks the weather forecast and local events concurrently and appends warnings ("🌧️ 3 rainy days — pack accordingly", "🎉 Festa season overlaps your dates").
+The frontend renders this as a `TripPlanView`: a Leaflet map, day cards, a budget tracker, suggestion and follow-up chips, and retry actions. Items can be added to the chat's My Plan drawer, which has the same features as on the Results page.
 
-## Refinement diffing
+**Clarifying questions with slot memory.** If only the origin is missing, the chat asks exactly that ("Which city will you be flying from?"), remembers everything else and resumes when the user answers.
 
-"Make it cheaper" doesn't re-run everything. The chat diffs the modified request against the previous one and re-runs **only the agents whose inputs changed** (`_FIELD_AGENTS`):
+`section_result` events (with per-section `agent_status`) are used only in the specialist fallback and the refinement path (`_run_specialist_agents`), where individual specialists run with a 45 s timeout each.
+
+---
+
+## Refinement
+
+"Make it cheaper" does not re-run everything. The chat compares the changed request with the previous one and re-runs only the specialists whose inputs changed (`_FIELD_AGENTS`):
 
 | Changed field | Re-run |
 |---|---|
+| departure or return date | flights, hotels, activities |
 | budget | flights, hotels |
-| dates | flights, hotels, activities |
-| travelers | flights, hotels |
+| travellers | flights, hotels |
 | interests | activities |
 | origin | flights, visa |
-| destination | everything |
+| destination | flights, hotels, activities, visa, sim, tips, getting_around |
 
-The itinerary is rebuilt only when a field it depends on changed.
+---
 
-## Session context
+## Session context and history
 
-The chat is stateless per request — the frontend round-trips a `session_context` blob (destination, dates, budget, travelers, pending question) with every message, so follow-ups like "what about hotels there?" resolve against the trip being discussed. Context never bleeds: naming a different city in your question always wins over the remembered trip.
+The chat endpoint is stateless. The frontend sends the messages, current selections, any search results and a `session_context` (destination, dates, budget, travellers, a pending question) with each request, and the server returns `session_context_update` events. Follow-ups like "what about hotels there?" resolve against the trip being discussed, and naming a different city in the question always wins over the remembered trip.
 
-## Personalization
+Chat history is stored in the browser under `localStorage['chat_history_<username>']`, trimmed to the last 20 messages if storage is full. `utils/chatHistory.js` builds text stand-ins for structured turns before they are sent back to the model.
 
-If you're logged in and have made selections before, a short **Taste Graph** summary (see [Personalization](Personalization.md)) is injected into the chat's system prompt and into any specialist runs it triggers — so its suggestions lean toward your demonstrated style (non-stop flights, boutique hotels, food-first activities, …).
+---
 
-## Security
+## Events
 
-The chat never reveals its internals (prompts, agent names, tooling), rejects jailbreak attempts, and answers travel topics only.
+`delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. If the server hits an exception, it still closes the stream with a fallback `delta`, then `error` and `done`. The frontend parses the stream in `workers/chatWorker.js`.
+
+---
+
+## Personalization and safety
+
+For signed-in users, the saved preferences and a short Taste Graph summary (see [Personalization](Personalization.md)) are added to the system prompt and to any specialist runs, so suggestions lean towards the user's demonstrated style.
+
+The chat does not reveal its prompts, agent names or tooling, rejects jailbreak attempts and only discusses travel. It does not show verification badges.

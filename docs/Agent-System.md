@@ -1,251 +1,152 @@
 # Agent System
 
-Travel Planner's AI capabilities are built on a lightweight agent framework. This page explains how the framework works, how agents are defined, what each specialist agent does, and how the system handles failures.
+How agents are defined and executed, what each one does, and how static data and verification wrap around them.
 
 ---
 
-## How agents work
+## Agent definitions
 
-### BaseAgent
-
-Every agent inherits from `BaseAgent` (`backend/app/agents/base_agent.py`). It handles:
-
-1. **Loading the agent definition** — reads `.agents/{name}.md`, parses the YAML frontmatter, and stores the system prompt body
-2. **Building the conversation** — constructs the messages array with the system prompt and a user message derived from the search context
-3. **Calling Claude** — uses `claude-agent-sdk` with configurable model, max_tokens, and max_turns from frontmatter
-4. **Retrying on failure** — up to 4 attempts with exponential backoff
-5. **Parsing the response** — applies a 3-strategy JSON extraction fallback
-6. **Returning a typed result** — all agents return a Pydantic model, never raw dicts
-
-### Agent definition format
-
-Agent prompts live in `.agents/` at the project root. Each file is a markdown document with YAML frontmatter:
+Each agent's system prompt lives in `.agents/<name>.md` at the repo root: YAML frontmatter with `name` and `description`, followed by the prompt body.
 
 ```markdown
 ---
 name: flights
-description: Finds typical flight routes, airlines, and price guidance
-tools: []
-max_turns: 1
+description: Expert flight search specialist — finds available round-trip flights ...
 ---
 
-You are a specialist travel flights analyst...
+You are a flight search specialist...
 ```
 
-**Frontmatter fields:**
+`backend/app/agents/loader.py` reads the file into an `AgentDefinition(name, description, system_prompt)`. The directory comes from `AGENTS_DIR` (default `<repo>/.agents`). Changing an agent's behaviour usually means editing its prompt; the Python class builds the user prompt and post-processes the JSON.
 
-| Field | Type | Description |
+There are 22 definition files:
+
+| `.agents` file | Python class (`backend/app/agents/`) | Used by |
 |---|---|---|
-| `name` | string | Agent identifier, must match the filename |
-| `description` | string | Human-readable description, used in logs |
-| `tools` | list | Tool-use configuration; most agents use `[]` (no tools) |
-| `max_turns` | int | Maximum conversation turns passed to the SDK |
-
-Changing agent behaviour means editing the `.md` file — no Python changes needed.
-
-### Retry and JSON parsing logic
-
-**Retry:** Each agent wraps its API call in a retry loop with up to 4 attempts. On rate limits, server errors, or network timeouts, it waits with exponential backoff. On the 4th failure, it returns a structured error result instead of raising an exception.
-
-**JSON parsing (3-strategy fallback):**
-
-1. **Direct parse** — `json.loads()` on the full response text
-2. **Code block extraction** — extract content from ` ```json ... ``` ` fences
-3. **Regex extraction** — find the first `{...}` block via regex
-
-If all three fail, the agent returns a fallback error result, which the frontend renders as a "not available" section.
+| `flights.md` | `flights_agent.py` | search, `/flights`, compare, chat fallback |
+| `weather.md` | `weather_agent.py` | search, compare |
+| `hotels.md` | `hotels_agent.py` | search, `/hotels`, compare, chat |
+| `activities.md` | `activities_agent.py` | search, `/activities`, chat |
+| `places.md` | `places_agent.py` | search (`places_to_see`) |
+| `walking_tours.md` | `walking_tours_agent.py` | search, `/walking-tours` |
+| `events.md` | `events_agent.py` | search, `/events`, chat warnings |
+| `visa.md` | `visa_agent.py` | search, `/visa`, compare, chat |
+| `sim.md` | `sim_agent.py` | search, `/sim`, chat |
+| `tips.md` | `tips_agent.py` | search, `/tips`, chat |
+| `emergency_card.md` | `emergency_card_agent.py` | search |
+| `getting-around.md` | `getting_around_agent.py` | search, `/getting-around`, chat |
+| `forex.md` | `forex_agent.py` | search, `/forex` |
+| `packing_list.md` | `packing_list_agent.py` | search (deferred) |
+| `pricing_advisor.md` | `pricing_advisor_agent.py` | search (deferred) |
+| `itinerary.md` | `itinerary_agent.py` | search Phase 2, `/itinerary` |
+| `stress_test.md` | `stress_test_agent.py` | search (after the itinerary), `/stress-test` |
+| `discovery.md` | `discovery_agent.py` | `/discover` |
+| `layover.md` | `layover_agent.py` | `/layover` |
+| `chat.md` | `chat_agent.py` | `/chat` |
+| `chat-itinerary.md` | `chat_itinerary_agent.py` | chat comprehensive planning |
+| `orchestrator.md` | none | Descriptive only; the orchestrator is the Python `TravelOrchestrator` |
 
 ---
 
-## The orchestrator phases
+## Execution: `BaseAgent`
 
-### Phase 0 — Static data (instant)
+`backend/app/agents/base_agent.py`:
 
-Static lookup tables in `static_results.py` yield results before any AI call:
+- **One API call per attempt.** `execute(prompt)` calls `AsyncAnthropic.messages.create` with model `claude-haiku-4-5-20251001`, `max_tokens` 16384, the definition's prompt as the system prompt (plus "Return ONLY valid JSON") and the agent's prompt as the single user message. No tools are passed to the model.
+- **Concurrency.** A global semaphore limits concurrent calls to `AGENT_MAX_CONCURRENCY` (default 6), so a burst of agents does not trip the organisation's rate limits. The SDK client also retries 3 times on its own.
+- **Retries.** Up to 4 attempts. Rate-limit, overload and connection errors back off `min(2^n, 10)` seconds; other errors back off `2n` seconds.
+- **Token cap.** If a response stops at `max_tokens`, the next attempt adds a "be compact" instruction instead of repeating the same request.
+- **JSON parsing** (`_parse_json`), three strategies: parse the whole text, extract a fenced code block, then take the outermost `{...}`.
+- **Failure.** After the last attempt the agent returns `{"error": "..."}` rather than raising.
 
-- `VisaAgent.static()` — visa category from `_VISA_TABLE` keyed by `(nationality, destination)`
-- `SimAgent.static()` — SIM options by destination
-- `TipsAgent.static()` — travel tips by destination
-- `GettingAroundAgent.static()` — transport options by destination
-- `get_static_emergency_card()` — emergency numbers from `_EMERGENCY_NUMBERS` (40+ destinations)
-- `get_confidence_score()` — safety / visa / budget / infrastructure score from `_DESTINATION_SCORES` (49 destinations)
+`ToolAgent` (a `BaseAgent` subclass) adds `enrich(data)`, which the orchestrator runs in the background after the first result has streamed; a changed result is streamed again. Flights (LLM results only), hotels, activities, places, visa, sim, tips, getting around and forex override it to look up real links (DuckDuckGo through `web_tools.py`, at most 4 concurrent searches; Serper as a second tier for activities and places when `SERPER_KEY` is set). Only hotels, activities and places_to_see mark their first yield as verification-pending.
 
-All stream to the browser within 1 second with `source: 'static'`. The UI shows them as "Enhancing…" until AI results arrive.
+Every specialist subclass overrides `run(request)` to build its user prompt and post-process the result. No agent has its own API plumbing.
 
-Destinations are matched to a table country by whole names only (`_place_country`): a stated country wins; otherwise the city map, when a trailing state or region name, or an ISO / region code with a reading in the mapped country, agrees with it ("Miami, FL", "Berlin, DE", "Perth, WA", "Toronto, ON" resolve; "Paris, TX", "Paris, Texas" and "Paris, US" get no row). A known city with an ISO code for another country that is not a US state code takes that country ("Cartagena, ES" → Spain). For a city not in the map, a code resolves only when it has a single reading across ISO codes and the region codes in `backend/app/core/places.py` (US states, Canadian provinces/territories, Australian and Brazilian states): "Trondheim, NO" → Norway, "Austin, TX" → USA, but "Leipzig, DE", "Fremantle, WA" and "Smalltown, PA" get no row. The city map includes common US, Australian, Canadian and Brazilian cities so "Denver, CO", "Perth, WA" or "Belém, PA" resolve. Names are accent-folded (`core/places.fold_place`, so "Zürich" and "São Paulo, BR" match) checked under their other St / St. / Saint spellings and through `CITY_ALIASES` ("Saigon", "Bombay", "Washington D.C."); "Washington, D.C." also resolves to the USA. Full Canadian, Australian and Brazilian state/province names count like their codes ("Sydney, New South Wales", "São Paulo, São Paulo"), and give an unknown city its country ("Victoria, British Columbia" → Canada).
+---
 
-### Phase 1 — Parallel AI agents
+## The specialists
 
-Thirteen agents run concurrently (the `phase1_agents` dict in the orchestrator), plus two deferred agents. As each finishes, its result is yielded over SSE:
+**Flights.** With `SERPAPI_KEY`, live Google Flights results via SerpAPI (`services/serp_flights.py`), marked `live_fare`; single-city results may carry Google's `price_insights`. Multi-city trips search one leg at a time (see [Multi-City Trips](Multi-City-Trips.md)). Without a key, or for legs SerpAPI cannot serve, the LLM produces estimates.
 
-| Agent | File | Purpose |
+**Weather.** Open-Meteo forecast when the trip starts within 16 days and the city has coordinates (`utils/geo.py`), otherwise an LLM seasonal estimate. Multi-city trips get a forecast per stay.
+
+**Hotels.** Options across budget tiers (luxury, premium, mid-range, budget); links are searched and checked during enrichment.
+
+**Activities.** Activities matched to the traveller's interests. The model itself assigns each activity a relevance `similarity_score`; there is no embedding model in the code base.
+
+**Places to See.** Landmarks and sights. With `SERPER_KEY`, Google Places data from Serper is passed to the model; otherwise the model works alone.
+
+**Free Walking Tours.** `services/walking_tours.py` crawls the public city pages of GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope (free and pay-what-you-wish tours only; cached per provider and city). The LLM only picks and explains tours by candidate id, so every URL comes from the crawl. Each city is topped up to at least `min(4, available)` tours; if the LLM fails, a rating-and-reviews ranking is used.
+
+**Events (What's On).** Festivals, concerts and markets during the dates. A `~` on a date marks a typical-season estimate.
+
+**Visa, SIM, Tips, Getting Around, Forex.** Static-backed (see below). Forex runs several DuckDuckGo searches for current rates in parallel and has the model extract them.
+
+**Emergency Card.** Per-city police, ambulance and fire numbers, the traveller's embassy (skipped for home-country cities), hospitals, survival phrases and local laws. The frontend can print it.
+
+**Packing List** (deferred). Starts when activities and weather are both in; a template list is used after 120 s or on error.
+
+**Pricing Advisor** (deferred). Starts once flights have at least 3 results; gives booking-timing advice and the data for the sparkline in the Flights section. Skipped after 120 s or on error.
+
+**Itinerary.** Day-by-day plan with morning, afternoon and evening slots, each with `duration_hours` and `lat`/`lng`, which the frontend uses to derive estimated times. Template fallback after 60 s.
+
+**Stress Test.** Audits the final itinerary against flights, visa and weather: pacing, timings, visa deadlines, weather clashes. Also callable with an edited itinerary through `POST /api/stress-test` (the "Re-check" button).
+
+**Discovery.** Powers *Surprise me* (`POST /api/discover`): five destinations with cost range, weather, visa type, flight time and match reasons. The visa type is replaced by the static visa table when it has an entry; otherwise it is shown as unverified. 30 s timeout (504), cached.
+
+**Layover.** A mini-plan for a long connection (`POST /api/layover`, up to 48 h).
+
+**Chat and Chat-Itinerary.** See [Chat Assistant](Chat-Assistant.md).
+
+---
+
+## Static data and fallbacks
+
+`backend/app/agents/static_results.py` holds curated tables:
+
+| Table | Entries | Feeds |
 |---|---|---|
-| FlightsAgent | `flights_agent.py` | Routes, airlines, pricing, booking advice |
-| HotelsAgent | `hotels_agent.py` | Neighbourhoods and accommodation tiers |
-| ActivitiesAgent | `activities_agent.py` | Activities with interest-relevance scoring |
-| PlacesAgent | `places_agent.py` | Landmarks from Serper/Google + Claude synthesis |
-| WalkingToursAgent | `walking_tours_agent.py` | Free walking tours crawled from provider city pages; the LLM picks and explains them |
-| EventsAgent | `events_agent.py` | Festivals, concerts, and exhibitions during the trip dates |
-| VisaAgent | `visa_agent.py` | Entry requirements, documents, fees |
-| SimAgent | `sim_agent.py` | SIM cards, eSIM, local carriers |
-| TipsAgent | `tips_agent.py` | Etiquette, safety, health, local knowledge |
-| ForexAgent | `forex_agent.py` | Currency, exchange rates, payment tips |
-| GettingAroundAgent | `getting_around_agent.py` | Local and intercity transport |
-| WeatherAgent | `weather_agent.py` | Forecast for travel dates |
-| EmergencyCardAgent | `emergency_card_agent.py` | Embassy, hospitals, phrases, local laws |
-| PricingAdvisorAgent | `pricing_advisor_agent.py` | Price trend + booking timing (deferred) |
-| PackingListAgent | `packing_list_agent.py` | Personalised packing checklist (deferred) |
+| `_VISA_TABLE` | 34 (nationality, destination) pairs | Phase 0 visa, visa verification, discovery and compare visa |
+| `_DESTINATION_SCORES` | 49 | Travel Ease grade (`get_confidence_score`), daily cost |
+| `_EMERGENCY_NUMBERS` | 40 | Phase 0 emergency card, emergency verification |
+| `_CITY_TO_COUNTRY` | 204 | Matching a destination to a table country |
+| `_GLOBAL_ESIMS` / `_LOCAL_SIMS` | 4 / 10 countries | Phase 0 SIM |
+| `_UNIVERSAL_TIPS` / `_DESTINATION_TIPS` | universal + 6 countries | Phase 0 tips |
+| `_GETTING_AROUND_TABLE` | 13 | Phase 0 getting around |
+| `_FOREX_TABLE`, `_DEST_CURRENCY`, `_NATIONALITY_TO_CURRENCY` | 6, 52, 37 | Phase 0 forex |
 
-**Deferred tasks** (triggered by Phase 1 results, not at start):
-- `pricing_advisor` starts when ≥ 3 flight prices are available
-- `packing_list` starts when activities are ready AND weather is done (or has failed)
+**Six agents are static-backed**: visa, sim, tips, getting_around, forex and emergency_card. Phase 0 sends their static result; Phase 1 replaces it with the AI result; if the AI fails, the error is suppressed and the static data stays. Phase 0 also sends a `confidence` event with the Travel Ease grade.
 
-**Static-backed agents**: If visa, SIM, tips, getting around, or emergency card AI calls fail, the error is suppressed and the Phase 0 static data is retained. Users never see a degraded experience for these sections.
-
-### Phase 2 — Itinerary synthesis
-
-`ItineraryAgent` starts once both activities and hotels are available. It synthesises a day-by-day schedule with morning / afternoon / evening slots, daily cost estimates, and weather-aware themes. Has a 60-second timeout with a template-based fallback.
-
-### Source verification labels
-
-Right before every section is yielded, the orchestrator calls `_attach_verification(name, data, request, pending=False)` (logic in `backend/app/services/verification.py`; the filtered endpoints `/api/{flights,hotels,activities}/filtered` attach the same final, non-pending label), which adds `data["verification"]` = `{level, label, summary, checks[], items_verified, items_total, pending}` with `level` one of `verified`, `partial`, `unverified`, `conflict`. Error results get none. Labels come only from evidence the pipeline already holds, with no extra network calls or LLM passes:
-
-- **Flights**: `live_fare: true` on options mapped from SerpAPI Google Flights (never trusted from LLM output); all live is verified, a mix partial, none unverified.
-- **Hotels**: enrichment sets `link_verified: true` when a search result's title (or URL path) contains the hotel's distinctive name words and `false` for hotels it searched without a match; items beyond the enrichment cap carry no flag and are not counted. Words of the destination city are not distinctive ("Hotel Berlin" does not match a "Hotels in Berlin" listing); a name with nothing distinctive left never matches.
-- **Activities / places**: the resolvers mark every item they actually search (their top N) with `link_checked: true`, and totals are counted over those only ("1 of the 5 checked"). A trusted-domain result always upgrades the link, but `link_verified: true` ("found online by name") is set only when that result's title contains the item's distinctive name words. Places' Tier-1 official-site matches (from Serper Places in `PlacesAgent.run`) are conservatively left unflagged. Name matching for hotels, activities and places shares `services/name_match.py` (short names need every distinctive word; longer names at least half, minimum 2). Destination words (and an item's own `city` on multi-city trips) are removed before anything else, and a name left with only generic words ("hotel", "tour", "city", "museum", …) never matches — "Berlin City Tour" is not evidence for a "Top Berlin Tours" page.
-- The first (pre-enrichment) hotels/activities/places yield is `pending: true`; if the stream ends before the final label arrives, the client clears `pending`. Model-supplied `link_verified` / `link_checked` are stripped; saved plans drop both flags from their items.
-- **Walking tours, weather**: verified from provider crawl results and the `open-meteo` source respectively.
-- **Visa, emergency card**: the AI result is compared with the static reference table. A visa-type match is verified; emergency numbers are verified only when at least two of police / ambulance / fire were compared and all matched (a single matching number is partial). A differing visa type or emergency number is a `conflict` that names both values and links the official source. The AI data is never overwritten. No table entry means unverified.
-- **Static Phase 0 yields** (sim, tips, getting around, forex) are verified as curated reference data; their AI yields, the itinerary, stress test, packing list and pricing advisor are unverified.
+**Matching a destination to a table country** (`_place_country`) uses whole names only, never substrings. A stated country wins. Otherwise the city map is used, including St/Saint variants and city aliases, and checked against a stated region or ISO code ("Miami, FL", "Perth, WA", "Berlin, DE", "Cartagena, ES" → Spain). A city not in the map falls back to the GeoNames place resolver ("Zermatt" → Switzerland), then to unique region names or codes, then to "City Country" written without a comma.
 
 ---
 
-## Agents in detail
+## Source verification
 
-### FlightsAgent
+The orchestrator attaches `data.verification` to every non-error section just before yielding it (`attach_verification` in `backend/app/services/verification.py`); the filtered endpoints attach the same final label. The function is pure: it uses only evidence already in the data and never calls the network or an LLM. The object never contains an `error` key, so it cannot trip the cache's error guard.
 
-Generates guidance on flight options between the user's origin and destination. Covers typical routes, airlines, rough price ranges, and booking timing advice. Does not make live flight API calls — uses Claude's knowledge enriched by web search context.
+| Section | Evidence | Rule |
+|---|---|---|
+| flights | `live_fare` on options mapped from SerpAPI (never trusted from LLM output) | all live → verified; some → partial; none → unverified |
+| hotels | `link_verified` from enrichment: a search result whose title or path contains the hotel's distinctive name words | counted over the hotels actually searched |
+| activities, places_to_see | `link_checked` on every item the resolvers searched; `link_verified` when a trusted result's title contains the item's distinctive name words | "1 of the 5 checked were found online by name" |
+| walking_tours | crawl provenance | verified |
+| weather | `source: "open-meteo"` | verified; LLM estimates unverified |
+| visa | compared with the static visa table | match → verified; different visa type → conflict; no entry → unverified |
+| emergency_card | compared with the static emergency numbers | verified only when at least 2 of police/ambulance/fire were compared and all matched; any mismatch → conflict |
+| sim, tips, getting_around, forex (Phase 0 yields) | curated reference data | verified |
+| everything else (AI yields of the above, itinerary, stress test, packing list, pricing advisor) | none | unverified |
 
-### HotelsAgent
-
-Breaks down accommodation by neighbourhood and type. Covers the best areas to stay (matched to the user's interests), accommodation categories from budget to boutique, price ranges per night, and booking tips. A nightlife-focused user gets different neighbourhood recommendations than a museum-focused user.
-
-### ActivitiesAgent
-
-Generates a list of activities, experiences, and attractions. After the agent returns, the backend applies **relevance scoring**:
-
-1. `sentence-transformers` encodes each activity description and the user's interests string into embedding vectors
-2. Cosine similarity is computed between each activity and the interests
-3. Activities are sorted descending by similarity score
-
-This means a "street food and local markets" user sees food-focused activities ranked above generic tourist attractions.
-
-### PlacesAgent
-
-Surfaces must-see landmarks, temples, museums, viewpoints, and markets using live data. The pipeline:
-
-1. Calls the Serper `/places` and `/search` APIs to fetch Google Maps data and editorial mentions
-2. Sends the raw data to Claude for synthesis into structured results
-3. `SerperPlacesResolver` enriches the top results with TripAdvisor, Timeout, and Lonely Planet URLs
-
-Falls back to Claude-only results if `SERPER_KEY` is not configured.
-
-### WalkingToursAgent
-
-Finds free and pay-what-you-wish walking tours. Unlike most agents it does not ask the LLM for tours. For each destination city, `services/walking_tours.py` fetches the public city page of GuruWalk, FreeTour.com, FreeWalkingTour.com, and SANDEMANs NewEurope in parallel (JSON-LD Event data for the first two, HTML cards for the others, free or pay-what-you-wish only). It sends a `VoyagerTravelPlanner/1.0` User-Agent, uses a 12 s request timeout and caps each city's whole crawl at 15 s. It only fetches the four city-page URL patterns, which were verified as robots.txt-permitted on 2026-10-28. Results are cached per provider and city. When the slug misses, a DuckDuckGo `site:` search looks for the city page (GuruWalk and FreeTour only); discovery only accepts city pages of those patterns whose slug shares a word with the requested city (or, for non-Latin names, whose listings name that city), never site pages, language roots or `/search`.
-
-The LLM (Haiku) then picks and explains the best tours **by candidate id only** — every URL comes from the crawl, never the model. Each city is topped up to at least `min(4, available)` tours by rating; if the LLM fails, a rating × log(reviews) ranking is used. The agent returns an error only when every provider fails.
-
-### VisaAgent
-
-Entry requirements specific to the user's nationality: visa category (visa-free / on-arrival / e-visa / embassy), application process, required documents, processing times, fees, and any notable conditions.
-
-### SimAgent
-
-Mobile connectivity: local carriers and prepaid SIM data plans, eSIM availability, coverage quality, and where to buy. Notes whether home-country roaming might be better for short trips.
-
-### TipsAgent
-
-Cultural and practical information: local customs and etiquette, safety, health precautions, tipping culture, bargaining norms, dress codes for religious sites, local laws tourists sometimes accidentally break.
-
-### ForexAgent
-
-Currency guidance: local currency and ISO code, current exchange rate context, whether to exchange before travel or at destination, ATM availability and fees, card acceptance, digital payment adoption.
-
-### GettingAroundAgent
-
-Transport at the destination: airport transfer options with price ranges, public transport usage, ride-hailing apps, taxi culture, car rental, and intercity travel for multi-city trips.
-
-### WeatherAgent
-
-Fetches forecast data from the Open-Meteo API using destination coordinates from `CITY_COORDS`. Returns daily high/low temperatures, weather codes (mapped to emoji), and precipitation probability. Used by the weather section and the Timeline view day headers.
-
-### EmergencyCardAgent
-
-The safety-critical agent. Given destination and nationality, returns:
-
-- Emergency phone numbers (police, ambulance, fire, tourist police)
-- The traveller's embassy: address, phone, emergency after-hours line, opening hours
-- Nearby international hospitals with English-speaking staff
-- Ten phonetic survival phrases in the local language
-- Local laws with severity levels (critical / warning)
-
-The backend detects home-country trips and skips the embassy section in that case. The frontend renders a printable card via `window.open()` — reliable across all browsers and mobile.
-
-Phase 0 provides static numbers (from `_EMERGENCY_NUMBERS`, 40+ destinations) immediately. AI enrichment adds the embassy, hospitals, phrases, and laws. If AI fails, the static numbers are retained.
-
-### PricingAdvisorAgent (deferred)
-
-Triggers when ≥ 3 flight prices are available. Receives the route, average price, and days until departure. Returns whether current prices are above or below typical, a booking recommendation, historical relative price trend data for the sparkline, and confidence level. Rendered as a banner above the Flights section.
-
-### PackingListAgent (deferred)
-
-Triggers when activities are ready and weather is done. Receives a summarised prompt (destination, duration, weather summary, planned activities, traveller profile). Returns categories — Documents, Clothing, Electronics, Medications, Activity Gear, Destination-Specific — with items marked essential or optional. Saved to My Plan as a persistent checklist with localStorage-backed checkbox state.
-
-### DiscoveryAgent
-
-Powers the "Surprise Me" flow (`POST /api/discover`). Given origin, budget, dates, nationality, and interests, suggests five curated destinations with cost range, seasonal weather, visa type, flight duration, match reasons, and highlights.
-
-Visa types are post-processed: the LLM's guess is overridden by `_VISA_TABLE` lookup when available. If not in the table, the badge shows "Verify" rather than potentially wrong data.
-
-Runs as a synchronous endpoint (not SSE) with a 30-second timeout and in-memory caching.
-
-### ItineraryAgent
-
-Phase 2 synthesis. Receives activities, hotels, the full search context, and weather data. Generates a structured day-by-day schedule:
-
-- Day number, date, theme, and city
-- Morning / afternoon / evening activity slots with name, location, duration, estimated cost, notes
-- Daily estimated cost
-- `duration_hours` on every slot and `lat`/`lng` on every slot (neighbourhood or hotel coordinates when no specific place) — the frontend derives estimated times and travel between stops from them (`utils/schedule.js`). The chat itinerary agent (`.agents/chat-itinerary.md`, `ChatItineraryAgent`) asks for the same fields
-- Coordinates for the Timeline map view
-
-60-second timeout with a template-based fallback that distributes activities mechanically.
+Name matching (`services/name_match.py`) drops destination words and generic words ("hotel", "tour", "museum", …) first, so "Berlin City Tour" is not evidence for a "Top Berlin Tours" page. The first, pre-enrichment yield of hotels, activities and places is `pending: true`; the frontend clears a still-pending label when the stream ends. Model-supplied `link_verified` and `link_checked` flags are stripped, and saved plans drop them.
 
 ---
 
-## Adding a new agent
+## Adding an agent
 
-1. Create `.agents/{name}.md` with YAML frontmatter and a system prompt
-2. Create `backend/app/agents/{name}_agent.py` as a subclass of `BaseAgent`
-3. Add it to the orchestrator in `backend/app/agents/orchestrator.py`
-4. Add the SSE event type to `AGENT_CONFIG` and `AGENT_ORDER` in `ResultsPage.jsx`
-5. Write a section component to render the data
-
----
-
-## Multi-city behaviour
-
-When `request.is_multi_city` is true, agents change behaviour:
-
-| Agent | Multi-city behaviour |
-|---|---|
-| flights | One search per leg via `serp_flights.search_multi_city` (parallel one-ways, retry, AI fill for empty legs); results grouped into ordered `legs` |
-| weather | Per-stay forecasts (`city_stays`); LLM fallback parses nested per-city output, assigns cities authoritatively by date range, sorts by stop order |
-| hotels / activities / places / events | Mandatory per-city quotas; every result tagged with `city` |
-| walking_tours | Each city crawled separately; every city topped up to at least `min(4, available)` tours |
-| getting_around | Intra-city options per city plus inter-city hops (train/bus/flight) tagged with a `city` route label |
-| visa | Evaluates every country on the route |
-| itinerary | Allocates days per `city_stays` and visits cities in exactly the user's order — never reorders |
-
-The chat assistant (`chat_agent.py`) is documented separately in [Chat Assistant](Chat-Assistant.md): topic queries are answered from model knowledge only, with specialists as a failure-only fallback; planning requests stream the full pipeline.
+1. Create `.agents/<name>.md` with `name` and `description` frontmatter and the system prompt.
+2. Create `backend/app/agents/<name>_agent.py`: subclass `BaseAgent` (or `ToolAgent` if it needs link enrichment), load the definition, and implement `run(request)`.
+3. Wire it into `TravelOrchestrator` (`backend/app/agents/orchestrator.py`) in the right phase, and add a route under `backend/app/api/routes/` if it should be callable alone (add the `light_ai` rate-limit dependency in `main.py`).
+4. If the section should be labelled, add a rule to `verify_section` in `services/verification.py`; otherwise it is "AI-generated".
+5. Frontend: add the event type to `AGENT_ORDER` / the agent config in `frontend/src/pages/ResultsPage.jsx` and write the section component.
+6. Add tests under `backend/tests/` (the agent classes are excluded from coverage, so test the parsing and orchestration paths directly).

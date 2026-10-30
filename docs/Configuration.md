@@ -1,201 +1,97 @@
 # Configuration
 
-All configuration is driven by environment variables, managed via Pydantic Settings (`backend/app/core/config.py`). The backend reads these on startup; missing required variables raise a `ValidationError` that prevents the application from starting.
+The backend is configured through environment variables, read by pydantic-settings in `backend/app/core/config.py`. Variable names are the upper-case field names. Every setting has a default, so the app always starts; the ones marked *needed* below must be set for it to be useful.
 
-For local development, put these in `backend/.env`. For Docker Compose, put them in `.env` at the project root. For Cloud Run, they are stored in GCP Secret Manager and injected at deploy time by Terraform.
-
----
-
-## Required variables
-
-These must be set for the application to start and function.
-
-### `ANTHROPIC_API_KEY`
-
-| | |
-|---|---|
-| **Required** | Yes |
-| **Example** | `sk-ant-api03-...` |
-| **What breaks** | All agent calls fail; search returns errors for every section |
-
-Your Anthropic API key. Every AI agent call goes through this key. Without it, the application starts but every search attempt will fail when the agents try to call the API.
-
-Get one at [console.anthropic.com](https://console.anthropic.com).
+Settings are read from the process environment and from a `.env` file in the **working directory** (`env_file=".env"`, unknown keys ignored). For `start.sh` and a manual `uvicorn` run that is `backend/.env`. For Docker Compose, put the values in your shell or a root `.env`, which Compose uses for variable substitution (see [Setup and Installation](Setup-and-Installation.md)).
 
 ---
 
-### `JWT_SECRET_KEY`
-
-| | |
-|---|---|
-| **Required** | Yes |
-| **Example** | `a-random-64-character-hex-string` |
-| **What breaks** | Authentication fails; tokens cannot be verified |
-
-The secret used to sign and verify JWT access tokens. Must be kept secret and consistent — if you change this, all existing sessions are invalidated (users get logged out).
-
-Generate a suitable value with:
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
-
----
-
-### `ADMIN_PASSWORD`
-
-| | |
-|---|---|
-| **Required** | Yes (on first startup) |
-| **Example** | `MySecureAdminPassword123!` |
-| **What breaks** | Admin account is created with a default password if missing (security risk) |
-
-The initial password for the `admin` account. The admin user is created on first startup if it does not already exist. The admin is forced to change this password on first login. After the admin password has been changed, this variable is no longer read at runtime (the new password is stored as a bcrypt hash in `users.db`).
-
----
-
-## Storage variables
-
-### `DATA_DIR`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | `./data` |
-| **Example** | `/app/data` |
-| **What breaks** | SQLite database files are created relative to the working directory |
-
-The directory where the four SQLite database files (`users.db`, `plans.db`, `preferences.db`, `feedback.db`) are stored. In Docker and Cloud Run deployments this should point to a writable path. The directory is created automatically if it does not exist.
-
----
-
-### `BACKUP_BUCKET`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | None (GCS backup disabled) |
-| **Example** | `my-travel-planner-backups` |
-| **What breaks** | SQLite data is not backed up; lost on Cloud Run instance restart |
-
-The name of the GCS bucket to use for SQLite backups. If not set, backup is silently disabled and a log message confirms this. Required for any production or Cloud Run deployment where the local filesystem is ephemeral.
-
-GCS authentication uses Application Default Credentials. In Cloud Run, the service account attached to the Cloud Run service must have `storage.objects.create` and `storage.objects.get` permissions on this bucket.
-
----
-
-### `AGENTS_DIR`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | `./.agents` |
-| **Example** | `/app/.agents` |
-| **What breaks** | Agents cannot load their system prompts; all agent calls fail with `FileNotFoundError` |
-
-Path to the directory containing `.agents/*.md` definition files. In Docker images this should be the absolute path where the `.agents/` directory is copied. In local development, the default relative path resolves correctly when the backend is started from the `backend/` directory.
-
----
-
-## Network variables
-
-### `CORS_ORIGINS`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | `http://localhost:5174` |
-| **Example** | `https://travel-planner.example.com,http://localhost:5174` |
-| **What breaks** | Browser blocks API requests from your frontend origin |
-
-Comma-separated list of allowed CORS origins. In production, set this to your frontend's public URL. In local development, the default covers the Vite dev server (port 5174). In Cloud Run, Terraform sets this to the frontend Cloud Run service URL.
-
----
-
-## Rate-limit variables
-
-AI endpoints are limited per signed-in user (or client IP when anonymous) over a rolling window; see the [API Reference](API-Reference.md) for which endpoints fall in which bucket. Over the limit the API returns `429` with a `Retry-After` header.
+## Core
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `RATE_LIMIT_ENABLED` | `true` | `false` turns all limits off (the test suite does this) |
-| `RATE_LIMIT_WINDOW_SECONDS` | `600` | Length of the rolling window |
-| `RATE_LIMIT_SEARCH` | `10` | `/api/search`, `/api/search/sync` per window |
-| `RATE_LIMIT_CHAT` | `30` | `/api/chat` per window |
-| `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` per window |
-| `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` per window |
-| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/layover`, `/api/stress-test` per window |
+| `ANTHROPIC_API_KEY` | `""` | **Needed.** Used by every agent. Without it, every AI call fails. |
+| `JWT_SECRET_KEY` | `""` | **Needed.** HS256 signing key for login tokens (24 h lifetime). Changing it logs everyone out. Generate one with `python3 -c "import secrets; print(secrets.token_hex(32))"`. |
+| `CORS_ORIGINS` | `["http://localhost:5174","http://localhost:5173"]` | Allowed browser origins, as a JSON list. |
+| `AGENTS_DIR` | `<repo>/.agents` | Directory of the agent definition files. A relative path that does not exist falls back to `<repo>/.agents`. |
+| `AGENT_MAX_CONCURRENCY` | `6` | Global cap on concurrent Anthropic calls across all agents. |
+| `CACHE_TTL_SECONDS` | `1800` | TTL of the in-memory result cache. |
+| `CACHE_MAXSIZE` | `500` | Maximum entries in that cache. |
 
-Counters live in process memory: they reset on restart and are not shared between instances. Anonymous callers are keyed by the connecting client's address, so behind a reverse proxy all anonymous traffic shares one bucket unless the proxy's address is replaced (e.g. uvicorn `--proxy-headers`).
+## Storage and backup
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DATA_DIR` | `backend/data` | Directory of the single SQLite file `airports.db`, which holds every table (users, plans, preferences, place data and so on). Created automatically. |
+| `BACKUP_BUCKET` | `""` | Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. When set, the database is restored at startup, uploaded every 60 s and uploaded once more on shutdown. Uses Application Default Credentials. |
+
+## Live data (optional)
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SERPAPI_KEY` | `""` | SerpAPI key for live Google Flights fares, the fare calendar and Google's price insights. Empty means flights are LLM estimates and `POST /api/flights/fare-calendar` returns 503. `GET /health` reports `serpapi_configured`. |
+| `SERPER_KEY` | `""` | Serper.dev key for Places-to-See data (Google Places) and the second tier of activity and place link resolution. Empty means Places to See is LLM-only. |
+
+Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the `ddgs` package and need no key.
+
+## Accounts
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ADMIN_USERNAME` | `admin` | Username of the seeded admin. |
+| `ADMIN_PASSWORD` | `""` | Password for the seeded admin. Empty means no admin is created. Used only when that user does not exist yet; the seeded admin is not forced to change it. |
+| `ADMIN_EMAIL` | `""` | Optional email for the seeded admin. |
+
+There is no self-registration: the admin creates every other user from the Admin page.
+
+## Rate limits
+
+AI-calling endpoints are rate-limited per signed-in user, or per client IP for anonymous callers, in an in-process sliding window (`backend/app/core/rate_limit.py`). See [API Reference](API-Reference.md#rate-limits) for the endpoints in each bucket.
+
+| Variable | Default | Applies to |
+|---|---|---|
+| `RATE_LIMIT_ENABLED` | `true` | Master switch. The test suite sets it to `false`. |
+| `RATE_LIMIT_WINDOW_SECONDS` | `600` | Window length. |
+| `RATE_LIMIT_SEARCH` | `10` | `/api/search`, `/api/search/sync` |
+| `RATE_LIMIT_CHAT` | `30` | `/api/chat` |
+| `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
+| `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
+| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours` |
+
+Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
+
+## Logging
+
+`LOG_FORMAT` is read directly with `os.getenv` in `backend/app/main.py`, not through Settings. The default, `json`, gives one JSON object per line (stdlib `logging` with a custom formatter in `backend/app/core/logging_config.py`). Any other value gives plain-text logs.
 
 ---
 
-## Logging variables
+## Frontend
 
-### `LOG_FORMAT`
+The frontend reads no environment variables at build or run time.
 
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | `json` |
-| **Values** | `json`, `console` |
-| **What breaks** | Nothing breaks; logs are just harder to read |
+- **Dev:** Vite proxies `/api` and `/health` to `http://localhost:8001` (`frontend/vite.config.js`).
+- **Container:** nginx renders `frontend/nginx.conf.template` with `BACKEND_URL` (envsubst) and proxies `/api/` and `/health` to it. Proxy buffering is off so SSE streams, with a 120 s read timeout.
 
-Controls whether `structlog` outputs JSON (for log aggregation in Cloud Run / Cloud Logging) or human-readable coloured output (for local development). Set to `console` when running locally.
+Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_open`, `tp_tour_done:<username>`, `chat_history_<username>`, and the packing-list checkbox state.
 
 ---
 
-## Search API variables (optional)
+## Examples
 
-These are used if you want the agents to perform live web searches to supplement their training data. If not set, agents rely solely on the model's knowledge.
-
-### `SERPER_KEY`
-
-| | |
-|---|---|
-| **Required** | No |
-| **Default** | None |
-| **Example** | `abc123...` |
-
-API key for Serper.dev (Google Search API). Used by the PlacesAgent to fetch real-time place data that Claude then synthesises into the `places_to_see` section. Get one at [serper.dev](https://serper.dev).
-
-If not provided, the application falls back to DuckDuckGo search (no key required) for any web search operations.
-
----
-
-## Example `.env` for local development
+`backend/.env` for local development:
 
 ```env
-# Required
-ANTHROPIC_API_KEY=sk-ant-api03-...
-JWT_SECRET_KEY=a64charrandombhexstringhere
+ANTHROPIC_API_KEY=sk-ant-...
+JWT_SECRET_KEY=3f0c...   # 64 hex characters
 ADMIN_PASSWORD=LocalDevPassword123
-
-# Storage
-DATA_DIR=./data
-AGENTS_DIR=../.agents
-
-# Network
-CORS_ORIGINS=http://localhost:5174
-
-# Logging
-LOG_FORMAT=console
+# Optional
+SERPAPI_KEY=
+SERPER_KEY=
+RATE_LIMIT_ENABLED=false
+LOG_FORMAT=text
 ```
 
-## Example `.env` for Docker Compose
+Values set by `docker-compose.yml`: `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
 
-```env
-# Required
-ANTHROPIC_API_KEY=sk-ant-api03-...
-JWT_SECRET_KEY=a64charrandombhexstringhere
-ADMIN_PASSWORD=LocalDevPassword123
-
-# Storage (Docker paths)
-DATA_DIR=/app/data
-AGENTS_DIR=/app/.agents
-
-# Network (Docker frontend)
-CORS_ORIGINS=http://localhost:8080
-
-# Logging
-LOG_FORMAT=console
-```
+The retained Terraform (see [Deployment](Deployment.md)) sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `CORS_ORIGINS`, `BACKUP_BUCKET`, and injects `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY`, `ADMIN_PASSWORD`, `SERPAPI_KEY` and `SERPER_KEY` from Secret Manager.

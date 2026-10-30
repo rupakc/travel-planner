@@ -1,45 +1,42 @@
 # Personalization
 
-Three layers tune results to the traveler: explicit **preferences**, per-search **dials**, and the learned **Taste Graph**.
+Three layers tune results to the traveller: saved **preferences**, per-search **settings**, and the learned **Taste Graph**.
 
-## Preferences (explicit)
+---
 
-Saved per account (`/api/preferences`, PreferencesPage): home airport, nationality, residence permits, existing visas, default budget, interests, and traveler mix. Preferences **pre-fill the Search form**, and edits made on the Search form **sync back** to preferences on submit — a two-way binding, so the app always remembers your latest defaults.
+## Preferences
+
+Saved per account (`GET/PUT /api/preferences`, `frontend/src/pages/PreferencesPage.jsx`):
+
+- **Travel Budget**: Budget, Mid-range or Luxury (pre-fills the Search budget as 1000, 3000 or 8000 USD).
+- **Identity**: nationality and current residence (used as the default departure city).
+- **Documents**: residence permits and existing visas.
+- **Travel Style**: interests, the traveller mix and accessibility needs.
+
+**Two-way binding** (`frontend/src/context/AuthContext.jsx`): saved preferences pre-fill the Search form on load, and submitting a search writes its fields back to preferences. The app therefore always remembers the latest defaults. A loaded recent search takes precedence over the pre-fill.
 
 ## Recent searches
 
-Every submitted search — from the Search form or refined in the Results page's *Search Criteria* panel — is saved to your account (`/api/recent-searches`, last 8, identical searches merged). They appear as cards in a collapsible **Recent searches** section above the Search form; its header shows the count, and whether it's open or closed is remembered per browser.
+Every submitted search, from the Search form or from the Results page's search panel, is saved to the account (`/api/recent-searches`): the newest 8, with identical searches merged (interest order ignored). They appear in a collapsible strip above the Search form; see [Trip Planning Features](Trip-Planning-Features.md#recent-searches).
 
+## Per-search settings
 
-- **Click a card** to load the whole search — route including multi-city stops, dates, interests, travelers, budget, visas — into the form, change what you need, then plan. A loaded search takes precedence over the preferences pre-fill.
-- **Search again** reruns it unchanged.
-- If the dates have passed, loading moves them to start a week from today with the same trip length (and *Search again* is disabled).
+These are fields of `TravelSearchRequest` (`backend/app/schemas/request.py`) that agents receive in their prompts:
 
-## Search dials (per trip)
+- **Serendipity** (`serendipity`, 0.0–1.0), the Search form's "Discovery style" slider: Famous classics, Balanced mix, Hidden gems. At the hidden-gems end, agents prefer local favourites and mark results `hidden_gem: true`.
+- **Pace** (`pace`: relaxed, balanced or packed) controls how densely the itinerary fills each day. It has no control on the Search form: the "Slow it down" remix sets it to relaxed, and API callers can set it directly.
+- **Traveller mix**: adults (18–64), seniors (65+), children (5–17), infants (0–4). It shapes fare notes, hotel suitability and activity choices.
+- **Accessibility needs**: wheelchair, visual, hearing, cognitive. They are passed into every agent prompt.
+- **Interests**: activities get a model-assigned relevance score (0.0–1.0) and are sorted by it.
 
-- **Pace** — `relaxed | balanced | packed` controls how densely the itinerary schedules each day.
-- **Serendipity dial** — `0.0–1.0`: at the low end you get the famous classics; at the high end agents prioritise hidden gems and local favourites, marking each result with `hidden_gem: true/false`.
-- **Traveler mix** — adults / children (5–17) / seniors (65+) / infants (0–4) shape flight fare notes, hotel suitability, and activity choices.
-- **Accessibility needs** — wheelchair, visual/hearing impairment, cognitive disability — propagate into every agent prompt.
+## Taste Graph
 
-## Taste Graph (learned)
+The Taste Graph (`backend/app/db/taste_db.py`) learns a user's style from what they **save into plans**, with no forms to fill.
 
-The Taste Graph (`backend/app/db/taste_db.py`) learns your style from what you actually **select into plans** — no forms to fill:
+1. Saving a plan (`POST`/`PUT /api/plans`) mines its selections for signals (`extract_signals`): flight style (non-stop or cheapest, per selected leg), hotel tier and type, activity categories and budget band. They are stored in the `taste_signals` table.
+2. `derive_taste_context()` condenses the signals into a short sentence, for example "Prefers non-stop flights, mid-range boutique hotels, food and history activities."
+3. On `/api/search` (with a valid token), `/api/chat` and their specialist runs, the server sets `TravelSearchRequest.taste_context` from the user's profile; a value sent by the client is ignored.
 
-1. Every saved plan's selections are mined for signals (`extract_signals`): flight style (non-stop vs cheapest, per selected leg), hotel tier and type, activity categories, typical budget band.
-2. `derive_taste_context()` compresses the signals into a short natural-language profile, e.g. *"Prefers non-stop flights, mid-range boutique hotels, food and history activities."*
-3. That summary is injected server-side into `TravelSearchRequest.taste_context` for every agent prompt (client-supplied values are ignored) — and into the chat assistant's system prompt.
+Agents use it to **rank matching options higher**, never to filter options out, so all budget tiers still appear. Because `taste_context` is part of the search cache key, cached results are per profile and never leak between users.
 
-Agents use it to **rank matching options higher**, never to filter options out — you always see the full spread across budget tiers.
-
-Because `taste_context` participates in result-cache keys, cached searches are per-profile and one user's taste never leaks into another's results.
-
-## Where it shows up
-
-| Surface | Effect |
-|---|---|
-| Flights | Preferred style (e.g. non-stop) ranked first |
-| Hotels | Preferred tier/type ranked first — all four budget tiers still shown |
-| Activities | Interest relevance scoring (0.0–1.0) plus learned category boosts |
-| Itinerary | Pacing follows the pace dial; serendipity shapes the mix |
-| Chat | Advisor recommendations lean toward your demonstrated taste |
+The Preferences page shows what has been learned (`GET /api/taste-profile`) and has a Reset button (`DELETE /api/taste-profile`).

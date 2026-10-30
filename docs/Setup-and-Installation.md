@@ -1,186 +1,129 @@
 # Setup and Installation
 
-This page covers everything needed to run Travel Planner locally, from scratch, in under 10 minutes.
+How to run Travel Planner on your own machine. There is no hosted instance any more (see [Deployment](Deployment.md)), so this is also how to try the app.
 
 ---
 
 ## Prerequisites
 
-- **Python 3.11 or later** — the backend uses `asyncio.TaskGroup` patterns and modern type hints
-- **Node.js 18 or later** — for the React frontend
-- **Docker and Docker Compose** — if you prefer the containerised setup
-- **An Anthropic API key** — the agents call Claude; without this, searches will not work
-- **Git**
-
-Optional (needed for GCS backup and GCP deployment only):
-- Google Cloud SDK (`gcloud`)
-- A GCP project with a Cloud Storage bucket
+- **Python 3.12** (the Dockerfile and CI use 3.12; `pyproject.toml` allows 3.11 or later).
+- **Node.js 20** (the Dockerfile and CI use 20; vitest 4 needs `^20 || ^22 || >=24` and jsdom 27 needs 20 or later).
+- **An Anthropic API key.** Every agent calls Claude. Without a key the app starts, but every AI section fails.
+- **Docker with Compose**, only for the container setup.
+- Optional: a **SerpAPI key** (`SERPAPI_KEY`) for live Google Flights fares, the fare calendar and price insights, and a **Serper key** (`SERPER_KEY`) for Places-to-See data and link resolution. Without them, flights come from the LLM and the fare calendar is hidden.
 
 ---
 
-## Option A: Direct (no Docker)
-
-This runs the backend and frontend as separate processes on your machine. Best for active development.
-
-### 1. Clone the repository
+## Option A: `start.sh` (recommended for development)
 
 ```bash
 git clone https://github.com/rupakc/travel-planner.git
 cd travel-planner
-```
 
-### 2. Set up the backend
-
-```bash
+# Backend dependencies (a virtualenv is recommended)
 cd backend
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt          # add -r requirements-dev.txt for tests and linters
+cd ..
 ```
 
-Create a `.env` file in the `backend/` directory:
+Create `backend/.env`. The backend reads `.env` from its working directory, which is `backend/` when started by `start.sh`:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
-JWT_SECRET_KEY=change-this-to-a-random-64-char-string
-ADMIN_PASSWORD=your-admin-password
-DATA_DIR=./data
-AGENTS_DIR=../.agents
-CORS_ORIGINS=http://localhost:5173
-LOG_FORMAT=console
+JWT_SECRET_KEY=<output of: python3 -c "import secrets; print(secrets.token_hex(32))">
+ADMIN_PASSWORD=<a password for the seeded admin account>
+# Optional
+SERPAPI_KEY=
+SERPER_KEY=
 ```
 
-Start the backend:
+Then, from the repo root:
 
 ```bash
-uvicorn app.main:app --reload --port 8001
+./start.sh              # backend on :8001, frontend on :5174
+./start.sh --backend    # just one side
+./start.sh --frontend
+./stop.sh               # stop both (--backend, --frontend, --force)
 ```
 
-The API will be available at `http://localhost:8001`. The interactive docs are at `http://localhost:8001/docs`.
+`start.sh` runs `uvicorn app.main:app --reload --port 8001` from `backend/` and `npm run dev` (Vite on port 5174) from `frontend/`. It runs `npm install` when `node_modules` is missing, warns when `ANTHROPIC_API_KEY` or `backend/.env` is missing, waits up to 30 s for each port, writes PIDs to `.pids/` and logs to `.logs/backend.log` and `.logs/frontend.log`. `stop.sh` gives each process a 10 s grace period; `--force` sends SIGKILL.
 
-### 3. Set up the frontend
+Open http://localhost:5174. The API's Swagger UI is at http://localhost:8001/docs.
 
-Open a new terminal tab:
+## Option B: by hand
 
 ```bash
-cd frontend
-npm install
+# Terminal 1
+cd backend && pip install -r requirements.txt && uvicorn app.main:app --port 8001 --reload
+
+# Terminal 2
+cd frontend && npm install && npm run dev
 ```
 
-Create a `.env` file in the `frontend/` directory (or the Vite dev proxy will handle this automatically):
+The Vite dev server proxies `/api` and `/health` to `http://localhost:8001` (`frontend/vite.config.js`). The frontend has no `.env` and reads no `VITE_*` variables.
 
-```env
-VITE_API_URL=http://localhost:8001
-```
-
-Start the frontend:
-
-```bash
-npm run dev
-```
-
-The app will be at `http://localhost:5173`.
-
-### 4. First login
-
-The application has no self-registration — accounts are created by an admin. On first startup, an admin account is created automatically using the `ADMIN_PASSWORD` you set in the backend `.env`.
-
-1. Go to `http://localhost:5173`
-2. Click **Login**
-3. Username: `admin`, password: whatever you set as `ADMIN_PASSWORD`
-4. You will be prompted to change the password on first login
-5. To create additional users, use the admin interface or the `/api/admin/users` endpoint
-
----
-
-## Option B: Docker Compose
-
-This is the quickest way to get a running instance without configuring Python or Node environments.
-
-### 1. Clone and configure
+## Option C: Docker Compose
 
 ```bash
 git clone https://github.com/rupakc/travel-planner.git
 cd travel-planner
-cp .env.example .env   # if .env.example exists, otherwise create .env
-```
-
-Edit `.env` at the project root:
-
-```env
-ANTHROPIC_API_KEY=sk-ant-...
-JWT_SECRET_KEY=change-this-to-a-random-64-char-string
-ADMIN_PASSWORD=your-admin-password
-```
-
-### 2. Start everything
-
-```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # or put it in a .env file at the repo root
 docker compose up --build
 ```
 
-This builds both the backend and frontend images and starts them. First build takes 3–5 minutes; subsequent starts are fast.
+- Frontend (nginx): http://localhost:8080
+- Backend: http://localhost:8001 (Swagger UI at `/docs`)
 
-- Frontend: `http://localhost:8080`
-- Backend API: `http://localhost:8001`
-- Backend docs: `http://localhost:8001/docs`
-
-### 3. Stopping
-
-```bash
-docker compose down
-```
-
-Use `docker compose down -v` to also remove the data volume (wipes the SQLite databases).
+`docker-compose.yml` builds the backend from the repo root (`context: .`, `dockerfile: backend/Dockerfile`), because the image copies both `backend/` and `.agents/`. Compose reads `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` and `ADMIN_PASSWORD` from your shell or a root `.env`. If unset, `JWT_SECRET_KEY` falls back to `change-me-in-compose` and `ADMIN_PASSWORD` to `admin-dev-password`; change both for anything other than a local trial. The backend stores its database in the `backend_data` volume (`DATA_DIR=/data`), GCS backup is off, and the frontend waits for the backend's `/health` check. `docker compose down -v` also deletes the volume and therefore all users and plans.
 
 ---
 
-## Running tests
+## What happens on first start
 
-### Backend tests
+The backend's startup (`backend/app/main.py`, lifespan) runs in this order:
+
+1. Restore from GCS (only when `BACKUP_BUCKET` is set).
+2. Seed the place and airport data into `$DATA_DIR/airports.db`. This takes about 2 s on the first start and about 5 ms afterwards, because the seed is versioned (see [Place and Airport Data](Place-and-Airport-Data.md)).
+3. Build the in-memory airport-name index (about 0.06 s).
+4. Seed the nationalities and create the remaining tables.
+5. Seed the admin account, if `ADMIN_PASSWORD` is set.
+6. Start the 60 s backup loop (a no-op without `BACKUP_BUCKET`).
+
+All data lives in one SQLite file, `$DATA_DIR/airports.db`. `DATA_DIR` defaults to `backend/data`, which is gitignored.
+
+## First login
+
+There is **no self-registration**. Accounts are created by an admin.
+
+1. Open the app and sign in as `admin` (or your `ADMIN_USERNAME`) with the `ADMIN_PASSWORD` you set. The seeded admin is not asked to change the password.
+2. Open the **Admin** tab and create users with a temporary password (at least 8 characters). Those users must change it on first login.
+
+`ADMIN_PASSWORD` is only used to create the admin account when it does not exist yet. Changing it later does not change an existing admin's password.
+
+---
+
+## Running the tests
 
 ```bash
-cd backend
-source .venv/bin/activate
-pytest
+cd backend && python3 -m pytest -q
+cd frontend && npm test
 ```
 
-For coverage:
-
-```bash
-pytest --cov=app --cov-report=term-missing
-```
-
-The test suite includes unit tests for individual agents, integration tests for the orchestration flow, and end-to-end tests for the API routes. Most tests mock the Anthropic API to avoid API costs during testing.
-
-### Frontend tests
-
-```bash
-cd frontend
-npm test
-```
+See [Testing and CI](Testing-and-CI.md) for coverage, lint and the Node 20.18 workaround.
 
 ---
 
 ## Troubleshooting
 
-**Backend won't start: `ModuleNotFoundError`**
-Make sure you activated the virtual environment (`source .venv/bin/activate`) before running uvicorn.
+**Every AI section shows an error.** The Anthropic key is missing or invalid, or the account is out of quota. Check `.logs/backend.log`. `GET /health/agents` makes one tiny Haiku call and reports whether the LLM is reachable.
 
-**`ANTHROPIC_API_KEY` not found**
-The key must be in the `.env` file in the `backend/` directory (not the project root, unless you are using Docker Compose where the root `.env` is used).
+**"Network Error" in the browser.** The backend is not running on port 8001, which the Vite proxy expects.
 
-**Frontend shows "Network Error" on search**
-The Vite dev server proxies `/api/*` to `http://localhost:8001`. If the backend is not running on port 8001, searches will fail with a network error. Check that the backend process is up.
+**No fare calendar and only estimated fares.** `SERPAPI_KEY` is not set. `GET /health` reports `serpapi_configured`.
 
-**Agents returning empty results**
-Check backend logs for `RetryError` — this usually means the Anthropic API key is invalid or has hit a rate limit. Confirm the key is correct and has available quota.
+**429 "Too many requests".** You hit a rate limit (for example 10 searches per 10 minutes). Raise the `RATE_LIMIT_*` values or set `RATE_LIMIT_ENABLED=false` for local work (see [Configuration](Configuration.md)).
 
-**Docker Compose port conflict**
-If port 8001 or 8080 is already in use, edit `docker-compose.yml` and change the host port mappings. For example, change `"8001:8001"` to `"8002:8001"`.
+**Port already in use.** Run `./stop.sh --force`, or change the host port mappings in `docker-compose.yml`.
 
-**`sentence-transformers` download on first run**
-The first time ActivitiesAgent runs, it downloads the embedding model (~90 MB). This is normal and happens once. Subsequent runs use the cached model. In Docker, this download happens at image build time.
-
-**GCS backup errors in logs**
-If `BACKUP_BUCKET` is not set, GCS backup is silently disabled. This is fine for local development. You will see `GCS backup disabled: BACKUP_BUCKET not configured` in the logs, which is expected.
+**Log lines are JSON.** That is the default. Set `LOG_FORMAT` to any value other than `json` for plain-text logs.

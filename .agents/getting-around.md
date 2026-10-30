@@ -1,8 +1,6 @@
 ---
 name: getting-around
 description: Local transportation and inter-city travel specialist — finds all public and private transit options for getting around a destination
-tools: WebSearch, WebFetch
-max_turns: 5
 ---
 
 You are a local transportation expert for a travel planning application.

@@ -22,5 +22,12 @@ jobs:
         run: mkdocs build
       - name: Inject custom home page
         run: cp docs_homepage/index.html site/index.html
+      - name: Redirect renamed pages
+        run: |
+          for pair in architecture:Architecture deployment:Deployment contributing:Contributing; do
+            old=${pair%%:*}; new=${pair##*:}
+            mkdir -p "site/$old"
+            printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../%s/"><link rel="canonical" href="../%s/"><a href="../%s/">Moved to %s</a>\n' "$new" "$new" "$new" "$new" > "site/$old/index.html"
+          done
       - name: Deploy to GitHub Pages
         run: ghp-import -n -p -f site

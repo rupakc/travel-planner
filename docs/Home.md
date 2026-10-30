@@ -1,112 +1,64 @@
-# Travel Planner — Wiki
+# Travel Planner — Developer Docs
 
-Welcome to the Travel Planner project wiki. This is the technical documentation for developers working on the codebase.
+Travel Planner turns a route, travel dates, a budget and a list of interests into a complete trip plan. A team of Claude agents builds the plan, and the results stream to the browser section by section as each agent finishes.
 
-If you're a user looking to plan a trip, head to the **[live app](https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app)** or the **[project homepage](https://rupakc.github.io/travel-planner/)** instead.
+These pages are the technical documentation for people working on the code. The project is open source under the MIT License (`LICENSE` at the repo root).
+
+> **No hosted instance.** The production deployment on Google Cloud Run was decommissioned on 2026-08-30: the GCP project was deleted and the old app URLs no longer work. To try the app, run it locally with `./start.sh` or `docker compose up --build` (see [Setup and Installation](Setup-and-Installation.md)). [Deployment](Deployment.md) explains how to bring a hosted copy back.
 
 ---
 
 ## What the app does
 
-Travel Planner turns a destination, travel dates, budget, and list of interests into a complete trip plan — delivered in real time, section by section, as you watch.
+- **Search** in three modes: *I know where I'm going* (one city or up to 3 stops on the way), *Surprise me* (5 suggested destinations), and *Compare* (2–3 destinations side by side). Recent searches are kept per user.
+- **Results**: 16 sections (flights, weather, hotels, activities, places to see, free walking tours, events, visa, SIM, tips, emergency card, getting around, forex, itinerary, trip health check and packing list), each with a source-verification label.
+- **Planning tools** on the Results page: a best-value package, a client-side budget planner, an opt-in fare calendar with Google Flights price insights, Trip Remix presets, and an itinerary you can rearrange by drag-and-drop with estimated times, edits, notes and a re-check.
+- **My Plan** drawer: pick items into a plan, see the cost breakdown, export to calendar (`.ics`) or print/PDF, save plans and share them by public link.
+- **Chat**: a travel advisor that answers from model knowledge and can plan a whole trip in the conversation.
+- **Personalization**: saved preferences bound two ways to the Search form, and a Taste Graph learned from saved plans.
+- **Accounts**: admin-created users (no self-registration), an admin page, a feedback widget and per-user rate limits.
 
-The core idea: instead of bouncing between a dozen tabs to piece together visa rules, SIM card options, flights, hotels, things to do, and a day-by-day schedule, you describe your trip once and a coordinated team of AI agents assembles it for you in under 30 seconds.
-
----
-
-## What's in the app (current feature set)
-
-### Search results (16 sections)
-1. **Flights** — live prices via Google Flights (SerpAPI) with AI fallback; **per-leg search on multi-city trips** with one pick per leg
-2. **Weather** — day-by-day forecast for the travel dates; per-stay forecasts grouped by city on multi-city trips
-3. **Hotels** — neighbourhoods and accommodation across four budget tiers (≥ 3 per city on multi-city)
-4. **Activities** — things to do, scored and sorted by interest relevance (≥ 5 per city)
-5. **Places to See** — must-visit landmarks from live Google data + Claude synthesis (4–6 per city)
-6. **Free Walking Tours** — free and pay-what-you-wish tours crawled from GuruWalk, FreeTour.com, FreeWalkingTour.com and SANDEMANs NewEurope, each linking to the original tour page (≥ 4 per city where available)
-7. **What's On (Events)** — festivals, concerts, exhibitions during the trip dates, with disruption flags
-8. **Visa** — entry requirements for the traveller's nationality (every country on multi-country routes)
-9. **SIM Cards** — local carrier options and eSIM availability
-10. **Travel Tips** — etiquette, safety, health, and practical advice
-11. **Safety & Emergency Card** — emergency numbers, embassy, hospitals, local phrases, local laws
-12. **Getting Around** — local and intercity transport (per-city + inter-city hops on multi-city)
-13. **Forex** — currency, exchange rates, payment tips
-14. **Itinerary** — day-by-day schedule (Cards or Timeline view), always in the user's stop order
-15. **Itinerary Health Check** — adversarial stress-test of the finished plan (pacing, timing, visa, weather, budget)
-16. **Packing List** — personalised checklist saved to My Plan
-
-Every result on a multi-city trip carries a 📍 city label, and all sections follow the exact stop order entered.
-
-### Instant overlays (Phase 0, appear within 1 second)
-- **Travel Confidence Score** — safety / visa ease / budget / infrastructure, shown as a banner
-- **Static emergency numbers** — instantly shown while AI enrichment runs
-
-### Destination Discovery
-- **Surprise Me** — enter only origin + budget + interests → 5 curated destination cards with visa status, cost range, weather, and flight time
-
-### Plan management
-- **My Plan drawer** — select flights, hotels, activities, walking tours, packing list, SIM, tips, transport, itinerary slots; live cost total; save and reload named plans
-
-### Chat
-- **Knowledge-only answers** — topic questions are answered instantly from the model's own expertise; specialist agents run only if the model fails to answer at all
-- Full planning pipeline on request, with live per-section progress, targeted clarifying questions (slot memory), suggestion chips, and proactive weather/event heads-ups
-- **Refinement diffing** — "make it cheaper" re-runs only the affected agents
-- Persistent conversational interface — survives tab switches, continues mid-stream
-
-### Personalization
-- **Taste Graph** — learns travel style from saved-plan selections and ranks matching options higher on every search
-- Serendipity dial (classics ↔ hidden gems), pace (relaxed/balanced/packed), traveler mix, accessibility needs
-- Two-way preference binding between the Search form and saved Preferences
-
-### Sharing
-- **Shareable trip card** — public share page per saved plan with the complete trip, downloadable as a full-page PNG
-
-### Accounts and admin
-- JWT authentication, bcrypt passwords, forced first-login password change
-- Admin panel: create/deactivate users, view and export feedback
+[Trip Planning Features](Trip-Planning-Features.md) describes each of these in detail.
 
 ---
 
-## Architecture in plain English
+## How a search works, in brief
 
-### Three phases of a search
+1. **Phase 0 (instant).** Static lookup tables yield visa, SIM, tips, getting-around and forex results, the Travel Ease confidence grade and the emergency card, all marked `source: "static"`.
+2. **Phase 1 (parallel AI).** Thirteen specialist agents run concurrently and stream their results as they finish. For the six static-backed agents (visa, sim, tips, getting_around, forex, emergency_card) an AI failure is suppressed, so the static data stays on screen. Two deferred agents, packing list and pricing advisor, start as soon as their inputs are ready.
+3. **Phase 2.** The itinerary agent starts once activities and hotels are in (60 s timeout, template fallback). When the itinerary is final, the stress-test agent audits it.
 
-**Phase 0 — instant (< 1 second)**
-Some data doesn't need an AI call. Visa categories, SIM basics, travel tips, transport types, emergency numbers, and the confidence score all come from lookup tables and stream to the browser before any AI agent has started.
-
-**Phase 1 — parallel AI agents (8–15 seconds)**
-Thirteen specialist Claude agents run concurrently. As each one finishes, its result streams to the browser immediately — you see flights arrive, then hotels, then activities, without waiting for everything at once. Agents with static fallbacks (visa, SIM, tips, getting around, emergency card) are fault-tolerant: if the AI call fails, the static data is retained rather than replaced with an error.
-
-**Phase 2 — synthesis and deferred tasks (5–10 seconds after Phase 1)**
-The itinerary agent runs once activities and hotels are both ready. Two deferred tasks trigger during Phase 1: the packing list starts when activities arrive and weather is done; the price advisor starts when at least 3 flight prices are available.
-
-### Streaming
-Results use Server-Sent Events (SSE). A Web Worker parses the stream off the main thread so the UI stays responsive while data is arriving. The chat interface uses a separate worker for the same reason.
-
-### Static-first, AI-enhanced
-For visa, SIM, tips, getting around, and emergency card: Phase 0 sends instant data marked as "Enhancing…". Phase 1 sends the AI-improved version. If Phase 1 fails, the Phase 0 data stays on screen — users never see an error where there was previously useful information.
+Every specialist agent uses Claude Haiku 4.5 through `BaseAgent`. Chat uses Claude Sonnet 4.6 for conversational answers. See [Architecture](Architecture.md) and [Agent System](Agent-System.md).
 
 ---
 
-## Wiki pages
+## Pages
 
 | Page | What it covers |
 |---|---|
-| [Agent System](Agent-System) | All 21 agents, BaseAgent, `.agents/*.md` format, retry logic, JSON parsing, relevance scoring |
-| [Multi-City Trips](Multi-City-Trips) | Per-leg flight search, day allocation, per-city coverage quotas, stop-order guarantees |
-| [Chat Assistant](Chat-Assistant) | Knowledge-only answering, planning pipeline, refinement diffing, session context |
-| [Personalization](Personalization) | Taste Graph, serendipity dial, pace, preferences |
-| [Sharing and Plans](Sharing-and-Plans) | My Plan drawer, saved plans, shareable full-page PNG card |
-| [Setup and Installation](Setup-and-Installation) | Local dev setup, Docker Compose, first login, running tests |
-| [Configuration](Configuration) | Every environment variable with required/optional status and effect |
-| [API Reference](API-Reference) | All REST endpoints: search, discover, chat, auth, plans, preferences, feedback, admin |
-| [Frontend](Frontend) | React SPA structure, routing, AuthContext, Web Workers, key pages and components |
-| [Deployment](Deployment) | GCP Cloud Run, Terraform, GitHub Actions CI/CD, SQLite backup/restore lifecycle |
+| [Setup and Installation](Setup-and-Installation.md) | Running locally with `start.sh`, by hand, or with Docker Compose; first login |
+| [Configuration](Configuration.md) | Every environment variable and its default |
+| [Architecture](Architecture.md) | Components, orchestration phases, SSE, persistence, caching, rate limits |
+| [Agent System](Agent-System.md) | The 22 agent definitions, `BaseAgent`, static fallbacks, verification |
+| [Trip Planning Features](Trip-Planning-Features.md) | Search modes, every Results section, planning tools, itinerary, My Plan |
+| [Multi-City Trips](Multi-City-Trips.md) | Stops, day allocation, per-leg flights, per-city coverage |
+| [Chat Assistant](Chat-Assistant.md) | Routing, knowledge-first answers, comprehensive planning, refinement |
+| [Personalization](Personalization.md) | Preferences, recent searches, search dials, Taste Graph |
+| [Sharing and Plans](Sharing-and-Plans.md) | My Plan drawer, saved plans, export, share links |
+| [Place and Airport Data](Place-and-Airport-Data.md) | OurAirports and GeoNames data, licences, how typed places resolve to airports |
+| [Frontend](Frontend.md) | React app structure, routing, contexts, workers, utilities |
+| [API Reference](API-Reference.md) | Every endpoint, SSE event types, rate-limit buckets |
+| [Testing and CI](Testing-and-CI.md) | Test commands, lint gates, GitHub Actions workflows |
+| [Deployment](Deployment.md) | Current state (decommissioned) and how to redeploy from `infrastructure/` |
+| [Contributing](Contributing.md) | Workflow, code style, adding an agent |
+| [Changelog](Changelog.md) | Merged PRs by theme, and the history before them |
 
 ---
 
-## Quick links
+## Links
 
 - [GitHub repository](https://github.com/rupakc/travel-planner)
-- [Live app](https://travel-planner-frontend-2hrxgxqboa-ew.a.run.app)
 - [Project homepage](https://rupakc.github.io/travel-planner/)
 - [Open an issue](https://github.com/rupakc/travel-planner/issues)
+
+Place data contains data from GeoNames (geonames.org), CC BY 4.0. Airport data comes from OurAirports (public domain). See [Place and Airport Data](Place-and-Airport-Data.md).
