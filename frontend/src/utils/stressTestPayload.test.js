@@ -141,3 +141,38 @@ describe('recheckErrorMessage', () => {
     expect(recheckErrorMessage(undefined)).toBe("Couldn't re-check — try again")
   })
 })
+
+describe('buildStressTestPayload — scheduled order', () => {
+  // ~8 km apart by street in Lisbon: travel between them is by transit
+  const at = (lat, lng) => ({ lat, lng })
+  const B = { ...slot('afternoon', 'Gulbenkian', 10), ...at(38.737, -9.154) }
+  const A = { ...slot('morning', 'Oceanario', 20), ...at(38.7635, -9.0937) }
+  const OUT_OF_ORDER = {
+    days: [
+      { day_number: 1, date: '2027-05-01', city: 'Lisbon', slots: [B, A] },
+      { day_number: 2, date: '2027-05-02', city: 'Lisbon', slots: [slot('morning', 'Belem', 15), slot('afternoon', 'LX Factory', 0)] },
+    ],
+  }
+  const results = { ...RESULTS, itinerary: OUT_OF_ORDER }
+
+  it('lists an out-of-order day as scheduled, so travel is from the stop listed just before', () => {
+    const p = buildStressTestPayload(SEARCH, results, selections())
+    const [day1] = p.itinerary.days
+    expect(day1.slots.map((s) => s.activity)).toEqual(['Oceanario', 'Gulbenkian'])
+    expect(day1.slots[0]).toMatchObject({ start_time: '09:00', transit_from_prev: null })
+    expect(day1.slots[1].transit_from_prev).toMatchObject({ mode: 'transit' })
+    expect(day1.slots[1].start_time).toBe('13:30')
+  })
+
+  it('leaves days already in order unchanged', () => {
+    const p = buildStressTestPayload(SEARCH, results, selections())
+    expect(p.itinerary.days[1].slots.map((s) => [s.activity, s.start_time])).toEqual([['Belem', '09:00'], ['LX Factory', '13:30']])
+    expect(activities(buildStressTestPayload(SEARCH, RESULTS, selections()))).toEqual([['Castle', 'Tram 28', 'Fado'], ['Belem', 'LX Factory']])
+  })
+
+  it('fingerprints the scheduled order', () => {
+    const listed = recheckFingerprint(OUT_OF_ORDER, selections())
+    const reordered = recheckFingerprint({ ...OUT_OF_ORDER, days: [{ ...OUT_OF_ORDER.days[0], slots: [A, B] }, OUT_OF_ORDER.days[1]] }, selections())
+    expect(listed).toBe(reordered)
+  })
+})

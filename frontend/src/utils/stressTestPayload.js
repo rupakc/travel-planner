@@ -1,6 +1,6 @@
 import { arrangeItinerary } from './itineraryLayout'
 import { apiReturnDate } from './compare'
-import { scheduleDays } from './schedule'
+import { scheduleDays, scheduleOrder } from './schedule'
 
 const RECHECK_FALLBACK = "Couldn't re-check — try again"
 
@@ -14,7 +14,8 @@ const withoutVerification = (section) => {
  * The itinerary as the user now sees it: arranged by their layout, with
  * removed activities left out, their edits (activity/location/cost) applied
  * and estimated start/end times and travel between stops added — what
- * ItinerarySection shows.
+ * ItinerarySection shows. Each day's slots are listed in the order they are
+ * timed, so every `transit_from_prev` is from the slot listed just before.
  */
 function editedItinerary(itinerary, selections) {
   const edits = selections?.itinerary_edits || {}
@@ -24,7 +25,7 @@ function editedItinerary(itinerary, selections) {
     ...arranged,
     days: scheduleDays(arranged.days, edits).map((day) => ({
       ...day,
-      slots: (day.slots || []).map((slot) => {
+      slots: scheduleOrder(day).map((i) => day.slots[i]).map((slot) => {
         const edit = edits[slot.key] || {}
         // `key` is client-only layout bookkeeping
         const { notes, key: _key, ...rest } = slot

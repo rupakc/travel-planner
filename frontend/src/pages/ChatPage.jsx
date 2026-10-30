@@ -20,6 +20,7 @@ import PlanExport from '../components/PlanExport'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
+import { stripLinkEvidence } from '../utils/verification'
 
 // Fix Leaflet default icon (only once, even if TripMap.jsx also does this)
 delete L.Icon.Default.prototype._getIconUrl
@@ -558,7 +559,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
 
 // ─── My Plan Drawer (compact version for chat) ──────────────────────────────
 
-function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -592,9 +593,10 @@ function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, 
       const isUpdate = !!loadedPlanId
       const url = isUpdate ? `/api/plans/${loadedPlanId}` : '/api/plans'
       const method = isUpdate ? 'PUT' : 'POST'
+      const saved = stripLinkEvidence(selections)
       const body = isUpdate
-        ? JSON.stringify({ name: planName, selections })
-        : JSON.stringify({ name: planName, search_data: {}, selections })
+        ? JSON.stringify({ name: planName, selections: saved })
+        : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) { setSaveMsg(isUpdate ? 'Plan updated!' : 'Saved!'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
       else setSaveMsg('Save failed')
@@ -635,9 +637,10 @@ function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, 
       const isUpdate = !!loadedPlanId
       const url = isUpdate ? `/api/plans/${loadedPlanId}` : '/api/plans'
       const method = isUpdate ? 'PUT' : 'POST'
+      const saved = stripLinkEvidence(selections)
       const body = isUpdate
-        ? JSON.stringify({ name: planName, selections })
-        : JSON.stringify({ name: planName, search_data: {}, selections })
+        ? JSON.stringify({ name: planName, selections: saved })
+        : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
         setSaveMsg(isUpdate ? 'Plan sent back!' : 'Plan saved!')

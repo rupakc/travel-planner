@@ -1,9 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import re
 from datetime import date, timedelta
 
+from ..core.rate_limit import try_consume
 from ..schemas.request import TravelSearchRequest
 from ..utils.geo import lookup_coords
 from .base_agent import _MODEL, _get_client
@@ -199,6 +201,7 @@ class ChatAgent:
         self.definition = load_agent_definition(agents_dir, "chat")
         self._session_context: dict = {}
         self._taste_context: str | None = None
+        self._rate_limit_key: str | None = None
 
     @staticmethod
     def _classify_intent(message: str) -> list[str]:
@@ -215,8 +218,12 @@ class ChatAgent:
         search_results: dict | None = None,
         session_context: dict | None = None,
         taste_context: str | None = None,
+        rate_limit_key: str | None = None,
     ):
         """Stream chat responses with plan management.
+
+        ``rate_limit_key`` (see core.rate_limit.caller_key) is charged one
+        ``search`` token for every full trip plan; None charges nothing.
 
         Routing:
         0. Security gate — jailbreak / off-topic rejection
@@ -231,6 +238,7 @@ class ChatAgent:
         if session_context:
             self._session_context = {**session_context}
         self._taste_context = taste_context
+        self._rate_limit_key = rate_limit_key
 
         last_msg = messages[-1]["content"] if messages else ""
         selections = selections or {}
@@ -538,6 +546,15 @@ class ChatAgent:
         if not affected and not self._refinement_needs_itinerary:
             self._refinement_needs_itinerary = True  # safest useful default
 
+        # A rebuilt itinerary is a full plan: charge it before any specialist
+        # runs, so an over-limit refinement does no partial work.
+        if self._refinement_needs_itinerary:
+            refusal = self._full_plan_refusal()
+            if refusal:
+                for chunk in refusal:
+                    yield chunk
+                return
+
         if affected:
             async for chunk in self._run_specialist_agents(
                 request,
@@ -550,7 +567,7 @@ class ChatAgent:
                 yield chunk
         if self._refinement_needs_itinerary:
             async for chunk in self._run_comprehensive_planning(
-                request, [], preferences, selections
+                request, [], preferences, selections, charged=True
             ):
                 yield chunk
 
@@ -1421,9 +1438,11 @@ class ChatAgent:
         preferences: dict | None,
         selections: dict | None = None,
         agent_names: list[str] | None = None,
+        charged: bool = False,
     ):
         """
-        New chat itinerary flow:
+        New chat itinerary flow (``charged``: the caller already took this
+        plan's search token):
           1. planning_start  (instant)
           2. trip_map        (instant — Python-computed city coords)
           3. itinerary_generating
@@ -1436,6 +1455,14 @@ class ChatAgent:
             f"destinations={request.destinations}, "
             f"dates={request.departure_date}→{request.return_date}"
         )
+
+        # Every full plan passes here: it costs as much as a search, so it
+        # draws on the caller's search bucket too.
+        refusal = None if charged else self._full_plan_refusal()
+        if refusal:
+            for chunk in refusal:
+                yield chunk
+            return
 
         request.taste_context = self._taste_context
         yield json.dumps({"type": "planning_start", "destination": request.destination})
@@ -1566,6 +1593,26 @@ class ChatAgent:
         return warnings
 
     # ── Specialist agent runner ───────────────────────────────────────
+
+    def _full_plan_refusal(self) -> list[str] | None:
+        """Take one search token for a full plan. Returns the events that
+        decline it when the caller is over the limit, else None."""
+        if not self._rate_limit_key:
+            return None
+        wait = try_consume("search", self._rate_limit_key)
+        if wait is None:
+            return None
+        minutes = math.ceil(wait / 60)
+        when = "about a minute" if minutes <= 1 else f"about {minutes} minutes"
+        text = (
+            "You've reached the limit for full trip plans for now (it's shared "
+            f"with the Search page) — try again in {when}, or ask me a quick "
+            "question meanwhile."
+        )
+        return [
+            json.dumps({"type": "delta", "text": text}),
+            json.dumps({"type": "done"}),
+        ]
 
     async def _run_specialist_agents(
         self,

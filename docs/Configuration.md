@@ -52,7 +52,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 |---|---|---|
 | `RATE_LIMIT_ENABLED` | `true` | Master switch. The test suite sets it to `false`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | `600` | Window length. |
-| `RATE_LIMIT_SEARCH` | `10` | `/api/search`, `/api/search/sync` |
+| `RATE_LIMIT_SEARCH` | `10` | `/api/search`, `/api/search/sync`, and full trip plans started from chat (`/api/chat` also charges its own bucket) |
 | `RATE_LIMIT_CHAT` | `30` | `/api/chat` |
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |

@@ -358,7 +358,7 @@ class TestOptionalUserInactive:
         assert user["username"] == "optactive" and user["is_active"] is True
 
     def test_inactive_user_rate_limited_by_ip(self, client, admin_headers, monkeypatch):
-        from app.core.rate_limit import _caller_key
+        from app.core.rate_limit import caller_key
 
         token = self._token_for(client, admin_headers, "optratelimit")
         client.delete("/api/admin/users/optratelimit", headers=admin_headers)
@@ -374,4 +374,4 @@ class TestOptionalUserInactive:
             class client:
                 host = "1.2.3.4"
 
-        assert _caller_key(_Req, user) == "ip:1.2.3.4"
+        assert caller_key(_Req, user) == "ip:1.2.3.4"
