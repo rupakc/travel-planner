@@ -135,8 +135,9 @@ def test_full_plan_over_limit_streams_friendly_message_and_runs_nothing(
     events = _chat(client, admin_headers, _PLAN_MSG)
     assert [e["type"] for e in events] == ["delta", "done"]
     assert events[0]["text"] == (
-        "You've planned several full trips in the last few minutes — try again "
-        "in about 9 minutes, or ask me a quick question meanwhile."
+        "You've reached the limit for full trip plans for now (it's shared "
+        "with the Search page) — try again in about 9 minutes, or ask me a "
+        "quick question meanwhile."
     )
     assert agents["itinerary"].return_value.run.await_count == 1  # first plan only
 
@@ -186,7 +187,7 @@ def test_refinement_needing_a_new_itinerary_is_checked_before_any_specialist(
             session_context={"destination": "Tokyo, Japan"},
         )
     assert [e["type"] for e in events] == ["delta", "done"]
-    assert "planned several full trips" in events[0]["text"]
+    assert "limit for full trip plans" in events[0]["text"]
     specialist.return_value.run.assert_not_awaited()
     agents["itinerary"].return_value.run.assert_not_awaited()
 

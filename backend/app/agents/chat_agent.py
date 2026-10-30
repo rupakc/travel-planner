@@ -1605,8 +1605,9 @@ class ChatAgent:
         minutes = math.ceil(wait / 60)
         when = "about a minute" if minutes <= 1 else f"about {minutes} minutes"
         text = (
-            "You've planned several full trips in the last few minutes — try "
-            f"again in {when}, or ask me a quick question meanwhile."
+            "You've reached the limit for full trip plans for now (it's shared "
+            f"with the Search page) — try again in {when}, or ask me a quick "
+            "question meanwhile."
         )
         return [
             json.dumps({"type": "delta", "text": text}),
