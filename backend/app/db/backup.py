@@ -31,6 +31,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from .seed_airports import PLACE_TABLES, PLACE_VERSION_KEY
+
 logger = logging.getLogger(__name__)
 
 _GCS_PREFIX = "sqlite-backups/"
@@ -184,7 +186,8 @@ def _sync_backup(bucket_name: str, data_dir: str, force: bool) -> None:
 
 
 def _snapshot_db(db_file: Path) -> Path:
-    """Consistent copy of a SQLite DB including all WAL contents."""
+    """Consistent copy of a SQLite DB including all WAL contents, without the
+    place data (regenerable from the committed files; reseeded on restore)."""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
         tmp_path = Path(tmp.name)
     src = sqlite3.connect(str(db_file))
@@ -193,11 +196,47 @@ def _snapshot_db(db_file: Path) -> Path:
         try:
             with dst:
                 src.backup(dst)
+            _strip_place_data(dst)
         finally:
             dst.close()
     finally:
         src.close()
     return tmp_path
+
+
+def _tables(conn: sqlite3.Connection, schema: str = "main") -> set[str]:
+    return {
+        row[0]
+        for row in conn.execute(
+            f"SELECT name FROM {schema}.sqlite_master WHERE type='table'"  # nosec B608
+        )
+    }
+
+
+def _strip_place_data(conn: sqlite3.Connection) -> None:
+    """Empty the regenerable place tables and drop the stored place-data
+    version (so a restored DB reseeds), then compact the file."""
+    tables = _tables(conn)
+    with conn:
+        for table in PLACE_TABLES:
+            if table in tables:
+                conn.execute(f"DELETE FROM {table}")  # nosec B608 — fixed names
+        if "meta" in tables:
+            conn.execute("DELETE FROM meta WHERE key = ?", (PLACE_VERSION_KEY,))
+    conn.execute("VACUUM")
+
+
+def _shared_columns(conn: sqlite3.Connection, table: str) -> list[str]:
+    """Quoted names of the columns ``table`` has in both main and gcs_db."""
+    remote = {
+        r[1]
+        for r in conn.execute(f"PRAGMA gcs_db.table_info({table})")  # nosec B608
+    }
+    return [
+        '"' + r[1].replace('"', '""') + '"'
+        for r in conn.execute(f"PRAGMA main.table_info({table})")  # nosec B608
+        if r[1] in remote
+    ]
 
 
 def _merge_gcs_into_local(blob, local_path: Path) -> None:
@@ -210,7 +249,8 @@ def _merge_gcs_into_local(blob, local_path: Path) -> None:
 
     This is safe for all tables in our schema: users, feedback, plans, preferences,
     airports, nationalities all use globally-unique primary keys (UUIDs or IATA codes),
-    so genuine conflicts are extremely rare.
+    so genuine conflicts are extremely rare. The regenerable place tables
+    (places, place_names, admin1) and the place-data version are skipped.
     """
     try:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -221,16 +261,21 @@ def _merge_gcs_into_local(blob, local_path: Path) -> None:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute(f"ATTACH DATABASE '{tmp_path}' AS gcs_db")  # nosec B608
 
-            tables = conn.execute(
-                "SELECT name FROM gcs_db.sqlite_master WHERE type='table'"
-            ).fetchall()
-
             merged_total = 0
-            for (table,) in tables:
+            for table in sorted(_tables(conn, "gcs_db") - set(PLACE_TABLES)):
+                # Place data is regenerable and never merged; neither is the
+                # place-data version in meta (the local seed owns it).
+                where = " WHERE key != ?" if table == "meta" else ""
+                params = (PLACE_VERSION_KEY,) if table == "meta" else ()
                 try:
-                    # table name comes from sqlite_master, not user input — safe  # nosec B608
+                    # Named columns both copies have: a backup from before a
+                    # column was added still merges. Table and column names
+                    # come from sqlite_master / table_info, not user input.
+                    cols = ", ".join(_shared_columns(conn, table))
                     cur = conn.execute(
-                        f"INSERT OR IGNORE INTO main.{table} SELECT * FROM gcs_db.{table}"  # nosec B608
+                        f"INSERT OR IGNORE INTO main.{table} ({cols}) "  # nosec B608
+                        f"SELECT {cols} FROM gcs_db.{table}{where}",
+                        params,
                     )
                     merged_total += cur.rowcount
                 except Exception as exc:

@@ -89,8 +89,13 @@ backend/
       request.py      # TravelSearchRequest
       travel.py       # Domain response models (incl. TransportOption, GettingAroundResponse)
     services/         # Business logic (searchers, rankers, builders)
-    core/             # Config, cache, retry utilities
+    core/             # Config, cache, retry utilities; places.py (fold, aliases, hints)
+    db/               # SQLite: database.py (lookups, autocomplete), places_db.py
+                      # (resolve_place), seed_airports.py (curated list + seeding)
+    db/data/          # Committed OurAirports + GeoNames data (see its README)
     tools/            # Search and data tools
+  scripts/
+    build_place_data.py # Offline generator for app/db/data (stdlib only)
   tests/              # Unit and integration tests
   requirements.txt    # Python dependencies
   pyproject.toml
@@ -149,6 +154,7 @@ The frontend dev server runs on port **5174** and proxies `/api` requests to the
 - **My Plan selections.** Users can select individual items (flights, hotels, activities, free walking tours, SIM plans, tips, transport options, itinerary slots) into a plan drawer, or add the whole rule-based best-value package from the Results page in one click (with Undo). Selections are saved/loaded via the plans API. Moved/removed itinerary activities persist as an overlay in `selections.itinerary_layout` (keyed by original slot, fingerprinted to the itinerary), and display, export and share follow it. Both ResultsPage and ChatPage support the full plan workflow, including the cost breakdown and calendar (.ics) / print-PDF export.
 - **Trip comparison.** The Search page's third mode, "Compare", takes 2–3 destinations plus shared trip fields and calls `POST /api/compare/destination` once per destination in parallel (per-column loading/error + Retry); results render in `CompareTable` and "Plan this trip" runs the compared request as a normal full search. Pure helpers live in `frontend/src/utils/compare.js`.
 - **Budget planner is client-side.** The Results page budget planner (`utils/budgetPlanner.js`) splits the budget into per-person shares and checks already-loaded results; only "Find cheaper hotels" calls the API (the existing hotel filter).
+- **Place data is local and comprehensive.** Typed places resolve offline against committed OurAirports + GeoNames data (`backend/app/db/data/`, regenerated only by `backend/scripts/build_place_data.py`): `lookup_city_iata` (curated airports first, then `places_db.resolve_place`), `static_results._place_country` (curated map, then the resolved place's country) and `search_airports` (airports + places). Curated islands, destinations, regions, exonyms and aliases live in `backend/app/db/data/hints.json` (loaded by `core/places.py`); never return an unscheduled airport. Contains data from GeoNames (geonames.org), CC BY 4.0.
 - **Budget tiers are explicit.** Hotels must cover luxury, premium, mid-range, and budget options. Activities are scored 0.0–1.0 by interest relevance.
 
 ## API

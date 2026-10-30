@@ -1,6 +1,9 @@
 """Place-name reference data shared by the airports DB and the static tables."""
 
+import json
+import re
 import unicodedata
+from pathlib import Path
 
 # US state code → state name
 _US_STATES = {
@@ -21,6 +24,21 @@ _US_STATES = {
 }  # fmt: skip
 
 _CANADIAN_PROVINCES = "ab bc mb nb nl ns nt nu on pe qc sk yt".split()
+# Indian states and union territories (ISO 3166-2:IN) → GeoNames admin1 name
+_INDIAN_STATES = {
+    "an": "andaman and nicobar", "ap": "andhra pradesh",
+    "ar": "arunachal pradesh", "as": "assam", "br": "bihar", "ch": "chandigarh",
+    "ct": "chhattisgarh", "cg": "chhattisgarh",
+    "dh": "dadra and nagar haveli and daman and diu", "dl": "delhi",
+    "ga": "goa", "gj": "gujarat", "hp": "himachal pradesh", "hr": "haryana",
+    "jh": "jharkhand", "jk": "jammu and kashmir", "ka": "karnataka",
+    "kl": "kerala", "la": "ladakh", "ld": "lakshadweep", "mh": "maharashtra",
+    "ml": "meghalaya", "mn": "manipur", "mp": "madhya pradesh", "mz": "mizoram",
+    "nl": "nagaland", "od": "odisha", "pb": "punjab", "py": "puducherry",
+    "rj": "rajasthan", "sk": "sikkim", "tg": "telangana", "ts": "telangana",
+    "tn": "tamil nadu", "tr": "tripura", "up": "uttar pradesh",
+    "ut": "uttarakhand", "wb": "west bengal",
+}  # fmt: skip
 _AUSTRALIAN_STATES = "wa sa nt nsw vic qld tas act".split()
 _BRAZILIAN_STATES = (
     "ac al ap am ba ce df es go ma mt ms mg pa pb pr pe pi rj rn rs ro rr sc sp se to"
@@ -34,6 +52,7 @@ def _region_codes() -> dict[str, frozenset[str]]:
         ("CA", _CANADIAN_PROVINCES),
         ("AU", _AUSTRALIAN_STATES),
         ("BR", _BRAZILIAN_STATES),
+        ("IN", _INDIAN_STATES),
     ):
         for code in codes:
             table.setdefault(code, set()).add(country)
@@ -66,6 +85,7 @@ _REGION_NAMES: dict[str, tuple[str, str]] = {
     "rio grande do sul": ("rs", "BR"), "rondonia": ("ro", "BR"),
     "roraima": ("rr", "BR"), "santa catarina": ("sc", "BR"),
     "sao paulo": ("sp", "BR"), "sergipe": ("se", "BR"), "tocantins": ("to", "BR"),
+    **{name: (code, "IN") for code, name in _INDIAN_STATES.items()},
 }  # fmt: skip
 
 
@@ -87,20 +107,40 @@ def stated_region(stated: str) -> tuple[str, frozenset[str]] | None:
 _REGION_CODES: dict[str, frozenset[str]] = _region_codes()
 
 
-# Letters NFKD does not decompose into a base letter + combining mark.
+# Letters NFKD does not decompose into a base letter + combining mark, word
+# separators ("St. Louis", "Winston-Salem", "Sant·Joan") and apostrophe and
+# quote variants, which are dropped ("Xi’an" → "xian").
 _TRANSLITERATE = str.maketrans(
     {"ß": "ss", "ø": "o", "æ": "ae", "œ": "oe", "ł": "l", "đ": "d", "ı": "i",
-     "þ": "th", "ð": "d"}
+     "þ": "th", "ð": "d", "ə": "e", "ɛ": "e", "ħ": "h", "ƶ": "z",
+     ".": " ", "·": " ",
+     "'": None, "’": None, "‘": None, "ʼ": None, "ʻ": None, "`": None,
+     "ʹ": None, "“": None, "”": None}
 )  # fmt: skip
+
+
+def _fold_char(ch: str) -> str:
+    """Drop combining marks and invisible format characters (ZWNJ, LRM);
+    every dash (hyphen, en/em dash, …) separates words."""
+    if unicodedata.combining(ch):
+        return ""
+    category = unicodedata.category(ch)
+    if category == "Cf":
+        return ""
+    if category == "Pd":
+        return " "
+    return ch
 
 
 def fold_place(text: str) -> str:
     """Accent-free, lower-case, single-spaced form of a place name for
-    matching: "  São Paulo" → "sao paulo", "Straße" → "strasse"."""
+    matching: "  São Paulo" → "sao paulo", "Straße" → "strasse",
+    "St. Louis" → "st louis", "Winston-Salem" → "winston salem",
+    "St. John's" → "st johns". The runtime lookups and the offline data
+    generator share this one definition."""
     lowered = (text or "").lower().translate(_TRANSLITERATE)
     decomposed = unicodedata.normalize("NFKD", lowered)
-    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
-    return " ".join(stripped.split())
+    return " ".join("".join(map(_fold_char, decomposed)).split())
 
 
 _SAINT_PREFIXES = ("st ", "st. ", "saint ")
@@ -116,16 +156,92 @@ def saint_variants(folded: str) -> set[str]:
     return {folded}
 
 
+# ── Curated hints, aliases and exonyms: backend/app/db/data/hints.json ────
+# (loaded once; folded keys; see its "_about" entry and the schema test).
+_HINTS_FILE = Path(__file__).resolve().parents[1] / "db" / "data" / "hints.json"
+
+
+def _load_hints() -> dict:
+    with open(_HINTS_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+_HINTS = _load_hints()
+
+
+def _airport_table(name: str) -> dict[str, tuple[str, tuple[str, ...]]]:
+    return {k: (v[0], tuple(v[1])) for k, v in _HINTS[name].items()}
+
+
 # Other spellings of a city (folded) → the city's name in the airports seed.
-CITY_ALIASES: dict[str, str] = {
-    "washington": "Washington D.C.",
-    "washington dc": "Washington D.C.",
-    "washington d c": "Washington D.C.",
-    "washington d.c.": "Washington D.C.",
-    "washington d.c": "Washington D.C.",
-    "dc": "Washington D.C.",
-    "new york city": "New York",
-    "nyc": "New York",
-    "saigon": "Ho Chi Minh City",
-    "bombay": "Mumbai",
-}
+CITY_ALIASES: dict[str, str] = dict(_HINTS["city_aliases"])
+# Other names people type for a country (folded) → ISO alpha-2 code: the one
+# alias map for the airports DB and the static reference tables.
+COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["country_aliases"])
+# Tourist islands and island groups → (ISO country, scheduled airports).
+ISLAND_AIRPORTS = _airport_table("islands")
+# Landmarks, parks, resorts and airportless countries → (country, airports).
+DESTINATION_AIRPORTS = _airport_table("destinations")
+# Regions that are not first-level divisions → (country, airports).
+REGION_HINTS = _airport_table("regions")
+# Exonyms whose own-name namesakes would win → GeoNames place id or
+# "ambiguous" (each id is checked against the seeded data by a test).
+EXONYMS: dict[str, int | str] = dict(_HINTS["exonyms"])
+# Names whose St / Saint variants must not borrow a hint ("Saint John", New
+# Brunswick, is not St John, USVI).
+SAINT_EXCEPTIONS: frozenset[str] = frozenset(_HINTS["saint_exceptions"])
+
+
+# ── Airports a place owns (shared by the data generator and the runtime) ──
+
+# Words an airport name adds to the place it names ("La Palma Airport"): the
+# one list for the generator's name-derived display and runtime name matches.
+AIRPORT_NAME_WORDS = frozenset(
+    {"airport", "international", "regional", "aerodrome", "airfield"}
+)
+
+# Words that alone never identify a place inside an airport name.
+GENERIC_PLACE_WORDS = frozenset(
+    "airport international regional national municipal domestic airfield "
+    "aerodrome field airstrip airpark county city town de del la le el al "
+    "san santa saint st new port north south east west central island lake "
+    "river airbase air base".split()
+)
+_NON_WORD_RE = re.compile(r"[^\w ]")
+
+# A same-country airport this close is the place's own, whatever its name.
+OWN_AIRPORT_KM = 25
+
+# Airports never linked to places: reachable only via a third country
+# (Ercan, northern Cyprus: flights only via Turkey).
+NEVER_LINK: frozenset[str] = frozenset({"ECN"})
+
+
+def words_in(folded_name: str, folded_text: str) -> bool:
+    """The folded name occurs as whole words in the folded text, and is not
+    made only of generic airport/geography words."""
+    if not folded_name or set(folded_name.split()) <= GENERIC_PLACE_WORDS:
+        return False
+    words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
+    return f" {folded_name} " in f" {words} "
+
+
+def is_own_airport(
+    place: str,
+    airport_city: str,
+    airport_name: str,
+    same_country: bool,
+    distance_km: float,
+) -> bool:
+    """An airport is a place's own (all names folded) when its display city
+    is the place, its name contains the place name ("Basel" for BSL in
+    France), or it is in the same country within ``OWN_AIRPORT_KM``."""
+    return (
+        airport_city == place
+        or words_in(place, airport_name)
+        or (same_country and distance_km <= OWN_AIRPORT_KM)
+    )
+
+
+# "BER — Berlin, Germany" (the UI's airport label): the code prefix.
+CODE_PREFIX_RE = re.compile(r"^\s*([A-Za-z]{3})\s*(?:[—–]|\s-)\s*")

@@ -1,0 +1,3866 @@
+code,name,folded_name
+AD.02,Canillo,canillo
+AD.03,Encamp,encamp
+AD.04,La Massana,la massana
+AD.05,Ordino,ordino
+AD.06,Sant Julià de Loria,sant julia de loria
+AD.07,Andorra la Vella,andorra la vella
+AD.08,Escaldes-Engordany,escaldes engordany
+AE.01,Abu Dhabi,abu dhabi
+AE.02,Ajman,ajman
+AE.03,Dubai,dubai
+AE.04,Fujairah,fujairah
+AE.05,Ras Al Khaimah,ras al khaimah
+AE.06,Sharjah,sharjah
+AE.07,Umm Al Quwain,umm al quwain
+AF.01,Badakhshan,badakhshan
+AF.02,Badghis,badghis
+AF.03,Baghlan,baghlan
+AF.05,Bamyan,bamyan
+AF.06,Farah,farah
+AF.07,Faryab,faryab
+AF.08,Ghazni,ghazni
+AF.09,Ghowr,ghowr
+AF.10,Helmand,helmand
+AF.11,Herat,herat
+AF.13,Kabul,kabul
+AF.14,Kapisa,kapisa
+AF.17,Logar,logar
+AF.18,Nangarhar,nangarhar
+AF.19,Nimroz,nimroz
+AF.23,Kandahar,kandahar
+AF.24,Kunduz,kunduz
+AF.26,Takhar,takhar
+AF.27,Maidan Wardak Province,maidan wardak province
+AF.28,Zabul,zabul
+AF.29,Paktika,paktika
+AF.30,Balkh,balkh
+AF.31,Jowzjan,jowzjan
+AF.32,Samangan,samangan
+AF.33,Sar-e Pol Province,sar e pol province
+AF.34,Kunar,kunar
+AF.35,Laghman,laghman
+AF.36,Paktia,paktia
+AF.37,Khowst,khowst
+AF.38,Nuristan,nuristan
+AF.39,Oruzgan,oruzgan
+AF.40,Parwan,parwan
+AF.41,Daykundi,daykundi
+AF.42,Panjshir,panjshir
+AG.01,Barbuda,barbuda
+AG.03,Saint George Parish,saint george parish
+AG.04,Saint John Parish,saint john parish
+AG.05,Saint Mary Parish,saint mary parish
+AG.06,Saint Paul Parish,saint paul parish
+AG.07,Saint Peter Parish,saint peter parish
+AG.08,Saint Philip Parish,saint philip parish
+AG.09,Redonda,redonda
+AI.11205389,Blowing Point,blowing point
+AI.11205392,Sandy Ground,sandy ground
+AI.11205393,Sandy Hill,sandy hill
+AI.11205396,The Valley,the valley
+AI.11205433,East End,east end
+AI.11205436,North Hill,north hill
+AI.11205437,West End,west end
+AI.11205438,South Hill,south hill
+AI.11205439,The Quarter,the quarter
+AI.11205440,North Side,north side
+AI.11205441,Island Harbour,island harbour
+AI.11205442,George Hill,george hill
+AI.11205443,Stoney Ground,stoney ground
+AI.11205444,The Farrington,the farrington
+AL.40,Berat County,berat county
+AL.41,Dibër County,diber county
+AL.42,Durrës County,durres county
+AL.43,Elbasan County,elbasan county
+AL.44,Fier County,fier county
+AL.45,Gjirokastër County,gjirokaster county
+AL.46,Korçë County,korce county
+AL.47,Kukës County,kukes county
+AL.48,Lezhë County,lezhe county
+AL.49,Shkodër County,shkoder county
+AL.50,Tirana,tirana
+AL.51,Vlorë County,vlore county
+AM.01,Aragatsotn,aragatsotn
+AM.02,Ararat,ararat
+AM.03,Armavir,armavir
+AM.04,Gegharkunik,gegharkunik
+AM.05,Kotayk,kotayk
+AM.06,Lori,lori
+AM.07,Shirak,shirak
+AM.08,Syunik,syunik
+AM.09,Tavush,tavush
+AM.10,Vayots Dzor,vayots dzor
+AM.11,Yerevan,yerevan
+AO.01,Benguela,benguela
+AO.02,Bíe,bie
+AO.03,Cabinda,cabinda
+AO.05,Cuanza Norte,cuanza norte
+AO.06,Kwanza Sul,kwanza sul
+AO.07,Cunene,cunene
+AO.08,Huambo,huambo
+AO.09,Huíla,huila
+AO.12,Malanje,malanje
+AO.13,Namibe,namibe
+AO.14,Moxico,moxico
+AO.15,Uíge,uige
+AO.16,Zaire,zaire
+AO.17,Luanda Norte,luanda norte
+AO.18,Lunda Sul,lunda sul
+AO.19,Bengo,bengo
+AO.20,Luanda,luanda
+AO.CBG,Cubango,cubango
+AO.CUB,Cuando Province,cuando province
+AO.ICB,Icolo e Bengo Province,icolo e bengo province
+AO.MLE,Moxico Leste Province,moxico leste province
+AR.01,Buenos Aires,buenos aires
+AR.02,Catamarca,catamarca
+AR.03,Chaco,chaco
+AR.04,Chubut,chubut
+AR.05,Cordoba,cordoba
+AR.06,Corrientes,corrientes
+AR.07,Buenos Aires F.D.,buenos aires f d
+AR.08,Entre Rios,entre rios
+AR.09,Formosa,formosa
+AR.10,Jujuy,jujuy
+AR.11,La Pampa,la pampa
+AR.12,La Rioja,la rioja
+AR.13,Mendoza,mendoza
+AR.14,Misiones,misiones
+AR.15,Neuquen,neuquen
+AR.16,Rio Negro,rio negro
+AR.17,Salta,salta
+AR.18,San Juan,san juan
+AR.19,San Luis,san luis
+AR.20,Santa Cruz,santa cruz
+AR.21,Santa Fe,santa fe
+AR.22,Santiago del Estero,santiago del estero
+AR.23,Tierra del Fuego,tierra del fuego
+AR.24,Tucuman,tucuman
+AS.010,Eastern District,eastern district
+AS.020,Manu'a,manua
+AS.030,Rose Island,rose island
+AS.040,Swains Island,swains island
+AS.050,Western District,western district
+AT.01,Burgenland,burgenland
+AT.02,Carinthia,carinthia
+AT.03,Lower Austria,lower austria
+AT.04,Upper Austria,upper austria
+AT.05,Salzburg,salzburg
+AT.06,Styria,styria
+AT.07,Tyrol,tyrol
+AT.08,Vorarlberg,vorarlberg
+AT.09,Vienna,vienna
+AU.01,Australian Capital Territory,australian capital territory
+AU.02,New South Wales,new south wales
+AU.03,Northern Territory,northern territory
+AU.04,Queensland,queensland
+AU.05,South Australia,south australia
+AU.06,Tasmania,tasmania
+AU.07,Victoria,victoria
+AU.08,Western Australia,western australia
+AX.211,Mariehamn,mariehamn
+AX.212,Ålands landsbygd,alands landsbygd
+AX.213,Ålands skärgård,alands skargard
+AZ.01,Abşeron,abseron
+AZ.02,Ağcabǝdi,agcabǝdi
+AZ.03,Ağdam,agdam
+AZ.04,Ağdaş,agdas
+AZ.05,Ağstafa,agstafa
+AZ.06,Agsu District,agsu district
+AZ.07,Shirvan,shirvan
+AZ.08,Astara,astara
+AZ.09,Baki,baki
+AZ.10,Balakan District,balakan district
+AZ.11,Barda,barda
+AZ.12,Beyləqan,beyleqan
+AZ.13,Bilasuvar District,bilasuvar district
+AZ.14,Jabrayil,jabrayil
+AZ.15,Jalilabad,jalilabad
+AZ.16,Daşkǝsǝn,daskǝsǝn
+AZ.17,Shabran,shabran
+AZ.18,Fuzuli District,fuzuli district
+AZ.19,Gadabay District,gadabay district
+AZ.20,Gǝncǝ,gǝncǝ
+AZ.21,Goranboy District,goranboy district
+AZ.22,Göyçay,goycay
+AZ.23,Hacıqabul,haciqabul
+AZ.24,İmişli,imisli
+AZ.25,Ismayilli District,ismayilli district
+AZ.26,Kalbajar,kalbajar
+AZ.27,Kurdamir District,kurdamir district
+AZ.28,Lachin Rayon,lachin rayon
+AZ.29,Lənkəran,lenkeran
+AZ.30,Lankaran Sahari,lankaran sahari
+AZ.31,Lerik District,lerik district
+AZ.32,Masally,masally
+AZ.33,Mingacevir City,mingacevir city
+AZ.34,Naftalan,naftalan
+AZ.35,Nakhchivan,nakhchivan
+AZ.36,Neftçala,neftcala
+AZ.37,Oğuz,oguz
+AZ.38,Qabala District,qabala district
+AZ.39,Qax,qax
+AZ.40,Qazax,qazax
+AZ.41,Qobustan,qobustan
+AZ.42,Quba,quba
+AZ.43,Qubadlı,qubadli
+AZ.44,Qusar District,qusar district
+AZ.45,Saatlı,saatli
+AZ.46,Sabirabad District,sabirabad district
+AZ.47,Shaki,shaki
+AZ.48,Shaki City,shaki city
+AZ.49,Salyan District,salyan district
+AZ.50,Şamaxı,samaxi
+AZ.51,Şǝmkir,sǝmkir
+AZ.52,Samux,samux
+AZ.53,Siyǝzǝn,siyǝzǝn
+AZ.54,Sumqayit,sumqayit
+AZ.55,Shusha,shusha
+AZ.56,Shusha City,shusha city
+AZ.57,Tartar District,tartar district
+AZ.58,Tovuz District,tovuz district
+AZ.59,Ucar,ucar
+AZ.60,Xaçmaz,xacmaz
+AZ.61,Xankǝndi,xankǝndi
+AZ.62,Goygol Rayon,goygol rayon
+AZ.63,Xızı,xizi
+AZ.64,Khojaly,khojaly
+AZ.65,Khojavend,khojavend
+AZ.66,Yardimli District,yardimli district
+AZ.67,Yevlax,yevlax
+AZ.68,Yevlax City,yevlax city
+AZ.69,Zangilan District,zangilan district
+AZ.70,Zaqatala District,zaqatala district
+AZ.71,Zardab,zardab
+BA.01,Federation of B&H,federation of b&h
+BA.02,Srpska,srpska
+BA.BRC,Brčko,brcko
+BB.01,Christ Church,christ church
+BB.02,Saint Andrew,saint andrew
+BB.03,Saint George,saint george
+BB.04,Saint James,saint james
+BB.05,Saint John,saint john
+BB.06,Saint Joseph,saint joseph
+BB.07,Saint Lucy,saint lucy
+BB.08,Saint Michael,saint michael
+BB.09,Saint Peter,saint peter
+BB.10,Saint Philip,saint philip
+BB.11,Saint Thomas,saint thomas
+BD.81,Dhaka Division,dhaka division
+BD.82,Khulna Division,khulna division
+BD.83,Rajshahi Division,rajshahi division
+BD.84,Chittagong,chittagong
+BD.85,Barisal Division,barisal division
+BD.86,Sylhet Division,sylhet division
+BD.87,Rangpur Division,rangpur division
+BD.H,Mymensingh Division,mymensingh division
+BE.BRU,Brussels Capital,brussels capital
+BE.VLG,Flanders,flanders
+BE.WAL,Wallonia,wallonia
+BF.01,Boucle du Mouhoun,boucle du mouhoun
+BF.02,Cascades Region,cascades region
+BF.03,Centre,centre
+BF.04,Centre-Est,centre est
+BF.05,Centre-Nord,centre nord
+BF.06,Centre-Ouest,centre ouest
+BF.07,Centre-Sud,centre sud
+BF.08,Est,est
+BF.09,Hauts-Bassins,hauts bassins
+BF.10,Nord,nord
+BF.11,Plateau-Central,plateau central
+BF.12,Sahel,sahel
+BF.13,Sud-Ouest,sud ouest
+BG.38,Blagoevgrad,blagoevgrad
+BG.39,Burgas,burgas
+BG.40,Dobrich,dobrich
+BG.41,Gabrovo,gabrovo
+BG.42,Sofia-Capital,sofia capital
+BG.43,Haskovo,haskovo
+BG.44,Kardzhali,kardzhali
+BG.45,Kyustendil,kyustendil
+BG.46,Lovech,lovech
+BG.47,Montana,montana
+BG.48,Pazardzhik,pazardzhik
+BG.49,Pernik,pernik
+BG.50,Pleven,pleven
+BG.51,Plovdiv,plovdiv
+BG.52,Razgrad,razgrad
+BG.53,Ruse,ruse
+BG.54,Shumen,shumen
+BG.55,Silistra,silistra
+BG.56,Sliven,sliven
+BG.57,Smolyan,smolyan
+BG.58,Sofia,sofia
+BG.59,Stara Zagora,stara zagora
+BG.60,Targovishte,targovishte
+BG.61,Varna,varna
+BG.62,Veliko Tarnovo,veliko tarnovo
+BG.63,Vidin,vidin
+BG.64,Vratsa,vratsa
+BG.65,Yambol,yambol
+BH.15,Muharraq,muharraq
+BH.16,Manama,manama
+BH.17,Southern Governorate,southern governorate
+BH.19,Northern,northern
+BI.09,Bubanza,bubanza
+BI.10,Bururi,bururi
+BI.11,Cankuzo,cankuzo
+BI.12,Cibitoke,cibitoke
+BI.13,Gitega,gitega
+BI.15,Kayanza,kayanza
+BI.16,Kirundo,kirundo
+BI.17,Makamba,makamba
+BI.18,Muyinga,muyinga
+BI.19,Ngozi,ngozi
+BI.20,Rutana,rutana
+BI.21,Ruyigi,ruyigi
+BI.22,Muramvya,muramvya
+BI.24,Bujumbura Mairie,bujumbura mairie
+BI.25,Bujumbura Rural,bujumbura rural
+BI.26,Rumonge,rumonge
+BJ.07,Alibori,alibori
+BJ.08,Atakora,atakora
+BJ.09,Atlantique,atlantique
+BJ.10,Borgou,borgou
+BJ.11,Collines,collines
+BJ.12,Kouffo,kouffo
+BJ.13,Donga,donga
+BJ.14,Littoral,littoral
+BJ.15,Mono,mono
+BJ.16,Ouémé,oueme
+BJ.17,Plateau,plateau
+BJ.18,Zou,zou
+BM.01,Devonshire,devonshire
+BM.02,Hamilton,hamilton
+BM.03,Hamilton city,hamilton city
+BM.04,Paget,paget
+BM.05,Pembroke,pembroke
+BM.06,Saint George,saint george
+BM.07,Saint Georgeʼs,saint georges
+BM.08,Sandys,sandys
+BM.09,Smithʼs,smiths
+BM.10,Southampton,southampton
+BM.11,Warwick,warwick
+BN.01,Belait,belait
+BN.02,Brunei-Muara District,brunei muara district
+BN.03,Temburong,temburong
+BN.04,Tutong,tutong
+BO.01,Chuquisaca Department,chuquisaca department
+BO.02,Cochabamba,cochabamba
+BO.03,Beni Department,beni department
+BO.04,La Paz Department,la paz department
+BO.05,Oruro,oruro
+BO.06,Pando,pando
+BO.07,Potosí Department,potosi department
+BO.08,Santa Cruz Department,santa cruz department
+BO.09,Tarija Department,tarija department
+BQ.BO,Bonaire,bonaire
+BQ.SB,Saba,saba
+BQ.SE,Sint Eustatius,sint eustatius
+BR.01,Acre,acre
+BR.02,Alagoas,alagoas
+BR.03,Amapá,amapa
+BR.04,Amazonas,amazonas
+BR.05,Bahia,bahia
+BR.06,Ceará,ceara
+BR.07,Federal District,federal district
+BR.08,Espírito Santo,espirito santo
+BR.11,Mato Grosso do Sul,mato grosso do sul
+BR.13,Maranhão,maranhao
+BR.14,Mato Grosso,mato grosso
+BR.15,Minas Gerais,minas gerais
+BR.16,Pará,para
+BR.17,Paraíba,paraiba
+BR.18,Paraná,parana
+BR.20,Piauí,piaui
+BR.21,Rio de Janeiro,rio de janeiro
+BR.22,Rio Grande do Norte,rio grande do norte
+BR.23,Rio Grande do Sul,rio grande do sul
+BR.24,Rondônia,rondonia
+BR.25,Roraima,roraima
+BR.26,Santa Catarina,santa catarina
+BR.27,São Paulo,sao paulo
+BR.28,Sergipe,sergipe
+BR.29,Goiás,goias
+BR.30,Pernambuco,pernambuco
+BR.31,Tocantins,tocantins
+BS.05,Bimini,bimini
+BS.06,Cat Island,cat island
+BS.10,Exuma,exuma
+BS.13,Inagua,inagua
+BS.15,Long Island,long island
+BS.16,Mayaguana,mayaguana
+BS.18,Ragged Island,ragged island
+BS.22,Harbour Island,harbour island
+BS.23,New Providence,new providence
+BS.24,Acklins,acklins
+BS.25,Freeport,freeport
+BS.32,Berry Islands,berry islands
+BS.35,San Salvador,san salvador
+BS.36,Black Point,black point
+BS.37,Central Abaco,central abaco
+BS.38,Central Andros,central andros
+BS.39,Central Eleuthera,central eleuthera
+BS.40,Crooked Island and Long Cay,crooked island and long cay
+BS.41,East Grand Bahama,east grand bahama
+BS.42,Grand Cay,grand cay
+BS.43,Hope Town,hope town
+BS.44,Mangrove Cay,mangrove cay
+BS.45,Moore’s Island,moores island
+BS.46,North Abaco,north abaco
+BS.47,North Andros,north andros
+BS.48,North Eleuthera,north eleuthera
+BS.49,Rum Cay,rum cay
+BS.50,South Abaco,south abaco
+BS.51,South Andros,south andros
+BS.52,South Eleuthera,south eleuthera
+BS.53,Spanish Wells,spanish wells
+BS.54,West Grand Bahama,west grand bahama
+BT.05,Bumthang District,bumthang district
+BT.06,Chukha,chukha
+BT.07,Tsirang District,tsirang district
+BT.08,Dagana,dagana
+BT.09,Sarpang District,sarpang district
+BT.10,Haa,haa
+BT.11,Lhuntse,lhuntse
+BT.12,Mongar,mongar
+BT.13,Paro,paro
+BT.14,Pemagatshel,pemagatshel
+BT.15,Punakha,punakha
+BT.16,Samtse District,samtse district
+BT.17,Samdrup Jongkhar,samdrup jongkhar
+BT.18,Zhemgang District,zhemgang district
+BT.19,Trashigang District,trashigang district
+BT.20,Thimphu District,thimphu district
+BT.21,Tongsa,tongsa
+BT.22,Wangdi Phodrang,wangdi phodrang
+BT.23,Gasa,gasa
+BT.24,Trashi Yangste,trashi yangste
+BW.01,Central,central
+BW.03,Ghanzi,ghanzi
+BW.04,Kgalagadi,kgalagadi
+BW.05,Kgatleng,kgatleng
+BW.06,Kweneng,kweneng
+BW.08,North-East,north east
+BW.09,South-East,south east
+BW.10,Ngwaketsi,ngwaketsi
+BW.11,North-West,north west
+BW.12,Chobe,chobe
+BW.13,City of Francistown,city of francistown
+BW.14,Gaborone,gaborone
+BW.15,Jwaneng,jwaneng
+BW.16,Lobatse,lobatse
+BW.17,Selibe Phikwe,selibe phikwe
+BW.18,Sowa Town,sowa town
+BY.01,Brest,brest
+BY.02,Homyel’ Voblasc’,homyel voblasc
+BY.03,Grodnenskaya,grodnenskaya
+BY.04,Minsk City,minsk city
+BY.05,Minsk,minsk
+BY.06,Mogilev,mogilev
+BY.07,Vitebsk,vitebsk
+BZ.01,Belize District,belize district
+BZ.02,Cayo District,cayo district
+BZ.03,Corozal District,corozal district
+BZ.04,Orange Walk District,orange walk district
+BZ.05,Stann Creek,stann creek
+BZ.06,Toledo District,toledo district
+CA.01,Alberta,alberta
+CA.02,British Columbia,british columbia
+CA.03,Manitoba,manitoba
+CA.04,New Brunswick,new brunswick
+CA.05,Newfoundland and Labrador,newfoundland and labrador
+CA.07,Nova Scotia,nova scotia
+CA.08,Ontario,ontario
+CA.09,Prince Edward Island,prince edward island
+CA.10,Quebec,quebec
+CA.11,Saskatchewan,saskatchewan
+CA.12,Yukon,yukon
+CA.13,Northwest Territories,northwest territories
+CA.14,Nunavut,nunavut
+CD.02,Équateur,equateur
+CD.04,East Kasai,east kasai
+CD.06,Kinshasa,kinshasa
+CD.08,Bas-Congo,bas congo
+CD.10,Maniema,maniema
+CD.11,North Kivu,north kivu
+CD.12,South Kivu,south kivu
+CD.13,Bas-Uele,bas uele
+CD.14,Haut-Katanga,haut katanga
+CD.15,Haut-Lomami,haut lomami
+CD.16,Haut-Uele,haut uele
+CD.17,Ituri,ituri
+CD.18,Kasai,kasai
+CD.19,Kwango,kwango
+CD.20,Kwilu,kwilu
+CD.21,Lomami,lomami
+CD.22,Lualaba,lualaba
+CD.23,Kasai-Central,kasai central
+CD.24,Mai-Ndombe,mai ndombe
+CD.25,Mongala,mongala
+CD.26,Nord-Ubangi,nord ubangi
+CD.27,Sankuru,sankuru
+CD.28,Sud-Ubangi,sud ubangi
+CD.29,Tanganyika,tanganyika
+CD.30,Tshopo,tshopo
+CD.31,Tshuapa,tshuapa
+CF.01,Bamingui-Bangoran,bamingui bangoran
+CF.02,Basse-Kotto,basse kotto
+CF.03,Haute-Kotto,haute kotto
+CF.04,Mambéré-Kadéï,mambere kadei
+CF.05,Haut-Mbomou,haut mbomou
+CF.06,Kémo,kemo
+CF.07,Lobaye,lobaye
+CF.08,Mbomou,mbomou
+CF.09,Nana-Mambéré,nana mambere
+CF.11,Ouaka,ouaka
+CF.12,Ouham,ouham
+CF.13,Ouham-Pendé,ouham pende
+CF.14,Vakaga,vakaga
+CF.15,Nana-Grébizi,nana grebizi
+CF.16,Sangha-Mbaéré,sangha mbaere
+CF.17,Ombella-M'Poko,ombella mpoko
+CF.18,Bangui,bangui
+CF.19,Mambéré,mambere
+CF.20,Ouham-Fafa,ouham fafa
+CF.21,Lim-Pendé,lim pende
+CG.01,Bouenza,bouenza
+CG.04,Kouilou,kouilou
+CG.05,Lékoumou,lekoumou
+CG.06,Likouala,likouala
+CG.07,Niari,niari
+CG.08,Plateaux,plateaux
+CG.10,Sangha,sangha
+CG.11,Pool,pool
+CG.12,Brazzaville,brazzaville
+CG.13,Cuvette,cuvette
+CG.14,Cuvette-Ouest,cuvette ouest
+CG.15,Pointe-Noire,pointe noire
+CH.AG,Aargau,aargau
+CH.AI,Appenzell Innerrhoden,appenzell innerrhoden
+CH.AR,Appenzell Ausserrhoden,appenzell ausserrhoden
+CH.BE,Bern,bern
+CH.BL,Basel-Landschaft,basel landschaft
+CH.BS,Basel-City,basel city
+CH.FR,Fribourg,fribourg
+CH.GE,Geneva,geneva
+CH.GL,Glarus,glarus
+CH.GR,Grisons,grisons
+CH.JU,Jura,jura
+CH.LU,Lucerne,lucerne
+CH.NE,Neuchâtel,neuchatel
+CH.NW,Nidwalden,nidwalden
+CH.OW,Obwalden,obwalden
+CH.SG,Saint Gallen,saint gallen
+CH.SH,Schaffhausen,schaffhausen
+CH.SO,Solothurn,solothurn
+CH.SZ,Schwyz,schwyz
+CH.TG,Thurgau,thurgau
+CH.TI,Ticino,ticino
+CH.UR,Uri,uri
+CH.VD,Vaud,vaud
+CH.VS,Valais,valais
+CH.ZG,Zug,zug
+CH.ZH,Zurich,zurich
+CI.76,Bas-Sassandra District,bas sassandra district
+CI.77,Denguélé District,denguele district
+CI.78,Montagnes,montagnes
+CI.81,Lacs District,lacs district
+CI.82,Lagunes District,lagunes district
+CI.87,Savanes District,savanes district
+CI.90,Vallée du Bandama District,vallee du bandama district
+CI.92,Zanzan District,zanzan district
+CI.93,Abidjan Autonomous District,abidjan autonomous district
+CI.94,Comoé District,comoe district
+CI.95,Goh-Djiboua,goh djiboua
+CI.96,Sassandra-Marahoue,sassandra marahoue
+CI.97,Woroba,woroba
+CI.98,Yamoussoukro,yamoussoukro
+CK.11695124,Aitutaki,aitutaki
+CK.11695126,Atiu,atiu
+CK.11695127,Mangaia,mangaia
+CK.11695384,Manihiki,manihiki
+CK.11695385,Ma'uke,mauke
+CK.11695386,Mitiaro,mitiaro
+CK.11695387,Palmerston,palmerston
+CK.11695388,Penrhyn,penrhyn
+CK.11695389,Pukapuka,pukapuka
+CK.11695390,Rakahanga,rakahanga
+CK.11695425,Rarotonga,rarotonga
+CL.01,Valparaiso,valparaiso
+CL.02,Aysén,aysen
+CL.03,Antofagasta,antofagasta
+CL.04,Araucania,araucania
+CL.05,Atacama,atacama
+CL.06,Biobio,biobio
+CL.07,Coquimbo Region,coquimbo region
+CL.08,O'Higgins Region,ohiggins region
+CL.10,Region of Magallanes,region of magallanes
+CL.11,Maule Region,maule region
+CL.12,Santiago Metropolitan,santiago metropolitan
+CL.14,Los Lagos Region,los lagos region
+CL.15,Tarapacá,tarapaca
+CL.16,Arica y Parinacota Region,arica y parinacota region
+CL.17,Los Ríos Region,los rios region
+CL.18,Ñuble,nuble
+CM.04,East,east
+CM.05,Littoral,littoral
+CM.07,North-West,north west
+CM.08,West,west
+CM.09,South-West,south west
+CM.10,Adamaoua,adamaoua
+CM.11,Centre,centre
+CM.12,Far North,far north
+CM.13,North,north
+CM.14,South,south
+CN.01,Anhui,anhui
+CN.02,Zhejiang,zhejiang
+CN.03,Jiangxi,jiangxi
+CN.04,Jiangsu,jiangsu
+CN.05,Jilin,jilin
+CN.06,Qinghai,qinghai
+CN.07,Fujian,fujian
+CN.08,Heilongjiang,heilongjiang
+CN.09,Henan,henan
+CN.10,Hebei,hebei
+CN.11,Hunan,hunan
+CN.12,Hubei,hubei
+CN.13,Xinjiang,xinjiang
+CN.14,Tibet,tibet
+CN.15,Gansu,gansu
+CN.16,Guangxi,guangxi
+CN.18,Guizhou,guizhou
+CN.19,Liaoning,liaoning
+CN.20,Inner Mongolia,inner mongolia
+CN.21,Ningxia,ningxia
+CN.22,Beijing,beijing
+CN.23,Shanghai,shanghai
+CN.24,Shanxi,shanxi
+CN.25,Shandong,shandong
+CN.26,Shaanxi,shaanxi
+CN.28,Tianjin,tianjin
+CN.29,Yunnan,yunnan
+CN.30,Guangdong,guangdong
+CN.31,Hainan,hainan
+CN.32,Sichuan,sichuan
+CN.33,Chongqing,chongqing
+CO.01,Amazonas Department,amazonas department
+CO.02,Antioquia,antioquia
+CO.03,Arauca Department,arauca department
+CO.04,Atlántico,atlantico
+CO.08,Caquetá,caqueta
+CO.09,Cauca Department,cauca department
+CO.10,Cesar Department,cesar department
+CO.11,Chocó,choco
+CO.12,Córdoba,cordoba
+CO.14,Guaviare Department,guaviare department
+CO.15,Guainía Department,guainia department
+CO.16,Huila Department,huila department
+CO.17,La Guajira Department,la guajira department
+CO.19,Meta Department,meta department
+CO.20,Nariño,narino
+CO.21,Norte de Santander Department,norte de santander department
+CO.22,Putumayo Department,putumayo department
+CO.23,Quindío Department,quindio department
+CO.24,Risaralda Department,risaralda department
+CO.25,San Andres y Providencia,san andres y providencia
+CO.26,Santander Department,santander department
+CO.27,Sucre Department,sucre department
+CO.28,Tolima Department,tolima department
+CO.29,Valle del Cauca Department,valle del cauca department
+CO.30,Vaupés,vaupes
+CO.31,Vichada Department,vichada department
+CO.32,Casanare Department,casanare department
+CO.33,Cundinamarca,cundinamarca
+CO.34,Bogota D.C.,bogota d c
+CO.35,Bolívar,bolivar
+CO.36,Boyacá,boyaca
+CO.37,Caldas Department,caldas department
+CO.38,Magdalena Department,magdalena department
+CR.01,Alajuela Province,alajuela province
+CR.02,Cartago Province,cartago province
+CR.03,Guanacaste Province,guanacaste province
+CR.04,Heredia Province,heredia province
+CR.06,Limón Province,limon province
+CR.07,Puntarenas Province,puntarenas province
+CR.08,San José,san jose
+CU.01,Pinar del Río,pinar del rio
+CU.02,Havana,havana
+CU.03,Matanzas Province,matanzas province
+CU.04,Isla de la Juventud,isla de la juventud
+CU.05,Camagüey,camaguey
+CU.07,Ciego de Ávila Province,ciego de avila province
+CU.08,Cienfuegos Province,cienfuegos province
+CU.09,Granma Province,granma province
+CU.10,Guantánamo Province,guantanamo province
+CU.12,Holguín Province,holguin province
+CU.13,Las Tunas Province,las tunas province
+CU.14,Sancti Spíritus Province,sancti spiritus province
+CU.15,Santiago de Cuba Province,santiago de cuba province
+CU.16,Villa Clara Province,villa clara province
+CU.AR,Artemisa,artemisa
+CU.MA,Mayabeque,mayabeque
+CV.01,Boa Vista,boa vista
+CV.02,Brava,brava
+CV.04,Maio,maio
+CV.05,Paul,paul
+CV.07,Ribeira Grande,ribeira grande
+CV.08,Sal,sal
+CV.11,São Vicente,sao vicente
+CV.13,Mosteiros,mosteiros
+CV.14,Praia,praia
+CV.15,Santa Catarina,santa catarina
+CV.16,Santa Cruz,santa cruz
+CV.17,São Domingos,sao domingos
+CV.18,São Filipe,sao filipe
+CV.19,São Miguel,sao miguel
+CV.20,Tarrafal,tarrafal
+CV.21,Porto Novo,porto novo
+CV.22,Ribeira Brava,ribeira brava
+CV.23,Ribeira Grande de Santiago,ribeira grande de santiago
+CV.24,Santa Catarina do Fogo,santa catarina do fogo
+CV.25,São Lourenço dos Órgãos,sao lourenco dos orgaos
+CV.26,São Salvador do Mundo,sao salvador do mundo
+CV.27,Tarrafal de São Nicolau,tarrafal de sao nicolau
+CY.01,Ammochostos,ammochostos
+CY.02,Keryneia,keryneia
+CY.03,Larnaka,larnaka
+CY.04,Nicosia,nicosia
+CY.05,Limassol,limassol
+CY.06,Pafos,pafos
+CZ.52,Prague,prague
+CZ.78,South Moravian,south moravian
+CZ.79,South Bohemian Region,south bohemian region
+CZ.80,Vysocina,vysocina
+CZ.81,Carlsbad Region,carlsbad region
+CZ.82,Hradec Králové Region,hradec kralove region
+CZ.83,Liberec Region,liberec region
+CZ.84,Olomouc Region,olomouc region
+CZ.85,Moravian-Silesian Region,moravian silesian region
+CZ.86,Pardubice Region,pardubice region
+CZ.87,Plzeň Region,plzen region
+CZ.88,Central Bohemia,central bohemia
+CZ.89,Ústí nad Labem Region,usti nad labem region
+CZ.90,Zlín,zlin
+DE.01,Baden-Wurttemberg,baden wurttemberg
+DE.02,Bavaria,bavaria
+DE.03,Bremen,bremen
+DE.04,Hamburg,hamburg
+DE.05,Hesse,hesse
+DE.06,Lower Saxony,lower saxony
+DE.07,North Rhine-Westphalia,north rhine westphalia
+DE.08,Rheinland-Pfalz,rheinland pfalz
+DE.09,Saarland,saarland
+DE.10,Schleswig-Holstein,schleswig holstein
+DE.11,Brandenburg,brandenburg
+DE.12,Mecklenburg-Vorpommern,mecklenburg vorpommern
+DE.13,Saxony,saxony
+DE.14,Saxony-Anhalt,saxony anhalt
+DE.15,Thuringia,thuringia
+DE.16,State of Berlin,state of berlin
+DJ.01,Ali Sabieh,ali sabieh
+DJ.04,Obock,obock
+DJ.05,Tadjourah,tadjourah
+DJ.06,Dikhil,dikhil
+DJ.07,Djibouti,djibouti
+DJ.08,Arta,arta
+DK.17,Capital Region,capital region
+DK.18,Central Jutland,central jutland
+DK.19,North Denmark,north denmark
+DK.20,Zealand,zealand
+DK.21,South Denmark,south denmark
+DM.02,Saint Andrew Parish,saint andrew parish
+DM.03,Saint David Parish,saint david parish
+DM.04,Saint George Parish,saint george parish
+DM.05,Saint John Parish,saint john parish
+DM.06,Saint Joseph Parish,saint joseph parish
+DM.07,Saint Luke Parish,saint luke parish
+DM.08,Saint Mark Parish,saint mark parish
+DM.09,Saint Patrick Parish,saint patrick parish
+DM.10,Saint Paul Parish,saint paul parish
+DM.11,Saint Peter Parish,saint peter parish
+DO.01,Azua Province,azua province
+DO.02,Baoruco Province,baoruco province
+DO.03,Barahona Province,barahona province
+DO.04,Dajabón,dajabon
+DO.06,Duarte Province,duarte province
+DO.08,Espaillat Province,espaillat province
+DO.09,Independencia,independencia
+DO.10,La Altagracia Province,la altagracia province
+DO.11,Elías Piña,elias pina
+DO.12,La Romana,la romana
+DO.14,María Trinidad Sánchez,maria trinidad sanchez
+DO.15,Monte Cristi Province,monte cristi province
+DO.16,Pedernales Province,pedernales province
+DO.18,Puerto Plata,puerto plata
+DO.19,Hermanas Mirabal,hermanas mirabal
+DO.20,Samaná,samana
+DO.21,Sánchez Ramírez,sanchez ramirez
+DO.23,San Juan Province,san juan province
+DO.24,San Pedro de Macorís,san pedro de macoris
+DO.25,Santiago Province,santiago province
+DO.26,Santiago Rodríguez,santiago rodriguez
+DO.27,Valverde Province,valverde province
+DO.28,El Seíbo,el seibo
+DO.29,Hato Mayor Province,hato mayor province
+DO.30,La Vega,la vega
+DO.31,Monseñor Nouel,monsenor nouel
+DO.32,Monte Plata Province,monte plata province
+DO.33,San Cristóbal,san cristobal
+DO.34,Nacional,nacional
+DO.35,Peravia,peravia
+DO.36,San José de Ocoa,san jose de ocoa
+DO.37,Santo Domingo Province,santo domingo province
+DZ.01,Algiers,algiers
+DZ.03,Batna,batna
+DZ.04,Constantine,constantine
+DZ.06,Medea,medea
+DZ.07,Mostaganem,mostaganem
+DZ.09,Oran,oran
+DZ.10,Saida,saida
+DZ.12,Sétif,setif
+DZ.13,Tiaret,tiaret
+DZ.14,Tizi Ouzou,tizi ouzou
+DZ.15,Tlemcen,tlemcen
+DZ.18,Béjaïa,bejaia
+DZ.19,Biskra,biskra
+DZ.20,Blida,blida
+DZ.21,Bouira,bouira
+DZ.22,Djelfa,djelfa
+DZ.23,Guelma,guelma
+DZ.24,Jijel,jijel
+DZ.25,Laghouat,laghouat
+DZ.26,Mascara,mascara
+DZ.27,M'Sila,msila
+DZ.29,Oum el Bouaghi,oum el bouaghi
+DZ.30,Sidi Bel Abbès,sidi bel abbes
+DZ.31,Skikda,skikda
+DZ.33,Tébessa,tebessa
+DZ.34,Adrar,adrar
+DZ.35,Aïn Defla,ain defla
+DZ.36,Aïn Témouchent,ain temouchent
+DZ.37,Annaba,annaba
+DZ.38,Béchar,bechar
+DZ.39,Bordj Bou Arréridj,bordj bou arreridj
+DZ.40,Boumerdes,boumerdes
+DZ.41,Chlef,chlef
+DZ.42,El Bayadh,el bayadh
+DZ.43,El Oued,el oued
+DZ.44,El Tarf,el tarf
+DZ.45,Ghardaia,ghardaia
+DZ.46,Illizi,illizi
+DZ.47,Khenchela,khenchela
+DZ.48,Mila,mila
+DZ.49,Naama,naama
+DZ.50,Ouargla,ouargla
+DZ.51,Relizane,relizane
+DZ.52,Souk Ahras,souk ahras
+DZ.53,Tamanrasset,tamanrasset
+DZ.54,Tindouf,tindouf
+DZ.55,Tipaza,tipaza
+DZ.56,Tissemsilt,tissemsilt
+DZ.BA,Beni Abbes,beni abbes
+DZ.BB,Bordj Badji Mokhtar,bordj badji mokhtar
+DZ.DJ,Djanet,djanet
+DZ.EM,El Menia,el menia
+DZ.IG,In Guezzam,in guezzam
+DZ.IS,In Salah,in salah
+DZ.MG,El Mghair,el mghair
+DZ.OD,Ouled Djellal,ouled djellal
+DZ.TG,Touggourt,touggourt
+DZ.TM,Timimoun,timimoun
+EC.01,Galápagos,galapagos
+EC.02,Azuay,azuay
+EC.03,Bolívar,bolivar
+EC.04,Canar,canar
+EC.05,Carchi,carchi
+EC.06,Chimborazo Province,chimborazo province
+EC.07,Cotopaxi,cotopaxi
+EC.08,El Oro,el oro
+EC.09,Esmeraldas,esmeraldas
+EC.10,Guayas,guayas
+EC.11,Imbabura,imbabura
+EC.12,Loja,loja
+EC.13,Los Ríos,los rios
+EC.14,Manabí,manabi
+EC.15,Morona-Santiago Province,morona santiago province
+EC.17,Pastaza Province,pastaza province
+EC.18,Pichincha,pichincha
+EC.19,Tungurahua Province,tungurahua province
+EC.20,Zamora Chinchipe,zamora chinchipe
+EC.22,Sucumbíos,sucumbios
+EC.23,Napo,napo
+EC.24,Orellana Province,orellana province
+EC.25,Santa Elena,santa elena
+EC.26,Santo Domingo de los Tsáchilas,santo domingo de los tsachilas
+EE.01,Harjumaa,harjumaa
+EE.02,Hiiumaa,hiiumaa
+EE.03,Ida-Virumaa,ida virumaa
+EE.04,Järvamaa,jarvamaa
+EE.05,Jõgevamaa,jogevamaa
+EE.07,Lääne,laane
+EE.08,Lääne-Virumaa,laane virumaa
+EE.11,Pärnumaa,parnumaa
+EE.12,Põlvamaa,polvamaa
+EE.13,Raplamaa,raplamaa
+EE.14,Saare,saare
+EE.18,Tartu,tartu
+EE.19,Valgamaa,valgamaa
+EE.20,Viljandimaa,viljandimaa
+EE.21,Võrumaa,vorumaa
+EG.01,Dakahlia,dakahlia
+EG.02,Red Sea,red sea
+EG.03,Beheira,beheira
+EG.04,Faiyum,faiyum
+EG.05,Gharbia,gharbia
+EG.06,Alexandria,alexandria
+EG.07,Ismailia,ismailia
+EG.08,Giza,giza
+EG.09,Monufia,monufia
+EG.10,Minya,minya
+EG.11,Cairo,cairo
+EG.12,Qalyubia,qalyubia
+EG.13,New Valley,new valley
+EG.14,Sharqia,sharqia
+EG.15,Suez,suez
+EG.16,Aswan,aswan
+EG.17,Asyut,asyut
+EG.18,Beni Suweif,beni suweif
+EG.19,Port Said,port said
+EG.20,Damietta,damietta
+EG.21,Kafr el-Sheikh,kafr el sheikh
+EG.22,Matruh,matruh
+EG.23,Qena,qena
+EG.24,Sohag,sohag
+EG.26,South Sinai,south sinai
+EG.27,North Sinai,north sinai
+EG.28,Luxor,luxor
+ER.01,Anseba,anseba
+ER.02,Debub,debub
+ER.03,Southern Red Sea,southern red sea
+ER.04,Gash-Barka,gash barka
+ER.05,Maekel,maekel
+ER.06,Northern Red Sea,northern red sea
+ES.07,Balearic Islands,balearic islands
+ES.27,La Rioja,la rioja
+ES.29,Madrid,madrid
+ES.31,Murcia,murcia
+ES.32,Navarre,navarre
+ES.34,Asturias,asturias
+ES.39,Cantabria,cantabria
+ES.51,Andalusia,andalusia
+ES.52,Aragon,aragon
+ES.53,Canary Islands,canary islands
+ES.54,Castille-La Mancha,castille la mancha
+ES.55,Castille and León,castille and leon
+ES.56,Catalonia,catalonia
+ES.57,Extremadura,extremadura
+ES.58,Galicia,galicia
+ES.59,Basque Country,basque country
+ES.60,Valencia,valencia
+ES.CE,Ceuta,ceuta
+ES.ML,Melilla,melilla
+ET.44,Addis Ababa,addis ababa
+ET.45,Āfar,afar
+ET.46,Amhara,amhara
+ET.47,Bīnshangul Gumuz,binshangul gumuz
+ET.48,Dire Dawa,dire dawa
+ET.49,Gambela,gambela
+ET.50,Harari,harari
+ET.51,Oromiya,oromiya
+ET.52,Somali,somali
+ET.53,Tigray,tigray
+ET.55,Central Ethiopia Regional State,central ethiopia regional state
+ET.56,South Ethiopia Regional State,south ethiopia regional state
+ET.SI,Sidama Region,sidama region
+ET.SW,South West Ethiopia Peoples' Region,south west ethiopia peoples region
+FI.01,Uusimaa,uusimaa
+FI.02,Southwest Finland,southwest finland
+FI.04,Satakunta,satakunta
+FI.05,Kanta-Häme,kanta hame
+FI.06,Pirkanmaa,pirkanmaa
+FI.07,Paijat-Hame,paijat hame
+FI.08,Kymenlaakso,kymenlaakso
+FI.09,South Karelia,south karelia
+FI.10,South Savo,south savo
+FI.11,North Savo,north savo
+FI.12,North Karelia,north karelia
+FI.13,Central Finland,central finland
+FI.14,South Ostrobothnia,south ostrobothnia
+FI.15,Ostrobothnia,ostrobothnia
+FI.16,Central Ostrobothnia,central ostrobothnia
+FI.17,North Ostrobothnia,north ostrobothnia
+FI.18,Kainuu,kainuu
+FI.19,Lapland,lapland
+FJ.01,Central,central
+FJ.02,Eastern,eastern
+FJ.03,Northern,northern
+FJ.04,Rotuma,rotuma
+FJ.05,Western,western
+FM.01,Kosrae,kosrae
+FM.02,Pohnpei State,pohnpei state
+FM.03,Chuuk,chuuk
+FM.04,Yap State,yap state
+FO.NO,Norðoyar,nordoyar
+FO.OS,Eysturoy,eysturoy
+FO.SA,Sandoy,sandoy
+FO.ST,Streymoy,streymoy
+FO.SU,Suðuroy,suduroy
+FO.VG,Vágar,vagar
+FR.11,Île-de-France,ile de france
+FR.24,Centre-Val de Loire,centre val de loire
+FR.27,Bourgogne-Franche-Comté,bourgogne franche comte
+FR.28,Normandy,normandy
+FR.32,Hauts-de-France,hauts de france
+FR.44,Grand Est,grand est
+FR.52,Pays de la Loire,pays de la loire
+FR.53,Brittany,brittany
+FR.75,New Aquitaine,new aquitaine
+FR.76,Occitanie,occitanie
+FR.84,Auvergne-Rhône-Alpes,auvergne rhone alpes
+FR.93,Provence-Alpes-Côte d'Azur,provence alpes cote dazur
+FR.94,Corsica,corsica
+GA.01,Estuaire,estuaire
+GA.02,Haut-Ogooué,haut ogooue
+GA.03,Moyen-Ogooué,moyen ogooue
+GA.04,Ngouni,ngouni
+GA.05,Nyanga,nyanga
+GA.06,Ogooué-Ivindo,ogooue ivindo
+GA.07,Ogooué-Lolo,ogooue lolo
+GA.08,Ogooué-Maritime,ogooue maritime
+GA.09,Woleu-Ntem,woleu ntem
+GB.ENG,England,england
+GB.NIR,Northern Ireland,northern ireland
+GB.SCT,Scotland,scotland
+GB.WLS,Wales,wales
+GD.01,Saint Andrew Parish,saint andrew parish
+GD.02,Saint David Parish,saint david parish
+GD.03,Saint George Parish,saint george parish
+GD.04,Saint John Parish,saint john parish
+GD.05,Saint Mark Parish,saint mark parish
+GD.06,Saint Patrick Parish,saint patrick parish
+GD.10,Carriacou and Petite Martinique,carriacou and petite martinique
+GE.02,Abkhazia,abkhazia
+GE.04,Adjara,adjara
+GE.51,Tbilisi,tbilisi
+GE.65,Guria,guria
+GE.66,Imereti,imereti
+GE.67,Kakheti,kakheti
+GE.68,Kvemo Kartli,kvemo kartli
+GE.69,Mtskheta-Mtianeti,mtskheta mtianeti
+GE.70,Racha-Lechkhumi and Kvemo Svaneti,racha lechkhumi and kvemo svaneti
+GE.71,Samegrelo and Zemo Svaneti,samegrelo and zemo svaneti
+GE.72,Samtskhe-Javakheti,samtskhe javakheti
+GE.73,Shida Kartli,shida kartli
+GF.GF,Guyane,guyane
+GG.6417213,St Pierre du Bois,st pierre du bois
+GG.6417214,Torteval,torteval
+GG.6417215,Saint Saviour,saint saviour
+GG.6417223,Forest,forest
+GG.6417224,St Martin,st martin
+GG.6417226,Saint Andrew,saint andrew
+GG.6417228,St Peter Port,st peter port
+GG.6417229,Castel,castel
+GG.6417230,Vale,vale
+GG.6417233,St Sampson,st sampson
+GG.8989934,Alderney,alderney
+GH.01,Greater Accra,greater accra
+GH.02,Ashanti,ashanti
+GH.04,Central,central
+GH.05,Eastern,eastern
+GH.06,Northern,northern
+GH.08,Volta,volta
+GH.09,Western,western
+GH.10,Upper East,upper east
+GH.11,Upper West,upper west
+GH.12,Ahafo,ahafo
+GH.13,Bono,bono
+GH.14,Bono East,bono east
+GH.15,North East,north east
+GH.16,Oti,oti
+GH.17,Savannah,savannah
+GH.18,Western North,western north
+GL.04,Kujalleq,kujalleq
+GL.06,Qeqqata,qeqqata
+GL.07,Sermersooq,sermersooq
+GL.11839534,Qeqertalik,qeqertalik
+GL.11839537,Avannaata,avannaata
+GM.01,Banjul,banjul
+GM.02,Lower River,lower river
+GM.03,Central River,central river
+GM.04,Upper River,upper river
+GM.05,Western,western
+GM.07,North Bank,north bank
+GN.04,Conakry,conakry
+GN.B,Boké Region,boke region
+GN.D,Kindia,kindia
+GN.F,Faranah,faranah
+GN.K,Kankan Region,kankan region
+GN.L,Labé Region,labe region
+GN.M,Mamou Region,mamou region
+GN.N,Nzérékoré Region,nzerekore region
+GP.GP,Guadeloupe,guadeloupe
+GQ.03,Annobon,annobon
+GQ.04,Bioko Norte,bioko norte
+GQ.05,Bioko Sur,bioko sur
+GQ.06,Centro Sur,centro sur
+GQ.07,Kié-Ntem,kie ntem
+GQ.08,Litoral,litoral
+GQ.09,Wele-Nzas,wele nzas
+GQ.10,Djibloho,djibloho
+GR.736572,Mount Athos,mount athos
+GR.ESYE11,East Macedonia and Thrace,east macedonia and thrace
+GR.ESYE12,Central Macedonia,central macedonia
+GR.ESYE13,West Macedonia,west macedonia
+GR.ESYE14,Thessaly,thessaly
+GR.ESYE21,Epirus,epirus
+GR.ESYE22,Ionian Islands,ionian islands
+GR.ESYE23,West Greece,west greece
+GR.ESYE24,Central Greece,central greece
+GR.ESYE25,Peloponnese,peloponnese
+GR.ESYE31,Attica,attica
+GR.ESYE41,North Aegean,north aegean
+GR.ESYE42,South Aegean,south aegean
+GR.ESYE43,Crete,crete
+GT.01,Alta Verapaz,alta verapaz
+GT.02,Baja Verapaz,baja verapaz
+GT.03,Chimaltenango,chimaltenango
+GT.04,Chiquimula,chiquimula
+GT.05,El Progreso,el progreso
+GT.06,Escuintla,escuintla
+GT.07,Guatemala,guatemala
+GT.08,Huehuetenango,huehuetenango
+GT.09,Izabal Department,izabal department
+GT.10,Jalapa,jalapa
+GT.11,Jutiapa,jutiapa
+GT.12,Petén,peten
+GT.13,Quetzaltenango,quetzaltenango
+GT.14,Quiché,quiche
+GT.15,Retalhuleu,retalhuleu
+GT.16,Sacatepéquez,sacatepequez
+GT.17,San Marcos,san marcos
+GT.18,Santa Rosa Department,santa rosa department
+GT.19,Sololá,solola
+GT.20,Suchitepeque,suchitepeque
+GT.21,Totonicapán,totonicapan
+GT.22,Zacapa,zacapa
+GU.AH,Agana Heights,agana heights
+GU.AN,Hagatna,hagatna
+GU.AS,Asan,asan
+GU.AT,Agat,agat
+GU.BA,Barrigada,barrigada
+GU.CP,Chalan Pago-Ordot,chalan pago ordot
+GU.DD,Dededo,dededo
+GU.IN,Inarajan,inarajan
+GU.MA,Mangilao,mangilao
+GU.ME,Merizo,merizo
+GU.MT,Mongmong-Toto-Maite,mongmong toto maite
+GU.PI,Piti,piti
+GU.SJ,Sinajana,sinajana
+GU.SR,Santa Rita,santa rita
+GU.TF,Talofofo,talofofo
+GU.TM,Tamuning,tamuning
+GU.UM,Umatac,umatac
+GU.YG,Yigo,yigo
+GU.YN,Yona,yona
+GW.01,Bafatá,bafata
+GW.02,Quinara,quinara
+GW.04,Oio,oio
+GW.05,Bolama,bolama
+GW.06,Cacheu,cacheu
+GW.07,Tombali,tombali
+GW.10,Gabú,gabu
+GW.11,Bissau,bissau
+GW.12,Biombo,biombo
+GY.10,Barima-Waini,barima waini
+GY.11,Cuyuni-Mazaruni,cuyuni mazaruni
+GY.12,Demerara-Mahaica,demerara mahaica
+GY.13,East Berbice-Corentyne,east berbice corentyne
+GY.14,Essequibo Islands-West Demerara,essequibo islands west demerara
+GY.15,Mahaica-Berbice,mahaica berbice
+GY.16,Pomeroon-Supenaam,pomeroon supenaam
+GY.17,Potaro-Siparuni,potaro siparuni
+GY.18,Upper Demerara-Berbice,upper demerara berbice
+GY.19,Upper Takutu-Upper Essequibo,upper takutu upper essequibo
+HK.HCW,Central and Western,central and western
+HK.HEA,Eastern District,eastern district
+HK.HSO,Southern District,southern district
+HK.HWC,Wan Chai,wan chai
+HK.KKC,Kowloon City,kowloon city
+HK.KKT,Kwun Tong District,kwun tong district
+HK.KSS,Sham Shui Po District,sham shui po district
+HK.KWT,Wong Tai Sin District,wong tai sin district
+HK.KYT,Yau Tsim Mong District,yau tsim mong district
+HK.NIS,Islands,islands
+HK.NKT,Kwai Tsing District,kwai tsing district
+HK.NNO,North District,north district
+HK.NSK,Sai Kung District,sai kung district
+HK.NST,Sha Tin,sha tin
+HK.NTM,Tuen Mun,tuen mun
+HK.NTP,Tai Po,tai po
+HK.NTW,Tsuen Wan,tsuen wan
+HK.NYL,Yuen Long,yuen long
+HN.01,Atlántida Department,atlantida department
+HN.02,Choluteca Department,choluteca department
+HN.03,Colón Department,colon department
+HN.04,Comayagua Department,comayagua department
+HN.05,Copán Department,copan department
+HN.06,Cortés Department,cortes department
+HN.07,El Paraíso Department,el paraiso department
+HN.08,Francisco Morazán Department,francisco morazan department
+HN.09,Gracias a Dios Department,gracias a dios department
+HN.10,Intibucá Department,intibuca department
+HN.11,Bay Islands,bay islands
+HN.12,La Paz Department,la paz department
+HN.13,Lempira Department,lempira department
+HN.14,Ocotepeque Department,ocotepeque department
+HN.15,Olancho Department,olancho department
+HN.16,Santa Bárbara Department,santa barbara department
+HN.17,Valle Department,valle department
+HN.18,Yoro Department,yoro department
+HR.01,Bjelovar-Bilogora,bjelovar bilogora
+HR.02,Brod-Posavina,brod posavina
+HR.03,Dubrovnik-Neretva,dubrovnik neretva
+HR.04,Istria,istria
+HR.05,Karlovac,karlovac
+HR.06,Koprivnica-Križevci,koprivnica krizevci
+HR.07,Krapina-Zagorje,krapina zagorje
+HR.08,Lika-Senj,lika senj
+HR.09,Međimurje,medimurje
+HR.10,County of Osijek-Baranja,county of osijek baranja
+HR.11,Požega-Slavonia,pozega slavonia
+HR.12,Primorje-Gorski Kotar,primorje gorski kotar
+HR.13,Šibenik-Knin,sibenik knin
+HR.14,Sisak-Moslavina,sisak moslavina
+HR.15,Split-Dalmatia,split dalmatia
+HR.16,Varaždin,varazdin
+HR.17,Virovitica-Podravina,virovitica podravina
+HR.18,Vukovar-Srijem,vukovar srijem
+HR.19,Zadar,zadar
+HR.20,Zagreb County,zagreb county
+HR.21,Zagreb,zagreb
+HT.03,Nord-Ouest,nord ouest
+HT.06,Artibonite,artibonite
+HT.07,Centre,centre
+HT.09,Nord,nord
+HT.10,Nord-Est,nord est
+HT.11,Ouest,ouest
+HT.12,Sud,sud
+HT.13,Sud-Est,sud est
+HT.14,Grand'Anse,grandanse
+HT.15,Nippes,nippes
+HU.01,Bács-Kiskun,bacs kiskun
+HU.02,Baranya,baranya
+HU.03,Bekes County,bekes county
+HU.04,Borsod-Abaúj-Zemplén,borsod abauj zemplen
+HU.05,Budapest,budapest
+HU.06,Csongrád,csongrad
+HU.08,Fejér,fejer
+HU.09,Győr-Moson-Sopron,gyor moson sopron
+HU.10,Hajdú-Bihar,hajdu bihar
+HU.11,Heves County,heves county
+HU.12,Komárom-Esztergom,komarom esztergom
+HU.14,Nógrád,nograd
+HU.16,Pest County,pest county
+HU.17,Somogy County,somogy county
+HU.18,Szabolcs-Szatmár-Bereg,szabolcs szatmar bereg
+HU.20,Jász-Nagykun-Szolnok,jasz nagykun szolnok
+HU.21,Tolna County,tolna county
+HU.22,Vas County,vas county
+HU.23,Veszprém,veszprem
+HU.24,Zala County,zala county
+ID.01,Aceh,aceh
+ID.02,Bali,bali
+ID.03,Bengkulu,bengkulu
+ID.04,Jakarta,jakarta
+ID.05,Jambi,jambi
+ID.07,Central Java,central java
+ID.08,East Java,east java
+ID.10,Yogyakarta,yogyakarta
+ID.11,West Kalimantan,west kalimantan
+ID.12,South Kalimantan,south kalimantan
+ID.13,Central Kalimantan,central kalimantan
+ID.14,East Kalimantan,east kalimantan
+ID.15,Lampung,lampung
+ID.17,West Nusa Tenggara,west nusa tenggara
+ID.18,East Nusa Tenggara,east nusa tenggara
+ID.21,Central Sulawesi,central sulawesi
+ID.22,Southeast Sulawesi,southeast sulawesi
+ID.24,West Sumatra,west sumatra
+ID.26,North Sumatra,north sumatra
+ID.28,Maluku,maluku
+ID.29,North Maluku,north maluku
+ID.30,West Java,west java
+ID.31,North Sulawesi,north sulawesi
+ID.32,South Sumatra,south sumatra
+ID.33,Banten,banten
+ID.34,Gorontalo,gorontalo
+ID.35,Bangka–Belitung Islands,bangka belitung islands
+ID.36,Papua,papua
+ID.37,Riau,riau
+ID.38,South Sulawesi,south sulawesi
+ID.39,West Papua,west papua
+ID.40,Riau Islands,riau islands
+ID.41,West Sulawesi,west sulawesi
+ID.42,North Kalimantan,north kalimantan
+ID.PD,Southwest Papua,southwest papua
+ID.PE,Highland Papua,highland papua
+ID.PS,South Papua,south papua
+ID.PT,Central Papua,central papua
+IE.C,Connacht,connacht
+IE.L,Leinster,leinster
+IE.M,Munster,munster
+IE.U,Ulster,ulster
+IL.01,Southern District,southern district
+IL.02,Central District,central district
+IL.03,Northern District,northern district
+IL.04,Haifa,haifa
+IL.05,Tel Aviv,tel aviv
+IL.06,Jerusalem,jerusalem
+IL.WE,Judea and Samaria Area,judea and samaria area
+IM.9782164,Andreas,andreas
+IM.9782165,Arbory,arbory
+IM.9782166,Ballaugh,ballaugh
+IM.9782167,Braddan,braddan
+IM.9782168,Bride,bride
+IM.9782169,Castletown,castletown
+IM.9782170,Douglas,douglas
+IM.9782171,German,german
+IM.9782172,Jurby,jurby
+IM.9782173,Laxey,laxey
+IM.9782176,Lezayre,lezayre
+IM.9782180,Lonan,lonan
+IM.9782182,Malew,malew
+IM.9782183,Marown,marown
+IM.9782184,Maughold,maughold
+IM.9782185,Michael,michael
+IM.9782186,Onchan,onchan
+IM.9782187,Patrick,patrick
+IM.9782188,Peel,peel
+IM.9782189,Port Erin,port erin
+IM.9782190,Port St Mary,port st mary
+IM.9782191,Ramsey,ramsey
+IM.9782192,Rushen,rushen
+IM.9782193,Santon,santon
+IN.01,Andaman and Nicobar,andaman and nicobar
+IN.02,Andhra Pradesh,andhra pradesh
+IN.03,Assam,assam
+IN.05,Chandigarh,chandigarh
+IN.07,Delhi,delhi
+IN.09,Gujarat,gujarat
+IN.10,Haryana,haryana
+IN.11,Himachal Pradesh,himachal pradesh
+IN.12,Jammu and Kashmir,jammu and kashmir
+IN.13,Kerala,kerala
+IN.14,Lakshadweep,lakshadweep
+IN.16,Maharashtra,maharashtra
+IN.17,Manipur,manipur
+IN.18,Meghalaya,meghalaya
+IN.19,Karnataka,karnataka
+IN.20,Nagaland,nagaland
+IN.21,Odisha,odisha
+IN.22,Puducherry,puducherry
+IN.23,Punjab,punjab
+IN.24,Rajasthan,rajasthan
+IN.25,Tamil Nadu,tamil nadu
+IN.26,Tripura,tripura
+IN.28,West Bengal,west bengal
+IN.29,Sikkim,sikkim
+IN.30,Arunachal Pradesh,arunachal pradesh
+IN.31,Mizoram,mizoram
+IN.33,Goa,goa
+IN.34,Bihar,bihar
+IN.35,Madhya Pradesh,madhya pradesh
+IN.36,Uttar Pradesh,uttar pradesh
+IN.37,Chhattisgarh,chhattisgarh
+IN.38,Jharkhand,jharkhand
+IN.39,Uttarakhand,uttarakhand
+IN.40,Telangana,telangana
+IN.41,Ladakh,ladakh
+IN.52,Dadra and Nagar Haveli and Daman and Diu,dadra and nagar haveli and daman and diu
+IQ.01,Anbar,anbar
+IQ.02,Basra,basra
+IQ.03,Muthanna,muthanna
+IQ.04,Al-Qadisiyah,al qadisiyah
+IQ.05,Sulaymaniyah,sulaymaniyah
+IQ.06,Babil,babil
+IQ.07,Baghdad,baghdad
+IQ.08,Duhok,duhok
+IQ.09,Dhi Qar,dhi qar
+IQ.10,Diyala,diyala
+IQ.11,Erbil,erbil
+IQ.12,Karbala,karbala
+IQ.13,Kirkuk,kirkuk
+IQ.14,Maysan,maysan
+IQ.15,Nineveh,nineveh
+IQ.16,Wasit,wasit
+IQ.17,Najaf,najaf
+IQ.18,Salah ad Din,salah ad din
+IQ.19,Halabja,halabja
+IR.01,West Azerbaijan,west azerbaijan
+IR.03,Chaharmahal and Bakhtiari,chaharmahal and bakhtiari
+IR.04,Sistan and Baluchestan,sistan and baluchestan
+IR.05,Kohgiluyeh and Boyer-Ahmad,kohgiluyeh and boyer ahmad
+IR.07,Fars,fars
+IR.08,Gilan Province,gilan province
+IR.09,Hamadan Province,hamadan province
+IR.10,Ilam Province,ilam province
+IR.11,Hormozgan,hormozgan
+IR.13,Kermanshah Province,kermanshah province
+IR.15,Khuzestan,khuzestan
+IR.16,Kurdistan Province,kurdistan province
+IR.22,Bushehr,bushehr
+IR.23,Lorestan Province,lorestan province
+IR.25,Semnan,semnan
+IR.26,Tehran,tehran
+IR.28,Isfahan,isfahan
+IR.29,Kerman,kerman
+IR.32,Ardabil Province,ardabil province
+IR.33,East Azerbaijan,east azerbaijan
+IR.34,Markazi,markazi
+IR.35,Māzandarān,mazandaran
+IR.36,Zanjan,zanjan
+IR.37,Golestan,golestan
+IR.38,Qazvin Province,qazvin province
+IR.39,Qom Province,qom province
+IR.40,Yazd Province,yazd province
+IR.41,South Khorasan Province,south khorasan province
+IR.42,Razavi Khorasan,razavi khorasan
+IR.43,North Khorasan,north khorasan
+IR.44,Alborz Province,alborz province
+IS.38,East,east
+IS.39,Capital Region,capital region
+IS.40,Northeast,northeast
+IS.41,Northwest,northwest
+IS.42,South,south
+IS.43,Southern Peninsula,southern peninsula
+IS.44,Westfjords,westfjords
+IS.45,West,west
+IT.01,Abruzzo,abruzzo
+IT.02,Basilicate,basilicate
+IT.03,Calabria,calabria
+IT.04,Campania,campania
+IT.05,Emilia-Romagna,emilia romagna
+IT.06,Friuli Venezia Giulia,friuli venezia giulia
+IT.07,Lazio,lazio
+IT.08,Liguria,liguria
+IT.09,Lombardy,lombardy
+IT.10,The Marches,the marches
+IT.11,Molise,molise
+IT.12,Piedmont,piedmont
+IT.13,Apulia,apulia
+IT.14,Sardinia,sardinia
+IT.15,Sicily,sicily
+IT.16,Tuscany,tuscany
+IT.17,Trentino-Alto Adige,trentino alto adige
+IT.18,Umbria,umbria
+IT.19,Aosta Valley,aosta valley
+IT.20,Veneto,veneto
+JE.3237072,St Clement,st clement
+JE.3237073,St Saviour,st saviour
+JE.3237200,St. Brelade,st brelade
+JE.3237203,Grouville,grouville
+JE.3237212,St Mary,st mary
+JE.3237214,St Lawrence,st lawrence
+JE.3237221,St Peter,st peter
+JE.3237229,St Ouen,st ouen
+JE.3237497,St John,st john
+JE.3237530,Trinity,trinity
+JE.3237716,St Martîn,st martin
+JE.3237864,St Helier,st helier
+JM.01,Clarendon,clarendon
+JM.02,Hanover,hanover
+JM.04,Manchester,manchester
+JM.07,Portland Parish,portland parish
+JM.08,Saint Andrew Parish,saint andrew parish
+JM.09,Saint Ann Parish,saint ann parish
+JM.10,Saint Catherine Parish,saint catherine parish
+JM.11,St. Elizabeth,st elizabeth
+JM.12,Saint James Parish,saint james parish
+JM.13,Saint Mary Parish,saint mary parish
+JM.14,Saint Thomas Parish,saint thomas parish
+JM.15,Trelawny Parish,trelawny parish
+JM.16,Westmoreland,westmoreland
+JM.17,Kingston,kingston
+JO.02,Balqa,balqa
+JO.09,Karak,karak
+JO.12,Tafielah,tafielah
+JO.15,Mafraq,mafraq
+JO.16,Amman,amman
+JO.17,Zarqa,zarqa
+JO.18,Irbid,irbid
+JO.19,Ma’an,maan
+JO.20,Ajloun,ajloun
+JO.21,Aqaba,aqaba
+JO.22,Jerash,jerash
+JO.23,Madaba,madaba
+JP.01,Aichi,aichi
+JP.02,Akita,akita
+JP.03,Aomori,aomori
+JP.04,Chiba,chiba
+JP.05,Ehime,ehime
+JP.06,Fukui,fukui
+JP.07,Fukuoka,fukuoka
+JP.08,Fukushima,fukushima
+JP.09,Gifu,gifu
+JP.10,Gunma,gunma
+JP.11,Hiroshima,hiroshima
+JP.12,Hokkaido,hokkaido
+JP.13,Hyōgo,hyogo
+JP.14,Ibaraki,ibaraki
+JP.15,Ishikawa,ishikawa
+JP.16,Iwate,iwate
+JP.17,Kagawa,kagawa
+JP.18,Kagoshima,kagoshima
+JP.19,Kanagawa,kanagawa
+JP.20,Kochi,kochi
+JP.21,Kumamoto,kumamoto
+JP.22,Kyoto,kyoto
+JP.23,Mie,mie
+JP.24,Miyagi,miyagi
+JP.25,Miyazaki,miyazaki
+JP.26,Nagano,nagano
+JP.27,Nagasaki,nagasaki
+JP.28,Nara,nara
+JP.29,Niigata,niigata
+JP.30,Oita,oita
+JP.31,Okayama,okayama
+JP.32,Osaka,osaka
+JP.33,Saga,saga
+JP.34,Saitama,saitama
+JP.35,Shiga,shiga
+JP.36,Shimane,shimane
+JP.37,Shizuoka,shizuoka
+JP.38,Tochigi,tochigi
+JP.39,Tokushima,tokushima
+JP.40,Tokyo,tokyo
+JP.41,Tottori,tottori
+JP.42,Toyama,toyama
+JP.43,Wakayama,wakayama
+JP.44,Yamagata,yamagata
+JP.45,Yamaguchi,yamaguchi
+JP.46,Yamanashi,yamanashi
+JP.47,Okinawa,okinawa
+KE.05,Nairobi County,nairobi county
+KE.10,Baringo,baringo
+KE.11,Bomet County,bomet county
+KE.12,Bungoma County,bungoma county
+KE.13,Busia County,busia county
+KE.14,Elegeyo-Marakwet,elegeyo marakwet
+KE.15,Embu County,embu county
+KE.16,Garissa County,garissa county
+KE.17,Homa Bay County,homa bay county
+KE.18,Isiolo County,isiolo county
+KE.19,Kajiado County,kajiado county
+KE.20,Kakamega County,kakamega county
+KE.21,Kericho County,kericho county
+KE.22,Kiambu County,kiambu county
+KE.23,Kilifi County,kilifi county
+KE.24,Kirinyaga County,kirinyaga county
+KE.25,Kisii County,kisii county
+KE.26,Kisumu County,kisumu county
+KE.27,Kitui County,kitui county
+KE.28,Kwale County,kwale county
+KE.29,Laikipia,laikipia
+KE.30,Lamu,lamu
+KE.31,Machakos County,machakos county
+KE.32,Makueni County,makueni county
+KE.33,Mandera County,mandera county
+KE.34,Marsabit County,marsabit county
+KE.35,Meru County,meru county
+KE.36,Migori County,migori county
+KE.37,Mombasa County,mombasa county
+KE.38,Murang'A,muranga
+KE.39,Nakuru County,nakuru county
+KE.40,Nandi,nandi
+KE.41,Narok County,narok county
+KE.42,Nyamira county,nyamira county
+KE.43,Nyandarua County,nyandarua county
+KE.44,Nyeri County,nyeri county
+KE.45,Samburu County,samburu county
+KE.46,Siaya County,siaya county
+KE.47,Taita Taveta,taita taveta
+KE.48,Tana River County,tana river county
+KE.49,Tharaka - Nithi,tharaka nithi
+KE.50,Trans Nzoia,trans nzoia
+KE.51,Turkana County,turkana county
+KE.52,Uasin Gishu County,uasin gishu county
+KE.53,Vihiga County,vihiga county
+KE.54,Wajir County,wajir county
+KE.55,West Pokot County,west pokot county
+KG.01,Bishkek,bishkek
+KG.02,Chuy Region,chuy region
+KG.03,Jalal-Abad Region,jalal abad region
+KG.04,Naryn Region,naryn region
+KG.06,Talas Region,talas region
+KG.07,Issyk-Kul,issyk kul
+KG.08,Osh Region,osh region
+KG.09,Batken,batken
+KG.10,Osh City,osh city
+KH.02,Kampong Cham,kampong cham
+KH.03,Kampong Chhnang,kampong chhnang
+KH.04,Kampong Speu Province,kampong speu province
+KH.05,Kampong Thom,kampong thom
+KH.07,Kandal,kandal
+KH.08,Koh Kong,koh kong
+KH.09,Kratie,kratie
+KH.10,Mondolkiri,mondolkiri
+KH.12,Pursat,pursat
+KH.13,Preah Vihear,preah vihear
+KH.14,Prey Veng,prey veng
+KH.17,Stung Treng,stung treng
+KH.18,Svay Rieng,svay rieng
+KH.19,Takeo,takeo
+KH.21,Kampot,kampot
+KH.22,Phnom Penh,phnom penh
+KH.23,Ratanakiri,ratanakiri
+KH.24,Siem Reap,siem reap
+KH.25,Banteay Meanchey,banteay meanchey
+KH.26,Kep,kep
+KH.27,Ŏtâr Méanchey,otar meanchey
+KH.28,Preah Sihanouk,preah sihanouk
+KH.29,Battambang,battambang
+KH.30,Pailin,pailin
+KH.31,Tboung Khmum,tboung khmum
+KI.01,Gilbert Islands,gilbert islands
+KI.02,Line Islands,line islands
+KI.03,Phoenix Islands,phoenix islands
+KM.01,Anjouan,anjouan
+KM.02,Grande Comore,grande comore
+KM.03,Mohéli,moheli
+KN.01,Christ Church Nichola Town,christ church nichola town
+KN.02,Saint Anne Sandy Point,saint anne sandy point
+KN.03,Saint George Basseterre,saint george basseterre
+KN.04,Saint George Gingerland,saint george gingerland
+KN.05,Saint James Windwa,saint james windwa
+KN.06,Saint John Capesterre,saint john capesterre
+KN.07,Saint John Figtree,saint john figtree
+KN.08,Saint Mary Cayon,saint mary cayon
+KN.09,Saint Paul Capesterre,saint paul capesterre
+KN.10,Saint Paul Charlestown,saint paul charlestown
+KN.11,Saint Peter Basseterre,saint peter basseterre
+KN.12,Saint Thomas Lowland,saint thomas lowland
+KN.13,Middle Island,middle island
+KN.15,Trinity Palmetto Point,trinity palmetto point
+KP.01,Chagang,chagang
+KP.03,South Hamgyong,south hamgyong
+KP.06,South Hwanghae,south hwanghae
+KP.07,North Hwanghae,north hwanghae
+KP.09,Kangwŏn-do,kangwon do
+KP.11,P'yŏngan-bukto,pyongan bukto
+KP.12,Pyongyang,pyongyang
+KP.13,Yanggang-do,yanggang do
+KP.14,Nampo,nampo
+KP.15,South Pyongan,south pyongan
+KP.17,North Hamgyong,north hamgyong
+KP.18,Rason,rason
+KP.19,Kaesong,kaesong
+KR.01,Jeju-do,jeju do
+KR.03,Jeollabuk-do,jeollabuk do
+KR.05,North Chungcheong,north chungcheong
+KR.06,Gangwon-do,gangwon do
+KR.10,Busan,busan
+KR.11,Seoul,seoul
+KR.12,Incheon,incheon
+KR.13,Gyeonggi-do,gyeonggi do
+KR.14,Gyeongsangbuk-do,gyeongsangbuk do
+KR.15,Daegu,daegu
+KR.16,Jeollanam-do,jeollanam do
+KR.17,Chungcheongnam-do,chungcheongnam do
+KR.18,Gwangju,gwangju
+KR.19,Daejeon,daejeon
+KR.20,Gyeongsangnam-do,gyeongsangnam do
+KR.21,Ulsan,ulsan
+KR.22,Sejong-si,sejong si
+KW.02,Al Asimah,al asimah
+KW.04,Al Aḩmadī,al ahmadi
+KW.05,Al Jahra Governorate,al jahra governorate
+KW.07,Al Farwaniyah,al farwaniyah
+KW.08,Hawalli,hawalli
+KW.09,Mubārak al Kabīr,mubarak al kabir
+KY.10346796,George Town,george town
+KY.10375968,West Bay,west bay
+KY.10375969,Bodden Town,bodden town
+KY.10375970,North Side,north side
+KY.10375971,East End,east end
+KY.10375972,Sister Island,sister island
+KZ.01,Almaty Region,almaty region
+KZ.02,Almaty,almaty
+KZ.03,Aqmola,aqmola
+KZ.04,Aktobe,aktobe
+KZ.05,Astana,astana
+KZ.06,Atyrau Oblisi,atyrau oblisi
+KZ.07,West Kazakhstan,west kazakhstan
+KZ.08,Baikonur,baikonur
+KZ.09,Mangystau,mangystau
+KZ.10,Turkistan,turkistan
+KZ.11,Pavlodar Region,pavlodar region
+KZ.12,Karaganda,karaganda
+KZ.12510143,Abai Region,abai region
+KZ.12510144,Zhetysu Region,zhetysu region
+KZ.12510145,Ulytau Region,ulytau region
+KZ.13,Kostanay,kostanay
+KZ.14,Kyzylorda,kyzylorda
+KZ.15,East Kazakhstan,east kazakhstan
+KZ.1537272,Shymkent,shymkent
+KZ.16,North Kazakhstan,north kazakhstan
+KZ.17,Zhambyl,zhambyl
+LA.01,Attapu,attapu
+LA.02,Champasak Province,champasak province
+LA.03,Houaphan,houaphan
+LA.07,Oudômxai,oudomxai
+LA.13,Xiagnabouli,xiagnabouli
+LA.14,Xiangkhoang,xiangkhoang
+LA.15,Khammouane Province,khammouane province
+LA.16,Loungnamtha,loungnamtha
+LA.17,Luang Prabang Province,luang prabang province
+LA.18,Phôngsali,phongsali
+LA.19,Salavan Province,salavan province
+LA.20,Savannakhet Province,savannakhet province
+LA.22,Bokeo,bokeo
+LA.23,Bolikhamsai,bolikhamsai
+LA.24,Vientiane Prefecture,vientiane prefecture
+LA.26,Xékong,xekong
+LA.27,Vientiane,vientiane
+LA.28,Xaisomboun,xaisomboun
+LB.04,Beirut,beirut
+LB.05,Mount Lebanon,mount lebanon
+LB.06,South Governorate,south governorate
+LB.07,Nabatieh,nabatieh
+LB.08,Bekaa,bekaa
+LB.09,North Lebanon,north lebanon
+LB.10,Akkar,akkar
+LB.11,Baalbek-Hermel Governorate,baalbek hermel governorate
+LC.01,Anse-la-Raye,anse la raye
+LC.03,Castries,castries
+LC.04,Choiseul,choiseul
+LC.05,Dennery,dennery
+LC.06,Gros-Islet,gros islet
+LC.07,Laborie,laborie
+LC.08,Micoud,micoud
+LC.09,Soufrière,soufriere
+LC.10,Vieux-Fort,vieux fort
+LC.12,Canaries,canaries
+LI.01,Balzers,balzers
+LI.02,Eschen,eschen
+LI.03,Gamprin,gamprin
+LI.04,Mauren,mauren
+LI.05,Planken,planken
+LI.06,Ruggell,ruggell
+LI.07,Schaan,schaan
+LI.08,Schellenberg,schellenberg
+LI.09,Triesen,triesen
+LI.10,Triesenberg,triesenberg
+LI.11,Vaduz,vaduz
+LK.29,Central Province,central province
+LK.30,North Central Province,north central province
+LK.32,North Western Province,north western province
+LK.33,Sabaragamuwa Province,sabaragamuwa province
+LK.34,Southern Province,southern province
+LK.35,Uva Province,uva province
+LK.36,Western Province,western province
+LK.37,Eastern Province,eastern province
+LK.38,Northern Province,northern province
+LR.01,Bong County,bong county
+LR.09,Nimba,nimba
+LR.10,Sinoe County,sinoe county
+LR.11,Grand Bassa County,grand bassa county
+LR.12,Grand Cape Mount County,grand cape mount county
+LR.13,Maryland County,maryland county
+LR.14,Montserrado County,montserrado county
+LR.15,Bomi County,bomi county
+LR.16,Grand Kru County,grand kru county
+LR.17,Margibi County,margibi county
+LR.18,River Cess County,river cess county
+LR.19,Grand Gedeh County,grand gedeh county
+LR.20,Lofa County,lofa county
+LR.21,Gbarpolu County,gbarpolu county
+LR.22,River Gee County,river gee county
+LS.10,Berea,berea
+LS.11,Butha-Buthe,butha buthe
+LS.12,Leribe,leribe
+LS.13,Mafeteng District,mafeteng district
+LS.14,Maseru District,maseru district
+LS.15,Mohale's Hoek District,mohales hoek district
+LS.16,Mokhotlong District,mokhotlong district
+LS.17,Qacha's Nek District,qachas nek district
+LS.18,Quthing,quthing
+LS.19,Thaba-Tseka,thaba tseka
+LT.56,Alytus,alytus
+LT.57,Kaunas,kaunas
+LT.58,Klaipėda County,klaipeda county
+LT.59,Marijampolė County,marijampole county
+LT.60,Panevėžys,panevezys
+LT.61,Siauliai,siauliai
+LT.62,Tauragė County,taurage county
+LT.63,Telsiai,telsiai
+LT.64,Utena,utena
+LT.65,Vilnius,vilnius
+LU.CA,Capellen,capellen
+LU.CL,Clervaux,clervaux
+LU.DI,Diekirch,diekirch
+LU.EC,Echternach,echternach
+LU.ES,Esch-sur-Alzette,esch sur alzette
+LU.GR,Grevenmacher,grevenmacher
+LU.LU,Luxembourg,luxembourg
+LU.ME,Mersch,mersch
+LU.RD,Redange,redange
+LU.RM,Remich,remich
+LU.VD,Vianden,vianden
+LU.WI,Wiltz,wiltz
+LV.01,Aizkraukle Municipality,aizkraukle municipality
+LV.02,Alūksne Municipality,aluksne municipality
+LV.03,Balvi Municipality,balvi municipality
+LV.04,Bauska Municipality,bauska municipality
+LV.05,Cēsis Municipality,cesis municipality
+LV.06,Daugavpils,daugavpils
+LV.08,Dobele Municipality,dobele municipality
+LV.09,Gulbene Municipality,gulbene municipality
+LV.10,Jēkabpils Municipality,jekabpils municipality
+LV.11,Jelgava,jelgava
+LV.12,Jelgava Municipality,jelgava municipality
+LV.13,Jūrmala,jurmala
+LV.14,Krāslava Municipality,kraslava municipality
+LV.15,Kuldīga Municipality,kuldiga municipality
+LV.16,Liepaja,liepaja
+LV.18,Limbaži Municipality,limbazi municipality
+LV.19,Ludza Municipality,ludza municipality
+LV.20,Madonas novads,madonas novads
+LV.21,Ogre,ogre
+LV.22,Preiļu novads,preilu novads
+LV.23,Rēzekne,rezekne
+LV.24,Rēzekne Municipality,rezekne municipality
+LV.25,Riga,riga
+LV.27,Saldus Rajons,saldus rajons
+LV.28,Talsu novads,talsu novads
+LV.29,Tukums Municipality,tukums municipality
+LV.30,Valka,valka
+LV.31,Valmiera,valmiera
+LV.32,Ventspils,ventspils
+LV.33,Ventspils Municipality,ventspils municipality
+LV.34,Ādaži,adazi
+LV.80,Ķekava,kekava
+LV.90,Līvāni,livani
+LV.95,Mārupe,marupe
+LV.A2,Olaine,olaine
+LV.AN,Augšdaugava Municipality,augsdaugava municipality
+LV.B5,Ropaži Municipality,ropazi municipality
+LV.C3,Salaspils Municipality,salaspils municipality
+LV.C5,Saulkrasti Municipality,saulkrasti municipality
+LV.C7,Sigulda Municipality,sigulda municipality
+LV.D1,Smiltene Municipality,smiltene municipality
+LV.DN,South Kurzeme Municipality,south kurzeme municipality
+LV.E1,Varakļāni Municipality,varaklani municipality
+LY.63,Al Jabal al Akhdar,al jabal al akhdar
+LY.64,Al Jufrah,al jufrah
+LY.65,Al Kufrah,al kufrah
+LY.66,Al Marj,al marj
+LY.67,An Nuqat al Khams,an nuqat al khams
+LY.68,Az Zawiyah,az zawiyah
+LY.69,Banghazi,banghazi
+LY.70,Darnah,darnah
+LY.71,Ghat,ghat
+LY.72,Misratah,misratah
+LY.73,Murzuq District,murzuq district
+LY.74,Nalut,nalut
+LY.75,Sabha District,sabha district
+LY.76,Surt,surt
+LY.77,Tripoli,tripoli
+LY.78,Wadi ash Shati',wadi ash shati
+LY.79,Al Butnan,al butnan
+LY.80,Jabal al Gharbi,jabal al gharbi
+LY.81,Al Jafarah,al jafarah
+LY.82,Al Marqab,al marqab
+LY.83,Al Wahat,al wahat
+LY.84,Wadi al Hayat,wadi al hayat
+MA.01,Tanger-Tetouan-Al Hoceima,tanger tetouan al hoceima
+MA.02,Oriental,oriental
+MA.03,Fes-Meknes,fes meknes
+MA.04,Rabat-Salé-Kénitra,rabat sale kenitra
+MA.05,Beni Mellal-Khenifra,beni mellal khenifra
+MA.06,Casablanca-Settat,casablanca settat
+MA.07,Marrakesh-Safi,marrakesh safi
+MA.08,Drâa-Tafilalet,draa tafilalet
+MA.09,Souss-Massa,souss massa
+MA.10,Guelmim-Oued Noun,guelmim oued noun
+MA.11,Laayoune-Sakia El Hamra,laayoune sakia el hamra
+MA.12,Dakhla-Oued Ed-Dahab,dakhla oued ed dahab
+MC.00,Municipality of Monaco,municipality of monaco
+MD.51,Gagauzia,gagauzia
+MD.57,Chișinău Municipality,chisinau municipality
+MD.58,Transnistria,transnistria
+MD.59,Anenii Noi,anenii noi
+MD.60,Bălţi,balti
+MD.61,Basarabeasca,basarabeasca
+MD.62,Bender Municipality,bender municipality
+MD.63,Briceni,briceni
+MD.64,Cahul,cahul
+MD.65,Cantemir,cantemir
+MD.66,Călăraşi,calarasi
+MD.67,Căuşeni,causeni
+MD.68,Cimişlia,cimislia
+MD.69,Criuleni,criuleni
+MD.70,Donduşeni,donduseni
+MD.71,Drochia,drochia
+MD.72,Dubăsari District,dubasari district
+MD.73,Raionul Edineţ,raionul edinet
+MD.74,Fălești,falesti
+MD.75,Floreşti,floresti
+MD.76,Glodeni,glodeni
+MD.77,Hînceşti,hincesti
+MD.78,Ialoveni,ialoveni
+MD.79,Leova,leova
+MD.80,Nisporeni,nisporeni
+MD.81,Raionul Ocniţa,raionul ocnita
+MD.82,Orhei,orhei
+MD.83,Rezina,rezina
+MD.84,Rîşcani,riscani
+MD.85,Sîngerei,singerei
+MD.86,Şoldăneşti,soldanesti
+MD.87,Soroca District,soroca district
+MD.88,Stefan-Voda,stefan voda
+MD.89,Strășeni,straseni
+MD.90,Taraclia,taraclia
+MD.91,Teleneşti,telenesti
+MD.92,Ungheni,ungheni
+ME.01,Andrijevica,andrijevica
+ME.02,Bar,bar
+ME.03,Berane,berane
+ME.04,Bijelo Polje,bijelo polje
+ME.05,Budva,budva
+ME.06,Cetinje,cetinje
+ME.07,Danilovgrad,danilovgrad
+ME.08,Herceg Novi,herceg novi
+ME.09,Opština Kolašin,opstina kolasin
+ME.10,Kotor,kotor
+ME.11,Mojkovac,mojkovac
+ME.12,Opština Nikšić,opstina niksic
+ME.13,Opština Plav,opstina plav
+ME.14,Pljevlja,pljevlja
+ME.15,Opština Plužine,opstina pluzine
+ME.16,Podgorica,podgorica
+ME.17,Rožaje Municipality,rozaje municipality
+ME.18,Opština Šavnik,opstina savnik
+ME.19,Tivat,tivat
+ME.20,Ulcinj,ulcinj
+ME.21,Opština Žabljak,opstina zabljak
+ME.22,Gusinje Municipality,gusinje municipality
+ME.23,Petnjica Municipality,petnjica municipality
+ME.24,Tuzi Municipality,tuzi municipality
+ME.25,Zeta,zeta
+MG.11,Analamanga,analamanga
+MG.12,Vakinankaratra,vakinankaratra
+MG.13,Itasy,itasy
+MG.14,Bongolava,bongolava
+MG.21,Upper Matsiatra,upper matsiatra
+MG.22,Amoron'i Mania,amoroni mania
+MG.24,Ihorombe,ihorombe
+MG.25,Atsimo-Atsinanana,atsimo atsinanana
+MG.26,Fitovinany Region,fitovinany region
+MG.27,Vatovavy Region,vatovavy region
+MG.31,Atsinanana,atsinanana
+MG.32,Analanjirofo,analanjirofo
+MG.33,Alaotra Mangoro,alaotra mangoro
+MG.41,Boeny,boeny
+MG.42,Sofia,sofia
+MG.43,Betsiboka,betsiboka
+MG.44,Melaky,melaky
+MG.51,Atsimo-Andrefana,atsimo andrefana
+MG.52,Androy,androy
+MG.53,Anosy,anosy
+MG.54,Menabe,menabe
+MG.71,Diana,diana
+MG.72,Sava,sava
+MH.007,Ailinginae Atoll,ailinginae atoll
+MH.010,Ailinglaplap Atoll,ailinglaplap atoll
+MH.030,Ailuk Atoll,ailuk atoll
+MH.040,Arno Atoll,arno atoll
+MH.050,Aur Atoll,aur atoll
+MH.060,Bikar Atoll,bikar atoll
+MH.070,Bikini Atoll,bikini atoll
+MH.073,Bokak Atoll,bokak atoll
+MH.080,Ebon Atoll,ebon atoll
+MH.090,Enewetak Atoll,enewetak atoll
+MH.100,Erikub Atoll,erikub atoll
+MH.110,Jabat Island,jabat island
+MH.120,Jaluit Atoll,jaluit atoll
+MH.130,Jemo Island,jemo island
+MH.140,Kili Island,kili island
+MH.150,Kwajalein Atoll,kwajalein atoll
+MH.160,Lae Atoll,lae atoll
+MH.170,Lib Island,lib island
+MH.180,Likiep Atoll,likiep atoll
+MH.190,Majuro Atoll,majuro atoll
+MH.300,Maloelap Atoll,maloelap atoll
+MH.310,Mejit Island,mejit island
+MH.320,Mili Atoll,mili atoll
+MH.330,Namdrik Atoll,namdrik atoll
+MH.340,Namu Atoll,namu atoll
+MH.350,Rongelap Atoll,rongelap atoll
+MH.360,Rongrik Atoll,rongrik atoll
+MH.385,Taka Atoll,taka atoll
+MH.390,Ujae Atoll,ujae atoll
+MH.400,Ujelang,ujelang
+MH.410,Utrik Atoll,utrik atoll
+MH.420,Wotho Atoll,wotho atoll
+MH.430,Wotje Atoll,wotje atoll
+MK.01,Arachinovo,arachinovo
+MK.04,Berovo,berovo
+MK.06,Bitola,bitola
+MK.08,Bogdanci,bogdanci
+MK.11,Bosilovo,bosilovo
+MK.12,Brvenica,brvenica
+MK.18,Centar Zhupa,centar zhupa
+MK.19,Češinovo-Obleševo,cesinovo oblesevo
+MK.20,Chucher Sandevo,chucher sandevo
+MK.22,Delchevo,delchevo
+MK.25,Demir Kapija,demir kapija
+MK.28,Dolneni,dolneni
+MK.33,Gevgelija,gevgelija
+MK.35,Gradsko,gradsko
+MK.36,Ilinden,ilinden
+MK.40,Karbinci,karbinci
+MK.43,Kichevo,kichevo
+MK.46,Kochani,kochani
+MK.47,Konche,konche
+MK.51,Kratovo,kratovo
+MK.52,Kriva Palanka,kriva palanka
+MK.53,Krivogashtani,krivogashtani
+MK.54,Krushevo,krushevo
+MK.59,Lipkovo,lipkovo
+MK.60,Lozovo,lozovo
+MK.62,Makedonska Kamenica,makedonska kamenica
+MK.69,Negotino,negotino
+MK.72,Novo Selo,novo selo
+MK.78,Pehchevo,pehchevo
+MK.79,Petrovec,petrovec
+MK.80,Plasnica,plasnica
+MK.83,Probishtip,probishtip
+MK.84,Radovish,radovish
+MK.85,Rankovce,rankovce
+MK.86,Resen,resen
+MK.87,Rosoman,rosoman
+MK.92,Sopište,sopiste
+MK.97,Staro Nagorichane,staro nagorichane
+MK.98,Shtip,shtip
+MK.A2,Studenichani,studenichani
+MK.A4,Sveti Nikole,sveti nikole
+MK.A5,Tearce,tearce
+MK.A9,Vasilevo,vasilevo
+MK.B3,Vevchani,vevchani
+MK.B4,Vinica,vinica
+MK.B7,Vrapchishte,vrapchishte
+MK.C2,Zelenikovo,zelenikovo
+MK.C3,Zhelino,zhelino
+MK.C6,Zrnovci,zrnovci
+MK.C7,Bogovinje,bogovinje
+MK.C9,Chashka,chashka
+MK.D2,Debar,debar
+MK.D3,Demir Hisar,demir hisar
+MK.D4,Gostivar,gostivar
+MK.D5,Jegunovce,jegunovce
+MK.D6,Kavadarci,kavadarci
+MK.D7,Kumanovo,kumanovo
+MK.D8,Makedonski Brod,makedonski brod
+MK.D9,Mogila,mogila
+MK.E1,Novaci,novaci
+MK.E2,Ohrid,ohrid
+MK.E3,Prilep,prilep
+MK.E4,Mavrovo and Rostuša,mavrovo and rostusa
+MK.E5,Dojran,dojran
+MK.E6,Struga,struga
+MK.E7,Strumica,strumica
+MK.E8,Tetovo,tetovo
+MK.E9,Valandovo,valandovo
+MK.F1,Veles,veles
+MK.F5,Debarca,debarca
+MK.F6,Grad Skopje,grad skopje
+ML.01,Bamako,bamako
+ML.03,Kayes,kayes
+ML.04,Mopti,mopti
+ML.05,Ségou,segou
+ML.06,Sikasso,sikasso
+ML.07,Koulikoro,koulikoro
+ML.08,Tombouctou,tombouctou
+ML.09,Gao,gao
+ML.10,Kidal,kidal
+ML.12070575,Taoudénit,taoudenit
+ML.12070577,Ménaka,menaka
+MM.01,Rakhine,rakhine
+MM.02,Chin State,chin state
+MM.03,Ayeyarwady,ayeyarwady
+MM.04,Kachin State,kachin state
+MM.05,Kayin State,kayin state
+MM.06,Kayah State,kayah state
+MM.08,Mandalay Region,mandalay region
+MM.10,Sagaing Region,sagaing region
+MM.11,Shan State,shan state
+MM.12,Tanintharyi Region,tanintharyi region
+MM.13,Mon,mon
+MM.15,Magway,magway
+MM.16,Bago Region,bago region
+MM.17,Yangon,yangon
+MM.18,Nay Pyi Taw,nay pyi taw
+MN.01,Arkhangai Province,arkhangai province
+MN.02,Bayankhongor,bayankhongor
+MN.03,Bayan-Ölgii Province,bayan olgii province
+MN.06,East Aimak,east aimak
+MN.07,East Gobi Aymag,east gobi aymag
+MN.08,Middle Govĭ,middle govi
+MN.09,Dzabkhan,dzabkhan
+MN.10,Govi-Altai Province,govi altai province
+MN.11,Hentiy,hentiy
+MN.12,Hovd,hovd
+MN.13,Khövsgöl Province,khovsgol province
+MN.14,Ömnögovĭ,omnogovi
+MN.15,Övörhangay,ovorhangay
+MN.16,Selenge Province,selenge province
+MN.17,Sühbaatar,suhbaatar
+MN.18,Central Aimak,central aimak
+MN.19,Uvs Province,uvs province
+MN.20,Ulaanbaatar,ulaanbaatar
+MN.21,Bulgan,bulgan
+MN.23,Darhan Uul,darhan uul
+MN.24,Govĭ-Sumber,govi sumber
+MN.25,Orhon,orhon
+MO.11875154,Nossa Senhora de Fátima,nossa senhora de fatima
+MO.11875155,Santo António,santo antonio
+MO.11875156,São Lázaro,sao lazaro
+MO.11875157,Sé,se
+MO.11875158,São Lourenço,sao lourenco
+MO.11875159,Our Lady of Carmo,our lady of carmo
+MO.11875160,Cotai,cotai
+MO.11875161,Saint Francis Xavier,saint francis xavier
+MP.085,Northern Islands,northern islands
+MP.100,Rota,rota
+MP.110,Saipan,saipan
+MP.120,Tinian,tinian
+MQ.MQ,Martinique,martinique
+MR.01,Hodh Ech Chargi,hodh ech chargi
+MR.02,Hodh El Gharbi,hodh el gharbi
+MR.03,Assaba,assaba
+MR.04,Gorgol,gorgol
+MR.05,Brakna,brakna
+MR.06,Trarza,trarza
+MR.07,Adrar,adrar
+MR.08,Dakhlet Nouadhibou,dakhlet nouadhibou
+MR.09,Tagant,tagant
+MR.10,Guidimaka,guidimaka
+MR.11,Tiris Zemmour,tiris zemmour
+MR.12,Inchiri,inchiri
+MR.13,Nouakchott West,nouakchott west
+MR.14,Nouakchott North,nouakchott north
+MR.15,Nouakchott South,nouakchott south
+MS.01,Saint Anthony,saint anthony
+MS.02,Saint Georges,saint georges
+MS.03,Saint Peter,saint peter
+MT.01,Attard,attard
+MT.02,Balzan,balzan
+MT.03,Il-Birgu,il birgu
+MT.04,Birkirkara,birkirkara
+MT.05,Birżebbuġa,birzebbuga
+MT.06,Bormla,bormla
+MT.07,Dingli,dingli
+MT.08,Il-Fgura,il fgura
+MT.09,Floriana,floriana
+MT.10,Il-Fontana,il fontana
+MT.11,Ghajnsielem,ghajnsielem
+MT.12,L-Għarb,l gharb
+MT.13,Ħal Għargħur,hal gharghur
+MT.14,L-Għasri,l ghasri
+MT.15,Ħal Għaxaq,hal ghaxaq
+MT.16,Il-Gudja,il gudja
+MT.17,Il-Gżira,il gzira
+MT.18,Il-Ħamrun,il hamrun
+MT.19,L-Iklin,l iklin
+MT.20,L-Imdina,l imdina
+MT.21,L-Imġarr,l imgarr
+MT.22,L-Imqabba,l imqabba
+MT.23,L-Imsida,l imsida
+MT.24,Mtarfa,mtarfa
+MT.25,Senglea,senglea
+MT.26,Il-Kalkara,il kalkara
+MT.27,Ta’ Kerċem,ta kercem
+MT.28,Kirkop,kirkop
+MT.29,Lija,lija
+MT.30,Luqa,luqa
+MT.31,Il-Marsa,il marsa
+MT.32,Marsaskala,marsaskala
+MT.33,Marsaxlokk,marsaxlokk
+MT.34,Il-Mellieħa,il mellieha
+MT.35,Il-Mosta,il mosta
+MT.36,Il-Munxar,il munxar
+MT.37,In-Nadur,in nadur
+MT.38,In-Naxxar,in naxxar
+MT.39,Paola,paola
+MT.40,Pembroke,pembroke
+MT.41,Tal-Pietà,tal pieta
+MT.42,Il-Qala,il qala
+MT.43,Qormi,qormi
+MT.44,Il-Qrendi,il qrendi
+MT.45,Ir-Rabat,ir rabat
+MT.46,Victoria,victoria
+MT.47,Safi,safi
+MT.48,Saint John,saint john
+MT.49,Saint Julian,saint julian
+MT.50,Saint Lawrence,saint lawrence
+MT.51,Saint Lucia,saint lucia
+MT.52,Saint Paul’s Bay,saint pauls bay
+MT.53,Saint Venera,saint venera
+MT.54,Sannat,sannat
+MT.55,Is-Siġġiewi,is siggiewi
+MT.56,Tas-Sliema,tas sliema
+MT.57,Is-Swieqi,is swieqi
+MT.58,Tarxien,tarxien
+MT.59,Ta’ Xbiex,ta xbiex
+MT.60,Valletta,valletta
+MT.61,Ix-Xagħra,ix xaghra
+MT.62,Ix-Xewkija,ix xewkija
+MT.63,Ix-Xgħajra,ix xghajra
+MT.64,Ħaż-Żabbar,haz zabbar
+MT.65,Ħaż-Żebbuġ,haz zebbug
+MT.66,Iż-Żebbuġ,iz zebbug
+MT.67,Iż-Żejtun,iz zejtun
+MT.68,Iż-Żurrieq,iz zurrieq
+MU.12,Black River,black river
+MU.13,Flacq,flacq
+MU.14,Grand Port,grand port
+MU.15,Moka,moka
+MU.16,Pamplemousses,pamplemousses
+MU.17,Plaines Wilhems,plaines wilhems
+MU.18,Port Louis,port louis
+MU.19,Rivière du Rempart,riviere du rempart
+MU.20,Savanne,savanne
+MU.21,Agalega Islands,agalega islands
+MU.22,Cargados Carajos,cargados carajos
+MU.23,Rodrigues,rodrigues
+MV.01,Seenu,seenu
+MV.05,Laamu,laamu
+MV.10346475,Southern Ari Atoll,southern ari atoll
+MV.30,Northern Ari Atoll,northern ari atoll
+MV.31,Baa Atholhu,baa atholhu
+MV.32,Dhaalu Atholhu,dhaalu atholhu
+MV.33,Faafu Atholhu,faafu atholhu
+MV.34,Gaafu Alif Atoll,gaafu alif atoll
+MV.35,Gaafu Dhaalu Atoll,gaafu dhaalu atoll
+MV.36,Haa Alifu Atholhu,haa alifu atholhu
+MV.37,Haa Dhaalu Atholhu,haa dhaalu atholhu
+MV.38,Kaafu Atoll,kaafu atoll
+MV.39,Faadhippolhu Atoll,faadhippolhu atoll
+MV.40,Male,male
+MV.41,Meemu Atholhu,meemu atholhu
+MV.42,Gnyaviyani Atoll,gnyaviyani atoll
+MV.43,Noonu Atoll,noonu atoll
+MV.44,Raa Atoll,raa atoll
+MV.45,Shaviyani Atholhu,shaviyani atholhu
+MV.46,Thaa Atholhu,thaa atholhu
+MV.47,Vaavu Atholhu,vaavu atholhu
+MW.C,Central Region,central region
+MW.N,Northern Region,northern region
+MW.S,Southern Region,southern region
+MX.01,Aguascalientes,aguascalientes
+MX.02,Baja California,baja california
+MX.03,Baja California Sur,baja california sur
+MX.04,Campeche,campeche
+MX.05,Chiapas,chiapas
+MX.06,Chihuahua,chihuahua
+MX.07,Coahuila,coahuila
+MX.08,Colima,colima
+MX.09,Mexico City,mexico city
+MX.10,Durango,durango
+MX.11,Guanajuato,guanajuato
+MX.12,Guerrero,guerrero
+MX.13,Hidalgo,hidalgo
+MX.14,Jalisco,jalisco
+MX.15,México,mexico
+MX.16,Michoacán,michoacan
+MX.17,Morelos,morelos
+MX.18,Nayarit,nayarit
+MX.19,Nuevo León,nuevo leon
+MX.20,Oaxaca,oaxaca
+MX.21,Puebla,puebla
+MX.22,Querétaro,queretaro
+MX.23,Quintana Roo,quintana roo
+MX.24,San Luis Potosí,san luis potosi
+MX.25,Sinaloa,sinaloa
+MX.26,Sonora,sonora
+MX.27,Tabasco,tabasco
+MX.28,Tamaulipas,tamaulipas
+MX.29,Tlaxcala,tlaxcala
+MX.30,Veracruz,veracruz
+MX.31,Yucatán,yucatan
+MX.32,Zacatecas,zacatecas
+MY.01,Johor,johor
+MY.02,Kedah,kedah
+MY.03,Kelantan,kelantan
+MY.04,Melaka,melaka
+MY.05,Negeri Sembilan,negeri sembilan
+MY.06,Pahang,pahang
+MY.07,Perak,perak
+MY.08,Perlis,perlis
+MY.09,Penang,penang
+MY.11,Sarawak,sarawak
+MY.12,Selangor,selangor
+MY.13,Terengganu,terengganu
+MY.14,Kuala Lumpur,kuala lumpur
+MY.15,Labuan,labuan
+MY.16,Sabah,sabah
+MY.17,Putrajaya,putrajaya
+MZ.01,Cabo Delgado Province,cabo delgado province
+MZ.02,Gaza Province,gaza province
+MZ.03,Inhambane Province,inhambane province
+MZ.04,Maputo Province,maputo province
+MZ.05,Sofala,sofala
+MZ.06,Nampula,nampula
+MZ.07,Niassa Province,niassa province
+MZ.08,Tete,tete
+MZ.09,Zambezia Province,zambezia province
+MZ.10,Manica,manica
+MZ.11,Maputo City,maputo city
+NA.21,Khomas Region,khomas region
+NA.28,Zambezi Region,zambezi region
+NA.29,Erongo Region,erongo region
+NA.30,Hardap Region,hardap region
+NA.31,Karas Region,karas region
+NA.32,Kunene Region,kunene region
+NA.33,Ohangwena Region,ohangwena region
+NA.35,Omaheke Region,omaheke region
+NA.36,Omusati Region,omusati region
+NA.37,Oshana Region,oshana region
+NA.38,Oshikoto Region,oshikoto region
+NA.39,Otjozondjupa Region,otjozondjupa region
+NA.40,Kavango East,kavango east
+NA.41,Kavango West,kavango west
+NC.01,North Province,north province
+NC.02,South Province,south province
+NC.03,Loyalty Islands,loyalty islands
+NE.01,Agadez,agadez
+NE.02,Diffa,diffa
+NE.03,Dosso Region,dosso region
+NE.04,Maradi Region,maradi region
+NE.06,Tahoua Region,tahoua region
+NE.07,Zinder Region,zinder region
+NE.08,Niamey,niamey
+NE.09,Tillabéri Region,tillaberi region
+NG.05,Lagos,lagos
+NG.11,FCT,fct
+NG.16,Ogun State,ogun state
+NG.21,Akwa Ibom State,akwa ibom state
+NG.22,Cross River State,cross river state
+NG.23,Kaduna State,kaduna state
+NG.24,Katsina State,katsina state
+NG.25,Anambra,anambra
+NG.26,Benue State,benue state
+NG.27,Borno State,borno state
+NG.28,Imo State,imo state
+NG.29,Kano State,kano state
+NG.30,Kwara State,kwara state
+NG.31,Niger State,niger state
+NG.32,Oyo State,oyo state
+NG.35,Adamawa,adamawa
+NG.36,Delta,delta
+NG.37,Edo State,edo state
+NG.39,Jigawa State,jigawa state
+NG.40,Kebbi,kebbi
+NG.41,Kogi State,kogi state
+NG.42,Osun State,osun state
+NG.43,Taraba State,taraba state
+NG.44,Yobe State,yobe state
+NG.45,Abia State,abia state
+NG.46,Bauchi,bauchi
+NG.47,Enugu State,enugu state
+NG.48,Ondo State,ondo state
+NG.49,Plateau State,plateau state
+NG.50,Rivers State,rivers state
+NG.51,Sokoto,sokoto
+NG.52,Bayelsa State,bayelsa state
+NG.53,Ebonyi State,ebonyi state
+NG.54,Ekiti State,ekiti state
+NG.55,Gombe State,gombe state
+NG.56,Nasarawa State,nasarawa state
+NG.57,Zamfara State,zamfara state
+NI.01,Boaco Department,boaco department
+NI.02,Carazo Department,carazo department
+NI.03,Chinandega Department,chinandega department
+NI.04,Chontales Department,chontales department
+NI.05,Estelí Department,esteli department
+NI.06,Granada Department,granada department
+NI.07,Jinotega Department,jinotega department
+NI.08,León Department,leon department
+NI.09,Madriz Department,madriz department
+NI.10,Managua Department,managua department
+NI.11,Masaya Department,masaya department
+NI.12,Matagalpa Department,matagalpa department
+NI.13,Nueva Segovia Department,nueva segovia department
+NI.14,Río San Juan Department,rio san juan department
+NI.15,Rivas Department,rivas department
+NI.17,North Caribbean Coast,north caribbean coast
+NI.18,South Caribbean Coast,south caribbean coast
+NL.01,Drenthe,drenthe
+NL.02,Friesland,friesland
+NL.03,Gelderland,gelderland
+NL.04,Groningen,groningen
+NL.05,Limburg,limburg
+NL.06,North Brabant,north brabant
+NL.07,North Holland,north holland
+NL.09,Utrecht,utrecht
+NL.10,Zeeland,zeeland
+NL.11,South Holland,south holland
+NL.15,Overijssel,overijssel
+NL.16,Flevoland,flevoland
+NO.01,Akershus,akershus
+NO.04,Buskerud,buskerud
+NO.05,Finnmark,finnmark
+NO.08,Møre og Romsdal,more og romsdal
+NO.09,Nordland,nordland
+NO.12,Oslo,oslo
+NO.13,Østfold,ostfold
+NO.14,Rogaland,rogaland
+NO.17,Telemark,telemark
+NO.18,Troms,troms
+NO.20,Vestfold,vestfold
+NO.21,Trøndelag,trondelag
+NO.34,Innlandet,innlandet
+NO.42,Agder,agder
+NO.46,Vestland,vestland
+NP.1,Koshi,koshi
+NP.2,Madhesh,madhesh
+NP.3,Bagmati Province,bagmati province
+NP.4,Gandaki Pradesh,gandaki pradesh
+NP.5,Lumbini Province,lumbini province
+NP.6,Karnali Pradesh,karnali pradesh
+NP.7,Sudurpashchim Pradesh,sudurpashchim pradesh
+NR.01,Aiwo District,aiwo district
+NR.02,Anabar District,anabar district
+NR.03,Anetan District,anetan district
+NR.04,Anibare District,anibare district
+NR.05,Baiti District,baiti district
+NR.06,Boe District,boe district
+NR.07,Buada District,buada district
+NR.08,Denigomodu District,denigomodu district
+NR.09,Ewa District,ewa district
+NR.10,Ijuw District,ijuw district
+NR.11,Meneng District,meneng district
+NR.12,Nibok District,nibok district
+NR.13,Uaboe District,uaboe district
+NR.14,Yaren District,yaren district
+NZ.10,Chatham Islands,chatham islands
+NZ.E7,Auckland,auckland
+NZ.E8,Bay of Plenty,bay of plenty
+NZ.E9,Canterbury,canterbury
+NZ.F1,Gisborne,gisborne
+NZ.F2,Hawke's Bay Region,hawkes bay region
+NZ.F3,Manawatu-Wanganui,manawatu wanganui
+NZ.F4,Marlborough,marlborough
+NZ.F5,Nelson Region,nelson region
+NZ.F6,Northland,northland
+NZ.F7,Otago,otago
+NZ.F8,Southland,southland
+NZ.F9,Taranaki Region,taranaki region
+NZ.G1,Waikato Region,waikato region
+NZ.G2,Wellington Region,wellington region
+NZ.G3,West Coast,west coast
+NZ.TAS,Tasman District,tasman district
+OM.01,Ad Dakhiliyah,ad dakhiliyah
+OM.02,Al Batinah South,al batinah south
+OM.03,Al Wusta Governorate,al wusta governorate
+OM.04,Southeastern Governorate,southeastern governorate
+OM.06,Muscat,muscat
+OM.07,Musandam Governorate,musandam governorate
+OM.08,Dhofar,dhofar
+OM.09,Ad Dhahirah,ad dhahirah
+OM.10,Al Buraimi,al buraimi
+OM.11,Al Batinah North,al batinah north
+OM.12,Northeastern Governorate,northeastern governorate
+PA.01,Bocas del Toro Province,bocas del toro province
+PA.02,Chiriquí Province,chiriqui province
+PA.03,Coclé,cocle
+PA.04,Colón,colon
+PA.05,Darién,darien
+PA.06,Herrera Province,herrera province
+PA.07,Los Santos Province,los santos province
+PA.08,Panamá,panama
+PA.09,Guna Yala,guna yala
+PA.10,Veraguas Province,veraguas province
+PA.11,Embera,embera
+PA.12,Ngöbe-Buglé Comarca,ngobe bugle comarca
+PA.13,Panamá Oeste Province,panama oeste province
+PA.NT,Naso Tjër Di,naso tjer di
+PE.01,Amazonas,amazonas
+PE.02,Ancash,ancash
+PE.03,Apurímac Department,apurimac department
+PE.04,Arequipa,arequipa
+PE.05,Ayacucho,ayacucho
+PE.06,Cajamarca Department,cajamarca department
+PE.07,Callao,callao
+PE.08,Cuzco Department,cuzco department
+PE.09,Huancavelica,huancavelica
+PE.10,Huánuco Department,huanuco department
+PE.11,Ica,ica
+PE.12,Junin,junin
+PE.13,La Libertad,la libertad
+PE.14,Lambayeque,lambayeque
+PE.15,Lima region,lima region
+PE.16,Loreto,loreto
+PE.17,Madre de Dios,madre de dios
+PE.18,Moquegua Department,moquegua department
+PE.19,Pasco,pasco
+PE.20,Piura,piura
+PE.21,Puno,puno
+PE.22,San Martín Department,san martin department
+PE.23,Tacna,tacna
+PE.24,Tumbes,tumbes
+PE.25,Ucayali,ucayali
+PE.LMA,Lima Province,lima province
+PF.01,Îles du Vent,iles du vent
+PF.02,Leeward Islands,leeward islands
+PF.03,Tuamotu-Gambier Islands,tuamotu gambier islands
+PF.04,Marquesas Islands,marquesas islands
+PF.05,Austral Islands,austral islands
+PG.01,Central Province,central province
+PG.02,Gulf Province,gulf province
+PG.03,Milne Bay Province,milne bay province
+PG.04,Oro Province,oro province
+PG.05,Southern Highlands Province,southern highlands province
+PG.06,Western Province,western province
+PG.07,Bougainville,bougainville
+PG.08,Chimbu Province,chimbu province
+PG.09,Eastern Highlands Province,eastern highlands province
+PG.10,East New Britain Province,east new britain province
+PG.11,East Sepik Province,east sepik province
+PG.12,Madang Province,madang province
+PG.13,Manus Province,manus province
+PG.14,Morobe Province,morobe province
+PG.15,New Ireland,new ireland
+PG.16,Western Highlands Province,western highlands province
+PG.17,West New Britain Province,west new britain province
+PG.18,Sandaun Province,sandaun province
+PG.19,Enga Province,enga province
+PG.20,National Capital,national capital
+PG.21,Hela Province,hela province
+PG.22,Jiwaka Province,jiwaka province
+PH.01,Ilocos,ilocos
+PH.02,Cagayan Valley,cagayan valley
+PH.03,Central Luzon,central luzon
+PH.05,Bicol Region,bicol region
+PH.06,Western Visayas,western visayas
+PH.07,Central Visayas,central visayas
+PH.08,Eastern Visayas,eastern visayas
+PH.09,Zamboanga Peninsula,zamboanga peninsula
+PH.10,Northern Mindanao,northern mindanao
+PH.11,Davao Region,davao region
+PH.12,Soccsksargen,soccsksargen
+PH.13,Caraga,caraga
+PH.14,Autonomous Region in Muslim Mindanao,autonomous region in muslim mindanao
+PH.15,Cordillera,cordillera
+PH.40,Calabarzon,calabarzon
+PH.41,Mimaropa,mimaropa
+PH.NCR,National Capital Region,national capital region
+PK.02,Balochistan,balochistan
+PK.03,Khyber Pakhtunkhwa,khyber pakhtunkhwa
+PK.04,Punjab,punjab
+PK.05,Sindh,sindh
+PK.06,Azad Kashmir,azad kashmir
+PK.07,Gilgit-Baltistan,gilgit baltistan
+PK.08,Islamabad,islamabad
+PL.72,Lower Silesia,lower silesia
+PL.73,Kujawsko-Pomorskie,kujawsko pomorskie
+PL.74,Łódź Voivodeship,lodz voivodeship
+PL.75,Lublin,lublin
+PL.76,Lubusz,lubusz
+PL.77,Lesser Poland,lesser poland
+PL.78,Mazovia,mazovia
+PL.79,Opole Voivodeship,opole voivodeship
+PL.80,Subcarpathia,subcarpathia
+PL.81,Podlasie,podlasie
+PL.82,Pomerania,pomerania
+PL.83,Silesia,silesia
+PL.84,Świętokrzyskie,swietokrzyskie
+PL.85,Warmia-Masuria,warmia masuria
+PL.86,Greater Poland,greater poland
+PL.87,West Pomerania,west pomerania
+PM.97501,Miquelon-Langlade,miquelon langlade
+PM.97502,Saint-Pierre,saint pierre
+PR.001,Adjuntas,adjuntas
+PR.003,Aguada,aguada
+PR.005,Aguadilla,aguadilla
+PR.007,Aguas Buenas,aguas buenas
+PR.009,Aibonito,aibonito
+PR.011,Añasco,anasco
+PR.013,Arecibo,arecibo
+PR.015,Arroyo,arroyo
+PR.017,Barceloneta,barceloneta
+PR.019,Barranquitas,barranquitas
+PR.021,Bayamón,bayamon
+PR.023,Cabo Rojo,cabo rojo
+PR.025,Caguas,caguas
+PR.027,Camuy,camuy
+PR.029,Canóvanas,canovanas
+PR.031,Carolina,carolina
+PR.033,Cataño,catano
+PR.035,Cayey,cayey
+PR.037,Ceiba,ceiba
+PR.039,Ciales,ciales
+PR.041,Cidra,cidra
+PR.043,Coamo,coamo
+PR.045,Comerío,comerio
+PR.047,Corozal,corozal
+PR.049,Culebra,culebra
+PR.051,Dorado,dorado
+PR.053,Fajardo,fajardo
+PR.054,Florida,florida
+PR.055,Guánica,guanica
+PR.057,Guayama,guayama
+PR.059,Guayanilla,guayanilla
+PR.061,Guaynabo,guaynabo
+PR.063,Gurabo,gurabo
+PR.065,Hatillo,hatillo
+PR.067,Hormigueros,hormigueros
+PR.069,Humacao,humacao
+PR.071,Isabela,isabela
+PR.073,Jayuya,jayuya
+PR.075,Juana Díaz,juana diaz
+PR.077,Juncos,juncos
+PR.079,Lajas,lajas
+PR.081,Lares,lares
+PR.083,Las Marías,las marias
+PR.085,Las Piedras,las piedras
+PR.087,Loíza,loiza
+PR.089,Luquillo,luquillo
+PR.091,Manatí,manati
+PR.093,Maricao,maricao
+PR.095,Maunabo,maunabo
+PR.097,Mayagüez,mayaguez
+PR.099,Moca,moca
+PR.101,Morovis,morovis
+PR.103,Naguabo,naguabo
+PR.105,Naranjito,naranjito
+PR.107,Orocovis,orocovis
+PR.109,Patillas,patillas
+PR.111,Peñuelas,penuelas
+PR.113,Ponce,ponce
+PR.115,Quebradillas,quebradillas
+PR.117,Rincón,rincon
+PR.119,Río Grande,rio grande
+PR.121,Sabana Grande,sabana grande
+PR.123,Salinas,salinas
+PR.125,San Germán,san german
+PR.127,San Juan,san juan
+PR.129,San Lorenzo,san lorenzo
+PR.131,San Sebastián,san sebastian
+PR.133,Santa Isabel,santa isabel
+PR.135,Toa Alta,toa alta
+PR.137,Toa Baja,toa baja
+PR.139,Trujillo Alto,trujillo alto
+PR.141,Utuado,utuado
+PR.143,Vega Alta,vega alta
+PR.145,Vega Baja,vega baja
+PR.147,Vieques,vieques
+PR.149,Villalba,villalba
+PR.151,Yabucoa,yabucoa
+PR.153,Yauco,yauco
+PS.GZ,Gaza Strip,gaza strip
+PS.WE,West Bank,west bank
+PT.02,Aveiro,aveiro
+PT.03,Beja,beja
+PT.04,Braga,braga
+PT.05,Bragança,braganca
+PT.06,Castelo Branco,castelo branco
+PT.07,Coimbra,coimbra
+PT.08,Évora,evora
+PT.09,Faro,faro
+PT.10,Madeira,madeira
+PT.11,Guarda,guarda
+PT.13,Leiria,leiria
+PT.14,Lisbon,lisbon
+PT.16,Portalegre,portalegre
+PT.17,Porto,porto
+PT.18,Santarém,santarem
+PT.19,Setúbal,setubal
+PT.20,Viana do Castelo,viana do castelo
+PT.21,Vila Real,vila real
+PT.22,Viseu,viseu
+PT.23,Azores,azores
+PW.01,Aimeliik,aimeliik
+PW.02,Airai,airai
+PW.03,Angaur,angaur
+PW.04,Hatohobei,hatohobei
+PW.05,Kayangel,kayangel
+PW.06,Koror,koror
+PW.07,Melekeok,melekeok
+PW.08,Ngaraard,ngaraard
+PW.09,Ngarchelong,ngarchelong
+PW.10,Ngardmau,ngardmau
+PW.11,Ngatpang,ngatpang
+PW.12,Ngchesar,ngchesar
+PW.13,Ngeremlengui,ngeremlengui
+PW.14,Ngiwal,ngiwal
+PW.15,Peleliu,peleliu
+PW.16,Sonsorol,sonsorol
+PY.01,Alto Paraná Department,alto parana department
+PY.02,Amambay Department,amambay department
+PY.04,Caaguazú Department,caaguazu department
+PY.05,Caazapá,caazapa
+PY.06,Central Department,central department
+PY.07,Concepción,concepcion
+PY.08,Cordillera Department,cordillera department
+PY.10,Guairá,guaira
+PY.11,Itapúa,itapua
+PY.12,Misiones Department,misiones department
+PY.13,Ñeembucú Department,neembucu department
+PY.15,Paraguarí,paraguari
+PY.16,Presidente Hayes,presidente hayes
+PY.17,San Pedro Department,san pedro department
+PY.19,Canindeyú,canindeyu
+PY.22,Asuncion,asuncion
+PY.23,Alto Paraguay,alto paraguay
+PY.24,Boquerón Department,boqueron department
+QA.01,Baladiyat ad Dawhah,baladiyat ad dawhah
+QA.04,Al Khor,al khor
+QA.06,Baladiyat ar Rayyan,baladiyat ar rayyan
+QA.08,Madinat ash Shamal,madinat ash shamal
+QA.09,Umm Salal,umm salal
+QA.10,Al Wakrah,al wakrah
+QA.13,Al Daayen,al daayen
+QA.14,Al-Shahaniya,al shahaniya
+RE.RE,Reunion,reunion
+RO.01,Alba County,alba county
+RO.02,Arad County,arad county
+RO.03,Arges,arges
+RO.04,Bacău County,bacau county
+RO.05,Bihor County,bihor county
+RO.06,Bistrița-Năsăud County,bistrita nasaud county
+RO.07,Botoșani County,botosani county
+RO.08,Brăila County,braila county
+RO.09,Brașov County,brasov county
+RO.10,Bucharest,bucharest
+RO.11,Buzău County,buzau county
+RO.12,Caraș-Severin County,caras severin county
+RO.13,Cluj County,cluj county
+RO.14,Constanța County,constanta county
+RO.15,Covasna County,covasna county
+RO.16,Dâmbovița County,dambovita county
+RO.17,Dolj,dolj
+RO.18,Galați County,galati county
+RO.19,Gorj County,gorj county
+RO.20,Harghita County,harghita county
+RO.21,Hunedoara County,hunedoara county
+RO.22,Ialomița County,ialomita county
+RO.23,Iași County,iasi county
+RO.25,Maramureş,maramures
+RO.26,Mehedinți County,mehedinti county
+RO.27,Mureș County,mures county
+RO.28,Neamț County,neamt county
+RO.29,Olt,olt
+RO.30,Prahova,prahova
+RO.31,Sălaj County,salaj county
+RO.32,Satu Mare County,satu mare county
+RO.33,Sibiu County,sibiu county
+RO.34,Suceava,suceava
+RO.35,Teleorman County,teleorman county
+RO.36,Timiș County,timis county
+RO.37,Tulcea County,tulcea county
+RO.38,Vaslui County,vaslui county
+RO.39,Vâlcea County,valcea county
+RO.40,Vrancea,vrancea
+RO.41,Călărași County,calarasi county
+RO.42,Giurgiu County,giurgiu county
+RO.43,Ilfov,ilfov
+RS.SE,Central Serbia,central serbia
+RS.VO,Vojvodina,vojvodina
+RU.01,Adygeya Republic,adygeya republic
+RU.03,Altai,altai
+RU.04,Altai Krai,altai krai
+RU.05,Amur Oblast,amur oblast
+RU.06,Arkhangelskaya,arkhangelskaya
+RU.07,Astrakhan Oblast,astrakhan oblast
+RU.08,Bashkortostan Republic,bashkortostan republic
+RU.09,Belgorod Oblast,belgorod oblast
+RU.10,Bryansk Oblast,bryansk oblast
+RU.11,Buryatiya Republic,buryatiya republic
+RU.12,Chechnya,chechnya
+RU.13,Chelyabinsk,chelyabinsk
+RU.15,Chukotka,chukotka
+RU.16,Chuvash Republic,chuvash republic
+RU.17,Dagestan,dagestan
+RU.19,Ingushetiya Republic,ingushetiya republic
+RU.20,Irkutsk Oblast,irkutsk oblast
+RU.21,Ivanovo Oblast,ivanovo oblast
+RU.22,Kabardino-Balkariya Republic,kabardino balkariya republic
+RU.23,Kaliningrad Oblast,kaliningrad oblast
+RU.24,Kalmykiya Republic,kalmykiya republic
+RU.25,Kaluga Oblast,kaluga oblast
+RU.27,Karachayevo-Cherkesiya Republic,karachayevo cherkesiya republic
+RU.28,Karelia,karelia
+RU.29,Kuzbass,kuzbass
+RU.30,Khabarovsk,khabarovsk
+RU.31,Khakasiya Republic,khakasiya republic
+RU.32,Khanty-Mansia,khanty mansia
+RU.33,Kirov Oblast,kirov oblast
+RU.34,Komi,komi
+RU.37,Kostroma Oblast,kostroma oblast
+RU.38,Krasnodar Krai,krasnodar krai
+RU.40,Kurgan Oblast,kurgan oblast
+RU.41,Kursk Oblast,kursk oblast
+RU.42,Leningradskaya Oblast',leningradskaya oblast
+RU.43,Lipetsk Oblast,lipetsk oblast
+RU.44,Magadan Oblast,magadan oblast
+RU.45,Mariy-El Republic,mariy el republic
+RU.46,Mordoviya Republic,mordoviya republic
+RU.47,Moscow Oblast,moscow oblast
+RU.48,Moscow,moscow
+RU.49,Murmansk,murmansk
+RU.50,Nenets,nenets
+RU.51,Nizhny Novgorod Oblast,nizhny novgorod oblast
+RU.52,Novgorod Oblast,novgorod oblast
+RU.53,Novosibirsk Oblast,novosibirsk oblast
+RU.54,Omsk Oblast,omsk oblast
+RU.55,Orenburg Oblast,orenburg oblast
+RU.56,Oryol oblast,oryol oblast
+RU.57,Penza Oblast,penza oblast
+RU.59,Primorye,primorye
+RU.60,Pskov Oblast,pskov oblast
+RU.61,Rostov,rostov
+RU.62,Ryazan Oblast,ryazan oblast
+RU.63,Sakha,sakha
+RU.64,Sakhalin Oblast,sakhalin oblast
+RU.65,Samara Oblast,samara oblast
+RU.66,St. Petersburg,st petersburg
+RU.67,Saratov Oblast,saratov oblast
+RU.68,North Ossetia–Alania,north ossetia alania
+RU.69,Smolensk Oblast,smolensk oblast
+RU.70,Stavropol Kray,stavropol kray
+RU.71,Sverdlovsk Oblast,sverdlovsk oblast
+RU.72,Tambov Oblast,tambov oblast
+RU.73,Tatarstan Republic,tatarstan republic
+RU.75,Tomsk Oblast,tomsk oblast
+RU.76,Tula Oblast,tula oblast
+RU.77,Tver Oblast,tver oblast
+RU.78,Tyumen Oblast,tyumen oblast
+RU.79,Republic of Tyva,republic of tyva
+RU.80,Udmurtiya Republic,udmurtiya republic
+RU.81,Ulyanovsk,ulyanovsk
+RU.83,Vladimir Oblast,vladimir oblast
+RU.84,Volgograd Oblast,volgograd oblast
+RU.85,Vologda Oblast,vologda oblast
+RU.86,Voronezh Oblast,voronezh oblast
+RU.87,Yamalo-Nenets,yamalo nenets
+RU.88,Yaroslavl Oblast,yaroslavl oblast
+RU.89,Jewish Autonomous Oblast,jewish autonomous oblast
+RU.90,Perm Krai,perm krai
+RU.91,Krasnoyarsk Krai,krasnoyarsk krai
+RU.92,Kamchatka,kamchatka
+RU.93,Zabaykalskiy (Transbaikal) Kray,zabaykalskiy (transbaikal) kray
+RW.11,Eastern Province,eastern province
+RW.12,Kigali,kigali
+RW.13,Northern Province,northern province
+RW.14,Western Province,western province
+RW.15,Southern Province,southern province
+SA.02,Al Bahah Region,al bahah region
+SA.05,Medina Region,medina region
+SA.06,Eastern Province,eastern province
+SA.08,Al-Qassim Region,al qassim region
+SA.10,Riyadh Region,riyadh region
+SA.11,'Asir Region,asir region
+SA.13,Ha'il Region,hail region
+SA.14,Mecca Region,mecca region
+SA.15,Northern Borders Region,northern borders region
+SA.16,Najran Region,najran region
+SA.17,Jazan Region,jazan region
+SA.19,Tabuk Region,tabuk region
+SA.20,Al Jawf Region,al jawf region
+SB.03,Malaita Province,malaita province
+SB.06,Guadalcanal Province,guadalcanal province
+SB.07,Isabel Province,isabel province
+SB.08,Makira-Ulawa Province,makira ulawa province
+SB.09,Temotu Province,temotu province
+SB.10,Central Province,central province
+SB.11,Western Province,western province
+SB.12,Choiseul Province,choiseul province
+SB.13,Rennell and Bellona Province,rennell and bellona province
+SB.14,Honiara,honiara
+SC.01,Anse-aux-Pins,anse aux pins
+SC.02,Anse Boileau,anse boileau
+SC.03,Anse Etoile,anse etoile
+SC.05,Anse Royale,anse royale
+SC.06,Baie Lazare,baie lazare
+SC.07,Baie Sainte Anne,baie sainte anne
+SC.08,Beau Vallon,beau vallon
+SC.09,Bel Air,bel air
+SC.10,Bel Ombre,bel ombre
+SC.11,Cascade,cascade
+SC.11876017,Outer Islands,outer islands
+SC.12,Glacis,glacis
+SC.12200079,Ile Perseverance I,ile perseverance i
+SC.12200080,Ile Perseverance II,ile perseverance ii
+SC.14,Grand Anse Praslin,grand anse praslin
+SC.17,Mont Buxton,mont buxton
+SC.18,Mont Fleuri,mont fleuri
+SC.19,Plaisance,plaisance
+SC.20,Pointe La Rue,pointe la rue
+SC.22,Saint Louis,saint louis
+SC.23,Takamaka,takamaka
+SC.24,Grand Anse Mahe,grand anse mahe
+SC.25,La Digue and Inner Islands,la digue and inner islands
+SC.26,La Rivière Anglaise,la riviere anglaise
+SC.27,Port Glaud,port glaud
+SC.28,Au Cap,au cap
+SC.29,Les Mamelles,les mamelles
+SC.30,Roche Caiman,roche caiman
+SD.29,Khartoum,khartoum
+SD.36,Red Sea,red sea
+SD.38,Al Jazirah,al jazirah
+SD.39,Al Qaḑārif,al qadarif
+SD.41,White Nile,white nile
+SD.42,Blue Nile,blue nile
+SD.43,Northern State,northern state
+SD.47,Western Darfur,western darfur
+SD.49,Southern Darfur,southern darfur
+SD.50,Southern Kordofan,southern kordofan
+SD.52,Kassala,kassala
+SD.53,River Nile,river nile
+SD.55,Northern Darfur,northern darfur
+SD.56,North Kordofan,north kordofan
+SD.58,Sennar,sennar
+SD.60,Eastern Darfur,eastern darfur
+SD.61,Central Darfur,central darfur
+SD.62,West Kordofan,west kordofan
+SE.02,Blekinge,blekinge
+SE.03,Gävleborg,gavleborg
+SE.05,Gotland,gotland
+SE.06,Halland,halland
+SE.07,Jämtland,jamtland
+SE.08,Jönköping,jonkoping
+SE.09,Kalmar,kalmar
+SE.10,Dalarna,dalarna
+SE.12,Kronoberg,kronoberg
+SE.14,Norrbotten,norrbotten
+SE.15,Örebro,orebro
+SE.16,Östergötland,ostergotland
+SE.18,Södermanland,sodermanland
+SE.21,Uppsala,uppsala
+SE.22,Värmland,varmland
+SE.23,Västerbotten,vasterbotten
+SE.24,Västernorrland,vasternorrland
+SE.25,Västmanland,vastmanland
+SE.26,Stockholm,stockholm
+SE.27,Skåne,skane
+SE.28,Västra Götaland,vastra gotaland
+SH.01,Ascension,ascension
+SH.02,Saint Helena,saint helena
+SH.03,Tristan da Cunha,tristan da cunha
+SI.01,Municipality of Ajdovščina,municipality of ajdovscina
+SI.02,Municipality of Beltinci,municipality of beltinci
+SI.03,Municipality of Bled,municipality of bled
+SI.04,Municipality of Bohinj,municipality of bohinj
+SI.05,Municipality of Borovnica,municipality of borovnica
+SI.06,Municipality of Bovec,municipality of bovec
+SI.07,Municipality of Brda,municipality of brda
+SI.08,Municipality of Brežice,municipality of brezice
+SI.09,Municipality of Brezovica,municipality of brezovica
+SI.11,Urban Municipality of Celje,urban municipality of celje
+SI.12,Municipality of Cerklje na Gorenjskem,municipality of cerklje na gorenjskem
+SI.13,Municipality of Cerknica,municipality of cerknica
+SI.14,Municipality of Cerkno,municipality of cerkno
+SI.15,Municipality of Črenšovci,municipality of crensovci
+SI.16,Municipality of Črna na Koroškem,municipality of crna na koroskem
+SI.17,Municipality of Črnomelj,municipality of crnomelj
+SI.19,Municipality of Divača,municipality of divaca
+SI.20,Municipality of Dobrepolje,municipality of dobrepolje
+SI.22,Dol pri Ljubljani,dol pri ljubljani
+SI.24,Municipality of Dornava,municipality of dornava
+SI.25,Municipality of Dravograd,municipality of dravograd
+SI.26,Municipality of Duplek,municipality of duplek
+SI.27,Municipality of Gorenja Vas–Poljane,municipality of gorenja vas poljane
+SI.28,Municipality of Gorišnica,municipality of gorisnica
+SI.29,Municipality of Gornja Radgona,municipality of gornja radgona
+SI.30,Municipality of Gornji Grad,municipality of gornji grad
+SI.31,Municipality of Gornji Petrovci,municipality of gornji petrovci
+SI.32,Municipality of Grosuplje,municipality of grosuplje
+SI.34,Municipality of Hrastnik,municipality of hrastnik
+SI.35,Municipality of Hrpelje–Kozina,municipality of hrpelje kozina
+SI.36,Municipality of Idrija,municipality of idrija
+SI.37,Municipality of Ig,municipality of ig
+SI.38,Municipality of Ilirska Bistrica,municipality of ilirska bistrica
+SI.39,Municipality of Ivančna Gorica,municipality of ivancna gorica
+SI.40,Municipality of Izola,municipality of izola
+SI.42,Municipality of Juršinci,municipality of jursinci
+SI.44,Municipality of Kanal ob Soči,municipality of kanal ob soci
+SI.45,Municipality of Kidričevo,municipality of kidricevo
+SI.46,Municipality of Kobarid,municipality of kobarid
+SI.47,Municipality of Kobilje,municipality of kobilje
+SI.49,Municipality of Komen,municipality of komen
+SI.50,Urban Municipality of Koper,urban municipality of koper
+SI.51,Municipality of Kozje,municipality of kozje
+SI.52,Urban Municipality of Kranj,urban municipality of kranj
+SI.53,Municipality of Kranjska Gora,municipality of kranjska gora
+SI.54,Urban Municipality of Krško,urban municipality of krsko
+SI.55,Municipality of Kungota,municipality of kungota
+SI.57,Municipality of Laško,municipality of lasko
+SI.61,Ljubljana,ljubljana
+SI.62,Municipality of Ljubno,municipality of ljubno
+SI.64,Logatec,logatec
+SI.66,Municipality of Loški Potok,municipality of loski potok
+SI.68,Lukovica,lukovica
+SI.71,Municipality of Medvode,municipality of medvode
+SI.72,Municipality of Mengeš,municipality of menges
+SI.73,Municipality of Metlika,municipality of metlika
+SI.74,Municipality of Mežica,municipality of mezica
+SI.76,Municipality of Mislinja,municipality of mislinja
+SI.77,Municipality of Moravče,municipality of moravce
+SI.78,Municipality of Moravske Toplice,municipality of moravske toplice
+SI.79,Municipality of Mozirje,municipality of mozirje
+SI.80,Urban Municipality of Murska Sobota,urban municipality of murska sobota
+SI.81,Municipality of Muta,municipality of muta
+SI.82,Municipality of Naklo,municipality of naklo
+SI.83,Municipality of Nazarje,municipality of nazarje
+SI.84,Urban Municipality of Nova Gorica,urban municipality of nova gorica
+SI.86,Municipality of Odranci,municipality of odranci
+SI.87,Municipality of Ormož,municipality of ormoz
+SI.88,Municipality of Osilnica,municipality of osilnica
+SI.89,Pesnica,pesnica
+SI.91,Pivka,pivka
+SI.92,Municipality of Podčetrtek,municipality of podcetrtek
+SI.94,Municipality of Postojna,municipality of postojna
+SI.97,Municipality of Puconci,municipality of puconci
+SI.98,Municipality of Rače–Fram,municipality of race fram
+SI.99,Municipality of Radeče,municipality of radece
+SI.A1,Municipality of Radenci,municipality of radenci
+SI.A2,Municipality of Radlje ob Dravi,municipality of radlje ob dravi
+SI.A3,Radovljica,radovljica
+SI.A6,Municipality of Rogašovci,municipality of rogasovci
+SI.A7,Municipality of Rogaška Slatina,municipality of rogaska slatina
+SI.A8,Municipality of Rogatec,municipality of rogatec
+SI.B1,Municipality of Semič,municipality of semic
+SI.B2,Municipality of Šenčur,municipality of sencur
+SI.B3,Municipality of Šentilj,municipality of sentilj
+SI.B4,Municipality of Šentjernej,municipality of sentjernej
+SI.B6,Municipality of Sevnica,municipality of sevnica
+SI.B7,Municipality of Sežana,municipality of sezana
+SI.B8,Municipality of Škocjan,municipality of skocjan
+SI.B9,Škofja Loka,skofja loka
+SI.C1,Municipality of Škofljica,municipality of skofljica
+SI.C2,Urban Municipality of Slovenj Gradec,urban municipality of slovenj gradec
+SI.C4,Municipality of Slovenske Konjice,municipality of slovenske konjice
+SI.C5,Municipality of Šmarje pri Jelšah,municipality of smarje pri jelsah
+SI.C6,Municipality of Šmartno ob Paki,municipality of smartno ob paki
+SI.C7,Municipality of Šoštanj,municipality of sostanj
+SI.C8,Municipality of Starše,municipality of starse
+SI.C9,Municipality of Štore,municipality of store
+SI.D1,Municipality of Sveti Jurij ob Ščavnici,municipality of sveti jurij ob scavnici
+SI.D2,Municipality of Tolmin,municipality of tolmin
+SI.D3,Municipality of Trbovlje,municipality of trbovlje
+SI.D4,Trebnje,trebnje
+SI.D5,Municipality of Tržič,municipality of trzic
+SI.D6,Municipality of Turnišče,municipality of turnisce
+SI.D7,Urban Municipality of Velenje,urban municipality of velenje
+SI.D8,Municipality of Velike Lašče,municipality of velike lasce
+SI.E1,Municipality of Vipava,municipality of vipava
+SI.E2,Municipality of Vitanje,municipality of vitanje
+SI.E3,Municipality of Vodice,municipality of vodice
+SI.E5,Municipality of Vrhnika,municipality of vrhnika
+SI.E6,Municipality of Vuzenica,municipality of vuzenica
+SI.E7,Municipality of Zagorje ob Savi,municipality of zagorje ob savi
+SI.E9,Municipality of Zavrč,municipality of zavrc
+SI.F1,Municipality of Železniki,municipality of zelezniki
+SI.F2,Municipality of Žiri,municipality of ziri
+SI.F3,Municipality of Zreče,municipality of zrece
+SI.F4,Municipality of Benedikt,municipality of benedikt
+SI.F5,Municipality of Bistrica ob Sotli,municipality of bistrica ob sotli
+SI.F6,Municipality of Bloke,municipality of bloke
+SI.F7,Municipality of Braslovče,municipality of braslovce
+SI.F8,Municipality of Cankova,municipality of cankova
+SI.F9,Municipality of Cerkvenjak,municipality of cerkvenjak
+SI.G1,Destrnik,destrnik
+SI.G2,Municipality of Dobje,municipality of dobje
+SI.G3,Dobrna,dobrna
+SI.G4,Municipality of Dobrova–Polhov Gradec,municipality of dobrova polhov gradec
+SI.G5,Municipality of Dobrovnik,municipality of dobrovnik
+SI.G6,Dolenjske Toplice,dolenjske toplice
+SI.G7,Municipality of Domžale,municipality of domzale
+SI.G8,Grad,grad
+SI.G9,Hajdina,hajdina
+SI.H1,Municipality of Hoče–Slivnica,municipality of hoce slivnica
+SI.H2,Municipality of Hodoš,municipality of hodos
+SI.H3,Municipality of Horjul,municipality of horjul
+SI.H4,Municipality of Jesenice,municipality of jesenice
+SI.H5,Municipality of Jezersko,municipality of jezersko
+SI.H6,Municipality of Kamnik,municipality of kamnik
+SI.H7,Municipality of Kočevje,municipality of kocevje
+SI.H8,Komenda,komenda
+SI.H9,Municipality of Kostel,municipality of kostel
+SI.I1,Municipality of Križevci,municipality of krizevci
+SI.I2,Municipality of Kuzma,municipality of kuzma
+SI.I3,Municipality of Lenart,municipality of lenart
+SI.I4,Municipality of Lendava,municipality of lendava
+SI.I5,Municipality of Litija,municipality of litija
+SI.I6,Ljutomer,ljutomer
+SI.I7,Municipality of Loška Dolina,municipality of loska dolina
+SI.I8,Municipality of Lovrenc na Pohorju,municipality of lovrenc na pohorju
+SI.I9,Municipality of Luče,municipality of luce
+SI.J1,Municipality of Majšperk,municipality of majsperk
+SI.J2,Urban Municipality of Maribor,urban municipality of maribor
+SI.J3,Municipality of Markovci,municipality of markovci
+SI.J4,Municipality of Miklavž na Dravskem Polju,municipality of miklavz na dravskem polju
+SI.J5,Municipality of Miren–Kostanjevica,municipality of miren kostanjevica
+SI.J6,Municipality of Mirna Peč,municipality of mirna pec
+SI.J7,Urban Municipality of Novo Mesto,urban municipality of novo mesto
+SI.J8,Municipality of Oplotnica,municipality of oplotnica
+SI.J9,Municipality of Piran,municipality of piran
+SI.K1,Municipality of Podlehnik,municipality of podlehnik
+SI.K2,Municipality of Podvelka,municipality of podvelka
+SI.K3,Municipality of Polzela,municipality of polzela
+SI.K4,Prebold,prebold
+SI.K5,Municipality of Preddvor,municipality of preddvor
+SI.K6,Municipality of Prevalje,municipality of prevalje
+SI.K7,Urban Municipality of Ptuj,urban municipality of ptuj
+SI.K8,Municipality of Ravne na Koroškem,municipality of ravne na koroskem
+SI.K9,Municipality of Razkrižje,municipality of razkrizje
+SI.L1,Municipality of Ribnica,municipality of ribnica
+SI.L2,Municipality of Ribnica na Pohorju,municipality of ribnica na pohorju
+SI.L3,Municipality of Ruše,municipality of ruse
+SI.L4,Municipality of Šalovci,municipality of salovci
+SI.L5,Municipality of Selnica ob Dravi,municipality of selnica ob dravi
+SI.L6,Municipality of Šempeter–Vrtojba,municipality of sempeter vrtojba
+SI.L7,Sentjur,sentjur
+SI.L8,Municipality of Slovenska Bistrica,municipality of slovenska bistrica
+SI.L9,Municipality of Šmartno pri Litiji,municipality of smartno pri litiji
+SI.M1,Municipality of Sodražica,municipality of sodrazica
+SI.M2,Municipality of Solčava,municipality of solcava
+SI.M3,Municipality of Sveta Ana,municipality of sveta ana
+SI.M4,Municipality of Sveti Andraž v Slovenskih Goricah,municipality of sveti andraz v slovenskih goricah
+SI.M5,Municipality of Tabor,municipality of tabor
+SI.M6,Municipality of Tišina,municipality of tisina
+SI.M7,Municipality of Trnovska Vas,municipality of trnovska vas
+SI.M8,Municipality of Trzin,municipality of trzin
+SI.M9,Municipality of Velika Polana,municipality of velika polana
+SI.N1,Municipality of Veržej,municipality of verzej
+SI.N2,Municipality of Videm,municipality of videm
+SI.N3,Municipality of Vojnik,municipality of vojnik
+SI.N4,Municipality of Vransko,municipality of vransko
+SI.N5,Municipality of Žalec,municipality of zalec
+SI.N6,Municipality of Žetale,municipality of zetale
+SI.N7,Municipality of Žirovnica,municipality of zirovnica
+SI.N8,Municipality of Žužemberk,municipality of zuzemberk
+SI.N9,Municipality of Apače,municipality of apace
+SI.O1,Municipality of Cirkulane,municipality of cirkulane
+SI.O2,Gorje,gorje
+SI.O3,Municipality of Kostanjevica na Krki,municipality of kostanjevica na krki
+SI.O4,Log–Dragomer,log dragomer
+SI.O5,Municipality of Makole,municipality of makole
+SI.O6,Municipality of Mirna,municipality of mirna
+SI.O7,Municipality of Mokronog–Trebelno,municipality of mokronog trebelno
+SI.O8,Municipality of Poljčane,municipality of poljcane
+SI.O9,Municipality of Rečica ob Savinji,municipality of recica ob savinji
+SI.P1,Municipality of Renče–Vogrsko,municipality of rence vogrsko
+SI.P2,Municipality of Šentrupert,municipality of sentrupert
+SI.P3,Municipality of Šmarješke Toplice,municipality of smarjeske toplice
+SI.P4,Municipality of Središče ob Dravi,municipality of sredisce ob dravi
+SI.P5,Municipality of Straža,municipality of straza
+SI.P6,Municipality of Sveta Trojica v Slovenskih Goricah,municipality of sveta trojica v slovenskih goricah
+SI.P7,Municipality of Sveti Jurij v Slovenskih Goricah,municipality of sveti jurij v slovenskih goricah
+SI.P8,Municipality of Sveti Tomaž,municipality of sveti tomaz
+SI.P9,Municipality of Ankaran,municipality of ankaran
+SJ.21,Svalbard,svalbard
+SJ.22,Jan Mayen,jan mayen
+SK.01,Banská Bystrica Region,banska bystrica region
+SK.02,Bratislava Region,bratislava region
+SK.03,Košice Region,kosice region
+SK.04,Nitra Region,nitra region
+SK.05,Prešov Region,presov region
+SK.06,Trenčín Region,trencin region
+SK.07,Trnava Region,trnava region
+SK.08,Žilina Region,zilina region
+SL.01,Eastern Province,eastern province
+SL.02,Northern Province,northern province
+SL.03,Southern Province,southern province
+SL.04,Western Area,western area
+SL.05,North West,north west
+SM.01,Acquaviva,acquaviva
+SM.02,Chiesanuova,chiesanuova
+SM.03,Domagnano,domagnano
+SM.04,Faetano,faetano
+SM.05,Fiorentino,fiorentino
+SM.06,Borgo Maggiore,borgo maggiore
+SM.07,San Marino,san marino
+SM.08,Montegiardino,montegiardino
+SM.09,Serravalle,serravalle
+SN.01,Dakar,dakar
+SN.03,Diourbel Region,diourbel region
+SN.05,Tambacounda,tambacounda
+SN.07,Thies,thies
+SN.09,Fatick,fatick
+SN.10,Kaolack,kaolack
+SN.11,Kolda,kolda
+SN.12,Ziguinchor,ziguinchor
+SN.13,Louga,louga
+SN.14,Saint-Louis,saint louis
+SN.15,Matam,matam
+SN.16,Kaffrine,kaffrine
+SN.17,Kedougou,kedougou
+SN.18,Sédhiou,sedhiou
+SO.01,Bakool,bakool
+SO.02,Banaadir,banaadir
+SO.03,Bari,bari
+SO.04,Bay,bay
+SO.05,Galguduud,galguduud
+SO.06,Gedo,gedo
+SO.07,Hiiraan,hiiraan
+SO.08,Middle Juba,middle juba
+SO.09,Lower Juba,lower juba
+SO.10,Mudug,mudug
+SO.12,Sanaag,sanaag
+SO.13,Middle Shabele,middle shabele
+SO.14,Lower Shabeelle,lower shabeelle
+SO.18,Nugaal,nugaal
+SO.19,Togdheer,togdheer
+SO.20,Woqooyi Galbeed,woqooyi galbeed
+SO.21,Awdal,awdal
+SO.22,Sool,sool
+SR.10,Brokopondo District,brokopondo district
+SR.11,Commewijne District,commewijne district
+SR.12,Coronie District,coronie district
+SR.13,Marowijne District,marowijne district
+SR.14,Nickerie District,nickerie district
+SR.15,Para District,para district
+SR.16,Paramaribo District,paramaribo district
+SR.17,Saramacca District,saramacca district
+SR.18,Sipaliwini District,sipaliwini district
+SR.19,Wanica District,wanica district
+SS.01,Central Equatoria,central equatoria
+SS.02,Eastern Equatoria,eastern equatoria
+SS.03,Jonglei,jonglei
+SS.04,Lakes,lakes
+SS.05,Northern Bahr al Ghazal,northern bahr al ghazal
+SS.06,Unity,unity
+SS.07,Upper Nile,upper nile
+SS.08,Warrap,warrap
+SS.09,Western Bahr al Ghazal,western bahr al ghazal
+SS.10,Western Equatoria,western equatoria
+ST.01,Príncipe,principe
+ST.02,São Tomé Island,sao tome island
+SV.01,Ahuachapan,ahuachapan
+SV.02,Cabanas,cabanas
+SV.03,Chalatenango Department,chalatenango department
+SV.04,Cuscatlan,cuscatlan
+SV.05,La Libertad Department,la libertad department
+SV.06,La Paz Department,la paz department
+SV.07,La Union,la union
+SV.08,Morazan,morazan
+SV.09,San Miguel Department,san miguel department
+SV.10,San Salvador Department,san salvador department
+SV.11,Santa Ana Department,santa ana department
+SV.12,San Vicente Department,san vicente department
+SV.13,Sonsonate Department,sonsonate department
+SV.14,Usulutan,usulutan
+SY.01,Al-Hasakah,al hasakah
+SY.02,Latakia,latakia
+SY.03,Quneitra,quneitra
+SY.04,Raqqa,raqqa
+SY.05,Suwayda,suwayda
+SY.06,Daraa,daraa
+SY.07,Deir ez-Zor,deir ez zor
+SY.08,Rif-dimashq,rif dimashq
+SY.09,Aleppo,aleppo
+SY.10,Hama,hama
+SY.11,Homs,homs
+SY.12,Idlib,idlib
+SY.13,Damascus Governorate,damascus governorate
+SY.14,Tartus,tartus
+SZ.01,Hhohho Region,hhohho region
+SZ.02,Lubombo Region,lubombo region
+SZ.03,Manzini Region,manzini region
+SZ.04,Shiselweni,shiselweni
+TD.01,Batha,batha
+TD.02,Wadi Fira,wadi fira
+TD.05,Guéra,guera
+TD.06,Kanem,kanem
+TD.07,Lac,lac
+TD.08,Logone Occidental,logone occidental
+TD.09,Logone Oriental,logone oriental
+TD.12,Ouadaï,ouadai
+TD.13,Salamat,salamat
+TD.14,Tandjilé,tandjile
+TD.15,Chari-Baguirmi,chari baguirmi
+TD.16,Mayo-Kebbi Est,mayo kebbi est
+TD.17,Moyen-Chari,moyen chari
+TD.18,Hadjer-Lamis,hadjer lamis
+TD.19,Mandoul,mandoul
+TD.20,Mayo-Kebbi Ouest,mayo kebbi ouest
+TD.21,N’Djaména,ndjamena
+TD.22,Barh el Gazel,barh el gazel
+TD.23,Borkou,borkou
+TD.25,Sila,sila
+TD.26,Tibesti,tibesti
+TD.27,Ennedi-Est,ennedi est
+TD.28,Ennedi-Ouest,ennedi ouest
+TF.01,Saint-Paul-et-Amsterdam,saint paul et amsterdam
+TF.02,Crozet,crozet
+TF.03,Kerguelen,kerguelen
+TF.04,Terre-Adélie,terre adelie
+TF.05,Îles Éparses,iles eparses
+TG.22,Centrale,centrale
+TG.23,Kara,kara
+TG.24,Maritime,maritime
+TG.25,Plateaux,plateaux
+TG.26,Savanes,savanes
+TH.01,Mae Hong Son,mae hong son
+TH.02,Chiang Mai,chiang mai
+TH.03,Chiang Rai,chiang rai
+TH.04,Nan,nan
+TH.05,Lamphun,lamphun
+TH.06,Lampang,lampang
+TH.07,Phrae,phrae
+TH.08,Tak,tak
+TH.09,Sukhothai,sukhothai
+TH.10,Uttaradit,uttaradit
+TH.11,Kamphaeng Phet,kamphaeng phet
+TH.12,Phitsanulok,phitsanulok
+TH.13,Phichit,phichit
+TH.14,Phetchabun,phetchabun
+TH.15,Uthai Thani,uthai thani
+TH.16,Nakhon Sawan,nakhon sawan
+TH.17,Nong Khai,nong khai
+TH.18,Loei,loei
+TH.20,Sakon Nakhon,sakon nakhon
+TH.22,Khon Kaen,khon kaen
+TH.23,Kalasin,kalasin
+TH.24,Maha Sarakham,maha sarakham
+TH.25,Roi Et,roi et
+TH.26,Chaiyaphum,chaiyaphum
+TH.27,Nakhon Ratchasima,nakhon ratchasima
+TH.28,Buriram,buriram
+TH.29,Surin,surin
+TH.30,Si Sa Ket,si sa ket
+TH.31,Narathiwat,narathiwat
+TH.32,Chai Nat,chai nat
+TH.33,Sing Buri,sing buri
+TH.34,Lopburi,lopburi
+TH.35,Ang Thong,ang thong
+TH.36,Phra Nakhon Si Ayutthaya,phra nakhon si ayutthaya
+TH.37,Saraburi,saraburi
+TH.38,Nonthaburi,nonthaburi
+TH.39,Pathum Thani,pathum thani
+TH.40,Bangkok,bangkok
+TH.41,Phayao,phayao
+TH.42,Samut Prakan,samut prakan
+TH.43,Nakhon Nayok,nakhon nayok
+TH.44,Chachoengsao,chachoengsao
+TH.46,Chon Buri,chon buri
+TH.47,Rayong,rayong
+TH.48,Chanthaburi,chanthaburi
+TH.49,Trat,trat
+TH.50,Kanchanaburi,kanchanaburi
+TH.51,Suphan Buri,suphan buri
+TH.52,Ratchaburi,ratchaburi
+TH.53,Nakhon Pathom,nakhon pathom
+TH.54,Samut Songkhram,samut songkhram
+TH.55,Samut Sakhon,samut sakhon
+TH.56,Phetchaburi,phetchaburi
+TH.57,Prachuap Khiri Khan,prachuap khiri khan
+TH.58,Chumphon,chumphon
+TH.59,Ranong province,ranong province
+TH.60,Surat Thani,surat thani
+TH.61,Phang Nga,phang nga
+TH.62,Phuket,phuket
+TH.63,Krabi,krabi
+TH.64,Nakhon Si Thammarat,nakhon si thammarat
+TH.65,Trang,trang
+TH.66,Phatthalung,phatthalung
+TH.67,Satun,satun
+TH.68,Songkhla,songkhla
+TH.69,Pattani,pattani
+TH.70,Yala,yala
+TH.72,Yasothon,yasothon
+TH.73,Nakhon Phanom,nakhon phanom
+TH.74,Prachin Buri,prachin buri
+TH.75,Ubon Ratchathani,ubon ratchathani
+TH.76,Udon Thani,udon thani
+TH.77,Amnat Charoen,amnat charoen
+TH.78,Mukdahan,mukdahan
+TH.79,Nong Bua Lamphu,nong bua lamphu
+TH.80,Sa Kaeo,sa kaeo
+TH.81,Bueng Kan,bueng kan
+TJ.01,Gorno-Badakhshan,gorno badakhshan
+TJ.02,Khatlon Province,khatlon province
+TJ.03,Sughd,sughd
+TJ.04,Dushanbe,dushanbe
+TJ.RR,Republican Subordination,republican subordination
+TK.A,Atafu,atafu
+TK.F,Fakaofo,fakaofo
+TK.N,Nukunonu,nukunonu
+TL.AL,Aileu,aileu
+TL.AN,Ainaro,ainaro
+TL.BA,Baucau,baucau
+TL.BO,Bobonaro,bobonaro
+TL.CO,Cova Lima,cova lima
+TL.DI,Dili Municipality,dili municipality
+TL.ER,Ermera,ermera
+TL.LA,Lautém,lautem
+TL.LI,Liquiçá,liquica
+TL.MF,Manufahi,manufahi
+TL.MT,Manatuto,manatuto
+TL.OE,Oecusse,oecusse
+TL.VI,Viqueque,viqueque
+TM.01,Ahal,ahal
+TM.02,Balkan,balkan
+TM.03,Dasoguz,dasoguz
+TM.04,Lebap,lebap
+TM.05,Mary,mary
+TM.S,Ashgabat,ashgabat
+TN.02,Kasserine Governorate,kasserine governorate
+TN.03,Kairouan,kairouan
+TN.06,Jendouba Governorate,jendouba governorate
+TN.14,Kef Governorate,kef governorate
+TN.15,Mahdia Governorate,mahdia governorate
+TN.16,Monastir Governorate,monastir governorate
+TN.17,Béja Governorate,beja governorate
+TN.18,Bizerte Governorate,bizerte governorate
+TN.19,Nabeul Governorate,nabeul governorate
+TN.22,Siliana Governorate,siliana governorate
+TN.23,Sousse Governorate,sousse governorate
+TN.27,Ben Arous Governorate,ben arous governorate
+TN.28,Medenine Governorate,medenine governorate
+TN.29,Gabès Governorate,gabes governorate
+TN.30,Gafsa,gafsa
+TN.31,Kebili Governorate,kebili governorate
+TN.32,Sfax Governorate,sfax governorate
+TN.33,Sidi Bouzid Governorate,sidi bouzid governorate
+TN.34,Tataouine,tataouine
+TN.35,Tozeur Governorate,tozeur governorate
+TN.36,Tunis Governorate,tunis governorate
+TN.37,Zaghouan Governorate,zaghouan governorate
+TN.38,Ariana Governorate,ariana governorate
+TN.39,Manouba,manouba
+TO.01,Haapai,haapai
+TO.02,Tongatapu,tongatapu
+TO.03,Vavau,vavau
+TO.EU,ʻEua,eua
+TO.NI,Niuas,niuas
+TR.02,Adıyaman Province,adiyaman province
+TR.03,Afyonkarahisar Province,afyonkarahisar province
+TR.04,Ağrı,agri
+TR.05,Amasya,amasya
+TR.07,Antalya,antalya
+TR.08,Artvin,artvin
+TR.09,Aydın,aydin
+TR.10,Balıkesir,balikesir
+TR.11,Bilecik,bilecik
+TR.12,Bingöl,bingol
+TR.13,Bitlis,bitlis
+TR.14,Bolu,bolu
+TR.15,Burdur,burdur
+TR.16,Bursa Province,bursa province
+TR.17,Canakkale,canakkale
+TR.19,Çorum,corum
+TR.20,Denizli,denizli
+TR.21,Diyarbakır Province,diyarbakir province
+TR.22,Edirne,edirne
+TR.23,Elazığ,elazig
+TR.24,Erzincan,erzincan
+TR.25,Erzurum,erzurum
+TR.26,Eskişehir,eskisehir
+TR.28,Giresun,giresun
+TR.31,Hatay,hatay
+TR.32,Mersin,mersin
+TR.33,Isparta,isparta
+TR.34,Istanbul,istanbul
+TR.35,İzmir Province,izmir province
+TR.37,Kastamonu,kastamonu
+TR.38,Kayseri,kayseri
+TR.39,Kırklareli,kirklareli
+TR.40,Kırşehir,kirsehir
+TR.41,Kocaeli,kocaeli
+TR.43,Kütahya,kutahya
+TR.44,Malatya,malatya
+TR.45,Manisa,manisa
+TR.46,Kahramanmaraş,kahramanmaras
+TR.48,Muğla,mugla
+TR.49,Muş,mus
+TR.50,Nevşehir Province,nevsehir province
+TR.52,Ordu,ordu
+TR.53,Rize Province,rize province
+TR.54,Sakarya,sakarya
+TR.55,Samsun,samsun
+TR.57,Sinop,sinop
+TR.58,Sivas,sivas
+TR.59,Tekirdağ,tekirdag
+TR.60,Tokat Province,tokat province
+TR.61,Trabzon,trabzon
+TR.62,Tunceli,tunceli
+TR.63,Şanlıurfa,sanliurfa
+TR.64,Uşak,usak
+TR.65,Van,van
+TR.66,Yozgat,yozgat
+TR.68,Ankara,ankara
+TR.69,Gümüşhane Province,gumushane province
+TR.70,Hakkâri,hakkari
+TR.71,Konya,konya
+TR.72,Mardin,mardin
+TR.73,Niğde Province,nigde province
+TR.74,Siirt,siirt
+TR.75,Aksaray,aksaray
+TR.76,Batman,batman
+TR.77,Bayburt Province,bayburt province
+TR.78,Karaman,karaman
+TR.79,Kırıkkale,kirikkale
+TR.80,Şırnak,sirnak
+TR.81,Adana,adana
+TR.82,Çankırı,cankiri
+TR.83,Gaziantep,gaziantep
+TR.84,Kars Province,kars province
+TR.85,Zonguldak Province,zonguldak province
+TR.86,Ardahan,ardahan
+TR.87,Bartın,bartin
+TR.88,Iğdır,igdir
+TR.89,Karabük Province,karabuk province
+TR.90,Kilis,kilis
+TR.91,Osmaniye,osmaniye
+TR.92,Yalova,yalova
+TR.93,Düzce,duzce
+TT.01,Borough of Arima,borough of arima
+TT.03,Mayaro,mayaro
+TT.05,Port of Spain,port of spain
+TT.10,San Fernando,san fernando
+TT.11,Tobago,tobago
+TT.CHA,Chaguanas,chaguanas
+TT.CTT,Couva-Tabaquite-Talparo,couva tabaquite talparo
+TT.DMN,Diego Martin Regional Corporation,diego martin regional corporation
+TT.PED,Penal/Debe,penal/debe
+TT.PRT,Princes Town,princes town
+TT.PTF,Point Fortin,point fortin
+TT.SGE,Sangre Grande Regional Corporation,sangre grande regional corporation
+TT.SIP,Siparia Regional Corporation,siparia regional corporation
+TT.SJL,San Juan/Laventille,san juan/laventille
+TT.TUP,Tunapuna/Piarco,tunapuna/piarco
+TV.FUN,Funafuti,funafuti
+TV.NIT,Niutao,niutao
+TV.NKF,Nukufetau,nukufetau
+TV.NKL,Nukulaelae,nukulaelae
+TV.NMA,Nanumea,nanumea
+TV.NMG,Nanumanga,nanumanga
+TV.NUI,Nui,nui
+TV.VAI,Vaitupu,vaitupu
+TW.01,Fujian,fujian
+TW.02,Takao,takao
+TW.03,Taipei,taipei
+TW.04,Taiwan,taiwan
+TZ.02,Pwani,pwani
+TZ.03,Dodoma,dodoma
+TZ.04,Iringa,iringa
+TZ.05,Kigoma,kigoma
+TZ.06,Kilimanjaro,kilimanjaro
+TZ.07,Lindi,lindi
+TZ.08,Mara,mara
+TZ.09,Mbeya,mbeya
+TZ.10,Morogoro,morogoro
+TZ.11,Mtwara,mtwara
+TZ.12,Mwanza,mwanza
+TZ.13,Pemba North,pemba north
+TZ.14,Ruvuma,ruvuma
+TZ.15,Shinyanga,shinyanga
+TZ.16,Singida,singida
+TZ.17,Tabora,tabora
+TZ.18,Tanga,tanga
+TZ.19,Kagera,kagera
+TZ.20,Pemba South,pemba south
+TZ.21,Zanzibar Central/South,zanzibar central/south
+TZ.22,Zanzibar North,zanzibar north
+TZ.23,Dar es Salaam Region,dar es salaam region
+TZ.24,Rukwa,rukwa
+TZ.25,Zanzibar Urban/West,zanzibar urban/west
+TZ.26,Arusha,arusha
+TZ.27,Manyara,manyara
+TZ.28,Geita,geita
+TZ.29,Katavi,katavi
+TZ.30,Njombe,njombe
+TZ.31,Simiyu,simiyu
+TZ.32,Songwe,songwe
+UA.01,Cherkasy,cherkasy
+UA.02,Chernihiv Oblast,chernihiv oblast
+UA.03,Chernivtsi,chernivtsi
+UA.04,Dnipropetrovsk,dnipropetrovsk
+UA.05,Donetsk,donetsk
+UA.06,Ivano-Frankivsk,ivano frankivsk
+UA.07,Kharkiv,kharkiv
+UA.08,Kherson,kherson
+UA.09,Khmelnytskyi,khmelnytskyi
+UA.10,Kirovohrad,kirovohrad
+UA.11,Crimea,crimea
+UA.12,Kyiv City,kyiv city
+UA.13,Kyiv Oblast,kyiv oblast
+UA.14,Luhansk,luhansk
+UA.15,Lviv,lviv
+UA.16,Mykolaiv,mykolaiv
+UA.17,Odesa,odesa
+UA.18,Poltava,poltava
+UA.19,Rivne Oblast,rivne oblast
+UA.20,Sevastopol City,sevastopol city
+UA.21,Sumy,sumy
+UA.22,Ternopil,ternopil
+UA.23,Vinnytsia,vinnytsia
+UA.24,Volyn,volyn
+UA.25,Zakarpattia,zakarpattia
+UA.26,Zaporizhzhia,zaporizhzhia
+UA.27,Zhytomyr Oblast,zhytomyr oblast
+UG.C,Central Region,central region
+UG.E,Eastern Region,eastern region
+UG.N,Northern Region,northern region
+UG.W,Western Region,western region
+UM.050,Baker Island,baker island
+UM.100,Howland Island,howland island
+UM.150,Jarvis Island,jarvis island
+UM.200,Johnston Atoll,johnston atoll
+UM.250,Kingman Reef,kingman reef
+UM.300,Midway Islands,midway islands
+UM.350,Navassa Island,navassa island
+UM.400,Palmyra Atoll,palmyra atoll
+UM.450,Wake Island,wake island
+US.AK,Alaska,alaska
+US.AL,Alabama,alabama
+US.AR,Arkansas,arkansas
+US.AZ,Arizona,arizona
+US.CA,California,california
+US.CO,Colorado,colorado
+US.CT,Connecticut,connecticut
+US.DC,District of Columbia,district of columbia
+US.DE,Delaware,delaware
+US.FL,Florida,florida
+US.GA,Georgia,georgia
+US.HI,Hawaii,hawaii
+US.IA,Iowa,iowa
+US.ID,Idaho,idaho
+US.IL,Illinois,illinois
+US.IN,Indiana,indiana
+US.KS,Kansas,kansas
+US.KY,Kentucky,kentucky
+US.LA,Louisiana,louisiana
+US.MA,Massachusetts,massachusetts
+US.MD,Maryland,maryland
+US.ME,Maine,maine
+US.MI,Michigan,michigan
+US.MN,Minnesota,minnesota
+US.MO,Missouri,missouri
+US.MS,Mississippi,mississippi
+US.MT,Montana,montana
+US.NC,North Carolina,north carolina
+US.ND,North Dakota,north dakota
+US.NE,Nebraska,nebraska
+US.NH,New Hampshire,new hampshire
+US.NJ,New Jersey,new jersey
+US.NM,New Mexico,new mexico
+US.NV,Nevada,nevada
+US.NY,New York,new york
+US.OH,Ohio,ohio
+US.OK,Oklahoma,oklahoma
+US.OR,Oregon,oregon
+US.PA,Pennsylvania,pennsylvania
+US.RI,Rhode Island,rhode island
+US.SC,South Carolina,south carolina
+US.SD,South Dakota,south dakota
+US.TN,Tennessee,tennessee
+US.TX,Texas,texas
+US.UT,Utah,utah
+US.VA,Virginia,virginia
+US.VT,Vermont,vermont
+US.WA,Washington,washington
+US.WI,Wisconsin,wisconsin
+US.WV,West Virginia,west virginia
+US.WY,Wyoming,wyoming
+UY.01,Artigas,artigas
+UY.02,Canelones,canelones
+UY.03,Cerro Largo,cerro largo
+UY.04,Colonia,colonia
+UY.05,Durazno Department,durazno department
+UY.06,Flores Department,flores department
+UY.07,Florida,florida
+UY.08,Lavalleja,lavalleja
+UY.09,Maldonado,maldonado
+UY.10,Montevideo Department,montevideo department
+UY.11,Paysandú Department,paysandu department
+UY.12,Río Negro Department,rio negro department
+UY.13,Rivera Department,rivera department
+UY.14,Rocha Department,rocha department
+UY.15,Salto Department,salto department
+UY.16,San José Department,san jose department
+UY.17,Soriano,soriano
+UY.18,Tacuarembó Department,tacuarembo department
+UY.19,Treinta y Tres Department,treinta y tres department
+UZ.01,Andijan Region,andijan region
+UZ.02,Bukhara,bukhara
+UZ.03,Fergana,fergana
+UZ.05,Xorazm Region,xorazm region
+UZ.06,Namangan,namangan
+UZ.07,Navoiy Region,navoiy region
+UZ.08,Qashqadaryo,qashqadaryo
+UZ.09,Karakalpakstan,karakalpakstan
+UZ.10,Samarqand Region,samarqand region
+UZ.12,Surxondaryo Region,surxondaryo region
+UZ.13,Tashkent,tashkent
+UZ.14,Tashkent Region,tashkent region
+UZ.15,Jizzakh Region,jizzakh region
+UZ.16,Sirdaryo Region,sirdaryo region
+VC.01,Charlotte Parish,charlotte parish
+VC.02,Saint Andrew Parish,saint andrew parish
+VC.03,Saint David Parish,saint david parish
+VC.04,Saint George Parish,saint george parish
+VC.05,Saint Patrick Parish,saint patrick parish
+VC.06,Grenadines Parish,grenadines parish
+VE.01,Amazonas,amazonas
+VE.02,Anzoátegui,anzoategui
+VE.03,Apure,apure
+VE.04,Aragua,aragua
+VE.05,Barinas,barinas
+VE.06,Bolívar,bolivar
+VE.07,Carabobo,carabobo
+VE.08,Cojedes,cojedes
+VE.09,Delta Amacuro,delta amacuro
+VE.11,Falcón,falcon
+VE.12,Guárico,guarico
+VE.13,Lara,lara
+VE.14,Mérida,merida
+VE.15,Miranda,miranda
+VE.16,Monagas,monagas
+VE.17,Nueva Esparta,nueva esparta
+VE.18,Portuguesa,portuguesa
+VE.19,Sucre,sucre
+VE.20,Táchira,tachira
+VE.21,Trujillo,trujillo
+VE.22,Yaracuy,yaracuy
+VE.23,Zulia,zulia
+VE.24,Dependencias Federales,dependencias federales
+VE.25,Distrito Federal,distrito federal
+VE.26,Vargas,vargas
+VI.010,Saint Croix Island,saint croix island
+VI.020,Saint John Island,saint john island
+VI.030,Saint Thomas Island,saint thomas island
+VN.01,Hanoi,hanoi
+VN.04,Cao Bằng Province,cao bang province
+VN.08,Tuyen Quang,tuyen quang
+VN.11,Điện Biên Province,dien bien province
+VN.12,Lai Châu Province,lai chau province
+VN.14,Sơn La Province,son la province
+VN.15,Lao Cai,lao cai
+VN.19,Thai Nguyen,thai nguyen
+VN.20,Lạng Sơn Province,lang son province
+VN.22,Quảng Ninh,quang ninh
+VN.24,Bac Ninh,bac ninh
+VN.25,Phu Tho,phu tho
+VN.31,Hai Phong,hai phong
+VN.33,Hưng Yên Province,hung yen province
+VN.37,Ninh Binh,ninh binh
+VN.38,Thanh Hóa Province,thanh hoa province
+VN.40,Nghệ An Province,nghe an province
+VN.42,Hà Tĩnh Province,ha tinh province
+VN.44,Quang Tri,quang tri
+VN.46,Thừa Thiên Huế Province,thua thien hue province
+VN.48,Da Nang City,da nang city
+VN.51,Quang Ngai,quang ngai
+VN.52,Gia Lai,gia lai
+VN.56,Khanh Hoa,khanh hoa
+VN.66,Dak Lak,dak lak
+VN.68,Lam Dong,lam dong
+VN.75,Dong Nai,dong nai
+VN.79,Ho Chi Minh City (HCMC),ho chi minh city (hcmc)
+VN.80,Tay Ninh,tay ninh
+VN.82,Dong Thap,dong thap
+VN.86,Vinh Long,vinh long
+VN.91,An Giang,an giang
+VN.92,Can Tho City,can tho city
+VN.96,Ca Mau,ca mau
+VU.07,Torba,torba
+VU.13,Sanma,sanma
+VU.15,Tafea,tafea
+VU.16,Malampa,malampa
+VU.17,Penama,penama
+VU.18,Shefa,shefa
+WF.98611,Alo,alo
+WF.98612,Sigave,sigave
+WF.98613,Uvea,uvea
+WS.01,A'ana,aana
+WS.02,Aiga-i-le-Tai,aiga i le tai
+WS.03,Atua,atua
+WS.04,Fa'asaleleaga,faasaleleaga
+WS.05,Gaga'emauga,gagaemauga
+WS.06,Va'a-o-Fonoti,vaa o fonoti
+WS.07,Gaga'ifomauga,gagaifomauga
+WS.08,Palauli,palauli
+WS.09,Satupa'itea,satupaitea
+WS.10,Tuamasaga,tuamasaga
+WS.11,Vaisigano,vaisigano
+XK.10096138,Ferizaj,ferizaj
+XK.10096859,Gjakova,gjakova
+XK.10097357,Gjilan,gjilan
+XK.10097358,Mitrovica,mitrovica
+XK.10097359,Pec,pec
+XK.10097360,Pristina,pristina
+XK.10097361,Prizren,prizren
+YE.01,Abyan Governorate,abyan governorate
+YE.02,Aden,aden
+YE.03,Al Mahrah Governorate,al mahrah governorate
+YE.04,Muhafazat Hadramaout,muhafazat hadramaout
+YE.05,Shabwah,shabwah
+YE.08,Al Hudaydah,al hudaydah
+YE.10,Al Mahwit Governorate,al mahwit governorate
+YE.11,Dhamār,dhamar
+YE.14,Ma’rib,marib
+YE.15,Şa‘dah,sadah
+YE.16,Sanaa Governorate,sanaa governorate
+YE.18,Aḑ Ḑāli‘,ad dali
+YE.19,Omran,omran
+YE.20,Al Bayda,al bayda
+YE.21,Al Jawf,al jawf
+YE.22,Ḩajjah,hajjah
+YE.23,Ibb Governorate,ibb governorate
+YE.24,Laḩij,lahij
+YE.25,Ta‘izz,taizz
+YE.26,Amanat Alasimah,amanat alasimah
+YE.27,Raymah,raymah
+YE.28,Soqatra,soqatra
+YT.97601,Acoua,acoua
+YT.97602,Bandraboua,bandraboua
+YT.97603,Bandrele,bandrele
+YT.97604,Bouéni,boueni
+YT.97605,Chiconi,chiconi
+YT.97606,Chirongui,chirongui
+YT.97607,Dembeni,dembeni
+YT.97608,Dzaoudzi,dzaoudzi
+YT.97609,Kani-Kéli,kani keli
+YT.97610,Koungou,koungou
+YT.97611,Mamoudzou,mamoudzou
+YT.97612,Mtsamboro,mtsamboro
+YT.97613,M'Tsangamouji,mtsangamouji
+YT.97614,Ouangani,ouangani
+YT.97615,Pamandzi,pamandzi
+YT.97616,Sada,sada
+YT.97617,Tsingoni,tsingoni
+ZA.02,KwaZulu-Natal,kwazulu natal
+ZA.03,Free State,free state
+ZA.05,Eastern Cape,eastern cape
+ZA.06,Gauteng,gauteng
+ZA.07,Mpumalanga,mpumalanga
+ZA.08,Northern Cape,northern cape
+ZA.09,Limpopo,limpopo
+ZA.10,North West,north west
+ZA.11,Western Cape,western cape
+ZM.01,Western Province,western province
+ZM.02,Central Province,central province
+ZM.03,Eastern Province,eastern province
+ZM.04,Luapula Province,luapula province
+ZM.05,Northern Province,northern province
+ZM.06,North-Western,north western
+ZM.07,Southern Province,southern province
+ZM.08,Copperbelt,copperbelt
+ZM.09,Lusaka Province,lusaka province
+ZM.10,Muchinga,muchinga
+ZW.01,Manicaland,manicaland
+ZW.02,Midlands Province,midlands province
+ZW.03,Mashonaland Central,mashonaland central
+ZW.04,Mashonaland East Province,mashonaland east province
+ZW.05,Mashonaland West,mashonaland west
+ZW.06,Matabeleland North,matabeleland north
+ZW.07,Matabeleland South Province,matabeleland south province
+ZW.08,Masvingo Province,masvingo province
+ZW.09,Bulawayo,bulawayo
+ZW.10,Harare,harare

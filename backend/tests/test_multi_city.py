@@ -165,7 +165,7 @@ class TestCityIataLookup:
     def test_unknown_city_returns_none(self, client):
         from app.db.database import lookup_city_iata
 
-        assert lookup_city_iata("Atlantis") is None
+        assert lookup_city_iata("Xyzzyville") is None
         assert lookup_city_iata("") is None
 
 

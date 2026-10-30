@@ -188,7 +188,7 @@ def test_common_variants_resolve(destination, country):
     [
         # "india" is a substring of "indiana(polis)"
         ("Indianapolis, United States", "usa"),
-        ("Indiana", None),
+        ("Indiana", "usa"),  # Task 3: a US town / state, never india
         # "uk" is a substring of "ukraine" / "phuket"
         ("Kiev, Ukraine", None),
         ("Ukraine", None),
@@ -203,7 +203,7 @@ def test_common_variants_resolve(destination, country):
         # destination text that is merely a substring of a key
         ("a", None),
         ("Ind", None),
-        ("Can", None),
+        ("Can", "turkey"),  # Task 3: Çan, Turkey, by its own name
         ("Port of Spain, Trinidad and Tobago", None),
     ],
 )
@@ -244,7 +244,8 @@ def test_visa_nationality_no_substring_match(nationality):
 def test_visa_row_helper_matches_get_static_visa():
     """Discovery's visa override uses the same exact lookup."""
     assert s.find_visa_row("Indian", "Kyoto") is s._VISA_TABLE[("indian", "japan")]
-    assert s.find_visa_row("Indian", "Indianapolis") is None
+    # Task 3: Indianapolis is a real US city (no "india" substring match)
+    assert s.find_visa_row("Indian", "Indianapolis") is s._VISA_TABLE[("indian", "usa")]
     assert s.find_visa_row("American Samoan", "Japan") is None
 
 
@@ -374,7 +375,7 @@ def test_static_forex_busan_is_not_usd():
         ("Hiroshima, JP", "japan"),
         ("Austin, TX", "usa"),
         ("Smalltown, CO", None),
-        ("Leipzig, DE", None),
+        ("Leipzig, DE", "germany"),  # Task 3: the place data knows Leipzig
         ("Leipzig, Germany", "germany"),
         ("Nowhere, ZZ", None),
         ("Paris, US", None),  # US reads as the USA, the city map says France
@@ -383,8 +384,8 @@ def test_static_forex_busan_is_not_usd():
         ("Seattle, WA", "usa"),
         ("Toronto, ON", "canada"),
         ("Fremantle, WA", None),  # Washington or Western Australia
-        ("Charlottetown, PE", None),  # Peru, PEI or Pernambuco
-        ("St. John's, NL", None),  # Netherlands or Newfoundland
+        ("Charlottetown, PE", "canada"),  # Task 3: PEI per the place data
+        ("St. John's, NL", "canada"),  # Task 3: Newfoundland per the place data
         ("Belém, PA", "brazil"),
         ("Florianópolis, SC", "brazil"),
         ("Smalltown, PA", None),  # Pennsylvania or Pará
@@ -452,3 +453,47 @@ def test_accent_and_alias_spellings_resolve_country(destination, country):
 )
 def test_full_region_names_and_saint_spellings_resolve_country(destination, country):
     assert s._place_country(destination) == country
+
+
+# ── Task 3: any city's country from the place data ──────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("destination", "country"),
+    [
+        ("St Petersburg", "russia"),
+        ("Zermatt", "switzerland"),
+        ("Ubud", "indonesia"),
+        ("Hallstatt", "austria"),
+        ("Kyoto", "japan"),
+        ("Interlaken", "switzerland"),
+        ("Venice", "italy"),
+        ("Chamonix", "france"),
+        ("Zermatt, Valais", "switzerland"),
+        ("ZRH — Zermatt, Switzerland", "switzerland"),
+        ("Leipzig, DE", "germany"),  # Germany, not Delaware: no Leipzig there
+        ("Charlottetown, PE", "canada"),
+        ("St. John's, NL", "canada"),
+        ("Denver, CO", "usa"),
+        # rulings that hold
+        ("Paris, Texas", None),
+        ("Paris, TX", None),
+        ("Tbilisi, Georgia", None),  # Georgia (the country) has no table row
+        ("Smalltown, CO", None),
+        ("Smalltown, PA", None),
+        ("Xyzzyville", None),
+    ],
+)
+def test_unknown_cities_learn_their_country_from_place_data(destination, country):
+    assert s._place_country(destination) == country
+
+
+def test_place_country_fallback_skips_known_city_rulings(monkeypatch):
+    """A city the curated map knows never reaches the place data."""
+    calls = []
+    monkeypatch.setattr(
+        "app.db.places_db.resolve_place", lambda *a, **k: calls.append(a)
+    )
+    assert s._place_country("Paris, TX") is None
+    assert s._place_country("Paris") == "france"
+    assert calls == []

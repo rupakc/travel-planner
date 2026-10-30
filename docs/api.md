@@ -599,7 +599,7 @@ Ingests batched client-side usage events (up to 50 per call). Returns `204`.
 
 | Endpoint | Returns |
 |---|---|
-| `GET /api/airports?q=` | Airport/city typeahead search |
+| `GET /api/airports/search?q=` | Airport/place typeahead search (see API-Reference.md) |
 | `GET /api/nationalities?q=` | Nationality typeahead search |
 
 ## Health

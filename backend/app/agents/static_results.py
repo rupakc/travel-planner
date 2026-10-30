@@ -7,13 +7,14 @@ provide enhanced, web-searched results.
 """
 
 import functools
-import re
 
 from ..core.places import (
     _REGION_CODES,
     _REGION_NAMES,
     _US_STATES,
     CITY_ALIASES,
+    CODE_PREFIX_RE,
+    COUNTRY_ALIASES,
     fold_place,
     saint_variants,
 )
@@ -1343,7 +1344,13 @@ _REGION_COUNTRY: dict[str, str] = {
     **{name: "usa" for name in _US_STATES.values()},
     # Full US / Canadian / Australian / Brazilian state and province names
     **{
-        name: {"US": "usa", "CA": "canada", "AU": "australia", "BR": "brazil"}[cc]
+        name: {
+            "US": "usa",
+            "CA": "canada",
+            "AU": "australia",
+            "BR": "brazil",
+            "IN": "india",
+        }[cc]
         for name, (_, cc) in _REGION_NAMES.items()
     },
     "us": "usa",
@@ -1396,21 +1403,13 @@ def _code_readings(code: str) -> set[str]:
     return readings
 
 
-# Other names for a table country key. Lookups compare whole names only.
+# Other names for a table country key, from the shared alias map ("england",
+# "holland", "turkiye"). Lookups compare whole names only.
 _COUNTRY_ALIASES: dict[str, str] = {
-    "united kingdom": "uk",
-    "england": "uk",
-    "great britain": "uk",
-    "united states": "usa",
-    "united states of america": "usa",
-    "united arab emirates": "uae",
-    "republic of korea": "south korea",
-    "korea": "south korea",
-    "czech republic": "czechia",
+    name: _ISO_COUNTRY[iso.lower()]
+    for name, iso in COUNTRY_ALIASES.items()
+    if iso.lower() in _ISO_COUNTRY and _ISO_COUNTRY[iso.lower()] != name
 }
-
-# "BCN — Barcelona, Spain" (the UI's airport label) → "Barcelona, Spain"
-_IATA_PREFIX_RE = re.compile(r"^\s*[A-Za-z]{3}\s*(?:[—–]|\s-)\s*")
 
 
 def _clean_place(text: str) -> str:
@@ -1483,7 +1482,7 @@ def normalise_place(destination: str) -> dict:
     country None. Country names are returned as table keys ("United
     Kingdom" → "uk"). ``tokens`` holds every whole word and phrase.
     """
-    text = _IATA_PREFIX_RE.sub("", destination or "", count=1)
+    text = CODE_PREFIX_RE.sub("", destination or "", count=1)
     segments = [seg for seg in (_clean_place(s) for s in text.split(",")) if seg]
     tokens = {phrase for seg in segments for phrase in _word_phrases(seg)}
     if not segments:
@@ -1506,8 +1505,13 @@ def _place_country(destination: str) -> str | None:
     ES").
     An unknown city with a code takes its country only when the code has a
     single reading across ISO and region codes ("Trondheim, NO", "Austin,
-    TX"; not "Leipzig, DE" or "Smalltown, PA"). Otherwise a single
+    TX"; not "Smalltown, PA"). Otherwise a single
     "<city> <country>" phrase like "Tokyo Japan". Never substring matching.
+
+    A city the map doesn't know first takes the country of the place it
+    resolves to in the GeoNames data (``places_db.resolve_place``: "Zermatt"
+    → switzerland, "Leipzig, DE" → germany), when the tables have that
+    country; a known city's rulings ("Paris, TX" → None) never get there.
     """
     place = normalise_place(destination)
     country, city = place["country"], place["city"]
@@ -1527,6 +1531,14 @@ def _place_country(destination: str) -> str | None:
         if country in _ISO_COUNTRY and country not in _US_STATES:
             return _ISO_COUNTRY[country]
         return None
+    if city:
+        # A city the curated map doesn't know: its country from the place
+        # data ("Zermatt", "Leipzig, DE"), when that country has table rows
+        from ..db.places_db import resolve_place
+
+        resolved = resolve_place(destination)
+        if resolved:
+            return _ISO_COUNTRY.get(resolved.country_code.lower())
     if city and country:
         # Unknown city: a full Canadian / Australian / Brazilian state or
         # province name ("Victoria, British Columbia"; US state names stay

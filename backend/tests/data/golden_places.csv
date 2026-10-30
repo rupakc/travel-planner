@@ -1,0 +1,694 @@
+query,expected_airports,match,expected_country,scope,display_city
+Verona,VRN,first,IT,data,Verona
+Fort Lauderdale,FLL,first,US,data,Fort Lauderdale
+Cozumel,CZM,first,MX,data,Cozumel
+Treviso,TSF,first,IT,data,Treviso
+Brest,BES,first,FR,data,Brest
+Zakynthos,ZTH,first,GR,data,Zakynthos
+Kisumu,KIS,first,KE,data,Kisumu
+Burbank,BUR,first,US,data,Burbank
+Ontario,ONT,first,US,data,Ontario
+Nevşehir,NAV,first,TR,data,Nevşehir
+Yiwu,YIW,first,CN,data,Yiwu
+Bol,BWK,first,HR,data,Bol
+Miyake,MYE,first,JP,data,Miyake
+Weifang,WEF,first,CN,data,
+Jammu,IXJ,first,IN,data,
+Nagano,MMJ,first,JP,data,
+Kinshasa,FIH,first,CD,data,Kinshasa
+Detroit,DTW,first,US,data,Detroit
+Liège,LGG,first,BE,data,
+Zhuhai,ZUH,first,CN,data,Zhuhai
+Moscow,SVO DME VKO,subset,RU,data,Moscow
+Doha,DOH,first,QA,data,Doha
+Colombo,CMB,first,LK,data,Colombo
+Kuala Lumpur,KUL,first,MY,data,Kuala Lumpur
+Basel,BSL,first,CH,data,Basel
+Brindisi,BDS,first,IT,data,Brindisi
+Beauvais,BVA,first,FR,data,Beauvais
+Figari,FSC,first,FR,data,Figari
+Friedrichshafen,FDH,first,DE,data,Friedrichshafen
+Memmingen,FMM,first,DE,data,Memmingen
+Paderborn,PAD,first,DE,data,Paderborn
+Karlovy Vary,KLV,first,CZ,data,Karlovy Vary
+Ostend,OST,first,BE,data,Ostend
+Ohrid,OHD,first,MK,data,Ohrid
+Pardubice,PED,first,CZ,data,Pardubice
+Kiruna,KRN,first,SE,data,Kiruna
+Vaasa,VAA,first,FI,data,Vaasa
+Sandefjord,TRF,first,NO,data,Sandefjord
+Mineralnye Vody,MRV,first,RU,data,Mineralnye Vody
+Palm Springs,PSP,first,US,data,Palm Springs
+San Bernardino,SBD,first,US,data,San Bernardino
+Sarasota,SRQ,first,US,data,
+Tulum,TQO,first,MX,data,
+Veracruz,VER,first,MX,data,Veracruz
+Tirupati,TIR,first,IN,data,Tirupati
+Cheongju-si,CJJ,first,KR,data,Cheongju
+Lianyungang,LYG,first,CN,data,Lianyungang
+Kolhāpur,KLH,first,IN,data,Kolhāpur
+Bellingham,BLI,first,US,data,Bellingham
+Carlsbad,CLD,first,US,data,Carlsbad
+Abbotsford,YXX,first,CA,data,Abbotsford
+Pueblo,PUB,first,US,data,Pueblo
+Lampang,LPT,first,TH,data,Lampang
+Toyama,TOY,first,JP,data,
+Kanpur,KNU,first,IN,data,
+Santa Marta,SMR,first,CO,data,
+Arusha,ARK JRO,first,TZ,data,
+Pietermaritzburg,PZB,first,ZA,data,
+Gwangju,KWJ,first,KR,data,
+Foshan,FUO CAN,first,CN,data,
+Plymouth,EXT NQY,first,GB,data,
+Zaozhuang,LYI,first,CN,data,
+Singapore,SIN,first,SG,data,Singapore
+Jerusalem,TLV,first,IL,data,
+Saarbrücken,SCN,first,DE,data,Saarbrücken
+Osaka,ITM KIX,subset,JP,data,Osaka
+Chicago,ORD MDW,subset,US,data,Chicago
+Lisbon,LIS,first,PT,data,Lisbon
+Rhodes,RHO,first,GR,data,Rhodes
+London,LHR LGW,subset,GB,data,London
+Paris,CDG ORY,subset,FR,data,Paris
+New York City,JFK LGA EWR,subset,US,data,
+Tokyo,HND NRT,subset,JP,data,Tokyo
+Milan,MXP LIN,subset,IT,data,Milan
+Rome,FCO CIA,subset,IT,data,Rome
+Madrid,MAD,first,ES,data,Madrid
+Barcelona,BCN,first,ES,data,Barcelona
+Berlin,BER,first,DE,data,Berlin
+Munich,MUC,first,DE,data,Munich
+Frankfurt am Main,FRA,exact,DE,data,
+Amsterdam,AMS,first,NL,data,Amsterdam
+Brussels,BRU,first,BE,data,Brussels
+Vienna,VIE,first,AT,data,Vienna
+Zurich,ZRH,first,CH,data,Zurich
+Geneva,GVA,first,CH,data,Geneva
+Prague,PRG,first,CZ,data,Prague
+Budapest,BUD,first,HU,data,Budapest
+Warsaw,WAW,first,PL,data,Warsaw
+Kraków,KRK,first,PL,data,
+Copenhagen,CPH,first,DK,data,Copenhagen
+Stockholm,ARN,first,SE,data,Stockholm
+Oslo,OSL,first,NO,data,Oslo
+Helsinki,HEL,first,FI,data,Helsinki
+Reykjavík,KEF RKV,first,IS,data,
+Dublin,DUB,first,IE,data,Dublin
+Edinburgh,EDI,first,GB,data,Edinburgh
+Manchester,MAN,first,GB,data,Manchester
+Athens,ATH,first,GR,data,Athens
+Istanbul,IST SAW,subset,TR,data,Istanbul
+Antalya,AYT,first,TR,data,Antalya
+Dubrovnik,DBV,first,HR,data,Dubrovnik
+Split,SPU,first,HR,data,Split
+Venice,VCE,first,IT,data,Venice
+Florence,FLR,first,IT,data,Florence
+Naples,NAP,first,IT,data,Naples
+Nice,NCE,first,FR,data,Nice
+Porto,OPO,first,PT,data,Porto
+Sevilla,SVQ,first,ES,data,
+Málaga,AGP,first,ES,data,
+Zermatt,BRN LUG GVA ZRH,first,CH,data,
+Interlaken,BRN ZRH,first,CH,data,
+Chamonix,GVA,first,FR,task3,
+Hallstatt,SZG LNZ,first,AT,task3,
+New York,JFK LGA EWR,subset,US,task3,
+Los Angeles,LAX,first,US,data,Los Angeles
+San Francisco,SFO,first,US,data,San Francisco
+Seattle,SEA,first,US,data,Seattle
+Las Vegas,LAS,first,US,data,Las Vegas
+Miami,MIA,first,US,data,Miami
+Orlando,MCO,first,US,data,Orlando
+Boston,BOS,first,US,data,Boston
+Washington,IAD DCA,first,US,task3,
+Atlanta,ATL,first,US,data,Atlanta
+Denver,DEN,first,US,data,Denver
+Honolulu,HNL,first,US,data,Honolulu
+New Orleans,MSY,first,US,data,New Orleans
+Nashville,BNA,first,US,data,Nashville
+Toronto,YYZ,first,CA,data,Toronto
+Vancouver,YVR,first,CA,data,Vancouver
+Montreal,YUL,first,CA,task3,
+Québec,YQB,first,CA,data,
+Banff,YYC,first,CA,data,
+Mexico City,MEX,first,MX,data,Mexico City
+Cancún,CUN,first,MX,data,
+Cancun,CUN,first,MX,task3,
+Oaxaca,OAX,first,MX,task3,
+Havana,HAV,first,CU,data,Havana
+San Juan,SJU,first,PR,data,
+Panama City,PTY,first,PA,task3,
+San José,SJO,first,CR,data,
+Bogotá,BOG,first,CO,data,
+Cartagena,CTG,first,CO,data,Cartagena
+Medellín,MDE EOH,first,CO,data,
+Lima,LIM,first,PE,data,Lima
+Cusco,CUZ,first,PE,data,
+Quito,UIO,first,EC,data,Quito
+Santiago,SCL,first,CL,data,Santiago
+Buenos Aires,EZE AEP,subset,AR,data,Buenos Aires
+Rio de Janeiro,GIG SDU,subset,BR,data,Rio de Janeiro
+São Paulo,GRU CGH,subset,BR,data,
+Salvador,SSA,first,BR,data,Salvador
+Montevideo,MVD,first,UY,data,Montevideo
+La Paz,LPB,first,BO,data,La Paz
+Cairo,CAI,first,EG,data,Cairo
+Marrakesh,RAK,first,MA,data,
+Casablanca,CMN,first,MA,data,Casablanca
+Tunis,TUN,first,TN,data,Tunis
+Nairobi,NBO,first,KE,data,Nairobi
+Addis Ababa,ADD,first,ET,data,Addis Ababa
+Lagos,LOS,first,NG,data,Lagos
+Accra,ACC,first,GH,data,Accra
+Dakar,DSS,first,SN,data,Dakar
+Johannesburg,JNB,first,ZA,data,Johannesburg
+Cape Town,CPT,first,ZA,data,Cape Town
+Durban,DUR,first,ZA,data,Durban
+Kigali,KGL,first,RW,data,Kigali
+Dar es Salaam,DAR,first,TZ,data,
+Zanzibar,ZNZ,first,TZ,data,
+Victoria Falls,VFA,first,ZW,data,
+Windhoek,WDH,first,NA,data,
+Antananarivo,TNR,first,MG,data,
+Port Louis,MRU,first,MU,data,
+Dubai,DXB,first,AE,data,Dubai
+Abu Dhabi,AUH,first,AE,data,Abu Dhabi
+Muscat,MCT,first,OM,data,Muscat
+Riyadh,RUH,first,SA,data,Riyadh
+Amman,AMM,first,JO,data,Amman
+Tel Aviv,TLV,first,IL,data,Tel Aviv
+Beirut,BEY,first,LB,data,Beirut
+Tehran,IKA THR,subset,IR,data,
+Delhi,DEL,first,IN,data,
+Mumbai,BOM,first,IN,data,Mumbai
+Bengaluru,BLR,first,IN,data,
+Chennai,MAA,first,IN,data,Chennai
+Kolkata,CCU,first,IN,data,Kolkata
+Jaipur,JAI,first,IN,data,Jaipur
+Agra,AGR,first,IN,data,
+Kathmandu,KTM,first,NP,data,Kathmandu
+Malé,MLE,first,MV,data,
+Bangkok,BKK DMK,subset,TH,data,Bangkok
+Chiang Mai,CNX,first,TH,data,Chiang Mai
+Phuket,HKT,first,TH,data,Phuket
+Hanoi,HAN,first,VN,data,Hanoi
+Ho Chi Minh City,SGN,first,VN,data,Ho Chi Minh City
+Da Nang,DAD,first,VN,data,
+Phnom Penh,KTI,first,KH,data,Phnom Penh
+Siem Reap,SAI,first,KH,data,Siem Reap
+Vientiane,VTE,first,LA,data,
+Yangon,RGN,first,MM,data,Yangon
+Manila,MNL,first,PH,data,Manila
+Cebu City,CEB,first,PH,data,
+Jakarta,CGK,first,ID,data,Jakarta
+Denpasar,DPS,first,ID,data,
+Ubud,DPS,first,ID,data,Bali
+Yogyakarta,YIA JOG,first,ID,data,
+Beijing,PEK PKX,subset,CN,data,Beijing
+Shanghai,PVG SHA,subset,CN,data,Shanghai
+Guangzhou,CAN,first,CN,data,Guangzhou
+Shenzhen,SZX,first,CN,data,Shenzhen
+Chengdu,TFU CTU,subset,CN,data,Chengdu
+Xi’an,XIY,first,CN,data,
+Guilin,KWL,first,CN,data,
+Hong Kong,HKG,first,HK,data,Hong Kong
+Macau,MFM,first,MO,data,
+Taipei,TPE TSA,subset,TW,data,Taipei
+Seoul,ICN GMP,subset,KR,data,Seoul
+Busan,PUS,first,KR,data,Busan
+Kyoto,ITM KIX UKB,first,JP,data,
+Sapporo,CTS OKD,first,JP,data,Sapporo
+Fukuoka,FUK,first,JP,data,Fukuoka
+Naha,OKA,first,JP,data,
+Ulan Bator,UBN,first,MN,data,Ulaanbaatar
+Almaty,ALA,first,KZ,data,Almaty
+Tashkent,TAS,first,UZ,data,Tashkent
+Samarkand,SKD,first,UZ,data,
+Tbilisi,TBS,first,GE,data,Tbilisi
+Yerevan,EVN,first,AM,data,Yerevan
+Baku,GYD,first,AZ,data,Baku
+Bishkek,BSZ,first,KG,data,Bishkek
+Chisinau,RMO,first,MD,data,Chisinau
+Tripoli,MJI,first,LY,data,Tripoli
+Freetown,FNA,first,SL,data,Freetown
+Sydney,SYD,first,AU,data,Sydney
+Melbourne,MEL AVV,first,AU,data,Melbourne
+Brisbane,BNE,first,AU,data,Brisbane
+Perth,PER,first,AU,data,Perth
+Cairns,CNS,first,AU,data,Cairns
+Hobart,HBA,first,AU,data,Hobart
+Auckland,AKL,first,NZ,data,Auckland
+Queenstown,ZQN,first,NZ,data,Queenstown
+Christchurch,CHC,first,NZ,data,Christchurch
+Nadi,NAN,first,FJ,data,Nadi
+Papeete,PPT,first,PF,data,
+Saint-Denis,RUN,first,RE,data,Saint-Denis
+Yaoundé,NSI,first,CM,data,
+Maseru,MSU,first,LS,data,Maseru
+Eilat,ETM,first,IL,data,Eilat
+Mykonos,JMK,first,GR,data,Mykonos
+Newcastle upon Tyne,NCL,first,GB,data,
+Cologne,CGN,first,DE,task3,
+Bruges,OST BRU,first,BE,task3,
+Mecca,JED,first,SA,task3,
+Odessa,,none,UA,task3,
+Nara,ITM KIX,first,JP,task3,
+Venice,VCE TSF,subset,IT,task3,
+Bali,DPS,first,ID,task3,
+Crete,HER CHQ,first,GR,task3,
+Santorini,JTR,first,GR,task3,
+"Paris, Texas",TYR DFW DAL,first,US,task3,
+Portland,PDX,first,US,task3,
+"Portland, ME",PWM,first,US,task3,
+Valencia,,none,,task3,
+Springfield,,none,,task3,
+St Petersburg,LED,first,RU,task3,
+León,BJX,first,MX,task3,
+Queenstown,ZQN,first,NZ,task3,
+Calcutta,CCU,first,IN,task3,
+Madras,MAA,first,IN,task3,
+Galápagos,GPS SCY,first,EC,task3,
+Tenerife,TFS TFN,first,ES,task3,
+Mallorca,PMI,first,ES,task3,
+Majorca,PMI,first,ES,task3,
+Sicily,CTA PMO,first,IT,task3,
+Sardinia,CAG OLB AHO,first,IT,task3,
+Corsica,AJA BIA,first,FR,task3,
+Maui,OGG,first,US,task3,
+Oahu,HNL,first,US,task3,
+Big Island,KOA ITO,first,US,task3,
+Bora Bora,BOB,first,PF,task3,
+Tahiti,PPT,first,PF,task3,
+Langkawi,LGK,first,MY,task3,
+Koh Samui,USM,first,TH,task3,
+Madeira,FNC,first,PT,task3,
+Lanzarote,ACE,first,ES,task3,
+Gran Canaria,LPA,first,ES,task3,
+Cappadocia,NAV ASR,first,TR,task3,
+"Munich, Bavaria",MUC,first,DE,task3,
+"London, Ontario",YXU,first,CA,task3,
+"Sydney, Nova Scotia",YQY,first,CA,task3,
+Birmingham,BHX,first,GB,task3,
+"Birmingham, AL",BHM,first,US,task3,
+San Jose,,none,,task3,
+"Kansas City, KS",MCI,first,US,task3,
+"Perth, WA",PER,first,AU,task3,
+Bombay,BOM,first,IN,task3,
+Saigon,SGN,first,VN,task3,
+München,MUC,first,DE,task3,
+Lisboa,LIS,first,PT,task3,
+"Toronto, CA",YYZ,first,CA,task3,
+Frankfurt,FRA,exact,DE,task3,
+Zermatt,BRN LUG GVA ZRH,first,CH,task3,
+Bareilly,BEK,first,IN,data,Bareilly
+Broomfield,BJC,first,US,data,Broomfield
+Houmt Souk,DJE,first,TN,data,Djerba
+Lhasa,LXA,first,CN,data,Lhasa
+Melbourne,MEL AVV,subset,AU,data,Melbourne
+Mexico City,MEX NLU,subset,MX,data,Mexico City
+Noida,DXN DEL,subset,IN,data,Noida
+Qeshm,GSM,first,IR,data,Qeshm
+Sydney,SYD WSI,subset,AU,data,Sydney
+Tehran,THR IKA,subset,IR,data,Tehran
+Xigazê,RKZ,first,CN,data,Shigatse
+Yantai,YNT,first,CN,data,Yantai
+Qui Nhon,UIH,first,VN,data,Qui Nhon
+San Salvador,SAL ILS,subset,SV,data,San Salvador
+Ilopango,ILS,first,SV,data,Ilopango
+Shigatse,RKZ,first,CN,task3,Shigatse
+Djerba,DJE,first,TN,task3,Djerba
+Kyoto,ITM KIX,subset,JP,data,
+Osaka,ITM KIX UKB,exact,JP,data,Osaka
+London,LHR LCY,subset,GB,data,London
+Paris,ORY CDG,subset,FR,data,Paris
+Tottori-shi,TTJ,first,JP,data,Tottori
+Wenquan,YIE,first,CN,data,Arxan
+Duba,NUM,first,SA,data,Neom
+Arxan,YIE,first,CN,task3,Arxan
+Kiritimati,CXI,first,KI,task3,Kiritimati
+London Village,CXI,first,KI,data,Kiritimati
+Milan,MXP,subset,IT,task3,
+Milano,MXP,subset,IT,task3,
+Brussels,BRU,first,BE,task3,
+Caracas,CCS,first,VE,task3,
+Paris,CDG,first,FR,task3,
+London,LHR LGW STN,exact,GB,task3,
+Tokyo,HND NRT,first,JP,task3,
+Kyoto,KIX ITM,first,JP,task3,
+Ubud,DPS,first,ID,task3,
+Interlaken,ZRH BRN GVA,first,CH,task3,
+Phnom Penh,KTI,first,KH,task3,
+Siem Reap,SAI,first,KH,task3,
+Chisinau,RMO,first,MD,task3,
+Chișinău,RMO,first,MD,task3,
+"London, ON",YXU,first,CA,task3,
+"Valencia, Spain",VLC,first,ES,task3,
+"Springfield, IL",SPI,first,US,task3,
+"Interlaken, Switzerland",ZRH BRN GVA,first,CH,task3,
+"Seattle, WA",SEA,first,US,task3,
+St Louis,STL,first,US,task3,
+"LGW — London, United Kingdom",LGW,exact,GB,task3,
+Basel,BSL,first,CH,task3,
+"Basel, Switzerland",BSL,first,CH,task3,
+"Basel, CH",BSL,first,CH,task3,
+Rhodes,RHO,exact,GR,task3,
+Corfu,CFU,exact,GR,task3,
+Kos,KGS,exact,GR,task3,
+Zakynthos,ZTH,exact,GR,task3,
+Zante,ZTH,exact,GR,task3,
+Kefalonia,EFL,exact,GR,task3,
+Cephalonia,EFL,exact,GR,task3,
+Menorca,MAH,exact,ES,task3,
+Minorca,MAH,exact,ES,task3,
+Fuerteventura,FUE,exact,ES,task3,
+Azores,PDL TER,exact,PT,task3,
+Kauai,LIH,exact,US,task3,
+Galapagos,GPS SCY,exact,EC,task3,
+Galapagos Islands,GPS SCY,exact,EC,task3,
+Lombok,LOP,exact,ID,task3,
+Zanzibar,ZNZ,exact,TZ,task3,
+Moorea,MOZ PPT,exact,PF,task3,
+Penang,PEN,exact,MY,task3,
+Ko Samui,USM,exact,TH,task3,
+Koh Phangan,USM,exact,TH,task3,
+Koh Tao,USM,exact,TH,task3,
+Phi Phi,HKT KBV,exact,TH,task3,
+Boracay,MPH KLO,exact,PH,task3,
+Palawan,PPS,exact,PH,task3,
+Jeju,CJU,exact,KR,task3,
+Jeju Island,CJU,exact,KR,task3,
+Okinawa,OKA,exact,JP,task3,
+Easter Island,IPC,exact,CL,task3,
+Isle Of Skye,INV,exact,GB,task3,
+Whitsundays,PPP HTI,exact,AU,task3,
+Machu Picchu,CUZ,exact,PE,task3,
+Petra,AQJ AMM,exact,JO,task3,
+Uluru,AYQ,exact,AU,task3,
+Ayers Rock,AYQ,exact,AU,task3,
+Yosemite,FAT,exact,US,task3,
+Yosemite National Park,FAT,exact,US,task3,
+Grand Canyon,FLG LAS PHX,exact,US,task3,
+Yellowstone,JAC BZN WYS,exact,US,task3,
+Zion,SGU LAS,exact,US,task3,
+Zion National Park,SGU LAS,exact,US,task3,
+Lake Tahoe,RNO,exact,US,task3,
+Napa Valley,SFO OAK,exact,US,task3,
+Key West,EYW,exact,US,task3,
+Banff,YYC,exact,CA,task3,
+Lake Louise,YYC,exact,CA,task3,
+Jasper,YEG,exact,CA,task3,
+Whistler,YVR,exact,CA,task3,
+Manali,KUU,exact,IN,task3,
+Taj Mahal,AGR DEL,exact,IN,task3,
+Goa,GOI GOX,exact,IN,task3,
+Leon,BJX,exact,MX,task3,
+Angkor Wat,SAI,exact,KH,task3,
+Angkor,SAI,exact,KH,task3,
+Ha Long Bay,HPH HAN,exact,VN,task3,
+Halong Bay,HPH HAN,exact,VN,task3,
+Bagan,NYU,exact,MM,task3,
+Everest Base Camp,LUA KTM,exact,NP,task3,
+Serengeti,JRO,exact,TZ,task3,
+Masai Mara,NBO,exact,KE,task3,
+Maasai Mara,NBO,exact,KE,task3,
+Kruger National Park,MQP,exact,ZA,task3,
+Cinque Terre,PSA GOA,exact,IT,task3,
+Amalfi Coast,NAP,exact,IT,task3,
+Amalfi,NAP,exact,IT,task3,
+Positano,NAP,exact,IT,task3,
+Capri,NAP,exact,IT,task3,
+Lake Como,MXP BGY LIN,exact,IT,task3,
+Dolomites,VCE INN,exact,IT,task3,
+Pamukkale,DNZ,exact,TR,task3,
+Iguazu Falls,IGR IGU,exact,AR,task3,
+Torres Del Paine,PNT PUQ,exact,CL,task3,
+Giza,SPX CAI,exact,EG,task3,
+Pyramids Of Giza,SPX CAI,exact,EG,task3,
+Cotswolds,BRS BHX,exact,GB,task3,
+Lake District,MAN,exact,GB,task3,
+lon,LHR,subset,,autocomplete,
+par,CDG,subset,,autocomplete,
+new,JFK,subset,,autocomplete,
+san,SFO,subset,,autocomplete,
+kyoto,ITM KIX,first,,autocomplete,
+zermatt,ZRH GVA BRN LUG,first,,autocomplete,
+lhr,LHR,first,,autocomplete,
+milan,MXP LIN BGY,subset,,autocomplete,
+Hue,HUI,first,VN,task3,
+hue,HUI,first,VN,task3,
+Bol,BWK,first,HR,task3,
+lhr,LHR,exact,GB,task3,
+jfk,JFK,exact,US,task3,
+BER,BER,exact,DE,task3,
+HUE,HUE,exact,,task3,
+USA,JFK LGA EWR,first,US,task3,
+usa,JFK LGA EWR,first,US,task3,
+UAE,AUH DXB DWC,first,AE,task3,
+uae,AUH DXB DWC,first,AE,task3,
+UK,LHR LCY LGW,first,GB,task3,
+uk,LHR LCY LGW,first,GB,task3,
+Victoria,YYJ,exact,CA,task3,
+Detroit,DTW,exact,US,task3,
+Strasbourg,SXB,exact,FR,task3,
+Geneva,GVA,exact,CH,task3,
+San Diego,SAN CLD,exact,US,task3,
+Switzerland,ZRH,exact,CH,task3,
+Lviv,RZE,exact,UA,task3,
+Niagara Falls,,none,,task3,
+St Lucia,UVF SLU,first,LC,task3,
+Port Douglas,CNS,first,AU,task3,
+Elba,EBA PSA FLR,first,IT,task3,
+Rio,GIG SDU,first,BR,task3,
+"Kingston, Ontario",YOW YPQ YYZ,first,CA,task3,
+"Kingston, ON",YOW YPQ YYZ,first,CA,task3,
+Hof,NUE ERF LEJ,first,DE,task3,
+"Hof, Germany",NUE ERF LEJ,first,DE,task3,
+Nicosia,LCA PFO,first,CY,task3,
+"Nicosia, Cyprus",LCA PFO,first,CY,task3,
+Cyprus,LCA PFO,first,CY,task3,
+Florida,MCO MIA TPA FLL JAX,first,US,task3,
+"Florida, USA",MCO MIA TPA FLL JAX,first,US,task3,
+Andalusia,AGP SVQ XRY,first,ES,task3,
+Normandy,CFR DOL,first,FR,task3,
+Scotland,EDI GLA PIK,first,GB,task3,
+Wales,CWL BRS,first,GB,task3,
+Northern Ireland,BFS BHD,first,GB,task3,
+St Vincent,SVD,first,VC,task3,
+Lucerne,ZRH,first,CH,task3,
+Siargao,IAO,first,PH,task3,
+Dili,DIL,first,TL,task3,
+Fez,FEZ,first,MA,task3,
+Jackson Hole,JAC,first,US,task3,
+Kona,KOA,first,US,task3,
+Los Cabos,SJD,first,MX,task3,
+Cabo San Lucas,SJD,first,MX,task3,
+Formentera,IBZ,first,ES,task3,
+Gozo,MLA,first,MT,task3,
+Koh Lanta,KBV,first,TH,task3,
+Nusa Penida,DPS,first,ID,task3,
+Martha's Vineyard,MVY,first,US,task3,
+St Kitts,SKB,first,KN,task3,
+St Barts,SBH,first,BL,task3,
+St Maarten,SXM,first,SX,task3,
+"Rio, Brazil",GIG SDU,first,BR,task3,
+"Elba, Italy",EBA PSA FLR,first,IT,task3,
+Park City,SLC,first,US,task3,
+St Moritz,ZRH,first,CH,task3,
+Davos,ZRH,first,CH,task3,
+Aqaba,AQJ,exact,JO,task3,
+Bandar Seri Begawan,BWN,exact,BN,task3,
+Arvada,DEN,first,US,task3,
+Cincinnati,CVG,first,US,task3,
+Providence,PVD,first,US,task3,
+PNH,KTI,exact,,task3,
+Gili Islands,LOP,first,ID,task3,
+Mahé,SEZ,first,SC,task3,
+Santa Fe,,none,,task3,
+Kerala,CCJ COK TRV CNN,first,IN,task3,
+Canterbury,SEN LGW LHR,first,GB,task3,
+Venezia,VCE TSF,first,IT,task3,
+Bariloche,BRC,first,AR,task3,
+Khajuraho,HJR,first,IN,task3,
+milan,MXP LIN BGY,subset,,autocomplete,
+cologne,CGN,first,,autocomplete,
+munchen,MUC,first,,autocomplete,
+münch,MUC,first,,autocomplete,
+hue,HUI,first,,autocomplete,
+goa,GOI,first,,autocomplete,
+zur,ZRH,first,,autocomplete,
+dubai,DXB,first,,autocomplete,
+Olbia,OLB,first,IT,task3,
+Sylt,GWT,first,DE,task3,
+Gerona,GRO,first,ES,task3,
+Londonderry,LDY,first,GB,task3,
+Antigua,ANU,first,AG,task3,
+St Thomas,STT,first,VI,task3,
+Praslin,PRI SEZ,first,SC,task3,
+Black Forest,FKB STR BSL,first,DE,task3,
+Yorkshire,LBA,first,GB,task3,
+Cornwall,NQY,first,GB,task3,
+Gap,MRS NCE GNB,first,FR,task3,
+Sun Valley,SUN,first,US,task3,
+Nosy Be,NOS,first,MG,task3,
+Puno,JUL,first,PE,task3,
+Isla Margarita,PMV,first,VE,task3,
+Fernando de Noronha,FEN,first,BR,task3,
+Turkmenbashi,KRW,first,TM,task3,
+Hualien,HUN,first,TW,task3,
+Jogja,YIA JOG,first,ID,task3,
+AlUla,ULH,first,SA,task3,
+Porto Santo,PXO,first,PT,task3,
+Terceira,TER,first,PT,task3,
+Lesbos,MJT,first,GR,task3,
+Bornholm,RNN,first,DK,task3,
+Shetland,LSI,first,GB,task3,
+Turks and Caicos,PLS,first,TC,task3,
+Grand Cayman,GCM,first,KY,task3,
+Eleuthera,ELH,first,BS,task3,
+Nevis,NEV SKB,first,KN,task3,
+Tortola,EIS,first,VG,task3,
+Ambergris Caye,SPR,first,BZ,task3,
+Huatulco,HUX,first,MX,task3,
+Zihuatanejo,ZIH,first,MX,task3,
+Lanai,LNY,first,US,task3,
+Kangaroo Island,KGC,first,AU,task3,
+Jiuzhaigou,JZH,first,CN,task3,
+Ceylon,CMB,first,LK,task3,
+St John,STT,first,VI,task3,
+St Croix,STX,first,VI,task3,
+Aix,MRS,first,FR,task3,
+Medina,MED,first,SA,task3,
+Provence,MRS,first,FR,task3,
+French Riviera,NCE,first,FR,task3,
+Algarve,FAO,first,PT,task3,
+Costa del Sol,AGP,first,ES,task3,
+Scottish Highlands,INV,first,GB,task3,
+Napa,SFO OAK,first,US,task3,
+Morzine,GVA,first,FR,task3,
+Xqz,,none,,task3,
+Jakarta,HLP CGK,subset,ID,data,Jakarta
+Medellín,EOH MDE,subset,CO,data,Medellín
+San Juan,SIG SJU,subset,PR,data,San Juan
+Kütahya,KZR,subset,TR,data,Kütahya
+Quetzaltenango,AAZ RER,subset,GT,data,Quetzaltenango
+Owerri,QOW,subset,NG,data,Owerri
+Angeles City,CRK,subset,PH,data,Angeles City
+Singapore,XSP SIN,subset,SG,data,Singapore
+Panama City,PAC PTY,subset,PA,data,Panama City
+Santo Domingo,JBQ SDQ,subset,DO,data,Santo Domingo
+Cuiabá,CGB,subset,BR,data,Cuiabá
+köln,CGN,first,,autocomplete,
+koln,CGN,first,,autocomplete,
+Port Elizabeth,PLZ,first,ZA,task3,
+Genova,GOA,first,IT,task3,
+Baroda,BDQ,first,IN,task3,
+Vail,EGE,first,US,task3,
+Vieques,VQS,first,PR,task3,
+Saint John,YSJ,first,CA,task3,
+Bâle,BSL,first,CH,task3,
+Cabo,SJD,first,MX,task3,
+Dalat,DLI,first,VN,task3,
+Sapa,HAN,first,VN,task3,
+"George Town, Penang",PEN,first,MY,task3,
+Java,CGK,first,ID,task3,
+Sion,GVA BRN,first,CH,task3,
+La Palma,SPC,first,ES,task3,
+La Gomera,GMZ,first,ES,task3,
+Åland,MHQ,first,FI,task3,
+Orkney,KOI,first,GB,task3,
+Solo,SOC,first,ID,task3,
+Mount Rainier,SEA,first,US,task3,
+Sudbury,YSB,first,CA,task3,
+Ixtapa,ZIH,first,MX,task3,
+Copper Canyon,CUU,first,MX,task3,
+Monteverde,SJO LIR,first,CR,task3,
+Saba,SAB,first,BQ,task3,
+Ilha Grande,GIG,first,BR,task3,
+Tanna,TAH,first,VU,task3,
+Wallis,WLS,first,WF,task3,
+Cape Cod,HYA BOS,first,US,task3,
+NOLA,MSY,first,US,task3,
+Twin Cities,MSP,first,US,task3,
+SF,SFO OAK SJC,first,US,task3,
+LA,LAX,first,US,task3,
+"St. John's, Newfoundland",YYT,first,CA,task3,
+HCMC,SGN,first,VN,task3,
+KL,KUL,first,MY,task3,
+Bohol,TAG,first,PH,task3,
+Calvi,CLY,first,FR,task3,
+El Hierro,VDE,first,ES,task3,
+Samos,SMI,first,GR,task3,
+Brač,BWK SPU,first,HR,task3,
+Islay,ILY,first,GB,task3,
+Kerry,KIR,first,IE,task3,
+Knock,NOC,first,IE,task3,
+Bacolod,BCD,first,PH,task3,
+Clark,CRK,first,PH,task3,
+Penghu,MZG,first,TW,task3,
+Yakushima,KUM,first,JP,task3,
+Xishuangbanna,JHG,first,CN,task3,
+Amboseli,ASV,first,KE,task3,
+Saint Helena,HLE,first,SH,task3,
+Molokai,MKK,first,US,task3,
+Taos,TSM SAF,first,US,task3,
+Utila,UII,first,HN,task3,
+Samaná,AZS,first,DO,task3,
+Grand Bahama,FPO,first,BS,task3,
+Virgin Gorda,VIJ,first,VG,task3,
+Mustique,MQS,first,VC,task3,
+Hamilton Island,HTI,first,AU,task3,
+Ballina,,none,,task3,
+Wagga Wagga,WGA,first,AU,task3,
+Raiatea,RFP,first,PF,task3,
+Huahine,HUH,first,PF,task3,
+Nuku Hiva,NHV,first,PF,task3,
+Lifou,LIF,first,NC,task3,
+Pohnpei,PNI,first,FM,task3,
+"Ontario, CA",ONT,first,US,task3,
+Andorra,LEU,first,AD,task3,
+Monte Carlo,NCE,first,MC,task3,
+Kota,JAI,first,IN,task3,
+"Mumbai, MH",BOM,first,IN,task3,
+Liechtenstein,ZRH,first,LI,task3,
+San Marino,RMI,first,SM,task3,
+Vatican,FCO,first,VA,task3,
+Monaco,NCE,first,MC,task3,
+Helsinki Finland,HEL,first,FI,task3,
+Sydney Nova Scotia,YQY,first,CA,task3,
+Santa Cruz Bolivia,VVI,first,BO,task3,
+Naples Florida,RSW,first,US,task3,
+Cordoba Argentina,COR,first,AR,task3,
+Portland Maine,PWM,first,US,task3,
+La Paz Mexico,LAP,first,MX,task3,
+Birmingham Alabama,BHM,first,US,task3,
+Manchester NH,MHT,first,US,task3,
+Flores Guatemala,FRS,first,GT,task3,
+Jackson Hole Wyoming,JAC,first,US,task3,
+Granada Nicaragua,MGA,first,NI,task3,
+Trinidad Cuba,TND,first,CU,task3,
+Lagos Nigeria,LOS,first,NG,task3,
+Honolulu HI,HNL,first,US,task3,
+Queenstown NZ,ZQN,first,NZ,task3,
+Istanbul Turkiye,IST,first,TR,task3,
+Sydney AU,SYD,first,AU,task3,
+Buenos Aires Argentina,EZE,first,AR,task3,
+Santiago Chile,SCL,first,CL,task3,
+Fukuoka Japan,FUK,first,JP,task3,
+Goa India,GOI,first,IN,task3,
+Dubai UAE,DXB,first,AE,task3,
+Phoenix AZ,PHX,first,US,task3,
+Milan Italy,MXP,first,IT,task3,
+Zanzibar Island,ZNZ,first,TZ,task3,
+Nosy Be Island,NOS,first,MG,task3,
+Isla de Margarita,PMV,first,VE,task3,
+Banff National Park,YYC,first,CA,task3,
+Samana Peninsula,AZS,first,DO,task3,
+Mandalay city,MDL,first,MM,task3,
+Hue city,HUI,first,VN,task3,
+Dili city,DIL,first,TL,task3,
+Tokyo city,HND,first,JP,task3,
+Milano city,LIN,first,IT,task3,
+KL city,KUL,first,MY,task3,
+Saint Thomas,STT,first,VI,task3,
+Berlin Germany,BER,first,DE,task3,
+Chicago IL,ORD,first,US,task3,
