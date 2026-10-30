@@ -178,6 +178,10 @@ CITY_ALIASES: dict[str, str] = dict(_HINTS["city_aliases"])
 # Other names people type for a country (folded) → ISO alpha-2 code: the one
 # alias map for the airports DB and the static reference tables.
 COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["country_aliases"])
+# Country abbreviations that are also scheduled airport codes (KSA Kosrae,
+# PRC Prescott, ROK Rockhampton, ROC Rochester): a country only as a
+# qualifier ("Riyadh, KSA", "Beijing PRC"); typed alone they stay codes.
+QUALIFIER_COUNTRY_ALIASES: dict[str, str] = dict(_HINTS["qualifier_country_aliases"])
 # Tourist islands and island groups → (ISO country, scheduled airports).
 ISLAND_AIRPORTS = _airport_table("islands")
 # Landmarks, parks, resorts and airportless countries → (country, airports).
@@ -190,6 +194,63 @@ EXONYMS: dict[str, int | str] = dict(_HINTS["exonyms"])
 # Names whose St / Saint variants must not borrow a hint ("Saint John", New
 # Brunswick, is not St John, USVI).
 SAINT_EXCEPTIONS: frozenset[str] = frozenset(_HINTS["saint_exceptions"])
+
+
+# ── Non-town features (islands, parks, mountains…): their short names ─────
+
+# A feature's name without a generic part is a primary name too ("Kakadu
+# National Park" → "kakadu", "Mount Everest" → "everest", "Isola
+# Stromboli" → "stromboli", "Annapurna I" → "annapurna"), in English and
+# the other languages GeoNames names features in. "Death Valley" and
+# "Rocky Mountains" keep their whole names.
+_FEATURE_PREFIXES = (
+    "mount ", "mt ", "lake ", "ko ", "koh ", "isle of ", "pulau ",
+    "isola ", "isla ", "ilha ", "ile ", "insel ", "gunung ", "mont ", "monte ",
+    "monti ", "cerro ", "pico ", "pic ", "piz ", "lago ", "lac ", "laguna ",
+    "parque nacional ", "parc national ", "nationalpark ", "national park ",
+    "zona arqueologica ",
+)  # fmt: skip
+_FEATURE_SUFFIXES = (
+    " national park",
+    " national reserve",
+    " game reserve",
+    " nature reserve",
+    " nationalpark",
+    " islands",
+    " island",
+    " insel",
+    " atoll",
+    " peninsula",
+    " peak",
+    " see",
+)
+# "de", "del", "de la"… after a prefix ("Parc national de la Vanoise")
+_CONNECTORS = ("de la ", "de los ", "de las ", "del ", "de ", "des ", "du ",
+               "da ", "do ", "dos ", "di ", "della ", "dei ")  # fmt: skip
+_ROMAN_SUFFIX_RE = re.compile(r" (i|ii|iii|iv|v)$")
+
+
+def feature_short_names(folded: str) -> set[str]:
+    """The folded feature name without a generic prefix (and a following
+    "de", "di"…), a generic suffix or a trailing Roman numeral (empty when
+    it has none, or nothing is left)."""
+    short = set()
+    for prefix in _FEATURE_PREFIXES:
+        if folded.startswith(prefix):
+            rest = folded[len(prefix) :]
+            for connector in _CONNECTORS:
+                if rest.startswith(connector):
+                    rest = rest[len(connector) :]
+                    break
+            if rest.strip():
+                short.add(rest)
+    for suffix in _FEATURE_SUFFIXES:
+        if folded.endswith(suffix) and folded[: -len(suffix)].strip():
+            short.add(folded[: -len(suffix)])
+    roman = _ROMAN_SUFFIX_RE.sub("", folded)
+    if roman != folded and roman.strip():
+        short.add(roman)
+    return short
 
 
 # ── Airports a place owns (shared by the data generator and the runtime) ──
@@ -224,6 +285,14 @@ def words_in(folded_name: str, folded_text: str) -> bool:
         return False
     words = " ".join(_NON_WORD_RE.sub(" ", folded_text).split())
     return f" {folded_name} " in f" {words} "
+
+
+def is_named_airport(place: str, airport_city: str, airport_name: str) -> bool:
+    """The airport is named for the place (all folded): its display city is
+    the place or its name contains the place name. The suburb rule's "own"
+    (never distance alone: Pontevedra, Buenos Aires is near EZE, not its
+    own airport's town)."""
+    return airport_city == place or words_in(place, airport_name)
 
 
 def is_own_airport(

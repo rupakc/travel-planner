@@ -1,3 +1,4 @@
+import bisect
 import csv
 import functools
 import json
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING
 from ..core.places import (
     CITY_ALIASES,
     CODE_PREFIX_RE,
+    COUNTRY_ALIASES,
     NEVER_LINK,
     fold_place,
     saint_variants,
@@ -99,7 +101,8 @@ def create_tables():
                 score        INTEGER,
                 lat          REAL,
                 lng          REAL,
-                airports     TEXT
+                airports     TEXT,
+                satellite    INTEGER NOT NULL DEFAULT 0
             );
             -- Folded place names: tier 0 = the place's own name, 1 = alternate
             CREATE TABLE IF NOT EXISTS place_names (
@@ -115,6 +118,27 @@ def create_tables():
                 name        TEXT NOT NULL,
                 folded_name TEXT NOT NULL
             );
+            -- GeoNames non-town features (islands, parks, mountains…) and
+            -- their airports; feature_names as place_names
+            CREATE TABLE IF NOT EXISTS features (
+                geonameid    INTEGER PRIMARY KEY,
+                name         TEXT NOT NULL,
+                country_code TEXT NOT NULL,
+                admin1       TEXT,
+                feature_code TEXT NOT NULL,
+                notability   INTEGER,
+                lat          REAL,
+                lng          REAL,
+                airports     TEXT,
+                population   INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS feature_names (
+                name_folded TEXT NOT NULL,
+                geonameid   INTEGER NOT NULL,
+                tier        INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_feature_names_folded
+                ON feature_names(name_folded);
             CREATE INDEX IF NOT EXISTS idx_places_country_score
                 ON places(country_code, score);
             CREATE INDEX IF NOT EXISTS idx_places_admin1_score
@@ -129,13 +153,21 @@ def create_tables():
         for column, decl in _AIRPORT_MIGRATIONS.items():
             if column not in existing:
                 _add_column(conn, column, decl)
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(places)")}
+        if "satellite" not in existing:  # places tables from before the flag
+            _add_column(conn, "satellite", "INTEGER NOT NULL DEFAULT 0", "places")
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(features)")}
+        if "population" not in existing:  # features tables before districts
+            _add_column(conn, "population", "INTEGER NOT NULL DEFAULT 0", "features")
 
 
-def _add_column(conn: sqlite3.Connection, column: str, decl: str) -> None:
-    """Add a column to ``airports``; a worker starting at the same time may
-    have added it first, which is fine."""
+def _add_column(
+    conn: sqlite3.Connection, column: str, decl: str, table: str = "airports"
+) -> None:
+    """Add a column to ``airports`` (or another table); a worker starting at the
+    same time may have added it first, which is fine."""
     try:
-        conn.execute(f"ALTER TABLE airports ADD COLUMN {column} {decl}")
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
     except sqlite3.OperationalError as exc:
         if "duplicate column name" not in str(exc):
             raise
@@ -647,6 +679,104 @@ _SHORT_QUERY = 3
 # this score, by size ("kili" → Kilimanjaro International before Kilis).
 _AIRPORT_NAME_SCORE = {0: 1e9, 1: 1e8, 2: 1e7}
 _SHORT_QUERY_MIN_POPULATION = 100_000
+# Non-town features (islands, parks, mountains…) suggested per query, only
+# when no real town matches, ranked below any town match.
+_AUTOCOMPLETE_FEATURES = 3
+_FEATURE_SCORE = 1.0
+# A suburb set aside by the suburb rule ranks at this share of its
+# namesake's score: just below the namesake with its own airport, and still
+# listed ("peoria": PIA before PHX).
+_SATELLITE_SHARE = 0.5
+# Country-name prefixes count from this many letters ("deuts" → Germany).
+_COUNTRY_PREFIX = 5
+
+
+@functools.cache
+def _other_country_names() -> tuple[str, ...]:
+    """Countries' other names and aliases (not official names), sorted."""
+    from .places_db import _official_country_name, country_names
+
+    return tuple(sorted(n for n in country_names() if not _official_country_name(n)))
+
+
+def _own_name_prefix(folded: str) -> bool:
+    """A town's or a feature's (district's) own name starts with the text."""
+    end = folded + "\uffff"
+    with get_connection() as conn:
+        return bool(
+            conn.execute(
+                "SELECT 1 FROM place_names WHERE tier = 0 AND name_folded >= ?"
+                " AND name_folded < ? LIMIT 1",
+                (folded, end),
+            ).fetchone()
+            or conn.execute(
+                "SELECT 1 FROM feature_names WHERE tier = 0 AND name_folded >= ?"
+                " AND name_folded < ? LIMIT 1",
+                (folded, end),
+            ).fetchone()
+        )
+
+
+def _country_name_place(folded: str, prefix: bool = False):
+    """The resolved place (the gateway city) for a query that is a
+    country's other name or alias ("deutschland", "nippon", "holland"), or
+    with ``prefix`` starts only such names of one country ("deuts"), or
+    None. Official names keep matching the airports' country column."""
+    from .places_db import country_names, resolve_place
+
+    if len(folded) < (_COUNTRY_PREFIX if prefix else _SHORT_QUERY + 1):
+        return None
+    names = _other_country_names()
+    if prefix:
+        start = bisect.bisect_left(names, folded)
+        matches = []
+        for name in names[start:]:
+            if not name.startswith(folded):
+                break
+            matches.append(name)
+        if not matches or len({country_names()[n] for n in matches}) != 1:
+            return None
+        name = min(matches, key=len)
+        if name not in COUNTRY_ALIASES and _own_name_prefix(folded):
+            return None  # "jordaa": Amsterdam's Jordaan, not Jordan's Afrikaans
+    elif folded in names:
+        name = folded
+    else:
+        return None
+    place = resolve_place(name)
+    return place if place and place.airports else None
+
+
+def _suburb_scores(rows: list[sqlite3.Row]) -> dict[int, float]:
+    """Row id() → lowered score for own-name matches the resolver's suburb
+    rule sets aside, per matched name ("peori" / "peoria": Arizona's
+    Phoenix suburb ranks just below Peoria, Illinois, and stays listed)."""
+    from .places_db import Place, _without_outscored_satellites
+
+    groups: dict[str, dict[int, Place]] = {}
+    for r in rows:
+        if r["tier"] == 0:
+            groups.setdefault(r["name_folded"], {})[id(r)] = Place(
+                name=r["name"],
+                country_code=r["country_code"],
+                airports=tuple(r["airports"].split()),
+                population=r["population"],
+                score=float(r["score"]),
+                lat=r["lat"],
+                lng=r["lng"],
+                satellite=int(r["satellite"]),
+            )
+    lowered: dict[int, float] = {}
+    for group in groups.values():
+        kept = _without_outscored_satellites(list(group.values()))
+        if len(kept) == len(group):
+            continue
+        leader = max(p.score for p in kept)
+        kept_ids = {id(p) for p in kept}
+        for key, place in group.items():
+            if id(place) not in kept_ids:
+                lowered[key] = min(place.score, leader * _SATELLITE_SHARE)
+    return lowered
 
 
 def _autocomplete_places(
@@ -667,8 +797,8 @@ def _autocomplete_places(
     name_score: dict[str, float] = {}
 
     def add(name, codes, score, place_cc=None, hint=False, small=False):
-        # a village's exact name is only a prefix-class match ("bucu" is
-        # Bucharest's București before the hamlet Bucu)
+        # a village's (or a feature's) exact name is only a prefix-class
+        # match ("bucu" is Bucharest's București before the hamlet Bucu)
         cls = _EXACT_NAME if name == folded and not small else _NAME_PREFIX
         name_score[name] = max(score, name_score.get(name, 0.0))
         for pos, code in enumerate(codes):
@@ -680,6 +810,12 @@ def _autocomplete_places(
     # an exactly typed hint keeps namesakes abroad out ("yorkshire": no
     # Yorkshire, Virginia; "sylt": no Sylhet)
     hint_country = hints[folded][0] if folded in hints else None
+    country_place = _country_name_place(folded)
+    if country_place is not None and not hint_country:
+        # a country's other name ("deutschland", "nippon"): its gateway, and
+        # no namesakes abroad (not Deutschlandsberg, Austria)
+        hint_country = country_place.country_code
+        add(folded, country_place.airports, _HINT_SCORE, hint=True)
     for name, (_cc, codes) in hints.items():
         # whole names, or prefixes from four letters ("par" is not Park City)
         if name == folded or (len(folded) >= 4 and name.startswith(folded)):
@@ -689,7 +825,7 @@ def _autocomplete_places(
     end = folded + "\uffff"
     rows = conn.execute(
         "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code,"
-        " p.population "
+        " p.population, p.name, p.lat, p.lng, p.satellite "
         "FROM place_names n JOIN places p ON p.geonameid = n.geonameid "
         "WHERE p.population > 0 AND p.airports != '' "
         "AND (length(:q) > :short OR n.name_folded = :q OR p.population >= :big) "
@@ -711,8 +847,14 @@ def _autocomplete_places(
             "small": SMALL_PLACE_POPULATION,
         },
     ).fetchall()
+    lowered = _suburb_scores(rows)
     scored = [
-        (r["score"] * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0), r) for r in rows
+        (
+            lowered.get(id(r), r["score"])
+            * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0),
+            r,
+        )
+        for r in rows
     ]  # alternates rank far below own names (Syracuse's stray "milan")
     # the share threshold counts own names of real towns when there are any
     # ("kota": Kota, Rajasthan, not Malay "Kota …" alternates of megacities);
@@ -736,6 +878,35 @@ def _autocomplete_places(
                 sc,
                 r["country_code"],
                 small=r["population"] < SMALL_PLACE_POPULATION,
+            )
+    hinted = any(link[3] is None for link in linked.values())
+    if not own and not hinted:
+        # a prefix of one country's other names ("deuts" → Germany), with
+        # the towns that also start so still listed below it
+        prefix_country = _country_name_place(folded, prefix=True)
+        if prefix_country is not None:
+            add(folded + "\u2026", prefix_country.airports, _HINT_SCORE, hint=True)
+            hinted = True
+    if not own and not hinted and len(folded) > _SHORT_QUERY:
+        # no real town or curated hint by that name: notable features
+        # ("kakadu" → Darwin; "sylt" stays the hint's GWT alone)
+        for r in conn.execute(
+            "SELECT DISTINCT n.name_folded, f.airports, f.country_code, f.notability"
+            " FROM feature_names n JOIN features f ON f.geonameid = n.geonameid"
+            " WHERE n.name_folded >= ? AND n.name_folded < ?"
+            " AND (n.tier = 0 OR length(n.name_folded) >= 4)"
+            " AND f.airports != '' ORDER BY n.tier, f.notability DESC,"
+            " n.name_folded LIMIT ?",
+            (folded, end, _AUTOCOMPLETE_FEATURES),
+        ):
+            if hint_country and r["country_code"] != hint_country:
+                continue
+            add(
+                r["name_folded"],
+                r["airports"].split(),
+                _FEATURE_SCORE,
+                r["country_code"],
+                small=True,
             )
     return linked, name_score
 
@@ -831,5 +1002,55 @@ def search_airports(query: str, limit: int = 10) -> list[dict]:
     if ranked and ranked[0][0][0] < _OTHER:
         # R7: no padding with mere "contains" matches below real ones
         ranked = [kr for kr in ranked if kr[0][0] < _OTHER]
+    rows_out = [r for _, r in ranked]
+    resolved = _resolved_answer(q)
+    if resolved:
+        # the resolver's own answer leads ("ealing" → LHR, not Ealing, NZ)
+        found = {r["iata_code"]: r for r in rows_out}
+        missing = [c for c in resolved if c not in found]
+        if missing:
+            with get_connection() as conn:
+                for r in conn.execute(
+                    "SELECT iata_code, name, city, country, country_code"
+                    " FROM airports WHERE scheduled = 1 AND iata_code IN"
+                    f" ({','.join('?' * len(missing))})",
+                    missing,
+                ):
+                    found[r["iata_code"]] = r
+        lead = [found[c] for c in resolved if c in found]
+        rows_out = lead + [r for r in rows_out if r["iata_code"] not in resolved]
     keys = ("iata_code", "name", "city", "country", "country_code")
-    return [{k: r[k] for k in keys} for _, r in ranked[:limit]]
+    return [{k: r[k] for k in keys} for r in rows_out[:limit]]
+
+
+def _resolved_answer(query: str) -> list[str]:
+    """The airports ``lookup_city_iata`` gives for a whole typed name of at
+    least four letters, when it resolves by an own name to a real town
+    (≥ 15k people), or to a curated hint, feature or district while no
+    real town's name starts so; else []. A village's answer does not lead
+    ("bucu": Bucharest, not the hamlet Bucu), nor an alternate name's
+    ("peori"), nor a district over towns ("vila": Vila Velha…)."""
+    from .places_db import SMALL_PLACE_POPULATION, resolve
+
+    if len(query) < _SHORT_QUERY + 1 or "," in query:
+        return []
+    place = resolve(query).place
+    if place is None or place.alternate:
+        return []
+    if place.geonameid is not None:
+        if place.population < SMALL_PLACE_POPULATION:
+            return []
+    else:
+        folded = fold_place(query)
+        with get_connection() as conn:
+            town = conn.execute(
+                "SELECT 1 FROM place_names n JOIN places p"
+                " ON p.geonameid = n.geonameid WHERE n.tier = 0"
+                " AND n.name_folded >= ? AND n.name_folded < ?"
+                " AND p.population >= ? LIMIT 1",
+                (folded, folded + "\uffff", SMALL_PLACE_POPULATION),
+            ).fetchone()
+        if town:
+            return []
+    codes = lookup_city_iata(query)
+    return codes.split(",") if codes else []

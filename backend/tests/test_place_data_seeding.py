@@ -46,6 +46,26 @@ _PLACES = [
 _ADMIN1 = [["DE.02", "Bavaria", "bavaria"], ["DE.16", "Berlin", "berlin"]]
 
 
+_FEATURE_COLS = (
+    "geonameid,name,ascii,country_code,admin1,feature_code,notability,lat,lng,"
+    "airports,alt_names"
+).split(",")
+_DISTRICT_COLS = [*_FEATURE_COLS, "population", "contested"]
+_FEATURES = [
+    ["2078127", "Kakadu National Park", "Kakadu National Park", "AU", "03", "PRK",
+     "58", "-13.0", "132.5", "DRW", "parc national de kakadu"],
+    ["1283416", "Mount Everest", "Mount Everest", "NP", "00", "MT", "186",
+     "27.99", "86.93", "KTM LUA", "chomolungma|sagarmatha"],
+]  # fmt: skip
+
+
+def _write_features(directory: Path, features=_FEATURES) -> None:
+    with gzip.open(
+        directory / "features.csv.gz", "wt", newline="", encoding="utf-8"
+    ) as f:
+        csv.writer(f).writerows([_FEATURE_COLS, *features])
+
+
 def _write_data(
     directory: Path, airports=_AIRPORTS, places=_PLACES, admin1=_ADMIN1
 ) -> Path:
@@ -172,7 +192,79 @@ def test_create_tables_is_idempotent_on_a_migrated_db(temp_db, data_dir):
     assert cols.count("region") == 1
 
 
+def test_old_places_table_gains_the_satellite_column(temp_db, data_dir):
+    conn = sqlite3.connect(temp_db)
+    conn.execute(
+        "CREATE TABLE places (geonameid INTEGER PRIMARY KEY, name TEXT NOT NULL,"
+        " country_code TEXT NOT NULL, admin1 TEXT, population INTEGER,"
+        " score INTEGER, lat REAL, lng REAL, airports TEXT)"
+    )
+    conn.commit()
+    conn.close()
+    seed_airports.seed(data_dir)
+    cols = [r["name"] for r in _rows("PRAGMA table_info(places)")]
+    assert cols[-1] == "satellite"
+    assert _rows("SELECT satellite FROM places WHERE geonameid = 2950159")[0][0] == 0
+
+
 # ── Versioned seeding ────────────────────────────────────────────────────────
+
+
+def test_seed_loads_satellite_flags(temp_db, data_dir):
+    cols = [*_PLACE_COLS, "satellite"]
+    places = [[*_PLACES[0], "0"], [*_PLACES[1], "1"], [*_PLACES[2], "0"]]
+    with gzip.open(data_dir / "places.csv.gz", "wt", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerows([cols, *places])
+    seed_airports.seed(data_dir)
+    flags = dict(_rows("SELECT geonameid, satellite FROM places"))
+    assert flags == {2950159: 0, 1821306: 1, 2867714: 0}
+
+
+def test_seed_loads_features_and_their_names(temp_db, data_dir):
+    _write_features(data_dir)
+    seed_airports.seed(data_dir)
+    kakadu = _rows("SELECT * FROM features WHERE geonameid = 2078127")[0]
+    assert (kakadu["name"], kakadu["country_code"], kakadu["feature_code"]) == (
+        "Kakadu National Park",
+        "AU",
+        "PRK",
+    )
+    assert (kakadu["notability"], kakadu["airports"]) == (58, "DRW")
+    names = {
+        (r["name_folded"], r["tier"])
+        for r in _rows("SELECT * FROM feature_names WHERE geonameid = 2078127")
+    }
+    # the name without its generic part is a primary name too ("Kakadu")
+    assert names == {
+        ("kakadu national park", 0),
+        ("kakadu", 0),
+        ("parc national de kakadu", 1),
+    }
+    everest = {
+        r["name_folded"]
+        for r in _rows("SELECT * FROM feature_names WHERE geonameid = 1283416")
+    }
+    assert {"mount everest", "everest", "sagarmatha"} <= everest
+    index_cols = _rows(
+        "SELECT ii.name FROM sqlite_master m, pragma_index_info(m.name) ii "
+        "WHERE m.type = 'index' AND m.tbl_name = 'feature_names'"
+    )
+    assert "name_folded" in {r["name"] for r in index_cols}
+
+
+def test_seed_without_a_features_file_leaves_features_empty(temp_db, data_dir):
+    seed_airports.seed(data_dir)
+    assert _rows("SELECT COUNT(*) FROM features")[0][0] == 0
+
+
+def test_features_file_is_part_of_the_data_version(data_dir):
+    before = seed_airports.place_data_version(data_dir)
+    _write_features(data_dir)
+    assert seed_airports.place_data_version(data_dir) != before
+
+
+def test_feature_tables_are_regenerable_place_tables():
+    assert {"features", "feature_names"} <= set(seed_airports.PLACE_TABLES)
 
 
 def test_seed_loads_places_names_and_admin1(temp_db, data_dir):
@@ -490,3 +582,59 @@ def test_known_obsolete_code_needs_no_web_search(client, monkeypatch):
     info = database.lookup_iata("PNH")
     assert (info["city"], info["country"]) == ("Phnom Penh", "Cambodia")
     assert database.lookup_iata("KBP")["city"] == "Kiev"  # unscheduled row
+
+
+@pytest.mark.parametrize(
+    ("name", "short"),
+    [
+        ("kakadu national park", {"kakadu"}),
+        ("serengeti national park", {"serengeti"}),
+        ("mount everest", {"everest"}),
+        ("mt kenya", {"kenya"}),
+        ("lake tahoe", {"tahoe"}),
+        ("ko phi phi", {"phi phi"}),
+        ("koh tao", {"tao"}),
+        ("isle of skye", {"skye"}),
+        ("pulau tioman", {"tioman"}),
+        ("bohol island", {"bohol"}),
+        ("death valley", set()),  # a generic word that is the name's own
+        ("monte rosa", {"rosa"}),
+        ("isola stromboli", {"stromboli"}),
+        ("gunung bromo", {"bromo"}),
+        ("annapurna i", {"annapurna"}),
+        ("killington peak", {"killington"}),
+        ("parque nacional torres del paine", {"torres del paine"}),
+        ("parc national de la vanoise", {"vanoise"}),
+        ("nationalpark berchtesgaden", {"berchtesgaden"}),
+        ("neusiedler see", {"neusiedler"}),
+        ("lago di garda", {"garda"}),
+        ("cerro fitzroy", {"fitzroy"}),
+        ("ilha grande", {"grande"}),
+        ("zona arqueologica teotihuacan", {"teotihuacan"}),
+        ("national park", set()),
+        ("mount", set()),
+    ],
+)
+def test_feature_short_names(name, short):
+    from app.core.places import feature_short_names
+
+    assert feature_short_names(name) == short
+
+
+def test_contested_district_names_load_as_tier_2(temp_db, data_dir):
+    with gzip.open(
+        data_dir / "features.csv.gz", "wt", newline="", encoding="utf-8"
+    ) as f:
+        csv.writer(f).writerows(
+            [
+                _DISTRICT_COLS,
+                ["90", "Centro", "Centro", "BR", "27", "PPLX", "2", "-23.5",
+                 "-46.6", "GRU", "", "300000", "centro"],
+            ]
+        )  # fmt: skip
+    seed_airports.seed(data_dir)
+    names = {
+        (r["name_folded"], r["tier"])
+        for r in _rows("SELECT * FROM feature_names WHERE geonameid = 90")
+    }
+    assert names == {("centro", 2)}

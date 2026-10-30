@@ -133,11 +133,13 @@ def test_no_alternate_name_penalty_any_more():
 def extra_place():
     ids: list[int] = []
 
-    def add(gid, name, cc, population, score, airports, names):
+    def add(gid, name, cc, population, score, airports, names, satellite=0, at=(0, 0)):
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO places VALUES (?, ?, ?, '', ?, ?, 0, 0, ?)",
-                (gid, name, cc, population, score, airports),
+                "INSERT INTO places (geonameid, name, country_code, admin1,"
+                " population, score, lat, lng, airports, satellite)"
+                " VALUES (?, ?, ?, '', ?, ?, ?, ?, ?, ?)",
+                (gid, name, cc, population, score, *at, airports, satellite),
             )
             conn.executemany(
                 "INSERT INTO place_names VALUES (?, ?, ?)",
@@ -675,3 +677,297 @@ def test_g6_no_comma_qualifiers(text, country):
 def test_g6_real_names_with_country_words_are_untouched():
     assert resolve_place("Panama City").country_code == "PA"
     assert resolve_place("Mexico City").country_code == "MX"
+
+
+# ── Remaining items: country names, satellites, non-town features ──────────
+
+
+@pytest.mark.parametrize(
+    ("segment", "codes"),
+    [
+        ("deutschland", {"DE"}),
+        ("brasil", {"BR"}),
+        ("nippon", {"JP"}),
+        ("suomi", {"FI"}),
+        ("ellada", {"GR"}),
+        ("ksa", {"SA"}),  # qualifier-only aliases count as qualifiers
+        ("prc", {"CN"}),
+        ("rok", {"KR"}),
+        ("roc", {"TW"}),
+        ("dprk", {"KP"}),
+    ],
+)
+def test_country_names_and_aliases_as_qualifiers(segment, codes):
+    assert places_db.stated_countries(segment) == codes
+
+
+def test_qualifier_only_aliases_stay_airport_codes_alone():
+    from app.db.database import code_first
+
+    for code in ("KSA", "PRC", "ROK", "ROC"):
+        assert code.lower() not in places_db.country_names()
+        assert code_first(code)
+    assert not code_first("USA")  # a full alias is never a code
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [
+        ("Deutschland", "DE"),
+        ("Brasil", "BR"),
+        ("España", "ES"),  # not the 2.6k-person España, Philippines
+        ("Nippon", "JP"),
+        ("Hellas", "GR"),
+        ("Berlin, Deutschland", "DE"),
+        ("Munich Deutschland", "DE"),
+        ("Riyadh, KSA", "SA"),
+        ("Beijing PRC", "CN"),
+    ],
+)
+def test_country_names_resolve(text, country):
+    assert resolve_place(text).country_code == country
+
+
+@pytest.mark.parametrize(
+    ("text", "key"),
+    [
+        ("Deutschland", "germany"),
+        ("Berlin, Deutschland", "germany"),
+        ("Madrid, España", "spain"),
+        ("Sao Paulo, Brasil", "brazil"),
+        ("Tokyo, Nippon", "japan"),
+    ],
+)
+def test_static_tables_read_country_names(text, key):
+    from app.agents.static_results import _place_country
+
+    assert _place_country(text) == key
+
+
+def test_a_big_town_keeps_a_generic_country_name():
+    # the generator's guard: "Columbia" (Colombia in some languages) is
+    # Columbia, South Carolina; "Nederland" is curated back (native name)
+    assert "columbia" not in places_db.country_names()
+    assert places_db.country_names()["nederland"] == "NL"
+
+
+_PIA = (40.66, -89.69)  # a town at PIA flies from its own airport
+
+
+def test_satellite_leader_yields_to_a_town_with_its_own_airport(extra_place):
+    names = [("satburg", 0)]
+    extra_place(990000101, "Satburg", "US", 190_000, 4 * 10**8, "PHX", names, 1)
+    # named "Peoria" so PIA (Peoria's airport) is named for it
+    extra_place(990000102, "Peoria", "US", 115_000, 10**8, "PIA", names, at=_PIA)
+    place = resolve_place("Satburg")
+    assert place.airports == ("PIA",)  # Peoria: PIA, not Phoenix's PHX
+
+
+def test_satellite_yields_only_to_a_town_with_its_own_airport(extra_place):
+    # Ede: the Nigerian one flies from Ilorin's ILR, 90 km away: no leader
+    names = [("satede", 0)]
+    extra_place(
+        990000107, "Satede", "NL", 67_000, 15 * 10**7, "EIN", names, 1, at=(51.6, 5.6)
+    )
+    extra_place(990000108, "Satede", "NG", 160_000, 10**8, "ILR", names, at=(7.7, 4.4))
+    assert resolve_place("Satede") is None
+
+
+def test_satellite_keeps_the_lead_over_a_far_smaller_town(extra_place):
+    names = [("satville", 0)]
+    extra_place(990000103, "Satville", "US", 190_000, 4 * 10**8, "PHX", names, 1)
+    extra_place(990000104, "Satville", "US", 15_000, 3 * 10**7, "PIA", names, at=_PIA)
+    assert resolve_place("Satville").airports == ("PHX",)  # under 1/10
+
+
+def test_two_comparable_satellites_stay_ambiguous(extra_place):
+    names = [("satton", 0)]
+    extra_place(990000105, "Satton", "US", 200_000, 2 * 10**8, "PHX", names, 1)
+    extra_place(990000106, "Satton", "US", 190_000, 10**8, "ORD", names, 1)
+    assert resolve_place("Satton") is None
+
+
+@pytest.fixture
+def extra_feature():
+    ids: list[int] = []
+
+    def add(gid, name, cc, notability, airports, names, at=(-13.0, 132.5), code="PRK"):
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO features (geonameid, name, country_code, admin1,"
+                " feature_code, notability, lat, lng, airports)"
+                " VALUES (?, ?, ?, '', ?, ?, ?, ?, ?)",
+                (gid, name, cc, code, notability, *at, airports),
+            )
+            conn.executemany(
+                "INSERT INTO feature_names VALUES (?, ?, ?)",
+                [(n, gid, tier) for n, tier in names],
+            )
+        ids.append(gid)
+
+    yield add
+    with get_connection() as conn:
+        for gid in ids:
+            conn.execute("DELETE FROM features WHERE geonameid = ?", (gid,))
+            conn.execute("DELETE FROM feature_names WHERE geonameid = ?", (gid,))
+
+
+def test_feature_beats_small_towns_only(extra_place, extra_feature):
+    extra_feature(990000201, "Qzparkland Park", "AU", 40, "DRW", [("qzparkland", 0)])
+    extra_place(990000202, "Qzparkland", "US", 5_000, 10**7, "ORD", [("qzparkland", 0)])
+    place = resolve_place("Qzparkland")
+    assert (place.name, place.country_code, place.airports) == (
+        "Qzparkland Park",
+        "AU",
+        ("DRW",),
+    )
+    assert place.geonameid is None and place.feature
+    extra_place(
+        990000203, "Qzparkland", "US", 20_000, 10**8, "DEN", [("qzparkland", 0)]
+    )
+    assert resolve_place("Qzparkland").country_code == "US"  # a real town wins
+
+
+def test_a_town_at_the_feature_keeps_its_own_answer(extra_place, extra_feature):
+    # Paros: the island's town and its airport, not the island's far hubs
+    extra_feature(990000208, "Qzisle", "GR", 40, "ATH", [("qzisle", 0)], at=(37, 25))
+    extra_place(
+        990000209, "Qzisle", "GR", 3_000, 10**6, "PAS", [("qzisle", 0)], at=(37.1, 25.1)
+    )
+    assert resolve_place("Qzisle").airports == ("PAS",)
+
+
+def test_feature_respects_a_stated_country(extra_feature):
+    extra_feature(990000204, "Featurepeak", "NP", 60, "KTM", [("featurepeak", 0)])
+    assert resolve_place("Featurepeak, Nepal").airports == ("KTM",)
+    assert resolve_place("Featurepeak, Peru") is None
+
+
+def test_comparable_features_abroad_are_ambiguous(extra_feature):
+    extra_feature(990000205, "Twinlake", "US", 30, "SEA", [("twinlake", 0)])
+    extra_feature(990000206, "Twinlake", "CA", 25, "YVR", [("twinlake", 0)])
+    assert resolve_place("Twinlake") is None
+    extra_feature(990000207, "Twinlake", "US", 200, "BOS", [("twinlake", 0)])
+    assert resolve_place("Twinlake").airports == ("BOS",)
+
+
+@pytest.mark.parametrize(
+    ("text", "country", "first"),
+    [
+        ("Kakadu", "AU", {"DRW"}),
+        ("Arches National Park", "US", {"CNY", "GJT"}),
+        ("Everest", "NP", {"KTM", "LUA"}),
+        ("Lake Tahoe", "US", {"RNO"}),
+        ("Matterhorn", "CH", {"GVA", "ZRH"}),
+    ],
+)
+def test_committed_features_resolve(text, country, first):
+    place = resolve_place(text)
+    assert place.country_code == country and place.airports[0] in first
+
+
+def test_feature_country_for_the_static_tables():
+    from app.agents.static_results import _place_country
+
+    assert _place_country("Kakadu") == "australia"
+
+
+def test_autocomplete_suggests_features_after_towns():
+    from app.db.database import search_airports
+
+    assert search_airports("kakadu")[0]["iata_code"] == "DRW"
+    # a real town keeps the lead: no feature padding for "london"
+    london = [r["iata_code"] for r in search_airports("london")]
+    assert london[0] == "LHR" or "LHR" in london[:3]
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Paros", {"PAS"}),
+        ("Naxos", {"JNX"}),
+        ("Lefkada", {"PVK"}),
+        ("Borneo", {"BKI", "KCH"}),
+        ("Blue Mountains", {"SYD", "WSI"}),  # the City of Blue Mountains, NSW
+        ("Ede", None),
+        ("Concord", None),
+        ("Newport", {"BRS", "CWL"}),
+    ],
+)
+def test_feature_and_satellite_regressions(text, first):
+    place = resolve_place(text)
+    if first is None:
+        assert place is None
+    else:
+        assert place.airports[0] in first
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [("Nederland", "NL"), ("Palestine", "PS"), ("Eire", "IE")],
+)
+def test_native_country_names_beat_small_namesakes(text, country):
+    # Nederland, Texas (17k) and Palestine, Texas (18k) blocked these in the
+    # generator's collision guard; curated aliases restore the country
+    assert COUNTRY_ALIASES[fold_place_name(text)] == country
+    assert resolve_place(text).country_code == country
+
+
+def fold_place_name(text):
+    from app.core.places import fold_place
+
+    return fold_place(text)
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Lake Garda", {"VRN"}),
+        ("Lago di Garda", {"VRN"}),
+        ("Sardegna", {"CAG", "OLB", "AHO"}),
+    ],
+)
+def test_lake_garda_and_sardegna_hints(text, first):
+    place = resolve_place(text)
+    assert place.country_code == "IT" and place.airports[0] in first
+
+
+def test_ambiguous_features_with_only_small_towns_give_none():
+    # Mount Olympus: Cyprus and Greece (and a 6.7k Utah town) → no guess
+    assert resolve_place("Mount Olympus") is None
+
+
+@pytest.mark.parametrize("text", ["Eretria", "Coria", "Grenade", "Cameron"])
+def test_colliding_country_names_are_qualifiers_only(text):
+    from app.core.places import fold_place
+
+    assert fold_place(text) not in places_db.country_names()
+    place = resolve_place(text)
+    assert place is None or place.country_code not in {"ER", "KR", "GD", "CM"}
+
+
+def test_colliding_country_names_still_qualify():
+    assert places_db.stated_countries("eretria") == {"ER"}
+
+
+def test_a_contested_district_name_gives_none_not_a_town(extra_place, extra_feature):
+    extra_feature(
+        990000301, "Qzcentro", "BR", 12, "GRU", [("qzcentro", 2)], code="PPLX"
+    )
+    extra_place(990000302, "Qzcentro", "PT", 2_000, 10**6, "LIS", [("qzcentro", 0)])
+    assert resolve("Qzcentro").place is None
+    assert resolve("Qzcentro").ambiguous
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Vila", "VLI"),  # Port Vila's alternate name blocks the Albanian peak
+        ("Tongren", "TEN"),  # Guizhou's own Tongren Fenghuang airport
+        ("Newport", "BRS"),  # Wales: Newport, RI is far smaller
+    ],
+)
+def test_alternate_towns_and_own_airport_namesakes(text, first):
+    from app.db.database import lookup_city_iata
+
+    assert lookup_city_iata(text).split(",")[0] == first

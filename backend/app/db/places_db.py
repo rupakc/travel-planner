@@ -24,9 +24,11 @@ from ..core.places import (
     EXONYMS,
     GENERIC_PLACE_WORDS,
     ISLAND_AIRPORTS,
+    QUALIFIER_COUNTRY_ALIASES,
     REGION_HINTS,
     SAINT_EXCEPTIONS,
     fold_place,
+    is_named_airport,
     saint_variants,
     stated_region,
 )
@@ -62,11 +64,21 @@ R1_NEVER_DROP_POPULATION = 40_000
 DIVISION_BLOCK_RATIO = 20
 # The winner needs this many times the score of the next candidate.
 DOMINANCE = 3.0
+# A satellite leader (a suburb flying from a bigger neighbour's airport:
+# Peoria, Arizona) yields to the best town with its own airport scoring at
+# least 1/SATELLITE_RATIO of it (Peoria, Illinois: PIA).
+SATELLITE_RATIO = 10
+# A non-town feature (island, park, mountain…) answers only when no town
+# candidate has this many people ("Arches": the park, not the French village).
+FEATURE_TOWN_POPULATION = 15_000
+# ... nor when a town of that name lies this close to it: the town is the
+# feature's own (Paros, Naxos: the island towns and their airports).
+FEATURE_TOWN_KM = 50.0
 
 
 _PLACE_COLUMNS = (
     "p.geonameid, p.name, p.country_code, p.admin1, p.population, p.score, "
-    "p.airports, p.lat, p.lng"
+    "p.airports, p.lat, p.lng, p.satellite"
 )
 
 
@@ -86,25 +98,55 @@ class Place:
     division: bool = False  # stands for a first-level division ("Florida")
     lat: float | None = None
     lng: float | None = None
+    satellite: int = 0  # 1: flies from a ≥10× bigger neighbour's airport; 2: ≥100×
+    feature: bool = False  # a non-town feature (geonameid is None)
+    feature_code: str = ""  # its GeoNames feature code ("ISL", "PRK", "PPLX")
+    contested: bool = False  # matched only by a contested district name
+
+
+@functools.cache
+def _country_tables() -> tuple[dict[str, str], dict[str, str]]:
+    """(official names, GeoNames native and other-language names, names that
+    count only as a qualifier), folded name → ISO code, from the committed
+    country list (``names`` and ``qualifier_names``) and the dataset's
+    curated spellings."""
+    from .seed_airports import PLACE_DATA_DIR
+
+    official: dict[str, str] = {}
+    other: dict[str, str] = {}
+    qualifiers: dict[str, str] = {}
+    with open(PLACE_DATA_DIR / "countries.csv", newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            official[fold_place(row["name"])] = row["code"]
+            for name in (row.get("names") or "").split("|"):
+                if name:
+                    other[name] = row["code"]
+            for name in (row.get("qualifier_names") or "").split("|"):
+                if name:
+                    qualifiers[name] = row["code"]
+    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["country_code"]:
+                official[fold_place(row["country"])] = row["country_code"]
+    return official, other, qualifiers
 
 
 @functools.cache
 def country_names() -> dict[str, str]:
     """Folded country name or alias → ISO code: every country in the
     committed country list (also those with no airport: Andorra), the
-    dataset's curated spellings, and the aliases."""
-    from .seed_airports import PLACE_DATA_DIR
+    dataset's curated spellings, GeoNames' native and other-language names
+    ("deutschland", "nippon") and the aliases. Not the qualifier-only
+    aliases ("ksa"), which are airport codes typed alone."""
+    official, other, _qualifiers = _country_tables()
+    return {**other, **official, **COUNTRY_ALIASES}
 
-    table: dict[str, str] = {}
-    with open(PLACE_DATA_DIR / "countries.csv", newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            table[fold_place(row["name"])] = row["code"]
-    with open(PLACE_DATA_DIR / "airports.csv", newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            if row["country_code"]:
-                table[fold_place(row["country"])] = row["country_code"]
-    table.update(COUNTRY_ALIASES)
-    return table
+
+def _official_country_name(name: str) -> bool:
+    """A country's own (OurAirports / curated) name, not an alias or a
+    GeoNames other-language name: it beats a same-named division."""
+    official = _country_tables()[0]
+    return name in official and name not in COUNTRY_ALIASES
 
 
 @functools.cache
@@ -119,6 +161,11 @@ def stated_countries(stated: str) -> frozenset[str]:
     for variant in saint_variants(stated):
         if variant in country_names():
             codes.add(country_names()[variant])
+        if variant in QUALIFIER_COUNTRY_ALIASES:  # "Riyadh, KSA"
+            codes.add(QUALIFIER_COUNTRY_ALIASES[variant])
+        qualifier_names = _country_tables()[2]
+        if variant in qualifier_names:  # "Asmara, Eretria"; alone, the town
+            codes.add(qualifier_names[variant])
     if len(stated) == 2 and stated.upper() in _iso_codes():
         codes.add(stated.upper())
     return frozenset(codes)
@@ -273,6 +320,7 @@ def _row_place(row: sqlite3.Row, score: float, alternate: bool = False) -> Place
         alternate=alternate,
         lat=row["lat"],
         lng=row["lng"],
+        satellite=int(row["satellite"]),
     )
 
 
@@ -347,7 +395,7 @@ def _division_candidates(conn: sqlite3.Connection, names: list[str]) -> list[Pla
         cc, _, admin = row["code"].partition(".")
         top = _top_place(conn, "p.country_code = ? AND p.admin1 = ?", [cc, admin])
         if top:  # the division stands for its top place (ruling I1)
-            found.append(replace(top[0], division=True))
+            found.append(replace(top[0], division=True, satellite=False))
     return found
 
 
@@ -397,17 +445,24 @@ def _dataset_airports() -> tuple[dict[str, tuple[float, float]], tuple[str, ...]
     return points, tuple(r["iata"] for r in rows if r["scheduled"] == "0")
 
 
-def airport_distance_km(place: Place, code: str) -> float:
-    """Great-circle distance from the place to an airport (inf if unknown)."""
-    point = _dataset_airports()[0].get(code)
-    if point is None or place.lat is None or place.lng is None:
+def _km(lat1, lng1, lat2, lng2) -> float:
+    """Great-circle distance (inf when a point is unknown)."""
+    if None in (lat1, lng1, lat2, lng2):
         return math.inf
-    lat1, lng1, lat2, lng2 = map(math.radians, (place.lat, place.lng, *point))
+    lat1, lng1, lat2, lng2 = map(math.radians, (lat1, lng1, lat2, lng2))
     h = (
         math.sin((lat2 - lat1) / 2) ** 2
         + math.cos(lat1) * math.cos(lat2) * math.sin((lng2 - lng1) / 2) ** 2
     )
     return 2 * 6371.0 * math.asin(math.sqrt(h))
+
+
+def airport_distance_km(place: Place, code: str) -> float:
+    """Great-circle distance from the place to an airport (inf if unknown)."""
+    point = _dataset_airports()[0].get(code)
+    if point is None:
+        return math.inf
+    return _km(place.lat, place.lng, *point)
 
 
 def _reachable(candidates: list[Place]) -> list[Place]:
@@ -548,6 +603,99 @@ def _weak_against_airport(place: Place, small_airport: bool = False) -> bool:
     return place.population < SMALL_PLACE_POPULATION or far
 
 
+def _flies_from_its_own_airport(place: Place) -> bool:
+    """The place's first airport is named for it (``core.places.
+    is_named_airport``; never by distance alone): Peoria, Illinois and PIA;
+    not Ede, Nigeria and Ilorin's ILR, nor a suburb next to a hub."""
+    info = _airport_names()[1].get(place.airports[0]) if place.airports else None
+    if info is None:
+        return False
+    _country, city, name, _type_rank = info
+    return is_named_airport(fold_place(place.name), city, name)
+
+
+def _without_outscored_satellites(candidates: list[Place]) -> list[Place]:
+    """The suburb rule.
+
+    1. A deep suburb (``satellite`` 2) drops out when a namesake scores
+       more that is an ordinary satellite or flies from an airport named
+       for it: it cannot spoil a clear choice ("Pontevedra": Spain's, not
+       the Buenos Aires suburb). A namesake just outside a metropolis'
+       60 km keeps the name ambiguous ("Darien": Connecticut or Illinois).
+    2. When the top candidate is a satellite that would win, and a namesake
+       flying from an airport named for it scores ≥ 1/``SATELLITE_RATIO``
+       of it, the satellites scoring above that namesake drop out, so it
+       leads ("Peoria" → Illinois' PIA, not Phoenix's suburb; not Ede,
+       Nigeria and Ilorin's ILR). Comparable namesakes stay ambiguous
+       ("Glendale", "Redmond")."""
+    if not candidates:
+        return candidates
+    clear = max(
+        (
+            p.score
+            for p in candidates
+            if not p.division
+            and (
+                p.satellite == 1
+                or (p.satellite == 0 and _flies_from_its_own_airport(p))
+            )
+        ),
+        default=0,
+    )
+    candidates = [p for p in candidates if p.satellite < 2 or p.score >= clear]
+    top = max(candidates, key=lambda p: p.score)
+    if not top.satellite:
+        return candidates
+    leaders = [
+        p
+        for p in candidates
+        if not p.division and not p.satellite and _flies_from_its_own_airport(p)
+    ]
+    if not leaders:
+        return candidates
+    best = max(leaders, key=lambda p: p.score)
+    if not best.score * SATELLITE_RATIO >= top.score >= DOMINANCE * best.score:
+        return candidates
+    return [p for p in candidates if not (p.satellite and p.score > best.score)]
+
+
+# A namesake flying from an airport named for it wins over a top candidate
+# that does not, when within this score ratio and a comparable size.
+OWN_AIRPORT_NAMESAKE_RATIO = 5
+OWN_AIRPORT_NAMESAKE_FAR_KM = 75.0
+
+
+def _own_airport_namesake(candidates: list[Place]) -> tuple[list[Place], bool]:
+    """When the top candidate would win (≥ 3× the next) without an airport
+    named for it, and a comparable namesake (score within 5×, ≥ 1/3 of the
+    people) flies from its own named airport: the namesake leads if the
+    top's nearest airport is over ``OWN_AIRPORT_NAMESAKE_FAR_KM`` away
+    ("Tongren": Guizhou's Tongren Fenghuang, not Qinghai's Xining 95 km
+    off), otherwise the name is ambiguous ("Salisbury": Wiltshire or
+    Maryland). (candidates, ambiguous)."""
+    if len(candidates) < 2:
+        return candidates, False
+    top = max(candidates, key=lambda p: p.score)
+    if top.division or _flies_from_its_own_airport(top):
+        return candidates, False
+    own = [
+        p
+        for p in candidates
+        if p is not top
+        and not p.division
+        and p.score * OWN_AIRPORT_NAMESAKE_RATIO >= top.score >= DOMINANCE * p.score
+        and p.population * DOMINANCE >= top.population
+        and _flies_from_its_own_airport(p)
+    ]
+    if len(own) != 1:
+        return candidates, False
+    best = own[0]
+    nearest = min((airport_distance_km(top, c) for c in top.airports), default=math.inf)
+    if nearest <= OWN_AIRPORT_NAMESAKE_FAR_KM:
+        return candidates, True
+    return [p for p in candidates if p is best or p.score < best.score], False
+
+
 def _winner(
     candidates: list[Place], curated: frozenset[str], qualified: bool = False
 ) -> Resolution:
@@ -556,6 +704,11 @@ def _winner(
     alone or in a curated country; one under ``CONFIDENCE_POPULATION`` whose
     nearest airport is over ``CONFIDENCE_KM`` away only alone with a stated
     qualifier."""
+    candidates, contested = _own_airport_namesake(
+        _without_outscored_satellites(candidates)
+    )
+    if contested:
+        return Resolution(None, ambiguous=True)
     result = _pick(candidates)
     if result.ambiguous:
         result = _pick(_reachable(candidates))
@@ -572,6 +725,60 @@ def _winner(
     ):
         return Resolution(None, ambiguous=True)  # R2: a guess
     return result
+
+
+def _alt_count(place: Place) -> int:
+    """A place's GeoNames alternate-name count, from its score (population
+    × (count + 1)², × 3 for a capital: an estimate)."""
+    if place.population <= 0:
+        return 0
+    return max(0, round(math.sqrt(place.score / place.population)) - 1)
+
+
+def _features(
+    conn: sqlite3.Connection, names: list[str], meanings: list["_Stated"]
+) -> list[Place]:
+    """Notable non-town features (and famous districts) with one of these
+    names (own, short or alternate name) in every stated country."""
+    rows = conn.execute(
+        "SELECT f.geonameid, f.name, f.country_code, f.admin1, f.feature_code,"
+        " f.notability, f.population, f.airports, f.lat, f.lng,"
+        " MIN(n.tier) AS tier"
+        " FROM feature_names n JOIN features f ON f.geonameid = n.geonameid"
+        f" WHERE n.name_folded IN ({','.join('?' * len(names))})"
+        " AND f.airports != ''"
+        " AND (n.tier != 1 OR length(n.name_folded) >= ?)"  # not "ber"
+        " GROUP BY f.geonameid",
+        [*names, MIN_ALT_NAME_LENGTH],
+    ).fetchall()
+    rows = [
+        r
+        for r in rows
+        if all(m.admits(r["country_code"], r["admin1"]) for m in meanings)
+    ]
+    found = [
+        Place(
+            name=r["name"],
+            country_code=r["country_code"],
+            airports=tuple(r["airports"].split()),
+            admin1=r["admin1"],
+            score=float(r["notability"]),
+            # a district notable by its people only (not by alternate names)
+            # carries them, to be weighed against towns of the same name
+            population=(
+                r["population"]
+                if r["feature_code"].startswith("PPL") and r["notability"] < 10
+                else 0
+            ),
+            lat=r["lat"],
+            lng=r["lng"],
+            feature=True,
+            feature_code=r["feature_code"],
+            contested=r["tier"] == 2,
+        )
+        for r in rows
+    ]
+    return found
 
 
 def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
@@ -599,7 +806,7 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
     curated = _curated_countries(names)
     country = _country_alone(city) if not stated else None
     divisions = [] if curated else _division_candidates(conn, names)
-    official = city in country_names() and city not in COUNTRY_ALIASES
+    official = _official_country_name(city)
     if country and (official or not divisions):
         # A country typed alone → its highest-scoring place (the capital, or
         # the main gateway city: Istanbul, Zürich, Sydney, New York City).
@@ -637,6 +844,55 @@ def _resolve(conn: sqlite3.Connection, text: str) -> Resolution:
         if not strong:
             return Resolution(named)  # R1: "Wagga Wagga", "Lord Howe Island"
         candidates = strong
+
+    def blocks(p: Place) -> bool:  # a real town keeps its name
+        return p.division or p.population >= FEATURE_TOWN_POPULATION
+
+    # an alternate-name town of 15k+ with at least twice the alternate
+    # names of the best feature blocks the feature path and competes ("Vila"
+    # is Port Vila (35), not an Albanian peak (12); "St. Martin" stays the
+    # island (96), not Saint-Martin-d'Hères (18))
+    big_alternates = [
+        p
+        for p in alternates
+        if p.population >= FEATURE_TOWN_POPULATION
+        and p.geonameid not in {c.geonameid for c in candidates}
+    ]
+    found = _features(conn, names, meanings) if named is None and not curated else []
+    if (
+        found
+        and all(f.contested for f in found)
+        and not any(blocks(p) for p in candidates if not p.alternate)
+    ):
+        # a district name shared with many elsewhere ("Centar", "Chinatown",
+        # "Downtown"): no guess, and no town elsewhere either
+        return Resolution(None, ambiguous=True)
+    notable = max((f.score for f in found), default=0)
+    big_alternates = [p for p in big_alternates if _alt_count(p) >= 2 * notable]
+    if big_alternates and found and not any(blocks(p) for p in candidates):
+        candidates += big_alternates
+    if found and not any(blocks(p) for p in candidates):
+        # no real town by that name, even by an alternate name ("Jiddah" is
+        # Jeddah's): a notable island, park, mountain or district ("Kakadu";
+        # "Arches": the park, not the French village; "Ealing"), unless a
+        # town so named is at it (Paros: the island's own town)
+        towns = candidates
+        if found and not any(
+            _km(p.lat, p.lng, f.lat, f.lng) <= FEATURE_TOWN_KM
+            for p in towns
+            for f in found
+        ):
+            # ambiguous features against small towns only: no guess
+            # ("Mount Olympus": Cyprus or Greece, not a Utah village)
+            picked = _pick(found)
+            district_people = picked.place.population if picked.place else 0
+            if not district_people or all(
+                district_people >= DOMINANCE * p.population for p in candidates
+            ):
+                # a district known only by its people must dwarf every town,
+                # alternate names too ("Manly": Sydney's 16k, not Manly,
+                # Iowa; "Legazpi": the Philippine city, not Madrid's ward)
+                return picked
     if meanings and not candidates:
         return Resolution(None)  # "Berlin, Japan"
     preferred = [p for p in candidates if p.country_code in curated]
@@ -733,6 +989,26 @@ def _affix_variants(text: str) -> list[tuple[str, bool]]:
     return [(v + ("," + rest if rest else ""), ok) for v, ok in variants]
 
 
+# After an island / park / peninsula affix, a feature must be of that kind
+# ("San Blas Islands" is not Argentina's San Blas peninsula).
+_AFFIX_FEATURE_CODES = (
+    ((" island", " islands", "isla de ", "ile de "), ("ISL", "ISLS", "ATOL")),
+    ((" national park", " np"), ("PRK", "RESN", "RESW", "RESF")),
+    ((" peninsula",), ("PEN",)),
+)
+
+
+def _affix_fits(text: str, place: Place) -> bool:
+    """A curated hint always fits; a feature only of the affix's kind."""
+    if not place.feature:
+        return True
+    folded = fold_place(text.partition(",")[0])
+    for affixes, codes in _AFFIX_FEATURE_CODES:
+        if any(folded.endswith(a) or folded.startswith(a) for a in affixes):
+            return place.feature_code in codes
+    return True
+
+
 def no_comma_readings(text: str) -> list[str]:
     """ "City Country" / "City ST" typed without a comma ("Berlin Germany",
     "Chicago IL", "Sydney Nova Scotia") → "City, Qualifier" readings, the
@@ -763,7 +1039,11 @@ def _resolve_any(conn: sqlite3.Connection, text: str) -> Resolution:
         retry = _resolve(conn, variant)
         if not (retry.place or retry.ambiguous):
             continue
-        if places_too or (retry.place and retry.place.geonameid is None):
+        if places_too or (
+            retry.place
+            and retry.place.geonameid is None
+            and _affix_fits(text, retry.place)
+        ):
             return retry
         if retry.place and _exonym(conn, fold_place(variant.split(",")[0])):
             return retry  # an exonym under the affix

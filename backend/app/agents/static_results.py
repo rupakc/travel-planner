@@ -1494,6 +1494,20 @@ def normalise_place(destination: str) -> dict:
     return {"city": segments[0], "country": country, "tokens": tokens}
 
 
+def _named_country(segment: str | None) -> str | None:
+    """The ISO code of a stated segment that names exactly one country by a
+    name the tables lack: a GeoNames native / other-language name
+    ("deutschland", "espana", "nippon") or a qualifier alias ("ksa"). Never
+    a code ("wa", "de") or a region name ("georgia", "victoria"), which keep
+    their own readings."""
+    if not segment or len(segment) <= 2 or segment in _REGION_NAMES:
+        return None
+    from ..db.places_db import stated_countries
+
+    codes = stated_countries(segment)
+    return next(iter(codes)) if len(codes) == 1 else None
+
+
 def _place_country(destination: str) -> str | None:
     """The country key a destination names, or None.
 
@@ -1517,6 +1531,9 @@ def _place_country(destination: str) -> str | None:
     country, city = place["country"], place["city"]
     if country in _known_countries():
         return country
+    named = _named_country(country)
+    if named:  # "Berlin, Deutschland", "Madrid, España": a country's other name
+        return _ISO_COUNTRY.get(named.lower())
     mapped = _city_country(city)
     if mapped:
         if country is None:

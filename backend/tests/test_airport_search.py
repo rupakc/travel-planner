@@ -148,3 +148,68 @@ def test_r7_no_padding_below_relevance():
 def test_g5_four_letter_prefixes_are_own_names(q, want):
     codes = _codes(q)
     assert codes and set(codes[:4]) <= want, codes
+
+
+def test_autocomplete_applies_the_suburb_rule():
+    # Peoria, Arizona is a Phoenix suburb: Peoria, Illinois' own PIA first
+    assert _codes("peoria")[0] == "PIA"
+
+
+@pytest.mark.parametrize(
+    ("q", "first", "never"),
+    [
+        ("deutschland", {"BER"}, {"GRZ", "KLU"}),  # not Deutschlandsberg, AT
+        ("nederland", {"AMS"}, {"BPT"}),
+        ("nippon", {"HND", "NRT"}, set()),
+    ],
+)
+def test_autocomplete_recognises_country_names(q, first, never):
+    codes = _codes(q)
+    assert codes and codes[0] in first, codes
+    assert not never & set(codes)
+
+
+def test_autocomplete_official_country_queries_unchanged():
+    # an official country name keeps matching the airports' country column
+    assert len(_codes("germany")) == 10
+
+
+def test_autocomplete_country_name_prefixes():
+    assert _codes("deuts")[0] == "BER"
+    assert _codes("sveri")[0] == "ARN"
+
+
+def test_autocomplete_suburb_rule_on_prefixes():
+    codes = _codes("peori")
+    assert codes[0] == "PIA"
+
+
+def test_autocomplete_feature_alternates_and_short_names():
+    assert "JTR" in _codes("sifnos")
+
+
+@pytest.mark.parametrize(
+    ("q", "both"),
+    [("pontevedra", ({"VGO", "SCQ"}, {"EZE", "AEP"})), ("redmond", ({"SEA"}, {"RDM"}))],
+)
+def test_autocomplete_keeps_namesakes_the_resolver_cannot_split(q, both):
+    codes = set(_codes(q))
+    assert all(codes & side for side in both), codes
+
+
+@pytest.mark.parametrize(
+    ("q", "first"),
+    [
+        ("ealing", "LHR"),  # the London borough, not Ealing, NZ's TIU
+        ("peoria", "PIA"),
+        ("kakadu", "DRW"),
+    ],
+)
+def test_autocomplete_leads_with_the_resolved_answer(q, first):
+    assert _codes(q)[0] == first
+
+
+def test_a_district_prefix_beats_a_country_alternate_name_prefix():
+    # "Jordaan" is Jordan's Afrikaans name and Amsterdam's district
+    assert _codes("jordaa")[0] == "AMS"
+    assert _codes("deuts")[0] == "BER"  # a curated native name still leads
