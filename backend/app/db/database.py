@@ -677,6 +677,46 @@ _SHORT_QUERY_MIN_POPULATION = 100_000
 # when no real town matches, ranked below any town match.
 _AUTOCOMPLETE_FEATURES = 3
 _FEATURE_SCORE = 1.0
+# A suburb set aside by the suburb rule ranks at this share of its score,
+# below the namesake with its own airport ("peoria": PIA before PHX).
+_SATELLITE_SHARE = 0.01
+
+
+def _country_name_place(folded: str):
+    """The resolved place (the gateway city) for a query that is a
+    country's other name or alias ("deutschland", "nippon", "holland"), or
+    None. Official names keep matching the airports' country column."""
+    from .places_db import _official_country_name, country_names, resolve_place
+
+    if len(folded) < _SHORT_QUERY + 1 or folded not in country_names():
+        return None
+    if _official_country_name(folded):
+        return None
+    place = resolve_place(folded)
+    return place if place and place.airports else None
+
+
+def _outscored_satellites(rows: list[sqlite3.Row], folded: str) -> set[int]:
+    """Rows (by id()) of exact own-name matches that the resolver's suburb
+    rule sets aside ("peoria": Arizona's Phoenix suburb below Illinois)."""
+    from .places_db import Place, _without_outscored_satellites
+
+    exact = {
+        id(r): Place(
+            name=r["name"],
+            country_code=r["country_code"],
+            airports=tuple(r["airports"].split()),
+            population=r["population"],
+            score=float(r["score"]),
+            lat=r["lat"],
+            lng=r["lng"],
+            satellite=bool(r["satellite"]),
+        )
+        for r in rows
+        if r["tier"] == 0 and r["name_folded"] == folded
+    }
+    kept = {id(p) for p in _without_outscored_satellites(list(exact.values()))}
+    return {key for key, place in exact.items() if id(place) not in kept}
 
 
 def _autocomplete_places(
@@ -710,6 +750,12 @@ def _autocomplete_places(
     # an exactly typed hint keeps namesakes abroad out ("yorkshire": no
     # Yorkshire, Virginia; "sylt": no Sylhet)
     hint_country = hints[folded][0] if folded in hints else None
+    country_place = _country_name_place(folded)
+    if country_place is not None and not hint_country:
+        # a country's other name ("deutschland", "nippon"): its gateway, and
+        # no namesakes abroad (not Deutschlandsberg, Austria)
+        hint_country = country_place.country_code
+        add(folded, country_place.airports, _HINT_SCORE, hint=True)
     for name, (_cc, codes) in hints.items():
         # whole names, or prefixes from four letters ("par" is not Park City)
         if name == folded or (len(folded) >= 4 and name.startswith(folded)):
@@ -719,7 +765,7 @@ def _autocomplete_places(
     end = folded + "\uffff"
     rows = conn.execute(
         "SELECT n.name_folded, n.tier, p.score, p.airports, p.country_code,"
-        " p.population "
+        " p.population, p.name, p.lat, p.lng, p.satellite "
         "FROM place_names n JOIN places p ON p.geonameid = n.geonameid "
         "WHERE p.population > 0 AND p.airports != '' "
         "AND (length(:q) > :short OR n.name_folded = :q OR p.population >= :big) "
@@ -741,8 +787,15 @@ def _autocomplete_places(
             "small": SMALL_PLACE_POPULATION,
         },
     ).fetchall()
+    outscored = _outscored_satellites(rows, folded)
     scored = [
-        (r["score"] * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0), r) for r in rows
+        (
+            r["score"]
+            * (_AUTOCOMPLETE_ALT_SHARE if r["tier"] else 1.0)
+            * (_SATELLITE_SHARE if id(r) in outscored else 1.0),
+            r,
+        )
+        for r in rows
     ]  # alternates rank far below own names (Syracuse's stray "milan")
     # the share threshold counts own names of real towns when there are any
     # ("kota": Kota, Rajasthan, not Malay "Kota …" alternates of megacities);

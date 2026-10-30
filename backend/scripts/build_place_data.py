@@ -121,6 +121,7 @@ ISLAND_CODES = frozenset({"ISL", "ISLS", "ATOL"})
 # Notability = GeoNames' alternate-name count; calibrated (see the README).
 FEATURE_MIN_NOTABILITY = 10
 FEATURE_AIRPORT_KM = 250  # large / medium airports linked within
+FEATURE_LARGE_FACTOR = 0.5  # a large airport ranks at half its distance
 # An airport on an island: within this distance of the island's point, and
 # that island is the nearest notable island point to the airport.
 ISLAND_AIRPORT_KM = 50
@@ -706,8 +707,10 @@ def island_airports(islands, airports) -> dict[str, str]:
 
 def link_feature(feature: Feature, index: GeoIndex, on_island: dict) -> list[str]:
     """A feature's airports: those on it (an island's, nearest first), then
-    large / medium airports within 250 km ranked by (foreign, type,
-    distance), ≤ 3. Air bases and ``NEVER_LINK`` airports never link."""
+    large / medium airports within 250 km ranked by (foreign, effective
+    distance: a large airport at × 0.5), ≤ 3, so a near medium airport is
+    not buried under far hubs (Florida Keys: EYW before MIA). Air bases and
+    ``NEVER_LINK`` airports never link."""
     nearby = [
         (d, a)
         for d, a in index.within(feature.lat, feature.lng, FEATURE_AIRPORT_KM)
@@ -715,10 +718,11 @@ def link_feature(feature: Feature, index: GeoIndex, on_island: dict) -> list[str
     ]
     own = [a.iata for d, a in nearby if on_island.get(a.iata) == feature.geonameid]
     ranked = sorted(
-        ((a.country_code != feature.country_code, a.type_rank, d, a.iata)
+        ((a.country_code != feature.country_code,
+          d * (FEATURE_LARGE_FACTOR if a.type_rank == 0 else 1), a.iata)
          for d, a in nearby if a.type_rank <= 1),
     )  # fmt: skip
-    codes = own + [t[3] for t in ranked if t[3] not in own]
+    codes = own + [t[2] for t in ranked if t[2] not in own]
     return codes[:MAX_LINKS]
 
 

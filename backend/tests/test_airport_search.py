@@ -148,3 +148,27 @@ def test_r7_no_padding_below_relevance():
 def test_g5_four_letter_prefixes_are_own_names(q, want):
     codes = _codes(q)
     assert codes and set(codes[:4]) <= want, codes
+
+
+def test_autocomplete_applies_the_suburb_rule():
+    # Peoria, Arizona is a Phoenix suburb: Peoria, Illinois' own PIA first
+    assert _codes("peoria")[0] == "PIA"
+
+
+@pytest.mark.parametrize(
+    ("q", "first", "never"),
+    [
+        ("deutschland", {"BER"}, {"GRZ", "KLU"}),  # not Deutschlandsberg, AT
+        ("nederland", {"AMS"}, {"BPT"}),
+        ("nippon", {"HND", "NRT"}, set()),
+    ],
+)
+def test_autocomplete_recognises_country_names(q, first, never):
+    codes = _codes(q)
+    assert codes and codes[0] in first, codes
+    assert not never & set(codes)
+
+
+def test_autocomplete_official_country_queries_unchanged():
+    # an official country name keeps matching the airports' country column
+    assert len(_codes("germany")) == 10

@@ -66,7 +66,10 @@
   "turks and caicos": "TC",
   "ceylon": "LK",
   "dprk": "KP",
-  "eire": "IE"
+  "eire": "IE",
+  "nederland": "NL",
+  "palestine": "PS",
+  "aland": "AX"
  },
  "qualifier_country_aliases": {
   "ksa": "SA",
@@ -730,6 +733,14 @@
     "BKI",
     "KCH"
    ]
+  ],
+  "sardegna": [
+   "IT",
+   [
+    "CAG",
+    "OLB",
+    "AHO"
+   ]
   ]
  },
  "destinations": {
@@ -1384,6 +1395,22 @@
    [
     "HYA",
     "BOS"
+   ]
+  ],
+  "lake garda": [
+   "IT",
+   [
+    "VRN",
+    "BGY",
+    "VCE"
+   ]
+  ],
+  "lago di garda": [
+   "IT",
+   [
+    "VRN",
+    "BGY",
+    "VCE"
    ]
   ]
  },

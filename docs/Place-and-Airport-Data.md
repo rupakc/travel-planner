@@ -41,12 +41,12 @@ Curated knowledge the open data lacks:
 
 | Key | Entries | Purpose |
 |---|---|---|
-| `islands` | 105 | Islands and their airports ("Sicily" → CTA, PMO, TPS; "Borneo" → BKI, KCH) |
+| `islands` | 106 | Islands and their airports ("Sicily" and "Sardegna" → CTA, PMO, TPS / CAG, OLB, AHO; "Borneo" → BKI, KCH) |
 | `destinations` | 82 | Places without a useful airport of their own ("Machu Picchu" → CUZ, "Kyoto" → KIX, ITM; "Zermatt" → ZRH, GVA; "Monte Carlo" → NCE) |
-| `regions` | 20 | Regions ("Algarve" → FAO) |
+| `regions` | 22 | Regions ("Algarve" → FAO; "Lake Garda" → VRN, BGY, VCE) |
 | `exonyms` | 80 | Other-language or English names mapped to a GeoNames id, or to `"ambiguous"` ("Cologne" → Köln, "Milano" → Milan; "Odessa" is ambiguous unless qualified) |
 | `city_aliases` | 19 | Shorthands (SF, LA, KL, HCMC, NOLA…) |
-| `country_aliases` | 45 | "UK", "England", "Holland", "DPRK", "Eire"… |
+| `country_aliases` | 48 | "UK", "England", "Holland", "DPRK", "Eire", and native names the generator's collision guard drops: "Nederland" (Nederland, Texas), "Palestine" (Palestine, Texas), "Aland" (Aland, India)… |
 | `qualifier_country_aliases` | 4 | KSA, PRC, ROK, ROC: countries only as a qualifier ("Riyadh, KSA", "Beijing PRC"), because typed alone each is a scheduled airport code (Kosrae, Prescott, Rockhampton, Rochester) |
 | `saint_exceptions` | 2 | Names that must not get St/Saint variants |
 
@@ -95,7 +95,7 @@ It can also be run by hand: `cd backend && python -m app.db.seed_airports`. Afte
 5. **GeoNames place resolution** (`resolve_place`, `backend/app/db/places_db.py`):
    - Candidates are places whose own name matches. Alternate names count only when no place has that own name, or when the own-name places are small (under 20k) and the alternate one is at least 10× bigger and 150k or more.
    - Exonyms from `hints.json` map an English name to a specific place, or mark it ambiguous.
-   - A country typed alone gives its top place; a first-level division ("Florida", "Scotland") joins as its top place unless a town of that name is comparably notable. Country names include the native and other-language names in `countries.csv` ("Deutschland" → BER, "Nippon" → HND); a name that is also the own name of a town of 15k or more stays the town's ("Nederland", Colorado).
+   - A country typed alone gives its top place; a first-level division ("Florida", "Scotland") joins as its top place unless a town of that name is comparably notable. Country names include the native and other-language names in `countries.csv` ("Deutschland" → BER, "Nippon" → HND); a name that is also the own name of a town of 15k or more stays the town's ("Columbia", South Carolina), unless it is the country's own name, curated as an alias ("Nederland" → AMS, not Nederland, Texas).
    - Stated qualifiers (country name in any of those forms, ISO code, alias, a qualifier-only alias such as KSA, US/CA/AU/BR/IN region code or a division name) filter the candidates ("Berlin, Deutschland", "Riyadh, KSA"). A qualifier that contradicts every candidate gives `None`.
    - An airport whose whole name equals the text can win ("Wagga Wagga" → WGA), but never over a place of 40k or more.
    - **Suburbs yield to towns with their own airport.** When the top candidate is a [satellite](#suburbs-satellite-places) and the best candidate whose first airport is its own scores at least 1/10 of it, the satellites scoring above that town drop out ("Peoria" → PIA, Illinois, not the Phoenix suburb).
@@ -112,9 +112,9 @@ A place is a *satellite* when its first airport is not its own but the own airpo
 
 ### Non-town features
 
-`features.csv.gz` holds 14,186 GeoNames features that are not towns: islands, archipelagos and atolls, peninsulas, parks and reserves, resorts, regions and coasts, mountains, ranges, peaks and volcanoes, valleys, lakes, beaches, ancient and historical sites, ruins and monuments, deserts, gorges and canyons. Only notable ones are kept: at least 10 GeoNames alternate names, and an airport. Their airports are those on the island (for islands), then large and medium airports within 250 km, same country first, large before medium. The data README has the calibration (5 → 83k features and 3.6 MB; 10 → 14k and 0.9 MB; 20 → 1.3k).
+`features.csv.gz` holds 14,186 GeoNames features that are not towns: islands, archipelagos and atolls, peninsulas, parks and reserves, resorts, regions and coasts, mountains, ranges, peaks and volcanoes, valleys, lakes, beaches, ancient and historical sites, ruins and monuments, deserts, gorges and canyons. Only notable ones are kept: at least 10 GeoNames alternate names, and an airport. Their airports are those on the island (for islands), then large and medium airports within 250 km, same country first, by distance with a large airport counted at half its distance (Florida Keys → EYW, then MIA; Lake Tahoe → RNO before Truckee). The data README has the calibration (5 → 83k features and 3.6 MB; 10 → 14k and 0.9 MB; 20 → 1.3k).
 
-Curated hints still come first; features answer names the hints do not cover ("Grand Teton" → JAC, "Crater Lake" → MFR, "Mount Rushmore" → RAP, "Tikal" → FRS, "Haida Gwaii" → YZP). Vast regions give a single point, so their airports can be rough (the Florida Keys give MIA before Key West); big islands with several gateways are curated ("Borneo" → BKI, KCH).
+Curated hints still come first; features answer names the hints do not cover ("Grand Teton" → JAC, "Crater Lake" → MFR, "Mount Rushmore" → RAP, "Tikal" → FRS, "Haida Gwaii" → YZP). Vast regions give a single point, so their airports can be rough (Sumatra → PKU, Pekanbaru); big islands with several gateways are curated ("Borneo" → BKI, KCH).
 
 ### Examples
 
@@ -158,6 +158,8 @@ The one web path: when a request's origin or destination is a bare 3-letter code
 
 - Matches airports by code, city, airport name or country, plus the airports of GeoNames places and curated hints whose folded name starts with the query ("kyoto" → ITM, KIX, …; "milan" → MXP, LIN, BGY).
 - From the fourth letter, when no town of 15k or more and no curated hint matches, up to 3 notable features whose name starts with the query add their airports, below every town match ("kakadu" → DRW, MNG).
+- A country's other name or alias suggests the airports of the place the resolver picks for it, and keeps namesakes abroad out ("deutschland" → BER, not Deutschlandsberg's GRZ; "nederland" → AMS, RTM). Official names still match the airports' country column ("germany" lists German airports).
+- The suburb rule applies to exact name matches: a satellite set aside by the resolver ranks below its namesake with its own airport ("peoria" → PIA).
 - Alternate names count for places of 100k or more from the fourth letter ("münch" → München).
 - A place contributes only its own-country airports, and only places scoring at least 1/10 of the best match count.
 - Order: exact code, code prefix, exact name, name prefix, then the rest. Lower-case three-letter text that names a place lists the place first ("hue" → HUI; "HUE" → HUE). Within a class, the more notable place comes first, then curated order, then the bigger airport.
@@ -169,7 +171,7 @@ Each row has `iata_code, name, city, country, country_code`.
 
 ## Quality
 
-- **Golden set.** `backend/tests/data/golden_places.csv` has 731 cases (438 resolution, 275 data, 18 autocomplete; 573 "first code matches", 98 exact, 50 subset and 10 expected `None`). `tests/test_golden_places_runtime.py` runs them all and forbids web calls.
+- **Golden set.** `backend/tests/data/golden_places.csv` has 736 cases (443 resolution, 275 data, 18 autocomplete; 578 "first code matches", 98 exact, 50 subset and 10 expected `None`). `tests/test_golden_places_runtime.py` runs them all and forbids web calls.
 - **Fresh blind probe.** On inputs not used during development, about 1.7% resolved to a wrong airport. More inputs now resolve to `None` by design: when a name is genuinely ambiguous, no answer (and an AI-estimated fare) is better than a confident wrong airport.
 - **Country names, suburbs and features (2026-10-30).** On the five earlier probe sets (2,484 inputs) no input gained a wrong airport; one wrong answer was fixed (Peoria) and 50 inputs that gave `None` now resolve, mostly parks, islands and regions.
 - **Speed.** `lookup_city_iata` takes about 0.8 ms per call at p50 and under 2.5 ms at p99 (warm), so request handlers call it synchronously.

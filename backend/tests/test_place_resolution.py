@@ -744,9 +744,11 @@ def test_static_tables_read_country_names(text, key):
     assert _place_country(text) == key
 
 
-def test_a_big_town_keeps_a_country_name():
-    # "Nederland" is Nederland, Colorado (17k): the generator's guard
-    assert "nederland" not in places_db.country_names()
+def test_a_big_town_keeps_a_generic_country_name():
+    # the generator's guard: "Columbia" (Colombia in some languages) is
+    # Columbia, South Carolina; "Nederland" is curated back (native name)
+    assert "columbia" not in places_db.country_names()
+    assert places_db.country_names()["nederland"] == "NL"
 
 
 _PIA = (40.66, -89.69)  # a town at PIA flies from its own airport
@@ -895,3 +897,33 @@ def test_feature_and_satellite_regressions(text, first):
         assert place is None
     else:
         assert place.airports[0] in first
+
+
+@pytest.mark.parametrize(
+    ("text", "country"),
+    [("Nederland", "NL"), ("Palestine", "PS"), ("Eire", "IE")],
+)
+def test_native_country_names_beat_small_namesakes(text, country):
+    # Nederland, Texas (17k) and Palestine, Texas (18k) blocked these in the
+    # generator's collision guard; curated aliases restore the country
+    assert COUNTRY_ALIASES[fold_place_name(text)] == country
+    assert resolve_place(text).country_code == country
+
+
+def fold_place_name(text):
+    from app.core.places import fold_place
+
+    return fold_place(text)
+
+
+@pytest.mark.parametrize(
+    ("text", "first"),
+    [
+        ("Lake Garda", {"VRN"}),
+        ("Lago di Garda", {"VRN"}),
+        ("Sardegna", {"CAG", "OLB", "AHO"}),
+    ],
+)
+def test_lake_garda_and_sardegna_hints(text, first):
+    place = resolve_place(text)
+    assert place.country_code == "IT" and place.airports[0] in first

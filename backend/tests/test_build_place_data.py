@@ -1396,8 +1396,9 @@ def test_features_keep_notable_ones_with_an_airport_in_reach(tmp_path):
     r = _build_all(tmp_path, airports, [], rows)
     assert set(r.features) == {"10"}
     park = r.features["10"]
-    # same country first, then type (large / medium only), then distance
-    assert park["airports"] == ["LRG", "MED", "FOR"]
+    # same country first, then effective distance (large at × 0.5: LRG
+    # 200 → 100 km, after MED at 30 km; large / medium only)
+    assert park["airports"] == ["MED", "LRG", "FOR"]
     assert park["notability"] == 16
     assert park["feature_code"] == "PRK"
     assert "grand parc" in park["alt_names"] and "great park" not in park["alt_names"]
@@ -1415,7 +1416,7 @@ def test_island_airports_on_the_island_come_first(tmp_path):
         _geo(22, "Rock", _north(_LAT, 9), _LNG, "ISL"),  # not notable: no claim
     ]
     r = _build_all(tmp_path, airports, [], rows)
-    assert r.features["20"]["airports"] == ["ISA", "HUB", "NBR"]
+    assert r.features["20"]["airports"] == ["ISA", "NBR", "HUB"]  # 45 < 120 × 0.5
     assert r.features["21"]["airports"] == ["NBR", "HUB"]
 
 
@@ -1530,3 +1531,31 @@ def test_committed_features(name, cc, airport):
     ]
     assert rows, name
     assert airport in rows[0]["airports"].split()
+
+
+def test_feature_large_airport_counts_at_half_distance(tmp_path):
+    airports = [
+        _oa("MED", _north(_LAT, 100), _LNG, kind="medium_airport"),
+        _oa("LRG", _north(_LAT, -190), _LNG),  # 190 × 0.5 = 95 < 100
+        _oa("FAR", _north(_LAT, 210), _LNG),  # 105 > 100
+    ]
+    rows = [_geo(40, "Big Lake", _LAT, _LNG, "LK", alts=_alts(12))]
+    r = _build_all(tmp_path, airports, [], rows)
+    assert r.features["40"]["airports"] == ["LRG", "MED", "FAR"]
+
+
+@pytest.mark.parametrize(
+    ("name", "cc", "airport", "within"),
+    [
+        ("Florida Keys", "US", "EYW", 1),
+        ("Mont Saint-Michel", "FR", "RNS", 2),
+        ("Arches National Park", "US", "CNY", 1),
+    ],
+)
+def test_committed_feature_airports_rank_near_ones_first(name, cc, airport, within):
+    (row,) = [
+        f
+        for f in _committed_features()
+        if f["name"] == name and f["country_code"] == cc
+    ]
+    assert airport in row["airports"].split()[:within], row["airports"]
