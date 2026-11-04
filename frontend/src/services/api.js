@@ -168,3 +168,10 @@ export async function recheckStressTest(payload, token) {
   const res = await api.post('/stress-test', payload, token ? authHeaders(token) : undefined)
   return res.data
 }
+
+// Plan from a link: read a link, pasted text or screenshots and return the
+// places found (an ImportPreview). `signal` lets the traveller cancel.
+export async function extractImport(body, token, signal) {
+  const res = await api.post('/import/extract', body, { ...authHeaders(token), signal, timeout: 90000 })
+  return res.data
+}

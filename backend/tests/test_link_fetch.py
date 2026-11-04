@@ -525,3 +525,18 @@ async def test_tiktok_uses_oembed_caption():
     )
     assert "Hidden bars in Mexico City" in content.text
     assert content.site_name == "TikTok"
+
+
+def test_extract_page_prefers_the_biggest_content_block_over_a_teaser():
+    places = "".join(
+        f"<h3>{n}</h3><p>{n} is one of the best places in Lisbon to visit.</p>"
+        for n in ("Belém Tower", "Alfama", "LX Factory", "Time Out Market", "Sintra")
+    )
+    html = _html(
+        '<article class="related"><h2>The Best Hotels in Lisbon</h2>'
+        "<p>Read our hotel guide.</p></article>"
+        f'<div class="entry-content">{places}</div>'
+    )
+    text = extract_page(html, "https://x.example/")["text"]
+    for n in ("Belém Tower", "Alfama", "LX Factory", "Time Out Market", "Sintra"):
+        assert n in text

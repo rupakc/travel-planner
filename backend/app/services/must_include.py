@@ -158,13 +158,21 @@ def _day_city(day: dict, request: TravelSearchRequest) -> str:
     return _city_key(request.destination)
 
 
+_LINK_FIELDS = ("from_link", "link_place", "link_places", "link_quote", "link_note")
+
+
 def _mark(slot: dict, place: MustIncludePlace) -> None:
-    slot["from_link"] = True
-    slot["link_place"] = place.name
-    if place.quote:
-        slot["link_quote"] = place.quote
-    if place.note:
-        slot["link_note"] = place.note
+    """Tag ``slot`` with ``place``; a slot may cover several link places
+    ("Santos and the Time Out Market")."""
+    if not slot.get("from_link"):
+        slot["from_link"] = True
+        slot["link_place"] = place.name
+        slot["link_places"] = []
+        if place.quote:
+            slot["link_quote"] = place.quote
+        if place.note:
+            slot["link_note"] = place.note
+    slot["link_places"].append(place.name)
 
 
 def _candidate_days(days: list[dict], place, request) -> list[dict]:
@@ -202,28 +210,46 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
     def slots_of(day):
         return [s for s in day.get("slots") or [] if isinstance(s, dict)]
 
+    # Only this check decides what is "from your link" — never the model
+    for day in days:
+        for slot in slots_of(day):
+            for key in _LINK_FIELDS:
+                slot.pop(key, None)
+
     scheduled, extras, missing = [], [], []
     linked_per_day: dict[int, int] = {}
-    pending = []
-    for place in request.must_include:
-        hit = next(
-            (
-                (day, slot)
-                for day in days
-                for slot in slots_of(day)
-                if not slot.get("link_place")
-                and _same_place(
-                    place.name, f"{slot.get('activity', '')} {slot.get('location', '')}"
-                )
-            ),
-            None,
-        )
-        if hit:
-            _mark(hit[1], place)
-            linked_per_day[id(hit[0])] = linked_per_day.get(id(hit[0]), 0) + 1
-            scheduled.append(place.name)
-        else:
-            pending.append(place)
+
+    def visit_slots():
+        return [
+            (day, slot)
+            for day in days
+            for slot in slots_of(day)
+            if not _LOGISTICS.search(slot.get("activity", ""))
+        ]
+
+    # Places the itinerary already names: by activity text first (strongest),
+    # then by location ("Embaixada Palace" sits in Príncipe Real — the
+    # palace's slot must not claim Príncipe Real while another slot names it)
+    pending = list(request.must_include)
+    for field in ("activity", "location"):
+        still = []
+        for place in pending:
+            hit = next(
+                (
+                    (day, slot)
+                    for day, slot in visit_slots()
+                    if _same_place(place.name, slot.get(field, ""))
+                    and (field == "activity" or not slot.get("from_link"))
+                ),
+                None,
+            )
+            if hit:
+                _mark(hit[1], place)
+                linked_per_day[id(hit[0])] = linked_per_day.get(id(hit[0]), 0) + 1
+                scheduled.append(place.name)
+            else:
+                still.append(place)
+        pending = still
 
     for place in pending:
         candidates = _candidate_days(days, place, request)
@@ -252,8 +278,6 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             slot.pop("notes", None)
             if place.lat is not None and place.lng is not None:
                 slot["lat"], slot["lng"] = place.lat, place.lng
-            for key in ("link_quote", "link_note"):
-                slot.pop(key, None)
             _mark(slot, place)
             linked_per_day[id(day)] = linked_per_day.get(id(day), 0) + 1
             scheduled.append(place.name)

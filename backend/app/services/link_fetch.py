@@ -382,8 +382,40 @@ def _walk_ld(node, lines: list[str], author: list[str], depth: int = 0) -> None:
             _walk_ld(node[key], lines, author, depth + 1)
 
 
+_CONTENT_CLASS = re.compile(
+    r"entry-content|post-content|post-body|article-body|article-content|"
+    r"story-body|blog-post|single-post|main-content",
+    re.IGNORECASE,
+)
+
+
+def _text_len(el) -> int:
+    return len(_clean(el.get_text(" ")))
+
+
+def _content_root(soup: BeautifulSoup):
+    """The element holding the article: the biggest of <article>, <main> and
+    the usual blog content containers — a teaser <article> in a sidebar must
+    not win — or the whole body when none holds most of the page's text."""
+    body = soup.body or soup
+    candidates = [
+        *soup.find_all("article"),
+        *soup.find_all("main"),
+        *soup.find_all(attrs={"role": "main"}),
+        *soup.find_all(attrs={"itemprop": "articleBody"}),
+        *soup.find_all(class_=_CONTENT_CLASS),
+    ]
+    if not candidates:
+        return body
+    best = max(candidates, key=_text_len)
+    best_len, body_len = _text_len(best), _text_len(body)
+    if best_len < 1500 and body_len > 3 * best_len:
+        return body
+    return best
+
+
 def _main_text(soup: BeautifulSoup) -> str:
-    root = soup.find("article") or soup.find("main") or soup.body or soup
+    root = _content_root(soup)
     lines: list[str] = []
     for el in root.find_all(_TEXT_TAGS):
         # Only the innermost text block counts (a <li> holding a <p> once)

@@ -33,7 +33,9 @@ SERPER_CONCURRENCY = 5
 DAY_TRIP_KM = 45.0
 SERPER_MAX_KM = 60.0
 PLACES_PER_DAY = 4
-MIN_DAYS, MAX_DAYS = 2, 14
+MIN_DAYS, MAX_DAYS = 3, 14
+# Hotels and transport don't fill a day of sightseeing
+_NOT_A_VISIT = {"stay", "transport"}
 
 
 @dataclass
@@ -250,9 +252,11 @@ async def build_preview(extraction: dict, source: dict) -> dict:
     )
     dropped = [s for s in stops if s not in kept]
 
-    place_total = sum(s.count for s in kept)
+    visits = sum(
+        1 for s in kept for _i, p, _c in s.members if p.get("kind") not in _NOT_A_VISIT
+    )
     days = extraction.get("suggested_days") or min(
-        MAX_DAYS, max(MIN_DAYS, math.ceil(place_total / PLACES_PER_DAY))
+        MAX_DAYS, max(MIN_DAYS, math.ceil(visits / PLACES_PER_DAY))
     )
     days = max(days, len(kept))
     nights = _split_nights(days, [s.count for s in kept]) if kept else []

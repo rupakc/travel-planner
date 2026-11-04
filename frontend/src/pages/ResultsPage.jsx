@@ -8,7 +8,7 @@ import {
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map as MapIcon, SlidersHorizontal, Wifi, Bath, Cloud,
   ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
-  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints
+  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints, Link2
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest, getSerpapiConfigured } from '../services/api'
@@ -36,6 +36,8 @@ import { responseErrorMessage, axiosErrorDetail } from '../utils/httpError'
 import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
+import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
+import LinkPlanBanner from '../components/LinkPlanBanner'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -1078,13 +1080,16 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
         const isSelected = selections.activities.some(x => x.name === a.name)
         const isOutdoor = OUTDOOR_CATS.some(c => (a.category || '').toLowerCase().includes(c))
         return (
-          <div key={i}
+          <div key={i} data-activity-card
             onClick={() => onSelect('activities', a)}
-            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-green-400 ring-2 ring-green-300 bg-green-50' : 'border-gray-200 hover:shadow-md'}`}>
+            className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-green-400 ring-2 ring-green-300 bg-green-50' : a.from_link ? 'border-amber-200 bg-amber-50/30 hover:shadow-md' : 'border-gray-200 hover:shadow-md'}`}>
             <div className="flex justify-between items-start mb-2">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[a.category] || catColors.general}`}>{a.category}</span>
+              <span className="flex flex-wrap items-start gap-1.5">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[a.category] || catColors.general}`}>{a.category}</span>
+                {a.from_link && <FromLinkChip quote={a.link_quote} note={a.verification_note} />}
+              </span>
               <div className="flex items-center gap-2">
-                {a.similarity_score && <span className="text-xs text-gray-400">{Math.round(a.similarity_score*100)}% match</span>}
+                {a.similarity_score && !a.from_link && <span className="text-xs text-gray-400">{Math.round(a.similarity_score*100)}% match</span>}
                 <button type="button" onClick={e => { e.stopPropagation(); onSelect('activities', a) }}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'}`}>
                   {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
@@ -1102,7 +1107,7 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
-              {a.source && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
+              {a.source && !a.from_link && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
               {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">Fits your budget</span>}
               {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
@@ -2653,6 +2658,9 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               {searchData?.budget_usd && <span className="text-white/50 ml-1">(budget: ${searchData.budget_usd.toLocaleString()})</span>}
             </div>
           )}
+          {searchData?.import_source && (
+            <InspiredBy source={searchData.import_source} className="mt-1.5 text-xs text-white/85 [&_a]:text-white" />
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -3044,7 +3052,10 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                   >
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{plan.name}</p>
+                        <p className="text-sm font-medium text-gray-800 truncate flex items-center gap-1">
+                          {plan.search_data?.import_source && <Link2 size={12} className="shrink-0 text-amber-600" aria-label="Planned from a link" />}
+                          <span className="truncate">{plan.name}</span>
+                        </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-gray-400">{plan.created_at?.slice(0,10)}</p>
                           {planCost > 0 && <span className="text-xs font-medium text-teal-600">${planCost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
@@ -4185,6 +4196,13 @@ export default function ResultsPage() {
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-5 pb-24">
         {completionBanner && <div className="mb-5">{completionBanner}</div>}
+
+        {searchData.must_include?.length > 0 && (
+          <div className="mb-5">
+            <LinkPlanBanner key={JSON.stringify(searchData.import_source || {}) + searchData.must_include.length}
+              searchData={searchData} itinerary={statuses.itinerary === 'done' ? results.itinerary : null} />
+          </div>
+        )}
 
         {isDone && remixInfo && (
           <div className="mb-5">

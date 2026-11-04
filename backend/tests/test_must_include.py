@@ -337,3 +337,69 @@ def test_template_fallback_includes_every_link_place():
     cov = itin["link_coverage"]
     assert cov["missing"] == []
     assert len(cov["scheduled"]) + len(cov["extras"]) == 3
+
+
+def test_post_check_ignores_model_set_flags_and_logistics_mentions():
+    """Seen live: the model tagged every slot from_link, and an arrival slot
+    whose hotel is "in Alfama" claimed the Alfama place."""
+    itin = {
+        "days": [
+            _day(
+                1,
+                [
+                    _slot(
+                        "morning",
+                        "Arrive in Lisbon, transfer to Memmo Alfama Hotel",
+                        from_link=True,
+                        location="Alfama",
+                    ),
+                    _slot("afternoon", "Explore Alfama neighbourhood", from_link=True),
+                    _slot("evening", "Dinner", from_link=True),
+                ],
+            ),
+            _day(
+                2,
+                [
+                    _slot(
+                        "morning",
+                        "Embaixada Palace cultural tour",
+                        location="Príncipe Real",
+                        from_link=True,
+                    ),
+                    _slot("afternoon", "Príncipe Real neighbourhood walk"),
+                    _slot("evening", "Santos & Cais do Sodré and the TimeOut Market"),
+                ],
+            ),
+            _day(
+                3,
+                [
+                    _slot("morning", "Breakfast"),
+                    _slot("afternoon", "Airport"),
+                    _slot("evening", "Departure flight"),
+                ],
+            ),
+        ]
+    }
+    places = [
+        {"name": "Alfama", "kind": "area", "city": "Lisbon"},
+        {"name": "Principe Real", "kind": "area", "city": "Lisbon"},
+        {"name": "Embaixada Palace", "kind": "sight", "city": "Lisbon"},
+        {"name": "Santos & Cais do Sodre", "kind": "area", "city": "Lisbon"},
+        {"name": "Timeout Market", "kind": "food", "city": "Lisbon"},
+    ]
+    out = ensure_must_include(itin, _req(must_include=places))
+    slots = {
+        (d["day_number"], s["time_of_day"]): s for d in out["days"] for s in d["slots"]
+    }
+    assert not slots[(1, "morning")].get("from_link")  # arrival logistics
+    assert not slots[(1, "evening")].get("from_link")  # model's flag dropped
+    assert slots[(1, "afternoon")]["link_place"] == "Alfama"
+    assert slots[(2, "morning")]["link_place"] == "Embaixada Palace"
+    assert slots[(2, "afternoon")]["link_place"] == "Principe Real"
+    assert slots[(2, "evening")]["link_places"] == [
+        "Santos & Cais do Sodre",
+        "Timeout Market",
+    ]
+    cov = out["link_coverage"]
+    assert sorted(cov["scheduled"]) == sorted(p["name"] for p in places)
+    assert cov["extras"] == [] and cov["missing"] == []
