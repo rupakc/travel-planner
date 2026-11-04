@@ -26,6 +26,8 @@ KEY = "test-key"
 
 @pytest.fixture(autouse=True)
 def _tables(monkeypatch):
+    # tokens are minted directly — skip bcrypt's deliberate slowness
+    monkeypatch.setattr("app.db.users_db._hash", lambda pw: "unused")
     create_users_table()
     fare_watch_db.create_fare_watch_tables()
     notifications_db.create_notifications_table()

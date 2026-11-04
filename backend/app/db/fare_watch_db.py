@@ -201,6 +201,13 @@ def update_watch(watch_id: int, **fields) -> dict | None:
     return get_watch(watch_id)
 
 
+def disable_email_for_user(user_id: str) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE fare_watches SET email_enabled = 0 WHERE user_id = ?", (user_id,)
+        )
+
+
 def delete_watch(watch_id: int, user_id: str) -> bool:
     with get_connection() as conn:
         cur = conn.execute(
@@ -211,6 +218,17 @@ def delete_watch(watch_id: int, user_id: str) -> bool:
             return False
         conn.execute("DELETE FROM fare_watch_history WHERE watch_id = ?", (watch_id,))
     return True
+
+
+def expire_inactive_past(today: str, *, now: datetime) -> int:
+    """End paused / errored watches whose departure day has come (no notice:
+    nobody is waiting on them). Active ones expire through their own check."""
+    with get_connection() as conn:
+        return conn.execute(
+            "UPDATE fare_watches SET status = 'expired', updated_at = ? "
+            "WHERE status IN ('paused', 'error') AND departure_date <= ?",
+            (now.isoformat(), today),
+        ).rowcount
 
 
 def claim_due(now: datetime, lease_until: datetime, limit: int) -> list[int]:

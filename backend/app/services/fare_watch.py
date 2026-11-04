@@ -6,6 +6,7 @@ fare, history, failures and the resulting notification. The scheduler
 loop that calls it lives further down (see ``run_scheduler``).
 """
 
+import asyncio
 import logging
 import random
 from collections.abc import Awaitable, Callable
@@ -282,6 +283,10 @@ def _error_note(watch: dict) -> dict:
     }
 
 
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
 # ── Live fares ────────────────────────────────────────────────────────────────
 
 
@@ -431,7 +436,12 @@ async def check_watch(
         logger.exception("Fare watch %d check crashed", watch_id)
         return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
 
-    return _record_success(watch, check, now, rand)
+    outcome = _record_success(watch, check, now, rand)
+    if outcome.notification:
+        from .alert_email import deliver
+
+        await deliver(outcome.watch, outcome.notification, now)
+    return outcome
 
 
 def _record_failure(watch: dict, error: str, now: datetime) -> CheckOutcome:
@@ -511,3 +521,74 @@ def _record_success(
         fields["last_notified_at"] = stamp
     watch = fare_watch_db.update_watch(watch["id"], **fields)
     return CheckOutcome("checked", watch, note)
+
+
+# ── Scheduler ─────────────────────────────────────────────────────────────────
+
+LEASE = timedelta(minutes=10)  # a crashed worker's claim frees up after this
+CLAIM_BATCH = 50
+CONCURRENCY = 3
+
+
+async def run_due(
+    api_key: str,
+    *,
+    clock: Callable[[], datetime] = utcnow,
+    fetch: Callable[[dict, str], Awaitable[FareCheck]] | None = None,
+    rand: Callable[[], float] = random.random,
+) -> list[CheckOutcome | None]:
+    """Claim the due watches (leased, so a second scheduler skips them) and
+    check them, CONCURRENCY at a time. A crashing check is logged, its lease
+    released, and never stops the others."""
+    now = clock()
+    fare_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
+    ids = fare_watch_db.claim_due(now, now + LEASE, CLAIM_BATCH)
+    sem = asyncio.Semaphore(CONCURRENCY)
+
+    async def one(watch_id: int) -> CheckOutcome | None:
+        async with sem:
+            try:
+                return await check_watch(
+                    watch_id, now=clock(), api_key=api_key, fetch=fetch, rand=rand
+                )
+            except Exception:
+                logger.exception("Fare watch %d check failed unexpectedly", watch_id)
+                fare_watch_db.update_watch(watch_id, lease_until=None)
+                return None
+
+    return list(await asyncio.gather(*(one(i) for i in ids)))
+
+
+async def run_scheduler(
+    api_key: str,
+    *,
+    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+) -> None:
+    """Every FARE_WATCH_TICK_SECONDS, check the due watches. Runs until
+    cancelled; one bad tick is logged and the loop goes on."""
+    logger.info(
+        "Fare watch scheduler started (tick %ss)", settings.fare_watch_tick_seconds
+    )
+    while True:
+        try:
+            await run_due(api_key)
+        except Exception:
+            logger.exception("Fare watch scheduler tick failed")
+        await sleep(settings.fare_watch_tick_seconds)
+
+
+def start_scheduler() -> asyncio.Task | None:
+    """Start the loop when live fares are configured and watching is on."""
+    if not (settings.serpapi_key and settings.fare_watch_enabled):
+        return None
+    return asyncio.create_task(run_scheduler(settings.serpapi_key))
+
+
+async def stop_scheduler(task: asyncio.Task | None) -> None:
+    if task is None:
+        return
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass

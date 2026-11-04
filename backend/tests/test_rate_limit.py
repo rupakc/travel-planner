@@ -238,6 +238,9 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/events"): "light_ai",
     ("POST", "/api/walking-tours"): "light_ai",
     ("POST", "/api/layover"): "light_ai",
+    # Fare watch: creating one and "Check now" each make a live fare lookup
+    ("POST", "/api/fare-watches"): "light_ai",
+    ("POST", "/api/fare-watches/{watch_id}/check"): "light_ai",
 }
 
 
