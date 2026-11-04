@@ -86,3 +86,117 @@ describe('ensureMustInclude (client fallback itinerary)', () => {
     expect(ensureMustInclude(fallback(), {})).toEqual(fallback())
   })
 })
+
+// ── Fix round 2 (mirrors backend tests) ──────────────────────────────────
+import { cityForDay } from './mustInclude'
+
+describe('ordered phrase matching', () => {
+  it.each([
+    ['Tokyo Tower', "Tokyo Skytree — Japan's tallest tower, sunset views"],
+    ['Lisbon Cathedral', 'Walk Lisbon-style tiled cafés then visit a cathedral in Tokyo'],
+    ['Osaka Castle', 'Day trip: Osaka street food, then the castle-town lanes of Kawagoe'],
+    ['Ark Hills', 'Roppongi Park Hills rooftop'],
+    ['Tower Tokyo', 'Tokyo Tower at night'],
+  ])('%s does not match "%s"', (name, text) => expect(sameLinkPlace(name, text)).toBe(false))
+
+  it.each([
+    ['LX Factory', 'Brunch at LXFactory'],
+    ['Senso-ji', 'Sensoji at dawn'],
+    ['Sensoji', 'Senso-ji at dawn'],
+    ['Senso-ji', 'Senso ji temple'],
+    ['Timeout Market', 'Dinner at the Time Out Market'],
+    ['Giolitti', "Gelato at Giolitti's"],
+    ['Praça das Flores', 'Praca Das Flores picnic'],
+  ])('%s matches "%s"', (name, text) => expect(sameLinkPlace(name, text)).toBe(true))
+})
+
+describe('travel slots match but are never replaced', () => {
+  const sd = {
+    destination: 'Lisbon, Portugal',
+    must_include: [
+      { name: 'Tram 28', kind: 'transport', city: 'Lisbon' },
+      { name: 'Pena Palace', kind: 'sight', city: 'Lisbon', town: 'Sintra' },
+      { name: 'Ferry Building', kind: 'food', city: 'Lisbon' },
+    ],
+  }
+  const itin = () => ({
+    days: [
+      { day_number: 1, slots: [slot('morning', 'Arrive in Lisbon')] },
+      { day_number: 2, slots: [slot('morning', 'Hop on Tram 28 from Martim Moniz, then head to the castle'), slot('afternoon', 'Train to Sintra for Pena Palace'), slot('evening', 'Ferry Building food hall lunch')] },
+      { day_number: 3, slots: [slot('morning', 'Belém pastries'), slot('afternoon', 'Alfama walk'), slot('evening', 'Fado dinner')] },
+      { day_number: 4, slots: [slot('morning', 'Check out and fly home')] },
+    ],
+  })
+
+  it('marks them in place and leaves the other days alone', () => {
+    const out = ensureMustInclude(itin(), sd)
+    expect(out.days[1].slots.map((s) => s.link_place)).toEqual(['Tram 28', 'Pena Palace', 'Ferry Building'])
+    expect(out.days[2].slots.map((s) => s.activity)).toEqual(['Belém pastries', 'Alfama walk', 'Fado dinner'])
+  })
+
+  it('arrival hotel slots still never claim a place', () => {
+    const out = ensureMustInclude({
+      days: [
+        { day_number: 1, slots: [slot('morning', 'Arrive in Lisbon, transfer to Memmo Alfama Hotel')] },
+        { day_number: 2, slots: [slot('morning', 'Museum'), slot('afternoon', 'Free time')] },
+        { day_number: 3, slots: [slot('evening', 'Departure flight')] },
+      ],
+    }, { destination: 'Lisbon', must_include: [{ name: 'Alfama', kind: 'area', city: 'Lisbon' }] })
+    expect(out.days[0].slots[0].from_link).toBeUndefined()
+    expect(out.days[1].slots[1].link_place).toBe('Alfama')
+  })
+
+  it('puts unmatched transport places in day notes, never slots', () => {
+    const out = ensureMustInclude(fallback(), { destination: 'Lisbon', must_include: [{ name: 'Tram 28', kind: 'transport', city: 'Lisbon' }] })
+    expect(out.days.some((d) => d.slots.some((s) => s.from_link))).toBe(false)
+    expect(out.link_coverage.extras).toEqual(['Tram 28'])
+  })
+
+  it.each(['Lisbon – Porto on the Alfa Pendular (3h)', 'Hikari bullet service, Lisbon ⇒ Porto'])(
+    'protects keyword-less transit "%s"', (activity) => {
+      const out = ensureMustInclude({
+        days: [
+          { day_number: 1, slots: [slot('morning', 'Arrive')] },
+          { day_number: 2, slots: [slot('morning', activity), slot('afternoon', 'Market')] },
+          { day_number: 3, slots: [slot('evening', 'Departure flight')] },
+        ],
+      }, { destination: 'Porto, Portugal', destinations: ['Lisbon, Portugal', 'Porto, Portugal'], must_include: Array.from({ length: 4 }, (_, i) => ({ name: `Spot ${i}`, kind: 'sight' })) })
+      expect(out.days[1].slots[0].activity).toBe(activity)
+    })
+})
+
+describe('totals and cities', () => {
+  it('takes a replaced slot\'s cost out of the day and trip totals', () => {
+    const itin = {
+      days: [
+        { day_number: 1, slots: [slot('morning', 'Arrive')] },
+        { day_number: 2, daily_estimated_cost_usd: 100, slots: [slot('morning', 'Gulbenkian Museum', { estimated_cost_usd: 20 }), slot('afternoon', 'Shopping', { estimated_cost_usd: 30 })] },
+        { day_number: 3, slots: [slot('evening', 'Departure flight')] },
+      ],
+      total_estimated_cost_usd: 300,
+    }
+    const out = ensureMustInclude(itin, { destination: 'Lisbon', must_include: [{ name: 'Livraria Lello', kind: 'shopping', city: 'Lisbon' }] })
+    const replaced = out.days[1].slots.find((s) => s.from_link)
+    const old = replaced.time_of_day === 'morning' ? 20 : 30
+    expect(out.days[1].daily_estimated_cost_usd).toBe(100 - old)
+    expect(out.total_estimated_cost_usd).toBe(300 - old)
+  })
+
+  it('gives fallback days their city from the stops and nights', () => {
+    const sd = { departure_date: '2026-12-01', return_date: '2026-12-05', destination: 'Porto, Portugal', destinations: ['Lisbon, Portugal', 'Porto, Portugal'], destination_nights: [2, null] }
+    expect([1, 2, 3, 4, 5].map((n) => cityForDay(n, sd))).toEqual(['Lisbon', 'Lisbon', 'Porto', 'Porto', 'Porto'])
+    expect(cityForDay(1, { destination: 'Lisbon, Portugal' })).toBeNull()
+  })
+
+  it('places a city\'s place on that city\'s fallback day', () => {
+    const sd = {
+      departure_date: '2026-12-01', return_date: '2026-12-05', destination: 'Porto, Portugal',
+      destinations: ['Lisbon, Portugal', 'Porto, Portugal'], destination_nights: [2, null],
+      must_include: [{ name: 'Livraria Lello', kind: 'shopping', city: 'Porto' }],
+    }
+    const days = [1, 2, 3, 4, 5].map((n) => ({ day_number: n, slots: [slot('morning', n === 1 ? 'Arrive' : n === 5 ? 'Departure flight' : 'Free time — explore')] }))
+    const out = ensureMustInclude({ days }, sd)
+    const day = out.days.find((d) => d.slots.some((s) => s.from_link))
+    expect(day.day_number).toBe(4) // Porto, and not its travel-in day 3
+  })
+})

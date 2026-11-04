@@ -3,7 +3,7 @@ import { Link2, ImagePlus, X, Check, Loader2, AlertCircle, RotateCcw, ClipboardP
 import { extractImport } from '../../services/api'
 import { track } from '../../utils/analytics'
 import {
-  IMPORT_EXAMPLES, MAX_IMAGES, detectImportInput, importErrorView, checkImageFile, prepareScreenshot,
+  IMPORT_EXAMPLES, MAX_IMAGES, MAX_UPLOAD_BASE64, detectImportInput, importErrorView, checkImageFile, prepareScreenshot,
 } from '../../utils/linkImport'
 
 const MAX_TEXT = 20000
@@ -52,7 +52,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
     const errors = []
     const accepted = []
     for (const file of files) {
-      const problem = checkImageFile(file)
+      const problem = checkImageFile(file, { beforeShrink: true })
       if (problem) errors.push(problem)
       else accepted.push(file)
     }
@@ -62,6 +62,10 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
     for (const file of accepted.slice(0, Math.max(0, room))) {
       try {
         const payload = await prepareScreenshot(file)
+        if (payload.data_base64.length > MAX_UPLOAD_BASE64) {
+          errors.push(`${file.name || 'That screenshot'} is still too big after shrinking. Crop it and try again.`)
+          continue
+        }
         added.push({ id: ++shotSeq, name: file.name || 'Screenshot', previewUrl: objectUrl(file), payload })
       } catch {
         errors.push(`We couldn't read ${file.name || 'that screenshot'} — try saving it again as PNG or JPEG.`)

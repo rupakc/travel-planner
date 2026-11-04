@@ -63,3 +63,18 @@ describe('"From your link" in results', () => {
     expect(container.querySelector('[data-link-extras]').textContent).toContain('Pena Palace')
   })
 })
+
+describe('client fallback itinerary on a multi-city trip', () => {
+  it('gives each day its city and places link places in the right one', async () => {
+    const { buildClientItinerary } = await import('./ResultsPage')
+    const sd = {
+      origin: 'London', departure_date: '2026-12-01', return_date: '2026-12-05',
+      destination: 'Porto, Portugal', destinations: ['Lisbon, Portugal', 'Porto, Portugal'], destination_nights: [2, null],
+      must_include: [{ name: 'Livraria Lello', kind: 'shopping', city: 'Porto' }],
+    }
+    const itin = buildClientItinerary({ results: [] }, { results: [] }, sd)
+    expect(itin.days.map((d) => d.city)).toEqual(['Lisbon', 'Lisbon', 'Porto', 'Porto', 'Porto'])
+    const day = itin.days.find((d) => d.slots.some((s) => s.from_link))
+    expect(day.city).toBe('Porto')
+  })
+})

@@ -18,18 +18,60 @@ export const foldText = (text) => String(text || '')
   .replace(/ß/g, 'ss')
   .normalize('NFKD')
   .replace(/[̀-ͯ]/g, '')
-const tokens = (text) => foldText(text).split(/[^a-z0-9]+/).filter(Boolean)
-const nameTokens = (name) => tokens(name).filter((t) => !NAME_FILLER.has(t))
+// Hyphens, spaces and apostrophes all split words; a possessive 's is dropped
+const tokens = (text) => foldText(String(text || '').replace(/(\w)['’]s\b/g, '$1'))
+  .split(/[^a-z0-9]+/)
+  .filter((t) => t && !NAME_FILLER.has(t))
 const cityKey = (text) => foldText(String(text || '').split(',')[0]).trim()
 
-/** `text` names the place: every token of its name, as whole tokens. */
+/**
+ * `text` names the place: the name's tokens as one contiguous, ordered phrase.
+ * Spacing variants count only when they line up on whole tokens
+ * ("Senso-ji" ~ "Sensoji", "Time Out" ~ "TimeOut"), so "Tokyo Tower" is not
+ * "Tokyo Skytree … tallest tower" and "Ark Hills" is not "Park Hills".
+ */
 export function sameLinkPlace(name, text) {
-  const wanted = nameTokens(name)
-  if (!wanted.length) return false
-  const have = new Set(tokens(text))
-  if (wanted.every((t) => have.has(t))) return true
-  const joined = wanted.join('')
-  return joined.length >= 8 && tokens(text).join('').includes(joined)
+  const wanted = tokens(name).join('')
+  if (!wanted) return false
+  const have = tokens(text)
+  for (let i = 0; i < have.length; i++) {
+    let joined = ''
+    for (let j = i; j < have.length; j++) {
+      joined += have[j]
+      if (joined === wanted) return true
+      if (!wanted.startsWith(joined)) break
+    }
+  }
+  return false
+}
+
+// Arrival, departure and hotel logistics never stand for a place
+const ARRIVAL = /\b(arriv\w*|depart\w*|check(?:ing)?[- ]?(?:in|into|out)|flights?|fly|flying|airports?|pack\w*|luggage)\b|\btransfer\b.*\bhotel\b/i
+const ARRIVAL_TYPES = new Set(['arrival', 'departure', 'check-in', 'check-out', 'checkin', 'checkout'])
+const TRANSIT_SEPARATOR = /[–—⇒→]|->|\s-\s|\bto\b|\bvia\b/i
+const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const isArrivalSlot = (slot) => ARRIVAL_TYPES.has(String(slot?.category || slot?.type || '').trim().toLowerCase())
+  || ARRIVAL.test(String(slot?.activity || ''))
+
+/** "Lisbon – Porto on the Alfa Pendular": two of the trip's stops with a separator between. */
+function namesTwoStops(text, stopCities) {
+  const raw = String(text || '')
+  const folded = foldText(raw)
+  const spots = stopCities
+    .map((c) => cityKey(c))
+    .filter(Boolean)
+    .map((key) => {
+      const m = new RegExp(`(^|[^a-z0-9])(${key.split(/\s+/).map(escapeRe).join('\\s+')})(?![a-z0-9])`).exec(folded)
+      return m ? { start: m.index + m[1].length, end: m.index + m[1].length + m[2].length } : null
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start - b.start)
+  for (let i = 0; i + 1 < spots.length; i++) {
+    // NFKD keeps symbols such as ⇒ and – in place, so positions line up
+    if (TRANSIT_SEPARATOR.test(folded.slice(spots[i].end, spots[i + 1].start))) return true
+  }
+  return false
 }
 
 /** Travel and hotel logistics, which are never replaced or matched. */
@@ -39,10 +81,43 @@ export function isLogisticsSlot(slot, stopCities = []) {
   const text = String(slot?.activity || '')
   if (LOGISTICS.test(text)) return true
   const folded = foldText(text)
-  return stopCities.some((c) => {
+  if (stopCities.some((c) => {
     const key = cityKey(c)
-    return key && new RegExp(`\\bto ${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(folded)
-  })
+    return key && new RegExp(`\\bto ${escapeRe(key)}\\b`).test(folded)
+  })) return true
+  return namesTwoStops(text, stopCities)
+}
+
+// Days per stop, mirroring TravelSearchRequest._allocate_days on the server
+function allocateDays(n, totalDays, nights) {
+  const requested = Array.from({ length: n }, (_, i) => (Number.isInteger(nights?.[i]) && nights[i] > 0 ? nights[i] : null))
+  const fixed = requested.reduce((t, d) => t + (d || 0), 0)
+  const free = requested.filter((d) => d == null).length
+  const remaining = totalDays - fixed
+  if (requested.some(Boolean) && remaining >= free && (free || remaining === 0)) {
+    if (!free) return requested
+    const bounds = Array.from({ length: free + 1 }, (_, i) => Math.round((i * remaining) / free))
+    let k = 0
+    return requested.map((d) => (d != null ? d : bounds[k + 1] - bounds[k++]))
+  }
+  const bounds = Array.from({ length: n + 1 }, (_, i) => Math.round((i * totalDays) / n))
+  return Array.from({ length: n }, (_, i) => bounds[i + 1] - bounds[i])
+}
+
+/** The stop (short city name) that day `dayNumber` is in, or null for a single-city trip. */
+export function cityForDay(dayNumber, searchData) {
+  const stops = searchData?.destinations || []
+  if (stops.length < 2) return null
+  const dep = Date.parse(searchData.departure_date)
+  const ret = Date.parse(searchData.return_date)
+  const total = Math.max(stops.length, Number.isFinite(dep) && Number.isFinite(ret) ? Math.round((ret - dep) / 86400000) : 2 * stops.length)
+  const alloc = allocateDays(stops.length, total, searchData.destination_nights)
+  let cursor = 0
+  for (let i = 0; i < stops.length; i++) {
+    if (dayNumber - 1 < cursor + alloc[i]) return String(stops[i]).split(',')[0].trim()
+    cursor += alloc[i]
+  }
+  return String(stops.at(-1)).split(',')[0].trim()
 }
 
 /** Every `searchData.must_include` place scheduled (or noted) in `itinerary`. */
@@ -56,8 +131,9 @@ export function ensureMustInclude(itinerary, searchData) {
   const multi = stops.length > 1
   const slotsOf = (day) => (day.slots || []).filter((s) => s && typeof s === 'object')
   const logistics = (slot) => isLogisticsSlot(slot, stops)
-  const rightCity = (day, place) => !(multi && place.city && day.city) || cityKey(day.city) === cityKey(place.city)
-  const travelIn = new Set(days.filter((d, i) => i > 0 && d.city && cityKey(d.city) !== cityKey(days[i - 1].city)))
+  const dayCity = (day) => day.city || cityForDay(day.day_number, searchData)
+  const rightCity = (day, place) => !(multi && place.city && dayCity(day)) || cityKey(dayCity(day)) === cityKey(place.city)
+  const travelIn = new Set(days.filter((d, i) => i > 0 && dayCity(d) && cityKey(dayCity(d)) !== cityKey(dayCity(days[i - 1]))))
 
   for (const day of days) for (const slot of slotsOf(day)) for (const key of LINK_FIELDS) delete slot[key]
   for (const day of days) delete day.link_extras
@@ -85,8 +161,10 @@ export function ensureMustInclude(itinerary, searchData) {
       let hit = null
       for (const day of days) {
         if (!rightCity(day, place)) continue
-        const slot = slotsOf(day).find((s) => !logistics(s) && sameLinkPlace(place.name, s[field])
-          && (field === 'activity' || !s.from_link))
+        // Travel slots may name a place by their activity ("Train to Sintra
+        // for Pena Palace"); arrival/hotel logistics never do
+        const slot = slotsOf(day).find((s) => !isArrivalSlot(s) && (field === 'activity' || !logistics(s))
+          && sameLinkPlace(place.name, s[field]) && (field === 'activity' || !s.from_link))
         if (slot) { hit = [day, slot]; break }
       }
       if (hit) {
@@ -100,13 +178,18 @@ export function ensureMustInclude(itinerary, searchData) {
     pending = still
   }
 
+  let removedCost = 0
+  const isNumber = (v) => typeof v === 'number' && Number.isFinite(v)
+  // Slots first, transport notes after, so notes land the same on every pass
+  pending.sort((a, b) => (a.kind === 'transport') - (b.kind === 'transport'))
   for (const place of pending) {
-    const inCity = multi && place.city ? days.filter((d) => !d.city || cityKey(d.city) === cityKey(place.city)) : days
+    const inCity = multi && place.city ? days.filter((d) => !dayCity(d) || cityKey(dayCity(d)) === cityKey(place.city)) : days
     const candidates = inCity.length ? inCity : days
     const inner = candidates.filter((d) => ![0, last].includes(days.indexOf(d)) && !travelIn.has(d))
     const innerOrEnds = inner.length ? inner : candidates.filter((d) => ![0, last].includes(days.indexOf(d)))
     const poolOf = (list) => list.flatMap((day) => slotsOf(day).filter((s) => !s.from_link && !logistics(s)).map((s) => [day, s]))
-    const pool = poolOf(innerOrEnds).length ? poolOf(innerOrEnds) : poolOf(candidates)
+    // A transport place ("Tram 28") never takes a slot: unmatched, it's a note
+    const pool = place.kind === 'transport' ? [] : (poolOf(innerOrEnds).length ? poolOf(innerOrEnds) : poolOf(candidates))
     if (pool.length) {
       const rank = ([day, slot]) => {
         const free = FREE_TIME.test(slot.activity || '')
@@ -120,6 +203,10 @@ export function ensureMustInclude(itinerary, searchData) {
       slot.activity = place.note ? `${place.name} — ${place.note}` : place.name
       slot.location = `${place.name}, ${where}`
       slot.duration_hours = DURATION[place.kind] ?? 2
+      if (isNumber(slot.estimated_cost_usd)) {
+        if (isNumber(day.daily_estimated_cost_usd)) day.daily_estimated_cost_usd = Math.max(0, Math.round((day.daily_estimated_cost_usd - slot.estimated_cost_usd) * 100) / 100)
+        removedCost += slot.estimated_cost_usd
+      }
       for (const key of STALE_FIELDS) delete slot[key]
       slot.estimated_cost_usd = null
       if (place.lat != null && place.lng != null) { slot.lat = place.lat; slot.lng = place.lng }
@@ -137,6 +224,9 @@ export function ensureMustInclude(itinerary, searchData) {
     }
   }
 
+  if (removedCost && isNumber(out.total_estimated_cost_usd)) {
+    out.total_estimated_cost_usd = Math.max(0, Math.round((out.total_estimated_cost_usd - removedCost) * 100) / 100)
+  }
   out.link_coverage = { total: places.length, scheduled, extras, missing }
   return out
 }

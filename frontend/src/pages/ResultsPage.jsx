@@ -38,7 +38,7 @@ import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
 import LinkPlanBanner from '../components/LinkPlanBanner'
-import { ensureMustInclude } from '../utils/mustInclude'
+import { ensureMustInclude, cityForDay } from '../utils/mustInclude'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -2334,7 +2334,7 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
 }
 
 // Build a client-side fallback itinerary from activities + hotels data
-function buildClientItinerary(activities, hotels, searchData) {
+export function buildClientItinerary(activities, hotels, searchData) {
   if (!searchData) return null
   const dep = new Date(searchData.departure_date)
   const ret = searchData.return_date ? new Date(searchData.return_date) : null
@@ -2384,7 +2384,8 @@ function buildClientItinerary(activities, hotels, searchData) {
 
     const dailyCost = slots.reduce((s, sl) => s + (sl.estimated_cost_usd || 0), 0)
     totalCost += dailyCost
-    days.push({ day_number: dayNum, date: dateStr, theme, slots, daily_estimated_cost_usd: dailyCost })
+    const city = cityForDay(dayNum, searchData)
+    days.push({ day_number: dayNum, date: dateStr, theme, slots, daily_estimated_cost_usd: dailyCost, ...(city ? { city } : {}) })
   }
 
   // Places from an imported link go in the same way the server puts them in

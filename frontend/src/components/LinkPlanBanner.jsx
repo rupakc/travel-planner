@@ -30,7 +30,7 @@ export default function LinkPlanBanner({ searchData, itinerary, failed = false }
           {pending
             ? <>Fitting your {n} {n === 1 ? 'place' : 'places'} into the days — from {source}.</>
             : broken
-            ? <>We couldn’t build the day plan this time. Your {n} {n === 1 ? 'place is' : 'places are'} from {source} are at the top of Activities — re-run the search to try the itinerary again.</>
+            ? <>We couldn’t build the day plan this time. The {n} {n === 1 ? 'place' : 'places'} from {source} {n === 1 ? 'is' : 'are'} at the top of Activities — re-run the search to try the itinerary again.</>
             : <>Planned around {n} {n === 1 ? 'place' : 'places'} from {source} — {all
               ? (n === 1 ? 'it’s in your itinerary.' : `all ${n} are in your itinerary.`)
               : <>{summary.inItinerary} of {n} are in your itinerary.{' '}

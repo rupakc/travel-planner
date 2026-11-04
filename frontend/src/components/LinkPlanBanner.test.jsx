@@ -52,6 +52,7 @@ describe('LinkPlanBanner', () => {
     render(<LinkPlanBanner searchData={SD} itinerary={null} failed />)
     expect(container.textContent).toContain('We couldn’t build the day plan')
     expect(container.textContent).toContain('top of Activities')
+    expect(container.textContent).not.toMatch(/\bare\b[^.]*\bare\b/)
     expect(container.querySelector('.animate-spin')).toBeNull()
   })
 

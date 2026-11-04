@@ -78,13 +78,27 @@ export function importErrorView(err) {
 }
 
 /** Why a dropped file can't be used, or null when it's fine. */
-export function checkImageFile(file) {
+// Files this big are refused before they are even decoded in the browser
+export const MAX_SOURCE_IMAGE_BYTES = 40 * 1024 * 1024
+// The upload limit applies to the base64 text (as on the server)
+export const MAX_UPLOAD_BASE64 = 5 * 1024 * 1024
+
+/**
+ * Why a dropped file can't be used, or null when it's fine. With
+ * `{ beforeShrink: true }` the 5 MB limit is not applied yet: the panel
+ * shrinks the screenshot first and checks the upload size after.
+ */
+export function checkImageFile(file, { beforeShrink = false } = {}) {
   const type = (file?.type || '').toLowerCase()
   const name = (file?.name || '').toLowerCase()
   if (type === 'image/heic' || type === 'image/heif' || /\.hei[cf]$/.test(name)) {
     return 'iPhone HEIC photos can\'t be read yet — take a screenshot instead (screenshots are PNG), or export it as JPEG.'
   }
   if (!IMAGE_TYPES.has(type)) return `${file?.name || 'That file'} isn't an image we can read. Use PNG, JPEG, WebP or GIF.`
+  if (beforeShrink) {
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) return `${file.name || 'That image'} is too big to read here (over 40 MB). Crop it or save it smaller.`
+    return null
+  }
   if (file.size > MAX_IMAGE_BYTES) return `${file.name || 'That image'} is over 5 MB. Crop it or save it as a smaller PNG or JPEG.`
   return null
 }
