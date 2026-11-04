@@ -64,6 +64,7 @@
 
 See the [Changelog](docs/Changelog.md) for the full history.
 
+- **Plan from a link or screenshot**: paste a travel blog, YouTube or TikTok link, a caption, or drop screenshots; review the places on a map, and every one is scheduled in your itinerary ("From your link").
 - **Comprehensive place data.** Any town in the world (GeoNames, 162k places), about 32k notable islands, parks, resorts, regions, mountains, sites and famous districts, and country names in their own languages ("Deutschland", "Nippon") resolve to nearby airports (OurAirports, 4,014 airports); autocomplete suggests places as well as airports.
 - **Fare watch and price alerts**: a bell, an Alerts page with price sparklines, and optional email, with one-click re-planning.
 - **Fare calendar** and Google Flights price insights.
