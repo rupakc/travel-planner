@@ -72,6 +72,11 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db.fare_watch_db import create_fare_watch_tables
+    from .db.notifications_db import create_notifications_table
+
+    create_fare_watch_tables()
+    create_notifications_table()
     asyncio.create_task(
         start_periodic_backup(
             _settings.backup_bucket, _settings.data_dir, interval_seconds=60
