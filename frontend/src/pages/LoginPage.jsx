@@ -7,7 +7,8 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
-  const from       = location.state?.from?.pathname || '/'
+  // Back to where the user was headed, query included (/?import=<link>)
+  const from       = location.state?.from ? `${location.state.from.pathname}${location.state.from.search || ''}` : '/'
 
   const [form, setForm]     = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)

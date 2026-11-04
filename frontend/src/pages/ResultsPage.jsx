@@ -38,6 +38,7 @@ import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
 import LinkPlanBanner from '../components/LinkPlanBanner'
+import { ensureMustInclude } from '../utils/mustInclude'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -2386,7 +2387,8 @@ function buildClientItinerary(activities, hotels, searchData) {
     days.push({ day_number: dayNum, date: dateStr, theme, slots, daily_estimated_cost_usd: dailyCost })
   }
 
-  return { days, total_estimated_cost_usd: Math.round(totalCost), source: 'template' }
+  // Places from an imported link go in the same way the server puts them in
+  return ensureMustInclude({ days, total_estimated_cost_usd: Math.round(totalCost), source: 'template' }, searchData)
 }
 
 // ─── My Plan Drawer ───────────────────────────────────────────────────────────
@@ -4200,7 +4202,9 @@ export default function ResultsPage() {
         {searchData.must_include?.length > 0 && (
           <div className="mb-5">
             <LinkPlanBanner key={JSON.stringify(searchData.import_source || {}) + searchData.must_include.length}
-              searchData={searchData} itinerary={statuses.itinerary === 'done' ? results.itinerary : null} />
+              searchData={searchData}
+              itinerary={statuses.itinerary === 'done' && results.itinerary?.days?.length ? arrangedItinerary : null}
+              failed={statuses.itinerary === 'error' || (isDone && !results.itinerary?.days?.length) || !!results.itinerary?.error} />
           </div>
         )}
 

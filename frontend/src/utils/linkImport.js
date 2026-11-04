@@ -41,8 +41,10 @@ const FRIENDLY = {
 const ACTIONS = {
   blocked_source: ['text', 'images'],
   paywall: ['text', 'images'],
+  blocked_by_site: ['text', 'images'],
   empty_page: ['text', 'images'],
   unsupported_content: ['images'],
+  unsupported_encoding: ['text', 'images'],
   not_found: ['text'],
   no_places: ['text'],
   timeout: ['retry', 'text'],
@@ -64,6 +66,13 @@ export function importErrorView(err) {
   }
   if (res.status === 429 && typeof detail === 'string') {
     return { code: 'rate_limited', message: detail, actions: [] }
+  }
+  if (res.status === 413) {
+    return {
+      code: 'too_large',
+      message: typeof detail === 'string' ? detail : 'That upload is too big — use up to 4 screenshots of 5 MB or less.',
+      actions: ['images'],
+    }
   }
   return { code: 'unknown', message: FRIENDLY.unknown, actions: ACTIONS.unknown }
 }
@@ -149,27 +158,28 @@ export function buildImportSearch({ form, preview, draft }) {
   }
 }
 
-/** The Results banner's numbers, or null for a trip without a link. */
-export function linkCoverageSummary(searchData, itinerary) {
+/**
+ * The Results banner's numbers, or null for a trip without a link. Counted
+ * from the itinerary as rendered (after the traveller's moves and removals),
+ * never from the server's own report. `state`: pending | ready | failed.
+ */
+export function linkCoverageSummary(searchData, itinerary, { failed = false } = {}) {
   const wanted = searchData?.must_include || []
   if (!wanted.length) return null
   const title = searchData.import_source?.title || null
-  if (!itinerary?.days?.length && !itinerary?.link_coverage) return { total: wanted.length, inItinerary: 0, missing: [], title, pending: true }
-  const cov = itinerary.link_coverage
-  if (cov) {
-    const inItinerary = (cov.scheduled?.length || 0) + (cov.extras?.length || 0)
-    return { total: wanted.length, inItinerary, missing: cov.missing || [], title, pending: false }
-  }
+  const base = { total: wanted.length, inItinerary: 0, missing: [], title }
+  if (failed || itinerary?.error) return { ...base, state: 'failed' }
+  if (!itinerary?.days?.length) return { ...base, state: 'pending' }
   const linked = new Set()
-  for (const day of itinerary.days || []) {
+  for (const day of itinerary.days) {
     for (const slot of day.slots || []) {
-      if (!slot.from_link) continue
+      if (!slot?.from_link) continue
       for (const name of slot.link_places?.length ? slot.link_places : [slot.link_place]) if (name) linked.add(name)
     }
     for (const x of day.link_extras || []) linked.add(x.name)
   }
   const missing = wanted.map((p) => p.name).filter((n) => !linked.has(n))
-  return { total: wanted.length, inItinerary: wanted.length - missing.length, missing, title, pending: false }
+  return { ...base, inItinerary: wanted.length - missing.length, missing, state: 'ready' }
 }
 
 /** The Search page link that opens the import flow prefilled with `url`. */
@@ -189,6 +199,57 @@ export function importLinkFromQuery(search) {
   }
 }
 
+// Claude scales anything bigger down anyway; sending less is faster and
+// keeps uploads far below proxy and API limits
+export const MAX_IMAGE_EDGE = 1568
+
+/** {width, height} scaled so the long edge is at most `max`. */
+export function fitWithin(width, height, max = MAX_IMAGE_EDGE) {
+  const scale = Math.min(1, max / Math.max(width, height))
+  return { width: Math.round(width * scale), height: Math.round(height * scale) }
+}
+
+const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => {
+    const result = String(reader.result || '')
+    resolve(result.slice(result.indexOf(',') + 1))
+  }
+  reader.onerror = () => reject(reader.error || new Error('read failed'))
+  reader.readAsDataURL(blob)
+})
+
+/**
+ * A screenshot ready to upload: re-encoded as WebP (JPEG where WebP isn't
+ * supported) at quality 0.85 with the long edge ≤ MAX_IMAGE_EDGE. Browsers
+ * without canvas image support send the file as it is.
+ */
+export async function prepareScreenshot(file) {
+  if (typeof createImageBitmap === 'function' && typeof document !== 'undefined') {
+    let bitmap = null
+    try {
+      bitmap = await createImageBitmap(file)
+      const { width, height } = fitWithin(bitmap.width, bitmap.height)
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(bitmap, 0, 0, width, height)
+        const encode = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, 0.85))
+        let blob = await encode('image/webp')
+        if (!blob || blob.type !== 'image/webp') blob = await encode('image/jpeg')
+        if (blob) return { media_type: blob.type, data_base64: await blobToBase64(blob) }
+      }
+    } catch {
+      // fall through: send the original file
+    } finally {
+      bitmap?.close?.()
+    }
+  }
+  return readImageFile(file)
+}
+
 /** A dropped or pasted image file → the API's {media_type, data_base64}. */
 export function readImageFile(file) {
   return new Promise((resolve, reject) => {
@@ -198,7 +259,7 @@ export function readImageFile(file) {
       const comma = result.indexOf(',')
       resolve({ media_type: file.type, data_base64: result.slice(comma + 1) })
     }
-    reader.onerror = () => reject(reader.error)
+    reader.onerror = () => reject(reader.error || new Error('read failed'))
     reader.readAsDataURL(file)
   })
 }

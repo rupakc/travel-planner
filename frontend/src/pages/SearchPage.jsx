@@ -7,6 +7,7 @@ import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, Plus, X, Lin
 import ImportPanel from '../components/import/ImportPanel'
 import ImportPreview from '../components/import/ImportPreview'
 import { importLinkFromQuery } from '../utils/linkImport'
+import usePageFileDrop from '../hooks/usePageFileDrop'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
@@ -130,8 +131,8 @@ export default function SearchPage() {
   // with (a deep-linked URL or a screenshot dropped anywhere on the page)
   const [importPreview, setImportPreview] = useState(null)
   const [importSeed, setImportSeed] = useState(null)
-  const [pageDrag, setPageDrag] = useState(false)
-  const pageDragDepth = useRef(0)
+  // Arrived to import (deep link or a dropped screenshot): no first-run tour
+  const [importEntry, setImportEntry] = useState(false)
   const formCardRef = useRef(null)
   const [discoverForm, setDiscoverForm] = useState({
     origin: '',
@@ -197,7 +198,8 @@ export default function SearchPage() {
   // and waits for that history to load so the page has stopped shifting.
   const tour = useFirstRunTour({
     username: user?.username,
-    visible: location.pathname === '/' && !hasSearchResults && mode === 'known',
+    visible: location.pathname === '/' && !hasSearchResults && mode === 'known' && !importEntry
+      && !importLinkFromQuery(location.search),
     eligible: recentLoaded && recentSearches.length === 0,
     delayMs: TOUR_START_DELAY_MS,
   })
@@ -408,7 +410,10 @@ export default function SearchPage() {
   const openImport = (seed = null) => {
     setMode('import')
     setImportPreview(null)
-    if (seed) setImportSeed({ ...seed, nonce: Date.now() })
+    if (seed) {
+      setImportEntry(true)
+      setImportSeed({ ...seed, nonce: Date.now() })
+    }
   }
 
   // /?import=<url> (e.g. from Chat) opens the import flow and starts reading
@@ -432,27 +437,7 @@ export default function SearchPage() {
   }
 
   // A screenshot dragged anywhere over the Search page opens the import tab
-  const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files')
-  const pageDragProps = {
-    onDragEnter: (e) => {
-      if (!hasFiles(e)) return
-      pageDragDepth.current += 1
-      setPageDrag(true)
-    },
-    onDragOver: (e) => { if (hasFiles(e)) e.preventDefault() },
-    onDragLeave: (e) => {
-      if (!hasFiles(e)) return
-      pageDragDepth.current = Math.max(0, pageDragDepth.current - 1)
-      if (!pageDragDepth.current) setPageDrag(false)
-    },
-    onDrop: (e) => {
-      if (!hasFiles(e)) return
-      e.preventDefault()
-      pageDragDepth.current = 0
-      setPageDrag(false)
-      openImport({ files: [...e.dataTransfer.files] })
-    },
-  }
+  const pageDrop = usePageFileDrop((files) => openImport({ files }))
 
   const handleDiscover = async () => {
     setDiscovering(true)
@@ -484,9 +469,9 @@ export default function SearchPage() {
   const labelClass = "block text-sm font-medium text-gray-700 mb-1"
 
   return (
-    <div {...pageDragProps} className="relative">
+    <div {...pageDrop.handlers} className="relative">
       <OnboardingTour open={tour.open} steps={SEARCH_TOUR_STEPS} onClose={tour.close} />
-      {pageDrag && (
+      {pageDrop.dragging && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-amber-50/85 backdrop-blur-sm" aria-hidden="true">
           <div className="rounded-3xl border-2 border-dashed border-amber-400 bg-white/90 px-10 py-8 text-center shadow-xl">
             <ImagePlus size={36} className="mx-auto text-amber-600" />
@@ -547,7 +532,7 @@ export default function SearchPage() {
 
           {mode === 'import' && (importPreview ? (
             <ImportPreview key={importPreview.title + (importPreview.places || []).length}
-              preview={importPreview} form={form} today={today}
+              preview={importPreview} form={form} today={today} token={token}
               onPlan={handleImportPlan}
               onStartOver={() => { setImportPreview(null); setImportSeed(null) }} />
           ) : (

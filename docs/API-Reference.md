@@ -21,7 +21,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | chat | `POST /api/chat` | 30 |
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
-| import | `POST /api/import/extract` | 20 |
+| import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
 | light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
@@ -54,6 +54,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/discover` | optional | 5 destination suggestions |
 | POST | `/api/compare/destination` | user | One-destination summary for Compare mode |
 | POST | `/api/import/extract` | user | Places from a link, pasted text or screenshots (plan from a link) |
+| POST | `/api/import/resolve-place` | user | Place one unplaced spot in a typed town |
 | POST | `/api/chat` | user | SSE chat with plan commands and planning |
 | GET, POST | `/api/plans` | user | List own plans; save a plan |
 | GET, PUT, DELETE | `/api/plans/{id}` | user | Get, rename/update, delete own plan |
@@ -158,7 +159,7 @@ The main endpoint. It streams results as Server-Sent Events. **Auth:** optional.
 
 Two optional fields carry a trip imported with `POST /api/import/extract`:
 
-- `must_include` (at most 25): places the plan must contain, each `{name, kind, city, town?, lat?, lng?, note?, quote?, verified}`. `city` is the trip stop the place belongs to, and `town` is its own town when that differs (a day trip). They lead the `activities` results as `source: "your_link"`, `from_link: true` items, folding in the agent's own copy of the same place, and they stay even when the activities agent fails. Each item's `verification_note` is "Located on Google Maps" or "From your link — not independently checked". After the itinerary (AI or template) is built, a deterministic check marks the slots that name each place (`from_link`, `link_place`, `link_places`, `link_quote`, `link_note`). It fills missing places into the most replaceable slot on a day in the right city: free time first, never arrival or departure logistics, food at lunch or dinner. When every such slot already holds a link place, the place goes into the day's `link_extras`. The itinerary also carries `link_coverage: {total, scheduled, extras, missing}`.
+- `must_include` (at most 25): places the plan must contain, each `{name, kind, city, town?, lat?, lng?, note?, quote?, verified}`. `city` is the trip stop the place belongs to, and `town` is its own town when that differs (a day trip). They lead the `activities` results as `source: "your_link"`, `from_link: true` items, folding in the agent's own copy of the same place, and they stay even when the activities agent fails. Each item's `verification_note` is "Located on Google Maps" or "From your link — not independently checked". After the itinerary (AI or template) is built, a deterministic check marks the slots that name each place (`from_link`, `link_place`, `link_places`, `link_quote`, `link_note`). A slot counts only if every token of the place's name appears in it as a whole word (only filler words like "the" and "de" are dropped, so "Tram 28" needs both words), and, on multi-city trips, only if it is on a day in the place's own city. Missing places go into the most replaceable slot on a day in the right city: free time first, food at lunch or dinner, and never a logistics slot on any day. Logistics means arrivals, departures, check-in/out, flights, trains, Shinkansen, buses, ferries, drives, transfers, "→", "to <stop>", or a transport category. Each stop's travel-in day is skipped when that city has another day. A replaced slot drops the old activity's cost, booking link and times. When every such slot already holds a link place, the place goes into the day's `link_extras`. The itinerary also carries `link_coverage: {total, scheduled, extras, missing}`.
 - `import_source`: `{url?, title}`, where the trip came from. `url` must be http(s). Saved plans keep it in `search_data`, and the share page, print view and calendar export show "Inspired by …".
 
 `destinations` and `destination_nights` describe a multi-city trip (see [Multi-City Trips](Multi-City-Trips.md)). `taste_context` is set by the server from the user's Taste Graph; a client value is ignored. `origin` and `destination` may be city names, typeahead labels or airport codes; the validator resolves them to airport codes for live flight search (see [Place and Airport Data](Place-and-Airport-Data.md)).
@@ -243,13 +244,16 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 - Only http and https on the default ports, with no credentials in the URL.
 - The host is resolved, and every address must be public. Private, loopback, link-local, multicast, reserved and CGNAT ranges are refused, as are their IPv6, IPv4-mapped, NAT64, 6to4 and Teredo forms. The connection goes to that vetted IP, with the original Host header and TLS SNI, so DNS rebinding cannot redirect it.
 - Redirects are followed by hand, at most 3, and each hop is checked again.
-- There is a 10-second ceiling, the body is read up to 2 MB, and only HTML, XHTML and plain text are accepted.
+- There is a 10-second ceiling, and only HTML, XHTML and plain text are accepted.
+- Only `gzip` and `deflate` compression is requested and accepted. The body is read as raw bytes, at most 2 MB, and inflated with a bounded zlib decompressor that stops at 2 MB of output, so a compression bomb cannot grow. Brotli, zstd, stacked and unknown encodings get `unsupported_encoding`.
+- Every hop sends `Connection: close`, so no pooled connection is reused across hosts.
+- HTML is parsed with BeautifulSoup in a worker thread, off the event loop.
 - From the page come the title, the OpenGraph and Twitter description, JSON-LD (`articleBody`, `ItemList`, places and attractions) and the readable main text, capped at 30k characters. The main text comes from the biggest article or content block, keeps headings and list items, and drops nav, footer, script and style.
 - YouTube and TikTok links are read through their public oEmbed endpoints, plus the YouTube watch page's description.
-- Instagram, Facebook, X and Threads get a specific `blocked_source` error.
+- Instagram, Facebook, X and Threads get a specific `blocked_source` error, including when a shortener redirects to them.
 - Scripts are never run, and links in the content are never followed.
 
-**Extraction**: the `link_import` agent (`.agents/link_import.md`, Haiku; screenshots go as vision image blocks). The source is wrapped as untrusted data between `<<<SOURCE_CONTENT>>>` markers, and any copies of the markers inside it are stripped. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a `quote` is kept only when it really appears in the source text.
+**Extraction**: the `link_import` agent (`.agents/link_import.md`, Haiku; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between `<<<SOURCE_<nonce>>>>` and `<<<END_SOURCE_<nonce>>>>` markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a `quote` is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same.
 
 **Resolution** (`backend/app/services/link_import.py`):
 - Each place's city is resolved with `resolve_place` to a canonical town, country, coordinates and airports. A town within 45 km of a bigger stop in the same country joins that stop as a day trip.
@@ -280,13 +284,25 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 
 | `code` | When |
 |---|---|
-| `invalid_url`, `blocked_address`, `unreachable`, `timeout`, `too_many_redirects`, `not_found`, `paywall`, `http_error`, `unsupported_content` | Fetching the link failed |
+| `invalid_url`, `blocked_address`, `unreachable`, `timeout`, `too_many_redirects`, `not_found`, `paywall` (401/402), `blocked_by_site` (403, usually bot blocking), `http_error`, `unsupported_content`, `unsupported_encoding` | Fetching the link failed |
 | `blocked_source` | Instagram, Facebook, X or Threads ("…doesn't let apps read posts. Paste the caption or drop a screenshot instead.") |
 | `empty_page` | The page had almost no readable text |
 | `no_places` | Nothing was found ("We couldn't spot any places — try pasting the part of the article with the list.") |
 | `heic_unsupported`, `unsupported_image`, `image_too_large`, `too_many_images` | A screenshot problem |
 
+`413` (string `detail`) means the request body is over 30 MB; it is refused before it is parsed. Each image's base64 must be at most 5 MB (`image_too_large`). The browser shrinks screenshots before uploading them: long edge ≤ 1568 px, WebP or JPEG at quality 0.85.
+
 `502` with `code: extract_failed` means the extraction agent failed. Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
+
+### POST /api/import/resolve-place
+
+Places one of the preview's "Couldn't place" spots in a town the traveller types. **Auth:** user. **Bucket:** import.
+
+**Request:** `{id?, name, kind?, city, country?, note?, quote?}`.
+
+**Response (200):** `{place, destination}`. `place` has the same shape as a preview place. `destination` is a preview destination (`place_count` 1, `nights` 1), so the client can add it as a new stop when the route has fewer than 3.
+
+**Errors:** `422` with `code: city_not_found` when the town cannot be resolved, for example an unknown name or a country typed alone.
 
 ### POST /api/compare/destination
 

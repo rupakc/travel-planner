@@ -54,6 +54,8 @@ describe('InspiredBy', () => {
     const a = container.querySelector('a')
     expect(a.href).toBe('https://blog.example/x')
     expect(a.rel).toContain('noopener')
+    expect(a.rel).toContain('nofollow')
+    expect(a.rel).toContain('ugc')
     expect(container.textContent).toContain('Inspired by')
     expect(container.textContent).toContain('48h in Lisbon')
   })

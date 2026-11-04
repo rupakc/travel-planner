@@ -175,3 +175,9 @@ export async function extractImport(body, token, signal) {
   const res = await api.post('/import/extract', body, { ...authHeaders(token), signal, timeout: 90000 })
   return res.data
 }
+
+// Place one "Couldn't place" spot in the town the traveller typed.
+export async function resolveImportPlace(body, token) {
+  const res = await api.post('/import/resolve-place', body, authHeaders(token))
+  return res.data
+}

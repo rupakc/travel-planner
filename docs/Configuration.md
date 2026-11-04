@@ -72,7 +72,7 @@ Counters live in process memory: they reset on restart and are not shared betwee
 The frontend reads no environment variables at build or run time.
 
 - **Dev:** Vite proxies `/api` and `/health` to `http://localhost:8001` (`frontend/vite.config.js`).
-- **Container:** nginx renders `frontend/nginx.conf.template` with `BACKEND_URL` (envsubst) and proxies `/api/` and `/health` to it. Proxy buffering is off so SSE streams, with a 120 s read timeout.
+- **Container:** nginx renders `frontend/nginx.conf.template` with `BACKEND_URL` (envsubst) and proxies `/api/` and `/health` to it. Proxy buffering is off so SSE streams, with a 120 s read timeout. `/api/` allows request bodies up to 32 MB (`client_max_body_size 32m`) for screenshot imports; the backend itself refuses import bodies over 30 MB.
 
 Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_open`, `tp_tour_done:<username>`, `chat_history_<username>`, and the packing-list checkbox state.
 

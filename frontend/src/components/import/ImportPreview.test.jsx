@@ -7,8 +7,10 @@ vi.mock('./ImportMap', () => ({ default: ({ places }) => <div data-map>{places.l
 vi.mock('../ui/AirportSearch', () => ({ default: ({ value, onChange }) => <input data-origin value={value} onChange={(e) => onChange(e.target.value)} /> }))
 vi.mock('../ui/NationalitySearch', () => ({ default: ({ value, onChange }) => <input data-nationality value={value} onChange={(e) => onChange(e.target.value)} /> }))
 vi.mock('../ui/TravelerPanel', () => ({ default: () => <div data-travelers /> }))
+vi.mock('../../services/api', () => ({ resolveImportPlace: vi.fn() }))
 
 import ImportPreview from './ImportPreview'
+import { resolveImportPlace } from '../../services/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -134,5 +136,73 @@ describe('ImportPreview', () => {
     render()
     act(() => btn('Start over').click())
     expect(onStartOver).toHaveBeenCalled()
+  })
+})
+
+
+describe('ImportPreview review fixes', () => {
+  let container, root, onPlan
+  const render = (props = {}) => act(() => root.render(
+    <ImportPreview preview={PREVIEW} form={FORM} today="2026-11-04" token="tok" onPlan={onPlan} onStartOver={() => {}} {...props} />,
+  ))
+  const btn = (text) => [...container.querySelectorAll('button')].find((b) => b.textContent.includes(text))
+  const typeInto = (input, value) => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+    act(() => { setter.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })) })
+  }
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    onPlan = vi.fn()
+    resolveImportPlace.mockReset()
+  })
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  it('places an unplaced spot in a town the traveller types, adding it as a stop', async () => {
+    resolveImportPlace.mockResolvedValue({
+      place: { id: 'p5', name: 'Mystery Bar', kind: 'drink', city: 'Faro', destination: 'Faro, Portugal', lat: 37, lng: -7.9, approximate: true },
+      destination: { name: 'Faro, Portugal', city: 'Faro', country: 'Portugal', airports: ['FAO'], place_count: 1, nights: 1 },
+    })
+    render()
+    typeInto(container.querySelector('input[aria-label="Town for Mystery Bar"]'), 'Faro')
+    await act(async () => { btn('Place it').click() })
+    expect(resolveImportPlace).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'p5', name: 'Mystery Bar', city: 'Faro' }), 'tok',
+    )
+    expect(container.textContent).not.toContain("Couldn't place")
+    expect(btn('Plan this trip').textContent).toContain('5 places')
+    act(() => btn('Plan this trip').click())
+    const { form, stops } = onPlan.mock.calls[0][0]
+    expect(form.destination).toBe('Faro, Portugal')
+    expect(stops.map((s) => s.city)).toEqual(['Lisbon, Portugal', 'Porto, Portugal'])
+    expect(form.must_include.at(-1)).toMatchObject({ name: 'Mystery Bar', city: 'Faro' })
+  })
+
+  it('shows the server\'s message when the town is unknown', async () => {
+    resolveImportPlace.mockRejectedValue({ response: { status: 422, data: { detail: { code: 'city_not_found', message: 'We couldn’t find a town called “Xqz”.' } } } })
+    render()
+    typeInto(container.querySelector('input[aria-label="Town for Mystery Bar"]'), 'Xqz')
+    await act(async () => { btn('Place it').click() })
+    expect(container.textContent).toContain('We couldn’t find a town called “Xqz”.')
+    expect(container.textContent).toContain("Couldn't place")
+  })
+
+  it('cannot plan with nothing ticked', () => {
+    render()
+    act(() => container.querySelector('[aria-label="Select none in Lisbon"]').click())
+    act(() => container.querySelector('[aria-label="Select none in Porto"]').click())
+    expect(btn('Plan this trip').disabled).toBe(true)
+    expect(container.textContent).toContain('Tick at least one place')
+  })
+
+  it('makes "change stop" a visible, labelled control', () => {
+    render()
+    const select = container.querySelector('select[aria-label="Stop for Belem Tower"]')
+    expect(select).not.toBeNull()
+    expect(select.className).toContain('border')
   })
 })

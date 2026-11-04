@@ -56,6 +56,10 @@ describe('importErrorView', () => {
     expect(v.actions).toEqual(['text', 'images'])
   })
 
+  it('suggests text or screenshots for sites that block apps', () => {
+    expect(importErrorView(axiosErr(422, { code: 'blocked_by_site', message: 'm' })).actions).toEqual(['text', 'images'])
+  })
+
   it('suggests pasting text for paywalls and empty pages', () => {
     expect(importErrorView(axiosErr(422, { code: 'paywall', message: 'm' })).actions).toEqual(['text', 'images'])
     expect(importErrorView(axiosErr(422, { code: 'no_places', message: 'm' })).actions).toEqual(['text'])
@@ -66,6 +70,17 @@ describe('importErrorView', () => {
     expect(v.code).toBe('rate_limited')
     expect(v.message).toBe('Too many requests — please wait 30 seconds and try again.')
     expect(v.actions).toEqual([])
+  })
+
+  it('shows a too-big upload detail as-is', () => {
+    const v = importErrorView(axiosErr(413, 'That upload is too big — use up to 4 screenshots of 5 MB or less.'))
+    expect(v.code).toBe('too_large')
+    expect(v.message).toContain('too big')
+    expect(v.actions).toEqual(['images'])
+  })
+
+  it('explains a proxy 413 with no detail', () => {
+    expect(importErrorView({ response: { status: 413, data: '<html>' } }).message).toMatch(/too big/)
   })
 
   it('explains network errors and unknown failures', () => {
@@ -165,23 +180,24 @@ describe('buildImportSearch', () => {
 
 describe('linkCoverageSummary', () => {
   const sd = { must_include: [{ name: 'A' }, { name: 'B' }, { name: 'C' }], import_source: { title: 'T' } }
-  it('counts all scheduled and extra places as in the itinerary', () => {
-    const s = linkCoverageSummary(sd, { link_coverage: { total: 3, scheduled: ['A', 'B'], extras: ['C'], missing: [] } })
-    expect(s).toEqual({ total: 3, inItinerary: 3, missing: [], title: 'T', pending: false })
+  const day = (slots, extras) => ({ slots, ...(extras ? { link_extras: extras } : {}) })
+
+  it('counts what the rendered itinerary actually holds, not the server report', () => {
+    const itin = {
+      days: [day([{ from_link: true, link_place: 'A', link_places: ['A', 'B'] }], [{ name: 'C' }])],
+      link_coverage: { scheduled: [], extras: [], missing: ['A', 'B', 'C'] },
+    }
+    expect(linkCoverageSummary(sd, itin)).toEqual({ total: 3, inItinerary: 3, missing: [], title: 'T', state: 'ready' })
   })
-  it('reports places that did not fit', () => {
-    const s = linkCoverageSummary(sd, { link_coverage: { total: 3, scheduled: ['A', 'B'], extras: [], missing: ['C'] } })
-    expect(s.inItinerary).toBe(2)
-    expect(s.missing).toEqual(['C'])
-  })
-  it('counts from slots when the itinerary has no coverage report', () => {
-    const itin = { days: [{ slots: [{ from_link: true, link_place: 'A' }, { activity: 'B tour' }] }] }
-    const s = linkCoverageSummary(sd, itin)
+  it('reports places missing from the rendered days (e.g. removed by the traveller)', () => {
+    const s = linkCoverageSummary(sd, { days: [day([{ from_link: true, link_place: 'A' }, { activity: 'B tour' }])] })
     expect(s.inItinerary).toBe(1)
     expect(s.missing).toEqual(['B', 'C'])
   })
-  it('is pending before the itinerary arrives and null for ordinary trips', () => {
-    expect(linkCoverageSummary(sd, null).pending).toBe(true)
+  it('is pending before the itinerary, failed when it errored, null for ordinary trips', () => {
+    expect(linkCoverageSummary(sd, null).state).toBe('pending')
+    expect(linkCoverageSummary(sd, null, { failed: true }).state).toBe('failed')
+    expect(linkCoverageSummary(sd, { error: 'boom' }).state).toBe('failed')
     expect(linkCoverageSummary({}, null)).toBeNull()
   })
 })
@@ -203,5 +219,15 @@ describe('examples', () => {
       expect(detectImportInput(ex.text).kind).toBe('text')
       expect(ex.label.length).toBeLessThan(30)
     }
+  })
+})
+
+describe('screenshot sizing', () => {
+  it('fits the long edge within 1568 px, keeping the aspect ratio', async () => {
+    const { fitWithin, MAX_IMAGE_EDGE } = await import('./linkImport')
+    expect(MAX_IMAGE_EDGE).toBe(1568)
+    expect(fitWithin(1170, 2532)).toEqual({ width: 725, height: 1568 })
+    expect(fitWithin(3000, 1000)).toEqual({ width: 1568, height: 523 })
+    expect(fitWithin(800, 600)).toEqual({ width: 800, height: 600 })
   })
 })

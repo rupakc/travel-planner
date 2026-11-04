@@ -10,6 +10,13 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 - `POST /api/import/extract`, with SSRF-safe link fetching (public addresses only on every redirect hop, pinned IP, 10 s and 2 MB limits), YouTube and TikTok oEmbed, friendly errors for Instagram, Facebook, X and Threads, and a hardened `link_import` extraction agent. Rate bucket `import`, default 20 (`RATE_LIMIT_IMPORT`).
 - `TravelSearchRequest.must_include` and `import_source`. Imported places lead Activities and are always scheduled in the itinerary by a deterministic post-check (`from_link` slots, `link_extras`, `link_coverage`). Results show a coverage banner and "From your link" tags; the share page, print and calendar export credit the source.
 - Chat replies to a pasted trip link with a "Plan a trip from this link" button that opens the import flow.
+- Hardening:
+  - bounded gzip/deflate decompression (other encodings refused), with parsing off the event loop;
+  - nonce-fenced prompts;
+  - a strict, city-aware scheduling match and a logistics guard on every day;
+  - screenshots shrunk in the browser, with 32 MB nginx and 30 MB backend body limits;
+  - `POST /api/import/resolve-place` to place spots by town;
+  - deep links that survive the login redirect.
 
 ## Unreleased: documentation and housekeeping
 

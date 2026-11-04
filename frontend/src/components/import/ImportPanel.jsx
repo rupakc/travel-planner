@@ -3,7 +3,7 @@ import { Link2, ImagePlus, X, Check, Loader2, AlertCircle, RotateCcw, ClipboardP
 import { extractImport } from '../../services/api'
 import { track } from '../../utils/analytics'
 import {
-  IMPORT_EXAMPLES, MAX_IMAGES, detectImportInput, importErrorView, checkImageFile, readImageFile,
+  IMPORT_EXAMPLES, MAX_IMAGES, detectImportInput, importErrorView, checkImageFile, prepareScreenshot,
 } from '../../utils/linkImport'
 
 const MAX_TEXT = 20000
@@ -33,6 +33,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
   const [step, setStep] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState(null)
+  const failedKind = useRef(null)
   const [dragging, setDragging] = useState(false)
   const textRef = useRef(null)
   const fileRef = useRef(null)
@@ -57,12 +58,15 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
     }
     const room = MAX_IMAGES - shotsRef.current.length
     if (accepted.length > room) errors.push(`Up to ${MAX_IMAGES} screenshots at a time — we kept the first ${Math.max(0, room)}.`)
-    const added = await Promise.all(accepted.slice(0, Math.max(0, room)).map(async (file) => ({
-      id: ++shotSeq,
-      name: file.name || 'Screenshot',
-      previewUrl: objectUrl(file),
-      payload: await readImageFile(file),
-    })))
+    const added = []
+    for (const file of accepted.slice(0, Math.max(0, room))) {
+      try {
+        const payload = await prepareScreenshot(file)
+        added.push({ id: ++shotSeq, name: file.name || 'Screenshot', previewUrl: objectUrl(file), payload })
+      } catch {
+        errors.push(`We couldn't read ${file.name || 'that screenshot'} — try saving it again as PNG or JPEG.`)
+      }
+    }
     setShotErrors(errors)
     if (added.length) {
       setShots((s) => [...s, ...added].slice(0, MAX_IMAGES))
@@ -96,6 +100,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
     } catch (err) {
       const view = importErrorView(err)
       if (view && !controller.signal.aborted) {
+        failedKind.current = sourceKind
         setError(view)
         track('import_failed', 'search', { code: view.code })
       }
@@ -119,6 +124,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
     abortRef.current?.abort()
     abortRef.current = null
     setBusy(null)
+    setTimeout(() => textRef.current?.focus(), 0)
   }, [])
 
   // The story: step through as time passes, and tick the elapsed seconds
@@ -149,9 +155,9 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
   const runAction = (action) => {
     setError(null)
     if (action === 'text') {
-      setText('')
+      // A failed link makes room for its text; pasted text is kept to trim
+      if (failedKind.current === 'url') setText('')
       setShots([])
-      requestAnimationFrame?.(() => textRef.current?.focus())
       textRef.current?.focus()
     } else if (action === 'images') {
       fileRef.current?.click()
@@ -257,7 +263,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setDragging(false); addFiles(e.dataTransfer?.files) }}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer?.files) }}
         className={`rounded-xl border-2 border-dashed p-3 transition-colors ${dragging ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}
       >
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif,.heic,.heif" multiple className="sr-only"

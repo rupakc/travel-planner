@@ -127,3 +127,72 @@ describe('ImportPanel', () => {
     expect(onPreview).toHaveBeenCalledWith(PREVIEW)
   })
 })
+
+describe('ImportPanel review fixes', () => {
+  let container, root, onPreview
+  const render = (props = {}) => act(() => root.render(<ImportPanel token="tok" onPreview={onPreview} {...props} />))
+  const textarea = () => container.querySelector('textarea')
+  const submit = () => container.querySelector('button[type="submit"]')
+  const byText = (text) => [...container.querySelectorAll('button')].find((b) => b.textContent.includes(text))
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    onPreview = vi.fn()
+    extractImport.mockReset()
+  })
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  it('keeps pasted text when asking for a better part of it', async () => {
+    extractImport.mockRejectedValue({ response: { status: 422, data: { detail: { code: 'no_places', message: 'No places' } } } })
+    render()
+    setValue(textarea(), 'I love travelling so much')
+    await act(async () => { submit().click() })
+    act(() => byText('Paste the text').click())
+    expect(textarea().value).toBe('I love travelling so much')
+    expect(document.activeElement).toBe(textarea())
+  })
+
+  it('returns focus to the input after cancelling', async () => {
+    extractImport.mockImplementation((_b, _t, signal) => new Promise((_r, reject) => {
+      signal.addEventListener('abort', () => reject(Object.assign(new Error('c'), { name: 'CanceledError' })))
+    }))
+    render()
+    setValue(textarea(), 'Belém Tower and LX Factory')
+    act(() => submit().click())
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(document.activeElement).toBe(textarea())
+  })
+
+  it('explains a screenshot that cannot be read instead of failing silently', async () => {
+    render()
+    const input = container.querySelector('input[type="file"]')
+    const broken = new File(['x'], 'shot.png', { type: 'image/png' })
+    const realReader = globalThis.FileReader
+    globalThis.FileReader = class { readAsDataURL() { setTimeout(() => { this.error = new Error('nope'); this.onerror?.() }) } }
+    try {
+      await act(async () => {
+        Object.defineProperty(input, 'files', { value: [broken], configurable: true })
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+        await new Promise((r) => setTimeout(r, 5))
+      })
+    } finally {
+      globalThis.FileReader = realReader
+    }
+    expect(container.textContent).toMatch(/couldn.t read shot\.png/i)
+    expect(container.querySelectorAll('[data-shot]')).toHaveLength(0)
+  })
+
+  it('offers text and screenshots for pages in an unreadable encoding', async () => {
+    extractImport.mockRejectedValue({ response: { status: 422, data: { detail: { code: 'unsupported_encoding', message: 'Compressed' } } } })
+    render()
+    setValue(textarea(), 'https://x.example/a')
+    await act(async () => { submit().click() })
+    expect(byText('Paste the text')).toBeTruthy()
+    expect(byText('Drop a screenshot')).toBeTruthy()
+  })
+})

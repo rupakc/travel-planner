@@ -52,7 +52,7 @@ export function InspiredBy({ source, className = '' }) {
       <span>
         Inspired by{' '}
         {href
-          ? <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-amber-400 decoration-2 underline-offset-2 hover:decoration-amber-500">{label}</a>
+          ? <a href={href} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-semibold underline decoration-amber-400 decoration-2 underline-offset-2 hover:decoration-amber-500">{label}</a>
           : <span className="font-semibold">{label}</span>}
       </span>
     </span>

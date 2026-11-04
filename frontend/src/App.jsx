@@ -22,7 +22,7 @@ function RequireAuth({ children }) {
   const { isAuthenticated, loading, requiresPasswordChange } = useAuth()
   const location = useLocation()
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading…</div>
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location }} />
   if (requiresPasswordChange && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />
   }

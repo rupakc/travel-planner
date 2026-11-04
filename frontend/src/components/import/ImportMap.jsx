@@ -11,8 +11,17 @@ function FitBounds({ points }) {
   const map = useMap()
   const signature = points.map((p) => p.join(',')).join(';')
   useEffect(() => {
-    if (points.length >= 2) map.fitBounds(points, { padding: [28, 28], maxZoom: 14 })
-    else if (points.length === 1) map.setView(points[0], 12)
+    const fit = () => {
+      map.invalidateSize()
+      if (points.length >= 2) map.fitBounds(points, { padding: [28, 28], maxZoom: 14 })
+      else if (points.length === 1) map.setView(points[0], 12)
+    }
+    fit()
+    // Keep every pin in view when the window (or a phone) changes size
+    let frame = 0
+    const onResize = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(fit) }
+    window.addEventListener('resize', onResize)
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(frame) }
   }, [signature])
   return null
 }
