@@ -23,7 +23,7 @@ from ...services.serp_flights import _google_flights_url
 
 router = APIRouter()
 
-_HIDDEN = ("user_id", "lease_until")
+_HIDDEN = ("user_id", "lease_until", "last_error")  # last_error → "problem"
 MULTI_CITY = "Fare watch works for single-destination trips for now"
 NO_LIVE_FARES = (
     "Fare watch needs live flight prices, which aren't set up on this server."
@@ -66,6 +66,7 @@ class FareWatchUpdate(BaseModel):
 
 def serialize(watch: dict, **extra) -> dict:
     out = {k: v for k, v in watch.items() if k not in _HIDDEN}
+    out["problem"] = fare_watch.friendly_problem(watch.get("last_error"))
     out["history"] = fare_watch_db.get_history(watch["id"])
     out["booking_url"] = _google_flights_url(
         watch["origin_code"],
@@ -176,16 +177,53 @@ def _seconds_to_next_utc_day(now: datetime) -> int:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 
-@router.get("/fare-watches/unsubscribe", response_class=HTMLResponse)
-def unsubscribe(token: str = Query("")):
-    """One-click link from an alert email: turns email off for that watch."""
+def _unsubscribe_target(token: str) -> tuple[int | None, dict | None]:
     watch_id = alert_email.read_unsubscribe_token(token)
     if watch_id is None:
+        return None, None
+    return watch_id, fare_watch_db.get_watch(watch_id)
+
+
+_BAD_LINK = ("This link isn't valid", "It may have been copied incompletely.")
+
+
+@router.get("/fare-watches/unsubscribe", response_class=HTMLResponse)
+def unsubscribe_confirm(token: str = Query("")):
+    """The link in alert emails: a confirmation page only. Link scanners and
+    prefetchers follow every GET, so the change itself needs the POST."""
+    watch_id, watch = _unsubscribe_target(token)
+    if watch_id is None:
+        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
+    if watch is None:
         return HTMLResponse(
-            _page("This link isn't valid", "It may have been copied incompletely."),
-            status_code=400,
+            _page("Nothing to stop", "That fare watch no longer exists.")
         )
-    watch = fare_watch_db.get_watch(watch_id)
+    route = fare_watch.route_label(watch)
+    action = html.escape(f"/api/fare-watches/unsubscribe?token={token}")
+    form = (
+        f'<form method="post" action="{action}" style="margin:0 0 16px">'
+        "<button type='submit' style='background:#0284c7;color:#fff;border:0;"
+        "border-radius:999px;padding:10px 18px;font-weight:600;font-size:14px;"
+        "cursor:pointer'>Stop emails for this fare</button></form>"
+    )
+    return HTMLResponse(
+        _page(
+            f"Stop emails about {route}?",
+            "We'll keep watching this fare in the app; only the emails stop. "
+            "You can turn them back on any time.",
+            form,
+        )
+    )
+
+
+@router.post("/fare-watches/unsubscribe", response_class=HTMLResponse)
+def unsubscribe(token: str = Query("")):
+    """Turns email off for one watch, without login: the confirmation form
+    above, or a mail client's RFC 8058 one-click POST
+    ("List-Unsubscribe=One-Click")."""
+    watch_id, watch = _unsubscribe_target(token)
+    if watch_id is None:
+        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
     if watch is None:
         return HTMLResponse(
             _page("Nothing to stop", "That fare watch no longer exists.")
@@ -201,7 +239,7 @@ def unsubscribe(token: str = Query("")):
     )
 
 
-def _page(title: str, body: str) -> str:
+def _page(title: str, body: str, form: str = "") -> str:
     link = html.escape(settings.app_base_url.rstrip("/") + "/alerts")
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
@@ -214,6 +252,7 @@ def _page(title: str, body: str) -> str:
         "border-radius:16px;padding:28px'>"
         f"<h1 style='font-size:20px;margin:0 0 8px'>{html.escape(title, quote=False)}</h1>"
         f"<p style='color:#475569;margin:0 0 16px'>{html.escape(body, quote=False)}</p>"
+        f"{form}"
         f"<a href='{link}' style='color:#0284c7;font-weight:600'>Open your alerts</a>"
         "</main></body></html>"
     )
@@ -377,10 +416,14 @@ async def check_fare_watch_now(watch_id: int, user: dict = Depends(get_current_u
     )
     if outcome.status == "budget_exhausted":
         wait = _seconds_to_next_utc_day(now)
+        detail = (
+            "You've used your share of today's live fare checks — your watches "
+            "will be checked again tomorrow."
+            if outcome.reason == "user"
+            else "We've used today's live fare checks — we'll check again tomorrow."
+        )
         raise HTTPException(
-            status_code=429,
-            detail="We've used today's live fare checks — we'll check again tomorrow.",
-            headers={"Retry-After": str(wait)},
+            status_code=429, detail=detail, headers={"Retry-After": str(wait)}
         )
     return serialize(
         fare_watch_db.get_watch(watch_id),

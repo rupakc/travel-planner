@@ -24,7 +24,7 @@ FastAPI backend (uvicorn, one process)
   │             walking-tour crawler, verification, compare
   ├── fare-watch scheduler (background task) ── SerpAPI re-checks, alert emails (SMTP)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (18 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (19 tables) ── optional GCS backup every 60 s
             │
             ▼
 External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
@@ -118,9 +118,10 @@ There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`)
 | `recent_searches` | Up to 8 per user |
 | `feedback` | Feedback widget submissions |
 | `taste_signals` | Taste Graph signals mined from saved plans |
-| `fare_watches` | Watched fares: trip, alert settings, baseline / last / lowest / last-alerted price, Google's verdict, status, schedule and lease |
+| `fare_watches` | Watched fares: trip, alert settings, baseline / last / lowest prices, per-signal alert state (last alerted price and time, peak since), Google's verdict, status, schedule and lease |
 | `fare_watch_history` | Each check's prices (up to 120 rows per watch) |
 | `fare_watch_quota` | SerpAPI calls spent by fare watches per UTC day |
+| `fare_watch_user_quota` | The same per user, for the per-user daily share |
 | `notifications` | In-app notifications (fare alerts, watch ended / on hold), read and emailed times |
 
 The first six are reference data seeded from files committed to the repo; see [Place and Airport Data](Place-and-Airport-Data.md).
@@ -135,8 +136,8 @@ The first six are reference data seeded from files committed to the repo; see [P
 
 `backend/app/services/fare_watch.py`, started in the `lifespan` (`start_scheduler`) only when `SERPAPI_KEY` is set and `FARE_WATCH_ENABLED` is true, and cancelled on shutdown.
 
-- Every `FARE_WATCH_TICK_SECONDS` (300) it ends paused / on-hold watches whose departure day has come, then **leases** up to 50 due active watches with one `UPDATE … RETURNING` (`lease_until` = now + 10 min), so a second scheduler, or "Check now", never checks the same watch at the same time; a crashed worker's lease simply expires. Creating a watch and "Check now" take the same lease for their inline check.
-- Leased watches are checked three at a time (`check_watch`): departure reached → `expired` + one notice; otherwise the check's SerpAPI cost is estimated (cached fares are free) and reserved from the day's `FARE_WATCH_DAILY_CALL_BUDGET` all-or-nothing (over budget → moved to early next UTC day, logged once); the fare comes from `serp_flights.watch_fares` (the fare calendar's outbound-stage price plus Google's insights, and the calendar's ±3 days for flexible watches, reusing a cached search). A failure retries in 1 h, three in a row put the watch on hold (`error` + one notice); SerpAPI's own quota error postpones without a strike. A success appends history, applies `evaluate` (the pure trigger and anti-spam rules), stores at most one notification, emails it when enabled (`alert_email.py`, `smtplib` in a thread, failures only logged), and schedules the next check in `FARE_WATCH_INTERVAL_HOURS` ±10 %.
+- Every `FARE_WATCH_TICK_SECONDS` (300) it sweeps notifications older than 180 days (once per UTC day), ends paused / on-hold watches whose departure day has come, and lists up to 50 due active watches. Each one is **leased** only when its turn comes (`claim_watch(..., due_only=True)`: one `UPDATE` that also checks it is still active, due and unleased; `lease_until` = now + 10 min), so a watch taken meanwhile by "Check now" or another scheduler is skipped, and a slow batch never outlives its leases; a crashed worker's lease simply expires. Creating a watch and "Check now" take the same lease for their inline check.
+- Leased watches are checked three at a time (`check_watch`): departure reached → `expired` + one notice; otherwise the check's SerpAPI cost is estimated (cached fares are free) and reserved all-or-nothing from the day's `FARE_WATCH_DAILY_CALL_BUDGET` and from the owner's share of it (`FARE_WATCH_USER_DAILY_SHARE`) (over either → moved to early next UTC day; the pool running out is logged once); the fare comes from `serp_flights.watch_fares` (the fare calendar's outbound-stage price plus Google's insights, and the calendar's ±3 days for flexible watches, reusing a cached search). A failure retries in 1 h, three in a row put the watch on hold (`error` + one notice); SerpAPI's own quota error postpones without a strike. A watch deleted while its fares were fetched ends as `deleted` with nothing recorded. A success appends history, applies `evaluate` (the pure trigger and anti-spam rules, with separate references for the trip's own dates and the nearby dates, re-armed after rebounds; see [Trip Planning Features](Trip-Planning-Features.md#fare-watch-and-price-alerts)), stores at most one notification, emails it when enabled (`alert_email.py`, `smtplib` in a thread, failures only logged), and schedules the next check in `FARE_WATCH_INTERVAL_HOURS` ±10 %.
 - The tests never start the loop (`FARE_WATCH_ENABLED=false`); they drive `run_due` and `check_watch` with an injected clock and fetch.
 
 ## Cache

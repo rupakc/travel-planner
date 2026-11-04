@@ -13,22 +13,34 @@ import { replanSearchData } from '../utils/fareWatch'
 import { track } from '../utils/analytics'
 import WatchCard from '../components/alerts/WatchCard'
 
-function checkMessage(res) {
-  if (res.check_status === 'checked' && res.notification) return { tone: 'good', text: res.notification.title }
-  if (res.check_status === 'checked' && res.last_price != null) {
-    return { tone: 'neutral', text: `Checked just now: ${formatUsd(res.last_price)}. Nothing worth an alert yet.` }
+/** What one "Check now" found, in plain words (statuses: see the API). */
+export function checkMessage(res) {
+  switch (res.check_status) {
+    case 'checked':
+      if (res.notification) return { tone: 'good', text: res.notification.title }
+      if (res.last_price != null) {
+        return { tone: 'neutral', text: `Checked just now: ${formatUsd(res.last_price)}. Nothing worth an alert yet.` }
+      }
+      return { tone: 'neutral', text: 'Checked just now, but no fares were found for these dates.' }
+    case 'failed':
+      return { tone: 'warn', text: 'Live fares didn’t respond. We’ll try again within the hour.' }
+    case 'errored':
+      return { tone: 'warn', text: 'Live fares failed three times in a row, so checks are on hold. Use Retry when you’re ready.' }
+    case 'expired':
+      return { tone: 'neutral', text: 'This trip has departed, so we’ve stopped watching its fare.' }
+    case 'postponed':
+      return { tone: 'warn', text: 'Live fares are busy right now — we’ll check again tomorrow.' }
+    case 'deleted':
+      return { tone: 'neutral', text: 'This watch was removed.' }
+    default:
+      return { tone: 'neutral', text: 'Nothing was checked: this fare isn’t being watched right now.' }
   }
-  if (res.check_status === 'failed' || res.check_status === 'errored') {
-    return { tone: 'warn', text: 'Live fares didn’t respond. We’ll try again within the hour.' }
-  }
-  if (res.check_status === 'postponed') return { tone: 'warn', text: 'Live fares are busy right now — we’ll check again tomorrow.' }
-  return { tone: 'neutral', text: 'Checked just now. No fare was found for these dates.' }
 }
 
 /** Every fare the traveller watches, grouped Active / Past. */
 export default function AlertsPage() {
   const { token, user, preferences } = useAuth()
-  const { caps, watchesChanged, refresh: refreshBell } = useAlerts()
+  const { caps, watchesChanged, refresh: refreshBell, markSeen } = useAlerts()
   const { setPendingSearchData } = useSearchData()
   const navigate = useNavigate()
   const location = useLocation()
@@ -73,7 +85,8 @@ export default function AlertsPage() {
       return
     }
     requestAnimationFrame(() => {
-      document.getElementById(`watch-${focusId}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      document.getElementById(`watch-${focusId}`)?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
     })
   }, [watches, focusId, location.search]) // runs once per deep link
 
@@ -83,7 +96,11 @@ export default function AlertsPage() {
       const res = await checkFareWatchNow(w.id, token)
       replace(res)
       say(w.id, checkMessage(res))
-      if (res.notification) { watchesChanged(); refreshBell() }
+      if (res.notification) {
+        markSeen(res.notification.id) // shown inline already: no toast for it
+        watchesChanged()
+        refreshBell()
+      }
     } catch (err) {
       say(w.id, { tone: 'warn', text: axiosErrorDetail(err).detail || 'Couldn’t check right now. Try again in a moment.' })
     }

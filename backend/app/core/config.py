@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     fare_watch_interval_hours: float = 12  # between checks of one watch (±10 %)
     fare_watch_daily_call_budget: int = 200  # SerpAPI calls/day (UTC) for watches
     fare_watch_max_active_per_user: int = 10
+    # One user's daily share of that budget (all their watches together)
+    fare_watch_user_daily_share: float = 0.3
 
     # Email alerts (optional): sent only when SMTP_HOST is set
     smtp_host: str = ""

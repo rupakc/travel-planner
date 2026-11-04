@@ -71,16 +71,38 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
   const hasEmail = !!user?.email
   const tripRoute = routeLabel({ origin_label: trip.origin, destination_label: trip.destination })
 
+  // Escape closes; Tab / Shift+Tab cycle inside the dialog. Called from the
+  // dialog's own onKeyDown (the portal stops key events from reaching the
+  // document) and from a document listener when focus is outside it.
+  const onKey = useRef(null)
+  onKey.current = (e) => {
+    if (e.key === 'Escape') { onClose(); return }
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    // Focus trap: Tab and Shift+Tab cycle inside the dialog
+    const items = [...dialogRef.current.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+    )]
+    if (!items.length) return
+    const first = items[0]
+    const last = items[items.length - 1]
+    const inside = dialogRef.current.contains(document.activeElement)
+    if (e.shiftKey && (document.activeElement === first || !inside)) {
+      e.preventDefault(); last.focus()
+    } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
+      e.preventDefault(); first.focus()
+    }
+  }
+
   useEffect(() => {
     const opener = document.activeElement
     dialogRef.current?.querySelector('input,button')?.focus()
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
+    const onDocKey = (e) => onKey.current(e)
+    document.addEventListener('keydown', onDocKey)
     return () => {
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown', onDocKey)
       if (opener && typeof opener.focus === 'function') opener.focus()
     }
-  }, [onClose])
+  }, [])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -112,7 +134,7 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
   // Portalled and isolated: entry points live inside clickable headers
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4"
-      onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+      onClick={e => e.stopPropagation()} onKeyDown={e => { e.stopPropagation(); onKey.current(e) }}>
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId}
         className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-w-md sm:rounded-2xl">

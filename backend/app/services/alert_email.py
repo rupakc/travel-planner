@@ -13,8 +13,10 @@ import logging
 import smtplib
 import ssl
 from datetime import datetime
+from email import policy
 from email.message import EmailMessage
-from email.utils import make_msgid
+from email.utils import formatdate, make_msgid, parseaddr
+from urllib.parse import urlparse
 
 import jwt
 from jwt import PyJWTError
@@ -168,14 +170,35 @@ def _html(note: dict, f: dict) -> str:
 """
 
 
+# Long header lines are legal up to 998 octets; the default policy's 78
+# would RFC 2047-encode the unbreakable List-Unsubscribe URL into something
+# no mail client can use.
+_POLICY = policy.default.clone(max_line_length=998)
+
+
+def _sender() -> str:
+    return settings.smtp_from or settings.smtp_username or "alerts@localhost"
+
+
+def _mail_domain() -> str:
+    """Domain for Message-ID: the sender's, else the app's host."""
+    addr = parseaddr(_sender())[1]
+    if "@" in addr and addr.rsplit("@", 1)[1] != "localhost":
+        return addr.rsplit("@", 1)[1]
+    return urlparse(settings.app_base_url).hostname or "localhost"
+
+
 def build_message(note: dict, watch: dict, to_addr: str, history: list[dict]):
     f = _facts(note, watch, history)
-    msg = EmailMessage()
+    msg = EmailMessage(policy=_POLICY)
     msg["Subject"] = note["title"]
-    msg["From"] = settings.smtp_from or settings.smtp_username or "alerts@localhost"
+    msg["From"] = _sender()
     msg["To"] = to_addr
-    msg["Message-ID"] = make_msgid(domain="fare-watch")
+    msg["Date"] = formatdate(localtime=False, usegmt=True)
+    msg["Message-ID"] = make_msgid(domain=_mail_domain())
+    # RFC 8058 one-click: mail clients POST "List-Unsubscribe=One-Click"
     msg["List-Unsubscribe"] = f"<{f['unsubscribe']}>"
+    msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
     msg.set_content(_text(note, f))
     msg.add_alternative(_html(note, f), subtype="html")
     return msg
@@ -195,7 +218,9 @@ def send_message(msg: EmailMessage) -> None:
 
 async def deliver(watch: dict, note: dict, now: datetime) -> bool:
     """Email a fare alert if this watch should get one. Never raises."""
-    if note["kind"] not in FARE_KINDS or not watch.get("email_enabled"):
+    if watch is None or note["kind"] not in FARE_KINDS:
+        return False
+    if not watch.get("email_enabled"):
         return False
     if not email_available():
         return False

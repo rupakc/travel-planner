@@ -18,7 +18,7 @@ import { newestUnseen, tripKey } from '../utils/fareWatch'
 // Outside the provider (isolated component tests, public pages) alerts are
 // simply unavailable: watch buttons render nothing, counts stay zero.
 const INERT = {
-  unread: 0, refresh: async () => {}, markRead: async () => {}, toast: null,
+  unread: 0, refresh: async () => {}, markRead: async () => {}, markSeen: () => {}, toast: null,
   showToast: () => {}, dismissToast: () => {},
   caps: { serpapi: false, fareWatch: false, email: false },
   watchFor: async () => null, watchVersion: 0, watchesChanged: () => {},
@@ -66,8 +66,32 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
     setToast(n)
   }, [])
 
-  const refresh = useCallback(async () => {
-    if (!token) return
+  // One refresh at a time: focus and visibilitychange fire together on return
+  const inflight = useRef(null)
+  const account = useRef(token)
+  if (account.current !== token) {
+    // Another account: forget what the previous one had seen
+    account.current = token
+    seenId.current = null
+    lastCount.current = 0
+    matches.current.clear()
+  }
+
+  const refresh = useCallback(() => {
+    if (!token) return Promise.resolve()
+    if (!inflight.current) {
+      inflight.current = doRefresh.current().finally(() => { inflight.current = null })
+    }
+    return inflight.current
+  }, [token])
+
+  /** An alert the user has already seen elsewhere (e.g. "Check now"). */
+  const markSeen = useCallback((id) => {
+    seenId.current = Math.max(seenId.current ?? 0, id)
+  }, [])
+
+  const doRefresh = useRef(null)
+  doRefresh.current = async () => {
     try {
       const count = await getUnreadCount(token)
       const grew = count > lastCount.current
@@ -89,7 +113,7 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
         announce(fresh)
       }
     } catch { /* offline or signed out — the next poll tries again */ }
-  }, [token, announce])
+  }
 
   useEffect(() => {
     if (!token) return undefined
@@ -149,10 +173,10 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   }, [])
 
   const value = useMemo(() => ({
-    unread, refresh, markRead, toast, showToast: setToast, dismissToast: () => setToast(null),
+    unread, refresh, markRead, markSeen, toast, showToast: setToast, dismissToast: () => setToast(null),
     caps, watchFor, watchVersion, watchesChanged, permission,
     shouldOfferBrowserAlerts, answerBrowserAlerts,
-  }), [unread, refresh, markRead, toast, caps, watchFor, watchVersion, watchesChanged, permission,
+  }), [unread, refresh, markRead, markSeen, toast, caps, watchFor, watchVersion, watchesChanged, permission,
     shouldOfferBrowserAlerts, answerBrowserAlerts])
 
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>

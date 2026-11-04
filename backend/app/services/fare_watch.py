@@ -8,6 +8,7 @@ loop that calls it lives further down (see ``run_scheduler``).
 
 import asyncio
 import logging
+import math
 import random
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -54,10 +55,12 @@ class FareCheck:
 
 @dataclass
 class CheckOutcome:
-    # checked | expired | postponed | failed | errored | skipped | budget_exhausted
+    # checked | expired | postponed | failed | errored | skipped | deleted
+    # | budget_exhausted
     status: str
     watch: dict | None
     notification: dict | None = None
+    reason: str | None = None  # budget_exhausted: "global" or "user"
 
 
 # ── Wording helpers ───────────────────────────────────────────────────────────
@@ -113,68 +116,132 @@ def _links(watch: dict, dep: str, ret: str | None, cheapest: bool = False) -> di
 
 
 # ── Trigger rules ─────────────────────────────────────────────────────────────
+#
+# Two signals, each with its own reference (review ruling):
+#   own dates  — fare_target / fare_drop / fare_low_level on the trip's dates;
+#                state: last_notified_price (A), own_peak_price (P, highest
+#                own-dates price since that alert), last_notified_at.
+#   nearby     — fare_cheaper_date on the cheapest date ±N days;
+#                state: cheaper_notified_price (C), cheaper_peak_price (Q),
+#                cheaper_notified_at.
+# A signal's first alert is measured from the baseline. A repeat needs a
+# further step(A) below its last alert — unless it re-armed: any_drop
+# re-arms once the price rebounds to A + step(A) (the reference becomes the
+# peak since the alert); target re-arms once the price is back above the
+# target by step(target). The 24 h cooldown is a per-watch cap on top.
 
 
-def _candidates(watch: dict, check: FareCheck) -> list[tuple[str, float]]:
-    """Every rule that fires, as (kind, featured price), unordered."""
+def step(price: float) -> float:
+    """The smallest move worth an alert: max($15, 5 %)."""
+    return max(DROP_MIN_USD, DROP_MIN_PCT * price)
+
+
+def _rearmed(last: float, peak: float | None) -> bool:
+    return peak is not None and peak >= last + step(last)
+
+
+def _own_candidates(watch: dict, check: FareCheck) -> list[tuple[str, float, float]]:
+    """Own-dates rules that fire, as (kind, price, reference price)."""
     p = check.price
-    mode = watch["alert_mode"]
-    target = watch.get("target_price")
-    baseline = watch["baseline_price"]
-    ref = watch.get("last_notified_price") or baseline
-    lowest = watch.get("lowest_price")
-    out: list[tuple[str, float]] = []
     if p is None:
-        return out
+        return []
+    mode, target = watch["alert_mode"], watch.get("target_price")
+    baseline = watch["baseline_price"]
+    last = watch.get("last_notified_price")
+    peak = watch.get("own_peak_price")
+    lowest = watch.get("own_lowest_price")
+    if last is None:
+        drop_ref = baseline
+        repeat_ok = p < baseline  # never for a rise above where we started
+    else:
+        drop_ref = peak if _rearmed(last, peak) else last
+        repeat_ok = p <= last - step(last) or _rearmed(last, peak)
+    out = []
     if mode == "below_target" and target is not None and p <= target:
-        out.append(("fare_target", p))
+        target_rearmed = (
+            last is not None and peak is not None and peak >= target + step(target)
+        )
+        ok = p < baseline if last is None else p <= last - step(last) or target_rearmed
+        if ok:
+            out.append(("fare_target", p, drop_ref))
     if mode == "any_drop":
-        if p <= ref - max(DROP_MIN_USD, DROP_MIN_PCT * ref):
-            out.append(("fare_drop", p))
-        if check.price_level == "low" and lowest is not None and p < lowest:
-            out.append(("fare_low_level", p))
-    c = check.cheapest_price
-    if (
+        if p <= drop_ref - step(drop_ref):
+            out.append(("fare_drop", p, drop_ref))
+        new_low = lowest is None or p < lowest
+        if check.price_level == "low" and new_low and repeat_ok:
+            out.append(("fare_low_level", p, drop_ref))
+    return out
+
+
+def _nearby_candidate(watch: dict, check: FareCheck) -> tuple[str, float, float] | None:
+    p, c = check.price, check.cheapest_price
+    mode, target = watch["alert_mode"], watch.get("target_price")
+    if not (
         watch.get("flexible_days")
+        and p is not None
         and c is not None
         and check.cheapest_departure_date
         and check.cheapest_departure_date != watch["departure_date"]
         and p - c >= max(CHEAPER_DATE_MIN_USD, CHEAPER_DATE_MIN_PCT * p)
-        and (mode == "any_drop" or (target is not None and c <= target))
     ):
-        out.append(("fare_cheaper_date", c))
-    return out
+        return None
+    baseline = watch["baseline_price"]
+    last = watch.get("cheaper_notified_price")
+    peak = watch.get("cheaper_peak_price")
+    if mode == "below_target":
+        if target is None or c > target:
+            return None
+        if last is None:
+            ok = c < baseline
+        else:
+            ok = c <= last - step(last) or (
+                peak is not None and peak >= target + step(target)
+            )
+        return ("fare_cheaper_date", c, last or baseline) if ok else None
+    if last is None:
+        return ("fare_cheaper_date", c, baseline) if c < baseline else None
+    ref = peak if _rearmed(last, peak) else last
+    return ("fare_cheaper_date", c, ref) if c <= ref - step(ref) else None
+
+
+def _latest_alert(watch: dict) -> tuple[datetime, float] | None:
+    """When and at what price the watch last alerted (either signal)."""
+    alerts = [
+        (_parse_ts(watch[at]), watch[price])
+        for at, price in (
+            ("last_notified_at", "last_notified_price"),
+            ("cheaper_notified_at", "cheaper_notified_price"),
+        )
+        if watch.get(at) and watch.get(price) is not None
+    ]
+    return max(alerts) if alerts else None
 
 
 def evaluate(watch: dict, check: FareCheck, now: datetime) -> list[dict]:
     """The notification (at most one) this check deserves.
 
-    Rules (highest priority wins; see the plan's Design section):
-    1. below_target — price ≤ target.
-    2. any_drop — price ≤ reference − max($15, 5 %).
-    3. any_drop — a new lowest since watching that Google calls "low".
-    4. flexible — a nearby date ≥ max($25, 8 %) cheaper than the selected
-       dates (in below_target mode only when that date also beats the target).
-    Anti-spam, for every rule: never on the first check (it is the
-    baseline); never unless the featured price is below the reference (the
-    last alerted price, else the baseline) — so never for increases or
-    repeats; within 24 h of an alert only for a further ≥ 5 % drop.
+    Rules, highest priority first: fare_target (price ≤ target), fare_drop
+    (≥ step below the reference), fare_low_level (a new own-dates lowest
+    Google calls "low"), fare_cheaper_date (a nearby date ≥ max($25, 8 %)
+    cheaper than the trip's dates; in target mode it must also beat the
+    target). References, repeats and re-arming: see the comment above.
+    Never on the first check (the baseline). Within 24 h of the watch's
+    last alert, only a price ≥ 5 % below that alert gets through.
     """
     if watch.get("baseline_price") is None or not watch.get("check_count"):
         return []
-    ref = watch.get("last_notified_price") or watch["baseline_price"]
-    last_at = watch.get("last_notified_at")
-    cooling = bool(last_at) and now - _parse_ts(last_at) < COOLDOWN
-    found = dict(_candidates(watch, check))
+    found = _own_candidates(watch, check)
+    nearby = _nearby_candidate(watch, check)
+    if nearby:
+        found.append(nearby)
+    latest = _latest_alert(watch)
+    cooling = latest is not None and now - latest[0] < COOLDOWN
+    by_kind = {kind: (price, ref) for kind, price, ref in found}
     for kind in _PRIORITY:
-        if kind not in found:
+        if kind not in by_kind:
             continue
-        featured = found[kind]
-        if featured >= ref:
-            continue
-        if cooling and featured > watch["last_notified_price"] * (
-            1 - COOLDOWN_FURTHER_DROP_PCT
-        ):
+        price, ref = by_kind[kind]
+        if cooling and price > latest[1] * (1 - COOLDOWN_FURTHER_DROP_PCT):
             continue
         return [_compose(kind, watch, check, ref)]
     return []
@@ -219,7 +286,8 @@ def _compose(kind: str, watch: dict, check: FareCheck, ref: float) -> dict:
         return {"kind": kind, "title": title, "body": body, "data": data}
 
     p = check.price
-    is_lowest = lowest is None or p < lowest
+    own_lowest = watch.get("own_lowest_price")
+    is_lowest = own_lowest is None or p < own_lowest
     data.update(
         price=p,
         delta=round(p - ref, 2),
@@ -285,6 +353,27 @@ def _error_note(watch: dict) -> dict:
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def user_daily_cap() -> int:
+    """SerpAPI calls one user's watches may spend per UTC day."""
+    share = settings.fare_watch_daily_call_budget * settings.fare_watch_user_daily_share
+    return max(1, math.floor(share + 1e-9))  # 10 × 0.3 is 2.999… in floats
+
+
+def friendly_problem(raw: str | None) -> str | None:
+    """What to tell the traveller about a failed check (raw text stays
+    server-side: it can name keys, hosts or internals)."""
+    if not raw:
+        return None
+    text = raw.lower()
+    if "timeout" in text:
+        return "Live fares took too long to answer."
+    if "http" in text and "serpapi" in text:
+        return "Live fares aren't available right now."
+    if "request error" in text:
+        return "We couldn't reach live fares."
+    return "Live fares sent something we couldn't read."
 
 
 # ── Live fares ────────────────────────────────────────────────────────────────
@@ -372,12 +461,13 @@ async def check_watch(
 ) -> CheckOutcome:
     """Check one watch now and persist the result.
 
-    The caller holds the watch's lease (``claim_due`` / ``claim_watch``, or
+    The caller holds the watch's lease (``claim_watch``, or
     ``create_watch(lease_until=...)``). The scheduler only checks active
-    watches; ``manual`` ("Check now") also
-    checks paused ones and, when today's budget is spent, reports
-    ``budget_exhausted`` instead of moving the schedule. Always releases the
-    watch's lease.
+    watches; ``manual`` ("Check now") also checks paused ones and, when
+    today's budget (or the owner's share of it) is spent, reports
+    ``budget_exhausted`` instead of moving the schedule. A watch deleted
+    while its fares are fetched ends as ``deleted`` with nothing recorded.
+    Always releases the watch's lease.
     """
     global _budget_logged_day
     fetch = fetch or fetch_fares
@@ -399,13 +489,21 @@ async def check_watch(
 
     day = now.date().isoformat()
     cost = _estimate_calls(watch)
+    budget = settings.fare_watch_daily_call_budget
     if cost and not fare_watch_db.reserve_calls(
-        day, cost, settings.fare_watch_daily_call_budget
+        day, cost, budget, user_id=watch["user_id"], user_cap=user_daily_cap()
     ):
+        pool_left = budget - fare_watch_db.calls_used(day) >= cost
+        reason = "user" if pool_left else "global"
         if manual:
             fare_watch_db.update_watch(watch_id, lease_until=None)
-            return CheckOutcome("budget_exhausted", watch)
-        if _budget_logged_day != day:
+            return CheckOutcome("budget_exhausted", watch, reason=reason)
+        if reason == "user":
+            logger.info(
+                "Fare watch %d: owner's daily share spent; checking tomorrow",
+                watch_id,
+            )
+        elif _budget_logged_day != day:
             _budget_logged_day = day
             logger.warning(
                 "Fare watch daily SerpAPI budget (%d calls) spent for %s; "
@@ -447,6 +545,9 @@ async def check_watch(
 
 
 def _record_failure(watch: dict, error: str, now: datetime) -> CheckOutcome:
+    watch = fare_watch_db.get_watch(watch["id"])
+    if watch is None:  # deleted while we were fetching
+        return CheckOutcome("deleted", None)
     failures = (watch.get("failure_count") or 0) + 1
     stamp = now.isoformat()
     logger.info("Fare watch %d check failed (%d): %s", watch["id"], failures, error)
@@ -476,6 +577,11 @@ def _record_success(
     watch: dict, check: FareCheck, now: datetime, rand: Callable[[], float]
 ) -> CheckOutcome:
     stamp = now.isoformat()
+    # The fetch took a while: the traveller may have deleted the watch (or
+    # changed its settings) meanwhile — use the current row, or stop here.
+    watch = fare_watch_db.get_watch(watch["id"])
+    if watch is None:
+        return CheckOutcome("deleted", None)
     fare_watch_db.add_history(
         watch["id"],
         {
@@ -489,6 +595,7 @@ def _record_success(
     )
     notes = evaluate(watch, check, now)
     note = _notify(watch, notes[0], now) if notes else None
+    kind = note["kind"] if note else None
 
     fields: dict = {
         "failure_count": 0,
@@ -503,14 +610,34 @@ def _record_success(
     if check.typical_low is not None:
         fields["google_typical_low"] = check.typical_low
         fields["google_typical_high"] = check.typical_high
-    if check.price is not None:
-        fields["last_price"] = check.price
+    p = check.price
+    if p is not None:
+        fields["last_price"] = p
         fields["check_count"] = (watch.get("check_count") or 0) + 1
         if watch.get("baseline_price") is None:
-            fields["baseline_price"] = check.price
-    seen = [(check.price, watch["departure_date"])]
-    if check.cheapest_price is not None:
-        seen.append((check.cheapest_price, check.cheapest_departure_date))
+            fields["baseline_price"] = p
+        own_lowest = watch.get("own_lowest_price")
+        if own_lowest is None or p < own_lowest:
+            fields["own_lowest_price"] = p
+        # Own-dates signal: a new alert resets its reference and peak;
+        # otherwise the peak since the last alert follows rebounds.
+        if kind in ("fare_target", "fare_drop", "fare_low_level"):
+            fields.update(
+                last_notified_price=p, last_notified_at=stamp, own_peak_price=p
+            )
+        elif watch.get("last_notified_price") is not None:
+            fields["own_peak_price"] = max(watch.get("own_peak_price") or p, p)
+    c = check.cheapest_price
+    if c is not None:
+        if kind == "fare_cheaper_date":
+            fields.update(
+                cheaper_notified_price=c,
+                cheaper_notified_at=stamp,
+                cheaper_peak_price=c,
+            )
+        elif watch.get("cheaper_notified_price") is not None:
+            fields["cheaper_peak_price"] = max(watch.get("cheaper_peak_price") or c, c)
+    seen = [(p, watch["departure_date"]), (c, check.cheapest_departure_date)]
     for price, dep in seen:
         if price is None:
             continue
@@ -518,17 +645,16 @@ def _record_success(
         if lowest is None or price < lowest:
             fields["lowest_price"] = price
             fields["lowest_price_date"] = dep
-    if note:
-        fields["last_notified_price"] = note["data"]["price"]
-        fields["last_notified_at"] = stamp
-    watch = fare_watch_db.update_watch(watch["id"], **fields)
-    return CheckOutcome("checked", watch, note)
+    updated = fare_watch_db.update_watch(watch["id"], **fields)
+    return CheckOutcome("checked", updated, note)
 
 
 # ── Scheduler ─────────────────────────────────────────────────────────────────
 
 LEASE = timedelta(minutes=10)  # a crashed worker's claim frees up after this
 CLAIM_BATCH = 50
+NOTIFICATION_RETENTION = timedelta(days=180)
+_swept_day: date | None = None
 CONCURRENCY = 3
 
 
@@ -539,16 +665,29 @@ async def run_due(
     fetch: Callable[[dict, str], Awaitable[FareCheck]] | None = None,
     rand: Callable[[], float] = random.random,
 ) -> list[CheckOutcome | None]:
-    """Claim the due watches (leased, so a second scheduler skips them) and
-    check them, CONCURRENCY at a time. A crashing check is logged, its lease
-    released, and never stops the others."""
+    """Check the due watches, CONCURRENCY at a time. Each watch is leased
+    only when its turn comes (``claim_watch``), so one taken meanwhile by
+    "Check now" or another scheduler is skipped, and a long batch never
+    outlives its leases. A crashing check is logged, its lease released, and
+    never stops the others. Once per UTC day, old notifications are swept."""
+    global _swept_day
     now = clock()
+    if _swept_day != now.date():
+        _swept_day = now.date()
+        removed = notifications_db.delete_older_than(now - NOTIFICATION_RETENTION)
+        if removed:
+            logger.info("Removed %d notifications older than 180 days", removed)
     fare_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
-    ids = fare_watch_db.claim_due(now, now + LEASE, CLAIM_BATCH)
+    ids = fare_watch_db.due_watch_ids(now, CLAIM_BATCH)
     sem = asyncio.Semaphore(CONCURRENCY)
 
     async def one(watch_id: int) -> CheckOutcome | None:
         async with sem:
+            started = clock()
+            if not fare_watch_db.claim_watch(
+                watch_id, started, started + LEASE, due_only=True
+            ):
+                return None  # someone else is checking it
             try:
                 return await check_watch(
                     watch_id, now=clock(), api_key=api_key, fetch=fetch, rand=rand

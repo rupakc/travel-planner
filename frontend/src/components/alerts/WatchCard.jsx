@@ -130,7 +130,7 @@ export default function WatchCard({
               {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{change.text}</p>}
             </>
           ) : (
-            <p className="text-sm text-slate-500">{past ? 'No price was found' : 'Getting today’s price…'}</p>
+            <p className="text-sm text-slate-500">{past ? 'No price was found' : watch.status === 'error' ? 'No price yet' : 'Getting today’s price…'}</p>
           )}
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function WatchCard({
 
       {watch.status === 'error' && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <span>Live fares didn’t respond three times in a row, so checks are on hold.</span>
+          <span>{watch.problem ? `${watch.problem} ` : ''}Three checks in a row failed, so checks are on hold.</span>
           <button type="button" onClick={() => onUpdate({ status: 'active' })} disabled={busy === 'status'}
             className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">
             {busy === 'status' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Retry

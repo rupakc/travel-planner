@@ -26,6 +26,15 @@ _CREATE_FIELDS = (
 
 _BOOL_FIELDS = ("email_enabled",)
 
+# Columns added after the first version of the table (per-signal references)
+_WATCH_MIGRATIONS = (
+    ("own_peak_price", "REAL"),
+    ("own_lowest_price", "REAL"),
+    ("cheaper_notified_price", "REAL"),
+    ("cheaper_notified_at", "TEXT"),
+    ("cheaper_peak_price", "REAL"),
+)
+
 
 def create_fare_watch_tables() -> None:
     with get_connection() as conn:
@@ -53,6 +62,11 @@ def create_fare_watch_tables() -> None:
                 lowest_price_date   TEXT,
                 last_notified_price REAL,
                 last_notified_at    TEXT,
+                own_peak_price      REAL,
+                own_lowest_price    REAL,
+                cheaper_notified_price REAL,
+                cheaper_notified_at TEXT,
+                cheaper_peak_price  REAL,
                 google_price_level  TEXT,
                 google_typical_low  REAL,
                 google_typical_high REAL,
@@ -87,7 +101,18 @@ def create_fare_watch_tables() -> None:
                 day   TEXT    PRIMARY KEY,
                 calls INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS fare_watch_user_quota (
+                day     TEXT    NOT NULL,
+                user_id TEXT    NOT NULL,
+                calls   INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (day, user_id)
+            );
         """)
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(fare_watches)")}
+        for name, decl in _WATCH_MIGRATIONS:
+            if name not in cols:
+                conn.execute(f"ALTER TABLE fare_watches ADD COLUMN {name} {decl}")  # nosec B608
 
 
 def _row(row) -> dict | None:
@@ -238,34 +263,39 @@ def expire_inactive_past(today: str, *, now: datetime) -> int:
         ).rowcount
 
 
-def claim_due(now: datetime, lease_until: datetime, limit: int) -> list[int]:
-    """Atomically lease up to ``limit`` due active watches; returns their ids.
+def due_watch_ids(now: datetime, limit: int) -> list[int]:
+    """Active watches due for a check and not leased, oldest due first.
 
-    One UPDATE … RETURNING, so two schedulers (several workers) can never
-    claim the same watch while its lease is live.
-    """
+    Read-only: the scheduler leases each one (``claim_watch``) only when it
+    actually starts checking it."""
     stamp = now.isoformat()
     with get_connection() as conn:
         rows = conn.execute(
-            "UPDATE fare_watches SET lease_until = ? WHERE id IN ("
-            " SELECT id FROM fare_watches WHERE status = 'active'"
-            " AND next_check_at <= ?"
-            " AND (lease_until IS NULL OR lease_until < ?)"
-            " ORDER BY next_check_at LIMIT ?) RETURNING id",
-            (lease_until.isoformat(), stamp, stamp, limit),
+            "SELECT id FROM fare_watches WHERE status = 'active'"
+            " AND next_check_at <= ? AND (lease_until IS NULL OR lease_until < ?)"
+            " ORDER BY next_check_at, id LIMIT ?",
+            (stamp, stamp, limit),
         ).fetchall()
-    return sorted(r[0] for r in rows)
+    return [r[0] for r in rows]
 
 
-def claim_watch(watch_id: int, now: datetime, lease_until: datetime) -> bool:
-    """Lease one watch for a manual check; False while someone else holds it."""
+def claim_watch(
+    watch_id: int, now: datetime, lease_until: datetime, *, due_only: bool = False
+) -> bool:
+    """Lease one watch; False while someone else holds it.
+
+    ``due_only`` (the scheduler) also requires it to be active and still
+    due, so a watch another worker has just checked isn't checked again."""
+    sql = (
+        "UPDATE fare_watches SET lease_until = ? WHERE id = ? "
+        "AND (lease_until IS NULL OR lease_until < ?)"
+    )
+    params: list = [lease_until.isoformat(), watch_id, now.isoformat()]
+    if due_only:
+        sql += " AND status = 'active' AND next_check_at <= ?"
+        params.append(now.isoformat())
     with get_connection() as conn:
-        cur = conn.execute(
-            "UPDATE fare_watches SET lease_until = ? WHERE id = ? "
-            "AND (lease_until IS NULL OR lease_until < ?)",
-            (lease_until.isoformat(), watch_id, now.isoformat()),
-        )
-        return cur.rowcount == 1
+        return conn.execute(sql, params).rowcount == 1
 
 
 # ── History ───────────────────────────────────────────────────────────────────
@@ -311,8 +341,16 @@ def get_history(watch_id: int) -> list[dict]:
 # ── Daily SerpAPI budget ──────────────────────────────────────────────────────
 
 
-def reserve_calls(day: str, n: int, budget: int) -> bool:
-    """Take ``n`` calls from ``day``'s budget, all or nothing."""
+def reserve_calls(
+    day: str,
+    n: int,
+    budget: int,
+    *,
+    user_id: str | None = None,
+    user_cap: int | None = None,
+) -> bool:
+    """Take ``n`` calls from ``day``'s budget — and, with ``user_id``, from
+    that user's daily share (``user_cap``) — all or nothing."""
     with get_connection() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO fare_watch_quota (day, calls) VALUES (?, 0)", (day,)
@@ -322,7 +360,32 @@ def reserve_calls(day: str, n: int, budget: int) -> bool:
             "WHERE day = ? AND calls + ? <= ?",
             (n, day, n, budget),
         )
-        return cur.rowcount == 1
+        if cur.rowcount != 1:
+            return False
+        if user_id is not None and user_cap is not None:
+            conn.execute(
+                "INSERT OR IGNORE INTO fare_watch_user_quota (day, user_id, calls) "
+                "VALUES (?, ?, 0)",
+                (day, user_id),
+            )
+            cur = conn.execute(
+                "UPDATE fare_watch_user_quota SET calls = calls + ? "
+                "WHERE day = ? AND user_id = ? AND calls + ? <= ?",
+                (n, day, user_id, n, user_cap),
+            )
+            if cur.rowcount != 1:
+                conn.rollback()  # give the pool's calls back
+                return False
+        return True
+
+
+def user_calls_used(day: str, user_id: str) -> int:
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT calls FROM fare_watch_user_quota WHERE day = ? AND user_id = ?",
+            (day, user_id),
+        ).fetchone()
+    return row[0] if row else 0
 
 
 def calls_used(day: str) -> int:

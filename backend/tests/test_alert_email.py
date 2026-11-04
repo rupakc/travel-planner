@@ -277,3 +277,45 @@ async def test_cheaper_date_email_names_the_dates():
     text = msg.get_body(("plain",)).get_content()
     assert "3–10 Dec" in text
     assert "cheapest=1" in text
+
+
+# ── RFC 8058 one-click + deliverability headers ───────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_list_unsubscribe_headers_are_raw_and_one_click():
+    await _drop(_watch(_user()), 454.0)
+    msg = FakeSMTP.instances[0].sent[0]
+    raw = msg.as_bytes()
+    lines = raw.split(b"\n")
+    unsub = [ln for ln in lines if ln.startswith(b"List-Unsubscribe:")]
+    assert len(unsub) == 1
+    assert (
+        unsub[0]
+        .rstrip(b"\r")
+        .startswith(
+            b"List-Unsubscribe: <https://trip.test/api/fare-watches/unsubscribe?token="
+        )
+    )
+    assert unsub[0].rstrip(b"\r").endswith(b">")
+    assert b"=?utf-8?" not in unsub[0]
+    assert b"List-Unsubscribe-Post: List-Unsubscribe=One-Click" in raw
+
+
+@pytest.mark.asyncio
+async def test_date_and_message_id_headers():
+    from email.utils import parsedate_to_datetime
+
+    await _drop(_watch(_user()), 454.0)
+    msg = FakeSMTP.instances[0].sent[0]
+    assert parsedate_to_datetime(msg["Date"]) is not None
+    assert msg["Message-ID"].startswith("<") and msg["Message-ID"].endswith(
+        "@trip.test>"
+    )
+
+
+def test_message_id_domain_falls_back_to_the_app_url(monkeypatch):
+    monkeypatch.setattr(settings, "smtp_from", "")
+    monkeypatch.setattr(settings, "smtp_username", "")
+    monkeypatch.setattr(settings, "app_base_url", "https://voyager.example.org/app")
+    assert alert_email._mail_domain() == "voyager.example.org"

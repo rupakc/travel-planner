@@ -90,3 +90,11 @@ def mark_emailed(notification_id: int, *, now: datetime) -> None:
             "UPDATE notifications SET emailed_at = ? WHERE id = ?",
             (now.isoformat(), notification_id),
         )
+
+
+def delete_older_than(cutoff: datetime) -> int:
+    """Retention: drop notifications created before ``cutoff``."""
+    with get_connection() as conn:
+        return conn.execute(
+            "DELETE FROM notifications WHERE created_at < ?", (cutoff.isoformat(),)
+        ).rowcount

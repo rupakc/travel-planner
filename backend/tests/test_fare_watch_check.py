@@ -33,6 +33,8 @@ def _tables(monkeypatch):
     notifications_db.create_notifications_table()
     monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 200)
     monkeypatch.setattr(settings, "fare_watch_interval_hours", 12)
+    # Budget tests below are about the pool; the per-user share has its own
+    monkeypatch.setattr(settings, "fare_watch_user_daily_share", 1.0)
     monkeypatch.setattr(serp_flights, "_today", lambda: NOW.date())
     monkeypatch.setattr(fare_watch, "_budget_logged_day", None)
     with get_connection() as conn:  # a fresh daily budget per test
@@ -615,3 +617,95 @@ def test_mark_read_ignores_other_users_ids(user):
     )
     notifications_db.mark_read(user["id"], [n["id"]], now=NOW)
     assert notifications_db.count_unread(other["id"]) == 1
+
+
+# ── Per-user share of the daily budget (30 %) ─────────────────────────────────
+
+
+def test_reserve_calls_enforces_a_per_user_share():
+    day = "2030-02-01"
+    assert fare_watch_db.reserve_calls(day, 2, 10, user_id="u1", user_cap=3) is True
+    assert fare_watch_db.reserve_calls(day, 2, 10, user_id="u1", user_cap=3) is False
+    assert fare_watch_db.calls_used(day) == 2  # the refused call isn't charged
+    assert fare_watch_db.user_calls_used(day, "u1") == 2
+    assert fare_watch_db.reserve_calls(day, 3, 10, user_id="u2", user_cap=3) is True
+    assert fare_watch_db.calls_used(day) == 5
+
+
+@pytest.mark.asyncio
+async def test_a_user_over_their_share_waits_while_others_are_checked(
+    user, monkeypatch
+):
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 10)
+    monkeypatch.setattr(settings, "fare_watch_user_daily_share", 0.3)
+    assert fare_watch.user_daily_cap() == 3
+    monkeypatch.setattr(fare_watch, "_estimate_calls", lambda watch: 1)
+    other = create_user(f"fw-{uuid.uuid4().hex[:8]}", "pw-123456789")
+    mine = [_new_watch(user, destination_code=c) for c in ("LIS", "OPO", "FAO", "MAD")]
+    theirs = _new_watch(other)
+    statuses = []
+    for w in mine:
+        out = await _run(w, _fetch(FareCheck(price=500.0, calls=1)))
+        statuses.append(out.status)
+    assert statuses == ["checked", "checked", "checked", "postponed"]
+    out = await _run(theirs, _fetch(FareCheck(price=500.0, calls=1)))
+    assert out.status == "checked"
+    manual = await _run(mine[0], _fetch(), manual=True)
+    assert manual.status == "budget_exhausted"
+    assert manual.reason == "user"
+
+
+@pytest.mark.asyncio
+async def test_budget_exhausted_reason_is_global_when_the_pool_is_empty(
+    user, monkeypatch
+):
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 1)
+    monkeypatch.setattr(fare_watch, "_estimate_calls", lambda watch: 1)
+    fare_watch_db.reserve_calls("2026-11-04", 1, 1)
+    out = await _run(_new_watch(user), _fetch(), manual=True)
+    assert (out.status, out.reason) == ("budget_exhausted", "global")
+
+
+# ── A watch deleted while its check is in flight ──────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_watch_deleted_mid_check_records_nothing(user, monkeypatch):
+    w = _new_watch(user)
+    await _run(w, _fetch(FareCheck(price=500.0)))
+    sent = []
+    monkeypatch.setattr(
+        "app.services.alert_email.deliver", AsyncMock(side_effect=sent.append)
+    )
+
+    async def fetch(watch, key):
+        fare_watch_db.delete_watch(watch["id"], user["id"])
+        return FareCheck(price=300.0)
+
+    out = await _run(w, fetch, now=NOW + timedelta(days=2))
+    assert out.status == "deleted"
+    assert out.notification is None
+    assert fare_watch_db.get_history(w["id"]) == []
+    assert _notes(user) == []
+    assert sent == []
+
+
+@pytest.mark.asyncio
+async def test_watch_deleted_before_its_third_failure_gets_no_notice(user):
+    w = _new_watch(user)
+    fare_watch_db.update_watch(w["id"], failure_count=2)
+
+    async def fetch(watch, key):
+        fare_watch_db.delete_watch(watch["id"], user["id"])
+        raise SerpAPIError("SerpAPI HTTP 500")
+
+    out = await _run(w, fetch)
+    assert out.status == "deleted"
+    assert _notes(user) == []
+
+
+@pytest.mark.asyncio
+async def test_deliver_ignores_a_missing_watch():
+    from app.services.alert_email import deliver
+
+    assert await deliver(None, {"kind": "fare_drop", "id": 1}, NOW) is False

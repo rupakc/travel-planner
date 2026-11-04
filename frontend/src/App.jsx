@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext'
 import { SearchDataProvider, useSearchData } from './context/SearchDataContext'
 import { AlertsProvider } from './context/AlertsContext'
 import { notificationLink } from './utils/fareWatch'
+import { loginPathFor } from './utils/returnPath'
 import { track } from './utils/analytics'
 import SearchPage          from './pages/SearchPage'
 import ResultsPage         from './pages/ResultsPage'
@@ -22,11 +23,13 @@ import AttributionFooter   from './components/ui/AttributionFooter'
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
 
-function RequireAuth({ children }) {
+// Signed-out visits (e.g. a link from an alert email) go to login with the
+// page kept in ?next=, and come back to it after signing in.
+export function RequireAuth({ children }) {
   const { isAuthenticated, loading, requiresPasswordChange } = useAuth()
   const location = useLocation()
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading…</div>
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to={loginPathFor(location)} state={{ from: location }} replace />
   if (requiresPasswordChange && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />
   }

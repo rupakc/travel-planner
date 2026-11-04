@@ -3,7 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 
-vi.mock('./AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
+const authState = { token: 'tok' }
+vi.mock('./AuthContext', () => ({ useAuth: () => authState }))
 vi.mock('../services/api', () => ({
   getCapabilities: vi.fn(async () => ({ serpapi: true, fareWatch: true, email: false })),
   getUnreadCount: vi.fn(),
@@ -109,6 +110,39 @@ describe('AlertsProvider', () => {
     expect(shown).toEqual([{ title: 'Drop 20', body: 'b', tag: 'fare-alert-20' }])
     expect(seen.toast).toBeNull()
     vi.unstubAllGlobals()
+  })
+
+  it('markSeen keeps an alert the user already saw from becoming a toast', async () => {
+    await mount()
+    act(() => seen.markSeen(30))
+    api.getUnreadCount.mockResolvedValue(1)
+    api.listNotifications.mockResolvedValue({ items: [note(30)] })
+    await tick(60000)
+    expect(seen.unread).toBe(1)
+    expect(seen.toast).toBeNull()
+  })
+
+  it('starts fresh for a different account (no toasts for its old alerts)', async () => {
+    await mount()
+    authState.token = 'other'
+    api.getUnreadCount.mockResolvedValue(4)
+    api.listNotifications.mockResolvedValue({ items: [note(99)] })
+    await act(async () => root.render(<AlertsProvider pollMs={60000}><Probe /></AlertsProvider>))
+    expect(seen.unread).toBe(4)
+    expect(seen.toast).toBeNull()
+    authState.token = 'tok'
+  })
+
+  it('a focus and a visibility change together refresh once', async () => {
+    await mount()
+    api.getUnreadCount.mockClear()
+    await setVisibility('hidden')
+    await act(async () => {
+      visibility = 'visible'
+      document.dispatchEvent(new Event('visibilitychange'))
+      window.dispatchEvent(new Event('focus'))
+    })
+    expect(api.getUnreadCount).toHaveBeenCalledTimes(1)
   })
 
   it('markRead updates the unread count', async () => {

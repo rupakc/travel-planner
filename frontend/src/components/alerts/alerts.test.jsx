@@ -12,6 +12,7 @@ const alerts = {
   caps: { serpapi: true, fareWatch: true, email: true },
   watchFor: vi.fn(async () => null), watchVersion: 0, watchesChanged: vi.fn(),
   shouldOfferBrowserAlerts: vi.fn(() => true), answerBrowserAlerts: vi.fn(),
+  markSeen: vi.fn(),
 }
 vi.mock('../../context/AlertsContext', async () => {
   const { useState, useEffect } = await import('react')
@@ -185,10 +186,28 @@ describe('WatchFareButton', () => {
     expect(dialog.textContent).toContain('Enter a price')
   })
 
+  it('keeps keyboard focus inside the dialog', async () => {
+    await render(<WatchFareButton trip={TRIP} />)
+    await act(async () => button('Watch fare').click())
+    const dialog = document.querySelector('[role="dialog"]')
+    const focusables = [...dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), a[href]')]
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    expect(dialog.contains(document.activeElement)).toBe(true)
+    last.focus()
+    act(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true })) })
+    expect(document.activeElement).toBe(first)
+    first.focus()
+    act(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true })) })
+    expect(document.activeElement).toBe(last)
+  })
+
   it('closes on Escape', async () => {
     await render(<WatchFareButton trip={TRIP} />)
     await act(async () => button('Watch fare').click())
-    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
+    // from inside the dialog, as a real key press would be
+    const inside = document.querySelector('[role="dialog"] input')
+    await act(async () => inside.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
     expect(document.querySelector('[role="dialog"]')).toBeNull()
   })
 })
@@ -339,6 +358,14 @@ describe('WatchCard', () => {
     expect(p.onUpdate).toHaveBeenCalledWith({ alert_mode: 'below_target', target_price: 420, flexible_days: 0, email_enabled: false })
   })
 
+  it('shows the friendly problem and no contradictory “getting price” text', async () => {
+    const watch = { ...WATCH, status: 'error', baseline_price: null, last_price: null, problem: 'Live fares took too long to answer.' }
+    await render(<WatchCard {...props({ watch })} />)
+    expect(container.textContent).toContain('Live fares took too long to answer.')
+    expect(container.textContent).toContain('No price yet')
+    expect(container.textContent).not.toContain('Getting today’s price')
+  })
+
   it('past trips keep only Delete', async () => {
     await render(<WatchCard {...props({ watch: { ...WATCH, status: 'expired' } })} />)
     expect(container.textContent).toContain('Ended')
@@ -374,6 +401,31 @@ describe('AlertsPage', () => {
     api.checkFareWatchNow.mockRejectedValueOnce({ response: { status: 429, data: { detail: 'We’ve used today’s live fare checks — we’ll check again tomorrow.' } } })
     await act(async () => button('Check now', container).click())
     expect(container.textContent).toContain('check again tomorrow')
+  })
+
+  it.each([
+    [{ check_status: 'errored' }, 'checks are on hold'],
+    [{ check_status: 'failed' }, 'try again within the hour'],
+    [{ check_status: 'expired', status: 'expired' }, 'has departed'],
+    [{ check_status: 'postponed' }, 'tomorrow'],
+    [{ check_status: 'checked', last_price: 454, notification: null }, 'Checked just now: $454'],
+    [{ check_status: 'checked', last_price: null, baseline_price: null, notification: null }, 'no fares were found'],
+    [{ check_status: 'skipped' }, 'isn’t being watched'],
+  ])('Check now result %o reads “%s”', async (res, text) => {
+    api.listFareWatches.mockResolvedValue([WATCH])
+    api.checkFareWatchNow.mockResolvedValueOnce({ ...WATCH, notification: null, ...res })
+    await render(<AlertsPage />, '/alerts')
+    await act(async () => button('Check now', container).click())
+    expect(container.textContent).toContain(text)
+  })
+
+  it('a Check-now alert is not shown again as a toast', async () => {
+    api.listFareWatches.mockResolvedValue([WATCH])
+    api.checkFareWatchNow.mockResolvedValueOnce({ ...WATCH, check_status: 'checked', notification: { id: 41, title: 'Dropped' } })
+    await render(<AlertsPage />, '/alerts')
+    await act(async () => button('Check now', container).click())
+    expect(alerts.markSeen).toHaveBeenCalledWith(41)
+    expect(alerts.markSeen.mock.invocationCallOrder[0]).toBeLessThan(alerts.refresh.mock.invocationCallOrder[0])
   })
 
   it('Re-plan runs the trip as a search with the traveller’s preferences', async () => {

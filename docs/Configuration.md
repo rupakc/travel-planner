@@ -45,13 +45,14 @@ Fare watch re-checks watched fares in the background and needs `SERPAPI_KEY`. Em
 | `FARE_WATCH_INTERVAL_HOURS` | `12` | Time between two checks of one watch, ±10 % jitter. |
 | `FARE_WATCH_DAILY_CALL_BUDGET` | `200` | SerpAPI calls per UTC day that fare watches may spend (scheduled checks, baselines and "Check now"). A check costs 1 call for exact dates or up to 7 with nearby dates; fares cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers `429`. Searches and the fare calendar are not counted. |
 | `FARE_WATCH_MAX_ACTIVE_PER_USER` | `10` | Active watches per user (paused and ended ones don't count). |
+| `FARE_WATCH_USER_DAILY_SHARE` | `0.3` | Largest share of `FARE_WATCH_DAILY_CALL_BUDGET` one user's watches may spend per UTC day (at least 1 call), so one account can't use up everyone's checks. Over it, that user's checks wait for the next day and their "Check now" answers `429`. |
 | `SMTP_HOST` | `""` | SMTP server for alert emails. Empty disables email (`GET /health` reports `email_alerts_available`). |
 | `SMTP_PORT` | `587` | SMTP port. |
 | `SMTP_USERNAME` | `""` | Login user; empty skips `AUTH`. |
 | `SMTP_PASSWORD` | `""` | Login password. Never logged. |
 | `SMTP_FROM` | `""` | `From` header, e.g. `Voyager <alerts@example.com>`. Falls back to `SMTP_USERNAME`, then `alerts@localhost`. |
 | `SMTP_STARTTLS` | `true` | Upgrade the connection with STARTTLS before logging in. |
-| `APP_BASE_URL` | `http://localhost:5174` | Public URL of the frontend, used for the links in alert emails ("See flights", "Re-plan", and the one-click stop link, which goes to `APP_BASE_URL/api/...`, so the frontend's host must proxy `/api`). |
+| `APP_BASE_URL` | `http://localhost:5174` | Public URL of the frontend, used for the links in alert emails ("See flights", "Re-plan", and the stop-emails link, which goes to `APP_BASE_URL/api/...`, so the frontend's host must proxy `/api`). That link opens a confirmation page (GET) and the change is a POST, which is also the RFC 8058 one-click target named in the `List-Unsubscribe` / `List-Unsubscribe-Post` headers. Account emails are not verified: setting one is signed-in only and rate-limited. |
 
 ## Accounts
 
@@ -75,7 +76,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_CHAT` | `30` | `/api/chat` |
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
-| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch and its "Check now" |
+| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", and changing the account email |
 
 Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
 

@@ -317,7 +317,7 @@ def test_resume_from_error_retries_now(client, alice):
     ).json()
     assert r["status"] == "active"
     assert r["failure_count"] == 0
-    assert r["last_error"] is None
+    assert r["problem"] is None
     assert r["next_check_at"] == NOW.isoformat()
 
 
@@ -511,35 +511,73 @@ def test_notifications_require_auth(client):
 # ── Unsubscribe link ──────────────────────────────────────────────────────────
 
 
-def test_unsubscribe_turns_off_email_without_login(client, monkeypatch):
+def _emailed_watch(client, monkeypatch):
     monkeypatch.setattr(settings, "smtp_host", "smtp.test")
     _, h = _user(email=f"{uuid.uuid4().hex[:6]}@example.com")
-    w = _create(client, h, email_enabled=True).json()
+    return _create(client, h, email_enabled=True).json()
+
+
+def test_unsubscribe_link_only_asks_for_confirmation(client, monkeypatch):
+    # Link scanners and prefetchers follow GET links: GET must not change state
+    w = _emailed_watch(client, monkeypatch)
     token = alert_email.unsubscribe_token(w["id"])
     r = client.get(f"/api/fare-watches/unsubscribe?token={token}")
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
+    assert '<form method="post"' in r.text
+    assert f"token={token}" in r.text
+    assert "Stop emails" in r.text
+    assert fare_watch_db.get_watch(w["id"])["email_enabled"] is True
+
+
+def test_confirming_turns_off_email_without_login(client, monkeypatch):
+    w = _emailed_watch(client, monkeypatch)
+    token = alert_email.unsubscribe_token(w["id"])
+    r = client.post(f"/api/fare-watches/unsubscribe?token={token}")
+    assert r.status_code == 200
     assert "won't email you" in r.text
     got = fare_watch_db.get_watch(w["id"])
     assert got["email_enabled"] is False
     assert got["status"] == "active"  # in-app alerts keep going
+    # replaying is harmless
+    assert (
+        client.post(f"/api/fare-watches/unsubscribe?token={token}").status_code == 200
+    )
 
 
+def test_rfc8058_one_click_post(client, monkeypatch):
+    w = _emailed_watch(client, monkeypatch)
+    token = alert_email.unsubscribe_token(w["id"])
+    r = client.post(
+        f"/api/fare-watches/unsubscribe?token={token}",
+        content="List-Unsubscribe=One-Click",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert r.status_code == 200
+    assert fare_watch_db.get_watch(w["id"])["email_enabled"] is False
+
+
+@pytest.mark.parametrize("method", ["get", "post"])
 @pytest.mark.parametrize("token", ["", "garbage", "a.b.c"])
-def test_unsubscribe_rejects_bad_tokens(client, token):
-    r = client.get(f"/api/fare-watches/unsubscribe?token={token}")
+def test_unsubscribe_rejects_bad_tokens(client, token, method):
+    r = getattr(client, method)(f"/api/fare-watches/unsubscribe?token={token}")
     assert r.status_code == 400
 
 
 def test_unsubscribe_rejects_a_login_token(client, alice):
     token = alice[1]["Authorization"].split()[1]
     assert client.get(f"/api/fare-watches/unsubscribe?token={token}").status_code == 400
+    assert (
+        client.post(f"/api/fare-watches/unsubscribe?token={token}").status_code == 400
+    )
 
 
 def test_unsubscribe_for_a_deleted_watch_is_friendly(client):
     token = alert_email.unsubscribe_token(999_999)
-    r = client.get(f"/api/fare-watches/unsubscribe?token={token}")
-    assert r.status_code == 200
+    assert client.get(f"/api/fare-watches/unsubscribe?token={token}").status_code == 200
+    assert (
+        client.post(f"/api/fare-watches/unsubscribe?token={token}").status_code == 200
+    )
 
 
 # ── Account email + capability flags ──────────────────────────────────────────
@@ -610,14 +648,14 @@ def test_scheduler_cannot_claim_a_watch_during_its_baseline_check(
     real_fetch = fare_watch.fetch_fares
 
     async def fetch(watch, key):
-        claimed_during_fetch.extend(
-            fare_watch_db.claim_due(NOW, NOW + timedelta(minutes=10), 50)
+        claimed_during_fetch.append(
+            fare_watch_db.claim_watch(watch["id"], NOW, NOW + timedelta(minutes=10))
         )
         return await real_fetch(watch, key)
 
     monkeypatch.setattr(fare_watch, "fetch_fares", fetch)
     w = _create(client, alice[1]).json()
-    assert w["id"] not in claimed_during_fetch
+    assert claimed_during_fetch == [False]
     assert [p["price"] for p in w["history"]] == [480.0]
     assert fare_watch_db.get_watch(w["id"])["lease_until"] is None
 
@@ -659,3 +697,71 @@ def test_claim_watch_is_exclusive(alice):
         fare_watch_db.claim_watch(w["id"], later, later + timedelta(minutes=10))
         is False
     )
+
+
+# ── Users see a friendly problem, never raw SerpAPI errors ───────────────────
+
+
+@pytest.mark.parametrize(
+    "raw,friendly",
+    [
+        ("SerpAPI HTTP 401: Invalid API key", "Live fares aren't available right now."),
+        ("SerpAPI HTTP 503: upstream", "Live fares aren't available right now."),
+        ("SerpAPI timeout: ReadTimeout", "Live fares took too long to answer."),
+        ("ValueError: bad json", "Live fares sent something we couldn't read."),
+        ("SerpAPI request error: [Errno 8]", "We couldn't reach live fares."),
+    ],
+)
+def test_last_error_is_shown_as_a_friendly_problem(client, alice, raw, friendly):
+    _, h = alice
+    w = _create(client, h).json()
+    fare_watch_db.update_watch(w["id"], last_error=raw, failure_count=1)
+    got = client.get(f"/api/fare-watches/{w['id']}", headers=h).json()
+    assert "last_error" not in got
+    assert got["problem"] == friendly
+    listed = client.get("/api/fare-watches", headers=h).json()
+    assert all("last_error" not in x for x in listed)
+
+
+def test_no_problem_when_healthy(client, alice):
+    w = _create(client, alice[1]).json()
+    assert w["problem"] is None
+
+
+# ── Per-user share of the daily budget ────────────────────────────────────────
+
+
+def test_check_now_over_the_users_daily_share_is_429(client, alice, monkeypatch):
+    _, h = alice
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 10)  # share: 3
+    w = _create(client, h).json()  # 1 call
+    for _ in range(2):
+        get_cache().clear()
+        assert (
+            client.post(f"/api/fare-watches/{w['id']}/check", headers=h).status_code
+            == 200
+        )
+    get_cache().clear()
+    r = client.post(f"/api/fare-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 429
+    assert "your share" in r.json()["detail"]
+    assert int(r.headers["Retry-After"]) == 12 * 3600
+
+
+def test_email_change_is_rate_limited(client, alice, monkeypatch):
+    _, h = alice
+    monkeypatch.setattr(settings, "rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "rate_limit_light_ai", 2)
+    rate_limit.limiter._hits.clear()
+    try:
+        for i in range(2):
+            r = client.put(
+                "/api/auth/email",
+                json={"email": f"x{i}-{uuid.uuid4().hex[:5]}@ex.com"},
+                headers=h,
+            )
+            assert r.status_code == 200
+        r = client.put("/api/auth/email", json={"email": "y@ex.com"}, headers=h)
+        assert r.status_code == 429
+    finally:
+        rate_limit.limiter._hits.clear()

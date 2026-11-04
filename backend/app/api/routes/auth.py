@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ...core.auth import MIN_PASSWORD_LENGTH, create_access_token, get_current_user
+from ...core.rate_limit import rate_limit
 from ...db.users_db import (
     EmailInUseError,
     authenticate_user,
@@ -91,7 +92,7 @@ class EmailUpdate(BaseModel):
     email: str = Field("", max_length=254)
 
 
-@router.put("/auth/email")
+@router.put("/auth/email", dependencies=[Depends(rate_limit("light_ai"))])
 def update_email(req: EmailUpdate, current_user: dict = Depends(get_current_user)):
     """Set or clear (empty string) the account's email, used for fare alerts."""
     email = req.email.strip().lower() or None

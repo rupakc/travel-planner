@@ -21,7 +21,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | chat | `POST /api/chat` | 30 |
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -79,7 +79,8 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/fare-watches/match` | user | The caller's watch for a trip, or `null` (no live lookup) |
 | GET, PATCH, DELETE | `/api/fare-watches/{id}` | user | Get, edit (pause/resume, mode, target, ±3 days, email), delete own watch |
 | POST | `/api/fare-watches/{id}/check` | user | "Check now": one live check |
-| GET | `/api/fare-watches/unsubscribe?token=` | none | One-click "stop emails for this watch" link from alert emails (HTML page) |
+| GET | `/api/fare-watches/unsubscribe?token=` | none | "Stop emails" link from alert emails: confirmation page (no change) |
+| POST | `/api/fare-watches/unsubscribe?token=` | none | Turn email off for that watch (the confirmation form, or RFC 8058 one-click) |
 | GET | `/api/notifications` | user | Own notifications, newest first (`unread_only`, `limit` 1–100, `offset`) |
 | GET | `/api/notifications/unread-count` | user | `{"count": n}` |
 | POST | `/api/notifications/read` | user | Mark `ids` (or `all`) read |
@@ -124,7 +125,7 @@ Returns `{ "username", "is_admin", "requires_password_change", "email" }`.
 
 ### PUT /api/auth/email
 
-`{"email": "me@example.com"}` sets the account email (trimmed, lower-cased); `""` clears it and turns email off on all the user's fare watches. Returns `{"email": ...}`. `422` for an address that isn't `local@domain.tld`; `409` when another account uses it. Set from the Preferences page.
+`{"email": "me@example.com"}` sets the account email (trimmed, lower-cased; not verified, so the route is rate-limited in the light_ai bucket); `""` clears it and turns email off on all the user's fare watches. Returns `{"email": ...}`. `422` for an address that isn't `local@domain.tld`; `409` when another account uses it. Set from the Preferences page.
 
 There is no registration endpoint. Admins create users:
 
@@ -502,7 +503,7 @@ A watch:
   "baseline_price": 220.0, "last_price": 150.0, "lowest_price": 150.0, "lowest_price_date": "2026-12-10",
   "last_notified_price": 150.0, "last_notified_at": "2026-11-04T08:50:51+00:00",
   "google_price_level": "low", "google_typical_low": 140, "google_typical_high": 210,
-  "check_count": 3, "failure_count": 0, "last_error": null,
+  "check_count": 3, "failure_count": 0, "problem": null,
   "last_checked_at": "...", "next_check_at": "...", "created_at": "...", "updated_at": "...",
   "history": [{"checked_at": "...", "price": 150.0, "cheapest_price": null,
                "cheapest_departure_date": null, "cheapest_return_date": null, "price_level": "low"}],
@@ -510,7 +511,7 @@ A watch:
 }
 ```
 
-`status` is `active`, `paused`, `expired` (departure day reached) or `error` (three failed checks in a row). `history` holds up to 120 checks, oldest first.
+`status` is `active`, `paused`, `expired` (departure day reached) or `error` (three failed checks in a row). `problem` is a plain-language reason for the latest failed check (`null` when healthy); the raw error stays server-side. `history` holds up to 120 checks, oldest first. The alert state per signal (`last_notified_*`, `own_peak_price`, `own_lowest_price`, `cheaper_notified_*`, `cheaper_peak_price`) is also returned.
 
 ### GET /api/fare-watches, GET /api/fare-watches/{id}
 
@@ -530,11 +531,15 @@ Deletes the watch and its history. Returns `{"deleted": true}`.
 
 ### POST /api/fare-watches/{id}/check
 
-"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. Returns the watch plus `check_status` (`checked`, `failed`, `errored`, `postponed`, `skipped`) and `notification` (the alert this check created, or `null`). `429` with `Retry-After` (seconds to the next UTC day) when today's fare-watch budget is spent; `409` while the watch is being checked or after it expired; `503` without SerpAPI. Rate-limited (light_ai).
+"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. Returns the watch plus `check_status` (`checked`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification` (the alert this check created, or `null`). `429` with `Retry-After` (seconds to the next UTC day) when today's fare-watch budget, or the caller's share of it (`FARE_WATCH_USER_DAILY_SHARE`), is spent — the `detail` says which; `409` while the watch is being checked or after it expired; `503` without SerpAPI. Rate-limited (light_ai).
 
 ### GET /api/fare-watches/unsubscribe?token=
 
-The signed link at the bottom of alert emails (also sent as `List-Unsubscribe`). Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. `400` for an invalid token.
+The signed link at the bottom of alert emails. Returns a confirmation page with a "Stop emails for this fare" button and changes nothing (mail scanners and prefetchers follow GET links). `400` for an invalid token.
+
+### POST /api/fare-watches/unsubscribe?token=
+
+Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. It is the confirmation page's form and the RFC 8058 one-click target: alert emails carry `List-Unsubscribe: <…/api/fare-watches/unsubscribe?token=…>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, and the body is ignored. Idempotent; `400` for an invalid token.
 
 ### GET /api/notifications
 

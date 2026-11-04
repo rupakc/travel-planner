@@ -54,7 +54,7 @@ def _watch(user, **over):
 # ── Leasing ───────────────────────────────────────────────────────────────────
 
 
-def test_claim_due_takes_only_due_active_unleased_watches(user):
+def test_due_watch_ids_lists_only_due_active_unleased_watches(user):
     due = _watch(user)
     later = _watch(user)
     fare_watch_db.update_watch(
@@ -66,32 +66,70 @@ def test_claim_due_takes_only_due_active_unleased_watches(user):
     fare_watch_db.update_watch(
         leased["id"], lease_until=(NOW + timedelta(minutes=5)).isoformat()
     )
-    ids = fare_watch_db.claim_due(NOW, NOW + timedelta(minutes=10), 50)
-    assert ids == [due["id"]]
+    assert fare_watch_db.due_watch_ids(NOW, 50) == [due["id"]]
+    # listing takes no lease
+    assert fare_watch_db.get_watch(due["id"])["lease_until"] is None
 
 
-def test_a_claimed_watch_cannot_be_claimed_twice_until_the_lease_ends(user):
-    w = _watch(user)
-    lease = NOW + timedelta(minutes=10)
-    assert fare_watch_db.claim_due(NOW, lease, 50) == [w["id"]]
-    assert fare_watch_db.claim_due(NOW + timedelta(minutes=1), lease, 50) == []
-    # a crashed worker's lease expires and the watch is picked up again
-    after = NOW + timedelta(minutes=11)
-    assert fare_watch_db.claim_due(after, after + timedelta(minutes=10), 50) == [
-        w["id"]
-    ]
-
-
-def test_claim_due_respects_the_batch_limit_oldest_first(user):
+def test_due_watch_ids_respects_the_limit_oldest_first(user):
     ws = [_watch(user) for _ in range(3)]
     for i, w in enumerate(ws):
         fare_watch_db.update_watch(
             w["id"], next_check_at=(NOW - timedelta(minutes=10 - i)).isoformat()
         )
-    assert fare_watch_db.claim_due(NOW, NOW + timedelta(minutes=10), 2) == [
-        ws[0]["id"],
-        ws[1]["id"],
-    ]
+    assert fare_watch_db.due_watch_ids(NOW, 2) == [ws[0]["id"], ws[1]["id"]]
+
+
+def test_a_claimed_watch_cannot_be_claimed_twice_until_the_lease_ends(user):
+    w = _watch(user)
+    lease = NOW + timedelta(minutes=10)
+    assert fare_watch_db.claim_watch(w["id"], NOW, lease) is True
+    assert (
+        fare_watch_db.claim_watch(w["id"], NOW + timedelta(minutes=1), lease) is False
+    )
+    after = NOW + timedelta(minutes=11)  # a crashed worker's lease expires
+    assert (
+        fare_watch_db.claim_watch(w["id"], after, after + timedelta(minutes=10)) is True
+    )
+
+
+@pytest.mark.asyncio
+async def test_watches_are_leased_one_by_one_as_they_are_processed(user):
+    ws = [_watch(user) for _ in range(5)]
+    leased_while_first_runs = []
+
+    async def fetch(watch, key):
+        if watch["id"] == ws[0]["id"]:
+            leased_while_first_runs.extend(
+                fare_watch_db.get_watch(w["id"])["lease_until"] is not None for w in ws
+            )
+        await asyncio.sleep(0)
+        return FareCheck(price=100.0)
+
+    await fare_watch.run_due("k", clock=lambda: NOW, fetch=fetch)
+    # 3 run at once; the 2 queued watches are not leased yet
+    assert sum(leased_while_first_runs) <= 3
+    assert leased_while_first_runs[3:] == [False, False]
+
+
+@pytest.mark.asyncio
+async def test_a_watch_taken_by_check_now_meanwhile_is_skipped(user):
+    first, second = _watch(user), _watch(user)
+    checked = []
+
+    async def fetch(watch, key):
+        checked.append(watch["id"])
+        if watch["id"] == first["id"]:
+            # "Check now" grabs the second watch while it waits in the queue
+            fare_watch_db.claim_watch(second["id"], NOW, NOW + timedelta(minutes=10))
+        return FareCheck(price=100.0)
+
+    fare_watch.CONCURRENCY, old = 1, fare_watch.CONCURRENCY
+    try:
+        await fare_watch.run_due("k", clock=lambda: NOW, fetch=fetch)
+    finally:
+        fare_watch.CONCURRENCY = old
+    assert checked == [first["id"]]
 
 
 @pytest.mark.asyncio
@@ -245,3 +283,31 @@ async def test_run_due_quietly_ends_paused_and_errored_watches_past_departure(us
     assert fare_watch_db.get_watch(errored["id"])["status"] == "expired"
     assert fare_watch_db.get_watch(future["id"])["status"] == "paused"
     assert notifications_db.list_notifications(user["id"])["items"] == []
+
+
+# ── Notification retention ────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_run_due_sweeps_notifications_older_than_180_days_once_a_day(
+    user, monkeypatch
+):
+    monkeypatch.setattr(fare_watch, "_swept_day", None)
+    old = notifications_db.add_notification(
+        user["id"], "fare_drop", "old", "b", {}, now=NOW - timedelta(days=181)
+    )
+    kept = notifications_db.add_notification(
+        user["id"], "fare_drop", "kept", "b", {}, now=NOW - timedelta(days=179)
+    )
+    await fare_watch.run_due("k", clock=lambda: NOW)
+    ids = [n["id"] for n in notifications_db.list_notifications(user["id"])["items"]]
+    assert old["id"] not in ids and kept["id"] in ids
+
+    sweeps = []
+    monkeypatch.setattr(
+        notifications_db, "delete_older_than", lambda cutoff: sweeps.append(cutoff)
+    )
+    await fare_watch.run_due("k", clock=lambda: NOW + timedelta(hours=1))
+    assert sweeps == []  # same UTC day
+    await fare_watch.run_due("k", clock=lambda: NOW + timedelta(days=1))
+    assert len(sweeps) == 1
