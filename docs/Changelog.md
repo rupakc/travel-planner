@@ -6,6 +6,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ## Unreleased: documentation and housekeeping
 
+- **Fare watch and price alerts** (branch `feat/price-alerts`): watch a single-destination trip's live fare from the Flights header, the fare calendar, My Plan or a saved plan; a background scheduler re-checks it about twice a day within a daily SerpAPI budget and notifies on a meaningful drop, a target price, a new Google-rated low or a cheaper date ±3 days, never on the baseline, never for a rise and at most once a day. New `/alerts` page, header bell with toasts and optional browser notifications, optional SMTP email with a one-click stop link, and an email field on Preferences. New tables `fare_watches`, `fare_watch_history`, `fare_watch_quota`, `notifications`; new settings `FARE_WATCH_*`, `SMTP_*`, `APP_BASE_URL`. See [Trip Planning Features](Trip-Planning-Features.md#fare-watch-and-price-alerts).
 - Developer docs consolidated into one set of pages (this site and the GitHub wiki share them), with new pages for trip-planning features, place and airport data, testing and CI, and this changelog.
 - Added an MIT `LICENSE` file.
 - App footer credits the place data: "Place data © GeoNames (CC BY 4.0) · Airport data: OurAirports".

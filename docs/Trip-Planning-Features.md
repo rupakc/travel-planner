@@ -6,9 +6,10 @@ What a user can do in the app, and where each feature lives in the code. Chat, m
 
 ## App shell
 
-- Routes (`frontend/src/App.jsx`): `/login`, `/share/:token` (public), `/change-password`, and the signed-in layout with `/` (Search and Results), `/chat`, `/preferences` and `/admin` (admins only). Any other path redirects to `/`.
+- Routes (`frontend/src/App.jsx`): `/login`, `/share/:token` (public), `/change-password`, and the signed-in layout with `/` (Search and Results), `/chat`, `/alerts`, `/preferences` and `/admin` (admins only). Any other path redirects to `/`.
 - Search, Results and Chat stay mounted and are hidden with CSS, so a running search or chat stream survives switching tabs. Logging out clears all search state.
 - A user who must change their password is sent to `/change-password` first.
+- The header has a notification bell for fare alerts (see [Fare watch and price alerts](#fare-watch-and-price-alerts)).
 - The footer credits the place data: "Place data © GeoNames (CC BY 4.0) · Airport data: OurAirports".
 
 ---
@@ -99,6 +100,25 @@ Shown after the best-value package when the search has a budget (`utils/budgetPl
 
 ---
 
+## Fare watch and price alerts
+
+A traveller can watch a trip's live fare and be told when it's worth acting on. Offered when `GET /health` reports `fare_watch_available` (SerpAPI configured and `FARE_WATCH_ENABLED`), for signed-in users and single-destination trips departing after today.
+
+- **Watch this fare** (`components/alerts/WatchFareButton.jsx`, `WatchDialog.jsx`): from the Flights header, the fare calendar ("Watch these dates", with nearby dates pre-ticked), the selected flight in My Plan (Results and Chat), saved-plan cards and the saved-plan viewer. A watched trip reads "Watching · $412" and opens its watch. The dialog shows today's price on Google's typical range and offers "Tell me when the price drops" (default) or "…when it's below $___" (pre-filled with the low end of the typical range), "Include nearby dates (±3 days)", and "Also email me" (hidden without SMTP, disabled with a link to Preferences when the account has no email). Creating a watch takes today's price as the baseline; the first time, the confirmation offers browser alerts (never asked on page load).
+- **Checks** (`backend/app/services/fare_watch.py`): a scheduler started with the backend re-checks each active watch every `FARE_WATCH_INTERVAL_HOURS` (12 h ±10 %) within a daily SerpAPI budget; one check is 1 call (exact dates) or up to 7 (±3 days), cached fares are free. Prices are totals for the trip's travellers. A watch ends when its departure day arrives (`watch_expired` notice), and three failed checks in a row put it on hold (`watch_error` notice with Retry).
+- **When we tell you** (`evaluate`, one notification per check at most, highest first):
+  1. *Below your target*: the price is at or under the target.
+  2. *Price drop* (default mode): at least max($15, 5 %) below the last alerted price, or the baseline.
+  3. *Low price*: a new lowest since watching that Google rates "low" (default mode).
+  4. *Cheaper nearby date* (±3 days): a departure at least max($25, 8 %) cheaper than the chosen dates, same trip length (in target mode only when it also beats the target).
+- **Never spammy**: no alert on the first check (that's the baseline); never for a rise, or for a price already alerted (it must beat the last alerted price, or the baseline); at most one alert per watch per 24 h unless the price falls a further 5 % below the last alert. Rises are still recorded in the history.
+- **Alerts page** (`pages/AlertsPage.jsx`, `components/alerts/WatchCard.jsx`): a card per watch with the route, dates and travellers, the current price, the change since watching, lowest seen, Google's verdict, a price sparkline with the target as a dashed line, and last/next check. Actions: Re-plan with this fare (runs the normal search with the traveller's preferences; flexible watches also offer the cheaper nearby departure), Book on Google Flights, Check now, Pause/Resume, Edit, and Delete (confirmed inline). Grouped Active / Past trips, with an empty state that points to search. `/alerts?watch=ID` scrolls to a watch; `&replan=1` (from emails) re-plans directly.
+- **Notifications** (`context/AlertsContext.jsx`, `components/alerts/NotificationBell.jsx`, `AlertToast.jsx`): the header bell shows the unread count and the latest 10 alerts ("Berlin → Lisbon dropped to $150 (−$70)"), each opening its watch and marking it read, with "Mark all as read". The unread count is polled every 60 s only while the tab is visible (and on focus). A new alert shows as one dismissible toast (a polite live region), or as a native browser notification when the window isn't focused and the traveller allowed it.
+- **Email** (`backend/app/services/alert_email.py`, optional): when `SMTP_HOST` is set, the watch has email on and the account has an address (set on Preferences), fare alerts are also emailed: plain text plus inline-styled HTML with no remote images, old → new price, lowest seen, a text sparkline (▆▄█▁), "See flights" and "Re-plan with this fare" links to `APP_BASE_URL`, and a one-click link that stops emails for that watch. Expiry and error notices stay in the app.
+- **Analytics** (`track()`): `watch_created` (mode, flex, email), `watch_checked_now`, `alert_clicked` (kind), `watch_replanned`, `watch_booked`.
+
+---
+
 ## Itinerary
 
 `components/ItinerarySection.jsx`, with helpers in `utils/`.
@@ -120,7 +140,7 @@ On both Results (`MyPlanDrawer`) and Chat (`ChatPlanDrawer`). Users pick flights
 ## Chat, Preferences, Admin and feedback
 
 - **Chat**: see [Chat Assistant](Chat-Assistant.md).
-- **Preferences** (`pages/PreferencesPage.jsx`): Travel Budget, Identity (nationality, current residence, used as the default departure city), Documents (permits, visas), Travel Style (interests, travellers, accessibility), and a Taste Graph card with Reset. Bound two ways to the Search form; see [Personalization](Personalization.md).
+- **Preferences** (`pages/PreferencesPage.jsx`): Travel Budget, Identity (nationality, current residence, used as the default departure city, and the email for fare alerts, saved on its own via `PUT /api/auth/email`), Documents (permits, visas), Travel Style (interests, travellers, accessibility), and a Taste Graph card with Reset. Bound two ways to the Search form; see [Personalization](Personalization.md).
 - **Admin** (`pages/AdminPage.jsx`, admins only): a Users tab to create users with a temporary password (at least 8 characters; they must change it on first login), list them, deactivate, reactivate and reset passwords; and a Feedback tab, filterable by page, category and minimum rating.
 - **Feedback widget** (`components/FeedbackWidget.jsx`): on every signed-in page. 1–5 stars, a category (bug, feature request, general, praise) and an optional message up to 500 characters, sent to `POST /api/feedback`.
 - **Rate limits**: when a limit is hit, the API's 429 message ("Too many requests — please wait N seconds and try again.") is shown as-is (`utils/httpError.js`). Defaults per 10 minutes: 10 searches, 30 chat messages, 30 compare calls, 10 discover calls, 60 single-agent calls.
