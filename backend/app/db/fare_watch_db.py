@@ -102,8 +102,13 @@ def _row(row) -> dict | None:
 # ── Watches ───────────────────────────────────────────────────────────────────
 
 
-def create_watch(user_id: str, fields: dict, *, now: datetime) -> dict:
-    """Insert an active watch, due for its first (baseline) check at ``now``."""
+def create_watch(
+    user_id: str, fields: dict, *, now: datetime, lease_until: datetime | None = None
+) -> dict:
+    """Insert an active watch, due for its first (baseline) check at ``now``.
+
+    ``lease_until`` creates it already leased, for a caller that checks it
+    straight away (so the scheduler can't check it at the same time)."""
     values = {k: fields[k] for k in _CREATE_FIELDS if fields.get(k) is not None}
     if "email_enabled" in values:
         values["email_enabled"] = int(bool(values["email_enabled"]))
@@ -111,6 +116,8 @@ def create_watch(user_id: str, fields: dict, *, now: datetime) -> dict:
     values.update(
         user_id=user_id, next_check_at=stamp, created_at=stamp, updated_at=stamp
     )
+    if lease_until is not None:
+        values["lease_until"] = lease_until.isoformat()
     cols = ", ".join(values)
     marks = ", ".join("?" * len(values))
     with get_connection() as conn:
@@ -248,6 +255,17 @@ def claim_due(now: datetime, lease_until: datetime, limit: int) -> list[int]:
             (lease_until.isoformat(), stamp, stamp, limit),
         ).fetchall()
     return sorted(r[0] for r in rows)
+
+
+def claim_watch(watch_id: int, now: datetime, lease_until: datetime) -> bool:
+    """Lease one watch for a manual check; False while someone else holds it."""
+    with get_connection() as conn:
+        cur = conn.execute(
+            "UPDATE fare_watches SET lease_until = ? WHERE id = ? "
+            "AND (lease_until IS NULL OR lease_until < ?)",
+            (lease_until.isoformat(), watch_id, now.isoformat()),
+        )
+        return cur.rowcount == 1
 
 
 # ── History ───────────────────────────────────────────────────────────────────

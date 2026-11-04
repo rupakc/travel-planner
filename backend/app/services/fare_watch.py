@@ -372,7 +372,9 @@ async def check_watch(
 ) -> CheckOutcome:
     """Check one watch now and persist the result.
 
-    The scheduler only checks active watches; ``manual`` ("Check now") also
+    The caller holds the watch's lease (``claim_due`` / ``claim_watch``, or
+    ``create_watch(lease_until=...)``). The scheduler only checks active
+    watches; ``manual`` ("Check now") also
     checks paused ones and, when today's budget is spent, reports
     ``budget_exhausted`` instead of moving the schedule. Always releases the
     watch's lease.

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useAlerts } from '../context/AlertsContext'
+import { updateAccountEmail } from '../services/api'
+import AlertEmailField from '../components/alerts/AlertEmailField'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TravelerPanel from '../components/ui/TravelerPanel'
 import { track } from '../utils/analytics'
@@ -107,7 +110,8 @@ const INTERESTS = [
 ]
 
 export default function PreferencesPage() {
-  const { token, refreshPreferences } = useAuth()
+  const { token, refreshPreferences, user, setUserEmail } = useAuth()
+  const { caps } = useAlerts()
   const [prefs, setPrefs] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
@@ -211,6 +215,9 @@ export default function PreferencesPage() {
             />
             <p className="text-xs text-gray-400 mt-1">Used as default departure city when planning trips</p>
           </div>
+
+          <AlertEmailField email={user?.email} emailAlertsAvailable={caps.email}
+            onSave={(email) => updateAccountEmail(email, token)} onSaved={setUserEmail} />
         </div>
 
         {/* Documents */}

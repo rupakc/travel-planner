@@ -13,6 +13,7 @@ from app.core.cache import get_cache
 from app.core.config import settings
 from app.db import fare_watch_db, notifications_db
 from app.db.database import get_connection
+from app.db.users_db import _hash as real_hash
 from app.db.users_db import create_user
 from app.services import alert_email, fare_watch, serp_flights
 from app.services.serp_flights import SerpAPIError
@@ -404,6 +405,7 @@ def test_check_now_reports_a_drop(client, alice, monkeypatch):
     body = r.json()
     assert body["check_status"] == "checked"
     assert body["notification"]["kind"] == "fare_drop"
+    assert "user_id" not in body["notification"]
     assert body["last_price"] == 430.0
     assert [p["price"] for p in body["history"]] == [480.0, 430.0]
 
@@ -473,6 +475,7 @@ def test_notifications_list_count_and_read(client, alice, bob):
     }
     page = client.get("/api/notifications", headers=h).json()
     assert {n["title"] for n in page["items"]} == {"a", "b"}
+    assert all("user_id" not in n for n in page["items"])
     assert page["unread"] == 2 and page["total"] == 2
     r = client.post("/api/notifications/read", json={"ids": [a["id"]]}, headers=h)
     assert r.json() == {"updated": 1, "unread": 1}
@@ -554,6 +557,16 @@ def test_me_includes_email_and_it_can_be_set(client, alice):
     assert r.json()["email"] is None
 
 
+def test_login_response_includes_email(client, monkeypatch):
+    monkeypatch.setattr("app.db.users_db._hash", real_hash)  # a real login
+    addr = f"{uuid.uuid4().hex[:6]}@example.com"
+    u = create_user(f"fw-{uuid.uuid4().hex[:8]}", "pw-123456789", email=addr)
+    r = client.post(
+        "/api/auth/login", json={"username": u["username"], "password": "pw-123456789"}
+    )
+    assert r.json()["user"]["email"] == addr
+
+
 @pytest.mark.parametrize("bad", ["nope", "a@b", "a b@c.de", "@x.com", "x@.com"])
 def test_email_is_validated(client, alice, bad):
     r = client.put("/api/auth/email", json={"email": bad}, headers=alice[1])
@@ -585,3 +598,64 @@ def test_health_reports_alert_capabilities(client, monkeypatch):
     body = client.get("/health").json()
     assert body["email_alerts_available"] is True
     assert body["fare_watch_available"] is False
+
+
+# ── Manual checks hold the lease (no double check with the scheduler) ────────
+
+
+def test_scheduler_cannot_claim_a_watch_during_its_baseline_check(
+    client, alice, monkeypatch
+):
+    claimed_during_fetch = []
+    real_fetch = fare_watch.fetch_fares
+
+    async def fetch(watch, key):
+        claimed_during_fetch.extend(
+            fare_watch_db.claim_due(NOW, NOW + timedelta(minutes=10), 50)
+        )
+        return await real_fetch(watch, key)
+
+    monkeypatch.setattr(fare_watch, "fetch_fares", fetch)
+    w = _create(client, alice[1]).json()
+    assert w["id"] not in claimed_during_fetch
+    assert [p["price"] for p in w["history"]] == [480.0]
+    assert fare_watch_db.get_watch(w["id"])["lease_until"] is None
+
+
+def test_check_now_while_the_scheduler_holds_the_watch_is_409(client, alice):
+    _, h = alice
+    w = _create(client, h).json()
+    fare_watch_db.update_watch(
+        w["id"], lease_until=(NOW + timedelta(minutes=5)).isoformat()
+    )
+    r = client.post(f"/api/fare-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 409
+    assert "checking" in r.json()["detail"]
+    serp_flights._call.reset_mock()
+    assert serp_flights._call.call_count == 0
+
+
+def test_claim_watch_is_exclusive(alice):
+    u, _ = alice
+    w = fare_watch_db.create_watch(
+        u["id"],
+        {
+            "origin_code": "BER",
+            "destination_code": "LIS",
+            "origin_label": "Berlin",
+            "destination_label": "Lisbon",
+            "departure_date": "2026-12-01",
+            "num_travelers": 1,
+        },
+        now=NOW,
+        lease_until=NOW + timedelta(minutes=10),
+    )
+    assert fare_watch_db.claim_watch(w["id"], NOW, NOW + timedelta(minutes=10)) is False
+    later = NOW + timedelta(minutes=11)
+    assert (
+        fare_watch_db.claim_watch(w["id"], later, later + timedelta(minutes=10)) is True
+    )
+    assert (
+        fare_watch_db.claim_watch(w["id"], later, later + timedelta(minutes=10))
+        is False
+    )

@@ -25,6 +25,9 @@ def list_notifications(
     page = notifications_db.list_notifications(
         user["id"], unread_only=unread_only, limit=limit, offset=offset
     )
+    page["items"] = [
+        {k: v for k, v in n.items() if k != "user_id"} for n in page["items"]
+    ]
     page["unread"] = notifications_db.count_unread(user["id"])
     return page
 

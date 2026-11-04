@@ -43,6 +43,7 @@ def login(req: LoginRequest):
             "username": user["username"],
             "is_admin": user["is_admin"],
             "requires_password_change": user["is_first_login"],
+            "email": user.get("email"),
         },
     }
 

@@ -292,6 +292,7 @@ async def create_fare_watch(
             "email_enabled": body.email_enabled,
         },
         now=now,
+        lease_until=now + fare_watch.LEASE,  # ours until the baseline check ends
     )
     # Baseline now when today's budget allows; otherwise the scheduler takes
     # it (the watch is due immediately).
@@ -366,6 +367,11 @@ async def check_fare_watch_now(watch_id: int, user: dict = Depends(get_current_u
             status_code=409, detail="This trip has departed, so its watch ended."
         )
     now = fare_watch.utcnow()
+    if not fare_watch_db.claim_watch(watch_id, now, now + fare_watch.LEASE):
+        raise HTTPException(
+            status_code=409,
+            detail="We're checking this fare right now — give it a moment.",
+        )
     outcome = await fare_watch.check_watch(
         watch_id, now=now, api_key=settings.serpapi_key, manual=True
     )
@@ -379,5 +385,9 @@ async def check_fare_watch_now(watch_id: int, user: dict = Depends(get_current_u
     return serialize(
         fare_watch_db.get_watch(watch_id),
         check_status=outcome.status,
-        notification=outcome.notification,
+        notification=(
+            {k: v for k, v in outcome.notification.items() if k != "user_id"}
+            if outcome.notification
+            else None
+        ),
     )

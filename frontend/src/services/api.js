@@ -117,20 +117,29 @@ export async function fetchFareCalendar(searchData, token) {
 }
 
 // One /health read per page load; a failed read is not cached so it can retry.
-let serpapiConfigured = null
+let capabilities = null
+
+/** Server capability flags from /health: live fares, fare watch, email alerts. */
+export function getCapabilities() {
+  if (!capabilities) {
+    capabilities = fetch('/health')
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then(data => ({
+        serpapi: data?.serpapi_configured === true,
+        fareWatch: data?.fare_watch_available === true,
+        email: data?.email_alerts_available === true,
+      }))
+      .catch(() => {
+        capabilities = null
+        return { serpapi: false, fareWatch: false, email: false }
+      })
+  }
+  return capabilities
+}
 
 /** Whether the backend has live flight data (SerpAPI) configured. */
 export function getSerpapiConfigured() {
-  if (!serpapiConfigured) {
-    serpapiConfigured = fetch('/health')
-      .then(res => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
-      .then(data => data?.serpapi_configured === true)
-      .catch(() => {
-        serpapiConfigured = null
-        return false
-      })
-  }
-  return serpapiConfigured
+  return getCapabilities().then(c => c.serpapi)
 }
 
 export async function discoverDestinations(data) {
@@ -167,4 +176,50 @@ export async function compareDestination(request, token) {
 export async function recheckStressTest(payload, token) {
   const res = await api.post('/stress-test', payload, token ? authHeaders(token) : undefined)
   return res.data
+}
+
+// ── Fare watches + notifications ─────────────────────────────────────────────
+
+export async function listFareWatches(token) {
+  return (await api.get('/fare-watches', authHeaders(token))).data
+}
+
+/** The signed-in user's watch for this trip, or null (no live lookups). */
+export async function matchFareWatch(trip, token) {
+  return (await api.post('/fare-watches/match', trip, authHeaders(token))).data.watch
+}
+
+export async function createFareWatch(body, token) {
+  return (await api.post('/fare-watches', body, authHeaders(token))).data
+}
+
+export async function updateFareWatch(id, changes, token) {
+  return (await api.patch(`/fare-watches/${id}`, changes, authHeaders(token))).data
+}
+
+export async function deleteFareWatch(id, token) {
+  await api.delete(`/fare-watches/${id}`, authHeaders(token))
+}
+
+export async function checkFareWatchNow(id, token) {
+  return (await api.post(`/fare-watches/${id}/check`, null, authHeaders(token))).data
+}
+
+export async function getUnreadCount(token) {
+  return (await api.get('/notifications/unread-count', authHeaders(token))).data.count
+}
+
+export async function listNotifications(token, { unreadOnly = false, limit = 10, offset = 0 } = {}) {
+  const params = { unread_only: unreadOnly, limit, offset }
+  return (await api.get('/notifications', { ...authHeaders(token), params })).data
+}
+
+/** Mark notifications read: `ids`, or every one when ids is 'all'. */
+export async function markNotificationsRead(ids, token) {
+  const body = ids === 'all' ? { all: true } : { ids }
+  return (await api.post('/notifications/read', body, authHeaders(token))).data
+}
+
+export async function updateAccountEmail(email, token) {
+  return (await api.put('/auth/email', { email }, authHeaders(token))).data
 }
