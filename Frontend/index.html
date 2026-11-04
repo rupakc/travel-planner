@@ -1234,7 +1234,8 @@
 │   ├── SearchPage.jsx        known / surprise-me / compare modes, recent searches, tour
 │   ├── ResultsPage.jsx       streamed sections, planning tools, My Plan drawer (~4,300 lines)
 │   ├── ChatPage.jsx          chat, TripPlanView, chat plan drawer
-│   ├── PreferencesPage.jsx   preferences + Taste Graph card
+│   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
+│   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
 │   ├── AdminPage.jsx         users and feedback (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
@@ -1244,10 +1245,13 @@
 │   │   FareCalendarStrip (+ PriceInsightsChip), FeedbackWidget, ItinerarySection,
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
 │   │   TripMap, VerificationBadge, WalkingToursSection
+│   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
+│   │                         NotificationBell, AlertToast, AlertEmailField
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
 │                             TravelerPanel, AttributionFooter
 ├── context/
 │   ├── AuthContext.jsx       token, user, preferences and two-way sync
+│   ├── AlertsContext.jsx     unread count polling, toasts, watch lookups
 │   └── SearchDataContext.jsx search form and results state
 ├── hooks/useFirstRunTour.js  when to show the onboarding tour
 ├── services/api.js           axios client and API helpers
@@ -1295,6 +1299,11 @@
 <td>Signed in</td>
 </tr>
 <tr>
+<td><code>/alerts</code></td>
+<td>AlertsPage (<code>?watch=ID</code>, <code>&amp;replan=1</code>)</td>
+<td>Signed in</td>
+</tr>
+<tr>
 <td><code>/preferences</code></td>
 <td>PreferencesPage</td>
 <td>Signed in</td>
@@ -1311,11 +1320,12 @@
 </tr>
 </tbody>
 </table>
-<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences and Admin mount on each visit. <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.</p>
+<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Alerts and Admin mount on each visit. <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.</p>
 <hr />
 <h2 id="state">State</h2>
 <ul>
 <li><strong>AuthContext</strong> keeps the JWT (<code>localStorage['tp_token']</code>), the user (<code>username</code>, <code>is_admin</code>, <code>requires_password_change</code>) and the saved preferences. It loads preferences after login and writes Search-form values back to them on submit (the two-way binding).</li>
+<li><strong>AlertsContext</strong> (inside the signed-in <code>Layout</code>) polls <code>GET /api/notifications/unread-count</code> every 60 s while the tab is visible (stopped while hidden, refreshed on return and focus), turns a newly arrived alert into one toast or, when the window isn't focused and permission was granted, a native notification, and caches each trip's watch for the "Watch fare" buttons. Outside the provider <code>useAlerts()</code> is inert, so components keep rendering in isolation.</li>
 <li><strong>SearchDataContext</strong> holds the search form, the streamed results and per-agent status, shared by SearchPage and ResultsPage.</li>
 <li>Plan selections, itinerary overlays and planner settings are local state in ResultsPage and ChatPage.</li>
 </ul>

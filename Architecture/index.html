@@ -949,6 +949,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#fare-watch-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fare-watch scheduler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cache" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1330,12 +1341,13 @@ FastAPI backend (uvicorn, one process)
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
   │             walking-tour crawler, verification, compare
+  ├── fare-watch scheduler (background task) ── SerpAPI re-checks, alert emails (SMTP)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (14 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (19 tables) ── optional GCS backup every 60 s
             │
             ▼
 External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
-          Open-Meteo, walking-tour provider sites
+          Open-Meteo, walking-tour provider sites, optional SMTP server
 </code></pre>
 <p>In the container setup, nginx serves the built frontend and proxies <code>/api/</code> and <code>/health</code> to the backend.</p>
 <hr />
@@ -1452,12 +1464,39 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <td><code>taste_signals</code></td>
 <td>Taste Graph signals mined from saved plans</td>
 </tr>
+<tr>
+<td><code>fare_watches</code></td>
+<td>Watched fares: trip, alert settings, baseline / last / lowest prices, per-signal alert state (last alerted price and time, peak since), Google's verdict, status, schedule and lease</td>
+</tr>
+<tr>
+<td><code>fare_watch_history</code></td>
+<td>Each check's prices (up to 120 rows per watch)</td>
+</tr>
+<tr>
+<td><code>fare_watch_quota</code></td>
+<td>SerpAPI calls spent by fare watches per UTC day</td>
+</tr>
+<tr>
+<td><code>fare_watch_user_quota</code></td>
+<td>The same per user, for the per-user daily share</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>In-app notifications (fare alerts, watch ended / on hold), read and emailed times</td>
+</tr>
 </tbody>
 </table>
 <p>The first six are reference data seeded from files committed to the repo; see <a href="../Place-and-Airport-Data/">Place and Airport Data</a>.</p>
 <h3 id="backups-optional">Backups (optional)</h3>
 <p><code>backend/app/db/backup.py</code> is active only when <code>BACKUP_BUCKET</code> is set. At startup it restores every <code>*.db</code> under <code>sqlite-backups/</code> in the bucket. Every 60 s it uploads a snapshot, using GCS generation checks: if another instance wrote newer data, it merges that data with <code>INSERT OR IGNORE</code> first, and it skips uploads during a 150 s startup window. On shutdown it forces one final upload. Snapshots leave out the regenerable place tables and the place-data version, so a restored database reseeds them on start. This was built for Cloud Run's ephemeral disk; locally it is off.</p>
 <hr />
+<h2 id="fare-watch-scheduler">Fare-watch scheduler</h2>
+<p><code>backend/app/services/fare_watch.py</code>, started in the <code>lifespan</code> (<code>start_scheduler</code>) only when <code>SERPAPI_KEY</code> is set and <code>FARE_WATCH_ENABLED</code> is true, and cancelled on shutdown.</p>
+<ul>
+<li>Every <code>FARE_WATCH_TICK_SECONDS</code> (300) it sweeps notifications older than 180 days (once per UTC day), ends paused / on-hold watches whose departure day has come, and lists up to 50 due active watches. Each one is <strong>leased</strong> only when its turn comes (<code>claim_watch(..., due_only=True)</code>: one <code>UPDATE</code> that also checks it is still active, due and unleased; <code>lease_until</code> = now + 10 min), so a watch taken meanwhile by "Check now" or another scheduler is skipped, and a slow batch never outlives its leases; a crashed worker's lease simply expires. Creating a watch and "Check now" take the same lease for their inline check.</li>
+<li>Leased watches are checked three at a time (<code>check_watch</code>): departure reached → <code>expired</code> + one notice; otherwise the check's SerpAPI cost is estimated (cached fares are free) and reserved all-or-nothing from the day's <code>FARE_WATCH_DAILY_CALL_BUDGET</code> and from the owner's share of it (<code>FARE_WATCH_USER_DAILY_SHARE</code>) (over either → moved to early next UTC day; the pool running out is logged once); the fare comes from <code>serp_flights.watch_fares</code> (the fare calendar's outbound-stage price plus Google's insights, and the calendar's ±3 days for flexible watches, reusing a cached search). A failure retries in 1 h, three in a row put the watch on hold (<code>error</code> + one notice); SerpAPI's own quota error postpones without a strike. A watch deleted while its fares were fetched ends as <code>deleted</code> with nothing recorded. A success appends history, applies <code>evaluate</code> (the pure trigger and anti-spam rules, with separate references for the trip's own dates and the nearby dates, re-armed after rebounds; see <a href="../Trip-Planning-Features/#fare-watch-and-price-alerts">Trip Planning Features</a>), stores at most one notification, emails it when enabled (<code>alert_email.py</code>, <code>smtplib</code> in a thread, failures only logged), and schedules the next check in <code>FARE_WATCH_INTERVAL_HOURS</code> ±10 %.</li>
+<li>The tests never start the loop (<code>FARE_WATCH_ENABLED=false</code>); they drive <code>run_due</code> and <code>check_watch</code> with an injected clock and fetch.</li>
+</ul>
 <h2 id="cache">Cache</h2>
 <p>One process-wide <code>cachetools.TTLCache</code> (<code>backend/app/core/cache.py</code>, size <code>CACHE_MAXSIZE</code> 500, TTL <code>CACHE_TTL_SECONDS</code> 1800) holds full search runs, discover and compare results (complete ones only), the <code>/health/agents</code> result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart.</p>
 <hr />
@@ -1468,7 +1507,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls. They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
 </ul>
 <h2 id="rate-limiting">Rate limiting</h2>
-<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>.</p>
+<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare watches add their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
 <h2 id="middleware">Middleware</h2>
 <ul>
 <li>CORS from <code>CORS_ORIGINS</code>.</li>

@@ -1308,7 +1308,7 @@ cd frontend &amp;&amp; npm test
 <h2 id="troubleshooting">Troubleshooting</h2>
 <p><strong>Every AI section shows an error.</strong> The Anthropic key is missing or invalid, or the account is out of quota. Check <code>.logs/backend.log</code>. <code>GET /health/agents</code> makes one tiny Haiku call and reports whether the LLM is reachable.</p>
 <p><strong>"Network Error" in the browser.</strong> The backend is not running on port 8001, which the Vite proxy expects.</p>
-<p><strong>No fare calendar and only estimated fares.</strong> <code>SERPAPI_KEY</code> is not set. <code>GET /health</code> reports <code>serpapi_configured</code>.</p>
+<p><strong>No fare calendar and only estimated fares.</strong> <code>SERPAPI_KEY</code> is not set. <code>GET /health</code> reports <code>serpapi_configured</code>. The same key enables fare watch ("Watch fare" and the Alerts page); alert emails also need <code>SMTP_HOST</code> (see <a href="../Configuration/#fare-watch-and-email-alerts-optional">Configuration</a>).</p>
 <p><strong>429 "Too many requests".</strong> You hit a rate limit (for example 10 searches per 10 minutes). Raise the <code>RATE_LIMIT_*</code> values or set <code>RATE_LIMIT_ENABLED=false</code> for local work (see <a href="../Configuration/">Configuration</a>).</p>
 <p><strong>Port already in use.</strong> Run <code>./stop.sh --force</code>, or change the host port mappings in <code>docker-compose.yml</code>.</p>
 <p><strong>Log lines are JSON.</strong> That is the default. Set <code>LOG_FORMAT</code> to any value other than <code>json</code> for plain-text logs.</p>

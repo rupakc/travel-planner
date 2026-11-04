@@ -995,6 +995,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#put-apiauthemail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /api/auth/email
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#post-apiadminusers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1277,6 +1288,144 @@
     <span class="md-ellipsis">
       
         POST /api/walking-tours
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fare-watches-and-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fare watches and notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fare watches and notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apifare-watches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/fare-watches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apifare-watches-get-apifare-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/fare-watches, GET /api/fare-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apifare-watchesmatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/fare-watches/match
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patch-apifare-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/fare-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apifare-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/fare-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apifare-watchesidcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/fare-watches/{id}/check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apifare-watchesunsubscribetoken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/fare-watches/unsubscribe?token=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apifare-watchesunsubscribetoken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/fare-watches/unsubscribe?token=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotificationsunread-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications/unread-count
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apinotificationsread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/notifications/read
       
     </span>
   </a>
@@ -1616,7 +1765,7 @@
 </tr>
 <tr>
 <td>light_ai</td>
-<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code></td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
 </tr>
 </tbody>
@@ -1654,6 +1803,12 @@
 <td><code>/api/auth/me</code></td>
 <td>user</td>
 <td>Current user</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/auth/email</code></td>
+<td>user</td>
+<td>Set or clear the account email (for fare alert emails)</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -1860,10 +2015,64 @@
 <td>Audit an itinerary</td>
 </tr>
 <tr>
+<td>GET, POST</td>
+<td><code>/api/fare-watches</code></td>
+<td>user</td>
+<td>List own fare watches; watch a trip's fare (takes the baseline)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/fare-watches/match</code></td>
+<td>user</td>
+<td>The caller's watch for a trip, or <code>null</code> (no live lookup)</td>
+</tr>
+<tr>
+<td>GET, PATCH, DELETE</td>
+<td><code>/api/fare-watches/{id}</code></td>
+<td>user</td>
+<td>Get, edit (pause/resume, mode, target, ±3 days, email), delete own watch</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/fare-watches/{id}/check</code></td>
+<td>user</td>
+<td>"Check now": one live check</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/fare-watches/unsubscribe?token=</code></td>
+<td>none</td>
+<td>"Stop emails" link from alert emails: confirmation page (no change)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/fare-watches/unsubscribe?token=</code></td>
+<td>none</td>
+<td>Turn email off for that watch (the confirmation form, or RFC 8058 one-click)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/notifications</code></td>
+<td>user</td>
+<td>Own notifications, newest first (<code>unread_only</code>, <code>limit</code> 1–100, <code>offset</code>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/notifications/unread-count</code></td>
+<td>user</td>
+<td><code>{"count": n}</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/notifications/read</code></td>
+<td>user</td>
+<td>Mark <code>ids</code> (or <code>all</code>) read</td>
+</tr>
+<tr>
 <td>GET</td>
 <td><code>/health</code></td>
 <td>none</td>
-<td>Liveness and <code>serpapi_configured</code></td>
+<td>Liveness and capability flags</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -1883,7 +2092,7 @@
 <pre><code class="language-json">{
   &quot;access_token&quot;: &quot;eyJ...&quot;,
   &quot;token_type&quot;: &quot;bearer&quot;,
-  &quot;user&quot;: { &quot;username&quot;: &quot;admin&quot;, &quot;is_admin&quot;: true, &quot;requires_password_change&quot;: false }
+  &quot;user&quot;: { &quot;username&quot;: &quot;admin&quot;, &quot;is_admin&quot;: true, &quot;requires_password_change&quot;: false, &quot;email&quot;: null }
 }
 </code></pre>
 <p>If <code>requires_password_change</code> is <code>true</code>, the frontend sends the user to <code>/change-password</code> first.</p>
@@ -1892,7 +2101,9 @@
 </code></pre>
 <p>Returns <code>{"access_token": "...", "token_type": "bearer"}</code> with a fresh token. <code>400</code> if the current password is wrong or the new one is shorter than 8 characters.</p>
 <h3 id="get-apiauthme">GET /api/auth/me</h3>
-<p>Returns <code>{ "username", "is_admin", "requires_password_change" }</code>.</p>
+<p>Returns <code>{ "username", "is_admin", "requires_password_change", "email" }</code>.</p>
+<h3 id="put-apiauthemail">PUT /api/auth/email</h3>
+<p><code>{"email": "me@example.com"}</code> sets the account email (trimmed, lower-cased; not verified, so the route is rate-limited in the light_ai bucket); <code>""</code> clears it and turns email off on all the user's fare watches. Returns <code>{"email": ...}</code>. <code>422</code> for an address that isn't <code>local@domain.tld</code>; <code>409</code> when another account uses it. Set from the Preferences page.</p>
 <p>There is no registration endpoint. Admins create users:</p>
 <h3 id="post-apiadminusers">POST /api/admin/users</h3>
 <pre><code class="language-json">{ &quot;username&quot;: &quot;newuser&quot;, &quot;password&quot;: &quot;TemporaryPassword123&quot;, &quot;email&quot;: null, &quot;is_admin&quot;: false }
@@ -2270,6 +2481,67 @@
 </code></pre>
 <p><code>sources</code> has one entry per provider and city; <code>status</code> is <code>ok</code>, <code>none</code> (page found, no free tours) or <code>error</code>. Each city is topped up to at least <code>min(4, available)</code> tours. The endpoint returns <code>{"error": ...}</code> only when every provider fails.</p>
 <hr />
+<h2 id="fare-watches-and-notifications">Fare watches and notifications</h2>
+<p>A fare watch re-checks one single-destination trip's live Google Flights fare (SerpAPI) about twice a day and creates a notification when it is worth telling the traveller. All prices are the total for the trip's travellers, like the Flights section. Every route needs a signed-in user and only sees that user's watches and notifications (<code>404</code> otherwise), except the unsubscribe link. See <a href="../Trip-Planning-Features/#fare-watch-and-price-alerts">Trip Planning Features</a> for the alert rules.</p>
+<h3 id="post-apifare-watches">POST /api/fare-watches</h3>
+<pre><code class="language-json">{
+  &quot;origin&quot;: &quot;Berlin&quot;, &quot;destination&quot;: &quot;Lisbon&quot;,
+  &quot;departure_date&quot;: &quot;2026-12-10&quot;, &quot;return_date&quot;: &quot;2026-12-17&quot;, &quot;num_travelers&quot;: 2,
+  &quot;alert_mode&quot;: &quot;any_drop&quot;, &quot;target_price&quot;: null, &quot;flexible_days&quot;: 0, &quot;email_enabled&quot;: false
+}
+</code></pre>
+<p>Or <code>{"plan_id": 12, ...options}</code> to watch a saved plan's trip. Codes are resolved like a search (typed cities work). <code>alert_mode</code> is <code>any_drop</code> (default) or <code>below_target</code> (needs <code>target_price</code>); <code>flexible_days</code> is <code>0</code> or <code>3</code> (also watch departures ±3 days, same trip length); <code>email_enabled</code> needs an account email and SMTP (<code>422</code> otherwise).</p>
+<p>Today's price is taken straight away as the <strong>baseline</strong> (never an alert) when the daily SerpAPI budget allows; otherwise the scheduler takes it. Returns the watch (below) with <code>already_watching: false</code>, or the existing watch for the same trip with <code>already_watching: true</code>. Errors: <code>503</code> without SerpAPI; <code>422</code> for multi-city (<code>"Fare watch works for single-destination trips for now"</code>), an unknown city, a departure today or earlier, or a return before departure; <code>409</code> at <code>FARE_WATCH_MAX_ACTIVE_PER_USER</code> active watches. Rate-limited (light_ai).</p>
+<p>A watch:</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 1, &quot;plan_id&quot;: null, &quot;origin_code&quot;: &quot;BER&quot;, &quot;destination_code&quot;: &quot;LIS,CAT&quot;,
+  &quot;origin_label&quot;: &quot;Berlin&quot;, &quot;destination_label&quot;: &quot;Lisbon&quot;,
+  &quot;departure_date&quot;: &quot;2026-12-10&quot;, &quot;return_date&quot;: &quot;2026-12-17&quot;, &quot;num_travelers&quot;: 1, &quot;cabin&quot;: &quot;economy&quot;,
+  &quot;flexible_days&quot;: 0, &quot;alert_mode&quot;: &quot;any_drop&quot;, &quot;target_price&quot;: null, &quot;email_enabled&quot;: true,
+  &quot;status&quot;: &quot;active&quot;,
+  &quot;baseline_price&quot;: 220.0, &quot;last_price&quot;: 150.0, &quot;lowest_price&quot;: 150.0, &quot;lowest_price_date&quot;: &quot;2026-12-10&quot;,
+  &quot;last_notified_price&quot;: 150.0, &quot;last_notified_at&quot;: &quot;2026-11-04T08:50:51+00:00&quot;,
+  &quot;google_price_level&quot;: &quot;low&quot;, &quot;google_typical_low&quot;: 140, &quot;google_typical_high&quot;: 210,
+  &quot;check_count&quot;: 3, &quot;failure_count&quot;: 0, &quot;problem&quot;: null,
+  &quot;last_checked_at&quot;: &quot;...&quot;, &quot;next_check_at&quot;: &quot;...&quot;, &quot;created_at&quot;: &quot;...&quot;, &quot;updated_at&quot;: &quot;...&quot;,
+  &quot;history&quot;: [{&quot;checked_at&quot;: &quot;...&quot;, &quot;price&quot;: 150.0, &quot;cheapest_price&quot;: null,
+               &quot;cheapest_departure_date&quot;: null, &quot;cheapest_return_date&quot;: null, &quot;price_level&quot;: &quot;low&quot;}],
+  &quot;booking_url&quot;: &quot;https://www.google.com/flights#flt=BER.LIS.2026-12-10*LIS.BER.2026-12-17;c:USD;e:1;sd:1;t:f&quot;
+}
+</code></pre>
+<p><code>status</code> is <code>active</code>, <code>paused</code>, <code>expired</code> (departure day reached) or <code>error</code> (three failed checks in a row). <code>already_below_target</code> / <code>already_low</code> say the baseline already met the target / was rated "low" by Google (that signal's first alert then needs a full max($15, 5 %) drop below the baseline); <code>problem</code> is a plain-language reason for the latest failed check (<code>null</code> when healthy); the raw error stays server-side. <code>history</code> holds up to 120 checks, oldest first. The alert state per signal (<code>last_notified_*</code>, <code>own_peak_price</code>, <code>own_lowest_price</code>, <code>cheaper_notified_*</code>, <code>cheaper_peak_price</code>) is also returned.</p>
+<h3 id="get-apifare-watches-get-apifare-watchesid">GET /api/fare-watches, GET /api/fare-watches/{id}</h3>
+<p>The caller's watches (ordered by departure date) or one watch, each with its history.</p>
+<h3 id="post-apifare-watchesmatch">POST /api/fare-watches/match</h3>
+<p>Body: the trip fields of <code>POST /api/fare-watches</code>. Returns <code>{"watch": {...}}</code> or <code>{"watch": null}</code>; makes no live lookup. The "Watch fare" buttons use it to show "Watching · $412".</p>
+<h3 id="patch-apifare-watchesid">PATCH /api/fare-watches/{id}</h3>
+<p>Any of <code>status</code> (<code>"paused"</code> or <code>"active"</code>), <code>alert_mode</code>, <code>target_price</code>, <code>flexible_days</code>, <code>email_enabled</code>. Resuming an <code>error</code> watch clears the failures and checks it on the next scheduler tick (the "Retry" action). <code>409</code> to resume an expired watch or past the active limit; <code>422</code> for <code>below_target</code> without a target or email without an address/SMTP. Scheduler fields can't be set.</p>
+<h3 id="delete-apifare-watchesid">DELETE /api/fare-watches/{id}</h3>
+<p>Deletes the watch and its history. Returns <code>{"deleted": true}</code>.</p>
+<h3 id="post-apifare-watchesidcheck">POST /api/fare-watches/{id}/check</h3>
+<p>"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. Returns the watch plus <code>check_status</code> (<code>checked</code>, <code>failed</code>, <code>errored</code>, <code>postponed</code>, <code>expired</code>, <code>skipped</code>, <code>deleted</code>) and <code>notification</code> (the alert this check created, or <code>null</code>). <code>429</code> with <code>Retry-After</code> (seconds to the next UTC day) when today's fare-watch budget, or the caller's share of it (<code>FARE_WATCH_USER_DAILY_SHARE</code>), is spent — the <code>detail</code> says which; <code>409</code> while the watch is being checked or after it expired; <code>503</code> without SerpAPI. Rate-limited (light_ai).</p>
+<h3 id="get-apifare-watchesunsubscribetoken">GET /api/fare-watches/unsubscribe?token=</h3>
+<p>The signed link at the bottom of alert emails. Returns a confirmation page with a "Stop emails for this fare" button and changes nothing (mail scanners and prefetchers follow GET links). <code>400</code> for an invalid token.</p>
+<h3 id="post-apifare-watchesunsubscribetoken">POST /api/fare-watches/unsubscribe?token=</h3>
+<p>Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. It is the confirmation page's form and the RFC 8058 one-click target: alert emails carry <code>List-Unsubscribe: &lt;…/api/fare-watches/unsubscribe?token=…&gt;</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code>, and the body is ignored. Idempotent; <code>400</code> for an invalid token.</p>
+<h3 id="get-apinotifications">GET /api/notifications</h3>
+<p><code>?unread_only=false&amp;limit=20&amp;offset=0</code> → <code>{"items": [...], "total": n, "unread": n}</code>, newest first. An item:</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 3, &quot;kind&quot;: &quot;fare_drop&quot;,
+  &quot;title&quot;: &quot;Berlin → Lisbon dropped to $150 (−$70)&quot;,
+  &quot;body&quot;: &quot;For 10–17 Dec · total for 1 traveller. The lowest we've seen since you started watching.&quot;,
+  &quot;data&quot;: {&quot;watch_id&quot;: 1, &quot;price&quot;: 150.0, &quot;previous_price&quot;: 220.0, &quot;delta&quot;: -70.0, &quot;is_lowest&quot;: true,
+           &quot;departure_date&quot;: &quot;2026-12-10&quot;, &quot;return_date&quot;: &quot;2026-12-17&quot;, &quot;num_travelers&quot;: 1,
+           &quot;links&quot;: {&quot;alerts&quot;: &quot;/alerts?watch=1&quot;, &quot;replan&quot;: &quot;/alerts?watch=1&amp;replan=1&quot;, &quot;book&quot;: &quot;https://www.google.com/flights#...&quot;}},
+  &quot;created_at&quot;: &quot;...&quot;, &quot;read_at&quot;: null, &quot;emailed_at&quot;: &quot;...&quot;
+}
+</code></pre>
+<p><code>kind</code> is <code>fare_drop</code>, <code>fare_target</code>, <code>fare_low_level</code>, <code>fare_cheaper_date</code> (data adds <code>selected_price</code>, <code>saving</code>, <code>cheapest_departure_date</code>, <code>cheapest_return_date</code>), <code>watch_expired</code> or <code>watch_error</code> (data <code>action: "retry"</code>).</p>
+<h3 id="get-apinotificationsunread-count">GET /api/notifications/unread-count</h3>
+<p><code>{"count": 2}</code>. The header bell polls it every 60 s while the tab is visible.</p>
+<h3 id="post-apinotificationsread">POST /api/notifications/read</h3>
+<p><code>{"ids": [3, 4]}</code> or <code>{"all": true}</code> → <code>{"updated": n, "unread": n}</code>. Only the caller's notifications change. <code>422</code> without either.</p>
+<hr />
 <h2 id="reference-data">Reference data</h2>
 <h3 id="get-apiairportssearchqlimit">GET /api/airports/search?q=&amp;limit=</h3>
 <p>Airport and place typeahead (<code>limit</code> 1–50, default 10). Matches airport codes, cities, names and countries, plus GeoNames places and curated hints by folded name prefix ("kyoto" → ITM, KIX; "milan" → MXP, LIN, BGY). Rows: <code>iata_code, name, city, country, country_code</code>. Ordering and rules: <a href="../Place-and-Airport-Data/#autocomplete">Place and Airport Data</a>.</p>
@@ -2278,7 +2550,7 @@
 <hr />
 <h2 id="health">Health</h2>
 <h3 id="get-health">GET /health</h3>
-<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false}</code>. No auth. The Results page reads <code>serpapi_configured</code> once per page load to decide whether to offer the fare calendar; Docker Compose uses this endpoint as the backend healthcheck.</p>
+<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
 <p>A deep check: one tiny Haiku call, cached for 5 minutes. Reports <code>llm</code> status, <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 

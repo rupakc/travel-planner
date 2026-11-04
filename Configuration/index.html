@@ -563,6 +563,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#fare-watch-and-email-alerts-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fare watch and email alerts (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#accounts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1318,6 +1329,84 @@
 </tbody>
 </table>
 <p>Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the <code>ddgs</code> package and need no key.</p>
+<h2 id="fare-watch-and-email-alerts-optional">Fare watch and email alerts (optional)</h2>
+<p>Fare watch re-checks watched fares in the background and needs <code>SERPAPI_KEY</code>. Email alerts need an SMTP server; without one, alerts still appear in the app.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FARE_WATCH_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Starts the fare-watch scheduler at startup (only when <code>SERPAPI_KEY</code> is set). <code>false</code> stops background checks and hides "Watch fare" (<code>GET /health</code> reports <code>fare_watch_available</code>). The test suite sets it to <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>FARE_WATCH_TICK_SECONDS</code></td>
+<td><code>300</code></td>
+<td>How often the scheduler looks for watches that are due.</td>
+</tr>
+<tr>
+<td><code>FARE_WATCH_INTERVAL_HOURS</code></td>
+<td><code>12</code></td>
+<td>Time between two checks of one watch, ±10 % jitter.</td>
+</tr>
+<tr>
+<td><code>FARE_WATCH_DAILY_CALL_BUDGET</code></td>
+<td><code>200</code></td>
+<td>SerpAPI calls per UTC day that fare watches may spend (scheduled checks, baselines and "Check now"). A check costs 1 call for exact dates or up to 7 with nearby dates; fares cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers <code>429</code>. Searches and the fare calendar are not counted.</td>
+</tr>
+<tr>
+<td><code>FARE_WATCH_MAX_ACTIVE_PER_USER</code></td>
+<td><code>10</code></td>
+<td>Active watches per user (paused and ended ones don't count).</td>
+</tr>
+<tr>
+<td><code>FARE_WATCH_USER_DAILY_SHARE</code></td>
+<td><code>0.3</code></td>
+<td>Largest share of <code>FARE_WATCH_DAILY_CALL_BUDGET</code> one user's watches may spend per UTC day (at least 1 call), so one account can't use up everyone's checks. Over it, that user's checks wait for the next day and their "Check now" answers <code>429</code>.</td>
+</tr>
+<tr>
+<td><code>SMTP_HOST</code></td>
+<td><code>""</code></td>
+<td>SMTP server for alert emails. Empty disables email (<code>GET /health</code> reports <code>email_alerts_available</code>).</td>
+</tr>
+<tr>
+<td><code>SMTP_PORT</code></td>
+<td><code>587</code></td>
+<td>SMTP port.</td>
+</tr>
+<tr>
+<td><code>SMTP_USERNAME</code></td>
+<td><code>""</code></td>
+<td>Login user; empty skips <code>AUTH</code>.</td>
+</tr>
+<tr>
+<td><code>SMTP_PASSWORD</code></td>
+<td><code>""</code></td>
+<td>Login password. Never logged.</td>
+</tr>
+<tr>
+<td><code>SMTP_FROM</code></td>
+<td><code>""</code></td>
+<td><code>From</code> header, e.g. <code>Voyager &lt;alerts@example.com&gt;</code>. Falls back to <code>SMTP_USERNAME</code>, then <code>alerts@localhost</code>.</td>
+</tr>
+<tr>
+<td><code>SMTP_STARTTLS</code></td>
+<td><code>true</code></td>
+<td>Upgrade the connection with STARTTLS before logging in.</td>
+</tr>
+<tr>
+<td><code>APP_BASE_URL</code></td>
+<td><code>http://localhost:5174</code></td>
+<td>Public URL of the frontend, used for the links in alert emails ("See flights", "Re-plan", and the stop-emails link, which goes to <code>APP_BASE_URL/api/...</code>, so the frontend's host must proxy <code>/api</code>). That link opens a confirmation page (GET) and the change is a POST, which is also the RFC 8058 one-click target named in the <code>List-Unsubscribe</code> / <code>List-Unsubscribe-Post</code> headers. Account emails are not verified: setting one is signed-in only and rate-limited.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="accounts">Accounts</h2>
 <table>
 <thead>
@@ -1390,7 +1479,7 @@
 <tr>
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>
 <td><code>60</code></td>
-<td>Single-agent routes, <code>/*/filtered</code>, <code>/api/flights/fare-calendar</code>, <code>/api/stress-test</code>, <code>/api/layover</code>, <code>/api/events</code>, <code>/api/walking-tours</code></td>
+<td>Single-agent routes, <code>/*/filtered</code>, <code>/api/flights/fare-calendar</code>, <code>/api/stress-test</code>, <code>/api/layover</code>, <code>/api/events</code>, <code>/api/walking-tours</code>, creating a fare watch, its "Check now", and changing the account email</td>
 </tr>
 </tbody>
 </table>
