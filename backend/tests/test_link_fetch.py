@@ -540,3 +540,153 @@ def test_extract_page_prefers_the_biggest_content_block_over_a_teaser():
     text = extract_page(html, "https://x.example/")["text"]
     for n in ("Belém Tower", "Alfama", "LX Factory", "Time Out Market", "Sintra"):
         assert n in text
+
+
+# ── Decompression bombs (C-1) ────────────────────────────────────────────
+
+import gzip  # noqa: E402
+import threading  # noqa: E402
+import tracemalloc  # noqa: E402
+import zlib  # noqa: E402
+
+BOMB_SIZE = 64 * 1024 * 1024  # 64 MB of zeros, a few dozen KB on the wire
+
+
+def _zeros_gzip() -> bytes:
+    return gzip.compress(b"\0" * BOMB_SIZE, compresslevel=9)
+
+
+def _zeros_zlib(raw: bool = False) -> bytes:
+    c = zlib.compressobj(9, zlib.DEFLATED, -15 if raw else 15)
+    return c.compress(b"\0" * BOMB_SIZE) + c.flush()
+
+
+def _streaming(body: bytes, encoding: str, ctype: str = "text/html"):
+    class Stream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            for i in range(0, len(body), 65536):
+                yield body[i : i + 65536]
+
+    seen = {}
+
+    def handler(request):
+        seen["accept-encoding"] = request.headers.get("accept-encoding")
+        return httpx.Response(
+            200,
+            headers={"content-type": ctype, "content-encoding": encoding},
+            stream=Stream(),
+        )
+
+    return handler, seen
+
+
+async def _fetch_bomb(body, encoding):
+    handler, seen = _streaming(body, encoding)
+    tracemalloc.start()
+    try:
+        page = await fetch_url(
+            "https://bomb.example/",
+            client=_client(handler),
+            resolver=_resolver({"bomb.example": [PUBLIC_IP]}),
+        )
+        error = None
+    except LinkFetchError as exc:
+        page, error = None, exc
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return page, error, peak, seen
+
+
+@pytest.mark.parametrize(
+    ("make", "encoding"),
+    [
+        (_zeros_gzip, "gzip"),
+        (_zeros_zlib, "deflate"),
+        (lambda: _zeros_zlib(True), "deflate"),
+    ],
+)
+async def test_gzip_and_deflate_bombs_stop_at_the_cap_with_bounded_memory(
+    make, encoding
+):
+    page, error, peak, seen = await _fetch_bomb(make(), encoding)
+    assert error is None
+    assert page.truncated is True
+    assert len(page.text) <= link_fetch.MAX_BYTES
+    assert peak < 24 * 1024 * 1024, f"peak {peak / 1e6:.0f} MB"
+    assert seen["accept-encoding"] == "gzip, deflate"
+
+
+async def test_stacked_gzip_bomb_is_refused():
+    body = gzip.compress(_zeros_gzip())
+    page, error, peak, _ = await _fetch_bomb(body, "gzip, gzip")
+    assert page is None and error.code == "unsupported_encoding"
+    assert "compress" in error.message.lower() or "encod" in error.message.lower()
+    assert peak < 24 * 1024 * 1024
+
+
+@pytest.mark.parametrize("encoding", ["br", "zstd", "compress", "x-weird"])
+async def test_other_encodings_are_refused_without_decoding(encoding):
+    import brotli
+
+    body = (
+        brotli.compress(b"\0" * BOMB_SIZE)
+        if encoding == "br"
+        else b"\x28\xb5\x2f\xfd" * 100
+    )
+    page, error, peak, _ = await _fetch_bomb(body, encoding)
+    assert page is None and error.code == "unsupported_encoding"
+    assert peak < 24 * 1024 * 1024
+
+
+async def test_compressed_page_still_reads_normally():
+    html = _html("<article><p>Belém Tower and LX Factory</p></article>").encode()
+    handler, _ = _streaming(gzip.compress(html), "gzip")
+    page = await fetch_url(
+        "https://ok.example/",
+        client=_client(handler),
+        resolver=_resolver({"ok.example": [PUBLIC_IP]}),
+    )
+    assert "Belém Tower" in page.text and page.truncated is False
+
+
+async def test_raw_bytes_are_capped_even_for_identity():
+    produced = []
+
+    class Endless(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            for _ in range(500):
+                produced.append(1)
+                yield b"<p>" + b"a" * 65530 + b"</p>"
+
+    def handler(request):
+        return httpx.Response(
+            200, headers={"content-type": "text/html"}, stream=Endless()
+        )
+
+    page = await fetch_url(
+        "https://big.example/",
+        client=_client(handler),
+        resolver=_resolver({"big.example": [PUBLIC_IP]}),
+    )
+    assert page.truncated and len(produced) < 40
+
+
+async def test_page_parsing_runs_off_the_event_loop(monkeypatch):
+    threads = []
+    real = link_fetch.extract_page
+
+    def spy(html, url):
+        threads.append(threading.current_thread() is threading.main_thread())
+        return real(html, url)
+
+    monkeypatch.setattr(link_fetch, "extract_page", spy)
+
+    def handler(request):
+        return httpx.Response(200, headers={"content-type": "text/html"}, text=BLOG)
+
+    await read_link(
+        "https://wander.example/lisbon",
+        client=_client(handler),
+        resolver=_resolver({"wander.example": [PUBLIC_IP]}),
+    )
+    assert threads == [False]

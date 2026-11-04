@@ -22,6 +22,7 @@ import ipaddress
 import json
 import re
 import socket
+import zlib
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from urllib.parse import quote, urljoin, urlsplit, urlunsplit
@@ -79,6 +80,8 @@ _MESSAGES = {
     "or paste the text instead.",
     "unsupported_content": "That link isn't a web page we can read "
     "(it looks like a file or image). Drop a screenshot instead.",
+    "unsupported_encoding": "That website sent its page in a compressed format "
+    "we don't read. Paste the article text or drop a screenshot instead.",
 }
 
 _BLOCKED_SOURCES = {
@@ -172,6 +175,71 @@ async def _vetted_ip(host: str, resolver: Resolver) -> str:
     return addrs[0]
 
 
+# ── Bounded decompression ────────────────────────────────────────────────
+#
+# httpx's own decoders inflate a whole chunk before anything can check its
+# size, so a 2 KB brotli or nested-gzip "bomb" could expand to gigabytes.
+# We ask for gzip/deflate only, read RAW bytes, and inflate them ourselves
+# with zlib's ``max_length`` so output never exceeds MAX_BYTES.
+
+
+class _BoundedDecoder:
+    def __init__(self, content_encoding: str) -> None:
+        codings = [c.strip().lower() for c in content_encoding.split(",") if c.strip()]
+        codings = [c for c in codings if c != "identity"]
+        if not codings:
+            self._kind = None
+        elif len(codings) == 1 and codings[0] in ("gzip", "x-gzip"):
+            self._kind = "gzip"
+        elif len(codings) == 1 and codings[0] == "deflate":
+            self._kind = "deflate"
+        else:  # br, zstd, compress, stacked encodings, anything unknown
+            raise _error("unsupported_encoding")
+        self._z = None
+        self._head = b""
+
+    def _start(self, data: bytes):
+        if self._kind == "gzip":
+            return zlib.decompressobj(16 + zlib.MAX_WBITS)
+        # "deflate" is zlib-wrapped per the RFC, but many servers send raw
+        is_zlib = (
+            len(data) >= 2
+            and data[0] & 0x0F == 8
+            and (data[0] << 8 | data[1]) % 31 == 0
+        )
+        return zlib.decompressobj(zlib.MAX_WBITS if is_zlib else -zlib.MAX_WBITS)
+
+    def feed(self, chunk: bytes, room: int) -> bytes:
+        """At most ``room`` decoded bytes from ``chunk``."""
+        if self._kind is None:
+            return chunk[:room]
+        if self._z is None:
+            self._head += chunk
+            if len(self._head) < 2:
+                return b""
+            chunk, self._head = self._head, b""
+            self._z = self._start(chunk)
+        out = bytearray()
+        data = chunk
+        try:
+            while data and room - len(out) > 0:
+                out += self._z.decompress(data, room - len(out))
+                data = self._z.unconsumed_tail
+        except zlib.error as exc:
+            raise _error("unsupported_encoding") from exc
+        return bytes(out)
+
+
+async def _raw_chunks(resp: httpx.Response):
+    """The body's undecoded bytes. A response built in memory (tests, cached
+    content) has no stream left to read; real network responses always do."""
+    if resp.is_stream_consumed:
+        yield resp.content
+        return
+    async for chunk in resp.aiter_raw():
+        yield chunk
+
+
 # ── Fetching ──────────────────────────────────────────────────────────────
 
 
@@ -195,6 +263,7 @@ def _pinned(parts, ip: str) -> tuple[str, dict, dict]:
         "Accept": "text/html,application/xhtml+xml,text/plain;q=0.9,"
         "application/json;q=0.8,*/*;q=0.1",
         "Accept-Language": "en;q=1.0, *;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
     }
     extensions = {"sni_hostname": parts.hostname} if parts.scheme == "https" else {}
     return target, headers, extensions
@@ -226,12 +295,14 @@ async def _fetch(
             ctype = resp.headers.get("content-type", "").split(";")[0].strip().lower()
             if ctype not in accept:
                 raise _error("unsupported_content")
+            decoder = _BoundedDecoder(resp.headers.get("content-encoding", ""))
             body = bytearray()
+            raw_total = 0
             truncated = False
-            async for chunk in resp.aiter_bytes():
-                body.extend(chunk)
-                if len(body) >= MAX_BYTES:
-                    del body[MAX_BYTES:]
+            async for chunk in _raw_chunks(resp):
+                raw_total += len(chunk)
+                body += decoder.feed(chunk, MAX_BYTES - len(body))
+                if len(body) >= MAX_BYTES or raw_total >= MAX_BYTES:
                     truncated = True
                     break
             encoding = resp.charset_encoding or "utf-8"
@@ -607,7 +678,8 @@ async def _read_video(
             page = await fetch_url(
                 _youtube_watch_url(url), client=client, resolver=resolver
             )
-            description = extract_page(page.text, page.final_url)["description"]
+            info = await asyncio.to_thread(extract_page, page.text, page.final_url)
+            description = info["description"]
         except LinkFetchError:
             description = ""
     text = "\n".join(p for p in (title, description) if p)
@@ -658,7 +730,8 @@ async def read_link(
             "text": page.text[:MAX_TEXT_CHARS],
         }
     else:
-        info = extract_page(page.text, page.final_url)
+        # bs4 on a 2 MB page takes a while: keep it off the event loop
+        info = await asyncio.to_thread(extract_page, page.text, page.final_url)
     return LinkContent(
         url=url, final_url=page.final_url, truncated=page.truncated, **info
     )
