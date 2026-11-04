@@ -26,6 +26,22 @@ def _norm_quote(text: str) -> str:
     return re.sub(r"\s+", " ", text.translate(_QUOTE_MARKS)).strip()
 
 
+_DAY_RANGE = re.compile(
+    r"\bdays?\s*(\d{1,2})(?:\s*(?:-|–|—|to|&|and)\s*(?:day\s*)?(\d{1,2}))?",
+    re.IGNORECASE,
+)
+
+
+def _numbered_days(source: str) -> set[int]:
+    """Day numbers the source itself uses: "Day 1", "Day 2–3", "days 4 to 5"."""
+    found: set[int] = set()
+    for m in _DAY_RANGE.finditer(source or ""):
+        first = int(m.group(1))
+        last = int(m.group(2)) if m.group(2) else first
+        found.update(range(first, last + 1) if first <= last <= first + 14 else [first])
+    return found
+
+
 def _quoted_in(quote: str, source: str) -> bool:
     q = _norm_quote(quote)
     if not q:
@@ -41,9 +57,12 @@ def clean_extraction(raw: dict, source_text: str | None) -> dict:
     source text (screenshots can't be checked, so their quotes stay)."""
     extraction = Extraction.model_validate(raw if isinstance(raw, dict) else {})
     if source_text is not None:
+        days = _numbered_days(source_text)
         for place in extraction.places:
             if place.quote and not _quoted_in(place.quote, source_text):
                 place.quote = None
+            if place.day_hint is not None and place.day_hint not in days:
+                place.day_hint = None  # the source never names that day
     return extraction.model_dump()
 
 

@@ -706,3 +706,297 @@ def test_post_check_is_idempotent_even_for_transport_places():
     )
     once = ensure_must_include(_itinerary(), req)
     assert ensure_must_include(once, req) == once
+
+
+# ── Fix round 2: ordered phrase match, logistics match-not-replace ───────
+
+from app.services.must_include import _same_place  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [
+        ("Tokyo Tower", "Tokyo Skytree — Japan's tallest tower, sunset views"),
+        (
+            "Lisbon Cathedral",
+            "Walk Lisbon-style tiled cafés then visit a cathedral in Tokyo",
+        ),
+        (
+            "Osaka Castle",
+            "Day trip: Osaka street food, then the castle-town lanes of Kawagoe",
+        ),
+        ("Ark Hills", "Roppongi Park Hills rooftop"),
+        ("Tower Tokyo", "Tokyo Tower at night"),  # order matters
+    ],
+)
+def test_phrase_match_rejects_scattered_or_partial_words(name, text):
+    assert _same_place(name, text) is False
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [
+        ("Sé Cathedral", "Lisbon Sé Cathedral at opening time"),
+        ("Tram 28", "Hop on Tram 28 from Martim Moniz"),
+        ("LX Factory", "Brunch at LX Factory"),
+        ("LX Factory", "Brunch at LXFactory"),
+        ("Senso-ji", "Sensoji at dawn"),
+        ("Sensoji", "Senso-ji at dawn"),
+        ("Senso-ji", "Senso ji temple"),
+        ("Time Out Market", "Dinner at the TimeOut Market"),
+        ("Timeout Market", "Dinner at the Time Out Market"),
+        ("Giolitti", "Gelato at Giolitti's"),
+        ("Praça das Flores", "Praca Das Flores picnic"),
+    ],
+)
+def test_phrase_match_accepts_spelling_variants(name, text):
+    assert _same_place(name, text) is True
+
+
+def _city_word_itinerary():
+    return {
+        "days": [
+            _day(1, [_slot("morning", "Arrive at Haneda")]),
+            _day(
+                2,
+                [
+                    _slot(
+                        "morning", "Tokyo Skytree — Japan's tallest tower, sunset views"
+                    ),
+                    _slot("afternoon", "Roppongi Park Hills rooftop"),
+                    _slot("evening", "Dinner in Ebisu"),
+                ],
+            ),
+            _day(
+                3,
+                [
+                    _slot(
+                        "morning",
+                        "Day trip: Osaka street food, then the castle-town lanes of Kawagoe",
+                    ),
+                    _slot(
+                        "afternoon",
+                        "Walk Lisbon-style tiled cafés then visit a cathedral in Tokyo",
+                    ),
+                ],
+            ),
+            _day(4, [_slot("morning", "Depart from Haneda")]),
+        ]
+    }
+
+
+def test_city_plus_noun_names_are_not_claimed_by_unrelated_slots():
+    req = _req(
+        destination="Tokyo, Japan",
+        must_include=[
+            {"name": n, "kind": "sight", "city": "Tokyo"}
+            for n in ("Tokyo Tower", "Lisbon Cathedral", "Ark Hills", "Osaka Castle")
+        ],
+    )
+    out = ensure_must_include(_city_word_itinerary(), req)
+    for day in out["days"]:
+        for slot in day["slots"]:
+            if slot.get("from_link"):
+                assert slot["link_place"] in slot["activity"]  # inserted, not "found"
+
+
+def _logistics_name_itinerary():
+    return {
+        "days": [
+            _day(1, [_slot("morning", "Arrive in Lisbon")]),
+            _day(
+                2,
+                [
+                    _slot(
+                        "morning",
+                        "Hop on Tram 28 from Martim Moniz, then head to the castle",
+                    ),
+                    _slot("afternoon", "Train to Sintra for Pena Palace"),
+                    _slot("evening", "Ferry Building food hall lunch"),
+                ],
+            ),
+            _day(
+                3,
+                [
+                    _slot("morning", "Belém pastries"),
+                    _slot("afternoon", "Alfama walk"),
+                    _slot("evening", "Fado dinner"),
+                ],
+            ),
+            _day(4, [_slot("morning", "Check out and fly home")]),
+        ]
+    }
+
+
+def test_places_named_in_travel_slots_are_matched_not_reinserted():
+    req = _req(
+        must_include=[
+            {"name": "Tram 28", "kind": "transport", "city": "Lisbon"},
+            {
+                "name": "Pena Palace",
+                "kind": "sight",
+                "city": "Lisbon",
+                "town": "Sintra",
+            },
+            {"name": "Ferry Building", "kind": "food", "city": "Lisbon"},
+        ]
+    )
+    out = ensure_must_include(_logistics_name_itinerary(), req)
+    day2 = [s.get("link_place") for s in out["days"][1]["slots"]]
+    assert day2 == ["Tram 28", "Pena Palace", "Ferry Building"]
+    assert [s["activity"] for s in out["days"][2]["slots"]] == [
+        "Belém pastries",
+        "Alfama walk",
+        "Fado dinner",
+    ]
+    assert out["link_coverage"]["scheduled"] == [
+        "Tram 28",
+        "Pena Palace",
+        "Ferry Building",
+    ]
+
+
+def test_alfa_pendular_on_the_travel_day_is_matched_not_duplicated():
+    req = _req(
+        destination="Porto, Portugal",
+        destinations=["Lisbon, Portugal", "Porto, Portugal"],
+        destination_nights=[2, None],
+        must_include=[{"name": "Alfa Pendular", "kind": "transport", "city": "Porto"}],
+    )
+    itin = {
+        "days": [
+            _day(
+                1,
+                [_slot("morning", "Arrive"), _slot("evening", "Dinner in Bairro Alto")],
+                city="Lisbon",
+            ),
+            _day(
+                2,
+                [_slot("morning", "Belém"), _slot("afternoon", "LX Factory")],
+                city="Lisbon",
+            ),
+            _day(
+                3,
+                [
+                    _slot(
+                        "morning",
+                        "Travel on Alfa Pendular high-speed train from Lisbon to Porto",
+                        estimated_cost_usd=35,
+                    )
+                ],
+                city="Porto",
+            ),
+            _day(
+                4,
+                [_slot("morning", "Ribeira"), _slot("evening", "Departure flight")],
+                city="Porto",
+            ),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    marked = [
+        (d["day_number"], s["activity"])
+        for d in out["days"]
+        for s in d["slots"]
+        if s.get("from_link")
+    ]
+    assert marked == [
+        (3, "Travel on Alfa Pendular high-speed train from Lisbon to Porto")
+    ]
+    assert out["days"][0]["slots"][1]["activity"] == "Dinner in Bairro Alto"
+
+
+def test_arrival_and_hotel_slots_still_never_claim_a_place():
+    req = _req(must_include=[{"name": "Alfama", "kind": "area", "city": "Lisbon"}])
+    itin = {
+        "days": [
+            _day(
+                1,
+                [_slot("morning", "Arrive in Lisbon, transfer to Memmo Alfama Hotel")],
+            ),
+            _day(2, [_slot("morning", "Museum"), _slot("afternoon", "Free time")]),
+            _day(3, [_slot("evening", "Departure flight")]),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    assert not out["days"][0]["slots"][0].get("from_link")
+    assert out["days"][1]["slots"][1]["link_place"] == "Alfama"
+
+
+def test_unmatched_transport_places_become_day_notes_never_slots():
+    req = _req(
+        must_include=[{"name": "Tram 28", "kind": "transport", "city": "Lisbon"}]
+    )
+    out = ensure_must_include(_itinerary(), req)
+    assert not any(s.get("from_link") for d in out["days"] for s in d["slots"])
+    notes = [
+        (d["day_number"], x["name"])
+        for d in out["days"]
+        for x in d.get("link_extras", [])
+    ]
+    assert notes and notes[0][1] == "Tram 28" and notes[0][0] not in (1, 4)
+    assert out["link_coverage"]["extras"] == ["Tram 28"]
+
+
+@pytest.mark.parametrize(
+    "activity",
+    [
+        "Lisbon – Porto on the Alfa Pendular (3h)",
+        "Hikari bullet service, Tokyo ⇒ Kyoto",
+        "Nozomi bullet, Tokyo - Kyoto",
+    ],
+)
+def test_keywordless_transit_between_two_stops_is_protected(activity):
+    stops = (
+        ["Tokyo, Japan", "Kyoto, Japan"]
+        if "Tokyo" in activity
+        else ["Lisbon, Portugal", "Porto, Portugal"]
+    )
+    req = _req(
+        destination=stops[-1],
+        destinations=stops,
+        must_include=[{"name": f"Spot {i}", "kind": "sight"} for i in range(6)],
+    )
+    itin = {
+        "days": [
+            _day(1, [_slot("morning", "Arrive")]),
+            _day(
+                2,
+                [
+                    _slot("morning", activity, estimated_cost_usd=95),
+                    _slot("afternoon", "Market"),
+                ],
+            ),
+            _day(3, [_slot("evening", "Departure flight")]),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    assert out["days"][1]["slots"][0]["activity"] == activity
+
+
+def test_day_and_trip_totals_drop_the_replaced_activitys_cost():
+    req = _req(
+        must_include=[{"name": "Livraria Lello", "kind": "shopping", "city": "Lisbon"}]
+    )
+    itin = {
+        "days": [
+            _day(1, [_slot("morning", "Arrive")]),
+            {
+                **_day(
+                    2,
+                    [
+                        _slot("morning", "Gulbenkian Museum", estimated_cost_usd=20),
+                        _slot("afternoon", "Shopping", estimated_cost_usd=30),
+                    ],
+                ),
+                "daily_estimated_cost_usd": 100,
+            },
+            _day(3, [_slot("evening", "Departure flight")]),
+        ],
+        "total_estimated_cost_usd": 300,
+    }
+    out = ensure_must_include(itin, req)
+    replaced = next(s for s in out["days"][1]["slots"] if s.get("from_link"))
+    old = 20 if replaced["time_of_day"] == "morning" else 30
+    assert out["days"][1]["daily_estimated_cost_usd"] == 100 - old
+    assert out["total_estimated_cost_usd"] == 300 - old

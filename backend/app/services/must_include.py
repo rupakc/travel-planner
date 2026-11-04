@@ -90,28 +90,88 @@ _SLOT_STALE_FIELDS = (
 )
 
 
+_POSSESSIVE = re.compile(r"(\w)['’]s\b")
+
+
 def _tokens(text: str) -> list[str]:
-    return [t for t in re.split(r"[^a-z0-9]+", fold_place(text or "")) if t]
-
-
-def _name_tokens(name: str) -> list[str]:
-    return [t for t in _tokens(name) if t not in _NAME_FILLER]
+    """Accent-folded word tokens; hyphens, spaces and apostrophes all split,
+    a possessive 's is dropped ("Giolitti's" → giolitti), filler dropped."""
+    text = _POSSESSIVE.sub(r"\1", text or "")
+    return [
+        t
+        for t in re.split(r"[^a-z0-9]+", fold_place(text))
+        if t and t not in _NAME_FILLER
+    ]
 
 
 def _same_place(name: str, text: str) -> bool:
-    """``text`` names the place: every token of its name (only filler words
-    like "the"/"de" dropped) appears in ``text`` as a whole token. "Sé
-    Cathedral" needs both "se" and "cathedral", so "a cathedral-like
-    monastery" is not it."""
-    wanted = _name_tokens(name)
+    """``text`` names the place: the name's tokens appear as one contiguous,
+    ordered phrase in ``text``. Spacing variants count only when they line up
+    on whole tokens ("Senso-ji" ~ "Sensoji", "Time Out" ~ "TimeOut"), so
+    "Tokyo Tower" is not "Tokyo Skytree … tallest tower" and "Ark Hills" is
+    not "Park Hills"."""
+    wanted = "".join(_tokens(name))
     if not wanted:
         return False
-    have = set(_tokens(text))
-    if all(t in have for t in wanted):
-        return True
-    # Run-together spellings: "TimeOut Market" for "Time Out Market"
-    joined = " ".join(_tokens(text)).replace(" ", "")
-    return "".join(wanted) in joined and len("".join(wanted)) >= 8
+    have = _tokens(text)
+    for i in range(len(have)):
+        joined = ""
+        for token in have[i:]:
+            joined += token
+            if joined == wanted:
+                return True
+            if not wanted.startswith(joined):
+                break
+    return False
+
+
+# Arrival, departure and hotel logistics never stand for a place, even when a
+# place's name appears in them ("transfer to Memmo Alfama Hotel")
+_ARRIVAL = re.compile(
+    r"\b(arriv\w*|depart\w*|check(?:ing)?[- ]?(?:in|into|out)|flights?|fly|"
+    r"flying|airports?|pack\w*|luggage)\b|\btransfer\b.*\bhotel\b",
+    re.IGNORECASE,
+)
+_ARRIVAL_TYPES = {
+    "arrival",
+    "departure",
+    "check-in",
+    "check-out",
+    "checkin",
+    "checkout",
+}
+_TRANSIT_SEPARATOR = re.compile(r"[–—⇒→]|->|\s-\s|\bto\b|\bvia\b", re.IGNORECASE)
+
+
+def _names_two_stops(text: str, stop_cities: set[str]) -> bool:
+    """ "Lisbon – Porto on the Alfa Pendular", "Tokyo ⇒ Kyoto": two of the
+    trip's stops with a separator between them."""
+    raw = text or ""
+    spots = []
+    for city in stop_cities:
+        if not city:
+            continue
+        pattern = r"\s+".join(re.escape(w) for w in city.split())
+        m = re.search(rf"(?<!\w){pattern}(?!\w)", fold_place(raw))
+        if m:
+            spots.append(m)
+    spots.sort(key=lambda m: m.start())
+    folded = fold_place(raw)
+    # fold_place drops symbols like "⇒", so look at the raw text between the
+    # two names too (folding keeps word order, so find them again there)
+    for first, second in zip(spots, spots[1:]):
+        if _TRANSIT_SEPARATOR.search(folded[first.end() : second.start()]):
+            return True
+        a = raw.lower().find(first.group(0).split()[0])
+        b = raw.lower().find(second.group(0).split()[0], a + 1) if a >= 0 else -1
+        if a >= 0 and b > a and _TRANSIT_SEPARATOR.search(raw[a:b]):
+            return True
+    return False
+
+
+def _is_arrival(slot: dict) -> bool:
+    kind = str(slot.get("category") or slot.get("type") or "").strip().lower()
+    return kind in _ARRIVAL_TYPES or bool(_ARRIVAL.search(slot.get("activity", "")))
 
 
 def _is_logistics(slot: dict, stop_cities: set[str]) -> bool:
@@ -123,7 +183,9 @@ def _is_logistics(slot: dict, stop_cities: set[str]) -> bool:
         return True
     folded = fold_place(text)
     # "… to Porto": moving between the trip's own stops
-    return any(re.search(rf"\bto {re.escape(c)}\b", folded) for c in stop_cities if c)
+    if any(re.search(rf"\bto {re.escape(c)}\b", folded) for c in stop_cities if c):
+        return True
+    return _names_two_stops(text, stop_cities)
 
 
 def _city_key(text: str | None) -> str:
@@ -254,6 +316,22 @@ def _slot_rank(day: dict, slot: dict, place: MustIncludePlace, linked_per_day):
     )
 
 
+def _is_number(value) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _drop_cost(day: dict, slot: dict) -> float:
+    """Take a replaced slot's cost out of its day's total; returns it."""
+    cost = slot.get("estimated_cost_usd")
+    if not _is_number(cost):
+        return 0.0
+    if _is_number(day.get("daily_estimated_cost_usd")):
+        day["daily_estimated_cost_usd"] = round(
+            max(0.0, day["daily_estimated_cost_usd"] - cost), 2
+        )
+    return float(cost)
+
+
 def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
     """Every must-include place scheduled (or noted) in ``itinerary``."""
     if not request.must_include or not isinstance(itinerary, dict):
@@ -293,13 +371,20 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
         for slot in slots_of(day):
             for key in _LINK_FIELDS:
                 slot.pop(key, None)
+        day.pop("link_extras", None)
 
     scheduled, extras, missing = [], [], []
     linked_per_day: dict[int, int] = {}
 
-    def visit_slots():
+    def visit_slots(field):
+        # Travel slots may name a place ("Train to Sintra for Pena Palace",
+        # "Hop on Tram 28") by their activity text; arrival and hotel
+        # logistics never do, and a travel slot's location never does
         return [
-            (day, slot) for day in days for slot in slots_of(day) if not logistics(slot)
+            (day, slot)
+            for day in days
+            for slot in slots_of(day)
+            if not _is_arrival(slot) and (field == "activity" or not logistics(slot))
         ]
 
     # Places the itinerary already names: by activity text first (strongest),
@@ -312,7 +397,7 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             hit = next(
                 (
                     (day, slot)
-                    for day, slot in visit_slots()
+                    for day, slot in visit_slots(field)
                     if right_city(day, place)
                     and _same_place(place.name, slot.get(field, ""))
                     and (field == "activity" or not slot.get("from_link"))
@@ -326,6 +411,11 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             else:
                 still.append(place)
         pending = still
+
+    removed_cost = 0.0
+    # Slots first, notes after: the notes then land on the least busy day
+    # whatever order the places came in, so a second pass changes nothing
+    pending.sort(key=lambda p: p.kind == "transport")
 
     for place in pending:
         candidates = _candidate_days(days, place, request)
@@ -348,7 +438,12 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
                 if not slot.get("from_link") and not logistics(slot)
             ]
 
-        pool = pool_of(inner) or pool_of(candidates)
+        # A transport place ("Tram 28") is a way of getting around, never a
+        # slot of its own: unmatched, it becomes a note on one of its days
+        if place.kind == "transport":
+            pool = []
+        else:
+            pool = pool_of(inner) or pool_of(candidates)
         if pool:
             day, slot = min(
                 pool, key=lambda ds: _slot_rank(ds[0], ds[1], place, linked_per_day)
@@ -359,6 +454,7 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             )
             slot["location"] = f"{place.name}, {where}"
             slot["duration_hours"] = _DURATION.get(place.kind, 2.0)
+            removed_cost += _drop_cost(day, slot)
             for key in _SLOT_STALE_FIELDS:
                 slot.pop(key, None)
             slot["estimated_cost_usd"] = None
@@ -375,6 +471,9 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             linked_per_day[id(day)] = linked_per_day.get(id(day), 0) + 1
             extras.append(place.name)
 
+    total = itinerary.get("total_estimated_cost_usd")
+    if removed_cost and _is_number(total):
+        itinerary["total_estimated_cost_usd"] = round(max(0.0, total - removed_cost), 2)
     itinerary["link_coverage"] = {
         "total": len(request.must_include),
         "scheduled": scheduled,

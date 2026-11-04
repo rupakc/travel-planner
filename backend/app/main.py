@@ -35,6 +35,7 @@ from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.walking_tours import router as walking_tours_router
+from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .core.rate_limit import rate_limit
@@ -103,29 +104,14 @@ app.add_middleware(
 app.add_middleware(AnalyticsMiddleware)
 
 # Plan-from-a-link bodies carry screenshots (4 × ≤5 MB base64); refuse anything
-# bigger before FastAPI reads and parses it. Keep in step with nginx's
-# client_max_body_size (frontend/nginx.conf.template).
-_IMPORT_MAX_BODY = 30 * 1024 * 1024
-
-
-@app.middleware("http")
-async def _limit_import_body(request, call_next):
-    if request.url.path.startswith("/api/import/"):
-        try:
-            length = int(request.headers.get("content-length") or 0)
-        except ValueError:
-            length = 0
-        if length > _IMPORT_MAX_BODY:
-            from fastapi.responses import JSONResponse
-
-            return JSONResponse(
-                status_code=413,
-                content={
-                    "detail": "That upload is too big — use up to 4 screenshots "
-                    "of 5 MB or less."
-                },
-            )
-    return await call_next(request)
+# bigger (declared or streamed) before FastAPI reads and parses it. Keep in step
+# with nginx's client_max_body_size (frontend/nginx.conf.template).
+app.add_middleware(
+    BodySizeLimit,
+    prefix="/api/import/",
+    max_bytes=30 * 1024 * 1024,
+    message="That upload is too big — use up to 4 screenshots of 5 MB or less.",
+)
 
 
 app.add_middleware(RequestIdMiddleware)

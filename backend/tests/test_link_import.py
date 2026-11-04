@@ -191,7 +191,9 @@ def test_clean_extraction_validates_and_caps():
         "suggested_days": "4",
         "interests": ["Food", "food", "  HISTORY "],
     }
-    out = clean_extraction(raw, source_text="We think Place 0 is lovely and more.")
+    out = clean_extraction(
+        raw, source_text="Day 2: we think Place 0 is lovely and more."
+    )
     assert len(out["places"]) == 40
     first = out["places"][0]
     assert first["kind"] == "sight"
@@ -687,3 +689,34 @@ def test_quote_check_is_exact_on_words_but_forgives_curly_quotes():
         None,
         "they're warm at 8am",
     ]
+
+
+def test_day_hints_are_kept_only_for_days_the_source_numbers():
+    source = "Day 1: Belém Tower. Day 2–3: Sintra and Cascais. Later: LX Factory."
+    raw = {
+        "places": [
+            {"name": "Belém Tower", "day_hint": 1},
+            {"name": "Pena Palace", "day_hint": 3},  # inside "Day 2–3"
+            {"name": "LX Factory", "day_hint": 4},  # invented
+            {"name": "Alfama", "day_hint": 1},
+        ]
+    }
+    out = clean_extraction(raw, source_text=source)
+    assert [p["day_hint"] for p in out["places"]] == [1, 3, None, 1]
+    no_days = clean_extraction(raw, source_text="Belém Tower, Pena Palace, LX Factory")
+    assert [p["day_hint"] for p in no_days["places"]] == [None] * 4
+
+
+def test_streamed_bodies_without_a_length_are_capped_too(client, admin_headers):
+    def chunks():
+        yield b'{"text": "'
+        for _ in range(31):
+            yield b"A" * (1024 * 1024)
+        yield b'"}'
+
+    r = client.post(
+        "/api/import/extract",
+        content=chunks(),
+        headers={**admin_headers, "content-type": "application/json"},
+    )
+    assert r.status_code == 413
