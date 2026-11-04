@@ -1477,6 +1477,11 @@
 <td><code>/api/discover</code></td>
 </tr>
 <tr>
+<td><code>RATE_LIMIT_IMPORT</code></td>
+<td><code>20</code></td>
+<td><code>/api/import/extract</code> (plan from a link, text or screenshots)</td>
+</tr>
+<tr>
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>
 <td><code>60</code></td>
 <td>Single-agent routes, <code>/*/filtered</code>, <code>/api/flights/fare-calendar</code>, <code>/api/stress-test</code>, <code>/api/layover</code>, <code>/api/events</code>, <code>/api/walking-tours</code>, creating a fare watch, its "Check now", and changing the account email</td>
@@ -1491,7 +1496,7 @@
 <p>The frontend reads no environment variables at build or run time.</p>
 <ul>
 <li><strong>Dev:</strong> Vite proxies <code>/api</code> and <code>/health</code> to <code>http://localhost:8001</code> (<code>frontend/vite.config.js</code>).</li>
-<li><strong>Container:</strong> nginx renders <code>frontend/nginx.conf.template</code> with <code>BACKEND_URL</code> (envsubst) and proxies <code>/api/</code> and <code>/health</code> to it. Proxy buffering is off so SSE streams, with a 120 s read timeout.</li>
+<li><strong>Container:</strong> nginx renders <code>frontend/nginx.conf.template</code> with <code>BACKEND_URL</code> (envsubst) and proxies <code>/api/</code> and <code>/health</code> to it. Proxy buffering is off so SSE streams, with a 120 s read timeout. <code>/api/</code> allows request bodies up to 32 MB (<code>client_max_body_size 32m</code>) for screenshot imports; the backend itself refuses import bodies over 30 MB.</li>
 </ul>
 <p>Browser storage used by the app: <code>tp_token</code> (login token), <code>tp_recent_searches_open</code>, <code>tp_tour_done:&lt;username&gt;</code>, <code>chat_history_&lt;username&gt;</code>, and the packing-list checkbox state.</p>
 <hr />

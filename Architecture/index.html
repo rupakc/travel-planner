@@ -888,6 +888,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plan-from-a-link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plan from a link
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sse-envelope" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1369,6 +1380,20 @@ External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
 <h3 id="caching">Caching</h3>
 <p>A complete, error-free run is stored as its list of SSE events in the TTL cache for 30 minutes, keyed by the md5 of the request JSON (which includes the user's Taste Graph context), and replayed instantly on a repeat. Runs with any error are never cached.</p>
 <hr />
+<h2 id="plan-from-a-link">Plan from a link</h2>
+<p><code>POST /api/import/extract</code> (<code>backend/app/api/routes/link_import.py</code>) turns a link, pasted text or screenshots into a preview the traveller reviews before anything is planned:</p>
+<pre><code>url ──► link_fetch.read_link ──► text ─┐
+text ──────────────────────────────────┼─► LinkImportAgent (Haiku; vision for images)
+images (sniffed, ≤4 × 5 MB) ───────────┘        │  untrusted-data fencing, Pydantic validation
+                                                ▼
+                     link_import.build_preview: resolve_place per city → stops
+                     (day trips merged, ≤3 stops, nights split) → Serper POI lookups
+                                                ▼
+                     ImportPreview ──► review in the browser ──► POST /api/search
+                                                   with must_include + import_source
+</code></pre>
+<p><code>link_fetch</code> is the only place the backend fetches a user-supplied URL. It vets every DNS answer and every redirect hop, and connects to the vetted IP with the original Host and SNI (see <a href="../API-Reference/#post-apiimportextract">API Reference</a>). In the search, <code>ActivitiesAgent</code> merges the places into its results (<code>services/must_include.merge_into_activities</code>). <code>ItineraryAgent</code> lists them as must-schedule in its prompt and runs <code>ensure_must_include</code> on its result, and the orchestrator's template fallback runs the same check, so every itinerary reports <code>link_coverage</code>.</p>
+<hr />
 <h2 id="sse-envelope">SSE envelope</h2>
 <pre><code>data: {&quot;type&quot;: &quot;visa&quot;, &quot;data&quot;: {...}, &quot;source&quot;: &quot;static&quot;}
 
@@ -1507,7 +1532,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls. They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
 </ul>
 <h2 id="rate-limiting">Rate limiting</h2>
-<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare watches add their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
+<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare watches add their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
 <h2 id="middleware">Middleware</h2>
 <ul>
 <li>CORS from <code>CORS_ORIGINS</code>.</li>

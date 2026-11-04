@@ -673,6 +673,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#from-a-link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "From a link ✨"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#recent-searches" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1346,7 +1357,7 @@
 </ul>
 <hr />
 <h2 id="search-page">Search page</h2>
-<p><code>frontend/src/pages/SearchPage.jsx</code> has three modes.</p>
+<p><code>frontend/src/pages/SearchPage.jsx</code> has four modes.</p>
 <h3 id="i-know-where-im-going">"I know where I'm going"</h3>
 <ul>
 <li><strong>Route.</strong> From and To use the airport/place typeahead (<code>components/ui/AirportSearch.jsx</code> → <code>GET /api/airports/search</code>). "Add a stop on the way (multi-city)" adds up to 3 intermediate stops, each with optional nights (1–30). The To city is the final destination.</li>
@@ -1360,6 +1371,25 @@
 <p>Origin, nationality, dates, optional budget, interests and travellers. <code>POST /api/discover</code> returns 5 destinations. Each card shows city and country, a weather emoji and description, a visa badge (⚠️ when not confirmed by the static table), flight time, a rough cost range and why it matches. "Plan this trip →" fills in the known-destination form.</p>
 <h3 id="compare">"Compare ⚖️"</h3>
 <p>Seeded once from the known-destination form. Takes 2–3 destinations plus shared trip fields, and makes one <code>POST /api/compare/destination</code> call per destination in parallel, each column with its own loading and error state and a Retry that re-runs only that column. Responses from an earlier run are ignored. <code>components/CompareTable.jsx</code> shows cost estimate, flight, hotel, weather, visa and the Travel Ease grade, marking the best value in each row (stacked cards on phones). "Plan this trip" runs that exact request as a normal full search. Pure helpers are in <code>utils/compare.js</code>. Compare is single-city only (multi-city requests get 422).</p>
+<h3 id="from-a-link">"From a link ✨"</h3>
+<p>Plan a trip around a travel blog, a YouTube or TikTok video, a caption, a friend's message or screenshots.</p>
+<ul>
+<li><strong>Ways in.</strong> The fourth mode tab. A hero hint: "Saw a great trip online? Paste the link". A deep link, <code>/?import=&lt;url&gt;</code>: Chat offers it when a message is just a link, or a link plus "plan", and it opens the flow and starts reading. Dropping a screenshot anywhere on the Search page opens the tab with it, under a full-page "Drop it to plan a trip" overlay.</li>
+<li><strong>Input</strong> (<code>components/import/ImportPanel.jsx</code>). One box tells a link from text as you type ("Link — we'll read the page" / "Text — we'll pick out the places"). A drop zone takes up to 4 screenshots, with thumbnails and remove buttons; pasting an image works too, and wrong types, HEIC, unreadable files and files that are still over 5 MB once shrunk are explained. Screenshots are shrunk in the browser before the size check and the upload (long edge ≤ 1568 px, WebP or JPEG at quality 0.85), so a 10 MB retina screenshot is fine. There are three "Try an example" texts. Enter submits a link; Cmd/Ctrl+Enter submits text.</li>
+<li><strong>Progress.</strong> Three staged steps: "Reading the page", then "Finding places", then "Putting them on the map". They are announced in an ARIA live region, and the time so far is shown against the typical time. Skeleton rows appear meanwhile. Cancel or Esc stops the request.</li>
+<li><strong>Errors offer the next step.</strong> A blocked source (Instagram and the like), a paywall or an empty page gets "Paste the text" and "Drop a screenshot" buttons. Timeouts get "Try again". The rate-limit message is shown as the server sends it.</li>
+<li><strong>Review</strong> (<code>components/import/ImportPreview.jsx</code>, <code>ImportMap.jsx</code>).</li>
+<li>"Here's what we found": the trip title and summary, plus a source card (favicon, title, site, author, link).</li>
+<li>A Leaflet map with numbered pins coloured by kind. They drop in once; reduced motion is respected. Approximate places are hollow pins, fanned out around their town, with an "approximate location" tooltip.</li>
+<li>The route, with a nights stepper per stop and the option to leave a stop out.</li>
+<li>Places grouped by stop. Each has a checkbox (with All / None per stop), a kind icon, inline rename, a "Change city" stop picker, a "day trip to …" label, "On the map ★ 4.6" or "Approximate", the source's quote highlighted, and the note.</li>
+<li>"Couldn't place" places get a town field. "Place it" calls <code>POST /api/import/resolve-place</code>, which drops the place into its stop, or adds the town as a new stop while the route has fewer than 3. A stop picker remains as an alternative.</li>
+<li>The usual trip fields, prefilled from Preferences: From, leaving date (default a month out; the return date follows the nights), nationality, budget and travellers.</li>
+<li>Hotels start unticked, and at most 25 places are planned.</li>
+<li><strong>Planning.</strong> "Plan this trip (N places)" runs a normal full search, with the reviewed places as <code>must_include</code> and the source as <code>import_source</code>. Interests from the source are added to the search but not saved to Preferences. Pure helpers are in <code>utils/linkImport.js</code>.</li>
+<li><strong>Results.</strong> The banner counts what the itinerary on screen holds, after the traveller's moves and removals. When the stream ends without an itinerary, the browser's fallback itinerary gives each day its city and places the link places the same way the server does (<code>utils/mustInclude.js</code>). When the itinerary fails, the banner says so and points to Activities instead of spinning. A dismissible banner says "Planned around 11 places from <em>48 hours in Lisbon</em> — all 11 are in your itinerary", or "10 of 11 … 1 didn't fit: show". Imported activity cards and itinerary rows carry an amber "From your link" chip; tapping it shows the quote and how the place was checked. Places that did not get a slot are listed as "Also from your link" under their day. Trip map pins from the link have an amber ring. The My Plan drawer and the share page show "Inspired by …", and saved plans from a link have a link icon. Print and calendar exports carry the credit and the tags.</li>
+<li><strong>Analytics.</strong> <code>import_started</code> (kind), <code>import_preview_shown</code> (place_count), <code>import_planned</code>, <code>import_failed</code> (code) and <code>import_from_chat</code>.</li>
+</ul>
 <h3 id="recent-searches">Recent searches</h3>
 <p>A collapsible strip above the known-destination form (<code>components/RecentSearches.jsx</code>). Its open/closed state is remembered per browser. Clicking a card loads the whole search (route, stops, dates, travellers, budget, visas) into the form; "Search again" re-runs it; each card can be deleted. Past dates are moved to start a week from today with the same trip length. The backend keeps the newest 8 per user and merges identical searches, ignoring interest order (<code>/api/recent-searches</code>).</p>
 <h3 id="onboarding-tour">Onboarding tour</h3>

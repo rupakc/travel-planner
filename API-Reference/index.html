@@ -1067,6 +1067,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#post-apiimportextract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/import/extract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apiimportresolve-place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/import/resolve-place
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#post-apicomparedestination" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1764,6 +1786,11 @@
 <td>10</td>
 </tr>
 <tr>
+<td>import</td>
+<td><code>POST /api/import/extract</code>, <code>POST /api/import/resolve-place</code></td>
+<td>20</td>
+</tr>
+<tr>
 <td>light_ai</td>
 <td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
@@ -1881,6 +1908,18 @@
 <td><code>/api/compare/destination</code></td>
 <td>user</td>
 <td>One-destination summary for Compare mode</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/import/extract</code></td>
+<td>user</td>
+<td>Places from a link, pasted text or screenshots (plan from a link)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/import/resolve-place</code></td>
+<td>user</td>
+<td>Place one unplaced spot in a typed town</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -2133,6 +2172,11 @@
   &quot;serendipity&quot;: 0.5
 }
 </code></pre>
+<p>Two optional fields carry a trip imported with <code>POST /api/import/extract</code>:</p>
+<ul>
+<li><code>must_include</code> (at most 25): places the plan must contain, each <code>{name, kind, city, town?, lat?, lng?, note?, quote?, verified}</code>. <code>city</code> is the trip stop the place belongs to, and <code>town</code> is its own town when that differs (a day trip). They lead the <code>activities</code> results as <code>source: "your_link"</code>, <code>from_link: true</code> items, folding in the agent's own copy of the same place, and they stay even when the activities agent fails. Each item's <code>verification_note</code> is "Located on Google Maps" or "From your link — not independently checked". After the itinerary (AI or template) is built, a deterministic check marks the slots that name each place (<code>from_link</code>, <code>link_place</code>, <code>link_places</code>, <code>link_quote</code>, <code>link_note</code>). A slot counts only if the place's name appears in its activity or location text as one contiguous, ordered phrase. The match ignores accents and filler words ("the", "de"), treats hyphens, spaces and apostrophes alike, and drops a possessive "'s". Run-together spellings count only on whole tokens ("Senso-ji" ~ "Sensoji", "Time Out" ~ "TimeOut"). So "Tokyo Tower" is not "Tokyo Skytree … tallest tower", and "Ark Hills" is not "Park Hills". On multi-city trips, the slot must also be on a day in the place's own city. Travel slots may <em>name</em> a place through their activity text ("Train to Sintra for Pena Palace", "Hop on Tram 28"), but are never replaced. Arrival, departure and hotel slots never stand for a place. Missing places go into the most replaceable slot on a day in the right city: free time first, food at lunch or dinner, and never a logistics slot on any day. Logistics means arrivals, departures, check-in/out, flights, trains, Shinkansen, buses, ferries, drives, transfers, "→", "to <stop>", two of the trip's stops joined by "–", "⇒" or "to", or a transport category. Each stop's travel-in day is skipped when that city has another day. A place of kind <code>transport</code> is never put into a slot: unmatched, it becomes a note on one of its city's days. A replaced slot drops the old activity's cost, booking link and times, and that cost is taken off the day's and the trip's totals. When every such slot already holds a link place, the place goes into the day's <code>link_extras</code>. The itinerary also carries <code>link_coverage: {total, scheduled, extras, missing}</code>.</li>
+<li><code>import_source</code>: <code>{url?, title}</code>, where the trip came from. <code>url</code> must be http(s). Saved plans keep it in <code>search_data</code>, and the share page, print view and calendar export show "Inspired by …".</li>
+</ul>
 <p><code>destinations</code> and <code>destination_nights</code> describe a multi-city trip (see <a href="../Multi-City-Trips/">Multi-City Trips</a>). <code>taste_context</code> is set by the server from the user's Taste Graph; a client value is ignored. <code>origin</code> and <code>destination</code> may be city names, typeahead labels or airport codes; the validator resolves them to airport codes for live flight search (see <a href="../Place-and-Airport-Data/">Place and Airport Data</a>).</p>
 <p><strong>Response:</strong> <code>Content-Type: text/event-stream</code>. Each event is <code>data: {JSON}\n\n</code>, and <code>: keepalive</code> comments are sent while agents run.</p>
 <table>
@@ -2243,6 +2287,86 @@
 }
 </code></pre>
 <p><code>visa_verified: true</code> means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: <code>422</code> invalid request, <code>504</code> after 30 s, <code>500</code> agent failure. Results are cached for 30 minutes.</p>
+<h3 id="post-apiimportextract">POST /api/import/extract</h3>
+<p>Plan from a link: reads a web page, pasted text or screenshots and returns the places in it, resolved and grouped into a trip for the traveller to review. <strong>Auth:</strong> user. <strong>Bucket:</strong> import.</p>
+<p><strong>Request body</strong>: exactly one of:</p>
+<pre><code class="language-json">{&quot;url&quot;: &quot;https://blog.example/48-hours-in-lisbon&quot;}
+{&quot;text&quot;: &quot;48 hours in Lisbon: Time Out Market, Belém Tower, LX Factory…&quot;}
+{&quot;images&quot;: [{&quot;media_type&quot;: &quot;image/png&quot;, &quot;data_base64&quot;: &quot;iVBORw0…&quot;}]}
+</code></pre>
+<p><code>text</code> is at most 20,000 characters. <code>images</code> holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.</p>
+<p><strong>Link fetching</strong> (<code>backend/app/services/link_fetch.py</code>):
+- Only http and https on the default ports, with no credentials in the URL.
+- The host is resolved, and every address must be public. Private, loopback, link-local, multicast, reserved and CGNAT ranges are refused, as are their IPv6, IPv4-mapped, NAT64, 6to4 and Teredo forms. The connection goes to that vetted IP, with the original Host header and TLS SNI, so DNS rebinding cannot redirect it.
+- Redirects are followed by hand, at most 3, and each hop is checked again.
+- There is a 10-second ceiling, and only HTML, XHTML and plain text are accepted.
+- Only <code>gzip</code> and <code>deflate</code> compression is requested and accepted. The body is read as raw bytes, at most 2 MB, and inflated with a bounded zlib decompressor that stops at 2 MB of output, so a compression bomb cannot grow. Brotli, zstd, stacked and unknown encodings get <code>unsupported_encoding</code>.
+- Every hop sends <code>Connection: close</code>, so no pooled connection is reused across hosts.
+- HTML is parsed with BeautifulSoup in a worker thread, off the event loop.
+- From the page come the title, the OpenGraph and Twitter description, JSON-LD (<code>articleBody</code>, <code>ItemList</code>, places and attractions) and the readable main text, capped at 30k characters. The main text comes from the biggest article or content block, keeps headings and list items, and drops nav, footer, script and style.
+- YouTube and TikTok links are read through their public oEmbed endpoints, plus the YouTube watch page's description.
+- Instagram, Facebook, X and Threads get a specific <code>blocked_source</code> error, including when a shortener redirects to them.
+- Scripts are never run, and links in the content are never followed.</p>
+<p><strong>Extraction</strong>: the <code>link_import</code> agent (<code>.agents/link_import.md</code>, Haiku; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between <code>&lt;&lt;&lt;SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> and <code>&lt;&lt;&lt;END_SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a <code>quote</code> is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same. A <code>day_hint</code> is kept only when the source text itself names that day ("Day 2", "Day 2–3", "days 4 to 5").</p>
+<p><strong>Resolution</strong> (<code>backend/app/services/link_import.py</code>):
+- Each place's city is resolved with <code>resolve_place</code> to a canonical town, country, coordinates and airports. A town within 45 km of a bigger stop in the same country joins that stop as a day trip.
+- Stops are ordered by the source's day hints, then by source order. With more than 3 stops, the 3 with the most places are kept and the rest are listed in <code>also_mentioned</code>.
+- Nights are split by place count, with at least 1 per stop. The trip length is <code>suggested_days</code>, or else about 4 sightseeing places a day, between 3 and 14 days.
+- With <code>SERPER_KEY</code>, up to 25 places are looked up on Google Maps (5 at a time, cached). A hit within 60 km of the town that shares a word with the name gives exact coordinates (<code>verified</code>); otherwise the place sits at its town centre (<code>approximate</code>).</p>
+<p><strong>Response (200)</strong> — <code>ImportPreview</code>:</p>
+<pre><code class="language-json">{
+  &quot;source&quot;: {&quot;kind&quot;: &quot;url&quot;, &quot;url&quot;: &quot;https://…&quot;, &quot;title&quot;: &quot;…&quot;, &quot;site_name&quot;: &quot;Wander Blog&quot;, &quot;favicon_url&quot;: &quot;https://…&quot;, &quot;author&quot;: null},
+  &quot;title&quot;: &quot;48 hours in Lisbon&quot;,
+  &quot;summary&quot;: &quot;Viewpoints, pastries and a day trip to Sintra.&quot;,
+  &quot;destinations&quot;: [{&quot;name&quot;: &quot;Lisbon, Portugal&quot;, &quot;city&quot;: &quot;Lisbon&quot;, &quot;country&quot;: &quot;Portugal&quot;, &quot;airports&quot;: [&quot;LIS&quot;, &quot;CAT&quot;], &quot;lat&quot;: 38.73, &quot;lng&quot;: -9.15, &quot;place_count&quot;: 5, &quot;nights&quot;: 3}],
+  &quot;places&quot;: [{&quot;id&quot;: &quot;p1&quot;, &quot;name&quot;: &quot;Time Out Market&quot;, &quot;kind&quot;: &quot;food&quot;, &quot;city&quot;: &quot;Lisbon&quot;, &quot;country&quot;: &quot;Portugal&quot;, &quot;destination&quot;: &quot;Lisbon, Portugal&quot;, &quot;lat&quot;: 38.707, &quot;lng&quot;: -9.146, &quot;approximate&quot;: false, &quot;verified&quot;: true, &quot;address&quot;: &quot;…&quot;, &quot;rating&quot;: 4.4, &quot;note&quot;: &quot;Lunch under one roof&quot;, &quot;quote&quot;: &quot;start at Time Out Market&quot;, &quot;day_hint&quot;: 1, &quot;confidence&quot;: 0.95}],
+  &quot;unresolved&quot;: [],
+  &quot;also_mentioned&quot;: [],
+  &quot;suggested_days&quot;: 3,
+  &quot;season_hint&quot;: null,
+  &quot;interests&quot;: [&quot;food&quot;, &quot;viewpoints&quot;],
+  &quot;warnings&quot;: []
+}
+</code></pre>
+<p><code>kind</code> is one of sight, food, drink, stay, activity, nature, shopping, nightlife, event, transport or area. Places whose town could not be resolved are returned in <code>unresolved</code>, so the traveller can assign them to a stop.</p>
+<p><strong>Errors:</strong> <code>422</code> with <code>detail: {code, message}</code>, where <code>message</code> is written for the traveller:</p>
+<table>
+<thead>
+<tr>
+<th><code>code</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>invalid_url</code>, <code>blocked_address</code>, <code>unreachable</code>, <code>timeout</code>, <code>too_many_redirects</code>, <code>not_found</code>, <code>paywall</code> (401/402), <code>blocked_by_site</code> (403, usually bot blocking), <code>http_error</code>, <code>unsupported_content</code>, <code>unsupported_encoding</code></td>
+<td>Fetching the link failed</td>
+</tr>
+<tr>
+<td><code>blocked_source</code></td>
+<td>Instagram, Facebook, X or Threads ("…doesn't let apps read posts. Paste the caption or drop a screenshot instead.")</td>
+</tr>
+<tr>
+<td><code>empty_page</code></td>
+<td>The page had almost no readable text</td>
+</tr>
+<tr>
+<td><code>no_places</code></td>
+<td>Nothing was found ("We couldn't spot any places — try pasting the part of the article with the list.")</td>
+</tr>
+<tr>
+<td><code>heic_unsupported</code>, <code>unsupported_image</code>, <code>image_too_large</code>, <code>too_many_images</code></td>
+<td>A screenshot problem</td>
+</tr>
+</tbody>
+</table>
+<p><code>413</code> (string <code>detail</code>) means the request body is over 30 MB. It is refused before it is parsed, whether the size is declared or streamed (chunked). Each image's base64 must be at most 5 MB (<code>image_too_large</code>). The browser shrinks screenshots before uploading them: long edge ≤ 1568 px, WebP or JPEG at quality 0.85.</p>
+<p><code>502</code> with <code>code: extract_failed</code> means the extraction agent failed. Plain FastAPI <code>422</code> validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.</p>
+<h3 id="post-apiimportresolve-place">POST /api/import/resolve-place</h3>
+<p>Places one of the preview's "Couldn't place" spots in a town the traveller types. <strong>Auth:</strong> user. <strong>Bucket:</strong> import.</p>
+<p><strong>Request:</strong> <code>{id?, name, kind?, city, country?, note?, quote?}</code>.</p>
+<p><strong>Response (200):</strong> <code>{place, destination}</code>. <code>place</code> has the same shape as a preview place. <code>destination</code> is a preview destination (<code>place_count</code> 1, <code>nights</code> 1), so the client can add it as a new stop when the route has fewer than 3.</p>
+<p><strong>Errors:</strong> <code>422</code> with <code>code: city_not_found</code> when the town cannot be resolved, for example an unknown name or a country typed alone.</p>
 <h3 id="post-apicomparedestination">POST /api/compare/destination</h3>
 <p>Lightweight summary of one destination, used by the Search page's Compare mode (one call per destination, in parallel). Runs flights, hotels (no URL enrichment), weather and visa concurrently with per-piece timeouts (flights and hotels 45 s, weather and visa 30 s). The visa piece uses the static visa table when it has an entry.</p>
 <p><strong>Auth:</strong> user. <strong>Bucket:</strong> compare.</p>
