@@ -240,7 +240,6 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
 
 function WatchConfirmation({ watch, offerBrowser, onAnswer, onClose }) {
   const price = watch.baseline_price ?? watch.last_price
-  const underTarget = watch.alert_mode === 'below_target' && price != null && price <= watch.target_price
   return (
     <div className="px-5 pb-5" role="status">
       <div className="mt-3 flex gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -249,8 +248,11 @@ function WatchConfirmation({ watch, offerBrowser, onAnswer, onClose }) {
           {price != null
             ? <p>Today’s fare is <strong className="tabular-nums">{formatUsd(price)}</strong> ({travellersLabel(watch.num_travelers)}). We’ll check about twice a day and only speak up when it’s worth it.</p>
             : <p>We’ll take today’s price shortly, then check about twice a day and only speak up when it’s worth it.</p>}
-          {underTarget && (
-            <p className="mt-1.5 font-medium">It’s already under your {formatUsd(watch.target_price)} target — this could be a good moment to book.</p>
+          {watch.already_below_target && (
+            <p className="mt-1.5 font-medium">Already below your target — we’ll tell you if it drops further.</p>
+          )}
+          {!watch.already_below_target && watch.already_low && (
+            <p className="mt-1.5 font-medium">Google already rates this as a low price — we’ll tell you if it drops further.</p>
           )}
         </div>
       </div>

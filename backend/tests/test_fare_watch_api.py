@@ -765,3 +765,29 @@ def test_email_change_is_rate_limited(client, alice, monkeypatch):
         assert r.status_code == 429
     finally:
         rate_limit.limiter._hits.clear()
+
+
+# ── Create says when the fare is already good ─────────────────────────────────
+
+
+def test_create_says_when_already_below_target(client, alice):
+    w = _create(client, alice[1], alert_mode="below_target", target_price=500).json()
+    assert w["baseline_price"] == 480.0
+    assert w["already_below_target"] is True
+    assert w["already_low"] is False
+
+
+def test_create_not_below_target(client, alice):
+    w = _create(client, alice[1], alert_mode="below_target", target_price=450).json()
+    assert w["already_below_target"] is False
+
+
+def test_already_below_target_only_in_target_mode(client, alice):
+    w = _create(client, alice[1]).json()
+    assert w["already_below_target"] is False
+
+
+def test_create_says_when_google_already_calls_it_low(client, alice):
+    serp_flights._call.return_value = _serp([480.0], level="low")
+    w = _create(client, alice[1]).json()
+    assert w["already_low"] is True

@@ -511,7 +511,7 @@ A watch:
 }
 ```
 
-`status` is `active`, `paused`, `expired` (departure day reached) or `error` (three failed checks in a row). `problem` is a plain-language reason for the latest failed check (`null` when healthy); the raw error stays server-side. `history` holds up to 120 checks, oldest first. The alert state per signal (`last_notified_*`, `own_peak_price`, `own_lowest_price`, `cheaper_notified_*`, `cheaper_peak_price`) is also returned.
+`status` is `active`, `paused`, `expired` (departure day reached) or `error` (three failed checks in a row). `already_below_target` / `already_low` say the baseline already met the target / was rated "low" by Google (that signal's first alert then needs a full max($15, 5 %) drop below the baseline); `problem` is a plain-language reason for the latest failed check (`null` when healthy); the raw error stays server-side. `history` holds up to 120 checks, oldest first. The alert state per signal (`last_notified_*`, `own_peak_price`, `own_lowest_price`, `cheaper_notified_*`, `cheaper_peak_price`) is also returned.
 
 ### GET /api/fare-watches, GET /api/fare-watches/{id}
 

@@ -28,6 +28,7 @@ _BOOL_FIELDS = ("email_enabled",)
 
 # Columns added after the first version of the table (per-signal references)
 _WATCH_MIGRATIONS = (
+    ("baseline_price_level", "TEXT"),
     ("own_peak_price", "REAL"),
     ("own_lowest_price", "REAL"),
     ("cheaper_notified_price", "REAL"),
@@ -62,6 +63,7 @@ def create_fare_watch_tables() -> None:
                 lowest_price_date   TEXT,
                 last_notified_price REAL,
                 last_notified_at    TEXT,
+                baseline_price_level TEXT,
                 own_peak_price      REAL,
                 own_lowest_price    REAL,
                 cheaper_notified_price REAL,

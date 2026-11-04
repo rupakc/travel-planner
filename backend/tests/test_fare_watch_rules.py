@@ -229,7 +229,10 @@ def test_target_already_met_at_baseline_needs_a_lower_price():
     w = _watch(**_target(400.0), baseline_price=380.0, own_lowest_price=380.0)
     assert evaluate(w, _check(385.0), NOW) == []
     assert evaluate(w, _check(380.0), NOW) == []
-    assert kinds(evaluate(w, _check(370.0), NOW)) == ["fare_target"]
+    # already under the target at the start: a full step below 380 (−19)
+    assert evaluate(w, _check(370.0), NOW) == []
+    assert evaluate(w, _check(361.5), NOW) == []
+    assert kinds(evaluate(w, _check(361.0), NOW)) == ["fare_target"]
 
 
 @pytest.mark.parametrize(
@@ -266,6 +269,13 @@ def test_target_mode_skips_low_level_rule():
 
 
 # ── Google "low" ──────────────────────────────────────────────────────────────
+
+
+def test_low_level_needs_a_full_step_when_the_baseline_was_already_low():
+    w = _watch(baseline_price_level="low")
+    assert evaluate(w, _check(490.0, price_level="low"), NOW) == []
+    w = _watch(baseline_price=500.0, baseline_price_level="low", alert_mode="any_drop")
+    assert kinds(evaluate(w, _check(475.0, price_level="low"), NOW)) == ["fare_drop"]
 
 
 def test_low_level_fires_on_new_lowest_small_drop():

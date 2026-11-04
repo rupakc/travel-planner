@@ -67,6 +67,7 @@ class FareWatchUpdate(BaseModel):
 def serialize(watch: dict, **extra) -> dict:
     out = {k: v for k, v in watch.items() if k not in _HIDDEN}
     out["problem"] = fare_watch.friendly_problem(watch.get("last_error"))
+    out.update(fare_watch.already_good(watch))
     out["history"] = fare_watch_db.get_history(watch["id"])
     out["booking_url"] = _google_flights_url(
         watch["origin_code"],

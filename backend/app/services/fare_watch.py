@@ -150,9 +150,14 @@ def _own_candidates(watch: dict, check: FareCheck) -> list[tuple[str, float, flo
     last = watch.get("last_notified_price")
     peak = watch.get("own_peak_price")
     lowest = watch.get("own_lowest_price")
+    # Already good when watching started (under the target / Google "low"):
+    # that signal's first alert needs a full step below the baseline.
+    full_step = p <= baseline - step(baseline)
     if last is None:
         drop_ref = baseline
         repeat_ok = p < baseline  # never for a rise above where we started
+        if watch.get("baseline_price_level") == "low":
+            repeat_ok = full_step
     else:
         drop_ref = peak if _rearmed(last, peak) else last
         repeat_ok = p <= last - step(last) or _rearmed(last, peak)
@@ -161,7 +166,10 @@ def _own_candidates(watch: dict, check: FareCheck) -> list[tuple[str, float, flo
         target_rearmed = (
             last is not None and peak is not None and peak >= target + step(target)
         )
-        ok = p < baseline if last is None else p <= last - step(last) or target_rearmed
+        if last is None:
+            ok = full_step if baseline <= target else p < baseline
+        else:
+            ok = p <= last - step(last) or target_rearmed
         if ok:
             out.append(("fare_target", p, drop_ref))
     if mode == "any_drop":
@@ -359,6 +367,18 @@ def user_daily_cap() -> int:
     """SerpAPI calls one user's watches may spend per UTC day."""
     share = settings.fare_watch_daily_call_budget * settings.fare_watch_user_daily_share
     return max(1, math.floor(share + 1e-9))  # 10 × 0.3 is 2.999… in floats
+
+
+def already_good(watch: dict) -> dict:
+    """Whether the fare was already good when watching started."""
+    base, target = watch.get("baseline_price"), watch.get("target_price")
+    return {
+        "already_below_target": watch.get("alert_mode") == "below_target"
+        and base is not None
+        and target is not None
+        and base <= target,
+        "already_low": base is not None and watch.get("baseline_price_level") == "low",
+    }
 
 
 def friendly_problem(raw: str | None) -> str | None:
@@ -616,6 +636,7 @@ def _record_success(
         fields["check_count"] = (watch.get("check_count") or 0) + 1
         if watch.get("baseline_price") is None:
             fields["baseline_price"] = p
+            fields["baseline_price_level"] = check.price_level
         own_lowest = watch.get("own_lowest_price")
         if own_lowest is None or p < own_lowest:
             fields["own_lowest_price"] = p

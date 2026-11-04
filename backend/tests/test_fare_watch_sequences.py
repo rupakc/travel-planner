@@ -229,3 +229,38 @@ async def test_state_is_persisted_per_signal():
             "FROM fare_watches ORDER BY id DESC LIMIT 1"
         ).fetchone()
     assert tuple(row) == (470.0, 480.0, 450.0, 470.0, 470.0, 450.0)
+
+
+# ── Baseline already good: the first alert needs a full step ──────────────────
+
+
+async def test_baseline_already_under_target_needs_a_full_step():
+    # 430 at the start with a 450 target: 425 is no news; ≤ 430 − 21.5 is
+    got = await run(
+        [430, 425, 420, 409, 408.5], alert_mode="below_target", target_price=450
+    )
+    assert got == [".", ".", ".", ".", "target"]
+
+
+async def test_baseline_above_target_still_alerts_on_crossing():
+    got = await run([460, 449], alert_mode="below_target", target_price=450)
+    assert got == [".", "target"]
+
+
+async def test_baseline_already_google_low_needs_a_full_step():
+    got = await run([(500, "low"), (490, "low"), (480, "low"), (475, "low")])
+    assert got == [".", ".", ".", "drop"]
+
+
+async def test_baseline_not_low_still_gets_the_first_low_alert():
+    got = await run([(500, "typical"), (490, "low")])
+    assert got == [".", "low"]
+
+
+async def test_baseline_level_is_stored():
+    await run([(500, "low")])
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT baseline_price_level FROM fare_watches ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    assert row[0] == "low"

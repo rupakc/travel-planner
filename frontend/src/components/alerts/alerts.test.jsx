@@ -149,6 +149,17 @@ describe('WatchFareButton', () => {
     expect(document.body.textContent).not.toContain('Get a heads-up')
   })
 
+  it.each([
+    [{ already_below_target: true, alert_mode: 'below_target', target_price: 500 }, 'Already below your target — we’ll tell you if it drops further.'],
+    [{ already_low: true }, 'Google already rates this as a low price — we’ll tell you if it drops further.'],
+  ])('says when the fare is already good: %o', async (flags, text) => {
+    api.createFareWatch.mockResolvedValue({ ...WATCH, baseline_price: 480, already_watching: false, already_below_target: false, already_low: false, ...flags })
+    await render(<WatchFareButton trip={TRIP} />)
+    await act(async () => button('Watch fare').click())
+    await act(async () => button('Start watching').click())
+    expect(document.querySelector('[role="dialog"]').textContent).toContain(text)
+  })
+
   it('pre-ticks nearby dates from the fare calendar and hides email without SMTP', async () => {
     alerts.caps = { ...alerts.caps, email: false }
     await render(<WatchFareButton trip={TRIP} defaultFlexible label="Watch these dates" />)

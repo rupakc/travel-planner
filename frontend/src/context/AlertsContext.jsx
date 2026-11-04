@@ -46,7 +46,7 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   const lastCount = useRef(0)
   const matches = useRef(new Map())
   const openLink = useRef(onOpenLink)
-  openLink.current = onOpenLink
+  useEffect(() => { openLink.current = onOpenLink }, [onOpenLink])
 
   useEffect(() => {
     let active = true
@@ -68,30 +68,8 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
 
   // One refresh at a time: focus and visibilitychange fire together on return
   const inflight = useRef(null)
-  const account = useRef(token)
-  if (account.current !== token) {
-    // Another account: forget what the previous one had seen
-    account.current = token
-    seenId.current = null
-    lastCount.current = 0
-    matches.current.clear()
-  }
 
-  const refresh = useCallback(() => {
-    if (!token) return Promise.resolve()
-    if (!inflight.current) {
-      inflight.current = doRefresh.current().finally(() => { inflight.current = null })
-    }
-    return inflight.current
-  }, [token])
-
-  /** An alert the user has already seen elsewhere (e.g. "Check now"). */
-  const markSeen = useCallback((id) => {
-    seenId.current = Math.max(seenId.current ?? 0, id)
-  }, [])
-
-  const doRefresh = useRef(null)
-  doRefresh.current = async () => {
+  const doRefresh = useCallback(async () => {
     try {
       const count = await getUnreadCount(token)
       const grew = count > lastCount.current
@@ -113,7 +91,27 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
         announce(fresh)
       }
     } catch { /* offline or signed out — the next poll tries again */ }
-  }
+  }, [token, announce])
+
+  const refresh = useCallback(() => {
+    if (!token) return Promise.resolve()
+    if (!inflight.current) {
+      inflight.current = doRefresh().finally(() => { inflight.current = null })
+    }
+    return inflight.current
+  }, [token, doRefresh])
+
+  /** An alert the user has already seen elsewhere (e.g. "Check now"). */
+  const markSeen = useCallback((id) => {
+    seenId.current = Math.max(seenId.current ?? 0, id)
+  }, [])
+
+  // Another account: forget what the previous one had seen. Runs before
+  // the polling effect below (effects run in order).
+  useEffect(() => {
+    seenId.current = null
+    lastCount.current = 0
+  }, [token])
 
   useEffect(() => {
     if (!token) return undefined
@@ -144,7 +142,7 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   }, [token])
 
   const watchFor = useCallback((trip) => {
-    const key = tripKey(trip)
+    const key = `${token}|${tripKey(trip)}`
     if (!matches.current.has(key)) {
       matches.current.set(key, matchFareWatch(trip, token).catch(() => {
         matches.current.delete(key)

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const authState = { token: 'tok' }
@@ -164,6 +164,86 @@ describe('AlertsProvider', () => {
     await act(async () => seen.answerBrowserAlerts(false))
     expect(requestPermission).not.toHaveBeenCalled()
     expect(seen.shouldOfferBrowserAlerts()).toBe(false)
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('AlertsProvider under StrictMode', () => {
+  let container, root, visibility
+  const strict = (props = {}) => (
+    <StrictMode><AlertsProvider pollMs={60000} {...props}><Probe /></AlertsProvider></StrictMode>
+  )
+  const tick = async (ms) => { await act(async () => { vi.advanceTimersByTime(ms) }) }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    visibility = 'visible'
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility })
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+    api.getUnreadCount.mockReset().mockResolvedValue(0)
+    api.listNotifications.mockReset().mockResolvedValue({ items: [] })
+    authState.token = 'tok'
+    container = document.createElement('div')
+    root = createRoot(container)
+  })
+  afterEach(() => {
+    act(() => root.unmount())
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    authState.token = 'tok'
+  })
+
+  it('polls once on mount and once a minute, despite double effects', async () => {
+    await act(async () => root.render(strict()))
+    expect(api.getUnreadCount).toHaveBeenCalledTimes(1)
+    await tick(60000)
+    expect(api.getUnreadCount).toHaveBeenCalledTimes(2)
+  })
+
+  it('never toasts alerts that existed before load, toasts a new one once', async () => {
+    api.getUnreadCount.mockResolvedValue(2)
+    api.listNotifications.mockResolvedValue({ items: [note(9), note(8)] })
+    await act(async () => root.render(strict()))
+    expect(seen.toast).toBeNull()
+    api.getUnreadCount.mockResolvedValue(3)
+    api.listNotifications.mockResolvedValue({ items: [note(10), note(9)] })
+    await tick(60000)
+    expect(seen.toast.id).toBe(10)
+    act(() => seen.dismissToast())
+    await tick(60000)
+    expect(seen.toast).toBeNull()
+  })
+
+  it('starts fresh for another account', async () => {
+    await act(async () => root.render(strict()))
+    authState.token = 'other'
+    api.getUnreadCount.mockResolvedValue(4)
+    api.listNotifications.mockResolvedValue({ items: [note(99)] })
+    await act(async () => root.render(strict()))
+    expect(seen.unread).toBe(4)
+    expect(seen.toast).toBeNull()
+  })
+
+  it('opens a native notification with the latest onOpenLink', async () => {
+    let made
+    class FakeNotification {
+      static permission = 'granted'
+      constructor() { made = this }
+      close() {}
+    }
+    vi.stubGlobal('Notification', FakeNotification)
+    document.hasFocus.mockReturnValue(false)
+    const first = vi.fn()
+    const second = vi.fn()
+    await act(async () => root.render(strict({ onOpenLink: first })))
+    await act(async () => root.render(strict({ onOpenLink: second })))
+    api.getUnreadCount.mockResolvedValue(1)
+    api.listNotifications.mockResolvedValue({ items: [note(5)] })
+    await tick(60000)
+    vi.spyOn(window, 'focus').mockImplementation(() => {})
+    made.onclick()
+    expect(second).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }))
+    expect(first).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
   })
 })
