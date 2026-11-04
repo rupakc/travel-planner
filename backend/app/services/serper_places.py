@@ -39,6 +39,30 @@ class SerperPlacesClient:
             logger.warning("Serper /places failed for %s: %s", destination, exc)
             return []
 
+    async def lookup_place(self, query: str) -> dict | None:
+        """The top Google Maps match for one named place ("Belém Tower,
+        Lisbon, Portugal"), with latitude/longitude, address and rating, or
+        None."""
+        try:
+            async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+                resp = await client.post(
+                    _SERPER_PLACES_URL,
+                    headers={
+                        "X-API-KEY": self._key,
+                        "Content-Type": "application/json",
+                    },
+                    json={"q": query, "gl": "us", "hl": "en"},
+                )
+                resp.raise_for_status()
+                places = resp.json().get("places") or []
+        except Exception as exc:
+            logger.warning("Serper /places lookup failed for %s: %s", query, exc)
+            return None
+        for place in places[:1]:
+            if place.get("latitude") is not None and place.get("longitude") is not None:
+                return place
+        return None
+
     async def fetch_guides(self, destination: str) -> list[dict]:
         """Fetch editorial Google search results (Timeout, Lonely Planet, TripAdvisor articles)."""
         try:

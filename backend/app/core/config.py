@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     rate_limit_compare: int = 30  # /compare/destination
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
+    rate_limit_import: int = 20  # /import/extract (plan from a link)
 
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"

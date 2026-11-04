@@ -27,6 +27,7 @@ from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.feedback import router as feedback_router
 from .api.routes.layover import router as layover_router
+from .api.routes.link_import import router as link_import_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
@@ -185,6 +186,12 @@ app.include_router(
 )
 app.include_router(
     layover_router, prefix="/api", tags=["layover"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    link_import_router,
+    prefix="/api",
+    tags=["import"],
+    dependencies=_limited("import"),
 )
 
 
