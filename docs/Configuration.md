@@ -76,6 +76,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_CHAT` | `30` | `/api/chat` |
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
+| `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", and changing the account email |
 
 Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
@@ -91,7 +92,7 @@ Counters live in process memory: they reset on restart and are not shared betwee
 The frontend reads no environment variables at build or run time.
 
 - **Dev:** Vite proxies `/api` and `/health` to `http://localhost:8001` (`frontend/vite.config.js`).
-- **Container:** nginx renders `frontend/nginx.conf.template` with `BACKEND_URL` (envsubst) and proxies `/api/` and `/health` to it. Proxy buffering is off so SSE streams, with a 120 s read timeout.
+- **Container:** nginx renders `frontend/nginx.conf.template` with `BACKEND_URL` (envsubst) and proxies `/api/` and `/health` to it. Proxy buffering is off so SSE streams, with a 120 s read timeout. `/api/` allows request bodies up to 32 MB (`client_max_body_size 32m`) for screenshot imports; the backend itself refuses import bodies over 30 MB.
 
 Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_open`, `tp_tour_done:<username>`, `chat_history_<username>`, and the packing-list checkbox state.
 

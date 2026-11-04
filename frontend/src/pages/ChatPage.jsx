@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   Send, Square, Plane, User, Trash2, Hotel, MapPin, Shield,
   Smartphone, Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
   Star, AlertTriangle, Info, AlertCircle, ExternalLink,
   DollarSign, Zap, X, Check, Copy, Plus, Bookmark, Save, Eye,
-  ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi, Share2
+  ChevronDown, ChevronUp, PenLine, Bus, RefreshCw, Wifi, Share2, Link2
 } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -23,6 +23,8 @@ import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EM
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
 import { stripLinkEvidence } from '../utils/verification'
+import { chatImportLink } from '../utils/linkImport'
+import { safeUrl } from '../utils/planPrint'
 
 // Fix Leaflet default icon (only once, even if TripMap.jsx also does this)
 delete L.Icon.Default.prototype._getIconUrl
@@ -1094,6 +1096,7 @@ export default function ChatPage() {
   const inputRef = useRef(null)
 
   const location = useLocation()
+  const navigate = useNavigate()
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1330,6 +1333,15 @@ export default function ChatPage() {
         } else if (event.type === 'plan_action') {
           planActionsReceived = true
           applyPlanAction(event)
+        } else if (event.type === 'import_link') {
+          const url = safeUrl(event.url)
+          if (url) {
+            setMessages(prev => {
+              const updated = [...prev]
+              updated[assistantIdx] = { ...updated[assistantIdx], importLink: url }
+              return updated
+            })
+          }
         } else if (event.type === 'plan_ready') {
           if (planActionsReceived) setIsPlanOpen(true)
         } else if (event.type === 'session_context_update') {
@@ -1536,6 +1548,12 @@ export default function ChatPage() {
                           )}
                           {msg.suggestions?.length > 0 && (
                             <SuggestionsBar chips={msg.suggestions} onSelect={(chip) => sendMessage(chip)} />
+                          )}
+                          {msg.importLink && (
+                            <button type="button" onClick={() => { track('import_from_chat', 'chat', {}); navigate(chatImportLink(msg.importLink)) }}
+                              className="self-start inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600">
+                              <Link2 size={15} /> Plan a trip from this link
+                            </button>
                           )}
                         </div>
                       )}

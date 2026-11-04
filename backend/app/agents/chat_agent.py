@@ -4,6 +4,7 @@ import logging
 import math
 import re
 from datetime import date, timedelta
+from urllib.parse import quote
 
 from ..core.rate_limit import try_consume
 from ..schemas.request import TravelSearchRequest
@@ -15,6 +16,30 @@ from .loader import load_agent_definition
 _CHAT_MODEL = "claude-sonnet-4-6"
 
 logger = logging.getLogger(__name__)
+
+# A trip link pasted into chat goes to the Search page's "From a link" flow
+# (chat never fetches pages itself): a message that is only a link, or a link
+# with a planning ask.
+_LINK_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)
+_LINK_PLAN_ASK = re.compile(
+    r"\b(plan|trip|itinerary|itineraries|holiday|vacation|import)\b", re.IGNORECASE
+)
+
+
+def import_link_request(message: str) -> str | None:
+    """The http(s) link to import when ``message`` asks to plan from one."""
+    text = (message or "").strip()
+    match = _LINK_RE.search(text)
+    if not match:
+        return None
+    url = match.group(0).rstrip(".,;:!?)]}")
+    only_link = text.strip("<>") == match.group(0)
+    if not (only_link or _LINK_PLAN_ASK.search(text.replace(match.group(0), " "))):
+        return None
+    if url.lower().startswith("www."):
+        url = "https://" + url
+    return url if url.lower().startswith(("http://", "https://")) else None
+
 
 _PLANNING_PATTERNS = re.compile(
     r"|".join(
@@ -250,6 +275,28 @@ class ChatAgent:
                 {
                     "type": "delta",
                     "text": "I'm a travel planning assistant — I can only help with travel questions!",
+                }
+            )
+            yield json.dumps({"type": "done"})
+            return
+
+        # 0.5 A trip link → hand off to the import flow
+        link = import_link_request(last_msg)
+        if link:
+            yield json.dumps(
+                {
+                    "type": "delta",
+                    "text": "That looks like a trip worth stealing! Open it in "
+                    "**Plan from a link** — I'll pull out every place it mentions, "
+                    "put them on a map for you to check, then plan the days "
+                    "around them.",
+                }
+            )
+            yield json.dumps(
+                {
+                    "type": "import_link",
+                    "url": link,
+                    "href": f"/?import={quote(link, safe='')}",
                 }
             )
             yield json.dumps({"type": "done"})

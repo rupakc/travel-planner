@@ -28,6 +28,7 @@ from .api.routes.events import router as events_router
 from .api.routes.fare_watches import router as fare_watches_router
 from .api.routes.feedback import router as feedback_router
 from .api.routes.layover import router as layover_router
+from .api.routes.link_import import router as link_import_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
@@ -36,6 +37,7 @@ from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.walking_tours import router as walking_tours_router
+from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .core.rate_limit import rate_limit
@@ -112,6 +114,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(AnalyticsMiddleware)
+
+# Plan-from-a-link bodies carry screenshots (4 × ≤5 MB base64); refuse anything
+# bigger (declared or streamed) before FastAPI reads and parses it. Keep in step
+# with nginx's client_max_body_size (frontend/nginx.conf.template).
+app.add_middleware(
+    BodySizeLimit,
+    prefix="/api/import/",
+    max_bytes=30 * 1024 * 1024,
+    message="That upload is too big — use up to 4 screenshots of 5 MB or less.",
+)
+
+
 app.add_middleware(RequestIdMiddleware)
 
 
@@ -200,6 +214,12 @@ app.include_router(
 )
 app.include_router(
     layover_router, prefix="/api", tags=["layover"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    link_import_router,
+    prefix="/api",
+    tags=["import"],
+    dependencies=_limited("import"),
 )
 
 

@@ -4,6 +4,20 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: plan a trip from a link or screenshot
+
+- New Search mode, **From a link ✨**. Paste a travel blog, YouTube or TikTok link, a caption or a message, or drop up to 4 screenshots. The places come back on a map for review (tick, rename, move between stops, place the unplaced, set nights), then a normal search plans the trip around them.
+- `POST /api/import/extract`, with SSRF-safe link fetching (public addresses only on every redirect hop, pinned IP, 10 s and 2 MB limits), YouTube and TikTok oEmbed, friendly errors for Instagram, Facebook, X and Threads, and a hardened `link_import` extraction agent. Rate bucket `import`, default 20 (`RATE_LIMIT_IMPORT`).
+- `TravelSearchRequest.must_include` and `import_source`. Imported places lead Activities and are always scheduled in the itinerary by a deterministic post-check (`from_link` slots, `link_extras`, `link_coverage`). Results show a coverage banner and "From your link" tags; the share page, print and calendar export credit the source.
+- Chat replies to a pasted trip link with a "Plan a trip from this link" button that opens the import flow.
+- Hardening:
+  - bounded gzip/deflate decompression (other encodings refused), with parsing off the event loop;
+  - nonce-fenced prompts;
+  - a strict, city-aware scheduling match and a logistics guard on every day;
+  - screenshots shrunk in the browser, with 32 MB nginx and 30 MB backend body limits;
+  - `POST /api/import/resolve-place` to place spots by town;
+  - deep links that survive the login redirect.
+
 ## Unreleased: documentation and housekeeping
 
 - **Fare watch and price alerts** (branch `feat/price-alerts`): watch a single-destination trip's live fare from the Flights header, the fare calendar, My Plan or a saved plan; a background scheduler re-checks it about twice a day within a daily SerpAPI budget and notifies on a meaningful drop, a target price, a new Google-rated low or a cheaper date ±3 days, never on the baseline, never for a rise, never for small drifts (repeats need a further max($15, 5 %) drop unless the price rebounded) and at most once a day; each user gets at most 30 % of the daily SerpAPI budget. New `/alerts` page, header bell with toasts and optional browser notifications, optional SMTP email with a one-click stop link, and an email field on Preferences. New tables `fare_watches`, `fare_watch_history`, `fare_watch_quota`, `notifications`; new settings `FARE_WATCH_*`, `SMTP_*`, `APP_BASE_URL`. See [Trip Planning Features](Trip-Planning-Features.md#fare-watch-and-price-alerts).

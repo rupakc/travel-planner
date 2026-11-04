@@ -57,8 +57,11 @@ class BaseAgent:
     def __init__(self, definition: AgentDefinition):
         self.definition = definition
 
-    async def execute(self, prompt: str) -> dict:
-        """Execute agent via direct Anthropic API and return parsed JSON."""
+    async def execute(self, prompt: str | list[dict]) -> dict:
+        """Execute agent via direct Anthropic API and return parsed JSON.
+
+        ``prompt`` is the user message: a string, or a list of content blocks
+        (text and base64 image blocks for vision)."""
         compact_nudge = ""
         for attempt in range(1, _MAX_RETRIES + 1):
             try:

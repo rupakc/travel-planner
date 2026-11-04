@@ -11,7 +11,8 @@
 ## Features
 
 ### Plan a trip
-- **Three ways to start.** Search a destination you already know. Use **Surprise me**, which suggests 5 destinations with visa status, flight time, a rough cost range and why each one matches you. Or use **Compare**, which puts 2–3 destinations side by side on cost, flight, hotel, weather, visa and Travel Ease.
+- **Four ways to start.** Search a destination you already know. Use **Surprise me**, which suggests 5 destinations with visa status, flight time, a rough cost range and why each one matches you. Use **Compare**, which puts 2–3 destinations side by side on cost, flight, hotel, weather, visa and Travel Ease. Or plan **From a link**.
+- **Plan from a link or screenshot.** Paste a travel blog, YouTube or TikTok link, a caption or a friend's message, or drop up to 4 screenshots. Every place in it lands on a map for you to review, and the trip is then planned around them. Each one is scheduled in the itinerary with a "From your link" tag.
 - **Multi-city trips.** Add up to 3 stops on the way, each with its own number of nights. Flights come per leg, and every section stays in journey order.
 - **16 streaming sections:** Flights, Weather, Hotels (across budget tiers), Activities (matched to your interests), Places to See, Free Walking Tours (from GuruWalk, Freetour.com, freewalkingtour.com and SANDEMANs NewEurope), What's On (events during your dates), Visa, SIM Cards, Travel Tips, Emergency Card, Getting Around, Currency & Forex, Itinerary, Trip Health Check and Packing List.
 - **Filters** for flights (stops, price, time windows), hotels (beds, price, wifi, distance, private washroom) and activities (interests, price, dates, rating).

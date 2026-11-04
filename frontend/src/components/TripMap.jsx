@@ -49,11 +49,13 @@ function nearestNeighborOrder(stops) {
   return result
 }
 
-function makeNumberedIcon(num, color = '#0d9488') {
+// Places from the traveller's imported link wear an amber ring
+function makeNumberedIcon(num, color = '#0d9488', fromLink = false) {
+  const ring = fromLink ? 'border:2px solid #fff;box-shadow:0 0 0 3px #f59e0b,0 1px 4px rgba(0,0,0,.35)' : 'border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)'
   return L.divIcon({
     html: `<div style="background:${color};color:#fff;width:22px;height:22px;border-radius:50%;
            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
-           border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">${num}</div>`,
+           ${ring}">${num}</div>`,
     className: '',
     iconSize: [22, 22],
     iconAnchor: [11, 11],
@@ -89,6 +91,7 @@ export default function TripMap({ days }) {
         time: s.time_of_day,
         day: day.day_number,
         city: day.city || s.city || null,
+        fromLink: !!s.from_link,
       }))
     allStops.push(...nearestNeighborOrder(dayStops))
   })
@@ -121,13 +124,14 @@ export default function TripMap({ days }) {
         {allStops.map((stop, i) => {
           const color = stop.city ? (cityColor[stop.city] || '#0d9488') : '#0d9488'
           return (
-            <Marker key={i} position={[stop.lat, stop.lng]} icon={makeNumberedIcon(i + 1, color)}>
+            <Marker key={i} position={[stop.lat, stop.lng]} icon={makeNumberedIcon(i + 1, color, stop.fromLink)}>
               <Popup>
                 <div style={{ fontSize: 12, lineHeight: 1.4 }}>
                   <p style={{ fontWeight: 600, margin: 0 }}>{stop.activity}</p>
                   {stop.location && (
                     <p style={{ color: '#6b7280', margin: '2px 0 0' }}>{stop.location}</p>
                   )}
+                  {stop.fromLink && <p style={{ color: '#b45309', margin: '2px 0 0', fontWeight: 600 }}>From your link</p>}
                   <p style={{ color: '#0d9488', margin: '2px 0 0' }}>
                     Day {stop.day}{stop.city ? ` · ${stop.city}` : ''} · {stop.time}
                   </p>

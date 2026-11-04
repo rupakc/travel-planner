@@ -92,3 +92,31 @@ class TestSanitization:
         assert sd["num_travelers"] == 2
 
         client.delete(f"/api/plans/{plan_id}", headers=admin_headers)
+
+    def test_public_view_keeps_a_safe_import_source(self, client, admin_headers):
+        def share(import_source):
+            resp = client.post(
+                "/api/plans",
+                json={
+                    "name": "From a link",
+                    "search_data": {**SEARCH_DATA, "import_source": import_source},
+                    "selections": SELECTIONS,
+                },
+                headers=admin_headers,
+            )
+            plan_id = resp.json()["id"]
+            token = client.post(
+                f"/api/plans/{plan_id}/share", headers=admin_headers
+            ).json()["share_token"]
+            body = client.get(f"/api/share/{token}").json()
+            client.delete(f"/api/plans/{plan_id}", headers=admin_headers)
+            return body["search_data"].get("import_source")
+
+        assert share(
+            {"url": "https://wander.example/lisbon", "title": "48h", "x": 1}
+        ) == {"url": "https://wander.example/lisbon", "title": "48h"}
+        assert share({"url": "javascript:alert(1)", "title": "Hi"}) == {
+            "url": None,
+            "title": "Hi",
+        }
+        assert share("junk") is None

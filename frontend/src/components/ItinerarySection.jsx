@@ -5,6 +5,7 @@ import {
   GripVertical, ArrowRightLeft, Undo2, RotateCcw,
 } from 'lucide-react'
 import TripMap from './TripMap'
+import FromLinkChip from './FromLinkChip'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
@@ -509,7 +510,10 @@ export default function ItinerarySection({
                           </div>
                         ) : (
                           <>
-                            <p data-activity className="text-sm font-medium text-gray-900">{activity}</p>
+                            <p data-activity className="text-sm font-medium text-gray-900">
+                              {activity}
+                              {slot.from_link && <FromLinkChip quote={slot.link_quote} note={slot.link_note} className="ml-2 align-middle" />}
+                            </p>
                             {location && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><MapPin size={11}/>{location}</p>}
                             {slot.notes && !edit.activity && <p className="text-sm text-gray-400 mt-1 italic">{slot.notes}</p>}
                             {note && <p className="text-sm text-teal-600 mt-1 italic">📝 {note}</p>}
@@ -581,6 +585,12 @@ export default function ItinerarySection({
               )
             })}
           </div>
+          {day.link_extras?.length > 0 && (
+            <p data-link-extras className="px-4 py-2.5 border-t border-amber-100 bg-amber-50/60 text-xs text-amber-900">
+              <span className="font-semibold">Also from your link:</span>{' '}
+              {day.link_extras.map((x) => x.name).join(', ')} — fit {day.link_extras.length === 1 ? 'it' : 'them'} in around the day.
+            </p>
+          )}
         </div>
       ))}
 

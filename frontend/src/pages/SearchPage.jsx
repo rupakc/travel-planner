@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { track } from '../utils/analytics'
-import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, Plus, X } from 'lucide-react'
+import { Calendar, Users, DollarSign, Globe, Search, Plane, MapPin, Plus, X, Link2, ImagePlus } from 'lucide-react'
+import ImportPanel from '../components/import/ImportPanel'
+import ImportPreview from '../components/import/ImportPreview'
+import { importLinkFromQuery } from '../utils/linkImport'
+import usePageFileDrop from '../hooks/usePageFileDrop'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
@@ -114,14 +118,22 @@ function DestinationCard({ dest, onSelect }) {
 
 export default function SearchPage() {
   const { preferences, updatePreferences, token, user } = useAuth()
-  const { setPendingSearchData, hasSearchResults } = useSearchData()
+  const { setPendingSearchData, hasSearchResults, clearSearchResults } = useSearchData()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const today     = new Date().toISOString().split('T')[0]
   const nextWeek  = new Date(Date.now() + 7  * 86400000).toISOString().split('T')[0]
   const twoWeeks  = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
 
-  const [mode, setMode] = useState('known')  // 'known' | 'discover' | 'compare'
+  const [mode, setMode] = useState('known')  // 'known' | 'discover' | 'compare' | 'import'
+  // Plan from a link: the reviewed preview, and what to prefill the input
+  // with (a deep-linked URL or a screenshot dropped anywhere on the page)
+  const [importPreview, setImportPreview] = useState(null)
+  const [importSeed, setImportSeed] = useState(null)
+  // Arrived to import (deep link or a dropped screenshot): no first-run tour
+  const [importEntry, setImportEntry] = useState(false)
+  const formCardRef = useRef(null)
   const [discoverForm, setDiscoverForm] = useState({
     origin: '',
     nationality: '',
@@ -186,7 +198,8 @@ export default function SearchPage() {
   // and waits for that history to load so the page has stopped shifting.
   const tour = useFirstRunTour({
     username: user?.username,
-    visible: location.pathname === '/' && !hasSearchResults && mode === 'known',
+    visible: location.pathname === '/' && !hasSearchResults && mode === 'known' && !importEntry
+      && !importLinkFromQuery(location.search),
     eligible: recentLoaded && recentSearches.length === 0,
     delayMs: TOUR_START_DELAY_MS,
   })
@@ -235,7 +248,7 @@ export default function SearchPage() {
   const toggleInterest = (id) =>
     setForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))
 
-  const startSearch = (form, extraStops) => {
+  const startSearch = (form, extraStops, { preferenceInterests = form.interests } = {}) => {
     const totalTravelers = Math.max(1, form.adults + form.children + form.seniors + form.infants)
     const stops = extraStops
       .map(s => ({ city: (s.city || '').trim(), nights: s.nights }))
@@ -261,7 +274,7 @@ export default function SearchPage() {
       current_residence: preferences?.current_residence || '',
       residence_permits: form.residence_permits,
       existing_visas: form.existing_visas,
-      interests: form.interests,
+      interests: preferenceInterests,
       num_travelers: totalTravelers,
       budget_category: USD_TO_BUDGET(form.budget_usd),
       adults: form.adults,
@@ -393,6 +406,39 @@ export default function SearchPage() {
     startSearch(planForm, [])
   }
 
+  // ── Plan from a link ──────────────────────────────────────────────────
+  const openImport = (seed = null) => {
+    setMode('import')
+    setImportPreview(null)
+    if (seed) {
+      setImportEntry(true)
+      setImportSeed({ ...seed, nonce: Date.now() })
+    }
+  }
+
+  // /?import=<url> (e.g. from Chat) opens the import flow and starts reading
+  useEffect(() => {
+    const url = importLinkFromQuery(location.search)
+    if (!url) return
+    clearSearchResults() // show the Search page even if results were open
+    openImport({ url, autoStart: true })
+    navigate('/', { replace: true })
+  }, [location.search])
+
+  const handleImportPreview = (preview) => {
+    setImportPreview(preview)
+    track('import_preview_shown', 'search', { place_count: (preview.places || []).length })
+    formCardRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleImportPlan = ({ form: planForm, stops, placeCount }) => {
+    track('import_planned', 'search', { place_count: placeCount, stops: stops.length + 1 })
+    startSearch(planForm, stops, { preferenceInterests: form.interests })
+  }
+
+  // A screenshot dragged anywhere over the Search page opens the import tab
+  const pageDrop = usePageFileDrop((files) => openImport({ files }))
+
   const handleDiscover = async () => {
     setDiscovering(true)
     setDiscoverError(null)
@@ -423,8 +469,17 @@ export default function SearchPage() {
   const labelClass = "block text-sm font-medium text-gray-700 mb-1"
 
   return (
-    <div>
+    <div {...pageDrop.handlers} className="relative">
       <OnboardingTour open={tour.open} steps={SEARCH_TOUR_STEPS} onClose={tour.close} />
+      {pageDrop.dragging && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-amber-50/85 backdrop-blur-sm" aria-hidden="true">
+          <div className="rounded-3xl border-2 border-dashed border-amber-400 bg-white/90 px-10 py-8 text-center shadow-xl">
+            <ImagePlus size={36} className="mx-auto text-amber-600" />
+            <p className="mt-3 font-display text-xl font-bold text-gray-900">Drop it to plan a trip</p>
+            <p className="mt-1 text-sm text-gray-500">We'll find every place in your screenshot</p>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
@@ -438,13 +493,21 @@ export default function SearchPage() {
           className="mt-2 text-sm font-medium text-teal-600 hover:text-teal-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
           New here? Take a quick tour
         </button>
+        {mode !== 'import' && (
+          <p className="mt-3">
+            <button type="button" onClick={() => openImport()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+              <Link2 size={14} /> Saw a great trip online? <span className="font-semibold">Paste the link</span>
+            </button>
+          </p>
+        )}
       </div>
 
       {/* Form card */}
       <div className="max-w-4xl mx-auto px-4 pb-16 -mt-2">
-        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8">
+        <div ref={formCardRef} className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8 scroll-mt-20">
           {/* Mode toggle */}
-          <div className="flex items-center gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit max-w-full mx-auto">
             <button type="button"
               onClick={() => setMode('known')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'known' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -460,7 +523,27 @@ export default function SearchPage() {
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'compare' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
               Compare ⚖️
             </button>
+            <button type="button"
+              onClick={() => { if (mode !== 'import') openImport() }}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'import' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              From a link ✨
+            </button>
           </div>
+
+          {mode === 'import' && (importPreview ? (
+            <ImportPreview key={importPreview.title + (importPreview.places || []).length}
+              preview={importPreview} form={form} today={today} token={token}
+              onPlan={handleImportPlan}
+              onStartOver={() => { setImportPreview(null); setImportSeed(null) }} />
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Turn any travel post into your trip</h2>
+                <p className="mt-1 text-sm text-gray-500">A blog, a YouTube or TikTok video, a friend's message or a screenshot — we'll find every place and plan the days around them.</p>
+              </div>
+              <ImportPanel token={token} onPreview={handleImportPreview} seed={importSeed} />
+            </div>
+          ))}
 
           {mode === 'known' && (
             <RecentSearches entries={recentSearches} today={today}

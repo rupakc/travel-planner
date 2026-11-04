@@ -150,6 +150,7 @@ function itineraryEvents(days, selections, searchData) {
       const cost = edit.cost ?? slot.estimated_cost_usd
       const description = [
         day.theme && `Day ${day.day_number}: ${day.theme}`,
+        slot.from_link && `From your link${slot.link_quote ? `: “${slot.link_quote}”` : ''}`,
         slot.notes,
         note,
         cost > 0 && `Est. cost: $${Number(cost).toLocaleString('en-US')}`,
@@ -161,6 +162,16 @@ function itineraryEvents(days, selections, searchData) {
         description,
         start: icsDateTime(date, start),
         end: icsDateTime(date, end),
+      })
+    }
+    if (day.link_extras?.length) {
+      events.push({
+        id: `extras-${day.day_number}`,
+        summary: `Also from your link: ${day.link_extras.map((x) => x.name).join(', ')}`,
+        description: day.link_extras.map((x) => [x.name, x.note].filter(Boolean).join(' — ')).join('\n'),
+        allDay: true,
+        start: icsDate(date),
+        end: icsDate(addDays(date, 1)),
       })
     }
   }
@@ -275,6 +286,11 @@ export function buildPlanIcs({ planName, searchData, selections, itinerary = nul
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${icsEscape(planName || 'Trip plan')}`,
   ]
+  const source = searchData?.import_source
+  if (source?.title || source?.url) {
+    const url = /^https?:\/\//i.test(source.url || '') ? source.url : ''
+    lines.push(`X-WR-CALDESC:${icsEscape(['Inspired by', [source.title, url].filter(Boolean).join(' — ')].join(' '))}`)
+  }
   for (const ev of events) {
     const dateParam = ev.allDay ? ';VALUE=DATE' : ''
     lines.push(

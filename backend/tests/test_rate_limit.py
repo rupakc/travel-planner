@@ -209,7 +209,8 @@ def test_default_limits(monkeypatch):
         s.rate_limit_compare,
         s.rate_limit_discover,
         s.rate_limit_light_ai,
-    ) == (10, 30, 30, 10, 60)
+        s.rate_limit_import,
+    ) == (10, 30, 30, 10, 60, 20)
 
 
 # ── Wiring: every expensive route is limited in the right bucket ────────────
@@ -238,6 +239,8 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/events"): "light_ai",
     ("POST", "/api/walking-tours"): "light_ai",
     ("POST", "/api/layover"): "light_ai",
+    ("POST", "/api/import/extract"): "import",
+    ("POST", "/api/import/resolve-place"): "import",
     # Fare watch: creating one and "Check now" each make a live fare lookup
     ("POST", "/api/fare-watches"): "light_ai",
     ("POST", "/api/fare-watches/{watch_id}/check"): "light_ai",

@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     rate_limit_compare: int = 30  # /compare/destination
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
+    rate_limit_import: int = 20  # /import/extract (plan from a link)
 
     # Fare watch: background re-checks of watched fares (needs SERPAPI_KEY).
     # One check = 1 SerpAPI call (exact dates) or up to 7 (±3 nearby dates);

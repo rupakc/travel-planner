@@ -82,10 +82,16 @@ function itineraryHtml(days, selections) {
       const notes = [slot.notes, note].filter(Boolean).map((n) => `<div class="note">${esc(n)}</div>`).join('')
       const range = timeRange(slot)
       const time = range ? `<span class="time">${esc(range)}</span> ` : ''
-      return `<li><span class="when">${esc(slot.time_of_day)}</span> ${time}${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${notes}</li>`
+      const fromLink = slot.from_link
+        ? ` <span class="link">From your link</span>${slot.link_quote ? ` <span class="muted">“${esc(slot.link_quote)}”</span>` : ''}`
+        : ''
+      return `<li><span class="when">${esc(slot.time_of_day)}</span> ${time}${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${fromLink}${notes}</li>`
     }).join('')
+    const extras = (day.link_extras || []).length
+      ? `<p class="note">Also from your link: ${day.link_extras.map((x) => esc(x.name)).join(', ')}</p>`
+      : ''
     const heading = [`Day ${day.day_number}`, day.date, day.city, day.theme].filter(Boolean).map(esc).join(' · ')
-    return `<div class="day"><h3>${heading}</h3><ul>${slots}</ul></div>`
+    return `<div class="day"><h3>${heading}</h3><ul>${slots}</ul>${extras}</div>`
   }).join('')
 }
 
@@ -114,6 +120,7 @@ const STYLES = `
   .when{display:inline-block;min-width:76px;text-transform:capitalize;color:#0f766e;font-weight:600}
   .note{margin:2px 0 4px 80px;font-style:italic;color:#4b5563}
   .day{break-inside:avoid}
+  .link{display:inline-block;font-size:11px;font-weight:600;color:#9a3412;background:#ffedd5;border-radius:999px;padding:0 8px}
   table.costs{border-collapse:collapse;min-width:320px} table.costs td{padding:3px 12px 3px 0}
   table.costs .pct{color:#6b7280} table.costs .total td{border-top:1px solid #d1d5db;font-weight:700}
   .toolbar{display:flex;justify-content:flex-end;margin-bottom:16px}
@@ -131,6 +138,10 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
     : null
   const summary = trip
     ? `<p class="muted">${esc(trip.route)} · ${esc(trip.dates)} · ${trip.travelers} traveler${trip.travelers === 1 ? '' : 's'}</p>`
+    : ''
+  const source = searchData?.import_source
+  const inspired = source?.title || safeUrl(source?.url)
+    ? `<p class="muted">Inspired by ${safeUrl(source.url) ? `<a href="${esc(safeUrl(source.url))}">${esc(source.title || safeUrl(source.url))}</a>` : esc(source.title)}</p>`
     : ''
 
   const flights = [...(sel.flight ? [sel.flight] : []), ...(sel.flights || [])]
@@ -165,6 +176,7 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
 <div class="toolbar"><button type="button" class="no-print" onclick="${PRINT_HANDLER}">Print / Save as PDF</button></div>
 <h1>${esc(name)}</h1>
 ${summary}
+${inspired}
 ${body}
 <footer>Planned with Voyager. Prices and availability are estimates — confirm before booking.</footer>
 </body>

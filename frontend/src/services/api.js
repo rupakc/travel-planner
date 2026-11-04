@@ -178,6 +178,19 @@ export async function recheckStressTest(payload, token) {
   return res.data
 }
 
+// Plan from a link: read a link, pasted text or screenshots and return the
+// places found (an ImportPreview). `signal` lets the traveller cancel.
+export async function extractImport(body, token, signal) {
+  const res = await api.post('/import/extract', body, { ...authHeaders(token), signal, timeout: 90000 })
+  return res.data
+}
+
+// Place one "Couldn't place" spot in the town the traveller typed.
+export async function resolveImportPlace(body, token) {
+  const res = await api.post('/import/resolve-place', body, authHeaders(token))
+  return res.data
+}
+
 // ── Fare watches + notifications ─────────────────────────────────────────────
 
 export async function listFareWatches(token) {

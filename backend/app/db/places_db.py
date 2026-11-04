@@ -142,6 +142,20 @@ def country_names() -> dict[str, str]:
     return {**other, **official, **COUNTRY_ALIASES}
 
 
+@functools.cache
+def _display_country_names() -> dict[str, str]:
+    from .seed_airports import PLACE_DATA_DIR
+
+    with open(PLACE_DATA_DIR / "countries.csv", newline="", encoding="utf-8") as f:
+        return {row["code"]: row["name"] for row in csv.DictReader(f)}
+
+
+def country_display_name(code: str) -> str:
+    """The English name of an ISO country code ("PT" → "Portugal"), else the
+    code."""
+    return _display_country_names().get((code or "").upper(), code or "")
+
+
 def _official_country_name(name: str) -> bool:
     """A country's own (OurAirports / curated) name, not an alias or a
     GeoNames other-language name: it beats a same-named division."""

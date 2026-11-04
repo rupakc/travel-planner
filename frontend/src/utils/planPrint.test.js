@@ -224,3 +224,42 @@ describe('arranged itinerary in print', () => {
     expect(html({ itinerary_layout: removeSlot(trip, null, '1-morning') })).not.toContain('Tsukiji Outer Market')
   })
 })
+
+describe('imported trips', () => {
+  const linkItinerary = {
+    days: [{
+      day_number: 2, date: '2027-04-02', city: 'Tokyo',
+      slots: [{ time_of_day: 'morning', activity: 'Senso-ji', location: 'Asakusa', from_link: true, link_place: 'Senso-ji', link_quote: 'go at dawn' }],
+      link_extras: [{ name: 'Golden Gai', note: 'Tiny bars' }],
+    }],
+  }
+
+  it('credits the source with a safe link', () => {
+    const html = build({
+      itinerary: linkItinerary,
+      searchData: { ...searchData, import_source: { url: 'https://blog.example/tokyo', title: '3 days in <Tokyo>' } },
+    })
+    expect(html).toContain('Inspired by')
+    expect(html).toContain('3 days in &lt;Tokyo&gt;')
+    expect(html).toContain('href="https://blog.example/tokyo"')
+  })
+
+  it('drops an unsafe source link but keeps the title', () => {
+    const html = build({ searchData: { ...searchData, import_source: { url: 'javascript:alert(1)', title: 'My notes' } } })
+    expect(html).toContain('Inspired by')
+    expect(html).toContain('My notes')
+    expect(html).not.toContain('javascript:')
+  })
+
+  it('marks link places and lists extras in the itinerary', () => {
+    const html = build({ itinerary: linkItinerary })
+    expect(html).toContain('From your link')
+    expect(html).toContain('go at dawn')
+    expect(html).toContain('Golden Gai')
+  })
+
+  it('says nothing about links for an ordinary trip', () => {
+    expect(build()).not.toContain('Inspired by')
+    expect(build()).not.toContain('From your link')
+  })
+})
