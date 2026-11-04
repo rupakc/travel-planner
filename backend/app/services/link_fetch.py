@@ -587,6 +587,8 @@ class LinkContent:
     def as_source_text(self) -> str:
         """Everything the extraction agent should read, labelled."""
         parts = []
+        if self.site_name:
+            parts.append(f"SITE: {self.site_name}")
         if self.title:
             parts.append(f"TITLE: {self.title}")
         if self.author:

@@ -142,13 +142,11 @@ async def extract_trip(
                 "We couldn't read any text on that page. Paste the part of the "
                 "article with the places, or drop a screenshot instead.",
             )
-        result = await agent.run(
-            text=text, source_label=content.site_name or "web page"
-        )
+        result = await agent.run(text=text, source_kind="url")
     elif kind == "text":
-        result = await agent.run(text=body.text.strip(), source_label="pasted text")
+        result = await agent.run(text=body.text.strip(), source_kind="text")
     else:
-        result = await agent.run(images=images, source_label="screenshots")
+        result = await agent.run(images=images, source_kind="images")
 
     if result.get("error"):
         logger.warning("Link import extraction failed: %s", result["error"])
