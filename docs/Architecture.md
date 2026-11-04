@@ -64,6 +64,26 @@ A complete, error-free run is stored as its list of SSE events in the TTL cache 
 
 ---
 
+## Plan from a link
+
+`POST /api/import/extract` (`backend/app/api/routes/link_import.py`) turns a link, pasted text or screenshots into a preview the traveller reviews before anything is planned:
+
+```
+url ──► link_fetch.read_link ──► text ─┐
+text ──────────────────────────────────┼─► LinkImportAgent (Haiku; vision for images)
+images (sniffed, ≤4 × 5 MB) ───────────┘        │  untrusted-data fencing, Pydantic validation
+                                                ▼
+                     link_import.build_preview: resolve_place per city → stops
+                     (day trips merged, ≤3 stops, nights split) → Serper POI lookups
+                                                ▼
+                     ImportPreview ──► review in the browser ──► POST /api/search
+                                                   with must_include + import_source
+```
+
+`link_fetch` is the only place the backend fetches a user-supplied URL. It vets every DNS answer and every redirect hop, and connects to the vetted IP with the original Host and SNI (see [API Reference](API-Reference.md#post-apiimportextract)). In the search, `ActivitiesAgent` merges the places into its results (`services/must_include.merge_into_activities`). `ItineraryAgent` lists them as must-schedule in its prompt and runs `ensure_must_include` on its result, and the orchestrator's template fallback runs the same check, so every itinerary reports `link_coverage`.
+
+---
+
 ## SSE envelope
 
 ```
@@ -140,7 +160,7 @@ One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE
 
 ## Rate limiting
 
-`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, light_ai 60. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits).
+`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits).
 
 ## Middleware
 

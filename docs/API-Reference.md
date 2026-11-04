@@ -21,6 +21,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | chat | `POST /api/chat` | 30 |
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
+| import | `POST /api/import/extract` | 20 |
 | light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
@@ -52,6 +53,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/search/sync` | optional | Same run, one JSON response (testing) |
 | POST | `/api/discover` | optional | 5 destination suggestions |
 | POST | `/api/compare/destination` | user | One-destination summary for Compare mode |
+| POST | `/api/import/extract` | user | Places from a link, pasted text or screenshots (plan from a link) |
 | POST | `/api/chat` | user | SSE chat with plan commands and planning |
 | GET, POST | `/api/plans` | user | List own plans; save a plan |
 | GET, PUT, DELETE | `/api/plans/{id}` | user | Get, rename/update, delete own plan |
@@ -154,6 +156,11 @@ The main endpoint. It streams results as Server-Sent Events. **Auth:** optional.
 }
 ```
 
+Two optional fields carry a trip imported with `POST /api/import/extract`:
+
+- `must_include` (at most 25): places the plan must contain, each `{name, kind, city, town?, lat?, lng?, note?, quote?, verified}`. `city` is the trip stop the place belongs to, and `town` is its own town when that differs (a day trip). They lead the `activities` results as `source: "your_link"`, `from_link: true` items, folding in the agent's own copy of the same place, and they stay even when the activities agent fails. Each item's `verification_note` is "Located on Google Maps" or "From your link — not independently checked". After the itinerary (AI or template) is built, a deterministic check marks the slots that name each place (`from_link`, `link_place`, `link_places`, `link_quote`, `link_note`). It fills missing places into the most replaceable slot on a day in the right city: free time first, never arrival or departure logistics, food at lunch or dinner. When every such slot already holds a link place, the place goes into the day's `link_extras`. The itinerary also carries `link_coverage: {total, scheduled, extras, missing}`.
+- `import_source`: `{url?, title}`, where the trip came from. `url` must be http(s). Saved plans keep it in `search_data`, and the share page, print view and calendar export show "Inspired by …".
+
 `destinations` and `destination_nights` describe a multi-city trip (see [Multi-City Trips](Multi-City-Trips.md)). `taste_context` is set by the server from the user's Taste Graph; a client value is ignored. `origin` and `destination` may be city names, typeahead labels or airport codes; the validator resolves them to airport codes for live flight search (see [Place and Airport Data](Place-and-Airport-Data.md)).
 
 **Response:** `Content-Type: text/event-stream`. Each event is `data: {JSON}\n\n`, and `: keepalive` comments are sent while agents run.
@@ -217,6 +224,69 @@ Same request and agents, run sequentially; returns a single JSON object. For tes
 ```
 
 `visa_verified: true` means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: `422` invalid request, `504` after 30 s, `500` agent failure. Results are cached for 30 minutes.
+
+### POST /api/import/extract
+
+Plan from a link: reads a web page, pasted text or screenshots and returns the places in it, resolved and grouped into a trip for the traveller to review. **Auth:** user. **Bucket:** import.
+
+**Request body**: exactly one of:
+
+```json
+{"url": "https://blog.example/48-hours-in-lisbon"}
+{"text": "48 hours in Lisbon: Time Out Market, Belém Tower, LX Factory…"}
+{"images": [{"media_type": "image/png", "data_base64": "iVBORw0…"}]}
+```
+
+`text` is at most 20,000 characters. `images` holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.
+
+**Link fetching** (`backend/app/services/link_fetch.py`):
+- Only http and https on the default ports, with no credentials in the URL.
+- The host is resolved, and every address must be public. Private, loopback, link-local, multicast, reserved and CGNAT ranges are refused, as are their IPv6, IPv4-mapped, NAT64, 6to4 and Teredo forms. The connection goes to that vetted IP, with the original Host header and TLS SNI, so DNS rebinding cannot redirect it.
+- Redirects are followed by hand, at most 3, and each hop is checked again.
+- There is a 10-second ceiling, the body is read up to 2 MB, and only HTML, XHTML and plain text are accepted.
+- From the page come the title, the OpenGraph and Twitter description, JSON-LD (`articleBody`, `ItemList`, places and attractions) and the readable main text, capped at 30k characters. The main text comes from the biggest article or content block, keeps headings and list items, and drops nav, footer, script and style.
+- YouTube and TikTok links are read through their public oEmbed endpoints, plus the YouTube watch page's description.
+- Instagram, Facebook, X and Threads get a specific `blocked_source` error.
+- Scripts are never run, and links in the content are never followed.
+
+**Extraction**: the `link_import` agent (`.agents/link_import.md`, Haiku; screenshots go as vision image blocks). The source is wrapped as untrusted data between `<<<SOURCE_CONTENT>>>` markers, and any copies of the markers inside it are stripped. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a `quote` is kept only when it really appears in the source text.
+
+**Resolution** (`backend/app/services/link_import.py`):
+- Each place's city is resolved with `resolve_place` to a canonical town, country, coordinates and airports. A town within 45 km of a bigger stop in the same country joins that stop as a day trip.
+- Stops are ordered by the source's day hints, then by source order. With more than 3 stops, the 3 with the most places are kept and the rest are listed in `also_mentioned`.
+- Nights are split by place count, with at least 1 per stop. The trip length is `suggested_days`, or else about 4 sightseeing places a day, between 3 and 14 days.
+- With `SERPER_KEY`, up to 25 places are looked up on Google Maps (5 at a time, cached). A hit within 60 km of the town that shares a word with the name gives exact coordinates (`verified`); otherwise the place sits at its town centre (`approximate`).
+
+**Response (200)** — `ImportPreview`:
+```json
+{
+  "source": {"kind": "url", "url": "https://…", "title": "…", "site_name": "Wander Blog", "favicon_url": "https://…", "author": null},
+  "title": "48 hours in Lisbon",
+  "summary": "Viewpoints, pastries and a day trip to Sintra.",
+  "destinations": [{"name": "Lisbon, Portugal", "city": "Lisbon", "country": "Portugal", "airports": ["LIS", "CAT"], "lat": 38.73, "lng": -9.15, "place_count": 5, "nights": 3}],
+  "places": [{"id": "p1", "name": "Time Out Market", "kind": "food", "city": "Lisbon", "country": "Portugal", "destination": "Lisbon, Portugal", "lat": 38.707, "lng": -9.146, "approximate": false, "verified": true, "address": "…", "rating": 4.4, "note": "Lunch under one roof", "quote": "start at Time Out Market", "day_hint": 1, "confidence": 0.95}],
+  "unresolved": [],
+  "also_mentioned": [],
+  "suggested_days": 3,
+  "season_hint": null,
+  "interests": ["food", "viewpoints"],
+  "warnings": []
+}
+```
+
+`kind` is one of sight, food, drink, stay, activity, nature, shopping, nightlife, event, transport or area. Places whose town could not be resolved are returned in `unresolved`, so the traveller can assign them to a stop.
+
+**Errors:** `422` with `detail: {code, message}`, where `message` is written for the traveller:
+
+| `code` | When |
+|---|---|
+| `invalid_url`, `blocked_address`, `unreachable`, `timeout`, `too_many_redirects`, `not_found`, `paywall`, `http_error`, `unsupported_content` | Fetching the link failed |
+| `blocked_source` | Instagram, Facebook, X or Threads ("…doesn't let apps read posts. Paste the caption or drop a screenshot instead.") |
+| `empty_page` | The page had almost no readable text |
+| `no_places` | Nothing was found ("We couldn't spot any places — try pasting the part of the article with the list.") |
+| `heic_unsupported`, `unsupported_image`, `image_too_large`, `too_many_images` | A screenshot problem |
+
+`502` with `code: extract_failed` means the extraction agent failed. Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
 
 ### POST /api/compare/destination
 

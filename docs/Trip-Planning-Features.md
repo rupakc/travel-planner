@@ -15,7 +15,7 @@ What a user can do in the app, and where each feature lives in the code. Chat, m
 
 ## Search page
 
-`frontend/src/pages/SearchPage.jsx` has three modes.
+`frontend/src/pages/SearchPage.jsx` has four modes.
 
 ### "I know where I'm going"
 
@@ -33,6 +33,26 @@ Origin, nationality, dates, optional budget, interests and travellers. `POST /ap
 ### "Compare ⚖️"
 
 Seeded once from the known-destination form. Takes 2–3 destinations plus shared trip fields, and makes one `POST /api/compare/destination` call per destination in parallel, each column with its own loading and error state and a Retry that re-runs only that column. Responses from an earlier run are ignored. `components/CompareTable.jsx` shows cost estimate, flight, hotel, weather, visa and the Travel Ease grade, marking the best value in each row (stacked cards on phones). "Plan this trip" runs that exact request as a normal full search. Pure helpers are in `utils/compare.js`. Compare is single-city only (multi-city requests get 422).
+
+### "From a link ✨"
+
+Plan a trip around a travel blog, a YouTube or TikTok video, a caption, a friend's message or screenshots.
+
+- **Ways in.** The fourth mode tab. A hero hint: "Saw a great trip online? Paste the link". A deep link, `/?import=<url>`: Chat offers it when a message is just a link, or a link plus "plan", and it opens the flow and starts reading. Dropping a screenshot anywhere on the Search page opens the tab with it, under a full-page "Drop it to plan a trip" overlay.
+- **Input** (`components/import/ImportPanel.jsx`). One box tells a link from text as you type ("Link — we'll read the page" / "Text — we'll pick out the places"). A drop zone takes up to 4 screenshots, with thumbnails and remove buttons; pasting an image works too, and wrong types, HEIC and files over 5 MB are explained. There are three "Try an example" texts. Enter submits a link; Cmd/Ctrl+Enter submits text.
+- **Progress.** Three staged steps: "Reading the page", then "Finding places", then "Putting them on the map". They are announced in an ARIA live region, and the time so far is shown against the typical time. Skeleton rows appear meanwhile. Cancel or Esc stops the request.
+- **Errors offer the next step.** A blocked source (Instagram and the like), a paywall or an empty page gets "Paste the text" and "Drop a screenshot" buttons. Timeouts get "Try again". The rate-limit message is shown as the server sends it.
+- **Review** (`components/import/ImportPreview.jsx`, `ImportMap.jsx`).
+  - "Here's what we found": the trip title and summary, plus a source card (favicon, title, site, author, link).
+  - A Leaflet map with numbered pins coloured by kind. They drop in once; reduced motion is respected. Approximate places are hollow pins, fanned out around their town, with an "approximate location" tooltip.
+  - The route, with a nights stepper per stop and the option to leave a stop out.
+  - Places grouped by stop. Each has a checkbox (with All / None per stop), a kind icon, inline rename, a "Change city" stop picker, a "day trip to …" label, "On the map ★ 4.6" or "Approximate", the source's quote highlighted, and the note.
+  - "Couldn't place" places get a stop picker.
+  - The usual trip fields, prefilled from Preferences: From, leaving date (default a month out; the return date follows the nights), nationality, budget and travellers.
+  - Hotels start unticked, and at most 25 places are planned.
+- **Planning.** "Plan this trip (N places)" runs a normal full search, with the reviewed places as `must_include` and the source as `import_source`. Interests from the source are added to the search but not saved to Preferences. Pure helpers are in `utils/linkImport.js`.
+- **Results.** A dismissible banner says "Planned around 11 places from *48 hours in Lisbon* — all 11 are in your itinerary", or "10 of 11 … 1 didn't fit: show". Imported activity cards and itinerary rows carry an amber "From your link" chip; tapping it shows the quote and how the place was checked. Places that did not get a slot are listed as "Also from your link" under their day. Trip map pins from the link have an amber ring. The My Plan drawer and the share page show "Inspired by …", and saved plans from a link have a link icon. Print and calendar exports carry the credit and the tags.
+- **Analytics.** `import_started` (kind), `import_preview_shown` (place_count), `import_planned`, `import_failed` (code) and `import_from_chat`.
 
 ### Recent searches
 

@@ -4,6 +4,13 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: plan a trip from a link or screenshot
+
+- New Search mode, **From a link ✨**. Paste a travel blog, YouTube or TikTok link, a caption or a message, or drop up to 4 screenshots. The places come back on a map for review (tick, rename, move between stops, place the unplaced, set nights), then a normal search plans the trip around them.
+- `POST /api/import/extract`, with SSRF-safe link fetching (public addresses only on every redirect hop, pinned IP, 10 s and 2 MB limits), YouTube and TikTok oEmbed, friendly errors for Instagram, Facebook, X and Threads, and a hardened `link_import` extraction agent. Rate bucket `import`, default 20 (`RATE_LIMIT_IMPORT`).
+- `TravelSearchRequest.must_include` and `import_source`. Imported places lead Activities and are always scheduled in the itinerary by a deterministic post-check (`from_link` slots, `link_extras`, `link_coverage`). Results show a coverage banner and "From your link" tags; the share page, print and calendar export credit the source.
+- Chat replies to a pasted trip link with a "Plan a trip from this link" button that opens the import flow.
+
 ## Unreleased: documentation and housekeeping
 
 - Developer docs consolidated into one set of pages (this site and the GitHub wiki share them), with new pages for trip-planning features, place and airport data, testing and CI, and this changelog.
