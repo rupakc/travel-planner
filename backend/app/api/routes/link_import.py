@@ -14,14 +14,22 @@ from ...agents.link_import_agent import LinkImportAgent
 from ...core.auth import get_current_user
 from ...core.cache import get_cache
 from ...core.config import settings
-from ...schemas.link_import import MAX_IMAGES, ImportPreview, ImportRequest
+from ...schemas.link_import import (
+    MAX_IMAGES,
+    ImportPreview,
+    ImportRequest,
+    ResolvedPlace,
+    ResolvePlaceRequest,
+)
 from ...services.link_fetch import LinkFetchError, read_link
-from ...services.link_import import build_preview
+from ...services.link_import import build_preview, resolve_one_place
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+# Anthropic's per-image limit applies to the base64 text, so check that too
+MAX_IMAGE_BASE64 = 5 * 1024 * 1024
 _MIN_SOURCE_CHARS = 40
 
 _agent: LinkImportAgent | None = None
@@ -70,6 +78,13 @@ def _checked_images(body: ImportRequest) -> list[dict]:
         )
     checked = []
     for i, image in enumerate(images, start=1):
+        if len(image.data_base64) > MAX_IMAGE_BASE64:
+            raise _fail(
+                422,
+                "image_too_large",
+                f"Screenshot {i} is too big to read. Crop it, or save it as a "
+                "smaller PNG or JPEG.",
+            )
         try:
             data = base64.b64decode(image.data_base64, validate=True)
         except (binascii.Error, ValueError):
@@ -166,3 +181,19 @@ async def extract_trip(
         )
     cache[key] = preview
     return preview
+
+
+@router.post("/import/resolve-place", response_model=ResolvedPlace)
+async def resolve_place_for_import(
+    body: ResolvePlaceRequest, user: dict = Depends(get_current_user)
+) -> dict:
+    """Place one "Couldn't place" spot in the town the traveller typed."""
+    resolved = await resolve_one_place(body.model_dump())
+    if resolved is None:
+        raise _fail(
+            422,
+            "city_not_found",
+            f"We couldn't find a town called “{body.city}”. Check the spelling, "
+            "or add the country (e.g. “Porto, Portugal”).",
+        )
+    return resolved

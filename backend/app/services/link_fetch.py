@@ -46,6 +46,7 @@ _ALLOWED_PORTS = {None, 80, 443}
 _REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 _CGNAT = ipaddress.ip_network("100.64.0.0/10")
 _NAT64 = ipaddress.ip_network("64:ff9b::/96")
+_DOC_V6 = ipaddress.ip_network("3fff::/20")  # documentation (RFC 9637)
 
 Resolver = Callable[[str], Awaitable[list[str]]]
 
@@ -63,8 +64,8 @@ class LinkFetchError(Exception):
 
 
 _MESSAGES = {
-    "invalid_url": "That doesn't look like a web link we can open — "
-    "it needs to start with http:// or https://.",
+    "invalid_url": "That doesn't look like a normal web link we can open. Use "
+    "the page's full http:// or https:// address, without a custom port.",
     "blocked_address": "That link points somewhere private, so we can't open it.",
     "unreachable": "We couldn't reach that website. Check the link, "
     "or paste the text instead.",
@@ -76,6 +77,8 @@ _MESSAGES = {
     "or paste the text instead.",
     "paywall": "That page needs a login or subscription, so we can't read it. "
     "Paste the article text or drop a screenshot instead.",
+    "blocked_by_site": "That site blocks apps from reading its pages. Paste "
+    "the article text or drop a screenshot instead.",
     "http_error": "That website returned an error. Try again in a moment, "
     "or paste the text instead.",
     "unsupported_content": "That link isn't a web page we can read "
@@ -91,7 +94,6 @@ _BLOCKED_SOURCES = {
     "fb.com": "Facebook",
     "x.com": "X",
     "twitter.com": "X",
-    "t.co": "X",
     "threads.net": "Threads",
     "threads.com": "Threads",
 }
@@ -136,6 +138,8 @@ def is_public_ip(addr: str) -> bool:
         return False
     if isinstance(ip, ipaddress.IPv4Address):
         return ip not in _CGNAT
+    if ip.is_site_local or ip in _DOC_V6:
+        return False
     return all(is_public_ip(str(v4)) for v4 in _embedded_ipv4(ip))
 
 
@@ -264,6 +268,9 @@ def _pinned(parts, ip: str) -> tuple[str, dict, dict]:
         "application/json;q=0.8,*/*;q=0.1",
         "Accept-Language": "en;q=1.0, *;q=0.5",
         "Accept-Encoding": "gzip, deflate",
+        # No pooled connection reuse: every hop gets its own TLS handshake and
+        # certificate check, even when two hosts share a CDN address
+        "Connection": "close",
     }
     extensions = {"sni_hostname": parts.hostname} if parts.scheme == "https" else {}
     return target, headers, extensions
@@ -275,6 +282,7 @@ async def _fetch(
     current = url
     for _hop in range(MAX_REDIRECTS + 1):
         parts = _validated(current)
+        _raise_if_blocked(current)  # also after a shortener's redirect
         ip = await _vetted_ip(parts.hostname, resolver)
         target, headers, extensions = _pinned(parts, ip)
         async with client.stream(
@@ -288,8 +296,10 @@ async def _fetch(
                 continue
             if resp.status_code in (404, 410):
                 raise _error("not_found")
-            if resp.status_code in (401, 402, 403):
+            if resp.status_code in (401, 402):
                 raise _error("paywall")
+            if resp.status_code == 403:  # mostly bot blocking (Cloudflare, …)
+                raise _error("blocked_by_site")
             if resp.status_code >= 400:
                 raise _error("http_error")
             ctype = resp.headers.get("content-type", "").split(";")[0].strip().lower()
@@ -613,6 +623,16 @@ def _platform(host: str) -> str | None:
     return None
 
 
+def _raise_if_blocked(url: str) -> None:
+    platform_name = blocked_source(url)
+    if platform_name:
+        raise LinkFetchError(
+            "blocked_source",
+            f"{platform_name} doesn't let apps read posts. Paste the caption "
+            "or drop a screenshot instead.",
+        )
+
+
 def blocked_source(url: str) -> str | None:
     """The platform name when ``url`` is on a site that blocks apps."""
     try:
@@ -709,13 +729,7 @@ async def read_link(
     Threads, which don't let apps read posts."""
     resolver = resolver or system_resolver
     url = url.strip()
-    platform_name = blocked_source(url)
-    if platform_name:
-        raise LinkFetchError(
-            "blocked_source",
-            f"{platform_name} doesn't let apps read posts. Paste the caption "
-            "or drop a screenshot instead.",
-        )
+    _raise_if_blocked(url)
     parts = _validated(url)
     platform = _platform(parts.hostname.lower())
     if platform:

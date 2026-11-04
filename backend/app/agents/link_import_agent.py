@@ -16,8 +16,23 @@ _FENCE_LIKE = re.compile(r"[<＜‹«]{3,}|[>＞›»]{3,}")
 _SOURCE_KINDS = {"url": "a web page", "text": "pasted text", "images": "screenshots"}
 
 
-def _fold(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip().lower()
+_QUOTE_MARKS = str.maketrans(
+    {"’": "'", "‘": "'", "‛": "'", "“": '"', "”": '"', "„": '"', "«": '"', "»": '"'}
+)
+
+
+def _norm_quote(text: str) -> str:
+    """Same words, same case; only quote marks and spacing normalised."""
+    return re.sub(r"\s+", " ", text.translate(_QUOTE_MARKS)).strip()
+
+
+def _quoted_in(quote: str, source: str) -> bool:
+    q = _norm_quote(quote)
+    if not q:
+        return False
+    # Whole words only: no mid-word fragments ("astéis de Bel")
+    pattern = rf"(?<!\w){re.escape(q)}(?!\w)"
+    return re.search(pattern, _norm_quote(source)) is not None
 
 
 def clean_extraction(raw: dict, source_text: str | None) -> dict:
@@ -26,9 +41,8 @@ def clean_extraction(raw: dict, source_text: str | None) -> dict:
     source text (screenshots can't be checked, so their quotes stay)."""
     extraction = Extraction.model_validate(raw if isinstance(raw, dict) else {})
     if source_text is not None:
-        haystack = _fold(source_text)
         for place in extraction.places:
-            if place.quote and _fold(place.quote) not in haystack:
+            if place.quote and not _quoted_in(place.quote, source_text):
                 place.quote = None
     return extraction.model_dump()
 

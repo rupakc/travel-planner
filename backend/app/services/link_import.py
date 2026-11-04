@@ -338,3 +338,38 @@ async def build_preview(extraction: dict, source: dict) -> dict:
         "interests": extraction.get("interests") or [],
         "warnings": warnings,
     }
+
+
+async def resolve_one_place(place: dict) -> dict | None:
+    """{place, destination} for one place whose town the traveller typed, or
+    None when the town can't be resolved (a country, an unknown name)."""
+    city = _resolve_city(place.get("city"), place.get("country"))
+    if city is None:
+        return None
+    hits = await _lookup_pois([("p1", place, city)])
+    hit = hits.get("p1")
+    return {
+        "place": _preview_place(
+            place.get("id") or "p1",
+            place,
+            city=city.name,
+            country=city.country,
+            destination=city.display,
+            lat=hit["latitude"] if hit else city.lat,
+            lng=hit["longitude"] if hit else city.lng,
+            approximate=not hit,
+            verified=bool(hit),
+            address=(hit or {}).get("address"),
+            rating=(hit or {}).get("rating"),
+        ),
+        "destination": {
+            "name": city.display,
+            "city": city.name,
+            "country": city.country,
+            "airports": city.airports,
+            "lat": city.lat,
+            "lng": city.lng,
+            "place_count": 1,
+            "nights": 1,
+        },
+    }

@@ -101,6 +101,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(AnalyticsMiddleware)
+
+# Plan-from-a-link bodies carry screenshots (4 × ≤5 MB base64); refuse anything
+# bigger before FastAPI reads and parses it. Keep in step with nginx's
+# client_max_body_size (frontend/nginx.conf.template).
+_IMPORT_MAX_BODY = 30 * 1024 * 1024
+
+
+@app.middleware("http")
+async def _limit_import_body(request, call_next):
+    if request.url.path.startswith("/api/import/"):
+        try:
+            length = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            length = 0
+        if length > _IMPORT_MAX_BODY:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "detail": "That upload is too big — use up to 4 screenshots "
+                    "of 5 MB or less."
+                },
+            )
+    return await call_next(request)
+
+
 app.add_middleware(RequestIdMiddleware)
 
 

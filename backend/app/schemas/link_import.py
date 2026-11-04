@@ -256,3 +256,34 @@ class ImportPreview(BaseModel):
     season_hint: str | None = None
     interests: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+
+
+class ResolvePlaceRequest(BaseModel):
+    """One unplaced spot and the town the traveller says it is in."""
+
+    id: str | None = Field(None, max_length=20)
+    name: str = Field(..., max_length=120)
+    kind: str = "sight"
+    city: str = Field(..., max_length=80)
+    country: str | None = Field(None, max_length=80)
+    note: str | None = Field(None, max_length=140)
+    quote: str | None = Field(None, max_length=120)
+
+    @field_validator("name", "city", mode="before")
+    @classmethod
+    def _required(cls, v):
+        text = _squash(v, 120)
+        if not text:
+            raise ValueError("required")
+        return text
+
+    @field_validator("kind", mode="before")
+    @classmethod
+    def _kind(cls, v):
+        kind = str(v or "").strip().lower()
+        return kind if kind in PLACE_KINDS else "sight"
+
+
+class ResolvedPlace(BaseModel):
+    place: PreviewPlace
+    destination: PreviewDestination

@@ -331,7 +331,7 @@ async def test_wrong_content_type_is_rejected(ctype):
         (404, "not_found"),
         (410, "not_found"),
         (401, "paywall"),
-        (403, "paywall"),
+        (403, "blocked_by_site"),
         (402, "paywall"),
         (500, "http_error"),
         (429, "http_error"),
@@ -690,3 +690,70 @@ async def test_page_parsing_runs_off_the_event_loop(monkeypatch):
         resolver=_resolver({"wander.example": [PUBLIC_IP]}),
     )
     assert threads == [False]
+
+
+# ── Review minors ────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("addr", ["fec0::1", "3fff::1"])
+def test_site_local_and_new_documentation_ranges_are_rejected(addr):
+    assert is_public_ip(addr) is False
+
+
+async def test_each_hop_asks_for_a_fresh_connection():
+    seen = []
+
+    def handler(request):
+        seen.append(request.headers.get("connection"))
+        if request.url.path == "/a":
+            return httpx.Response(302, headers={"location": "https://cdn.example/b"})
+        return httpx.Response(200, headers={"content-type": "text/plain"}, text="ok")
+
+    await fetch_url(
+        "https://blog.example/a",
+        client=_client(handler),
+        resolver=_resolver({"blog.example": [PUBLIC_IP], "cdn.example": [PUBLIC_IP]}),
+    )
+    assert seen == ["close", "close"]
+
+
+async def test_a_redirect_to_a_blocked_platform_gets_its_specific_message():
+    def handler(request):
+        return httpx.Response(
+            302, headers={"location": "https://www.instagram.com/p/x/"}
+        )
+
+    with pytest.raises(LinkFetchError) as err:
+        await read_link(
+            "https://bit.example/abc",
+            client=_client(handler),
+            resolver=_resolver({"bit.example": [PUBLIC_IP]}),
+        )
+    assert err.value.code == "blocked_source" and "Instagram" in err.value.message
+
+
+def test_t_co_is_followed_not_blocked():
+    assert link_fetch.blocked_source("https://t.co/abc") is None
+
+
+async def test_403_is_a_site_that_blocks_apps_not_a_paywall():
+    def handler(request):
+        return httpx.Response(403, headers={"content-type": "text/html"}, text="no")
+
+    with pytest.raises(LinkFetchError) as err:
+        await fetch_url(
+            "https://x.example/",
+            client=_client(handler),
+            resolver=_resolver({"x.example": [PUBLIC_IP]}),
+        )
+    assert err.value.code == "blocked_by_site"
+    assert "subscription" not in err.value.message
+
+
+async def test_a_custom_port_gets_a_message_that_fits():
+    with pytest.raises(LinkFetchError) as err:
+        await fetch_url("http://x.example:8080/", resolver=_resolver({}))
+    assert err.value.code == "invalid_url"
+    assert (
+        "port" in err.value.message.lower() or "normal web" in err.value.message.lower()
+    )

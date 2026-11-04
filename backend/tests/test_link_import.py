@@ -596,3 +596,94 @@ def test_successful_previews_are_cached(client, admin_headers, agent):
     client.post("/api/import/extract", json=body, headers=admin_headers)
     client.post("/api/import/extract", json=body, headers=admin_headers)
     assert agent.run.await_count == 1
+
+
+# ── POST /api/import/resolve-place (fixing an unplaced spot) ─────────────
+
+
+def test_resolve_place_returns_the_place_and_its_stop(client, admin_headers):
+    r = client.post(
+        "/api/import/resolve-place",
+        json={
+            "name": "Mystery Bar",
+            "kind": "drink",
+            "city": "Porto",
+            "note": "Late drinks",
+        },
+        headers=admin_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["destination"]["name"] == "Porto, Portugal"
+    assert "OPO" in body["destination"]["airports"]
+    place = body["place"]
+    assert place["name"] == "Mystery Bar" and place["kind"] == "drink"
+    assert place["destination"] == "Porto, Portugal" and place["city"] == "Porto"
+    assert place["approximate"] is True and place["note"] == "Late drinks"
+    assert isinstance(place["lat"], float)
+
+
+@pytest.mark.parametrize("city", ["Xqzzyville", "Portugal", "  "])
+def test_resolve_place_explains_a_city_it_cannot_find(client, admin_headers, city):
+    r = client.post(
+        "/api/import/resolve-place",
+        json={"name": "Mystery Bar", "city": city},
+        headers=admin_headers,
+    )
+    assert r.status_code == 422
+    if city.strip():
+        detail = r.json()["detail"]
+        assert detail["code"] == "city_not_found"
+        assert city in detail["message"]
+
+
+def test_resolve_place_requires_auth(client):
+    r = client.post("/api/import/resolve-place", json={"name": "X", "city": "Porto"})
+    assert r.status_code == 401
+
+
+def test_base64_over_5_mb_is_refused_with_a_friendly_message(
+    client, admin_headers, agent
+):
+    big = base64.b64encode(PNG + b"\0" * (4 * 1024 * 1024)).decode()  # ~5.3 MB base64
+    r = client.post(
+        "/api/import/extract",
+        json={"images": [{"media_type": "image/png", "data_base64": big}]},
+        headers=admin_headers,
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "image_too_large"
+    agent.run.assert_not_awaited()
+
+
+def test_oversized_request_bodies_are_refused_before_parsing(client, admin_headers):
+    blob = "A" * (31 * 1024 * 1024)
+    r = client.post(
+        "/api/import/extract",
+        content=b'{"text": "' + blob.encode() + b'"}',
+        headers={**admin_headers, "content-type": "application/json"},
+    )
+    assert r.status_code == 413
+    assert "too big" in r.json()["detail"]
+
+
+def test_quote_check_is_exact_on_words_but_forgives_curly_quotes():
+    source = "Don’t miss the “Pastéis de Belém” — they're warm at 8am."
+    raw = {
+        "places": [
+            {
+                "name": "A",
+                "quote": 'Don\'t miss the "Pastéis de Belém"',
+            },  # straight vs curly
+            {"name": "B", "quote": "don’t miss the"},  # wrong case
+            {"name": "C", "quote": "astéis de Bel"},  # mid-word fragment
+            {"name": "D", "quote": "they're warm at 8am"},
+        ]
+    }
+    out = clean_extraction(raw, source_text=source)
+    assert [p["quote"] for p in out["places"]] == [
+        'Don\'t miss the "Pastéis de Belém"',
+        None,
+        None,
+        "they're warm at 8am",
+    ]
