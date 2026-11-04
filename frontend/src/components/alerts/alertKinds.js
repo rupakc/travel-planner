@@ -13,3 +13,8 @@ export const ALERT_KINDS = {
 }
 
 export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+
+/** Keeps a price delta such as "(−$70)" on one line when a title wraps. */
+export function keepDeltaTogether(text) {
+  return typeof text === 'string' ? text.replace(/([−-])\$/g, '$1⁠$') : text
+}

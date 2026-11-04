@@ -122,7 +122,10 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
       if (document.visibilityState === 'visible') { refresh(); start() } else stop()
     }
     const onFocus = () => refresh()
-    if (document.visibilityState === 'visible') { refresh(); start() }
+    // One fetch even in a background tab, so the badge is right on arrival;
+    // polling itself only runs while visible.
+    refresh()
+    if (document.visibilityState === 'visible') start()
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('focus', onFocus)
     return () => {

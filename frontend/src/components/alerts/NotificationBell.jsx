@@ -6,7 +6,7 @@ import { useAlerts } from '../../context/AlertsContext'
 import { listNotifications } from '../../services/api'
 import { notificationLink, relativeTime } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
-import { kindOf } from './alertKinds'
+import { kindOf, keepDeltaTogether } from './alertKinds'
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
   const { Icon, tone, action } = kindOf(n.kind)
@@ -19,7 +19,7 @@ export function NotificationItem({ n, onOpen, now = new Date() }) {
           <Icon size={15} aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className={`block text-sm leading-snug ${unread ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{n.title}</span>
+          <span className={`block text-sm leading-snug ${unread ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{keepDeltaTogether(n.title)}</span>
           <span className="mt-0.5 line-clamp-2 block text-xs text-slate-500">{n.body}</span>
           <span className="mt-1 flex items-center gap-2 text-[11px]">
             <span className="text-slate-400">{relativeTime(n.created_at, now)}</span>

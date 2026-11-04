@@ -75,6 +75,14 @@ describe('AlertsProvider', () => {
     expect(api.getUnreadCount).toHaveBeenCalledTimes(3)
   })
 
+  it('fetches the count once when opened in a background tab, without polling', async () => {
+    visibility = 'hidden'
+    await mount()
+    expect(api.getUnreadCount).toHaveBeenCalledTimes(1)
+    await tick(5 * 60000)
+    expect(api.getUnreadCount).toHaveBeenCalledTimes(1)
+  })
+
   it('does not toast notifications that existed before the app opened', async () => {
     api.getUnreadCount.mockResolvedValue(2)
     api.listNotifications.mockResolvedValue({ items: [note(9), note(8)] })

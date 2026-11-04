@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import { useAlerts } from '../../context/AlertsContext'
 import { notificationLink } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
-import { kindOf } from './alertKinds'
+import { kindOf, keepDeltaTogether } from './alertKinds'
 
 const VISIBLE_MS = 10000
 
@@ -41,7 +41,7 @@ export default function AlertToast() {
             <Icon size={16} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold leading-snug text-slate-900">{toast.title}</p>
+            <p className="text-sm font-semibold leading-snug text-slate-900">{keepDeltaTogether(toast.title)}</p>
             <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{toast.body}</p>
             <button type="button" onClick={open}
               className="mt-2 text-xs font-semibold text-sky-700 hover:text-sky-900">{action}</button>
