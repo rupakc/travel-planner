@@ -196,6 +196,7 @@ async def resolve_top(
             for i, a in enumerate(activities)
             if a.get("similarity_score") is not None
             and len(a.get("name", "")) >= _MIN_NAME_LEN
+            and not a.get("from_link")  # the traveller's own place: maps link
         ],
         key=lambda x: (-(x[1].get("similarity_score") or 0), x[0]),
     )[:_TOP_N]

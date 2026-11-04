@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
+from ..services.must_include import ensure_must_include
 from ..services.verification import attach_verification
 from .activities_agent import ActivitiesAgent
 from .base_agent import ToolAgent
@@ -803,4 +804,5 @@ class TravelOrchestrator:
                 }
             )
 
-        return {"days": days, "total_estimated_cost_usd": round(total_cost, 2)}
+        itinerary = {"days": days, "total_estimated_cost_usd": round(total_cost, 2)}
+        return ensure_must_include(itinerary, request)

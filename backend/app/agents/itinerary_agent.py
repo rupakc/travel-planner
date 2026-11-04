@@ -1,6 +1,7 @@
 import json
 
 from ..schemas.request import TravelSearchRequest
+from ..services.must_include import ensure_must_include, itinerary_prompt_block
 from .base_agent import BaseAgent
 from .loader import load_agent_definition
 
@@ -27,7 +28,7 @@ class ItineraryAgent(BaseAgent):
 
         activities_summary = ""
         if activities and activities.get("results"):
-            top = activities["results"][:12]
+            top = activities["results"][: 12 + len(request.must_include or [])]
             brief = [
                 {
                     "name": a.get("name"),
@@ -118,4 +119,8 @@ class ItineraryAgent(BaseAgent):
                 f"\n{request.taste_context}\n"
                 "Lean the day plans toward this profile where it fits the destination."
             )
-        return await self.execute(prompt)
+        prompt += itinerary_prompt_block(request)
+        result = await self.execute(prompt)
+        if isinstance(result, dict) and result.get("days") and not result.get("error"):
+            result = ensure_must_include(result, request)
+        return result

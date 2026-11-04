@@ -5,6 +5,7 @@ from urllib.parse import quote_plus, urlparse
 
 from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
+from ..services.must_include import merge_into_activities
 from .base_agent import ToolAgent, _URLSearchMixin, strip_link_verified
 from .loader import load_agent_definition
 
@@ -151,6 +152,10 @@ class ActivitiesAgent(ToolAgent, _URLSearchMixin):
             activity["booking_url"] = _build_search_url(
                 activity.get("name", ""), destination, activity.get("source")
             )
+        # Places from an imported link lead the list and survive agent errors
+        result = merge_into_activities(result, request)
+        if request.must_include:
+            result["_destination"] = destination
         return result
 
     async def enrich(self, data: dict) -> dict:

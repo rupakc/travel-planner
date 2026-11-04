@@ -8,6 +8,7 @@ import { computePlanCost } from '../utils/planHelpers'
 import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
 import { scheduleDays, timeRange } from '../utils/schedule'
+import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
 
 // Public, read-only trip card — reachable without login via /share/:token
 
@@ -296,6 +297,7 @@ export default function SharePage() {
             <div>
               <h1 className="text-3xl font-bold leading-tight">{destinationLabel(sd)}</h1>
               {sd.origin && <p className="text-white/80 text-sm mt-1">from {sd.origin}</p>}
+              {sd.import_source && <InspiredBy source={sd.import_source} className="mt-2 text-sm text-white/90 [&_a]:text-white" />}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-white/90">
               {tripDates(sd) && <span className="flex items-center gap-1.5"><Calendar size={13} />{tripDates(sd)}</span>}
@@ -409,12 +411,16 @@ export default function SharePage() {
                           <span className="min-w-0">
                             {edit.activity || slot.activity}
                             {(edit.location ?? slot.location) && <span className="text-gray-400 text-xs"> — {edit.location ?? slot.location}</span>}
+                            {slot.from_link && <FromLinkChip quote={slot.link_quote} note={slot.link_note} className="ml-1.5 align-middle" />}
                             {note && <span className="block text-xs text-teal-600 italic">📝 {note}</span>}
                           </span>
                         </li>
                       )
                     })}
                   </ul>
+                  {(day.link_extras || []).length > 0 && (
+                    <p className="mt-1 text-xs text-amber-800">Also from your link: {day.link_extras.map((x) => x.name).join(', ')}</p>
+                  )}
                 </div>
               ))}
               {arranged?.total_estimated_cost_usd > 0 && (

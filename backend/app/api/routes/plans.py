@@ -35,15 +35,28 @@ _PUBLIC_SEARCH_FIELDS = (
 )
 
 
+def _public_import_source(value) -> dict | None:
+    """The "Inspired by" link of an imported trip: title and an http(s) URL."""
+    if not isinstance(value, dict):
+        return None
+    url = value.get("url")
+    if not (isinstance(url, str) and url.lower().startswith(("http://", "https://"))):
+        url = None
+    title = value.get("title") if isinstance(value.get("title"), str) else None
+    return {"url": url, "title": title}
+
+
 def _sanitize_shared_plan(plan: dict) -> dict:
     search_data = plan.get("search_data") or {}
+    public = {k: v for k, v in search_data.items() if k in _PUBLIC_SEARCH_FIELDS}
+    import_source = _public_import_source(search_data.get("import_source"))
+    if import_source:
+        public["import_source"] = import_source
     return {
         "name": plan.get("name"),
         "created_at": plan.get("created_at"),
         "updated_at": plan.get("updated_at"),
-        "search_data": {
-            k: v for k, v in search_data.items() if k in _PUBLIC_SEARCH_FIELDS
-        },
+        "search_data": public,
         "selections": plan.get("selections") or {},
     }
 

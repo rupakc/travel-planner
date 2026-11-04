@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 def _resolve_iata(value: str) -> str:
@@ -21,6 +21,38 @@ def _airport_codes(value: str) -> str | None:
     from ..db.database import lookup_city_iata
 
     return lookup_city_iata(value.strip())
+
+
+class MustIncludePlace(BaseModel):
+    """A place from the traveller's imported link that the plan must include."""
+
+    name: str = Field(..., min_length=1, max_length=120)
+    kind: str = Field("sight", max_length=20)
+    city: str | None = Field(
+        None, max_length=80, description="The trip stop it belongs to"
+    )
+    town: str | None = Field(
+        None, max_length=80, description="Its own town when a day trip from `city`"
+    )
+    lat: float | None = Field(None, ge=-90, le=90)
+    lng: float | None = Field(None, ge=-180, le=180)
+    note: str | None = Field(None, max_length=140)
+    quote: str | None = Field(None, max_length=120)
+    verified: bool = Field(False, description="Located on Google Maps at import")
+
+
+class ImportSource(BaseModel):
+    """Where an imported trip came from (shown as "Inspired by …")."""
+
+    url: str | None = Field(None, max_length=2048)
+    title: str | None = Field(None, max_length=200)
+
+    @field_validator("url")
+    @classmethod
+    def _web_url(cls, v):
+        if v is not None and not v.strip().lower().startswith(("http://", "https://")):
+            raise ValueError("import_source.url must be an http(s) link")
+        return v
 
 
 class TravelSearchRequest(BaseModel):
@@ -79,6 +111,16 @@ class TravelSearchRequest(BaseModel):
         le=1.0,
         description="0 = famous classics only, 0.5 = balanced mix, "
         "1 = hidden gems and local favourites",
+    )
+
+    must_include: list[MustIncludePlace] | None = Field(
+        None,
+        max_length=25,
+        description="Places from an imported link: merged into activities and "
+        "scheduled in the itinerary",
+    )
+    import_source: ImportSource | None = Field(
+        None, description="The link or text the trip was imported from"
     )
 
     # Server-set from the authenticated user's Taste Graph (never client input).

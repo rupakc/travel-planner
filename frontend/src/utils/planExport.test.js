@@ -385,3 +385,26 @@ describe('scheduled times', () => {
     expect(day.schedule_warnings).toEqual(['Tile Museum starts at 14:20 — later than planned'])
   })
 })
+
+describe('imported trips in the calendar', () => {
+  const unfoldText = (ics) => ics.replace(/\r\n /g, '')
+
+  it('notes link places and credits the source', () => {
+    const ics = unfoldText(buildPlanIcs({
+      planName: 'Tokyo',
+      searchData: { ...searchData, import_source: { url: 'https://blog.example/tokyo', title: '3 days in Tokyo' } },
+      selections: {},
+      itinerary: {
+        days: [{
+          day_number: 1, date: '2027-04-01',
+          slots: [{ time_of_day: 'morning', activity: 'Senso-ji', from_link: true, link_quote: 'go at dawn' }],
+          link_extras: [{ name: 'Golden Gai' }],
+        }],
+      },
+      now: NOW,
+    }))
+    expect(ics).toContain('X-WR-CALDESC:Inspired by 3 days in Tokyo — https://blog.example/tokyo')
+    expect(ics).toContain('From your link: “go at dawn”')
+    expect(ics).toContain('Also from your link: Golden Gai')
+  })
+})
