@@ -37,6 +37,8 @@ import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from 
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
+import WatchFareButton from '../components/alerts/WatchFareButton'
+import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
 import {
@@ -2699,6 +2701,10 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               {selections.flight.booking_url && (
                 <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> Book this flight</a>
               )}
+              <div className="mt-1.5">
+                <WatchFareButton variant="inline" trip={tripFromSearch(searchData)} source="my_plan"
+                  price={cheapestFlightPrice(results?.flights)} insights={results?.flights?.price_insights} />
+              </div>
             </div>
           )}
 
@@ -3065,6 +3071,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
                         {isLoaded ? <><Check size={11} /> Loaded</> : <><RefreshCw size={11} /> Load</>}
                       </button>
+                      <WatchFareButton variant="card" label="Watch" trip={tripFromPlan(plan)} source="saved_plan" />
                       <button onClick={() => onViewPlan(plan)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
                         <Eye size={11} /> View
@@ -4004,6 +4011,8 @@ export default function ResultsPage() {
               ×
             </button>
           )}
+          <WatchFareButton variant="header" trip={tripFromSearch(searchData)} source="flights_header"
+            price={cheapestFlightPrice(data)} insights={data?.price_insights} />
           {canShowFareCalendar && (
             <button onClick={e => {
               e.stopPropagation()

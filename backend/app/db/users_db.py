@@ -1,6 +1,7 @@
 """SQLite persistence for user accounts."""
 
 import logging
+import sqlite3
 import uuid
 from datetime import UTC, datetime
 
@@ -119,6 +120,29 @@ def get_user_by_username(username: str) -> dict | None:
             "SELECT * FROM users WHERE username = ?", (username,)
         ).fetchone()
     return _row_to_dict(row) if row else None
+
+
+def get_user_by_id(user_id: str) -> dict | None:
+    with get_connection() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    return _row_to_dict(row) if row else None
+
+
+class EmailInUseError(Exception):
+    """Another account already uses this email address."""
+
+
+def set_email(username: str, email: str | None) -> None:
+    """Set (or clear with None) a user's email; raises EmailInUseError."""
+    now = datetime.now(UTC).isoformat()
+    try:
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE users SET email = ?, updated_at = ? WHERE username = ?",
+                (email, now, username),
+            )
+    except sqlite3.IntegrityError as exc:
+        raise EmailInUseError from exc
 
 
 def get_all_users() -> list[dict]:

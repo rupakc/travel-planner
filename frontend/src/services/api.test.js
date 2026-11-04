@@ -39,4 +39,12 @@ describe('getSerpapiConfigured', () => {
     expect(await getSerpapiConfigured()).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
+
+  it('exposes fare watch and email capabilities from the same read', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ serpapi_configured: true, fare_watch_available: true, email_alerts_available: false }) })
+    const { getCapabilities, getSerpapiConfigured } = await import('./api')
+    expect(await getCapabilities()).toEqual({ serpapi: true, fareWatch: true, email: false })
+    expect(await getSerpapiConfigured()).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
 })

@@ -15,7 +15,8 @@ frontend/src/
 │   ├── SearchPage.jsx        known / surprise-me / compare modes, recent searches, tour
 │   ├── ResultsPage.jsx       streamed sections, planning tools, My Plan drawer (~4,300 lines)
 │   ├── ChatPage.jsx          chat, TripPlanView, chat plan drawer
-│   ├── PreferencesPage.jsx   preferences + Taste Graph card
+│   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
+│   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
 │   ├── AdminPage.jsx         users and feedback (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
@@ -25,10 +26,13 @@ frontend/src/
 │   │   FareCalendarStrip (+ PriceInsightsChip), FeedbackWidget, ItinerarySection,
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
 │   │   TripMap, VerificationBadge, WalkingToursSection
+│   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
+│   │                         NotificationBell, AlertToast, AlertEmailField
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
 │                             TravelerPanel, AttributionFooter
 ├── context/
 │   ├── AuthContext.jsx       token, user, preferences and two-way sync
+│   ├── AlertsContext.jsx     unread count polling, toasts, watch lookups
 │   └── SearchDataContext.jsx search form and results state
 ├── hooks/useFirstRunTour.js  when to show the onboarding tour
 ├── services/api.js           axios client and API helpers
@@ -53,17 +57,19 @@ Routes in `App.jsx`:
 | `/change-password` | ChangePasswordPage | Signed in |
 | `/` | SearchPage, then ResultsPage | Signed in |
 | `/chat` | ChatPage | Signed in |
+| `/alerts` | AlertsPage (`?watch=ID`, `&replan=1`) | Signed in |
 | `/preferences` | PreferencesPage | Signed in |
 | `/admin` | AdminPage | Admins (`RequireAdmin`) |
 | anything else | redirect to `/` | |
 
-Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences and Admin mount on each visit. `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.
+Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Alerts and Admin mount on each visit. `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.
 
 ---
 
 ## State
 
 - **AuthContext** keeps the JWT (`localStorage['tp_token']`), the user (`username`, `is_admin`, `requires_password_change`) and the saved preferences. It loads preferences after login and writes Search-form values back to them on submit (the two-way binding).
+- **AlertsContext** (inside the signed-in `Layout`) polls `GET /api/notifications/unread-count` every 60 s while the tab is visible (stopped while hidden, refreshed on return and focus), turns a newly arrived alert into one toast or, when the window isn't focused and permission was granted, a native notification, and caches each trip's watch for the "Watch fare" buttons. Outside the provider `useAlerts()` is inert, so components keep rendering in isolation.
 - **SearchDataContext** holds the search form, the streamed results and per-agent status, shared by SearchPage and ResultsPage.
 - Plan selections, itinerary overlays and planner settings are local state in ResultsPage and ChatPage.
 

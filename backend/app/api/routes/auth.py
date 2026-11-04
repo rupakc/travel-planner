@@ -1,8 +1,16 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...core.auth import MIN_PASSWORD_LENGTH, create_access_token, get_current_user
-from ...db.users_db import authenticate_user, change_password
+from ...core.rate_limit import rate_limit
+from ...db.users_db import (
+    EmailInUseError,
+    authenticate_user,
+    change_password,
+    set_email,
+)
 
 router = APIRouter()
 
@@ -36,6 +44,7 @@ def login(req: LoginRequest):
             "username": user["username"],
             "is_admin": user["is_admin"],
             "requires_password_change": user["is_first_login"],
+            "email": user.get("email"),
         },
     }
 
@@ -71,4 +80,34 @@ def me(current_user: dict = Depends(get_current_user)):
         "username": current_user["username"],
         "is_admin": current_user["is_admin"],
         "requires_password_change": current_user["is_first_login"],
+        "email": current_user.get("email"),
     }
+
+
+# local@domain.tld — deliberately simple; the mail server has the final word
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
+
+
+class EmailUpdate(BaseModel):
+    email: str = Field("", max_length=254)
+
+
+@router.put("/auth/email", dependencies=[Depends(rate_limit("light_ai"))])
+def update_email(req: EmailUpdate, current_user: dict = Depends(get_current_user)):
+    """Set or clear (empty string) the account's email, used for fare alerts."""
+    email = req.email.strip().lower() or None
+    if email and not _EMAIL_RE.match(email):
+        raise HTTPException(
+            status_code=422, detail="That doesn't look like an email address."
+        )
+    try:
+        set_email(current_user["username"], email)
+    except EmailInUseError:
+        raise HTTPException(
+            status_code=409, detail="Another account already uses that email."
+        )
+    if email is None:  # nowhere to send fare alerts any more
+        from ...db.fare_watch_db import disable_email_for_user
+
+        disable_email_for_user(current_user["id"])
+    return {"email": email}

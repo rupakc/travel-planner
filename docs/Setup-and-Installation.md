@@ -120,7 +120,7 @@ See [Testing and CI](Testing-and-CI.md) for coverage, lint and the Node 20.18 wo
 
 **"Network Error" in the browser.** The backend is not running on port 8001, which the Vite proxy expects.
 
-**No fare calendar and only estimated fares.** `SERPAPI_KEY` is not set. `GET /health` reports `serpapi_configured`.
+**No fare calendar and only estimated fares.** `SERPAPI_KEY` is not set. `GET /health` reports `serpapi_configured`. The same key enables fare watch ("Watch fare" and the Alerts page); alert emails also need `SMTP_HOST` (see [Configuration](Configuration.md#fare-watch-and-email-alerts-optional)).
 
 **429 "Too many requests".** You hit a rate limit (for example 10 searches per 10 minutes). Raise the `RATE_LIMIT_*` values or set `RATE_LIMIT_ENABLED=false` for local work (see [Configuration](Configuration.md)).
 

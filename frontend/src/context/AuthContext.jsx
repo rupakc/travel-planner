@@ -52,6 +52,8 @@ export function AuthProvider({ children }) {
     setUser(u => u ? { ...u, requires_password_change: false } : u)
   }
 
+  const setUserEmail = (email) => setUser(u => (u ? { ...u, email } : u))
+
   const logout = () => {
     localStorage.removeItem('tp_token')
     setToken(null)
@@ -87,6 +89,7 @@ export function AuthProvider({ children }) {
       isAdmin: !!user?.is_admin,
       requiresPasswordChange: !!user?.requires_password_change,
       updateTokenAfterPasswordChange,
+      setUserEmail,
       preferences,
       refreshPreferences,
       updatePreferences,
@@ -101,3 +104,7 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
   return ctx
 }
+
+/** Auth state when present, else {} (components that may render outside the
+ * provider, e.g. in isolated tests, and simply hide signed-in features). */
+export const useOptionalAuth = () => useContext(AuthContext) || {}

@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane } from 'lucide-react'
+import { useAlerts } from '../../context/AlertsContext'
+import NotificationBell from '../alerts/NotificationBell'
+import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing } from 'lucide-react'
 
 const BASE_TABS = [
   { path: '/',            label: 'Search',      icon: Search },
   { path: '/chat',        label: 'Chat',         icon: MessageCircle },
+  { path: '/alerts',      label: 'Alerts',       icon: BellRing },
   { path: '/preferences', label: 'Preferences',  icon: Settings },
 ]
 
@@ -14,6 +17,7 @@ export default function NavBar() {
   const location = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { unread } = useAlerts()
 
   const tabs = isAdmin
     ? [...BASE_TABS, { path: '/admin', label: 'Admin', icon: ShieldCheck }]
@@ -34,6 +38,9 @@ export default function NavBar() {
       >
         <Icon size={14} />
         <span>{label}</span>
+        {path === '/alerts' && unread > 0 && (
+          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-sky-500" aria-label={`${unread} unread`} />
+        )}
       </button>
     )
   })
@@ -66,6 +73,7 @@ export default function NavBar() {
         {/* User info */}
         {user && (
           <div className="flex items-center gap-2 text-slate-600 text-sm">
+            <NotificationBell />
             <User size={14} />
             <span className="font-medium hidden sm:inline">{user.username}</span>
             {isAdmin && <span className="hidden sm:inline px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Admin</span>}

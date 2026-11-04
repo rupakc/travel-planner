@@ -25,9 +25,11 @@ from .api.routes.chat import router as chat_router
 from .api.routes.compare import router as compare_router
 from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
+from .api.routes.fare_watches import router as fare_watches_router
 from .api.routes.feedback import router as feedback_router
 from .api.routes.layover import router as layover_router
 from .api.routes.nationalities import router as nationalities_router
+from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
 from .api.routes.recent_searches import router as recent_searches_router
@@ -46,6 +48,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
+from .services import fare_watch
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 
@@ -72,12 +75,21 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db.fare_watch_db import create_fare_watch_tables
+    from .db.notifications_db import create_notifications_table
+
+    create_fare_watch_tables()
+    create_notifications_table()
+    # Fare-watch re-checks: only with live fares (SERPAPI_KEY) and
+    # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
+    fare_watch_task = fare_watch.start_scheduler()
     asyncio.create_task(
         start_periodic_backup(
             _settings.backup_bucket, _settings.data_dir, interval_seconds=60
         )
     )
     yield
+    await fare_watch.stop_scheduler(fare_watch_task)
     # SIGTERM: force=True always uploads our current state regardless of GCS generation.
     # This is safe — the dying instance holds the most up-to-date data.
     await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)
@@ -174,6 +186,9 @@ app.include_router(
     dependencies=_limited("light_ai"),
 )
 app.include_router(taste_router, prefix="/api", tags=["taste"])
+# Fare watches: create and "check now" draw on the light_ai bucket (per route)
+app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
+app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
 )
@@ -229,4 +244,9 @@ async def health():
         "service": "travel-planner-backend",
         # Cheap capability flag: the UI offers the fare calendar only when set
         "serpapi_configured": bool(_settings.serpapi_key),
+        # The UI offers "Watch this fare" / the email option only when set
+        "fare_watch_available": bool(
+            _settings.serpapi_key and _settings.fare_watch_enabled
+        ),
+        "email_alerts_available": bool(_settings.smtp_host),
     }
