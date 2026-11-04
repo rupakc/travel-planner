@@ -14,6 +14,8 @@ import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
+import WatchFareButton from '../components/alerts/WatchFareButton'
+import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
@@ -721,6 +723,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                 </>
               )}
               {selections.flight.booking_url && <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> Book</a>}
+              <div className="mt-1.5">
+                <WatchFareButton variant="inline" trip={tripFromSearch(searchContext)} source="chat_plan" />
+              </div>
             </div>
           )}
 
@@ -913,6 +918,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
                         {isLoaded ? <><Check size={11} /> Loaded</> : <><RefreshCw size={11} /> Load</>}
                       </button>
+                      <WatchFareButton variant="card" label="Watch" trip={tripFromPlan(plan)} source="saved_plan" />
                       <button onClick={() => setViewingPlan(plan)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
                         <Eye size={11} /> View

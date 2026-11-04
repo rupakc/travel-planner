@@ -19,6 +19,8 @@ os.environ["JWT_SECRET_KEY"] = "test-secret-key-at-least-32-bytes-long!"
 os.environ["LOG_FORMAT"] = "text"
 os.environ["BACKUP_BUCKET"] = ""
 os.environ["RATE_LIMIT_ENABLED"] = "false"  # tests opt in via test_rate_limit
+os.environ["FARE_WATCH_ENABLED"] = "false"  # never start the real scheduler loop
+os.environ["SMTP_HOST"] = ""  # never send real email
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

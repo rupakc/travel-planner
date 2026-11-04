@@ -56,3 +56,21 @@
 @media (prefers-reduced-motion: reduce) {
   .import-pin, .import-step-active { animation: none; }
 }
+
+/* Fare alerts: the toast slides in; the bell nudges once when a new alert
+   arrives. Both are skipped for people who prefer reduced motion. */
+.alert-pop { animation: alertPop 220ms ease-out both; }
+.bell-nudge { animation: bellNudge 700ms ease-in-out 1; transform-origin: 50% 2px; }
+@keyframes alertPop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes bellNudge {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(14deg); }
+  45% { transform: rotate(-10deg); }
+  70% { transform: rotate(5deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alert-pop, .bell-nudge { animation: none; }
+}

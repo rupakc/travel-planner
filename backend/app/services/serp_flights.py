@@ -551,6 +551,101 @@ async def search_calendar(
     return {"dates": list(dates), "currency": "USD", "source": "google_flights"}
 
 
+# ── Fare watch ────────────────────────────────────────────────────────────────
+
+
+def _watch_key(
+    origin_id: str, dest_id: str, dep: Any, ret: Any, num_travelers: int
+) -> str:
+    """Fare-watch snapshot cache key (selected-dates price + Google insights)."""
+    return f"serp-watch:{origin_id}:{dest_id}:{dep}:{ret}:{num_travelers}"
+
+
+def _cached_snapshot(request: TravelSearchRequest) -> dict | None:
+    """The selected dates' price (+ insights) from cache alone, or None."""
+    origin_id = request.origin_iata or request.origin
+    dest_id = request.destination_iata or request.destination
+    dep, ret, n = request.departure_date, request.return_date, request.num_travelers
+    cache = get_cache()
+    snap = cache.get(_watch_key(origin_id, dest_id, dep, ret, n))
+    if snap is not None:
+        return snap
+    main = cache.get(_main_key(origin_id, dest_id, dep, ret, n))
+    price = _cached_selected_price(
+        main, cache.get(_calendar_key(origin_id, dest_id, dep, ret, n))
+    )
+    if price is None:
+        return None
+    return {"price": price, "price_insights": (main or {}).get("price_insights")}
+
+
+def _calendar_dates(request: TravelSearchRequest, window: int) -> list[date]:
+    """Departure dates a ±window calendar covers (tomorrow onwards)."""
+    tomorrow = _today() + timedelta(days=1)
+    return [
+        request.departure_date + timedelta(days=o)
+        for o in range(-window, window + 1)
+        if request.departure_date + timedelta(days=o) >= tomorrow
+    ]
+
+
+def watch_call_estimate(request: TravelSearchRequest, window: int = 0) -> int:
+    """SerpAPI calls ``watch_fares`` would make now (cached fares are free)."""
+    origin_id = request.origin_iata or request.origin
+    dest_id = request.destination_iata or request.destination
+    calls = 0 if _cached_snapshot(request) is not None else 1
+    if window:
+        cache = get_cache()
+        for dep in _calendar_dates(request, window):
+            if dep == request.departure_date:
+                continue  # the selected date comes from the snapshot
+            shift = dep - request.departure_date
+            ret = request.return_date + shift if request.return_date else None
+            key = _calendar_key(origin_id, dest_id, dep, ret, request.num_travelers)
+            if key not in cache:
+                calls += 1
+    return calls
+
+
+async def watch_fares(
+    api_key: str, request: TravelSearchRequest, window: int = 0
+) -> dict:
+    """Live fare for a watched trip: the selected dates' cheapest
+    outbound-stage price (the calendar's figure) with Google's insights, plus
+    the calendar's ±window dates when ``window`` is set.
+
+    Reuses a cached main search / calendar entry when there is one, so a
+    watch created right after a search costs nothing. Returns
+    ``{"price", "price_insights", "dates", "calls"}``; raises SerpAPIError
+    when the selected dates' lookup fails.
+    """
+    calls = watch_call_estimate(request, window)
+    snap = _cached_snapshot(request)
+    if snap is None:
+        origin_id = request.origin_iata or request.origin
+        dest_id = request.destination_iata or request.destination
+        data = await _call(_build_params(api_key, request, None))
+        cache = get_cache()
+        _record_calendar_price(cache, request, None, origin_id, dest_id, data)
+        snap = {
+            "price": _cheapest(data),
+            "price_insights": _extract_price_insights(data),
+        }
+        cache[
+            _watch_key(
+                origin_id,
+                dest_id,
+                request.departure_date,
+                request.return_date,
+                request.num_travelers,
+            )
+        ] = snap
+    dates: list[dict] = []
+    if window:
+        dates = (await search_calendar(api_key, request, window))["dates"]
+    return {**snap, "dates": dates, "calls": calls}
+
+
 async def search_multi_city(
     api_key: str,
     request: TravelSearchRequest,

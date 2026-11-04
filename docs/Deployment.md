@@ -105,5 +105,7 @@ Any host that can run the two containers works. Requirements:
 - `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` and `ADMIN_PASSWORD` set; `SERPAPI_KEY` and `SERPER_KEY` optional.
 - `CORS_ORIGINS` set to the frontend's origin, and `BACKEND_URL` for the frontend container.
 - If the backend sits behind a proxy, run uvicorn with `--proxy-headers` so anonymous rate limits key on real client IPs.
+- **Fare watch** runs inside the backend process when `SERPAPI_KEY` is set. Keep **one** backend worker (`uvicorn` without `--workers`, one instance): watches are leased in SQLite, so extra workers on the same file would not double-check a watch, but each would run its own scheduler loop and in-memory cache, and the SQLite file can't be shared across hosts. On a host that scales to zero (like Cloud Run without minimum instances) checks only run while an instance is up; set a minimum of one instance, or `FARE_WATCH_ENABLED=false` to turn background checks off. Size `FARE_WATCH_DAILY_CALL_BUDGET` to your SerpAPI plan.
+- **Alert emails** need `SMTP_HOST` (+ `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_STARTTLS`) and `APP_BASE_URL` set to the public frontend URL; the frontend host must proxy `/api` so the emails' one-click stop link works. Use a sender your provider has verified (SPF/DKIM) or the emails land in spam. Without SMTP everything else works and alerts stay in the app.
 
 `docker-compose.yml` is a working single-host example (see [Setup and Installation](Setup-and-Installation.md#option-c-docker-compose)).

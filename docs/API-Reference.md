@@ -22,7 +22,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -41,6 +41,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/auth/login` | none | Username and password → JWT |
 | POST | `/api/auth/change-password` | user | Change own password; returns a new token |
 | GET | `/api/auth/me` | user | Current user |
+| PUT | `/api/auth/email` | user | Set or clear the account email (for fare alert emails) |
 | POST | `/api/admin/users` | admin | Create a user with a temporary password |
 | GET | `/api/admin/users` | admin | List users (no password hashes) |
 | DELETE | `/api/admin/users/{username}` | admin | Deactivate a user (not yourself) |
@@ -77,7 +78,16 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/walking-tours` | optional | Crawled free walking tours |
 | POST | `/api/layover` | optional | Layover mini-plan |
 | POST | `/api/stress-test` | optional | Audit an itinerary |
-| GET | `/health` | none | Liveness and `serpapi_configured` |
+| GET, POST | `/api/fare-watches` | user | List own fare watches; watch a trip's fare (takes the baseline) |
+| POST | `/api/fare-watches/match` | user | The caller's watch for a trip, or `null` (no live lookup) |
+| GET, PATCH, DELETE | `/api/fare-watches/{id}` | user | Get, edit (pause/resume, mode, target, ±3 days, email), delete own watch |
+| POST | `/api/fare-watches/{id}/check` | user | "Check now": one live check |
+| GET | `/api/fare-watches/unsubscribe?token=` | none | "Stop emails" link from alert emails: confirmation page (no change) |
+| POST | `/api/fare-watches/unsubscribe?token=` | none | Turn email off for that watch (the confirmation form, or RFC 8058 one-click) |
+| GET | `/api/notifications` | user | Own notifications, newest first (`unread_only`, `limit` 1–100, `offset`) |
+| GET | `/api/notifications/unread-count` | user | `{"count": n}` |
+| POST | `/api/notifications/read` | user | Mark `ids` (or `all`) read |
+| GET | `/health` | none | Liveness and capability flags |
 | GET | `/health/agents` | none | Deep check with one tiny Haiku call (cached 5 min) |
 
 The single-agent routes accept anonymous calls; only the rate limit protects them.
@@ -98,7 +108,7 @@ Response (`401` for wrong credentials or an inactive account):
 {
   "access_token": "eyJ...",
   "token_type": "bearer",
-  "user": { "username": "admin", "is_admin": true, "requires_password_change": false }
+  "user": { "username": "admin", "is_admin": true, "requires_password_change": false, "email": null }
 }
 ```
 
@@ -114,7 +124,11 @@ Returns `{"access_token": "...", "token_type": "bearer"}` with a fresh token. `4
 
 ### GET /api/auth/me
 
-Returns `{ "username", "is_admin", "requires_password_change" }`.
+Returns `{ "username", "is_admin", "requires_password_change", "email" }`.
+
+### PUT /api/auth/email
+
+`{"email": "me@example.com"}` sets the account email (trimmed, lower-cased; not verified, so the route is rate-limited in the light_ai bucket); `""` clears it and turns email off on all the user's fare watches. Returns `{"email": ...}`. `422` for an address that isn't `local@domain.tld`; `409` when another account uses it. Set from the Preferences page.
 
 There is no registration endpoint. Admins create users:
 
@@ -545,6 +559,102 @@ Response:
 
 ---
 
+## Fare watches and notifications
+
+A fare watch re-checks one single-destination trip's live Google Flights fare (SerpAPI) about twice a day and creates a notification when it is worth telling the traveller. All prices are the total for the trip's travellers, like the Flights section. Every route needs a signed-in user and only sees that user's watches and notifications (`404` otherwise), except the unsubscribe link. See [Trip Planning Features](Trip-Planning-Features.md#fare-watch-and-price-alerts) for the alert rules.
+
+### POST /api/fare-watches
+
+```json
+{
+  "origin": "Berlin", "destination": "Lisbon",
+  "departure_date": "2026-12-10", "return_date": "2026-12-17", "num_travelers": 2,
+  "alert_mode": "any_drop", "target_price": null, "flexible_days": 0, "email_enabled": false
+}
+```
+
+Or `{"plan_id": 12, ...options}` to watch a saved plan's trip. Codes are resolved like a search (typed cities work). `alert_mode` is `any_drop` (default) or `below_target` (needs `target_price`); `flexible_days` is `0` or `3` (also watch departures ±3 days, same trip length); `email_enabled` needs an account email and SMTP (`422` otherwise).
+
+Today's price is taken straight away as the **baseline** (never an alert) when the daily SerpAPI budget allows; otherwise the scheduler takes it. Returns the watch (below) with `already_watching: false`, or the existing watch for the same trip with `already_watching: true`. Errors: `503` without SerpAPI; `422` for multi-city (`"Fare watch works for single-destination trips for now"`), an unknown city, a departure today or earlier, or a return before departure; `409` at `FARE_WATCH_MAX_ACTIVE_PER_USER` active watches. Rate-limited (light_ai).
+
+A watch:
+
+```json
+{
+  "id": 1, "plan_id": null, "origin_code": "BER", "destination_code": "LIS,CAT",
+  "origin_label": "Berlin", "destination_label": "Lisbon",
+  "departure_date": "2026-12-10", "return_date": "2026-12-17", "num_travelers": 1, "cabin": "economy",
+  "flexible_days": 0, "alert_mode": "any_drop", "target_price": null, "email_enabled": true,
+  "status": "active",
+  "baseline_price": 220.0, "last_price": 150.0, "lowest_price": 150.0, "lowest_price_date": "2026-12-10",
+  "last_notified_price": 150.0, "last_notified_at": "2026-11-04T08:50:51+00:00",
+  "google_price_level": "low", "google_typical_low": 140, "google_typical_high": 210,
+  "check_count": 3, "failure_count": 0, "problem": null,
+  "last_checked_at": "...", "next_check_at": "...", "created_at": "...", "updated_at": "...",
+  "history": [{"checked_at": "...", "price": 150.0, "cheapest_price": null,
+               "cheapest_departure_date": null, "cheapest_return_date": null, "price_level": "low"}],
+  "booking_url": "https://www.google.com/flights#flt=BER.LIS.2026-12-10*LIS.BER.2026-12-17;c:USD;e:1;sd:1;t:f"
+}
+```
+
+`status` is `active`, `paused`, `expired` (departure day reached) or `error` (three failed checks in a row). `already_below_target` / `already_low` say the baseline already met the target / was rated "low" by Google (that signal's first alert then needs a full max($15, 5 %) drop below the baseline); `problem` is a plain-language reason for the latest failed check (`null` when healthy); the raw error stays server-side. `history` holds up to 120 checks, oldest first. The alert state per signal (`last_notified_*`, `own_peak_price`, `own_lowest_price`, `cheaper_notified_*`, `cheaper_peak_price`) is also returned.
+
+### GET /api/fare-watches, GET /api/fare-watches/{id}
+
+The caller's watches (ordered by departure date) or one watch, each with its history.
+
+### POST /api/fare-watches/match
+
+Body: the trip fields of `POST /api/fare-watches`. Returns `{"watch": {...}}` or `{"watch": null}`; makes no live lookup. The "Watch fare" buttons use it to show "Watching · $412".
+
+### PATCH /api/fare-watches/{id}
+
+Any of `status` (`"paused"` or `"active"`), `alert_mode`, `target_price`, `flexible_days`, `email_enabled`. Resuming an `error` watch clears the failures and checks it on the next scheduler tick (the "Retry" action). `409` to resume an expired watch or past the active limit; `422` for `below_target` without a target or email without an address/SMTP. Scheduler fields can't be set.
+
+### DELETE /api/fare-watches/{id}
+
+Deletes the watch and its history. Returns `{"deleted": true}`.
+
+### POST /api/fare-watches/{id}/check
+
+"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. Returns the watch plus `check_status` (`checked`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification` (the alert this check created, or `null`). `429` with `Retry-After` (seconds to the next UTC day) when today's fare-watch budget, or the caller's share of it (`FARE_WATCH_USER_DAILY_SHARE`), is spent — the `detail` says which; `409` while the watch is being checked or after it expired; `503` without SerpAPI. Rate-limited (light_ai).
+
+### GET /api/fare-watches/unsubscribe?token=
+
+The signed link at the bottom of alert emails. Returns a confirmation page with a "Stop emails for this fare" button and changes nothing (mail scanners and prefetchers follow GET links). `400` for an invalid token.
+
+### POST /api/fare-watches/unsubscribe?token=
+
+Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. It is the confirmation page's form and the RFC 8058 one-click target: alert emails carry `List-Unsubscribe: <…/api/fare-watches/unsubscribe?token=…>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, and the body is ignored. Idempotent; `400` for an invalid token.
+
+### GET /api/notifications
+
+`?unread_only=false&limit=20&offset=0` → `{"items": [...], "total": n, "unread": n}`, newest first. An item:
+
+```json
+{
+  "id": 3, "kind": "fare_drop",
+  "title": "Berlin → Lisbon dropped to $150 (−$70)",
+  "body": "For 10–17 Dec · total for 1 traveller. The lowest we've seen since you started watching.",
+  "data": {"watch_id": 1, "price": 150.0, "previous_price": 220.0, "delta": -70.0, "is_lowest": true,
+           "departure_date": "2026-12-10", "return_date": "2026-12-17", "num_travelers": 1,
+           "links": {"alerts": "/alerts?watch=1", "replan": "/alerts?watch=1&replan=1", "book": "https://www.google.com/flights#..."}},
+  "created_at": "...", "read_at": null, "emailed_at": "..."
+}
+```
+
+`kind` is `fare_drop`, `fare_target`, `fare_low_level`, `fare_cheaper_date` (data adds `selected_price`, `saving`, `cheapest_departure_date`, `cheapest_return_date`), `watch_expired` or `watch_error` (data `action: "retry"`).
+
+### GET /api/notifications/unread-count
+
+`{"count": 2}`. The header bell polls it every 60 s while the tab is visible.
+
+### POST /api/notifications/read
+
+`{"ids": [3, 4]}` or `{"all": true}` → `{"updated": n, "unread": n}`. Only the caller's notifications change. `422` without either.
+
+---
+
 ## Reference data
 
 ### GET /api/airports/search?q=&limit=
@@ -561,7 +671,7 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health
 
-`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false}`. No auth. The Results page reads `serpapi_configured` once per page load to decide whether to offer the fare calendar; Docker Compose uses this endpoint as the backend healthcheck.
+`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". Docker Compose uses this endpoint as the backend healthcheck.
 
 ### GET /health/agents
 

@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Plane, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { returnPathFrom } from '../utils/returnPath'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
-  // Back to where the user was headed, query included (/?import=<link>)
-  const from       = location.state?.from ? `${location.state.from.pathname}${location.state.from.search || ''}` : '/'
+  const from       = returnPathFrom(location)  // same-origin only
 
   const [form, setForm]     = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)

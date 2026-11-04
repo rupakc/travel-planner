@@ -50,6 +50,27 @@ class Settings(BaseSettings):
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
     rate_limit_import: int = 20  # /import/extract (plan from a link)
 
+    # Fare watch: background re-checks of watched fares (needs SERPAPI_KEY).
+    # One check = 1 SerpAPI call (exact dates) or up to 7 (±3 nearby dates);
+    # cached fares cost nothing. Run one backend worker: see Deployment.md.
+    fare_watch_enabled: bool = True
+    fare_watch_tick_seconds: int = 300  # how often the scheduler looks for due checks
+    fare_watch_interval_hours: float = 12  # between checks of one watch (±10 %)
+    fare_watch_daily_call_budget: int = 200  # SerpAPI calls/day (UTC) for watches
+    fare_watch_max_active_per_user: int = 10
+    # One user's daily share of that budget (all their watches together)
+    fare_watch_user_daily_share: float = 0.3
+
+    # Email alerts (optional): sent only when SMTP_HOST is set
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_starttls: bool = True
+    # Public URL of the frontend, for links in emails
+    app_base_url: str = "http://localhost:5174"
+
     # Seeded admin account (used only on first startup to create the admin user)
     admin_username: str = "admin"
     admin_password: str = ""

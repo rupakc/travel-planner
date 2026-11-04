@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { fetchFareCalendar } from '../services/api'
 import { axiosErrorDetail } from '../utils/httpError'
+import { tripFromSearch } from '../utils/fareWatch'
+import WatchFareButton from './alerts/WatchFareButton'
 import {
   cheapestDeparture, dayOffset, fareDelta, formatDay, formatDelta, formatUsd,
   priceInsightsChip, replanPrompt,
@@ -91,6 +93,12 @@ export default function FareCalendarStrip({ searchData, token, onReplan, load = 
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
         <h4 className="text-xs font-semibold text-gray-700">Fare calendar</h4>
         <p className="text-[11px] text-gray-400">Cheapest live fare by departure date · same trip length</p>
+        {state.status === 'done' && dates.length > 0 && (
+          <span className="ml-auto">
+            <WatchFareButton variant="inline" label="Watch these dates" trip={tripFromSearch(searchData)} defaultFlexible
+              price={selected?.cheapest_usd ?? null} source="fare_calendar" />
+          </span>
+        )}
       </div>
 
       {state.status === 'loading' && (
