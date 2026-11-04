@@ -403,3 +403,306 @@ def test_post_check_ignores_model_set_flags_and_logistics_mentions():
     cov = out["link_coverage"]
     assert sorted(cov["scheduled"]) == sorted(p["name"] for p in places)
     assert cov["extras"] == [] and cov["missing"] == []
+
+
+# ── Review fixes: strict match (I-2), city check (I-3), logistics (I-4) ─────
+
+
+def test_one_common_word_never_counts_as_the_place():
+    req = _req(
+        must_include=[
+            {"name": "Sé Cathedral", "kind": "sight", "city": "Lisbon"},
+            {"name": "Tram 28", "kind": "transport", "city": "Lisbon"},
+            {"name": "LX Factory", "kind": "shopping", "city": "Lisbon"},
+        ]
+    )
+    itin = {
+        "days": [
+            _day(
+                1,
+                [
+                    _slot("morning", "Arrive in Lisbon"),
+                    _slot("afternoon", "Take the tram to Belém"),
+                ],
+            ),
+            _day(
+                2,
+                [
+                    _slot("morning", "Visit the Jerónimos cathedral-like monastery"),
+                    _slot("afternoon", "Lunch at a former factory canteen in Marvila"),
+                    _slot("evening", "Fado dinner"),
+                ],
+            ),
+            _day(
+                3,
+                [
+                    _slot("morning", "Sintra palaces"),
+                    _slot("afternoon", "Cascais beach"),
+                    _slot("evening", "Free time"),
+                ],
+            ),
+            _day(
+                4,
+                [
+                    _slot("morning", "Pack and check out"),
+                    _slot("afternoon", "Flight home"),
+                ],
+            ),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    texts = {
+        s["link_place"]: s["activity"]
+        for d in out["days"]
+        for s in d["slots"]
+        if s.get("from_link")
+    }
+    # every place is really in its slot's text now — none "found" in a lookalike
+    for name, activity in texts.items():
+        assert name in activity, (name, activity)
+    assert set(texts) | set(out["link_coverage"]["extras"]) == {
+        "Sé Cathedral",
+        "Tram 28",
+        "LX Factory",
+    }
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [
+        ("Sé Cathedral", "Lisbon Sé Cathedral at opening time"),
+        ("Tram 28", "Ride Tram 28 through Graça"),
+        ("LX Factory", "Brunch and shops at LX Factory"),
+        ("Santos & Cais do Sodre", "Santos & Cais do Sodré neighbourhood"),
+        ("Timeout Market", "Dinner at the TimeOut Market"),
+        ("Principe Real", "Príncipe Real neighbourhood walk"),
+    ],
+)
+def test_real_mentions_still_match(name, text):
+    req = _req(must_include=[{"name": name, "kind": "sight", "city": "Lisbon"}])
+    itin = {
+        "days": [
+            _day(1, [_slot("morning", "Arrive")]),
+            _day(2, [_slot("afternoon", text)]),
+            _day(3, [_slot("evening", "Departure flight")]),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    slot = out["days"][1]["slots"][0]
+    assert slot["activity"] == text and slot["link_place"] == name
+
+
+def test_a_mention_on_another_citys_day_does_not_count():
+    req = _req(
+        destination="Kyoto, Japan",
+        destinations=["Tokyo, Japan", "Kyoto, Japan"],
+        destination_nights=[2, None],
+        must_include=[{"name": "Senso-ji", "kind": "sight", "city": "Tokyo"}],
+    )
+    itin = {
+        "days": [
+            _day(
+                1,
+                [
+                    _slot("morning", "Arrive at Narita airport"),
+                    _slot("afternoon", "Shibuya walk"),
+                ],
+                city="Tokyo",
+            ),
+            _day(
+                2,
+                [
+                    _slot("morning", "Tsukiji market"),
+                    _slot("afternoon", "Free time to explore"),
+                ],
+                city="Tokyo",
+            ),
+            _day(
+                3,
+                [
+                    _slot("morning", "Shinkansen from Tokyo to Kyoto"),
+                    _slot("afternoon", "Fushimi Inari"),
+                    _slot("evening", "Senso-ji souvenirs at Gion"),
+                ],
+                city="Kyoto",
+            ),
+            _day(
+                4,
+                [
+                    _slot("morning", "Kinkaku-ji"),
+                    _slot("evening", "Depart for airport"),
+                ],
+                city="Kyoto",
+            ),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    marked = [
+        (d["city"], s["activity"])
+        for d in out["days"]
+        for s in d["slots"]
+        if s.get("from_link")
+    ]
+    assert marked == [("Tokyo", "Senso-ji")]
+
+
+@pytest.mark.parametrize(
+    "activity",
+    [
+        "Alfa Pendular train Lisbon → Porto",
+        "Shinkansen to Kyoto",
+        "Train from Lisbon",
+        "Check into your hotel in Porto",
+        "Ferry across the Tagus",
+        "Coach transfer to the old town",
+        "Drive to Sintra",
+        "Head to Porto",
+    ],
+)
+def test_logistics_slots_are_never_replaced(activity):
+    req = _req(
+        must_include=[
+            {"name": f"Spot {i}", "kind": "sight", "city": "Lisbon"} for i in range(9)
+        ]
+    )
+    itin = {
+        "days": [
+            _day(
+                1,
+                [
+                    _slot("morning", "Arrive"),
+                    _slot("afternoon", "Lunch"),
+                    _slot("evening", "Dinner"),
+                ],
+            ),
+            _day(
+                2,
+                [
+                    _slot(
+                        "morning",
+                        activity,
+                        estimated_cost_usd=35,
+                        booking_url="https://cp.pt",
+                    ),
+                    _slot("afternoon", "Museum"),
+                    _slot("evening", "Bar"),
+                ],
+            ),
+            _day(
+                3,
+                [
+                    _slot("morning", "Breakfast"),
+                    _slot("afternoon", "Market"),
+                    _slot("evening", "Departure flight"),
+                ],
+            ),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    kept = out["days"][1]["slots"][0]
+    assert kept["activity"] == activity and not kept.get("from_link")
+    assert kept["booking_url"] == "https://cp.pt"
+
+
+def test_inserted_slots_drop_the_old_cost_and_booking_link_and_skip_travel_in_days():
+    req = _req(
+        destination="Porto, Portugal",
+        destinations=["Lisbon, Portugal", "Porto, Portugal"],
+        destination_nights=[2, None],
+        must_include=[{"name": "Livraria Lello", "kind": "shopping", "city": "Porto"}],
+    )
+    itin = {
+        "days": [
+            _day(
+                1,
+                [_slot("morning", "Arrive"), _slot("afternoon", "Alfama")],
+                city="Lisbon",
+            ),
+            _day(
+                2, [_slot("morning", "Belém"), _slot("afternoon", "LX")], city="Lisbon"
+            ),
+            _day(
+                3,
+                [
+                    _slot(
+                        "morning",
+                        "Alfa Pendular train Lisbon → Porto",
+                        estimated_cost_usd=35,
+                        booking_url="https://cp.pt",
+                    ),
+                    _slot("afternoon", "Check into your hotel in Porto"),
+                    _slot(
+                        "evening",
+                        "Port tasting in Gaia",
+                        estimated_cost_usd=25,
+                        booking_url="https://port.example",
+                    ),
+                ],
+                city="Porto",
+            ),
+            _day(
+                4,
+                [
+                    _slot(
+                        "morning",
+                        "Clérigos Tower",
+                        estimated_cost_usd=8,
+                        booking_url="https://clerigos.example",
+                        start_time="09:30",
+                    ),
+                    _slot(
+                        "afternoon",
+                        "Clérigos Tower again",
+                        estimated_cost_usd=8,
+                        booking_url="https://clerigos.example",
+                        start_time="13:30",
+                    ),
+                    _slot("evening", "Departure flight"),
+                ],
+                city="Porto",
+            ),
+            _day(
+                5,
+                [
+                    _slot("morning", "Breakfast"),
+                    _slot("afternoon", "Airport"),
+                    _slot("evening", "Departure flight"),
+                ],
+                city="Porto",
+            ),
+        ]
+    }
+    out = ensure_must_include(itin, req)
+    day3 = out["days"][2]["slots"]
+    assert [s["activity"] for s in day3][:2] == [
+        "Alfa Pendular train Lisbon → Porto",
+        "Check into your hotel in Porto",
+    ]
+    slot = next(s for d in out["days"] for s in d["slots"] if s.get("from_link"))
+    assert slot["activity"].startswith("Livraria Lello")
+    assert out["days"][3]["slots"].count(slot) == 1  # a non-travel day in Porto
+    assert slot["estimated_cost_usd"] is None
+    assert "booking_url" not in slot and "start_time" not in slot
+
+
+def test_must_include_rejects_blank_names_unknown_kinds_and_duplicates():
+    req = _req(
+        must_include=[
+            {"name": "  Belém Tower ", "kind": "SPACESHIP", "city": "Lisbon"},
+            {"name": "belém tower", "city": "Lisbon"},
+        ]
+    )
+    assert [(p.name, p.kind) for p in req.must_include] == [("Belém Tower", "sight")]
+    with pytest.raises(ValidationError):
+        _req(must_include=[{"name": "   ", "city": "Lisbon"}])
+
+
+def test_post_check_is_idempotent_even_for_transport_places():
+    req = _req(
+        must_include=[
+            {"name": "Tram 28", "kind": "transport", "city": "Lisbon"},
+            {"name": "Sé Cathedral", "kind": "sight", "city": "Lisbon"},
+        ]
+    )
+    once = ensure_must_include(_itinerary(), req)
+    assert ensure_must_include(once, req) == once

@@ -40,6 +40,22 @@ class MustIncludePlace(BaseModel):
     quote: str | None = Field(None, max_length=120)
     verified: bool = Field(False, description="Located on Google Maps at import")
 
+    @field_validator("name", mode="before")
+    @classmethod
+    def _clean_name(cls, v):
+        name = " ".join(str(v or "").split())
+        if not name:
+            raise ValueError("a place needs a name")
+        return name
+
+    @field_validator("kind", mode="before")
+    @classmethod
+    def _known_kind(cls, v):
+        from .link_import import PLACE_KINDS
+
+        kind = str(v or "").strip().lower()
+        return kind if kind in PLACE_KINDS else "sight"
+
 
 class ImportSource(BaseModel):
     """Where an imported trip came from (shown as "Inspired by …")."""
@@ -119,6 +135,22 @@ class TravelSearchRequest(BaseModel):
         description="Places from an imported link: merged into activities and "
         "scheduled in the itinerary",
     )
+
+    @field_validator("must_include")
+    @classmethod
+    def _unique_places(cls, v):
+        if not v:
+            return v
+        from ..core.places import fold_place
+
+        seen, unique = set(), []
+        for place in v:
+            key = (fold_place(place.name), fold_place(place.city or ""))
+            if key not in seen:
+                seen.add(key)
+                unique.append(place)
+        return unique
+
     import_source: ImportSource | None = Field(
         None, description="The link or text the trip was imported from"
     )

@@ -20,7 +20,6 @@ from urllib.parse import quote_plus
 
 from ..core.places import fold_place
 from ..schemas.request import MustIncludePlace, TravelSearchRequest
-from .name_match import STOP_WORDS
 
 VERIFIED_NOTE = "Located on Google Maps"
 UNVERIFIED_NOTE = "From your link — not independently checked"
@@ -43,29 +42,88 @@ _FREE_TIME = re.compile(
     r"\brelax|\brest\b|\boptional\b|explore the neighbou?rhood|spontaneous",
     re.IGNORECASE,
 )
+# Travel and hotel logistics: never matched as a place, never replaced.
+# Checked on every day, not just the first and last.
 _LOGISTICS = re.compile(
-    r"\b(arriv\w*|check[- ]?in|check[- ]?out|depart\w*|flight|airport|transfer|"
-    r"travel from|train to|pack\w*)\b",
+    r"\b(arriv\w*|depart\w*|check(?:ing)?[- ]?(?:in|into|out)|flights?|fly|flying|"
+    r"airports?|transfers?|trains?|rail\w*|shinkansen|tgv|eurostar|intercity|"
+    r"bus(?:es)?|coach|ferr(?:y|ies)|drive|driving|car hire|rental car|taxi|uber|"
+    r"travel (?:from|to)|head(?:ing)? (?:to|back)|move on|pack\w*|luggage|"
+    r"comboio|zug|tren|treno|autobus)\b|→|->",
     re.IGNORECASE,
+)
+_LOGISTICS_TYPES = {
+    "transport",
+    "transit",
+    "travel",
+    "transfer",
+    "arrival",
+    "departure",
+    "check-in",
+    "check-out",
+    "checkin",
+    "checkout",
+    "logistics",
+}
+# Only these words are ignored when matching a place's name; every other
+# token counts, however short ("Tram 28", "LX Factory", "Sé Cathedral")
+_NAME_FILLER = frozenset(
+    "the a an of and at in on de da do das dos di del della la le les el los "
+    "las y e et und".split()
+)
+# A replaced slot keeps none of the old activity's money or links
+_SLOT_STALE_FIELDS = (
+    "estimated_cost_usd",
+    "cost",
+    "price_usd",
+    "booking_url",
+    "url",
+    "link",
+    "tickets",
+    "transport",
+    "transport_mode",
+    "notes",
+    "start_time",
+    "end_time",
+    "category",
+    "type",
 )
 
 
-def _words(text: str) -> set[str]:
-    return {
-        w
-        for w in re.split(r"[^a-z0-9]+", fold_place(text or ""))
-        if len(w) > 2 and w not in STOP_WORDS
-    }
+def _tokens(text: str) -> list[str]:
+    return [t for t in re.split(r"[^a-z0-9]+", fold_place(text or "")) if t]
+
+
+def _name_tokens(name: str) -> list[str]:
+    return [t for t in _tokens(name) if t not in _NAME_FILLER]
 
 
 def _same_place(name: str, text: str) -> bool:
-    """``text`` names the place: its folded name appears, or every one of its
-    distinctive words does."""
-    folded_name, folded_text = fold_place(name), fold_place(text or "")
-    if folded_name and re.search(rf"\b{re.escape(folded_name)}\b", folded_text):
+    """``text`` names the place: every token of its name (only filler words
+    like "the"/"de" dropped) appears in ``text`` as a whole token. "Sé
+    Cathedral" needs both "se" and "cathedral", so "a cathedral-like
+    monastery" is not it."""
+    wanted = _name_tokens(name)
+    if not wanted:
+        return False
+    have = set(_tokens(text))
+    if all(t in have for t in wanted):
         return True
-    words = _words(name)
-    return bool(words) and words <= _words(text)
+    # Run-together spellings: "TimeOut Market" for "Time Out Market"
+    joined = " ".join(_tokens(text)).replace(" ", "")
+    return "".join(wanted) in joined and len("".join(wanted)) >= 8
+
+
+def _is_logistics(slot: dict, stop_cities: set[str]) -> bool:
+    kind = str(slot.get("category") or slot.get("type") or "").strip().lower()
+    if kind in _LOGISTICS_TYPES:
+        return True
+    text = f"{slot.get('activity', '')}"
+    if _LOGISTICS.search(text):
+        return True
+    folded = fold_place(text)
+    # "… to Porto": moving between the trip's own stops
+    return any(re.search(rf"\bto {re.escape(c)}\b", folded) for c in stop_cities if c)
 
 
 def _city_key(text: str | None) -> str:
@@ -206,6 +264,26 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
     itinerary = copy.deepcopy(itinerary)
     days = [d for d in itinerary["days"] if isinstance(d, dict)]
     last = len(days) - 1
+    stop_cities = {
+        _city_key(c) for c in (request.destinations or [request.destination]) if c
+    }
+    multi = request.is_multi_city
+
+    def logistics(slot):
+        return _is_logistics(slot, stop_cities)
+
+    def right_city(day, place):
+        return not (multi and place.city) or _day_city(day, request) == _city_key(
+            place.city
+        )
+
+    # Each stop's travel-in day (its first day after another city's) is kept
+    # for arriving, like the trip's first and last days
+    travel_in = {
+        id(d)
+        for i, d in enumerate(days)
+        if i > 0 and _day_city(d, request) != _day_city(days[i - 1], request)
+    }
 
     def slots_of(day):
         return [s for s in day.get("slots") or [] if isinstance(s, dict)]
@@ -221,10 +299,7 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
 
     def visit_slots():
         return [
-            (day, slot)
-            for day in days
-            for slot in slots_of(day)
-            if not _LOGISTICS.search(slot.get("activity", ""))
+            (day, slot) for day in days for slot in slots_of(day) if not logistics(slot)
         ]
 
     # Places the itinerary already names: by activity text first (strongest),
@@ -238,7 +313,8 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
                 (
                     (day, slot)
                     for day, slot in visit_slots()
-                    if _same_place(place.name, slot.get(field, ""))
+                    if right_city(day, place)
+                    and _same_place(place.name, slot.get(field, ""))
                     and (field == "activity" or not slot.get("from_link"))
                 ),
                 None,
@@ -257,14 +333,22 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             missing.append(place.name)
             continue
         # Arrival and departure days only when nothing else is in this city
-        inner = [d for d in candidates if days.index(d) not in (0, last)]
-        pool = [
-            (day, slot)
-            for day in (inner or candidates)
-            for slot in slots_of(day)
-            if not slot.get("from_link")
-            and not _LOGISTICS.search(slot.get("activity", ""))
+        inner = [
+            d
+            for d in candidates
+            if days.index(d) not in (0, last) and id(d) not in travel_in
         ]
+        inner = inner or [d for d in candidates if days.index(d) not in (0, last)]
+
+        def pool_of(day_list):
+            return [
+                (day, slot)
+                for day in day_list
+                for slot in slots_of(day)
+                if not slot.get("from_link") and not logistics(slot)
+            ]
+
+        pool = pool_of(inner) or pool_of(candidates)
         if pool:
             day, slot = min(
                 pool, key=lambda ds: _slot_rank(ds[0], ds[1], place, linked_per_day)
@@ -275,7 +359,9 @@ def ensure_must_include(itinerary: dict, request: TravelSearchRequest) -> dict:
             )
             slot["location"] = f"{place.name}, {where}"
             slot["duration_hours"] = _DURATION.get(place.kind, 2.0)
-            slot.pop("notes", None)
+            for key in _SLOT_STALE_FIELDS:
+                slot.pop(key, None)
+            slot["estimated_cost_usd"] = None
             if place.lat is not None and place.lng is not None:
                 slot["lat"], slot["lng"] = place.lat, place.lng
             _mark(slot, place)
