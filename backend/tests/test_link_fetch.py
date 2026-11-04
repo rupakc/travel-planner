@@ -550,6 +550,13 @@ import tracemalloc  # noqa: E402
 import zlib  # noqa: E402
 
 BOMB_SIZE = 64 * 1024 * 1024  # 64 MB of zeros, a few dozen KB on the wire
+# brotli.compress(b"\0" * BOMB_SIZE): 106 bytes that expand to 64 MB, kept as a
+# constant so the test needs no brotli package (it must never be decoded anyway)
+BROTLI_BOMB = bytes.fromhex(
+    "cbffff3ff82700e2b14020f7fe8fffff7ff04f00c4611180eefd1fffffffe09f0088c302"
+    "00ddfb3ffeffffc13f0110870500baf77ffcffff837f02200e0b0074effff8ffff07ff04"
+    "401c1600e8defff1ffff0ffe0980382c00d0bdffe3ffff1ffc1300715800a07bff37"
+)
 
 
 def _zeros_gzip() -> bytes:
@@ -626,13 +633,7 @@ async def test_stacked_gzip_bomb_is_refused():
 
 @pytest.mark.parametrize("encoding", ["br", "zstd", "compress", "x-weird"])
 async def test_other_encodings_are_refused_without_decoding(encoding):
-    import brotli
-
-    body = (
-        brotli.compress(b"\0" * BOMB_SIZE)
-        if encoding == "br"
-        else b"\x28\xb5\x2f\xfd" * 100
-    )
+    body = BROTLI_BOMB if encoding == "br" else b"\x28\xb5\x2f\xfd" * 100
     page, error, peak, _ = await _fetch_bomb(body, encoding)
     assert page is None and error.code == "unsupported_encoding"
     assert peak < 24 * 1024 * 1024
