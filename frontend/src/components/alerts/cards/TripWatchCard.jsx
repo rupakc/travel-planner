@@ -56,7 +56,10 @@ function TripDetails({ watch }) {
         <ul aria-label="Trip price breakdown" className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-100 text-sm">
           {rows.map(r => (
             <li key={r.id} className="flex items-center gap-2 px-3 py-1.5">
-              <span className="min-w-0 flex-1 truncate text-slate-700" title={r.label}>{r.label}</span>
+              <span className="min-w-0 flex-1 text-slate-700">
+                <span className="block truncate" title={r.label}>{r.label}</span>
+                {r.detail && <span className="block truncate text-[11px] text-slate-500" title={r.detail}>{r.detail}</span>}
+              </span>
               <TripBadge row={r} />
               <span className="w-20 shrink-0 text-right tabular-nums text-slate-800">
                 {rowPrice(r)}

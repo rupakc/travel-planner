@@ -2690,7 +2690,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
           <CostBreakdown selections={selections} searchData={searchData} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
-          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint source="my_plan" />
+          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint savedNote source="my_plan" />
 
           {/* Selected flight */}
           {selections.flight && (

@@ -108,3 +108,68 @@ export function tripReplanFare(watch) {
   const flight = (watch?.subject?.components || []).find(c => c.type === 'flight' && c.subject?.origin_label)
   return flight ? flight.subject : null
 }
+
+// ── Before watching / vs My Plan ─────────────────────────────────────────────
+
+const positive = (v) => {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
+function travellers(sd) {
+  const n = Number(sd?.num_travelers) || ['adults', 'children', 'seniors'].reduce((t, k) => t + (Number(sd?.[k]) || 0), 0)
+  return Math.max(1, Math.min(n || 1, 20))
+}
+
+/**
+ * The plan's parts as a trip watch counts them (the server's estimates):
+ * like My Plan's cost breakdown, except activities are per person ×
+ * travellers, and the flight is tracked as the cheapest fare on the dates.
+ * Live prices replace these once watching starts.
+ */
+export function tripPreviewParts(selections, searchData) {
+  const sel = selections || {}
+  const n = travellers(searchData)
+  const dep = searchData?.departure_date
+  const ret = searchData?.return_date
+  const nights = dep && ret ? Math.max(1, Math.round((new Date(ret) - new Date(dep)) / 86400000)) : 7
+  const legs = sel.flights || []
+  const parts = [
+    {
+      key: 'flights', label: 'Flights',
+      amount: positive(sel.flight?.price_usd) + legs.reduce((t, f) => t + positive(f.price_usd), 0),
+      note: sel.flight && !legs.length ? 'tracked as the cheapest fare on your dates' : null,
+    },
+    {
+      key: 'hotel', label: 'Hotel',
+      amount: sel.hotel ? (positive(sel.hotel.total_price_usd) || positive(sel.hotel.price_per_night_usd) * nights) : 0,
+      note: null,
+    },
+    {
+      key: 'activities', label: 'Activities',
+      amount: (sel.activities || []).reduce((t, a) => t + positive(a.price_usd) * n, 0),
+      note: `per person × ${n}`,
+    },
+    { key: 'sim', label: 'SIM / eSIM', amount: positive(sel.sim?.price_usd), note: null },
+  ]
+  return parts.filter(p => p.amount > 0)
+}
+
+/**
+ * Why the watched total isn't the My Plan total (`planTotal`), or null when
+ * they agree (within $1) or there's nothing to compare.
+ */
+export function totalDifference(watch, planTotal) {
+  const watched = watch?.baseline_price
+  if (!isNum(watched) || !isNum(planTotal) || planTotal <= 0) return null
+  const delta = Math.round((watched - planTotal) * 100) / 100
+  if (Math.abs(delta) < 1) return null
+  const rows = watch.subject?.components || []
+  const n = watch.subject?.travellers || 1
+  const reasons = []
+  if (rows.some(r => r.type === 'flight' && r.live)) reasons.push('flights are the cheapest live fare on your dates, not the flight you picked')
+  if (rows.some(r => r.type === 'hotel' && r.live)) reasons.push('the hotel is its live Google Hotels price')
+  if (n > 1 && rows.some(r => r.type === 'activity')) reasons.push(`activities are counted per person × ${n}`)
+  else if (rows.some(r => r.type === 'activity' && r.live)) reasons.push('activities use their live “from” prices')
+  return { watched, plan: planTotal, delta, reasons }
+}

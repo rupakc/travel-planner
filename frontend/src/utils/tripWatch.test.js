@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
-  groupTotals, isWatchablePlan, percent, rowBadge, rowPrice, tripReplanFare, tripRows,
+  groupTotals, totalDifference, tripPreviewParts, isWatchablePlan, percent, rowBadge, rowPrice, tripReplanFare, tripRows,
   tripWatchingLabel, whatChanged,
 } from './tripWatch'
 
@@ -85,5 +85,42 @@ describe('labels and plans', () => {
     const fare = { origin_label: 'Berlin', destination_label: 'Lisbon' }
     expect(tripReplanFare({ subject: { components: [{ type: 'flight', subject: fare }] } })).toBe(fare)
     expect(tripReplanFare({ subject: { components: [SIM] } })).toBeNull()
+  })
+})
+
+describe('tripPreviewParts', () => {
+  const sd = { departure_date: '2099-12-10', return_date: '2099-12-14', num_travelers: 2 }
+  it('counts like the watch: activities per person × travellers', () => {
+    const parts = tripPreviewParts({
+      flight: { price_usd: 612 }, hotel: { total_price_usd: 398 },
+      activities: [{ price_usd: 30 }, { price_usd: 20 }], sim: { price_usd: 13 },
+    }, sd)
+    expect(parts).toEqual([
+      { key: 'flights', label: 'Flights', amount: 612, note: 'tracked as the cheapest fare on your dates' },
+      { key: 'hotel', label: 'Hotel', amount: 398, note: null },
+      { key: 'activities', label: 'Activities', amount: 100, note: 'per person × 2' },
+      { key: 'sim', label: 'SIM / eSIM', amount: 13, note: null },
+    ])
+  })
+  it('skips parts without a price', () => {
+    expect(tripPreviewParts({ activities: [{ name: 'Free walk' }] }, sd)).toEqual([])
+  })
+})
+
+describe('totalDifference', () => {
+  const rows = [
+    { id: 'flight', type: 'flight', live: true, price: 612 },
+    { id: 'activity-0', type: 'activity', live: true, price: 60, unit: 'per person' },
+  ]
+  const w = { baseline_price: 685, subject: { travellers: 2, components: rows } }
+  it('explains why the watched total differs from My Plan', () => {
+    expect(totalDifference(w, 640)).toEqual({
+      watched: 685, plan: 640, delta: 45,
+      reasons: ['flights are the cheapest live fare on your dates, not the flight you picked', 'activities are counted per person × 2'],
+    })
+  })
+  it('is null when they agree or there is no plan total', () => {
+    expect(totalDifference(w, 685.4)).toBeNull()
+    expect(totalDifference(w, null)).toBeNull()
   })
 })

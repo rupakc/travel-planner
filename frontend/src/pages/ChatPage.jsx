@@ -704,7 +704,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           <CostBreakdown selections={selections} searchData={searchContext} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchContext} selections={selections} source="chat" />
-          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchContext, selections } : null} showHint source="chat_plan" />
+          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchContext, selections } : null} showHint savedNote source="chat_plan" />
 
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">

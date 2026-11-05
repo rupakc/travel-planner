@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
-import { computePlanCost, computePlanCostBreakdown } from '../../utils/planHelpers'
+import { computePlanCost } from '../../utils/planHelpers'
 import { formatDateRange } from '../../utils/fareWatch'
 import { priceWatchLink } from '../../utils/priceWatch'
-import { isWatchablePlan, tripWatchingLabel } from '../../utils/tripWatch'
+import { isWatchablePlan, tripPreviewParts, tripWatchingLabel } from '../../utils/tripWatch'
 import PriceWatchDialog from './PriceWatchDialog'
 
 const STYLES = {
@@ -14,14 +14,14 @@ const STYLES = {
   inline: {
     idle: 'inline-flex items-center gap-1 text-xs font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
     on: 'inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
-    hint: 'text-xs text-gray-400',
+    hint: 'text-xs text-gray-500',
     size: 12,
   },
   // text action on a dark modal header (PlanViewModal)
   onDark: {
-    idle: 'inline-flex items-center gap-1 text-xs font-medium text-white/90 hover:text-white hover:underline underline-offset-2',
-    on: 'inline-flex items-center gap-1 text-xs font-semibold text-emerald-200 hover:text-white',
-    hint: 'text-xs text-white/70',
+    idle: 'inline-flex items-center gap-1 rounded text-xs font-medium text-white/90 hover:text-white hover:underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+    on: 'inline-flex items-center gap-1 rounded text-xs font-semibold text-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+    hint: 'text-xs text-white/80',
     size: 12,
   },
 }
@@ -32,7 +32,8 @@ const STYLES = {
  * the server; an unsaved plan (`plan` without an id) shows, with
  * `showHint`, "Save your plan to watch its price". Once watched it reads
  * "Watching · $2,140" and opens the watch on the Alerts page. `className`
- * goes on the wrapper, so spacing disappears with the button.
+ * goes on the wrapper, so spacing disappears with the button; `savedNote`
+ * (the My Plan drawer) says the watch prices the saved plan.
  */
 export default function WatchTripButton({ plan, showHint = false, variant = 'inline', className = '', ...rest }) {
   const { token } = useOptionalAuth()
@@ -45,7 +46,7 @@ export default function WatchTripButton({ plan, showHint = false, variant = 'inl
   return <div className={className}><ActiveTripButton plan={plan} variant={variant} {...rest} /></div>
 }
 
-function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch whole trip' }) {
+function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch whole trip', savedNote = false }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const spec = useMemo(() => ({ plan_id: plan.id }), [plan.id])
@@ -58,9 +59,11 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
     title: plan.name,
     subtitle: [String(sd.destination || '').split(',')[0], sd.departure_date && formatDateRange(sd.departure_date, sd.return_date)]
       .filter(Boolean).join(' · '),
-    price: computePlanCost(plan.selections, sd) || null,
-    parts: computePlanCostBreakdown(plan.selections, sd).map(p => ({ key: p.key, label: p.label, amount: p.amount })),
+    parts: tripPreviewParts(plan.selections, sd),
+    planTotal: computePlanCost(plan.selections, sd) || null,
   }
+  // The target field's starting point: the plan as the watch counts it
+  preview.price = preview.parts.reduce((t, p) => t + p.amount, 0) || null
 
   const onClick = (e) => {
     e.stopPropagation()
@@ -76,6 +79,9 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
         {watching ? <BellRing size={style.size} aria-hidden="true" /> : <BellPlus size={style.size} aria-hidden="true" />}
         <span className="tabular-nums">{watching ? tripWatchingLabel(watch) : label}</span>
       </button>
+      {savedNote && !watching && (
+        <p className={`mt-0.5 ${style.hint}`}>Watches your saved plan — save any changes first.</p>
+      )}
       {open && (
         <PriceWatchDialog kind="trip" spec={spec} preview={preview} source={source}
           onClose={() => setOpen(false)}
