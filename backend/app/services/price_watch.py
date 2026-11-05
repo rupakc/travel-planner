@@ -26,7 +26,7 @@ from typing import Literal, Protocol, runtime_checkable
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
 from . import fare_watch, price_rules
-from .fare_watch import CheckOutcome, usd
+from .fare_watch import CheckOutcome
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,8 @@ class CreatedWatch:
     ``title`` / ``subtitle`` the card and notification wording ("Lumen
     Hotel" / "Lisbon · 10–14 Dec"); ``expires_on`` the ISO date checking
     stops (check-in, activity date, trip departure); ``plan_id`` the saved
-    plan it came from, if any.
+    plan it came from, if any; ``currency`` the currency of every price the
+    watch records (activities keep the listing's own currency).
     """
 
     subject: dict
@@ -91,6 +92,7 @@ class CreatedWatch:
     subtitle: str | None
     expires_on: str
     plan_id: int | None = None
+    currency: str = "USD"  # prices are compared in this currency only
 
 
 @dataclass
@@ -187,7 +189,9 @@ def registered_kinds() -> list[str]:
 
 # Modules that provide the built-in sources, each exposing ``SOURCE`` (a
 # PriceSource instance). One line per kind, e.g. "app.services.hotel_source".
-SOURCE_MODULES: tuple[str, ...] = ()
+SOURCE_MODULES: tuple[str, ...] = (
+    "app.services.price_sources.activity",
+)  # fmt: skip
 
 
 def register_builtin_sources() -> list[str]:
@@ -220,6 +224,36 @@ def active_watch_count(user_id: str) -> int:
 
 def limit_reached(user_id: str) -> bool:
     return active_watch_count(user_id) >= settings.fare_watch_max_active_per_user
+
+
+_SYMBOLS = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "JPY": "¥",
+    "INR": "₹",
+    "AUD": "A$",
+    "CAD": "C$",
+    "NZD": "NZ$",
+    "HKD": "HK$",
+    "SGD": "S$",
+    "BRL": "R$",
+    "MXN": "MX$",
+}
+_NO_CENTS = frozenset({"JPY"})
+
+
+def format_price(amount: float, currency: str | None = "USD") -> str:
+    """A watched price in its own currency: cents under 100 ("$9.90",
+    "€33.46"), whole amounts from 100 ("$1,240" — as ``usd``); unknown
+    currencies read "12.50 XYZ"."""
+    code = (currency or "USD").upper()
+    if amount < 100 and code not in _NO_CENTS:
+        number = f"{amount:,.2f}"
+    else:
+        number = f"{round(amount):,}"
+    symbol = _SYMBOLS.get(code)
+    return f"{symbol}{number}" if symbol else f"{number} {currency}"
 
 
 def alerts_link(watch: dict) -> str:
@@ -276,6 +310,7 @@ def record_created(
             "subtitle": created.subtitle,
             "subject": created.subject,
             "match_key": match_key,
+            "currency": created.currency,
             "alert_mode": alert_mode,
             "target_price": target_price,
             "email_enabled": email_enabled,
@@ -376,7 +411,8 @@ def _expired_note(watch: dict) -> dict:
     d = date.fromisoformat(watch["expires_on"])
     body = f"{d.day} {d:%b} has arrived, so we've stopped checking."
     if watch.get("lowest_price") is not None:
-        body += f" The lowest price we saw was {usd(watch['lowest_price'])}."
+        lowest = format_price(watch["lowest_price"], watch.get("currency"))
+        body += f" The lowest price we saw was {lowest}."
     return {
         "kind": "watch_expired",
         "title": f"Your {watch['title']} price watch has ended",

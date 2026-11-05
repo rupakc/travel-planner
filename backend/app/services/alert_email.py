@@ -24,6 +24,7 @@ from jwt import PyJWTError
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
 from .fare_watch import date_range, route_label, travellers, usd
+from .price_watch import format_price
 
 logger = logging.getLogger(__name__)
 
@@ -266,16 +267,20 @@ def _price_facts(note: dict, watch: dict, history: list[dict]) -> dict:
     links = data.get("links") or {}
     eyebrow, see = PRICE_KIND_LABELS.get(watch["kind"], ("Price watch", "See details"))
     token = unsubscribe_token(watch["id"], PRICE_UNSUB_PURPOSE)
+
+    def money(amount: float) -> str:
+        return format_price(amount, watch.get("currency"))
+
     return {
         "eyebrow": eyebrow,
         "see_label": see,
         "subject": " · ".join(
             x for x in (watch.get("title"), watch.get("subtitle")) if x
         ),
-        "old": usd(old),
-        "new": usd(new),
-        "delta": f"−{usd(old - new)}" if new < old else "",
-        "lowest": usd(lowest),
+        "old": money(old),
+        "new": money(new),
+        "delta": f"−{money(old - new)}" if new < old else "",
+        "lowest": money(lowest),
         "spark": sparkline([h.get("price") for h in history]),
         "see": _url(
             links.get("alerts", f"/alerts?kind={watch['kind']}&watch={watch['id']}")

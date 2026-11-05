@@ -16,6 +16,8 @@ Pure and async, no database. Public API:
 - ``price_listing(listing, query, api_key)``: re-run the stored query and
   find the same listing again.
 - ``suggestions(listings, n=3)``.
+- ``search_listings(query, api_key)`` / ``is_cached(query)``: one stored
+  query's listings, and whether re-running it is free.
 
 Currency: prices keep the currency Google shows ("$" with ``gl=us`` is USD,
 "€" is EUR, "A$" is AUD …). The app has no exchange-rate source to convert
@@ -516,6 +518,19 @@ async def _search(query: str, api_key: str) -> dict:
     cache[key] = entry
     logger.info("Activity prices: %d Google results for %r", len(results), query)
     return entry
+
+
+def is_cached(query: str) -> bool:
+    """True when ``query``'s Google results are in the shared cache, so
+    searching it again spends no SerpAPI call."""
+    return get_cache().get(_cache_key(query)) is not None
+
+
+async def search_listings(query: str, api_key: str) -> list[ActivityListing]:
+    """Priced listings for one exact query (as ``parse_listings``); cached.
+    Raises ``SerpAPIError``."""
+    entry = await _search(query, api_key)
+    return parse_listings({"organic_results": entry["results"]}, query)
 
 
 def build_query(name: str, city: str, provider: str) -> str:
