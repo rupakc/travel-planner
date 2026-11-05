@@ -232,3 +232,42 @@ def test_lifespan_registers_the_builtin_sources(monkeypatch):
     with TestClient(app):
         pass
     assert calls == [1]
+
+
+async def test_a_crash_in_a_scheduled_check_strikes_and_never_retries_every_tick(
+    src, user, monkeypatch
+):
+    w = _due(user)
+    src.cost = 2
+
+    async def crash(watch_id, **kw):
+        src.checked.append(watch_id)  # the live look happened…
+        raise RuntimeError("after the calls were spent")  # …then a crash
+
+    monkeypatch.setattr(price_watch, "check_watch", crash)
+    src.queue += [ok(390.0)] * 5
+    t = NOW
+    for _ in range(3):
+        await price_watch.run_due("k", clock=lambda t=t: t)
+        await price_watch.run_due("k", clock=lambda t=t: t)  # same tick: not due
+        t += timedelta(hours=2)
+    row = price_watch_db.get_watch(w["id"])
+    assert len(src.checked) == 3
+    assert row["status"] == "error" and row["lease_until"] is None
+
+
+async def test_a_scheduled_check_with_a_broken_compose_is_not_retried_each_tick(
+    src, user
+):
+    w = _due(user)
+    src.cost = 2
+
+    def broken(kind, watch, obs, ref):
+        raise RuntimeError("compose broke")
+
+    src.compose = broken
+    src.queue += [ok(300.0)] * 3
+    await price_watch.run_due("k", clock=lambda: NOW)
+    await price_watch.run_due("k", clock=lambda: NOW + timedelta(minutes=5))
+    assert len(src.checked) == 1
+    assert price_watch_db.get_watch(w["id"])["failure_count"] == 1

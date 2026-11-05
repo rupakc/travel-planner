@@ -13,7 +13,7 @@ import { formatUsd } from '../utils/fareCalendar'
 import { replanSearchData } from '../utils/fareWatch'
 import { track } from '../utils/analytics'
 import {
-  ALERT_TABS, countByTab, inTab, priceCheckMessage, watchDomId,
+  ALERT_TABS, countByTab, filterStatus, inTab, priceCheckMessage, watchDomId,
 } from '../utils/priceWatch'
 import WatchCard from '../components/alerts/WatchCard'
 import { cardFor } from '../components/alerts/cards'
@@ -91,7 +91,11 @@ export default function AlertsPage() {
     setLoadError(null)
     listFareWatches(token)
       .then(setFares)
-      .catch(err => setLoadError(axiosErrorDetail(err).detail || 'Couldn’t load your watched fares.'))
+      .catch(err => {
+        // Price watches still show; the banner offers to try again
+        setFares(list => list || [])
+        setLoadError(axiosErrorDetail(err).detail || 'Couldn’t load your watched flights.')
+      })
     loadPrices()
   }, [token, loadPrices])
 
@@ -123,9 +127,15 @@ export default function AlertsPage() {
   // for fares, ?kind=KIND&watch=ID for price watches
   useEffect(() => {
     if (!watches || !focusId || handledLink.current === location.search) return
-    handledLink.current = location.search
     const w = watches.find(isFocus)
-    if (!w) return
+    if (!w) {
+      // Its list failed to load: try again once it has (the "Try again" button)
+      const listFailed = focusKind ? priceError : !!loadError
+      if (!listFailed) handledLink.current = location.search
+      return
+    }
+    handledLink.current = location.search
+    setTab(t => (inTab(w, t) ? t : 'all')) // a filtered-out watch: show all
     if (!w.kind && params.get('replan') === '1' && w.status !== 'expired') {
       replan(w, params.get('cheapest') === '1')
       return
@@ -134,7 +144,7 @@ export default function AlertsPage() {
       const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       document.getElementById(watchDomId(w))?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
     })
-  }, [watches, focusId, location.search]) // runs once per deep link
+  }, [watches, focusId, location.search, priceError, loadError]) // once per deep link
 
   const onCheck = (w) => withBusy(w, 'check', async () => {
     const act = actionsFor(w)
@@ -226,16 +236,16 @@ export default function AlertsPage() {
         </div>
       )}
 
-      {watches && watches.length === 0 && (
+      {watches && watches.length === 0 && !loadError && (
         <section className="rounded-2xl border border-white/60 bg-white/90 px-6 py-10 text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-600">
             <BellRing size={22} aria-hidden="true" />
           </span>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">No fares watched yet</h2>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">Nothing watched yet</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
             {caps.fareWatch
-              ? 'Search a trip, then choose “Watch fare” in the Flights section. We’ll keep an eye on the price and let you know when it drops or hits the price you want.'
-              : 'Watching fares needs live flight prices, which aren’t set up on this server yet.'}
+              ? 'Watch a flight’s fare, a hotel, an activity or a whole saved trip from your results. We’ll keep an eye on the price and let you know when it drops or hits the price you want.'
+              : 'Watching flights, hotels, activities and trips needs live prices, which aren’t set up on this server yet.'}
           </p>
           <button type="button" onClick={() => navigate('/')}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700">
@@ -248,14 +258,20 @@ export default function AlertsPage() {
         <div role="group" aria-label="Filter watches" className="-mx-1 mb-5 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {ALERT_TABS.map(t => (
             <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}
+              aria-label={`${t.label}, ${counts[t.id]}`}
               className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${tab === t.id ? 'border-sky-600 bg-sky-600 text-white' : counts[t.id] ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300' : 'border-slate-100 bg-white/60 text-slate-400'}`}>
               {t.label}<span className={`tabular-nums ${tab === t.id ? 'text-sky-100' : 'text-slate-400'}`}>{counts[t.id]}</span>
             </button>
           ))}
         </div>
       )}
+      {watches && watches.length > 0 && (
+        <p className="sr-only" aria-live="polite" data-testid="filter-status">{filterStatus(tab, shown.length)}</p>
+      )}
       {watches && watches.length > 0 && shown.length === 0 && (
-        <p className="rounded-xl bg-white/70 px-4 py-6 text-center text-sm text-slate-500">Nothing watched here yet.</p>
+        <p className="rounded-xl bg-white/70 px-4 py-6 text-center text-sm text-slate-500">
+          {ALERT_TABS.find(t => t.id === tab)?.empty || 'Nothing watched here yet.'}
+        </p>
       )}
 
       {active.length > 0 && (
