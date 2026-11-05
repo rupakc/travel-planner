@@ -33,6 +33,7 @@ from .api.routes.nationalities import router as nationalities_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
+from .api.routes.price_watches import router as price_watches_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
@@ -50,7 +51,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import fare_watch
+from .services import fare_watch, price_watch
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 
@@ -79,10 +80,13 @@ async def lifespan(app: FastAPI):
     create_taste_table()
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
+    from .db.price_watch_db import create_price_watch_tables
 
     create_fare_watch_tables()
+    create_price_watch_tables()
     create_notifications_table()
-    # Fare-watch re-checks: only with live fares (SERPAPI_KEY) and
+    price_watch.register_builtin_sources()
+    # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
     asyncio.create_task(
@@ -202,6 +206,7 @@ app.include_router(
 app.include_router(taste_router, prefix="/api", tags=["taste"])
 # Fare watches: create and "check now" draw on the light_ai bucket (per route)
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
+app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")

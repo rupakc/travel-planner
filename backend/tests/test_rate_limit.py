@@ -244,6 +244,8 @@ EXPECTED_BUCKETS = {
     # Fare watch: creating one and "Check now" each make a live fare lookup
     ("POST", "/api/fare-watches"): "light_ai",
     ("POST", "/api/fare-watches/{watch_id}/check"): "light_ai",
+    ("POST", "/api/price-watches"): "light_ai",
+    ("POST", "/api/price-watches/{watch_id}/check"): "light_ai",
     # Changing the alert email: authenticated, not verified, so rate-limited
     ("PUT", "/api/auth/email"): "light_ai",
 }

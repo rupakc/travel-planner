@@ -17,19 +17,20 @@ from datetime import UTC, date, datetime, timedelta
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
 from ..schemas.request import TravelSearchRequest
-from . import serp_flights
+from . import price_rules, serp_flights
 from .serp_flights import SerpAPIError
 
 logger = logging.getLogger(__name__)
 
 # ── Rule constants ────────────────────────────────────────────────────────────
 
-DROP_MIN_USD = 15.0  # any_drop: at least $15 …
-DROP_MIN_PCT = 0.05  # … and at least 5 % below the reference price
+# Own-dates rules are shared with price watches: see ``price_rules``.
+DROP_MIN_USD = price_rules.FARE_STEP.min_usd  # any_drop: at least $15 …
+DROP_MIN_PCT = price_rules.FARE_STEP.min_pct  # … and at least 5 % below
 CHEAPER_DATE_MIN_USD = 25.0  # nearby date: at least $25 …
 CHEAPER_DATE_MIN_PCT = 0.08  # … and 8 % cheaper than the selected dates
-COOLDOWN = timedelta(hours=24)  # one alert per watch per day …
-COOLDOWN_FURTHER_DROP_PCT = 0.05  # … unless 5 % below the last alert
+COOLDOWN = price_rules.COOLDOWN  # one alert per watch per day …
+COOLDOWN_FURTHER_DROP_PCT = price_rules.COOLDOWN_FURTHER_DROP_PCT  # … unless 5 % lower
 
 FAILURES_BEFORE_ERROR = 3
 RETRY_AFTER_FAILURE = timedelta(hours=1)
@@ -133,11 +134,11 @@ def _links(watch: dict, dep: str, ret: str | None, cheapest: bool = False) -> di
 
 def step(price: float) -> float:
     """The smallest move worth an alert: max($15, 5 %)."""
-    return max(DROP_MIN_USD, DROP_MIN_PCT * price)
+    return price_rules.FARE_STEP(price)
 
 
 def _rearmed(last: float, peak: float | None) -> bool:
-    return peak is not None and peak >= last + step(last)
+    return price_rules.rearmed(last, peak, price_rules.FARE_STEP)
 
 
 def _own_candidates(watch: dict, check: FareCheck) -> list[tuple[str, float, float]]:
@@ -145,39 +146,26 @@ def _own_candidates(watch: dict, check: FareCheck) -> list[tuple[str, float, flo
     p = check.price
     if p is None:
         return []
-    mode, target = watch["alert_mode"], watch.get("target_price")
-    baseline = watch["baseline_price"]
-    last = watch.get("last_notified_price")
-    peak = watch.get("own_peak_price")
-    lowest = watch.get("own_lowest_price")
-    # Already good when watching started (under the target / Google "low"):
-    # that signal's first alert needs a full step below the baseline.
-    full_step = p <= baseline - step(baseline)
-    if last is None:
-        drop_ref = baseline
-        repeat_ok = p < baseline  # never for a rise above where we started
-        if watch.get("baseline_price_level") == "low":
-            repeat_ok = full_step
-    else:
-        drop_ref = peak if _rearmed(last, peak) else last
-        repeat_ok = p <= last - step(last) or _rearmed(last, peak)
+    signal = price_rules.own_signal(
+        p,
+        mode=watch["alert_mode"],
+        target=watch.get("target_price"),
+        baseline=watch["baseline_price"],
+        last=watch.get("last_notified_price"),
+        peak=watch.get("own_peak_price"),
+        baseline_already_low=watch.get("baseline_price_level") == "low",
+        step=price_rules.FARE_STEP,
+    )
     out = []
-    if mode == "below_target" and target is not None and p <= target:
-        target_rearmed = (
-            last is not None and peak is not None and peak >= target + step(target)
-        )
-        if last is None:
-            ok = full_step if baseline <= target else p < baseline
-        else:
-            ok = p <= last - step(last) or target_rearmed
-        if ok:
-            out.append(("fare_target", p, drop_ref))
-    if mode == "any_drop":
-        if p <= drop_ref - step(drop_ref):
-            out.append(("fare_drop", p, drop_ref))
+    if signal.target:
+        out.append(("fare_target", p, signal.reference))
+    if signal.drop:
+        out.append(("fare_drop", p, signal.reference))
+    if watch["alert_mode"] == "any_drop":
+        lowest = watch.get("own_lowest_price")
         new_low = lowest is None or p < lowest
-        if check.price_level == "low" and new_low and repeat_ok:
-            out.append(("fare_low_level", p, drop_ref))
+        if check.price_level == "low" and new_low and signal.repeat_ok:
+            out.append(("fare_low_level", p, signal.reference))
     return out
 
 
@@ -243,13 +231,12 @@ def evaluate(watch: dict, check: FareCheck, now: datetime) -> list[dict]:
     if nearby:
         found.append(nearby)
     latest = _latest_alert(watch)
-    cooling = latest is not None and now - latest[0] < COOLDOWN
     by_kind = {kind: (price, ref) for kind, price, ref in found}
     for kind in _PRIORITY:
         if kind not in by_kind:
             continue
         price, ref = by_kind[kind]
-        if cooling and price > latest[1] * (1 - COOLDOWN_FURTHER_DROP_PCT):
+        if price_rules.cooldown_blocks(price, latest, now):
             continue
         return [_compose(kind, watch, check, ref)]
     return []
@@ -642,12 +629,15 @@ def _record_success(
             fields["own_lowest_price"] = p
         # Own-dates signal: a new alert resets its reference and peak;
         # otherwise the peak since the last alert follows rebounds.
-        if kind in ("fare_target", "fare_drop", "fare_low_level"):
-            fields.update(
-                last_notified_price=p, last_notified_at=stamp, own_peak_price=p
+        fields.update(
+            price_rules.advance_own(
+                p,
+                alerted=kind in ("fare_target", "fare_drop", "fare_low_level"),
+                last=watch.get("last_notified_price"),
+                peak=watch.get("own_peak_price"),
+                stamp=stamp,
             )
-        elif watch.get("last_notified_price") is not None:
-            fields["own_peak_price"] = max(watch.get("own_peak_price") or p, p)
+        )
     c = check.cheapest_price
     if c is not None:
         if kind == "fare_cheaper_date":
@@ -726,8 +716,11 @@ async def run_scheduler(
     *,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> None:
-    """Every FARE_WATCH_TICK_SECONDS, check the due watches. Runs until
-    cancelled; one bad tick is logged and the loop goes on."""
+    """Every FARE_WATCH_TICK_SECONDS, check the due fare watches, then the
+    due price watches (``price_watch.run_due``). Runs until cancelled; one
+    bad pass is logged and the loop goes on."""
+    from . import price_watch
+
     logger.info(
         "Fare watch scheduler started (tick %ss)", settings.fare_watch_tick_seconds
     )
@@ -736,6 +729,10 @@ async def run_scheduler(
             await run_due(api_key)
         except Exception:
             logger.exception("Fare watch scheduler tick failed")
+        try:
+            await price_watch.run_due(api_key)
+        except Exception:
+            logger.exception("Price watch scheduler tick failed")
         await sleep(settings.fare_watch_tick_seconds)
 
 

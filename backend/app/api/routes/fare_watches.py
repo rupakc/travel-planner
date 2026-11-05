@@ -18,7 +18,7 @@ from ...core.rate_limit import rate_limit
 from ...db import fare_watch_db
 from ...db.plans_db import get_plan
 from ...schemas.request import TravelSearchRequest
-from ...services import alert_email, fare_watch
+from ...services import alert_email, fare_watch, price_watch
 from ...services.serp_flights import _google_flights_url
 
 router = APIRouter()
@@ -92,9 +92,8 @@ def _require_live_fares() -> None:
 
 
 def _limit_reached(user: dict) -> bool:
-    return fare_watch_db.count_active(user["id"]) >= (
-        settings.fare_watch_max_active_per_user
-    )
+    """The active-watch limit counts fare and price watches together."""
+    return price_watch.limit_reached(user["id"])
 
 
 def _limit_error() -> HTTPException:
