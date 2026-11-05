@@ -245,7 +245,7 @@ def test_active_limit_counts_fare_and_price_watches(client, alice, src, monkeypa
     assert _create(client, h, name="A").status_code == 200
     r = _create(client, h, name="B")
     assert r.status_code == 409
-    assert "watching 2" in r.json()["detail"]
+    assert "2 active watches" in r.json()["detail"]
     # …and the fare-watch route counts the price watch too
     r = client.post(
         "/api/fare-watches",
@@ -548,3 +548,82 @@ def test_create_and_check_use_the_light_ai_bucket(client, alice, src, monkeypatc
         assert client.get("/api/price-watches", headers=h).status_code == 200
     finally:
         rate_limit.limiter._hits.clear()
+
+
+# ── Fix round 1 ───────────────────────────────────────────────────────────────
+
+
+class SpentError(RuntimeError):
+    calls = 3
+
+
+def test_create_failure_settles_the_calls_the_source_reports(
+    client, alice, src, monkeypatch
+):
+    _, h = alice
+
+    async def boom(spec, user, key):
+        raise SpentError("HTTP 500")
+
+    monkeypatch.setattr(src, "create", boom)
+    assert _create(client, h).status_code == 502
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 3
+
+
+def test_invalid_spec_after_spending_keeps_the_spent_calls(
+    client, alice, src, monkeypatch
+):
+    from app.services.price_watch import InvalidSpec
+
+    _, h = alice
+
+    class SpentInvalid(InvalidSpec):
+        calls = 2
+
+    async def bad(spec, user, key):
+        raise SpentInvalid("That listing isn't a tour.")
+
+    monkeypatch.setattr(src, "create", bad)
+    r = _create(client, h)
+    assert r.status_code == 422 and r.json()["detail"] == "That listing isn't a tour."
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 2
+
+
+def test_match_ignores_an_oversized_spec(client, alice, src):
+    _, h = alice
+    q = {"kind": "test", "test": {"name": "x", "junk": "y" * 9000}}
+    r = client.post("/api/price-watches/match", json=q, headers=h)
+    assert r.status_code == 200 and r.json() == {"watch": None}
+
+
+def test_check_now_with_a_broken_compose_answers_and_frees_the_watch(
+    client, alice, src, monkeypatch
+):
+    _, h = alice
+    w = _create(client, h).json()
+
+    def broken(kind, watch, obs, ref):
+        raise RuntimeError("compose broke")
+
+    monkeypatch.setattr(src, "compose", broken)
+    src.queue.append(ok(300.0))
+    r = client.post(f"/api/price-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 200 and r.json()["check_status"] == "failed"
+    assert price_watch_db.get_watch(w["id"])["lease_until"] is None
+
+
+def test_fare_limit_message_counts_watches_not_fares(client, alice, src, monkeypatch):
+    u, h = alice
+    monkeypatch.setattr(settings, "fare_watch_max_active_per_user", 1)
+    assert _create(client, h).status_code == 200
+    r = client.post(
+        "/api/fare-watches",
+        json={"origin": "BER", "destination": "MAD", "departure_date": "2026-12-01"},
+        headers=h,
+    )
+    assert r.status_code == 409
+    assert (
+        "1 active watches" in r.json()["detail"]
+        or "1 active watch" in r.json()["detail"]
+    )
+    assert "fares" not in r.json()["detail"]

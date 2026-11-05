@@ -130,6 +130,10 @@ class PriceSource(Protocol):
     - ``check(watch, api_key)``: one live look at ``watch["subject"]`` →
       ``PriceObservation``. Raise on failure (an exception with a truthy
       ``quota_exceeded`` attribute postpones to tomorrow without a strike).
+      Set ``obs.calls`` to the calls really spent: the reservation is settled
+      to it. ``status`` other than ``"ok"`` / ``"unavailable"`` is a failure.
+    - Exceptions from ``create`` may carry ``calls`` (int, the SerpAPI calls
+      spent before failing) so the shared budget is settled correctly.
     - ``estimate_calls(watch)``: SerpAPI calls ``check`` may spend, reserved
       all-or-nothing from the shared daily budget before it runs.
     - ``compose(kind, watch, obs, ref)``: the alert for notification kind
@@ -220,6 +224,21 @@ def active_watch_count(user_id: str) -> int:
 
 def limit_reached(user_id: str) -> bool:
     return active_watch_count(user_id) >= settings.fare_watch_max_active_per_user
+
+
+def limit_message() -> str:
+    """The 409 wording when the shared active-watch limit is reached."""
+    n = settings.fare_watch_max_active_per_user
+    return (
+        f"You already have {n} active watches — pause or remove one to watch another."
+    )
+
+
+def calls_spent(exc: BaseException, default: int) -> int:
+    """SerpAPI calls a failing ``create`` reports having spent (``exc.calls``),
+    else ``default``."""
+    calls = getattr(exc, "calls", None)
+    return calls if isinstance(calls, int) and calls >= 0 else default
 
 
 def alerts_link(watch: dict) -> str:
@@ -476,7 +495,11 @@ async def check_watch(
         return CheckOutcome("skipped", watch)
 
     day = now.date().isoformat()
-    cost = source.estimate_calls(watch)
+    try:
+        cost = int(source.estimate_calls(watch) or 0)
+    except Exception as exc:
+        logger.warning("Price watch %d: estimate_calls raised", watch_id, exc_info=True)
+        return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
     budget = settings.fare_watch_daily_call_budget
     if cost and not fare_watch_db.reserve_calls(
         day,
@@ -521,12 +544,23 @@ async def check_watch(
         logger.info("Price watch %d check raised", watch_id, exc_info=True)
         return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
 
+    spent = getattr(obs, "calls", cost) or 0
+    if spent != cost:  # settle the reservation to what the look really spent
+        fare_watch_db.adjust_calls(day, spent - cost, user_id=watch["user_id"])
     if obs.status == "ok" and obs.price is None:
         return _record_failure(watch, "ValueError: no price in an ok look", now)
-    if obs.status != "ok":
+    if obs.status == "unavailable":
         return _record_unavailable(watch, obs, now, rand)
+    if obs.status != "ok":
+        return _record_failure(watch, f"ValueError: unknown status {obs.status!r}", now)
 
-    outcome = _record_success(watch, obs, now, rand, source)
+    try:
+        outcome = _record_success(watch, obs, now, rand, source)
+    except Exception as exc:  # e.g. the source's compose: a strike, not a loop
+        logger.warning(
+            "Price watch %d: recording the look failed", watch_id, exc_info=True
+        )
+        return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
     if outcome.notification:
         from .alert_email import deliver_price
 
@@ -546,6 +580,7 @@ def _record_failure(watch: dict, error: str, now: datetime) -> CheckOutcome:
         watch = price_watch_db.update_watch(
             watch["id"],
             status="error",
+            unavailable_count=0,
             failure_count=failures,
             last_error=error[:300],
             lease_until=None,
@@ -555,6 +590,7 @@ def _record_failure(watch: dict, error: str, now: datetime) -> CheckOutcome:
     watch = price_watch_db.update_watch(
         watch["id"],
         failure_count=failures,
+        unavailable_count=0,  # a failure breaks an "unavailable" streak
         last_error=error[:300],
         next_check_at=(now + RETRY_AFTER_FAILURE).isoformat(),
         lease_until=None,
@@ -615,6 +651,8 @@ def _record_success(
     watch = price_watch_db.get_watch(watch["id"])
     if watch is None:
         return CheckOutcome("deleted", None)
+    # Decide (source code may raise) before anything is written
+    proposed = evaluate(watch, obs, now, source)
     price_watch_db.add_history(
         watch["id"],
         {
@@ -624,7 +662,6 @@ def _record_success(
             "observed": {**obs.observed, "status": obs.status},
         },
     )
-    proposed = evaluate(watch, obs, now, source)
     note = _notify(watch, proposed, now) if proposed else None
     p = obs.price
     fields: dict = {
@@ -667,7 +704,8 @@ async def run_due(
 ) -> list[CheckOutcome | None]:
     """Check the due price watches, CONCURRENCY at a time, leasing each one
     only when its turn comes (as ``fare_watch.run_due``). A crashing check is
-    logged, its lease released, and never stops the others."""
+    logged and recorded as a failure strike (retry in an hour, on hold after
+    three), so it is never retried every tick; it never stops the others."""
     now = clock()
     price_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
     ids = price_watch_db.due_watch_ids(now, CLAIM_BATCH)
@@ -684,9 +722,21 @@ async def run_due(
                 return await check_watch(
                     watch_id, now=clock(), api_key=api_key, rand=rand
                 )
-            except Exception:
+            except Exception as exc:
                 logger.exception("Price watch %d check failed unexpectedly", watch_id)
-                price_watch_db.update_watch(watch_id, lease_until=None)
+                try:
+                    _record_failure(
+                        {"id": watch_id}, f"{type(exc).__name__}: {exc}", clock()
+                    )
+                except Exception:
+                    logger.exception(
+                        "Price watch %d: recording the crash failed", watch_id
+                    )
+                    price_watch_db.update_watch(
+                        watch_id,
+                        lease_until=None,
+                        next_check_at=(clock() + RETRY_AFTER_FAILURE).isoformat(),
+                    )
                 return None
 
     return list(await asyncio.gather(*(one(i) for i in ids)))

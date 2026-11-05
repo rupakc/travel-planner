@@ -97,12 +97,8 @@ def _limit_reached(user: dict) -> bool:
 
 
 def _limit_error() -> HTTPException:
-    n = settings.fare_watch_max_active_per_user
-    return HTTPException(
-        status_code=409,
-        detail=f"You're already watching {n} fares — pause or remove one "
-        "to watch another.",
-    )
+    # The limit counts fare and price watches together
+    return HTTPException(status_code=409, detail=price_watch.limit_message())
 
 
 def _check_email_allowed(user: dict) -> None:
