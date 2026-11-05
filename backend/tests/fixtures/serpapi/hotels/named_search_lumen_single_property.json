@@ -1,0 +1,3465 @@
+{
+ "search_metadata": {
+  "id": "6aeb63786ee47adc46ec406a",
+  "status": "Success",
+  "created_at": "2026-11-04T16:55:20.665Z",
+  "processed_at": "2026-11-04T16:55:20.665Z",
+  "google_hotels_url": "https://www.google.com/travel/search?q=Lumen+Hotel+Lisbon&hl=en&gl=us",
+  "total_time_taken": {
+   "float": 1.9054324626922607
+  }
+ },
+ "search_parameters": {
+  "engine": "google_hotels",
+  "q": "Lumen Hotel Lisbon",
+  "gl": "us",
+  "hl": "en",
+  "currency": "USD",
+  "check_in_date": "2026-12-10",
+  "check_out_date": "2026-12-14",
+  "adults": 2,
+  "children": 0
+ },
+ "search_information": {
+  "hotels_results_state": "Showing results for property details"
+ },
+ "ads": [
+  {
+   "name": "InterContinental Lisbon",
+   "source": "InterContinental Lisbon",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/8621728485584542106.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQERoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYASABEgIk1PD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_2TRGC-gNfdnk-zZz5zWU5X6AG_TA&adurl=",
+   "property_token": "CgoI7drbt9vwh-JTEAE",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgoI7drbt9vwh-JTEAE&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.726817,
+    "longitude": -9.155224000000002
+   },
+   "hotel_class": 5,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuDobvXRiH2NiNXuklVBI9wuRnyuiPjjaUAjzv5X7494KMQw&s=10",
+   "overall_rating": 4.6,
+   "reviews": 3004,
+   "price": "$193",
+   "extracted_price": 193,
+   "amenities": [
+    "Pet-friendly",
+    "Parking",
+    "Fitness center",
+    "Free Wi-Fi",
+    "Wi-Fi"
+   ]
+  },
+  {
+   "name": "Lisbon Marriott Hotel",
+   "source": "Lisbon Marriott Hotel",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/df3424c9-7799-4d27-aeb5-cdcabf8bf950.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQARoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYAiABEgI8xvD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_0JbsVeyE5UvbQZZc2ZMXesRFt5lQ&adurl=",
+   "property_token": "CgsItJ7G-KvktoidARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsItJ7G-KvktoidARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.747256,
+    "longitude": -9.164349
+   },
+   "hotel_class": 4,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEUH4tbmJjI6qoa3AY-XDGn9vAaI9Yw9D5ccRKNOF-rdfKBA&s=10",
+   "overall_rating": 4.4,
+   "reviews": 6441,
+   "price": "$179",
+   "extracted_price": 179,
+   "amenities": [
+    "Pool",
+    "Pet-friendly",
+    "Parking",
+    "Fitness center",
+    "Wi-Fi",
+    "Outdoor pool"
+   ]
+  },
+  {
+   "name": "H10 Duque de Loulé",
+   "source": "Expedia.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/ac238c97-1652-4830-8da8-bb8d8883af88.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQBxoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYAyABEgJhiPD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_3bk9wt3QHgoPKuWydKhE6de0Ew9A&adurl=",
+   "property_token": "CgsI8sns3MzS1qGSARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsI8sns3MzS1qGSARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.726462999999995,
+    "longitude": -9.147064
+   },
+   "hotel_class": 4,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9OvXEEbaHytKmLUZTaV9abwoFcYZa55cdJh1-nV0oZvg-5Q&s=10",
+   "overall_rating": 4.7,
+   "reviews": 2346,
+   "price": "$182",
+   "extracted_price": 182,
+   "amenities": [
+    "Parking",
+    "Free Wi-Fi"
+   ]
+  },
+  {
+   "name": "Sheraton Lisboa Hotel & Spa",
+   "source": "Sheraton Lisboa Hotel & Spa",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/df3424c9-7799-4d27-aeb5-cdcabf8bf950.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQCRoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYBCABEgIgA_D_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_2tfK2x9cf-uUEMAPVoOHlPAlaNtg&adurl=",
+   "property_token": "CgsI4ZDvmdfU8N67ARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsI4ZDvmdfU8N67ARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.731753,
+    "longitude": -9.146995
+   },
+   "hotel_class": 5,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKKZWm5AxJ7G7L_mCc5EwYHw10lHaSIq89Mj8C2FMBBtOqTA&s=10",
+   "overall_rating": 4.6,
+   "reviews": 3961,
+   "price": "$215",
+   "extracted_price": 215,
+   "amenities": [
+    "Hot tub",
+    "Spa",
+    "Pool",
+    "Pet-friendly",
+    "Parking",
+    "Fitness center",
+    "Free Wi-Fi",
+    "Wi-Fi",
+    "Outdoor pool"
+   ]
+  },
+  {
+   "name": "Hotel da Baixa",
+   "source": "Hotels.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/306127930749010778.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQCxoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYBSABEgIlMfD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_0SBGB50Uhptrk7EDdSie_2EKLiug&adurl=",
+   "property_token": "CgoI68mQtKiogpI_EAE",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgoI68mQtKiogpI_EAE&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.712151999999996,
+    "longitude": -9.13752
+   },
+   "hotel_class": 4,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNpm710-JRStcca0gsAQ7W3WrtTzxLW6BvtSBVychNAT3X8A&s=10",
+   "overall_rating": 4.8,
+   "reviews": 1294,
+   "price": "$188",
+   "extracted_price": 188,
+   "amenities": [
+    "Parking",
+    "Free Wi-Fi"
+   ]
+  },
+  {
+   "name": "Chalet d'Ávila Guest House",
+   "source": "Booking.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_184.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQBRoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYBiABEgJ_AvD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_2kwJZvUiCCVzeLfp_toUyQO3WQdA&adurl=",
+   "property_token": "CgsIr7Tpj_-f-sHgARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsIr7Tpj_-f-sHgARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.735005,
+    "longitude": -9.143025
+   },
+   "hotel_class": 3,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ20FuwhdlMDJC-0mEOKuJiUY0HemcjLy-TT74wyF2FNNw6xg&s=10",
+   "overall_rating": 4.7,
+   "reviews": 981,
+   "price": "$66",
+   "extracted_price": 66,
+   "amenities": [
+    "Free Wi-Fi",
+    "Free breakfast"
+   ]
+  },
+  {
+   "name": "DoubleTree by Hilton Lisbon - Fontana Park",
+   "source": "Hotels.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/306127930749010778.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQDxoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYByABEgIp5vD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_0T5DVbLqbf4Jmu4BYLygBx_2oZXw&adurl=",
+   "property_token": "CgsIjt3T4qOaota1ARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsIjt3T4qOaota1ARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.73132,
+    "longitude": -9.144014
+   },
+   "hotel_class": 4,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQ5RrsGwHLyc0SNPExPTS-X0UPEvHqjxeQlpYooNMA0AAAmQ&s=10",
+   "overall_rating": 4.2,
+   "reviews": 2325,
+   "price": "$102",
+   "extracted_price": 102,
+   "amenities": [
+    "Parking",
+    "Fitness center",
+    "Free Wi-Fi"
+   ]
+  },
+  {
+   "name": "Corpo Santo Lisbon Historical Hotel",
+   "source": "Hotels.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/306127930749010778.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQDRoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYCCABEgKiQfD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_3wGQn-qPA6UWwzkMRxkc0YnvfARA&adurl=",
+   "property_token": "CgoIlYrH5uW8kK8JEAE",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgoIlYrH5uW8kK8JEAE&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.707448,
+    "longitude": -9.141831999999999
+   },
+   "hotel_class": 5,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZ4VdX4q_tl6QJPtdMBq8BIgIbSw5zkXQ6NRLzttuo1p0uuw&s=10",
+   "overall_rating": 4.8,
+   "reviews": 1756,
+   "price": "$576",
+   "extracted_price": 576,
+   "amenities": [
+    "Hot tub",
+    "Parking",
+    "Fitness center",
+    "Free Wi-Fi",
+    "Free breakfast"
+   ]
+  },
+  {
+   "name": "Hotel Vincci Liberdade",
+   "source": "Booking.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_184.png",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwi3yP704-6XAxVUIa0GHXIpCE0YACICCAEQAxoCcHY&co=1&gclid=EAIaIQobChMIt8j-9OPulwMVVCGtBh1yKQhNECQYCSABEgIiIvD_BwE&cid=CAASuwHkaHJyeYM6WVCluEAOx9LsRMWpRcwEOE9i_wLc1hEqZzDPj4feCuT-4e5HpaE9VZQl4fmCLzPO9x9gNo5A70JmFBwfdN_bi51Nswho11EaVU7qgl_IDlRjzQmZ8-RXGfp4ovHUaio97GQHgBU57quU3qiUQojnZrY5jCs8ipNlHE9QQw5vq58Dc9ewu7dHNMzNRhuSFMrFATeTDBo00WvTRg__BTi1VeI1d-qQU1bXFKGdQYvbfofRRwiB&sig=AOD64_1QwJnX7IfKbeZJSfxE2J5AKYylaw&adurl=",
+   "property_token": "CgsI7ZS7jbmRzMvQARAB",
+   "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=CgsI7ZS7jbmRzMvQARAB&q=Lumen+Hotel+Lisbon",
+   "gps_coordinates": {
+    "latitude": 38.721967,
+    "longitude": -9.149325
+   },
+   "hotel_class": 4,
+   "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH9hDydl1zhmlY8qktdYZXxmH24tb5JFdGmxm3UqLOJLFhZQ&s=10",
+   "overall_rating": 4.6,
+   "reviews": 1228,
+   "price": "$141",
+   "extracted_price": 141,
+   "amenities": [
+    "Parking",
+    "Free Wi-Fi"
+   ],
+   "free_cancellation": true
+  }
+ ],
+ "type": "hotel",
+ "name": "Lumen Hotel & The Lisbon Light Show",
+ "description": "On a side street, this stylish hotel is a 2-minute walk from a metro station, and 4 km from both Castelo de S. Jorge and Praça do Comércio, a waterside plaza.\nModern rooms, some with colorful decor, feature floor-to-ceiling windows, flat-screen TVs and Wi-Fi, plus minibars and coffeemakers. Suites add living rooms; upgraded suites offer balconies.\nA chic restaurant has a patio that features evening light shows projected onto the walls. Other amenities include a rooftop pool, a gym and co-working space. Breakfast and parking are available.",
+ "link": "https://www.lumenhotel.pt/",
+ "property_token": "ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB",
+ "serpapi_property_details_link": "https://serpapi.com/search.json?adults=2&check_in_date=2026-12-10&check_out_date=2026-12-14&children=0&currency=USD&engine=google_hotels&gl=us&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB&q=Lumen+Hotel+Lisbon",
+ "address": "R. Sousa Martins 20, 1050-217 Lisboa, Portugal",
+ "directions": "https://maps.google.com/maps?hl=en&gl=US&um=1&ie=UTF-8&fb=1&sa=X&geocode=KZnnc_V1MxkNMZGUhCx21ruQ&daddr=Lumen+Hotel+%26+The+Lisbon+Light+Show,+R.+Sousa+Martins+20,+1050-217+Lisboa,+Portugal",
+ "phone": "+351 21 054 7410",
+ "phone_link": "tel:+351210547410",
+ "gps_coordinates": {
+  "latitude": 38.7295874,
+  "longitude": -9.1456099
+ },
+ "check_in_time": "3:00 PM",
+ "check_out_time": "12:00 PM",
+ "rate_per_night": {
+  "display_price": "$90",
+  "extracted_display_price": 90,
+  "lowest": "$100",
+  "extracted_lowest": 100,
+  "before_taxes_fees": "$90",
+  "extracted_before_taxes_fees": 90,
+  "after_taxes_fees": "$100",
+  "extracted_after_taxes_fees": 100
+ },
+ "total_rate": {
+  "display_price": "$358",
+  "extracted_display_price": 358,
+  "lowest": "$398",
+  "extracted_lowest": 398,
+  "before_taxes_fees": "$358",
+  "extracted_before_taxes_fees": 358,
+  "after_taxes_fees": "$398",
+  "extracted_after_taxes_fees": 398
+ },
+ "featured_prices": [
+  {
+   "source": "Hotels.com",
+   "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQARoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASABEgLtNPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_06O6LA8j57Z-WiMCXjx05VRuDbYg&adurl",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/306127930749010778.png",
+   "rooms": [
+    {
+     "name": "Deluxe Double Room, City View",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w3iaJcFhmzMh51LmkLEjGNwu-kgo_rbnbVf_eLk50GMTs3ZxdONQlqZpLRAxGSUF2_g76T0ejngm8DVhF_CP2nOFVzagOE1tWy7cH9QHAJ3MCXrdnBl2rmFKiXca7czPVto6mDE4o2yYZVBf2n3tksCUOEpysZ9sk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w8j8i-C7xXX5fpYlCkgV2YiJ6uGxAJmdiwtmKtI_fmtLILeIjK_OmRGmZ1fVXE4Rz4hboJh6skY_o-PfkeLx0ctzTuigQZFxD-FK9w3CUHwQlTJZxgnP5hNWKWEpK63Ge2yHEbhlkUpbcdCFLOLdSEXhjRZFJrVqJA",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xH0qkgYOoxvBVMz3CfH81GelrcCUeS6OSFaf9fYUycD0c2J--xjjiTgdR9gpH1JFwsJM4w19Mvh0mqI38rS-Sx_9iKcaRRssmwGTwodGTkajOF1qXmClaJvNBno93extILFPJzZleS5dkgzARGxDmg5pUmn2HrKppy",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xaHoltpUvdoolW4JJdET4TCZ3StPuSX09M0s2nbeT-rnEW68sEuq1OGPSK3_t9woekemiXtrNPzqkmh0sINl3Wtar5RhOl0mAfvubH3YSGRlU7YUQInyLmBGXMms1dhX0P1xG_alZyXldfYUO4SgMVP7GS_ypZ07Li",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_yngzYgTXOX-zLr_iSPwazV80nps1bvorOyHsM9a6RBsjxqv8R5Se9OGivhuNUmBRknwAN5dAT6bNECT6a3KFQtRJNI1WklphS97xi2jT3DM4iSYGiqYMiAfJe75Ig8orlyiW5M8sCAq-1OEcApGPttXavqSEpDb38"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQBRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAFEgJ1z_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2ZCq661YHI0KMTnPFDSJy-PVjLqA&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$105",
+      "extracted_display_price": 105,
+      "lowest": "$120",
+      "extracted_lowest": 120,
+      "before_taxes_fees": "$105",
+      "extracted_before_taxes_fees": 105,
+      "after_taxes_fees": "$120",
+      "extracted_after_taxes_fees": 120
+     },
+     "total_rate": {
+      "display_price": "$419",
+      "extracted_display_price": 419,
+      "lowest": "$480",
+      "extracted_lowest": 480,
+      "before_taxes_fees": "$419",
+      "extracted_before_taxes_fees": 419,
+      "after_taxes_fees": "$480",
+      "extracted_after_taxes_fees": 480
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQBRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAFEgJ1z_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2ZCq661YHI0KMTnPFDSJy-PVjLqA&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$105",
+        "extracted_display_price": 105,
+        "lowest": "$120",
+        "extracted_lowest": 120,
+        "before_taxes_fees": "$105",
+        "extracted_before_taxes_fees": 105,
+        "after_taxes_fees": "$120",
+        "extracted_after_taxes_fees": 120
+       },
+       "total_rate": {
+        "display_price": "$419",
+        "extracted_display_price": 419,
+        "lowest": "$480",
+        "extracted_lowest": 480,
+        "before_taxes_fees": "$419",
+        "extracted_before_taxes_fees": 419,
+        "after_taxes_fees": "$480",
+        "extracted_after_taxes_fees": 480
+       },
+       "inclusions": [
+        "1 double bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQBhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAGEgJSgfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0UtCkDKKgCpnmcAj-wKIboA5dEsQ&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$117",
+        "extracted_display_price": 117,
+        "lowest": "$132",
+        "extracted_lowest": 132,
+        "before_taxes_fees": "$117",
+        "extracted_before_taxes_fees": 117,
+        "after_taxes_fees": "$132",
+        "extracted_after_taxes_fees": 132
+       },
+       "total_rate": {
+        "display_price": "$466",
+        "extracted_display_price": 466,
+        "lowest": "$530",
+        "extracted_lowest": 530,
+        "before_taxes_fees": "$466",
+        "extracted_before_taxes_fees": 466,
+        "after_taxes_fees": "$530",
+        "extracted_after_taxes_fees": 530
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQBxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAHEgJIRPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_218U56Y2HtznsEbR5JXVieMbVmGg&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$139",
+        "extracted_display_price": 139,
+        "lowest": "$157",
+        "extracted_lowest": 157,
+        "before_taxes_fees": "$139",
+        "extracted_before_taxes_fees": 139,
+        "after_taxes_fees": "$157",
+        "extracted_after_taxes_fees": 157
+       },
+       "total_rate": {
+        "display_price": "$557",
+        "extracted_display_price": 557,
+        "lowest": "$626",
+        "extracted_lowest": 626,
+        "before_taxes_fees": "$557",
+        "extracted_before_taxes_fees": 557,
+        "after_taxes_fees": "$626",
+        "extracted_after_taxes_fees": 626
+       },
+       "inclusions": [
+        "1 double bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQCBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAIEgLx2PD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_33mAee_3mkDxAmktiE0ziwkN87gw&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$155",
+        "extracted_display_price": 155,
+        "lowest": "$173",
+        "extracted_lowest": 173,
+        "before_taxes_fees": "$155",
+        "extracted_before_taxes_fees": 155,
+        "after_taxes_fees": "$173",
+        "extracted_after_taxes_fees": 173
+       },
+       "total_rate": {
+        "display_price": "$618",
+        "extracted_display_price": 618,
+        "lowest": "$691",
+        "extracted_lowest": 691,
+        "before_taxes_fees": "$618",
+        "extracted_before_taxes_fees": 618,
+        "after_taxes_fees": "$691",
+        "extracted_after_taxes_fees": 691
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Deluxe Twin Room, City View",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_zxti5Z5bC4s6TEUiZRNWYliuggpsf1VUz9E5HCNSSyoeRH5QzbKR5ARzlXrg0qBgXsrqULl9WEhqNBShZxKERPybx5MyyagBpENYTaNpJzvBmTQerINGTABIQ_m5Uw8NkCPK7gsxzZNLGHCjQug0GJshrC3_wjkzk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y9oTHIgVojE98uDwsk-Fl0bmccy4zZFsvvhfRuZn82ohAIIzkaHDJ2LOpIMELNWnVyAFAupYWx-dTPisMJ1D2Kt1PScbHLkhADVWcVtd1GWGyJuv-HuKYNhqwWD21Ar591tfLfrXMX-QxNjy2zdrhXnbQwf7VDwbQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_x4Hq1kQfmxROeWWks9adQ6qO-dCk2D3FB_VYZI2z6UZOnrPlhgW5CGpyDJD4r3A68JsVW17GkkdEu0oCkoinUXtT2EQAf9jv95Bi_jPN36d2gOp-hlyKkTbcrVILkNUrJHW0pdZwbiUdbDK0_jjifUIfNb7pGq9fpd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y7PxmXgsvgJe--cmiAH0JFv1Pix0w3xU3JEOw_SaFCUTMTaJmAdUyTt64lr-R16QM7pajut0iFnFxrBPW20Lbb7dMTGrtjJ0c_8TLrED-4XkAM0vKJyJA1INXDvW8ZbJRZ5oWfvuaZbztWkSGF8VxZBFm7M0mCRFQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xv26ZiYBl1CVxJqNXM0UUw-_DF_BZtHFGS5058wL--33sw__pSyBjM8lK91FgnP_GpDiFZMNf1EqJxrT36bQW7Q-vyHxtLe2huBp5HVW9K6byM0gv39Uv5glzQJf-GAwjBpsdSCnMqORZqPVE3M5HDhjgGFzNey-wJ"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQCRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAJEgLTePD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_15my5pmBmANr3CKozDK4xkjftJVw&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$105",
+      "extracted_display_price": 105,
+      "lowest": "$120",
+      "extracted_lowest": 120,
+      "before_taxes_fees": "$105",
+      "extracted_before_taxes_fees": 105,
+      "after_taxes_fees": "$120",
+      "extracted_after_taxes_fees": 120
+     },
+     "total_rate": {
+      "display_price": "$419",
+      "extracted_display_price": 419,
+      "lowest": "$480",
+      "extracted_lowest": 480,
+      "before_taxes_fees": "$419",
+      "extracted_before_taxes_fees": 419,
+      "after_taxes_fees": "$480",
+      "extracted_after_taxes_fees": 480
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQCRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAJEgLTePD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_15my5pmBmANr3CKozDK4xkjftJVw&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$105",
+        "extracted_display_price": 105,
+        "lowest": "$120",
+        "extracted_lowest": 120,
+        "before_taxes_fees": "$105",
+        "extracted_before_taxes_fees": 105,
+        "after_taxes_fees": "$120",
+        "extracted_after_taxes_fees": 120
+       },
+       "total_rate": {
+        "display_price": "$419",
+        "extracted_display_price": 419,
+        "lowest": "$480",
+        "extracted_lowest": 480,
+        "before_taxes_fees": "$419",
+        "extracted_before_taxes_fees": 419,
+        "after_taxes_fees": "$480",
+        "extracted_after_taxes_fees": 480
+       },
+       "inclusions": [
+        "1 single bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQChoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAKEgImavD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_3AdO0GdHOZ_GXhTHyJFY4Zdmbh8g&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$117",
+        "extracted_display_price": 117,
+        "lowest": "$132",
+        "extracted_lowest": 132,
+        "before_taxes_fees": "$117",
+        "extracted_before_taxes_fees": 117,
+        "after_taxes_fees": "$132",
+        "extracted_after_taxes_fees": 132
+       },
+       "total_rate": {
+        "display_price": "$466",
+        "extracted_display_price": 466,
+        "lowest": "$530",
+        "extracted_lowest": 530,
+        "before_taxes_fees": "$466",
+        "extracted_before_taxes_fees": 466,
+        "after_taxes_fees": "$530",
+        "extracted_after_taxes_fees": 530
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQCxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASALEgKUdfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0CYqSewUSVv8iBRJyMhIWqfb6l3g&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$139",
+        "extracted_display_price": 139,
+        "lowest": "$157",
+        "extracted_lowest": 157,
+        "before_taxes_fees": "$139",
+        "extracted_before_taxes_fees": 139,
+        "after_taxes_fees": "$157",
+        "extracted_after_taxes_fees": 157
+       },
+       "total_rate": {
+        "display_price": "$557",
+        "extracted_display_price": 557,
+        "lowest": "$626",
+        "extracted_lowest": 626,
+        "before_taxes_fees": "$557",
+        "extracted_before_taxes_fees": 557,
+        "after_taxes_fees": "$626",
+        "extracted_after_taxes_fees": 626
+       },
+       "inclusions": [
+        "1 single bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQDBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAMEgKNbfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0QZlFzxPhaJ59DkyTw-TjBAbaf2Q&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$155",
+        "extracted_display_price": 155,
+        "lowest": "$173",
+        "extracted_lowest": 173,
+        "before_taxes_fees": "$155",
+        "extracted_before_taxes_fees": 155,
+        "after_taxes_fees": "$173",
+        "extracted_after_taxes_fees": 173
+       },
+       "total_rate": {
+        "display_price": "$618",
+        "extracted_display_price": 618,
+        "lowest": "$691",
+        "extracted_lowest": 691,
+        "before_taxes_fees": "$618",
+        "extracted_before_taxes_fees": 618,
+        "after_taxes_fees": "$691",
+        "extracted_after_taxes_fees": 691
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Deluxe Double Room (Show View)",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w3iaJcFhmzMh51LmkLEjGNwu-kgo_rbnbVf_eLk50GMTs3ZxdONQlqZpLRAxGSUF2_g76T0ejngm8DVhF_CP2nOFVzagOE1tWy7cH9QHAJ3MCXrdnBl2rmFKiXca7czPVto6mDE4o2yYZVBf2n3tksCUOEpysZ9sk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w8j8i-C7xXX5fpYlCkgV2YiJ6uGxAJmdiwtmKtI_fmtLILeIjK_OmRGmZ1fVXE4Rz4hboJh6skY_o-PfkeLx0ctzTuigQZFxD-FK9w3CUHwQlTJZxgnP5hNWKWEpK63Ge2yHEbhlkUpbcdCFLOLdSEXhjRZFJrVqJA",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xH0qkgYOoxvBVMz3CfH81GelrcCUeS6OSFaf9fYUycD0c2J--xjjiTgdR9gpH1JFwsJM4w19Mvh0mqI38rS-Sx_9iKcaRRssmwGTwodGTkajOF1qXmClaJvNBno93extILFPJzZleS5dkgzARGxDmg5pUmn2HrKppy",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xaHoltpUvdoolW4JJdET4TCZ3StPuSX09M0s2nbeT-rnEW68sEuq1OGPSK3_t9woekemiXtrNPzqkmh0sINl3Wtar5RhOl0mAfvubH3YSGRlU7YUQInyLmBGXMms1dhX0P1xG_alZyXldfYUO4SgMVP7GS_ypZ07Li",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_yngzYgTXOX-zLr_iSPwazV80nps1bvorOyHsM9a6RBsjxqv8R5Se9OGivhuNUmBRknwAN5dAT6bNECT6a3KFQtRJNI1WklphS97xi2jT3DM4iSYGiqYMiAfJe75Ig8orlyiW5M8sCAq-1OEcApGPttXavqSEpDb38"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQDRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASANEgJBcPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_3Y2xKdiYb6kp0xKRVvBaav17UXvg&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$136",
+      "extracted_display_price": 136,
+      "lowest": "$154",
+      "extracted_lowest": 154,
+      "before_taxes_fees": "$136",
+      "extracted_before_taxes_fees": 136,
+      "after_taxes_fees": "$154",
+      "extracted_after_taxes_fees": 154
+     },
+     "total_rate": {
+      "display_price": "$546",
+      "extracted_display_price": 546,
+      "lowest": "$614",
+      "extracted_lowest": 614,
+      "before_taxes_fees": "$546",
+      "extracted_before_taxes_fees": 546,
+      "after_taxes_fees": "$614",
+      "extracted_after_taxes_fees": 614
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQDRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASANEgJBcPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_3Y2xKdiYb6kp0xKRVvBaav17UXvg&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$136",
+        "extracted_display_price": 136,
+        "lowest": "$154",
+        "extracted_lowest": 154,
+        "before_taxes_fees": "$136",
+        "extracted_before_taxes_fees": 136,
+        "after_taxes_fees": "$154",
+        "extracted_after_taxes_fees": 154
+       },
+       "total_rate": {
+        "display_price": "$546",
+        "extracted_display_price": 546,
+        "lowest": "$614",
+        "extracted_lowest": 614,
+        "before_taxes_fees": "$546",
+        "extracted_before_taxes_fees": 546,
+        "after_taxes_fees": "$614",
+        "extracted_after_taxes_fees": 614
+       },
+       "inclusions": [
+        "1 double bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQDhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAOEgLWKvD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0D6X0KoQ_HEoGGuYDaEr8gA6Pvkg&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$151",
+        "extracted_display_price": 151,
+        "lowest": "$170",
+        "extracted_lowest": 170,
+        "before_taxes_fees": "$151",
+        "extracted_before_taxes_fees": 151,
+        "after_taxes_fees": "$170",
+        "extracted_after_taxes_fees": 170
+       },
+       "total_rate": {
+        "display_price": "$606",
+        "extracted_display_price": 606,
+        "lowest": "$678",
+        "extracted_lowest": 678,
+        "before_taxes_fees": "$606",
+        "extracted_before_taxes_fees": 606,
+        "after_taxes_fees": "$678",
+        "extracted_after_taxes_fees": 678
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQDxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAPEgLdJvD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_1wDXFOppPg9hrP1eAk5kIiC4fuTw&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$170",
+        "extracted_display_price": 170,
+        "lowest": "$190",
+        "extracted_lowest": 190,
+        "before_taxes_fees": "$170",
+        "extracted_before_taxes_fees": 170,
+        "after_taxes_fees": "$190",
+        "extracted_after_taxes_fees": 190
+       },
+       "total_rate": {
+        "display_price": "$682",
+        "extracted_display_price": 682,
+        "lowest": "$759",
+        "extracted_lowest": 759,
+        "before_taxes_fees": "$682",
+        "extracted_before_taxes_fees": 682,
+        "after_taxes_fees": "$759",
+        "extracted_after_taxes_fees": 759
+       },
+       "inclusions": [
+        "1 double bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQEBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAQEgKm6_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_1QC-ZeGDHEP3zJunm5CRARnQ-l8A&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$190",
+        "extracted_display_price": 190,
+        "lowest": "$210",
+        "extracted_lowest": 210,
+        "before_taxes_fees": "$190",
+        "extracted_before_taxes_fees": 190,
+        "after_taxes_fees": "$210",
+        "extracted_after_taxes_fees": 210
+       },
+       "total_rate": {
+        "display_price": "$758",
+        "extracted_display_price": 758,
+        "lowest": "$840",
+        "extracted_lowest": 840,
+        "before_taxes_fees": "$758",
+        "extracted_before_taxes_fees": 758,
+        "after_taxes_fees": "$840",
+        "extracted_after_taxes_fees": 840
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Deluxe Twin Room (Show View)",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_zxti5Z5bC4s6TEUiZRNWYliuggpsf1VUz9E5HCNSSyoeRH5QzbKR5ARzlXrg0qBgXsrqULl9WEhqNBShZxKERPybx5MyyagBpENYTaNpJzvBmTQerINGTABIQ_m5Uw8NkCPK7gsxzZNLGHCjQug0GJshrC3_wjkzk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y9oTHIgVojE98uDwsk-Fl0bmccy4zZFsvvhfRuZn82ohAIIzkaHDJ2LOpIMELNWnVyAFAupYWx-dTPisMJ1D2Kt1PScbHLkhADVWcVtd1GWGyJuv-HuKYNhqwWD21Ar591tfLfrXMX-QxNjy2zdrhXnbQwf7VDwbQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_x4Hq1kQfmxROeWWks9adQ6qO-dCk2D3FB_VYZI2z6UZOnrPlhgW5CGpyDJD4r3A68JsVW17GkkdEu0oCkoinUXtT2EQAf9jv95Bi_jPN36d2gOp-hlyKkTbcrVILkNUrJHW0pdZwbiUdbDK0_jjifUIfNb7pGq9fpd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y7PxmXgsvgJe--cmiAH0JFv1Pix0w3xU3JEOw_SaFCUTMTaJmAdUyTt64lr-R16QM7pajut0iFnFxrBPW20Lbb7dMTGrtjJ0c_8TLrED-4XkAM0vKJyJA1INXDvW8ZbJRZ5oWfvuaZbztWkSGF8VxZBFm7M0mCRFQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xv26ZiYBl1CVxJqNXM0UUw-_DF_BZtHFGS5058wL--33sw__pSyBjM8lK91FgnP_GpDiFZMNf1EqJxrT36bQW7Q-vyHxtLe2huBp5HVW9K6byM0gv39Uv5glzQJf-GAwjBpsdSCnMqORZqPVE3M5HDhjgGFzNey-wJ"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQERoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAREgIN-vD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0vv0IHNPMouuvMNDKdUs-ZgOiHTA&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$136",
+      "extracted_display_price": 136,
+      "lowest": "$154",
+      "extracted_lowest": 154,
+      "before_taxes_fees": "$136",
+      "extracted_before_taxes_fees": 136,
+      "after_taxes_fees": "$154",
+      "extracted_after_taxes_fees": 154
+     },
+     "total_rate": {
+      "display_price": "$546",
+      "extracted_display_price": 546,
+      "lowest": "$614",
+      "extracted_lowest": 614,
+      "before_taxes_fees": "$546",
+      "extracted_before_taxes_fees": 546,
+      "after_taxes_fees": "$614",
+      "extracted_after_taxes_fees": 614
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQERoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAREgIN-vD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0vv0IHNPMouuvMNDKdUs-ZgOiHTA&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$136",
+        "extracted_display_price": 136,
+        "lowest": "$154",
+        "extracted_lowest": 154,
+        "before_taxes_fees": "$136",
+        "extracted_before_taxes_fees": 136,
+        "after_taxes_fees": "$154",
+        "extracted_after_taxes_fees": 154
+       },
+       "total_rate": {
+        "display_price": "$546",
+        "extracted_display_price": 546,
+        "lowest": "$614",
+        "extracted_lowest": 614,
+        "before_taxes_fees": "$546",
+        "extracted_before_taxes_fees": 546,
+        "after_taxes_fees": "$614",
+        "extracted_after_taxes_fees": 614
+       },
+       "inclusions": [
+        "1 single bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQEhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASASEgJJJPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_07apM9jvirJZ2MoLkbJkUlVgbh4Q&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$151",
+        "extracted_display_price": 151,
+        "lowest": "$170",
+        "extracted_lowest": 170,
+        "before_taxes_fees": "$151",
+        "extracted_before_taxes_fees": 151,
+        "after_taxes_fees": "$170",
+        "extracted_after_taxes_fees": 170
+       },
+       "total_rate": {
+        "display_price": "$606",
+        "extracted_display_price": 606,
+        "lowest": "$678",
+        "extracted_lowest": 678,
+        "before_taxes_fees": "$606",
+        "extracted_before_taxes_fees": 606,
+        "after_taxes_fees": "$678",
+        "extracted_after_taxes_fees": 678
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQExoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASATEgLQA_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_37dDNGqh3WPBgWgUc2J0mijTjOSQ&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$170",
+        "extracted_display_price": 170,
+        "lowest": "$190",
+        "extracted_lowest": 190,
+        "before_taxes_fees": "$170",
+        "extracted_before_taxes_fees": 170,
+        "after_taxes_fees": "$190",
+        "extracted_after_taxes_fees": 190
+       },
+       "total_rate": {
+        "display_price": "$682",
+        "extracted_display_price": 682,
+        "lowest": "$759",
+        "extracted_lowest": 759,
+        "before_taxes_fees": "$682",
+        "extracted_before_taxes_fees": 682,
+        "after_taxes_fees": "$759",
+        "extracted_after_taxes_fees": 759
+       },
+       "inclusions": [
+        "1 single bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQFBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAUEgKXAPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_09bvWOHTW_FO0A0lN7pF2ceSTlTQ&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$190",
+        "extracted_display_price": 190,
+        "lowest": "$210",
+        "extracted_lowest": 210,
+        "before_taxes_fees": "$190",
+        "extracted_before_taxes_fees": 190,
+        "after_taxes_fees": "$210",
+        "extracted_after_taxes_fees": 210
+       },
+       "total_rate": {
+        "display_price": "$758",
+        "extracted_display_price": 758,
+        "lowest": "$840",
+        "extracted_lowest": 840,
+        "before_taxes_fees": "$758",
+        "extracted_before_taxes_fees": 758,
+        "after_taxes_fees": "$840",
+        "extracted_after_taxes_fees": 840
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Executive Double Room (Show View)",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w8j8i-C7xXX5fpYlCkgV2YiJ6uGxAJmdiwtmKtI_fmtLILeIjK_OmRGmZ1fVXE4Rz4hboJh6skY_o-PfkeLx0ctzTuigQZFxD-FK9w3CUHwQlTJZxgnP5hNWKWEpK63Ge2yHEbhlkUpbcdCFLOLdSEXhjRZFJrVqJA",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xeopHSgsSfUq6kWPhK6Q-9YQ5oVG1KRaFYfTBL-hv7iUvcZ1m1QSTe1N7JF8qyQ_L4vX0KjI3QcFsrlu0NMSETWZv-E-BY7gmcxVhDIuIAooyum1LKruSwRengFaZeuj9SzvJ75R6MMZ7NRMaYX2fG3RqxKo-Koud3",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y7PxmXgsvgJe--cmiAH0JFv1Pix0w3xU3JEOw_SaFCUTMTaJmAdUyTt64lr-R16QM7pajut0iFnFxrBPW20Lbb7dMTGrtjJ0c_8TLrED-4XkAM0vKJyJA1INXDvW8ZbJRZ5oWfvuaZbztWkSGF8VxZBFm7M0mCRFQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xv26ZiYBl1CVxJqNXM0UUw-_DF_BZtHFGS5058wL--33sw__pSyBjM8lK91FgnP_GpDiFZMNf1EqJxrT36bQW7Q-vyHxtLe2huBp5HVW9K6byM0gv39Uv5glzQJf-GAwjBpsdSCnMqORZqPVE3M5HDhjgGFzNey-wJ"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQFRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAVEgIqDvD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0O7oB1HLwK95Wcdmjth6R_iousig&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$166",
+      "extracted_display_price": 166,
+      "lowest": "$185",
+      "extracted_lowest": 185,
+      "before_taxes_fees": "$166",
+      "extracted_before_taxes_fees": 166,
+      "after_taxes_fees": "$185",
+      "extracted_after_taxes_fees": 185
+     },
+     "total_rate": {
+      "display_price": "$664",
+      "extracted_display_price": 664,
+      "lowest": "$740",
+      "extracted_lowest": 740,
+      "before_taxes_fees": "$664",
+      "extracted_before_taxes_fees": 664,
+      "after_taxes_fees": "$740",
+      "extracted_after_taxes_fees": 740
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQFRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAVEgIqDvD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0O7oB1HLwK95Wcdmjth6R_iousig&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$166",
+        "extracted_display_price": 166,
+        "lowest": "$185",
+        "extracted_lowest": 185,
+        "before_taxes_fees": "$166",
+        "extracted_before_taxes_fees": 166,
+        "after_taxes_fees": "$185",
+        "extracted_after_taxes_fees": 185
+       },
+       "total_rate": {
+        "display_price": "$664",
+        "extracted_display_price": 664,
+        "lowest": "$740",
+        "extracted_lowest": 740,
+        "before_taxes_fees": "$664",
+        "extracted_before_taxes_fees": 664,
+        "after_taxes_fees": "$740",
+        "extracted_after_taxes_fees": 740
+       },
+       "inclusions": [
+        "1 double bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQFhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAWEgI1S_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2Whv5E_yW1Yew0yvIpKWb3xzl5NA&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$184",
+        "extracted_display_price": 184,
+        "lowest": "$204",
+        "extracted_lowest": 204,
+        "before_taxes_fees": "$184",
+        "extracted_before_taxes_fees": 184,
+        "after_taxes_fees": "$204",
+        "extracted_after_taxes_fees": 204
+       },
+       "total_rate": {
+        "display_price": "$738",
+        "extracted_display_price": 738,
+        "lowest": "$818",
+        "extracted_lowest": 818,
+        "before_taxes_fees": "$738",
+        "extracted_before_taxes_fees": 738,
+        "after_taxes_fees": "$818",
+        "extracted_after_taxes_fees": 818
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQFxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAXEgI26fD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0kte1L0VzF4fSmK7Abit2glNIcig&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$200",
+        "extracted_display_price": 200,
+        "lowest": "$221",
+        "extracted_lowest": 221,
+        "before_taxes_fees": "$200",
+        "extracted_before_taxes_fees": 200,
+        "after_taxes_fees": "$221",
+        "extracted_after_taxes_fees": 221
+       },
+       "total_rate": {
+        "display_price": "$799",
+        "extracted_display_price": 799,
+        "lowest": "$883",
+        "extracted_lowest": 883,
+        "before_taxes_fees": "$799",
+        "extracted_before_taxes_fees": 799,
+        "after_taxes_fees": "$883",
+        "extracted_after_taxes_fees": 883
+       },
+       "inclusions": [
+        "1 double bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQGBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAYEgKvc_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_37eXyOkgIUmDecilhxArbl5a40Tw&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Double",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$222",
+        "extracted_display_price": 222,
+        "lowest": "$245",
+        "extracted_lowest": 245,
+        "before_taxes_fees": "$222",
+        "extracted_before_taxes_fees": 222,
+        "after_taxes_fees": "$245",
+        "extracted_after_taxes_fees": 245
+       },
+       "total_rate": {
+        "display_price": "$890",
+        "extracted_display_price": 890,
+        "lowest": "$979",
+        "extracted_lowest": 979,
+        "before_taxes_fees": "$890",
+        "extracted_before_taxes_fees": 890,
+        "after_taxes_fees": "$979",
+        "extracted_after_taxes_fees": 979
+       },
+       "inclusions": [
+        "1 double bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Executive Twin Room (Show View)",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y9oTHIgVojE98uDwsk-Fl0bmccy4zZFsvvhfRuZn82ohAIIzkaHDJ2LOpIMELNWnVyAFAupYWx-dTPisMJ1D2Kt1PScbHLkhADVWcVtd1GWGyJuv-HuKYNhqwWD21Ar591tfLfrXMX-QxNjy2zdrhXnbQwf7VDwbQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xeopHSgsSfUq6kWPhK6Q-9YQ5oVG1KRaFYfTBL-hv7iUvcZ1m1QSTe1N7JF8qyQ_L4vX0KjI3QcFsrlu0NMSETWZv-E-BY7gmcxVhDIuIAooyum1LKruSwRengFaZeuj9SzvJ75R6MMZ7NRMaYX2fG3RqxKo-Koud3",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y7PxmXgsvgJe--cmiAH0JFv1Pix0w3xU3JEOw_SaFCUTMTaJmAdUyTt64lr-R16QM7pajut0iFnFxrBPW20Lbb7dMTGrtjJ0c_8TLrED-4XkAM0vKJyJA1INXDvW8ZbJRZ5oWfvuaZbztWkSGF8VxZBFm7M0mCRFQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xv26ZiYBl1CVxJqNXM0UUw-_DF_BZtHFGS5058wL--33sw__pSyBjM8lK91FgnP_GpDiFZMNf1EqJxrT36bQW7Q-vyHxtLe2huBp5HVW9K6byM0gv39Uv5glzQJf-GAwjBpsdSCnMqORZqPVE3M5HDhjgGFzNey-wJ"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQGRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAZEgLV2PD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2N6raQaUJMvSBerTgjulRKWbqHdw&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$166",
+      "extracted_display_price": 166,
+      "lowest": "$185",
+      "extracted_lowest": 185,
+      "before_taxes_fees": "$166",
+      "extracted_before_taxes_fees": 166,
+      "after_taxes_fees": "$185",
+      "extracted_after_taxes_fees": 185
+     },
+     "total_rate": {
+      "display_price": "$664",
+      "extracted_display_price": 664,
+      "lowest": "$740",
+      "extracted_lowest": 740,
+      "before_taxes_fees": "$664",
+      "extracted_before_taxes_fees": 664,
+      "after_taxes_fees": "$740",
+      "extracted_after_taxes_fees": 740
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQGRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAZEgLV2PD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2N6raQaUJMvSBerTgjulRKWbqHdw&adurl",
+       "num_guests": 2,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$166",
+        "extracted_display_price": 166,
+        "lowest": "$185",
+        "extracted_lowest": 185,
+        "before_taxes_fees": "$166",
+        "extracted_before_taxes_fees": 166,
+        "after_taxes_fees": "$185",
+        "extracted_after_taxes_fees": 185
+       },
+       "total_rate": {
+        "display_price": "$664",
+        "extracted_display_price": 664,
+        "lowest": "$740",
+        "extracted_lowest": 740,
+        "before_taxes_fees": "$664",
+        "extracted_before_taxes_fees": 664,
+        "after_taxes_fees": "$740",
+        "extracted_after_taxes_fees": 740
+       },
+       "inclusions": [
+        "1 single bed"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQGhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAaEgJ1q_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0xHWrD3MApIm-Dl5eQUNcAr-RTbw&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$184",
+        "extracted_display_price": 184,
+        "lowest": "$204",
+        "extracted_lowest": 204,
+        "before_taxes_fees": "$184",
+        "extracted_before_taxes_fees": 184,
+        "after_taxes_fees": "$204",
+        "extracted_after_taxes_fees": 204
+       },
+       "total_rate": {
+        "display_price": "$738",
+        "extracted_display_price": 738,
+        "lowest": "$818",
+        "extracted_lowest": 818,
+        "before_taxes_fees": "$738",
+        "extracted_before_taxes_fees": 738,
+        "after_taxes_fees": "$818",
+        "extracted_after_taxes_fees": 818
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQGxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAbEgLpZvD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_1Xwot_86xkRk3OaaPL1JXfHOOH2g&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$200",
+        "extracted_display_price": 200,
+        "lowest": "$221",
+        "extracted_lowest": 221,
+        "before_taxes_fees": "$200",
+        "extracted_before_taxes_fees": 200,
+        "after_taxes_fees": "$221",
+        "extracted_after_taxes_fees": 221
+       },
+       "total_rate": {
+        "display_price": "$799",
+        "extracted_display_price": 799,
+        "lowest": "$883",
+        "extracted_lowest": 883,
+        "before_taxes_fees": "$799",
+        "extracted_before_taxes_fees": 799,
+        "after_taxes_fees": "$883",
+        "extracted_after_taxes_fees": 883
+       },
+       "inclusions": [
+        "1 single bed",
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQHBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAcEgIF9PD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_1diHOvzeoG87Q55BtrF2GfbP-i5A&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "beds": [
+        {
+         "type": "Single",
+         "count": 1
+        }
+       ],
+       "rate_per_night": {
+        "display_price": "$222",
+        "extracted_display_price": 222,
+        "lowest": "$245",
+        "extracted_lowest": 245,
+        "before_taxes_fees": "$222",
+        "extracted_before_taxes_fees": 222,
+        "after_taxes_fees": "$245",
+        "extracted_after_taxes_fees": 245
+       },
+       "total_rate": {
+        "display_price": "$890",
+        "extracted_display_price": 890,
+        "lowest": "$979",
+        "extracted_lowest": 979,
+        "before_taxes_fees": "$890",
+        "extracted_before_taxes_fees": 890,
+        "after_taxes_fees": "$979",
+        "extracted_after_taxes_fees": 979
+       },
+       "inclusions": [
+        "1 single bed",
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Executive Suite, City View",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y3eEl7DQLAxMWDmULVe58zobC6EPOMlox6goTu6JuUUtMdNq78kBMOJ6k9i0wSCpI7fB31dbHAK762MoClPsP28tS5SwVKJoTAZO2_M5IpKra0GzvnjBSOKV1iuFmrTrIunfT_HCE5ckhnKq7u6ng_qaOB0tqKGrhd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xxCEfbTPdhhzBta7rjyRslHEV28QEnlooeIuDNbKAQDONCKXK-r95UQn5iuNmL7fyMfm-OJpxWCO_d9dkiLVHwd5st53nvmzoWrZnidmlhUrCH1abuVYgObI7eJCPIjBHMYi5OtDoNdVtd5Hf-itYjhfnMo0_ArIhd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_wYRiOpTMlBTlpUr3ylIM_ecPJkAkBzH8hSlkqof5Van0Iytf9ljMIgrE3MyVVPNz4QQGdfg0OL3h_Xs_WOUQ7gkSsByqhj2xgn0NuufnzPc4ydMhX7dLupnHurQQv37L1RiSonp2zXhDzBSw5DG2f6kqDsvehbxlS8",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_zE5rP6BaWS6qI0Ol9d9JMS1iHUhL6zwNSel5zRhHR9OfbHGkR_kDp66TzI4KeZcQWNZOZu2DslCR0mCybLFlQiLXJvmhYuAVvWDp1EVceOXReyLFkUf23t6CwUiBXxi6VJPPqxI0gkBbZanM87BIcOfC7B7oj0Pn1q",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xr7RUwBmkjLHkK_To_dB70MXFa5kLsWmrw5Bi-QbLCVK8m_FConI1_5QZS4gLAh2u92LOfLB0noBMHuqd5TAthCOVNPjRF6clMxKErkmpaKvdjTEQS2_M9jFRPcrHRfO5eA0S3u9zkghXYVTjX5Re1yY27bI8_LnrG"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQHRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAdEgIqa_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0XZwATIsiy57Cit6F9kCiIXqTtMA&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$178",
+      "extracted_display_price": 178,
+      "lowest": "$197",
+      "extracted_lowest": 197,
+      "before_taxes_fees": "$178",
+      "extracted_before_taxes_fees": 178,
+      "after_taxes_fees": "$197",
+      "extracted_after_taxes_fees": 197
+     },
+     "total_rate": {
+      "display_price": "$710",
+      "extracted_display_price": 710,
+      "lowest": "$789",
+      "extracted_lowest": 789,
+      "before_taxes_fees": "$710",
+      "extracted_before_taxes_fees": 710,
+      "after_taxes_fees": "$789",
+      "extracted_after_taxes_fees": 789
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQHRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAdEgIqa_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0XZwATIsiy57Cit6F9kCiIXqTtMA&adurl",
+       "num_guests": 2,
+       "rate_per_night": {
+        "display_price": "$178",
+        "extracted_display_price": 178,
+        "lowest": "$197",
+        "extracted_lowest": 197,
+        "before_taxes_fees": "$178",
+        "extracted_before_taxes_fees": 178,
+        "after_taxes_fees": "$197",
+        "extracted_after_taxes_fees": 197
+       },
+       "total_rate": {
+        "display_price": "$710",
+        "extracted_display_price": 710,
+        "lowest": "$789",
+        "extracted_lowest": 789,
+        "before_taxes_fees": "$710",
+        "extracted_before_taxes_fees": 710,
+        "after_taxes_fees": "$789",
+        "extracted_after_taxes_fees": 789
+       },
+       "inclusions": [
+        "Suite",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQHhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAeEgLmWPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0FmzT9Y1kp9clS8MKp5M-G3d7u0A&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "rate_per_night": {
+        "display_price": "$198",
+        "extracted_display_price": 198,
+        "lowest": "$218",
+        "extracted_lowest": 218,
+        "before_taxes_fees": "$198",
+        "extracted_before_taxes_fees": 198,
+        "after_taxes_fees": "$218",
+        "extracted_after_taxes_fees": 218
+       },
+       "total_rate": {
+        "display_price": "$790",
+        "extracted_display_price": 790,
+        "lowest": "$874",
+        "extracted_lowest": 874,
+        "before_taxes_fees": "$790",
+        "extracted_before_taxes_fees": 790,
+        "after_taxes_fees": "$874",
+        "extracted_after_taxes_fees": 874
+       },
+       "inclusions": [
+        "Suite",
+        "Free cancellation until Dec 8",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQHxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAfEgJ3MfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_20pW_dFATjXEviLhxE-AWkDqb25w&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$213",
+        "extracted_display_price": 213,
+        "lowest": "$234",
+        "extracted_lowest": 234,
+        "before_taxes_fees": "$213",
+        "extracted_before_taxes_fees": 213,
+        "after_taxes_fees": "$234",
+        "extracted_after_taxes_fees": 234
+       },
+       "total_rate": {
+        "display_price": "$850",
+        "extracted_display_price": 850,
+        "lowest": "$937",
+        "extracted_lowest": 937,
+        "before_taxes_fees": "$850",
+        "extracted_before_taxes_fees": 850,
+        "after_taxes_fees": "$937",
+        "extracted_after_taxes_fees": 937
+       },
+       "inclusions": [
+        "Suite",
+        "breakfast",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQIBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAgEgJY5vD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0sW3sKInwGaSAxSEMune4clzLefw&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$236",
+        "extracted_display_price": 236,
+        "lowest": "$259",
+        "extracted_lowest": 259,
+        "before_taxes_fees": "$236",
+        "extracted_before_taxes_fees": 236,
+        "after_taxes_fees": "$259",
+        "extracted_after_taxes_fees": 259
+       },
+       "total_rate": {
+        "display_price": "$943",
+        "extracted_display_price": 943,
+        "lowest": "$1,035",
+        "extracted_lowest": 1035,
+        "before_taxes_fees": "$943",
+        "extracted_before_taxes_fees": 943,
+        "after_taxes_fees": "$1,035",
+        "extracted_after_taxes_fees": 1035
+       },
+       "inclusions": [
+        "Suite",
+        "Free cancellation until Dec 8",
+        "breakfast",
+        "Suite"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Premium Suite, City View",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y3eEl7DQLAxMWDmULVe58zobC6EPOMlox6goTu6JuUUtMdNq78kBMOJ6k9i0wSCpI7fB31dbHAK762MoClPsP28tS5SwVKJoTAZO2_M5IpKra0GzvnjBSOKV1iuFmrTrIunfT_HCE5ckhnKq7u6ng_qaOB0tqKGrhd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xxCEfbTPdhhzBta7rjyRslHEV28QEnlooeIuDNbKAQDONCKXK-r95UQn5iuNmL7fyMfm-OJpxWCO_d9dkiLVHwd5st53nvmzoWrZnidmlhUrCH1abuVYgObI7eJCPIjBHMYi5OtDoNdVtd5Hf-itYjhfnMo0_ArIhd",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_wYRiOpTMlBTlpUr3ylIM_ecPJkAkBzH8hSlkqof5Van0Iytf9ljMIgrE3MyVVPNz4QQGdfg0OL3h_Xs_WOUQ7gkSsByqhj2xgn0NuufnzPc4ydMhX7dLupnHurQQv37L1RiSonp2zXhDzBSw5DG2f6kqDsvehbxlS8",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_zE5rP6BaWS6qI0Ol9d9JMS1iHUhL6zwNSel5zRhHR9OfbHGkR_kDp66TzI4KeZcQWNZOZu2DslCR0mCybLFlQiLXJvmhYuAVvWDp1EVceOXReyLFkUf23t6CwUiBXxi6VJPPqxI0gkBbZanM87BIcOfC7B7oj0Pn1q",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xr7RUwBmkjLHkK_To_dB70MXFa5kLsWmrw5Bi-QbLCVK8m_FConI1_5QZS4gLAh2u92LOfLB0noBMHuqd5TAthCOVNPjRF6clMxKErkmpaKvdjTEQS2_M9jFRPcrHRfO5eA0S3u9zkghXYVTjX5Re1yY27bI8_LnrG"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQIRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAhEgKDwPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_3LyRLswpVl_PTIReDZ19x_mPoOfQ&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$214",
+      "extracted_display_price": 214,
+      "lowest": "$235",
+      "extracted_lowest": 235,
+      "before_taxes_fees": "$214",
+      "extracted_before_taxes_fees": 214,
+      "after_taxes_fees": "$235",
+      "extracted_after_taxes_fees": 235
+     },
+     "total_rate": {
+      "display_price": "$854",
+      "extracted_display_price": 854,
+      "lowest": "$941",
+      "extracted_lowest": 941,
+      "before_taxes_fees": "$854",
+      "extracted_before_taxes_fees": 854,
+      "after_taxes_fees": "$941",
+      "extracted_after_taxes_fees": 941
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQIRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAhEgKDwPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_3LyRLswpVl_PTIReDZ19x_mPoOfQ&adurl",
+       "num_guests": 2,
+       "rate_per_night": {
+        "display_price": "$214",
+        "extracted_display_price": 214,
+        "lowest": "$235",
+        "extracted_lowest": 235,
+        "before_taxes_fees": "$214",
+        "extracted_before_taxes_fees": 214,
+        "after_taxes_fees": "$235",
+        "extracted_after_taxes_fees": 235
+       },
+       "total_rate": {
+        "display_price": "$854",
+        "extracted_display_price": 854,
+        "lowest": "$941",
+        "extracted_lowest": 941,
+        "before_taxes_fees": "$854",
+        "extracted_before_taxes_fees": 854,
+        "after_taxes_fees": "$941",
+        "extracted_after_taxes_fees": 941
+       },
+       "inclusions": [
+        "Suite",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQIhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAiEgIjYPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0ysSMi9z29_RIT1fOUbKIWhLzvfg&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "rate_per_night": {
+        "display_price": "$237",
+        "extracted_display_price": 237,
+        "lowest": "$261",
+        "extracted_lowest": 261,
+        "before_taxes_fees": "$237",
+        "extracted_before_taxes_fees": 237,
+        "after_taxes_fees": "$261",
+        "extracted_after_taxes_fees": 261
+       },
+       "total_rate": {
+        "display_price": "$949",
+        "extracted_display_price": 949,
+        "lowest": "$1,042",
+        "extracted_lowest": 1042,
+        "before_taxes_fees": "$949",
+        "extracted_before_taxes_fees": 949,
+        "after_taxes_fees": "$1,042",
+        "extracted_after_taxes_fees": 1042
+       },
+       "inclusions": [
+        "Suite",
+        "Free cancellation until Dec 8",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQIxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAjEgKDhfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_1BWT-0imm5lAG7wjs9aHlm3pDlOg&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$247",
+        "extracted_display_price": 247,
+        "lowest": "$271",
+        "extracted_lowest": 271,
+        "before_taxes_fees": "$247",
+        "extracted_before_taxes_fees": 247,
+        "after_taxes_fees": "$271",
+        "extracted_after_taxes_fees": 271
+       },
+       "total_rate": {
+        "display_price": "$990",
+        "extracted_display_price": 990,
+        "lowest": "$1,085",
+        "extracted_lowest": 1085,
+        "before_taxes_fees": "$990",
+        "extracted_before_taxes_fees": 990,
+        "after_taxes_fees": "$1,085",
+        "extracted_after_taxes_fees": 1085
+       },
+       "inclusions": [
+        "Suite",
+        "breakfast",
+        "Suite"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQJBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAkEgKsWfD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_23bMQSBPCR5QsCxvQoyPTHle18gA&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$275",
+        "extracted_display_price": 275,
+        "lowest": "$301",
+        "extracted_lowest": 301,
+        "before_taxes_fees": "$275",
+        "extracted_before_taxes_fees": 275,
+        "after_taxes_fees": "$301",
+        "extracted_after_taxes_fees": 301
+       },
+       "total_rate": {
+        "display_price": "$1,102",
+        "extracted_display_price": 1102,
+        "lowest": "$1,204",
+        "extracted_lowest": 1204,
+        "before_taxes_fees": "$1,102",
+        "extracted_before_taxes_fees": 1102,
+        "after_taxes_fees": "$1,204",
+        "extracted_after_taxes_fees": 1204
+       },
+       "inclusions": [
+        "Suite",
+        "Free cancellation until Dec 8",
+        "breakfast",
+        "Suite"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Connecting Room, Show View",
+     "images": [
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w3iaJcFhmzMh51LmkLEjGNwu-kgo_rbnbVf_eLk50GMTs3ZxdONQlqZpLRAxGSUF2_g76T0ejngm8DVhF_CP2nOFVzagOE1tWy7cH9QHAJ3MCXrdnBl2rmFKiXca7czPVto6mDE4o2yYZVBf2n3tksCUOEpysZ9sk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_w8j8i-C7xXX5fpYlCkgV2YiJ6uGxAJmdiwtmKtI_fmtLILeIjK_OmRGmZ1fVXE4Rz4hboJh6skY_o-PfkeLx0ctzTuigQZFxD-FK9w3CUHwQlTJZxgnP5hNWKWEpK63Ge2yHEbhlkUpbcdCFLOLdSEXhjRZFJrVqJA",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_zxti5Z5bC4s6TEUiZRNWYliuggpsf1VUz9E5HCNSSyoeRH5QzbKR5ARzlXrg0qBgXsrqULl9WEhqNBShZxKERPybx5MyyagBpENYTaNpJzvBmTQerINGTABIQ_m5Uw8NkCPK7gsxzZNLGHCjQug0GJshrC3_wjkzk",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_y9oTHIgVojE98uDwsk-Fl0bmccy4zZFsvvhfRuZn82ohAIIzkaHDJ2LOpIMELNWnVyAFAupYWx-dTPisMJ1D2Kt1PScbHLkhADVWcVtd1GWGyJuv-HuKYNhqwWD21Ar591tfLfrXMX-QxNjy2zdrhXnbQwf7VDwbQ",
+      "https://lh3.googleusercontent.com/hrppk/ANjXD_xaHoltpUvdoolW4JJdET4TCZ3StPuSX09M0s2nbeT-rnEW68sEuq1OGPSK3_t9woekemiXtrNPzqkmh0sINl3Wtar5RhOl0mAfvubH3YSGRlU7YUQInyLmBGXMms1dhX0P1xG_alZyXldfYUO4SgMVP7GS_ypZ07Li"
+     ],
+     "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQJRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAlEgImV_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0-xl2ejAHSCooveCOILC-bI398qg&adurl",
+     "num_guests": 2,
+     "rate_per_night": {
+      "display_price": "$265",
+      "extracted_display_price": 265,
+      "lowest": "$290",
+      "extracted_lowest": 290,
+      "before_taxes_fees": "$265",
+      "extracted_before_taxes_fees": 265,
+      "after_taxes_fees": "$290",
+      "extracted_after_taxes_fees": 290
+     },
+     "total_rate": {
+      "display_price": "$1,061",
+      "extracted_display_price": 1061,
+      "lowest": "$1,161",
+      "extracted_lowest": 1161,
+      "before_taxes_fees": "$1,061",
+      "extracted_before_taxes_fees": 1061,
+      "after_taxes_fees": "$1,161",
+      "extracted_after_taxes_fees": 1161
+     },
+     "rates": [
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQJRoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAlEgImV_D_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_0-xl2ejAHSCooveCOILC-bI398qg&adurl",
+       "num_guests": 2,
+       "rate_per_night": {
+        "display_price": "$265",
+        "extracted_display_price": 265,
+        "lowest": "$290",
+        "extracted_lowest": 290,
+        "before_taxes_fees": "$265",
+        "extracted_before_taxes_fees": 265,
+        "after_taxes_fees": "$290",
+        "extracted_after_taxes_fees": 290
+       },
+       "total_rate": {
+        "display_price": "$1,061",
+        "extracted_display_price": 1061,
+        "lowest": "$1,161",
+        "extracted_lowest": 1161,
+        "before_taxes_fees": "$1,061",
+        "extracted_before_taxes_fees": 1061,
+        "after_taxes_fees": "$1,161",
+        "extracted_after_taxes_fees": 1161
+       }
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQJhoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAmEgINdPD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2uOBCsxEZ-oRZMRVRmREd9hVpb4Q&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "rate_per_night": {
+        "display_price": "$295",
+        "extracted_display_price": 295,
+        "lowest": "$322",
+        "extracted_lowest": 322,
+        "before_taxes_fees": "$295",
+        "extracted_before_taxes_fees": 295,
+        "after_taxes_fees": "$322",
+        "extracted_after_taxes_fees": 322
+       },
+       "total_rate": {
+        "display_price": "$1,181",
+        "extracted_display_price": 1181,
+        "lowest": "$1,287",
+        "extracted_lowest": 1287,
+        "before_taxes_fees": "$1,181",
+        "extracted_before_taxes_fees": 1181,
+        "after_taxes_fees": "$1,287",
+        "extracted_after_taxes_fees": 1287
+       },
+       "inclusions": [
+        "Free cancellation until Dec 8"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQJxoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAnEgIA3PD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2pEelfqfPya39vOqKpLepc2yZbsQ&adurl",
+       "num_guests": 2,
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$334",
+        "extracted_display_price": 334,
+        "lowest": "$363",
+        "extracted_lowest": 363,
+        "before_taxes_fees": "$334",
+        "extracted_before_taxes_fees": 334,
+        "after_taxes_fees": "$363",
+        "extracted_after_taxes_fees": 363
+       },
+       "total_rate": {
+        "display_price": "$1,336",
+        "extracted_display_price": 1336,
+        "lowest": "$1,452",
+        "extracted_lowest": 1452,
+        "before_taxes_fees": "$1,336",
+        "extracted_before_taxes_fees": 1336,
+        "after_taxes_fees": "$1,452",
+        "extracted_after_taxes_fees": 1452
+       },
+       "inclusions": [
+        "breakfast"
+       ]
+      },
+      {
+       "link": "https://www.google.com/aclk?sa=l&ai=DChsSEwiXm_704-6XAxX_zMIEHeFXCLkYACICCAEQKBoCcHY&co=1&gclid=EAIaIQobChMIl5v-9OPulwMV_8zCBB3hVwi5EAoYASAoEgLF6vD_BwE&cid=CAASuwHkaBVFtL4to-48Rsz10tC97yaEelKhQv0yaqbGA16-LW_ISr6-8GeMX3vxpTW_ui875Iotv8XXb0qUj3SzWzThKk7QhyalV63qmy7XpMnYNEjnrJb8AoNTEUYvmixUiW9L359RrvER9wxWtJ4FzELZ5d8-3qPuieUyTV0-bAI3UP7-q7sYNkADGnvnByvJpeg28XRMxidKC1es_mvDtMR6k4PUpYeT2-hWRiMGgVd15TD63iYJ5H-Rv9Tb&sig=AOD64_2GRZSLj5RQXuJzwNLZnHCUewlRIw&adurl",
+       "num_guests": 2,
+       "free_cancellation": true,
+       "free_cancellation_until_date": "Dec 8",
+       "free_cancellation_until_time": "3:00 PM",
+       "breakfast_included": true,
+       "rate_per_night": {
+        "display_price": "$371",
+        "extracted_display_price": 371,
+        "lowest": "$403",
+        "extracted_lowest": 403,
+        "before_taxes_fees": "$371",
+        "extracted_before_taxes_fees": 371,
+        "after_taxes_fees": "$403",
+        "extracted_after_taxes_fees": 403
+       },
+       "total_rate": {
+        "display_price": "$1,485",
+        "extracted_display_price": 1485,
+        "lowest": "$1,610",
+        "extracted_lowest": 1610,
+        "before_taxes_fees": "$1,485",
+        "extracted_before_taxes_fees": 1485,
+        "after_taxes_fees": "$1,610",
+        "extracted_after_taxes_fees": 1610
+       },
+       "inclusions": [
+        "Free cancellation until Dec 8",
+        "breakfast"
+       ]
+      }
+     ]
+    }
+   ],
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$105",
+    "extracted_display_price": 105,
+    "lowest": "$120",
+    "extracted_lowest": 120,
+    "before_taxes_fees": "$105",
+    "extracted_before_taxes_fees": 105,
+    "after_taxes_fees": "$120",
+    "extracted_after_taxes_fees": 120
+   },
+   "total_rate": {
+    "display_price": "$419",
+    "extracted_display_price": 419,
+    "lowest": "$480",
+    "extracted_lowest": 480,
+    "before_taxes_fees": "$419",
+    "extracted_before_taxes_fees": 419,
+    "after_taxes_fees": "$480",
+    "extracted_after_taxes_fees": 480
+   }
+  }
+ ],
+ "prices": [
+  {
+   "source": "Lumen Hotel & The Lisbon Light Show",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEygLGBwirgrOUw5QpJkpLhjHTieFnVWvb0axYnVLORvYu1NFtziYo036axcUvnLCJugg0QlmOxibvSAZ2vK8eG8KXAPSVUwrZSfedUkkJ47p8lxsqZBRPwGNy-ze5Jz2OoCZE_Q5BizfVzWEXr8uikbRjTCySXD0O3mf7RY74XMITBFPnhL_sVg&pcurl=https://wtbngprod-cdn.official-rates.com/xml/fichesatellite.phtml?tosite%3Dtmphotel%26from%3DDist-GHP%26DistNum%3DAVPPTOAGSB20436%26fromdate%3D2026-12-10%26todate%3D2026-12-14%26lg%3Den%26nbadult%3D2%26currency%3DUSD%26tdp%3D428.60%26vrfc%3Dfalse%26offercode%3D114598_WEBBARRONR-AM%26roomId%3D114598%26usercountry%3DUS%26device%3Ddesktop%26price%3D428.60%26organicLink%3Dtrue%26rateId%3D%26ari%3D1&s=ALZo0YIZRmwePnRUIOl5YwIKPWJO&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/4714177670729615992.png",
+   "official": true,
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$98",
+    "extracted_display_price": 98,
+    "lowest": "$107",
+    "extracted_lowest": 107,
+    "before_taxes_fees": "$98",
+    "extracted_before_taxes_fees": 98,
+    "after_taxes_fees": "$107",
+    "extracted_after_taxes_fees": 107
+   },
+   "total_rate": {
+    "display_price": "$393",
+    "extracted_display_price": 393,
+    "lowest": "$429",
+    "extracted_lowest": 429,
+    "before_taxes_fees": "$393",
+    "extracted_before_taxes_fees": 393,
+    "after_taxes_fees": "$429",
+    "extracted_after_taxes_fees": 429
+   }
+  },
+  {
+   "source": "Vio.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyjKtC1jnDZbWLRO00xDGNhHABBSpsRRRdmeWBfitHb77UURHSM8chmZ6jnPvyjG22p956eiRNen0jFPA9HcXHf5VEsWKNCBOYMR2nWmQF-E4NvDecRlaZ2_dc-jIl4aKzmKx1iiply9xBQ-V8seDFrmAFFvc21QNEvASsa_pFI51WXwQUYQxHEW&pcurl=https://deals.vio.com/?sig%3D73aca13c7f952d2641c156f3e69125e1eb497c325f122828ee5aa8797168b9a12d32303331333438363233%26turl%3Dhttps%253A%252F%252Fwww.vio.com%252FHotel%252FSearch%253FcheckIn%253D2026-12-10%2526checkOut%253D2026-12-14%2526currency%253DUSD%2526forceCurrencyChange%253D1%2526lang%253Den%2526forceLanguageChange%253D1%2526rooms%253D2%253A%2526utm_source%253Dgha%2526utm_medium%253Dcpc%2526hotelId%253D9851195%2526userCountry%253DUS%2526profile%253Dr2d2m73kn8%2526preferredRate%253D398.00%2526deviceType%253Ddesktop%2526label%253Dsrc%25253Dgha%252526cltype%25253Dhotel%252526datype%25253Dselected%252526gsite%25253Dlocaluniversal%252526vf%25253D0%252526ucountry%25253DUS%252526udevice%25253Ddesktop%252526hotel%25253D9851195%252526day%25253D10%252526month%25253D12%252526year%25253D2026%252526los%25253D4%252526price%25253D398.00%252526currency%25253DUSD%252526cid%25253D%252526listid%25253D%252526rateid%25253DUS_D%252526closerateid%25253D%252526promo%25253D0%252526isPrivateRate%25253D0%252526isAudienceUser%25253D0%252526isPaidClick%25253D0%252526%2526cp%253Dctb_ZiFD-RNfM5LWCg8IiJgCGPAeIgNVU0RSATISGhX8Qax9Ggs4MDRPQUlYOW5nVSgCMN2urdcG&s=ALZo0YJLOjnVvU8_4B7GL0RW8vke&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/297592521974050080.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$90",
+    "extracted_display_price": 90,
+    "lowest": "$100",
+    "extracted_lowest": 100,
+    "before_taxes_fees": "$90",
+    "extracted_before_taxes_fees": 90,
+    "after_taxes_fees": "$100",
+    "extracted_after_taxes_fees": 100
+   },
+   "total_rate": {
+    "display_price": "$358",
+    "extracted_display_price": 358,
+    "lowest": "$398",
+    "extracted_lowest": 398,
+    "before_taxes_fees": "$358",
+    "extracted_before_taxes_fees": 358,
+    "after_taxes_fees": "$398",
+    "extracted_after_taxes_fees": 398
+   }
+  },
+  {
+   "source": "Bluepillow.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyji4OXzGdsqpokFxRNJ6adLVx11M9v4EpFveTyjyQ_6RTNzQiZCiBJRlgkRwJmRKxPKuobU1eKJYfAOKVHc_3nDbJGBigRYWY2SE0D8HD7mairIEGfTWv9nVDspZHHXm06xrwnJCjFsMTFXx_TuPaet2y5A31iLeSPdPYSuD0wxtU_LjjY-2G0kHw&pcurl=https://www.bluepillow.com/search/62de8b9fde4e4eebed14993c?begin%3D2026-12-10%26end%3D2026-12-14%26block_id%3D-b,KZWrOAXyjFXQUm8Dsux7dpa_Bu-iSKBj-q3EeNRxKqc,-bpag-Hotel%26fees%3D21.41%26tax%3D21.41%26total%3D378.34%26adults%3D2%26childs%3D0%26infants%3D0%26childrens%3D0%26country%3DUS%26currency%3DUSD%26language%3Den%26source%3Dlocaluniversal%26utm_campaign%3Dhotel%26prid%3Dforeign&s=ALZo0YK8beos45qqMGkIdZfhpD6-&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/c770e909-af04-45dd-8ad7-335bc5055826.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$95",
+    "extracted_display_price": 95,
+    "lowest": "$95",
+    "extracted_lowest": 95
+   },
+   "total_rate": {
+    "display_price": "$378",
+    "extracted_display_price": 378,
+    "lowest": "$378",
+    "extracted_lowest": 378
+   }
+  },
+  {
+   "source": "goseek.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEygwkIaQMEwJxxj8c4ECJ7y2j01HS_fj2_q_fH8au08mQBd8qboq6rbeITTmE1fz5dCWrLZMG3fWSBJ_YShwWSZHdLHucdjlz9Q6Ec7LKbQkgSjtApiUCed-OkGpwVqNf8qNWE8TLNCpjpYohOiTwzn1yV8Azld4-u7ptLZINb16mOCjKvhlXg3GHri4LyrO3g&pcurl=https://deals.goseek.com/?sig%3D34c47a49c3e8320dca5a5dda0da2a460c1bc23afde972e2894a4ff0b6052fb53383131303836353931%26turl%3Dhttps%253A%252F%252Fwww.goseek.com%252FHotel%252FSearch%253FcheckIn%253D2026-12-10%2526checkOut%253D2026-12-14%2526currency%253DUSD%2526forceCurrencyChange%253D1%2526lang%253Den%2526forceLanguageChange%253D1%2526rooms%253D2%253A%2526utm_source%253Dgha%2526utm_medium%253Dcpc%2526hotelId%253D9851195%2526userCountry%253DUS%2526profile%253Dr2d2m73kn8%2526preferredRate%253D401.31%2526deviceType%253Ddesktop%2526label%253Dsrc%25253Dgha%252526cltype%25253Dhotel%252526datype%25253Dselected%252526gsite%25253Dlocaluniversal%252526vf%25253D0%252526ucountry%25253DUS%252526udevice%25253Ddesktop%252526hotel%25253D9851195%252526day%25253D10%252526month%25253D12%252526year%25253D2026%252526los%25253D4%252526price%25253D401.31%252526currency%25253DUSD%252526cid%25253D%252526listid%25253D%252526rateid%25253DUS_D%252526closerateid%25253D%252526promo%25253D0%252526isPrivateRate%25253D0%252526isAudienceUser%25253D0%252526isPaidClick%25253D0%252526%2526cp%253DKav3moY02lZfM5LWCg8I5KcCGOARIgNVU0RSATISGhVWvEe8GgtBNUUxOERYMmZyTSgDMMeurdcG&s=ALZo0YLGFOU1N9qSbYTN4j9EHvPy&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/4bb2e6d3-77b1-4306-8c69-5a97ce95ce39.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$95",
+    "extracted_display_price": 95,
+    "lowest": "$100",
+    "extracted_lowest": 100,
+    "before_taxes_fees": "$95",
+    "extracted_before_taxes_fees": 95,
+    "after_taxes_fees": "$100",
+    "extracted_after_taxes_fees": 100
+   },
+   "total_rate": {
+    "display_price": "$379",
+    "extracted_display_price": 379,
+    "lowest": "$401",
+    "extracted_lowest": 401,
+    "before_taxes_fees": "$379",
+    "extracted_before_taxes_fees": 379,
+    "after_taxes_fees": "$401",
+    "extracted_after_taxes_fees": 401
+   }
+  },
+  {
+   "source": "Stayforlong.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyiGxnXCAZ3Iog3OVNsj-D3iFWVRKn2Dw9Xyyk568Ln2TfaaXMsxGQmbyCVPkTRp8NRaTYADOjLgpNuI_ByUnqvDPIrOQOjAp4BrHB02BovY-pdU_lHVgeMp_859lLmQR_mQqlB10be1G8d9prH8eJMwrHl22mhxlN8Sdif2--b17LzeTtyB7KiDTsJaRw&pcurl=https://www.stayforlong.com/hotel-detail/1234187?checkin%3D2026-12-10%26checkout%3D2026-12-14%26adults%3D2%26metadevice%3Ddesktop%26aid%3Dgha%26market%3Dus%26lang%3Den%26total%3D388%26query_type%3Dpull%26ch%3D0%26adclick%3Dfree%26defaultdate%3Dfalse%26googlesite%3Dlocaluniversal%26p%3Dd5f31db37e629924f98da415261725b8%26rate_token%3Dv2.z6aeb5f1200b40cdc85ce5e9b709ceedc%26source%3Dmeta&s=ALZo0YKCNj5sP6THGCBu_A-p9PMU&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/8110349155345136694.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$96",
+    "extracted_display_price": 96,
+    "lowest": "$101",
+    "extracted_lowest": 101,
+    "before_taxes_fees": "$96",
+    "extracted_before_taxes_fees": 96,
+    "after_taxes_fees": "$101",
+    "extracted_after_taxes_fees": 101
+   },
+   "total_rate": {
+    "display_price": "$384",
+    "extracted_display_price": 384,
+    "lowest": "$406",
+    "extracted_lowest": 406,
+    "before_taxes_fees": "$384",
+    "extracted_before_taxes_fees": 384,
+    "after_taxes_fees": "$406",
+    "extracted_after_taxes_fees": 406
+   }
+  },
+  {
+   "source": "Reserving",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyjksFK8MOp8JzLy42AndTe7cDdhlaodm_lU-2k7Bx9vipmdgbGxtvkReMflP40Q_pzw9Vn6LpC33wXT9b00RPNBuZLkKucWTneKw1kxkO1l9dwIZk-sjBUeq9G3ArVSwf8iLKtafaBOOd6h6sl6AKi7RKuish9P8sWbHIVIPw6p5Ul3xcHpI7knRuqZMTVqHw&pcurl=https://h-en.reserving.com/search?i%3D7103%26rf%3DGOOGLEHOTELS%26portal%3Drsvcom%26lang%3Den%26auto%3D1%26tipo%3DS%26id%3D868879%26numero_habs%3D1%26no_adultos_hab1%3D2%26no_ninos_hab1%3D0%26fecha_entrada%3D10%252F12%252F2026%26fecha_salida%3D14%252F12%252F2026%26refp%3D423.95%26campaing-id%3D%26tp%3D%26moneda%3DUSD%26device%3Ddesktop%26pais_dom%3DUS%26sg%3Db%3D345.66,bhab%3D3413,big%3D2026-11-03,bmid%3D36,bpd%3Des,bpt%3D19.63,bt%3D32,bwp%3DKdzlUOWuGvE,ts%3D2026-11-03T22:47:15%2B01:00/B:85D3F915BFA9B5D5E417EFD22F6E5E2A06794386A62597A0C7E1D17B%26c3%3Dmode%3DP,d%3D2,ts_id%3D7424352000665225%26r%3DCAMPAIGN-ID%3D;TRACKING-PARAM%3D;CUSTOM1%3D;PRICE-DISPLAYED-TOTAL%3D423.95;DEFAULT-DATE%3D0;CLICK-TYPE%3Dhotel;USER-COUNTRY%3DUS;DEVICE%3Ddesktop;SITE%3Dlocaluniversal;USER-LANGUAGE%3Den;USER-CURRENCY%3DUSD;POS%3DALL-ALL-ALL-RSVCOM;AD-CLICK%3D0;PAYMENT-ID%3Dfree;C2%3Db%3D345.66,bhab%3D3413,big%3D2026-11-03,bmid%3D36,bpd%3Des,bpt%3D19.63,bt%3D32,bwp%3DKdzlUOWuGvE,ts%3D2026-11-03T22:47:15%2B01:00/B:85D3F915BFA9B5D5E417EFD22F6E5E2A06794386A62597A0C7E1D17B;C3%3Dmode%3DP,d%3D2,ts_id%3D7424352000665225&s=ALZo0YJe_gwJm1Xk3t44_SZbE85B&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/6610968879149230366.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$97",
+    "extracted_display_price": 97,
+    "lowest": "$106",
+    "extracted_lowest": 106,
+    "before_taxes_fees": "$97",
+    "extracted_before_taxes_fees": 97,
+    "after_taxes_fees": "$106",
+    "extracted_after_taxes_fees": 106
+   },
+   "total_rate": {
+    "display_price": "$388",
+    "extracted_display_price": 388,
+    "lowest": "$424",
+    "extracted_lowest": 424,
+    "before_taxes_fees": "$388",
+    "extracted_before_taxes_fees": 388,
+    "after_taxes_fees": "$424",
+    "extracted_after_taxes_fees": 424
+   }
+  },
+  {
+   "source": "Hotels.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEygcDHLC8wkPqdPTwk7n_LX4Dwx52x0xAsqm1m-N8oDLtCTw2fb36_D8rgFy6J_2Im1MYL0gjWJhHJAlKaMR3clx-OKrlRIA5WXcTTvp5hlFAr4dLGvUjmCkT9z44SHZ9BTRXcMrliVsO4sExONdUEhCIv1KMKhpmQbqAFLTTm5yEoZ6QFInk-w0nUKs24g&pcurl=https://www.hotels.com/Hotel-Search?selected%3D66889014%26startDate%3D2026-12-10%26endDate%3D2026-12-14%26mdpcid%3DHCOM-US.META.HPA.HOTEL-ORGANIC-desktop.HOTEL%26MDPDTL%3DHTL.66889014.20261210.20261214.DDF.36.CID..AUDID.%26adults%3D2%26children%3D%26mctc%3D10%26mpf%3D479.62%26mpg%3DUSD%26mpl%3DUSD%26mpj%3D60.97%26mpr%3D0.00%26rffrid%3Dsem.hcom.US.156.024.localuniversal.02.desktop-4.kwrd%3DGGMETA.66889014USen-20261210-N-ABW%3D36-camp%3D-aud%3D-N%26rateplanid%3D382768495%26mpm%3D24%26mpn%3D314247853%26mpo%3DEC%26mpe%3D1793801963%26mpp%3D1%26locale%3Den_US%26siteid%3D300000001&s=ALZo0YLiNdp21GBz0fMsnQYt7d69&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/306127930749010778.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$105",
+    "extracted_display_price": 105,
+    "lowest": "$120",
+    "extracted_lowest": 120,
+    "before_taxes_fees": "$105",
+    "extracted_before_taxes_fees": 105,
+    "after_taxes_fees": "$120",
+    "extracted_after_taxes_fees": 120
+   },
+   "total_rate": {
+    "display_price": "$419",
+    "extracted_display_price": 419,
+    "lowest": "$480",
+    "extracted_lowest": 480,
+    "before_taxes_fees": "$419",
+    "extracted_before_taxes_fees": 419,
+    "after_taxes_fees": "$480",
+    "extracted_after_taxes_fees": 480
+   }
+  },
+  {
+   "source": "Booking.com",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyjXk9fGfMDR3Dz1JRWAn6D7XPZB3Yf9Z01JfWrEAFdhm1JZXw8bnjV16vycKT15hqRx2SAKpEk9ucuFdcPq7oqvO-JGdeRnP6qADHa-jTISor8jd35dcDGohSt01e9Ee3YkXc5nWZH3sN5RPvDqQwY_6Lk0BN7rLCPphlHCUbQpEssZJRT2b4P0zGlxrqCc4FreOA&pcurl=https://www.booking.com/searchresults.en.html?dest_id%3D6729913%26highlighted_hotels%3D6729913%26dest_type%3Dhotel%26checkin%3D2026-12-10%26checkout%3D2026-12-14%26group_adults%3D2%26req_adults%3D2%26show_room%3D672991318_275295078_0_2_0%26lang%3Den%26selected_currency%3DUSD%26exrt%3D1.12259495%26ext_price_total%3D480.47%26ext_price_tax%3D61.09%26xfc%3DEUR%26hca%3Dm%26group_children%3D0%26req_children%3D0%26%26ts%3D1793803732%26no_rooms%3D1%26edgtid%3DhMTCfB96TbO6iCvaLW2nWw%26efpc%3DOWsApCiwCh8%26utm_source%3Dmetagha%26utm_medium%3Dlocaluniversal%26utm_campaign%3DUS%26utm_term%3Dhotel-6729913%26utm_content%3Ddev-desktop_los-4_bw-36_dow-Thursday_defdate-0_room-0_gstadt-2_rateid-public_aud-0_gacid-_mcid-10_ppa-0_clrid-0_ad-0_gstkid-0_checkin-20261210_ppt-0%26aid%3D2127486%26label%3Dmetagha-link-LUUS-hotel-6729913_dev-desktop_los-4_bw-36_dow-Thursday_defdate-0_room-0_gstadt-2_rateid-public_aud-0_gacid-_mcid-10_ppa-0_clrid-0_ad-0_gstkid-0_checkin-20261210_ppt-0&s=ALZo0YJht9CodVakwFxPicmlTR6b&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/icon_184.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$105",
+    "extracted_display_price": 105,
+    "lowest": "$120",
+    "extracted_lowest": 120,
+    "before_taxes_fees": "$105",
+    "extracted_before_taxes_fees": 105,
+    "after_taxes_fees": "$120",
+    "extracted_after_taxes_fees": 120
+   },
+   "total_rate": {
+    "display_price": "$419",
+    "extracted_display_price": 419,
+    "lowest": "$480",
+    "extracted_lowest": 480,
+    "before_taxes_fees": "$419",
+    "extracted_before_taxes_fees": 419,
+    "after_taxes_fees": "$480",
+    "extracted_after_taxes_fees": 480
+   }
+  },
+  {
+   "source": "TravelUp",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyhxMaqZW1Df5SlLrHUrKexGqfxaR40GOSQ3nIFVLOCJj5VxIinp7muSjINpvrC-yqmgBwJVuIfhThemXHqKTZth31dVAxbtDWx5UjFkxoQEV4jAY85qAB0DzUd9YZS0Jdmcl1FezOP4OgzsElwS_AkVD95jajKWpgaxwZj6BBoSL2u4D0vBV0F6bU8y&pcurl=https://www.travelup.com/en-us/portugal/lisbon/lumen-hotel-and-the-lisbon-light-show?prp%3D1302608%26cur%3DUSD%26lan%3Den%26CI%3D2026-12-10%26CO%3D2026-12-14%26rm1_a%3D2%26rm1_c%3Dnull%26ref%3Dgoogle_en-us%26utm_campaign%3Den-us%26utm_content%3D/portugal/lisbon/lumen-hotel-and-the-lisbon-light-show%26utm_medium%3Dmetasearch_hotel%26utm_source%3Dgoogle_en-us%26utm_term%3D1302608&s=ALZo0YLu0S1j6c0neDANkz9NULKc&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/3596491065776866588.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$108",
+    "extracted_display_price": 108,
+    "lowest": "$114",
+    "extracted_lowest": 114,
+    "before_taxes_fees": "$108",
+    "extracted_before_taxes_fees": 108,
+    "after_taxes_fees": "$114",
+    "extracted_after_taxes_fees": 114
+   },
+   "total_rate": {
+    "display_price": "$432",
+    "extracted_display_price": 432,
+    "lowest": "$456",
+    "extracted_lowest": 456,
+    "before_taxes_fees": "$432",
+    "extracted_before_taxes_fees": 432,
+    "after_taxes_fees": "$456",
+    "extracted_after_taxes_fees": 456
+   }
+  },
+  {
+   "source": "Hotel prive",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyi7SrxI9QTb1n3DMsNHTOC1PmMUcudLV7B1tMBsIQtS1snQfZMbYfrKZYyw_dCPWF3uB_1RBMoTZKlPxlEYbs4XLR5t0Kepp8wy-HfXtjtVRNx8Mgj6C_M1piXmrE-NGi3b7lgE8H8C2V5vnDtqYPhxNOJn5gZnxexSGm9mFWABITA1bBHEY0qQZpF6gAVhu0zEd8Ig7CQ&pcurl=https://hotelprive.net/google-hotels?hotelID%3Dlp65571137%26checkinDay%3D10%26checkinMonth%3D12%26checkinYear%3D2026%26nights%3D4%26adults%3D2%26children%3D0%26sessionId%3Dgoogle-d2d01dce33d48025cf1778c58b7583f1%26ratePlanId%3D3024397-RO-NRFN%26roomId%3D3024397%26currency%3DUSD%26language%3Den&s=ALZo0YJMqyrMiXZ24jXq8Fn-7GAB&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/4959433487713394378.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$118",
+    "extracted_display_price": 118,
+    "lowest": "$127",
+    "extracted_lowest": 127,
+    "before_taxes_fees": "$118",
+    "extracted_before_taxes_fees": 118,
+    "after_taxes_fees": "$127",
+    "extracted_after_taxes_fees": 127
+   },
+   "total_rate": {
+    "display_price": "$473",
+    "extracted_display_price": 473,
+    "lowest": "$509",
+    "extracted_lowest": 509,
+    "before_taxes_fees": "$473",
+    "extracted_before_taxes_fees": 473,
+    "after_taxes_fees": "$509",
+    "extracted_after_taxes_fees": 509
+   }
+  },
+  {
+   "source": "Evendo",
+   "link": "https://www.google.com/travel/lodging/clk?pc=AJ0xEyj4G4uzdzAp82x0frMaElAR04JQ40uG_T-kyxz0CXYbINaxySZHZvDyhpJIDdh8LQ5dEHHE7r3hvd4t3SRj7N_fMWXLxdUIvS2LsbznJJW0FvZUNKULbqgoZOhdUbNrNxXtI3iclVvnNwPqmw1b-6H81PvdJCrOyRIFY4rT_VKrwULL14S5crGYy8gEu6MwJQ&pcurl=https://evendo.com/stays/lumen-hotel-and-the-lisbon-light-show/57640870?check_in%3D2026-12-10%26check_out%3D2026-12-14%26who%3D%255B%257B%2522adults%2522:2,%2522children%2522:%255B%255D%257D%255D%26currency%3DUSD%26language%3Den%26country%3DUS%26utm_source%3Dgoogle%26utm_medium%3Dgooglehotels%26utm_campaign%3Dlocaluniversal%26pdtax%3D60.07%26pdtotal%3D462.60%26prid%3D&s=ALZo0YItmML_gRGJEauuYE5URo6z&ap=1",
+   "logo": "https://www.gstatic.com/travel-hotels/branding/17146812660057606236.png",
+   "num_guests": 2,
+   "rate_per_night": {
+    "display_price": "$101",
+    "extracted_display_price": 101,
+    "lowest": "$116",
+    "extracted_lowest": 116,
+    "before_taxes_fees": "$101",
+    "extracted_before_taxes_fees": 101,
+    "after_taxes_fees": "$116",
+    "extracted_after_taxes_fees": 116
+   },
+   "total_rate": {
+    "display_price": "$403",
+    "extracted_display_price": 403,
+    "lowest": "$463",
+    "extracted_lowest": 463,
+    "before_taxes_fees": "$403",
+    "extracted_before_taxes_fees": 403,
+    "after_taxes_fees": "$463",
+    "extracted_after_taxes_fees": 463
+   }
+  }
+ ],
+ "typical_price_range": {
+  "lowest": "$84",
+  "extracted_lowest": 84,
+  "highest": "$129",
+  "extracted_highest": 129
+ },
+ "nearby_places": [
+  {
+   "category": "Point of interest",
+   "name": "Castelo de São Jorge",
+   "link": "https://www.google.com/search?q=Castelo+de+S%C3%A3o+Jorge&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TewMMoxKtBSzE620s_JT04syczPgzOsEktKihKTQcxiAH1UM1YyAAAA#fpstate=trskp&trifp=kpq%253DCastelo%252Bde%252BS%2525C3%2525A3o%252BJorge%2526skpm%253D/m/082l2p%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTesX0gYc7xYrJ4oguvND02Jlv0ECIH3HYtSZjxgNpz0S56zZ5T",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "18 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "26 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 103325,
+   "description": "11th-century, hilltop Moorish castle & royal residence with palace ruins & archaeological museum.",
+   "gps_coordinates": {
+    "latitude": 38.713909199999996,
+    "longitude": -9.133476199999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Praça do Comércio",
+   "link": "https://www.google.com/search?q=Pra%C3%A7a+do+Com%C3%A9rcio&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TdIN84xLtZSzE620s_JT04syczPgzOsEktKihKTQcxiABlBfe0yAAAA#fpstate=trskp&trifp=kpq%253DPra%2525C3%2525A7a%252Bdo%252BCom%2525C3%2525A9rcio%2526skpm%253D/m/0g3l3s%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTxZRLmNDvhTnDtiKMcs1fp4pwOUYS3KCc_H_j7C8n5-qA_Gii4",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "15 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "18 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 134434,
+   "description": "Waterside public plaza with a notable arch & statue, lined with outdoor cafes & shopping venues.",
+   "gps_coordinates": {
+    "latitude": 38.7072828,
+    "longitude": -9.136361299999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Santa Justa Lift",
+   "link": "https://www.google.com/search?q=Santa+Justa+Lift&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwMyrJMdVSzE620s_JT04syczPgzOsEktKihKTQcxiAC9P9bwyAAAA#fpstate=trskp&trifp=kpq%253DSanta%252BJusta%252BLift%2526skpm%253D/m/062tl5%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSFmeRl0cD09h505WF1BfTE3zTs5EILmW8MGjS_mKAqsn-fZHmO",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "13 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "20 min"
+    }
+   ],
+   "rating": 4.1,
+   "reviews": 58325,
+   "description": "Cast-iron elevator with filigree details, built in 1902 to connect lower streets with Carmo Square.",
+   "gps_coordinates": {
+    "latitude": 38.712130099999996,
+    "longitude": -9.139429699999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Time Out Market",
+   "link": "https://www.google.com/search?q=Time+Out+Market&stick=H4sIAAAAAAAAAONgFmJQ4tVP1zc0TDYqyDWyzEjTUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgBoclkpNgAAAA#fpstate=trskp&trifp=kpq%253DTime%252BOut%252BMarket%2526skpm%253D/g/11c2pm29hf%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/ACvplmNY05y3AE_4bZ2hdAoEUufaOLEF-Wm_6U51Xld0QJ8IaJeSTMMdc_7duD7g3bITYe54_YHzH41Ele4ALjXXtJLDaMPCVIqTgzQV8Jd2s21GId4kLmkFs35eqIUcnVYY0tzGlWiD=w182-h120-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "17 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "20 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 76123,
+   "gps_coordinates": {
+    "latitude": 38.7070608,
+    "longitude": -9.1456691
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Jerónimos Monastery",
+   "link": "https://www.google.com/search?q=Jer%C3%B3nimos+Monastery&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwNbDMLtNSzE620s_JT04syczPgzOsEktKihKTQcxiAG5Cb7IyAAAA#fpstate=trskp&trifp=kpq%253DJer%2525C3%2525B3nimos%252BMonastery%2526skpm%253D/m/0509kv%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRUZsZhd3_HYtg9MyfzDV5v0f6jgauiT-nBg7kEhYBq9mKajBi-",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "17 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "46 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 63049,
+   "description": "Late Gothic Manueline-style monastery housing archaeology & maritime museums in its wings.",
+   "gps_coordinates": {
+    "latitude": 38.6978909,
+    "longitude": -9.206703899999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Belém Tower",
+   "link": "https://www.google.com/search?q=Bel%C3%A9m+Tower&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwTU-qMNNSzE620s_JT04syczPgzOsEktKihKTQcxiAPpNFIIyAAAA#fpstate=trskp&trifp=kpq%253DBel%2525C3%2525A9m%252BTower%2526skpm%253D/m/05gbx6%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcT5H-m1y_n1nKkDGsO4F3fjMMI54vGllC9WspK9M4krsIRcUjX7",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "17 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "54 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 117221,
+   "description": "Landmark medieval fortified tower on tiny river island with rooftop terrace offering estuary views.",
+   "gps_coordinates": {
+    "latitude": 38.691583699999995,
+    "longitude": -9.215977299999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Lisbon Cathedral",
+   "link": "https://www.google.com/search?q=Lisbon+Cathedral&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwTDOqqtJSzE620s_JT04syczPgzOsEktKihKTQcxiAKJ1cLMyAAAA#fpstate=trskp&trifp=kpq%253DLisbon%252BCathedral%2526skpm%253D/m/01f2zz%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcR3NS28ncS9CcfrvP0O_Qm5_IDqX9ddljtOp21AFrLFW2abboJs",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "14 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "20 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 36053,
+   "description": "Earthquakes have led to this cathedral being rebuilt many times in different architectural styles.",
+   "gps_coordinates": {
+    "latitude": 38.7098339,
+    "longitude": -9.1329535
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Calouste Gulbenkian Museum",
+   "link": "https://www.google.com/search?q=Calouste+Gulbenkian+Museum&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwLrc0KtdSzE620s_JT04syczPgzOsEktKihKTQcxiAMTtmOMyAAAA#fpstate=trskp&trifp=kpq%253DCalouste%252BGulbenkian%252BMuseum%2526skpm%253D/m/03w92w%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQviCxegeV1rfBc1XupMYUJZxk9YHs-dNtmdRfvJYnrjMx81wxy",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "12 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "18 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 18125,
+   "description": "Displays of art from Greek to Roman & Asian to European, plus gardens, shop & restaurant.",
+   "gps_coordinates": {
+    "latitude": 38.737812399999996,
+    "longitude": -9.1535455
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Carmo Archaeological Museum",
+   "link": "https://www.google.com/search?q=Carmo+Archaeological+Museum&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TdILzTJM9VSzE620s_JT04syczPgzOsEktKihKTQcxiAEeSoP4yAAAA#fpstate=trskp&trifp=kpq%253DCarmo%252BArchaeological%252BMuseum%2526skpm%253D/m/0gq4n5%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQuLchCbHVil2V_16rb7BH4WsRm9VxwK50NQab3IBxQbQS0ZmO_",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "15 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "16 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 21566,
+   "description": "Ruined Gothic church destroyed by an earthquake in 1755, with an evocative roofless nave & museum.",
+   "gps_coordinates": {
+    "latitude": 38.712038299999996,
+    "longitude": -9.140612899999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Tram 28",
+   "link": "https://www.google.com/search?q=Tram+28&stick=H4sIAAAAAAAAAONgFmJQ4tVP1zc0TM7OLq6oMirRUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgDvpcAKNgAAAA#fpstate=trskp&trifp=kpq%253DTram%252B28%2526skpm%253D/g/11ckksxz2t%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/ACvplmMUCWQKmb2rxg4yOSWAqUXb4wVUoFg2RBoqkYvCbBaSk9E-DdNgQJ_zQfQ0vYKAkOMvPRnr4EXqWz_XPMbiNMuuF15S4yoWH5TWZp6Xck1_54xxO2jqvrlVfwcFKMb8T9YVwfGb=w160-h200-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "9 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "17 min"
+    }
+   ],
+   "rating": 4.2,
+   "reviews": 14839,
+   "description": "Classic yellow trams retaining original 1930s features like brass dials & polished wood interiors.",
+   "gps_coordinates": {
+    "latitude": 38.7152423,
+    "longitude": -9.136078399999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Museu Nacional do Azulejo",
+   "link": "https://www.google.com/search?q=Museu+Nacional+do+Azulejo&stick=H4sIAAAAAAAAAONgFmJQ4tLP1TfIKjEyjjfXUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgAxFZc_MwAAAA#fpstate=trskp&trifp=kpq%253DMuseu%252BNacional%252Bdo%252BAzulejo%2526skpm%253D/m/0jt23_7%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/ACvplmMSlDc-q4nQ7bIA68K2-rukQjIwUSr4DkaC_a6E7NIsIf6L1p7Qgez3Jr8-02iOnd6TkjzMMndnCfAXAQqqWT0N5hAFsk_wp73LEq5JT_Em7kTWc1cakLf7DtDu5BdpvgiWRl6ggw=w160-h120-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "13 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "28 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 17216,
+   "description": "Museum of decorative azulejo tiles housed in a 16th-century monastery with a spectacular chapel.",
+   "gps_coordinates": {
+    "latitude": 38.7250559,
+    "longitude": -9.113539
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "LX Factory",
+   "link": "https://www.google.com/search?q=LX+Factory&stick=H4sIAAAAAAAAAONgFmJQ4tFP1zcsNDNOzkvONtFSzE620s_JT04syczPgzOsEktKihKTQcxiAK79MmY1AAAA#fpstate=trskp&trifp=kpq%253DLX%252BFactory%2526skpm%253D/g/1q63cnck4%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/ACvplmNfZ8WiZkvQpbZnLo6YRPMpXJigOD1NR0YybQqbzBiKpRsqVM-M7-fz0NGbo2tp2Jzi-0FoBRozlqwaY2BDHMxUH6p3_58jIylEZeCel2rjyLtbz31TiEm0jsIqxA04wOqrwstL=w160-h140-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "16 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "30 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 67358,
+   "description": "This historical industrial complex houses an array of arty retailers & unique restaurants.",
+   "gps_coordinates": {
+    "latitude": 38.703460199999995,
+    "longitude": -9.1787831
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Monument to the Discoveries",
+   "link": "https://www.google.com/search?q=Monument+to+the+Discoveries&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwT07KNddSzE620s_JT04syczPgzOsEktKihKTQcxiAFiOVv8yAAAA#fpstate=trskp&trifp=kpq%253DMonument%252Bto%252Bthe%252BDiscoveries%2526skpm%253D/m/07cbm7%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSPcoOvPgPnKsgGkGwPq-C-84f8HFp1Fk7mbFNbd4ucT6_JPpSN",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "19 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "52 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 66212,
+   "description": "Statue built in 1940 and made permanent in 1960 to mark 500 years since Henry the Navigator's death.",
+   "gps_coordinates": {
+    "latitude": 38.6935973,
+    "longitude": -9.2057115
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Miradouro de Santa Luzia",
+   "link": "https://www.google.com/search?q=Miradouro+de+Santa+Luzia&stick=H4sIAAAAAAAAAONgFmJQ4tZP1zc0MjRLKymz1FLMTrbSz8lPTizJzM-DM6wSS0qKEpNBzGIArQZAPDQAAAA#fpstate=trskp&trifp=kpq%253DMiradouro%252Bde%252BSanta%252BLuzia%2526skpm%253D/g/1216ftv9%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/ACvplmM8WFCBIEwUhha0pxsqIs8eGubVXgBX6prTT79FoKZXa1mQU_IXozFdwCfo8zUeETVohkhc9GY6NKiiJCLUQ86iFo_nnnJSZU65EgoyL_uGKCNZmyBKcfAeo6O29CzC-R3VYA2p=w160-h200-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "15 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "24 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 43785,
+   "description": "This popular observation deck with a pergola offers dramatic views of Lisbon & the Tagus River.",
+   "gps_coordinates": {
+    "latitude": 38.7116956,
+    "longitude": -9.1301972
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Rua Augusta Arch",
+   "link": "https://www.google.com/search?q=Rua+Augusta+Arch&stick=H4sIAAAAAAAAAONgFmJQ4tLP1TdIK8w1N6_QUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgA37PaiMwAAAA#fpstate=trskp&trifp=kpq%253DRua%252BAugusta%252BArch%2526skpm%253D/m/0fqm77x%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRMrFDK9HJJuRhKhwAsayz9V2pYb9KEbBCXit2bH0UWQ0BvpSfc",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "19 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "19 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 27118,
+   "description": "Ornate 18th-century triumphal arch with sculpted figures & views over the city center.",
+   "gps_coordinates": {
+    "latitude": 38.7084447,
+    "longitude": -9.136824299999999
+   }
+  },
+  {
+   "category": "Train station",
+   "name": "Entrecampos",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "9 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "26 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.7445443,
+    "longitude": -9.1486702
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Picoas",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "3 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.73064,
+    "longitude": -9.1465
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Saldanha",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "11 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.7353796,
+    "longitude": -9.1452375
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Marquês de Pombal",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "10 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.725266,
+    "longitude": -9.1500605
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Anjos",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "15 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.7263148,
+    "longitude": -9.1349164
+   }
+  },
+  {
+   "category": "Airport",
+   "name": "Humberto Delgado Airport",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "20 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "29 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.774166699999995,
+    "longitude": -9.1341667
+   }
+  }
+ ],
+ "hotel_class": "4-star hotel",
+ "extracted_hotel_class": 4,
+ "images": [
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdtmf_CzdXZbTqD20mMOcSQ__NoymnZTAZhctKC-1bx7xhf7x6P0jDisHjqd2VjzsUrvhEVoqX7dBoftpMiNAjiFWao0-z4u96b1nbcbvksKmx-qGdRPYW2ZZ48gUfM2-UM_pqA=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLdtmf_CzdXZbTqD20mMOcSQ__NoymnZTAZhctKC-1bx7xhf7x6P0jDisHjqd2VjzsUrvhEVoqX7dBoftpMiNAjiFWao0-z4u96b1nbcbvksKmx-qGdRPYW2ZZ48gUfM2-UM_pqA=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLcALjD-fF1dKGo7XR5GRDQy1FAS7Gcuk2TXn3P0nY_XES5dbMMsRdeyHV6br91X9RZ4GFaaXCPzMZFBk_6KiTusIa9V86oydTiN6cvvKc5kAY4UHQrsk4K-eHVFH9DzaYi-Idh1=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLcALjD-fF1dKGo7XR5GRDQy1FAS7Gcuk2TXn3P0nY_XES5dbMMsRdeyHV6br91X9RZ4GFaaXCPzMZFBk_6KiTusIa9V86oydTiN6cvvKc5kAY4UHQrsk4K-eHVFH9DzaYi-Idh1=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLeZ5aCudhj2H62scmlnzLPy10vaBoUMFFLcbQJaSQnomzn4_Vs8HwwWGj3-TQcdmOKBE6AR8zfh__P7SWOkyeja5j2Sf5HMUnNzAGWF_EHCoz0_18Oy56Whcuv-ZS9TF8ahBd-9=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLeZ5aCudhj2H62scmlnzLPy10vaBoUMFFLcbQJaSQnomzn4_Vs8HwwWGj3-TQcdmOKBE6AR8zfh__P7SWOkyeja5j2Sf5HMUnNzAGWF_EHCoz0_18Oy56Whcuv-ZS9TF8ahBd-9=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfd-6NuBfj4c_cZuDR4q8Kt0uw4gQYhl263nhfV3u9cf7UP1_Hj70icJyTDqP3-FcQY9XzxD0HDn0SJbht2bjL1XdPuSvQ0eZKm6nu9eVIEgpuEhBjK9_-51AkSCllrXUXrKGMy=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLfd-6NuBfj4c_cZuDR4q8Kt0uw4gQYhl263nhfV3u9cf7UP1_Hj70icJyTDqP3-FcQY9XzxD0HDn0SJbht2bjL1XdPuSvQ0eZKm6nu9eVIEgpuEhBjK9_-51AkSCllrXUXrKGMy=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdW6eIwg6efYYaBek3a9A6wCQIUwgxpwhDNIhg4s8TuKmDVdGAGAjuz5p-8csBp7LeJck0ssYtXgWeNCmiC4w1rLqbEzFx6En52TZkDQY08zY99FFcKzl7wUa8Dw0-2vQ61L5Uv=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLdW6eIwg6efYYaBek3a9A6wCQIUwgxpwhDNIhg4s8TuKmDVdGAGAjuz5p-8csBp7LeJck0ssYtXgWeNCmiC4w1rLqbEzFx6En52TZkDQY08zY99FFcKzl7wUa8Dw0-2vQ61L5Uv=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLcIlJjBKyaMTBkRKNGLv9KRtXKgwCmTpzj4Zd8M4q3HHtYrovAR71VW6PjSe2ePTq8HS-ohUejOVMWCNCZvS8IBpJIOYGfxywz_UX8GfK4lNQvsRa5CVL96jUgz4IfAFYSV6YQ=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLcIlJjBKyaMTBkRKNGLv9KRtXKgwCmTpzj4Zd8M4q3HHtYrovAR71VW6PjSe2ePTq8HS-ohUejOVMWCNCZvS8IBpJIOYGfxywz_UX8GfK4lNQvsRa5CVL96jUgz4IfAFYSV6YQ=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLegQm9bJdTajF7DZsNGMI-qY0asK038xVI4KB-qA-KCasfJBNkUHDJZetuC1OoL55KAxAhnnJ4-gUNUiEOT6F3QarV-29iqskF_LuoOLR2yMBSdJ71COS_PwDOeFAvKDFtHz1ZL=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLegQm9bJdTajF7DZsNGMI-qY0asK038xVI4KB-qA-KCasfJBNkUHDJZetuC1OoL55KAxAhnnJ4-gUNUiEOT6F3QarV-29iqskF_LuoOLR2yMBSdJ71COS_PwDOeFAvKDFtHz1ZL=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLf73pFS49JA9100YytEcTpIIsIEZltvvmhAQmhUM7WCSaSb0l987ZoRz_5yfEHB-bcxebKCSq1Zldl7oK1hhvBKS8Pz5lnSflnkyTVu-SbrYgFLSptbEN447oYKJ9lL5ERPr0c=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLf73pFS49JA9100YytEcTpIIsIEZltvvmhAQmhUM7WCSaSb0l987ZoRz_5yfEHB-bcxebKCSq1Zldl7oK1hhvBKS8Pz5lnSflnkyTVu-SbrYgFLSptbEN447oYKJ9lL5ERPr0c=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLeqhYPjbNUqk9gg9S45c2s7AQZJ-SozenxD1l8N36Ygy4MgTzDI-Qh-B1dlNxbG5yXSfHYpZdpokD2eIh6MtWvmnCN1pvsq8W1fN0mW1gEbFU5g_mbr0efZsSIldKmircwu1oc=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLeqhYPjbNUqk9gg9S45c2s7AQZJ-SozenxD1l8N36Ygy4MgTzDI-Qh-B1dlNxbG5yXSfHYpZdpokD2eIh6MtWvmnCN1pvsq8W1fN0mW1gEbFU5g_mbr0efZsSIldKmircwu1oc=s10000"
+  }
+ ],
+ "overall_rating": 4.6,
+ "reviews": 1405,
+ "ratings": [
+  {
+   "stars": 5,
+   "count": 1090
+  },
+  {
+   "stars": 4,
+   "count": 212
+  },
+  {
+   "stars": 3,
+   "count": 43
+  },
+  {
+   "stars": 2,
+   "count": 18
+  },
+  {
+   "stars": 1,
+   "count": 42
+  }
+ ],
+ "location_rating": 4.0,
+ "reviews_breakdown": [
+  {
+   "name": "Fitness",
+   "description": "Fitness",
+   "total_mentioned": 75,
+   "positive": 58,
+   "negative": 6,
+   "neutral": 11,
+   "category_token": "PXioD3ica1yRnFiSmp5fVDl5uVtmSV5qcTEjjAEAtXQMIg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=PXioD3ica1yRnFiSmp5fVDl5uVtmSV5qcTEjjAEAtXQMIg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Service",
+   "description": "Service",
+   "total_mentioned": 271,
+   "positive": 234,
+   "negative": 26,
+   "neutral": 11,
+   "category_token": "DZ7RYHica1yRnFiSmp5fVDl5eXBqUVlmciojjAEAtX8MDA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=DZ7RYHica1yRnFiSmp5fVDl5eXBqUVlmciojjAEAtX8MDA&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Property",
+   "description": "Property",
+   "total_mentioned": 261,
+   "positive": 235,
+   "negative": 19,
+   "neutral": 7,
+   "category_token": "qPRjhHica1yRnFiSmp5fVDl5RUBRfkFqUUklI5wFANGQDTY",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=qPRjhHica1yRnFiSmp5fVDl5RUBRfkFqUUklI5wFANGQDTY&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Breakfast",
+   "description": "Breakfast",
+   "total_mentioned": 129,
+   "positive": 113,
+   "negative": 10,
+   "neutral": 6,
+   "category_token": "B2S1iHica1yRnFiSmp5fVDl5pVNRamJ2WmJxCSOCCQDoBQ2U",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=B2S1iHica1yRnFiSmp5fVDl5pVNRamJ2WmJxCSOCCQDoBQ2U&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Pool",
+   "description": "Pool",
+   "total_mentioned": 45,
+   "positive": 39,
+   "negative": 0,
+   "neutral": 6,
+   "category_token": "ysOZZnica1yRnFiSmp5fVDl5SUB-fg4jmAQAcoYJmA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=ysOZZnica1yRnFiSmp5fVDl5SUB-fg4jmAQAcoYJmA&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Bar",
+   "description": "Bar or lounge",
+   "total_mentioned": 62,
+   "positive": 50,
+   "negative": 11,
+   "neutral": 1,
+   "category_token": "qI-Rpnica1yRnFiSmp5fVDl5rVNikUJ-kUJOfmleeirjYiAXAMhXDEE",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=qI-Rpnica1yRnFiSmp5fVDl5rVNikUJ-kUJOfmleeirjYiAXAMhXDEE&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Nightlife",
+   "description": "Nightlife",
+   "total_mentioned": 33,
+   "positive": 29,
+   "negative": 2,
+   "neutral": 2,
+   "category_token": "jCBqW3ica1yRnFiSmp5fVDl5pV9mekZJTmZaKiOCCQDpcg2i",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=jCBqW3ica1yRnFiSmp5fVDl5pV9mekZJTmZaKiOCCQDpcg2i&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Atmosphere",
+   "description": "Atmosphere",
+   "total_mentioned": 94,
+   "positive": 92,
+   "negative": 1,
+   "neutral": 1,
+   "category_token": "1EvKb3ica1yRnFiSmp5fVDl5lWNJbn5xQUZqUSojEhsACBsOoA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=1EvKb3ica1yRnFiSmp5fVDl5lWNJbn5xQUZqUSojEhsACBsOoA&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Dining",
+   "description": "Food and Beverage",
+   "total_mentioned": 66,
+   "positive": 55,
+   "negative": 9,
+   "neutral": 2,
+   "category_token": "2aMhPHica1yRnFiSmp5fVDl5o1t-fopCYl6KglNqWWpRYnoq4zKXzLzMvHQAKAwO6A",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=2aMhPHica1yRnFiSmp5fVDl5o1t-fopCYl6KglNqWWpRYnoq4zKXzLzMvHQAKAwO6A&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Location",
+   "description": "Location",
+   "total_mentioned": 132,
+   "positive": 108,
+   "negative": 7,
+   "neutral": 17,
+   "category_token": "jLN0PHica1yRnFiSmp5fVDl5hU8-kJ2Zn8cIZwEAzmAM3g",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=jLN0PHica1yRnFiSmp5fVDl5hU8-kJ2Zn8cIZwEAzmAM3g&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Gym",
+   "description": "Gym",
+   "total_mentioned": 25,
+   "positive": 21,
+   "negative": 2,
+   "neutral": 2,
+   "category_token": "tC7xxXica1yRnFiSmp5fVDl5sXtlLiOIAABfVQi8",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=tC7xxXica1yRnFiSmp5fVDl5sXtlLiOIAABfVQi8&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Business",
+   "description": "Business",
+   "total_mentioned": 20,
+   "positive": 15,
+   "negative": 2,
+   "neutral": 3,
+   "category_token": "8pRO1nica1yRnFiSmp5fVDl5hVNpcWZeanExI5wFAM-0DQQ",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=8pRO1nica1yRnFiSmp5fVDl5hVNpcWZeanExI5wFAM-0DQQ&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Restaurant",
+   "description": "Restaurant",
+   "total_mentioned": 57,
+   "positive": 47,
+   "negative": 5,
+   "neutral": 5,
+   "category_token": "WeWj6Hica1yRnFiSmp5fVDl5VVBqcUliaVFiXgkjEhsACXMOwg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=WeWj6Hica1yRnFiSmp5fVDl5VVBqcUliaVFiXgkjEhsACXMOwg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Sleep",
+   "description": "Sleep",
+   "total_mentioned": 78,
+   "positive": 60,
+   "negative": 10,
+   "neutral": 8,
+   "category_token": "WYlIUnica1yRnFiSmp5fVDl5aXBOamoBI4QCAIaxClg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=WYlIUnica1yRnFiSmp5fVDl5aXBOamoBI4QCAIaxClg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Cleanliness",
+   "description": "Cleanliness",
+   "total_mentioned": 106,
+   "positive": 87,
+   "negative": 12,
+   "neutral": 7,
+   "category_token": "JXKy3Xica1yRnFiSmp5fVDl5tXNOamJeTmZeanExIzIHACQKD1Q",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=JXKy3Xica1yRnFiSmp5fVDl5tXNOamJeTmZeanExIzIHACQKD1Q&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Room",
+   "description": "Room amenities",
+   "total_mentioned": 59,
+   "positive": 40,
+   "negative": 14,
+   "neutral": 5,
+   "category_token": "Rr34mHica1yRnFiSmp5fVDl5XVB-fq5CYm5qXmZJZmox4xIQHwDoCw2H",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=Rr34mHica1yRnFiSmp5fVDl5XVB-fq5CYm5qXmZJZmox4xIQHwDoCw2H&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Family",
+   "description": "Family friendly",
+   "total_mentioned": 15,
+   "positive": 11,
+   "negative": 1,
+   "neutral": 3,
+   "category_token": "kuiVx3ica1yRnFiSmp5fVDl5vVtibmZOpUJaUWZqXkpOJeMyiAAAEmwOsg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=kuiVx3ica1yRnFiSmp5fVDl5vVtibmZOpUJaUWZqXkpOJeMyiAAAEmwOsg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Transit",
+   "description": "Public transit",
+   "total_mentioned": 35,
+   "positive": 30,
+   "negative": 0,
+   "neutral": 5,
+   "category_token": "o5NNbnica1yRnFiSmp5fVDl5XUBpUk5mskJJUWJecWYJ4_IQCAMAFAMO2g",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=o5NNbnica1yRnFiSmp5fVDl5XUBpUk5mskJJUWJecWYJ4_IQCAMAFAMO2g&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Bathroom",
+   "description": "Bathroom and toiletries",
+   "total_mentioned": 44,
+   "positive": 28,
+   "negative": 10,
+   "neutral": 6,
+   "category_token": "iMUWyHica1yRnFiSmp5fVDl5u1NiSUZRfn6uQmJeikJJfmZOaklRZmox4wqYBAC6wxKq",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=iMUWyHica1yRnFiSmp5fVDl5u1NiSUZRfn6uQmJeikJJfmZOaklRZmox4wqYBAC6wxKq&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Parking",
+   "description": "Parking",
+   "total_mentioned": 11,
+   "positive": 11,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "-sQD83ica1yRnFiSmp5fVDl5eUBiUXZmXjojjAEAtNAMAg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=-sQD83ica1yRnFiSmp5fVDl5eUBiUXZmXjojjAEAtNAMAg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "TV",
+   "description": "Room entertainment",
+   "total_mentioned": 8,
+   "positive": 6,
+   "negative": 1,
+   "neutral": 1,
+   "category_token": "ujBrSXica1yRnFiSmp5fVDl5U1B-fq5Cal5JalFJYmZeLpDFsCgkDAAGnA5U",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=ujBrSXica1yRnFiSmp5fVDl5U1B-fq5Cal5JalFJYmZeLpDFsCgkDAAGnA5U&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Accessibility",
+   "description": "Accessibility",
+   "total_mentioned": 11,
+   "positive": 9,
+   "negative": 2,
+   "neutral": 0,
+   "category_token": "eZs5onica1yRnFiSmp5fVDl5rWNycmpxcWZSZk5mSSUjKhcAZdcRBg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=eZs5onica1yRnFiSmp5fVDl5rWNycmpxcWZSZk5mSSUjKhcAZdcRBg&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Kitchen",
+   "description": "Kitchen",
+   "total_mentioned": 8,
+   "positive": 4,
+   "negative": 2,
+   "neutral": 2,
+   "category_token": "0AYmPXica1yRnFiSmp5fVDl5uXdmSXJGah4DjAEAtGML9Q",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=0AYmPXica1yRnFiSmp5fVDl5uXdmSXJGah4DjAEAtGML9Q&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Safety",
+   "description": "Safety",
+   "total_mentioned": 6,
+   "positive": 4,
+   "negative": 2,
+   "neutral": 0,
+   "category_token": "ItReBXica1yRnFiSmp5fVDl5WXBiWmpJJQOUBgCdBAs_",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=ItReBXica1yRnFiSmp5fVDl5WXBiWmpJJQOUBgCdBAs_&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  },
+  {
+   "name": "Air Conditioning",
+   "description": "Air conditioning",
+   "total_mentioned": 5,
+   "positive": 2,
+   "negative": 3,
+   "neutral": 0,
+   "category_token": "tBbQvXica1yRnFiSmp5fVDl5g2NmkUJyfl5KZklmfl5mXjoDWMQZSQQAyY0S3Q",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=tBbQvXica1yRnFiSmp5fVDl5g2NmkUJyfl5KZklmfl5mXjoDWMQZSQQAyY0S3Q&engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+  }
+ ],
+ "amenities": [
+  "Wi-Fi",
+  "Wi-Fi in public areas",
+  "Public internet workstation",
+  "Restaurant",
+  "Bar",
+  "Table service",
+  "Buffet dinner",
+  "Room service",
+  "Breakfast",
+  "Breakfast buffet",
+  "Smoke-free property",
+  "Credit cards",
+  "Debit cards",
+  "NFC mobile payments",
+  "Cash",
+  "Front desk",
+  "Baggage storage",
+  "Concierge",
+  "Full-service laundry",
+  "Elevator",
+  "Wake up calls",
+  "Housekeeping",
+  "Turndown service",
+  "Pool",
+  "Outdoor pool",
+  "Adult-only pool",
+  "Fitness center",
+  "Elliptical machine",
+  "Treadmill",
+  "Weight machines",
+  "Free weights",
+  "Parking",
+  "Self parking",
+  "EV charger",
+  "Airport shuttle",
+  "Business center",
+  "Meeting rooms",
+  "Accessible",
+  "Accessible parking",
+  "Accessible elevator",
+  "English",
+  "French",
+  "Portuguese",
+  "Spanish",
+  "Air conditioning",
+  "Coffee maker",
+  "Minibar",
+  "Private bathroom",
+  "Shower"
+ ],
+ "excluded_amenities": [
+  "Hot tub",
+  "Spa",
+  "Pet-friendly"
+ ],
+ "amenities_detailed": {
+  "groups": [
+   {
+    "title": "Internet",
+    "list": [
+     {
+      "title": "Wi-Fi",
+      "label": "free",
+      "available": true
+     },
+     {
+      "title": "Wi-Fi in public areas",
+      "available": true
+     },
+     {
+      "title": "Public internet workstation",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Food & drink",
+    "list": [
+     {
+      "title": "Restaurant",
+      "available": true
+     },
+     {
+      "title": "Bar",
+      "available": true
+     },
+     {
+      "title": "Table service",
+      "available": true
+     },
+     {
+      "title": "Buffet dinner",
+      "available": true
+     },
+     {
+      "title": "Room service",
+      "label": "24 hour",
+      "available": true
+     },
+     {
+      "title": "Breakfast",
+      "label": "extra charge",
+      "available": true
+     },
+     {
+      "title": "Breakfast buffet",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Policies & payments",
+    "list": [
+     {
+      "title": "Smoke-free property",
+      "available": true
+     },
+     {
+      "title": "Credit cards",
+      "available": true
+     },
+     {
+      "title": "Debit cards",
+      "available": true
+     },
+     {
+      "title": "NFC mobile payments",
+      "available": true
+     },
+     {
+      "title": "Cash",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Services",
+    "list": [
+     {
+      "title": "Front desk",
+      "label": "24 hour",
+      "available": true
+     },
+     {
+      "title": "Baggage storage",
+      "available": true
+     },
+     {
+      "title": "Concierge",
+      "available": true
+     },
+     {
+      "title": "Full-service laundry",
+      "available": true
+     },
+     {
+      "title": "Elevator",
+      "available": true
+     },
+     {
+      "title": "Wake up calls",
+      "available": true
+     },
+     {
+      "title": "Housekeeping",
+      "label": "daily",
+      "available": true
+     },
+     {
+      "title": "Turndown service",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Pools",
+    "list": [
+     {
+      "title": "Pool",
+      "available": true,
+      "details": {
+       "snippet": "The Clorofila restaurant, the rooftop pool (seasonal - closed from November 1st to April 30th), the gym, meeting rooms and co-working spaces complete the offer.",
+       "snippet_original": "The Clorofila restaurant, the rooftop <b>pool</b> (seasonal - closed from November 1st to April 30th), the gym, meeting rooms and co-working spaces complete the offer.",
+       "snippet_highlighted_words": [
+        "pool"
+       ],
+       "link": "https://www.lumenhotel.pt/en/the-hotel#:~:text=The%20Clorofila%20restaurant%2C%20the%20rooftop%20pool%20(seasonal%20%2D%20closed%20from%20November%201st%20to%20April%2030th)%2C%20the%20gym%2C%20meeting%20rooms%20and%20co%2Dworking%20spaces%20complete%20the%20offer.",
+       "displayed_link": "https://www.lumenhotel.pt/...",
+       "title": "Lumen Hotel - Lisbon Light Show - Best Price Guaranteed",
+       "source_logo": "http://t0.gstatic.com/favicon-tbn?q=tbn:ANd9GcRUCkVGManD7AMndN9KVAo8bXAWEsfwczhJ7WNJQF-ukmfMbCTehIcjPtOIaoLUxt-XsvtRLQ"
+      }
+     },
+     {
+      "title": "Outdoor pool",
+      "available": true
+     },
+     {
+      "title": "Adult-only pool",
+      "available": true
+     },
+     {
+      "title": "Hot tub",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Wellness",
+    "list": [
+     {
+      "title": "Fitness center",
+      "label": "free",
+      "available": true
+     },
+     {
+      "title": "Elliptical machine",
+      "available": true
+     },
+     {
+      "title": "Treadmill",
+      "available": true
+     },
+     {
+      "title": "Weight machines",
+      "available": true
+     },
+     {
+      "title": "Free weights",
+      "available": true
+     },
+     {
+      "title": "Spa",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Parking & transportation",
+    "list": [
+     {
+      "title": "Parking",
+      "label": "free",
+      "available": true
+     },
+     {
+      "title": "Self parking",
+      "label": "free",
+      "available": true
+     },
+     {
+      "title": "EV charger",
+      "available": true
+     },
+     {
+      "title": "Airport shuttle",
+      "label": "extra charge",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Business & events",
+    "list": [
+     {
+      "title": "Business center",
+      "available": true
+     },
+     {
+      "title": "Meeting rooms",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Accessibility",
+    "list": [
+     {
+      "title": "Accessible",
+      "available": true
+     },
+     {
+      "title": "Accessible parking",
+      "available": true
+     },
+     {
+      "title": "Accessible elevator",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Languages spoken",
+    "list": [
+     {
+      "title": "English",
+      "available": true
+     },
+     {
+      "title": "French",
+      "available": true
+     },
+     {
+      "title": "Portuguese",
+      "available": true
+     },
+     {
+      "title": "Spanish",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Pets",
+    "list": [
+     {
+      "title": "Pet-friendly",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Rooms",
+    "list": [
+     {
+      "title": "Air conditioning",
+      "available": true
+     },
+     {
+      "title": "Coffee maker",
+      "available": true
+     },
+     {
+      "title": "Minibar",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Bathrooms",
+    "list": [
+     {
+      "title": "Private bathroom",
+      "available": true
+     },
+     {
+      "title": "Shower",
+      "available": true
+     }
+    ]
+   }
+  ],
+  "popular": [
+   {
+    "title": "Pool",
+    "available": true
+   },
+   {
+    "title": "Parking",
+    "label": "free",
+    "available": true
+   },
+   {
+    "title": "Wi-Fi",
+    "label": "free",
+    "available": true
+   },
+   {
+    "title": "Air conditioning",
+    "available": true
+   }
+  ]
+ },
+ "health_and_safety": {
+  "groups": [
+   {
+    "title": "Enhanced cleaning",
+    "list": [
+     {
+      "title": "Enhanced cleaning of guest rooms",
+      "available": true
+     },
+     {
+      "title": "Employees trained in COVID-19 cleaning procedures",
+      "available": true
+     },
+     {
+      "title": "Enhanced cleaning of common areas",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Minimized contact",
+    "list": [
+     {
+      "title": "Housekeeping scheduled by request only",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Increased food safety",
+    "list": [
+     {
+      "title": "Additional sanitation in dining areas",
+      "available": true
+     }
+    ]
+   }
+  ]
+ },
+ "sustainability": {
+  "groups": [
+   {
+    "title": "Energy efficiency",
+    "list": [
+     {
+      "title": "Energy-efficient heating and cooling systems",
+      "available": true
+     },
+     {
+      "title": "Energy-efficient lighting",
+      "available": true
+     },
+     {
+      "title": "Energy-saving thermostats",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Water conservation",
+    "list": [
+     {
+      "title": "Water-efficient faucets, toilets, and showers",
+      "available": true
+     },
+     {
+      "title": "Towel and linen reuse program",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Waste reduction",
+    "list": [
+     {
+      "title": "Recycling program",
+      "available": true
+     },
+     {
+      "title": "Food waste reduction program",
+      "available": true
+     },
+     {
+      "title": "Donates excess food",
+      "available": true
+     },
+     {
+      "title": "Safely handles hazardous substances",
+      "available": true
+     },
+     {
+      "title": "Safely disposes of electronics, batteries, and lightbulbs",
+      "available": true
+     },
+     {
+      "title": "Water bottle filling stations",
+      "available": true
+     },
+     {
+      "title": "No Styrofoam food containers",
+      "available": true
+     },
+     {
+      "title": "No single-use plastic water bottles or straws",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Sustainable sourcing",
+    "list": [
+     {
+      "title": "Vegetarian meals",
+      "available": true
+     },
+     {
+      "title": "Eco-friendly toiletries",
+      "available": true
+     }
+    ]
+   }
+  ]
+ },
+ "other_reviews": [
+  {
+   "source": "Tripadvisor",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_100532569.png",
+   "source_rating": {
+    "score": 4.800000190734863,
+    "max_score": 5
+   },
+   "reviews": 771,
+   "user_review": {
+    "username": "R2814OVgaryb",
+    "date": "a month ago",
+    "rating": {
+     "score": 5,
+     "max_score": 5
+    },
+    "comment": "We stayed a week at Lumen Hotel.  The staff at the hotel are friendly, helpful, and extremely accommodating.  We were treated like family!  Felipe and Sergio were fabulous.  They went of their way to help us.   A breakfast buffet is served in the morning which is helpful prior to exploring the city and visiting attractions.  The hotel is located less than 2 blocks from the metro station (yellow line).  I highly recommend taking an Uber, especially if someone in your party has mobility issues.  I believe the staff at Lumen Hotel is the best I have ever experienced!",
+    "link": "https://www.tripadvisor.com/Hotel_Review-g189158-d21503874-r1079334348?m=68573&staydates=2026_11_15_2026_11_16&uguests=1_2_0&supdv=desktop&supuc=US&supul=en"
+   },
+   "source_number": 100532569,
+   "serpapi_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB&source_number=100532569"
+  },
+  {
+   "source": "Tripadvisor",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_100532569.png",
+   "source_rating": {
+    "score": 4.800000190734863,
+    "max_score": 5
+   },
+   "reviews": 772,
+   "user_review": {
+    "username": "susanmL1651OS",
+    "date": "3 weeks ago",
+    "rating": {
+     "score": 5,
+     "max_score": 5
+    },
+    "comment": "The room was clean and large.  Comfortable lobby, great breakfast, and kind, helpful employees throughout.",
+    "link": "https://www.tripadvisor.com/Hotel_Review-g189158-d21503874-r1081842699?m=68573&staydates=2026_11_15_2026_11_16&uguests=1_2_0&supdv=desktop&supuc=US&supul=en"
+   },
+   "source_number": 100532569,
+   "serpapi_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB&source_number=100532569"
+  },
+  {
+   "source": "Priceline",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_220.png",
+   "source_rating": {
+    "score": 9.640000343322754,
+    "max_score": 10
+   },
+   "reviews": 11,
+   "user_review": {
+    "username": "\"\"",
+    "date": "4 months ago",
+    "rating": {
+     "score": 4.5,
+     "max_score": 10
+    },
+    "comment": "\"\" \n\"\""
+   },
+   "source_number": 220,
+   "serpapi_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB&source_number=220"
+  },
+  {
+   "source": "Trip.com",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/b8089cb0-34b4-458c-8749-9bc4614baba4.png",
+   "source_rating": {
+    "score": 4.699999809265137,
+    "max_score": 5
+   },
+   "reviews": 435,
+   "user_review": {
+    "username": "Trip.com Member",
+    "date": "4 months ago",
+    "rating": {
+     "score": 4.699999809265137,
+     "max_score": 5
+    },
+    "comment": "Love my stay here..service super awesome. Breakfast was great in the mornings. Location is alright not too close to city centre."
+   },
+   "source_number": 84,
+   "serpapi_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB&source_number=84"
+  }
+ ],
+ "serpapi_google_hotels_reviews_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB",
+ "serpapi_google_hotels_photos_link": "https://serpapi.com/search.json?engine=google_hotels_photos&property_token=ChoIkamS5OLO9d2QARoNL2cvMTFrODM4N24zORAB"
+}

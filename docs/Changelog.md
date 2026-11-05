@@ -4,6 +4,13 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## 2026-11-05: price watch for hotels, activities and whole trips
+
+- Watch a hotel's stay price, an activity's per-person price or a whole saved trip's total, next to the flight fare watch. *Watch price* on hotel and activity cards, in My Plan and in chat; *Watch whole trip* on saved plans. The Alerts page gets tabs per kind and a card per kind (trip cards show a per-part breakdown).
+- Honest prices: every part is observed (a live Google Hotels, Google Flights or Google result) or a labelled estimate. Estimates are frozen and never alert, a watch with no live part can't be created, activity prices come from Google results for GetYourGuide / Viator listings (those sites are never scraped) in the listing's currency, and a trip's flight is the cheapest fare on your dates.
+- Alert steps: fares and hotels max($15, 5 %), activities max(1 unit, 5 %), trips max($25, 4 %) on the total, with the same anti-spam rules as fares. One scheduler loop, one daily SerpAPI budget and one active-watch limit for all kinds.
+- `/api/price-watches` (CRUD, match, check, unsubscribe; `422 no_live_price` with suggestions, `422 target_currency_mismatch`), tables `price_watches` and `price_watch_history`, a `PriceSource` registry, notification kinds `hotel_*`, `activity_*`, `trip_*`, and kind-aware alert emails. See [Trip Planning Features](Trip-Planning-Features.md#price-watch-hotels-activities-and-trips).
+
 ## Unreleased: plan a trip from a link or screenshot
 
 - New Search mode, **From a link ✨**. Paste a travel blog, YouTube or TikTok link, a caption or a message, or drop up to 4 screenshots. The places come back on a map for review (tick, rename, move between stops, place the unplaced, set nights), then a normal search plans the trip around them.

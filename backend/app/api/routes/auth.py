@@ -106,8 +106,9 @@ def update_email(req: EmailUpdate, current_user: dict = Depends(get_current_user
         raise HTTPException(
             status_code=409, detail="Another account already uses that email."
         )
-    if email is None:  # nowhere to send fare alerts any more
-        from ...db.fare_watch_db import disable_email_for_user
+    if email is None:  # nowhere to send fare or price alerts any more
+        from ...db import fare_watch_db, price_watch_db
 
-        disable_email_for_user(current_user["id"])
+        fare_watch_db.disable_email_for_user(current_user["id"])
+        price_watch_db.disable_email_for_user(current_user["id"])
     return {"email": email}

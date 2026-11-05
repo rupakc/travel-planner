@@ -36,15 +36,15 @@ Other web lookups (link enrichment for hotels and activities, the forex agent's 
 
 ## Fare watch and email alerts (optional)
 
-Fare watch re-checks watched fares in the background and needs `SERPAPI_KEY`. Email alerts need an SMTP server; without one, alerts still appear in the app.
+Fare watch re-checks watched fares in the background and needs `SERPAPI_KEY`. Price watches for hotels, activities and whole trips use the **same** settings, scheduler and SerpAPI budget: there is no separate price-watch configuration, and the daily budget, the per-user share and the active limit count all kinds of watch together. Email alerts need an SMTP server; without one, alerts still appear in the app.
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `FARE_WATCH_ENABLED` | `true` | Starts the fare-watch scheduler at startup (only when `SERPAPI_KEY` is set). `false` stops background checks and hides "Watch fare" (`GET /health` reports `fare_watch_available`). The test suite sets it to `false`. |
 | `FARE_WATCH_TICK_SECONDS` | `300` | How often the scheduler looks for watches that are due. |
 | `FARE_WATCH_INTERVAL_HOURS` | `12` | Time between two checks of one watch, ±10 % jitter. |
-| `FARE_WATCH_DAILY_CALL_BUDGET` | `200` | SerpAPI calls per UTC day that fare watches may spend (scheduled checks, baselines and "Check now"). A check costs 1 call for exact dates or up to 7 with nearby dates; fares cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers `429`. Searches and the fare calendar are not counted. |
-| `FARE_WATCH_MAX_ACTIVE_PER_USER` | `10` | Active watches per user (paused and ended ones don't count). |
+| `FARE_WATCH_DAILY_CALL_BUDGET` | `200` | SerpAPI calls per UTC day that all watches (fare, hotel, activity and trip) may spend together (scheduled checks, baselines and "Check now"). A fare check costs 1 call for exact dates or up to 7 with nearby dates; a hotel or activity check 1, a trip check up to 8; creating a price watch holds its worst case (hotel 2, activity 2, trip 10) and gives back what it didn't spend. Answers cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers `429`. Searches and the fare calendar are not counted. |
+| `FARE_WATCH_MAX_ACTIVE_PER_USER` | `10` | Active watches per user, of every kind together (paused and ended ones don't count). |
 | `FARE_WATCH_USER_DAILY_SHARE` | `0.3` | Largest share of `FARE_WATCH_DAILY_CALL_BUDGET` one user's watches may spend per UTC day (at least 1 call), so one account can't use up everyone's checks. Over it, that user's checks wait for the next day and their "Check now" answers `429`. |
 | `SMTP_HOST` | `""` | SMTP server for alert emails. Empty disables email (`GET /health` reports `email_alerts_available`). |
 | `SMTP_PORT` | `587` | SMTP port. |

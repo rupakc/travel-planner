@@ -31,7 +31,7 @@
 - **Budget planner.** Splits your budget into per-person shares and flags or hides over-budget results. It runs entirely in the browser.
 - **Fare calendar.** Shows the cheapest live fare for departure dates ±3 days. It needs SerpAPI, a signed-in user and a single-city trip.
 - **Price insights** from Google Flights (low / typical / high) and a **pricing advisor** with booking-timing advice.
-- **Fare watch and price alerts.** Watch a trip's fare from the Flights section, the fare calendar, My Plan or a saved plan. We re-check the live price about twice a day and tell you — in the app, by browser notification or by email — when it drops, hits your target or a nearby date is cheaper, never more than once a day. Needs SerpAPI; email needs SMTP.
+- **Fare watch and price alerts.** Watch a trip's fare from the Flights section, the fare calendar, My Plan or a saved plan. We re-check the live price about twice a day and tell you — in the app, by browser notification or by email — when it drops, hits your target or a nearby date is cheaper, never more than once a day. The same alerts cover a hotel's price, an activity's price and a whole saved trip's total, with observed prices kept apart from labelled estimates. Needs SerpAPI; email needs SMTP.
 
 ### Itinerary
 - A day-by-day plan with Cards and Timeline views and a route map (Leaflet + OpenStreetMap).
@@ -66,7 +66,7 @@ See the [Changelog](docs/Changelog.md) for the full history.
 
 - **Plan from a link or screenshot**: paste a travel blog, YouTube or TikTok link, a caption, or drop screenshots; review the places on a map, and every one is scheduled in your itinerary ("From your link").
 - **Comprehensive place data.** Any town in the world (GeoNames, 162k places), about 32k notable islands, parks, resorts, regions, mountains, sites and famous districts, and country names in their own languages ("Deutschland", "Nippon") resolve to nearby airports (OurAirports, 4,014 airports); autocomplete suggests places as well as airports.
-- **Fare watch and price alerts**: a bell, an Alerts page with price sparklines, and optional email, with one-click re-planning.
+- **Fare watch and price alerts**: a bell, an Alerts page with price sparklines, and optional email, with one-click re-planning; also for hotels, activities and whole trips.
 - **Fare calendar** and Google Flights price insights.
 - **Timed itinerary**, with estimated times kept when you pick slots into your plan.
 - **Budget planner**, **best-value package** and **side-by-side comparison**.

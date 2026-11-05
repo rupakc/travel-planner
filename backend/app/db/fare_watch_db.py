@@ -396,3 +396,44 @@ def calls_used(day: str) -> int:
             "SELECT calls FROM fare_watch_quota WHERE day = ?", (day,)
         ).fetchone()
     return row[0] if row else 0
+
+
+# calls + n, but an addition stops at the cap (or where it already was)
+_ADJUSTED = "MAX(0, MIN(calls + ?, MAX(calls, ?)))"
+_NO_CAP = 2**62
+
+
+def adjust_calls(
+    day: str,
+    n: int,
+    *,
+    user_id: str | None = None,
+    budget: int | None = None,
+    user_cap: int | None = None,
+) -> None:
+    """Correct ``day``'s counts by ``n`` (negative gives calls back) once the
+    real number is known — e.g. a price-watch match that reserved one call
+    and spent more or none. Never below zero; an addition never takes the
+    pool past ``budget`` nor the user past ``user_cap`` (so an overspend
+    can't postpone fare checks); never refused."""
+    top = _NO_CAP if budget is None else budget
+    user_top = _NO_CAP if user_cap is None else user_cap
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO fare_watch_quota (day, calls) VALUES (?, 0)", (day,)
+        )
+        conn.execute(
+            f"UPDATE fare_watch_quota SET calls = {_ADJUSTED} WHERE day = ?",
+            (n, top, day),
+        )
+        if user_id is not None:
+            conn.execute(
+                "INSERT OR IGNORE INTO fare_watch_user_quota (day, user_id, calls) "
+                "VALUES (?, ?, 0)",
+                (day, user_id),
+            )
+            conn.execute(
+                f"UPDATE fare_watch_user_quota SET calls = {_ADJUSTED} "
+                "WHERE day = ? AND user_id = ?",
+                (n, user_top, day, user_id),
+            )

@@ -193,7 +193,7 @@ def test_active_watch_limit(client, alice, monkeypatch):
     assert _create(client, h, departure_date="2026-12-02").status_code == 200
     r = _create(client, h, departure_date="2026-12-03")
     assert r.status_code == 409
-    assert "2 fares" in r.json()["detail"]
+    assert "2 active watches" in r.json()["detail"]  # fare + price watches
 
 
 def test_create_from_a_saved_plan(client, alice):

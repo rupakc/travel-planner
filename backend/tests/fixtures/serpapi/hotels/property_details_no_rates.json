@@ -1,0 +1,1295 @@
+{
+ "search_metadata": {
+  "id": "6aec22e7bbd349aca5a1d13f",
+  "status": "Success",
+  "created_at": "2026-11-05T06:32:07.657Z",
+  "processed_at": "2026-11-05T06:32:07.658Z",
+  "google_hotels_url": "https://www.google.com/travel/hotels/entity/ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE?hl=en&gl=us",
+  "total_time_taken": {
+   "float": 0.8830099105834961
+  }
+ },
+ "search_parameters": {
+  "engine": "google_hotels",
+  "gl": "us",
+  "hl": "en",
+  "currency": "USD",
+  "check_in_date": "2026-12-30",
+  "check_out_date": "2027-01-02",
+  "adults": 6,
+  "children": 0,
+  "property_token": "ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+ },
+ "type": "hotel",
+ "name": "Patio São Vicente Guest Houses",
+ "link": "https://www.patiosaovicente.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp",
+ "property_token": "ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE",
+ "address": "Telheiro de S. Vicente 10A, 1100-594 Lisboa, Portugal",
+ "directions": "https://maps.google.com/maps?hl=en&gl=US&um=1&ie=UTF-8&fb=1&sa=X&geocode=KVWckD2KMxkNMR8ARY2MAzpY&daddr=Patio+S%C3%A3o+Vicente+Guest+Houses,+Telheiro+de+S.+Vicente+10A,+1100-594+Lisboa,+Portugal",
+ "phone": "+351 965 404 627",
+ "phone_link": "tel:+351965404627",
+ "gps_coordinates": {
+  "latitude": 38.7155846,
+  "longitude": -9.1280593
+ },
+ "check_in_time": "3:00 PM",
+ "check_out_time": "11:00 AM",
+ "nearby_places": [
+  {
+   "category": "Point of interest",
+   "name": "Castelo de São Jorge",
+   "link": "https://www.google.com/search?q=Castelo+de+S%C3%A3o+Jorge&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TewMMoxKtBSzE620s_JT04syczPgzOsEktKihKTQcxiAH1UM1YyAAAA#fpstate=trskp&trifp=kpq%253DCastelo%252Bde%252BS%2525C3%2525A3o%252BJorge%2526skpm%253D/m/082l2p%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTesX0gYc7xYrJ4oguvND02Jlv0ECIH3HYtSZjxgNpz0S56zZ5T",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "11 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "13 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 104194,
+   "description": "11th-century, hilltop Moorish castle & royal residence with palace ruins & archaeological museum.",
+   "gps_coordinates": {
+    "latitude": 38.713909199999996,
+    "longitude": -9.133476199999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Praça do Comércio",
+   "link": "https://www.google.com/search?q=Pra%C3%A7a+do+Com%C3%A9rcio&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TdIN84xLtZSzE620s_JT04syczPgzOsEktKihKTQcxiABlBfe0yAAAA#fpstate=trskp&trifp=kpq%253DPra%2525C3%2525A7a%252Bdo%252BCom%2525C3%2525A9rcio%2526skpm%253D/m/0g3l3s%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTxZRLmNDvhTnDtiKMcs1fp4pwOUYS3KCc_H_j7C8n5-qA_Gii4",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "15 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "18 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 135324,
+   "description": "Waterside public plaza with a notable arch & statue, lined with outdoor cafes & shopping venues.",
+   "gps_coordinates": {
+    "latitude": 38.7072828,
+    "longitude": -9.136361299999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Santa Justa Lift",
+   "link": "https://www.google.com/search?q=Santa+Justa+Lift&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwMyrJMdVSzE620s_JT04syczPgzOsEktKihKTQcxiAC9P9bwyAAAA#fpstate=trskp&trifp=kpq%253DSanta%252BJusta%252BLift%2526skpm%253D/m/062tl5%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSFmeRl0cD09h505WF1BfTE3zTs5EILmW8MGjS_mKAqsn-fZHmO",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "13 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "20 min"
+    }
+   ],
+   "rating": 4.1,
+   "reviews": 58450,
+   "description": "Cast-iron elevator with filigree details, built in 1902 to connect lower streets with Carmo Square.",
+   "gps_coordinates": {
+    "latitude": 38.712130099999996,
+    "longitude": -9.139429699999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Time Out Market",
+   "link": "https://www.google.com/search?q=Time+Out+Market&stick=H4sIAAAAAAAAAONgFmJQ4tVP1zc0TDYqyDWyzEjTUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgBoclkpNgAAAA#fpstate=trskp&trifp=kpq%253DTime%252BOut%252BMarket%2526skpm%253D/g/11c2pm29hf%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfe0Z-VwdObpe1-DQjQv1nBwfgaI6P-CAAUkuhtOmD_Fr6oEX6th0nVq6IriQkSjF8753d0SUezIwFJ2Ew1oa3uYKToI0nWU_EJjwm9WLULET01wIzCj7064G5iDV3n1yRZu-Yu=w182-h120-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "18 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "25 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 76872,
+   "gps_coordinates": {
+    "latitude": 38.7070608,
+    "longitude": -9.1456691
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Lisbon Cathedral",
+   "link": "https://www.google.com/search?q=Lisbon+Cathedral&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwTDOqqtJSzE620s_JT04syczPgzOsEktKihKTQcxiAKJ1cLMyAAAA#fpstate=trskp&trifp=kpq%253DLisbon%252BCathedral%2526skpm%253D/m/01f2zz%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcR3NS28ncS9CcfrvP0O_Qm5_IDqX9ddljtOp21AFrLFW2abboJs",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "11 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "14 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 36482,
+   "description": "Earthquakes have led to this cathedral being rebuilt many times in different architectural styles.",
+   "gps_coordinates": {
+    "latitude": 38.7098339,
+    "longitude": -9.1329535
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Jerónimos Monastery",
+   "link": "https://www.google.com/search?q=Jer%C3%B3nimos+Monastery&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwNbDMLtNSzE620s_JT04syczPgzOsEktKihKTQcxiAG5Cb7IyAAAA#fpstate=trskp&trifp=kpq%253DJer%2525C3%2525B3nimos%252BMonastery%2526skpm%253D/m/0509kv%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRUZsZhd3_HYtg9MyfzDV5v0f6jgauiT-nBg7kEhYBq9mKajBi-",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "29 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "38 min"
+    }
+   ],
+   "rating": 4.4,
+   "reviews": 63721,
+   "description": "Late Gothic Manueline-style monastery housing archaeology & maritime museums in its wings.",
+   "gps_coordinates": {
+    "latitude": 38.6978909,
+    "longitude": -9.206703899999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Tram 28",
+   "link": "https://www.google.com/search?q=Tram+28&stick=H4sIAAAAAAAAAONgFmJQ4tVP1zc0TM7OLq6oMirRUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgDvpcAKNgAAAA#fpstate=trskp&trifp=kpq%253DTram%252B28%2526skpm%253D/g/11ckksxz2t%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLeOuO4Wr6KuJKcsLlDGl7UE2qbp3OX4Qvm4FiW5p_H-hX0iKAoTu9BLmFQ1MwqHcQPcGMJ-GH14G7bSWe9nfqGAvNwB6IyC5WNMd5moUadOuaNiC9--pdYvURhGGb92ZpT3m8rR=w160-h200-k-no",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "14 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "16 min"
+    }
+   ],
+   "rating": 4.2,
+   "reviews": 15118,
+   "description": "Classic yellow trams retaining original 1930s features like brass dials & polished wood interiors.",
+   "gps_coordinates": {
+    "latitude": 38.7152423,
+    "longitude": -9.136078399999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Museu Nacional do Azulejo",
+   "link": "https://www.google.com/search?q=Museu+Nacional+do+Azulejo&stick=H4sIAAAAAAAAAONgFmJQ4tLP1TfIKjEyjjfXUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgAxFZc_MwAAAA#fpstate=trskp&trifp=kpq%253DMuseu%252BNacional%252Bdo%252BAzulejo%2526skpm%253D/m/0jt23_7%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLf0AyekOh0cT4AW_xssdx50kvvDkrC9lTdjjuYTzJ7ECYVgXrOEGPvuhMyf8N_lGEo2Ogpmm32M0y6VWoRQt1-W37KkWbtixJIv5fX-ASlFBsgN5IdyJ03jQu8z8L4ZSYmqUBBv=w160-h120-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "7 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "16 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 17230,
+   "description": "Museum of decorative azulejo tiles housed in a 16th-century monastery with a spectacular chapel.",
+   "gps_coordinates": {
+    "latitude": 38.7250559,
+    "longitude": -9.113539
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Carmo Archaeological Museum",
+   "link": "https://www.google.com/search?q=Carmo+Archaeological+Museum&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TdILzTJM9VSzE620s_JT04syczPgzOsEktKihKTQcxiAEeSoP4yAAAA#fpstate=trskp&trifp=kpq%253DCarmo%252BArchaeological%252BMuseum%2526skpm%253D/m/0gq4n5%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQuLchCbHVil2V_16rb7BH4WsRm9VxwK50NQab3IBxQbQS0ZmO_",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "16 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "16 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 21802,
+   "description": "Ruined Gothic church destroyed by an earthquake in 1755, with an evocative roofless nave & museum.",
+   "gps_coordinates": {
+    "latitude": 38.712038299999996,
+    "longitude": -9.140612899999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Belém Tower",
+   "link": "https://www.google.com/search?q=Bel%C3%A9m+Tower&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwTU-qMNNSzE620s_JT04syczPgzOsEktKihKTQcxiAPpNFIIyAAAA#fpstate=trskp&trifp=kpq%253DBel%2525C3%2525A9m%252BTower%2526skpm%253D/m/05gbx6%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcT5H-m1y_n1nKkDGsO4F3fjMMI54vGllC9WspK9M4krsIRcUjX7",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "28 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "53 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 118613,
+   "description": "Landmark medieval fortified tower on tiny river island with rooftop terrace offering estuary views.",
+   "gps_coordinates": {
+    "latitude": 38.691583699999995,
+    "longitude": -9.215977299999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Miradouro de Santa Luzia",
+   "link": "https://www.google.com/search?q=Miradouro+de+Santa+Luzia&stick=H4sIAAAAAAAAAONgFmJQ4tZP1zc0MjRLKymz1FLMTrbSz8lPTizJzM-DM6wSS0qKEpNBzGIArQZAPDQAAAA#fpstate=trskp&trifp=kpq%253DMiradouro%252Bde%252BSanta%252BLuzia%2526skpm%253D/g/1216ftv9%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLc4PqYtCeeuLeUgiNmN0cJMw9y72J03HnVr19KTHD-MVAO8-9nMIdbX08O597gKWtSsWabSgdpRP4HGFn9OczHa8NEnxdMYPOJNBwAx0q8wLac8JYOK4FN9VBJG49mayXbb3g=w160-h120-k-no",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "8 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "10 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 44310,
+   "description": "This popular observation deck with a pergola offers dramatic views of Lisbon & the Tagus River.",
+   "gps_coordinates": {
+    "latitude": 38.7116956,
+    "longitude": -9.1301972
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "LX Factory",
+   "link": "https://www.google.com/search?q=LX+Factory&stick=H4sIAAAAAAAAAONgFmJQ4tFP1zcsNDNOzkvONtFSzE620s_JT04syczPgzOsEktKihKTQcxiAK79MmY1AAAA#fpstate=trskp&trifp=kpq%253DLX%252BFactory%2526skpm%253D/g/1q63cnck4%2526t%253Dd",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLeoa_7scxq1B3ZaI6gSunmQtUE4dkAj3iI-a1OA7a0I6Xn6qA_V63hFLz1ayDrmcgnqktDXsuZbXFyQso0LF2Eoqmo55Agvs4sJ-OEPAZQ2YbVw45HLlf5xio91Tlnw4PLVxDvII5uoWhl1=w160-h213-k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "27 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "35 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 68054,
+   "description": "This historical industrial complex houses an array of arty retailers & unique restaurants.",
+   "gps_coordinates": {
+    "latitude": 38.703460199999995,
+    "longitude": -9.1787831
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Calouste Gulbenkian Museum",
+   "link": "https://www.google.com/search?q=Calouste+Gulbenkian+Museum&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TcwLrc0KtdSzE620s_JT04syczPgzOsEktKihKTQcxiAMTtmOMyAAAA#fpstate=trskp&trifp=kpq%253DCalouste%252BGulbenkian%252BMuseum%2526skpm%253D/m/03w92w%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQviCxegeV1rfBc1XupMYUJZxk9YHs-dNtmdRfvJYnrjMx81wxy",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "18 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "26 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 18322,
+   "description": "Displays of art from Greek to Roman & Asian to European, plus gardens, shop & restaurant.",
+   "gps_coordinates": {
+    "latitude": 38.737812399999996,
+    "longitude": -9.1535455
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "Rua Augusta Arch",
+   "link": "https://www.google.com/search?q=Rua+Augusta+Arch&stick=H4sIAAAAAAAAAONgFmJQ4tLP1TdIK8w1N6_QUsxOttLPyU9OLMnMz4MzrBJLSooSk0HMYgA37PaiMwAAAA#fpstate=trskp&trifp=kpq%253DRua%252BAugusta%252BArch%2526skpm%253D/m/0fqm77x%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRMrFDK9HJJuRhKhwAsayz9V2pYb9KEbBCXit2bH0UWQ0BvpSfc",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "17 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "19 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 27279,
+   "description": "Ornate 18th-century triumphal arch with sculpted figures & views over the city center.",
+   "gps_coordinates": {
+    "latitude": 38.7084447,
+    "longitude": -9.136824299999999
+   }
+  },
+  {
+   "category": "Point of interest",
+   "name": "National Pantheon",
+   "link": "https://www.google.com/search?q=National+Pantheon&stick=H4sIAAAAAAAAAONgFmJQ4tTP1TdIq8gqiddSzE620s_JT04syczPgzOsEktKihKTQcxiAJISwusyAAAA#fpstate=trskp&trifp=kpq%253DNational%252BPantheon%2526skpm%253D/m/0fxjt_%2526t%253Dd",
+   "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQesLFLwXFuMC7oGt9jBmnIpIAmzkqTSKzMFjZFKaP-iuyFAbz",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "4 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "6 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 12898,
+   "description": "17th-century baroque church turned into modern-day mausoleum for tombs of national celebrities.",
+   "gps_coordinates": {
+    "latitude": 38.714994399999995,
+    "longitude": -9.1246835
+   }
+  },
+  {
+   "category": "Train station",
+   "name": "Santa Apolónia",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "12 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.71436,
+    "longitude": -9.122349999999999
+   }
+  },
+  {
+   "category": "Train station",
+   "name": "Roma-Areeiro",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "13 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "57 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.74558,
+    "longitude": -9.13567
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Santa Apolónia",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "13 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.713766799999995,
+    "longitude": -9.1223762
+   }
+  },
+  {
+   "category": "Subway station",
+   "name": "Martim Moniz",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "13 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.7168215,
+    "longitude": -9.1357622
+   }
+  },
+  {
+   "category": "Tram stop",
+   "name": "Voz Operário",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "2 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.7150021,
+    "longitude": -9.1288033
+   }
+  },
+  {
+   "category": "Airport",
+   "name": "Humberto Delgado Airport",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "27 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "31 min"
+    }
+   ],
+   "gps_coordinates": {
+    "latitude": 38.774166699999995,
+    "longitude": -9.1341667
+   }
+  },
+  {
+   "category": "Brunch restaurant",
+   "name": "Augusto Lisboa",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdUlYF7D31gSs5cbX1jGUgf51N87imXE8th_ffT_zF_IdO3M0rJzhO6e63b94OTotYEpKsV44g9RrBz9ARHz_M44LsAeN4_qtrzALun8vGVgEoB-lF1j5PP6zZ7eYYtnIgwlsxdBg=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "1 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "4 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "6 min"
+    }
+   ],
+   "rating": 4.8,
+   "reviews": 3579,
+   "gps_coordinates": {
+    "latitude": 38.7144063,
+    "longitude": -9.1302323
+   }
+  },
+  {
+   "category": "Portuguese restaurant",
+   "name": "Taberna Do Castelo",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfZRiJ_el_DDEAHqUMksS_zPI1JqVLj4OCpps2esvVCCZ3VKNA7yuY2FWj8fnOhYvlgHCWedkrvXN6HTiQO1Nl1c8qLrjO34R93nXxzKd1ePPRrq45S1g5WGNWHkFXpoRR3FfNk=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "5 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "9 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "11 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 2637,
+   "gps_coordinates": {
+    "latitude": 38.7106893,
+    "longitude": -9.1311615
+   }
+  },
+  {
+   "category": "Restaurant",
+   "name": "Casa da Saira restaurante portuguesa",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLcvFqoJMyOin44yTEhoV-HMBFzdmsqydjaO_hIlxYFFZGBZBzBXntLADhPoHC0uCKHjhNWq8S__T8hWS8GL1JMWmL6q-EX3h_VVrFIcHgF-_DdAh_eup5niOlEZquzWcRldLV4HgIOhIlhY=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "3 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "6 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "7 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 192,
+   "gps_coordinates": {
+    "latitude": 38.713314499999996,
+    "longitude": -9.1306712
+   }
+  },
+  {
+   "category": "Brunch restaurant",
+   "name": "Gen-Z BRUNCH & RESTAURANT",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfA68vzGHdhYVWdGRawZclg3xA-IFQJIYBybXt5KGd021g1bcR7NEkxp6ujnRNfv1F7viJM82sXgJybRrjScN5yfw_WbK0i4kQZuKbpwjbhSSoyUpw9bVK9YdDVwt_pibXi4j-yKE-jdXRA=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "3 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "7 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "8 min"
+    }
+   ],
+   "rating": 4.6,
+   "reviews": 305,
+   "gps_coordinates": {
+    "latitude": 38.7131439,
+    "longitude": -9.1309614
+   }
+  },
+  {
+   "category": "Portuguese restaurant",
+   "name": "Restaurante Desgraça",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfmHlbwxfrtlg8J4ws56Th0aHX14AJUTwp0F0Jpvbz7AKN7bHMbuumhucMZtHOnSAXrii0r_hZXYzMtZn2ecOEeNwgrRfcgo4z6uEWUOda0G5JMCitA4cuUZSQziJzn4CnsJ121=k-no",
+   "transportations": [
+    {
+     "type": "Public transport",
+     "duration": "4 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "7 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "8 min"
+    }
+   ],
+   "rating": 4.5,
+   "reviews": 997,
+   "gps_coordinates": {
+    "latitude": 38.7166546,
+    "longitude": -9.1302589
+   }
+  },
+  {
+   "category": "Portuguese restaurant",
+   "name": "Restaurante Lorena",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLcv8BIFtSVFAUaHjJm_lD2xNru1r0jasSX05zjhMTqE6Cbtzi5hqUTqv-tLMvr7IE_3Fh88nSlYm9vHuDLncqbcnZkworv363EF2kXxfbjNSYPHGLihyylCjKnVRDAWKi0kAfAKaA=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "4 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "6 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "11 min"
+    }
+   ],
+   "rating": 4.8,
+   "reviews": 135,
+   "gps_coordinates": {
+    "latitude": 38.719078499999995,
+    "longitude": -9.128001099999999
+   }
+  },
+  {
+   "category": "Portuguese restaurant",
+   "name": "Allfama Portuguese Cuisine",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdNGv1VTUCUBqbNv_AtyoZRC3LGae6Ox8CE2R-_VKWDhYoQjVUsEXNMmkYvW0SoEJRhnGgzdj6RTRrh_jVk58esxMugwQbYoMUR6pfgZGeEsjL9kU3WgrjJnQ_dJu6m8Doakeq3=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "3 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "5 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "8 min"
+    }
+   ],
+   "rating": 4.1,
+   "reviews": 865,
+   "gps_coordinates": {
+    "latitude": 38.713766199999995,
+    "longitude": -9.124916599999999
+   }
+  },
+  {
+   "category": "Restaurant",
+   "name": "MOHAL restaurant",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLf88r6HMaTe_MAAfWTQZTTeNLRSJa2TpWVcxJjiA4O87vTIZHccitHkOp7HGRrgxj8DIf_yYfKfelut3l4QT2X5D_--37yrOZQUYZngEnYrpGtBbDEaZp8SnI1nQjuN3cgrhSsj8Nr9Fsv7=k-no",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "6 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "6 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "7 min"
+    }
+   ],
+   "rating": 4.8,
+   "reviews": 207,
+   "gps_coordinates": {
+    "latitude": 38.7136962,
+    "longitude": -9.130432899999999
+   }
+  },
+  {
+   "category": "Restaurant",
+   "name": "Altar",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLccDBCgjX268iiRWzEQ8IfiRSbEbv0meBSLyoaS_zpPooaMjlvn90nPiPxgPclLYB6ZnT6mEigzYYlV7d6_pvVZWornd6YWCoY0M2VJFaUzwUvL88FLBGJMcRHBcVekfqwN-aNp=k-no",
+   "transportations": [
+    {
+     "type": "Walking",
+     "duration": "6 min"
+    },
+    {
+     "type": "Taxi",
+     "duration": "6 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "7 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 2514,
+   "gps_coordinates": {
+    "latitude": 38.7144723,
+    "longitude": -9.1311526
+   }
+  },
+  {
+   "category": "Restaurant",
+   "name": "A Parreirinha do Paraíso",
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLeL1x9am8LgXypTMfx-bzMnYq2-tGsP1_KIpH3zVIoo5-GbSDdPzo7f0JOa0qqL3b5nWOgMwY4AxERA4oEdiZ5RJtsdrgilOVmhFF8_91XfmxEE0B4gDuHAmyDN4SRdDm0RqVe2eQ=k-no",
+   "transportations": [
+    {
+     "type": "Taxi",
+     "duration": "2 min"
+    },
+    {
+     "type": "Public transport",
+     "duration": "5 min"
+    },
+    {
+     "type": "Walking",
+     "duration": "9 min"
+    }
+   ],
+   "rating": 4.7,
+   "reviews": 1294,
+   "gps_coordinates": {
+    "latitude": 38.7145231,
+    "longitude": -9.1238817
+   }
+  }
+ ],
+ "hotel_class": "4-star hotel",
+ "extracted_hotel_class": 4,
+ "images": [
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfzcCneQxH6mHXw8EsaKi07fKn9champfU-enYgL0FhFpagrQnzp-W2_hf0320I0Z6pdU7WDjpoFjjrYKIzLPvNrwNMylp6xMMTHrLJtz9y1JMeN08wKiNJcqtpNeNRuJofQDE=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLfzcCneQxH6mHXw8EsaKi07fKn9champfU-enYgL0FhFpagrQnzp-W2_hf0320I0Z6pdU7WDjpoFjjrYKIzLPvNrwNMylp6xMMTHrLJtz9y1JMeN08wKiNJcqtpNeNRuJofQDE=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdP_qsEZ__H22njPpDDOvXBZrBSGnrlobToVe4TrFaXQHmqt3Txxs2ywmhsMAG_CXx6L35vlbDorlxs7dFlQ3pCU2lOVOwiIvxP_HLyCIAcTcWxmfDzRQSckSxQHdlpktUioG3QZw=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLdP_qsEZ__H22njPpDDOvXBZrBSGnrlobToVe4TrFaXQHmqt3Txxs2ywmhsMAG_CXx6L35vlbDorlxs7dFlQ3pCU2lOVOwiIvxP_HLyCIAcTcWxmfDzRQSckSxQHdlpktUioG3QZw=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfaB021mLr4oCAizvnIkOCxVi40-EFblbjVvnYzpFBxUujGIk1iAxIzx6NSSXcMQrfq8EH5ptwjllcqThIcsw9HKzLtPdAFNfhKUc_TODbpLCtLFp_pojE_2mYyEOCCXRV6wsM=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLfaB021mLr4oCAizvnIkOCxVi40-EFblbjVvnYzpFBxUujGIk1iAxIzx6NSSXcMQrfq8EH5ptwjllcqThIcsw9HKzLtPdAFNfhKUc_TODbpLCtLFp_pojE_2mYyEOCCXRV6wsM=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLd09c0PphqDJlnwWZrPbKN-QmKREM6305NOhGGjoIEztQ-l3FsBxLdPPWv54UTt_-wK5RbMl51X7gaG71gtOL9uqg_-nzjjH6hTRxFFJmVcGSTcfH2eg_tjMr37Bocxarho534=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLd09c0PphqDJlnwWZrPbKN-QmKREM6305NOhGGjoIEztQ-l3FsBxLdPPWv54UTt_-wK5RbMl51X7gaG71gtOL9uqg_-nzjjH6hTRxFFJmVcGSTcfH2eg_tjMr37Bocxarho534=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLdldkcq3ho0A_x8npSF4sACw8KHszHUVmNlLXlunnNQ0UQcEXwAmx6iA5abjWUpMAvpy1uyy0brmRRv4C3N90iejcHw_7vS5eN0uysTYDqFc9cWjsA-k4Xv-1GOMYgW477wDeLRow=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLdldkcq3ho0A_x8npSF4sACw8KHszHUVmNlLXlunnNQ0UQcEXwAmx6iA5abjWUpMAvpy1uyy0brmRRv4C3N90iejcHw_7vS5eN0uysTYDqFc9cWjsA-k4Xv-1GOMYgW477wDeLRow=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfgsdUYUwAFCouHVW_aBPJ1k97K6Eu1zrUYhVewx1JQ_UOHoXyhQHR4IhsDAptBmSAXhuuvbIhWQws0UgHi55MPEKUh2nb9ISPFfaHrW0lyHkIhS-BarZ_riMLaStvPNvWeS1R4jg=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLfgsdUYUwAFCouHVW_aBPJ1k97K6Eu1zrUYhVewx1JQ_UOHoXyhQHR4IhsDAptBmSAXhuuvbIhWQws0UgHi55MPEKUh2nb9ISPFfaHrW0lyHkIhS-BarZ_riMLaStvPNvWeS1R4jg=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-proxy/AIM7gW0q1KTH1bJQ3r4N2OpZy6_MxfbRkJteUI2RECXUHjcF1MpOMV76hAw5BrXlzJ1oh4wrR-zj_0A8nYQbFXObUdTNiuvPQ8Bj9gGxP3HUTq5CAtjl53XP4qWyVvdEmjTQORcccDn2MWwyCFiErhXggbr-J0XS8nNAGUzDWMrDCbOU8kTzTsJxk0wQyA=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://images.trvl-media.com/lodging/34000000/33460000/33450500/33450409/9d720a68.jpg?impolicy=ccrop&w=1000&h=666&q=medium"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLfeJazo6EkE9YkxG_ILdF8GWXuaFd5Je6lJFaSzDJPaMbzIpbS7cgt00lk2jk0fHfYJnRU3nY30FJ-ype0pCUbc5dhKECmTldSsr2Tr_vKpeqQRWka5BcCzgD1F4Z0EnFPVRzSb=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLfeJazo6EkE9YkxG_ILdF8GWXuaFd5Je6lJFaSzDJPaMbzIpbS7cgt00lk2jk0fHfYJnRU3nY30FJ-ype0pCUbc5dhKECmTldSsr2Tr_vKpeqQRWka5BcCzgD1F4Z0EnFPVRzSb=s10000"
+  },
+  {
+   "thumbnail": "https://lh3.googleusercontent.com/grass-cs/AABkmLcH058QMLCnMzIEHC9r6TAINJJ3qPX2YqDaPrGOGlZKcMoYD9w79TClIMziXMpx7QN-BYdJT1tTYWwpXsMrlWuZfua7lFmhwElMYsORGWLR4yyULTaetY2zZqQ2NN5OUnIqFQRYxg=s287-w287-h192-n-k-no-v1",
+   "original_image": "https://lh3.googleusercontent.com/grass-cs/AABkmLcH058QMLCnMzIEHC9r6TAINJJ3qPX2YqDaPrGOGlZKcMoYD9w79TClIMziXMpx7QN-BYdJT1tTYWwpXsMrlWuZfua7lFmhwElMYsORGWLR4yyULTaetY2zZqQ2NN5OUnIqFQRYxg=s10000"
+  }
+ ],
+ "overall_rating": 4.9,
+ "reviews": 353,
+ "ratings": [
+  {
+   "stars": 5,
+   "count": 334
+  },
+  {
+   "stars": 4,
+   "count": 16
+  },
+  {
+   "stars": 3,
+   "count": 3
+  },
+  {
+   "stars": 2,
+   "count": 0
+  },
+  {
+   "stars": 1,
+   "count": 0
+  }
+ ],
+ "location_rating": 4.4,
+ "reviews_breakdown": [
+  {
+   "name": "Location",
+   "description": "Location",
+   "total_mentioned": 88,
+   "positive": 84,
+   "negative": 2,
+   "neutral": 2,
+   "category_token": "jLN0PHica1yRnFiSmp5fVDl5hU8-kJ2Zn8cIZwEAzmAM3g",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=jLN0PHica1yRnFiSmp5fVDl5hU8-kJ2Zn8cIZwEAzmAM3g&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Property",
+   "description": "Property",
+   "total_mentioned": 87,
+   "positive": 84,
+   "negative": 2,
+   "neutral": 1,
+   "category_token": "qPRjhHica1yRnFiSmp5fVDl5RUBRfkFqUUklI5wFANGQDTY",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=qPRjhHica1yRnFiSmp5fVDl5RUBRfkFqUUklI5wFANGQDTY&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Service",
+   "description": "Service",
+   "total_mentioned": 60,
+   "positive": 60,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "DZ7RYHica1yRnFiSmp5fVDl5eXBqUVlmciojjAEAtX8MDA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=DZ7RYHica1yRnFiSmp5fVDl5eXBqUVlmciojjAEAtX8MDA&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Cleanliness",
+   "description": "Cleanliness",
+   "total_mentioned": 52,
+   "positive": 52,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "JXKy3Xica1yRnFiSmp5fVDl5tXNOamJeTmZeanExIzIHACQKD1Q",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=JXKy3Xica1yRnFiSmp5fVDl5tXNOamJeTmZeanExIzIHACQKD1Q&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Room",
+   "description": "Room amenities",
+   "total_mentioned": 26,
+   "positive": 24,
+   "negative": 1,
+   "neutral": 1,
+   "category_token": "Rr34mHica1yRnFiSmp5fVDl5XVB-fq5CYm5qXmZJZmox4xIQHwDoCw2H",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=Rr34mHica1yRnFiSmp5fVDl5XVB-fq5CYm5qXmZJZmox4xIQHwDoCw2H&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Family",
+   "description": "Family friendly",
+   "total_mentioned": 10,
+   "positive": 8,
+   "negative": 1,
+   "neutral": 1,
+   "category_token": "kuiVx3ica1yRnFiSmp5fVDl5vVtibmZOpUJaUWZqXkpOJeMyiAAAEmwOsg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=kuiVx3ica1yRnFiSmp5fVDl5vVtibmZOpUJaUWZqXkpOJeMyiAAAEmwOsg&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Kitchen",
+   "description": "Kitchen",
+   "total_mentioned": 14,
+   "positive": 14,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "N6mX_nica1yRnFiSmp5fVDl5uXdmSXJGah4jjAEAtGwL9g",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=N6mX_nica1yRnFiSmp5fVDl5uXdmSXJGah4jjAEAtGwL9g&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Atmosphere",
+   "description": "Atmosphere",
+   "total_mentioned": 23,
+   "positive": 23,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "1EvKb3ica1yRnFiSmp5fVDl5lWNJbn5xQUZqUSojEhsACBsOoA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=1EvKb3ica1yRnFiSmp5fVDl5lWNJbn5xQUZqUSojEhsACBsOoA&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Safety",
+   "description": "Safety",
+   "total_mentioned": 9,
+   "positive": 9,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "ItReBXica1yRnFiSmp5fVDl5WXBiWmpJJQOUBgCdBAs_",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=ItReBXica1yRnFiSmp5fVDl5WXBiWmpJJQOUBgCdBAs_&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Bathroom",
+   "description": "Bathroom and toiletries",
+   "total_mentioned": 16,
+   "positive": 14,
+   "negative": 0,
+   "neutral": 2,
+   "category_token": "iMUWyHica1yRnFiSmp5fVDl5u1NiSUZRfn6uQmJeikJJfmZOaklRZmox4wqYBAC6wxKq",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=iMUWyHica1yRnFiSmp5fVDl5u1NiSUZRfn6uQmJeikJJfmZOaklRZmox4wqYBAC6wxKq&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Accessibility",
+   "description": "Accessibility",
+   "total_mentioned": 8,
+   "positive": 1,
+   "negative": 2,
+   "neutral": 5,
+   "category_token": "RQHLCHica1yRnFiSmp5fVDl5rWNycmpxcWZSZk5mSSUDKhcAZcgRBQ",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=RQHLCHica1yRnFiSmp5fVDl5rWNycmpxcWZSZk5mSSUDKhcAZcgRBQ&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Wi-Fi",
+   "description": "Wi-Fi",
+   "total_mentioned": 6,
+   "positive": 5,
+   "negative": 0,
+   "neutral": 1,
+   "category_token": "8xDzSXica1yRnFiSmp5fVDl5aXimrlsmA4QCAIJVCZ0",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=8xDzSXica1yRnFiSmp5fVDl5aXimrlsmA4QCAIJVCZ0&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Nightlife",
+   "description": "Nightlife",
+   "total_mentioned": 5,
+   "positive": 5,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "pLe_Cnica1yRnFiSmp5fVDl5pV9mekZJTmZaKgOCCQDpZw2h",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=pLe_Cnica1yRnFiSmp5fVDl5pV9mekZJTmZaKgOCCQDpZw2h&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Sleep",
+   "description": "Sleep",
+   "total_mentioned": 19,
+   "positive": 15,
+   "negative": 1,
+   "neutral": 3,
+   "category_token": "WYlIUnica1yRnFiSmp5fVDl5aXBOamoBI4QCAIaxClg",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=WYlIUnica1yRnFiSmp5fVDl5aXBOamoBI4QCAIaxClg&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Bar",
+   "description": "Bar or lounge",
+   "total_mentioned": 8,
+   "positive": 8,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "L4-to3ica1yRnFiSmp5fVDl5rVNikUJ-kUJOfmleeirDYiAXAMhSDEA",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=L4-to3ica1yRnFiSmp5fVDl5rVNikUJ-kUJOfmleeirDYiAXAMhSDEA&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  },
+  {
+   "name": "Dining",
+   "description": "Food and Beverage",
+   "total_mentioned": 5,
+   "positive": 5,
+   "negative": 0,
+   "neutral": 0,
+   "category_token": "DgnoGHica1yRnFiSmp5fVDl5o1t-fopCYl6KglNqWWpRYnoqwzKXzLzMvHQAKAQO5w",
+   "serpapi_link": "https://serpapi.com/search.json?category_token=DgnoGHica1yRnFiSmp5fVDl5o1t-fopCYl6KglNqWWpRYnoqwzKXzLzMvHQAKAQO5w&engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+  }
+ ],
+ "amenities": [
+  "Wi-Fi",
+  "Wi-Fi in public areas",
+  "Baggage storage",
+  "Self-service laundry",
+  "Housekeeping",
+  "Smoke-free property",
+  "Credit cards",
+  "Debit cards",
+  "Cash",
+  "Kid-friendly",
+  "Babysitting",
+  "Airport shuttle",
+  "Local shuttle",
+  "Air conditioning",
+  "Kitchen",
+  "Refrigerator",
+  "Microwave",
+  "Coffee maker",
+  "English",
+  "Portuguese",
+  "Private bathroom",
+  "Bathtub in some rooms",
+  "Shower"
+ ],
+ "excluded_amenities": [
+  "Breakfast",
+  "Pool",
+  "Hot tub",
+  "Parking",
+  "Fitness center",
+  "Spa",
+  "Pet-friendly",
+  "Accessible"
+ ],
+ "amenities_detailed": {
+  "groups": [
+   {
+    "title": "Internet",
+    "list": [
+     {
+      "title": "Wi-Fi",
+      "label": "free",
+      "available": true
+     },
+     {
+      "title": "Wi-Fi in public areas",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Food & drink",
+    "list": [
+     {
+      "title": "Breakfast",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Services",
+    "list": [
+     {
+      "title": "Baggage storage",
+      "available": true
+     },
+     {
+      "title": "Self-service laundry",
+      "available": true
+     },
+     {
+      "title": "Housekeeping",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Policies & payments",
+    "list": [
+     {
+      "title": "Smoke-free property",
+      "available": true
+     },
+     {
+      "title": "Credit cards",
+      "available": true
+     },
+     {
+      "title": "Debit cards",
+      "available": true
+     },
+     {
+      "title": "Cash",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Children",
+    "list": [
+     {
+      "title": "Kid-friendly",
+      "available": true
+     },
+     {
+      "title": "Babysitting",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Pools",
+    "list": [
+     {
+      "title": "Pool",
+      "available": false
+     },
+     {
+      "title": "Hot tub",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Parking & transportation",
+    "list": [
+     {
+      "title": "Parking",
+      "available": false
+     },
+     {
+      "title": "Airport shuttle",
+      "label": "extra charge",
+      "available": true
+     },
+     {
+      "title": "Local shuttle",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Wellness",
+    "list": [
+     {
+      "title": "Fitness center",
+      "available": false
+     },
+     {
+      "title": "Spa",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Pets",
+    "list": [
+     {
+      "title": "Pet-friendly",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Accessibility",
+    "list": [
+     {
+      "title": "Accessible",
+      "available": false
+     }
+    ]
+   },
+   {
+    "title": "Rooms",
+    "list": [
+     {
+      "title": "Air conditioning",
+      "available": true
+     },
+     {
+      "title": "Kitchen",
+      "available": true
+     },
+     {
+      "title": "Refrigerator",
+      "available": true
+     },
+     {
+      "title": "Microwave",
+      "available": true
+     },
+     {
+      "title": "Coffee maker",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Languages spoken",
+    "list": [
+     {
+      "title": "English",
+      "available": true
+     },
+     {
+      "title": "Portuguese",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Bathrooms",
+    "list": [
+     {
+      "title": "Private bathroom",
+      "available": true
+     },
+     {
+      "title": "Bathtub in some rooms",
+      "available": true
+     },
+     {
+      "title": "Shower",
+      "available": true
+     }
+    ]
+   }
+  ],
+  "popular": [
+   {
+    "title": "Wi-Fi",
+    "label": "free",
+    "available": true
+   },
+   {
+    "title": "Air conditioning",
+    "available": true
+   },
+   {
+    "title": "Kitchen",
+    "available": true
+   },
+   {
+    "title": "Airport shuttle",
+    "available": true
+   }
+  ]
+ },
+ "health_and_safety": {
+  "groups": [
+   {
+    "title": "Enhanced cleaning",
+    "list": [
+     {
+      "title": "Enhanced cleaning of guest rooms",
+      "available": true
+     }
+    ]
+   }
+  ]
+ },
+ "sustainability": {
+  "groups": [
+   {
+    "title": "Energy efficiency",
+    "list": [
+     {
+      "title": "Energy-efficient heating and cooling systems",
+      "available": true
+     },
+     {
+      "title": "Energy-efficient lighting",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Water conservation",
+    "list": [
+     {
+      "title": "Water-efficient toilets",
+      "available": true
+     },
+     {
+      "title": "Towel and linen reuse program",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Waste reduction",
+    "list": [
+     {
+      "title": "Recycling program",
+      "available": true
+     },
+     {
+      "title": "Refillable toiletry containers",
+      "available": true
+     },
+     {
+      "title": "No single-use plastic water bottles",
+      "available": true
+     }
+    ]
+   },
+   {
+    "title": "Sustainable sourcing",
+    "list": [
+     {
+      "title": "Responsible purchasing policy",
+      "available": true
+     }
+    ]
+   }
+  ]
+ },
+ "other_reviews": [
+  {
+   "source": "Tripadvisor",
+   "source_icon": "https://www.gstatic.com/travel-hotels/branding/icon_100532569.png",
+   "source_rating": {
+    "score": 4.599999904632568,
+    "max_score": 5
+   },
+   "reviews": 7,
+   "user_review": {
+    "username": "caitlinrose93",
+    "date": "2 years ago",
+    "rating": {
+     "score": 2,
+     "max_score": 5
+    },
+    "comment": "I was disappointed greatly with my stay - I booked for 3 weeks and the pictures looked beautiful but very much youth hostel vibes - other guests constantly leaving plates and food in the sink, bathroom on middle floor stank when you walked past, despite the cleaner’s brilliant efforts every day to have kept nice, it very much was like uni halls and no one cared. My room I expected to be a lot airier from the photos however as you can see there wasn’t proper windows, the slats opened to another corrugated roof type thing, there was however a window round a corner where desk is but did not let in natural light to end area and gave the room a “cave like” feel as another guest described, again bathroom drains smelled really badly and air con wasn’t working so was constantly too hot with poor ventilation - when complained they have engineer look at it then gave me a fan, noisy and gave me a sore throat but better than the lack of sleep due to heat. Pillows - BRING YOUR OWN - 2 flat over used pillows on a king size bed, I ended up using my airplane neck pillow the full time. Walls are also PAPER thin so wouldn’t recommend unless you have earplugs and were staying solo - I had read this in other reviews but unfortunately thought they were over exaggerating (they were not).. there is also a window from middle hall to the top bedroom I was on without a blind so every time someone used hall light it shone fully through window - not ideal when the light switch is 2 flights down from you and people are working through the house to American time zone at 2am on a Wednesday!!  ||They also had workmen booked in for week 3/3 I was here - they did not mention this or offer discount. There was constant banging some days or drilling , no use of kitchen or living room facilities through day and no heads up or discount offered which would have been the reasonable thing should you wish to keep your hostel open, I went down in the morning to 2 builders offering me a coffee in the middle of the kitchen without any prior acknowledgment, I had to ask them to move so I could use washing machine, not a huge deal but as a single woman in pjs it would have been good to have a heads up. Also lost use of outdoors due to them doing a full paint job, again, without informing guests. By the end I was happy to be leaving as the lack of sleep was making me a bit ill. ||Pros - Location was good - really good actually and cleaner really good at her job - on the occasion the internet went down when I was working this was also resolved quickly. ||Overall I would say fine if young and having a quick weekend in Lisbon but if looking for a nicer setting or for any longer I wouldn’t bother - I will be glad to get to a kitchen I can use without stepping over builders having a coffee (not their fault) and a good night’s sleep!",
+    "link": "https://www.tripadvisor.com/Hotel_Review-g189158-d15634225-r940468535?m=68573&staydates=2026_11_15_2026_11_16&uguests=1_2_0&supdv=desktop&supuc=US&supul=en"
+   },
+   "source_number": 100532569,
+   "serpapi_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE&source_number=100532569"
+  }
+ ],
+ "serpapi_google_hotels_reviews_link": "https://serpapi.com/search.json?engine=google_hotels_reviews&hl=en&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE",
+ "serpapi_google_hotels_photos_link": "https://serpapi.com/search.json?engine=google_hotels_photos&property_token=ChkIn4CU6sjxgJ1YGg0vZy8xMWY0XzdqenhqEAE"
+}

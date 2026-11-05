@@ -6,6 +6,7 @@ import {
   PartyPopper, Share2, Footprints
 } from 'lucide-react'
 import WatchFareButton from './alerts/WatchFareButton'
+import WatchTripButton from './alerts/WatchTripButton'
 import { tripFromPlan } from '../utils/fareWatch'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import PlanExport from './PlanExport'
@@ -149,8 +150,9 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                 {sd.origin} → {sd.destination} · {sd.departure_date}{sd.return_date ? ` – ${sd.return_date}` : ''} · {sd.num_travelers || 1} traveler{(sd.num_travelers || 1) > 1 ? 's' : ''}
               </p>
             )}
-            <div className="mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
               <WatchFareButton variant="onDark" trip={tripFromPlan(plan)} source="plan_view" label="Watch this fare" />
+              <WatchTripButton variant="onDark" plan={plan} source="plan_view" />
             </div>
             {totalCost > 0 && (
               <div className="flex items-center gap-2 mt-1.5">

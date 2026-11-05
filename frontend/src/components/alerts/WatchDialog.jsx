@@ -1,7 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BellRing, Check, Loader2, Mail, X } from 'lucide-react'
+import { BellRing, Check, Loader2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
 import { createFareWatch } from '../../services/api'
@@ -11,6 +10,8 @@ import {
   checkTarget, defaultTarget, formatDateRange, rangePosition, routeLabel, travellersLabel,
 } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
+import WatchDialogShell from './WatchDialogShell'
+import { BrowserAlertsOffer, EmailOption, Option } from './WatchDialogParts'
 
 /** Google's typical range for this trip with today's price marked on it. */
 export function TypicalRangeBar({ range, price }) {
@@ -32,19 +33,6 @@ export function TypicalRangeBar({ range, price }) {
   )
 }
 
-function Option({ checked, onChange, title, children, name, value }) {
-  return (
-    <label className={`flex cursor-pointer gap-3 rounded-xl border px-3.5 py-3 transition-colors ${checked ? 'border-sky-400 bg-sky-50/70' : 'border-slate-200 hover:border-slate-300'}`}>
-      <input type="radio" name={name} value={value} checked={checked} onChange={onChange}
-        className="mt-0.5 h-4 w-4 accent-sky-600" />
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-slate-800">{title}</span>
-        {children}
-      </span>
-    </label>
-  )
-}
-
 /**
  * "Watch this fare": choose how to be told, then confirm. `trip` is the
  * search's (or saved plan's) trip; `price` / `insights` are what the page
@@ -54,7 +42,6 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
   const { token, user } = useAuth()
   const { caps, watchesChanged, shouldOfferBrowserAlerts, answerBrowserAlerts } = useAlerts()
   const titleId = useId()
-  const dialogRef = useRef(null)
   const [mode, setMode] = useState('any_drop')
   const [target, setTarget] = useState(() => String(defaultTarget(insights, price)))
   const [flexible, setFlexible] = useState(defaultFlexible)
@@ -70,39 +57,6 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
   const shownTargetError = targetTouched ? targetCheck.error : null
   const hasEmail = !!user?.email
   const tripRoute = routeLabel({ origin_label: trip.origin, destination_label: trip.destination })
-
-  // Escape closes; Tab / Shift+Tab cycle inside the dialog. Called from the
-  // dialog's own onKeyDown (the portal stops key events from reaching the
-  // document) and from a document listener when focus is outside it.
-  const onKey = useRef(null)
-  onKey.current = (e) => {
-    if (e.key === 'Escape') { onClose(); return }
-    if (e.key !== 'Tab' || !dialogRef.current) return
-    // Focus trap: Tab and Shift+Tab cycle inside the dialog
-    const items = [...dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-    )]
-    if (!items.length) return
-    const first = items[0]
-    const last = items[items.length - 1]
-    const inside = dialogRef.current.contains(document.activeElement)
-    if (e.shiftKey && (document.activeElement === first || !inside)) {
-      e.preventDefault(); last.focus()
-    } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
-      e.preventDefault(); first.focus()
-    }
-  }
-
-  useEffect(() => {
-    const opener = document.activeElement
-    dialogRef.current?.querySelector('input,button')?.focus()
-    const onDocKey = (e) => onKey.current(e)
-    document.addEventListener('keydown', onDocKey)
-    return () => {
-      document.removeEventListener('keydown', onDocKey)
-      if (opener && typeof opener.focus === 'function') opener.focus()
-    }
-  }, [])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -131,28 +85,11 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
 
   const answer = (allow) => { answerBrowserAlerts(allow); setOfferBrowser(false) }
 
-  // Portalled and isolated: entry points live inside clickable headers
-  return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4"
-      onClick={e => e.stopPropagation()} onKeyDown={e => { e.stopPropagation(); onKey.current(e) }}>
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-w-md sm:rounded-2xl">
-        <div className="flex items-start justify-between gap-3 px-5 pb-1 pt-5">
-          <div className="min-w-0">
-            <h2 id={titleId} className="text-base font-semibold text-slate-900">
-              {done ? (done.already_watching ? 'You’re already watching this fare' : 'Watching this fare') : 'Watch this fare'}
-            </h2>
-            <p className="mt-0.5 text-sm text-slate-500">
-              {tripRoute} · {formatDateRange(trip.departure_date, trip.return_date)}
-            </p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close"
-            className="-mr-1 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-            <X size={18} />
-          </button>
-        </div>
-
+  return (
+    <WatchDialogShell
+      title={done ? (done.already_watching ? 'You’re already watching this fare' : 'Watching this fare') : 'Watch this fare'}
+      subtitle={`${tripRoute} · ${formatDateRange(trip.departure_date, trip.return_date)}`}
+      onClose={onClose}>
         {!done && (
           <form onSubmit={submit} className="px-5 pb-5">
             {price != null && (
@@ -200,22 +137,7 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
               </span>
             </label>
 
-            {caps.email && (
-              <label className={`mt-3 flex items-start gap-3 ${hasEmail ? 'cursor-pointer' : 'cursor-default'}`}>
-                <input type="checkbox" checked={email && hasEmail} disabled={!hasEmail}
-                  onChange={e => setEmail(e.target.checked)} className="mt-0.5 h-4 w-4 rounded accent-sky-600" />
-                <span>
-                  <span className={`flex items-center gap-1.5 text-sm font-medium ${hasEmail ? 'text-slate-800' : 'text-slate-400'}`}>
-                    <Mail size={13} /> Also email me
-                  </span>
-                  <span className="block text-xs text-slate-500">
-                    {hasEmail
-                      ? <>Sent to {user.email}. Every email has a one-click stop link.</>
-                      : <>Add an email address in <Link to="/preferences" onClick={onClose} className="font-medium text-sky-700 underline underline-offset-2">Preferences</Link> first.</>}
-                  </span>
-                </span>
-              </label>
-            )}
+            {caps.email && <EmailOption checked={email} onChange={setEmail} email={user?.email} onClose={onClose} />}
 
             {error && <p role="alert" className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</p>}
 
@@ -232,9 +154,7 @@ export default function WatchDialog({ trip, price = null, insights = null, sourc
         )}
 
         {done && <WatchConfirmation watch={done} offerBrowser={offerBrowser} onAnswer={answer} onClose={onClose} />}
-      </div>
-    </div>,
-    document.body,
+    </WatchDialogShell>
   )
 }
 
@@ -257,18 +177,7 @@ function WatchConfirmation({ watch, offerBrowser, onAnswer, onClose }) {
         </div>
       </div>
 
-      {offerBrowser && (
-        <div className="mt-3 rounded-xl border border-slate-200 px-4 py-3">
-          <p className="text-sm font-medium text-slate-800">Get a heads-up on this device too?</p>
-          <p className="mt-0.5 text-xs text-slate-500">While Voyager is open in another window, your browser can show a small alert when a fare drops. You can change this in your browser any time.</p>
-          <div className="mt-2.5 flex gap-2">
-            <button type="button" onClick={() => onAnswer(true)}
-              className="rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700">Allow browser alerts</button>
-            <button type="button" onClick={() => onAnswer(false)}
-              className="rounded-full px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100">Not now</button>
-          </div>
-        </div>
-      )}
+      {offerBrowser && <BrowserAlertsOffer onAnswer={onAnswer} />}
 
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Link to={`/alerts?watch=${watch.id}`} onClick={onClose}

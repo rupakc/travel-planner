@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { cityForCode } from '../utils/cityNames'
 
 const api = axios.create({
   baseURL: '/api',
@@ -216,6 +217,43 @@ export async function deleteFareWatch(id, token) {
 
 export async function checkFareWatchNow(id, token) {
   return (await api.post(`/fare-watches/${id}/check`, null, authHeaders(token))).data
+}
+
+// ── Price watches (hotel / activity / trip) ──────────────────────────────────
+// Bodies nest the kind's spec under its kind: { kind: 'hotel', hotel: {...} }
+// (see utils/priceWatch.priceWatchBody). A 422 with data.code ===
+// 'no_live_price' carries data.message, data.suggestions and data.estimate.
+
+export async function listPriceWatches(token, kind = null) {
+  const params = kind ? { kind } : undefined
+  return (await api.get('/price-watches', { ...authHeaders(token), params })).data
+}
+
+/** The city an airport code names ("LIS" → "Lisbon"), from the local airport data, or null. */
+export async function airportCity(code) {
+  const rows = (await api.get('/airports/search', { params: { q: code, limit: 5 } })).data
+  return cityForCode(code, rows)
+}
+
+/** The signed-in user's watch for this subject, or null (no live lookups). */
+export async function matchPriceWatch(body, token) {
+  return (await api.post('/price-watches/match', body, authHeaders(token))).data.watch
+}
+
+export async function createPriceWatch(body, token) {
+  return (await api.post('/price-watches', body, authHeaders(token))).data
+}
+
+export async function updatePriceWatch(id, changes, token) {
+  return (await api.patch(`/price-watches/${id}`, changes, authHeaders(token))).data
+}
+
+export async function deletePriceWatch(id, token) {
+  await api.delete(`/price-watches/${id}`, authHeaders(token))
+}
+
+export async function checkPriceWatchNow(id, token) {
+  return (await api.post(`/price-watches/${id}/check`, null, authHeaders(token))).data
 }
 
 export async function getUnreadCount(token) {

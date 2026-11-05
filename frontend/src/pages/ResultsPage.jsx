@@ -41,6 +41,10 @@ import LinkPlanBanner from '../components/LinkPlanBanner'
 import { ensureMustInclude, cityForDay } from '../utils/mustInclude'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchActivityButton from '../components/alerts/WatchActivityButton'
+import { ActivityTripContext } from '../components/alerts/activityTripContext'
+import WatchHotelButton from '../components/alerts/WatchHotelButton'
+import WatchTripButton from '../components/alerts/WatchTripButton'
 import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -852,7 +856,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   )
 }
 
-export function HotelsSection({ data, selections, onSelect, budget = null }) {
+export function HotelsSection({ data, selections, onSelect, budget = null, searchData = null }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
   const selected = selections.hotel
   const isHotelSelected = (h) => !!selected && selected.name === h.name
@@ -890,11 +894,12 @@ export function HotelsSection({ data, selections, onSelect, budget = null }) {
                   {h.amenities.length > 4 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{h.amenities.length-4}</span>}
                 </div>
               )}
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                   {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
                   {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
                   <FoundOnlineBadge item={h} />
+                  <WatchHotelButton hotel={h} searchData={searchData} source="results" />
                 </div>
                 <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
@@ -1110,6 +1115,7 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
+              <WatchActivityButton activity={a} source="results_activity" />
               {a.source && !a.from_link && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
               {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">Fits your budget</span>}
@@ -2509,7 +2515,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
   )
 }
 
-function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -2689,6 +2695,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
           <CostBreakdown selections={selections} searchData={searchData} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
+          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint savedNote source="my_plan" />
 
           {/* Selected flight */}
           {selections.flight && (
@@ -2758,6 +2765,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               {selections.hotel.booking_url && (
                 <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> View & Book</a>
               )}
+              <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchData} source="my_plan" /></div>
             </div>
           )}
 
@@ -2778,6 +2786,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                       {a.booking_url && (
                         <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> Book</a>
                       )}
+                      <div className="mt-0.5"><WatchActivityButton activity={a} source="my_plan" /></div>
                     </div>
                     <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
@@ -3096,6 +3105,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                         {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
                       </button>
                     </div>
+                    <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
                         ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
@@ -3525,6 +3535,8 @@ export default function ResultsPage() {
     () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
     [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
+  // City, travellers and itinerary day for activity "Watch price" buttons
+  const activityTrip = useMemo(() => ({ searchData, itinerary: arrangedItinerary }), [searchData, arrangedItinerary])
   // Fingerprint of the itinerary as edited now; only needed to judge an
   // existing re-check result or error.
   const currentRecheckFingerprint = useMemo(
@@ -3989,7 +4001,7 @@ export default function ResultsPage() {
       flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} departureDate={searchData.departure_date} onLayover={handleLayover} budget={flightBudget}
         fareCalendar={canShowFareCalendar && isFareCalendarOpen ? <FareCalendarStrip searchData={searchData} token={token} onReplan={handleFareReplan} /> : null} />,
       weather:        () => <WeatherSection    data={data} />,
-      hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} />,
+      hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} searchData={searchData} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} budget={activityBudget} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
       walking_tours:  () => <WalkingToursSection data={data} {...sectionProps} />,
@@ -4104,6 +4116,7 @@ export default function ResultsPage() {
   )
 
   return (
+    <ActivityTripContext.Provider value={activityTrip}>
     <div className="min-h-screen bg-gray-50">
       {/* Sticky header: top bar + badges */}
       <div className="sticky top-14 z-30">
@@ -4370,5 +4383,6 @@ export default function ResultsPage() {
         searchData={searchData}
       />
     </div>
+    </ActivityTripContext.Provider>
   )
 }

@@ -41,7 +41,7 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
 - **Validation**: Pydantic v2 models in `backend/app/schemas/` (`request.py`: `TravelSearchRequest` resolves origin/destination to airport codes)
 - **Config**: pydantic-settings with `.env` support (`backend/app/core/config.py`); every setting has a default
 - **Auth**: JWT (HS256, PyJWT, 24 h) + bcrypt. **No self-registration** — admins create users (`api/routes/admin.py`). `/search`, `/discover` and single-agent routes accept anonymous calls via `get_optional_user` (inactive users count as anonymous)
-- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 14 tables (airports, places, place_names, features, feature_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals). Optional GCS backup (`BACKUP_BUCKET`) every 60 s + on shutdown
+- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 21 tables (airports, places, place_names, features, feature_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals, notifications, fare_watches, fare_watch_history, fare_watch_quota, fare_watch_user_quota, price_watches, price_watch_history). Optional GCS backup (`BACKUP_BUCKET`) every 60 s + on shutdown
 - **Place data**: OurAirports + GeoNames files committed in `backend/app/db/data/`, versioned seed at startup; `lookup_city_iata` / `resolve_place` resolve typed places to airports locally; country names in any language (`countries.csv` `names`), suburbs yield to namesakes with their own airport (`places.satellite`), and notable islands/parks/mountains resolve via `features.csv.gz`
 - **Caching**: in-memory cachetools TTLCache (TTL 30 min, max 500 entries)
 - **Rate limits**: in-process sliding window (`core/rate_limit.py`)
@@ -77,11 +77,12 @@ backend/
     main.py             FastAPI app, lifespan (restore → seed → tables → admin → backup loop), routers, /health
     agents/             loader, base_agent, orchestrator, chat_agent, chat_itinerary_agent,
                         *_agent.py specialists, static_results.py, web_tools.py
-    api/routes/         one router per domain (27): search, chat, compare, discover, flights,
+    api/routes/         one router per domain (31): search, chat, compare, discover, flights,
                         hotels, activities, visa, sim, tips, getting_around, forex, itinerary,
                         events, walking_tours, layover, stress_test, plans, preferences,
                         recent_searches, taste, airports, nationalities, auth, admin,
-                        feedback, analytics
+                        feedback, analytics, link_import, fare_watches, price_watches,
+                        notifications
     core/               config, auth, cache, rate_limit, logging_config, places (fold_place, hints)
     db/                 database (schema, lookup_city_iata, search_airports), places_db,
                         seed_airports, seed_nationalities, airport_regions, backup,
@@ -90,7 +91,10 @@ backend/
     middleware/         analytics (request logging), request_id
     schemas/            request.py, travel.py
     services/           serp_flights, serper_places, activity/places URL resolvers,
-                        walking_tours (crawler), compare, verification, name_match
+                        walking_tours (crawler), compare, verification, name_match,
+                        fare_watch, price_watch, price_rules, hotel_prices, activity_prices,
+                        alert_email
+      price_sources/    one price-watch source per kind: hotel, activity, trip
     utils/geo.py        city coordinates
 
 frontend/src/
@@ -145,6 +149,7 @@ Tests: `cd backend && python3 -m pytest -q`; `cd frontend && npm test` (on Node 
 - **Trip comparison.** The Search page's third mode, "Compare", takes 2–3 destinations plus shared trip fields and calls `POST /api/compare/destination` once per destination in parallel (per-column loading/error + Retry); results render in `CompareTable` and "Plan this trip" runs the compared request as a normal full search. Pure helpers live in `frontend/src/utils/compare.js`.
 - **Plan from a link.** The Search page's "From a link ✨" mode sends a URL, pasted text or 1–4 screenshots to `POST /api/import/extract` (SSRF-safe fetch in `services/link_fetch.py`, `link_import` agent, place resolution and grouping in `services/link_import.py`, `import` rate bucket, default 20). The reviewed places go into a normal search as `must_include` plus `import_source`: they lead Activities, and `services/must_include.py` makes sure every one is scheduled in the itinerary (`from_link` slots, `link_extras`, `link_coverage`).
 - **Fare watch & alerts.** `/api/fare-watches` + `/api/notifications`; a lifespan scheduler (`services/fare_watch.py`, only with `SERPAPI_KEY`) re-checks leased watches within a daily SerpAPI budget, and the pure `evaluate()` holds the trigger + anti-spam rules (one alert per check; separate own-dates / nearby-dates references; repeats need a further max($15, 5 %) drop unless re-armed by a rebound; never on the baseline; 24 h cap); optional SMTP email (`services/alert_email.py`); UI in `components/alerts/`, `pages/AlertsPage.jsx`, `context/AlertsContext.jsx`.
+- **Price watch (hotels, activities, trips).** `/api/price-watches` on the same scheduler, SerpAPI budget and active limit as fare watch; each kind is a `PriceSource` in `services/price_sources/` (`hotel`, `activity`, `trip`, registered via `SOURCE_MODULES`), shared own-price rules in `services/price_rules.py` (steps: fares/hotels max($15, 5 %), activities max(1 unit, 5 %), trips max($25, 4 %)). Honesty: prices are observed or labelled estimates; estimates are frozen and never alert; no live part → `422 no_live_price`; activity prices come from Google results for GetYourGuide/Viator listings, never scraped, in the listing's currency; a trip's flight is the cheapest fare on the dates.
 - **Budget planner is client-side.** The Results page budget planner (`utils/budgetPlanner.js`) splits the budget into per-person shares and checks already-loaded results; only "Find cheaper hotels" calls the API (the existing hotel filter).
 - **Budget tiers are explicit.** Hotels must cover luxury, premium, mid-range, and budget options. Activities get a model-assigned relevance score 0.0–1.0 (no embedding model).
 - **Place data is generated.** Don't hand-edit `backend/app/db/data/*.csv*`; regenerate with `backend/scripts/build_place_data.py`. `hints.json` is hand-curated. GeoNames data is CC BY 4.0 — keep the attribution ("Contains data from GeoNames (geonames.org), CC BY 4.0").

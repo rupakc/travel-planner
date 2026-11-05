@@ -259,6 +259,16 @@ describe('NotificationBell', () => {
     expect(container.textContent).toContain('No alerts yet')
     expect(button('Mark all as read', container).disabled).toBe(true)
   })
+
+  it('speaks of prices, not just fares (hotels, activities and trips alert too)', async () => {
+    alerts.unread = 0
+    api.listNotifications.mockResolvedValue({ items: [] })
+    await render(<NotificationBell />)
+    await act(async () => container.querySelector('button[aria-expanded]').click())
+    expect(container.querySelector('h2').textContent).toBe('Price alerts')
+    expect(container.textContent).toContain('See all watched prices')
+    expect(container.textContent).not.toMatch(/fare/i)
+  })
 })
 
 describe('AlertToast', () => {
@@ -390,7 +400,7 @@ describe('AlertsPage', () => {
   it('has a helpful empty state', async () => {
     api.listFareWatches.mockResolvedValue([])
     await render(<AlertsPage />, '/alerts')
-    expect(container.textContent).toContain('No fares watched yet')
+    expect(container.textContent).toContain('Nothing watched yet')
     await act(async () => button('Search flights', container).click())
     expect(location.pathname).toBe('/')
   })
@@ -462,6 +472,6 @@ describe('AlertsPage', () => {
     await render(<AlertsPage />, '/alerts')
     expect(container.querySelector('[role="alert"]').textContent).toContain('Couldn’t load')
     await act(async () => button('Try again', container).click())
-    expect(container.textContent).toContain('No fares watched yet')
+    expect(container.textContent).toContain('Nothing watched yet')
   })
 })

@@ -18,8 +18,8 @@ from ...core.rate_limit import rate_limit
 from ...db import fare_watch_db
 from ...db.plans_db import get_plan
 from ...schemas.request import TravelSearchRequest
-from ...services import alert_email, fare_watch
-from ...services.serp_flights import _google_flights_url
+from ...services import alert_email, fare_watch, price_watch
+from ...services.serp_flights import google_flights_url
 
 router = APIRouter()
 
@@ -69,7 +69,7 @@ def serialize(watch: dict, **extra) -> dict:
     out["problem"] = fare_watch.friendly_problem(watch.get("last_error"))
     out.update(fare_watch.already_good(watch))
     out["history"] = fare_watch_db.get_history(watch["id"])
-    out["booking_url"] = _google_flights_url(
+    out["booking_url"] = google_flights_url(
         watch["origin_code"],
         watch["destination_code"],
         watch["departure_date"],
@@ -92,18 +92,13 @@ def _require_live_fares() -> None:
 
 
 def _limit_reached(user: dict) -> bool:
-    return fare_watch_db.count_active(user["id"]) >= (
-        settings.fare_watch_max_active_per_user
-    )
+    """The active-watch limit counts fare and price watches together."""
+    return price_watch.limit_reached(user["id"])
 
 
 def _limit_error() -> HTTPException:
-    n = settings.fare_watch_max_active_per_user
-    return HTTPException(
-        status_code=409,
-        detail=f"You're already watching {n} fares — pause or remove one "
-        "to watch another.",
-    )
+    # The limit counts fare and price watches together
+    return HTTPException(status_code=409, detail=price_watch.limit_message())
 
 
 def _check_email_allowed(user: dict) -> None:
@@ -194,10 +189,10 @@ def unsubscribe_confirm(token: str = Query("")):
     prefetchers follow every GET, so the change itself needs the POST."""
     watch_id, watch = _unsubscribe_target(token)
     if watch_id is None:
-        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
+        return HTMLResponse(html_page(*_BAD_LINK), status_code=400)
     if watch is None:
         return HTMLResponse(
-            _page("Nothing to stop", "That fare watch no longer exists.")
+            html_page("Nothing to stop", "That fare watch no longer exists.")
         )
     route = fare_watch.route_label(watch)
     action = html.escape(f"/api/fare-watches/unsubscribe?token={token}")
@@ -208,7 +203,7 @@ def unsubscribe_confirm(token: str = Query("")):
         "cursor:pointer'>Stop emails for this fare</button></form>"
     )
     return HTMLResponse(
-        _page(
+        html_page(
             f"Stop emails about {route}?",
             "We'll keep watching this fare in the app; only the emails stop. "
             "You can turn them back on any time.",
@@ -224,15 +219,15 @@ def unsubscribe(token: str = Query("")):
     ("List-Unsubscribe=One-Click")."""
     watch_id, watch = _unsubscribe_target(token)
     if watch_id is None:
-        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
+        return HTMLResponse(html_page(*_BAD_LINK), status_code=400)
     if watch is None:
         return HTMLResponse(
-            _page("Nothing to stop", "That fare watch no longer exists.")
+            html_page("Nothing to stop", "That fare watch no longer exists.")
         )
     fare_watch_db.update_watch(watch_id, email_enabled=False)
     route = fare_watch.route_label(watch)
     return HTMLResponse(
-        _page(
+        html_page(
             "Done — we won't email you about this fare",
             f"Emails for {route} are off. We'll keep watching it in the app, "
             "where you can turn emails back on any time.",
@@ -240,7 +235,7 @@ def unsubscribe(token: str = Query("")):
     )
 
 
-def _page(title: str, body: str, form: str = "") -> str:
+def html_page(title: str, body: str, form: str = "") -> str:
     link = html.escape(settings.app_base_url.rstrip("/") + "/alerts")
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
