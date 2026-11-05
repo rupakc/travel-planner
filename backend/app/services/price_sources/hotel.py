@@ -26,6 +26,7 @@ import re
 import unicodedata
 from datetime import date
 
+from ...db.database import airport_city
 from .. import fare_watch, hotel_prices
 from ..fare_watch import date_range
 from ..hotel_prices import HotelOffer, HotelPrice
@@ -88,7 +89,8 @@ def _clean(spec: dict) -> dict:
     if not isinstance(spec, dict):
         raise InvalidSpec("Tell us which hotel to watch.")
     name = _text(spec, "name", MAX_NAME, "name")
-    city = _text(spec, "city", MAX_CITY, "city")
+    # the search form stores an airport code ("LIS"): watch the city
+    city = airport_city(_text(spec, "city", MAX_CITY, "city"))
     ci = _date(spec, "check_in", "check-in")
     co = _date(spec, "check_out", "check-out")
     nights = (co - ci).days

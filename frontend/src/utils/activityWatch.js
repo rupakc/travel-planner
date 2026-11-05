@@ -53,12 +53,15 @@ export function activityDate(itinerary, name) {
 /**
  * The spec to watch an activity card's price: { name, city, travellers,
  * date?, estimate_price? }, or null when the card can't be watched (no
- * name / city). `trip` is { searchData, itinerary } from the page. A date
+ * name / city — on a multi-city trip, an activity without its own city).
+ * `trip` is { searchData, itinerary } from the page. A date
  * that isn't after tomorrow is left out (the watch then runs 180 days).
  */
 export function activitySpec(activity, trip = null, now = new Date()) {
   const name = String(activity?.name || '').trim()
-  const destination = String(trip?.searchData?.destination || '').split(',')[0]
+  const sd = trip?.searchData
+  // A multi-city activity is watched in its own leg's city, never guessed
+  const destination = sd?.destinations?.length > 1 ? '' : String(sd?.destination || '').split(',')[0]
   const city = String(activity?.city || destination).trim()
   if (!name || !city) return null
   const spec = { name, city, travellers: travellersFrom(trip?.searchData) }

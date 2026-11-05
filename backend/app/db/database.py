@@ -240,6 +240,25 @@ def lookup_iata(code: str) -> dict | None:
     return _web_search_iata(code)
 
 
+def airport_city(text: str) -> str:
+    """The city an ALL-CAPS airport code names, from the local airport data
+    ("LIS" → "Lisbon"); any other text — a city name, a country alias such
+    as "USA", an unknown code — comes back unchanged. Never searches the
+    web, so it is safe on every price-watch path."""
+    code = text.strip() if isinstance(text, str) else ""
+    if not code_first(code):
+        return text
+    try:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT city FROM airports WHERE iata_code = ?", (code,)
+            ).fetchone()
+        city = row["city"] if row else (_replaced_code_info(code) or {}).get("city")
+    except sqlite3.Error:
+        return text
+    return city or text
+
+
 def _replaced_code_info(code: str) -> dict | None:
     """A retired code the old curated list used ("PNH", now KTI): the city
     and country of its replacement, so it never needs a web search."""

@@ -7,6 +7,7 @@ import { computePlanCost } from '../../utils/planHelpers'
 import { formatDateRange } from '../../utils/fareWatch'
 import { priceWatchLink } from '../../utils/priceWatch'
 import { isWatchablePlan, tripPreviewParts, tripWatchingLabel } from '../../utils/tripWatch'
+import { useAirportCities } from '../../hooks/useAirportCities'
 import PriceWatchDialog from './PriceWatchDialog'
 
 const STYLES = {
@@ -54,10 +55,12 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
   const style = STYLES[variant] || STYLES.inline
   const watching = watch && watch.status !== 'expired'
   const sd = plan.search_data || {}
+  const name = useAirportCities([sd.destination])
+  const city = String(sd.destination || '').split(',')[0]
 
   const preview = {
     title: plan.name,
-    subtitle: [String(sd.destination || '').split(',')[0], sd.departure_date && formatDateRange(sd.departure_date, sd.return_date)]
+    subtitle: [name ? name(city) : city, sd.departure_date && formatDateRange(sd.departure_date, sd.return_date)]
       .filter(Boolean).join(' · '),
     parts: tripPreviewParts(plan.selections, sd),
     planTotal: computePlanCost(plan.selections, sd) || null,

@@ -30,6 +30,7 @@ from dataclasses import replace
 from datetime import date, timedelta
 
 from ...db import price_watch_db
+from ...db.database import airport_city
 from .. import activity_prices as ap
 from .. import fare_watch, price_rules
 from ..activity_prices import ActivityListing
@@ -77,7 +78,10 @@ def parse_spec(spec: dict) -> dict:
         raise InvalidSpec("Tell us which activity to watch.")
     out = {
         "name": _text(spec, "name", MAX_NAME, "Tell us which activity to watch."),
-        "city": _text(spec, "city", MAX_CITY, "Tell us which city it's in."),
+        # the search form stores an airport code ("LIS"): watch the city
+        "city": airport_city(
+            _text(spec, "city", MAX_CITY, "Tell us which city it's in.")
+        ),
     }
 
     travellers = spec.get("travellers", 1)

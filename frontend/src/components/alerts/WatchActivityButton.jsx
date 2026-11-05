@@ -7,6 +7,8 @@ import { loginPathFor } from '../../utils/returnPath'
 import { priceWatchLink } from '../../utils/priceWatch'
 import { activitySpec, activityWatchingLabel, ownWatch } from '../../utils/activityWatch'
 import { ActivityTripContext } from './activityTripContext'
+import { useAirportCities } from '../../hooks/useAirportCities'
+import { withCityNames } from '../../utils/cityNames'
 import PriceWatchDialog from './PriceWatchDialog'
 
 const STYLES = {
@@ -35,7 +37,13 @@ export default function WatchActivityButton({ activity, variant = 'inline', sour
   const { token } = useOptionalAuth()
   const { caps } = useAlerts()
   const trip = useContext(ActivityTripContext)
-  const spec = useMemo(() => activitySpec(activity, trip), [activity, trip])
+  // the search stores airport codes ("LIS"): watch the city ("Lisbon")
+  const sd = trip?.searchData
+  const name = useAirportCities([sd?.destination, ...(sd?.destinations || []), activity?.city])
+  const spec = useMemo(() => name && activitySpec(
+    activity?.city ? { ...activity, city: name(activity.city) } : activity,
+    trip && { ...trip, searchData: withCityNames(trip.searchData, name) },
+  ), [activity, trip, name])
   if (!caps.fareWatch || !spec) return null
   const style = STYLES[variant] || STYLES.inline
   if (!token) return <SignInToWatch style={style} />

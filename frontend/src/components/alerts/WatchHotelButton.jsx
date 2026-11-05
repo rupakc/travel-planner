@@ -6,6 +6,8 @@ import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { hotelPreview, hotelWatchSpec } from '../../utils/hotelWatch'
 import { formatPrice, priceWatchLink } from '../../utils/priceWatch'
 import { loginPathFor } from '../../utils/returnPath'
+import { useAirportCities } from '../../hooks/useAirportCities'
+import { withCityNames } from '../../utils/cityNames'
 import PriceWatchDialog from './PriceWatchDialog'
 
 const STYLES = {
@@ -39,7 +41,11 @@ export const hotelWatchingLabel = (w) => {
 export default function WatchHotelButton({ hotel, searchData, variant = 'inline', source = 'results' }) {
   const { token } = useOptionalAuth()
   const { caps } = useAlerts()
-  const spec = useMemo(() => hotelWatchSpec(hotel, searchData), [hotel, searchData])
+  // the search stores airport codes ("LIS"): watch the city ("Lisbon")
+  const name = useAirportCities([searchData?.destination, ...(searchData?.destinations || []), hotel?.city])
+  const spec = useMemo(() => name && hotelWatchSpec(
+    hotel?.city ? { ...hotel, city: name(hotel.city) } : hotel, withCityNames(searchData, name),
+  ), [hotel, searchData, name])
   if (!caps.fareWatch || !spec) return null
   if (!token) return <SignInToWatch hotel={hotel} variant={variant} />
   return <ActiveHotelButton hotel={hotel} spec={spec} variant={variant} source={source} />

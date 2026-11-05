@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { cityForCode } from '../utils/cityNames'
 
 const api = axios.create({
   baseURL: '/api',
@@ -226,6 +227,12 @@ export async function checkFareWatchNow(id, token) {
 export async function listPriceWatches(token, kind = null) {
   const params = kind ? { kind } : undefined
   return (await api.get('/price-watches', { ...authHeaders(token), params })).data
+}
+
+/** The city an airport code names ("LIS" → "Lisbon"), from the local airport data, or null. */
+export async function airportCity(code) {
+  const rows = (await api.get('/airports/search', { params: { q: code, limit: 5 } })).data
+  return cityForCode(code, rows)
 }
 
 /** The signed-in user's watch for this subject, or null (no live lookups). */

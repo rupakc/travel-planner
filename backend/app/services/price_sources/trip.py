@@ -55,6 +55,7 @@ from datetime import UTC, date, datetime
 
 from ...core.cache import get_cache
 from ...db import plans_db
+from ...db.database import airport_city
 from ...schemas.request import TravelSearchRequest
 from .. import activity_prices, fare_watch, hotel_prices, price_rules, serp_flights
 from ..activity_prices import ActivityListing
@@ -123,7 +124,9 @@ def _plan_id(spec: dict) -> int:
 
 
 def _city(destination) -> str:
-    return str(destination or "").split(",")[0].strip()
+    """ "Lisbon" for "Lisbon, Portugal" — and for "LIS", the airport code the
+    search form stores (local airport data, no network)."""
+    return airport_city(str(destination or "").split(",")[0].strip())
 
 
 def _travellers(sd: dict) -> int:
@@ -389,9 +392,12 @@ def _drafts(plan: dict, ctx: dict) -> list[dict]:
             unit * n,
             detail=_per_person_detail(unit, n, live=False) if unit else None,
         )
-        if name and city and tried < MAX_LIVE_ACTIVITIES:
+        # each activity's own leg city; on a multi-city trip one without a
+        # city is never guessed
+        where = _city(act.get("city")) or ("" if ctx["multi_city"] else city)
+        if name and where and tried < MAX_LIVE_ACTIVITIES:
             tried += 1
-            d["_try"] = {"name": name, "city": city}
+            d["_try"] = {"name": name, "city": where}
         out.append(d)
 
     sim = sel.get("sim") if isinstance(sel.get("sim"), dict) else None
