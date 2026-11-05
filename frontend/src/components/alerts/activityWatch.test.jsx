@@ -75,6 +75,10 @@ const render = async (el, path = '/results') => {
   ))
 }
 const button = (text, scope = document.body) => [...scope.querySelectorAll('button')].find(b => b.textContent.includes(text))
+const setValue = (input, value) => {
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+}
 
 beforeEach(() => {
   container = document.createElement('div')
@@ -148,6 +152,48 @@ describe('WatchActivityButton', () => {
     expect(ownWatch(WATCH, { spec: {}, viaSuggestion: false })).toBe(WATCH)
     expect(ownWatch(WATCH)).toBe(WATCH) // older dialogs pass no details
     expect(ownWatch(WATCH, { spec: {}, viaSuggestion: true })).toBe(null)
+  })
+})
+
+describe('target currency (fix round 1)', () => {
+  it('asks again in the listing currency when it differs, with the same spec', async () => {
+    api.createPriceWatch
+      .mockRejectedValueOnce({ response: { status: 422, data: {
+        code: 'target_currency_mismatch', currency: 'EUR', price: 61, unit_price: 30.5,
+        message: 'This is priced in EUR (now €61). Enter your target in EUR.', detail: 'x',
+      } } })
+      .mockResolvedValueOnce({ ...WATCH, currency: 'EUR', already_watching: false })
+    await render(<WatchActivityButton activity={ACTIVITY} />)
+    await act(async () => button('Watch price').click())
+    await act(async () => document.querySelector('input[value="below_target"]').click())
+    const input = () => document.querySelector('input[aria-label^="Target price in"]')
+    expect(input().getAttribute('aria-label')).toBe('Target price in US dollars')
+    setValue(input(), '50')
+    await act(async () => button('Start watching').click())
+    expect(api.createPriceWatch.mock.calls[0][0]).toMatchObject({ target_price: 50, target_currency: 'USD' })
+    expect(input().getAttribute('aria-label')).toBe('Target price in EUR')
+    expect(input().value).toBe('')
+    expect(input().getAttribute('placeholder')).toBeTruthy()
+    expect(document.body.textContent).toContain('priced in EUR')
+    setValue(input(), '55')
+    await act(async () => button('Start watching').click())
+    const second = api.createPriceWatch.mock.calls[1][0]
+    expect(second).toMatchObject({ target_price: 55, target_currency: 'EUR' })
+    expect(second.activity).toEqual(api.createPriceWatch.mock.calls[0][0].activity)
+    expect(document.querySelector('[role="dialog"]').textContent).toContain('Watching this activity')
+  })
+
+  it('labels per-person estimates and suggestion prices', async () => {
+    api.createPriceWatch.mockRejectedValueOnce({ response: { status: 422, data: {
+      code: 'no_live_price', message: 'none', estimate: { price: 30, currency: 'USD', label: 'per person', source: 'ai_estimate' },
+      suggestions: [{ title: 'Jerónimos ticket', price: 22.87, currency: 'USD', price_label: 'per person', spec: { name: 'x' } }],
+    } } })
+    await render(<WatchActivityButton activity={ACTIVITY} />)
+    await act(async () => button('Watch price').click())
+    await act(async () => button('Start watching').click())
+    const alert = document.querySelector('[role="alert"]').textContent
+    expect(alert).toContain('$30.00 per person')
+    expect(alert).toContain('$22.87per person')
   })
 })
 

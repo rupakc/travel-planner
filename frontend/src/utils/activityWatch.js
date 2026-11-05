@@ -28,9 +28,12 @@ export function travellersFrom(sd) {
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
 
-const localToday = (now) => {
+/** Local tomorrow (ISO). A date after it is in the future in every
+ * timezone, so the server (which counts in UTC) accepts it too. */
+const localTomorrow = (now) => {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
   const pad = (v) => String(v).padStart(2, '0')
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 /** The itinerary day an activity is scheduled on (ISO), or null. */
@@ -51,7 +54,7 @@ export function activityDate(itinerary, name) {
  * The spec to watch an activity card's price: { name, city, travellers,
  * date?, estimate_price? }, or null when the card can't be watched (no
  * name / city). `trip` is { searchData, itinerary } from the page. A date
- * that isn't in the future is left out (the watch then runs 180 days).
+ * that isn't after tomorrow is left out (the watch then runs 180 days).
  */
 export function activitySpec(activity, trip = null, now = new Date()) {
   const name = String(activity?.name || '').trim()
@@ -60,7 +63,7 @@ export function activitySpec(activity, trip = null, now = new Date()) {
   if (!name || !city) return null
   const spec = { name, city, travellers: travellersFrom(trip?.searchData) }
   const date = activityDate(trip?.itinerary, name)
-  if (date && date > localToday(now)) spec.date = date
+  if (date && date > localTomorrow(now)) spec.date = date
   const estimate = Number(activity?.price_usd)
   if (Number.isFinite(estimate) && estimate > 0) spec.estimate_price = estimate
   return spec
@@ -78,10 +81,27 @@ export function perPerson(w) {
   return total != null ? total / n : null
 }
 
-/** "Watching · from $11.63 pp" (or paused / no price yet). */
 /** The watch to mark as this card's own after the dialog: not a picked suggestion. */
 export const ownWatch = (watch, meta) => (meta?.viaSuggestion ? null : watch)
 
+/**
+ * The trip a chat message's activities belong to: the session context it
+ * streamed, else its planning destination or trip map, else `fallback`
+ * (the page's trip). `{ searchData, itinerary }` or `fallback`.
+ */
+export function messageTrip(message, fallback = null) {
+  const ctx = message?.tripContext
+  if (ctx?.destination) return { searchData: ctx, itinerary: null }
+  const destination = message?.planDestination || message?.tripMap?.cities?.[0]?.city
+  if (!destination) return fallback
+  const travellers = message?.tripMap?.num_travelers ?? fallback?.searchData?.num_travelers
+  return {
+    searchData: travellers != null ? { destination, num_travelers: travellers } : { destination },
+    itinerary: null,
+  }
+}
+
+/** "Watching · from $11.63 pp" (or paused / no price yet). */
 export function activityWatchingLabel(w) {
   if (w?.status === 'paused') return 'Watch paused'
   const unit = perPerson(w)

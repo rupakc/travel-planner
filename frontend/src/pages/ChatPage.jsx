@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -17,6 +17,7 @@ import PlanViewModal from '../components/PlanViewModal'
 import WatchFareButton from '../components/alerts/WatchFareButton'
 import WatchActivityButton from '../components/alerts/WatchActivityButton'
 import { ActivityTripContext } from '../components/alerts/activityTripContext'
+import { messageTrip } from '../utils/activityWatch'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
@@ -200,7 +201,7 @@ function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggl
           <div key={i} className={`flex items-center justify-between border rounded-lg p-2 text-xs ${isSelected ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200'}`}>
             <div className="flex-1 min-w-0 mr-2">
               <p className="font-medium text-gray-900 truncate">{a.name}</p>
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-500">
                 {a.price_usd != null && <span>${a.price_usd}</span>}
                 {a.duration_hours && <span>{a.duration_hours}h</span>}
                 {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> Book</a>}
@@ -1144,6 +1145,7 @@ export default function ChatPage() {
         planningDone: m.planningDone || false, error: m.error || false,
         comprehensiveItinerary: m.comprehensiveItinerary || null,
         tripMap: m.tripMap || null,
+        planDestination: m.planDestination || null, tripContext: m.tripContext || null,
       })),
       sessionContext,
       lastSearchContext,
@@ -1168,7 +1170,10 @@ export default function ChatPage() {
 
   const planTrip = loadedPlanSearchData || lastSearchContext
   // City and travellers for activity "Watch price" buttons (chat has no dated itinerary here)
-  const activityTrip = useMemo(() => ({ searchData: planTrip, itinerary: null }), [planTrip])
+  const activityTrip = useMemo(
+    () => ({ searchData: planTrip || (sessionContext?.destination ? sessionContext : null), itinerary: null }),
+    [planTrip, sessionContext],
+  )
 
   const handleLoadPlan = (plan) => {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
@@ -1286,7 +1291,7 @@ export default function ChatPage() {
           isPlanning = true
           setMessages(prev => {
             const updated = [...prev]
-            updated[assistantIdx] = { ...updated[assistantIdx], planning: true }
+            updated[assistantIdx] = { ...updated[assistantIdx], planning: true, planDestination: event.destination || null }
             return updated
           })
         } else if (event.type === 'itinerary_generating') {
@@ -1352,6 +1357,12 @@ export default function ChatPage() {
           if (planActionsReceived) setIsPlanOpen(true)
         } else if (event.type === 'session_context_update') {
           setSessionContext(event.context)
+          // The trip this message's sections belong to (activity watch buttons)
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], tripContext: event.context || null }
+            return updated
+          })
         } else if (event.type === 'search_context') {
           setLastSearchContext(event.params)
         } else if (event.type === 'suggestions') {
@@ -2122,6 +2133,13 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
 
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
+/** Activity rows take their trip (city, travellers) from their own message. */
+function MessageTrip({ message, children }) {
+  const pageTrip = useContext(ActivityTripContext)
+  const value = useMemo(() => messageTrip(message, pageTrip), [message, pageTrip])
+  return <ActivityTripContext.Provider value={value}>{children}</ActivityTripContext.Provider>
+}
+
 function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
@@ -2153,6 +2171,7 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
             )}
             {/* Fallback: old section cards (for partial/non-itinerary planning responses) */}
             {!message.tripMap && Object.keys(message.sections || {}).length > 0 && (
+              <MessageTrip message={message}>
               <PlanningMessage
                 sections={message.sections}
                 sectionStatuses={message.sectionStatuses || {}}
@@ -2160,6 +2179,7 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
                 onSelect={onSelect}
                 itineraryGenerating={message.itineraryGenerating}
               />
+              </MessageTrip>
             )}
             {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (
               <div className="flex items-center gap-2 text-sm text-teal-700 mb-2">

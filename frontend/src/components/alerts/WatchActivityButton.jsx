@@ -16,10 +16,10 @@ const STYLES = {
     on: 'inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
     size: 11,
   },
-  // compact rows (chat)
+  // compact rows (chat): small text, but a comfortable hit area
   compact: {
-    idle: 'inline-flex items-center gap-0.5 text-[10px] font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
-    on: 'inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
+    idle: 'inline-flex min-h-6 items-center gap-0.5 px-1 py-1 text-[10px] font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
+    on: 'inline-flex min-h-6 items-center gap-0.5 px-1 py-1 text-[10px] font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded',
     size: 9,
   },
 }

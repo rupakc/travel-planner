@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
-  activityDate, activitySpec, activityWatchingLabel, formatPrice, perPerson, providerName,
+  activityDate, activitySpec, activityWatchingLabel, formatPrice, messageTrip, perPerson, providerName,
   titleDiffers, travellersFrom,
 } from './activityWatch'
 
@@ -80,5 +80,35 @@ describe('watch labels', () => {
     expect(providerName('viator')).toBe('Viator')
     expect(titleDiffers('Belem walking tour', 'Small Group Walking Tour of Belém')).toBe(true)
     expect(titleDiffers('Small group walking tour of Belem', 'Small Group Walking Tour of Belém')).toBe(false)
+  })
+})
+
+describe('fix round 1', () => {
+  it('sends a date only when it is after tomorrow locally (the server counts in UTC)', () => {
+    const it = (date) => ({ days: [{ date, slots: [{ activity: 'Fado night' }] }] })
+    const trip = (date) => ({ searchData: { destination: 'Lisbon' }, itinerary: it(date) })
+    expect(activitySpec({ name: 'Fado night' }, trip('2026-11-06'), NOW)).not.toHaveProperty('date')
+    expect(activitySpec({ name: 'Fado night' }, trip('2026-11-07'), NOW).date).toBe('2026-11-07')
+  })
+
+  describe('messageTrip: a chat message’s own trip', () => {
+    const fallback = { searchData: { destination: 'Rome', num_travelers: 4 }, itinerary: null }
+    it('uses the session context the message streamed', () => {
+      const m = { tripContext: { destination: 'Lisbon', num_travelers: 2 } }
+      expect(messageTrip(m, fallback)).toEqual({ searchData: { destination: 'Lisbon', num_travelers: 2 }, itinerary: null })
+    })
+    it('else its planning destination or trip map', () => {
+      expect(messageTrip({ planDestination: 'Porto' }, null).searchData.destination).toBe('Porto')
+      const m = { tripMap: { cities: [{ city: 'Kyoto' }], num_travelers: 3 } }
+      expect(messageTrip(m, null).searchData).toEqual({ destination: 'Kyoto', num_travelers: 3 })
+    })
+    it('falls back to the page’s trip, then to nothing', () => {
+      expect(messageTrip({}, fallback)).toBe(fallback)
+      expect(messageTrip({}, null)).toBe(null)
+    })
+    it('makes chat activity rows watchable without a page-level destination', () => {
+      const trip = messageTrip({ planDestination: 'Lisbon, Portugal' }, { searchData: null, itinerary: null })
+      expect(activitySpec({ name: 'Tram 28 ride' }, trip, NOW)).toEqual({ name: 'Tram 28 ride', city: 'Lisbon', travellers: 1 })
+    })
   })
 })

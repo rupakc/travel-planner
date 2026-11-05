@@ -20,12 +20,18 @@ function noLivePrice(err) {
   return err?.response?.status === 422 && data?.code === 'no_live_price' ? data : null
 }
 
+/** The API's 422 "your target is in another currency" answer, or null. */
+function currencyMismatch(err) {
+  const data = err?.response?.data
+  return err?.response?.status === 422 && data?.code === 'target_currency_mismatch' ? data : null
+}
+
 function Suggestions({ result, busy, onPick }) {
   return (
     <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3" role="alert">
       <p className="text-sm font-medium text-amber-900">{result.message}</p>
       {result.estimate?.price != null && (
-        <p className="mt-1 text-xs text-amber-800">Our AI estimate was {formatPrice(result.estimate.price, result.estimate.currency)} — an estimate, not a live price, so we can’t watch it.</p>
+        <p className="mt-1 text-xs text-amber-800">Our AI estimate was {formatPrice(result.estimate.price, result.estimate.currency)}{result.estimate.label ? ` ${result.estimate.label}` : ''} — an estimate, not a live price, so we can’t watch it.</p>
       )}
       {result.suggestions?.length > 0 && (
         <>
@@ -38,7 +44,12 @@ function Suggestions({ result, busy, onPick }) {
                   {s.subtitle && <span className="block text-xs text-slate-500">{s.subtitle}</span>}
                 </span>
                 <span className="flex items-center gap-2">
-                  {s.price != null && <span className="text-sm font-semibold tabular-nums text-slate-900">{formatPrice(s.price, s.currency)}</span>}
+                  {s.price != null && (
+                    <span>
+                      <span className="text-sm font-semibold tabular-nums text-slate-900">{formatPrice(s.price, s.currency)}</span>
+                      {s.price_label && <span className="ml-1 text-xs text-slate-500">{s.price_label}</span>}
+                    </span>
+                  )}
                   <button type="button" disabled={busy} onClick={() => onPick(s)}
                     className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60">
                     Watch this instead
@@ -65,6 +76,11 @@ function Suggestions({ result, busy, onPick }) {
  * says which spec was watched, so a caller marks its own subject as watched
  * only when `viaSuggestion` is false. The done state shows the created
  * watch's own title and subtitle, and bodies always get the spec used.
+ *
+ * A target is sent with the currency it was typed in; when the live price
+ * turns out to be in another currency the server creates nothing (422
+ * `target_currency_mismatch`) and the dialog asks for the target again in
+ * that currency, then resends the same spec (a cached look: no live call).
  */
 export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel = null, source = 'results', onClose, onWatched }) {
   const { token, user } = useAuth()
@@ -80,9 +96,11 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
   const [noMatch, setNoMatch] = useState(null)
   const [done, setDone] = useState(null)
   const [usedSpec, setUsedSpec] = useState(spec)
+  const [currencyAsk, setCurrencyAsk] = useState(null) // { currency, price, message }
+  const [retrySpec, setRetrySpec] = useState(null)
   const [offerBrowser, setOfferBrowser] = useState(false)
   const noun = kindNoun(kind)
-  const currency = preview.currency || 'USD'
+  const currency = currencyAsk?.currency || preview.currency || 'USD'
   const targetCheck = mode === 'below_target' ? checkPriceTarget(target) : { error: null }
   const shownTargetError = targetTouched ? targetCheck.error : null
 
@@ -94,6 +112,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
       const watch = await createPriceWatch(priceWatchBody(kind, watchSpec, {
         alert_mode: mode,
         target_price: mode === 'below_target' ? targetCheck.value : null,
+        ...(mode === 'below_target' ? { target_currency: currency } : {}),
         email_enabled: email && !!user?.email && caps.email,
       }), token)
       const viaSuggestion = watchSpec !== spec
@@ -106,8 +125,15 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
       onWatched?.(watch, { spec: watchSpec, viaSuggestion })
     } catch (err) {
       const nlp = noLivePrice(err)
+      const otherCurrency = currencyMismatch(err)
       if (nlp) setNoMatch(nlp)
-      else setError(axiosErrorDetail(err).detail || `Couldn’t start watching this ${noun}. Try again in a moment.`)
+      else if (otherCurrency) {
+        setCurrencyAsk(otherCurrency)
+        setRetrySpec(watchSpec)
+        setNoMatch(null)
+        setTarget('')
+        setTargetTouched(false)
+      } else setError(axiosErrorDetail(err).detail || `Couldn’t start watching this ${noun}. Try again in a moment.`)
     } finally {
       setSaving(false)
     }
@@ -121,7 +147,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
   return (
     <WatchDialogShell title={title} subtitle={subtitle} onClose={onClose}>
       {!done && (
-        <form onSubmit={e => { e.preventDefault(); if (!noMatch) create(spec) }} className="px-5 pb-5">
+        <form onSubmit={e => { e.preventDefault(); if (!noMatch) create(retrySpec || spec) }} className="px-5 pb-5">
           <Body kind={kind} spec={usedSpec} preview={preview} watch={null} unitLabel={unitLabel} />
 
           <fieldset className="mt-4 space-y-2">
@@ -137,12 +163,13 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
                   <span className="flex items-center gap-2">
                     <span className="text-sm text-slate-500">{currencySymbol(currency)}</span>
                     <input type="text" inputMode="numeric" aria-label={`Target price in ${currencyLabel(currency)}`} value={target}
+                      placeholder={currencyAsk ? String(defaultTarget(null, currencyAsk.price)) : undefined}
                       onChange={e => { setTarget(e.target.value); setTargetTouched(true) }} aria-invalid={!!shownTargetError}
                       aria-describedby={`${fieldId}-target`}
                       className="w-28 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm tabular-nums focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200" />
                   </span>
-                  <span id={`${fieldId}-target`} className={`mt-1 block text-xs ${shownTargetError ? 'text-red-600' : 'text-slate-500'}`}>
-                    {shownTargetError || `The total price, in ${currencyLabel(currency)}.`}
+                  <span id={`${fieldId}-target`} aria-live="polite" className={`mt-1 block text-xs ${shownTargetError ? 'text-red-600' : 'text-slate-500'}`}>
+                    {shownTargetError || currencyAsk?.message || `The total price, in ${currencyLabel(currency)}.`}
                   </span>
                 </span>
               )}
