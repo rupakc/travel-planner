@@ -20,6 +20,20 @@ export const ALERT_KINDS = {
 
 export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
 
+/**
+ * Icon, colour and action for one notification. The shared notices
+ * (watch_expired / watch_error) read per watch kind; fare notices keep
+ * kindOf's wording.
+ */
+export function alertKindFor(n) {
+  const base = kindOf(n?.kind)
+  if (n?.data?.watch_kind !== 'hotel') return base
+  if (n.kind === 'watch_expired') return { ...base, action: 'See hotel' }
+  // Sold out for the dates: there is nothing to retry, only the hotel to look at
+  if (n.kind === 'watch_error' && n.data.reason === 'unavailable') return { ...base, action: 'See hotel' }
+  return base
+}
+
 /** Keeps a price delta such as "(−$70)" on one line when a title wraps. */
 export function keepDeltaTogether(text) {
   return typeof text === 'string' ? text.replace(/([−-])\$/g, '$1⁠$') : text
