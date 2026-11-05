@@ -183,6 +183,27 @@ describe('target currency (fix round 1)', () => {
     expect(document.querySelector('[role="dialog"]').textContent).toContain('Watching this activity')
   })
 
+  it('after a currency mismatch on a picked suggestion, the body shows the pick', async () => {
+    const PICK = 'https://www.getyourguide.com/lisbon-l42/jeronimos-t1374987'
+    api.createPriceWatch
+      .mockRejectedValueOnce({ response: { status: 422, data: {
+        code: 'no_live_price', message: 'none', suggestions: [{ title: 'Jerónimos ticket', price: 22.87, currency: 'EUR',
+          link: PICK, spec: { name: 'Belém walking tour', city: 'Lisbon', travellers: 2, listing_url: PICK } }],
+      } } })
+      .mockRejectedValueOnce({ response: { status: 422, data: {
+        code: 'target_currency_mismatch', currency: 'EUR', price: 45.74, unit_price: 22.87, message: 'This is priced in EUR.',
+      } } })
+    await render(<WatchActivityButton activity={ACTIVITY} />)
+    await act(async () => button('Watch price').click())
+    await act(async () => document.querySelector('input[value="below_target"]').click())
+    setValue(document.querySelector('input[aria-label^="Target price in"]'), '50')
+    await act(async () => button('Start watching').click())
+    await act(async () => button('Watch this instead').click())
+    const dialog = document.querySelector('[role="dialog"]')
+    expect(dialog.textContent).toContain('the listing you picked')
+    expect(dialog.querySelector(`a[href="${PICK}"]`)).not.toBeNull()
+  })
+
   it('labels per-person estimates and suggestion prices', async () => {
     api.createPriceWatch.mockRejectedValueOnce({ response: { status: 422, data: {
       code: 'no_live_price', message: 'none', estimate: { price: 30, currency: 'USD', label: 'per person', source: 'ai_estimate' },

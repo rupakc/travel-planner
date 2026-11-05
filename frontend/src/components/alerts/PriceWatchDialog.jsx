@@ -130,6 +130,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
       else if (otherCurrency) {
         setCurrencyAsk(otherCurrency)
         setRetrySpec(watchSpec)
+        setUsedSpec(watchSpec) // the body follows a picked suggestion
         setNoMatch(null)
         setTarget('')
         setTargetTouched(false)

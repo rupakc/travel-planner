@@ -26,6 +26,19 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _no_leftover_serp_client():
+    """A test that makes the shared SerpAPI client (``serp_flights._client``)
+    must not hand it to later tests: it is bound to that test's event loop,
+    and closing it from another loop (the app's shutdown) fails. Dropped
+    after each test, so results never depend on test order."""
+    from app.services import serp_flights
+
+    before = serp_flights._client
+    yield
+    serp_flights._client = before
+
+
 @pytest.fixture(scope="session", autouse=True)
 def place_data():
     """Seed the place data once, before any test: lookups (airports, static

@@ -103,6 +103,33 @@ GENERIC_TOUR_WORDS = frozenset(
     }
 )
 GENERIC_TOUR_WEIGHT = 0.25
+# What the traveller does there, not what is visited: dropped from a name
+# before matching ("Explore the Louvre" is about the Louvre).
+ACTIVITY_VERBS = frozenset(
+    {
+        "visit",
+        "visits",
+        "visiting",
+        "explore",
+        "exploring",
+        "discover",
+        "discovering",
+        "see",
+        "seeing",
+        "hike",
+        "hiking",
+        "ride",
+        "cruise",
+        "sailing",
+        "enjoy",
+    }
+)
+# A Title-Case name ("Arashiyama Bamboo Grove Morning Walk") capitalises
+# every word, so capitals say nothing about places: then all its specific
+# words are required, but one of three or more may be missing ("Grove" vs
+# "Forest") when the rest is covered at least ONE_MISSING_MIN_COVERAGE.
+TITLE_CASE_SHARE = 0.75
+ONE_MISSING_MIN_COVERAGE = 0.75
 
 # Words that describe the product format, not what is visited.
 _FORMAT_WORDS = frozenset(
@@ -139,6 +166,7 @@ _FORMAT_WORDS = frozenset(
         "including",
         "included",
         "experience",
+        "timed",
         "2025",
         "2026",
         "2027",
@@ -431,16 +459,31 @@ def _fold(text: str) -> str:
     return "".join(c for c in norm if not unicodedata.combining(c))
 
 
+def _name_words(name: str, city: str) -> set[str]:
+    words_ = distinctive_words(_fold(name), exclude=[_fold(city)] if city else [])
+    return words_ - ACTIVITY_VERBS
+
+
 def _required_words(name: str, name_words: set[str]) -> set[str]:
-    """The name's place / proper-noun words, which a listing must contain:
-    its capitalised words that aren't generic tour vocabulary (all its
-    non-generic words when the name has no capitals at all)."""
-    folded = _fold(name)
-    capitalised = {
-        w.lower() for w in re.findall(r"[A-Za-z0-9]+", folded) if w[:1].isupper()
-    }
+    """The name's place / proper-noun words, which a listing must contain.
+
+    In ordinary text ("Small group walking tour of Belém") these are its
+    capitalised, non-generic words. A Title-Case name, or one without any
+    capitals, gives no such signal: then every non-generic word counts.
+    """
+    tokens = [
+        w
+        for w in re.findall(r"[A-Za-z0-9]+", _fold(name))
+        if len(w) > 2 and w.lower() not in STOP_WORDS
+    ]
+    capitalised = {w.lower() for w in tokens if w[:1].isupper()}
     specific = name_words - GENERIC_TOUR_WORDS
-    return specific & capitalised if capitalised else specific
+    title_case = bool(tokens) and (
+        sum(1 for w in tokens if w[:1].isupper()) / len(tokens) >= TITLE_CASE_SHARE
+    )
+    if title_case or not capitalised:
+        return specific
+    return specific & capitalised
 
 
 def _weight(word: str) -> float:
@@ -452,19 +495,30 @@ def _score(
 ) -> tuple[float, float] | None:
     """(coverage, precision) when the listing confidently matches ``name``.
 
-    Every place / proper-noun word of the name (``_required_words``) must be
-    in the title; coverage weighs generic tour vocabulary at
+    Activity verbs ("visit", "explore", "hike") are dropped from the name;
+    its place / proper-noun words (``_required_words``) must be in the
+    title — one of three or more may be missing when the rest is well
+    covered; coverage weighs generic tour vocabulary at
     ``GENERIC_TOUR_WEIGHT``, so "small group walking tour" can't carry a
     match on its own.
     """
-    name_words = distinctive_words(_fold(name), exclude=[_fold(city)] if city else [])
+    name_words = _name_words(name, city)
     if not name_words:
         return None
     title_words = words(_fold(listing.title))
     hits = name_words & title_words
-    if not _required_words(name, name_words) <= title_words:
-        return None
-    coverage = sum(_weight(w) for w in hits) / sum(_weight(w) for w in name_words)
+    required = _required_words(name, name_words)
+    missing = required - title_words
+    total = sum(_weight(w) for w in name_words)
+    coverage = sum(_weight(w) for w in hits) / total
+    if missing:
+        rest = total - sum(_weight(w) for w in missing)
+        if (
+            len(missing) > 1
+            or len(required) < 3
+            or sum(_weight(w) for w in hits) / rest < ONE_MISSING_MIN_COVERAGE
+        ):
+            return None
     if len(hits) < min_matches(name_words) or coverage < MATCH_MIN_COVERAGE:
         return None
     city_words = words(_fold(city)) if city else set()

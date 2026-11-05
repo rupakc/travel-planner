@@ -21,6 +21,20 @@ function dayLabel(iso) {
 export default function ActivityDialogBody({ spec = {}, watch = null }) {
   if (watch) return <Matched watch={watch} />
   const n = spec.travellers || 1
+  if (spec.listing_url) {
+    return (
+      <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <p>
+          We’ll watch the listing you picked for <strong className="text-slate-800">{spec.name}</strong>
+          {n > 1 ? `, for ${people(n)}` : ''}.
+        </p>
+        <a href={spec.listing_url} target="_blank" rel="noopener noreferrer"
+          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-700 underline-offset-2 hover:underline">
+          <ExternalLink size={11} aria-hidden="true" /> See the listing
+        </a>
+      </div>
+    )
+  }
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <p>

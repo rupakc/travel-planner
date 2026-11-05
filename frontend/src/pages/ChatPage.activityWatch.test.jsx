@@ -63,4 +63,29 @@ describe('Chat activity rows can be watched', () => {
     expect(watch).toBeDefined()
     expect(lookups.at(-1)).toEqual({ name: 'Belém walking tour', city: 'Lisbon', travellers: 1, estimate_price: 30 })
   })
+
+  it('specialist answers: hotel and activity rows take their trip from the session context the message streamed', async () => {
+    localStorage.setItem('chat_history_chatter', JSON.stringify({
+      messages: [
+        { role: 'user', content: 'hotels and things to do in Lisbon?' },
+        {
+          role: 'assistant', content: '', planning: true, planningDone: true,
+          // no search_context (the backend never emits it) — only the session context update
+          tripContext: { destination: 'Lisbon', departure_date: '2099-12-10', return_date: '2099-12-14', num_travelers: 2 },
+          sections: {
+            hotels: { results: [{ name: 'Lumen Hotel', price_per_night_usd: 100 }] },
+            activities: { results: [{ name: 'Tram 28 ride' }] },
+          },
+          sectionStatuses: { hotels: 'done', activities: 'done' },
+        },
+      ],
+      sessionContext: {},
+      lastSearchContext: null,
+    }))
+    await act(async () => root.render(<MemoryRouter initialEntries={['/chat']}><ChatPage /></MemoryRouter>))
+    const watches = [...container.querySelectorAll('button')].filter(b => b.textContent.includes('Watch price'))
+    expect(watches.length).toBe(2) // the hotel row and the activity row
+    expect(lookups).toContainEqual(expect.objectContaining({ name: 'Lumen Hotel', city: 'Lisbon', check_in: '2099-12-10', check_out: '2099-12-14' }))
+    expect(lookups).toContainEqual({ name: 'Tram 28 ride', city: 'Lisbon', travellers: 2 })
+  })
 })

@@ -2192,7 +2192,7 @@ export function ChatBubble({ message, userName, selections, onSelect, onRetry })
                 selections={selections}
                 onSelect={onSelect}
                 itineraryGenerating={message.itineraryGenerating}
-                searchContext={message.searchContext || null}
+                searchContext={message.searchContext || message.tripContext || null}
               />
               </MessageTrip>
             )}
