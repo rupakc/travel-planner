@@ -1330,7 +1330,7 @@
 </table>
 <p>Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the <code>ddgs</code> package and need no key.</p>
 <h2 id="fare-watch-and-email-alerts-optional">Fare watch and email alerts (optional)</h2>
-<p>Fare watch re-checks watched fares in the background and needs <code>SERPAPI_KEY</code>. Email alerts need an SMTP server; without one, alerts still appear in the app.</p>
+<p>Fare watch re-checks watched fares in the background and needs <code>SERPAPI_KEY</code>. Price watches for hotels, activities and whole trips use the <strong>same</strong> settings, scheduler and SerpAPI budget: there is no separate price-watch configuration, and the daily budget, the per-user share and the active limit count all kinds of watch together. Email alerts need an SMTP server; without one, alerts still appear in the app.</p>
 <table>
 <thead>
 <tr>
@@ -1358,12 +1358,12 @@
 <tr>
 <td><code>FARE_WATCH_DAILY_CALL_BUDGET</code></td>
 <td><code>200</code></td>
-<td>SerpAPI calls per UTC day that fare watches may spend (scheduled checks, baselines and "Check now"). A check costs 1 call for exact dates or up to 7 with nearby dates; fares cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers <code>429</code>. Searches and the fare calendar are not counted.</td>
+<td>SerpAPI calls per UTC day that all watches (fare, hotel, activity and trip) may spend together (scheduled checks, baselines and "Check now"). A fare check costs 1 call for exact dates or up to 7 with nearby dates; a hotel or activity check 1, a trip check up to 8; creating a price watch holds its worst case (hotel 2, activity 2, trip 10) and gives back what it didn't spend. Answers cached in the last 30 min cost nothing. When spent, remaining checks move to the next day and "Check now" answers <code>429</code>. Searches and the fare calendar are not counted.</td>
 </tr>
 <tr>
 <td><code>FARE_WATCH_MAX_ACTIVE_PER_USER</code></td>
 <td><code>10</code></td>
-<td>Active watches per user (paused and ended ones don't count).</td>
+<td>Active watches per user, of every kind together (paused and ended ones don't count).</td>
 </tr>
 <tr>
 <td><code>FARE_WATCH_USER_DAILY_SHARE</code></td>

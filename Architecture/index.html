@@ -968,6 +968,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Fare-watch scheduler">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shared-alert-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared alert rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#price-watches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price watches
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1352,9 +1380,9 @@ FastAPI backend (uvicorn, one process)
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
   │             walking-tour crawler, verification, compare
-  ├── fare-watch scheduler (background task) ── SerpAPI re-checks, alert emails (SMTP)
+  ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (19 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (21 tables) ── optional GCS backup every 60 s
             │
             ▼
 External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
@@ -1506,8 +1534,16 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <td>The same per user, for the per-user daily share</td>
 </tr>
 <tr>
+<td><code>price_watches</code></td>
+<td>Watched hotel / activity / trip prices: <code>kind</code>, the matched <code>subject</code> (JSON, kind-specific), <code>match_key</code>, title and subtitle, alert settings, baseline / last / lowest prices, alert state (last alerted price and time, peak since), <code>last_observation</code> (JSON: status, unit price, source, link, trip breakdown), failure and unavailable streaks, <code>expires_on</code>, status, schedule and lease</td>
+</tr>
+<tr>
+<td><code>price_watch_history</code></td>
+<td>Each look: total price (null when unavailable), trip breakdown and raw observed details as JSON (up to 120 rows per watch)</td>
+</tr>
+<tr>
 <td><code>notifications</code></td>
-<td>In-app notifications (fare alerts, watch ended / on hold), read and emailed times</td>
+<td>In-app notifications (fare and price alerts, watch ended / on hold), read and emailed times</td>
 </tr>
 </tbody>
 </table>
@@ -1521,7 +1557,21 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <li>Every <code>FARE_WATCH_TICK_SECONDS</code> (300) it sweeps notifications older than 180 days (once per UTC day), ends paused / on-hold watches whose departure day has come, and lists up to 50 due active watches. Each one is <strong>leased</strong> only when its turn comes (<code>claim_watch(..., due_only=True)</code>: one <code>UPDATE</code> that also checks it is still active, due and unleased; <code>lease_until</code> = now + 10 min), so a watch taken meanwhile by "Check now" or another scheduler is skipped, and a slow batch never outlives its leases; a crashed worker's lease simply expires. Creating a watch and "Check now" take the same lease for their inline check.</li>
 <li>Leased watches are checked three at a time (<code>check_watch</code>): departure reached → <code>expired</code> + one notice; otherwise the check's SerpAPI cost is estimated (cached fares are free) and reserved all-or-nothing from the day's <code>FARE_WATCH_DAILY_CALL_BUDGET</code> and from the owner's share of it (<code>FARE_WATCH_USER_DAILY_SHARE</code>) (over either → moved to early next UTC day; the pool running out is logged once); the fare comes from <code>serp_flights.watch_fares</code> (the fare calendar's outbound-stage price plus Google's insights, and the calendar's ±3 days for flexible watches, reusing a cached search). A failure retries in 1 h, three in a row put the watch on hold (<code>error</code> + one notice); SerpAPI's own quota error postpones without a strike. A watch deleted while its fares were fetched ends as <code>deleted</code> with nothing recorded. A success appends history, applies <code>evaluate</code> (the pure trigger and anti-spam rules, with separate references for the trip's own dates and the nearby dates, re-armed after rebounds; see <a href="../Trip-Planning-Features/#fare-watch-and-price-alerts">Trip Planning Features</a>), stores at most one notification, emails it when enabled (<code>alert_email.py</code>, <code>smtplib</code> in a thread, failures only logged), and schedules the next check in <code>FARE_WATCH_INTERVAL_HOURS</code> ±10 %.</li>
 <li>The tests never start the loop (<code>FARE_WATCH_ENABLED=false</code>); they drive <code>run_due</code> and <code>check_watch</code> with an injected clock and fetch.</li>
+<li>The same loop then runs the price-watch pass (<code>price_watch.run_due</code>, below); a failing pass of either kind is logged and never stops the other.</li>
 </ul>
+<h3 id="shared-alert-rules">Shared alert rules</h3>
+<p><code>backend/app/services/price_rules.py</code> holds the kind-agnostic own-price rules both kinds of watch use: the reference (baseline, last alerted price, or the peak once re-armed), the step (<code>FARE_STEP</code> max($15, 5 %), also used by hotels; <code>ACTIVITY_STEP</code> max(1 unit of the listing currency, 5 %); <code>TRIP_STEP</code> max($25, 4 %) for whole-trip totals), target re-arming, the baseline-already-good rule, the 24 h cooldown cap and the state a check leaves behind. Fare watches add their Google-"low" and nearby-dates signals on top. <code>test_price_rules_equivalence.py</code> checks the extraction against a frozen copy of the original fare rules.</p>
+<h2 id="price-watches">Price watches</h2>
+<p>Hotel, activity and whole-trip prices are watched by <code>backend/app/services/price_watch.py</code>, with tables in <code>db/price_watch_db.py</code> and routes in <code>api/routes/price_watches.py</code>. The pipeline is generic; each kind plugs in a <strong>price source</strong>:</p>
+<ul>
+<li><code>PriceSource</code> (protocol): <code>kind</code>; <code>match_key(spec)</code> (dedupe key from the client's spec, no live calls); <code>async create(spec, user, api_key)</code> → <code>CreatedWatch</code> (matched <code>subject</code>, baseline <code>PriceObservation</code>, title, subtitle, <code>expires_on</code>, <code>plan_id</code>) or <code>NoLivePrice</code> (message, up to 3 live <code>suggestions</code>, the AI <code>estimate</code>); <code>async check(watch, api_key)</code> → <code>PriceObservation</code>; <code>estimate_calls(watch)</code>; <code>compose(kind, watch, obs, ref)</code> → the alert's title, body and extra data; optional <code>step</code>, <code>max_create_calls</code> (the most calls <code>create</code> may spend, default 1: hotel 2, activity 2, trip 10) and <code>existing_watch(user_id, created)</code> (the same subject found another way: hotel by property, stay, guests and rooms; activity by listing and travellers).</li>
+<li><code>PriceObservation</code>: <code>price</code> (the total, in the watch's currency: USD, except an activity watch, which keeps its listing's currency), <code>unit_price</code>, <code>status</code> (<code>ok</code> / <code>unavailable</code>), <code>source</code>, <code>link</code>, <code>breakdown</code> (trips), <code>observed</code> (raw details), <code>calls</code>.</li>
+<li>Hotels everywhere (a hotel watch, and a trip's hotel) are priced for <code>hotel_prices.rooms_for(guests)</code> rooms: one room for up to 4 guests, then one per 4 (the UI's <code>hotelGuests</code> mirrors it). A trip's hotel baseline is the property look by <code>property_token</code> — the look every check makes — never the search list's price, so an unchanged trip never shows a hotel drop.</li>
+<li>A spec's <code>city</code> may be the airport code the search form stores ("LIS"), or "City, Country" (cut at the comma): the hotel and activity sources and the trip component builder name it from the local airport data (<code>database.airport_city</code>, no web lookup), so subjects, alert copy and Google queries say "Lisbon". A multi-city trip's activities use their own leg's city.</li>
+<li>Sources register with <code>register_source</code>; built-in ones are listed in <code>price_watch.SOURCE_MODULES</code> (each module exposes <code>SOURCE</code>) and registered in the <code>lifespan</code>. Tests use a fake <code>test</code> source only.</li>
+</ul>
+<p>Creating a watch holds the kind's worst case (<code>max_create_calls</code>: hotel 2, activity 2, trip 10) from the shared daily budget and the owner's share, all or nothing (refused with <code>429</code> when either can't cover it), lets the source match and take the baseline, then gives back what it didn't spend (<code>fare_watch_db.adjust_calls</code>; settlement never charges more than the hold, so price spending can't postpone fare checks). A failure whose spend is unknown keeps the whole hold. Calls are counted as made: a lookup answered from the 30-minute cache is free. A failed check's text is stored and logged redacted (<code>price_watch.redact_error</code>: the HTTP status without the response body, never the key). The baseline is stored as the first check (never an alert). Each later check (<code>check_watch</code>, leased exactly like fare checks, three at a time) reserves its worst case, <code>estimate_calls</code>, all or nothing from the <strong>same</strong> budget as fare watches and settles it to <code>obs.calls</code> afterwards (in practice only giving calls back) (a failing <code>create</code> may report its spend as <code>exc.calls</code>); expires on <code>expires_on</code>; postpones on a spent budget or SerpAPI quota; retries a failure in 1 h and puts the watch on hold after three (a crash in the source's own code after the live look, e.g. in <code>compose</code>, counts as a failure too, so a broken watch is never retried every tick); records an <code>unavailable</code> look (sold out, listing gone) without alert or strike, holding the watch only after three in a row; and otherwise applies the shared rules to the total, storing at most one <code>&lt;kind&gt;_drop</code> / <code>&lt;kind&gt;_target</code> notification (data carries <code>watch_kind</code>, <code>watch_id</code> and <code>links.alerts</code> = <code>/alerts?kind=&lt;kind&gt;&amp;watch=&lt;id&gt;</code>) and emailing it when enabled (<code>alert_email.deliver_price</code>, its own unsubscribe token). <code>FARE_WATCH_MAX_ACTIVE_PER_USER</code> counts fare and price watches together. Estimates are frozen at creation and never alert on their own; a source never presents an estimate as a live price.</p>
+<p>The fare scheduler (<code>fare_watch.run_scheduler</code>) runs the fare pass on every tick and starts the price pass (<code>price_watch.run_due</code>) as its own task, so a slow price pass never delays fare checks; at most one price pass is in flight (a tick that finds one running starts none), and stopping the scheduler cancels and awaits it.</p>
 <h2 id="cache">Cache</h2>
 <p>One process-wide <code>cachetools.TTLCache</code> (<code>backend/app/core/cache.py</code>, size <code>CACHE_MAXSIZE</code> 500, TTL <code>CACHE_TTL_SECONDS</code> 1800) holds full search runs, discover and compare results (complete ones only), the <code>/health/agents</code> result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart.</p>
 <hr />
@@ -1532,7 +1582,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls. They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
 </ul>
 <h2 id="rate-limiting">Rate limiting</h2>
-<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare watches add their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
+<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
 <h2 id="middleware">Middleware</h2>
 <ul>
 <li>CORS from <code>CORS_ORIGINS</code>.</li>

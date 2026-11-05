@@ -1421,6 +1421,117 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#price-watches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price watches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Price watches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apiprice-watches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/price-watches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POST /api/price-watches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#activity-watches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activity watches
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apiprice-watches-get-apiprice-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/price-watches, GET /api/price-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apiprice-watchesmatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/price-watches/match
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patch-apiprice-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/price-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apiprice-watchesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/price-watches/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apiprice-watchesidcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/price-watches/{id}/check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-post-apiprice-watchesunsubscribetoken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET, POST /api/price-watches/unsubscribe?token=
+      
+    </span>
+  </a>
+  
+</li>
+        
           <li class="md-nav__item">
   <a href="#get-apinotifications" class="md-nav__link">
     <span class="md-ellipsis">
@@ -1792,7 +1903,7 @@
 </tr>
 <tr>
 <td>light_ai</td>
-<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
 </tr>
 </tbody>
@@ -2088,6 +2199,36 @@
 <td><code>/api/fare-watches/unsubscribe?token=</code></td>
 <td>none</td>
 <td>Turn email off for that watch (the confirmation form, or RFC 8058 one-click)</td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/price-watches</code></td>
+<td>user</td>
+<td>List own hotel / activity / trip price watches (<code>?kind=</code>); watch a price (matches it live, takes the baseline)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/price-watches/match</code></td>
+<td>user</td>
+<td>The caller's price watch for a subject, or <code>null</code> (no live lookup)</td>
+</tr>
+<tr>
+<td>GET, PATCH, DELETE</td>
+<td><code>/api/price-watches/{id}</code></td>
+<td>user</td>
+<td>Get, edit (pause/resume, mode, target, email), delete own price watch</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/price-watches/{id}/check</code></td>
+<td>user</td>
+<td>"Check now": one live look</td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/price-watches/unsubscribe?token=</code></td>
+<td>none</td>
+<td>"Stop emails" for one price watch: confirmation page (GET), turn off (POST / one-click)</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -2648,6 +2789,55 @@
 <p>The signed link at the bottom of alert emails. Returns a confirmation page with a "Stop emails for this fare" button and changes nothing (mail scanners and prefetchers follow GET links). <code>400</code> for an invalid token.</p>
 <h3 id="post-apifare-watchesunsubscribetoken">POST /api/fare-watches/unsubscribe?token=</h3>
 <p>Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. It is the confirmation page's form and the RFC 8058 one-click target: alert emails carry <code>List-Unsubscribe: &lt;…/api/fare-watches/unsubscribe?token=…&gt;</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code>, and the body is ignored. Idempotent; <code>400</code> for an invalid token.</p>
+<h2 id="price-watches">Price watches</h2>
+<p>A price watch re-checks a hotel's, an activity's or a whole saved trip's live price about twice a day, with the same alert rules as fare watches (whole trips use a step of max($25, 4 %)). Prices are totals (all nights and rooms, all travellers, or the whole trip) in the watch's <code>currency</code>: USD, except an activity watch, which keeps its listing's currency and only ever compares like with like. Ownership, rate limits and the daily SerpAPI budget work as for fare watches, and <code>FARE_WATCH_MAX_ACTIVE_PER_USER</code> counts fare and price watches together. Which kinds are available depends on the price sources the server registers; an unknown kind is a <code>422</code>.</p>
+<h3 id="post-apiprice-watches">POST /api/price-watches</h3>
+<pre><code class="language-json">{&quot;kind&quot;: &quot;hotel&quot;, &quot;hotel&quot;: {...kind-specific spec...},
+ &quot;plan_id&quot;: null, &quot;alert_mode&quot;: &quot;any_drop&quot;, &quot;target_price&quot;: null, &quot;email_enabled&quot;: false}
+</code></pre>
+<p>The spec rides under the kind's own key (a top-level <code>plan_id</code> is passed into it). The server matches it to a live price and stores that look as the <strong>baseline</strong> (never an alert). Returns the watch (below) with <code>already_watching: false</code>, or the caller's existing non-expired watch for the same subject with <code>already_watching: true</code> (no live lookup). When nothing live matches:</p>
+<pre><code class="language-json">{&quot;detail&quot;: &quot;We couldn't find live prices for this hotel on Google Hotels.&quot;,
+ &quot;code&quot;: &quot;no_live_price&quot;, &quot;message&quot;: &quot;We couldn't find live prices for this hotel on Google Hotels.&quot;,
+ &quot;suggestions&quot;: [{&quot;title&quot;: &quot;Lumen Hotel &amp; The Lisbon Light Show&quot;, &quot;subtitle&quot;: &quot;Baixa&quot;, &quot;price&quot;: 398.0,
+                  &quot;link&quot;: &quot;https://…&quot;, &quot;spec&quot;: {...}}],
+ &quot;estimate&quot;: {&quot;price&quot;: 420.0, &quot;source&quot;: &quot;ai_estimate&quot;}}
+</code></pre>
+<p>with status <code>422</code>; sending a suggestion's <code>spec</code> back watches it instead. A <code>below_target</code> request may carry <code>target_currency</code> (the currency the target was typed in): when the live price is in another currency nothing is created and the answer is <code>422 {code: "target_currency_mismatch", message, currency, price, unit_price}</code>, so the client can ask again in that currency (the retry reuses the cached look). Other errors: <code>422</code> for an invalid or oversized spec (the <code>detail</code> says why), <code>below_target</code> without a target, email without an address/SMTP, or a subject ending today; <code>409</code> at the active limit; <code>429</code> with <code>Retry-After</code> when today's budget or the caller's share is spent; <code>502</code> when live prices fail; <code>503</code> without SerpAPI. Rate-limited (light_ai).</p>
+<p><strong>Hotel spec:</strong> <code>{name, city, check_in, check_out, adults, rooms?, property_token?, estimate_total?}</code>. <code>city</code> may be "Lisbon, Portugal" or an airport code ("LIS"); it is watched as the city ("Lisbon"). <code>rooms</code> defaults to one room for up to 4 guests, then one per 4 — the rule a trip's hotel uses too. A spec with <code>property_token</code> (a picked suggestion) is priced directly; otherwise the name is matched on Google Hotels. The baseline is always the property's own look by token, as every check. A <code>plan_id</code> is stored only when it is the caller's own plan (otherwise <code>null</code>). The same Google property for the same stay, guests and rooms already watched under another name returns that watch with <code>already_watching: true</code> (after the matching lookup).</p>
+<p>Creating a watch holds its kind's worst case from the daily SerpAPI budget and the caller's share (hotel 2 calls, activity 2, trip 10) and gives back what it didn't spend.</p>
+<p>A price watch:</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 4, &quot;kind&quot;: &quot;hotel&quot;, &quot;plan_id&quot;: null, &quot;title&quot;: &quot;Lumen Hotel&quot;, &quot;subtitle&quot;: &quot;Lisbon · 10–14 Dec&quot;,
+  &quot;subject&quot;: {...as matched...}, &quot;currency&quot;: &quot;USD&quot;,
+  &quot;alert_mode&quot;: &quot;any_drop&quot;, &quot;target_price&quot;: null, &quot;email_enabled&quot;: false, &quot;status&quot;: &quot;active&quot;,
+  &quot;baseline_price&quot;: 398.0, &quot;last_price&quot;: 352.0, &quot;lowest_price&quot;: 352.0,
+  &quot;last_notified_price&quot;: 352.0, &quot;last_notified_at&quot;: &quot;...&quot;, &quot;own_peak_price&quot;: 352.0,
+  &quot;last_observation&quot;: {&quot;price&quot;: 352.0, &quot;unit_price&quot;: 88.0, &quot;status&quot;: &quot;ok&quot;, &quot;source&quot;: &quot;google_hotels&quot;,
+                       &quot;link&quot;: &quot;https://…&quot;, &quot;breakdown&quot;: null, &quot;observed&quot;: {...}, &quot;observed_at&quot;: &quot;...&quot;},
+  &quot;link&quot;: &quot;https://…&quot;, &quot;expires_on&quot;: &quot;2026-12-10&quot;,
+  &quot;check_count&quot;: 3, &quot;failure_count&quot;: 0, &quot;unavailable_count&quot;: 0, &quot;problem&quot;: null, &quot;already_below_target&quot;: false,
+  &quot;last_checked_at&quot;: &quot;...&quot;, &quot;next_check_at&quot;: &quot;...&quot;, &quot;created_at&quot;: &quot;...&quot;, &quot;updated_at&quot;: &quot;...&quot;,
+  &quot;history&quot;: [{&quot;checked_at&quot;: &quot;...&quot;, &quot;price&quot;: 352.0, &quot;breakdown&quot;: null, &quot;observed&quot;: {&quot;status&quot;: &quot;ok&quot;}}]
+}
+</code></pre>
+<p><code>status</code> is <code>active</code>, <code>paused</code>, <code>expired</code> (the <code>expires_on</code> day — check-in, activity date or departure — has come) or <code>error</code> (three failed checks, or three "unavailable" looks, in a row). An unavailable look (sold out for the dates, listing gone) has <code>price: null</code> in history and <code>last_observation.status: "unavailable"</code>; it never alerts.</p>
+<h4 id="activity-watches">Activity watches</h4>
+<pre><code class="language-json">{&quot;kind&quot;: &quot;activity&quot;, &quot;activity&quot;: {&quot;name&quot;: &quot;Belém walking tour&quot;, &quot;city&quot;: &quot;Lisbon&quot;,
+ &quot;date&quot;: &quot;2026-12-10&quot;, &quot;travellers&quot;: 2, &quot;listing_url&quot;: null, &quot;estimate_price&quot;: 30}}
+</code></pre>
+<p><code>name</code> and <code>city</code> are required; <code>date</code> (optional, must be in the future) ends the watch, which otherwise runs 180 days; <code>travellers</code> is 1–20 (default 1); <code>estimate_price</code> is the AI's per-person estimate, shown labelled in a <code>no_live_price</code> answer and never watched. The server searches Google (SerpAPI) for "<name> <city> getyourguide" (then Viator) and watches the best-matching <strong>specific</strong> listing; category or attraction pages are never watched. The price is the listing's per-person "from" price × travellers (<code>last_observation.unit_price</code> is per person), as Google results show it — getyourguide.com and viator.com are never fetched. A <code>no_live_price</code> answer suggests up to 3 priced specific listings; their <code>spec</code> carries <code>listing_url</code>, and a watch of a picked listing is its own subject (the original activity stays unwatched). A check that can't find the listing, finds it without a price, or finds it in another currency is unavailable (<code>observed.reason</code>: <code>not_found</code>, <code>no_price</code>, <code>currency_changed</code>). A listing matches only when it names every place / proper-noun word of the activity; generic tour words ("small group walking tour") never carry a match alone. Activity alerts use a step of max(1, 5 %) in the listing's currency. "Already watching" is by name, city and travellers (the date only ends the watch), and also by the same listing and travellers however it was found.</p>
+<h3 id="get-apiprice-watches-get-apiprice-watchesid">GET /api/price-watches, GET /api/price-watches/{id}</h3>
+<p>The caller's price watches (<code>?kind=hotel|activity|trip</code> to filter; ordered by <code>expires_on</code>) or one, each with its history.</p>
+<h3 id="post-apiprice-watchesmatch">POST /api/price-watches/match</h3>
+<p>Body: <code>{"kind": ..., "&lt;kind&gt;": spec, "plan_id": ...}</code> as for create. Returns <code>{"watch": {...}}</code> or <code>{"watch": null}</code> (also for an unknown kind or an unusable spec); makes no live lookup.</p>
+<h3 id="patch-apiprice-watchesid">PATCH /api/price-watches/{id}</h3>
+<p>Any of <code>status</code> (<code>"paused"</code> / <code>"active"</code>), <code>alert_mode</code>, <code>target_price</code>, <code>email_enabled</code>. Resuming an <code>error</code> watch clears both streaks and checks it on the next tick ("Retry"). <code>409</code> to resume an expired watch or past the active limit; <code>422</code> as for fare watches.</p>
+<h3 id="delete-apiprice-watchesid">DELETE /api/price-watches/{id}</h3>
+<p>Deletes the watch and its history. Returns <code>{"deleted": true}</code>.</p>
+<h3 id="post-apiprice-watchesidcheck">POST /api/price-watches/{id}/check</h3>
+<p>"Check now" (also on a paused watch). Returns the watch plus <code>check_status</code> (<code>checked</code>, <code>unavailable</code>, <code>failed</code>, <code>errored</code>, <code>postponed</code>, <code>expired</code>, <code>skipped</code>, <code>deleted</code>) and <code>notification</code>. <code>429</code> / <code>409</code> / <code>503</code> as for fare watches. Rate-limited (light_ai).</p>
+<h3 id="get-post-apiprice-watchesunsubscribetoken">GET, POST /api/price-watches/unsubscribe?token=</h3>
+<p>As the fare-watch unsubscribe link, for one price watch (its own signed token; a fare-watch token is refused with <code>400</code>).</p>
 <h3 id="get-apinotifications">GET /api/notifications</h3>
 <p><code>?unread_only=false&amp;limit=20&amp;offset=0</code> → <code>{"items": [...], "total": n, "unread": n}</code>, newest first. An item:</p>
 <pre><code class="language-json">{
@@ -2660,7 +2850,7 @@
   &quot;created_at&quot;: &quot;...&quot;, &quot;read_at&quot;: null, &quot;emailed_at&quot;: &quot;...&quot;
 }
 </code></pre>
-<p><code>kind</code> is <code>fare_drop</code>, <code>fare_target</code>, <code>fare_low_level</code>, <code>fare_cheaper_date</code> (data adds <code>selected_price</code>, <code>saving</code>, <code>cheapest_departure_date</code>, <code>cheapest_return_date</code>), <code>watch_expired</code> or <code>watch_error</code> (data <code>action: "retry"</code>).</p>
+<p><code>kind</code> is <code>fare_drop</code>, <code>fare_target</code>, <code>fare_low_level</code>, <code>fare_cheaper_date</code> (data adds <code>selected_price</code>, <code>saving</code>, <code>cheapest_departure_date</code>, <code>cheapest_return_date</code>), <code>watch_expired</code> or <code>watch_error</code> (data <code>action: "retry"</code>). Price watches add <code>hotel_drop</code>, <code>hotel_target</code>, <code>activity_drop</code>, <code>activity_target</code>, <code>trip_drop</code> and <code>trip_target</code>; every price-watch notification (including its <code>watch_expired</code> / <code>watch_error</code>, whose data adds <code>reason</code>: <code>failed</code> or <code>unavailable</code>) has <code>data.watch_kind</code> and <code>data.links.alerts</code> = <code>/alerts?kind=&lt;kind&gt;&amp;watch=&lt;id&gt;</code>, plus <code>price</code>, <code>previous_price</code>, <code>delta</code>, <code>baseline_price</code>, <code>target_price</code>, <code>is_lowest</code>, <code>title</code>, <code>subtitle</code> and <code>links.book</code> (the listing) for alerts. Fare-watch notifications have no <code>watch_kind</code>.</p>
 <h3 id="get-apinotificationsunread-count">GET /api/notifications/unread-count</h3>
 <p><code>{"count": 2}</code>. The header bell polls it every 60 s while the tab is visible.</p>
 <h3 id="post-apinotificationsread">POST /api/notifications/read</h3>
