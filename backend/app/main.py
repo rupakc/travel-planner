@@ -33,6 +33,7 @@ from .api.routes.nationalities import router as nationalities_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
+from .api.routes.price_watches import router as price_watches_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
@@ -204,6 +205,7 @@ app.include_router(
 app.include_router(taste_router, prefix="/api", tags=["taste"])
 # Fare watches: create and "check now" draw on the light_ai bucket (per route)
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
+app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
