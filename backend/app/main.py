@@ -100,6 +100,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     await fare_watch.stop_scheduler(fare_watch_task)
+    await push.drain()  # pushes in flight: a few seconds, then cancelled
     # SIGTERM: force=True always uploads our current state regardless of GCS generation.
     # This is safe — the dying instance holds the most up-to-date data.
     await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)

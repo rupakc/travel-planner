@@ -145,6 +145,13 @@ async def test_sends_to_every_device_with_string_data(google):
 
 
 @pytest.mark.asyncio
+async def test_watch_status_notes_go_at_normal_priority(google):
+    u, _ = _user_with_devices(1)
+    await push.send_to_user(u["username"], "a", "b", {"kind": "watch_expired"})
+    assert google.sends[0]["android"]["priority"] == "normal"
+
+
+@pytest.mark.asyncio
 async def test_access_token_is_cached(google):
     u, _ = _user_with_devices(1)
     await push.send_to_user(u["username"], "a", "b", {})
@@ -178,6 +185,102 @@ async def test_unregistered_tokens_are_pruned(google):
     )
     assert await push.send_to_user(u["username"], "a", "b", {}) == 1
     assert devices_db.tokens_for(u["username"]) == [live]
+
+
+@pytest.mark.asyncio
+async def test_invalid_token_field_violation_is_pruned(google):
+    u, (bad, live) = _user_with_devices(2)
+    google.fcm[bad] = (
+        400,
+        {
+            "error": {
+                "status": "INVALID_ARGUMENT",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.BadRequest",
+                        "fieldViolations": [
+                            {
+                                "field": "message.token",
+                                "description": "Invalid registration token",
+                            }
+                        ],
+                    }
+                ],
+            }
+        },
+    )
+    assert await push.send_to_user(u["username"], "a", "b", {}) == 1
+    assert devices_db.tokens_for(u["username"]) == [live]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "status,body",
+    [
+        # wrong / deleted Firebase project: bare 404, no FCM error code
+        (404, {"error": {"code": 404, "status": "NOT_FOUND", "message": "nope"}}),
+        (404, {}),
+        # a payload problem, not the token's
+        (
+            400,
+            {
+                "error": {
+                    "status": "INVALID_ARGUMENT",
+                    "details": [
+                        {
+                            "@type": "type.googleapis.com/google.rpc.BadRequest",
+                            "fieldViolations": [{"field": "message.data[0].value"}],
+                        }
+                    ],
+                }
+            },
+        ),
+        (
+            403,
+            {
+                "error": {
+                    "status": "PERMISSION_DENIED",
+                    "details": [{"errorCode": "SENDER_ID_MISMATCH"}],
+                }
+            },
+        ),
+    ],
+)
+async def test_errors_not_about_the_token_keep_it(google, status, body):
+    u, tokens = _user_with_devices(1)
+    google.fcm[tokens[0]] = (status, body)
+    assert await push.send_to_user(u["username"], "a", "b", {}) == 0
+    assert devices_db.tokens_for(u["username"]) == tokens
+
+
+@pytest.mark.asyncio
+async def test_401_drops_the_cached_access_token(google):
+    u, (tok,) = _user_with_devices(1)
+    google.fcm[tok] = (401, {"error": {"status": "UNAUTHENTICATED"}})
+    await push.send_to_user(u["username"], "a", "b", {})
+    del google.fcm[tok]
+    await push.send_to_user(u["username"], "a", "b", {})
+    assert google.token_calls == 2
+
+
+@pytest.mark.asyncio
+async def test_concurrent_sends_share_one_token_exchange(google):
+    u, _ = _user_with_devices(1)
+    await asyncio.gather(
+        *(push.send_to_user(u["username"], "a", "b", {}) for _ in range(5))
+    )
+    assert google.token_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_no_full_token_in_logs(google, caplog):
+    u, (dead, flaky) = _user_with_devices(2)
+    google.fcm[dead] = (404, {"error": {"details": [{"errorCode": "UNREGISTERED"}]}})
+    google.fcm[flaky] = (500, {"error": {"status": "INTERNAL", "message": flaky}})
+    with caplog.at_level("DEBUG", logger="app.services.push"):
+        await push.send_to_user(u["username"], "a", "b", {})
+    assert caplog.records
+    assert dead not in caplog.text and flaky not in caplog.text
 
 
 @pytest.mark.asyncio
@@ -298,6 +401,48 @@ async def test_a_failing_push_never_breaks_alert_creation(google, monkeypatch):
     row = fare_watch._notify({"id": 1, "user_id": u["id"]}, note, NOW)
     await _drain()
     assert row["kind"] == "fare_drop"
+
+
+@pytest.mark.asyncio
+async def test_a_malformed_note_never_breaks_alert_creation(google):
+    # notify() itself is guarded: a row it can't read is logged, not raised
+    push.notify("someone", {"kind": "fare_drop"}, "/alerts")
+    push.notify(
+        "someone",
+        {"id": 1, "kind": "x", "title": "t", "body": "b", "data": "not-a-dict"},
+        "/alerts",
+    )
+    await _drain()
+
+
+@pytest.mark.asyncio
+async def test_inactive_users_get_no_push(google, monkeypatch):
+    from app.db.users_db import deactivate_user
+
+    sent = []
+    monkeypatch.setattr(
+        push, "send_to_user", AsyncMock(side_effect=lambda *a: sent.append(a))
+    )
+    u, _ = _user_with_devices(1)
+    deactivate_user(u["username"])
+    note = {"kind": "fare_drop", "title": "t", "body": "b", "data": {}}
+    fare_watch._notify({"id": 1, "user_id": u["id"]}, note, NOW)
+    await _drain()
+    assert sent == []
+
+
+@pytest.mark.asyncio
+async def test_drain_cancels_what_is_still_pending(google, monkeypatch):
+    async def slow(*a):
+        await asyncio.sleep(60)
+
+    monkeypatch.setattr(push, "send_to_user", slow)
+    u, _ = _user_with_devices(1)
+    note = {"kind": "fare_drop", "title": "t", "body": "b", "data": {}}
+    fare_watch._notify({"id": 1, "user_id": u["id"]}, note, NOW)
+    assert push._tasks
+    await push.drain(timeout=0.05)
+    assert push._tasks == set()
 
 
 def test_hook_without_a_running_loop_is_a_no_op(google):
