@@ -6,7 +6,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ## Unreleased: backend for the Android app
 
-- Push alerts: `POST /api/devices`, `GET /api/devices`, `DELETE /api/devices/{id}` and `POST /api/devices/unregister` (sign-out) manage the app's FCM tokens (table `devices`, at most 20 per user, tokens shown masked and never in URLs). With `FCM_SERVICE_ACCOUNT_FILE` set, every new fare- or price-watch notification is also pushed to the owner's devices over FCM HTTP v1 in the background (data `kind`, `notification_id`, `link`), only tokens FCM reports as dead are pruned, and failures never affect the alert. `/health` reports `push_configured`. `google-auth` is now a direct dependency.
+- Push alerts: `POST /api/devices`, `GET /api/devices`, `DELETE /api/devices/{id}` and `POST /api/devices/unregister` (sign-out) manage the app's FCM tokens (table `devices`, at most 20 per user, tokens shown masked and never in URLs). With `FCM_SERVICE_ACCOUNT_FILE` set, every new fare- or price-watch notification is also pushed to the owner's devices over FCM HTTP v1 in the background as data-only messages (data `title`, `body`, `kind`, `notification_id`, `link`; the app builds the notification itself), only tokens FCM reports as dead are pruned, and failures never affect the alert. `/health` reports `push_configured`. `google-auth` is now a direct dependency.
 - Near me: `POST /api/nearby {lat, lng, interests?, limit?}` returns the nearest known place with its region (local GeoNames data, up to 75 km) and the activities agent's things to do there, cached an hour per ~5 km cell; `404 no_place` when nothing is near. light_ai bucket.
 
 ## 2026-11-05: price watch for hotels, activities and whole trips

@@ -131,7 +131,7 @@ async def test_disabled_sends_nothing(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_sends_to_every_device_with_string_data(google):
+async def test_sends_data_only_messages_to_every_device(google):
     u, tokens = _user_with_devices(2)
     sent = await push.send_to_user(
         u["username"], "Fare drop", "BER → LIS $454", {"kind": "fare_drop", "n": 7}
@@ -139,8 +139,14 @@ async def test_sends_to_every_device_with_string_data(google):
     assert sent == 2
     assert sorted(m["token"] for m in google.sends) == sorted(tokens)
     msg = google.sends[0]
-    assert msg["notification"] == {"title": "Fare drop", "body": "BER → LIS $454"}
-    assert msg["data"] == {"kind": "fare_drop", "n": "7"}
+    # data-only, so the app builds the notification itself in the background too
+    assert "notification" not in msg
+    assert msg["data"] == {
+        "kind": "fare_drop",
+        "n": "7",
+        "title": "Fare drop",
+        "body": "BER → LIS $454",
+    }
     assert msg["android"]["priority"] == "high"
 
 

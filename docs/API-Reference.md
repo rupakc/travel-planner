@@ -779,7 +779,7 @@ Sign-out: `{"token": "<the full FCM token>"}` → `204`, always (idempotent; a t
 
 ### Push messages
 
-When `FCM_SERVICE_ACCOUNT_FILE` is set (`/health` `push_configured`), every new fare- or price-watch notification is also pushed to each of the owner's devices over FCM HTTP v1, in the background: `notification` = the notification's `title` / `body`, Android priority high (`normal` for `watch_expired` / `watch_error`), and string `data`:
+When `FCM_SERVICE_ACCOUNT_FILE` is set (`/health` `push_configured`), every new fare- or price-watch notification is also pushed to each of the owner's devices over FCM HTTP v1, in the background as a data-only message (no `notification` block, so the app always builds the notification itself): Android priority high (`normal` for `watch_expired` / `watch_error`), and string `data` (the notification's `title` and `body` ride in `data` too):
 
 ```json
 {"kind": "fare_drop", "notification_id": "42", "link": "/alerts?watch=7", "watch_id": "7"}

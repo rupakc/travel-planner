@@ -179,10 +179,12 @@ async def send_to_user(
             return 0
         account = _account(settings.fcm_service_account_file)
         url = SEND_URL.format(project_id=account["project_id"])
+        # Data-only: the app always gets onMessageReceived, so it builds the
+        # notification itself (channel, in-app toggle, seen-id dedupe, deep link)
+        payload = {**data, "title": title, "body": body}
         message = {
-            "notification": {"title": title, "body": body},
             # FCM data values must be strings
-            "data": {str(k): str(v) for k, v in data.items() if v is not None},
+            "data": {str(k): str(v) for k, v in payload.items() if v is not None},
             "android": {
                 "priority": "normal" if data.get("kind") in QUIET_KINDS else "high"
             },
