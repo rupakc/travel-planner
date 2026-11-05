@@ -6,30 +6,40 @@ plan (anyone else's, or a missing one, is the same 404 "Plan not found")
 and turns its selections into **components**, mirroring the plan drawer's
 cost breakdown (``frontend/src/utils/planHelpers.js``):
 
-- the selected flight → **live** via the fare-watch path (Google Flights'
-  cheapest fare for the plan's route, dates and travellers, as a fare watch
-  tracks it); multi-city legs, or a route we can't price → estimate;
+- the selected flight → **live** via the fare-watch path. This is Google
+  Flights' *cheapest fare* for the plan's route, dates and travellers (as a
+  fare watch tracks it), not the specific flight picked, and is labelled so;
+  multi-city legs, or a route we can't price → estimate;
 - the selected hotel → **live** via ``hotel_prices`` (Google Hotels, matched
-  by name; stored with the hotel watch's subject fields) → else estimate;
+  by name, ``ceil(travellers / 2)`` rooms; stored with the hotel watch's
+  subject fields) → else estimate;
 - selected activities → **live** via ``activity_prices`` (the GetYourGuide /
-  Viator "from" price in Google results, per person × travellers; stored
-  with the activity watch's subject fields) for at most
+  Viator "from" price in Google results, **per person × travellers**;
+  stored with the activity watch's subject fields) for the first
   ``MAX_LIVE_ACTIVITIES``; category pages, non-USD listings and the rest →
-  estimates;
+  estimates (the AI price, also per person × travellers);
 - the SIM / eSIM plan → estimate ("other").
 
-Estimates are the AI prices of the original search, **frozen at creation**
-and labelled; they are part of the total but never move, so they never
-alert on their own. A plan with no live part can't be watched (422
-``no_live_price``).
+Every component carries a ``detail`` line saying what its price is ("Google
+Flights · Berlin ⇄ Lisbon · 10–14 Dec · 2 travellers", "from $22.87 per
+person × 2"). Estimates are the AI prices of the original search, **frozen
+at creation** and labelled; they are part of the total but never move, so
+they never alert on their own. A plan with no live part can't be watched
+(422 ``no_live_price``).
 
 A check re-prices the live parts (≤ ``CHECK_CALL_CAP`` SerpAPI calls; at
-most ``MAX_LIVE_ACTIVITIES`` activities, least recently checked first, the
-others keep their last observed price marked ``stale``). A part that is
-unavailable (or whose look failed) keeps its last observed price, flagged
-in the breakdown; when the flight and hotel are both unavailable the whole
-look is ``unavailable``. Alerts use the trip step (max $25, 4 %) on the
-total and explain the change by component.
+most ``MAX_LIVE_ACTIVITIES`` activities, least recently checked first — a
+defensive rule, as creation makes at most that many live — the others keep
+their last observed price marked ``stale``). A part that is unavailable (or
+whose look failed) keeps its last observed price, flagged in the breakdown;
+the look is ``unavailable`` only when no live part priced. Alerts use the
+trip step (max $25, 4 %) on the total and explain the change by component,
+measured against the stored breakdown of the reference look (the core's
+``reference_looks``); without one only the total is explained.
+
+SerpAPI calls are counted as made: each adapter lookup counts the cache
+entries it newly filled (cached answers are free), or uses the count the
+adapter returns.
 
 The watch works on its frozen subject: deleting the plan afterwards doesn't
 stop it (it still ends on the departure date).
@@ -39,11 +49,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from collections.abc import Awaitable
 from datetime import UTC, date, datetime
 
 from ...core.cache import get_cache
-from ...db import plans_db, price_watch_db
+from ...db import plans_db
 from ...schemas.request import TravelSearchRequest
 from .. import activity_prices, fare_watch, hotel_prices, price_rules, serp_flights
 from ..activity_prices import ActivityListing
@@ -58,6 +69,8 @@ MAX_LIVE_ACTIVITIES = 5  # activities looked up live per create / check
 NO_LIVE_MESSAGE = "We can't find a live price for any part of this trip yet"
 ESTIMATE = "ai_estimate"
 DEFAULT_NIGHTS = 7  # as the plan drawer, when the plan has no return date
+LIVE_FLIGHT_LABEL = "Flights — cheapest fare on your dates"
+MAX_NAMED_ESTIMATES = 2  # in alert bodies: "SIM / eSIM, Fado night +3 more"
 
 GROUPS = {"flight": "flights", "hotel": "stay", "activity": "activities"}
 # How each group reads in "flights −$70, hotel −$42"
@@ -67,7 +80,7 @@ MOVE_LABELS = {
     "activities": "activities",
     "other": "other",
 }
-_ANCHORS = ("flight", "hotel")  # both unavailable → the look is unavailable
+_ANCHORS = ("flight", "hotel")
 _PRIVATE = ("_try",)  # draft-only keys, never stored
 
 
@@ -89,7 +102,7 @@ def _amount(value) -> float:
         n = float(value)
     except (TypeError, ValueError):
         return 0.0
-    return n if n > 0 and n != float("inf") else 0.0
+    return n if 0 < n < float("inf") else 0.0
 
 
 def _plan_id(spec: dict) -> int:
@@ -117,6 +130,11 @@ def _travellers(sd: dict) -> int:
         return 1
 
 
+def _rooms(n: int) -> int:
+    """Rooms for the party: two to a room, as most hotel rates assume."""
+    return max(1, math.ceil(n / 2))
+
+
 def _iso(value) -> str | None:
     try:
         return date.fromisoformat(str(value)[:10]).isoformat() if value else None
@@ -132,6 +150,16 @@ def _nights(dep: str | None, ret: str | None) -> int:
 
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def _money(amount: float, currency: str = "USD") -> str:
+    """$22.87 / $1,234 for details (cents under $100); other codes as "EUR 24.00"."""
+    text = f"{amount:,.2f}" if amount < 100 else f"{round(amount):,}"
+    return f"${text}" if currency == "USD" else f"{currency} {text}"
+
+
+def _plural(n: int, word: str) -> str:
+    return f"{n} {word}{'s' if n != 1 else ''}"
 
 
 def _draft(cid: str, ctype: str, label: str, price: float, **extra) -> dict:
@@ -154,6 +182,35 @@ def _public(comp: dict) -> dict:
     return {k: v for k, v in comp.items() if k not in _PRIVATE}
 
 
+def _per_person_detail(unit: float, n: int, currency: str = "USD", *, live: bool):
+    base = f"{_money(unit, currency)} per person × {n}"
+    return f"from {base}" if live else f"{base} (estimate)"
+
+
+def _hotel_detail(s: dict, nightly: float | None) -> str:
+    parts = [
+        "Google Hotels",
+        _plural(_nights(s["check_in"], s["check_out"]), "night"),
+        _plural(s.get("rooms") or 1, "room"),
+    ]
+    if nightly:
+        parts.append(f"{_money(nightly)} per night")
+    return " · ".join(parts)
+
+
+def _flight_detail(fare: dict) -> str:
+    arrow = "⇄" if fare.get("return_date") else "→"
+    route = (
+        f"{_city(fare['origin_label']) or fare['origin_code']} {arrow} "
+        f"{_city(fare['destination_label']) or fare['destination_code']}"
+    )
+    when = date_range(fare["departure_date"], fare.get("return_date"))
+    return (
+        f"Google Flights · {route} · {when} · "
+        f"{_plural(fare['num_travelers'], 'traveller')}"
+    )
+
+
 # ── SerpAPI call accounting (cached answers are free) ─────────────────────────
 
 
@@ -161,39 +218,47 @@ def _cached(key: str) -> bool:
     return key in get_cache()
 
 
+async def _counted(keys: list[str], coro: Awaitable):
+    """Await an adapter lookup; returns ``(result, calls, exc)``.
+
+    Calls = the cache entries among ``keys`` that were missing before and
+    are filled after (the adapters cache every answer they fetch), plus one
+    for a failed call (failures are never cached)."""
+    missing = [k for k in keys if not _cached(k)]
+    try:
+        result, exc = await coro, None
+    except Exception as e:  # reported to the caller, which decides
+        result, exc = None, e
+    calls = sum(1 for k in missing if _cached(k))
+    if exc is not None and any(not _cached(k) for k in missing):
+        calls += 1
+    return result, calls, exc
+
+
 def _flight_cost(fw: dict) -> int:
     return serp_flights.watch_call_estimate(fare_watch.watch_request(fw))
 
 
-def _hotel_find_cost(name: str, city: str, ci: str, co: str, adults: int) -> int:
+def _hotel_find_key(name: str, city: str, ci: str, co: str, n: int) -> str:
     q = " ".join(p.strip() for p in (name, city) if p and p.strip())
-    return 0 if _cached(hotel_prices._find_key(q, ci, co, adults, 1)) else 1
+    return hotel_prices._find_key(q, ci, co, n, _rooms(n))
 
 
-def _hotel_price_cost(s: dict) -> int:
-    key = hotel_prices._price_key(
+def _hotel_price_key(s: dict) -> str:
+    return hotel_prices._price_key(
         s["property_token"], s["check_in"], s["check_out"], s["adults"], s["rooms"]
     )
-    return 0 if _cached(key) else 1
 
 
-def _activity_queries(name: str, city: str) -> tuple[str, str]:
-    return (
-        activity_prices.build_query(name, city, "getyourguide"),
-        activity_prices.build_query(name, city, "viator"),
-    )
+def _activity_keys(name: str, city: str) -> list[str]:
+    return [
+        activity_prices._cache_key(activity_prices.build_query(name, city, p))
+        for p in ("getyourguide", "viator")
+    ]
 
 
-def _activity_find_cost(name: str, city: str) -> int:
-    """Worst case: the GetYourGuide query, then the Viator one."""
-    return sum(
-        0 if _cached(activity_prices._cache_key(q)) else 1
-        for q in _activity_queries(name, city)
-    )
-
-
-def _activity_price_cost(s: dict) -> int:
-    return 0 if _cached(activity_prices._cache_key(s["query"])) else 1
+def _uncached(keys: list[str]) -> int:
+    return sum(0 if _cached(k) else 1 for k in keys)
 
 
 # ── Building the components from a saved plan ─────────────────────────────────
@@ -213,6 +278,10 @@ def _trip_context(plan: dict) -> dict:
         raise InvalidSpec(
             "This plan has no departure date, so its price can't be watched."
         )
+    if date.fromisoformat(dep) <= fare_watch.utcnow().date():
+        raise InvalidSpec(
+            "This trip has already started, so its price can't be watched."
+        )
     ret = _iso(sd.get("return_date"))
     if ret and ret <= dep:
         ret = None
@@ -222,7 +291,7 @@ def _trip_context(plan: dict) -> dict:
         "dep": dep,
         "ret": ret,
         "n": _travellers(sd),
-        "city": _city(sd.get("destination")) or "your",
+        "city": _city(sd.get("destination")),
         "multi_city": isinstance(destinations, list) and len(destinations) > 1,
     }
 
@@ -269,7 +338,12 @@ def _drafts(plan: dict, ctx: dict) -> list[dict]:
         price = _amount((flight or {}).get("price_usd")) + sum(
             _amount(f.get("price_usd")) for f in legs
         )
-        d = _draft("flight", "flight", "Flights", price)
+        detail = (
+            f"{_plural(len(legs), 'flight leg')} you picked (estimate)"
+            if legs
+            else "The flight you picked (estimate)"
+        )
+        d = _draft("flight", "flight", "Flights", price, detail=detail)
         fare = _fare_subject(ctx) if flight and not legs else None
         if fare:
             d["_try"] = fare
@@ -277,12 +351,19 @@ def _drafts(plan: dict, ctx: dict) -> list[dict]:
 
     hotel = sel.get("hotel") if isinstance(sel.get("hotel"), dict) else None
     if hotel:
-        price = _amount(hotel.get("total_price_usd")) or _amount(
-            hotel.get("price_per_night_usd")
-        ) * _nights(dep, ret)
+        nights = _nights(dep, ret)
+        price = _amount(hotel.get("total_price_usd")) or (
+            _amount(hotel.get("price_per_night_usd")) * nights
+        )
         name = str(hotel.get("name") or "").strip()
-        d = _draft("hotel", "hotel", name or "Hotel", price)
-        if name and ret and not ctx["multi_city"]:
+        d = _draft(
+            "hotel",
+            "hotel",
+            name or "Hotel",
+            price,
+            detail=f"{_plural(nights, 'night')} (estimate)",
+        )
+        if name and city and ret and not ctx["multi_city"]:
             d["_try"] = {"name": name, "city": city}
         out.append(d)
 
@@ -291,91 +372,120 @@ def _drafts(plan: dict, ctx: dict) -> list[dict]:
         if not isinstance(act, dict):
             continue
         name = str(act.get("name") or "").strip()
+        unit = _amount(act.get("price_usd"))
         d = _draft(
             f"activity-{i}",
             "activity",
             name or "Activity",
-            _amount(act.get("price_usd")) * n,
+            unit * n,
+            detail=_per_person_detail(unit, n, live=False) if unit else None,
         )
-        if name and tried < MAX_LIVE_ACTIVITIES:
+        if name and city and tried < MAX_LIVE_ACTIVITIES:
             tried += 1
             d["_try"] = {"name": name, "city": city}
         out.append(d)
 
     sim = sel.get("sim") if isinstance(sel.get("sim"), dict) else None
     if sim:
-        out.append(_draft("sim", "other", "SIM / eSIM", _amount(sim.get("price_usd"))))
+        out.append(
+            _draft(
+                "sim",
+                "other",
+                "SIM / eSIM",
+                _amount(sim.get("price_usd")),
+                detail="From your search (estimate)",
+            )
+        )
     return out
 
 
-# ── Live lookups at creation ──────────────────────────────────────────────────
+# ── Live lookups at creation: each returns (calls, quota error or None) ───────
 
 
-async def _create_flight(d: dict, api_key: str) -> None:
+def _failed(label: str, exc: Exception) -> Exception | None:
+    """A quota error stops the create; any other leaves the part an estimate."""
+    if getattr(exc, "quota_exceeded", False):
+        return exc
+    logger.info("Trip watch: %s lookup failed: %s", label, type(exc).__name__)
+    return None
+
+
+async def _create_flight(d: dict, api_key: str):
     fare = d["_try"]
-    check = await fare_watch.fetch_fares({**fare, "flexible_days": 0}, api_key)
-    if check.price is None:
-        return
-    d.update(
-        live=True,
-        price=round(float(check.price), 2),
-        source="google_flights",
-        status="ok",
-        subject=fare,
-        link=serp_flights._google_flights_url(
-            fare["origin_code"],
-            fare["destination_code"],
-            fare["departure_date"],
-            fare["return_date"],
+    worst = _flight_cost(fare)
+    try:
+        check = await fare_watch.fetch_fares({**fare, "flexible_days": 0}, api_key)
+    except Exception as exc:
+        return worst, _failed("flight", exc)
+    if check.price is not None:
+        d.update(
+            live=True,
+            label=LIVE_FLIGHT_LABEL,
+            detail=_flight_detail(fare),
+            price=round(float(check.price), 2),
+            source="google_flights",
+            status="ok",
+            subject=fare,
+            link=serp_flights._google_flights_url(
+                fare["origin_code"],
+                fare["destination_code"],
+                fare["departure_date"],
+                fare["return_date"],
+            ),
+        )
+    return check.calls, None
+
+
+async def _create_hotel(d: dict, ctx: dict, api_key: str):
+    name, city, n = d["_try"]["name"], d["_try"]["city"], ctx["n"]
+    rooms = _rooms(n)
+    offers, calls, exc = await _counted(
+        [_hotel_find_key(name, city, ctx["dep"], ctx["ret"], n)],
+        hotel_prices.find_properties(
+            name, city, ctx["dep"], ctx["ret"], n, api_key, rooms=rooms
         ),
     )
-
-
-async def _create_hotel(d: dict, ctx: dict, api_key: str) -> None:
-    name, city = d["_try"]["name"], d["_try"]["city"]
-    offers = await hotel_prices.find_properties(
-        name, city, ctx["dep"], ctx["ret"], ctx["n"], api_key, rooms=1
-    )
-    match = hotel_prices.match_property(name, offers, city)
+    if exc is not None:
+        return calls, _failed("hotel", exc)
+    match = hotel_prices.match_property(name, offers or [], city)
     if match is None or not match.total_rate:
-        return
+        return calls, None
+    subject = {
+        "name": match.name,
+        "requested_name": name,
+        "city": city,
+        "property_token": match.property_token,
+        "check_in": ctx["dep"],
+        "check_out": ctx["ret"],
+        "adults": n,
+        "rooms": rooms,
+    }
     d.update(
         live=True,
+        label=match.name,
+        detail=_hotel_detail(subject, match.rate_per_night),
         price=round(float(match.total_rate), 2),
         unit_price=match.rate_per_night,
         unit="per night",
         source=hotel_prices.SOURCE,
         status="ok",
         link=match.link,
-        subject={
-            "name": match.name,
-            "requested_name": name,
-            "city": city,
-            "property_token": match.property_token,
-            "check_in": ctx["dep"],
-            "check_out": ctx["ret"],
-            "adults": ctx["n"],
-            "rooms": 1,
-        },
+        subject=subject,
     )
+    return calls, None
 
 
-async def _create_activity(d: dict, ctx: dict, api_key: str) -> int:
-    """Look the activity up; returns the SerpAPI calls it spent."""
+async def _create_activity(d: dict, ctx: dict, api_key: str):
     name, city, n = d["_try"]["name"], d["_try"]["city"], ctx["n"]
-    gyg_q, viator_q = _activity_queries(name, city)
-    gyg_new = not _cached(activity_prices._cache_key(gyg_q))
-    viator_new = not _cached(activity_prices._cache_key(viator_q))
-    listings = await activity_prices.find_listings(name, city, api_key)
-    gyg_best = activity_prices.match_listing(
-        name, [x for x in listings if x.provider == "getyourguide"], city
+    listings, calls, exc = await _counted(
+        _activity_keys(name, city),
+        activity_prices.find_listings(name, city, api_key),
     )
-    spent = int(gyg_new) + int(
-        viator_new and (gyg_best is None or gyg_best.is_category)
-    )
-    match = activity_prices.match_listing(name, listings, city)
+    if exc is not None:
+        return calls, _failed(d["id"], exc)
+    match = activity_prices.match_listing(name, listings or [], city)
     if match is None or match.is_category or not match.price_from:
-        return spent
+        return calls, None
     if not match.is_usd:
         # Non-USD prices can't join a USD total: keep the AI estimate, or —
         # without one — show the listing's price, frozen, outside the total.
@@ -388,13 +498,16 @@ async def _create_activity(d: dict, ctx: dict, api_key: str) -> int:
                 unit="per person",
                 source=match.source,
                 link=match.url,
+                detail=f"{_per_person_detail(match.price_from, n, match.currency, live=True)}"
+                " (estimate, not in the US-dollar total)",
             )
-        return spent
+        return calls, None
     d.update(
         live=True,
         price=round(match.price_from * n, 2),
         unit_price=match.price_from,
         unit="per person",
+        detail=_per_person_detail(match.price_from, n, live=True),
         source=match.source,
         status="ok",
         link=match.url,
@@ -413,75 +526,64 @@ async def _create_activity(d: dict, ctx: dict, api_key: str) -> int:
             "reviews": match.reviews,
         },
     )
-    return spent
-
-
-async def _guarded(coro: Awaitable, label: str, worst: int) -> int:
-    """Run one create lookup: a failure leaves that part an estimate (a
-    quota error stops the create). Returns the calls it spent."""
-    try:
-        spent = await coro
-    except Exception as exc:
-        if getattr(exc, "quota_exceeded", False):
-            raise
-        logger.info("Trip watch: %s lookup failed: %s", label, type(exc).__name__)
-        return worst
-    return worst if spent is None else spent
+    return calls, None
 
 
 async def _resolve_live(drafts: list[dict], ctx: dict, api_key: str) -> int:
-    """Look up the live parts within CREATE_CALL_CAP; returns calls spent."""
+    """Look up the live parts within CREATE_CALL_CAP; returns the calls made.
+
+    Each lookup reserves its worst case from the cap and gives back what it
+    didn't use, so later activities can still run. A quota error stops the
+    create, carrying the calls made so far (``exc.calls``)."""
     budget = CREATE_CALL_CAP
-    first: list[Awaitable] = []
+    pending: list[tuple[Awaitable, int]] = []
     for d in drafts:
         if "_try" not in d or d["type"] == "activity":
             continue
+        t = d["_try"]
         if d["type"] == "flight":
-            cost = _flight_cost(d["_try"])
-            coro = _create_flight(d, api_key)
+            worst = _flight_cost(t)
+            job = _create_flight(d, api_key)
         else:
-            t = d["_try"]
-            cost = _hotel_find_cost(
-                t["name"], t["city"], ctx["dep"], ctx["ret"], ctx["n"]
+            worst = _uncached(
+                [
+                    _hotel_find_key(
+                        t["name"], t["city"], ctx["dep"], ctx["ret"], ctx["n"]
+                    )
+                ]
             )
-            coro = _create_hotel(d, ctx, api_key)
-        if cost > budget:
-            coro.close()
+            job = _create_hotel(d, ctx, api_key)
+        if worst > budget:
+            job.close()
             continue
-        budget -= cost
-        first.append(_guarded(_with_cost(coro, cost), d["id"], cost))
+        budget -= worst
+        pending.append((job, worst))
 
     queue = [d for d in drafts if "_try" in d and d["type"] == "activity"]
     spent = 0
-    pending = first
+    quota: Exception | None = None
     while pending or queue:
-        batch: list[tuple[dict, int]] = []
         while queue:
-            cost = _activity_find_cost(
-                queue[0]["_try"]["name"], queue[0]["_try"]["city"]
-            )
-            if cost > budget:
+            t = queue[0]["_try"]
+            worst = _uncached(_activity_keys(t["name"], t["city"]))
+            if worst > budget:
                 break
-            budget -= cost
-            batch.append((queue.pop(0), cost))
-        if not batch and not pending:
+            budget -= worst
+            pending.append((_create_activity(queue.pop(0), ctx, api_key), worst))
+        if not pending:
             break
-        jobs = pending + [
-            _guarded(_create_activity(d, ctx, api_key), d["id"], cost)
-            for d, cost in batch
-        ]
-        results = await asyncio.gather(*jobs)
-        used = list(results)
-        spent += sum(used)
-        # refund what the batch reserved but didn't spend
-        budget += sum(cost for _, cost in batch) - sum(used[len(pending) :])
+        results = await asyncio.gather(*(job for job, _ in pending))
+        for (_, worst), (calls, exc) in zip(pending, results, strict=True):
+            spent += calls
+            budget += worst - calls  # give back what wasn't used
+            quota = quota or exc
         pending = []
+        if quota is not None:
+            break
+    if quota is not None:
+        quota.calls = spent
+        raise quota
     return spent
-
-
-async def _with_cost(coro: Awaitable, cost: int) -> int:
-    await coro
-    return cost
 
 
 # ── Checking ──────────────────────────────────────────────────────────────────
@@ -505,7 +607,8 @@ def _picks(watch: dict) -> list[dict]:
     core = [c for c in comps if c["type"] in _ANCHORS]
     acts = [c for c in comps if c["type"] == "activity"]
     order = sorted(
-        range(len(acts)), key=lambda i: (prev[acts[i]["id"]].get("checked_at") or "", i)
+        range(len(acts)),
+        key=lambda i: (prev[acts[i]["id"]].get("checked_at") or "", i),
     )
     return core + [acts[i] for i in order[:MAX_LIVE_ACTIVITIES]]
 
@@ -515,31 +618,43 @@ def _check_cost(comp: dict) -> int:
     if comp["type"] == "flight":
         return _flight_cost(s)
     if comp["type"] == "hotel":
-        return _hotel_price_cost(s)
-    return _activity_price_cost(s)
+        return _uncached([_hotel_price_key(s)])
+    return _uncached([activity_prices._cache_key(s["query"])])
 
 
-async def _look(comp: dict, api_key: str) -> tuple[float | None, dict]:
-    """(price, extras) for one live part; price None = unavailable."""
+async def _look(comp: dict, api_key: str):
+    """One live part → ``(price or None if unavailable, extras, calls, exc)``."""
     s = comp["subject"]
     if comp["type"] == "flight":
-        check = await fare_watch.fetch_fares({**s, "flexible_days": 0}, api_key)
-        return (None if check.price is None else float(check.price)), {}
+        worst = _flight_cost(s)
+        try:
+            check = await fare_watch.fetch_fares({**s, "flexible_days": 0}, api_key)
+        except Exception as exc:
+            return None, {}, worst, exc
+        price = None if check.price is None else float(check.price)
+        return price, {}, check.calls, None
     if comp["type"] == "hotel":
-        hp = await hotel_prices.price_property(
-            s["property_token"],
-            s["check_in"],
-            s["check_out"],
-            s["adults"],
-            api_key,
-            rooms=s.get("rooms") or 1,
+        hp, calls, exc = await _counted(
+            [_hotel_price_key(s)],
+            hotel_prices.price_property(
+                s["property_token"],
+                s["check_in"],
+                s["check_out"],
+                s["adults"],
+                api_key,
+                rooms=s.get("rooms") or 1,
+            ),
         )
+        if exc is not None:
+            return None, {}, calls, exc
         if not hp.available or not hp.total:
-            return None, {}
-        return float(hp.total), {
+            return None, {}, calls, None
+        extras = {
             "unit_price": hp.nightly,
+            "detail": _hotel_detail(s, hp.nightly),
             "link": hp.link or comp.get("link"),
         }
+        return float(hp.total), extras, calls, None
     listing = ActivityListing(
         provider=s["provider"],
         url=s["listing_url"],
@@ -553,19 +668,28 @@ async def _look(comp: dict, api_key: str) -> tuple[float | None, dict]:
         page_kind=s.get("page_kind") or "activity",
         query=s["query"],
     )
-    ap = await activity_prices.price_listing(listing, s["query"], api_key)
+    ap, calls, exc = await _counted(
+        [activity_prices._cache_key(s["query"])],
+        activity_prices.price_listing(listing, s["query"], api_key),
+    )
+    if exc is not None:
+        return None, {}, calls, exc
     if not ap.available or not ap.is_usd or not ap.price_from:
-        return None, {}  # gone, unpriced, or now in another currency
+        return None, {}, calls, None  # gone, unpriced, or now in another currency
     n = s.get("travellers") or 1
-    return round(ap.price_from * n, 2), {"unit_price": ap.price_from, "link": ap.url}
+    extras = {
+        "unit_price": ap.price_from,
+        "detail": _per_person_detail(ap.price_from, n, live=True),
+        "link": ap.url,
+    }
+    return round(ap.price_from * n, 2), extras, calls, None
 
 
 def _row(comp: dict, prev: dict, **fields) -> dict:
     row = {k: v for k, v in comp.items() if k != "subject"}
-    if "checked_at" in prev:
-        row["checked_at"] = prev["checked_at"]
-    if prev.get("unit_price") is not None and comp.get("live"):
-        row["unit_price"] = prev["unit_price"]
+    for key in ("checked_at", "unit_price", "detail"):
+        if key in prev and comp.get("live"):
+            row[key] = prev[key]
     row.update(fields)
     before = prev.get("price", comp["price"])
     row["previous_price"] = before
@@ -577,25 +701,48 @@ def _total(rows: list[dict]) -> float:
     return round(sum(r["price"] for r in rows if r.get("in_total", True)), 2)
 
 
+def _observed(rows: list[dict]) -> dict:
+    def ids(status: str) -> list[str]:
+        return [r["id"] for r in rows if r.get("status") == status]
+
+    return {
+        "live": sum(1 for r in rows if r.get("live")),
+        "estimates": sum(1 for r in rows if not r.get("live")),
+        "unavailable": ids("unavailable"),
+        "stale": ids("stale"),
+        "errors": ids("error"),
+    }
+
+
 # ── Notification wording ──────────────────────────────────────────────────────
 
 
-def _reference_prices(watch: dict, ref: float) -> dict[str, float]:
-    """Component prices at the look whose total was ``ref`` (the baseline,
-    the last alert or the peak since it); the baseline if it's gone."""
-    for h in reversed(price_watch_db.get_history(watch["id"])):
-        if (
-            h.get("price") is not None
-            and abs(h["price"] - ref) < 0.01
-            and h.get("breakdown")
-        ):
-            return {r["id"]: r["price"] for r in h["breakdown"] if "id" in r}
-    return {c["id"]: c["price"] for c in watch["subject"].get("components") or []}
+def _reference_prices(watch: dict, ref: float) -> dict[str, float] | None:
+    """Component prices of the look the alert is measured from — stored by
+    the core in ``reference_looks`` (baseline, last alert, re-arm peak).
+    None when it isn't stored or doesn't add up to ``ref``: then only the
+    total is explained, never invented component moves."""
+    looks = watch.get("reference_looks") or {}
+    last, peak = watch.get("last_notified_price"), watch.get("own_peak_price")
+    if last is None:
+        key = "baseline"
+    elif price_rules.rearmed(last, peak, price_rules.TRIP_STEP):
+        key = "peak"
+    else:
+        key = "last_alert"
+    rows = looks.get(key)
+    if not isinstance(rows, list) or not rows:
+        return None
+    if abs(_total(rows) - ref) > 0.01:
+        return None
+    return {r["id"]: r["price"] for r in rows if "id" in r}
 
 
 def _moves(watch: dict, obs: PriceObservation, ref: float) -> list[dict]:
     """Live groups whose price moved since the reference, biggest drop first."""
     before = _reference_prices(watch, ref)
+    if before is None:
+        return []
     groups: dict[str, float] = {}
     for row in obs.breakdown or []:
         if not row.get("live") or not row.get("in_total", True):
@@ -618,8 +765,37 @@ def _phrase(moves: list[dict]) -> str:
     return ", ".join(f"{m['label']} {_signed(m['delta'])}" for m in moves)
 
 
-def _travellers_text(n: int) -> str:
-    return f"{n} traveller{'s' if n != 1 else ''}"
+def _estimates_sentence(rows: list[dict]) -> str | None:
+    names = [r["label"] for r in rows if not r.get("live")]
+    if not names:
+        return None
+    shown = ", ".join(names[:MAX_NAMED_ESTIMATES])
+    if len(names) > MAX_NAMED_ESTIMATES:
+        shown += f" +{len(names) - MAX_NAMED_ESTIMATES} more"
+    return f"Estimates ({shown}) are held fixed and never trigger alerts."
+
+
+def _unpriced_sentences(rows: list[dict]) -> list[str]:
+    out = []
+    for r in rows:
+        if (
+            r.get("live")
+            and r["type"] in _ANCHORS
+            and r["status"]
+            in (
+                "unavailable",
+                "error",
+            )
+        ):
+            name = "Flights" if r["type"] == "flight" else r["label"]
+            out.append(
+                f"{name}: no live price on this check (last seen {usd(r['price'])})."
+            )
+    return out
+
+
+def _your_trip(city: str | None) -> str:
+    return f"Your {city} trip" if city else "Your trip"
 
 
 # ── The source ────────────────────────────────────────────────────────────────
@@ -651,12 +827,13 @@ class TripSource:
                 estimate={"price": total, "source": ESTIMATE} if comps else None,
                 calls=calls,
             )
-        n = ctx["n"]
+        n, city = ctx["n"], ctx["city"]
+        where = city or "Your trip"
         return CreatedWatch(
             subject={
                 "plan_id": plan["id"],
                 "plan_name": plan.get("name"),
-                "city": ctx["city"],
+                "city": city or None,
                 "departure_date": ctx["dep"],
                 "return_date": ctx["ret"],
                 "travellers": n,
@@ -669,9 +846,9 @@ class TripSource:
                 observed=_observed(rows),
                 calls=calls,
             ),
-            title=plan.get("name") or f"{ctx['city']} trip",
-            subtitle=f"{ctx['city']} · {date_range(ctx['dep'], ctx['ret'])} · "
-            f"{_travellers_text(n)}",
+            title=plan.get("name") or (f"{city} trip" if city else "Your trip"),
+            subtitle=f"{where} · {date_range(ctx['dep'], ctx['ret'])} · "
+            f"{_plural(n, 'traveller')}",
             expires_on=ctx["dep"],
             plan_id=plan["id"],
         )
@@ -682,15 +859,15 @@ class TripSource:
     async def check(self, watch: dict, api_key: str) -> PriceObservation:
         picks = _picks(watch)
         prev = _previous(watch)
-        costs = {c["id"]: _check_cost(c) for c in picks}
-        results = await asyncio.gather(
-            *(_look(c, api_key) for c in picks), return_exceptions=True
-        )
-        for r in results:
-            if isinstance(r, BaseException) and getattr(r, "quota_exceeded", False):
-                raise r
-        errors = [r for r in results if isinstance(r, BaseException)]
+        results = await asyncio.gather(*(_look(c, api_key) for c in picks))
+        calls = sum(r[2] for r in results)
+        errors = [r[3] for r in results if r[3] is not None]
+        for exc in errors:
+            if getattr(exc, "quota_exceeded", False):
+                exc.calls = calls
+                raise exc
         if picks and len(errors) == len(picks):
+            errors[0].calls = calls
             raise errors[0]
 
         stamp = _now()
@@ -701,118 +878,80 @@ class TripSource:
             last = p.get("price", comp["price"])
             if not comp.get("live"):
                 rows.append(_row(comp, {}, status="estimate"))
-            elif comp["id"] not in looked:
+                continue
+            if comp["id"] not in looked:
                 rows.append(_row(comp, p, price=last, status="stale"))
+                continue
+            price, extras, _, exc = looked[comp["id"]]
+            if exc is not None:
+                logger.info(
+                    "Trip watch %s: %s look failed: %s",
+                    watch.get("id"),
+                    comp["id"],
+                    type(exc).__name__,
+                )
+                rows.append(_row(comp, p, price=last, status="error"))
+            elif price is None:
+                rows.append(
+                    _row(comp, p, price=last, status="unavailable", checked_at=stamp)
+                )
             else:
-                got = looked[comp["id"]]
-                if isinstance(got, BaseException):
-                    logger.info(
-                        "Trip watch %s: %s look failed: %s",
-                        watch.get("id"),
-                        comp["id"],
-                        type(got).__name__,
-                    )
-                    rows.append(_row(comp, p, price=last, status="error"))
-                elif got[0] is None:
-                    rows.append(
-                        _row(
-                            comp, p, price=last, status="unavailable", checked_at=stamp
-                        )
-                    )
-                else:
-                    rows.append(
-                        _row(
-                            comp,
-                            p,
-                            price=got[0],
-                            status="ok",
-                            checked_at=stamp,
-                            **got[1],
-                        )
-                    )
+                rows.append(
+                    _row(comp, p, price=price, status="ok", checked_at=stamp, **extras)
+                )
 
-        status = _look_status(rows, picks)
-        if status == "failed":
-            raise next(
-                r
-                for c, r in zip(picks, results, strict=True)
-                if c["type"] in _ANCHORS and isinstance(r, BaseException)
-            )
+        # Unavailable only when no live part priced on this check; otherwise
+        # the others are carried at their last observed price (flagged).
+        priced = any(r["status"] == "ok" for r in rows if r.get("live"))
         return PriceObservation(
-            price=_total(rows) if status == "ok" else None,
-            status=status,
+            price=_total(rows) if priced else None,
+            status="ok" if priced else "unavailable",
             source="trip",
             breakdown=rows,
             observed=_observed(rows),
-            calls=sum(costs.values()),
+            calls=calls,
         )
 
     def compose(
         self, kind: str, watch: dict, obs: PriceObservation, ref: float
     ) -> dict:
         s = watch["subject"]
-        city, p = s.get("city") or "your", obs.price
+        city, p = s.get("city"), obs.price
+        rows = obs.breakdown or []
         moves = _moves(watch, obs, ref)
         phrase = _phrase(moves)
         if kind.endswith("_target"):
             title = (
-                f"🧳 Your {city} trip is now {usd(p)} — below your "
+                f"🧳 {_your_trip(city)} is now {usd(p)} — below your "
                 f"{usd(watch['target_price'])} target"
             )
         else:
-            title = f"🧳 Your {city} trip is {usd(ref - p)} cheaper"
+            title = f"🧳 {_your_trip(city)} is {usd(ref - p)} cheaper"
             if phrase:
                 title += f": {phrase}"
         body = [f"Now {usd(p)}, was {usd(ref)}."]
         if phrase:
             body.append(f"{phrase[0].upper()}{phrase[1:]}.")
-        estimates = [r["label"] for r in obs.breakdown or [] if not r.get("live")]
-        if estimates:
+        body += _unpriced_sentences(rows)
+        if any(r.get("live") and r["type"] == "flight" for r in rows):
             body.append(
-                f"Estimates ({', '.join(estimates)}) are held fixed and never "
-                "trigger alerts."
+                "Flights are the cheapest Google Flights fare on your dates, "
+                "not one specific flight."
             )
+        estimates = _estimates_sentence(rows)
+        if estimates:
+            body.append(estimates)
         if s.get("departure_date"):
             body.append(
                 f"For {date_range(s['departure_date'], s.get('return_date'))}"
-                f" · {_travellers_text(s.get('travellers') or 1)}."
+                f" · {_plural(s.get('travellers') or 1, 'traveller')}."
             )
         return {
             "kind": kind,
             "title": title,
             "body": " ".join(body),
-            "data": {
-                "components": moves,
-                "plan_id": s.get("plan_id"),
-                "city": city,
-            },
+            "data": {"components": moves, "plan_id": s.get("plan_id"), "city": city},
         }
-
-
-def _look_status(rows: list[dict], picks: list[dict]) -> str:
-    """ok / unavailable / failed for one check (see the module docstring)."""
-    by_id = {r["id"]: r for r in rows}
-    picked = [by_id[c["id"]] for c in picks]
-    anchors = [r for r in picked if r["type"] in _ANCHORS]
-    judged = anchors or picked
-    if any(r["status"] == "ok" for r in judged):
-        return "ok"
-    if any(r["status"] == "unavailable" for r in judged):
-        return "unavailable"
-    return "failed" if anchors else "ok"
-
-
-def _observed(rows: list[dict]) -> dict:
-    def ids(status: str) -> list[str]:
-        return [r["id"] for r in rows if r.get("status") == status]
-
-    return {
-        "live": sum(1 for r in rows if r.get("live")),
-        "estimates": sum(1 for r in rows if not r.get("live")),
-        "unavailable": ids("unavailable"),
-        "stale": ids("stale"),
-        "errors": ids("error"),
-    }
 
 
 SOURCE = TripSource()

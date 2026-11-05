@@ -90,7 +90,9 @@ def _plan(user, selections=None, search=None, name="Lisbon escape"):
 
 
 class Stubs:
-    """Programmable fakes for the three adapters; records every call."""
+    """Programmable fakes for the three adapters; records every call and,
+    like the real adapters, caches every answer it "fetched" (the source
+    counts SerpAPI calls by the cache entries a lookup fills)."""
 
     def __init__(self):
         self.fares: list = [612.0]  # FareCheck price (or exception) per call
@@ -113,7 +115,9 @@ class Stubs:
         return FareCheck(price=item, calls=1)
 
     async def find_properties(self, name, city, ci, co, adults, api_key, rooms=1):
-        self.calls.append(("hotel_find", name, city, ci, co, adults))
+        self.calls.append(("hotel_find", name, city, ci, co, adults, rooms))
+        q = f"{name} {city}"
+        get_cache()[hotel_prices._find_key(q, ci, co, adults, rooms)] = ()
         return list(self.hotel_offers)
 
     async def price_property(self, token, ci, co, adults, api_key, rooms=1, **kw):
@@ -121,17 +125,27 @@ class Stubs:
         item = self.hotel_prices.pop(0)
         if isinstance(item, Exception):
             raise item
+        get_cache()[hotel_prices._price_key(token, ci, co, adults, rooms)] = item
         return item
 
     async def find_listings(self, name, city, api_key):
         self.calls.append(("activity_find", name, city))
-        return list(self.listings.get(name, []))
+        found = list(self.listings.get(name, []))
+        cache = get_cache()
+        for provider in ("getyourguide", "viator"):
+            q = activity_prices.build_query(name, city, provider)
+            cache[activity_prices._cache_key(q)] = {"results": []}
+            best = activity_prices.match_listing(name, found, city)
+            if best is not None and not best.is_category:
+                break  # the Viator query only runs without a GYG match
+        return found
 
     async def price_listing(self, listing, query, api_key):
         self.calls.append(("activity_price", listing.url))
         item = self.activity_prices[listing.url].pop(0)
         if isinstance(item, Exception):
             raise item
+        get_cache()[activity_prices._cache_key(query)] = {"results": []}
         return item
 
     def count(self, kind):
@@ -225,6 +239,7 @@ def _watch(created, watch_id=1, last=None):
         "subject": created.subject,
         "baseline_price": created.baseline.price,
         "last_observation": {"breakdown": obs.breakdown, "status": obs.status},
+        "reference_looks": {"baseline": created.baseline.breakdown},
     }
 
 
@@ -277,6 +292,10 @@ def test_create_builds_live_and_estimate_components(stubs):
     assert f["subject"]["origin_code"] and f["subject"]["destination_code"]
     assert f["subject"]["departure_date"] == "2026-12-10"
     assert f["subject"]["num_travelers"] == 2
+    # it is Google's cheapest fare for the dates, not the picked flight
+    assert f["label"] == "Flights — cheapest fare on your dates"
+    assert f["detail"].startswith("Google Flights · Berlin ⇄ Lisbon · 10–14 Dec")
+    assert f["detail"].endswith("2 travellers")
 
     h = comps["hotel"]
     assert (h["live"], h["price"], h["source"]) == (True, 398.0, "google_hotels")
@@ -291,11 +310,13 @@ def test_create_builds_live_and_estimate_components(stubs):
         "rooms": 1,
     }
     assert h["unit_price"] == pytest.approx(99.5) and h["unit"] == "per night"
+    assert h["detail"] == "Google Hotels · 4 nights · 1 room · $99.50 per night"
 
     a = comps["activity-1"]
     assert a["live"] is True and a["source"] == "getyourguide_via_google"
     assert a["price"] == pytest.approx(66.92)  # $33.46 per person × 2
     assert (a["unit_price"], a["unit"]) == (33.46, "per person")
+    assert a["detail"] == "from $33.46 per person × 2"
     assert set(a["subject"]) >= {
         "name",
         "city",
@@ -343,6 +364,8 @@ def test_unmatched_parts_become_frozen_estimates(stubs):
     # activities: AI price per person × travellers, as estimates
     assert comps["activity-0"]["live"] is False
     assert comps["activity-0"]["price"] == 60.0
+    assert comps["activity-0"]["detail"] == "$30.00 per person × 2 (estimate)"
+    assert comps["hotel"]["detail"] == "4 nights (estimate)"
     assert created.baseline.price == pytest.approx(612 + 440 + 60 + 60 + 13)
 
 
@@ -479,6 +502,62 @@ def test_plan_without_departure_date_is_invalid(stubs):
         _create(user, plan["id"])
 
 
+def test_departed_or_departing_today_plan_is_invalid_before_any_call(
+    stubs, monkeypatch
+):
+    monkeypatch.setattr(fare_watch, "utcnow", lambda: NOW.replace(month=12, day=10))
+    user = _user()
+    plan = _plan(user)
+    with pytest.raises(InvalidSpec) as exc:
+        _create(user, plan["id"])
+    assert "already started" in str(exc.value)
+    assert stubs.calls == []
+
+
+def test_hotel_rooms_fit_the_party(stubs):
+    user = _user()
+    created = _create(user, _plan(user, search={**SEARCH, "num_travelers": 5})["id"])
+    find = next(c for c in stubs.calls if c[0] == "hotel_find")
+    assert (find[5], find[6]) == (5, 3)  # 5 adults in 3 rooms
+    h = _by_id(created.subject["components"])["hotel"]["subject"]
+    assert (h["adults"], h["rooms"]) == (5, 3)
+
+
+def test_a_plan_without_a_city_skips_hotel_and_activity_lookups(stubs):
+    user = _user()
+    result = _create(user, _plan(user, search={**SEARCH, "destination": ""})["id"])
+    assert stubs.calls == []  # no "hotels in your" searches
+    assert isinstance(result, NoLivePrice)
+
+
+def test_invalid_spec_declares_its_status():
+    assert InvalidSpec.status_code == 422
+    assert trip.PlanNotFound().status_code == 404
+
+
+def test_quota_partway_through_create_reports_the_calls_made(stubs):
+    stubs.fares = [serp_flights.SerpAPIError("quota", quota_exceeded=True)]
+    user = _user()
+    with pytest.raises(serp_flights.SerpAPIError) as exc:
+        _create(user, _plan(user)["id"])
+    # the flight call failed (1) + hotel search (1) + 2 activity searches (2)
+    assert exc.value.calls == 4
+
+
+def test_check_reports_the_calls_it_made(stubs):
+    created = _created_with_prices(stubs)
+    stubs.fares = [612.0]
+    stubs.hotel_prices = [_hp(398.0)]
+    u0, u1 = _url(created, "activity-0"), _url(created, "activity-1")
+    stubs.activity_prices = {u0: [_ap(u0, 22.87)], u1: [_ap(u1, 33.46)]}
+    # activity-1's search is already cached: it costs nothing
+    q1 = _by_id(created.subject["components"])["activity-1"]["subject"]["query"]
+    get_cache()[activity_prices._cache_key(q1)] = {"results": []}
+    w = _watch(created)
+    assert trip.SOURCE.estimate_calls(w) == 3
+    assert run(trip.SOURCE.check(w, "k")).calls == 3
+
+
 # ── Check ─────────────────────────────────────────────────────────────────────
 
 
@@ -486,6 +565,7 @@ def _created_with_prices(stubs, user=None, selections=None):
     user = user or _user()
     created = _create(user, _plan(user, selections)["id"])
     stubs.calls.clear()
+    get_cache().clear()  # a later check: nothing cached any more
     return created
 
 
@@ -619,12 +699,40 @@ def test_unavailable_part_keeps_its_last_price_and_is_flagged(stubs):
     assert obs.price == pytest.approx(600 + 398 + 45.74 + 66.92 + 13)
 
 
-def test_flight_and_hotel_both_unavailable_is_an_unavailable_look(stubs):
+def test_flight_and_hotel_unavailable_but_activities_priced_is_ok(stubs):
     created = _created_with_prices(stubs)
     stubs.fares = [None]
     stubs.hotel_prices = [_hp(0, available=False)]
     stubs.activity_prices = {
-        u: [_ap(u, 9.0)]
+        u: [_ap(u, 20.0)]
+        for u in (_url(created, "activity-0"), _url(created, "activity-1"))
+    }
+    obs = run(trip.SOURCE.check(_watch(created), "k"))
+    assert obs.status == "ok"
+    b = _by_id(obs.breakdown)
+    assert (b["flight"]["status"], b["flight"]["price"]) == ("unavailable", 612.0)
+    assert (b["hotel"]["status"], b["hotel"]["price"]) == ("unavailable", 398.0)
+    assert obs.price == pytest.approx(612 + 398 + 40 + 40 + 13)
+
+
+def test_only_flight_live_and_unavailable_with_activities_priced_is_ok(stubs):
+    stubs.hotel_offers = []  # hotel stays an estimate
+    created = _created_with_prices(stubs)
+    stubs.fares = [None]
+    stubs.activity_prices = {
+        u: [_ap(u, 20.0)]
+        for u in (_url(created, "activity-0"), _url(created, "activity-1"))
+    }
+    obs = run(trip.SOURCE.check(_watch(created), "k"))
+    assert obs.status == "ok"
+
+
+def test_no_live_part_priced_is_an_unavailable_look(stubs):
+    created = _created_with_prices(stubs)
+    stubs.fares = [None]
+    stubs.hotel_prices = [_hp(0, available=False)]
+    stubs.activity_prices = {
+        u: [_ap(u, 0, available=False)]
         for u in (_url(created, "activity-0"), _url(created, "activity-1"))
     }
     obs = run(trip.SOURCE.check(_watch(created), "k"))
@@ -694,37 +802,24 @@ def _obs_from(created, **prices):
     return PriceObservation(price=total, breakdown=rows, source="trip")
 
 
-def test_drop_copy_explains_by_component(stubs, monkeypatch):
+def test_drop_copy_explains_by_component(stubs):
     created = _created_with_prices(stubs)
     w = _watch(created)
-    monkeypatch.setattr(
-        price_watch_db,
-        "get_history",
-        lambda wid: [
-            {"price": created.baseline.price, "breakdown": created.baseline.breakdown}
-        ],
-    )
     obs = _obs_from(created, flight=542.0, hotel=356.0)
     note = trip.SOURCE.compose("trip_drop", w, obs, created.baseline.price)
     assert (
         note["title"] == "🧳 Your Lisbon trip is $112 cheaper: flights −$70, hotel −$42"
     )
-    assert "Estimates" in note["body"] and "fixed" in note["body"]
+    assert "Estimates (SIM / eSIM) are held fixed" in note["body"]
+    assert "cheapest Google Flights fare on your dates" in note["body"]
     assert note["data"]["components"] == [
         {"group": "flights", "label": "flights", "delta": -70.0},
         {"group": "stay", "label": "hotel", "delta": -42.0},
     ]
 
 
-def test_copy_lists_only_parts_that_moved_and_groups_activities(stubs, monkeypatch):
+def test_copy_lists_only_parts_that_moved_and_groups_activities(stubs):
     created = _created_with_prices(stubs)
-    monkeypatch.setattr(
-        price_watch_db,
-        "get_history",
-        lambda wid: [
-            {"price": created.baseline.price, "breakdown": created.baseline.breakdown}
-        ],
-    )
     obs = _obs_from(
         created, **{"activity-0": 15.74, "activity-1": 36.92, "flight": 590.0}
     )
@@ -737,25 +832,61 @@ def test_copy_lists_only_parts_that_moved_and_groups_activities(stubs, monkeypat
     )
 
 
-def test_copy_measures_from_the_reference_look(stubs, monkeypatch):
+def test_copy_measures_from_the_stored_last_alert_look(stubs):
     created = _created_with_prices(stubs)
-    mid = _obs_from(created, flight=560.0)  # an earlier alert at this total
-    monkeypatch.setattr(
-        price_watch_db,
-        "get_history",
-        lambda wid: [
-            {"price": created.baseline.price, "breakdown": created.baseline.breakdown},
-            {"price": mid.price, "breakdown": mid.breakdown},
-        ],
-    )
+    mid = _obs_from(created, flight=560.0)  # the last alert, at this total
+    w = {
+        **_watch(created),
+        "last_notified_price": mid.price,
+        "own_peak_price": mid.price,
+        "reference_looks": {
+            "baseline": created.baseline.breakdown,
+            "last_alert": mid.breakdown,
+            "peak": mid.breakdown,
+        },
+    }
     obs = _obs_from(created, flight=560.0, hotel=320.0)
-    note = trip.SOURCE.compose("trip_drop", _watch(created), obs, mid.price)
+    note = trip.SOURCE.compose("trip_drop", w, obs, mid.price)
     assert note["title"] == "🧳 Your Lisbon trip is $78 cheaper: hotel −$78"
 
 
-def test_target_copy(stubs, monkeypatch):
+def test_copy_measures_from_the_stored_peak_once_rearmed(stubs):
     created = _created_with_prices(stubs)
-    monkeypatch.setattr(price_watch_db, "get_history", lambda wid: [])
+    alert = _obs_from(created, flight=500.0)  # alerted at base − 112
+    peak = _obs_from(created, flight=700.0)  # rebounded ≥ a step above it
+    w = {
+        **_watch(created),
+        "last_notified_price": alert.price,
+        "own_peak_price": peak.price,
+        "reference_looks": {
+            "baseline": created.baseline.breakdown,
+            "last_alert": alert.breakdown,
+            "peak": peak.breakdown,
+        },
+    }
+    obs = _obs_from(created, flight=640.0, hotel=350.0)
+    note = trip.SOURCE.compose("trip_drop", w, obs, peak.price)
+    assert (
+        note["title"] == "🧳 Your Lisbon trip is $108 cheaper: flights −$60, hotel −$48"
+    )
+
+
+def test_without_a_stored_reference_look_only_the_total_is_explained(stubs):
+    created = _created_with_prices(stubs)
+    obs = _obs_from(created, flight=542.0, hotel=356.0)
+    gone = {**_watch(created), "reference_looks": None}
+    note = trip.SOURCE.compose("trip_drop", gone, obs, created.baseline.price)
+    assert note["title"] == "🧳 Your Lisbon trip is $112 cheaper"
+    assert note["data"]["components"] == []
+    # a stored look that doesn't add up to the reference is not trusted either
+    other = _obs_from(created, flight=100.0)
+    w = {**_watch(created), "reference_looks": {"baseline": other.breakdown}}
+    note = trip.SOURCE.compose("trip_drop", w, obs, created.baseline.price)
+    assert note["title"] == "🧳 Your Lisbon trip is $112 cheaper"
+
+
+def test_target_copy(stubs):
+    created = _created_with_prices(stubs)
     w = {**_watch(created), "target_price": 1100.0}
     obs = _obs_from(created, flight=500.0)
     note = trip.SOURCE.compose("trip_target", w, obs, created.baseline.price)
@@ -763,6 +894,46 @@ def test_target_copy(stubs, monkeypatch):
         f"🧳 Your Lisbon trip is now ${round(obs.price):,} — below your $1,100 target"
     )
     assert "Flights −$112" in note["body"]
+
+
+def test_copy_names_at_most_two_estimates(stubs):
+    names = [f"Tour number {i}" for i in range(6)]
+    stubs.listings = {}
+    sel = {**SELECTIONS, "activities": _acts(*names)}
+    created = _created_with_prices(stubs, selections=sel)
+    obs = _obs_from(created, flight=500.0)
+    note = trip.SOURCE.compose(
+        "trip_drop", _watch(created), obs, created.baseline.price
+    )
+    assert (
+        "Estimates (Tour number 0, Tour number 1 +5 more) are held fixed"
+        in note["body"]
+    )
+
+
+def test_copy_says_which_parts_had_no_live_price(stubs):
+    created = _created_with_prices(stubs)
+    obs = _obs_from(created, flight=500.0)
+    for r in obs.breakdown:
+        if r["id"] == "hotel":
+            r["status"] = "unavailable"
+    note = trip.SOURCE.compose(
+        "trip_drop", _watch(created), obs, created.baseline.price
+    )
+    assert (
+        "Lumen Hotel & The Lisbon Light Show: no live price on this check "
+        "(last seen $398)." in note["body"]
+    )
+
+
+def test_copy_without_a_city(stubs):
+    created = _created_with_prices(stubs)
+    created.subject["city"] = None
+    obs = _obs_from(created, flight=500.0)
+    note = trip.SOURCE.compose(
+        "trip_drop", _watch(created), obs, created.baseline.price
+    )
+    assert note["title"].startswith("🧳 Your trip is $112 cheaper")
 
 
 # ── Pipeline: estimates never alert alone, threshold ──────────────────────────
@@ -825,13 +996,74 @@ def test_threshold_on_the_total_is_max_25_or_4_percent(piped):
 
 def test_estimates_never_alert_on_their_own(piped):
     user = _user()
-    created = _create(user, _plan(user)["id"])
+    plan = _plan(user)
+    created = _create(user, plan["id"])
     w = _stored(user, created)
-    # nothing live moves; the estimates are frozen whatever the plan says now
-    _queue(piped, created, 612.0)
+    # The plan's estimates get much cheaper afterwards (hotel, SIM, activities
+    # all near zero); the watch's estimates stay frozen, nothing live moves.
+    cheaper = copy.deepcopy(SELECTIONS)
+    cheaper["hotel"]["total_price_usd"] = 1.0
+    cheaper["sim"]["price_usd"] = 1.0
+    for a in cheaper["activities"]:
+        a["price_usd"] = 1.0
+    from app.db.plans_db import update_plan
+
+    update_plan(plan["id"], user["username"], None, cheaper)
+    stubs = piped
+    stubs.hotel_offers = []  # (not consulted by checks)
+    _queue(stubs, created, 612.0)
     out = _check(w["id"], NOW + timedelta(hours=12))
     assert out.notification is None
     assert out.watch["last_price"] == pytest.approx(created.baseline.price)
+    sim = _by_id(out.watch["last_observation"]["breakdown"])["sim"]
+    assert (sim["price"], sim["status"]) == (13.0, "estimate")
+
+
+def test_reference_looks_are_stored_for_the_baseline_alerts_and_peaks(piped):
+    user = _user()
+    created = _create(user, _plan(user)["id"])
+    w = _stored(user, created)
+    row = price_watch_db.get_watch(w["id"])
+    assert row["reference_looks"] == {"baseline": created.baseline.breakdown}
+
+    _queue(piped, created, 500.0)  # an alert: −$112
+    out = _check(w["id"], NOW + timedelta(hours=12))
+    assert out.notification is not None
+    looks = price_watch_db.get_watch(w["id"])["reference_looks"]
+    alert_flight = _by_id(looks["last_alert"])["flight"]["price"]
+    assert alert_flight == 500.0 and looks["peak"] == looks["last_alert"]
+    assert looks["baseline"] == created.baseline.breakdown
+
+    _queue(piped, created, 520.0)  # a rebound: a new peak, no alert
+    out = _check(w["id"], NOW + timedelta(hours=36))
+    assert out.notification is None
+    looks = price_watch_db.get_watch(w["id"])["reference_looks"]
+    assert _by_id(looks["peak"])["flight"]["price"] == 520.0
+    assert _by_id(looks["last_alert"])["flight"]["price"] == 500.0
+
+    _queue(piped, created, 510.0)  # lower than the peak: the peak look stays
+    _check(w["id"], NOW + timedelta(hours=60))
+    looks = price_watch_db.get_watch(w["id"])["reference_looks"]
+    assert _by_id(looks["peak"])["flight"]["price"] == 520.0
+
+    # the API never shows them
+    from app.api.routes.price_watches import serialize
+
+    assert "reference_looks" not in serialize(price_watch_db.get_watch(w["id"]))
+
+
+def test_alert_explained_after_history_is_pruned(piped, monkeypatch):
+    monkeypatch.setattr(price_watch_db, "HISTORY_KEEP", 1)
+    user = _user()
+    created = _create(user, _plan(user)["id"])
+    w = _stored(user, created)
+    _queue(piped, created, 500.0)  # alert vs baseline (flights −$112)
+    _check(w["id"], NOW + timedelta(hours=12))
+    _queue(piped, created, 505.0)  # a quiet look pushes the alert row out
+    assert _check(w["id"], NOW + timedelta(hours=24)).notification is None
+    _queue(piped, created, 500.0, hotel=300.0)  # −$98 since that alert
+    out = _check(w["id"], NOW + timedelta(hours=48))
+    assert out.notification["title"] == "🧳 Your Lisbon trip is $98 cheaper: hotel −$98"
 
 
 def test_plan_deleted_watch_keeps_checking_its_frozen_subject(piped):
@@ -852,7 +1084,9 @@ def test_unavailable_look_goes_through_the_pipeline(piped):
     piped.fares = [None]
     piped.hotel_prices = [_hp(0, available=False)]
     piped.activity_prices = {
-        _url(created, f"activity-{i}"): [_ap(_url(created, f"activity-{i}"), 9.0)]
+        _url(created, f"activity-{i}"): [
+            _ap(_url(created, f"activity-{i}"), 0, available=False)
+        ]
         for i in range(2)
     }
     out = _check(w["id"], NOW + timedelta(hours=12))
@@ -881,12 +1115,16 @@ class FakeSerp:
     def __init__(self):
         self.params: list[dict] = []
         self.flight_price = 612
+        self.google_body = None  # engine=google answer (default: GYG fixture)
+        self.quota_on = None  # engine answering 429
 
     async def get(self, url, params=None):
         params = dict(params or {})
         assert params.pop("api_key", None) == "test-key"
         self.params.append(params)
         engine = params.get("engine")
+        if engine == self.quota_on:
+            return httpx.Response(429, json={}, request=httpx.Request("GET", url))
         if engine == "google_flights":
             body = copy.deepcopy(FLIGHTS_BODY)
             body["best_flights"][0]["price"] = self.flight_price
@@ -894,6 +1132,8 @@ class FakeSerp:
             body = _fixture("hotels/property_details_lumen_generic_q.json")
         elif engine == "google_hotels":
             body = _fixture("hotels/named_search_lumen_single_property.json")
+        elif self.google_body is not None:
+            body = copy.deepcopy(self.google_body)
         elif "viator" in params.get("q", ""):
             body = _fixture("activities/viator_belem_tower.json")
         else:
@@ -1028,3 +1268,72 @@ def test_api_check_now_of_another_users_watch_is_404(client, serp):
     w = _post(client, alice, _plan(alice)["id"]).json()
     r = client.post(f"/api/price-watches/{w['id']}/check", headers=_login(bob))
     assert r.status_code == 404
+
+
+VIATOR_ITEM = {
+    "position": 1,
+    "title": "Small Group Walking Tour of Belém",
+    "link": "https://www.viator.com/tours/Lisbon/Small-Group-Walking-Tour-of-Belem/d538-12345P1",
+    "snippet": "Explore Belém on a 3 hour walking tour.",
+    "rich_snippet": {
+        "top": {
+            "detected_extensions": {
+                "rating": 4.8,
+                "reviews": 50,
+                "price": 31.0,
+                "currency": "$",
+            },
+            "extensions": ["4.8(50)", "From $31.00"],
+        }
+    },
+}
+
+
+def test_api_counts_real_calls_when_the_gyg_query_finds_a_viator_page(client, serp):
+    serp.google_body = {"organic_results": [VIATOR_ITEM]}
+    user = _user()
+    sel = {"flight": FLIGHT, "activities": _acts("Small Group Walking Tour of Belem")}
+    r = _post(client, user, _plan(user, sel)["id"])
+    assert r.status_code == 200, r.text
+    act = _by_id(r.json()["subject"]["components"])["activity-0"]
+    assert act["live"] and act["source"] == "viator_via_google"
+    assert not any("viator" in p.get("q", "") for p in serp.params)  # no 2nd query
+    assert _calls_used() == len(serp.params) == 2  # flight + one Google search
+
+
+def test_api_quota_partway_settles_to_the_calls_made(client, serp):
+    serp.quota_on = "google_hotels"
+    user = _user()
+    r = _post(client, user, _plan(user)["id"])
+    assert r.status_code == 429
+    made = len(serp.params)
+    assert made >= 1
+    assert _calls_used() == made
+
+
+def test_sources_without_a_breakdown_store_no_reference_looks(client, monkeypatch):
+    from .price_watch_fakes import FakeSource, ok
+
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 500)
+    src = FakeSource()
+    price_watch.register_source(src)
+    try:
+        user = _user()
+        created = run(src.create({"name": "Lumen"}, user, "k"))
+        w = price_watch.record_created(
+            user["id"],
+            "test",
+            created,
+            match_key="lumen",
+            alert_mode="any_drop",
+            target_price=None,
+            email_enabled=False,
+            now=NOW,
+        )
+        assert price_watch_db.get_watch(w["id"])["reference_looks"] is None
+        src.queue = [ok(300.0)]
+        out = _check(w["id"], NOW + timedelta(hours=12))
+        assert out.notification is not None
+        assert price_watch_db.get_watch(w["id"])["reference_looks"] is None
+    finally:
+        price_watch.unregister_source("test")

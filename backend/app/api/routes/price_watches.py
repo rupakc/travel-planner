@@ -29,7 +29,7 @@ from ...services.price_watch import InvalidSpec, NoLivePrice
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-_HIDDEN = ("user_id", "lease_until", "last_error", "match_key")
+_HIDDEN = ("user_id", "lease_until", "last_error", "match_key", "reference_looks")
 MAX_SPEC_BYTES = 8_000
 NO_LIVE_PRICES = "Price watch needs live prices, which aren't set up on this server."
 UNKNOWN_KIND = "We can't watch prices of this kind yet."
@@ -118,7 +118,7 @@ def _spec(body: _Spec) -> dict:
 def _invalid(exc: InvalidSpec) -> HTTPException:
     """422 with the source's message — or the status it asks for (a trip
     watch's plan that isn't the caller's is a 404)."""
-    return HTTPException(status_code=getattr(exc, "status_code", 422), detail=str(exc))
+    return HTTPException(status_code=exc.status_code, detail=str(exc))
 
 
 def _limit_error() -> HTTPException:

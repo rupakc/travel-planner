@@ -111,8 +111,11 @@ class NoLivePrice:
 
 
 class InvalidSpec(ValueError):
-    """Raised by a source for a spec it can't use; the API answers 422 with
-    ``str(exc)`` as the (user-facing) detail."""
+    """Raised by a source for a spec it can't use; the API answers
+    ``status_code`` (422; a subclass may say 404) with ``str(exc)`` as the
+    (user-facing) detail."""
+
+    status_code: int = 422
 
 
 @runtime_checkable
@@ -310,6 +313,9 @@ def record_created(
             "last_checked_at": stamp,
             "next_check_at": fare_watch._next_check(now, rand).isoformat(),
             "last_observation": _observation_json(obs, stamp),
+            "reference_looks": (
+                {"baseline": obs.breakdown} if obs.breakdown is not None else None
+            ),
         },
         now=now,
     )
@@ -693,8 +699,30 @@ def _record_success(
             stamp=stamp,
         )
     )
+    looks = _reference_looks(watch, obs, fields)
+    if looks is not None:
+        fields["reference_looks"] = looks
     updated = price_watch_db.update_watch(watch["id"], **fields)
     return CheckOutcome("checked", updated, note)
+
+
+def _reference_looks(watch: dict, obs: PriceObservation, fields: dict) -> dict | None:
+    """The breakdowns alerts are measured from (``reference_looks``, sources
+    with a ``breakdown`` only): ``baseline`` (at create), ``last_alert`` (the
+    look of the latest alert) and ``peak`` (the look of the highest price
+    since it, the reference once re-armed). None when nothing changed."""
+    if obs.breakdown is None:
+        return None
+    looks = dict(watch.get("reference_looks") or {})
+    if fields.get("last_notified_at"):  # alerted: the reference and the peak
+        looks.update(last_alert=obs.breakdown, peak=obs.breakdown)
+    elif fields.get("own_peak_price") is not None and fields[
+        "own_peak_price"
+    ] != watch.get("own_peak_price"):
+        looks["peak"] = obs.breakdown
+    else:
+        return None
+    return looks
 
 
 # ── Scheduler pass (driven by fare_watch.run_scheduler) ───────────────────────

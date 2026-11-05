@@ -34,11 +34,12 @@ _CREATE_FIELDS = (
     "last_checked_at",
     "next_check_at",
     "last_observation",
+    "reference_looks",
     "lease_until",
 )
 
 _BOOL_FIELDS = ("email_enabled",)
-_JSON_FIELDS = ("subject", "last_observation")
+_JSON_FIELDS = ("subject", "last_observation", "reference_looks")
 
 
 def create_price_watch_tables() -> None:
@@ -68,6 +69,7 @@ def create_price_watch_tables() -> None:
                 unavailable_count   INTEGER NOT NULL DEFAULT 0,
                 last_error          TEXT,
                 last_observation    TEXT,
+                reference_looks     TEXT,
                 check_count         INTEGER NOT NULL DEFAULT 0,
                 last_checked_at     TEXT,
                 next_check_at       TEXT,
@@ -92,6 +94,14 @@ def create_price_watch_tables() -> None:
             CREATE INDEX IF NOT EXISTS idx_price_watch_history_watch
                 ON price_watch_history (watch_id, checked_at);
         """)
+        # Migration: breakdowns of the looks alerts are measured from (trip
+        # watches explain a drop by component against these)
+        cols = {
+            row["name"]
+            for row in conn.execute("PRAGMA table_info(price_watches)").fetchall()
+        }
+        if "reference_looks" not in cols:
+            conn.execute("ALTER TABLE price_watches ADD COLUMN reference_looks TEXT")
 
 
 def _row(row) -> dict | None:
