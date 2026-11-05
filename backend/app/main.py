@@ -52,7 +52,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import fare_watch, price_watch
+from .services import fare_watch, price_watch, push
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 
@@ -278,4 +278,6 @@ async def health():
             _settings.serpapi_key and _settings.fare_watch_enabled
         ),
         "email_alerts_available": bool(_settings.smtp_host),
+        # Alerts also go to registered phones (FCM) only when set
+        "push_configured": push.configured(),
     }
