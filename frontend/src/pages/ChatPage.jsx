@@ -135,6 +135,15 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
   )
 }
 
+/** `messages` with `params` (a search_context event) kept on the assistant
+ * message at `idx`: its hotel cards date their stay from their own search. */
+export function withSearchContext(messages, idx, params) {
+  if (!messages[idx]) return messages
+  const updated = [...messages]
+  updated[idx] = { ...updated[idx], searchContext: params }
+  return updated
+}
+
 export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand, searchContext = null }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No hotels found</p>
   const LIMIT = 5
@@ -157,7 +166,7 @@ export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onTo
               <div className="flex-1 min-w-0 mr-2">
                 <p className="font-medium text-gray-900 truncate">{h.name}</p>
                 <p className="text-gray-500">{h.location}</p>
-                <div className="flex items-center gap-1 mt-0.5">
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
                   {h.star_rating > 0 && <div className="flex">{[...Array(Math.round(h.star_rating))].map((_, j) => <Star key={j} size={8} className="text-yellow-400 fill-yellow-400" />)}</div>}
                   {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5 ml-1"><ExternalLink size={9} /> Book</a>}
                   <span className="ml-1"><WatchHotelButton hotel={h} searchData={searchContext} variant="compact" source="chat" /></span>
@@ -1143,6 +1152,7 @@ export default function ChatPage() {
         planningDone: m.planningDone || false, error: m.error || false,
         comprehensiveItinerary: m.comprehensiveItinerary || null,
         tripMap: m.tripMap || null,
+        searchContext: m.searchContext || null,
       })),
       sessionContext,
       lastSearchContext,
@@ -1351,6 +1361,7 @@ export default function ChatPage() {
           setSessionContext(event.context)
         } else if (event.type === 'search_context') {
           setLastSearchContext(event.params)
+          setMessages(prev => withSearchContext(prev, assistantIdx, event.params))
         } else if (event.type === 'suggestions') {
           setMessages(prev => {
             const updated = [...prev]
@@ -1539,7 +1550,6 @@ export default function ChatPage() {
                         userName={user?.name}
                         selections={selections}
                         onSelect={handleSelect}
-                        searchContext={lastSearchContext}
                         onRetry={msg.error ? () => {
                           const prevUser = messages.slice(0, i).filter(m => m.role === 'user').at(-1)
                           if (prevUser) sendMessage(prevUser.content)
@@ -2118,7 +2128,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
 
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
-function ChatBubble({ message, userName, selections, onSelect, onRetry, searchContext = null }) {
+export function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
   const hasSections = message.planning || message.tripMap || Object.keys(message.sections || {}).length > 0
@@ -2155,7 +2165,7 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry, searchCo
                 selections={selections}
                 onSelect={onSelect}
                 itineraryGenerating={message.itineraryGenerating}
-                searchContext={searchContext}
+                searchContext={message.searchContext || null}
               />
             )}
             {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (

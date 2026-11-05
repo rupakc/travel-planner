@@ -13,8 +13,8 @@ vi.mock('../components/alerts/WatchHotelButton', () => ({
   ),
 }))
 
-import { HotelsSection } from './ResultsPage'
-import { ChatHotelsSection, ChatPlanDrawer } from './ChatPage'
+import { HotelsSection, MyPlanDrawer } from './ResultsPage'
+import { ChatBubble, ChatHotelsSection, ChatPlanDrawer, withSearchContext } from './ChatPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -54,5 +54,42 @@ describe('hotel price-watch entry points', () => {
       onClearSelections={() => {}}
       selections={{ ...sel, hotel: HOTELS.results[0], tips: [], getting_around: [], itinerary_slots: [] }} />)
     expect(buttons()).toEqual(['Lumen Hotel|2099-12-10|inline|chat_plan'])
+  })
+
+  it('puts one on the Results My Plan drawer’s selected hotel', () => {
+    render(<MyPlanDrawer isOpen onClose={() => {}} selections={{ ...sel, hotel: HOTELS.results[0], sim: null, tips: [], getting_around: [], events: [], walking_tours: [], itinerary_slots: [], itinerary_notes: {}, itinerary_edits: {} }}
+      planName="Lisbon" onPlanNameChange={() => {}} onRemoveSelection={() => {}} onViewPlan={() => {}} token="tok"
+      searchData={SEARCH} results={{}} loadedPlanId={null} onLoadPlan={() => {}} onClearLoadedPlan={() => {}} onClearSelections={() => {}} />)
+    expect(buttons()).toEqual(['Lumen Hotel|2099-12-10|inline|my_plan'])
+  })
+
+  it('dates each chat planning message’s hotels from that message’s own search', () => {
+    const planning = (dep, ret, destination) => ({
+      role: 'assistant', content: '', planning: true, planningDone: true,
+      sections: { hotels: HOTELS }, sectionStatuses: { hotels: 'done' },
+      searchContext: { destination, departure_date: dep, return_date: ret, adults: 2 },
+    })
+    render(<>
+      <ChatBubble message={planning('2099-12-10', '2099-12-14', 'Lisbon')} selections={sel} onSelect={() => {}} />
+      <ChatBubble message={planning('2100-01-05', '2100-01-12', 'Tokyo')} selections={sel} onSelect={() => {}} />
+    </>)
+    expect(buttons()).toEqual([
+      'Lumen Hotel|2099-12-10|compact|chat', 'Brown’s|2099-12-10|compact|chat',
+      'Lumen Hotel|2100-01-05|compact|chat', 'Brown’s|2100-01-05|compact|chat',
+    ])
+  })
+
+  it('gives restored messages without their own search no dates', () => {
+    render(<ChatBubble message={{ role: 'assistant', content: '', planning: true, sections: { hotels: HOTELS }, sectionStatuses: {} }}
+      selections={sel} onSelect={() => {}} />)
+    expect(buttons()).toEqual(['Lumen Hotel|undefined|compact|chat', 'Brown’s|undefined|compact|chat'])
+  })
+
+  it('stores a search_context on the assistant message it belongs to', () => {
+    const msgs = [{ role: 'user', content: 'Lisbon' }, { role: 'assistant', content: '' }]
+    const out = withSearchContext(msgs, 1, SEARCH)
+    expect(out[1].searchContext).toEqual(SEARCH)
+    expect(msgs[1].searchContext).toBeUndefined()
+    expect(out[0]).toBe(msgs[0])
   })
 })

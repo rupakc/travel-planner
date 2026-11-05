@@ -7,13 +7,14 @@ const SEARCH = { destination: 'Lisbon, Portugal', departure_date: '2026-12-10', 
 const HOTEL = { name: 'Lumen Hotel', price_per_night_usd: 100, total_price_usd: 410 }
 
 describe('hotelGuests', () => {
-  it('counts everyone in the party, two to a room', () => {
+  it('counts every traveller as a guest (Google Hotels takes adults only), one room up to 4', () => {
     expect(hotelGuests({ adults: 2 })).toEqual({ adults: 2, rooms: 1 })
-    expect(hotelGuests({ adults: 2, children: 1, seniors: 0 })).toEqual({ adults: 3, rooms: 2 })
+    expect(hotelGuests({ adults: 2, children: 2, seniors: 0 })).toEqual({ adults: 4, rooms: 1 })
     expect(hotelGuests({ adults: 0, seniors: 1 })).toEqual({ adults: 1, rooms: 1 })
-    expect(hotelGuests({ num_travelers: 4 })).toEqual({ adults: 4, rooms: 2 })
+    expect(hotelGuests({ num_travelers: 5 })).toEqual({ adults: 5, rooms: 2 })
+    expect(hotelGuests({ adults: 9 })).toEqual({ adults: 9, rooms: 3 })
     expect(hotelGuests({})).toEqual({ adults: 1, rooms: 1 })
-    expect(hotelGuests({ adults: 30 })).toEqual({ adults: 16, rooms: 8 })
+    expect(hotelGuests({ adults: 30 })).toEqual({ adults: 16, rooms: 4 })
   })
 })
 
@@ -21,6 +22,10 @@ describe('hotelStay', () => {
   it('uses the trip dates for a single-city trip', () => {
     expect(hotelStay(HOTEL, SEARCH, TODAY)).toEqual({ check_in: '2026-12-10', check_out: '2026-12-14', city: 'Lisbon, Portugal' })
     expect(hotelStay({ ...HOTEL, city: 'Lisbon' }, SEARCH, TODAY).city).toBe('Lisbon')
+  })
+  it('is null for a hotel in another city than the trip’s', () => {
+    expect(hotelStay({ ...HOTEL, city: 'Tokyo' }, SEARCH, TODAY)).toBeNull()
+    expect(hotelStay({ ...HOTEL, city: 'lisboa' }, SEARCH, TODAY)).toBeNull()
   })
   it('is null without both dates, or once check-in is today or past', () => {
     expect(hotelStay(HOTEL, { ...SEARCH, return_date: null }, TODAY)).toBeNull()
@@ -54,6 +59,9 @@ describe('hotelWatchSpec', () => {
     expect(hotelWatchSpec({ name: 'X', price_per_night_usd: 90 }, SEARCH, TODAY).estimate_total).toBe(360)
     expect('estimate_total' in hotelWatchSpec({ name: 'X' }, SEARCH, TODAY)).toBe(false)
   })
+  it('scales the one-room AI estimate to the rooms watched', () => {
+    expect(hotelWatchSpec(HOTEL, { ...SEARCH, adults: 6 }, TODAY)).toMatchObject({ adults: 6, rooms: 2, estimate_total: 820 })
+  })
   it('is null without a name or dates', () => {
     expect(hotelWatchSpec({ ...HOTEL, name: ' ' }, SEARCH, TODAY)).toBeNull()
     expect(hotelWatchSpec(HOTEL, { ...SEARCH, return_date: null }, TODAY)).toBeNull()
@@ -61,14 +69,21 @@ describe('hotelWatchSpec', () => {
 })
 
 describe('hotelPreview', () => {
-  it('describes the stay and labels the AI price as an estimate', () => {
+  it('describes the stay as guests and rooms and never offers the estimate as the price', () => {
     const spec = hotelWatchSpec(HOTEL, SEARCH, TODAY)
     expect(hotelPreview(HOTEL, spec)).toEqual({
-      title: 'Lumen Hotel', subtitle: '10–14 Dec · 4 nights · 2 adults', price: 410, priceLabel: 'AI estimate for the stay', currency: 'USD',
+      title: 'Lumen Hotel', subtitle: '10–14 Dec · 4 nights · 2 guests · 1 room', price: null,
+      estimate: 410, estimateLabel: 'AI estimate for 1 room, whole stay', currency: 'USD',
     })
-    expect(hotelPreview(HOTEL, { ...spec, adults: 3, rooms: 2 }).subtitle).toBe('10–14 Dec · 4 nights · 3 adults · 2 rooms')
-    expect(hotelPreview(HOTEL, { ...spec, check_out: '2026-12-11', adults: 1 }).subtitle).toBe('10–11 Dec · 1 night · 1 adult')
-    expect(hotelPreview(HOTEL, { ...spec, check_in: '2026-12-30', check_out: '2027-01-02' }).subtitle).toBe('30 Dec – 2 Jan · 3 nights · 2 adults')
+    expect(hotelPreview(HOTEL, { ...spec, check_out: '2026-12-11', adults: 1 }).subtitle).toBe('10–11 Dec · 1 night · 1 guest · 1 room')
+    expect(hotelPreview(HOTEL, { ...spec, check_in: '2026-12-30', check_out: '2027-01-02' }).subtitle).toBe('30 Dec – 2 Jan · 3 nights · 2 guests · 1 room')
+  })
+  it('names the per-room basis when more than one room is watched', () => {
+    const spec = hotelWatchSpec(HOTEL, { ...SEARCH, adults: 6 }, TODAY)
+    const p = hotelPreview(HOTEL, spec)
+    expect(p.subtitle).toBe('10–14 Dec · 4 nights · 6 guests · 2 rooms')
+    expect(p.estimate).toBe(820)
+    expect(p.estimateLabel).toBe('AI estimate: 2 rooms × $410, whole stay')
   })
 })
 

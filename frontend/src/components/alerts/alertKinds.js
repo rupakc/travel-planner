@@ -29,8 +29,6 @@ export function alertKindFor(n) {
   const base = kindOf(n?.kind)
   if (n?.data?.watch_kind !== 'hotel') return base
   if (n.kind === 'watch_expired') return { ...base, action: 'See hotel' }
-  // Sold out for the dates: there is nothing to retry, only the hotel to look at
-  if (n.kind === 'watch_error' && n.data.reason === 'unavailable') return { ...base, action: 'See hotel' }
   return base
 }
 

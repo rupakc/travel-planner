@@ -2,9 +2,10 @@
 // guests, rooms) and the spec the backend's hotel source matches to a live
 // Google Hotels property. API shapes: docs/API-Reference.md.
 import { allocateDays, cityKey } from './mustInclude'
+import { formatPrice } from './priceWatch'
 
 const MAX_ADULTS = 16
-const MAX_ROOMS = 8
+const GUESTS_PER_ROOM = 4
 const DAY_MS = 86400000
 
 
@@ -13,11 +14,15 @@ const addDays = (iso, n) => isoDay(new Date(Date.parse(`${iso}T00:00:00Z`) + n *
 const nightsBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / DAY_MS)
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-/** Everyone in the party as Google Hotels guests, two to a room. */
+/**
+ * The party as Google Hotels guests. Google Hotels (and our adapter) price
+ * adults only, so every traveller — children and seniors too — is a guest;
+ * one room for up to 4, then one room per 4.
+ */
 export function hotelGuests(sd) {
   const counted = (Number(sd?.adults) || 0) + (Number(sd?.seniors) || 0) + (Number(sd?.children) || 0)
   const guests = Math.min(MAX_ADULTS, Math.max(1, counted || Number(sd?.num_travelers) || 1))
-  return { adults: guests, rooms: Math.min(MAX_ROOMS, Math.ceil(guests / 2)) }
+  return { adults: guests, rooms: guests <= GUESTS_PER_ROOM ? 1 : Math.ceil(guests / GUESTS_PER_ROOM) }
 }
 
 /**
@@ -41,22 +46,32 @@ export function hotelStay(hotel, sd, now = new Date()) {
       city: hotel.city,
     }
   } else {
+    // A hotel from another city than the trip's isn't this trip's stay
+    if (hotel.city && sd.destination && cityKey(hotel.city) !== cityKey(sd.destination)) return null
     stay = { check_in: sd.departure_date, check_out: sd.return_date, city: hotel.city || sd.destination }
   }
   if (!stay.city || nightsBetween(stay.check_in, stay.check_out) < 1) return null
   return stay.check_in > isoDay(now) ? stay : null
 }
 
-/** POST /price-watches `hotel` spec for a hotel card, or null if it can't be watched. */
+/** The hotel's AI price for one room and the whole stay (the hotel agent
+ * prices one room), or null. */
+function perRoomEstimate(hotel, nights) {
+  const total = Number(hotel?.total_price_usd)
+  if (total > 0) return total
+  const nightly = Number(hotel?.price_per_night_usd)
+  return nightly > 0 ? Math.round(nightly * nights) : null
+}
+
+/** POST /price-watches `hotel` spec for a hotel card, or null if it can't be
+ * watched. `estimate_total` is the AI estimate scaled to the rooms watched. */
 export function hotelWatchSpec(hotel, sd, now = new Date()) {
   const name = String(hotel?.name || '').trim()
   const stay = name && hotelStay(hotel, sd, now)
   if (!stay) return null
   const spec = { name, city: stay.city, check_in: stay.check_in, check_out: stay.check_out, ...hotelGuests(sd) }
-  const nightly = Number(hotel.price_per_night_usd)
-  const estimate = Number(hotel.total_price_usd) > 0 ? Number(hotel.total_price_usd)
-    : nightly > 0 ? Math.round(nightly * nightsBetween(stay.check_in, stay.check_out)) : null
-  if (estimate) spec.estimate_total = estimate
+  const perRoom = perRoomEstimate(hotel, nightsBetween(stay.check_in, stay.check_out))
+  if (perRoom) spec.estimate_total = perRoom * spec.rooms
   return spec
 }
 
@@ -66,15 +81,25 @@ function stayDates(ci, co) {
   return ci.slice(0, 7) === co.slice(0, 7) ? `${fmt(ci, false)}–${fmt(co, true)}` : `${fmt(ci, true)} – ${fmt(co, true)}`
 }
 
-/** What the dialog shows before the live look ({ title, subtitle, price, priceLabel }). */
+/**
+ * What the dialog shows before the live look: { title, subtitle, price,
+ * estimate, estimateLabel, currency }. `price` stays null — the AI estimate
+ * is no live price and must not seed the target — and the estimate says
+ * what it covers.
+ */
 export function hotelPreview(hotel, spec) {
-  const parts = [stayDates(spec.check_in, spec.check_out), plural(nightsBetween(spec.check_in, spec.check_out), 'night'), plural(spec.adults, 'adult')]
-  if (spec.rooms > 1) parts.push(plural(spec.rooms, 'room'))
+  const nights = nightsBetween(spec.check_in, spec.check_out)
+  const rooms = spec.rooms || 1
+  const parts = [stayDates(spec.check_in, spec.check_out), plural(nights, 'night'), plural(spec.adults, 'guest'), plural(rooms, 'room')]
+  const perRoom = perRoomEstimate(hotel, nights)
   return {
     title: hotel.name,
     subtitle: parts.join(' · '),
-    price: spec.estimate_total ?? null,
-    priceLabel: 'AI estimate for the stay',
+    price: null,
+    estimate: spec.estimate_total ?? null,
+    estimateLabel: rooms > 1 && perRoom
+      ? `AI estimate: ${rooms} rooms × ${formatPrice(perRoom)}, whole stay`
+      : 'AI estimate for 1 room, whole stay',
     currency: 'USD',
   }
 }

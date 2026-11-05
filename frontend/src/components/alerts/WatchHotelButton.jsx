@@ -11,20 +11,21 @@ import PriceWatchDialog from './PriceWatchDialog'
 const STYLES = {
   // small text action on a hotel card or in the My Plan drawer
   inline: {
-    idle: 'inline-flex items-center gap-1 rounded text-xs font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
-    on: 'inline-flex items-center gap-1 rounded text-xs font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
+    idle: 'inline-flex min-h-6 items-center gap-1 rounded py-1 text-xs font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
+    on: 'inline-flex min-h-6 items-center gap-1 rounded py-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
     size: 12,
   },
   // the compact chat cards
   compact: {
-    idle: 'inline-flex items-center gap-0.5 rounded text-[10px] font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500',
-    on: 'inline-flex items-center gap-0.5 rounded text-[10px] font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500',
+    idle: 'inline-flex min-h-6 items-center gap-0.5 rounded py-1 text-[10px] font-medium text-sky-700 hover:text-sky-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500',
+    on: 'inline-flex min-h-6 items-center gap-0.5 rounded py-1 text-[10px] font-medium text-emerald-700 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500',
     size: 9,
   },
 }
 
 export const hotelWatchingLabel = (w) => {
   if (w.status === 'paused') return 'Watch paused'
+  if (w.status === 'error') return 'Watch on hold'
   return w.last_price != null ? `Watching · ${formatPrice(w.last_price, w.currency)}` : 'Watching'
 }
 
@@ -50,7 +51,7 @@ function SignInToWatch({ hotel, variant }) {
   const style = STYLES[variant] || STYLES.inline
   return (
     <button type="button" className={style.idle} title="Sign in to watch this hotel’s price"
-      aria-label={`Sign in to watch the price of ${hotel.name}`}
+      aria-label={`Watch price of ${hotel.name} — sign in first`}
       onClick={(e) => { e.stopPropagation(); navigate(loginPathFor(location)) }}>
       <BellPlus size={style.size} aria-hidden="true" /> Watch price
     </button>
@@ -75,7 +76,7 @@ function ActiveHotelButton({ hotel, spec, variant, source }) {
   return (
     <>
       <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${hotelWatchingLabel(watch)}, ${hotel.name} — open your alerts` : `Watch the price of ${hotel.name}`}
+        aria-label={watching ? `${hotelWatchingLabel(watch)}, ${hotel.name} — open your alerts` : `Watch price of ${hotel.name}`}
         title={watching ? 'Open this watch on your Alerts page' : 'Get told when this hotel’s price drops'}>
         {watching ? <BellRing size={style.size} aria-hidden="true" /> : <BellPlus size={style.size} aria-hidden="true" />}
         <span className="tabular-nums">{watching ? hotelWatchingLabel(watch) : 'Watch price'}</span>
