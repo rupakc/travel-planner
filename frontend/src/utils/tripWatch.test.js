@@ -44,7 +44,7 @@ describe('rowBadge and rowPrice', () => {
     expect(rowBadge({ ...HOTEL, status: 'stale' }).label).toBe('Live · earlier check')
   })
   it('shows a non-USD estimate in its own currency', () => {
-    expect(rowPrice(row({ price: 24, currency: 'EUR' }))).toBe('€24.00')
+    expect(rowPrice(row({ price: 24, currency: 'EUR' }))).toBe('€24')
     expect(rowPrice(FLIGHT)).toBe('$542')
   })
 })
@@ -52,12 +52,12 @@ describe('rowBadge and rowPrice', () => {
 describe('whatChanged', () => {
   const w = (rows, n = 2) => ({ check_count: n, last_observation: { breakdown: rows } })
   it('names the live groups that moved, biggest drop first', () => {
-    expect(whatChanged(w([HOTEL, FLIGHT, SIM]))).toBe('Last check: flights −$70.00, hotel −$42.00.')
+    expect(whatChanged(w([HOTEL, FLIGHT, SIM]))).toBe('Last check: flights −$70, hotel −$42.')
   })
   it('groups activities and ignores estimates', () => {
     const a1 = row({ id: 'a1', type: 'activity', group: 'activities', live: true, status: 'ok', delta: -5 })
     const a2 = row({ id: 'a2', type: 'activity', group: 'activities', live: true, status: 'ok', delta: -7 })
-    expect(whatChanged(w([a1, a2, { ...SIM, delta: -3 }]))).toBe('Last check: activities −$12.00.')
+    expect(whatChanged(w([a1, a2, { ...SIM, delta: -3 }]))).toBe('Last check: activities −$12.')
   })
   it('says when nothing moved and names parts it could not price', () => {
     const gone = { ...HOTEL, status: 'unavailable', delta: 0 }

@@ -4,15 +4,28 @@
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const codeOf = (currency) => (typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD')
 
+/** Minor-unit digits a currency normally shows (0 for JPY; 2 when Intl doesn't know the code). */
+function currencyDigits(code) {
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits
+  } catch {
+    return 2
+  }
+}
+
 /**
- * A price in its own currency: "$398", "$9.90", "€24.00", "€1,200".
- * Cents show under 100 (or always with `cents: true`); larger amounts are
- * rounded to whole units. A code Intl can't use falls back to "CODE 5.00".
+ * A price in its own currency: "$70", "$9.90", "€24", "$398", "$1,234".
+ * Cents show only when the amount is under 100 AND not a whole amount (or
+ * always with `cents: true`), so deltas read "−$70" / "−$1.73" — the same
+ * rule as the backend `price_watch.format_price` used in emails and notices.
+ * A code Intl can't use falls back to "CODE 5" / "CODE 5.50".
  */
 export function formatPrice(amount, currency = 'USD', { cents = false } = {}) {
   if (!isNum(amount)) return ''
   const code = codeOf(currency)
-  const digits = cents || Math.abs(amount) < 100 ? 2 : 0
+  const rounded = Math.round(amount * 100) / 100
+  const fractional = Math.abs(rounded) < 100 && rounded !== Math.round(rounded)
+  const digits = (cents || fractional) && currencyDigits(code) > 0 ? 2 : 0
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency', currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits,

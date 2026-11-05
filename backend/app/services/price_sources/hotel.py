@@ -27,9 +27,15 @@ import unicodedata
 from datetime import date
 
 from .. import fare_watch, hotel_prices
-from ..fare_watch import date_range, usd
+from ..fare_watch import date_range
 from ..hotel_prices import HotelOffer, HotelPrice
-from ..price_watch import CreatedWatch, InvalidSpec, NoLivePrice, PriceObservation
+from ..price_watch import (
+    CreatedWatch,
+    InvalidSpec,
+    NoLivePrice,
+    PriceObservation,
+    format_price,
+)
 
 NO_LIVE_PRICE_MESSAGE = "We couldn't find live prices for this hotel on Google Hotels."
 SOURCE_NAME = hotel_prices.SOURCE  # "google_hotels"
@@ -130,6 +136,11 @@ def _fold(text: str) -> str:
 
 
 # ── Wording ───────────────────────────────────────────────────────────────────
+
+
+def usd(amount: float) -> str:
+    """A USD amount as the UI's formatPrice shows it ("$70", "$88.50", "$1,234")."""
+    return format_price(amount, "USD")
 
 
 def _plural(n: int, word: str) -> str:

@@ -364,7 +364,7 @@ def test_unmatched_parts_become_frozen_estimates(stubs):
     # activities: AI price per person × travellers, as estimates
     assert comps["activity-0"]["live"] is False
     assert comps["activity-0"]["price"] == 60.0
-    assert comps["activity-0"]["detail"] == "$30.00 per person × 2 (estimate)"
+    assert comps["activity-0"]["detail"] == "$30 per person × 2 (estimate)"
     assert comps["hotel"]["detail"] == "4 nights (estimate)"
     assert created.baseline.price == pytest.approx(612 + 440 + 60 + 60 + 13)
 
@@ -1337,3 +1337,21 @@ def test_sources_without_a_breakdown_store_no_reference_looks(client, monkeypatc
         assert price_watch_db.get_watch(w["id"])["reference_looks"] is None
     finally:
         price_watch.unregister_source("test")
+
+
+# ── Money wording matches the UI's formatPrice (polish) ──────────────────────
+
+
+@pytest.mark.parametrize(
+    "amount,currency,text",
+    [(24.0, "EUR", "€24"), (22.87, "USD", "$22.87"), (30.0, "USD", "$30")],
+)
+def test_detail_money_matches_ui_rule(amount, currency, text):
+    assert trip._money(amount, currency) == text
+
+
+@pytest.mark.parametrize(
+    "delta,text", [(-70.0, "−$70"), (-1.73, "−$1.73"), (42.5, "+$42.50")]
+)
+def test_signed_moves_keep_small_cents(delta, text):
+    assert trip._signed(delta) == text

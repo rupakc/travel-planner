@@ -80,17 +80,23 @@ describe('formatPrice', () => {
     [[398], '$398'],
     [[1234.4], '$1,234'],
     [[398, 'USD', { cents: true }], '$398.00'],
-    [[24, 'EUR'], '€24.00'],
+    [[24, 'EUR'], '€24'],
+    [[70], '$70'],
+    [[1.73], '$1.73'],
+    [[99.999], '$100'],
+    [[70, 'USD', { cents: true }], '$70.00'],
     [[1200, 'EUR'], '€1,200'],
     [[0.4, 'GBP'], '£0.40'],
+    [[9.5, 'JPY'], '¥10'],
   ])('%o → %s', (args, out) => {
     expect(formatPrice(...args)).toBe(out)
   })
 
   it('falls back safely for unknown or missing codes', () => {
-    expect(formatPrice(5, 'not a code')).toBe('not a code 5.00')
-    expect(formatPrice(5, '')).toBe('$5.00')
-    expect(formatPrice(5, null)).toBe('$5.00')
+    expect(formatPrice(5, 'not a code')).toBe('not a code 5')
+    expect(formatPrice(5.5, 'not a code')).toBe('not a code 5.50')
+    expect(formatPrice(5, '')).toBe('$5')
+    expect(formatPrice(5, null)).toBe('$5')
     expect(formatPrice(null)).toBe('')
     expect(formatPrice(Number.NaN)).toBe('')
   })

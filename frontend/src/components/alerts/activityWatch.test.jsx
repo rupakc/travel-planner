@@ -135,7 +135,7 @@ describe('WatchActivityButton', () => {
     }), 'tok')
     expect(document.querySelector('[role="dialog"]').textContent).toContain(WALK)
     await act(async () => button('Done').click())
-    expect(button('Watching').textContent).toContain('Watching · from $29.00 pp')
+    expect(button('Watching').textContent).toContain('Watching · from $29 pp')
   })
 
   it('once watched it reads per person and opens the Alerts page', async () => {
@@ -213,7 +213,7 @@ describe('target currency (fix round 1)', () => {
     await act(async () => button('Watch price').click())
     await act(async () => button('Start watching').click())
     const alert = document.querySelector('[role="alert"]').textContent
-    expect(alert).toContain('$30.00 per person')
+    expect(alert).toContain('$30 per person')
     expect(alert).toContain('$22.87per person')
   })
 })
@@ -226,7 +226,7 @@ describe('ActivityDialogBody', () => {
     expect(t).toContain('GetYourGuide and Viator')
     expect(t).toContain('2 travellers')
     expect(t).toContain('20 Apr')
-    expect(t).toContain('$30.00 per person')
+    expect(t).toContain('$30 per person')
     expect(t).toMatch(/AI estimate/)
   })
 
@@ -237,9 +237,9 @@ describe('ActivityDialogBody', () => {
     expect(t).toContain(WALK)
     expect(t).toContain('4.9')
     expect(t).toContain('80 reviews')
-    expect(t).toContain('from $29.00 per person')
+    expect(t).toContain('from $29 per person')
     expect(t).toContain('× 2 travellers')
-    expect(t).toContain('$58.00')
+    expect(t).toContain('$58')
     expect(t).toContain('Price as shown in Google results for GetYourGuide')
     expect(t).toContain('closest listing we found for “Belém walking tour”')
     const link = container.querySelector(`a[href="${URL}"]`)
@@ -253,7 +253,7 @@ describe('ActivityDialogBody', () => {
     await render(<ActivityDialogBody kind="activity" spec={w.subject} preview={{ currency: 'USD', price: 60 }} watch={w} />)
     expect(container.textContent).not.toContain('$')
     expect(container.textContent).not.toContain('closest listing')
-    expect(container.textContent).toContain('€29.00')
+    expect(container.textContent).toContain('€29')
     expect(container.textContent).toContain('in EUR')
   })
 })
@@ -266,8 +266,8 @@ describe('ActivityWatchCard', () => {
     const t = container.textContent
     expect(t).toContain(WALK)
     expect(t).toContain('GetYourGuide')
-    expect(t).toContain('from $29.00 per person')
-    expect(t).toContain('× 2 travellers = $58.00')
+    expect(t).toContain('from $29 per person')
+    expect(t).toContain('× 2 travellers = $58')
     const open = [...container.querySelectorAll('a')].find(a => a.textContent.includes('Open listing'))
     expect(open.getAttribute('href')).toBe(URL)
     expect(container.querySelector('svg[role="img"], svg[aria-label]')).not.toBeNull()
@@ -283,8 +283,8 @@ describe('ActivityWatchCard', () => {
   it('shows money in the watch’s currency', async () => {
     const w = { ...WATCH, currency: 'EUR', subtitle: 'GetYourGuide · from €33.46 per person · 2 travellers', subject: { ...WATCH.subject, currency: 'EUR' } }
     await render(<ActivityWatchCard watch={w} {...props} />)
-    expect(container.textContent).toContain('from €29.00 per person')
-    expect(container.textContent).toContain('€58.00')
+    expect(container.textContent).toContain('from €29 per person')
+    expect(container.textContent).toContain('€58')
     expect(container.textContent).not.toContain('$')
   })
 

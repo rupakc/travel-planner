@@ -208,7 +208,7 @@ describe('Alerts page — fix round 1', () => {
     const card = container.querySelector('#price-watch-11').textContent
     expect(card).toContain('€9.90')
     expect(card).toContain('€1.73 less than when you started')
-    expect(card).toContain('€9.00 or less')
+    expect(card).toContain('€9 or less')
     expect(card).not.toContain('$')
   })
 })
@@ -224,7 +224,7 @@ describe('PriceWatchCard', () => {
     expect(t).toContain('Lumen Hotel')
     expect(t).toContain('Lisbon · 10–14 Dec')
     expect(t).toContain('$352')
-    expect(t).toContain('$46.00 less than when you started')
+    expect(t).toContain('$46 less than when you started')
     expect(t).toContain('$88')
     const link = container.querySelector('a[href="https://hotels.example/lumen"]')
     expect(link.getAttribute('target')).toBe('_blank')
@@ -362,7 +362,7 @@ describe('PriceWatchDialog', () => {
 
   it('labels the target with the currency and passes a unit label to the body', async () => {
     await open({ preview: { title: 'Tour', price: 24, currency: 'EUR' }, kind: 'activity', unitLabel: 'per person' })
-    expect(document.body.textContent).toContain('€24.00')
+    expect(document.body.textContent).toContain('€24')
     expect(document.body.textContent).toContain('per person')
     await act(async () => document.querySelector('input[value="below_target"]').click())
     expect(document.querySelector('input[aria-label="Target price in EUR"]')).not.toBeNull()

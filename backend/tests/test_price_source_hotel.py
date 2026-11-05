@@ -548,3 +548,12 @@ def test_compose_multi_room_names_the_per_room_rate():
     note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 900.0)
     assert "6 guests in 2 rooms" in note["body"]
     assert "2 rooms × $100 a night" in note["body"]
+
+
+def test_compose_money_matches_ui_rule():
+    """Small non-whole amounts keep cents, as formatPrice shows them."""
+    subject = {**LUMEN_SUBJECT, "adults": 6, "rooms": 2}
+    obs = PriceObservation(price=708.0, unit_price=177.0)
+    note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 900.0)
+    assert "2 rooms × $88.50 a night" in note["body"]
+    assert "(−$192)" in note["title"]

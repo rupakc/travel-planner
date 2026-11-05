@@ -129,7 +129,7 @@ describe('TripDialogBody', () => {
     await render(<TripDialogBody kind="trip" spec={{ plan_id: 3 }} watch={watch} preview={{ planTotal: 625 }} />)
     expect(container.textContent).toContain('Google Flights · Berlin ⇄ Lisbon')
     const diff = container.querySelector('[data-testid="trip-total-diff"]')
-    expect(diff.textContent).toContain('$70.00 less than your My Plan total ($625)')
+    expect(diff.textContent).toContain('$70 less than your My Plan total ($625)')
     expect(diff.textContent).toContain('cheapest live fare on your dates')
   })
 
@@ -142,7 +142,7 @@ describe('TripDialogBody', () => {
     expect(rows[0]).toContain('Live')
     expect(rows[3]).toContain('SIM / eSIM')
     expect(rows[3]).toContain('Estimate')
-    expect(rows[2]).toContain('€24.00') // own currency …
+    expect(rows[2]).toContain('€24') // own currency …
     expect(rows[2]).toMatch(/not in total/i) // … and outside the USD total
     expect(table.querySelector('tfoot').textContent).toContain('$1,023')
     expect(container.textContent).toContain('Estimates are fixed and never trigger alerts')
@@ -164,7 +164,7 @@ describe('TripWatchCard', () => {
     expect(list.textContent).toContain('Lumen Hotel')
     expect(list.textContent).toContain('Live')
     expect(list.textContent).toContain('Estimate')
-    expect(container.textContent).toContain('Last check: flights −$70.00, hotel −$42.00.')
+    expect(container.textContent).toContain('Last check: flights −$70, hotel −$42.')
     expect(list.textContent).toContain('from $22.87 per person × 2')
     expect(container.querySelector('svg[role="img"]')).not.toBeNull() // sparkline of the total
   })

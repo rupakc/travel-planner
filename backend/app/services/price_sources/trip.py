@@ -58,8 +58,14 @@ from ...db import plans_db
 from ...schemas.request import TravelSearchRequest
 from .. import activity_prices, fare_watch, hotel_prices, price_rules, serp_flights
 from ..activity_prices import ActivityListing
-from ..fare_watch import date_range, usd
-from ..price_watch import CreatedWatch, InvalidSpec, NoLivePrice, PriceObservation
+from ..fare_watch import date_range
+from ..price_watch import (
+    CreatedWatch,
+    InvalidSpec,
+    NoLivePrice,
+    PriceObservation,
+    format_price,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,9 +159,12 @@ def _now() -> str:
 
 
 def _money(amount: float, currency: str = "USD") -> str:
-    """$22.87 / $1,234 for details (cents under $100); other codes as "EUR 24.00"."""
-    text = f"{amount:,.2f}" if amount < 100 else f"{round(amount):,}"
-    return f"${text}" if currency == "USD" else f"{currency} {text}"
+    """"$22.87" / "$30" / "€24" / "$1,234" — the UI's formatPrice rule."""
+    return format_price(amount, currency)
+
+
+def usd(amount: float) -> str:
+    return format_price(amount, "USD")
 
 
 def _plural(n: int, word: str) -> str:
