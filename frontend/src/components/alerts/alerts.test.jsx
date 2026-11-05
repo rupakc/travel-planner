@@ -390,7 +390,7 @@ describe('AlertsPage', () => {
   it('has a helpful empty state', async () => {
     api.listFareWatches.mockResolvedValue([])
     await render(<AlertsPage />, '/alerts')
-    expect(container.textContent).toContain('No fares watched yet')
+    expect(container.textContent).toContain('Nothing watched yet')
     await act(async () => button('Search flights', container).click())
     expect(location.pathname).toBe('/')
   })
@@ -462,6 +462,6 @@ describe('AlertsPage', () => {
     await render(<AlertsPage />, '/alerts')
     expect(container.querySelector('[role="alert"]').textContent).toContain('Couldn’t load')
     await act(async () => button('Try again', container).click())
-    expect(container.textContent).toContain('No fares watched yet')
+    expect(container.textContent).toContain('Nothing watched yet')
   })
 })

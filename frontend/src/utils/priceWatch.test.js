@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
+  checkPriceTarget, currencyLabel, currencySymbol, formatPrice, priceWatchChange,
   ALERT_TABS, countByTab, inTab, isUnavailable, matchKey, priceCheckMessage, priceWatchBody,
   priceWatchLink, watchKind, watchDomId,
 } from './priceWatch'
@@ -70,5 +71,58 @@ describe('priceCheckMessage', () => {
     const m = priceCheckMessage(res)
     expect(m.tone).toBe(tone)
     expect(m.text).toContain(text)
+  })
+})
+
+describe('formatPrice', () => {
+  it.each([
+    [[9.9], '$9.90'],
+    [[398], '$398'],
+    [[1234.4], '$1,234'],
+    [[398, 'USD', { cents: true }], '$398.00'],
+    [[24, 'EUR'], '€24.00'],
+    [[1200, 'EUR'], '€1,200'],
+    [[0.4, 'GBP'], '£0.40'],
+  ])('%o → %s', (args, out) => {
+    expect(formatPrice(...args)).toBe(out)
+  })
+
+  it('falls back safely for unknown or missing codes', () => {
+    expect(formatPrice(5, 'not a code')).toBe('not a code 5.00')
+    expect(formatPrice(5, '')).toBe('$5.00')
+    expect(formatPrice(5, null)).toBe('$5.00')
+    expect(formatPrice(null)).toBe('')
+    expect(formatPrice(Number.NaN)).toBe('')
+  })
+})
+
+describe('priceWatchChange', () => {
+  it('keeps cents and the watch currency', () => {
+    expect(priceWatchChange({ baseline_price: 11.63, last_price: 9.9, currency: 'USD' }))
+      .toEqual({ delta: -1.73, direction: 'down', text: '$1.73 less than when you started' })
+    expect(priceWatchChange({ baseline_price: 24, last_price: 24.4, currency: 'EUR' }))
+      .toEqual({ delta: 0.4, direction: 'up', text: '€0.40 more than when you started' })
+    expect(priceWatchChange({ baseline_price: 398, last_price: 398, currency: 'USD' }).direction).toBe('same')
+    expect(priceWatchChange({ baseline_price: null, last_price: 3 })).toBeNull()
+  })
+})
+
+describe('currency helpers', () => {
+  it('names and symbols', () => {
+    expect(currencyLabel('USD')).toBe('US dollars')
+    expect(currencyLabel('EUR')).toBe('EUR')
+    expect(currencySymbol('EUR')).toBe('€')
+    expect(currencySymbol('USD')).toBe('$')
+  })
+
+  it('checks a typed target', () => {
+    expect(checkPriceTarget('€ 1,250')).toEqual({ error: null, value: 1250 })
+    expect(checkPriceTarget('').error).toContain('Enter a price')
+    expect(checkPriceTarget('-3').error).toContain('Enter a price')
+  })
+
+  it('Check now wording uses the watch currency', () => {
+    expect(priceCheckMessage({ check_status: 'checked', last_price: 9.9, currency: 'EUR' }).text)
+      .toContain('€9.90')
   })
 })

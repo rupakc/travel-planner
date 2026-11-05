@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.services import fare_watch
+from app.services import fare_watch, price_rules
 from app.services.fare_watch import FareCheck
 
 from . import legacy_fare_rules as legacy
@@ -53,10 +53,21 @@ def _advance(w: dict, check: FareCheck, kind: str | None, stamp: str) -> None:
             w["baseline_price_level"] = check.price_level
         if w.get("own_lowest_price") is None or p < w["own_lowest_price"]:
             w["own_lowest_price"] = p
-        if kind in ("fare_target", "fare_drop", "fare_low_level"):
-            w.update(last_notified_price=p, last_notified_at=stamp, own_peak_price=p)
+        alerted = kind in ("fare_target", "fare_drop", "fare_low_level")
+        new = price_rules.advance_own(
+            p,
+            alerted=alerted,
+            last=w.get("last_notified_price"),
+            peak=w.get("own_peak_price"),
+            stamp=stamp,
+        )
+        old: dict = {}
+        if alerted:
+            old.update(last_notified_price=p, last_notified_at=stamp, own_peak_price=p)
         elif w.get("last_notified_price") is not None:
-            w["own_peak_price"] = max(w.get("own_peak_price") or p, p)
+            old["own_peak_price"] = max(w.get("own_peak_price") or p, p)
+        assert new == old  # the extracted state update matches the original
+        w.update(old)
     if c is not None:
         if kind == "fare_cheaper_date":
             w.update(
@@ -119,6 +130,13 @@ SCRIPTED = [
     ([430, 425, 420, 409, 408.5], {"alert_mode": "below_target", "target_price": 450}),
     ([460, 449], {"alert_mode": "below_target", "target_price": 450}),
 ]
+
+
+def test_an_unknown_mode_stays_silent_on_both_paths():
+    checks = [FareCheck(price=float(p), price_level="low") for p in (500, 300, 200)]
+    assert (
+        _drive(checks, [DAY] * 3, alert_mode="weird", target_price=450.0) == [None] * 3
+    )
 
 
 @pytest.mark.parametrize("prices,fields", SCRIPTED)

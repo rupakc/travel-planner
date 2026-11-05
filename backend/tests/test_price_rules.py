@@ -166,6 +166,27 @@ def test_peak_follows_rebounds_after_an_alert_only():
 
 
 @pytest.mark.parametrize("bad", ["drop", "", "target"])
-def test_own_signal_rejects_unknown_modes(bad):
-    with pytest.raises(ValueError):
-        sig(400.0, mode=bad)
+def test_unknown_modes_never_fire(bad):
+    s = sig(300.0, mode=bad, target=450.0)
+    assert (s.drop, s.target, s.repeat_ok) == (False, False, False)
+
+
+def test_fare_evaluate_stays_silent_on_an_unknown_mode():
+    from app.services.fare_watch import FareCheck, evaluate
+
+    w = {
+        "id": 1,
+        "origin_code": "BER",
+        "destination_code": "LIS",
+        "origin_label": "Berlin",
+        "destination_label": "Lisbon",
+        "departure_date": "2027-02-01",
+        "return_date": None,
+        "num_travelers": 1,
+        "flexible_days": 0,
+        "alert_mode": "weird",
+        "target_price": 450.0,
+        "baseline_price": 500.0,
+        "check_count": 1,
+    }
+    assert evaluate(w, FareCheck(price=300.0, price_level="low"), NOW) == []

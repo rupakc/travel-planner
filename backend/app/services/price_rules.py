@@ -79,9 +79,10 @@ def own_signal(
     baseline_already_low: bool = False,
     step: Step = DEFAULT_STEP,
 ) -> OwnSignal:
-    """Apply the shared rules to ``price`` (see the module docstring)."""
+    """Apply the shared rules to ``price`` (see the module docstring). An
+    unknown ``mode`` never fires (as the fare rules always behaved)."""
     if mode not in MODES:
-        raise ValueError(f"unknown alert mode: {mode!r}")
+        return OwnSignal(baseline, False, False, False)
     full_step = price <= baseline - step(baseline)
     if last is None:
         reference = baseline

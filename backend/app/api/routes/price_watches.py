@@ -116,12 +116,7 @@ def _spec(body: _Spec) -> dict:
 
 
 def _limit_error() -> HTTPException:
-    n = settings.fare_watch_max_active_per_user
-    return HTTPException(
-        status_code=409,
-        detail=f"You're already watching {n} prices — pause or remove one "
-        "to watch another.",
-    )
+    return HTTPException(status_code=409, detail=price_watch.limit_message())
 
 
 def _check_email_allowed(user: dict) -> None:
@@ -245,8 +240,8 @@ def match_price_watch(body: _Spec, user: dict = Depends(get_current_user)):
     if source is None:
         return {"watch": None}
     try:
-        key = source.match_key(body.spec())
-    except InvalidSpec:
+        key = source.match_key(_spec(body))
+    except (InvalidSpec, HTTPException):  # unusable or oversized: not watched
         return {"watch": None}
     watch = price_watch_db.find_watch(user["id"], body.kind, key) if key else None
     return {"watch": serialize(watch) if watch else None}
@@ -288,9 +283,15 @@ async def create_price_watch(
     try:
         result = await source.create(spec, user, settings.serpapi_key)
     except InvalidSpec as exc:
-        fare_watch_db.adjust_calls(day, -1, user_id=user["id"])
+        # Nothing spent unless the source says so (exc.calls)
+        spent = price_watch.calls_spent(exc, 0)
+        fare_watch_db.adjust_calls(day, spent - 1, user_id=user["id"])
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
+        # Unknown spend keeps the held call unless the source says (exc.calls)
+        spent = price_watch.calls_spent(exc, 1)
+        if spent != 1:
+            fare_watch_db.adjust_calls(day, spent - 1, user_id=user["id"])
         if getattr(exc, "quota_exceeded", False):
             raise _busy(now) from exc
         logger.warning(

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Trash2 } from 'lucide-react'
-import { formatUsd } from '../../../utils/fareCalendar'
-import { checkTarget, priceChange, relativeTime, untilTime, watchStatus } from '../../../utils/fareWatch'
-import { isUnavailable, watchDomId } from '../../../utils/priceWatch'
+import { relativeTime, untilTime, watchStatus } from '../../../utils/fareWatch'
+import {
+  checkPriceTarget, currencyLabel, currencySymbol, formatPrice, isUnavailable, priceWatchChange, watchDomId,
+} from '../../../utils/priceWatch'
 import Sparkline from '../Sparkline'
 
 const CHIP = {
@@ -18,7 +19,7 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
   const [target, setTarget] = useState(watch.target_price != null ? String(Math.round(watch.target_price)) : '')
   const [email, setEmail] = useState(!!watch.email_enabled)
   const [saving, setSaving] = useState(false)
-  const check = mode === 'below_target' ? checkTarget(target, watch.last_price) : { error: null }
+  const check = mode === 'below_target' ? checkPriceTarget(target) : { error: null }
   const save = async (e) => {
     e.preventDefault()
     if (check.error) return
@@ -38,9 +39,9 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
         </label>
         <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
           <input type="radio" name={`pmode-${watch.id}`} checked={mode === 'below_target'} onChange={() => setMode('below_target')} className="accent-sky-600" />
-          When it’s below $
+          When it’s below {currencySymbol(watch.currency)}
           <input type="text" inputMode="numeric" value={target} onChange={e => { setTarget(e.target.value); setMode('below_target') }}
-            aria-label="Target price in US dollars" aria-invalid={!!check.error}
+            aria-label={`Target price in ${currencyLabel(watch.currency)}`} aria-invalid={!!check.error}
             className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm tabular-nums focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200" />
         </label>
         {check.error && <p className="text-xs text-red-600">{check.error}</p>}
@@ -82,7 +83,8 @@ export default function PriceWatchCard({
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const status = watchStatus(watch)
-  const change = priceChange(watch)
+  const change = priceWatchChange(watch)
+  const money = (v) => formatPrice(v, watch.currency)
   const past = watch.status === 'expired'
   const price = watch.last_price ?? watch.baseline_price
   const target = watch.alert_mode === 'below_target' ? watch.target_price : null
@@ -101,15 +103,15 @@ export default function PriceWatchCard({
           </div>
           {watch.subtitle && <p className="mt-0.5 text-sm text-slate-500">{watch.subtitle}</p>}
           <p className="mt-0.5 text-xs text-slate-400">
-            {target != null ? `Alerts when it’s ${formatUsd(target)} or less` : 'Alerts on meaningful drops'}
+            {target != null ? `Alerts when it’s ${money(target)} or less` : 'Alerts on meaningful drops'}
             {watch.email_enabled ? ' · also by email' : ''}
           </p>
         </div>
         <div className="sm:text-right">
           {price != null ? (
             <>
-              <p className="text-3xl font-semibold leading-none tabular-nums text-slate-900">{formatUsd(price)}</p>
-              {unit != null && <p className="mt-1 text-[11px] text-slate-400">{formatUsd(unit)} {unitLabel}</p>}
+              <p className="text-3xl font-semibold leading-none tabular-nums text-slate-900">{money(price)}</p>
+              {unit != null && <p className="mt-1 text-[11px] text-slate-400">{money(unit)} {unitLabel}</p>}
               {change && change.direction !== 'same' && (
                 <p className={`mt-1 text-xs font-medium ${change.direction === 'down' ? 'text-emerald-700' : 'text-rose-700'}`}>{change.text}</p>
               )}
@@ -130,10 +132,10 @@ export default function PriceWatchCard({
       {Details && <Details watch={watch} />}
 
       <div className="mt-4">
-        <Sparkline history={watch.history} target={target} />
+        <Sparkline history={watch.history} target={target} format={money} />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
           {watch.lowest_price != null && (
-            <span>Lowest seen <strong className="font-semibold tabular-nums text-slate-700">{formatUsd(watch.lowest_price)}</strong></span>
+            <span>Lowest seen <strong className="font-semibold tabular-nums text-slate-700">{money(watch.lowest_price)}</strong></span>
           )}
           {watch.last_checked_at && <span>Checked {relativeTime(watch.last_checked_at, now)}</span>}
           {watch.status === 'active' && watch.next_check_at && <span>Next check {untilTime(watch.next_check_at, now)}</span>}

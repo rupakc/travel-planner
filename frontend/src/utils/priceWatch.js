@@ -1,15 +1,81 @@
 // Pure helpers for price watches (hotel / activity / trip) next to fare
 // watches on the Alerts page. API shapes: docs/API-Reference.md.
-import { formatUsd } from './fareCalendar'
+
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
+const codeOf = (currency) => (typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD')
+
+/**
+ * A price in its own currency: "$398", "$9.90", "€24.00", "€1,200".
+ * Cents show under 100 (or always with `cents: true`); larger amounts are
+ * rounded to whole units. A code Intl can't use falls back to "CODE 5.00".
+ */
+export function formatPrice(amount, currency = 'USD', { cents = false } = {}) {
+  if (!isNum(amount)) return ''
+  const code = codeOf(currency)
+  const digits = cents || Math.abs(amount) < 100 ? 2 : 0
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits,
+    }).format(amount)
+  } catch {
+    return `${code} ${amount.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`
+  }
+}
+
+/** "$" / "€" for a code (the code itself when Intl has no symbol for it). */
+export function currencySymbol(currency = 'USD') {
+  const code = codeOf(currency)
+  try {
+    const part = new Intl.NumberFormat('en-US', { style: 'currency', currency: code })
+      .formatToParts(0).find(p => p.type === 'currency')
+    return part?.value || code
+  } catch {
+    return code
+  }
+}
+
+/** Words for labels: "US dollars" for USD, else the code ("EUR"). */
+export const currencyLabel = (currency = 'USD') => (codeOf(currency) === 'USD' ? 'US dollars' : codeOf(currency))
+
+/** A typed target price (symbols, commas and spaces allowed). */
+export function checkPriceTarget(raw) {
+  const text = String(raw ?? '')
+  const value = Number(text.replace(/[^\d.-]/g, ''))
+  if (!text.trim() || !Number.isFinite(value) || value <= 0) {
+    return { error: 'Enter a price, like 450.', value: null }
+  }
+  return { error: null, value }
+}
+
+/** Latest price vs the price when watching started, in the watch's currency. */
+export function priceWatchChange(w) {
+  if (!isNum(w?.baseline_price) || !isNum(w?.last_price)) return null
+  const delta = Math.round((w.last_price - w.baseline_price) * 100) / 100
+  if (Math.abs(delta) < 0.005) return { delta: 0, direction: 'same', text: 'Same as when you started' }
+  const amount = formatPrice(Math.abs(delta), w.currency)
+  return delta < 0
+    ? { delta, direction: 'down', text: `${amount} less than when you started` }
+    : { delta, direction: 'up', text: `${amount} more than when you started` }
+}
 
 /** Filter chips on the Alerts page, in order. `kind` matches watchKind(). */
 export const ALERT_TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'flight', label: 'Flights' },
-  { id: 'hotel', label: 'Hotels' },
-  { id: 'activity', label: 'Activities' },
-  { id: 'trip', label: 'Trips' },
+  { id: 'all', label: 'All', noun: 'watch' },
+  { id: 'flight', label: 'Flights', noun: 'flight watch',
+    empty: 'No flights watched yet. Search a trip and choose “Watch fare” in the Flights section.' },
+  { id: 'hotel', label: 'Hotels', noun: 'hotel watch',
+    empty: 'No hotels watched yet. Watch a hotel from its card in your results.' },
+  { id: 'activity', label: 'Activities', noun: 'activity watch',
+    empty: 'No activities watched yet. Watch an activity from its card in your results.' },
+  { id: 'trip', label: 'Trips', noun: 'trip watch',
+    empty: 'No trips watched yet. Save a plan, then choose “Watch whole trip”.' },
 ]
+
+/** What the filter shows, for a polite live region: "Showing 1 hotel watch". */
+export function filterStatus(tab, n) {
+  const t = ALERT_TABS.find(x => x.id === tab) || ALERT_TABS[0]
+  return `Showing ${n} ${t.noun}${n === 1 ? '' : 'es'}`
+}
 
 /** 'flight' for a fare watch, else the price watch's kind. */
 export const watchKind = (w) => w?.kind || 'flight'
@@ -55,7 +121,7 @@ export function priceCheckMessage(res) {
     case 'checked':
       if (res.notification) return { tone: 'good', text: res.notification.title }
       if (res.last_price != null) {
-        return { tone: 'neutral', text: `Checked just now: ${formatUsd(res.last_price)}. Nothing worth an alert yet.` }
+        return { tone: 'neutral', text: `Checked just now: ${formatPrice(res.last_price, res.currency)}. Nothing worth an alert yet.` }
       }
       return { tone: 'neutral', text: 'Checked just now.' }
     case 'unavailable':
