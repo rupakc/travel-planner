@@ -31,7 +31,7 @@
 - **Budget planner.** Splits your budget into per-person shares and flags or hides over-budget results. It runs entirely in the browser.
 - **Fare calendar.** Shows the cheapest live fare for departure dates ±3 days. It needs SerpAPI, a signed-in user and a single-city trip.
 - **Price insights** from Google Flights (low / typical / high) and a **pricing advisor** with booking-timing advice.
-- **Fare watch and price alerts.** Watch a trip's fare from the Flights section, the fare calendar, My Plan or a saved plan. We re-check the live price about twice a day and tell you — in the app, by browser notification or by email — when it drops, hits your target or a nearby date is cheaper, never more than once a day. The same alerts cover a hotel's price, an activity's price and a whole saved trip's total, with observed prices kept apart from labelled estimates. Needs SerpAPI; email needs SMTP.
+- **Fare watch and price alerts.** Watch a trip's fare from the Flights section, the fare calendar, My Plan or a saved plan. We re-check the live price about twice a day and tell you — in the app, by browser notification or by email — when it drops, hits your target or a nearby date is cheaper, never more than once a day. The same alerts cover a hotel's price, an activity's price and a whole saved trip's total, with observed prices kept apart from labelled estimates. Needs SerpAPI; email needs SMTP; push to the Android app needs a Firebase service account (`FCM_SERVICE_ACCOUNT_FILE`).
 
 ### Itinerary
 - A day-by-day plan with Cards and Timeline views and a route map (Leaflet + OpenStreetMap).

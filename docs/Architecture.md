@@ -11,6 +11,8 @@ Browser (React 18 SPA, Vite)
   ├── sseWorker.js  ── POST /api/search  (SSE)
   ├── chatWorker.js ── POST /api/chat    (SSE)
   └── axios         ── everything else  (JSON)
+Android app (separate repo) ── the same JSON / SSE API with a Bearer token,
+                               plus /api/devices (push) and /api/nearby (Near me)
             │
             ▼
 FastAPI backend (uvicorn, one process)
@@ -22,13 +24,15 @@ FastAPI backend (uvicorn, one process)
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
   │             walking-tour crawler, verification, compare
-  ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP)
+  ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP),
+  │                                         alert pushes to registered phones (FCM, optional)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (21 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (22 tables) ── optional GCS backup every 60 s
             │
             ▼
 External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
-          Open-Meteo, walking-tour provider sites, optional SMTP server
+          Open-Meteo, walking-tour provider sites, optional SMTP server,
+          optional Firebase Cloud Messaging (FCM HTTP v1)
 ```
 
 In the container setup, nginx serves the built frontend and proxies `/api/` and `/health` to the backend.
@@ -145,6 +149,7 @@ There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`)
 | `price_watches` | Watched hotel / activity / trip prices: `kind`, the matched `subject` (JSON, kind-specific), `match_key`, title and subtitle, alert settings, baseline / last / lowest prices, alert state (last alerted price and time, peak since), `last_observation` (JSON: status, unit price, source, link, trip breakdown), failure and unavailable streaks, `expires_on`, status, schedule and lease |
 | `price_watch_history` | Each look: total price (null when unavailable), trip breakdown and raw observed details as JSON (up to 120 rows per watch) |
 | `notifications` | In-app notifications (fare and price alerts, watch ended / on hold), read and emailed times |
+| `devices` | Push devices: `username`, FCM `token` (unique: one owner at a time), `platform` (`android`), `locale`, created and last-seen times; at most 20 per user |
 
 The first six are reference data seeded from files committed to the repo; see [Place and Airport Data](Place-and-Airport-Data.md).
 
@@ -181,9 +186,16 @@ Creating a watch holds the kind's worst case (`max_create_calls`: hotel 2, activ
 
 The fare scheduler (`fare_watch.run_scheduler`) runs the fare pass on every tick and starts the price pass (`price_watch.run_due`) as its own task, so a slow price pass never delays fare checks; at most one price pass is in flight (a tick that finds one running starts none), and stopping the scheduler cancels and awaits it.
 
+## Mobile client and push
+
+The Android app (its own repository) is a second client of the same API: it signs in with the same JWT, streams `/api/search` and `/api/chat`, and reads `/api/notifications`. Two additions exist for it:
+
+- **Push.** The app registers its FCM token with `POST /api/devices` (`devices` table; a token belongs to one user at a time). When `FCM_SERVICE_ACCOUNT_FILE` is set, `services/push.py` sends every new fare- or price-watch notification to the owner's devices. The hook is the `_notify` helper of each watch service, right after the notification row is stored: `push.notify` starts a background task, so alert creation keeps its latency and outcome, and with push off it does nothing. The task looks up the username, signs a JWT with the service-account key (google-auth's RS256 signer), exchanges it for an OAuth access token (cached until a minute before it expires), and sends one FCM HTTP v1 message per device concurrently over httpx: the notification's title and body, plus string data `kind`, `notification_id`, `link` (the web deep link, `data.links.alerts`), `watch_id` and, for price watches, `watch_kind`. A `404` or `UNREGISTERED` answer deletes that token; every other failure is logged and dropped (the alert stays in-app and in email). The app polls `/api/notifications` as a safety net either way.
+- **Near me.** `POST /api/nearby` finds the nearest known place to a coordinate (`places_db.nearest_place`: a lat/lng bounding box on the `places` table's `idx_places_lat_lng` index, wrapping the antimeridian, then great-circle distances, up to 75 km; a ward or suburb yields to a place at least 10× bigger within 15 km), then runs the existing activities agent for "Place, Country" with the body's interests (else the saved preferences') and the caller's Taste Graph. Results are cached for an hour in their own `TTLCache`, per 0.05° cell, place, interests and taste.
+
 ## Cache
 
-One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE_MAXSIZE` 500, TTL `CACHE_TTL_SECONDS` 1800) holds full search runs, discover and compare results (complete ones only), the `/health/agents` result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart.
+One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE_MAXSIZE` 500, TTL `CACHE_TTL_SECONDS` 1800) holds full search runs, discover and compare results (complete ones only), the `/health/agents` result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart. Near me results have their own one-hour cache (`api/routes/nearby.py`).
 
 ---
 
