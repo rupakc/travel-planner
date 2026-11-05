@@ -60,7 +60,7 @@ Fare- and price-watch alerts can also be pushed to the Android app's registered 
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `FCM_SERVICE_ACCOUNT_FILE` | `""` | Path to a Firebase service-account JSON key (Firebase console → Project settings → Service accounts → Generate new private key) for the project the Android app is registered in. Its `project_id` picks the FCM project. Empty, or a path that does not exist, disables push (`GET /health` reports `push_configured`). Keep the file out of the repo and readable only by the backend. |
+| `FCM_SERVICE_ACCOUNT_FILE` | `""` | Path to a Firebase service-account JSON key (Firebase console → Project settings → Service accounts → Generate new private key) for the project the Android app is registered in. Its `project_id` picks the FCM project. Empty, or a path that does not exist, disables push (`GET /health` reports `push_configured`). Keep the file out of the repo (`*service-account*.json` and `*-key.json` are git-ignored) and readable only by the backend. The key is read once: restart the backend after rotating it. |
 
 ## Accounts
 
@@ -85,7 +85,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
-| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", and `/api/nearby`, and changing the account email |
+| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby` and changing the account email |
 
 Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
 
@@ -117,7 +117,7 @@ ADMIN_PASSWORD=LocalDevPassword123
 # Optional
 SERPAPI_KEY=
 SERPER_KEY=
-FCM_SERVICE_ACCOUNT_FILE=   # e.g. /path/to/firebase-service-account.json
+FCM_SERVICE_ACCOUNT_FILE=   # e.g. /path/to/firebase-service-account.json (git-ignored name)
 RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 ```

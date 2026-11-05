@@ -178,7 +178,7 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 | `GET/POST /api/plans`, `GET/PUT/DELETE /api/plans/{id}` | Saved plans |
 | `POST/DELETE /api/plans/{id}/share`, `GET /api/share/{token}` | Share links (public read) |
 | `GET /api/airports/search`, `GET /api/nationalities/search` | Typeaheads |
-| `GET/POST /api/devices`, `DELETE /api/devices/{token}` | Android push devices (FCM tokens, masked in lists; auth) |
+| `GET/POST /api/devices`, `DELETE /api/devices/{id}`, `POST /api/devices/unregister` | Android push devices (FCM tokens: masked in lists, only ever in bodies; auth) |
 | `POST /api/nearby` | Near me: nearest known place to `lat`/`lng` + activities there (auth, light_ai, cached 1 h per ~5 km cell) |
 | `GET /health`, `GET /health/agents` | Health (reports `serpapi_configured`, `push_configured`); deep LLM check |
 
