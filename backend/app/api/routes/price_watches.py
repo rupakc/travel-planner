@@ -115,6 +115,12 @@ def _spec(body: _Spec) -> dict:
     return spec
 
 
+def _invalid(exc: InvalidSpec) -> HTTPException:
+    """422 with the source's message — or the status it asks for (a trip
+    watch's plan that isn't the caller's is a 404)."""
+    return HTTPException(status_code=getattr(exc, "status_code", 422), detail=str(exc))
+
+
 def _limit_error() -> HTTPException:
     n = settings.fare_watch_max_active_per_user
     return HTTPException(
@@ -262,7 +268,7 @@ async def create_price_watch(
     try:
         key = source.match_key(spec)
     except InvalidSpec as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise _invalid(exc) from exc
     if key:
         existing = price_watch_db.find_watch(user["id"], body.kind, key)
         if existing and existing["status"] != "expired":
@@ -289,7 +295,7 @@ async def create_price_watch(
         result = await source.create(spec, user, settings.serpapi_key)
     except InvalidSpec as exc:
         fare_watch_db.adjust_calls(day, -1, user_id=user["id"])
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise _invalid(exc) from exc
     except Exception as exc:
         if getattr(exc, "quota_exceeded", False):
             raise _busy(now) from exc

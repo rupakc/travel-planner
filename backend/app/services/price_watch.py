@@ -187,7 +187,11 @@ def registered_kinds() -> list[str]:
 
 # Modules that provide the built-in sources, each exposing ``SOURCE`` (a
 # PriceSource instance). One line per kind, e.g. "app.services.hotel_source".
-SOURCE_MODULES: tuple[str, ...] = ()
+# fmt: off
+SOURCE_MODULES: tuple[str, ...] = (
+    "app.services.price_sources.trip",
+)
+# fmt: on
 
 
 def register_builtin_sources() -> list[str]:
