@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { matchedElsewhere, money } from '../../../utils/hotelWatch'
-import { priceWatchLink } from '../../../utils/priceWatch'
+import { matchedElsewhere } from '../../../utils/hotelWatch'
+import { formatPrice, priceWatchLink } from '../../../utils/priceWatch'
 
 const nightsOf = (ci, co) => Math.round((Date.parse(co) - Date.parse(ci)) / 86400000)
 
@@ -10,7 +10,7 @@ const nightsOf = (ci, co) => Math.round((Date.parse(co) - Date.parse(ci)) / 8640
  * Hotels property actually tracked, its live total and nightly rate, and a
  * note when Google lists it under another name than the card.
  */
-export default function HotelDialogBody({ spec = {}, preview = {}, watch = null }) {
+export default function HotelDialogBody({ spec = {}, preview = {}, watch = null, unitLabel = null }) {
   if (watch) {
     const obs = watch.last_observation || {}
     const s = watch.subject || {}
@@ -20,8 +20,8 @@ export default function HotelDialogBody({ spec = {}, preview = {}, watch = null 
       <div className="text-sm text-slate-700">
         <p>Tracking: <strong className="text-slate-900">{watch.title}</strong> on Google Hotels</p>
         <p className="mt-1 text-xs text-slate-600 tabular-nums">
-          {money(total, watch.currency)}{nights ? ` for ${nights} night${nights === 1 ? '' : 's'}` : ''}
-          {obs.unit_price != null ? ` · ${money(obs.unit_price, watch.currency)} a night` : ''}
+          {formatPrice(total, watch.currency)}{nights ? ` for ${nights} night${nights === 1 ? '' : 's'}` : ''}
+          {obs.unit_price != null ? ` · ${formatPrice(obs.unit_price, watch.currency)} ${unitLabel || 'a night'}` : ''}
           {watch.subtitle ? ` · ${watch.subtitle}` : ''}
         </p>
         {matchedElsewhere(watch) && (
@@ -37,7 +37,7 @@ export default function HotelDialogBody({ spec = {}, preview = {}, watch = null 
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
       {preview.price != null && (
         <p className="text-sm text-slate-600">
-          Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{money(preview.price)}</span>
+          Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.price, preview.currency)}</span>
           <span className="ml-1.5 text-xs text-slate-500">{preview.priceLabel || 'estimate'}</span>
         </p>
       )}

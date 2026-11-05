@@ -274,7 +274,7 @@ async def test_create_without_a_confident_match_offers_priced_suggestions():
             "2026-12-14",
         )
         assert (s["spec"]["adults"], s["spec"]["rooms"]) == (2, 1)
-        assert "/night" in s["subtitle"]
+        assert s["subtitle"].endswith("a night · total for 4 nights")
         # A suggestion's spec is itself a valid spec
         SOURCE.match_key(s["spec"])
     assert result.suggestions[0]["title"] == "Lumen Hotel & The Lisbon Light Show"

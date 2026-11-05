@@ -145,7 +145,9 @@ def subtitle(check_in: str, check_out: str, adults: int, rooms: int) -> str:
     return " · ".join(parts)
 
 
-def _offer_subtitle(o: HotelOffer) -> str:
+def _offer_subtitle(o: HotelOffer, nights: int) -> str:
+    """'4★ · 4.6/5 (1,405 reviews) · $100 a night · total for 4 nights' (the
+    suggestion's price is the stay's total)."""
     parts = []
     if o.hotel_class:
         parts.append(f"{o.hotel_class}★")
@@ -155,7 +157,8 @@ def _offer_subtitle(o: HotelOffer) -> str:
             + (f" ({o.reviews:,} reviews)" if o.reviews else "")
         )
     if o.rate_per_night is not None:
-        parts.append(f"{usd(o.rate_per_night)}/night")
+        parts.append(f"{usd(o.rate_per_night)} a night")
+    parts.append(f"total for {_plural(nights, 'night')}")
     return " · ".join(parts)
 
 
@@ -225,7 +228,7 @@ def _observation(price: HotelPrice, s: dict, calls: int) -> PriceObservation:
 def _suggestion(o: HotelOffer, s: dict) -> dict:
     return {
         "title": o.name,
-        "subtitle": _offer_subtitle(o),
+        "subtitle": _offer_subtitle(o, s["nights"]),
         "price": o.total_rate,
         "nightly": o.rate_per_night,
         "currency": o.currency,

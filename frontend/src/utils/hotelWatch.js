@@ -1,16 +1,12 @@
 // Pure helpers for hotel price watches: which stay a hotel card is for (dates,
 // guests, rooms) and the spec the backend's hotel source matches to a live
 // Google Hotels property. API shapes: docs/API-Reference.md.
-import { formatUsd } from './fareCalendar'
 import { allocateDays, cityKey } from './mustInclude'
 
 const MAX_ADULTS = 16
 const MAX_ROOMS = 8
 const DAY_MS = 86400000
 
-/** Prices on hotel watches. The one place to switch to the shared
- * currency-aware formatter (utils/priceWatch formatPrice) when it lands. */
-export const money = (amount, currency = 'USD') => formatUsd(amount)
 
 const isoDay = (d) => d.toISOString().slice(0, 10)
 const addDays = (iso, n) => isoDay(new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY_MS))
@@ -79,6 +75,7 @@ export function hotelPreview(hotel, spec) {
     subtitle: parts.join(' · '),
     price: spec.estimate_total ?? null,
     priceLabel: 'AI estimate for the stay',
+    currency: 'USD',
   }
 }
 

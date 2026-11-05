@@ -159,7 +159,7 @@ describe('HotelDialogBody', () => {
     await render(<HotelDialogBody spec={SPEC} watch={WATCH} />)
     const text = container.textContent
     expect(text).toContain('Tracking: Lumen Hotel & The Lisbon Light Show on Google Hotels')
-    expect(text).toContain('$398 for 4 nights · $100 a night · 10–14 Dec · 2 adults')
+    expect(text).toContain('$398 for 4 nights · $99.50 a night · 10–14 Dec · 2 adults')
     expect(text).toContain('Your plan calls it “Lumen Hotel”; Google Hotels lists it as “Lumen Hotel & The Lisbon Light Show”.')
     const link = [...container.querySelectorAll('a')].find(a => a.textContent.includes('Remove it'))
     expect(link.getAttribute('href')).toBe('/alerts?kind=hotel&watch=11')
@@ -184,7 +184,7 @@ describe('HotelWatchCard', () => {
     expect(text).toContain('Lumen Hotel & The Lisbon Light Show')
     expect(text).toContain('10–14 Dec · 2 adults')
     expect(text).toContain('$398')
-    expect(text).toContain('$100 a night')
+    expect(text).toContain('$99.50 a night')
     expect(text).toContain('Total for 4 nights in Lisbon on Google Hotels')
     expect(text).toContain('Your plan called it “Lumen Hotel”.')
     const book = [...container.querySelectorAll('a')].find(a => a.textContent.includes('Book'))

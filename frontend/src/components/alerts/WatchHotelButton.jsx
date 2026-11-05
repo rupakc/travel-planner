@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
-import { hotelPreview, hotelWatchSpec, money } from '../../utils/hotelWatch'
-import { priceWatchLink } from '../../utils/priceWatch'
+import { hotelPreview, hotelWatchSpec } from '../../utils/hotelWatch'
+import { formatPrice, priceWatchLink } from '../../utils/priceWatch'
 import { loginPathFor } from '../../utils/returnPath'
 import PriceWatchDialog from './PriceWatchDialog'
 
@@ -25,7 +25,7 @@ const STYLES = {
 
 export const hotelWatchingLabel = (w) => {
   if (w.status === 'paused') return 'Watch paused'
-  return w.last_price != null ? `Watching · ${money(w.last_price, w.currency)}` : 'Watching'
+  return w.last_price != null ? `Watching · ${formatPrice(w.last_price, w.currency)}` : 'Watching'
 }
 
 /**
@@ -83,7 +83,7 @@ function ActiveHotelButton({ hotel, spec, variant, source }) {
       {open && (
         // Clicks inside the (portalled) dialog must not reach the card's own onClick
         <span onClick={e => e.stopPropagation()}>
-          <PriceWatchDialog kind="hotel" spec={spec} preview={hotelPreview(hotel, spec)} source={source}
+          <PriceWatchDialog kind="hotel" spec={spec} preview={hotelPreview(hotel, spec)} unitLabel="a night" source={source}
             onClose={() => setOpen(false)} onWatched={onWatched} />
         </span>
       )}

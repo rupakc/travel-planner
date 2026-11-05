@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { hotelGuests, hotelStay, hotelWatchSpec, hotelPreview, matchedElsewhere, money } from './hotelWatch'
+import { hotelGuests, hotelStay, hotelWatchSpec, hotelPreview, matchedElsewhere } from './hotelWatch'
 
 const TODAY = new Date('2026-11-05T12:00:00Z')
 const SEARCH = { destination: 'Lisbon, Portugal', departure_date: '2026-12-10', return_date: '2026-12-14', num_travelers: 2, adults: 2 }
@@ -64,7 +64,7 @@ describe('hotelPreview', () => {
   it('describes the stay and labels the AI price as an estimate', () => {
     const spec = hotelWatchSpec(HOTEL, SEARCH, TODAY)
     expect(hotelPreview(HOTEL, spec)).toEqual({
-      title: 'Lumen Hotel', subtitle: '10–14 Dec · 4 nights · 2 adults', price: 410, priceLabel: 'AI estimate for the stay',
+      title: 'Lumen Hotel', subtitle: '10–14 Dec · 4 nights · 2 adults', price: 410, priceLabel: 'AI estimate for the stay', currency: 'USD',
     })
     expect(hotelPreview(HOTEL, { ...spec, adults: 3, rooms: 2 }).subtitle).toBe('10–14 Dec · 4 nights · 3 adults · 2 rooms')
     expect(hotelPreview(HOTEL, { ...spec, check_out: '2026-12-11', adults: 1 }).subtitle).toBe('10–11 Dec · 1 night · 1 adult')
@@ -78,12 +78,5 @@ describe('matchedElsewhere', () => {
     expect(matchedElsewhere({ title: 'Lumen Hotel', subject: { requested_name: 'lumen  hotel' } })).toBe(false)
     expect(matchedElsewhere({ title: 'Lumen Hotel', subject: {} })).toBe(false)
     expect(matchedElsewhere(null)).toBe(false)
-  })
-})
-
-describe('money', () => {
-  it('formats whole dollars', () => {
-    expect(money(398)).toBe('$398')
-    expect(money(1234.4, 'USD')).toBe('$1,234')
   })
 })
