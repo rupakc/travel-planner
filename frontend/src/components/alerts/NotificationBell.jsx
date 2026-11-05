@@ -51,7 +51,7 @@ export default function NotificationBell() {
   useEffect(() => {
     if (unread > prev.current) {
       setNudge(true)
-      setAnnouncement(`${unread} unread fare alert${unread === 1 ? '' : 's'}`)
+      setAnnouncement(`${unread} unread price alert${unread === 1 ? '' : 's'}`)
     }
     prev.current = unread
   }, [unread])
@@ -109,7 +109,7 @@ export default function NotificationBell() {
         <div id={panelId} role="region" aria-label="Notifications"
           className="alert-pop fixed inset-x-4 top-16 z-[55] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-[22rem]">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-            <h2 className="text-sm font-semibold text-slate-800">Fare alerts</h2>
+            <h2 className="text-sm font-semibold text-slate-800">Price alerts</h2>
             <button type="button" onClick={markAll} disabled={!unread}
               className="text-xs font-medium text-sky-700 hover:text-sky-900 disabled:cursor-default disabled:text-slate-300">
               Mark all as read
@@ -123,7 +123,7 @@ export default function NotificationBell() {
             {items?.length === 0 && (
               <div className="px-4 py-6 text-sm text-slate-500">
                 <p className="font-medium text-slate-700">No alerts yet</p>
-                <p className="mt-1">Watch a fare from your flight results and we’ll tell you here when it drops.</p>
+                <p className="mt-1">Watch a flight, hotel, activity or whole trip and we’ll tell you here when its price drops.</p>
               </div>
             )}
             {items?.length > 0 && (
@@ -134,7 +134,7 @@ export default function NotificationBell() {
           </div>
           <Link to="/alerts" onClick={() => setOpen(false)}
             className="block border-t border-slate-100 px-4 py-2.5 text-center text-sm font-medium text-sky-700 hover:bg-slate-50">
-            See all watched fares
+            See all watched prices
           </Link>
         </div>
       )}
