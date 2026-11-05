@@ -397,6 +397,45 @@ async def test_checks_spend_the_shared_fare_watch_budget(src, user):
     assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 4
 
 
+async def test_a_check_that_overspends_never_pushes_the_pool_past_the_budget(
+    src, user, monkeypatch
+):
+    # Budget 200, fares used 198: the check reserves its worst case (2) up
+    # front and spends 5 — the pool stops at the budget, never 201.
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 200)
+    monkeypatch.setattr(settings, "fare_watch_user_daily_share", 0.5)  # 100
+    fare_watch_db.reserve_calls("2026-11-04", 198, 200)
+    w = _create(user)
+    src.cost = 2
+    src.queue.append(PriceObservation(price=399.0, source="fake_live", calls=5))
+    res = await check_watch(w["id"], now=START, api_key="k")
+    assert res.status != "postponed"
+    assert fare_watch_db.calls_used("2026-11-04") == 200
+    assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 5
+
+
+async def test_an_overspend_never_pushes_the_owner_past_their_share(
+    src, user, monkeypatch
+):
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 10)
+    monkeypatch.setattr(settings, "fare_watch_user_daily_share", 0.3)  # 3 calls
+    w = _create(user)
+    src.cost = 2
+    src.queue.append(PriceObservation(price=399.0, source="fake_live", calls=6))
+    await check_watch(w["id"], now=START, api_key="k")
+    assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 3
+    assert fare_watch_db.calls_used("2026-11-04") == 6
+
+
+async def test_a_check_that_spends_less_gives_the_rest_back(src, user):
+    w = _create(user)
+    src.cost = 4
+    src.queue.append(PriceObservation(price=399.0, source="fake_live", calls=1))
+    await check_watch(w["id"], now=START, api_key="k")
+    assert fare_watch_db.calls_used("2026-11-04") == 1
+    assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 1
+
+
 async def test_spent_budget_postpones_scheduled_and_refuses_manual(
     src, user, monkeypatch
 ):

@@ -102,6 +102,28 @@ def test_create_charges_the_calls_the_match_spent(client, alice, src):
     assert fare_watch_db.calls_used(day) == 3
 
 
+def test_create_never_settles_the_pool_past_the_budget(client, alice, src):
+    # One call held at 199 of 200; the match spent 3 — the pool stops at 200
+    day = NOW.date().isoformat()
+    fare_watch_db.reserve_calls(day, 199, 200)
+    _, h = alice
+    src.create_calls = 3
+    assert _create(client, h).status_code == 200
+    assert fare_watch_db.calls_used(day) == 200
+
+
+def test_adjust_calls_clamps_additions_at_the_budget_and_share():
+    day = "2031-01-01"
+    fare_watch_db.adjust_calls(day, 5, user_id="cap-u", budget=4, user_cap=3)
+    assert fare_watch_db.calls_used(day) == 4
+    assert fare_watch_db.user_calls_used(day, "cap-u") == 3
+    fare_watch_db.adjust_calls(day, 2, user_id="cap-u", budget=4, user_cap=3)
+    assert fare_watch_db.calls_used(day) == 4  # already at the budget
+    fare_watch_db.adjust_calls(day, -3, user_id="cap-u", budget=4, user_cap=3)
+    assert fare_watch_db.calls_used(day) == 1  # giving back is never clamped
+    assert fare_watch_db.user_calls_used(day, "cap-u") == 0
+
+
 def test_create_with_target_and_plan(client, alice, src):
     _, h = alice
     r = _create(

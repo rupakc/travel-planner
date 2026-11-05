@@ -590,7 +590,13 @@ async def check_watch(
 
     spent = getattr(obs, "calls", cost) or 0
     if spent != cost:  # settle the reservation to what the look really spent
-        fare_watch_db.adjust_calls(day, spent - cost, user_id=watch["user_id"])
+        fare_watch_db.adjust_calls(
+            day,
+            spent - cost,
+            user_id=watch["user_id"],
+            budget=budget,
+            user_cap=fare_watch.user_daily_cap(),
+        )
     if obs.status == "ok" and obs.price is None:
         return _record_failure(watch, "ValueError: no price in an ok look", now)
     if obs.status == "unavailable":
