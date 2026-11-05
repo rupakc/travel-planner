@@ -241,7 +241,7 @@ def test_check_now_drop_alerts_with_hotel_copy_and_email(client, monkeypatch):
     assert note["title"] == (
         "🏨 Lumen Hotel & The Lisbon Light Show dropped to $322 for 10–14 Dec (−$46)"
     )
-    assert "$80 a night" in note["body"] or "$81 a night" in note["body"]
+    assert "$80.50 a night" in note["body"]  # cents under 100, as the UI
     assert note["data"]["watch_kind"] == "hotel"
     assert note["data"]["links"]["book"] == "https://www.lumenhotel.pt/"
     assert res["last_price"] == 322.0 and res["lowest_price"] == 322.0
