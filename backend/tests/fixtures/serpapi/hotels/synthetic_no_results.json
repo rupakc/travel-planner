@@ -1,0 +1,19 @@
+{
+ "_comment": "SYNTHETIC (not recorded live): the shape SerpAPI returns with HTTP 200 when Google Hotels has no results for a query.",
+ "search_metadata": {
+  "id": "synthetic",
+  "status": "Success"
+ },
+ "search_parameters": {
+  "engine": "google_hotels",
+  "q": "Zzyzx Nonexistent Hotel Lisbon",
+  "gl": "us",
+  "hl": "en",
+  "currency": "USD",
+  "check_in_date": "2026-12-10",
+  "check_out_date": "2026-12-14",
+  "adults": 2,
+  "children": 0
+ },
+ "error": "Google Hotels hasn't returned any results for this query."
+}
