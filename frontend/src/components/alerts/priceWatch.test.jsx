@@ -391,6 +391,17 @@ describe('PriceWatchDialog', () => {
     expect(document.querySelector('[role="status"]')).not.toBeNull()
   })
 
+  it('does not re-send the failed spec when the form is submitted after no live price', async () => {
+    api.createPriceWatch.mockRejectedValueOnce({ response: { status: 422, data: {
+      detail: 'No live price.', code: 'no_live_price', message: 'No live price.',
+      suggestions: [{ title: 'Lumen Lisboa', price: 380, spec: { name: 'Lumen Lisboa', city: 'Lisbon' } }],
+    } } })
+    await open()
+    await submit()
+    await submit()
+    expect(api.createPriceWatch).toHaveBeenCalledTimes(1)
+  })
+
   it('shows other errors as they come', async () => {
     api.createPriceWatch.mockRejectedValueOnce({ response: { status: 409, data: { detail: 'You already have 10 active watches — pause or remove one to watch another.' } } })
     await open()
