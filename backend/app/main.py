@@ -23,6 +23,7 @@ from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
 from .api.routes.compare import router as compare_router
+from .api.routes.devices import router as devices_router
 from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.fare_watches import router as fare_watches_router
@@ -78,6 +79,7 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.price_watch_db import create_price_watch_tables
@@ -85,6 +87,7 @@ async def lifespan(app: FastAPI):
     create_fare_watch_tables()
     create_price_watch_tables()
     create_notifications_table()
+    create_devices_table()
     price_watch.register_builtin_sources()
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
@@ -208,6 +211,7 @@ app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
+app.include_router(devices_router, prefix="/api", tags=["devices"])
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
 )
