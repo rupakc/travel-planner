@@ -655,6 +655,10 @@ The spec rides under the kind's own key (a top-level `plan_id` is passed into it
 
 with status `422`; sending a suggestion's `spec` back watches it instead. A `below_target` request may carry `target_currency` (the currency the target was typed in): when the live price is in another currency nothing is created and the answer is `422 {code: "target_currency_mismatch", message, currency, price, unit_price}`, so the client can ask again in that currency (the retry reuses the cached look). Other errors: `422` for an invalid or oversized spec (the `detail` says why), `below_target` without a target, email without an address/SMTP, or a subject ending today; `409` at the active limit; `429` with `Retry-After` when today's budget or the caller's share is spent; `502` when live prices fail; `503` without SerpAPI. Rate-limited (light_ai).
 
+**Hotel spec:** `{name, city, check_in, check_out, adults, rooms?, property_token?, estimate_total?}`. `city` may be "Lisbon, Portugal" or an airport code ("LIS"); it is watched as the city ("Lisbon"). `rooms` defaults to one room for up to 4 guests, then one per 4 — the rule a trip's hotel uses too. A spec with `property_token` (a picked suggestion) is priced directly; otherwise the name is matched on Google Hotels. The baseline is always the property's own look by token, as every check. A `plan_id` is stored only when it is the caller's own plan (otherwise `null`). The same Google property for the same stay, guests and rooms already watched under another name returns that watch with `already_watching: true` (after the matching lookup).
+
+Creating a watch holds its kind's worst case from the daily SerpAPI budget and the caller's share (hotel 2 calls, activity 2, trip 10) and gives back what it didn't spend.
+
 A price watch:
 
 ```json
