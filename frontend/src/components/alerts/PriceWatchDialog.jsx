@@ -121,7 +121,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
   return (
     <WatchDialogShell title={title} subtitle={subtitle} onClose={onClose}>
       {!done && (
-        <form onSubmit={e => { e.preventDefault(); create(spec) }} className="px-5 pb-5">
+        <form onSubmit={e => { e.preventDefault(); if (!noMatch) create(spec) }} className="px-5 pb-5">
           <Body kind={kind} spec={usedSpec} preview={preview} watch={null} unitLabel={unitLabel} />
 
           <fieldset className="mt-4 space-y-2">
