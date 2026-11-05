@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 
 const auth = { token: 'tok', user: { username: 'u', email: 'u@example.com' }, preferences: {} }
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth, useOptionalAuth: () => auth }))
@@ -145,6 +145,74 @@ describe('Alerts page with price watches', () => {
   })
 })
 
+describe('Alerts page — fix round 1', () => {
+  it('a deep link reaches a watch hidden by the current filter', async () => {
+    let navigateTo
+    function Nav() { navigateTo = useNavigate(); return null }
+    await render(<><AlertsPage /><Nav /></>, '/alerts')
+    const chips = () => container.querySelector('[aria-label="Filter watches"]')
+    await act(async () => button('Hotels', chips()).click())
+    expect(container.querySelector('#watch-7')).toBeNull()
+    await act(async () => navigateTo('/alerts?watch=7'))
+    expect(container.querySelector('#watch-7').className).toContain('ring-2')
+    expect(button('All', chips()).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('price watches still show when fare watches fail to load', async () => {
+    api.listFareWatches.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([FARE])
+    await render(<AlertsPage />, '/alerts')
+    expect(container.querySelector('[role="alert"]').textContent).toContain('Couldn’t load your watched flights')
+    expect(container.querySelector('#price-watch-7')).not.toBeNull()
+    expect(container.textContent).not.toContain('Nothing watched yet')
+    await act(async () => button('Try again', container.querySelector('[role="alert"]')).click())
+    expect(container.querySelector('#watch-7')).not.toBeNull()
+  })
+
+  it('a price-watch deep link waits for a failed price list to load', async () => {
+    api.listPriceWatches.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([HOTEL, TRIP])
+    await render(<AlertsPage />, '/alerts?kind=trip&watch=9')
+    await act(async () => button('Try again', container.querySelector('[data-testid="price-load-error"]')).click())
+    expect(container.querySelector('#price-watch-9').className).toContain('ring-2')
+  })
+
+  it('has a generic empty state', async () => {
+    api.listFareWatches.mockResolvedValue([])
+    api.listPriceWatches.mockResolvedValue([])
+    await render(<AlertsPage />, '/alerts')
+    const t = container.textContent
+    expect(t).toContain('Nothing watched yet')
+    for (const word of ['flight', 'hotel', 'activit', 'trip']) expect(t.toLowerCase()).toContain(word)
+  })
+
+  it('an empty tab says how to watch that kind', async () => {
+    await render(<AlertsPage />, '/alerts')
+    await act(async () => button('Activities', container.querySelector('[aria-label="Filter watches"]')).click())
+    expect(container.textContent).toContain('No activities watched yet')
+  })
+
+  it('chips have spoken names and the filter result is announced', async () => {
+    await render(<AlertsPage />, '/alerts')
+    const chips = container.querySelector('[aria-label="Filter watches"]')
+    expect(button('Hotels', chips).getAttribute('aria-label')).toBe('Hotels, 1')
+    await act(async () => button('Hotels', chips).click())
+    expect(container.querySelector('[aria-live="polite"][data-testid="filter-status"]').textContent)
+      .toBe('Showing 1 hotel watch')
+  })
+
+  it('shows a non-USD watch in its own currency, with cents', async () => {
+    const eur = { ...HOTEL, id: 11, kind: 'activity', currency: 'EUR', baseline_price: 11.63, last_price: 9.9,
+      lowest_price: 9.9, target_price: 9, alert_mode: 'below_target',
+      last_observation: { status: 'ok', unit_price: 9.9 }, history: [{ price: 11.63 }, { price: 9.9 }] }
+    api.listPriceWatches.mockResolvedValue([eur])
+    await render(<AlertsPage />, '/alerts')
+    const card = container.querySelector('#price-watch-11').textContent
+    expect(card).toContain('€9.90')
+    expect(card).toContain('€1.73 less than when you started')
+    expect(card).toContain('€9.00 or less')
+    expect(card).not.toContain('$')
+  })
+})
+
 describe('PriceWatchCard', () => {
   const props = (over = {}) => ({
     watch: HOTEL, onCheck: vi.fn(), onUpdate: vi.fn(async () => true), onDelete: vi.fn(), onOpen: vi.fn(), ...over,
@@ -156,7 +224,7 @@ describe('PriceWatchCard', () => {
     expect(t).toContain('Lumen Hotel')
     expect(t).toContain('Lisbon · 10–14 Dec')
     expect(t).toContain('$352')
-    expect(t).toContain('$46 less than when you started')
+    expect(t).toContain('$46.00 less than when you started')
     expect(t).toContain('$88')
     const link = container.querySelector('a[href="https://hotels.example/lumen"]')
     expect(link.getAttribute('target')).toBe('_blank')
@@ -243,6 +311,63 @@ describe('PriceWatchDialog', () => {
     expect(see.getAttribute('href')).toBe('/alerts?kind=hotel&watch=7')
   })
 
+  it('after picking a suggestion, reports and shows what is really watched', async () => {
+    const lisboa = { ...HOTEL, id: 8, title: 'Lumen Lisboa', subtitle: 'Baixa · 10–14 Dec' }
+    api.createPriceWatch
+      .mockRejectedValueOnce({ response: { status: 422, data: {
+        detail: 'No live price.', code: 'no_live_price', message: 'No live price.',
+        suggestions: [{ title: 'Lumen Lisboa', price: 380, currency: 'EUR', spec: { name: 'Lumen Lisboa' } }],
+        estimate: { price: 420, currency: 'EUR' },
+      } } })
+      .mockResolvedValueOnce(lisboa)
+    DIALOG_BODIES.hotel = ({ spec, watch }) => <p data-testid="body">{watch ? `tracking ${spec.name}` : spec.name}</p>
+    const p = await open()
+    await submit()
+    const dialog = document.querySelector('[role="dialog"]')
+    expect(dialog.textContent).toContain('€380')
+    expect(dialog.textContent).toContain('€420')
+    expect(button('Start watching', dialog)).toBeUndefined() // no re-send of the failed spec
+    await act(async () => button('Watch this instead', dialog).click())
+    expect(p.onWatched).toHaveBeenCalledWith(lisboa, { spec: { name: 'Lumen Lisboa' }, viaSuggestion: true })
+    expect(dialog.textContent).toContain('Lumen Lisboa · Baixa · 10–14 Dec')
+    expect(dialog.textContent).not.toContain('Lumen Hotel · Lisbon')
+    expect(document.querySelector('[data-testid="body"]').textContent).toBe('tracking Lumen Lisboa')
+  })
+
+  it('reports the original spec when it matched directly', async () => {
+    api.createPriceWatch.mockResolvedValueOnce(HOTEL)
+    const p = await open()
+    await submit()
+    expect(p.onWatched).toHaveBeenCalledWith(HOTEL, { spec: { name: 'Lumen Hotel', city: 'Lisbon' }, viaSuggestion: false })
+  })
+
+  it('already watching: says so and offers no browser alerts', async () => {
+    alerts.shouldOfferBrowserAlerts.mockReturnValue(true)
+    api.createPriceWatch.mockResolvedValueOnce({ ...HOTEL, already_watching: true })
+    await open()
+    await submit()
+    expect(document.querySelector('[role="dialog"]').textContent).toContain('You’re already watching this hotel')
+    expect(button('Allow browser alerts')).toBeUndefined()
+    alerts.shouldOfferBrowserAlerts.mockReturnValue(false)
+  })
+
+  it('never shows a made-up price when the watch has none yet', async () => {
+    api.createPriceWatch.mockResolvedValueOnce({ ...HOTEL, baseline_price: null, last_price: null })
+    await open()
+    await submit()
+    const status = document.querySelector('[role="status"]').textContent
+    expect(status).not.toContain('$0')
+    expect(status).toContain('shortly')
+  })
+
+  it('labels the target with the currency and passes a unit label to the body', async () => {
+    await open({ preview: { title: 'Tour', price: 24, currency: 'EUR' }, kind: 'activity', unitLabel: 'per person' })
+    expect(document.body.textContent).toContain('€24.00')
+    expect(document.body.textContent).toContain('per person')
+    await act(async () => document.querySelector('input[value="below_target"]').click())
+    expect(document.querySelector('input[aria-label="Target price in EUR"]')).not.toBeNull()
+  })
+
   it('offers live suggestions when there is no live price', async () => {
     api.createPriceWatch
       .mockRejectedValueOnce({ response: { status: 422, data: {
@@ -267,10 +392,10 @@ describe('PriceWatchDialog', () => {
   })
 
   it('shows other errors as they come', async () => {
-    api.createPriceWatch.mockRejectedValueOnce({ response: { status: 409, data: { detail: 'You’re already watching 10 prices — pause or remove one to watch another.' } } })
+    api.createPriceWatch.mockRejectedValueOnce({ response: { status: 409, data: { detail: 'You already have 10 active watches — pause or remove one to watch another.' } } })
     await open()
     await submit()
-    expect(document.querySelector('[role="alert"]').textContent).toContain('already watching 10 prices')
+    expect(document.querySelector('[role="alert"]').textContent).toContain('10 active watches')
   })
 
   it('target mode sends the target', async () => {
