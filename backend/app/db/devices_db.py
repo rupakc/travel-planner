@@ -36,7 +36,7 @@ def masked(token: str) -> str:
 def _public(row) -> dict:
     d = dict(row)
     d["token"] = masked(d["token"])
-    return {k: v for k, v in d.items() if k not in ("id", "username")}
+    return {k: v for k, v in d.items() if k != "username"}
 
 
 def upsert_device(
@@ -85,15 +85,23 @@ def tokens_for(username: str) -> list[str]:
     return [r["token"] for r in rows]
 
 
-def delete_device(username: str, token: str) -> bool:
-    """Delete one of the user's tokens; False when they don't own it."""
+def delete_device(username: str, device_id: int) -> bool:
+    """Delete one of the user's devices by id; False when they don't own it."""
     with get_connection() as conn:
         return (
             conn.execute(
-                "DELETE FROM devices WHERE username = ? AND token = ?",
-                (username, token),
+                "DELETE FROM devices WHERE username = ? AND id = ?",
+                (username, device_id),
             ).rowcount
             > 0
+        )
+
+
+def unregister(username: str, token: str) -> None:
+    """Sign-out: drop the token if the user owns it (anyone else's stays)."""
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM devices WHERE username = ? AND token = ?", (username, token)
         )
 
 

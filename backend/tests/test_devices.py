@@ -1,5 +1,6 @@
 """Device registry for push notifications: register (upsert / move between
-users), list (masked tokens), delete (owner only) and the per-user cap."""
+users), list (masked tokens, ids), delete by id (owner only), unregister by
+token (sign-out) and the per-user cap. A token never travels in a URL."""
 
 import uuid
 
@@ -34,7 +35,10 @@ def _register(client, headers, token, **over):
 def test_devices_require_auth(client):
     assert client.post("/api/devices", json={"token": "t"}).status_code == 401
     assert client.get("/api/devices").status_code == 401
-    assert client.delete("/api/devices/abc").status_code == 401
+    assert client.delete("/api/devices/1").status_code == 401
+    assert (
+        client.post("/api/devices/unregister", json={"token": "t"}).status_code == 401
+    )
 
 
 def test_register_and_list_masks_the_token(client):
@@ -43,6 +47,7 @@ def test_register_and_list_masks_the_token(client):
     r = _register(client, h, tok, locale="de-DE")
     assert r.status_code == 200
     body = r.json()
+    assert isinstance(body["id"], int)
     assert body["token"] == "…" + tok[-6:]
     assert body["platform"] == "android"
     assert body["locale"] == "de-DE"
@@ -50,6 +55,7 @@ def test_register_and_list_masks_the_token(client):
 
     items = client.get("/api/devices", headers=h).json()["items"]
     assert [d["token"] for d in items] == ["…" + tok[-6:]]
+    assert items[0]["id"] == body["id"]
     assert tok not in str(items)
 
 
@@ -74,16 +80,48 @@ def test_a_token_moves_to_the_user_who_registers_it(client):
     assert devices_db.tokens_for(bob["username"]) == [tok]
 
 
-def test_delete_only_the_callers_token(client):
+def test_delete_by_id_only_the_callers_device(client):
+    alice, ha = _user()
+    _, hb = _user()
+    tok = _token()
+    dev = _register(client, ha, tok).json()
+    assert client.delete(f"/api/devices/{dev['id']}", headers=hb).status_code == 404
+    assert devices_db.tokens_for(alice["username"]) == [tok]
+    assert client.delete(f"/api/devices/{dev['id']}", headers=ha).status_code == 204
+    assert devices_db.tokens_for(alice["username"]) == []
+    assert client.delete(f"/api/devices/{dev['id']}", headers=ha).status_code == 404
+
+
+def test_delete_needs_a_numeric_id(client):
+    _, h = _user()
+    assert client.delete("/api/devices/fcm:abc", headers=h).status_code == 422
+
+
+def test_unregister_by_token_is_idempotent_and_owner_only(client):
     alice, ha = _user()
     _, hb = _user()
     tok = _token()
     _register(client, ha, tok)
-    assert client.delete(f"/api/devices/{tok}", headers=hb).status_code == 404
+    body = {"token": tok}
+    # someone else's token: nothing changes, same answer
+    assert (
+        client.post("/api/devices/unregister", json=body, headers=hb).status_code == 204
+    )
     assert devices_db.tokens_for(alice["username"]) == [tok]
-    assert client.delete(f"/api/devices/{tok}", headers=ha).status_code == 204
+    assert (
+        client.post("/api/devices/unregister", json=body, headers=ha).status_code == 204
+    )
     assert devices_db.tokens_for(alice["username"]) == []
-    assert client.delete(f"/api/devices/{tok}", headers=ha).status_code == 404
+    assert (
+        client.post("/api/devices/unregister", json=body, headers=ha).status_code == 204
+    )
+
+
+def test_no_route_takes_a_token_in_the_path(client):
+    from app.main import app
+
+    paths = {getattr(r, "path", "") for r in app.routes}
+    assert not any("{token}" in p for p in paths if p.startswith("/api/devices"))
 
 
 def test_cap_evicts_the_oldest_device(client):
