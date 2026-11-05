@@ -31,6 +31,7 @@ from .api.routes.feedback import router as feedback_router
 from .api.routes.layover import router as layover_router
 from .api.routes.link_import import router as link_import_router
 from .api.routes.nationalities import router as nationalities_router
+from .api.routes.nearby import router as nearby_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
@@ -212,6 +213,9 @@ app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])
+app.include_router(
+    nearby_router, prefix="/api", tags=["nearby"], dependencies=_limited("light_ai")
+)
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
 )
