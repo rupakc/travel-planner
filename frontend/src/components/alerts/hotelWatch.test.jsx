@@ -12,14 +12,13 @@ const alerts = {
   watchesChanged: vi.fn(), shouldOfferBrowserAlerts: vi.fn(() => false), answerBrowserAlerts: vi.fn(),
   priceWatchFor: vi.fn(async () => null),
 }
-const priceWatch = { current: null }
 vi.mock('../../context/AlertsContext', async () => {
   const { useState, useEffect } = await import('react')
   return {
     useAlerts: () => alerts,
     usePriceWatchFor: (kind, spec) => {
       const [w, setW] = useState(null)
-      useEffect(() => { alerts.priceWatchFor(kind, spec).then(setW) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+      useEffect(() => { alerts.priceWatchFor(kind, spec).then(setW) }, [])
       return [w, setW]
     },
   }
@@ -69,7 +68,6 @@ beforeEach(() => {
   alerts.priceWatchFor.mockReset().mockResolvedValue(null)
   alerts.watchesChanged.mockReset()
   api.createPriceWatch.mockReset()
-  priceWatch.current = null
 })
 afterEach(() => {
   act(() => root.unmount())
