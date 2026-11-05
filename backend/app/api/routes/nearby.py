@@ -2,14 +2,16 @@
 existing activities agent for it — same item shape as /api/activities."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
 from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from ...agents.activities_agent import ActivitiesAgent
 from ...core.auth import get_current_user
 from ...core.config import settings
+from ...core.places import fold_place
 from ...db.places_db import nearest_place
 from ...db.preferences_db import get_preferences
 from ...db.taste_db import derive_taste_context
@@ -26,12 +28,30 @@ _cache: TTLCache = TTLCache(maxsize=settings.cache_maxsize, ttl=3600)
 class NearbyRequest(BaseModel):
     lat: float = Field(..., ge=-90, le=90)
     lng: float = Field(..., ge=-180, le=180)
-    interests: list[str] | None = Field(None, max_length=20)
+    interests: (
+        list[
+            Annotated[
+                str,
+                StringConstraints(strip_whitespace=True, min_length=1, max_length=60),
+            ]
+        ]
+        | None
+    ) = Field(None, max_length=20)
     limit: int = Field(8, ge=1, le=20)
 
 
 def _cell(value: float) -> str:
     return f"{round(value / CELL_DEGREES) * CELL_DEGREES:.2f}"
+
+
+def _label(place: dict) -> str:
+    """ "Portland, Maine, United States": the region tells same-named towns
+    apart; left out when it only repeats the name ("Kyoto, Japan")."""
+    parts = [place["name"]]
+    region = place.get("region")
+    if region and fold_place(region) != fold_place(place["name"]):
+        parts.append(region)
+    return ", ".join([*parts, place["country"]])
 
 
 @router.post("/nearby")
@@ -59,7 +79,7 @@ async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
     )
     items = _cache.get(key)
     if items is None:
-        label = f"{place['name']}, {place['country']}"
+        label = _label(place)
         today = datetime.now(UTC).date()
         request = TravelSearchRequest(
             origin=label,

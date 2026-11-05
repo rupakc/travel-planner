@@ -51,6 +51,14 @@ def test_nearest_place_finds_the_city():
     assert p["distance_km"] < 3
 
 
+def test_same_name_towns_are_told_apart_by_region():
+    maine = nearest_place(43.66, -70.26)
+    oregon = nearest_place(45.52, -122.68)
+    assert (maine["name"], maine["region"]) == ("Portland", "Maine")
+    assert (oregon["name"], oregon["region"]) == ("Portland", "Oregon")
+    assert maine["country"] == oregon["country"] == "United States"
+
+
 def test_nearest_place_none_in_open_ocean():
     assert nearest_place(0.0, -30.0) is None
 
@@ -99,10 +107,39 @@ def test_nearby_returns_place_and_items(client, agent):
     assert body["place"]["country"] == "Japan"
     assert body["place"]["lat"] == pytest.approx(35.02107)
     assert body["place"]["distance_km"] == 0
+    assert body["place"]["region"] == "Kyoto"
     assert body["items"] == ITEMS[:3]
     req = agent.await_args.args[0]
+    # the region repeats the city's name, so the label leaves it out
     assert req.destination == "Kyoto, Japan"
     assert req.interests == ["temples"]
+
+
+def test_label_carries_the_region(client, agent):
+    _, h = _user()
+    r = client.post("/api/nearby", json={"lat": 43.66, "lng": -70.26}, headers=h)
+    assert r.json()["place"]["region"] == "Maine"
+    assert agent.await_args.args[0].destination == "Portland, Maine, United States"
+
+
+def test_interests_are_trimmed_and_bounded(client, agent):
+    _, h = _user()
+    body = {**KYOTO, "interests": ["  art ", "food"]}
+    assert client.post("/api/nearby", json=body, headers=h).status_code == 200
+    assert agent.await_args.args[0].interests == ["art", "food"]
+    for bad in ([""], ["   "], ["x" * 61]):
+        r = client.post("/api/nearby", json={**KYOTO, "interests": bad}, headers=h)
+        assert r.status_code == 422
+
+
+def test_taste_profiles_never_share_a_cache_entry(client, agent, monkeypatch):
+    taste = {"value": "likes ramen"}
+    monkeypatch.setattr(nearby, "derive_taste_context", lambda u: taste["value"])
+    _, h = _user()
+    client.post("/api/nearby", json=KYOTO, headers=h)
+    taste["value"] = "likes museums"
+    client.post("/api/nearby", json=KYOTO, headers=h)
+    assert agent.await_count == 2
 
 
 def test_default_limit_is_eight(client, agent):

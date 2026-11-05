@@ -1110,16 +1110,18 @@ def nearest_place(
     if dlng >= 180.0:
         lng_sql, lng_params = "1", []
     elif west < -180.0:
-        lng_sql, lng_params = "(lng >= ? OR lng <= ?)", [west + 360.0, east]
+        lng_sql, lng_params = "(p.lng >= ? OR p.lng <= ?)", [west + 360.0, east]
     elif east > 180.0:
-        lng_sql, lng_params = "(lng >= ? OR lng <= ?)", [west, east - 360.0]
+        lng_sql, lng_params = "(p.lng >= ? OR p.lng <= ?)", [west, east - 360.0]
     else:
-        lng_sql, lng_params = "lng BETWEEN ? AND ?", [west, east]
+        lng_sql, lng_params = "p.lng BETWEEN ? AND ?", [west, east]
     try:
         with get_connection() as conn:
             rows = conn.execute(
-                "SELECT name, country_code, population, lat, lng FROM places"  # nosec B608
-                f" WHERE lat BETWEEN ? AND ? AND {lng_sql}",
+                "SELECT p.name, p.country_code, p.population, p.lat, p.lng,"
+                " a.name AS region FROM places p"  # nosec B608
+                " LEFT JOIN admin1 a ON a.code = p.country_code || '.' || p.admin1"
+                f" WHERE p.lat BETWEEN ? AND ? AND {lng_sql}",
                 [lat - dlat, lat + dlat, *lng_params],
             ).fetchall()
     except sqlite3.Error as exc:  # tables missing (unseeded DB)
@@ -1141,6 +1143,7 @@ def nearest_place(
         best_km = -neg_km
     return {
         "name": best["name"],
+        "region": best["region"],  # state / province name, or None
         "country": country_display_name(best["country_code"]),
         "country_code": best["country_code"],
         "lat": best["lat"],
