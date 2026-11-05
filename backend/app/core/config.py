@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = ""
     smtp_starttls: bool = True
+    # Push alerts to the Android app (optional): path to a Firebase service-account
+    # JSON key; empty = push disabled (alerts stay in-app / email only)
+    fcm_service_account_file: str = ""
     # Public URL of the frontend, for links in emails
     app_base_url: str = "http://localhost:5174"
 

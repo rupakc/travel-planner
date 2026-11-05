@@ -1086,3 +1086,67 @@ def resolve(text: str, conn: sqlite3.Connection | None = None) -> Resolution:
     except sqlite3.Error as exc:  # tables missing (unseeded DB) → unresolved
         logger.debug("Place resolution failed for %r: %s", text, exc)
         return Resolution(None)
+
+
+NEAREST_MAX_KM = 75.0
+# The nearest place yields to one this many times bigger within YIELD_KM of
+# the point: a ward or suburb ("Kamigyō-ku") stands for its city (Kyoto),
+# while a village 30 km out stays itself.
+NEAREST_YIELD_RATIO = 10
+NEAREST_YIELD_KM = 15.0
+
+
+def nearest_place(
+    lat: float, lng: float, max_km: float = NEAREST_MAX_KM
+) -> dict | None:
+    """The known place (GeoNames town of 1,000+ people) nearest a point,
+    within ``max_km``, or None — or the much bigger place it is part of (see
+    NEAREST_YIELD_RATIO). A bounding box on lat/lng narrows the candidates
+    before great-circle distances; it wraps the antimeridian."""
+    dlat = max_km / 111.0
+    cos_lat = math.cos(math.radians(min(abs(lat) + dlat, 89.9)))
+    dlng = min(max_km / (111.32 * cos_lat), 180.0)
+    west, east = lng - dlng, lng + dlng
+    if dlng >= 180.0:
+        lng_sql, lng_params = "1", []
+    elif west < -180.0:
+        lng_sql, lng_params = "(p.lng >= ? OR p.lng <= ?)", [west + 360.0, east]
+    elif east > 180.0:
+        lng_sql, lng_params = "(p.lng >= ? OR p.lng <= ?)", [west, east - 360.0]
+    else:
+        lng_sql, lng_params = "p.lng BETWEEN ? AND ?", [west, east]
+    try:
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT p.name, p.country_code, p.population, p.lat, p.lng,"
+                " a.name AS region FROM places p"  # nosec B608
+                " LEFT JOIN admin1 a ON a.code = p.country_code || '.' || p.admin1"
+                f" WHERE p.lat BETWEEN ? AND ? AND {lng_sql}",
+                [lat - dlat, lat + dlat, *lng_params],
+            ).fetchall()
+    except sqlite3.Error as exc:  # tables missing (unseeded DB)
+        logger.debug("Nearest place failed for %s,%s: %s", lat, lng, exc)
+        return None
+    dists = ((_km(lat, lng, row["lat"], row["lng"]), row) for row in rows)
+    near = sorted((d for d in dists if d[0] <= max_km), key=lambda d: d[0])
+    if not near:
+        return None
+    best_km, best = near[0]
+    floor = (best["population"] or 0) * NEAREST_YIELD_RATIO
+    bigger = [
+        (row["population"], -km, row)
+        for km, row in near
+        if km <= NEAREST_YIELD_KM and (row["population"] or 0) >= max(floor, 1)
+    ]
+    if bigger:
+        _, neg_km, best = max(bigger, key=lambda b: b[:2])
+        best_km = -neg_km
+    return {
+        "name": best["name"],
+        "region": best["region"],  # state / province name, or None
+        "country": country_display_name(best["country_code"]),
+        "country_code": best["country_code"],
+        "lat": best["lat"],
+        "lng": best["lng"],
+        "distance_km": round(best_km, 1),
+    }

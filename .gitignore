@@ -21,6 +21,7 @@ env/
 !*.tfvars.example
 github-sa-key.json
 *-key.json
+*service-account*.json
 
 # SQLite / data
 backend/data/

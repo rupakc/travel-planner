@@ -17,7 +17,7 @@ from datetime import UTC, date, datetime, timedelta
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
 from ..schemas.request import TravelSearchRequest
-from . import price_rules, serp_flights
+from . import price_rules, push, serp_flights
 from .serp_flights import SerpAPIError
 
 logger = logging.getLogger(__name__)
@@ -447,7 +447,7 @@ def next_check(now: datetime, rand: Callable[[], float]) -> datetime:
 
 
 def _notify(watch: dict, note: dict, now: datetime) -> dict:
-    return notifications_db.add_notification(
+    row = notifications_db.add_notification(
         watch["user_id"],
         note["kind"],
         note["title"],
@@ -455,6 +455,9 @@ def _notify(watch: dict, note: dict, now: datetime) -> dict:
         note["data"],
         now=now,
     )
+    # Also to the owner's phones, in the background (a no-op when push is off)
+    push.notify(watch["user_id"], row, f"/alerts?watch={watch['id']}")
+    return row
 
 
 async def check_watch(

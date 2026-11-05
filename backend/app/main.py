@@ -23,6 +23,7 @@ from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
 from .api.routes.compare import router as compare_router
+from .api.routes.devices import router as devices_router
 from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.fare_watches import router as fare_watches_router
@@ -30,6 +31,7 @@ from .api.routes.feedback import router as feedback_router
 from .api.routes.layover import router as layover_router
 from .api.routes.link_import import router as link_import_router
 from .api.routes.nationalities import router as nationalities_router
+from .api.routes.nearby import router as nearby_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
@@ -51,7 +53,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import fare_watch, price_watch
+from .services import fare_watch, price_watch, push
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 
@@ -78,6 +80,7 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.price_watch_db import create_price_watch_tables
@@ -85,6 +88,7 @@ async def lifespan(app: FastAPI):
     create_fare_watch_tables()
     create_price_watch_tables()
     create_notifications_table()
+    create_devices_table()
     price_watch.register_builtin_sources()
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
@@ -96,6 +100,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     await fare_watch.stop_scheduler(fare_watch_task)
+    await push.drain()  # pushes in flight: a few seconds, then cancelled
     # SIGTERM: force=True always uploads our current state regardless of GCS generation.
     # This is safe — the dying instance holds the most up-to-date data.
     await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)
@@ -208,6 +213,10 @@ app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
+app.include_router(devices_router, prefix="/api", tags=["devices"])
+app.include_router(
+    nearby_router, prefix="/api", tags=["nearby"], dependencies=_limited("light_ai")
+)
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
 )
@@ -274,4 +283,6 @@ async def health():
             _settings.serpapi_key and _settings.fare_watch_enabled
         ),
         "email_alerts_available": bool(_settings.smtp_host),
+        # Alerts also go to registered phones (FCM) only when set
+        "push_configured": push.configured(),
     }

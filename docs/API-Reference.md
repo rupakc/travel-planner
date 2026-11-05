@@ -22,7 +22,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -92,6 +92,10 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | GET | `/api/notifications` | user | Own notifications, newest first (`unread_only`, `limit` 1–100, `offset`) |
 | GET | `/api/notifications/unread-count` | user | `{"count": n}` |
 | POST | `/api/notifications/read` | user | Mark `ids` (or `all`) read |
+| GET, POST | `/api/devices` | user | List own push devices (tokens masked); register an FCM token |
+| DELETE | `/api/devices/{id}` | user | Remove one of own devices by id (`204`, or `404`) |
+| POST | `/api/devices/unregister` | user | Sign-out: forget a token sent in the body (`204`, idempotent) |
+| POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there |
 | GET | `/health` | none | Liveness and capability flags |
 | GET | `/health/agents` | none | Deep check with one tiny Haiku call (cached 5 min) |
 
@@ -740,6 +744,73 @@ As the fare-watch unsubscribe link, for one price watch (its own signed token; a
 
 ---
 
+## Mobile app: push devices and Near me
+
+Added for the Android app. Every route needs a signed-in user and only touches that user's data. An FCM token only ever travels in a request body, never in a URL, so request and access logs never carry one; logs show at most its last 6 characters.
+
+### POST /api/devices
+
+Registers the app's FCM registration token for push alerts.
+
+```json
+{"token": "eXaMpLe...:APA91b...", "platform": "android", "locale": "de-DE"}
+```
+
+`token` 1–4096 characters; `platform` only `"android"` (the default); `locale` optional (≤ 35). → `200` with the device, token masked to its last 6 characters:
+
+```json
+{"id": 12, "token": "…Xy12Ab", "platform": "android", "locale": "de-DE",
+ "created_at": "2026-11-05T09:00:00.123456+00:00", "last_seen_at": "2026-11-05T09:00:00.123456+00:00"}
+```
+
+Registering again refreshes `locale` and `last_seen_at` (call it on every app start and token refresh). A token registered by another user moves to the caller (a shared phone). A user keeps at most 20 devices; the least recently seen is dropped.
+
+### GET /api/devices
+
+`{"items": [device, ...]}`, most recently seen first, tokens masked as above.
+
+### DELETE /api/devices/{id}
+
+Removes one of the caller's devices by its `id` (for example a lost phone, from a "Your devices" list). `204`; `404 {"detail": "Device not found"}` when the caller has no device with that id (another user's device is never touched); `422` for a non-numeric id.
+
+### POST /api/devices/unregister
+
+Sign-out: `{"token": "<the full FCM token>"}` → `204`, always (idempotent; a token the caller doesn't own is left alone and gets the same answer). Call it before dropping the JWT.
+
+### Push messages
+
+When `FCM_SERVICE_ACCOUNT_FILE` is set (`/health` `push_configured`), every new fare- or price-watch notification is also pushed to each of the owner's devices over FCM HTTP v1, in the background: `notification` = the notification's `title` / `body`, Android priority high (`normal` for `watch_expired` / `watch_error`), and string `data`:
+
+```json
+{"kind": "fare_drop", "notification_id": "42", "link": "/alerts?watch=7", "watch_id": "7"}
+```
+
+`link` is the web deep link (`data.links.alerts` of the notification: `/alerts?watch=<id>` for fare watches, `/alerts?kind=<kind>&watch=<id>` for price watches); price watches add `watch_kind`. The notification itself is unchanged in `/api/notifications`. A deactivated user gets no pushes. A token is deleted only when FCM says it is dead (error code `UNREGISTERED`, or `INVALID_ARGUMENT` naming `message.token`); every other failure, including a bare `404` from a wrong Firebase project, keeps the token, is logged, and the notification stays in-app only.
+
+### POST /api/nearby
+
+Bucket: light_ai.
+
+```json
+{"lat": 35.0116, "lng": 135.7681, "interests": ["temples", "food"], "limit": 8}
+```
+
+`lat` −90…90, `lng` −180…180, `interests` optional (≤ 20, each trimmed and 1–60 characters; default: the saved preferences' interests), `limit` 1–20 (default 8). The nearest place in the local GeoNames table (towns of 1,000+ people) within 75 km is chosen; a ward or suburb yields to a place at least 10× bigger within 15 km ("Kamigyō-ku" → Kyoto). The existing activities agent then runs for "Place, Region, Country" ("Portland, Maine, United States"; the region is left out when it repeats the name, "Kyoto, Japan") with those interests and the caller's Taste Graph. → `200`:
+
+```json
+{
+  "place": {"name": "Kyoto", "region": "Kyoto", "country": "Japan", "country_code": "JP",
+            "lat": 35.02107, "lng": 135.75385, "distance_km": 1.4},
+  "items": [{"name": "Fushimi Inari Taisha Early Morning Hike", "category": "culture",
+             "similarity_score": 0.95, "rating": 4.8, "review_count": 12000,
+             "source": "getyourguide", "booking_url": "https://www.getyourguide.com/s/?q=...", "...": "..."}]
+}
+```
+
+`items` are the activities agent's `results`, unchanged (the shape of `POST /api/activities`), first `limit`. `region` is the state / province (GeoNames first-level division) name, or `null`. `distance_km` is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: `404 {"detail": {"code": "no_place", "message": "..."}}` when no known place is within 75 km; `502 {"detail": {"code": "agent_error", "message": "..."}}` when the agent fails (not cached).
+
+---
+
 ## Reference data
 
 ### GET /api/airports/search?q=&limit=
@@ -756,7 +827,7 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health
 
-`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". Docker Compose uses this endpoint as the backend healthcheck.
+`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". `push_configured` (`FCM_SERVICE_ACCOUNT_FILE` names an existing file) tells the Android app that alerts are pushed, so it can poll less. Docker Compose uses this endpoint as the backend healthcheck.
 
 ### GET /health/agents
 

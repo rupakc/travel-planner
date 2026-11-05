@@ -144,6 +144,8 @@ def create_tables():
             CREATE INDEX IF NOT EXISTS idx_places_admin1_score
                 ON places(country_code, admin1, score);
             CREATE INDEX IF NOT EXISTS idx_admin1_folded ON admin1(folded_name);
+            -- Near me: bounding-box lookups by coordinates
+            CREATE INDEX IF NOT EXISTS idx_places_lat_lng ON places(lat, lng);
             CREATE TABLE IF NOT EXISTS meta (
                 key   TEXT PRIMARY KEY,
                 value TEXT

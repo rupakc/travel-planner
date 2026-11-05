@@ -239,6 +239,7 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/events"): "light_ai",
     ("POST", "/api/walking-tours"): "light_ai",
     ("POST", "/api/layover"): "light_ai",
+    ("POST", "/api/nearby"): "light_ai",
     ("POST", "/api/import/extract"): "import",
     ("POST", "/api/import/resolve-place"): "import",
     # Fare watch: creating one and "Check now" each make a live fare lookup
