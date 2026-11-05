@@ -22,9 +22,9 @@ FastAPI backend (uvicorn, one process)
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
   │             walking-tour crawler, verification, compare
-  ├── fare-watch scheduler (background task) ── SerpAPI re-checks, alert emails (SMTP)
+  ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (19 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (21 tables) ── optional GCS backup every 60 s
             │
             ▼
 External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
@@ -142,7 +142,9 @@ There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`)
 | `fare_watch_history` | Each check's prices (up to 120 rows per watch) |
 | `fare_watch_quota` | SerpAPI calls spent by fare watches per UTC day |
 | `fare_watch_user_quota` | The same per user, for the per-user daily share |
-| `notifications` | In-app notifications (fare alerts, watch ended / on hold), read and emailed times |
+| `price_watches` | Watched hotel / activity / trip prices: `kind`, the matched `subject` (JSON, kind-specific), `match_key`, title and subtitle, alert settings, baseline / last / lowest prices, alert state (last alerted price and time, peak since), `last_observation` (JSON: status, unit price, source, link, trip breakdown), failure and unavailable streaks, `expires_on`, status, schedule and lease |
+| `price_watch_history` | Each look: total price (null when unavailable), trip breakdown and raw observed details as JSON (up to 120 rows per watch) |
+| `notifications` | In-app notifications (fare and price alerts, watch ended / on hold), read and emailed times |
 
 The first six are reference data seeded from files committed to the repo; see [Place and Airport Data](Place-and-Airport-Data.md).
 
@@ -159,6 +161,21 @@ The first six are reference data seeded from files committed to the repo; see [P
 - Every `FARE_WATCH_TICK_SECONDS` (300) it sweeps notifications older than 180 days (once per UTC day), ends paused / on-hold watches whose departure day has come, and lists up to 50 due active watches. Each one is **leased** only when its turn comes (`claim_watch(..., due_only=True)`: one `UPDATE` that also checks it is still active, due and unleased; `lease_until` = now + 10 min), so a watch taken meanwhile by "Check now" or another scheduler is skipped, and a slow batch never outlives its leases; a crashed worker's lease simply expires. Creating a watch and "Check now" take the same lease for their inline check.
 - Leased watches are checked three at a time (`check_watch`): departure reached → `expired` + one notice; otherwise the check's SerpAPI cost is estimated (cached fares are free) and reserved all-or-nothing from the day's `FARE_WATCH_DAILY_CALL_BUDGET` and from the owner's share of it (`FARE_WATCH_USER_DAILY_SHARE`) (over either → moved to early next UTC day; the pool running out is logged once); the fare comes from `serp_flights.watch_fares` (the fare calendar's outbound-stage price plus Google's insights, and the calendar's ±3 days for flexible watches, reusing a cached search). A failure retries in 1 h, three in a row put the watch on hold (`error` + one notice); SerpAPI's own quota error postpones without a strike. A watch deleted while its fares were fetched ends as `deleted` with nothing recorded. A success appends history, applies `evaluate` (the pure trigger and anti-spam rules, with separate references for the trip's own dates and the nearby dates, re-armed after rebounds; see [Trip Planning Features](Trip-Planning-Features.md#fare-watch-and-price-alerts)), stores at most one notification, emails it when enabled (`alert_email.py`, `smtplib` in a thread, failures only logged), and schedules the next check in `FARE_WATCH_INTERVAL_HOURS` ±10 %.
 - The tests never start the loop (`FARE_WATCH_ENABLED=false`); they drive `run_due` and `check_watch` with an injected clock and fetch.
+- The same loop then runs the price-watch pass (`price_watch.run_due`, below); a failing pass of either kind is logged and never stops the other.
+
+### Shared alert rules
+
+`backend/app/services/price_rules.py` holds the kind-agnostic own-price rules both kinds of watch use: the reference (baseline, last alerted price, or the peak once re-armed), the step (`FARE_STEP` max($15, 5 %); `TRIP_STEP` max($25, 4 %) for whole-trip totals), target re-arming, the baseline-already-good rule, the 24 h cooldown cap and the state a check leaves behind. Fare watches add their Google-"low" and nearby-dates signals on top. `test_price_rules_equivalence.py` checks the extraction against a frozen copy of the original fare rules.
+
+## Price watches
+
+Hotel, activity and whole-trip prices are watched by `backend/app/services/price_watch.py`, with tables in `db/price_watch_db.py` and routes in `api/routes/price_watches.py`. The pipeline is generic; each kind plugs in a **price source**:
+
+- `PriceSource` (protocol): `kind`; `match_key(spec)` (dedupe key from the client's spec, no live calls); `async create(spec, user, api_key)` → `CreatedWatch` (matched `subject`, baseline `PriceObservation`, title, subtitle, `expires_on`, `plan_id`) or `NoLivePrice` (message, up to 3 live `suggestions`, the AI `estimate`); `async check(watch, api_key)` → `PriceObservation`; `estimate_calls(watch)`; `compose(kind, watch, obs, ref)` → the alert's title, body and extra data; optional `step`.
+- `PriceObservation`: `price` (total USD), `unit_price`, `status` (`ok` / `unavailable`), `source`, `link`, `breakdown` (trips), `observed` (raw details), `calls`.
+- Sources register with `register_source`; built-in ones are listed in `price_watch.SOURCE_MODULES` (each module exposes `SOURCE`) and registered in the `lifespan`. Tests use a fake `test` source only.
+
+Creating a watch holds one SerpAPI call from the shared daily budget (and the owner's share), lets the source match and take the baseline, then settles the count to the calls really spent (`fare_watch_db.adjust_calls`). The baseline is stored as the first check (never an alert). Each later check (`check_watch`, leased exactly like fare checks, three at a time) reserves `estimate_calls` from the **same** budget as fare watches; expires on `expires_on`; postpones on a spent budget or SerpAPI quota; retries a failure in 1 h and puts the watch on hold after three; records an `unavailable` look (sold out, listing gone) without alert or strike, holding the watch only after three in a row; and otherwise applies the shared rules to the total, storing at most one `<kind>_drop` / `<kind>_target` notification (data carries `watch_kind`, `watch_id` and `links.alerts` = `/alerts?kind=<kind>&watch=<id>`) and emailing it when enabled (`alert_email.deliver_price`, its own unsubscribe token). `FARE_WATCH_MAX_ACTIVE_PER_USER` counts fare and price watches together. Estimates are frozen at creation and never alert on their own; a source never presents an estimate as a live price.
 
 ## Cache
 
@@ -174,7 +191,7 @@ One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE
 
 ## Rate limiting
 
-`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits). Fare watches add their own daily SerpAPI budget, stored in SQLite (see [Fare-watch scheduler](#fare-watch-scheduler)).
+`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits). Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see [Fare-watch scheduler](#fare-watch-scheduler)).
 
 ## Middleware
 

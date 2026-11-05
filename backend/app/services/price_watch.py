@@ -98,9 +98,11 @@ class NoLivePrice:
     """A source's answer to ``create`` when nothing live matched: the API
     answers 422 ``{code: "no_live_price", message, suggestions, estimate}``
     and the UI offers to watch a suggestion instead. ``suggestions`` are up to
-    3 live alternatives (each a spec the client can send back, plus display
-    fields and price); ``estimate`` the AI estimate to show, labelled as
-    such; ``calls`` the SerpAPI calls the search spent."""
+    3 live alternatives, each ``{"title", "subtitle"?, "price"?, "link"?,
+    "spec"}`` — ``spec`` is sent back as-is to watch that one instead;
+    ``estimate`` the AI estimate to show, labelled as such (e.g.
+    ``{"price": 420.0, "source": "ai_estimate"}``); ``calls`` the SerpAPI
+    calls the search spent."""
 
     message: str
     suggestions: list[dict] = field(default_factory=list)

@@ -22,7 +22,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check`, `PUT /auth/email` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -84,6 +84,11 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/fare-watches/{id}/check` | user | "Check now": one live check |
 | GET | `/api/fare-watches/unsubscribe?token=` | none | "Stop emails" link from alert emails: confirmation page (no change) |
 | POST | `/api/fare-watches/unsubscribe?token=` | none | Turn email off for that watch (the confirmation form, or RFC 8058 one-click) |
+| GET, POST | `/api/price-watches` | user | List own hotel / activity / trip price watches (`?kind=`); watch a price (matches it live, takes the baseline) |
+| POST | `/api/price-watches/match` | user | The caller's price watch for a subject, or `null` (no live lookup) |
+| GET, PATCH, DELETE | `/api/price-watches/{id}` | user | Get, edit (pause/resume, mode, target, email), delete own price watch |
+| POST | `/api/price-watches/{id}/check` | user | "Check now": one live look |
+| GET, POST | `/api/price-watches/unsubscribe?token=` | none | "Stop emails" for one price watch: confirmation page (GET), turn off (POST / one-click) |
 | GET | `/api/notifications` | user | Own notifications, newest first (`unread_only`, `limit` 1–100, `offset`) |
 | GET | `/api/notifications/unread-count` | user | `{"count": n}` |
 | POST | `/api/notifications/read` | user | Mark `ids` (or `all`) read |
@@ -627,6 +632,73 @@ The signed link at the bottom of alert emails. Returns a confirmation page with 
 
 Turns email off for that one watch, without login, and returns a small HTML page; in-app alerts continue. It is the confirmation page's form and the RFC 8058 one-click target: alert emails carry `List-Unsubscribe: <…/api/fare-watches/unsubscribe?token=…>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, and the body is ignored. Idempotent; `400` for an invalid token.
 
+## Price watches
+
+A price watch re-checks a hotel's, an activity's or a whole saved trip's live price about twice a day, with the same alert rules as fare watches (whole trips use a step of max($25, 4 %)). Prices are totals in USD (all nights and rooms, all travellers, or the whole trip). Ownership, rate limits and the daily SerpAPI budget work as for fare watches, and `FARE_WATCH_MAX_ACTIVE_PER_USER` counts fare and price watches together. Which kinds are available depends on the price sources the server registers; an unknown kind is a `422`.
+
+### POST /api/price-watches
+
+```json
+{"kind": "hotel", "hotel": {...kind-specific spec...},
+ "plan_id": null, "alert_mode": "any_drop", "target_price": null, "email_enabled": false}
+```
+
+The spec rides under the kind's own key (a top-level `plan_id` is passed into it). The server matches it to a live price and stores that look as the **baseline** (never an alert). Returns the watch (below) with `already_watching: false`, or the caller's existing non-expired watch for the same subject with `already_watching: true` (no live lookup). When nothing live matches:
+
+```json
+{"detail": "We couldn't find live prices for this hotel on Google Hotels.",
+ "code": "no_live_price", "message": "We couldn't find live prices for this hotel on Google Hotels.",
+ "suggestions": [{"title": "Lumen Hotel & The Lisbon Light Show", "subtitle": "Baixa", "price": 398.0,
+                  "link": "https://…", "spec": {...}}],
+ "estimate": {"price": 420.0, "source": "ai_estimate"}}
+```
+
+with status `422`; sending a suggestion's `spec` back watches it instead. Other errors: `422` for an invalid or oversized spec (the `detail` says why), `below_target` without a target, email without an address/SMTP, or a subject ending today; `409` at the active limit; `429` with `Retry-After` when today's budget or the caller's share is spent; `502` when live prices fail; `503` without SerpAPI. Rate-limited (light_ai).
+
+A price watch:
+
+```json
+{
+  "id": 4, "kind": "hotel", "plan_id": null, "title": "Lumen Hotel", "subtitle": "Lisbon · 10–14 Dec",
+  "subject": {...as matched...}, "currency": "USD",
+  "alert_mode": "any_drop", "target_price": null, "email_enabled": false, "status": "active",
+  "baseline_price": 398.0, "last_price": 352.0, "lowest_price": 352.0,
+  "last_notified_price": 352.0, "last_notified_at": "...", "own_peak_price": 352.0,
+  "last_observation": {"price": 352.0, "unit_price": 88.0, "status": "ok", "source": "google_hotels",
+                       "link": "https://…", "breakdown": null, "observed": {...}, "observed_at": "..."},
+  "link": "https://…", "expires_on": "2026-12-10",
+  "check_count": 3, "failure_count": 0, "unavailable_count": 0, "problem": null, "already_below_target": false,
+  "last_checked_at": "...", "next_check_at": "...", "created_at": "...", "updated_at": "...",
+  "history": [{"checked_at": "...", "price": 352.0, "breakdown": null, "observed": {"status": "ok"}}]
+}
+```
+
+`status` is `active`, `paused`, `expired` (the `expires_on` day — check-in, activity date or departure — has come) or `error` (three failed checks, or three "unavailable" looks, in a row). An unavailable look (sold out for the dates, listing gone) has `price: null` in history and `last_observation.status: "unavailable"`; it never alerts.
+
+### GET /api/price-watches, GET /api/price-watches/{id}
+
+The caller's price watches (`?kind=hotel|activity|trip` to filter; ordered by `expires_on`) or one, each with its history.
+
+### POST /api/price-watches/match
+
+Body: `{"kind": ..., "<kind>": spec, "plan_id": ...}` as for create. Returns `{"watch": {...}}` or `{"watch": null}` (also for an unknown kind or an unusable spec); makes no live lookup.
+
+### PATCH /api/price-watches/{id}
+
+Any of `status` (`"paused"` / `"active"`), `alert_mode`, `target_price`, `email_enabled`. Resuming an `error` watch clears both streaks and checks it on the next tick ("Retry"). `409` to resume an expired watch or past the active limit; `422` as for fare watches.
+
+### DELETE /api/price-watches/{id}
+
+Deletes the watch and its history. Returns `{"deleted": true}`.
+
+### POST /api/price-watches/{id}/check
+
+"Check now" (also on a paused watch). Returns the watch plus `check_status` (`checked`, `unavailable`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification`. `429` / `409` / `503` as for fare watches. Rate-limited (light_ai).
+
+### GET, POST /api/price-watches/unsubscribe?token=
+
+As the fare-watch unsubscribe link, for one price watch (its own signed token; a fare-watch token is refused with `400`).
+
 ### GET /api/notifications
 
 `?unread_only=false&limit=20&offset=0` → `{"items": [...], "total": n, "unread": n}`, newest first. An item:
@@ -643,7 +715,7 @@ Turns email off for that one watch, without login, and returns a small HTML page
 }
 ```
 
-`kind` is `fare_drop`, `fare_target`, `fare_low_level`, `fare_cheaper_date` (data adds `selected_price`, `saving`, `cheapest_departure_date`, `cheapest_return_date`), `watch_expired` or `watch_error` (data `action: "retry"`).
+`kind` is `fare_drop`, `fare_target`, `fare_low_level`, `fare_cheaper_date` (data adds `selected_price`, `saving`, `cheapest_departure_date`, `cheapest_return_date`), `watch_expired` or `watch_error` (data `action: "retry"`). Price watches add `hotel_drop`, `hotel_target`, `activity_drop`, `activity_target`, `trip_drop` and `trip_target`; every price-watch notification (including its `watch_expired` / `watch_error`, whose data adds `reason`: `failed` or `unavailable`) has `data.watch_kind` and `data.links.alerts` = `/alerts?kind=<kind>&watch=<id>`, plus `price`, `previous_price`, `delta`, `baseline_price`, `target_price`, `is_lowest`, `title`, `subtitle` and `links.book` (the listing) for alerts. Fare-watch notifications have no `watch_kind`.
 
 ### GET /api/notifications/unread-count
 
