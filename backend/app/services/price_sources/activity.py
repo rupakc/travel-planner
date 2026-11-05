@@ -29,8 +29,9 @@ import unicodedata
 from dataclasses import replace
 from datetime import date, timedelta
 
+from ...db import price_watch_db
 from .. import activity_prices as ap
-from .. import fare_watch
+from .. import fare_watch, price_rules
 from ..activity_prices import ActivityListing
 from ..price_watch import (
     CreatedWatch,
@@ -137,11 +138,13 @@ def _provider(provider: str) -> str:
 
 
 def _subtitle(listing: ActivityListing, travellers: int) -> str:
-    price = format_price(listing.price_from, listing.currency)
-    return (
-        f"{_provider(listing.provider)} · from {price} per person · "
-        f"{_people(travellers)}"
-    )
+    """Provider · travellers. No price: it would freeze the creation-time
+    one (cards and emails show the latest look's)."""
+    return f"{_provider(listing.provider)} · {_people(travellers)}"
+
+
+def _same_name(a: str, b: str) -> bool:
+    return _fold(a or "") == _fold(b or "")
 
 
 def _suggestion(listing: ActivityListing, spec: dict) -> dict:
@@ -178,18 +181,15 @@ def _suggestion(listing: ActivityListing, spec: dict) -> dict:
 
 class ActivitySource:
     kind = KIND
+    step = price_rules.ACTIVITY_STEP  # max(1, 5 %) in the listing currency
 
     def match_key(self, spec: dict) -> str:
-        """normalised name|city|date|travellers — plus the listing URL for a
+        """normalised name|city|travellers — plus the listing URL for a
         picked suggestion, which is its own subject (the card that offered
-        it stays unwatched)."""
+        it stays unwatched). The date only sets ``expires_on``: it moves
+        with the itinerary, so it never splits one activity into two."""
         s = parse_spec(spec)
-        parts = [
-            _fold(s["name"]),
-            _fold(s["city"]),
-            s["date"] or "",
-            str(s["travellers"]),
-        ]
+        parts = [_fold(s["name"]), _fold(s["city"]), str(s["travellers"])]
         if s["listing_url"]:
             parts.append(s["listing_url"])
         return "|".join(parts)
@@ -219,10 +219,7 @@ class ActivitySource:
 
     async def _match(self, s: dict, api_key: str, spent) -> CreatedWatch | NoLivePrice:
         if s["listing_url"]:
-            provider = ap.provider_of(s["listing_url"])
-            query = ap.build_query(s["name"], s["city"], provider)
-            listings = await ap.search_listings(query, api_key)
-            chosen = next((x for x in listings if x.url == s["listing_url"]), None)
+            listings, chosen = await self._picked(s, api_key)
         else:
             listings = await ap.find_listings(s["name"], s["city"], api_key)
             chosen = ap.match_listing(s["name"], listings, s["city"])
@@ -232,6 +229,42 @@ class ActivitySource:
             if price.available and price.currency == chosen.currency:
                 return self._created(s, chosen, price, spent())
         return self._no_live_price(s, listings, spent())
+
+    async def _picked(
+        self, s: dict, api_key: str
+    ) -> tuple[list[ActivityListing], ActivityListing | None]:
+        """A picked suggestion: re-read the query that listed it — cached
+        queries first (a GetYourGuide search can list a Viator page), then
+        its own provider's query."""
+        own = ap.build_query(s["name"], s["city"], ap.provider_of(s["listing_url"]))
+        built = [
+            ap.build_query(s["name"], s["city"], p) for p in ("getyourguide", "viator")
+        ]
+        queries = [q for q in built if ap.is_cached(q)]
+        if own not in queries:
+            queries.append(own)
+        listings: list[ActivityListing] = []
+        for query in queries:
+            listings = await ap.search_listings(query, api_key)
+            chosen = next((x for x in listings if x.url == s["listing_url"]), None)
+            if chosen is not None:
+                return listings, chosen
+        return listings, None
+
+    def existing_watch(self, user_id: str, created: CreatedWatch) -> dict | None:
+        """The user's live watch of the same listing for the same number of
+        travellers, however it was found (matched or picked)."""
+        url = ap.normalise_url(created.subject["listing_url"])
+        travellers = created.subject["travellers"]
+        for watch in price_watch_db.list_watches(user_id, KIND):
+            subject = watch.get("subject") or {}
+            if (
+                watch["status"] != "expired"
+                and subject.get("travellers") == travellers
+                and ap.normalise_url(subject.get("listing_url") or "") == url
+            ):
+                return watch
+        return None
 
     def _created(
         self, s: dict, listing: ActivityListing, price: ap.ActivityPrice, calls: int
@@ -340,7 +373,12 @@ class ActivitySource:
 
         unit = obs.unit_price if obs.unit_price is not None else obs.price / travellers
         ref_unit = ref / travellers
-        name = subject.get("name") or watch["title"]
+        ai_name = subject.get("name") or watch["title"]
+        listing = subject.get("listing_title") or ai_name
+        # The traveller must see what is really watched: the listing, with
+        # their own name for it in the body when the two differ.
+        differs = not _same_name(ai_name, listing)
+        name = listing if differs else ai_name
         provider = _provider(subject.get("provider", ""))
         if kind.endswith("_target"):
             title = f"🎟️ {name} is under your target: from {money(unit)} per person"
@@ -363,7 +401,8 @@ class ActivitySource:
         else:
             total = f"Down from {money(ref_unit)} per person."
         honesty = f"Price as shown in Google results for {provider}."
-        body = " ".join(x for x in (lead, total, honesty) if x)
+        yours = f"Watching it for your ‘{ai_name}’." if differs else ""
+        body = " ".join(x for x in (yours, lead, total, honesty) if x)
         return {
             "kind": kind,
             "title": title,

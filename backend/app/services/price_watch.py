@@ -248,11 +248,11 @@ _NO_CENTS = frozenset({"JPY"})
 
 
 def format_price(amount: float, currency: str | None = "USD") -> str:
-    """A watched price in its own currency: cents under 100 ("$9.90",
-    "€33.46"), whole amounts from 100 ("$1,240" — as ``usd``); unknown
-    currencies read "12.50 XYZ"."""
+    """A watched price in its own currency: cents under 100 when there are
+    any ("$9.90", "€33.46", but "$46"), whole amounts from 100 ("$1,240" —
+    as ``usd``); unknown currencies read "12.50 XYZ"."""
     code = (currency or "USD").upper()
-    if amount < 100 and code not in _NO_CENTS:
+    if amount < 100 and code not in _NO_CENTS and round(amount, 2) != round(amount):
         number = f"{amount:,.2f}"
     else:
         number = f"{round(amount):,}"

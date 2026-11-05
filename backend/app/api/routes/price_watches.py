@@ -54,6 +54,9 @@ class _Spec(BaseModel):
 class PriceWatchCreate(_Spec):
     alert_mode: Literal["any_drop", "below_target"] = "any_drop"
     target_price: float | None = Field(None, gt=0, le=1_000_000)
+    # The currency the target was typed in: a below-target watch whose live
+    # price is in another currency is refused (422 target_currency_mismatch)
+    target_currency: str | None = Field(None, min_length=1, max_length=8)
     email_enabled: bool = False
 
     @model_validator(mode="after")
@@ -153,6 +156,30 @@ def _no_live_price(result: NoLivePrice) -> JSONResponse:
             "message": result.message,
             "suggestions": result.suggestions[:3],
             "estimate": result.estimate,
+        },
+    )
+
+
+def _target_currency_mismatch(result) -> JSONResponse:
+    """The live price is in another currency than the typed target: nothing
+    is created; the client asks again in that currency (the retry reuses the
+    cached look, so it costs no live call)."""
+    currency = result.currency or "USD"
+    price = result.baseline.price
+    message = (
+        f"This is priced in {currency} (now "
+        f"{price_watch.format_price(price, currency)}). "
+        f"Enter your target in {currency}."
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": message,
+            "code": "target_currency_mismatch",
+            "message": message,
+            "currency": currency,
+            "price": price,
+            "unit_price": result.baseline.unit_price,
         },
     )
 
@@ -309,6 +336,16 @@ async def create_price_watch(
         return _no_live_price(
             NoLivePrice(message="It isn't available for these dates right now.")
         )
+    existing_for = getattr(source, "existing_watch", None)
+    existing = existing_for(user["id"], result) if existing_for else None
+    if existing:  # the same subject found another way (e.g. a picked listing)
+        return serialize(existing, already_watching=True)
+    if (
+        body.alert_mode == "below_target"
+        and body.target_currency
+        and body.target_currency.strip().upper() != (result.currency or "USD").upper()
+    ):
+        return _target_currency_mismatch(result)
     if date.fromisoformat(result.expires_on) <= now.date():
         raise HTTPException(
             status_code=422, detail="This is too soon to watch its price."

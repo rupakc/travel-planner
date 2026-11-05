@@ -75,6 +75,36 @@ MATCH_MIN_PRECISION = 0.5
 # kind, and the Jaccard similarity of the two titles' words at least this.
 RECHECK_MIN_TITLE_SIMILARITY = 0.8
 
+# Generic tour vocabulary: never enough to identify an activity. A name's
+# other capitalised words (places, proper nouns) must all be in a listing's
+# title, and these count only GENERIC_TOUR_WEIGHT towards coverage.
+GENERIC_TOUR_WORDS = frozenset(
+    {
+        "tour",
+        "tours",
+        "walking",
+        "walk",
+        "small",
+        "group",
+        "guided",
+        "guide",
+        "ticket",
+        "tickets",
+        "entry",
+        "skip",
+        "line",
+        "private",
+        "day",
+        "trip",
+        "from",
+        "with",
+        "experience",
+        "admission",
+        "audio",
+    }
+)
+GENERIC_TOUR_WEIGHT = 0.25
+
 # Words that describe the product format, not what is visited.
 _FORMAT_WORDS = frozenset(
     {
@@ -402,16 +432,40 @@ def _fold(text: str) -> str:
     return "".join(c for c in norm if not unicodedata.combining(c))
 
 
+def _required_words(name: str, name_words: set[str]) -> set[str]:
+    """The name's place / proper-noun words, which a listing must contain:
+    its capitalised words that aren't generic tour vocabulary (all its
+    non-generic words when the name has no capitals at all)."""
+    folded = _fold(name)
+    capitalised = {
+        w.lower() for w in re.findall(r"[A-Za-z0-9]+", folded) if w[:1].isupper()
+    }
+    specific = name_words - GENERIC_TOUR_WORDS
+    return specific & capitalised if capitalised else specific
+
+
+def _weight(word: str) -> float:
+    return GENERIC_TOUR_WEIGHT if word in GENERIC_TOUR_WORDS else 1.0
+
+
 def _score(
     name: str, listing: ActivityListing, city: str
 ) -> tuple[float, float] | None:
-    """(coverage, precision) when the listing confidently matches ``name``."""
+    """(coverage, precision) when the listing confidently matches ``name``.
+
+    Every place / proper-noun word of the name (``_required_words``) must be
+    in the title; coverage weighs generic tour vocabulary at
+    ``GENERIC_TOUR_WEIGHT``, so "small group walking tour" can't carry a
+    match on its own.
+    """
     name_words = distinctive_words(_fold(name), exclude=[_fold(city)] if city else [])
     if not name_words:
         return None
     title_words = words(_fold(listing.title))
     hits = name_words & title_words
-    coverage = len(hits) / len(name_words)
+    if not _required_words(name, name_words) <= title_words:
+        return None
+    coverage = sum(_weight(w) for w in hits) / sum(_weight(w) for w in name_words)
     if len(hits) < min_matches(name_words) or coverage < MATCH_MIN_COVERAGE:
         return None
     city_words = words(_fold(city)) if city else set()

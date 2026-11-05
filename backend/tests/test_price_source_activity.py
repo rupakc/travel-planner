@@ -126,7 +126,7 @@ class TestSpec:
                 "estimate_price": 30,
             }
         )
-        assert a == b == "small group walking tour of belem|lisbon|2026-12-10|2"
+        assert a == b == "small group walking tour of belem|lisbon|2"
 
     def test_a_picked_listing_is_its_own_subject(self):
         # A suggestion the traveller picked instead is a different subject:
@@ -135,13 +135,14 @@ class TestSpec:
         picked = act.SOURCE.match_key(_spec(listing_url=WALK_URL + "?ranking=1"))
         assert picked == f"{own}|{WALK_URL}"
 
-    def test_match_key_differs_by_travellers_and_date(self):
-        keys = {
-            act.SOURCE.match_key(_spec()),
-            act.SOURCE.match_key(_spec(travellers=3)),
-            act.SOURCE.match_key(_spec(date="2026-12-10")),
-        }
-        assert len(keys) == 3
+    def test_match_key_differs_by_travellers_not_date(self):
+        # the date only sets expires_on: it changes as the itinerary moves
+        assert act.SOURCE.match_key(_spec()) != act.SOURCE.match_key(
+            _spec(travellers=3)
+        )
+        assert act.SOURCE.match_key(_spec()) == act.SOURCE.match_key(
+            _spec(date="2026-12-10")
+        )
 
     def test_travellers_default_to_one(self):
         assert act.SOURCE.match_key({"name": "Tour", "city": "Rome"}).endswith("|1")
@@ -184,7 +185,7 @@ class TestCreate:
         assert isinstance(res, CreatedWatch)
         assert client.get.await_count == 1  # GetYourGuide matched: no Viator query
         assert res.title == WALK
-        assert res.subtitle == "GetYourGuide · from $33.46 per person · 2 travellers"
+        assert res.subtitle == "GetYourGuide · 2 travellers"
         assert res.currency == "USD"
         assert res.subject == {
             "name": WALK,
@@ -215,7 +216,7 @@ class TestCreate:
             )
         assert res.expires_on == "2026-12-10"
         assert res.subject["date"] == "2026-12-10"
-        assert res.subtitle == "GetYourGuide · from $33.46 per person · 1 traveller"
+        assert res.subtitle == "GetYourGuide · 1 traveller"
         assert res.baseline.price == 33.46
 
     async def test_cached_search_spends_no_calls(self):
@@ -292,7 +293,7 @@ class TestCreate:
             res = await act.SOURCE.create(_spec(), USER, KEY)
         assert res.currency == "EUR" and res.subject["currency"] == "EUR"
         assert res.baseline.price == 61.0
-        assert res.subtitle == "GetYourGuide · from €30.50 per person · 2 travellers"
+        assert res.subtitle == "GetYourGuide · 2 travellers"
 
     async def test_serpapi_errors_propagate_with_the_calls_spent(self):
         with serp(httpx.Response(500, text="boom")), pytest.raises(Exception) as e:
@@ -387,6 +388,7 @@ class TestCompose:
         w = _watch()
         w.update({"title": WALK, "target_price": None, **kw})
         w["subject"]["name"] = "Belém walking tour"
+        w["subject"]["listing_title"] = "Belém Walking Tour"  # same activity
         w["subject"]["travellers"] = 1
         return w
 
@@ -415,7 +417,7 @@ class TestCompose:
         assert note["title"] == (
             "🎟️ Belém walking tour is under your target: from $9.90 per person"
         )
-        assert "$10.00" in note["body"]
+        assert "$10" in note["body"]
 
     def test_euro_wording(self):
         w = self._w()
@@ -523,8 +525,7 @@ class TestApi:
         note = res["notification"]
         assert note["kind"] == "activity_drop"
         assert note["title"] == (
-            "🎟️ Small Group Walking Tour of Belém is now from $20.00 per person"
-            " (−$13.46)"
+            "🎟️ Small Group Walking Tour of Belém is now from $20 per person (−$13.46)"
         )
         assert note["data"]["watch_kind"] == "activity"
         assert note["data"]["links"]["book"] == WALK_URL
@@ -556,7 +557,7 @@ class TestApi:
         with serp(data):
             w = _post(client, h, _spec(), email_enabled=False).json()
         assert w["currency"] == "EUR"
-        assert w["subtitle"] == "GetYourGuide · from €40.00 per person · 2 travellers"
+        assert w["subtitle"] == "GetYourGuide · 2 travellers"
         price_watch_db.update_watch(
             w["id"],
             email_enabled=True,
@@ -580,15 +581,14 @@ class TestApi:
         assert done and done[0].status == "checked"
         note = done[0].notification
         assert note["title"] == (
-            "🎟️ Small Group Walking Tour of Belém is now from €30.00 per person"
-            " (−€10.00)"
+            "🎟️ Small Group Walking Tour of Belém is now from €30 per person (−€10)"
         )
         assert len(sent) == 1
         msg = sent[0]
         assert msg["Subject"] == note["title"]
         text = msg.get_body(("plain",)).get_content()
         assert "Activity price watch" not in text  # eyebrow is HTML only
-        assert "€80.00 → €60.00" in text
+        assert "€80 → €60" in text
         assert "$" not in text.split("Price:")[1].splitlines()[0]
         html = msg.get_body(("html",)).get_content()
         assert "Activity price watch" in html and "See activity" in html
@@ -605,6 +605,8 @@ class TestApi:
         (9.9, "USD", "$9.90"),
         (33.456, "USD", "$33.46"),
         (398.0, "USD", "$398"),
+        (46.0, "USD", "$46"),
+        (40.0, "EUR", "€40"),
         (1240.4, "USD", "$1,240"),
         (9.9, "EUR", "€9.90"),
         (12.5, "eur", "€12.50"),
@@ -629,4 +631,166 @@ def test_expiry_notice_uses_the_watch_currency():
             "currency": "EUR",
         }
     )
-    assert note["body"].endswith("The lowest price we saw was €59.00.")
+    assert note["body"].endswith("The lowest price we saw was €59.")
+
+
+# ── Fix round 1 ──────────────────────────────────────────────────────────────
+
+
+class TestActivityStep:
+    """Activities alert on small drops: max(1 unit of the listing currency, 5 %)."""
+
+    def test_source_uses_the_activity_step(self):
+        from app.services import price_rules
+
+        assert price_rules.ACTIVITY_STEP == price_rules.Step(min_usd=1.0, min_pct=0.05)
+        assert price_watch.step_for(act.SOURCE) is price_rules.ACTIVITY_STEP
+
+    def _watch(self):
+        return {
+            "id": 3,
+            "kind": "activity",
+            "title": WALK,
+            "subtitle": None,
+            "alert_mode": "any_drop",
+            "target_price": None,
+            "baseline_price": 23.26,
+            "last_notified_price": None,
+            "own_peak_price": None,
+            "lowest_price": 23.26,
+            "check_count": 1,
+            "currency": "EUR",
+            "subject": {**_watch()["subject"], "travellers": 2, "currency": "EUR"},
+        }
+
+    def test_a_173_drop_per_person_alerts(self):
+        obs = PriceObservation(price=19.8, unit_price=9.9, source="x")
+        note = price_watch.evaluate(self._watch(), obs, NOW, act.SOURCE)
+        assert note and note["kind"] == "activity_drop"
+        assert note["title"].endswith("from €9.90 per person (−€1.73)")
+
+    def test_a_50_cent_drop_does_not(self):
+        obs = PriceObservation(price=22.76, unit_price=11.38, source="x")
+        assert price_watch.evaluate(self._watch(), obs, NOW, act.SOURCE) is None
+
+
+class TestPickedSuggestionWording:
+    def test_title_names_the_listing_and_body_the_ai_name(self):
+        w = _watch(name="Belém walking tour", listing_title="Jerónimos Monastery Entry")
+        w.update(title="Jerónimos Monastery Entry", target_price=None)
+        w["subject"]["travellers"] = 1
+        obs = PriceObservation(price=9.9, unit_price=9.9, source="x")
+        note = act.SOURCE.compose("activity_drop", w, obs, 11.63)
+        assert note["title"] == (
+            "🎟️ Jerónimos Monastery Entry is now from $9.90 per person (−$1.73)"
+        )
+        assert "for your ‘Belém walking tour’" in note["body"]
+
+    def test_same_name_keeps_the_simple_wording(self):
+        w = _watch(name="small group walking tour of belem")
+        w.update(title=WALK, target_price=None)
+        obs = PriceObservation(price=19.8, unit_price=9.9, source="x")
+        note = act.SOURCE.compose("activity_drop", w, obs, 23.26)
+        assert note["title"].startswith("🎟️ small group walking tour of belem is now")
+        assert "for your" not in note["body"]
+
+
+class TestPickQuery:
+    async def test_pick_reuses_the_cached_query_that_listed_it(self):
+        # A Viator listing surfaced by the GetYourGuide query: picking it
+        # re-reads that cached query instead of spending a Viator search.
+        viator_url = "https://www.viator.com/tours/Lisbon/Belem-Walk/d538-88037P242"
+        data = copy.deepcopy(_fixture("gyg_belem_tower"))
+        data["organic_results"].insert(
+            0,
+            {
+                "position": 1,
+                "link": viator_url,
+                "title": "Belém Walking Tour",
+                "rich_snippet": {
+                    "top": {"detected_extensions": {"price": 25.0, "currency": "$"}}
+                },
+            },
+        )
+        with serp(data, {"organic_results": []}) as client:
+            first = await act.SOURCE.create(_spec(name="Belem Tower tour"), USER, KEY)
+            assert any(s["link"] == viator_url for s in first.suggestions)
+            calls_before = client.get.await_count
+            res = await act.SOURCE.create(
+                _spec(name="Belem Tower tour", listing_url=viator_url), USER, KEY
+            )
+        assert isinstance(res, CreatedWatch)
+        assert client.get.await_count == calls_before
+        assert res.baseline.calls == 0
+        assert res.subject["provider"] == "viator"
+        assert res.subject["query"] == "Belem Tower tour Lisbon getyourguide"
+
+
+class TestApiFixRound:
+    def test_target_currency_mismatch_creates_nothing_and_retry_is_free(self, api):
+        client, u, h = api
+        data = _with_price(_fixture("gyg_belem_tower"), "t78184", 30.5, "€")
+        body = {
+            "alert_mode": "below_target",
+            "target_price": 50,
+            "target_currency": "USD",
+        }
+        with serp(data) as http:
+            r = _post(client, h, _spec(), **body)
+            assert r.status_code == 422, r.text
+            j = r.json()
+            assert j["code"] == "target_currency_mismatch"
+            assert (j["currency"], j["price"], j["unit_price"]) == ("EUR", 61.0, 30.5)
+            assert "EUR" in j["message"]
+            assert (
+                client.get(
+                    "/api/price-watches", params={"kind": "activity"}, headers=h
+                ).json()
+                == []
+            )
+            used = http.get.await_count
+            r2 = _post(
+                client,
+                h,
+                _spec(),
+                alert_mode="below_target",
+                target_price=55,
+                target_currency="EUR",
+            )
+            assert r2.status_code == 200, r2.text
+            assert http.get.await_count == used  # cached: the retry spends nothing
+        assert r2.json()["target_price"] == 55 and r2.json()["currency"] == "EUR"
+
+    def test_any_drop_ignores_target_currency(self, api):
+        client, _, h = api
+        data = _with_price(_fixture("gyg_belem_tower"), "t78184", 30.5, "€")
+        with serp(data):
+            r = _post(client, h, _spec(), target_currency="USD")
+        assert r.status_code == 200, r.text
+
+    def test_same_listing_is_already_watched_whether_matched_or_picked(self, api):
+        client, _, h = api
+        # the second name is its own (uncached) query
+        with serp(_fixture("gyg_belem_tower"), _fixture("gyg_belem_tower")):
+            w = _post(client, h, _spec()).json()  # auto-matched WALK_URL
+            picked = _post(
+                client,
+                h,
+                _spec(name="Belem walking tour", listing_url=WALK_URL + "/?x=1"),
+            )
+            other_people = _post(
+                client,
+                h,
+                _spec(name="Belem walking tour", listing_url=WALK_URL, travellers=3),
+            )
+        assert picked.status_code == 200, picked.text
+        assert picked.json()["already_watching"] is True
+        assert picked.json()["id"] == w["id"]
+        assert other_people.json()["already_watching"] is False
+        # /match stays name-based: the picking card's own name isn't watched
+        m = client.post(
+            "/api/price-watches/match",
+            json={"kind": "activity", "activity": _spec(name="Belem walking tour")},
+            headers=h,
+        )
+        assert m.json()["watch"] is None

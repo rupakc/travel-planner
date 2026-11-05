@@ -714,3 +714,37 @@ def test_fixtures_carry_no_api_key_or_serpapi_links():
         text = path.read_text()
         assert "api_key" not in text, path.name
         assert "serpapi.com/search" not in text, path.name
+
+
+# ── Fix round 1: generic tour words never carry a match ──────────────────────
+
+
+class TestGenericTourWords:
+    """Recorded live 2026-11-05: Google's results for "Small group walking
+    tour of Belém Lisbon getyourguide" (sanitized)."""
+
+    def _live(self):
+        return parse_listings(
+            _fixture("gyg_small_group_belem_live"),
+            "Small group walking tour of Belém Lisbon getyourguide",
+        )
+
+    def test_place_word_is_required_generic_words_are_not_enough(self):
+        m = match_listing("Small group walking tour of Belém", self._live(), "Lisbon")
+        assert m is not None
+        assert "Food and Wine" not in m.title
+        assert "Belém" in m.title or "Belem" in m.title
+
+    def test_food_and_wine_tour_never_matches_a_belem_walk(self):
+        food = [x for x in self._live() if "Food and Wine" in x.title]
+        assert food
+        assert (
+            match_listing("Small group walking tour of Belém", food, "Lisbon") is None
+        )
+        assert (
+            match_listing("small group walking tour of belem", food, "Lisbon") is None
+        )
+
+    def test_lowercase_names_require_their_specific_words(self):
+        listing = _listing(title="Lisbon: Food and Wine Small Group Walking Tour")
+        assert match_listing("belem small group walk", [listing], "Lisbon") is None
