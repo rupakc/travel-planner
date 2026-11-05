@@ -29,6 +29,7 @@ vi.mock('../../utils/analytics', () => ({ track: vi.fn() }))
 import * as api from '../../services/api'
 import WatchHotelButton from './WatchHotelButton'
 import HotelDialogBody from './dialogs/HotelDialogBody'
+import PriceWatchDialog from './PriceWatchDialog'
 import HotelWatchCard from './cards/HotelWatchCard'
 import { cardFor } from './cards'
 import { dialogBodyFor } from './dialogs'
@@ -208,6 +209,49 @@ describe('HotelDialogBody', () => {
     }, 'tok')
     expect(alerts.watchesChanged).toHaveBeenCalled()
     expect(container.textContent).toContain('Tracking: Brown’s Avenue Hotel on Google Hotels')
+    expect(button('Not this one?')).toBeUndefined()
+  })
+
+  it('reports the replacement watch to the dialog through onReplaced', async () => {
+    const ALT = { title: 'Other', price: 300, spec: { name: 'Other', property_token: 'o' } }
+    const watched = { ...WATCH, last_observation: { ...WATCH.last_observation, observed: { alternatives: [ALT] } } }
+    const next = { ...WATCH, id: 12, title: 'Other', last_observation: { status: 'ok' } }
+    api.createPriceWatch.mockResolvedValue(next)
+    api.deletePriceWatch.mockResolvedValue()
+    const onReplaced = vi.fn()
+    await render(<HotelDialogBody spec={SPEC} watch={watched} onReplaced={onReplaced} />)
+    await act(async () => button('Not this one?').click())
+    await act(async () => button('Watch this instead').click())
+    expect(onReplaced).toHaveBeenCalledWith(next, { spec: ALT.spec })
+  })
+
+  it('after a swap the dialog header, subtitle and “See your alerts” follow the new watch', async () => {
+    const ALT = {
+      title: 'Brown’s Avenue Hotel', subtitle: '4★ · $120 a night · total for 4 nights', price: 480, currency: 'USD',
+      spec: { name: 'Brown’s Avenue Hotel', city: 'Lisbon, Portugal', check_in: '2099-12-10', check_out: '2099-12-14', adults: 2, rooms: 1, property_token: 'b' },
+    }
+    const first = { ...WATCH, already_watching: false,
+      last_observation: { ...WATCH.last_observation, observed: { alternatives: [ALT] } } }
+    const swapped = { ...WATCH, id: 12, title: 'Brown’s Avenue Hotel', subtitle: '10–14 Dec · 2 guests · 1 room (Brown’s)',
+      baseline_price: 480, last_price: 480, subject: { ...ALT.spec, requested_name: 'Brown’s Avenue Hotel' },
+      last_observation: { status: 'ok', unit_price: 120 } }
+    api.createPriceWatch.mockResolvedValueOnce(first).mockResolvedValueOnce(swapped)
+    api.deletePriceWatch.mockResolvedValue()
+    const onWatched = vi.fn()
+    await render(<PriceWatchDialog kind="hotel" spec={SPEC} preview={{ title: 'Lumen Hotel', price: null }} onClose={vi.fn()} onWatched={onWatched} />)
+    await act(async () => button('Start watching').click())
+    const dialog = () => document.querySelector('[role="dialog"]')
+    expect(dialog().textContent).toContain(WATCH.title)
+    await act(async () => button('Not this one?').click())
+    await act(async () => button('Watch this instead').click())
+    const text = dialog().textContent
+    expect(text).toContain('Watching this hotel')
+    expect(text).toContain('Brown’s Avenue Hotel · 10–14 Dec · 2 guests · 1 room (Brown’s)')
+    expect(text).not.toContain(WATCH.title)
+    expect(text).toContain('The live price is $480')
+    const link = [...dialog().querySelectorAll('a')].find(a => a.textContent.includes('See your alerts'))
+    expect(link.getAttribute('href')).toBe('/alerts?kind=hotel&watch=12')
+    expect(onWatched).toHaveBeenLastCalledWith(swapped, { spec: ALT.spec, viaSuggestion: true })
     expect(button('Not this one?')).toBeUndefined()
   })
 

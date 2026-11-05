@@ -15,10 +15,12 @@ const nightsOf = (ci, co) => Math.round((Date.parse(co) - Date.parse(ci)) / 8640
  * After: the Google Hotels property actually tracked, its live total and
  * nightly rate, a note when Google lists it under another name than the
  * card, and "Not this one?" — the other priced properties the search found,
- * any of which replaces the watch (same alert settings).
+ * any of which replaces the watch (same alert settings) and is reported
+ * through `onReplaced(newWatch, { spec })` so the dialog follows it. Offered
+ * once: after a swap the list is gone.
  */
-export default function HotelDialogBody({ spec = {}, preview = {}, watch = null, unitLabel = null, onClose }) {
-  if (watch) return <Tracked watch={watch} unitLabel={unitLabel} onClose={onClose} />
+export default function HotelDialogBody({ spec = {}, preview = {}, watch = null, unitLabel = null, onClose, onReplaced }) {
+  if (watch) return <Tracked watch={watch} unitLabel={unitLabel} onClose={onClose} onReplaced={onReplaced} />
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
       {preview.estimate != null && (
@@ -35,18 +37,19 @@ export default function HotelDialogBody({ spec = {}, preview = {}, watch = null,
   )
 }
 
-function Tracked({ watch: created, unitLabel, onClose }) {
+function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
   const { token } = useAuth()
   const { watchesChanged } = useAlerts()
   const [watch, setWatch] = useState(created)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
+  const [swapped, setSwapped] = useState(false)
   const obs = watch.last_observation || {}
   const s = watch.subject || {}
   const total = watch.baseline_price ?? watch.last_price
   const nights = s.check_in && s.check_out ? nightsOf(s.check_in, s.check_out) : null
-  const alternatives = watch === created ? (obs.observed?.alternatives || []) : []
+  const alternatives = swapped ? [] : (obs.observed?.alternatives || [])
 
   // Create the replacement first: if it fails, the traveller keeps the first watch
   const swap = async (alt, i) => {
@@ -59,7 +62,9 @@ function Tracked({ watch: created, unitLabel, onClose }) {
       await deletePriceWatch(watch.id, token)
       watchesChanged()
       setWatch(next)
+      setSwapped(true)
       setOpen(false)
+      onReplaced?.(next, { spec: alt.spec })
     } catch {
       setError('Couldn’t switch to that hotel — you’re still watching the first one.')
     } finally {

@@ -2,8 +2,10 @@
 // mode, email and no-live-price suggestions are shared: ../PriceWatchDialog).
 // Add a kind by creating its body in this folder and one line below, e.g.
 //   import HotelDialogBody from './HotelDialogBody'   →   hotel: HotelDialogBody,
-// Bodies get { kind, spec, preview, watch, unitLabel, onClose } (see GenericPriceBody;
-// onClose closes the dialog, e.g. before a link leaves the page).
+// Bodies get { kind, spec, preview, watch, unitLabel, onClose, onReplaced } (see
+// GenericPriceBody; onClose closes the dialog, e.g. before a link leaves the page;
+// onReplaced(newWatch, { spec }) — done state only — reports that the body swapped
+// the watch for another one, so the dialog's header and links follow it).
 import GenericPriceBody from './GenericPriceBody'
 import ActivityDialogBody from './ActivityDialogBody'
 import HotelDialogBody from './HotelDialogBody'

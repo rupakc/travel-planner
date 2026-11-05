@@ -77,6 +77,13 @@ function Suggestions({ result, busy, onPick }) {
  * only when `viaSuggestion` is false. The done state shows the created
  * watch's own title and subtitle, and bodies always get the spec used.
  *
+ * A done-state body may replace the watch it was given (hotel "Not this
+ * one?" deletes it and watches another property). It reports that with the
+ * `onReplaced(newWatch, { spec })` prop: the dialog then shows the new
+ * watch (header, subtitle, "See your alerts" link) and calls
+ * `onWatched(newWatch, { spec, viaSuggestion: true })` — a different
+ * subject from the caller's own.
+ *
  * A target is sent with the currency it was typed in; when the live price
  * turns out to be in another currency the server creates nothing (422
  * `target_currency_mismatch`) and the dialog asks for the target again in
@@ -138,6 +145,14 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
     } finally {
       setSaving(false)
     }
+  }
+
+  // A done-state body swapped the watch for another subject (see above)
+  const replaced = (watch, { spec: newSpec } = {}) => {
+    const watchedSpec = newSpec || usedSpec
+    setUsedSpec(watchedSpec)
+    setDone(watch)
+    onWatched?.(watch, { spec: watchedSpec, viaSuggestion: true })
   }
 
   const title = done
@@ -205,7 +220,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
               {done.already_below_target && (
                 <p className="mt-1.5 font-medium">Already below your target — we’ll tell you if it drops further.</p>
               )}
-              <div className="mt-2"><Body kind={kind} spec={usedSpec} preview={preview} watch={done} unitLabel={unitLabel} onClose={onClose} /></div>
+              <div className="mt-2"><Body kind={kind} spec={usedSpec} preview={preview} watch={done} unitLabel={unitLabel} onClose={onClose} onReplaced={replaced} /></div>
             </div>
           </div>
           {offerBrowser && <BrowserAlertsOffer onAnswer={(allow) => { answerBrowserAlerts(allow); setOfferBrowser(false) }} />}
