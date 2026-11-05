@@ -557,3 +557,21 @@ def test_compose_money_matches_ui_rule():
     note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 900.0)
     assert "2 rooms × $88.50 a night" in note["body"]
     assert "(−$192)" in note["title"]
+
+
+# ── Final fix 2 ───────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("adults,rooms", [(1, 1), (4, 1), (5, 2), (9, 3)])
+def test_rooms_default_to_the_shared_rule(adults, rooms):
+    assert hotel._clean(spec(adults=adults))["rooms"] == rooms
+    assert hotel._clean(spec(adults=adults))["rooms"] == hotel_prices.rooms_for(adults)
+
+
+def test_city_is_cut_at_the_comma_like_activities_and_trips():
+    assert hotel._clean(spec(city="Lisbon, Portugal"))["city"] == "Lisbon"
+    assert SOURCE.match_key(spec(city="Lisbon, Portugal")) == SOURCE.match_key(spec())
+
+
+def test_create_holds_two_calls():
+    assert SOURCE.max_create_calls == 2

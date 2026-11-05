@@ -18,9 +18,11 @@ import asyncio
 import importlib
 import logging
 import random
+import re
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal, Protocol, runtime_checkable
 
 from ..core.config import settings
@@ -139,6 +141,9 @@ class PriceSource(Protocol):
       to it. ``status`` other than ``"ok"`` / ``"unavailable"`` is a failure.
     - Exceptions from ``create`` may carry ``calls`` (int, the SerpAPI calls
       spent before failing) so the shared budget is settled correctly.
+    - Calls are counted as made: a lookup answered from the cache is free.
+      (A failed request is counted by each source as its adapter allows:
+      hotel and trip count it, activity counts the searches it cached.)
     - ``estimate_calls(watch)``: SerpAPI calls ``check`` may spend, reserved
       all-or-nothing from the shared daily budget before it runs.
     - ``compose(kind, watch, obs, ref)``: the alert for notification kind
@@ -149,7 +154,13 @@ class PriceSource(Protocol):
       ``is_lowest`` and ``links`` unless the source set them.
 
     Optional: ``step`` (a ``price_rules.Step``; default ``FARE_STEP``,
-    max($15, 5 %)) — trips use ``TRIP_STEP``, max($25, 4 %).
+    max($15, 5 %)) — trips use ``TRIP_STEP``, max($25, 4 %);
+    ``max_create_calls`` (int, default 1): the most SerpAPI calls ``create``
+    may spend. The create route holds that many from the shared budget (and
+    the owner's share) before matching, then gives back what wasn't spent —
+    settlement never charges more than the hold. Hotel 2, activity 2, trip 10.
+    ``existing_watch(user_id, created)``: the user's live watch of the same
+    subject found another way, returned instead of a duplicate.
     """
 
     kind: str
@@ -219,6 +230,13 @@ def register_builtin_sources() -> list[str]:
     return kinds
 
 
+def create_hold(source: PriceSource) -> int:
+    """The calls a create holds up front: the source's ``max_create_calls``
+    (its worst case), else 1."""
+    n = getattr(source, "max_create_calls", None)
+    return n if isinstance(n, int) and not isinstance(n, bool) and n > 0 else 1
+
+
 def step_for(source: PriceSource) -> price_rules.Step:
     return getattr(source, "step", None) or price_rules.DEFAULT_STEP
 
@@ -235,6 +253,8 @@ def limit_reached(user_id: str) -> bool:
     return active_watch_count(user_id) >= settings.fare_watch_max_active_per_user
 
 
+# Symbols as the UI's Intl.NumberFormat("en-US") writes them; any other code
+# reads "CHF 12.50" (code first), as the UI does.
 _SYMBOLS = {
     "USD": "$",
     "EUR": "€",
@@ -242,27 +262,29 @@ _SYMBOLS = {
     "JPY": "¥",
     "INR": "₹",
     "AUD": "A$",
-    "CAD": "C$",
+    "CAD": "CA$",
     "NZD": "NZ$",
     "HKD": "HK$",
-    "SGD": "S$",
     "BRL": "R$",
     "MXN": "MX$",
+    "CNY": "CN¥",
+    "KRW": "₩",
 }
-_NO_CENTS = frozenset({"JPY"})
+_NO_CENTS = frozenset({"JPY", "KRW"})
 
 
 def format_price(amount: float, currency: str | None = "USD") -> str:
-    """A watched price in its own currency: cents under 100 when there are
-    any ("$9.90", "€33.46", but "$46"), whole amounts from 100 ("$1,240" —
-    as ``usd``); unknown currencies read "12.50 XYZ"."""
-    code = (currency or "USD").upper()
+    """A watched price in its own currency, as the UI's ``formatPrice``
+    writes it: cents under 100 when there are any ("$9.90", "€33.46", but
+    "$46"), whole amounts from 100 ("$1,240"); other codes read "CHF 12.50"."""
+    code = (currency or "USD").strip().upper() or "USD"
     if amount < 100 and code not in _NO_CENTS and round(amount, 2) != round(amount):
         number = f"{amount:,.2f}"
-    else:
-        number = f"{round(amount):,}"
+    else:  # half away from zero, as Intl rounds
+        whole = int(Decimal(str(abs(amount))).quantize(Decimal(1), ROUND_HALF_UP))
+        number = f"{-whole if amount < 0 else whole:,}"
     symbol = _SYMBOLS.get(code)
-    return f"{symbol}{number}" if symbol else f"{number} {currency}"
+    return f"{symbol}{number}" if symbol else f"{code} {number}"
 
 
 def limit_message() -> str:
@@ -271,6 +293,20 @@ def limit_message() -> str:
     return (
         f"You already have {n} active watches — pause or remove one to watch another."
     )
+
+
+_HTTP_BODY = re.compile(r"(\bHTTP \d{3}):.*", re.DOTALL)
+_KEY_PARAM = re.compile(r"(api_key=)[^&\s\"'<]+")
+
+
+def redact_error(exc: BaseException, api_key: str | None = None) -> str:
+    """A failed check's text, safe to store and log, whichever adapter
+    raised: the HTTP status without the response body (it may echo the
+    request), and never the key."""
+    text = _HTTP_BODY.sub(r"\1", f"{type(exc).__name__}: {exc}")
+    if api_key:
+        text = text.replace(api_key, "***")
+    return _KEY_PARAM.sub(r"\1***", text)
 
 
 def calls_spent(exc: BaseException, default: int) -> int:
@@ -585,8 +621,9 @@ async def check_watch(
                 updated_at=stamp,
             )
             return CheckOutcome("postponed", watch)
-        logger.info("Price watch %d check raised", watch_id, exc_info=True)
-        return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
+        error = redact_error(exc, api_key)
+        logger.info("Price watch %d check raised: %s", watch_id, error)
+        return _record_failure(watch, error, now)
 
     spent = getattr(obs, "calls", cost) or 0
     if spent != cost:  # settle the reservation to what the look really spent

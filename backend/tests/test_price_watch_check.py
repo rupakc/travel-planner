@@ -582,3 +582,67 @@ async def test_a_source_cannot_override_watch_id_or_kind(src, user):
     res = await check_watch(w["id"], now=START + DAY, api_key="k")
     d = res.notification["data"]
     assert (d["watch_id"], d["watch_kind"], d["custom"]) == (w["id"], "test", 1)
+
+
+# ── Final fix 2: emails and the UI write money the same way (M9) ──────────────
+
+# The same table is asserted by the frontend's formatPrice
+# (frontend/src/utils/priceWatch.test.js, "agrees with the backend").
+SHARED_MONEY = [
+    (398.0, "USD", "$398"),
+    (9.9, "USD", "$9.90"),
+    (1234.0, "USD", "$1,234"),
+    (24.0, "EUR", "€24"),
+    (33.46, "EUR", "€33.46"),
+    (1240.4, "GBP", "£1,240"),
+    (77.48, "AUD", "A$77.48"),
+    (24.0, "CAD", "CA$24"),
+    (12.5, "CAD", "CA$12.50"),
+    (1500.0, "JPY", "¥1,500"),
+    (12.0, "JPY", "¥12"),
+    (24.0, "SGD", "SGD 24"),
+    (12.5, "CHF", "CHF 12.50"),
+    (12.5, "XYZ", "XYZ 12.50"),
+]
+
+
+@pytest.mark.parametrize("amount,currency,text", SHARED_MONEY)
+def test_format_price_matches_the_ui(amount, currency, text):
+    assert price_watch.format_price(amount, currency) == text
+
+
+# ── Final fix 2: failed-check text is redacted on every path (M5) ─────────────
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        'SerpAPI HTTP 500: {"error": "bad", "search_parameters": {"api_key": "sk-secret-1"}}',
+        "SerpAPI request error: https://serpapi.com/search?q=x&api_key=sk-secret-1",
+        "boom sk-secret-1",
+    ],
+)
+async def test_failed_check_never_stores_the_key_or_a_response_body(
+    src, user, caplog, message
+):
+    w = _create(user)
+    src.queue.append(RuntimeError(message))
+    with caplog.at_level("INFO"):
+        await check_watch(w["id"], now=START + DAY, api_key="sk-secret-1")
+    row = price_watch_db.get_watch(w["id"])
+    assert row["failure_count"] == 1
+    assert "sk-secret-1" not in row["last_error"]
+    assert "search_parameters" not in row["last_error"]
+    assert row["last_error"].startswith("RuntimeError: ")
+    assert "sk-secret-1" not in caplog.text
+    assert "search_parameters" not in caplog.text
+
+
+def test_redact_error_keeps_the_status_and_drops_the_body():
+    text = price_watch.redact_error(
+        RuntimeError("SerpAPI HTTP 503: <html>api_key=abc</html>"), "abc"
+    )
+    assert text == "RuntimeError: SerpAPI HTTP 503"
+    assert (
+        price_watch.friendly_problem(text) == "Live prices aren't available right now."
+    )

@@ -11,8 +11,12 @@ cost breakdown (``frontend/src/utils/planHelpers.js``):
   fare watch tracks it), not the specific flight picked, and is labelled so;
   multi-city legs, or a route we can't price → estimate;
 - the selected hotel → **live** via ``hotel_prices`` (Google Hotels, matched
-  by name, ``ceil(travellers / 2)`` rooms; stored with the hotel watch's
-  subject fields) → else estimate;
+  by name, rooms by the shared ``hotel_prices.rooms_for`` rule — one room
+  for up to 4 travellers, then one per 4 — as a hotel watch). The baseline
+  is the property look by ``property_token``, the same look every check
+  makes, never the search list's price (they often differ, which would show
+  a hotel drop that didn't happen); stored with the hotel watch's subject
+  fields → else estimate;
 - selected activities → **live** via ``activity_prices`` (the GetYourGuide /
   Viator "from" price in Google results, **per person × travellers**;
   stored with the activity watch's subject fields) for the first
@@ -49,7 +53,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
 from collections.abc import Awaitable
 from datetime import UTC, date, datetime
 
@@ -137,11 +140,6 @@ def _travellers(sd: dict) -> int:
         return max(1, min(int(n or 1), 20))
     except (TypeError, ValueError):
         return 1
-
-
-def _rooms(n: int) -> int:
-    """Rooms for the party: two to a room, as most hotel rates assume."""
-    return max(1, math.ceil(n / 2))
 
 
 def _iso(value) -> str | None:
@@ -252,8 +250,7 @@ def _flight_cost(fw: dict) -> int:
 
 
 def _hotel_find_key(name: str, city: str, ci: str, co: str, n: int) -> str:
-    q = " ".join(p.strip() for p in (name, city) if p and p.strip())
-    return hotel_prices.find_cache_key(q, ci, co, n, _rooms(n))
+    return hotel_prices.find_key(name, city, ci, co, n, hotel_prices.rooms_for(n))
 
 
 def _hotel_price_key(s: dict) -> str:
@@ -452,8 +449,10 @@ async def _create_flight(d: dict, api_key: str):
 
 
 async def _create_hotel(d: dict, ctx: dict, api_key: str):
+    """Match the hotel by name, then take its baseline from the property
+    look by token — what every check prices — never the list's price."""
     name, city, n = d["_try"]["name"], d["_try"]["city"], ctx["n"]
-    rooms = _rooms(n)
+    rooms = hotel_prices.rooms_for(n)
     offers, calls, exc = await _counted(
         [_hotel_find_key(name, city, ctx["dep"], ctx["ret"], n)],
         hotel_prices.find_properties(
@@ -463,7 +462,7 @@ async def _create_hotel(d: dict, ctx: dict, api_key: str):
     if exc is not None:
         return calls, _failed("hotel", exc)
     match = hotel_prices.match_property(name, offers or [], city)
-    if match is None or not match.total_rate:
+    if match is None:
         return calls, None
     subject = {
         "name": match.name,
@@ -475,16 +474,27 @@ async def _create_hotel(d: dict, ctx: dict, api_key: str):
         "adults": n,
         "rooms": rooms,
     }
+    hp, spent, exc = await _counted(
+        [_hotel_price_key(subject)],
+        hotel_prices.price_property(
+            match.property_token, ctx["dep"], ctx["ret"], n, api_key, rooms=rooms
+        ),
+    )
+    calls += spent
+    if exc is not None:
+        return calls, _failed("hotel", exc)
+    if not hp.available or not hp.total:
+        return calls, None  # no rates on the property look: an estimate
     d.update(
         live=True,
         label=match.name,
-        detail=_hotel_detail(subject, match.rate_per_night),
-        price=round(float(match.total_rate), 2),
-        unit_price=match.rate_per_night,
+        detail=_hotel_detail(subject, hp.nightly),
+        price=round(float(hp.total), 2),
+        unit_price=hp.nightly,
         unit="per night",
         source=hotel_prices.SOURCE,
         status="ok",
-        link=match.link,
+        link=hp.link or match.link,
         subject=subject,
     )
     return calls, None
@@ -559,14 +569,11 @@ async def _resolve_live(drafts: list[dict], ctx: dict, api_key: str) -> int:
         if d["type"] == "flight":
             worst = _flight_cost(t)
             job = _create_flight(d, api_key)
-        else:
-            worst = _uncached(
-                [
-                    _hotel_find_key(
-                        t["name"], t["city"], ctx["dep"], ctx["ret"], ctx["n"]
-                    )
-                ]
+        else:  # the search, then the property look (its token isn't known yet)
+            find = _hotel_find_key(
+                t["name"], t["city"], ctx["dep"], ctx["ret"], ctx["n"]
             )
+            worst = _uncached([find]) + 1
             job = _create_hotel(d, ctx, api_key)
         if worst > budget:
             job.close()
@@ -819,6 +826,7 @@ def _your_trip(city: str | None) -> str:
 class TripSource:
     kind = "trip"
     step = price_rules.TRIP_STEP
+    max_create_calls = CREATE_CALL_CAP
 
     def match_key(self, spec: dict) -> str:
         return f"plan:{_plan_id(spec)}"

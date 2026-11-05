@@ -292,6 +292,16 @@ def _base_params(ci: str, co: str, adults: int, rooms: int, api_key: str) -> dic
     }
 
 
+GUESTS_PER_ROOM = 4
+
+
+def rooms_for(guests: int) -> int:
+    """The rooms a party is priced in, everywhere (hotel and trip watches;
+    the UI's ``hotelGuests`` mirrors it): one room for up to 4 guests, then
+    one room per 4."""
+    return max(1, math.ceil(max(1, guests) / GUESTS_PER_ROOM))
+
+
 def find_cache_key(q: str, ci: str, co: str, adults: int, rooms: int) -> str:
     """Cache key of a ``find_properties`` search (callers count a cached
     search as costing no SerpAPI call)."""
@@ -303,7 +313,20 @@ def price_cache_key(token: str, ci: str, co: str, adults: int, rooms: int) -> st
     return f"serp-hotels:price:{token}:{ci}:{co}:{adults}:{rooms}"
 
 
+def _query(name: str, city: str) -> str:
+    return " ".join(part.strip() for part in (name, city) if part and part.strip())
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
+
+
+def find_key(
+    name: str, city: str, check_in: Any, check_out: Any, adults: int, rooms: int = 1
+) -> str:
+    """The cache key ``find_properties`` uses for these arguments."""
+    return find_cache_key(
+        _query(name, city), str(check_in), str(check_out), adults, rooms
+    )
 
 
 def find_is_cached(
@@ -311,9 +334,7 @@ def find_is_cached(
 ) -> bool:
     """Would ``find_properties`` with these arguments answer from the cache
     (no SerpAPI call)? Lets callers count the calls they really spend."""
-    ci, co = str(check_in), str(check_out)
-    q = " ".join(part.strip() for part in (name, city) if part and part.strip())
-    return find_cache_key(q, ci, co, adults, rooms) in get_cache()
+    return find_key(name, city, check_in, check_out, adults, rooms) in get_cache()
 
 
 def price_is_cached(
@@ -335,7 +356,7 @@ async def find_properties(
 ) -> list[HotelOffer]:
     """Google Hotels properties for "<name> <city>" on these dates."""
     ci, co = _check_args(check_in, check_out, adults, rooms)
-    q = " ".join(part.strip() for part in (name, city) if part and part.strip())
+    q = _query(name, city)
     key = find_cache_key(q, ci, co, adults, rooms)
     cache = get_cache()
     if key in cache:

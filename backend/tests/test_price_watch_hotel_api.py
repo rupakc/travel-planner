@@ -365,3 +365,56 @@ def test_failed_price_look_after_a_find_charges_both_calls(client):
         r = _create(client, h)
     assert r.status_code == 502
     assert fare_watch_db.calls_used(NOW.date().isoformat()) == 2
+
+
+# ── Final fix 2 ───────────────────────────────────────────────────────────────
+
+
+def test_same_property_under_another_name_is_already_watched(client):
+    """Two cards (or a "Not this one?" pick) that land on the same Google
+    property, stay, guests and rooms share one watch (M2)."""
+    u, h = _user()
+    first = _create_lumen(client, h)
+    with serp(
+        load("named_search_lumen_single_property.json"),
+        load("property_details_lumen_generic_q.json"),
+    ):
+        r = _create(client, h, _hotel(name="Lumen Hotel & The Lisbon Light Show"))
+    assert r.status_code == 200, r.text
+    assert r.json()["already_watching"] is True and r.json()["id"] == first["id"]
+    with serp(load("property_details_lumen_generic_q.json")):
+        picked = _create(client, h, _hotel(property_token=LUMEN_TOKEN))
+    assert picked.json()["already_watching"] is True
+    assert picked.json()["id"] == first["id"]
+    assert len(price_watch_db.list_watches(u["id"], "hotel")) == 1
+
+
+def test_same_property_for_other_guests_or_dates_is_a_new_watch(client):
+    u, h = _user()
+    _create_lumen(client, h)
+    with serp(
+        load("named_search_lumen_single_property.json"),
+        load("property_details_lumen_generic_q.json"),
+    ):
+        r = _create(client, h, _hotel(name="Lumen Hotel Lisboa", adults=3))
+    assert r.status_code == 200, r.text
+    assert r.json()["already_watching"] is False
+    assert len(price_watch_db.list_watches(u["id"], "hotel")) == 2
+
+
+def test_hotel_watch_keeps_only_the_callers_own_plan_id(client):
+    """A plan id is stored only when it is the caller's plan (M1)."""
+    from app.db.plans_db import save_plan
+
+    alice, ha = _user()
+    bob, hb = _user()
+    own = save_plan(alice["username"], "Lisbon", {}, {})
+    other = save_plan(bob["username"], "Bob's", {}, {})
+    w = _create_lumen(client, ha, plan_id=own["id"])
+    assert w["plan_id"] == own["id"]
+    w2 = _create_lumen(client, hb, plan_id=own["id"])  # alice's plan
+    assert w2["plan_id"] is None
+    w3 = _create_lumen(
+        client, ha, hotel=_hotel(adults=3, plan_id=other["id"])
+    )  # bob's plan, inside the spec
+    assert w3["plan_id"] is None

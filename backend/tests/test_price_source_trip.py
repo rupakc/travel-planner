@@ -97,7 +97,7 @@ class Stubs:
     def __init__(self):
         self.fares: list = [612.0]  # FareCheck price (or exception) per call
         self.hotel_offers = [_offer("Lumen Hotel & The Lisbon Light Show", 398.0)]
-        self.hotel_prices: list = []  # HotelPrice (or exception) per call
+        self.hotel_prices: list = []  # HotelPrice (or exception) per look
         self.listings = {  # activity name → listings returned by find_listings
             "Jeronimos Monastery": [_listing("Jeronimos Monastery Entry", 22.87)],
             "Small Group Walking Tour of Belem": [
@@ -121,8 +121,12 @@ class Stubs:
         return list(self.hotel_offers)
 
     async def price_property(self, token, ci, co, adults, api_key, rooms=1, **kw):
-        self.calls.append(("hotel_price", token))
-        item = self.hotel_prices.pop(0)
+        self.calls.append(("hotel_price", token, ci, co, adults, rooms))
+        if self.hotel_prices:
+            item = self.hotel_prices.pop(0)
+        else:  # unless a test queues one, the property look agrees with the list
+            offer = next(o for o in self.hotel_offers if o.property_token == token)
+            item = _hp(offer.total_rate)
         if isinstance(item, Exception):
             raise item
         get_cache()[hotel_prices.price_cache_key(token, ci, co, adults, rooms)] = item
@@ -347,8 +351,8 @@ def test_create_builds_live_and_estimate_components(stubs):
     assert created.subject["plan_id"] == plan["id"]
     assert created.subject["city"] == "Lisbon"
     assert len(created.baseline.breakdown) == 5
-    # one flight + one hotel search + two activity searches
-    assert created.baseline.calls == 4
+    # one flight + one hotel search + its property look + two activity searches
+    assert created.baseline.calls == 5
 
 
 def test_unmatched_parts_become_frozen_estimates(stubs):
@@ -422,14 +426,15 @@ def test_at_most_five_live_activities_at_create(stubs):
 
 def test_create_spends_at_most_ten_calls(stubs, monkeypatch):
     # every activity search may need the Viator query too (2 calls): with
-    # flight + hotel that leaves room for 4 activities
+    # the flight (1) + the hotel's search and property look (2) that leaves
+    # room for 3 activities
     names = [f"Tour number {i}" for i in range(6)]
     stubs.listings = {}  # nothing matches → GetYourGuide then Viator each
     user = _user()
     sel = {"flight": FLIGHT, "hotel": HOTEL, "activities": _acts(*names)}
     created_or_none = _create(user, _plan(user, sel)["id"])
-    assert stubs.count("activity_find") == 4
-    assert created_or_none.baseline.calls == 1 + 1 + 4 * 2
+    assert stubs.count("activity_find") == 3
+    assert created_or_none.baseline.calls == 1 + 2 + 3 * 2
 
 
 def test_cached_lookups_are_free(stubs):
@@ -442,7 +447,7 @@ def test_cached_lookups_are_free(stubs):
         )
     ] = ()
     created = _create(user, plan["id"])
-    assert created.baseline.calls == 3
+    assert created.baseline.calls == 4  # the property look still runs
 
 
 def test_no_live_component_is_no_live_price(stubs):
@@ -520,9 +525,79 @@ def test_hotel_rooms_fit_the_party(stubs):
     user = _user()
     created = _create(user, _plan(user, search={**SEARCH, "num_travelers": 5})["id"])
     find = next(c for c in stubs.calls if c[0] == "hotel_find")
-    assert (find[5], find[6]) == (5, 3)  # 5 adults in 3 rooms
+    assert (find[5], find[6]) == (5, 2)  # 5 adults in 2 rooms (4 to a room)
     h = _by_id(created.subject["components"])["hotel"]["subject"]
-    assert (h["adults"], h["rooms"]) == (5, 3)
+    assert (h["adults"], h["rooms"]) == (5, 2)
+
+
+@pytest.mark.parametrize(
+    "n,rooms", [(1, 1), (2, 1), (4, 1), (5, 2), (8, 2), (9, 3), (16, 4)]
+)
+def test_rooms_for_is_one_room_up_to_four_then_one_per_four(n, rooms):
+    assert hotel_prices.rooms_for(n) == rooms
+
+
+@pytest.mark.parametrize("n", [2, 5, 9])
+def test_trip_hotel_and_a_hotel_watch_request_the_same_stay(stubs, n):
+    """The same stay through the trip and through a hotel watch (with the
+    rooms the UI sends, or none) asks Google Hotels the same questions."""
+    from app.services.price_sources.hotel import SOURCE as HOTEL
+
+    user = _user()
+    _create(user, _plan(user, search={**SEARCH, "num_travelers": n})["id"])
+    trip_looks = [c for c in stubs.calls if c[0].startswith("hotel_")]
+    assert [c[0] for c in trip_looks] == ["hotel_find", "hotel_price"]
+    stay = {
+        "name": "Lumen Hotel",
+        "city": "Lisbon, Portugal",
+        "check_in": "2026-12-10",
+        "check_out": "2026-12-14",
+        "adults": n,
+    }
+    ui_rooms = 1 if n <= 4 else -(-n // 4)  # frontend hotelGuests
+    for spec in (stay, {**stay, "rooms": ui_rooms}):
+        stubs.calls.clear()
+        get_cache().clear()
+        run(HOTEL.create(spec, user, "k"))
+        assert [c for c in stubs.calls if c[0].startswith("hotel_")] == trip_looks
+
+
+def test_hotel_baseline_is_the_property_look_the_checks_use(piped):
+    """Google's search list said $398, the property look says $368: the
+    baseline is the property look, so an unchanged trip never alerts."""
+    piped.hotel_prices = [_hp(368.0)]
+    user = _user()
+    created = _create(user, _plan(user)["id"])
+    h = _by_id(created.subject["components"])["hotel"]
+    assert (h["live"], h["price"], h["unit_price"]) == (True, 368.0, 92.0)
+    assert h["detail"] == "Google Hotels · 4 nights · 1 room · $92 per night"
+    assert piped.count("hotel_price") == 1
+    w = _stored(user, created)
+    get_cache().clear()
+    _queue(piped, created, 612.0, hotel=368.0)
+    out = _check(w["id"], NOW + timedelta(hours=12))
+    assert out.status == "checked" and out.notification is None
+    assert out.watch["last_price"] == pytest.approx(created.baseline.price)
+    assert all(r["delta"] == 0 for r in out.watch["last_observation"]["breakdown"])
+
+
+def test_hotel_without_a_property_price_stays_an_estimate(stubs):
+    stubs.hotel_prices = [_hp(0, available=False)]
+    user = _user()
+    created = _create(user, _plan(user)["id"])
+    h = _by_id(created.subject["components"])["hotel"]
+    assert (h["live"], h["price"], h["source"]) == (False, 440.0, "ai_estimate")
+    assert "subject" not in h
+
+
+def test_failing_property_look_leaves_an_estimate_and_counts_its_call(stubs):
+    stubs.hotel_prices = [serp_flights.SerpAPIError("SerpAPI HTTP 500")]
+    user = _user()
+    created = _create(user, _plan(user)["id"])
+    h = _by_id(created.subject["components"])["hotel"]
+    assert (h["live"], h["price"]) == (False, 440.0)
+    # flight 1 + hotel search 1 + failed property look 1 + 2 activity searches
+    assert created.baseline.calls == 5
 
 
 def test_a_plan_without_a_city_skips_hotel_and_activity_lookups(stubs):
@@ -542,8 +617,9 @@ def test_quota_partway_through_create_reports_the_calls_made(stubs):
     user = _user()
     with pytest.raises(serp_flights.SerpAPIError) as exc:
         _create(user, _plan(user)["id"])
-    # the flight call failed (1) + hotel search (1) + 2 activity searches (2)
-    assert exc.value.calls == 4
+    # the flight call failed (1) + hotel search and look (2) + 2 activity
+    # searches (2)
+    assert exc.value.calls == 5
 
 
 def test_check_reports_the_calls_it_made(stubs):
@@ -1189,17 +1265,38 @@ def test_api_create_reports_live_and_estimate_components(client, serp):
     assert w["plan_id"] == plan["id"] and w["expires_on"] == "2026-12-10"
     comps = _by_id(w["subject"]["components"])
     assert comps["flight"]["live"] and comps["flight"]["price"] == 612
-    assert comps["hotel"]["live"] and comps["hotel"]["price"] == 398
+    # the property look by token ($368), as every check prices it — not the
+    # search list's $398
+    assert comps["hotel"]["live"] and comps["hotel"]["price"] == 368
     assert comps["hotel"]["subject"]["property_token"]
     assert comps["activity-0"]["live"]  # Jerónimos listing, $22.87 pp
     assert comps["activity-0"]["price"] == pytest.approx(45.74)
     assert comps["activity-1"]["live"]  # Small Group Walking Tour of Belém
     assert comps["sim"]["live"] is False
-    assert w["baseline_price"] == pytest.approx(612 + 398 + 45.74 + 66.92 + 13)
+    assert w["baseline_price"] == pytest.approx(612 + 368 + 45.74 + 66.92 + 13)
     assert w["history"][0]["breakdown"]
-    # 1 flight + 1 hotel + 2 GetYourGuide searches (no Viator needed)
-    assert len(serp.params) == 4
-    assert _calls_used() == 4
+    # 1 flight + hotel search and property look + 2 GetYourGuide searches
+    # (no Viator needed)
+    assert len(serp.params) == 5
+    assert _calls_used() == 5
+
+
+def test_api_first_check_after_create_shows_no_phantom_hotel_drop(client, serp):
+    """Recorded fixtures: the search list prices Lumen at $398, the property
+    look at $368. Nothing changes at Google → no alert, no move."""
+    user = _user()
+    w = _post(client, user, _plan(user)["id"]).json()
+    get_cache().clear()  # a later check: nothing cached
+    r = client.post(f"/api/price-watches/{w['id']}/check", headers=_login(user))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["check_status"] == "checked"
+    assert body["notification"] is None
+    assert body["last_price"] == pytest.approx(w["baseline_price"])
+    b = _by_id(body["last_observation"]["breakdown"])
+    assert b["hotel"]["price"] == 368
+    assert all(row["delta"] == 0 for row in b.values())
+    assert notifications_db.list_notifications(user["id"])["items"] == []
 
 
 def test_api_create_is_404_for_another_users_or_a_missing_plan(client, serp):
@@ -1252,10 +1349,10 @@ def test_api_check_now_reprices_and_explains_the_drop(client, serp):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["check_status"] == "checked"
-    # Google Hotels' property page now shows $368 for the stay (was $398)
-    assert body["last_price"] == pytest.approx(w["baseline_price"] - 100)
+    # the hotel's property look is unchanged ($368): only the flight moved
+    assert body["last_price"] == pytest.approx(w["baseline_price"] - 70)
     assert body["notification"]["title"] == (
-        "🧳 Your Lisbon trip is $100 cheaper: flights −$70, hotel −$30"
+        "🧳 Your Lisbon trip is $70 cheaper: flights −$70"
     )
     # flight + hotel by token + 2 activity re-searches
     assert len(serp.params) == 4

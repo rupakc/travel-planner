@@ -185,6 +185,7 @@ def _suggestion(listing: ActivityListing, spec: dict) -> dict:
 
 class ActivitySource:
     kind = KIND
+    max_create_calls = 2  # the GetYourGuide and Viator searches
     step = price_rules.ACTIVITY_STEP  # max(1, 5 %) in the listing currency
 
     def match_key(self, spec: dict) -> str:

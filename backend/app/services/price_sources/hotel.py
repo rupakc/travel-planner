@@ -16,8 +16,12 @@ never watched and never alert.
 Prices are USD totals for the whole stay and all rooms (after taxes and
 fees), with the nightly rate as ``unit_price``.
 
-Spec: ``{name, city, check_in, check_out, adults, rooms?=1,
-property_token?, estimate_total?}``.
+Rooms default to the shared rule (``hotel_prices.rooms_for``: one room for
+up to 4 guests, then one per 4) — the same rooms a trip watch prices and the
+UI sends. A ``plan_id`` is kept only when it is the caller's own plan.
+
+Spec: ``{name, city, check_in, check_out, adults, rooms?=rooms_for(adults),
+property_token?, estimate_total?, plan_id?}``.
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ import re
 import unicodedata
 from datetime import date
 
+from ...db import plans_db, price_watch_db
 from ...db.database import airport_city
 from .. import fare_watch, hotel_prices
 from ..fare_watch import date_range
@@ -89,8 +94,12 @@ def _clean(spec: dict) -> dict:
     if not isinstance(spec, dict):
         raise InvalidSpec("Tell us which hotel to watch.")
     name = _text(spec, "name", MAX_NAME, "name")
-    # the search form stores an airport code ("LIS"): watch the city
-    city = airport_city(_text(spec, "city", MAX_CITY, "city"))
+    # "Lisbon, Portugal" → "Lisbon" (as activity and trip watches); the
+    # search form stores an airport code ("LIS"): watch the city
+    city = _text(spec, "city", MAX_CITY, "city").split(",")[0].strip()
+    if not city:
+        raise InvalidSpec("Tell us the hotel's city.")
+    city = airport_city(city)
     ci = _date(spec, "check_in", "check-in")
     co = _date(spec, "check_out", "check-out")
     nights = (co - ci).days
@@ -101,7 +110,7 @@ def _clean(spec: dict) -> dict:
     if ci <= fare_watch.utcnow().date():
         raise InvalidSpec("Check-in is too soon to watch this hotel's price.")
     adults = _count(spec, "adults", None, MAX_ADULTS, "adults")
-    rooms = _count(spec, "rooms", 1, MAX_ROOMS, "rooms")
+    rooms = _count(spec, "rooms", hotel_prices.rooms_for(adults), MAX_ROOMS, "rooms")
     if rooms > adults:
         raise InvalidSpec("Each room needs at least one adult.")
     token = spec.get("property_token")
@@ -117,6 +126,8 @@ def _clean(spec: dict) -> dict:
     ):
         estimate = None  # only shown next to "no live price": never blocks a watch
     plan_id = spec.get("plan_id")
+    if isinstance(plan_id, bool):
+        plan_id = None
     return {
         "name": name,
         "city": city,
@@ -284,10 +295,21 @@ def _estimate(s: dict) -> dict | None:
     }
 
 
+def _own_plan_id(plan_id: int | None, user: dict) -> int | None:
+    """``plan_id`` when it is the caller's saved plan, else None (dropped)."""
+    if plan_id is None:
+        return None
+    plan = plans_db.get_plan(plan_id)
+    if not plan or plan.get("username") != user.get("username"):
+        return None
+    return plan_id
+
+
 class HotelSource:
     """Watches one Google Hotels property for one stay."""
 
     kind = "hotel"
+    max_create_calls = 2  # the search, then the property look
 
     def match_key(self, spec: dict) -> str:
         s = _clean(spec)
@@ -364,8 +386,22 @@ class HotelSource:
             title=name,
             subtitle=subtitle(s["check_in"], s["check_out"], s["adults"], s["rooms"]),
             expires_on=s["check_in"],
-            plan_id=s["plan_id"],
+            plan_id=_own_plan_id(s["plan_id"], user),
         )
+
+    def existing_watch(self, user_id: str, created: CreatedWatch) -> dict | None:
+        """The user's live watch of the same Google property for the same
+        stay, guests and rooms, however it was found (another card's name,
+        or a "Not this one?" pick)."""
+        new = created.subject
+        same = ("property_token", "check_in", "check_out", "adults", "rooms")
+        for watch in price_watch_db.list_watches(user_id, self.kind):
+            old = watch.get("subject") or {}
+            if watch["status"] != "expired" and all(
+                str(old.get(k) or "") == str(new.get(k) or "") for k in same
+            ):
+                return watch
+        return None
 
     def _no_live_price(self, s: dict, offers: list[HotelOffer], calls: int):
         picks = hotel_prices.suggestions(offers, SUGGESTIONS, s["name"], s["city"])

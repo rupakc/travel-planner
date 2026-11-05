@@ -280,12 +280,19 @@ def match_price_watch(body: _Spec, user: dict = Depends(get_current_user)):
     return {"watch": serialize(watch) if watch else None}
 
 
-def _settle(day: str, n: int, user_id: str) -> None:
-    """Settle a create's held call to what the match spent, never past the
-    shared budget or the owner's share."""
+def _settle(day: str, held: int, spent: int, user_id: str) -> None:
+    """Settle a create's hold to what the match spent: only gives calls back
+    (the hold is the kind's worst case; a source that spends more is logged
+    and charged the hold)."""
+    if spent > held:
+        logger.warning(
+            "Price watch create spent %d calls, more than its hold of %d", spent, held
+        )
+    if spent >= held:
+        return
     fare_watch_db.adjust_calls(
         day,
-        n,
+        spent - held,
         user_id=user_id,
         budget=settings.fare_watch_daily_call_budget,
         user_cap=fare_watch.user_daily_cap(),
@@ -314,12 +321,13 @@ async def create_price_watch(
 
     now = fare_watch.utcnow()
     day = now.date().isoformat()
-    # Matching spends live calls we can't know in advance: hold one now
-    # (refused when today's budget or the owner's share is spent), then
-    # settle to what it really cost.
+    # Matching spends live calls we can't know in advance: hold the kind's
+    # worst case now (refused when today's budget or the owner's share can't
+    # cover it), then give back what it didn't spend.
+    held = price_watch.create_hold(source)
     if not fare_watch_db.reserve_calls(
         day,
-        1,
+        held,
         settings.fare_watch_daily_call_budget,
         user_id=user["id"],
         user_cap=fare_watch.user_daily_cap(),
@@ -329,14 +337,11 @@ async def create_price_watch(
         result = await source.create(spec, user, settings.serpapi_key)
     except InvalidSpec as exc:
         # Nothing spent unless the source says so (exc.calls)
-        spent = price_watch.calls_spent(exc, 0)
-        _settle(day, spent - 1, user["id"])
+        _settle(day, held, price_watch.calls_spent(exc, 0), user["id"])
         raise _invalid(exc) from exc
     except Exception as exc:
-        # Unknown spend keeps the held call unless the source says (exc.calls)
-        spent = price_watch.calls_spent(exc, 1)
-        if spent != 1:
-            _settle(day, spent - 1, user["id"])
+        # Unknown spend keeps the hold unless the source says (exc.calls)
+        _settle(day, held, price_watch.calls_spent(exc, held), user["id"])
         if getattr(exc, "quota_exceeded", False):
             raise _busy(now) from exc
         logger.warning(
@@ -346,7 +351,7 @@ async def create_price_watch(
             status_code=502, detail="We couldn't reach live prices right now."
         ) from exc
     spent = result.calls if isinstance(result, NoLivePrice) else result.baseline.calls
-    _settle(day, spent - 1, user["id"])
+    _settle(day, held, spent, user["id"])
 
     if isinstance(result, NoLivePrice):
         return _no_live_price(result)

@@ -93,6 +93,7 @@ def test_create_matches_and_takes_the_baseline(client, alice, src):
 
 def test_create_charges_the_calls_the_match_spent(client, alice, src):
     _, h = alice
+    src.max_create_calls = 3
     src.create_calls = 3
     assert _create(client, h).status_code == 200
     day = NOW.date().isoformat()
@@ -103,7 +104,8 @@ def test_create_charges_the_calls_the_match_spent(client, alice, src):
 
 
 def test_create_never_settles_the_pool_past_the_budget(client, alice, src):
-    # One call held at 199 of 200; the match spent 3 — the pool stops at 200
+    # One call held at 199 of 200; the match (wrongly) spent 3 — the pool
+    # stops at 200: settlement only gives calls back
     day = NOW.date().isoformat()
     fare_watch_db.reserve_calls(day, 199, 200)
     _, h = alice
@@ -587,6 +589,7 @@ def test_create_failure_settles_the_calls_the_source_reports(
     async def boom(spec, user, key):
         raise SpentError("HTTP 500")
 
+    src.max_create_calls = 4
     monkeypatch.setattr(src, "create", boom)
     assert _create(client, h).status_code == 502
     assert fare_watch_db.calls_used(NOW.date().isoformat()) == 3
@@ -605,6 +608,7 @@ def test_invalid_spec_after_spending_keeps_the_spent_calls(
     async def bad(spec, user, key):
         raise SpentInvalid("That listing isn't a tour.")
 
+    src.max_create_calls = 2
     monkeypatch.setattr(src, "create", bad)
     r = _create(client, h)
     assert r.status_code == 422 and r.json()["detail"] == "That listing isn't a tour."
@@ -649,3 +653,58 @@ def test_fare_limit_message_counts_watches_not_fares(client, alice, src, monkeyp
         or "1 active watch" in r.json()["detail"]
     )
     assert "fares" not in r.json()["detail"]
+
+
+# ── Final fix 2: a create holds its kind's worst case (M7) ────────────────────
+
+
+def test_builtin_sources_declare_their_worst_case_create():
+    from app.services.price_sources import activity, hotel, trip
+
+    assert price_watch.create_hold(hotel.SOURCE) == 2  # search + property look
+    assert price_watch.create_hold(activity.SOURCE) == 2  # two Google searches
+    assert price_watch.create_hold(trip.SOURCE) == trip.CREATE_CALL_CAP == 10
+    assert price_watch.create_hold(FakeSource()) == 1  # undeclared → 1
+
+
+def test_create_holds_the_worst_case_up_front(client, alice, src):
+    _, h = alice
+    day = NOW.date().isoformat()
+    src.max_create_calls = 10
+    fare_watch_db.reserve_calls(day, 191, 200)  # 9 left: not enough
+    r = _create(client, h)
+    assert r.status_code == 429
+    assert src.created == []
+    assert fare_watch_db.calls_used(day) == 191
+
+
+def test_create_hold_is_settled_by_giving_back_what_was_not_spent(client, alice, src):
+    _, h = alice
+    day = NOW.date().isoformat()
+    src.max_create_calls = 10
+    fare_watch_db.reserve_calls(day, 190, 200)  # exactly 10 left
+    src.create_calls = 4
+    assert _create(client, h).status_code == 200
+    assert fare_watch_db.calls_used(day) == 194
+
+
+def test_create_settlement_never_charges_past_the_hold(client, alice, src):
+    _, h = alice
+    src.max_create_calls = 2
+    src.create_calls = 5  # a source that under-declared: never over the hold
+    assert _create(client, h).status_code == 200
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 2
+
+
+def test_create_failure_of_unknown_spend_keeps_the_whole_hold(
+    client, alice, src, monkeypatch
+):
+    _, h = alice
+    src.max_create_calls = 3
+
+    async def boom(spec, user, key):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(src, "create", boom)
+    assert _create(client, h).status_code == 502
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 3
