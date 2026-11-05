@@ -268,6 +268,51 @@ describe('HotelDialogBody', () => {
     expect(container.textContent).toContain('Tracking: Lumen Hotel & The Lisbon Light Show')
   })
 
+  it('at the active-watch limit, makes room first and then swaps (M10)', async () => {
+    const ALT = { title: 'Other', price: 300, spec: { name: 'Other', property_token: 'o' } }
+    const watched = { ...WATCH, last_observation: { ...WATCH.last_observation, observed: { alternatives: [ALT] } } }
+    const next = { ...WATCH, id: 12, title: 'Other', last_observation: { status: 'ok' } }
+    const order = []
+    api.createPriceWatch.mockReset()
+      .mockImplementationOnce(async () => { order.push('create'); throw { response: { status: 409, data: { detail: 'limit' } } } })
+      .mockImplementationOnce(async () => { order.push('create'); return next })
+    api.deletePriceWatch.mockReset().mockImplementation(async () => { order.push('delete') })
+    const onReplaced = vi.fn()
+    await render(<HotelDialogBody spec={SPEC} watch={watched} onReplaced={onReplaced} />)
+    await act(async () => button('Not this one?').click())
+    await act(async () => button('Watch this instead').click())
+    expect(order).toEqual(['create', 'delete', 'create'])
+    expect(api.deletePriceWatch).toHaveBeenCalledWith(11, 'tok')
+    expect(onReplaced).toHaveBeenCalledWith(next, { spec: ALT.spec })
+    expect(container.textContent).toContain('Tracking: Other on Google Hotels')
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('at the limit, puts the first watch back when the new one fails (M10)', async () => {
+    const ALT = { title: 'Other', price: 300, spec: { name: 'Other', property_token: 'o' } }
+    const watched = { ...WATCH, alert_mode: 'below_target', target_price: 350, email_enabled: true,
+      last_observation: { ...WATCH.last_observation, observed: { alternatives: [ALT] } } }
+    const restored = { ...WATCH, id: 13 }
+    api.createPriceWatch.mockReset()
+      .mockRejectedValueOnce({ response: { status: 409, data: { detail: 'limit' } } })
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(restored)
+    api.deletePriceWatch.mockReset().mockResolvedValue()
+    const onReplaced = vi.fn()
+    await render(<HotelDialogBody spec={SPEC} watch={watched} onReplaced={onReplaced} />)
+    await act(async () => button('Not this one?').click())
+    await act(async () => button('Watch this instead').click())
+    expect(api.createPriceWatch).toHaveBeenCalledTimes(3)
+    expect(api.createPriceWatch.mock.calls[2][0]).toEqual({
+      kind: 'hotel',
+      hotel: { name: 'Lumen Hotel', city: 'Lisbon, Portugal', check_in: '2099-12-10', check_out: '2099-12-14', adults: 2, rooms: 1, property_token: 'tok' },
+      alert_mode: 'below_target', target_price: 350, email_enabled: true,
+    })
+    expect(onReplaced).toHaveBeenCalledWith(restored, expect.anything())
+    expect(container.querySelector('[role="alert"]').textContent).toContain('still watching the first one')
+    expect(container.textContent).toContain('Tracking: Lumen Hotel & The Lisbon Light Show')
+  })
+
   it('says nothing extra when the names agree', async () => {
     await render(<HotelDialogBody spec={SPEC} watch={{ ...WATCH, title: 'Lumen Hotel' }} />)
     expect(container.textContent).not.toContain('Your plan calls it')

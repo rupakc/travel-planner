@@ -26,7 +26,8 @@ const SHARED_NOTICES = new Set(['watch_expired', 'watch_error'])
 /**
  * Icon, colour and action for one notification. The shared notices
  * (watch_expired / watch_error) read per watch kind — a hotel's ended watch
- * says "See hotel", an activity's notices show the activity icon, a trip's
+ * says "See hotel", an activity's ended watch shows the activity icon (its
+ * paused notice keeps the warning icon), a trip's
  * say "See trip" / "Check trip"; fare notices keep kindOf's wording.
  */
 export function alertKindFor(n) {
@@ -34,7 +35,8 @@ export function alertKindFor(n) {
   if (!SHARED_NOTICES.has(n?.kind)) return base
   const watchKind = n?.data?.watch_kind
   if (watchKind === 'hotel' && n.kind === 'watch_expired') return { ...base, action: 'See hotel' }
-  if (watchKind === 'activity') return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
+  // an ended activity watch shows the ticket; a paused one keeps the warning
+  if (watchKind === 'activity' && n.kind === 'watch_expired') return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
   if (watchKind === 'trip') return { ...base, action: n.kind === 'watch_expired' ? 'See trip' : 'Check trip' }
   return base
 }

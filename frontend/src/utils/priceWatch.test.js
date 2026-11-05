@@ -92,6 +92,27 @@ describe('formatPrice', () => {
     expect(formatPrice(...args)).toBe(out)
   })
 
+  // The same table as the backend's price_watch.format_price (emails and
+  // notices): backend/tests/test_price_watch_check.py SHARED_MONEY (M9)
+  it.each([
+    [398, 'USD', '$398'],
+    [9.9, 'USD', '$9.90'],
+    [1234, 'USD', '$1,234'],
+    [24, 'EUR', '€24'],
+    [33.46, 'EUR', '€33.46'],
+    [1240.4, 'GBP', '£1,240'],
+    [77.48, 'AUD', 'A$77.48'],
+    [24, 'CAD', 'CA$24'],
+    [12.5, 'CAD', 'CA$12.50'],
+    [1500, 'JPY', '¥1,500'],
+    [12, 'JPY', '¥12'],
+    [24, 'SGD', 'SGD 24'],
+    [12.5, 'CHF', 'CHF 12.50'],
+    [12.5, 'XYZ', 'XYZ 12.50'],
+  ])('agrees with the backend: %s %s → %s', (amount, code, out) => {
+    expect(formatPrice(amount, code).replace(/\u00a0/g, ' ')).toBe(out)
+  })
+
   it('falls back safely for unknown or missing codes', () => {
     expect(formatPrice(5, 'not a code')).toBe('not a code 5')
     expect(formatPrice(5.5, 'not a code')).toBe('not a code 5.50')

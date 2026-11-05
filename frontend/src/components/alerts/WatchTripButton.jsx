@@ -65,8 +65,9 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
     parts: tripPreviewParts(plan.selections, sd),
     planTotal: computePlanCost(plan.selections, sd) || null,
   }
-  // The target field's starting point: the plan as the watch counts it
-  preview.price = preview.parts.reduce((t, p) => t + p.amount, 0) || null
+  // No target is suggested: the parts above are estimates until the first
+  // live look, and an estimate never seeds the target
+  preview.price = null
 
   const onClick = (e) => {
     e.stopPropagation()

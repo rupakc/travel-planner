@@ -37,6 +37,15 @@ export default function HotelDialogBody({ spec = {}, preview = {}, watch = null,
   )
 }
 
+/** The hotel spec that watches `watch`'s property again (same stay). */
+function specOf(watch) {
+  const s = watch.subject || {}
+  return {
+    name: s.requested_name || watch.title, city: s.city, check_in: s.check_in, check_out: s.check_out,
+    adults: s.adults, rooms: s.rooms, property_token: s.property_token,
+  }
+}
+
 function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
   const { token } = useAuth()
   const { watchesChanged } = useAlerts()
@@ -51,20 +60,51 @@ function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
   const nights = s.check_in && s.check_out ? nightsOf(s.check_in, s.check_out) : null
   const alternatives = swapped ? [] : (obs.observed?.alternatives || [])
 
-  // Create the replacement first: if it fails, the traveller keeps the first watch
+  const settings = {
+    alert_mode: watch.alert_mode, target_price: watch.target_price ?? null, email_enabled: !!watch.email_enabled,
+  }
+  const create = (hotelSpec) => createPriceWatch(priceWatchBody('hotel', hotelSpec, settings), token)
+  const switched = (next, nextSpec) => {
+    watchesChanged()
+    setWatch(next)
+    setSwapped(true)
+    setOpen(false)
+    onReplaced?.(next, { spec: nextSpec })
+  }
+
+  // Create the replacement first: if it fails, the traveller keeps the first
+  // watch. At the active-watch limit (409) make room first, and put the first
+  // watch back (same property, same settings) if the new one then fails.
   const swap = async (alt, i) => {
     setBusy(i)
     setError(null)
     try {
-      const next = await createPriceWatch(priceWatchBody('hotel', alt.spec, {
-        alert_mode: watch.alert_mode, target_price: watch.target_price ?? null, email_enabled: !!watch.email_enabled,
-      }), token)
+      let next
+      try {
+        next = await create(alt.spec)
+      } catch (err) {
+        if (err?.response?.status !== 409) throw err
+        await deletePriceWatch(watch.id, token)
+        try {
+          next = await create(alt.spec)
+        } catch {
+          const firstSpec = specOf(watch)
+          const back = await create(firstSpec).catch(() => null)
+          watchesChanged()
+          if (back) {
+            setWatch(back)
+            onReplaced?.(back, { spec: firstSpec })
+            setError('Couldn’t switch to that hotel — you’re still watching the first one.')
+          } else {
+            setError('Couldn’t switch to that hotel, and the first one couldn’t be put back — watch it again from its card.')
+          }
+          return
+        }
+        switched(next, alt.spec)
+        return
+      }
       await deletePriceWatch(watch.id, token)
-      watchesChanged()
-      setWatch(next)
-      setSwapped(true)
-      setOpen(false)
-      onReplaced?.(next, { spec: alt.spec })
+      switched(next, alt.spec)
     } catch {
       setError('Couldn’t switch to that hotel — you’re still watching the first one.')
     } finally {

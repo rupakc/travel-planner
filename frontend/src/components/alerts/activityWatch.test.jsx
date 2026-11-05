@@ -155,6 +155,16 @@ describe('WatchActivityButton', () => {
   })
 })
 
+describe('final fix 2', () => {
+  it('never seeds the target from the AI estimate (M8)', async () => {
+    await render(<WatchActivityButton activity={ACTIVITY} />)
+    await act(async () => button('Watch price').click())
+    await act(async () => document.querySelector('input[value="below_target"]').click())
+    expect(document.querySelector('input[aria-label^="Target price in"]').value).toBe('')
+    expect(document.querySelector('[role="dialog"]').textContent).toContain('AI estimate')
+  })
+})
+
 describe('target currency (fix round 1)', () => {
   it('asks again in the listing currency when it differs, with the same spec', async () => {
     api.createPriceWatch
@@ -305,7 +315,8 @@ describe('registries and alert copy', () => {
 
   it('activity notices get the activity icon; fare and hotel copy are unchanged', () => {
     const n = (kind, data) => ({ kind, data })
-    expect(alertKindFor(n('watch_error', { watch_kind: 'activity' })).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
+    // a paused activity watch keeps the warning icon (M11)
+    expect(alertKindFor(n('watch_error', { watch_kind: 'activity' })).Icon).toBe(ALERT_KINDS.watch_error.Icon)
     expect(alertKindFor(n('watch_expired', { watch_kind: 'activity' })).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
     expect(alertKindFor(n('watch_error', { watch_kind: 'activity' })).action).toBe(ALERT_KINDS.watch_error.action)
     expect(alertKindFor(n('watch_error'))).toBe(ALERT_KINDS.watch_error)

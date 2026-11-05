@@ -228,6 +228,13 @@ describe('WatchTripButton', () => {
     expect(document.querySelector('[role="dialog"] table')).not.toBeNull()
   })
 
+  it('never seeds the target from the plan’s estimates (M8)', async () => {
+    await render(<WatchTripButton plan={PLAN} />)
+    await act(async () => button('Watch whole trip').click())
+    await act(async () => document.querySelector('input[value="below_target"]').click())
+    expect(document.querySelector('input[aria-label^="Target price in"]').value).toBe('')
+  })
+
   it('reads "Watching · $X" once watched and opens the Alerts page', async () => {
     matched = { ...TRIP, last_price: 2140 }
     await render(<WatchTripButton plan={PLAN} />)

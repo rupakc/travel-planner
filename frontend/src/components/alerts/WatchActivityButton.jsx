@@ -87,7 +87,9 @@ function ActiveButton({ activity, spec, style, source }) {
           preview={{
             title: spec.name,
             subtitle: [spec.city, people].join(' · '),
-            price: spec.estimate_price != null ? spec.estimate_price * spec.travellers : null,
+            // the AI estimate is no live price: it never seeds the target
+            // (the dialog body shows it, labelled)
+            price: null,
             currency: 'USD',
           }}
           onClose={() => setOpen(false)}

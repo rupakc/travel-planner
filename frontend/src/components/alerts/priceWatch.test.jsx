@@ -283,6 +283,23 @@ describe('PriceWatchCard', () => {
     expect(p.onUpdate).toHaveBeenCalledWith({ alert_mode: 'below_target', target_price: 300, email_enabled: false })
   })
 
+  it('keeps an exact target and resends it only when changed (M3)', async () => {
+    const watch = { ...HOTEL, alert_mode: 'below_target', target_price: 9.5, email_enabled: false }
+    const p = props({ watch, emailAvailable: true, hasEmail: true })
+    await render(<PriceWatchCard {...p} />)
+    await act(async () => button('Edit').click())
+    const input = container.querySelector('input[aria-label="Target price in US dollars"]')
+    expect(input.value).toBe('9.5')
+    await act(async () => container.querySelector('input[type="checkbox"]').click())
+    await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+    expect(p.onUpdate).toHaveBeenLastCalledWith({ alert_mode: 'below_target', email_enabled: true })
+    await act(async () => button('Edit').click())
+    setValue(container.querySelector('input[aria-label="Target price in US dollars"]'), '9.25')
+    await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+    // (the mock doesn't update the watch: email is off again in the reopened panel)
+    expect(p.onUpdate).toHaveBeenLastCalledWith({ alert_mode: 'below_target', email_enabled: false, target_price: 9.25 })
+  })
+
   it('renders kind details passed in', async () => {
     await render(<PriceWatchCard {...props()} Details={({ watch }) => <span>details for {watch.title}</span>} />)
     expect(container.textContent).toContain('details for Lumen Hotel')

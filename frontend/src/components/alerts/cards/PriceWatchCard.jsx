@@ -16,7 +16,9 @@ const quiet = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs
 
 function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
   const [mode, setMode] = useState(watch.alert_mode)
-  const [target, setTarget] = useState(watch.target_price != null ? String(Math.round(watch.target_price)) : '')
+  // The exact target ("9.5", not "10"): saving other settings never moves it
+  const initialTarget = watch.target_price != null ? String(watch.target_price) : ''
+  const [target, setTarget] = useState(initialTarget)
   const [email, setEmail] = useState(!!watch.email_enabled)
   const [saving, setSaving] = useState(false)
   const check = mode === 'below_target' ? checkPriceTarget(target) : { error: null }
@@ -25,7 +27,9 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
     if (check.error) return
     setSaving(true)
     const changes = { alert_mode: mode, email_enabled: email }
-    if (mode === 'below_target') changes.target_price = check.value
+    if (mode === 'below_target' && (target !== initialTarget || watch.target_price == null)) {
+      changes.target_price = check.value
+    }
     await onSave(changes)
     setSaving(false)
   }
