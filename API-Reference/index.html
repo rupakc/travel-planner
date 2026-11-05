@@ -1571,6 +1571,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mobile-app-push-devices-and-near-me" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile app: push devices and Near me
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mobile app: push devices and Near me">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apidevices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/devices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apidevices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/devices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apidevicesid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/devices/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apidevicesunregister" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/devices/unregister
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#push-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Push messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apinearby" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/nearby
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reference-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1903,7 +1986,7 @@
 </tr>
 <tr>
 <td>light_ai</td>
-<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
 </tr>
 </tbody>
@@ -2247,6 +2330,30 @@
 <td><code>/api/notifications/read</code></td>
 <td>user</td>
 <td>Mark <code>ids</code> (or <code>all</code>) read</td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/devices</code></td>
+<td>user</td>
+<td>List own push devices (tokens masked); register an FCM token</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/devices/{id}</code></td>
+<td>user</td>
+<td>Remove one of own devices by id (<code>204</code>, or <code>404</code>)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/devices/unregister</code></td>
+<td>user</td>
+<td>Sign-out: forget a token sent in the body (<code>204</code>, idempotent)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/nearby</code></td>
+<td>user</td>
+<td>Near me: nearest known place to a coordinate and things to do there</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -2856,6 +2963,43 @@
 <h3 id="post-apinotificationsread">POST /api/notifications/read</h3>
 <p><code>{"ids": [3, 4]}</code> or <code>{"all": true}</code> → <code>{"updated": n, "unread": n}</code>. Only the caller's notifications change. <code>422</code> without either.</p>
 <hr />
+<h2 id="mobile-app-push-devices-and-near-me">Mobile app: push devices and Near me</h2>
+<p>Added for the Android app. Every route needs a signed-in user and only touches that user's data. An FCM token only ever travels in a request body, never in a URL, so request and access logs never carry one; logs show at most its last 6 characters.</p>
+<h3 id="post-apidevices">POST /api/devices</h3>
+<p>Registers the app's FCM registration token for push alerts.</p>
+<pre><code class="language-json">{&quot;token&quot;: &quot;eXaMpLe...:APA91b...&quot;, &quot;platform&quot;: &quot;android&quot;, &quot;locale&quot;: &quot;de-DE&quot;}
+</code></pre>
+<p><code>token</code> 1–4096 characters; <code>platform</code> only <code>"android"</code> (the default); <code>locale</code> optional (≤ 35). → <code>200</code> with the device, token masked to its last 6 characters:</p>
+<pre><code class="language-json">{&quot;id&quot;: 12, &quot;token&quot;: &quot;…Xy12Ab&quot;, &quot;platform&quot;: &quot;android&quot;, &quot;locale&quot;: &quot;de-DE&quot;,
+ &quot;created_at&quot;: &quot;2026-11-05T09:00:00.123456+00:00&quot;, &quot;last_seen_at&quot;: &quot;2026-11-05T09:00:00.123456+00:00&quot;}
+</code></pre>
+<p>Registering again refreshes <code>locale</code> and <code>last_seen_at</code> (call it on every app start and token refresh). A token registered by another user moves to the caller (a shared phone). A user keeps at most 20 devices; the least recently seen is dropped.</p>
+<h3 id="get-apidevices">GET /api/devices</h3>
+<p><code>{"items": [device, ...]}</code>, most recently seen first, tokens masked as above.</p>
+<h3 id="delete-apidevicesid">DELETE /api/devices/{id}</h3>
+<p>Removes one of the caller's devices by its <code>id</code> (for example a lost phone, from a "Your devices" list). <code>204</code>; <code>404 {"detail": "Device not found"}</code> when the caller has no device with that id (another user's device is never touched); <code>422</code> for a non-numeric id.</p>
+<h3 id="post-apidevicesunregister">POST /api/devices/unregister</h3>
+<p>Sign-out: <code>{"token": "&lt;the full FCM token&gt;"}</code> → <code>204</code>, always (idempotent; a token the caller doesn't own is left alone and gets the same answer). Call it before dropping the JWT.</p>
+<h3 id="push-messages">Push messages</h3>
+<p>When <code>FCM_SERVICE_ACCOUNT_FILE</code> is set (<code>/health</code> <code>push_configured</code>), every new fare- or price-watch notification is also pushed to each of the owner's devices over FCM HTTP v1, in the background: <code>notification</code> = the notification's <code>title</code> / <code>body</code>, Android priority high (<code>normal</code> for <code>watch_expired</code> / <code>watch_error</code>), and string <code>data</code>:</p>
+<pre><code class="language-json">{&quot;kind&quot;: &quot;fare_drop&quot;, &quot;notification_id&quot;: &quot;42&quot;, &quot;link&quot;: &quot;/alerts?watch=7&quot;, &quot;watch_id&quot;: &quot;7&quot;}
+</code></pre>
+<p><code>link</code> is the web deep link (<code>data.links.alerts</code> of the notification: <code>/alerts?watch=&lt;id&gt;</code> for fare watches, <code>/alerts?kind=&lt;kind&gt;&amp;watch=&lt;id&gt;</code> for price watches); price watches add <code>watch_kind</code>. The notification itself is unchanged in <code>/api/notifications</code>. A deactivated user gets no pushes. A token is deleted only when FCM says it is dead (error code <code>UNREGISTERED</code>, or <code>INVALID_ARGUMENT</code> naming <code>message.token</code>); every other failure, including a bare <code>404</code> from a wrong Firebase project, keeps the token, is logged, and the notification stays in-app only.</p>
+<h3 id="post-apinearby">POST /api/nearby</h3>
+<p>Bucket: light_ai.</p>
+<pre><code class="language-json">{&quot;lat&quot;: 35.0116, &quot;lng&quot;: 135.7681, &quot;interests&quot;: [&quot;temples&quot;, &quot;food&quot;], &quot;limit&quot;: 8}
+</code></pre>
+<p><code>lat</code> −90…90, <code>lng</code> −180…180, <code>interests</code> optional (≤ 20, each trimmed and 1–60 characters; default: the saved preferences' interests), <code>limit</code> 1–20 (default 8). The nearest place in the local GeoNames table (towns of 1,000+ people) within 75 km is chosen; a ward or suburb yields to a place at least 10× bigger within 15 km ("Kamigyō-ku" → Kyoto). The existing activities agent then runs for "Place, Region, Country" ("Portland, Maine, United States"; the region is left out when it repeats the name, "Kyoto, Japan") with those interests and the caller's Taste Graph. → <code>200</code>:</p>
+<pre><code class="language-json">{
+  &quot;place&quot;: {&quot;name&quot;: &quot;Kyoto&quot;, &quot;region&quot;: &quot;Kyoto&quot;, &quot;country&quot;: &quot;Japan&quot;, &quot;country_code&quot;: &quot;JP&quot;,
+            &quot;lat&quot;: 35.02107, &quot;lng&quot;: 135.75385, &quot;distance_km&quot;: 1.4},
+  &quot;items&quot;: [{&quot;name&quot;: &quot;Fushimi Inari Taisha Early Morning Hike&quot;, &quot;category&quot;: &quot;culture&quot;,
+             &quot;similarity_score&quot;: 0.95, &quot;rating&quot;: 4.8, &quot;review_count&quot;: 12000,
+             &quot;source&quot;: &quot;getyourguide&quot;, &quot;booking_url&quot;: &quot;https://www.getyourguide.com/s/?q=...&quot;, &quot;...&quot;: &quot;...&quot;}]
+}
+</code></pre>
+<p><code>items</code> are the activities agent's <code>results</code>, unchanged (the shape of <code>POST /api/activities</code>), first <code>limit</code>. <code>region</code> is the state / province (GeoNames first-level division) name, or <code>null</code>. <code>distance_km</code> is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: <code>404 {"detail": {"code": "no_place", "message": "..."}}</code> when no known place is within 75 km; <code>502 {"detail": {"code": "agent_error", "message": "..."}}</code> when the agent fails (not cached).</p>
+<hr />
 <h2 id="reference-data">Reference data</h2>
 <h3 id="get-apiairportssearchqlimit">GET /api/airports/search?q=&amp;limit=</h3>
 <p>Airport and place typeahead (<code>limit</code> 1–50, default 10). Matches airport codes, cities, names and countries, plus GeoNames places and curated hints by folded name prefix ("kyoto" → ITM, KIX; "milan" → MXP, LIN, BGY). Rows: <code>iata_code, name, city, country, country_code</code>. Ordering and rules: <a href="../Place-and-Airport-Data/#autocomplete">Place and Airport Data</a>.</p>
@@ -2864,7 +3008,7 @@
 <hr />
 <h2 id="health">Health</h2>
 <h3 id="get-health">GET /health</h3>
-<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". Docker Compose uses this endpoint as the backend healthcheck.</p>
+<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
 <p>A deep check: one tiny Haiku call, cached for 5 minutes. Reports <code>llm</code> status, <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 

@@ -1097,6 +1097,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#unreleased-backend-for-the-android-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased: backend for the Android app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2026-11-05-price-watch-for-hotels-activities-and-whole-trips" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1262,6 +1273,11 @@
 <h1 id="changelog">Changelog</h1>
 <p>Changes since the project started on 2026-05-17. From 2026-08-30 on, every change went through a pull request; dates are merge dates (UTC). A "(#N)" inside a PR title refers to a backlog item, not a PR.</p>
 <hr />
+<h2 id="unreleased-backend-for-the-android-app">Unreleased: backend for the Android app</h2>
+<ul>
+<li>Push alerts: <code>POST /api/devices</code>, <code>GET /api/devices</code>, <code>DELETE /api/devices/{id}</code> and <code>POST /api/devices/unregister</code> (sign-out) manage the app's FCM tokens (table <code>devices</code>, at most 20 per user, tokens shown masked and never in URLs). With <code>FCM_SERVICE_ACCOUNT_FILE</code> set, every new fare- or price-watch notification is also pushed to the owner's devices over FCM HTTP v1 in the background (data <code>kind</code>, <code>notification_id</code>, <code>link</code>), only tokens FCM reports as dead are pruned, and failures never affect the alert. <code>/health</code> reports <code>push_configured</code>. <code>google-auth</code> is now a direct dependency.</li>
+<li>Near me: <code>POST /api/nearby {lat, lng, interests?, limit?}</code> returns the nearest known place with its region (local GeoNames data, up to 75 km) and the activities agent's things to do there, cached an hour per ~5 km cell; <code>404 no_place</code> when nothing is near. light_ai bucket.</li>
+</ul>
 <h2 id="2026-11-05-price-watch-for-hotels-activities-and-whole-trips">2026-11-05: price watch for hotels, activities and whole trips</h2>
 <ul>
 <li>Watch a hotel's stay price, an activity's per-person price or a whole saved trip's total, next to the flight fare watch. <em>Watch price</em> on hotel and activity cards, in My Plan and in chat; <em>Watch whole trip</em> on saved plans. The Alerts page gets tabs per kind and a card per kind (trip cards show a per-part breakdown).</li>
