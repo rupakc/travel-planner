@@ -574,7 +574,9 @@ def _title_similarity(a: str, b: str) -> float:
 # ── SerpAPI ───────────────────────────────────────────────────────────────────
 
 
-def _cache_key(query: str) -> str:
+def search_cache_key(query: str) -> str:
+    """Cache key of the Google search for ``query`` (callers count a cached
+    search as costing no SerpAPI call)."""
     return f"{_CACHE_PREFIX}:{_HL}:{_GL}:{' '.join(query.lower().split())}"
 
 
@@ -586,7 +588,7 @@ async def _search(query: str, api_key: str) -> dict:
     """{"results": organic_results, "fetched_at": iso} for ``query``; cached
     (shared 30-minute cache, api_key not in the key)."""
     cache = get_cache()
-    key = _cache_key(query)
+    key = search_cache_key(query)
     cached = cache.get(key)
     if cached is not None:
         return cached
@@ -630,7 +632,7 @@ async def _search(query: str, api_key: str) -> dict:
 def is_cached(query: str) -> bool:
     """True when ``query``'s Google results are in the shared cache, so
     searching it again spends no SerpAPI call."""
-    return get_cache().get(_cache_key(query)) is not None
+    return get_cache().get(search_cache_key(query)) is not None
 
 
 async def search_listings(query: str, api_key: str) -> list[ActivityListing]:

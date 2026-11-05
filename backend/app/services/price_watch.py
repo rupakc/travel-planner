@@ -344,7 +344,7 @@ def record_created(
             "lowest_price": obs.price,
             "check_count": 1,
             "last_checked_at": stamp,
-            "next_check_at": fare_watch._next_check(now, rand).isoformat(),
+            "next_check_at": fare_watch.next_check(now, rand).isoformat(),
             "last_observation": _observation_json(obs, stamp),
             "reference_looks": (
                 {"baseline": obs.breakdown} if obs.breakdown is not None else None
@@ -371,7 +371,7 @@ def _latest_alert(watch: dict) -> tuple[datetime, float] | None:
     at, price = watch.get("last_notified_at"), watch.get("last_notified_price")
     if not at or price is None:
         return None
-    return fare_watch._parse_ts(at), price
+    return fare_watch.parse_ts(at), price
 
 
 def evaluate(
@@ -532,7 +532,7 @@ async def check_watch(
         logger.warning("Price watch %d: no source for kind %r", watch_id, watch["kind"])
         watch = price_watch_db.update_watch(
             watch_id,
-            next_check_at=fare_watch._next_check(now, rand).isoformat(),
+            next_check_at=fare_watch.next_check(now, rand).isoformat(),
             lease_until=None,
             updated_at=stamp,
         )
@@ -567,7 +567,7 @@ async def check_watch(
             )
         watch = price_watch_db.update_watch(
             watch_id,
-            next_check_at=fare_watch._next_day(now, rand).isoformat(),
+            next_check_at=fare_watch.next_day(now, rand).isoformat(),
             lease_until=None,
             updated_at=stamp,
         )
@@ -580,7 +580,7 @@ async def check_watch(
             logger.warning("SerpAPI quota exceeded during price watch %d", watch_id)
             watch = price_watch_db.update_watch(
                 watch_id,
-                next_check_at=fare_watch._next_day(now, rand).isoformat(),
+                next_check_at=fare_watch.next_day(now, rand).isoformat(),
                 lease_until=None,
                 updated_at=stamp,
             )
@@ -675,7 +675,7 @@ def _record_unavailable(
             "errored", price_watch_db.update_watch(watch["id"], **fields), note
         )
     fields.update(
-        last_error=None, next_check_at=fare_watch._next_check(now, rand).isoformat()
+        last_error=None, next_check_at=fare_watch.next_check(now, rand).isoformat()
     )
     return CheckOutcome(
         "unavailable", price_watch_db.update_watch(watch["id"], **fields)
@@ -716,7 +716,7 @@ def _record_success(
         "check_count": (watch.get("check_count") or 0) + 1,
         "last_observation": _observation_json(obs, stamp),
         "last_checked_at": stamp,
-        "next_check_at": fare_watch._next_check(now, rand).isoformat(),
+        "next_check_at": fare_watch.next_check(now, rand).isoformat(),
         "lease_until": None,
         "updated_at": stamp,
     }

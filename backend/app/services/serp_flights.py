@@ -139,7 +139,7 @@ def _map_leg(flights_arr: list, layovers: list, date_str: str) -> dict:
     }
 
 
-def _google_flights_url(
+def google_flights_url(
     origin: str, destination: str, dep_date: str, ret_date: str | None
 ) -> str:
     # A resolved city can carry several codes ("LHR,LGW,STN"); the link takes one
@@ -175,7 +175,7 @@ def _map_result(
         "trip_type": trip_type,
         "outbound": outbound_leg,
         "return": return_leg,
-        "booking_url": _google_flights_url(origin, destination, dep_date, ret_date),
+        "booking_url": google_flights_url(origin, destination, dep_date, ret_date),
         "source": "google_flights",
         # Evidence for the verification label — set only here, never by the LLM
         "live_fare": True,

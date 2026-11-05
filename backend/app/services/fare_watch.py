@@ -100,7 +100,7 @@ def travellers(n: int) -> str:
     return f"total for {n} traveller{'s' if n != 1 else ''}"
 
 
-def _parse_ts(value: str) -> datetime:
+def parse_ts(value: str) -> datetime:
     ts = datetime.fromisoformat(value.replace("Z", "+00:00"))
     return ts if ts.tzinfo else ts.replace(tzinfo=UTC)
 
@@ -110,7 +110,7 @@ def _links(watch: dict, dep: str, ret: str | None, cheapest: bool = False) -> di
     return {
         "alerts": alerts,
         "replan": alerts + "&replan=1" + ("&cheapest=1" if cheapest else ""),
-        "book": serp_flights._google_flights_url(
+        "book": serp_flights.google_flights_url(
             watch["origin_code"], watch["destination_code"], dep, ret
         ),
     }
@@ -203,7 +203,7 @@ def _nearby_candidate(watch: dict, check: FareCheck) -> tuple[str, float, float]
 def _latest_alert(watch: dict) -> tuple[datetime, float] | None:
     """When and at what price the watch last alerted (either signal)."""
     alerts = [
-        (_parse_ts(watch[at]), watch[price])
+        (parse_ts(watch[at]), watch[price])
         for at, price in (
             ("last_notified_at", "last_notified_price"),
             ("cheaper_notified_at", "cheaper_notified_price"),
@@ -435,13 +435,13 @@ async def fetch_fares(watch: dict, api_key: str) -> FareCheck:
 _budget_logged_day: str | None = None
 
 
-def _next_day(now: datetime, rand: Callable[[], float]) -> datetime:
+def next_day(now: datetime, rand: Callable[[], float]) -> datetime:
     """Early next UTC day, spread over its first hour."""
     midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
     return midnight.replace(tzinfo=UTC) + timedelta(minutes=int(rand() * 59))
 
 
-def _next_check(now: datetime, rand: Callable[[], float]) -> datetime:
+def next_check(now: datetime, rand: Callable[[], float]) -> datetime:
     factor = 1 + JITTER * (2 * rand() - 1)
     return now + timedelta(hours=settings.fare_watch_interval_hours * factor)
 
@@ -520,7 +520,7 @@ async def check_watch(
             )
         watch = fare_watch_db.update_watch(
             watch_id,
-            next_check_at=_next_day(now, rand).isoformat(),
+            next_check_at=next_day(now, rand).isoformat(),
             lease_until=None,
             updated_at=stamp,
         )
@@ -533,7 +533,7 @@ async def check_watch(
             logger.warning("SerpAPI quota exceeded during fare watch %d", watch_id)
             watch = fare_watch_db.update_watch(
                 watch_id,
-                next_check_at=_next_day(now, rand).isoformat(),
+                next_check_at=next_day(now, rand).isoformat(),
                 lease_until=None,
                 updated_at=stamp,
             )
@@ -608,7 +608,7 @@ def _record_success(
         "failure_count": 0,
         "last_error": None,
         "last_checked_at": stamp,
-        "next_check_at": _next_check(now, rand).isoformat(),
+        "next_check_at": next_check(now, rand).isoformat(),
         "lease_until": None,
         "updated_at": stamp,
     }

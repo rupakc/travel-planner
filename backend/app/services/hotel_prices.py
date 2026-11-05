@@ -292,11 +292,14 @@ def _base_params(ci: str, co: str, adults: int, rooms: int, api_key: str) -> dic
     }
 
 
-def _find_key(q: str, ci: str, co: str, adults: int, rooms: int) -> str:
+def find_cache_key(q: str, ci: str, co: str, adults: int, rooms: int) -> str:
+    """Cache key of a ``find_properties`` search (callers count a cached
+    search as costing no SerpAPI call)."""
     return f"serp-hotels:find:{q.strip().lower()}:{ci}:{co}:{adults}:{rooms}"
 
 
-def _price_key(token: str, ci: str, co: str, adults: int, rooms: int) -> str:
+def price_cache_key(token: str, ci: str, co: str, adults: int, rooms: int) -> str:
+    """Cache key of a ``price_property`` look (as ``find_cache_key``)."""
     return f"serp-hotels:price:{token}:{ci}:{co}:{adults}:{rooms}"
 
 
@@ -310,14 +313,14 @@ def find_is_cached(
     (no SerpAPI call)? Lets callers count the calls they really spend."""
     ci, co = str(check_in), str(check_out)
     q = " ".join(part.strip() for part in (name, city) if part and part.strip())
-    return _find_key(q, ci, co, adults, rooms) in get_cache()
+    return find_cache_key(q, ci, co, adults, rooms) in get_cache()
 
 
 def price_is_cached(
     property_token: str, check_in: Any, check_out: Any, adults: int, rooms: int = 1
 ) -> bool:
     """Would ``price_property`` with these arguments answer from the cache?"""
-    key = _price_key(property_token, str(check_in), str(check_out), adults, rooms)
+    key = price_cache_key(property_token, str(check_in), str(check_out), adults, rooms)
     return key in get_cache()
 
 
@@ -333,7 +336,7 @@ async def find_properties(
     """Google Hotels properties for "<name> <city>" on these dates."""
     ci, co = _check_args(check_in, check_out, adults, rooms)
     q = " ".join(part.strip() for part in (name, city) if part and part.strip())
-    key = _find_key(q, ci, co, adults, rooms)
+    key = find_cache_key(q, ci, co, adults, rooms)
     cache = get_cache()
     if key in cache:
         return list(cache[key])
@@ -364,7 +367,7 @@ async def price_property(
     property (verified live with ``q="hotel"``).
     """
     ci, co = _check_args(check_in, check_out, adults, rooms)
-    key = _price_key(property_token, ci, co, adults, rooms)
+    key = price_cache_key(property_token, ci, co, adults, rooms)
     cache = get_cache()
     if key in cache:
         cached = cache[key]  # copy: callers may mutate ``observed``

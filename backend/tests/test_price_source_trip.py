@@ -117,7 +117,7 @@ class Stubs:
     async def find_properties(self, name, city, ci, co, adults, api_key, rooms=1):
         self.calls.append(("hotel_find", name, city, ci, co, adults, rooms))
         q = f"{name} {city}"
-        get_cache()[hotel_prices._find_key(q, ci, co, adults, rooms)] = ()
+        get_cache()[hotel_prices.find_cache_key(q, ci, co, adults, rooms)] = ()
         return list(self.hotel_offers)
 
     async def price_property(self, token, ci, co, adults, api_key, rooms=1, **kw):
@@ -125,7 +125,7 @@ class Stubs:
         item = self.hotel_prices.pop(0)
         if isinstance(item, Exception):
             raise item
-        get_cache()[hotel_prices._price_key(token, ci, co, adults, rooms)] = item
+        get_cache()[hotel_prices.price_cache_key(token, ci, co, adults, rooms)] = item
         return item
 
     async def find_listings(self, name, city, api_key):
@@ -134,7 +134,7 @@ class Stubs:
         cache = get_cache()
         for provider in ("getyourguide", "viator"):
             q = activity_prices.build_query(name, city, provider)
-            cache[activity_prices._cache_key(q)] = {"results": []}
+            cache[activity_prices.search_cache_key(q)] = {"results": []}
             best = activity_prices.match_listing(name, found, city)
             if best is not None and not best.is_category:
                 break  # the Viator query only runs without a GYG match
@@ -145,7 +145,7 @@ class Stubs:
         item = self.activity_prices[listing.url].pop(0)
         if isinstance(item, Exception):
             raise item
-        get_cache()[activity_prices._cache_key(query)] = {"results": []}
+        get_cache()[activity_prices.search_cache_key(query)] = {"results": []}
         return item
 
     def count(self, kind):
@@ -437,7 +437,9 @@ def test_cached_lookups_are_free(stubs):
     plan = _plan(user)
     cache = get_cache()
     cache[
-        hotel_prices._find_key("Lumen Hotel Lisbon", "2026-12-10", "2026-12-14", 2, 1)
+        hotel_prices.find_cache_key(
+            "Lumen Hotel Lisbon", "2026-12-10", "2026-12-14", 2, 1
+        )
     ] = ()
     created = _create(user, plan["id"])
     assert created.baseline.calls == 3
@@ -552,7 +554,7 @@ def test_check_reports_the_calls_it_made(stubs):
     stubs.activity_prices = {u0: [_ap(u0, 22.87)], u1: [_ap(u1, 33.46)]}
     # activity-1's search is already cached: it costs nothing
     q1 = _by_id(created.subject["components"])["activity-1"]["subject"]["query"]
-    get_cache()[activity_prices._cache_key(q1)] = {"results": []}
+    get_cache()[activity_prices.search_cache_key(q1)] = {"results": []}
     w = _watch(created)
     assert trip.SOURCE.estimate_calls(w) == 3
     assert run(trip.SOURCE.check(w, "k")).calls == 3
@@ -603,7 +605,7 @@ def test_check_reprices_live_parts_and_holds_estimates(stubs):
 def test_check_counts_cached_answers_as_free(stubs):
     created = _created_with_prices(stubs)
     h = _by_id(created.subject["components"])["hotel"]["subject"]
-    key = hotel_prices._price_key(
+    key = hotel_prices.price_cache_key(
         h["property_token"], h["check_in"], h["check_out"], h["adults"], h["rooms"]
     )
     get_cache()[key] = _hp(398.0)

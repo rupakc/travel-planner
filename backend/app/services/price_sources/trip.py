@@ -159,7 +159,7 @@ def _now() -> str:
 
 
 def _money(amount: float, currency: str = "USD") -> str:
-    """"$22.87" / "$30" / "€24" / "$1,234" — the UI's formatPrice rule."""
+    """Like "$22.87", "$30", "€24", "$1,234": the UI's formatPrice rule."""
     return format_price(amount, currency)
 
 
@@ -250,18 +250,18 @@ def _flight_cost(fw: dict) -> int:
 
 def _hotel_find_key(name: str, city: str, ci: str, co: str, n: int) -> str:
     q = " ".join(p.strip() for p in (name, city) if p and p.strip())
-    return hotel_prices._find_key(q, ci, co, n, _rooms(n))
+    return hotel_prices.find_cache_key(q, ci, co, n, _rooms(n))
 
 
 def _hotel_price_key(s: dict) -> str:
-    return hotel_prices._price_key(
+    return hotel_prices.price_cache_key(
         s["property_token"], s["check_in"], s["check_out"], s["adults"], s["rooms"]
     )
 
 
 def _activity_keys(name: str, city: str) -> list[str]:
     return [
-        activity_prices._cache_key(activity_prices.build_query(name, city, p))
+        activity_prices.search_cache_key(activity_prices.build_query(name, city, p))
         for p in ("getyourguide", "viator")
     ]
 
@@ -435,7 +435,7 @@ async def _create_flight(d: dict, api_key: str):
             source="google_flights",
             status="ok",
             subject=fare,
-            link=serp_flights._google_flights_url(
+            link=serp_flights.google_flights_url(
                 fare["origin_code"],
                 fare["destination_code"],
                 fare["departure_date"],
@@ -628,7 +628,7 @@ def _check_cost(comp: dict) -> int:
         return _flight_cost(s)
     if comp["type"] == "hotel":
         return _uncached([_hotel_price_key(s)])
-    return _uncached([activity_prices._cache_key(s["query"])])
+    return _uncached([activity_prices.search_cache_key(s["query"])])
 
 
 async def _look(comp: dict, api_key: str):
@@ -678,7 +678,7 @@ async def _look(comp: dict, api_key: str):
         query=s["query"],
     )
     ap, calls, exc = await _counted(
-        [activity_prices._cache_key(s["query"])],
+        [activity_prices.search_cache_key(s["query"])],
         activity_prices.price_listing(listing, s["query"], api_key),
     )
     if exc is not None:

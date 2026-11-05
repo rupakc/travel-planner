@@ -209,13 +209,13 @@ _GONE = ("Nothing to stop", "That price watch no longer exists.")
 @router.get("/price-watches/unsubscribe", response_class=HTMLResponse)
 def unsubscribe_confirm(token: str = Query("")):
     """Confirmation page only: link scanners follow every GET."""
-    from .fare_watches import _page
+    from .fare_watches import html_page
 
     watch_id, watch = _unsubscribe_target(token)
     if watch_id is None:
-        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
+        return HTMLResponse(html_page(*_BAD_LINK), status_code=400)
     if watch is None:
-        return HTMLResponse(_page(*_GONE))
+        return HTMLResponse(html_page(*_GONE))
     action = html.escape(f"/api/price-watches/unsubscribe?token={token}")
     form = (
         f'<form method="post" action="{action}" style="margin:0 0 16px">'
@@ -224,7 +224,7 @@ def unsubscribe_confirm(token: str = Query("")):
         "cursor:pointer'>Stop emails for this price</button></form>"
     )
     return HTMLResponse(
-        _page(
+        html_page(
             f"Stop emails about {watch['title']}?",
             "We'll keep watching this price in the app; only the emails stop. "
             "You can turn them back on any time.",
@@ -237,16 +237,16 @@ def unsubscribe_confirm(token: str = Query("")):
 def unsubscribe(token: str = Query("")):
     """Turns email off for one price watch (the form above, or a mail
     client's RFC 8058 one-click POST)."""
-    from .fare_watches import _page
+    from .fare_watches import html_page
 
     watch_id, watch = _unsubscribe_target(token)
     if watch_id is None:
-        return HTMLResponse(_page(*_BAD_LINK), status_code=400)
+        return HTMLResponse(html_page(*_BAD_LINK), status_code=400)
     if watch is None:
-        return HTMLResponse(_page(*_GONE))
+        return HTMLResponse(html_page(*_GONE))
     price_watch_db.update_watch(watch_id, email_enabled=False)
     return HTMLResponse(
-        _page(
+        html_page(
             "Done — we won't email you about this price",
             f"Emails for {watch['title']} are off. We'll keep watching it in the "
             "app, where you can turn emails back on any time.",
