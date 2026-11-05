@@ -74,3 +74,7 @@ export function priceCheckMessage(res) {
       return { tone: 'neutral', text: 'Nothing was checked: this price isn’t being watched right now.' }
   }
 }
+
+/** Dialog wording per kind ("Watch this hotel" …); unknown kinds read generically. */
+const KIND_NOUNS = { hotel: 'hotel', activity: 'activity', trip: 'trip' }
+export const kindNoun = (kind) => KIND_NOUNS[kind] || 'price'

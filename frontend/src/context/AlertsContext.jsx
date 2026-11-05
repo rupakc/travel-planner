@@ -2,8 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from './AuthContext'
 import {
   getCapabilities, getUnreadCount, listNotifications, markNotificationsRead, matchFareWatch,
+  matchPriceWatch,
 } from '../services/api'
 import { newestUnseen, tripKey } from '../utils/fareWatch'
+import { matchKey, priceWatchBody } from '../utils/priceWatch'
 
 /**
  * Fare alerts state shared by the bell, the toast, the Alerts page and every
@@ -21,7 +23,7 @@ const INERT = {
   unread: 0, refresh: async () => {}, markRead: async () => {}, markSeen: () => {}, toast: null,
   showToast: () => {}, dismissToast: () => {},
   caps: { serpapi: false, fareWatch: false, email: false },
-  watchFor: async () => null, watchVersion: 0, watchesChanged: () => {},
+  watchFor: async () => null, priceWatchFor: async () => null, watchVersion: 0, watchesChanged: () => {},
   permission: 'unsupported', shouldOfferBrowserAlerts: () => false, answerBrowserAlerts: async () => {},
 }
 const AlertsContext = createContext(INERT)
@@ -155,6 +157,18 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
     return matches.current.get(key)
   }, [token])
 
+  /** The user's price watch (hotel / activity / trip) for this subject, or null. */
+  const priceWatchFor = useCallback((kind, spec) => {
+    const key = `${token}|price|${matchKey(kind, spec)}`
+    if (!matches.current.has(key)) {
+      matches.current.set(key, matchPriceWatch(priceWatchBody(kind, spec), token).catch(() => {
+        matches.current.delete(key)
+        return null
+      }))
+    }
+    return matches.current.get(key)
+  }, [token])
+
   /** After creating / editing / deleting watches: entry points re-read. */
   const watchesChanged = useCallback(() => {
     matches.current.clear()
@@ -175,9 +189,9 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
 
   const value = useMemo(() => ({
     unread, refresh, markRead, markSeen, toast, showToast: setToast, dismissToast: () => setToast(null),
-    caps, watchFor, watchVersion, watchesChanged, permission,
+    caps, watchFor, priceWatchFor, watchVersion, watchesChanged, permission,
     shouldOfferBrowserAlerts, answerBrowserAlerts,
-  }), [unread, refresh, markRead, markSeen, toast, caps, watchFor, watchVersion, watchesChanged, permission,
+  }), [unread, refresh, markRead, markSeen, toast, caps, watchFor, priceWatchFor, watchVersion, watchesChanged, permission,
     shouldOfferBrowserAlerts, answerBrowserAlerts])
 
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>
@@ -198,5 +212,19 @@ export function useWatchFor(trip, enabled = true) {
     watchFor(trip).then(w => { if (active) setWatch(w) })
     return () => { active = false }
   }, [key, enabled, watchVersion, watchFor]) // trip is identified by its key
+  return [watch, setWatch]
+}
+
+/** The user's price watch of `kind` for `spec` (null when not watched), kept fresh. */
+export function usePriceWatchFor(kind, spec, enabled = true) {
+  const { priceWatchFor, watchVersion } = useAlerts()
+  const [watch, setWatch] = useState(null)
+  const key = spec ? matchKey(kind, spec) : ''
+  useEffect(() => {
+    if (!enabled || !spec) { setWatch(null); return undefined }
+    let active = true
+    priceWatchFor(kind, spec).then(w => { if (active) setWatch(w) })
+    return () => { active = false }
+  }, [key, enabled, watchVersion, priceWatchFor]) // spec is identified by its key
   return [watch, setWatch]
 }
