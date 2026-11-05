@@ -15,6 +15,7 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchHotelButton from '../components/alerts/WatchHotelButton'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
@@ -134,7 +135,16 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
   )
 }
 
-function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
+/** `messages` with `params` (a search_context event) kept on the assistant
+ * message at `idx`: its hotel cards date their stay from their own search. */
+export function withSearchContext(messages, idx, params) {
+  if (!messages[idx]) return messages
+  const updated = [...messages]
+  updated[idx] = { ...updated[idx], searchContext: params }
+  return updated
+}
+
+export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand, searchContext = null }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No hotels found</p>
   const LIMIT = 5
   const selected = selections.hotel
@@ -156,9 +166,10 @@ function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExp
               <div className="flex-1 min-w-0 mr-2">
                 <p className="font-medium text-gray-900 truncate">{h.name}</p>
                 <p className="text-gray-500">{h.location}</p>
-                <div className="flex items-center gap-1 mt-0.5">
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
                   {h.star_rating > 0 && <div className="flex">{[...Array(Math.round(h.star_rating))].map((_, j) => <Star key={j} size={8} className="text-yellow-400 fill-yellow-400" />)}</div>}
                   {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5 ml-1"><ExternalLink size={9} /> Book</a>}
+                  <span className="ml-1"><WatchHotelButton hotel={h} searchData={searchContext} variant="compact" source="chat" /></span>
                 </div>
               </div>
               <div className="text-right shrink-0">
@@ -477,7 +488,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
 
 // ─── Section wrapper with collapsible header ─────────────────────────────────
 
-function ChatSection({ section, data, status, selections, onSelect }) {
+function ChatSection({ section, data, status, selections, onSelect, searchContext = null }) {
   const [open, setOpen] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
   const cfg = AGENT_CONFIG[section]
@@ -488,7 +499,7 @@ function ChatSection({ section, data, status, selections, onSelect }) {
 
   const renderers = {
     flights:        () => <ChatFlightsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
-    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} searchContext={searchContext} />,
     activities:     () => <ChatActivitiesSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
     visa:           () => <ChatVisaSection data={data} />,
     sim:            () => <ChatSimSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
@@ -525,7 +536,7 @@ function ChatSection({ section, data, status, selections, onSelect }) {
 
 // ─── Planning message with streamed sections ─────────────────────────────────
 
-function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating }) {
+function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating, searchContext = null }) {
   const sectionOrder = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
   // Include itinerary immediately once the backend signals it has started generating
   const arrived = sectionOrder.filter(s => sections[s] || (s === 'itinerary' && itineraryGenerating))
@@ -545,7 +556,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
         const isLoading = !sections[section] && section === 'itinerary' && itineraryGenerating
         const status = isLoading ? 'generating' : (sectionStatuses[section] || 'done')
         return (
-          <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} />
+          <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} searchContext={searchContext} />
         )
       })}
       {searching.map(section => {
@@ -738,6 +749,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
               <p className="text-sm font-medium">{selections.hotel.name}</p>
               <p className="text-xs text-gray-500">${selections.hotel.price_per_night_usd?.toLocaleString()}/night{selections.hotel.total_price_usd ? ` · $${selections.hotel.total_price_usd.toLocaleString()} total` : ''}</p>
               {selections.hotel.booking_url && <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium mt-1"><ExternalLink size={10} /> Book</a>}
+              <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchContext} source="chat_plan" /></div>
             </div>
           )}
 
@@ -1140,6 +1152,7 @@ export default function ChatPage() {
         planningDone: m.planningDone || false, error: m.error || false,
         comprehensiveItinerary: m.comprehensiveItinerary || null,
         tripMap: m.tripMap || null,
+        searchContext: m.searchContext || null,
       })),
       sessionContext,
       lastSearchContext,
@@ -1348,6 +1361,7 @@ export default function ChatPage() {
           setSessionContext(event.context)
         } else if (event.type === 'search_context') {
           setLastSearchContext(event.params)
+          setMessages(prev => withSearchContext(prev, assistantIdx, event.params))
         } else if (event.type === 'suggestions') {
           setMessages(prev => {
             const updated = [...prev]
@@ -2114,7 +2128,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
 
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
-function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
+export function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
   const hasSections = message.planning || message.tripMap || Object.keys(message.sections || {}).length > 0
@@ -2151,6 +2165,7 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
                 selections={selections}
                 onSelect={onSelect}
                 itineraryGenerating={message.itineraryGenerating}
+                searchContext={message.searchContext || null}
               />
             )}
             {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (

@@ -44,11 +44,10 @@ import httpx
 from ..core.cache import get_cache
 from . import serp_flights
 from .name_match import STOP_WORDS, distinctive_words, min_matches, words
-from .serp_flights import SerpAPIError
+from .serp_flights import SERP_URL, SerpAPIError
 
 logger = logging.getLogger(__name__)
 
-_SERP_URL = "https://serpapi.com/search"
 _HL, _GL = "en", "us"
 _CACHE_PREFIX = "activity_prices:google"  # shared cache: TTL 30 min (settings)
 
@@ -490,7 +489,7 @@ async def _search(query: str, api_key: str) -> dict:
         "api_key": api_key,
     }
     try:
-        resp = await serp_flights._get_client().get(_SERP_URL, params=params)
+        resp = await serp_flights.get_serp_client().get(SERP_URL, params=params)
     except httpx.TimeoutException as exc:
         raise SerpAPIError(_redact(f"SerpAPI timeout: {exc}", api_key)) from None
     except httpx.RequestError as exc:

@@ -69,7 +69,8 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
  * - `Details`: component rendered under the price ({ watch }), e.g. a trip
  *   breakdown or the matched hotel's nightly rate;
  * - `openLabel`: wording of the listing link (default "Open listing");
- * - `unitLabel`: wording after the unit price (default "per unit").
+ * - `unitLabel`: wording after the unit price (default "per unit");
+ * - `unavailableText`: what to say while it isn't available for the dates.
  * Actions call back up (as WatchCard): `busy` names the action in flight
  * ('check' | 'save' | 'delete' | 'status'), `message` the latest outcome.
  */
@@ -77,6 +78,7 @@ export default function PriceWatchCard({
   watch, highlighted = false, busy = null, message = null, emailAvailable = false, hasEmail = false,
   onCheck, onUpdate, onDelete, onOpen, now = new Date(), Details = null,
   openLabel = 'Open listing', unitLabel = 'per unit',
+  unavailableText = 'Not available for your dates right now. We’ll keep checking and won’t alert you until it’s back.',
 }) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -123,7 +125,7 @@ export default function PriceWatchCard({
 
       {!past && isUnavailable(watch) && (
         <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          Not available for your dates right now. We’ll keep checking and won’t alert you until it’s back.
+          {unavailableText}
         </p>
       )}
 
