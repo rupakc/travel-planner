@@ -9,7 +9,7 @@ import { track } from '../../utils/analytics'
 import { kindOf, keepDeltaTogether } from './alertKinds'
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
-  const { Icon, tone, action } = kindOf(n.kind)
+  const { Icon, tone, action } = kindOf(n.kind, n.data)
   const unread = !n.read_at
   return (
     <li>

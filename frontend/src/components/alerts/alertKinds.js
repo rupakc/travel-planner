@@ -18,7 +18,16 @@ export const ALERT_KINDS = {
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
 }
 
-export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+// watch_expired / watch_error are shared by every watch kind: only trip
+// watches (data.watch_kind === 'trip') get trip wording; fares keep theirs.
+const TRIP_SHARED = {
+  watch_expired: { ...ALERT_KINDS.watch_expired, action: 'See trip' },
+  watch_error: { ...ALERT_KINDS.watch_error, action: 'Check trip' },
+}
+
+/** Style and action wording for a notification (`data` picks per-kind wording). */
+export const kindOf = (kind, data = null) =>
+  (data?.watch_kind === 'trip' && TRIP_SHARED[kind]) || ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
 
 /** Keeps a price delta such as "(−$70)" on one line when a title wraps. */
 export function keepDeltaTogether(text) {

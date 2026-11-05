@@ -15,6 +15,7 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchTripButton from '../components/alerts/WatchTripButton'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
@@ -703,6 +704,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           <CostBreakdown selections={selections} searchData={searchContext} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchContext} selections={selections} source="chat" />
+          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchContext, selections } : null} showHint source="chat_plan" />
 
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
@@ -929,6 +931,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                         {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
                       </button>
                     </div>
+                    <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
                         ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>

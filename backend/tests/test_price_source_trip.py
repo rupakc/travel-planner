@@ -520,6 +520,24 @@ def test_check_reprices_live_parts_and_holds_estimates(stubs):
     }
 
 
+def test_check_counts_cached_answers_as_free(stubs):
+    created = _created_with_prices(stubs)
+    h = _by_id(created.subject["components"])["hotel"]["subject"]
+    key = hotel_prices._price_key(
+        h["property_token"], h["check_in"], h["check_out"], h["adults"], h["rooms"]
+    )
+    get_cache()[key] = _hp(398.0)
+    stubs.fares = [612.0]
+    stubs.hotel_prices = [_hp(398.0)]
+    stubs.activity_prices = {
+        u: [_ap(u, 22.87)]
+        for u in (_url(created, "activity-0"), _url(created, "activity-1"))
+    }
+    w = _watch(created)
+    assert trip.SOURCE.estimate_calls(w) == 3
+    assert run(trip.SOURCE.check(w, "k")).calls == 3
+
+
 def test_estimate_calls_never_exceeds_eight(stubs):
     names = [f"Tour number {i}" for i in range(8)]
     stubs.listings = {n: [_listing(n, 10.0, slug=f"t{i}")] for i, n in enumerate(names)}

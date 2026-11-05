@@ -41,6 +41,7 @@ import LinkPlanBanner from '../components/LinkPlanBanner'
 import { ensureMustInclude, cityForDay } from '../utils/mustInclude'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchTripButton from '../components/alerts/WatchTripButton'
 import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -2689,6 +2690,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
 
           <CostBreakdown selections={selections} searchData={searchData} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
+          <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint source="my_plan" />
 
           {/* Selected flight */}
           {selections.flight && (
@@ -3096,6 +3098,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                         {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
                       </button>
                     </div>
+                    <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
                         ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
