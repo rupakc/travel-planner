@@ -716,24 +716,42 @@ async def run_scheduler(
     *,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> None:
-    """Every FARE_WATCH_TICK_SECONDS, check the due fare watches, then the
-    due price watches (``price_watch.run_due``). Runs until cancelled; one
-    bad pass is logged and the loop goes on."""
-    from . import price_watch
-
+    """Every FARE_WATCH_TICK_SECONDS, check the due fare watches, then start
+    a pass over the due price watches (``price_watch.run_due``) as its own
+    task, so a slow price pass never delays the next fare pass. At most one
+    price pass is in flight: a tick that finds one still running starts
+    none. Runs until cancelled, then cancels and awaits the price pass in
+    flight; one bad pass is logged and the loop goes on."""
     logger.info(
         "Fare watch scheduler started (tick %ss)", settings.fare_watch_tick_seconds
     )
-    while True:
-        try:
-            await run_due(api_key)
-        except Exception:
-            logger.exception("Fare watch scheduler tick failed")
-        try:
-            await price_watch.run_due(api_key)
-        except Exception:
-            logger.exception("Price watch scheduler tick failed")
-        await sleep(settings.fare_watch_tick_seconds)
+    price_task: asyncio.Task | None = None
+    try:
+        while True:
+            try:
+                await run_due(api_key)
+            except Exception:
+                logger.exception("Fare watch scheduler tick failed")
+            if price_task is None or price_task.done():
+                price_task = asyncio.create_task(_price_pass(api_key))
+            await sleep(settings.fare_watch_tick_seconds)
+    finally:
+        if price_task is not None and not price_task.done():
+            price_task.cancel()
+            try:
+                await price_task
+            except asyncio.CancelledError:
+                pass
+
+
+async def _price_pass(api_key: str) -> None:
+    """One price-watch pass; a crash is logged, never raised."""
+    from . import price_watch
+
+    try:
+        await price_watch.run_due(api_key)
+    except Exception:
+        logger.exception("Price watch scheduler tick failed")
 
 
 def start_scheduler() -> asyncio.Task | None:

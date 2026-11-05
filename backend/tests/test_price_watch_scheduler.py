@@ -173,6 +173,7 @@ async def test_one_loop_runs_fare_and_price_passes_and_survives_errors(monkeypat
 
     async def fake_sleep(seconds):
         sleeps.append(seconds)
+        await asyncio.sleep(0)  # the price pass runs in its own task
         if len(sleeps) == 3:
             raise asyncio.CancelledError
 
@@ -183,6 +184,59 @@ async def test_one_loop_runs_fare_and_price_passes_and_survives_errors(monkeypat
         await fare_watch.run_scheduler("k", sleep=fake_sleep)
     assert calls == [("fare", "k"), ("price", "k")] * 3
     assert sleeps == [7, 7, 7]
+
+
+async def test_a_slow_price_pass_never_delays_the_fare_pass(monkeypatch):
+    """The price pass runs as its own task: fare passes keep their tick
+    while it runs, a second price pass waits for the first to finish, and
+    stopping the scheduler cancels and awaits the one in flight."""
+    events = []
+    gates = [asyncio.Event(), asyncio.Event()]  # one per price pass
+    cancelled = []
+
+    async def fare_pass(api_key, **kw):
+        events.append("fare")
+        return []
+
+    async def price_pass(api_key, **kw):
+        gate = gates[events.count("price start")]
+        events.append("price start")
+        try:
+            await gate.wait()  # slower than any number of fare ticks
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+        events.append("price end")
+        return []
+
+    ticks = 0
+
+    async def fake_sleep(seconds):
+        nonlocal ticks
+        ticks += 1
+        await asyncio.sleep(0)
+        if ticks == 3:
+            gates[0].set()  # the first pass finishes during the third tick
+            await asyncio.sleep(0)
+        if ticks == 5:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(fare_watch, "run_due", fare_pass)
+    monkeypatch.setattr(price_watch, "run_due", price_pass)
+    with pytest.raises(asyncio.CancelledError):
+        # a scheduler stuck behind the price pass would never finish
+        await asyncio.wait_for(fare_watch.run_scheduler("k", sleep=fake_sleep), 2)
+    assert events == [
+        "fare",
+        "price start",  # tick 1: starts, stays in flight
+        "fare",  # tick 2: not delayed, no second price pass
+        "fare",  # tick 3: still in flight; it ends while we sleep
+        "price end",
+        "fare",
+        "price start",  # tick 4: the next price pass starts
+        "fare",  # tick 5: in flight again; stop cancels it
+    ]
+    assert cancelled == [True]
 
 
 def test_lifespan_creates_the_price_watch_tables(monkeypatch):
