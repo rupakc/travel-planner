@@ -15,6 +15,7 @@ estimate parts held fixed.
 """
 
 import asyncio
+import importlib
 import logging
 import random
 from collections.abc import Callable
@@ -180,6 +181,27 @@ def get_source(kind: str) -> PriceSource | None:
 
 def registered_kinds() -> list[str]:
     return sorted(_SOURCES)
+
+
+# Modules that provide the built-in sources, each exposing ``SOURCE`` (a
+# PriceSource instance). One line per kind, e.g. "app.services.hotel_source".
+SOURCE_MODULES: tuple[str, ...] = ()
+
+
+def register_builtin_sources() -> list[str]:
+    """Import every module in SOURCE_MODULES and register its ``SOURCE``
+    (called once at startup). A module that fails to load is logged and
+    skipped: its watches wait, without strikes, until it loads again."""
+    kinds = []
+    for name in SOURCE_MODULES:
+        try:
+            source = importlib.import_module(name).SOURCE
+            register_source(source)
+        except Exception:
+            logger.exception("Price source module %s failed to load", name)
+            continue
+        kinds.append(source.kind)
+    return kinds
 
 
 def step_for(source: PriceSource) -> price_rules.Step:

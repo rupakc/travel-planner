@@ -51,7 +51,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import fare_watch
+from .services import fare_watch, price_watch
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 
@@ -85,6 +85,7 @@ async def lifespan(app: FastAPI):
     create_fare_watch_tables()
     create_price_watch_tables()
     create_notifications_table()
+    price_watch.register_builtin_sources()
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()

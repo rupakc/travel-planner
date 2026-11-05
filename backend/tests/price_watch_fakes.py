@@ -85,3 +85,7 @@ def gone() -> PriceObservation:
     return PriceObservation(
         price=None, status="unavailable", source="fake_live", calls=1
     )
+
+
+# For register_builtin_sources(): a source module exposes SOURCE.
+SOURCE = FakeSource()

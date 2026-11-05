@@ -200,3 +200,35 @@ def test_lifespan_creates_the_price_watch_tables(monkeypatch):
     with TestClient(app):
         pass
     assert created == [1]
+
+
+# ── Built-in sources ──────────────────────────────────────────────────────────
+
+
+def test_builtin_sources_are_registered_from_their_modules(monkeypatch):
+    monkeypatch.setattr(price_watch, "SOURCE_MODULES", ("tests.price_watch_fakes",))
+    try:
+        assert price_watch.register_builtin_sources() == ["test"]
+        assert isinstance(price_watch.get_source("test"), FakeSource)
+    finally:
+        price_watch.unregister_source("test")
+
+
+def test_a_broken_source_module_is_logged_not_fatal(monkeypatch, caplog):
+    monkeypatch.setattr(price_watch, "SOURCE_MODULES", ("tests.no_such_module",))
+    assert price_watch.register_builtin_sources() == []
+    assert "no_such_module" in caplog.text
+
+
+def test_lifespan_registers_the_builtin_sources(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    calls = []
+    monkeypatch.setattr(
+        price_watch, "register_builtin_sources", lambda: calls.append(1) or []
+    )
+    with TestClient(app):
+        pass
+    assert calls == [1]
