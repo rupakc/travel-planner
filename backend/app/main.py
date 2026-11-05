@@ -79,10 +79,12 @@ async def lifespan(app: FastAPI):
     create_taste_table()
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
+    from .db.price_watch_db import create_price_watch_tables
 
     create_fare_watch_tables()
+    create_price_watch_tables()
     create_notifications_table()
-    # Fare-watch re-checks: only with live fares (SERPAPI_KEY) and
+    # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
     asyncio.create_task(

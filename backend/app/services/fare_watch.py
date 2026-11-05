@@ -716,8 +716,11 @@ async def run_scheduler(
     *,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> None:
-    """Every FARE_WATCH_TICK_SECONDS, check the due watches. Runs until
-    cancelled; one bad tick is logged and the loop goes on."""
+    """Every FARE_WATCH_TICK_SECONDS, check the due fare watches, then the
+    due price watches (``price_watch.run_due``). Runs until cancelled; one
+    bad pass is logged and the loop goes on."""
+    from . import price_watch
+
     logger.info(
         "Fare watch scheduler started (tick %ss)", settings.fare_watch_tick_seconds
     )
@@ -726,6 +729,10 @@ async def run_scheduler(
             await run_due(api_key)
         except Exception:
             logger.exception("Fare watch scheduler tick failed")
+        try:
+            await price_watch.run_due(api_key)
+        except Exception:
+            logger.exception("Price watch scheduler tick failed")
         await sleep(settings.fare_watch_tick_seconds)
 
 
