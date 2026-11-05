@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -15,6 +15,8 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchActivityButton from '../components/alerts/WatchActivityButton'
+import { ActivityTripContext } from '../components/alerts/activityTripContext'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
@@ -202,6 +204,7 @@ function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggl
                 {a.price_usd != null && <span>${a.price_usd}</span>}
                 {a.duration_hours && <span>{a.duration_hours}h</span>}
                 {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> Book</a>}
+                <WatchActivityButton activity={a} variant="compact" source="chat_activity" />
               </div>
             </div>
             <button onClick={() => onSelect('activities', a)}
@@ -753,6 +756,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                       {a.duration_hours && <span>{a.duration_hours}h</span>}
                     </div>
                     {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 text-[10px]"><ExternalLink size={8} className="inline" /> Book</a>}
+                    <div><WatchActivityButton activity={a} variant="compact" source="chat_plan" /></div>
                   </div>
                   <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
@@ -1163,6 +1167,8 @@ export default function ChatPage() {
   }, [selections, loadedPlanId])
 
   const planTrip = loadedPlanSearchData || lastSearchContext
+  // City and travellers for activity "Watch price" buttons (chat has no dated itinerary here)
+  const activityTrip = useMemo(() => ({ searchData: planTrip, itinerary: null }), [planTrip])
 
   const handleLoadPlan = (plan) => {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
@@ -1497,6 +1503,7 @@ export default function ChatPage() {
   const selectedCount = countSelections(selections)
 
   return (
+    <ActivityTripContext.Provider value={activityTrip}>
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-gradient-to-br from-sky-50 via-white to-teal-50">
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
@@ -1624,6 +1631,7 @@ export default function ChatPage() {
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
       />
     </div>
+    </ActivityTripContext.Provider>
   )
 }
 

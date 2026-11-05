@@ -634,7 +634,7 @@ Turns email off for that one watch, without login, and returns a small HTML page
 
 ## Price watches
 
-A price watch re-checks a hotel's, an activity's or a whole saved trip's live price about twice a day, with the same alert rules as fare watches (whole trips use a step of max($25, 4 %)). Prices are totals in USD (all nights and rooms, all travellers, or the whole trip). Ownership, rate limits and the daily SerpAPI budget work as for fare watches, and `FARE_WATCH_MAX_ACTIVE_PER_USER` counts fare and price watches together. Which kinds are available depends on the price sources the server registers; an unknown kind is a `422`.
+A price watch re-checks a hotel's, an activity's or a whole saved trip's live price about twice a day, with the same alert rules as fare watches (whole trips use a step of max($25, 4 %)). Prices are totals (all nights and rooms, all travellers, or the whole trip) in the watch's `currency`: USD, except an activity watch, which keeps its listing's currency and only ever compares like with like. Ownership, rate limits and the daily SerpAPI budget work as for fare watches, and `FARE_WATCH_MAX_ACTIVE_PER_USER` counts fare and price watches together. Which kinds are available depends on the price sources the server registers; an unknown kind is a `422`.
 
 ### POST /api/price-watches
 
@@ -674,6 +674,15 @@ A price watch:
 ```
 
 `status` is `active`, `paused`, `expired` (the `expires_on` day — check-in, activity date or departure — has come) or `error` (three failed checks, or three "unavailable" looks, in a row). An unavailable look (sold out for the dates, listing gone) has `price: null` in history and `last_observation.status: "unavailable"`; it never alerts.
+
+#### Activity watches
+
+```json
+{"kind": "activity", "activity": {"name": "Belém walking tour", "city": "Lisbon",
+ "date": "2026-12-10", "travellers": 2, "listing_url": null, "estimate_price": 30}}
+```
+
+`name` and `city` are required; `date` (optional, must be in the future) ends the watch, which otherwise runs 180 days; `travellers` is 1–20 (default 1); `estimate_price` is the AI's per-person estimate, shown labelled in a `no_live_price` answer and never watched. The server searches Google (SerpAPI) for "<name> <city> getyourguide" (then Viator) and watches the best-matching **specific** listing; category or attraction pages are never watched. The price is the listing's per-person "from" price × travellers (`last_observation.unit_price` is per person), as Google results show it — getyourguide.com and viator.com are never fetched. A `no_live_price` answer suggests up to 3 priced specific listings; their `spec` carries `listing_url`, and a watch of a picked listing is its own subject (the original activity stays unwatched). A check that can't find the listing, finds it without a price, or finds it in another currency is unavailable (`observed.reason`: `not_found`, `no_price`, `currency_changed`).
 
 ### GET /api/price-watches, GET /api/price-watches/{id}
 

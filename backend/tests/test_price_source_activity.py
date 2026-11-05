@@ -123,11 +123,17 @@ class TestSpec:
                 "city": "lisbon",
                 "date": "2026-12-10",
                 "travellers": 2,
-                "listing_url": WALK_URL,
                 "estimate_price": 30,
             }
         )
         assert a == b == "small group walking tour of belem|lisbon|2026-12-10|2"
+
+    def test_a_picked_listing_is_its_own_subject(self):
+        # A suggestion the traveller picked instead is a different subject:
+        # the activity card itself stays unwatched.
+        own = act.SOURCE.match_key(_spec())
+        picked = act.SOURCE.match_key(_spec(listing_url=WALK_URL + "?ranking=1"))
+        assert picked == f"{own}|{WALK_URL}"
 
     def test_match_key_differs_by_travellers_and_date(self):
         keys = {
@@ -496,6 +502,12 @@ class TestApi:
             r2 = _post(client, h, pick["spec"])
         assert r2.status_code == 200, r2.text
         assert r2.json()["subject"]["listing_url"] == pick["link"]
+        m = client.post(
+            "/api/price-watches/match",
+            json={"kind": "activity", "activity": _spec(name="Belem Tower tour")},
+            headers=h,
+        )
+        assert m.json()["watch"] is None  # the card's own subject stays unwatched
 
     def test_check_now_drop_and_currency_change(self, api):
         client, u, h = api

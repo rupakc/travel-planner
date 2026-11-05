@@ -180,10 +180,19 @@ class ActivitySource:
     kind = KIND
 
     def match_key(self, spec: dict) -> str:
+        """normalised name|city|date|travellers — plus the listing URL for a
+        picked suggestion, which is its own subject (the card that offered
+        it stays unwatched)."""
         s = parse_spec(spec)
-        return "|".join(
-            [_fold(s["name"]), _fold(s["city"]), s["date"] or "", str(s["travellers"])]
-        )
+        parts = [
+            _fold(s["name"]),
+            _fold(s["city"]),
+            s["date"] or "",
+            str(s["travellers"]),
+        ]
+        if s["listing_url"]:
+            parts.append(s["listing_url"])
+        return "|".join(parts)
 
     def estimate_calls(self, watch: dict) -> int:
         return 1

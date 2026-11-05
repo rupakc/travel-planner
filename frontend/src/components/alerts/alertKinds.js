@@ -18,9 +18,19 @@ export const ALERT_KINDS = {
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
 }
 
-export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+// Notices shared by every kind of watch (ended / paused): an activity's
+// shows the activity icon; everything else, fares included, is unchanged.
+const SHARED_NOTICES = new Set(['watch_expired', 'watch_error'])
 
-/** Keeps a price delta such as "(−$70)" on one line when a title wraps. */
+export function kindOf(kind, data = null) {
+  const base = ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+  if (SHARED_NOTICES.has(kind) && data?.watch_kind === 'activity') {
+    return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
+  }
+  return base
+}
+
+/** Keeps a price delta such as "(−$70)" or "(−€1.73)" on one line when a title wraps. */
 export function keepDeltaTogether(text) {
-  return typeof text === 'string' ? text.replace(/([−-])\$/g, '$1⁠$') : text
+  return typeof text === 'string' ? text.replace(/([−-])(?=[A-Z]{0,3}[$€£¥₹])/g, '$1⁠') : text
 }

@@ -41,6 +41,8 @@ import LinkPlanBanner from '../components/LinkPlanBanner'
 import { ensureMustInclude, cityForDay } from '../utils/mustInclude'
 import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendarStrip'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchActivityButton from '../components/alerts/WatchActivityButton'
+import { ActivityTripContext } from '../components/alerts/activityTripContext'
 import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -1110,6 +1112,7 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
+              <WatchActivityButton activity={a} source="results_activity" />
               {a.source && !a.from_link && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
               {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">Fits your budget</span>}
@@ -2778,6 +2781,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
                       {a.booking_url && (
                         <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> Book</a>
                       )}
+                      <div className="mt-0.5"><WatchActivityButton activity={a} source="my_plan" /></div>
                     </div>
                     <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
@@ -3525,6 +3529,8 @@ export default function ResultsPage() {
     () => arrangeItinerary(results.itinerary, selections.itinerary_layout, selections.itinerary_edits),
     [results.itinerary, selections.itinerary_layout, selections.itinerary_edits],
   )
+  // City, travellers and itinerary day for activity "Watch price" buttons
+  const activityTrip = useMemo(() => ({ searchData, itinerary: arrangedItinerary }), [searchData, arrangedItinerary])
   // Fingerprint of the itinerary as edited now; only needed to judge an
   // existing re-check result or error.
   const currentRecheckFingerprint = useMemo(
@@ -4104,6 +4110,7 @@ export default function ResultsPage() {
   )
 
   return (
+    <ActivityTripContext.Provider value={activityTrip}>
     <div className="min-h-screen bg-gray-50">
       {/* Sticky header: top bar + badges */}
       <div className="sticky top-14 z-30">
@@ -4370,5 +4377,6 @@ export default function ResultsPage() {
         searchData={searchData}
       />
     </div>
+    </ActivityTripContext.Provider>
   )
 }

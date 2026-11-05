@@ -22,7 +22,7 @@ export default function AlertToast() {
     return () => clearTimeout(timer.current)
   }, [toast, paused, dismissToast])
 
-  const { Icon, tone, action } = kindOf(toast?.kind)
+  const { Icon, tone, action } = kindOf(toast?.kind, toast?.data)
   const open = () => {
     track('alert_clicked', 'toast', { kind: toast.kind })
     markRead([toast.id])

@@ -4,8 +4,10 @@
 // A card gets the props documented on PriceWatchCard (it can wrap it and
 // pass Details / openLabel / unitLabel). Fare watches keep ../WatchCard.
 import PriceWatchCard from './PriceWatchCard'
+import ActivityWatchCard from './ActivityWatchCard'
 
 export const PRICE_CARDS = {
+  activity: ActivityWatchCard,
 }
 
 export function cardFor(kind) {

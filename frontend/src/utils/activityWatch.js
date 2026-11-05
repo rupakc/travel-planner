@@ -1,26 +1,9 @@
 // Pure helpers for activity price watches (GetYourGuide / Viator "from"
 // prices as Google shows them). API shape: docs/API-Reference.md.
 
-/**
- * A price in its own currency: cents under 100 ("$9.90", "€33.46"), whole
- * amounts from 100 ("$1,240"); unknown currency codes read "12.50 XYZ".
- *
- * Stand-in with the exact signature of `formatPrice` from ./priceWatch
- * (landing with the core fixes): every activity-watch component imports it
- * from here, so the swap is this one line.
- */
-export function formatPrice(amount, currency = 'USD', { cents } = {}) {
-  const code = String(currency || 'USD').toUpperCase()
-  const withCents = (cents ?? Math.abs(amount) < 100) && code !== 'JPY'
-  const digits = withCents ? 2 : 0
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency', currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits,
-    }).format(amount)
-  } catch {
-    return `${Number(amount).toFixed(digits)} ${currency}`
-  }
-}
+import { formatPrice } from './priceWatch'
+
+export { formatPrice }
 
 const PROVIDERS = { getyourguide: 'GetYourGuide', viator: 'Viator' }
 
@@ -96,6 +79,9 @@ export function perPerson(w) {
 }
 
 /** "Watching · from $11.63 pp" (or paused / no price yet). */
+/** The watch to mark as this card's own after the dialog: not a picked suggestion. */
+export const ownWatch = (watch, meta) => (meta?.viaSuggestion ? null : watch)
+
 export function activityWatchingLabel(w) {
   if (w?.status === 'paused') return 'Watch paused'
   const unit = perPerson(w)

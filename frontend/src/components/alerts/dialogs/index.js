@@ -4,8 +4,10 @@
 //   import HotelDialogBody from './HotelDialogBody'   →   hotel: HotelDialogBody,
 // Bodies get { kind, spec, preview, watch, unitLabel } (see GenericPriceBody).
 import GenericPriceBody from './GenericPriceBody'
+import ActivityDialogBody from './ActivityDialogBody'
 
 export const DIALOG_BODIES = {
+  activity: ActivityDialogBody,
 }
 
 export function dialogBodyFor(kind) {
