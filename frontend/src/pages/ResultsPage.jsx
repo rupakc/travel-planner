@@ -43,6 +43,7 @@ import FareCalendarStrip, { PriceInsightsChip } from '../components/FareCalendar
 import WatchFareButton from '../components/alerts/WatchFareButton'
 import WatchActivityButton from '../components/alerts/WatchActivityButton'
 import { ActivityTripContext } from '../components/alerts/activityTripContext'
+import WatchHotelButton from '../components/alerts/WatchHotelButton'
 import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -854,7 +855,7 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   )
 }
 
-export function HotelsSection({ data, selections, onSelect, budget = null }) {
+export function HotelsSection({ data, selections, onSelect, budget = null, searchData = null }) {
   if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
   const selected = selections.hotel
   const isHotelSelected = (h) => !!selected && selected.name === h.name
@@ -892,11 +893,12 @@ export function HotelsSection({ data, selections, onSelect, budget = null }) {
                   {h.amenities.length > 4 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{h.amenities.length-4}</span>}
                 </div>
               )}
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                   {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
                   {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
                   <FoundOnlineBadge item={h} />
+                  <WatchHotelButton hotel={h} searchData={searchData} source="results" />
                 </div>
                 <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
@@ -2512,7 +2514,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
   )
 }
 
-function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -2761,6 +2763,7 @@ function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange,
               {selections.hotel.booking_url && (
                 <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> View & Book</a>
               )}
+              <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchData} source="my_plan" /></div>
             </div>
           )}
 
@@ -3995,7 +3998,7 @@ export default function ResultsPage() {
       flights:        () => <FlightsSection    data={data} {...sectionProps} pricingData={pricingData} departureDate={searchData.departure_date} onLayover={handleLayover} budget={flightBudget}
         fareCalendar={canShowFareCalendar && isFareCalendarOpen ? <FareCalendarStrip searchData={searchData} token={token} onReplan={handleFareReplan} /> : null} />,
       weather:        () => <WeatherSection    data={data} />,
-      hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} />,
+      hotels:         () => <HotelsSection     data={data} {...sectionProps} budget={hotelBudget} searchData={searchData} />,
       activities:     () => <ActivitiesSection   data={data} {...sectionProps} weatherData={results.weather} budget={activityBudget} />,
       places_to_see:  () => <PlacesToSeeSection  data={data} {...sectionProps} weatherData={results.weather} />,
       walking_tours:  () => <WalkingToursSection data={data} {...sectionProps} />,

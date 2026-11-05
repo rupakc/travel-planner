@@ -17,7 +17,8 @@ from ..schemas.request import TravelSearchRequest
 
 logger = logging.getLogger(__name__)
 
-_SERP_URL = "https://serpapi.com/search"
+SERP_URL = "https://serpapi.com/search"
+_SERP_URL = SERP_URL  # old private name, kept for existing imports
 
 # Module-level shared client — one connection pool for the process lifetime
 _client: httpx.AsyncClient | None = None
@@ -28,6 +29,17 @@ def _get_client() -> httpx.AsyncClient:
     if _client is None:
         _client = httpx.AsyncClient(timeout=20.0)
     return _client
+
+
+def get_serp_client() -> httpx.AsyncClient:
+    """The process-wide SerpAPI HTTP client (one connection pool), shared by
+    every SerpAPI adapter (flights, hotel and activity prices).
+
+    Looks ``_get_client`` up at call time, so tests may patch either name
+    (``serp_flights._get_client`` or ``serp_flights.get_serp_client``) and
+    every adapter that calls ``serp_flights.get_serp_client()`` is
+    intercepted."""
+    return _get_client()
 
 
 async def close_client() -> None:

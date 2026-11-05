@@ -195,7 +195,8 @@ def registered_kinds() -> list[str]:
 # PriceSource instance). One line per kind, e.g. "app.services.hotel_source".
 SOURCE_MODULES: tuple[str, ...] = (
     "app.services.price_sources.activity",
-)  # fmt: skip
+    "app.services.price_sources.hotel",
+)  # fmt: skip (one line per kind)
 
 
 def register_builtin_sources() -> list[str]:

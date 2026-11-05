@@ -18,15 +18,23 @@ export const ALERT_KINDS = {
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
 }
 
-// Notices shared by every kind of watch (ended / paused): an activity's
-// shows the activity icon; everything else, fares included, is unchanged.
+export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+
+// Notices shared by every kind of watch (ended / paused).
 const SHARED_NOTICES = new Set(['watch_expired', 'watch_error'])
 
-export function kindOf(kind, data = null) {
-  const base = ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
-  if (SHARED_NOTICES.has(kind) && data?.watch_kind === 'activity') {
-    return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
-  }
+/**
+ * Icon, colour and action for one notification. The shared notices
+ * (watch_expired / watch_error) read per watch kind — a hotel's ended watch
+ * says "See hotel", an activity's notices show the activity icon; fare
+ * notices keep kindOf's wording.
+ */
+export function alertKindFor(n) {
+  const base = kindOf(n?.kind)
+  if (!SHARED_NOTICES.has(n?.kind)) return base
+  const watchKind = n?.data?.watch_kind
+  if (watchKind === 'hotel' && n.kind === 'watch_expired') return { ...base, action: 'See hotel' }
+  if (watchKind === 'activity') return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
   return base
 }
 

@@ -148,7 +148,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
     <WatchDialogShell title={title} subtitle={subtitle} onClose={onClose}>
       {!done && (
         <form onSubmit={e => { e.preventDefault(); if (!noMatch) create(retrySpec || spec) }} className="px-5 pb-5">
-          <Body kind={kind} spec={usedSpec} preview={preview} watch={null} unitLabel={unitLabel} />
+          <Body kind={kind} spec={usedSpec} preview={preview} watch={null} unitLabel={unitLabel} onClose={onClose} />
 
           <fieldset className="mt-4 space-y-2">
             <legend className="mb-2 text-sm font-medium text-slate-700">Tell me</legend>
@@ -204,7 +204,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
               {done.already_below_target && (
                 <p className="mt-1.5 font-medium">Already below your target — we’ll tell you if it drops further.</p>
               )}
-              <div className="mt-2"><Body kind={kind} spec={usedSpec} preview={preview} watch={done} unitLabel={unitLabel} /></div>
+              <div className="mt-2"><Body kind={kind} spec={usedSpec} preview={preview} watch={done} unitLabel={unitLabel} onClose={onClose} /></div>
             </div>
           </div>
           {offerBrowser && <BrowserAlertsOffer onAnswer={(allow) => { answerBrowserAlerts(allow); setOfferBrowser(false) }} />}

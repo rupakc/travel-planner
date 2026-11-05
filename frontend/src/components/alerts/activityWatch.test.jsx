@@ -35,7 +35,7 @@ import ActivityDialogBody from './dialogs/ActivityDialogBody'
 import ActivityWatchCard from './cards/ActivityWatchCard'
 import { PRICE_CARDS, cardFor } from './cards'
 import { DIALOG_BODIES, dialogBodyFor } from './dialogs'
-import { ALERT_KINDS, kindOf, keepDeltaTogether } from './alertKinds'
+import { ALERT_KINDS, alertKindFor, kindOf, keepDeltaTogether } from './alertKinds'
 import { ownWatch } from '../../utils/activityWatch'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -282,13 +282,16 @@ describe('registries and alert copy', () => {
     expect(dialogBodyFor('activity')).toBe(ActivityDialogBody)
   })
 
-  it('activity notices get the activity icon; fare copy is unchanged', () => {
-    expect(kindOf('watch_error', { watch_kind: 'activity' }).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
-    expect(kindOf('watch_expired', { watch_kind: 'activity' }).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
-    expect(kindOf('watch_error', { watch_kind: 'activity' }).action).toBe(ALERT_KINDS.watch_error.action)
+  it('activity notices get the activity icon; fare and hotel copy are unchanged', () => {
+    const n = (kind, data) => ({ kind, data })
+    expect(alertKindFor(n('watch_error', { watch_kind: 'activity' })).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
+    expect(alertKindFor(n('watch_expired', { watch_kind: 'activity' })).Icon).toBe(ALERT_KINDS.activity_drop.Icon)
+    expect(alertKindFor(n('watch_error', { watch_kind: 'activity' })).action).toBe(ALERT_KINDS.watch_error.action)
+    expect(alertKindFor(n('watch_error'))).toBe(ALERT_KINDS.watch_error)
+    expect(alertKindFor(n('watch_error', {}))).toBe(ALERT_KINDS.watch_error)
+    expect(alertKindFor(n('fare_drop', { watch_kind: 'activity' }))).toBe(ALERT_KINDS.fare_drop)
+    expect(alertKindFor(n('watch_expired', { watch_kind: 'hotel' })).action).toBe('See hotel')
     expect(kindOf('watch_error')).toBe(ALERT_KINDS.watch_error)
-    expect(kindOf('watch_error', {})).toBe(ALERT_KINDS.watch_error)
-    expect(kindOf('fare_drop', { watch_kind: 'activity' })).toBe(ALERT_KINDS.fare_drop)
   })
 
   it('keeps any currency’s delta together', () => {

@@ -85,13 +85,13 @@ export function perPerson(w) {
 export const ownWatch = (watch, meta) => (meta?.viaSuggestion ? null : watch)
 
 /**
- * The trip a chat message's activities belong to: the session context it
- * streamed, else its planning destination or trip map, else `fallback`
+ * The trip a chat message's activities belong to: the search or session
+ * context it streamed, else its planning destination or trip map, else `fallback`
  * (the page's trip). `{ searchData, itinerary }` or `fallback`.
  */
 export function messageTrip(message, fallback = null) {
-  const ctx = message?.tripContext
-  if (ctx?.destination) return { searchData: ctx, itinerary: null }
+  const ctx = [message?.searchContext, message?.tripContext].find(c => c?.destination)
+  if (ctx) return { searchData: ctx, itinerary: null }
   const destination = message?.planDestination || message?.tripMap?.cities?.[0]?.city
   if (!destination) return fallback
   const travellers = message?.tripMap?.num_travelers ?? fallback?.searchData?.num_travelers

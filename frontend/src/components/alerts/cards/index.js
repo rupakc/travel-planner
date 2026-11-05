@@ -5,9 +5,11 @@
 // pass Details / openLabel / unitLabel). Fare watches keep ../WatchCard.
 import PriceWatchCard from './PriceWatchCard'
 import ActivityWatchCard from './ActivityWatchCard'
+import HotelWatchCard from './HotelWatchCard'
 
 export const PRICE_CARDS = {
   activity: ActivityWatchCard,
+  hotel: HotelWatchCard,
 }
 
 export function cardFor(kind) {

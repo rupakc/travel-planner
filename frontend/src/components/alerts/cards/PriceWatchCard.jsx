@@ -70,7 +70,7 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
  *   breakdown or the matched hotel's nightly rate;
  * - `openLabel`: wording of the listing link (default "Open listing");
  * - `unitLabel`: wording after the unit price (default "per unit");
- * - `unavailableText`: what an "unavailable" last look means for the kind.
+ * - `unavailableText`: what to say while it isn't available for the dates.
  * Actions call back up (as WatchCard): `busy` names the action in flight
  * ('check' | 'save' | 'delete' | 'status'), `message` the latest outcome.
  */

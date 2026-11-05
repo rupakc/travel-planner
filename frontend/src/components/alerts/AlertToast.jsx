@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import { useAlerts } from '../../context/AlertsContext'
 import { notificationLink } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
-import { kindOf, keepDeltaTogether } from './alertKinds'
+import { alertKindFor, keepDeltaTogether } from './alertKinds'
 
 const VISIBLE_MS = 10000
 
@@ -22,7 +22,7 @@ export default function AlertToast() {
     return () => clearTimeout(timer.current)
   }, [toast, paused, dismissToast])
 
-  const { Icon, tone, action } = kindOf(toast?.kind, toast?.data)
+  const { Icon, tone, action } = alertKindFor(toast)
   const open = () => {
     track('alert_clicked', 'toast', { kind: toast.kind })
     markRead([toast.id])

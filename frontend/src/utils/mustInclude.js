@@ -22,7 +22,7 @@ export const foldText = (text) => String(text || '')
 const tokens = (text) => foldText(String(text || '').replace(/(\w)['’]s\b/g, '$1'))
   .split(/[^a-z0-9]+/)
   .filter((t) => t && !NAME_FILLER.has(t))
-const cityKey = (text) => foldText(String(text || '').split(',')[0]).trim()
+export const cityKey = (text) => foldText(String(text || '').split(',')[0]).trim()
 
 /**
  * `text` names the place: the name's tokens as one contiguous, ordered phrase.
@@ -89,7 +89,7 @@ export function isLogisticsSlot(slot, stopCities = []) {
 }
 
 // Days per stop, mirroring TravelSearchRequest._allocate_days on the server
-function allocateDays(n, totalDays, nights) {
+export function allocateDays(n, totalDays, nights) {
   const requested = Array.from({ length: n }, (_, i) => (Number.isInteger(nights?.[i]) && nights[i] > 0 ? nights[i] : null))
   const fixed = requested.reduce((t, d) => t + (d || 0), 0)
   const free = requested.filter((d) => d == null).length

@@ -97,6 +97,10 @@ describe('fix round 1', () => {
       const m = { tripContext: { destination: 'Lisbon', num_travelers: 2 } }
       expect(messageTrip(m, fallback)).toEqual({ searchData: { destination: 'Lisbon', num_travelers: 2 }, itinerary: null })
     })
+    it('prefers the search it ran (search_context) over the session context', () => {
+      const m = { searchContext: { destination: 'Porto', num_travelers: 3 }, tripContext: { destination: 'Lisbon' } }
+      expect(messageTrip(m, fallback).searchData.destination).toBe('Porto')
+    })
     it('else its planning destination or trip map', () => {
       expect(messageTrip({ planDestination: 'Porto' }, null).searchData.destination).toBe('Porto')
       const m = { tripMap: { cities: [{ city: 'Kyoto' }], num_travelers: 3 } }
