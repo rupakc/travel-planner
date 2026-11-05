@@ -252,6 +252,16 @@ describe('HotelWatchCard', () => {
     expect(text).not.toContain('Sold out')
   })
 
+  it('claims taxes are included only when the live look said so', async () => {
+    const withTaxes = (t) => ({ ...WATCH, last_observation: { ...WATCH.last_observation, observed: { taxes_included: t } } })
+    await card(withTaxes(true))
+    expect(container.textContent).toContain('on Google Hotels, taxes and fees included.')
+    await card(withTaxes(false))
+    expect(container.textContent).toContain('on Google Hotels, before taxes and fees.')
+    await card(WATCH)
+    expect(container.textContent).not.toContain('taxes')
+  })
+
   it('says “Sold out for your dates” when the last look found no rooms', async () => {
     await card({ ...WATCH, last_observation: { status: 'unavailable', source: 'google_hotels' } })
     expect(container.textContent).toContain('Sold out for your dates')
