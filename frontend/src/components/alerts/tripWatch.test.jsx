@@ -28,7 +28,7 @@ import TripWatchCard from './cards/TripWatchCard'
 import WatchTripButton from './WatchTripButton'
 import { PRICE_CARDS, cardFor } from './cards'
 import { DIALOG_BODIES, dialogBodyFor } from './dialogs'
-import { kindOf } from './alertKinds'
+import { alertKindFor, kindOf } from './alertKinds'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -253,12 +253,13 @@ describe('WatchTripButton', () => {
 
 describe('alert kinds', () => {
   it('trip end / error notifications say trip; fare copy is unchanged', () => {
-    expect(kindOf('watch_expired', { watch_kind: 'trip' }).action).toBe('See trip')
-    expect(kindOf('watch_error', { watch_kind: 'trip' }).action).toBe('Check trip')
+    const note = (kind, watch_kind) => ({ kind, data: watch_kind ? { watch_kind } : {} })
+    expect(alertKindFor(note('watch_expired', 'trip')).action).toBe('See trip')
+    expect(alertKindFor(note('watch_error', 'trip')).action).toBe('Check trip')
+    expect(alertKindFor(note('watch_expired')).action).toBe('View')
+    expect(alertKindFor(note('watch_error')).action).toBe('Retry')
+    expect(alertKindFor(note('fare_drop')).action).toBe('See fare')
+    expect(alertKindFor(note('trip_drop', 'trip')).action).toBe('See trip')
     expect(kindOf('watch_expired').action).toBe('View')
-    expect(kindOf('watch_expired', { watch_kind: 'hotel' }).action).toBe('View')
-    expect(kindOf('watch_error').action).toBe('Retry')
-    expect(kindOf('fare_drop').action).toBe('See fare')
-    expect(kindOf('trip_drop').action).toBe('See trip')
   })
 })

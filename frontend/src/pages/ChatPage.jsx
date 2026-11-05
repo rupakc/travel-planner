@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -15,6 +15,10 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
 import WatchFareButton from '../components/alerts/WatchFareButton'
+import WatchActivityButton from '../components/alerts/WatchActivityButton'
+import { ActivityTripContext } from '../components/alerts/activityTripContext'
+import { messageTrip } from '../utils/activityWatch'
+import WatchHotelButton from '../components/alerts/WatchHotelButton'
 import WatchTripButton from '../components/alerts/WatchTripButton'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
@@ -135,7 +139,16 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
   )
 }
 
-function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
+/** `messages` with `params` (a search_context event) kept on the assistant
+ * message at `idx`: its hotel cards date their stay from their own search. */
+export function withSearchContext(messages, idx, params) {
+  if (!messages[idx]) return messages
+  const updated = [...messages]
+  updated[idx] = { ...updated[idx], searchContext: params }
+  return updated
+}
+
+export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand, searchContext = null }) {
   if (!data?.results?.length) return <p className="text-xs text-gray-500">No hotels found</p>
   const LIMIT = 5
   const selected = selections.hotel
@@ -157,9 +170,10 @@ function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExp
               <div className="flex-1 min-w-0 mr-2">
                 <p className="font-medium text-gray-900 truncate">{h.name}</p>
                 <p className="text-gray-500">{h.location}</p>
-                <div className="flex items-center gap-1 mt-0.5">
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
                   {h.star_rating > 0 && <div className="flex">{[...Array(Math.round(h.star_rating))].map((_, j) => <Star key={j} size={8} className="text-yellow-400 fill-yellow-400" />)}</div>}
                   {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5 ml-1"><ExternalLink size={9} /> Book</a>}
+                  <span className="ml-1"><WatchHotelButton hotel={h} searchData={searchContext} variant="compact" source="chat" /></span>
                 </div>
               </div>
               <div className="text-right shrink-0">
@@ -199,10 +213,11 @@ function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggl
           <div key={i} className={`flex items-center justify-between border rounded-lg p-2 text-xs ${isSelected ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200'}`}>
             <div className="flex-1 min-w-0 mr-2">
               <p className="font-medium text-gray-900 truncate">{a.name}</p>
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-500">
                 {a.price_usd != null && <span>${a.price_usd}</span>}
                 {a.duration_hours && <span>{a.duration_hours}h</span>}
                 {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> Book</a>}
+                <WatchActivityButton activity={a} variant="compact" source="chat_activity" />
               </div>
             </div>
             <button onClick={() => onSelect('activities', a)}
@@ -478,7 +493,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
 
 // ─── Section wrapper with collapsible header ─────────────────────────────────
 
-function ChatSection({ section, data, status, selections, onSelect }) {
+function ChatSection({ section, data, status, selections, onSelect, searchContext = null }) {
   const [open, setOpen] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
   const cfg = AGENT_CONFIG[section]
@@ -489,7 +504,7 @@ function ChatSection({ section, data, status, selections, onSelect }) {
 
   const renderers = {
     flights:        () => <ChatFlightsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
-    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
+    hotels:         () => <ChatHotelsSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} searchContext={searchContext} />,
     activities:     () => <ChatActivitiesSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
     visa:           () => <ChatVisaSection data={data} />,
     sim:            () => <ChatSimSection data={data} selections={selections} onSelect={onSelect} isExpanded={isExpanded} onToggleExpand={toggleExpand} />,
@@ -526,7 +541,7 @@ function ChatSection({ section, data, status, selections, onSelect }) {
 
 // ─── Planning message with streamed sections ─────────────────────────────────
 
-function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating }) {
+function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating, searchContext = null }) {
   const sectionOrder = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
   // Include itinerary immediately once the backend signals it has started generating
   const arrived = sectionOrder.filter(s => sections[s] || (s === 'itinerary' && itineraryGenerating))
@@ -546,7 +561,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
         const isLoading = !sections[section] && section === 'itinerary' && itineraryGenerating
         const status = isLoading ? 'generating' : (sectionStatuses[section] || 'done')
         return (
-          <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} />
+          <ChatSection key={section} section={section} data={sections[section]} status={status} selections={selections} onSelect={onSelect} searchContext={searchContext} />
         )
       })}
       {searching.map(section => {
@@ -740,6 +755,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
               <p className="text-sm font-medium">{selections.hotel.name}</p>
               <p className="text-xs text-gray-500">${selections.hotel.price_per_night_usd?.toLocaleString()}/night{selections.hotel.total_price_usd ? ` · $${selections.hotel.total_price_usd.toLocaleString()} total` : ''}</p>
               {selections.hotel.booking_url && <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium mt-1"><ExternalLink size={10} /> Book</a>}
+              <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchContext} source="chat_plan" /></div>
             </div>
           )}
 
@@ -755,6 +771,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                       {a.duration_hours && <span>{a.duration_hours}h</span>}
                     </div>
                     {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 text-[10px]"><ExternalLink size={8} className="inline" /> Book</a>}
+                    <div><WatchActivityButton activity={a} variant="compact" source="chat_plan" /></div>
                   </div>
                   <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
@@ -1143,6 +1160,8 @@ export default function ChatPage() {
         planningDone: m.planningDone || false, error: m.error || false,
         comprehensiveItinerary: m.comprehensiveItinerary || null,
         tripMap: m.tripMap || null,
+        planDestination: m.planDestination || null, tripContext: m.tripContext || null,
+        searchContext: m.searchContext || null,
       })),
       sessionContext,
       lastSearchContext,
@@ -1166,6 +1185,11 @@ export default function ChatPage() {
   }, [selections, loadedPlanId])
 
   const planTrip = loadedPlanSearchData || lastSearchContext
+  // City and travellers for activity "Watch price" buttons (chat has no dated itinerary here)
+  const activityTrip = useMemo(
+    () => ({ searchData: planTrip || (sessionContext?.destination ? sessionContext : null), itinerary: null }),
+    [planTrip, sessionContext],
+  )
 
   const handleLoadPlan = (plan) => {
     setSelections({ ...EMPTY_SELECTIONS, ...(plan.selections || {}) })
@@ -1283,7 +1307,7 @@ export default function ChatPage() {
           isPlanning = true
           setMessages(prev => {
             const updated = [...prev]
-            updated[assistantIdx] = { ...updated[assistantIdx], planning: true }
+            updated[assistantIdx] = { ...updated[assistantIdx], planning: true, planDestination: event.destination || null }
             return updated
           })
         } else if (event.type === 'itinerary_generating') {
@@ -1349,8 +1373,15 @@ export default function ChatPage() {
           if (planActionsReceived) setIsPlanOpen(true)
         } else if (event.type === 'session_context_update') {
           setSessionContext(event.context)
+          // The trip this message's sections belong to (activity watch buttons)
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[assistantIdx] = { ...updated[assistantIdx], tripContext: event.context || null }
+            return updated
+          })
         } else if (event.type === 'search_context') {
           setLastSearchContext(event.params)
+          setMessages(prev => withSearchContext(prev, assistantIdx, event.params))
         } else if (event.type === 'suggestions') {
           setMessages(prev => {
             const updated = [...prev]
@@ -1500,6 +1531,7 @@ export default function ChatPage() {
   const selectedCount = countSelections(selections)
 
   return (
+    <ActivityTripContext.Provider value={activityTrip}>
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-gradient-to-br from-sky-50 via-white to-teal-50">
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
@@ -1627,6 +1659,7 @@ export default function ChatPage() {
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
       />
     </div>
+    </ActivityTripContext.Provider>
   )
 }
 
@@ -2117,7 +2150,14 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
 
 // ─── Chat Bubble ─────────────────────────────────────────────────────────────
 
-function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
+/** Activity rows take their trip (city, travellers) from their own message. */
+function MessageTrip({ message, children }) {
+  const pageTrip = useContext(ActivityTripContext)
+  const value = useMemo(() => messageTrip(message, pageTrip), [message, pageTrip])
+  return <ActivityTripContext.Provider value={value}>{children}</ActivityTripContext.Provider>
+}
+
+export function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
   const isUser = message.role === 'user'
   const isError = message.error
   const hasSections = message.planning || message.tripMap || Object.keys(message.sections || {}).length > 0
@@ -2148,13 +2188,16 @@ function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
             )}
             {/* Fallback: old section cards (for partial/non-itinerary planning responses) */}
             {!message.tripMap && Object.keys(message.sections || {}).length > 0 && (
+              <MessageTrip message={message}>
               <PlanningMessage
                 sections={message.sections}
                 sectionStatuses={message.sectionStatuses || {}}
                 selections={selections}
                 onSelect={onSelect}
                 itineraryGenerating={message.itineraryGenerating}
+                searchContext={message.searchContext || message.tripContext || null}
               />
+              </MessageTrip>
             )}
             {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (
               <div className="flex items-center gap-2 text-sm text-teal-700 mb-2">

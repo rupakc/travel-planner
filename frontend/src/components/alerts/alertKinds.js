@@ -18,18 +18,28 @@ export const ALERT_KINDS = {
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
 }
 
-// watch_expired / watch_error are shared by every watch kind: only trip
-// watches (data.watch_kind === 'trip') get trip wording; fares keep theirs.
-const TRIP_SHARED = {
-  watch_expired: { ...ALERT_KINDS.watch_expired, action: 'See trip' },
-  watch_error: { ...ALERT_KINDS.watch_error, action: 'Check trip' },
+export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+
+// Notices shared by every kind of watch (ended / paused).
+const SHARED_NOTICES = new Set(['watch_expired', 'watch_error'])
+
+/**
+ * Icon, colour and action for one notification. The shared notices
+ * (watch_expired / watch_error) read per watch kind — a hotel's ended watch
+ * says "See hotel", an activity's notices show the activity icon, a trip's
+ * say "See trip" / "Check trip"; fare notices keep kindOf's wording.
+ */
+export function alertKindFor(n) {
+  const base = kindOf(n?.kind)
+  if (!SHARED_NOTICES.has(n?.kind)) return base
+  const watchKind = n?.data?.watch_kind
+  if (watchKind === 'hotel' && n.kind === 'watch_expired') return { ...base, action: 'See hotel' }
+  if (watchKind === 'activity') return { ...base, Icon: ALERT_KINDS.activity_drop.Icon }
+  if (watchKind === 'trip') return { ...base, action: n.kind === 'watch_expired' ? 'See trip' : 'Check trip' }
+  return base
 }
 
-/** Style and action wording for a notification (`data` picks per-kind wording). */
-export const kindOf = (kind, data = null) =>
-  (data?.watch_kind === 'trip' && TRIP_SHARED[kind]) || ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
-
-/** Keeps a price delta such as "(−$70)" on one line when a title wraps. */
+/** Keeps a price delta such as "(−$70)" or "(−€1.73)" on one line when a title wraps. */
 export function keepDeltaTogether(text) {
-  return typeof text === 'string' ? text.replace(/([−-])\$/g, '$1⁠$') : text
+  return typeof text === 'string' ? text.replace(/([−-])(?=[A-Z]{0,3}[$€£¥₹])/g, '$1⁠') : text
 }

@@ -16,6 +16,8 @@ Pure and async, no database. Public API:
 - ``price_listing(listing, query, api_key)``: re-run the stored query and
   find the same listing again.
 - ``suggestions(listings, n=3)``.
+- ``search_listings(query, api_key)`` / ``is_cached(query)``: one stored
+  query's listings, and whether re-running it is free.
 
 Currency: prices keep the currency Google shows ("$" with ``gl=us`` is USD,
 "€" is EUR, "A$" is AUD …). The app has no exchange-rate source to convert
@@ -44,11 +46,10 @@ import httpx
 from ..core.cache import get_cache
 from . import serp_flights
 from .name_match import STOP_WORDS, distinctive_words, min_matches, words
-from .serp_flights import SerpAPIError
+from .serp_flights import SERP_URL, SerpAPIError
 
 logger = logging.getLogger(__name__)
 
-_SERP_URL = "https://serpapi.com/search"
 _HL, _GL = "en", "us"
 _CACHE_PREFIX = "activity_prices:google"  # shared cache: TTL 30 min (settings)
 
@@ -72,6 +73,63 @@ MATCH_MIN_PRECISION = 0.5
 # Re-check fallback when the stored URL is gone: same provider, same page
 # kind, and the Jaccard similarity of the two titles' words at least this.
 RECHECK_MIN_TITLE_SIMILARITY = 0.8
+
+# Generic tour vocabulary: never enough to identify an activity. A name's
+# other capitalised words (places, proper nouns) must all be in a listing's
+# title, and these count only GENERIC_TOUR_WEIGHT towards coverage.
+GENERIC_TOUR_WORDS = frozenset(
+    {
+        "tour",
+        "tours",
+        "walking",
+        "walk",
+        "small",
+        "group",
+        "guided",
+        "guide",
+        "ticket",
+        "tickets",
+        "entry",
+        "skip",
+        "line",
+        "private",
+        "day",
+        "trip",
+        "from",
+        "with",
+        "experience",
+        "admission",
+        "audio",
+    }
+)
+GENERIC_TOUR_WEIGHT = 0.25
+# What the traveller does there, not what is visited: dropped from a name
+# before matching ("Explore the Louvre" is about the Louvre).
+ACTIVITY_VERBS = frozenset(
+    {
+        "visit",
+        "visits",
+        "visiting",
+        "explore",
+        "exploring",
+        "discover",
+        "discovering",
+        "see",
+        "seeing",
+        "hike",
+        "hiking",
+        "ride",
+        "cruise",
+        "sailing",
+        "enjoy",
+    }
+)
+# A Title-Case name ("Arashiyama Bamboo Grove Morning Walk") capitalises
+# every word, so capitals say nothing about places: then all its specific
+# words are required, but one of three or more may be missing ("Grove" vs
+# "Forest") when the rest is covered at least ONE_MISSING_MIN_COVERAGE.
+TITLE_CASE_SHARE = 0.75
+ONE_MISSING_MIN_COVERAGE = 0.75
 
 # Words that describe the product format, not what is visited.
 _FORMAT_WORDS = frozenset(
@@ -108,6 +166,7 @@ _FORMAT_WORDS = frozenset(
         "including",
         "included",
         "experience",
+        "timed",
         "2025",
         "2026",
         "2027",
@@ -400,16 +459,66 @@ def _fold(text: str) -> str:
     return "".join(c for c in norm if not unicodedata.combining(c))
 
 
+def _name_words(name: str, city: str) -> set[str]:
+    words_ = distinctive_words(_fold(name), exclude=[_fold(city)] if city else [])
+    return words_ - ACTIVITY_VERBS
+
+
+def _required_words(name: str, name_words: set[str]) -> set[str]:
+    """The name's place / proper-noun words, which a listing must contain.
+
+    In ordinary text ("Small group walking tour of Belém") these are its
+    capitalised, non-generic words. A Title-Case name, or one without any
+    capitals, gives no such signal: then every non-generic word counts.
+    """
+    tokens = [
+        w
+        for w in re.findall(r"[A-Za-z0-9]+", _fold(name))
+        if len(w) > 2 and w.lower() not in STOP_WORDS
+    ]
+    capitalised = {w.lower() for w in tokens if w[:1].isupper()}
+    specific = name_words - GENERIC_TOUR_WORDS
+    title_case = bool(tokens) and (
+        sum(1 for w in tokens if w[:1].isupper()) / len(tokens) >= TITLE_CASE_SHARE
+    )
+    if title_case or not capitalised:
+        return specific
+    return specific & capitalised
+
+
+def _weight(word: str) -> float:
+    return GENERIC_TOUR_WEIGHT if word in GENERIC_TOUR_WORDS else 1.0
+
+
 def _score(
     name: str, listing: ActivityListing, city: str
 ) -> tuple[float, float] | None:
-    """(coverage, precision) when the listing confidently matches ``name``."""
-    name_words = distinctive_words(_fold(name), exclude=[_fold(city)] if city else [])
+    """(coverage, precision) when the listing confidently matches ``name``.
+
+    Activity verbs ("visit", "explore", "hike") are dropped from the name;
+    its place / proper-noun words (``_required_words``) must be in the
+    title — one of three or more may be missing when the rest is well
+    covered; coverage weighs generic tour vocabulary at
+    ``GENERIC_TOUR_WEIGHT``, so "small group walking tour" can't carry a
+    match on its own.
+    """
+    name_words = _name_words(name, city)
     if not name_words:
         return None
     title_words = words(_fold(listing.title))
     hits = name_words & title_words
-    coverage = len(hits) / len(name_words)
+    required = _required_words(name, name_words)
+    missing = required - title_words
+    total = sum(_weight(w) for w in name_words)
+    coverage = sum(_weight(w) for w in hits) / total
+    if missing:
+        rest = total - sum(_weight(w) for w in missing)
+        if (
+            len(missing) > 1
+            or len(required) < 3
+            or sum(_weight(w) for w in hits) / rest < ONE_MISSING_MIN_COVERAGE
+        ):
+            return None
     if len(hits) < min_matches(name_words) or coverage < MATCH_MIN_COVERAGE:
         return None
     city_words = words(_fold(city)) if city else set()
@@ -490,7 +599,7 @@ async def _search(query: str, api_key: str) -> dict:
         "api_key": api_key,
     }
     try:
-        resp = await serp_flights._get_client().get(_SERP_URL, params=params)
+        resp = await serp_flights.get_serp_client().get(SERP_URL, params=params)
     except httpx.TimeoutException as exc:
         raise SerpAPIError(_redact(f"SerpAPI timeout: {exc}", api_key)) from None
     except httpx.RequestError as exc:
@@ -516,6 +625,19 @@ async def _search(query: str, api_key: str) -> dict:
     cache[key] = entry
     logger.info("Activity prices: %d Google results for %r", len(results), query)
     return entry
+
+
+def is_cached(query: str) -> bool:
+    """True when ``query``'s Google results are in the shared cache, so
+    searching it again spends no SerpAPI call."""
+    return get_cache().get(_cache_key(query)) is not None
+
+
+async def search_listings(query: str, api_key: str) -> list[ActivityListing]:
+    """Priced listings for one exact query (as ``parse_listings``); cached.
+    Raises ``SerpAPIError``."""
+    entry = await _search(query, api_key)
+    return parse_listings({"organic_results": entry["results"]}, query)
 
 
 def build_query(name: str, city: str, provider: str) -> str:

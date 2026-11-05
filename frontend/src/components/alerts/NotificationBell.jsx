@@ -6,10 +6,10 @@ import { useAlerts } from '../../context/AlertsContext'
 import { listNotifications } from '../../services/api'
 import { notificationLink, relativeTime } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
-import { kindOf, keepDeltaTogether } from './alertKinds'
+import { alertKindFor, keepDeltaTogether } from './alertKinds'
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
-  const { Icon, tone, action } = kindOf(n.kind, n.data)
+  const { Icon, tone, action } = alertKindFor(n)
   const unread = !n.read_at
   return (
     <li>

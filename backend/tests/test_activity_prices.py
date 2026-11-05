@@ -392,8 +392,8 @@ class TestMatchListing:
         # 3 distinctive words → 2 needed (0.67 ≥ 0.6) …
         listing = _listing(title="Jeronimos Monastery Ticket")
         assert (
-            match_listing("Jeronimos Monastery cloister visit", [listing]) is None
-        )  # 2/4 = 0.5
+            match_listing("Jeronimos Monastery cloister garden", [listing]) is None
+        )  # 2/4 = 0.5 ("visit" is an activity verb now: dropped from names)
         assert (
             match_listing("Jeronimos Monastery cloister", [listing]) is not None
         )  # 2/3
@@ -714,3 +714,109 @@ def test_fixtures_carry_no_api_key_or_serpapi_links():
         text = path.read_text()
         assert "api_key" not in text, path.name
         assert "serpapi.com/search" not in text, path.name
+
+
+# ── Fix round 1: generic tour words never carry a match ──────────────────────
+
+
+class TestGenericTourWords:
+    """Recorded live 2026-11-05: Google's results for "Small group walking
+    tour of Belém Lisbon getyourguide" (sanitized)."""
+
+    def _live(self):
+        return parse_listings(
+            _fixture("gyg_small_group_belem_live"),
+            "Small group walking tour of Belém Lisbon getyourguide",
+        )
+
+    def test_place_word_is_required_generic_words_are_not_enough(self):
+        m = match_listing("Small group walking tour of Belém", self._live(), "Lisbon")
+        assert m is not None
+        assert "Food and Wine" not in m.title
+        assert "Belém" in m.title or "Belem" in m.title
+
+    def test_food_and_wine_tour_never_matches_a_belem_walk(self):
+        food = [x for x in self._live() if "Food and Wine" in x.title]
+        assert food
+        assert (
+            match_listing("Small group walking tour of Belém", food, "Lisbon") is None
+        )
+        assert (
+            match_listing("small group walking tour of belem", food, "Lisbon") is None
+        )
+
+    def test_lowercase_names_require_their_specific_words(self):
+        listing = _listing(title="Lisbon: Food and Wine Small Group Walking Tour")
+        assert match_listing("belem small group walk", [listing], "Lisbon") is None
+
+
+# ── Fix round 2: ordinary Title-Case names still match ───────────────────────
+
+
+@pytest.mark.parametrize(
+    "name,city,title",
+    [
+        ("Belém Tower Visit", "Lisbon", "Lisbon: Belém Tower Entry Ticket"),
+        (
+            "Jerónimos Monastery Visit",
+            "Lisbon",
+            "Lisbon: Jerónimos Monastery Entry Ticket",
+        ),
+        (
+            "Park Güell Guided Visit",
+            "Barcelona",
+            "Barcelona: Park Güell Guided Tour with Skip-the-Line Ticket",
+        ),
+        (
+            "Fushimi Inari Shrine Hike",
+            "Kyoto",
+            "Kyoto: Fushimi Inari Taisha Shrine Hiking Tour",
+        ),
+        (
+            "Arashiyama Bamboo Grove Morning Walk",
+            "Kyoto",
+            "Kyoto: Arashiyama Bamboo Forest Early Morning Walking Tour",
+        ),
+        (
+            "Sunset Sailing on the Tagus",
+            "Lisbon",
+            "Lisbon: Sunset Cruise on the Tagus River",
+        ),
+        ("Explore the Louvre", "Paris", "Paris: Louvre Museum Timed Entry Ticket"),
+    ],
+)
+def test_title_case_names_match_their_listing(name, city, title):
+    listing = _listing(title=title)
+    assert match_listing(name, [listing], city=city) is listing
+
+
+@pytest.mark.parametrize(
+    "name,city,title",
+    [
+        # proper names stay required
+        ("Explore the Louvre", "Paris", "Paris: Orsay Museum Timed Entry Ticket"),
+        (
+            "Park Güell Guided Visit",
+            "Barcelona",
+            "Barcelona: Sagrada Familia Guided Tour",
+        ),
+        (
+            "Belém Tower Visit",
+            "Lisbon",
+            "Lisbon: Food and Wine Small Group Walking Tour",
+        ),
+        # only one required word may be missing, and only from three or more
+        (
+            "Sintra Pena Palace and Moorish Castle Tour",
+            "Lisbon",
+            "From Lisbon: Sintra, Pena Palace and Cascais Day Trip",
+        ),
+    ],
+)
+def test_title_case_names_still_refuse_other_places(name, city, title):
+    assert match_listing(name, [_listing(title=title)], city=city) is None
+
+
+def test_belem_walk_still_refuses_the_food_tour_in_title_case():
+    food = _listing(title="Lisbon: Food and Wine Small Group Walking Tour")
+    assert match_listing("Small Group Walking Tour of Belém", [food], "Lisbon") is None

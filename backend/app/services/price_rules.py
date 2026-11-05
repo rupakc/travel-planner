@@ -18,8 +18,9 @@ the highest price since that alert) and ``last_notified_at``.
 - A 24 h cooldown caps alerts per watch: inside it, only a price ≥ 5 %
   below the most recent alert gets through (``cooldown_blocks``).
 
-``step`` is max($15, 5 %) for fares, hotels and activities (``FARE_STEP``)
-and max($25, 4 %) for whole-trip totals (``TRIP_STEP``).
+``step`` is max($15, 5 %) for fares and hotels (``FARE_STEP``), max(1, 5 %)
+in the listing's currency for activities (``ACTIVITY_STEP``) and max($25,
+4 %) for whole-trip totals (``TRIP_STEP``).
 """
 
 from dataclasses import dataclass
@@ -44,6 +45,9 @@ class Step:
 
 FARE_STEP = Step(15.0, 0.05)
 TRIP_STEP = Step(25.0, 0.04)
+# Activities: per-person prices of a few units; the minimum applies in the
+# listing's own currency (activity watches never mix currencies).
+ACTIVITY_STEP = Step(min_usd=1.0, min_pct=0.05)
 DEFAULT_STEP = FARE_STEP
 
 
