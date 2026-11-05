@@ -410,7 +410,7 @@ def _client_returning(resp=None, exc=None):
 @pytest.mark.parametrize("exc", [httpx.ReadTimeout("slow"), httpx.ConnectError("down")])
 async def test_transport_errors_raise_serpapi_error(exc):
     with patch.object(
-        hotel_prices, "_get_client", return_value=_client_returning(exc=exc)
+        hotel_prices, "get_serp_client", return_value=_client_returning(exc=exc)
     ):
         with pytest.raises(SerpAPIError):
             await price_property("t", "2026-12-10", "2026-12-14", 2, API_KEY)
@@ -419,14 +419,14 @@ async def test_transport_errors_raise_serpapi_error(exc):
 async def test_quota_and_http_errors():
     resp = httpx.Response(429, text="too many")
     with patch.object(
-        hotel_prices, "_get_client", return_value=_client_returning(resp)
+        hotel_prices, "get_serp_client", return_value=_client_returning(resp)
     ):
         with pytest.raises(SerpAPIError) as info:
             await find_properties("x", "Lisbon", "2026-12-10", "2026-12-14", 2, API_KEY)
     assert info.value.quota_exceeded is True
     resp = httpx.Response(500, text="boom")
     with patch.object(
-        hotel_prices, "_get_client", return_value=_client_returning(resp)
+        hotel_prices, "get_serp_client", return_value=_client_returning(resp)
     ):
         with pytest.raises(SerpAPIError) as info:
             await price_property("t", "2026-12-10", "2026-12-14", 2, API_KEY)
@@ -436,7 +436,7 @@ async def test_quota_and_http_errors():
 async def test_non_json_body_raises_serpapi_error():
     resp = httpx.Response(200, text="<html>oops</html>")
     with patch.object(
-        hotel_prices, "_get_client", return_value=_client_returning(resp)
+        hotel_prices, "get_serp_client", return_value=_client_returning(resp)
     ):
         with pytest.raises(SerpAPIError):
             await price_property("t", "2026-12-10", "2026-12-14", 2, API_KEY)
@@ -445,7 +445,7 @@ async def test_non_json_body_raises_serpapi_error():
 async def test_http_error_text_never_leaks_api_key():
     resp = httpx.Response(401, text=f"bad key {API_KEY}")
     with patch.object(
-        hotel_prices, "_get_client", return_value=_client_returning(resp)
+        hotel_prices, "get_serp_client", return_value=_client_returning(resp)
     ):
         with pytest.raises(SerpAPIError) as info:
             await price_property("t", "2026-12-10", "2026-12-14", 2, API_KEY)

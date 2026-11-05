@@ -17,17 +17,23 @@ from ..schemas.request import TravelSearchRequest
 
 logger = logging.getLogger(__name__)
 
-_SERP_URL = "https://serpapi.com/search"
+SERP_URL = "https://serpapi.com/search"
+_SERP_URL = SERP_URL  # old private name, kept for existing imports
 
 # Module-level shared client — one connection pool for the process lifetime
 _client: httpx.AsyncClient | None = None
 
 
-def _get_client() -> httpx.AsyncClient:
+def get_serp_client() -> httpx.AsyncClient:
+    """The process-wide SerpAPI HTTP client (one connection pool), shared by
+    every SerpAPI adapter (flights, hotel and activity prices)."""
     global _client
     if _client is None:
         _client = httpx.AsyncClient(timeout=20.0)
     return _client
+
+
+_get_client = get_serp_client  # old private name, kept for existing callers
 
 
 async def close_client() -> None:

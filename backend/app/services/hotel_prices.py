@@ -37,7 +37,7 @@ import httpx
 
 from ..core.cache import get_cache
 from .name_match import words
-from .serp_flights import _SERP_URL, SerpAPIError, _get_client
+from .serp_flights import SERP_URL, SerpAPIError, get_serp_client
 
 __all__ = [
     "MATCH_THRESHOLD",
@@ -107,7 +107,7 @@ async def _call(params: dict) -> dict:
     """One SerpAPI request. Raises SerpAPIError on transport/HTTP/body errors."""
     t0 = time.monotonic()
     try:
-        resp = await _get_client().get(_SERP_URL, params=params)
+        resp = await get_serp_client().get(SERP_URL, params=params)
     except httpx.TimeoutException as exc:
         raise SerpAPIError(f"SerpAPI timeout: {type(exc).__name__}") from exc
     except httpx.RequestError as exc:

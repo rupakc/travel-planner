@@ -50,7 +50,9 @@ def _mock_client(*responses):
         side.append(httpx.Response(200, json=r) if isinstance(r, dict) else r)
     client = AsyncMock()
     client.get = AsyncMock(side_effect=side)
-    return client, patch("app.services.serp_flights._get_client", return_value=client)
+    return client, patch(
+        "app.services.serp_flights.get_serp_client", return_value=client
+    )
 
 
 def _item(
