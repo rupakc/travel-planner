@@ -24,16 +24,22 @@ _SERP_URL = SERP_URL  # old private name, kept for existing imports
 _client: httpx.AsyncClient | None = None
 
 
-def get_serp_client() -> httpx.AsyncClient:
-    """The process-wide SerpAPI HTTP client (one connection pool), shared by
-    every SerpAPI adapter (flights, hotel and activity prices)."""
+def _get_client() -> httpx.AsyncClient:
     global _client
     if _client is None:
         _client = httpx.AsyncClient(timeout=20.0)
     return _client
 
 
-_get_client = get_serp_client  # old private name, kept for existing callers
+def get_serp_client() -> httpx.AsyncClient:
+    """The process-wide SerpAPI HTTP client (one connection pool), shared by
+    every SerpAPI adapter (flights, hotel and activity prices).
+
+    Looks ``_get_client`` up at call time, so tests may patch either name
+    (``serp_flights._get_client`` or ``serp_flights.get_serp_client``) and
+    every adapter that calls ``serp_flights.get_serp_client()`` is
+    intercepted."""
+    return _get_client()
 
 
 async def close_client() -> None:

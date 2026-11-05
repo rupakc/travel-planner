@@ -26,7 +26,6 @@ import re
 import unicodedata
 from datetime import date
 
-from ...core.cache import get_cache
 from .. import fare_watch, hotel_prices
 from ..fare_watch import date_range, usd
 from ..hotel_prices import HotelOffer, HotelPrice
@@ -103,12 +102,12 @@ def _clean(spec: dict) -> dict:
     ):
         raise InvalidSpec("That Google Hotels property isn't valid.")
     estimate = spec.get("estimate_total")
-    if estimate is not None and (
+    if (
         isinstance(estimate, bool)
         or not isinstance(estimate, (int, float))
         or not 0 < estimate <= 1_000_000
     ):
-        raise InvalidSpec("The estimated price isn't a valid amount.")
+        estimate = None  # only shown next to "no live price": never blocks a watch
     plan_id = spec.get("plan_id")
     return {
         "name": name,
@@ -138,11 +137,15 @@ def _plural(n: int, word: str) -> str:
 
 
 def subtitle(check_in: str, check_out: str, adults: int, rooms: int) -> str:
-    """'10–14 Dec · 2 adults' (· '2 rooms' when more than one)."""
-    parts = [date_range(check_in, check_out), _plural(adults, "adult")]
-    if rooms > 1:
-        parts.append(_plural(rooms, "room"))
-    return " · ".join(parts)
+    """'10–14 Dec · 2 guests · 1 room'. Google Hotels prices adults only, so
+    every traveller in the party is a guest."""
+    return " · ".join(
+        [
+            date_range(check_in, check_out),
+            _plural(adults, "guest"),
+            _plural(rooms, "room"),
+        ]
+    )
 
 
 def _offer_subtitle(o: HotelOffer, nights: int) -> str:
@@ -165,27 +168,39 @@ def _offer_subtitle(o: HotelOffer, nights: int) -> str:
 # ── Live looks ────────────────────────────────────────────────────────────────
 
 
-def _price_cached(token: str, s: dict) -> bool:
-    key = hotel_prices._price_key(
-        token, s["check_in"], s["check_out"], s["adults"], s["rooms"]
-    )
-    return key in get_cache()
-
-
-def _find_cached(s: dict) -> bool:
-    q = f"{s['name']} {s['city']}"
-    key = hotel_prices._find_key(
-        q, s["check_in"], s["check_out"], s["adults"], s["rooms"]
-    )
-    return key in get_cache()
-
-
 async def _price(token: str, s: dict, api_key: str) -> tuple[HotelPrice, int]:
-    calls = 0 if _price_cached(token, s) else 1
-    price = await hotel_prices.price_property(
-        token, s["check_in"], s["check_out"], s["adults"], api_key, rooms=s["rooms"]
-    )
+    args = (s["check_in"], s["check_out"], s["adults"])
+    calls = 0 if hotel_prices.price_is_cached(token, *args, s["rooms"]) else 1
+    try:
+        price = await hotel_prices.price_property(
+            token, *args, api_key, rooms=s["rooms"]
+        )
+    except Exception as exc:
+        exc.calls = calls  # type: ignore[attr-defined]
+        raise
     return price, calls
+
+
+_TAX_KEYS = (
+    "extracted_lowest",
+    "extracted_after_taxes_fees",
+    "lowest",
+    "after_taxes_fees",
+    "extracted_before_taxes_fees",
+)
+
+
+def _taxes_included(raw: dict) -> bool | None:
+    """Whether the look's price includes taxes and fees: the first rate field
+    hotel_prices prices from (same order) tells; None when unknown."""
+    for block in (raw.get("total_rate"), raw.get("rate_per_night")):
+        if not isinstance(block, dict):
+            continue
+        for key in _TAX_KEYS:
+            value = block.get(key)
+            if value and not isinstance(value, bool):
+                return key != "extracted_before_taxes_fees"
+    return None
 
 
 def _observed(price: HotelPrice, s: dict) -> dict:
@@ -202,6 +217,7 @@ def _observed(price: HotelPrice, s: dict) -> dict:
         "rooms": s["rooms"],
         "nightly": price.nightly,
         "total": price.total,
+        "taxes_included": _taxes_included(raw),
     }
 
 
@@ -281,23 +297,30 @@ class HotelSource:
         offers: list[HotelOffer] = []
         token = s["property_token"]
         if token is None:
-            calls += 0 if _find_cached(s) else 1
-            offers = await hotel_prices.find_properties(
-                s["name"],
-                s["city"],
-                s["check_in"],
-                s["check_out"],
-                s["adults"],
-                api_key,
-                rooms=s["rooms"],
+            stay = (s["check_in"], s["check_out"], s["adults"])
+            calls += (
+                0
+                if hotel_prices.find_is_cached(s["name"], s["city"], *stay, s["rooms"])
+                else 1
             )
+            try:
+                offers = await hotel_prices.find_properties(
+                    s["name"], s["city"], *stay, api_key, rooms=s["rooms"]
+                )
+            except Exception as exc:
+                exc.calls = calls  # type: ignore[attr-defined]
+                raise
             match = hotel_prices.match_property(s["name"], offers, s["city"])
             if match is None:
                 return self._no_live_price(s, offers, calls)
             token = match.property_token
             offers = [o for o in offers if o.property_token != token]
 
-        price, spent = await _price(token, s, api_key)
+        try:
+            price, spent = await _price(token, s, api_key)
+        except Exception as exc:
+            exc.calls = calls + getattr(exc, "calls", 1)  # type: ignore[attr-defined]
+            raise
         calls += spent
         baseline = _observation(price, s, calls)
         if baseline.status != "ok":
@@ -305,6 +328,14 @@ class HotelSource:
         name = (price.observed or {}).get("name") or s["name"]
         if s["estimate_total"] is not None:
             baseline.observed["estimate_total"] = s["estimate_total"]
+        # "Not this one?": the other priced properties the search found
+        alternatives = hotel_prices.suggestions(
+            offers, SUGGESTIONS, s["name"], s["city"]
+        )
+        if alternatives:
+            baseline.observed["alternatives"] = [
+                _suggestion(o, s) for o in alternatives
+            ]
         return CreatedWatch(
             subject={
                 "name": name,
@@ -366,15 +397,23 @@ class HotelSource:
             )
         else:
             title = f"🏨 {name} dropped to {usd(p)} for {date_range(ci, co)} (−{usd(ref - p)})"
-        guests = _plural(adults, "adult") + (
+        guests = _plural(adults, "guest") + (
             f" in {_plural(rooms, 'room')}" if rooms > 1 else ""
         )
         stay = f"{_plural(nights, 'night')}, {guests}"
-        if obs.unit_price is not None:
-            body = f"That's {usd(obs.unit_price)} a night for {stay}"
+        nightly = obs.unit_price
+        if nightly is not None and rooms > 1:
+            per_room = f"{_plural(rooms, 'room')} × {usd(nightly / rooms)} a night"
+            body = f"That's {usd(nightly)} a night ({per_room}) for {stay}"
+        elif nightly is not None:
+            body = f"That's {usd(nightly)} a night for {stay}"
         else:
             body = f"That's the total for {stay}"
-        body += " on Google Hotels, taxes and fees included."
+        taxes = (obs.observed or {}).get("taxes_included")
+        body += {
+            True: " on Google Hotels, taxes and fees included.",
+            False: " on Google Hotels, before taxes and fees.",
+        }.get(taxes, " on Google Hotels.")
         lowest = watch.get("lowest_price")
         if lowest is None or p < lowest:
             body += " The lowest we've seen since you started watching."

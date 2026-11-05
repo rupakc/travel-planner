@@ -36,17 +36,20 @@ from typing import Any
 import httpx
 
 from ..core.cache import get_cache
+from . import serp_flights
 from .name_match import words
-from .serp_flights import SERP_URL, SerpAPIError, get_serp_client
+from .serp_flights import SERP_URL, SerpAPIError
 
 __all__ = [
     "MATCH_THRESHOLD",
     "HotelOffer",
     "HotelPrice",
     "SerpAPIError",
+    "find_is_cached",
     "find_properties",
     "match_property",
     "name_similarity",
+    "price_is_cached",
     "price_property",
     "suggestions",
 ]
@@ -107,7 +110,7 @@ async def _call(params: dict) -> dict:
     """One SerpAPI request. Raises SerpAPIError on transport/HTTP/body errors."""
     t0 = time.monotonic()
     try:
-        resp = await get_serp_client().get(SERP_URL, params=params)
+        resp = await serp_flights.get_serp_client().get(SERP_URL, params=params)
     except httpx.TimeoutException as exc:
         raise SerpAPIError(f"SerpAPI timeout: {type(exc).__name__}") from exc
     except httpx.RequestError as exc:
@@ -298,6 +301,24 @@ def _price_key(token: str, ci: str, co: str, adults: int, rooms: int) -> str:
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
+
+def find_is_cached(
+    name: str, city: str, check_in: Any, check_out: Any, adults: int, rooms: int = 1
+) -> bool:
+    """Would ``find_properties`` with these arguments answer from the cache
+    (no SerpAPI call)? Lets callers count the calls they really spend."""
+    ci, co = str(check_in), str(check_out)
+    q = " ".join(part.strip() for part in (name, city) if part and part.strip())
+    return _find_key(q, ci, co, adults, rooms) in get_cache()
+
+
+def price_is_cached(
+    property_token: str, check_in: Any, check_out: Any, adults: int, rooms: int = 1
+) -> bool:
+    """Would ``price_property`` with these arguments answer from the cache?"""
+    key = _price_key(property_token, str(check_in), str(check_out), adults, rooms)
+    return key in get_cache()
 
 
 async def find_properties(

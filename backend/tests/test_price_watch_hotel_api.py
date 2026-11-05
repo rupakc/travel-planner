@@ -110,7 +110,7 @@ def test_create_matches_the_hotel_and_stores_the_property(client):
     w = _create_lumen(client, h)
     assert w["kind"] == "hotel" and w["already_watching"] is False
     assert w["title"] == "Lumen Hotel & The Lisbon Light Show"
-    assert w["subtitle"] == "10–14 Dec · 2 adults"
+    assert w["subtitle"] == "10–14 Dec · 2 guests · 1 room"
     assert w["subject"]["property_token"] == LUMEN_TOKEN
     assert w["subject"]["requested_name"] == "Lumen Hotel"
     assert w["expires_on"] == "2026-12-10"
@@ -253,8 +253,8 @@ def test_check_now_drop_alerts_with_hotel_copy_and_email(client, monkeypatch):
     text = msg.get_body(("plain",)).get_content()
     assert "Hotel price watch" in msg.get_body(("html",)).get_content()
     assert "$368 → $322" in text
-    assert "a night for 4 nights, 2 adults" in text
-    assert "Lumen Hotel & The Lisbon Light Show · 10–14 Dec · 2 adults" in text
+    assert "a night for 4 nights, 2 guests" in text
+    assert "Lumen Hotel & The Lisbon Light Show · 10–14 Dec · 2 guests · 1 room" in text
     assert "https://www.lumenhotel.pt/" in text
     assert notifications_db.list_notifications(u["id"])["items"][0]["emailed_at"]
 
@@ -314,7 +314,7 @@ async def test_scheduler_checks_due_hotel_watches(client):
         conn.execute(
             "UPDATE price_watches SET status = 'paused' WHERE id != ?", (w["id"],)
         )
-    later = NOW + timedelta(hours=13)
+    later = NOW + timedelta(hours=25)  # past the 12 h ± jitter cadence
     with serp(lumen_at(340, 85)) as call:
         outcomes = await price_watch.run_due(
             "test-key", clock=lambda: later, rand=lambda: 0.5
@@ -348,3 +348,20 @@ async def test_scheduler_expires_on_check_in_day(client):
     assert outcome.status == "expired"
     assert outcome.notification["kind"] == "watch_expired"
     assert outcome.notification["data"]["watch_kind"] == "hotel"
+
+
+def test_failed_price_look_after_a_find_charges_both_calls(client):
+    _, h = _user()
+    with patch.object(
+        hotel_prices,
+        "_call",
+        AsyncMock(
+            side_effect=[
+                load("named_search_lumen_single_property.json"),
+                hotel_prices.SerpAPIError("HTTP 500"),
+            ]
+        ),
+    ):
+        r = _create(client, h)
+    assert r.status_code == 502
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 2

@@ -10,10 +10,12 @@ import copy
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
+from app.core.cache import get_cache
 from app.services import fare_watch, hotel_prices, price_watch, serp_flights
 from app.services.price_sources import hotel
 from app.services.price_sources.hotel import SOURCE
@@ -73,7 +75,7 @@ def watch_for(subject, **over):
         "id": 7,
         "kind": "hotel",
         "title": subject.get("name", "Lumen Hotel & The Lisbon Light Show"),
-        "subtitle": "10–14 Dec · 2 adults",
+        "subtitle": "10–14 Dec · 2 guests · 1 room",
         "subject": subject,
         "baseline_price": 398.0,
         "target_price": None,
@@ -113,8 +115,30 @@ def test_builtin_registration_includes_the_hotel_source():
 def test_serp_client_has_public_names():
     assert serp_flights.SERP_URL == "https://serpapi.com/search"
     assert serp_flights._SERP_URL == serp_flights.SERP_URL
-    assert serp_flights.get_serp_client() is serp_flights.get_serp_client()
-    assert hotel_prices.get_serp_client is serp_flights.get_serp_client
+    assert serp_flights.get_serp_client() is serp_flights._get_client()
+
+
+def _blocked_client():
+    client = MagicMock()
+    client.get = AsyncMock(side_effect=httpx.ConnectError("patched"))
+    return client
+
+
+@pytest.mark.parametrize("target", ["_get_client", "get_serp_client"])
+async def test_patching_either_client_name_intercepts_every_adapter(target):
+    """Sibling branches patch the old private name: it must still stop the
+    hotel and activity adapters from reaching the network."""
+    from app.services import activity_prices
+
+    client = _blocked_client()
+    with patch(f"app.services.serp_flights.{target}", return_value=client):
+        with pytest.raises(hotel_prices.SerpAPIError):
+            await hotel_prices.price_property(
+                LUMEN_TOKEN, "2026-12-10", "2026-12-14", 2, "k"
+            )
+        with pytest.raises(hotel_prices.SerpAPIError):
+            await activity_prices.find_listings("Belem Tower tour", "Lisbon", "k")
+    assert client.get.await_count == 2
 
 
 # ── Spec validation / match key ───────────────────────────────────────────────
@@ -143,8 +167,6 @@ def test_serp_client_has_public_names():
         {"rooms": 3},  # more rooms than adults
         {"property_token": 12},
         {"property_token": "t" * 301},
-        {"estimate_total": -5},
-        {"estimate_total": "lots"},
     ],
 )
 def test_invalid_specs_raise(bad):
@@ -191,7 +213,7 @@ async def test_create_matches_the_named_hotel_and_prices_it_by_token():
     assert price["property_token"] == LUMEN_TOKEN
     assert result.subject == LUMEN_SUBJECT
     assert result.title == "Lumen Hotel & The Lisbon Light Show"
-    assert result.subtitle == "10–14 Dec · 2 adults"
+    assert result.subtitle == "10–14 Dec · 2 guests · 1 room"
     assert result.expires_on == "2026-12-10"
     b = result.baseline
     # The baseline comes from the same property look every check uses
@@ -224,7 +246,7 @@ async def test_create_from_a_picked_suggestion_prices_the_token_directly():
     assert isinstance(result, CreatedWatch)
     assert result.subject["property_token"] == BROWNS_TOKEN
     assert result.title == "Brown's | Avenue Hotel"
-    assert result.subtitle == "14–17 Jan · 2 adults"
+    assert result.subtitle == "14–17 Jan · 2 guests · 1 room"
     assert (result.baseline.price, result.baseline.unit_price) == (476.0, 159.0)
     assert result.baseline.calls == 1
 
@@ -243,7 +265,7 @@ async def test_create_with_rooms_says_so_in_the_subtitle():
             USER,
             "k",
         )
-    assert result.subtitle == "14–17 Jan · 4 adults · 2 rooms"
+    assert result.subtitle == "14–17 Jan · 4 guests · 2 rooms"
     assert result.subject["rooms"] == 2
     assert result.baseline.price == 952.0
 
@@ -380,12 +402,18 @@ async def test_check_raises_on_serpapi_errors():
 
 def test_compose_drop_copy():
     w = watch_for({**LUMEN_SUBJECT, "name": "Lumen Hotel"}, title="Lumen Hotel")
-    obs = PriceObservation(price=352.0, unit_price=88.0, source="google_hotels")
+    obs = PriceObservation(
+        price=352.0,
+        unit_price=88.0,
+        source="google_hotels",
+        observed={"taxes_included": True},
+    )
     note = SOURCE.compose("hotel_drop", w, obs, 398.0)
     assert note["kind"] == "hotel_drop"
     assert note["title"] == "🏨 Lumen Hotel dropped to $352 for 10–14 Dec (−$46)"
     assert "$88 a night" in note["body"]
-    assert "4 nights" in note["body"] and "2 adults" in note["body"]
+    assert "4 nights" in note["body"] and "2 guests" in note["body"]
+    assert "taxes and fees included" in note["body"]
     assert "Google Hotels" in note["body"]
     assert note["data"]["nightly"] == 88.0
     assert note["data"]["check_in"] == "2026-12-10"
@@ -423,9 +451,100 @@ def test_compose_one_night_one_adult_and_cross_month():
     obs = PriceObservation(price=90.0, unit_price=90.0)
     note = SOURCE.compose("hotel_drop", w, obs, 120.0)
     assert "31 Dec 2026 – 1 Jan 2027" in note["title"]
-    assert "1 night" in note["body"] and "1 adult" in note["body"]
-    assert "nights" not in note["body"] and "adults" not in note["body"]
+    assert "1 night" in note["body"] and "1 guest" in note["body"]
+    assert "nights" not in note["body"] and "guests" not in note["body"]
 
 
 def test_helpers_module_exposes_the_message():
     assert hotel.NO_LIVE_PRICE_MESSAGE == NO_LIVE
+
+
+# ── Fix round 1 ───────────────────────────────────────────────────────────────
+
+
+def before_tax_only(data: dict) -> dict:
+    """A property look whose rates carry only the before-tax price."""
+    data = copy.deepcopy(data)
+    for key in ("rate_per_night", "total_rate"):
+        data[key] = {"extracted_before_taxes_fees": data[key]["extracted_lowest"]}
+    return data
+
+
+@pytest.mark.parametrize("bad", [-5, "lots", 0, 2_000_000, True])
+async def test_an_unusable_estimate_is_dropped_not_fatal(bad):
+    assert SOURCE.match_key(spec(estimate_total=bad)) == SOURCE.match_key(spec())
+    with serp(load("synthetic_no_results.json")):
+        result = await SOURCE.create(spec(estimate_total=bad), USER, "k")
+    assert isinstance(result, NoLivePrice) and result.estimate is None
+
+
+async def test_failing_price_look_after_a_find_reports_both_calls():
+    err = hotel_prices.SerpAPIError("HTTP 500")
+    with patch.object(
+        hotel_prices,
+        "_call",
+        AsyncMock(side_effect=[load("named_search_lumen_single_property.json"), err]),
+    ):
+        with pytest.raises(hotel_prices.SerpAPIError) as info:
+            await SOURCE.create(spec(), USER, "k")
+    assert info.value.calls == 2
+
+
+async def test_failing_find_reports_one_call_and_cached_find_none():
+    with patch.object(
+        hotel_prices, "_call", AsyncMock(side_effect=hotel_prices.SerpAPIError("x"))
+    ):
+        with pytest.raises(hotel_prices.SerpAPIError) as info:
+            await SOURCE.create(spec(), USER, "k")
+    assert info.value.calls == 1
+    with serp(load("named_search_lumen_single_property.json")):
+        await hotel_prices.find_properties(
+            "Lumen Hotel", "Lisbon", "2026-12-10", "2026-12-14", 2, "k"
+        )
+    with patch.object(
+        hotel_prices, "_call", AsyncMock(side_effect=hotel_prices.SerpAPIError("x"))
+    ):
+        with pytest.raises(hotel_prices.SerpAPIError) as info:
+            await SOURCE.create(spec(), USER, "k")
+    assert info.value.calls == 1  # the find was cached; the price look failed
+
+
+def test_public_cache_probes():
+    args = ("2026-12-10", "2026-12-14", 2, 1)
+    assert hotel_prices.find_is_cached("Lumen Hotel", "Lisbon", *args) is False
+    assert hotel_prices.price_is_cached(LUMEN_TOKEN, *args) is False
+
+
+async def test_a_confident_match_keeps_up_to_three_alternatives():
+    with serp(
+        load("city_search_lisbon.json"),
+        load("property_details_lumen_generic_q.json"),
+    ):
+        result = await SOURCE.create(spec(), USER, "k")
+    assert isinstance(result, CreatedWatch)
+    alts = result.baseline.observed["alternatives"]
+    assert 1 <= len(alts) <= 3
+    assert all(a["spec"]["property_token"] != LUMEN_TOKEN for a in alts)
+    assert all(a["price"] > 0 and a["spec"]["city"] == "Lisbon" for a in alts)
+    json.dumps(alts)
+
+
+async def test_before_tax_prices_are_never_called_tax_inclusive():
+    with serp(before_tax_only(load("property_details_lumen_generic_q.json"))):
+        obs = await SOURCE.check(watch_for(LUMEN_SUBJECT), "k")
+    assert obs.observed["taxes_included"] is False
+    note = SOURCE.compose("hotel_drop", watch_for(LUMEN_SUBJECT), obs, 400.0)
+    assert "taxes and fees included" not in note["body"]
+    assert "before taxes and fees" in note["body"]
+    get_cache().clear()
+    with serp(load("property_details_lumen_generic_q.json")):
+        obs = await SOURCE.check(watch_for(LUMEN_SUBJECT), "k")
+    assert obs.observed["taxes_included"] is True
+
+
+def test_compose_multi_room_names_the_per_room_rate():
+    subject = {**LUMEN_SUBJECT, "adults": 6, "rooms": 2}
+    obs = PriceObservation(price=800.0, unit_price=200.0)
+    note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 900.0)
+    assert "6 guests in 2 rooms" in note["body"]
+    assert "2 rooms × $100 a night" in note["body"]
