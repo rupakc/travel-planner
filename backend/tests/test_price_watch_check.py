@@ -80,7 +80,7 @@ async def _run(src, user, steps, gap=DAY, **over):
     out = []
     t = START + gap
     for s in steps[1:]:
-        src.queue.append(s if isinstance(s, PriceObservation) else ok(s))
+        src.queue.append(s if isinstance(s, (PriceObservation, Exception)) else ok(s))
         res = await check_watch(w["id"], now=t, api_key="k")
         out.append(res.notification["kind"] if res.notification else ".")
         t += gap
@@ -391,7 +391,7 @@ async def test_missing_source_skips_without_a_strike(src, user):
 async def test_checks_spend_the_shared_fare_watch_budget(src, user):
     w = _create(user)
     src.cost = 4
-    src.queue.append(ok(399.0))
+    src.queue.append(PriceObservation(price=399.0, source="fake_live", calls=4))
     await check_watch(w["id"], now=START, api_key="k")
     assert fare_watch_db.calls_used("2026-11-04") == 4
     assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 4
@@ -468,3 +468,78 @@ async def test_no_email_when_disabled(src, user, monkeypatch):
     src.queue.append(ok(370.0))
     await check_watch(w["id"], now=START + DAY, api_key="k")
     assert sent == []
+
+
+# ── Fix round 1 ───────────────────────────────────────────────────────────────
+
+
+async def test_a_crashing_compose_after_the_live_look_is_a_failure_strike(src, user):
+    w = _create(user)
+
+    def broken(kind, watch, obs, ref):
+        raise RuntimeError("compose broke")
+
+    src.compose = broken
+    src.queue.append(ok(300.0))
+    res = await check_watch(w["id"], now=START + DAY, api_key="k")
+    assert res.status == "failed"
+    row = price_watch_db.get_watch(w["id"])
+    assert row["failure_count"] == 1 and row["lease_until"] is None
+    assert row["next_check_at"] == (START + DAY + timedelta(hours=1)).isoformat()
+    assert row["check_count"] == 1  # nothing recorded as a successful check
+    assert [h["price"] for h in price_watch_db.get_history(w["id"])] == [400.0]
+
+
+async def test_a_crashing_estimate_is_a_failure_strike(src, user):
+    w = _create(user)
+
+    def broken(watch):
+        raise KeyError("subject")
+
+    src.estimate_calls = broken
+    res = await check_watch(w["id"], now=START + DAY, api_key="k")
+    assert res.status == "failed"
+    assert price_watch_db.get_watch(w["id"])["lease_until"] is None
+    assert src.checked == []
+
+
+async def test_check_calls_are_settled_to_what_the_look_spent(src, user):
+    w = _create(user)
+    src.cost = 8
+    src.queue.append(PriceObservation(price=390.0, source="fake_live", calls=2))
+    await check_watch(w["id"], now=START, api_key="k")
+    assert fare_watch_db.calls_used("2026-11-04") == 2
+    assert fare_watch_db.user_calls_used("2026-11-04", user["id"]) == 2
+
+
+async def test_a_failure_breaks_the_unavailable_streak(src, user):
+    w, _ = await _run(src, user, [400.0, gone(), RuntimeError("x"), gone(), gone()])
+    row = price_watch_db.get_watch(w["id"])
+    assert row["status"] == "active"
+    assert row["unavailable_count"] == 2
+
+
+async def test_an_unknown_status_is_a_failure_not_unavailable(src, user):
+    w = _create(user)
+    src.queue.append(PriceObservation(price=None, status="sold_out", source="x"))
+    res = await check_watch(w["id"], now=START + DAY, api_key="k")
+    assert res.status == "failed"
+    assert price_watch_db.get_watch(w["id"])["unavailable_count"] == 0
+
+
+async def test_a_source_cannot_override_watch_id_or_kind(src, user):
+    w = _create(user)
+
+    def sneaky(kind, watch, obs, ref):
+        return {
+            "kind": kind,
+            "title": "t",
+            "body": "b",
+            "data": {"watch_id": 999, "watch_kind": "flight", "custom": 1},
+        }
+
+    src.compose = sneaky
+    src.queue.append(ok(300.0))
+    res = await check_watch(w["id"], now=START + DAY, api_key="k")
+    d = res.notification["data"]
+    assert (d["watch_id"], d["watch_kind"], d["custom"]) == (w["id"], "test", 1)

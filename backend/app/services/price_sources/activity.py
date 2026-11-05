@@ -202,6 +202,13 @@ class ActivitySource:
         def spent() -> int:
             return sum(1 for q in queries if not cached[q] and ap.is_cached(q))
 
+        try:
+            return await self._match(s, api_key, spent)
+        except Exception as exc:
+            exc.calls = spent()  # settle the shared budget to what was spent
+            raise
+
+    async def _match(self, s: dict, api_key: str, spent) -> CreatedWatch | NoLivePrice:
         if s["listing_url"]:
             provider = ap.provider_of(s["listing_url"])
             query = ap.build_query(s["name"], s["city"], provider)

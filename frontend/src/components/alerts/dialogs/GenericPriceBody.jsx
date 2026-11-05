@@ -1,20 +1,22 @@
-import { formatUsd } from '../../../utils/fareCalendar'
+import { formatPrice } from '../../../utils/priceWatch'
 
 /**
  * Default body of the price-watch dialog. Every body gets
- * `{ kind, spec, preview, watch }`: `spec` is what will be matched,
- * `preview` what the page already knows ({ title, subtitle, price,
- * priceLabel }), and `watch` the created watch once there is one (show the
- * matched subject so the traveller sees what is tracked).
+ * `{ kind, spec, preview, watch, unitLabel }`: `spec` is the spec actually
+ * sent (a picked suggestion's, after a no-live-price answer), `preview` what
+ * the page already knows ({ title, subtitle, price, priceLabel, currency }),
+ * `watch` the created watch once there is one (show the matched subject so
+ * the traveller sees what is tracked), and `unitLabel` the kind's wording
+ * after a unit price ("per night", "per person").
  */
-export default function GenericPriceBody({ preview = {}, watch = null }) {
+export default function GenericPriceBody({ preview = {}, watch = null, unitLabel = null }) {
   if (watch) {
     const unit = watch.last_observation?.unit_price
     return (
       <p className="text-sm text-slate-600">
         Tracking <strong className="text-slate-800">{watch.title}</strong>
         {watch.subtitle ? ` · ${watch.subtitle}` : ''}
-        {unit != null ? ` · ${formatUsd(unit)} per unit` : ''}
+        {unit != null ? ` · ${formatPrice(unit, watch.currency)} ${unitLabel || 'per unit'}` : ''}
       </p>
     )
   }
@@ -22,8 +24,8 @@ export default function GenericPriceBody({ preview = {}, watch = null }) {
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
       <p className="text-sm text-slate-600">
-        Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatUsd(preview.price)}</span>
-        {preview.priceLabel && <span className="ml-1.5 text-xs text-slate-500">{preview.priceLabel}</span>}
+        Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.price, preview.currency)}</span>
+        {(preview.priceLabel || unitLabel) && <span className="ml-1.5 text-xs text-slate-500">{preview.priceLabel || unitLabel}</span>}
       </p>
       <p className="mt-1 text-xs text-slate-500">We’ll look up the live price when you start watching.</p>
     </div>

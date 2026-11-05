@@ -288,9 +288,23 @@ class TestCreate:
         assert res.baseline.price == 61.0
         assert res.subtitle == "GetYourGuide · from €30.50 per person · 2 travellers"
 
-    async def test_serpapi_errors_propagate(self):
-        with serp(httpx.Response(500, text="boom")), pytest.raises(Exception):
+    async def test_serpapi_errors_propagate_with_the_calls_spent(self):
+        with serp(httpx.Response(500, text="boom")), pytest.raises(Exception) as e:
             await act.SOURCE.create(_spec(), USER, KEY)
+        assert e.value.calls == 0
+        # GetYourGuide answered (category only), then Viator failed: 1 spent
+        with (
+            serp(_fixture("gyg_belem_tower"), httpx.Response(500, text="boom")),
+            pytest.raises(Exception) as e,
+        ):
+            await act.SOURCE.create(_spec(name="Belem Tower tour"), USER, KEY)
+        assert e.value.calls == 1
+
+    async def test_check_spends_nothing_when_cached(self):
+        with serp(_fixture("gyg_belem_tower")):
+            first = await act.SOURCE.check(_watch(), KEY)
+            again = await act.SOURCE.check(_watch(), KEY)
+        assert (first.calls, again.calls) == (1, 0)
 
 
 # ── Check ─────────────────────────────────────────────────────────────────────

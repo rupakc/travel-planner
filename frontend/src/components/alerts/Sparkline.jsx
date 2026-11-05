@@ -4,9 +4,10 @@ import { sparkGeometry } from '../../utils/fareWatch'
 
 /**
  * Price history line with the target as a dashed line. The latest point is
- * marked; the whole graphic carries a text summary for screen readers.
+ * marked; the whole graphic carries a text summary for screen readers
+ * (`format` writes its prices; fares use whole US dollars).
  */
-export default function Sparkline({ history, target = null, width = 280, height = 48, className = '' }) {
+export default function Sparkline({ history, target = null, width = 280, height = 48, className = '', format = formatUsd }) {
   const gradientId = useId()
   const g = sparkGeometry(history, { width, height, pad: 4, target })
   if (!g || g.points.length < 2) {
@@ -20,8 +21,8 @@ export default function Sparkline({ history, target = null, width = 280, height 
   const first = g.points[0]
   const down = last.price < first.price
   const stroke = down ? '#059669' : '#0284c7'
-  const summary = `Price over ${g.points.length} checks: from ${formatUsd(first.price)} to ${formatUsd(last.price)}, low ${formatUsd(Math.min(...g.points.map(p => p.price)))}`
-    + (target ? `. Your target is ${formatUsd(target)}.` : '.')
+  const summary = `Price over ${g.points.length} checks: from ${format(first.price)} to ${format(last.price)}, low ${format(Math.min(...g.points.map(p => p.price)))}`
+    + (target ? `. Your target is ${format(target)}.` : '.')
   return (
     <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={summary}
       className={`block h-auto w-full overflow-visible ${className}`}>
