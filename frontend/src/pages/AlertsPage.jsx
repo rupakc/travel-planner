@@ -101,8 +101,11 @@ export default function AlertsPage() {
 
   useEffect(() => { load() }, [load])
 
-  const watches = fares && prices
-    ? [...fares, ...prices].sort((a, b) => sortDate(a).localeCompare(sortDate(b)))
+  // Each list shows as soon as it arrives (a slow price list never holds
+  // up the fare cards); "nothing watched" waits for both
+  const loaded = fares !== null && prices !== null
+  const watches = fares || prices
+    ? [...(fares || []), ...(prices || [])].sort((a, b) => sortDate(a).localeCompare(sortDate(b)))
     : null
   const isFocus = (w) => w.id === focusId && (w.kind || null) === focusKind
 
@@ -126,7 +129,8 @@ export default function AlertsPage() {
   // Deep links from the bell, toasts and emails: ?watch=ID[&replan=1[&cheapest=1]]
   // for fares, ?kind=KIND&watch=ID for price watches
   useEffect(() => {
-    if (!watches || !focusId || handledLink.current === location.search) return
+    if (!focusId || handledLink.current === location.search) return
+    if ((focusKind ? prices : fares) === null) return // its list is still loading
     const w = watches.find(isFocus)
     if (!w) {
       // Its list failed to load: try again once it has (the "Try again" button)
@@ -144,7 +148,7 @@ export default function AlertsPage() {
       const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       document.getElementById(watchDomId(w))?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
     })
-  }, [watches, focusId, location.search, priceError, loadError]) // once per deep link
+  }, [fares, prices, focusId, location.search, priceError, loadError]) // once per deep link
 
   const onCheck = (w) => withBusy(w, 'check', async () => {
     const act = actionsFor(w)
@@ -236,7 +240,7 @@ export default function AlertsPage() {
         </div>
       )}
 
-      {watches && watches.length === 0 && !loadError && (
+      {loaded && watches.length === 0 && !loadError && (
         <section className="rounded-2xl border border-white/60 bg-white/90 px-6 py-10 text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-600">
             <BellRing size={22} aria-hidden="true" />

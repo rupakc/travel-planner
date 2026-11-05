@@ -175,6 +175,37 @@ describe('Alerts page — fix round 1', () => {
     expect(container.querySelector('#price-watch-9').className).toContain('ring-2')
   })
 
+  it('fare cards show as soon as the fare list arrives; price watches merge in later', async () => {
+    let answer
+    api.listPriceWatches.mockReturnValue(new Promise(r => { answer = r }))
+    await render(<AlertsPage />, '/alerts')
+    expect(container.querySelector('#watch-7')).not.toBeNull() // the fare, without waiting
+    expect(container.querySelector('#price-watch-9')).toBeNull()
+    expect(container.textContent).not.toContain('Nothing watched yet')
+    await act(async () => answer([HOTEL, TRIP]))
+    expect(container.querySelector('#price-watch-9')).not.toBeNull()
+    expect(container.querySelector('#watch-7')).not.toBeNull()
+  })
+
+  it('a slow price list never shows the empty state early', async () => {
+    let answer
+    api.listFareWatches.mockResolvedValue([])
+    api.listPriceWatches.mockReturnValue(new Promise(r => { answer = r }))
+    await render(<AlertsPage />, '/alerts')
+    expect(container.textContent).not.toContain('Nothing watched yet')
+    await act(async () => answer([HOTEL]))
+    expect(container.querySelector('#price-watch-7')).not.toBeNull()
+  })
+
+  it('a price-watch deep link waits for a slow price list', async () => {
+    let answer
+    api.listPriceWatches.mockReturnValue(new Promise(r => { answer = r }))
+    await render(<AlertsPage />, '/alerts?kind=trip&watch=9')
+    expect(container.querySelector('#watch-7')).not.toBeNull()
+    await act(async () => answer([HOTEL, TRIP]))
+    expect(container.querySelector('#price-watch-9').className).toContain('ring-2')
+  })
+
   it('has a generic empty state', async () => {
     api.listFareWatches.mockResolvedValue([])
     api.listPriceWatches.mockResolvedValue([])
