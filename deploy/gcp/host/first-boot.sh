@@ -181,7 +181,7 @@ install_units() {
   systemctl daemon-reload
   systemctl enable voyager-governor-rules.service voyager.service \
     voyager-governor.timer voyager-deploy.timer voyager-window.timer
-  systemctl restart apt-daily-upgrade.timer || true
+  systemctl restart --no-block apt-daily-upgrade.timer || true
 }
 
 main() {
@@ -194,8 +194,8 @@ main() {
   [[ -f /etc/docker/daemon.json ]] || configure_docker
   prepare_data_dir
   install_units
-  systemctl start voyager-governor-rules.service
-  systemctl start voyager-governor.timer voyager-deploy.timer voyager-window.timer
+  systemctl start --no-block voyager-governor-rules.service
+  systemctl start --no-block voyager-governor.timer voyager-deploy.timer voyager-window.timer
   # First deploy now (also brings up compose). Later runs (every boot, or
   # after --update-host) apply the possibly changed compose.yaml/app.env:
   # `up -d` recreates only the services whose config changed.
@@ -204,7 +204,9 @@ main() {
   else
     docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
       --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans
-    systemctl start voyager.service
+    # --no-block: this script runs inside google-startup-scripts.service, so
+    # it must never wait on another unit's start job (boot deadlock)
+    systemctl start --no-block voyager.service
   fi
   log "done"
 }

@@ -2,7 +2,9 @@
 Description=Voyager (docker compose: app + caddy)
 Requires=docker.service
 Wants=network-online.target
-After=docker.service network-online.target voyager-governor-rules.service google-startup-scripts.service
+# Not ordered after google-startup-scripts: first-boot.sh runs inside that
+# unit and starts this one (--no-block), which would otherwise wait forever
+After=docker.service network-online.target voyager-governor-rules.service
 # First boot: nothing to start until the deployer has verified and pinned images
 ConditionPathExists=/opt/voyager/images.env
 
