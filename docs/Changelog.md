@@ -8,6 +8,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 Deployment kit for the approved lean GCP design (`docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md`): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: [Deployment on GCP](Deployment-GCP.md).
 
+- **Operator password tool:** `python -m app.set_password USERNAME` (reset, reactivate) or `--create --admin`; reads the password twice with getpass, never from arguments (runbook §5a).
 - **Backend production mode:**
   - `BACKUP_MODE=vm`: disk authoritative, restore only if the DB is missing (stray WAL/SHM removed), mount-guard marker, no merge, user-table export to tmpfs uploaded on hash change every 5 min plus a clean-shutdown flush, `backup_ok` in `/health`.
   - `python -m app.entrypoint`: Secret Manager secrets into memory, refuses an empty `JWT_SECRET_KEY`, uvicorn with `--timeout-graceful-shutdown 5` and proxy headers only from the compose network.

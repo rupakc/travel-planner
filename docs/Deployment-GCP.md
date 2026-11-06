@@ -140,6 +140,19 @@ gcloud storage cp /tmp/voyager-migration/airports.db \
 
 At start, the app sees no DB on the disk, restores this file and reseeds the place data. The old passwords keep working.
 
+## 5a. Forgotten password or a new admin
+
+There is no self-service reset; the operator sets a password on the VM. The tool asks for it twice with no echo, so it never appears in shell history, `ps` or a log, and nobody else (including an assistant) has to see it:
+
+```bash
+gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=voyager-prod-ohzkl -- -t \
+  sudo docker exec -it voyager-app-1 python -m app.set_password admin
+```
+
+- A reset also reactivates the account and skips the forced change on next login (you chose the password).
+- New admin: `python -m app.set_password NEWNAME --create --admin`.
+- Minimum length is the app's (8 characters). The change reaches the GCS backup within 5 minutes.
+
 ## 6. Day-to-day: deploys and rollback
 
 - **Auto-deploy.** Every merge to `main` that passes all of CI publishes images signed by `deploy.yml` and moves their `prod` tags. Within 5 minutes `voyager-deploy.timer` on the VM resolves `prod` to a digest and checks the cosign signature: it must come from `rupakc/travel-planner`'s `deploy.yml` on `refs/heads/main`. It then pulls by digest, pins the digest in `/opt/voyager/images.env` (keeping the previous one), runs `docker compose up -d`, and waits up to 240 s for the app to report healthy (longer than the container's 180 s start period, so a slow reseed isn't mistaken for a failure). Each run also converges: `compose up -d` brings back anything that was stopped, e.g. by a Docker upgrade.
