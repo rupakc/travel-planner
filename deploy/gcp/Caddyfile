@@ -10,6 +10,13 @@
 		# HTTP/1.1 + HTTP/2 only: no UDP (HTTP/3), so every byte is TCP the
 		# egress governor can meter
 		protocols h1 h2
+		# Slow-client (slowloris) limits. No write timeout: SSE streams run
+		# for minutes and keepalives arrive every 15 s.
+		timeouts {
+			read_header 10s
+			read_body 2m
+			idle 2m
+		}
 	}
 }
 
@@ -41,6 +48,10 @@
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		Strict-Transport-Security "max-age=31536000"
+		# The built SPA has no inline scripts and no eval; React and Leaflet
+		# set inline styles; map tiles and result images come from anywhere
+		Content-Security-Policy "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
 		-Server
 	}
 
@@ -58,14 +69,18 @@
 		}
 	}
 
+	# Hashed build assets never change: cache for a year. A missing one is a
+	# plain 404 (never index.html, which would be cached as JS for a year).
+	handle /assets/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# index.html and SPA routes: always revalidate, so a deploy shows up
 	handle {
 		root * /srv
-		# Hashed build assets never change: cache for a year
-		@assets path /assets/*
-		header @assets Cache-Control "public, max-age=31536000, immutable"
-		# index.html and SPA routes: always revalidate, so a deploy shows up
-		@shell not path /assets/*
-		header @shell Cache-Control "no-cache"
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
 	}

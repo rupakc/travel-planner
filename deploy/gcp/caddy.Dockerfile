@@ -10,6 +10,11 @@ RUN npm run build
 FROM caddy:2.10-alpine
 COPY deploy/gcp/Caddyfile /etc/caddy/Caddyfile
 COPY --from=spa /app/dist /srv
+# Non-root (uid 10002); compose lowers the unprivileged-port floor so it can
+# bind 80/443. Fresh named volumes on /data and /config inherit this owner.
+RUN addgroup -S -g 10002 caddy && adduser -S -D -H -u 10002 -G caddy caddy \
+    && chown -R caddy:caddy /data /config
+USER 10002
 # Fail the build on a Caddyfile error (placeholder values for the check only)
 RUN SITE_HOST=voyager.example.test ACME_EMAIL=ops@example.test \
     caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
