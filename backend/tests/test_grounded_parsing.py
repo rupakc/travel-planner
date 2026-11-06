@@ -529,3 +529,57 @@ def test_title_matching_rules(name, title, ok):
     chunk = _maps(title, "https://maps.google.com/?cid=1")
     sections, _ = nearby_grounded.parse_sections(f"## See\n* {name} - x", [chunk], 6)
     assert bool(sections[0]["items"]) is ok
+
+
+def test_review_chunks_lose_their_prefix_and_never_duplicate_a_place():
+    # Real Shinjuku shape: the place chunk and a "Review of …" chunk of the
+    # same place (same placeId); the model listed it twice
+    chunks = [
+        _maps(
+            "Don Quijote Shinjuku - Google Maps",
+            "https://maps.google.com/?cid=1",
+            "places/D",
+        ),
+        _maps(
+            "Review of Don Quijote Shinjuku - Google Maps",
+            "https://maps.google.com/?cid=1&r=2",
+            "places/D",
+        ),
+        _maps(
+            "Review of Ashoka Pillar Monument - Google Maps",
+            "https://maps.google.com/?cid=3",
+            "places/P",
+        ),
+    ]
+    text = (
+        "## Shop\n* Don Quijote Shinjuku - Discount store\n"
+        "* Don Quijote Shinjuku - Again\n"
+        "## See\n* Ashoka Pillar Monument - Stone landmark\n"
+    )
+    sections, sources = nearby_grounded.parse_sections(text, chunks, 6)
+    assert [i["name"] for i in sections[2]["items"]] == ["Don Quijote Shinjuku"]
+    assert [i["name"] for i in sections[0]["items"]] == ["Ashoka Pillar Monument"]
+    assert sources[2]["title"] == "Ashoka Pillar Monument"
+
+
+@pytest.mark.parametrize(
+    "line, title, summary",
+    [
+        (
+            "* Isla & Co. - Midtown - Trendy all-day brunch.",
+            "Isla & Co. - Midtown",
+            "Trendy all-day brunch.",
+        ),
+        (
+            "* Lisbon Wine House - Rooms & Suites - Value rooms near Rossio.",
+            "Lisbon Wine House - Rooms & Suites",
+            "Value rooms near Rossio.",
+        ),
+        ("* Cafeteria - Upscale diner food.", "Cafeteria", "Upscale diner food."),
+    ],
+)
+def test_names_containing_a_dash_keep_a_clean_summary(line, title, summary):
+    chunk = _maps(f"{title} - Google Maps", "https://maps.google.com/?cid=1")
+    sections, _ = nearby_grounded.parse_sections(f"## Eat\n{line}", [chunk], 6)
+    [item] = sections[1]["items"]
+    assert (item["name"], item["summary"]) == (title, summary)

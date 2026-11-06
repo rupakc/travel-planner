@@ -28,6 +28,7 @@ SECTIONS = (
 _IDS = {sid for sid, *_ in SECTIONS}
 # Maps chunk titles read "Cafe Portugal - Google Maps"
 _TITLE_SUFFIX = re.compile(r"\s*[-–—|]\s*Google Maps\s*$", re.IGNORECASE)
+_REVIEW_PREFIX = re.compile(r"^Review of\s+", re.IGNORECASE)
 _BULLET = re.compile(r"^\s*(?:[-*•]+|\d{1,2}[.)])\s*")
 _SEPARATORS = (" - ", " – ", " — ", ":")
 # A folded name shorter than this must equal a chunk title exactly ("Bar"
@@ -65,8 +66,23 @@ def _clean(text: str) -> str:
 
 
 def clean_title(title: str) -> str:
-    """A Maps chunk title without Google's " - Google Maps" suffix."""
-    return _TITLE_SUFFIX.sub("", (title or "").strip()).strip()
+    """A Maps chunk title without Google's " - Google Maps" suffix, or the
+    "Review of " prefix of a chunk that links to a review of the place."""
+    title = _TITLE_SUFFIX.sub("", (title or "").strip()).strip()
+    return _REVIEW_PREFIX.sub("", title).strip()
+
+
+def _trim_summary(why: str, name: str, title: str) -> str:
+    """Drop the part of a title the line split into its summary: "Isla &
+    Co. - Midtown - Trendy brunch" → name "Isla & Co.", summary "Midtown -
+    Trendy brunch"; the item is titled "Isla & Co. - Midtown", so the
+    summary becomes "Trendy brunch"."""
+    if not name or not title.lower().startswith(name.lower()):
+        return why
+    extra = title[len(name) :].strip(" -–—:")
+    if extra and why.lower().startswith(extra.lower()):
+        return why[len(extra) :].lstrip(" -–—:").strip()
+    return why
 
 
 def _place_id(raw) -> str | None:
@@ -186,6 +202,7 @@ def parse_sections(
     supports = supports or []
     items: dict[str, list[dict]] = {sid: [] for sid in _IDS}
     used: set[str] = set()
+    places: set[str] = set()
     section = None
     for line in (text or "").splitlines():
         if not line.strip():
@@ -203,10 +220,17 @@ def parse_sections(
         if chunk is None:
             continue
         used.add(chunk["uri"])
+        # one card per place: a review chunk (or a second chunk) of a place
+        # already listed is skipped
+        place = _place_id(chunk.get("place_id")) or fold_place(chunk["title"])
+        if place in places:
+            continue
+        places.add(place)
+        title = chunk["title"] or name
         items[section].append(
             {
-                "name": chunk["title"] or name,
-                "summary": why[:_MAX_SUMMARY],
+                "name": title,
+                "summary": _trim_summary(why, name, title)[:_MAX_SUMMARY],
                 "maps_uri": chunk["uri"],
                 "place_id": _place_id(chunk.get("place_id")),
                 "category": section,
