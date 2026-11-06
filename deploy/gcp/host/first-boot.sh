@@ -82,11 +82,33 @@ JSON
   systemctl restart docker
 }
 
+# Docker's published ports (DNAT) and the containers' own outbound traffic
+# (metadata server, Secret Manager, GCS) need IPv4 forwarding. Docker turns
+# it on only when dockerd starts; the GCE image ships
+# /etc/sysctl.d/60-gce-network-security.conf with net.ipv4.ip_forward=0, so
+# any full sysctl reload (`sysctl --system`, systemd-sysctl) turns it off
+# again under a running Docker. Incident 2026-11-06: re-running this script
+# after --update-host did exactly that (~10 min outage). 99- sorts after 60-,
+# so this file wins at boot and on every reload. Written before any sysctl is
+# applied; this script itself only ever applies single files (`sysctl -p`).
+configure_network() {
+  cat >/etc/sysctl.d/99-voyager-docker.conf <<'EOF'
+# Voyager: Docker needs IPv4 forwarding (published ports, container egress).
+# Overrides net.ipv4.ip_forward=0 in 60-gce-network-security.conf (GCE image);
+# without it a sysctl reload cuts every container off (incident 2026-11-06).
+net.ipv4.ip_forward=1
+EOF
+  sysctl -q -p /etc/sysctl.d/99-voyager-docker.conf ||
+    log "WARNING: could not set net.ipv4.ip_forward=1 (the governor retries every minute)"
+}
+
 configure_memory() {
   # zram instead of a swapfile: no disk thrash at 22 IOPS, no snapshot churn
   local want=$'ALGO=lz4\nSIZE=512\nPRIORITY=100'
   echo "vm.swappiness=10" >/etc/sysctl.d/90-voyager.conf
-  sysctl -q --system || true
+  # Only this file: a full `sysctl --system` would re-apply the image's
+  # net.ipv4.ip_forward=0 (see configure_network)
+  sysctl -q -p /etc/sysctl.d/90-voyager.conf || log "could not apply vm.swappiness (continuing)"
   systemctl enable zramswap
   # Restart only when the config changed (or zramswap isn't running): a
   # restart swapoffs zram, which on the live VM pulls swapped app pages back
@@ -189,6 +211,9 @@ install_units() {
 }
 
 main() {
+  # First: before package installs (whose postinsts may reload sysctl) and
+  # before configure_memory applies its own sysctl file
+  configure_network
   install_packages
   install -d -m 0755 "$OPT"
   unpack_bundle

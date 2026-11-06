@@ -23,6 +23,12 @@ but counted, so it errs towards closing early). It is reboot-safe: a new
 boot id or a counter that went backwards counts the new raw value as the
 delta. State is persisted atomically every tick.
 
+Every tick also guards net.ipv4.ip_forward, which Docker needs for its
+published ports and the containers' own traffic: when something reset it to
+0 (incident 2026-11-06: a full sysctl reload re-applied the GCE image's
+60-gce-network-security.conf), the tick sets it back to 1, logs loudly and
+emails (at most once a day), so an outage lasts at most a minute.
+
 Usage: governor.py tick | apply | status | reopen [--extra-gib N]
                    | seed --gib N | close | mail --subject S --body B
 Config: /etc/voyager/governor.env (KEY=VALUE, optional).
@@ -57,6 +63,8 @@ CHAIN_CLOSE = "VOYAGER-CLOSE"
 CHAIN_GUARD = "VOYAGER-GUARD"
 METADATA_IP = "169.254.169.254"
 CONFIG_FILE = Path("/etc/voyager/governor.env")
+IP_FORWARD = Path("/proc/sys/net/ipv4/ip_forward")
+IP_FORWARD_ALERT_EVERY = 24 * 3600  # seconds between ip_forward emails
 METADATA = "http://metadata.google.internal/computeMetadata/v1"
 
 log = logging.getLogger("voyager-governor")
@@ -504,8 +512,73 @@ def _state_for_now(cfg: Config) -> dict:
     return state
 
 
+def ip_forward_guard(
+    cfg: Config, state: dict, now: float, path: Path | None = None
+) -> dict:
+    """Keep net.ipv4.ip_forward at 1. Docker sets it only when dockerd
+    starts; anything that reloads sysctl later (``sysctl --system``,
+    systemd-sysctl) re-applies the GCE image's ip_forward=0, and every
+    container loses its routing (no metadata server, no inbound DNAT).
+
+    On 0: write 1, log an error and email, at most once per
+    IP_FORWARD_ALERT_EVERY (a flapping value must not email every minute).
+    If it cannot be restored, the same throttled email says so, and one more
+    goes out once it is 1 again."""
+    path = path or IP_FORWARD
+    try:
+        value = path.read_text().strip()
+    except OSError as exc:
+        log.error("Cannot read %s: %s", path, exc)
+        return state
+    if value == "1":
+        if state.get("ip_forward_error"):
+            log.warning("net.ipv4.ip_forward is 1 again")
+            send_email(cfg, "[voyager] net.ipv4.ip_forward is 1 again", "Recovered.\n")
+        return dict(state, ip_forward_error=None)
+    try:
+        path.write_text("1\n")
+        healed = path.read_text().strip() == "1"
+        error = None if healed else f"still {path.read_text().strip()} after writing 1"
+    except OSError as exc:
+        healed, error = False, f"{type(exc).__name__}: {exc}"
+    check = "Check: cat /proc/sys/net/ipv4/ip_forward (must be 1); ls /etc/sysctl.d/\n"
+    if healed:
+        log.error(
+            "net.ipv4.ip_forward was %s: set it back to 1. Containers had no "
+            "routing (metadata server, Secret Manager, inbound 80/443) until now",
+            value,
+        )
+        subject = "[voyager] net.ipv4.ip_forward was reset to 0; restored to 1"
+        body = (
+            f"The governor found net.ipv4.ip_forward={value} and set it back to 1. "
+            "Until then the containers had no routing: the app could not reach "
+            "the metadata server or Secret Manager, and inbound 80/443 (DNAT) "
+            "was dead. Something reloaded sysctl (e.g. `sysctl --system`) and "
+            "re-applied the GCE image's 60-gce-network-security.conf; "
+            "/etc/sysctl.d/99-voyager-docker.conf should override it.\n\n" + check
+        )
+    else:
+        log.critical(
+            "net.ipv4.ip_forward is %s and could not be set to 1: %s", value, error
+        )
+        subject = "[voyager] net.ipv4.ip_forward is 0 and could NOT be restored"
+        body = (
+            f"net.ipv4.ip_forward={value} and writing 1 failed ({error}). Every "
+            "container is cut off. Fix by hand: sudo sysctl -w "
+            "net.ipv4.ip_forward=1\n\n" + check
+        )
+    last = state.get("ip_forward_alerted_at")
+    if last is None or now - last >= IP_FORWARD_ALERT_EVERY:
+        send_email(cfg, subject, body)
+        state = dict(state, ip_forward_alerted_at=now)
+    return dict(state, ip_forward_error=error)
+
+
 def cmd_tick(cfg: Config) -> None:
-    state = apply_tick(_state_for_now(cfg), read_raw(cfg), read_boot_id(), time.time())
+    now = time.time()
+    state = apply_tick(_state_for_now(cfg), read_raw(cfg), read_boot_id(), now)
+    # First: without forwarding nothing else here matters (site down)
+    state = ip_forward_guard(cfg, state, now)
     save_state(cfg.state_path, state)  # counted bytes survive any failure below
     d = decide(state, cfg)
     failure = None

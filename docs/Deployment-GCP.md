@@ -174,7 +174,7 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=v
 - **Logs.** Docker keeps 10 MB × 5 per container on the VM; there is no Cloud Logging agent and so no ingestion bill.
   - `sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs -f app`
   - `journalctl -u voyager-deploy -u voyager-governor`
-- **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`. It returns as soon as the bundle is unpacked and `compose up -d` has applied the changes; units are started with `--no-block`, so it never waits on itself.
+- **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`. It returns as soon as the bundle is unpacked and `compose up -d` has applied the changes; units are started with `--no-block`, so it never waits on itself. **Afterwards check IPv4 forwarding:** `cat /proc/sys/net/ipv4/ip_forward` must print `1`, and `curl -m 10 https://<host>/health` must answer. If it prints `0`, see [Troubleshooting](#11-troubleshooting).
 - **Schema changes stay additive.** A rollback must never meet a DB it can't read.
 
 ## 7. Backups and restore drills
@@ -225,6 +225,7 @@ How the rules are applied:
 - The governor owns `DOCKER-USER`; don't add rules of your own there.
 - Its rules are replaced in **one `iptables-restore` transaction**, validated first. A rejected ruleset leaves the previous rules in force and sends one email ("egress governor rules FAILED to apply", and another when they apply again). The `voyager-governor` unit then fails, so it shows in `systemctl --failed`.
 - CI runs the real rules against iptables-nft on Debian 13 for every tier (job `host-checks`).
+- Every tick also checks `/proc/sys/net/ipv4/ip_forward`. If it is `0`, the governor sets it back to `1`, logs an error and sends one email ("net.ipv4.ip_forward was reset to 0; restored to 1", at most one a day). So a reset costs at most about a minute of downtime. See [Troubleshooting](#11-troubleshooting).
 
 | Month-to-date egress (billing month, 00:00 America/Los_Angeles) | Action |
 |---|---|
@@ -263,3 +264,34 @@ The site starts on `<a-b-c-d>.sslip.io`. The certificates live in the persistent
 - **Monthly check:** in Billing → Reports, filter on the project. Expect about $3.65 for the IP, cents for snapshots, $0 for egress and Gemini as used. Also check `governor.py status`, and in GCS that the bucket holds a few MB with no soft-deleted bytes.
 - **Never add:** a load balancer, Cloud NAT, Cloud Run, Artifact Registry (image scanning), a logging agent, external IPv6, or a second VM.
 - **SerpAPI** (free plan, 250 searches/month): `FARE_WATCH_DAILY_CALL_BUDGET=6` in `app.env`.
+
+## 11. Troubleshooting
+
+### Site down, app stuck starting: `net.ipv4.ip_forward` is 0
+
+**Symptoms.** The site doesn't answer on 80/443, the uptime check fires, and the app container hangs in its entrypoint because it can't reach the metadata server or Secret Manager. Docker itself looks healthy.
+
+**Check:**
+
+```bash
+cat /proc/sys/net/ipv4/ip_forward      # must print 1
+journalctl -u voyager-governor | grep ip_forward
+ls /etc/sysctl.d/                      # 99-voyager-docker.conf must be there
+```
+
+**Fix by hand** (the governor does this within a minute):
+
+```bash
+sudo sysctl -w net.ipv4.ip_forward=1
+```
+
+**Why it happens.** Docker needs IPv4 forwarding for its published ports (DNAT) and for the containers' own outbound traffic. It turns forwarding on only when `dockerd` starts. The GCE Debian image ships `/etc/sysctl.d/60-gce-network-security.conf` with `net.ipv4.ip_forward=0`, so any full sysctl reload under a running Docker turns forwarding off again. That includes `sysctl --system` and a restart of `systemd-sysctl`, for example by a package upgrade.
+
+**Incident 2026-11-06, about 17:15 UTC (about 10 minutes down).** Re-running the startup script after `--update-host` reached `sysctl --system` in `first-boot.sh` (`configure_memory`). That reload re-applied the image's `ip_forward=0`. Docker was already running, and the re-run doesn't restart it, so forwarding stayed off: the app couldn't fetch its secrets, and inbound traffic was dropped. The hot-fix on the VM was `/etc/sysctl.d/99-voyager-docker.conf` (`net.ipv4.ip_forward=1`) plus `sysctl --system`.
+
+What prevents it now:
+
+- `first-boot.sh` writes `/etc/sysctl.d/99-voyager-docker.conf` before anything applies sysctl settings. The file sorts after `60-…`, so it wins at boot and on every reload.
+- `first-boot.sh` applies only its own files (`sysctl -p <file>`) and never runs `sysctl --system`.
+- The governor's per-minute guard sets forwarding back to `1` and emails you (section 8).
+- CI's `first_boot_sim.sh` (job `host-checks`) installs the image's `60-gce-network-security.conf`. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays `1`.

@@ -263,6 +263,12 @@ class FakeHost:
 
         self.restores: list[str] = []  # committed rulesets
         self.reject = False  # iptables-restore rejects the ruleset
+        # /proc/sys/net/ipv4/ip_forward, healthy unless a test says otherwise
+        import tempfile
+
+        self.ip_forward = Path(tempfile.mkdtemp()) / "ip_forward"
+        self.ip_forward.write_text("1\n")
+        monkeypatch.setattr(gov, "IP_FORWARD", self.ip_forward)
 
     def run(self, cmd, check=True, input=None):
         import subprocess
@@ -400,6 +406,91 @@ def test_a_rejected_ruleset_keeps_the_old_rules_and_alerts_once(monkeypatch, tmp
     assert len(host.restores) == 2 and "-A VOYAGER-CLOSE" in host.restores[-1]
     assert any("applied again" in e for e in host.emails)
     assert gov.load_state(cfg.state_path)["rules_error"] is None
+
+
+# ── ip_forward guard (incident 2026-11-06) ───────────────────────────────────
+
+
+def test_tick_restores_ip_forward_and_emails_once(monkeypatch, tmp_path, caplog):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    gov.cmd_tick(cfg)
+    assert host.emails == []  # healthy: silent
+    host.ip_forward.write_text("0\n")  # a full sysctl reload re-applied the image's 0
+    gov.cmd_tick(cfg)
+    assert host.ip_forward.read_text().strip() == "1"  # self-healed within a tick
+    assert [e for e in host.emails if "ip_forward" in e] == [
+        "[voyager] net.ipv4.ip_forward was reset to 0; restored to 1"
+    ]
+    assert any(
+        r.levelname == "ERROR" and "ip_forward was 0" in r.getMessage()
+        for r in caplog.records
+    )
+    gov.cmd_tick(cfg)  # stays 1: no more mail
+    assert sum("ip_forward" in e for e in host.emails) == 1
+    assert gov.load_state(cfg.state_path)["ip_forward_error"] is None
+
+
+def test_ip_forward_reset_again_soon_is_healed_without_another_email(tmp_path):
+    path = tmp_path / "ip_forward"
+    emails = []
+    state = {}
+    for minute in range(3):  # something keeps resetting it
+        path.write_text("0\n")
+        state = _guard(state, path, emails, now=1000 + 60 * minute)
+        assert path.read_text().strip() == "1"
+    assert len(emails) == 1  # throttled
+    path.write_text("0\n")
+    _guard(state, path, emails, now=1000 + gov.IP_FORWARD_ALERT_EVERY)
+    assert len(emails) == 2  # a day later: mail again
+
+
+def test_ip_forward_that_cannot_be_restored_alerts_once_then_recovers(tmp_path):
+    path = tmp_path / "ip_forward"
+    path.write_text("0\n")
+    path.chmod(0o444)  # like a read-only /proc/sys
+    emails = []
+    state = _guard({}, path, emails, now=1000)
+    if path.read_text().strip() == "1":  # running as root: chmod is ignored
+        pytest.skip("root can write a read-only file")
+    assert state["ip_forward_error"] and "could NOT be restored" in emails[0]
+    state = _guard(state, path, emails, now=1060)
+    assert len(emails) == 1
+    path.chmod(0o644)
+    path.write_text("1\n")  # an operator fixed it
+    state = _guard(state, path, emails, now=1120)
+    assert emails[-1] == "[voyager] net.ipv4.ip_forward is 1 again"
+    assert state["ip_forward_error"] is None
+
+
+def test_unreadable_ip_forward_never_breaks_the_tick(tmp_path):
+    state = _guard({"total": 5}, tmp_path / "missing", [], now=1)
+    assert state == {"total": 5}
+
+
+def _guard(state, path, emails, now):
+    orig = gov.send_email
+    gov.send_email = lambda cfg, subj, body: emails.append(subj)
+    try:
+        return gov.ip_forward_guard(CFG, state, now, path=path)
+    finally:
+        gov.send_email = orig
+
+
+def test_first_boot_pins_ip_forward_and_never_reloads_all_of_sysctl():
+    import re
+
+    script = (HOST / "first-boot.sh").read_text()
+    assert "sysctl.d/99-voyager-docker.conf" in script
+    assert re.search(r"^net\.ipv4\.ip_forward=1$", script, re.MULTILINE)
+    assert "--system" not in re.sub(r"#[^\n]*", "", script)
+    main = script[script.index("\nmain() {") + 1 :]
+    body = [
+        ln.strip()
+        for ln in main.splitlines()[1:]
+        if ln.strip() and not ln.strip().startswith("#")
+    ]
+    assert body[0] == "configure_network"  # before anything applies sysctl
 
 
 # ── Boot-time unit wiring (no deadlock with the startup script) ─────────────
