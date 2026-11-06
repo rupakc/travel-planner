@@ -12,9 +12,12 @@
 #   project (only if missing) + billing link (only if unlinked)
 #   APIs: compute, iap, oslogin, secretmanager, monitoring, storage, fcm,
 #         billingbudgets, aiplatform — plus the plumbing gcloud needs for the
-#         rest: iam, iamcredentials, sts (service accounts, WIF),
-#         cloudresourcemanager (IAM bindings), cloudbilling (billing link)
-#   service accounts: vm-runtime (the VM), ci-publisher (WIF; no project roles)
+#         rest: iam (service account, custom roles), cloudresourcemanager (IAM
+#         bindings), cloudbilling (billing link)
+#   service account vm-runtime (the VM) with two custom least-privilege roles:
+#   Gemini prompts only (aiplatform.endpoints.predict) and FCM send only
+#   (cloudmessaging.messages.create); objectUser on the bucket, secretAccessor
+#   per secret
 #   static IPv4 (Standard tier), firewall 80/443 + IAP-only 22
 #   e2-micro VM in us-east1, Debian 13, 30 GB pd-standard, Shielded VM,
 #   OS Login, cloud-platform scope (least privilege is in IAM)
@@ -26,11 +29,11 @@
 #   forecast alerts; "Voyager Gemini spend cap": ₹1,800/month hard cap on
 #   Gemini Enterprise Agent Platform (Vertex AI). Skipped when they exist.
 #   uptime check on https://<host>/health matching "backup_ok":true + email alert
-#   Workload Identity Federation pool/provider for rupakc/travel-planner,
-#   refs/heads/main, push events only
 #
 # Never: a load balancer, NAT, Cloud Run, Artifact Registry, IPv6, logging
-# agents. The VM pulls signed images; CI never gets VM access.
+# agents, no CI identity in GCP (CI signs with Sigstore and pushes to GHCR;
+# the VM pulls). Existing resources are never modified, except IAM bindings
+# and custom-role permissions, which are re-asserted.
 #
 # --dry-run prints every command and calls nothing (no gcloud needed).
 # --update-host only refreshes the VM's host bundle metadata (after changes
@@ -59,7 +62,6 @@ ZONE="${ZONE:-us-east1-b}"
 VM="${VM:-voyager-vm}"
 IP_NAME="${IP_NAME:-voyager-ip}"
 BUCKET="${BUCKET:-$PROJECT_ID-voyager-backup}"
-GITHUB_REPO="${GITHUB_REPO:-rupakc/travel-planner}"
 ACME_EMAIL="${ACME_EMAIL:-$ALERT_EMAIL}"
 # Amounts are in the billing account's currency. The voyager billing account
 # is in INR: ₹2,300 ≈ \$27 total alerts, ₹1,800 ≈ \$21 Gemini hard cap.
@@ -76,7 +78,15 @@ AI_SERVICE_ID="${AI_SERVICE_ID:-C7E2-9256-1C43}"
 # No anthropic-api-key: production uses Gemini on Vertex AI via the VM's SA
 SECRETS=(jwt-secret-key admin-password serpapi-key serper-key smtp-password)
 RUNTIME_SA="vm-runtime@$PROJECT_ID.iam.gserviceaccount.com"
-CI_SA="ci-publisher@$PROJECT_ID.iam.gserviceaccount.com"
+# Custom roles (least privilege). Gemini generateContent/streamGenerateContent
+# on publishers/google/models/* are authorised by aiplatform.endpoints.predict
+# ("Make prompt requests", docs.cloud.google.com/vertex-ai/generative-ai/docs/
+# access-control); the app calls nothing else on Vertex. FCM HTTP v1 send
+# needs cloudmessaging.messages.create.
+GEMINI_ROLE="voyagerGeminiInvoker"
+GEMINI_PERMS="aiplatform.endpoints.predict"
+FCM_ROLE="voyagerFcmSender"
+FCM_PERMS="cloudmessaging.messages.create"
 IAP_RANGE="35.235.240.0/20"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -138,23 +148,33 @@ apis() {
     compute.googleapis.com iap.googleapis.com oslogin.googleapis.com \
     secretmanager.googleapis.com monitoring.googleapis.com storage.googleapis.com \
     fcm.googleapis.com billingbudgets.googleapis.com aiplatform.googleapis.com \
-    iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
+    iam.googleapis.com \
     cloudresourcemanager.googleapis.com cloudbilling.googleapis.com
+}
+
+# custom_role ID TITLE PERMS — create, or reset its permissions to exactly PERMS
+custom_role() {
+  if gx iam roles describe "$1"; then
+    g iam roles update "$1" --permissions="$3" >/dev/null
+  else
+    g iam roles create "$1" --title="$2" --permissions="$3" --stage=GA \
+      --description="Least privilege for the Voyager VM (bootstrap.sh)"
+  fi
 }
 
 service_accounts() {
   say "Service accounts"
   gx iam service-accounts describe "$RUNTIME_SA" ||
     g iam service-accounts create vm-runtime --display-name="Voyager VM runtime"
-  gx iam service-accounts describe "$CI_SA" ||
-    g iam service-accounts create ci-publisher \
-      --display-name="Voyager CI (WIF; signs/pushes images to GHCR, no project roles)"
-  # Project-level roles for the VM: Gemini on Vertex AI + FCM send. Storage
-  # and secrets are granted per resource below, not project-wide.
+  # Project-level: only the two custom roles. Storage and secrets are
+  # granted per resource below, never project-wide.
+  custom_role "$GEMINI_ROLE" "Voyager Gemini invoker" "$GEMINI_PERMS"
+  custom_role "$FCM_ROLE" "Voyager FCM sender" "$FCM_PERMS"
   local role
-  for role in roles/aiplatform.user roles/firebasecloudmessaging.admin; do
+  for role in "$GEMINI_ROLE" "$FCM_ROLE"; do
     g projects add-iam-policy-binding "$PROJECT_ID" \
-      --member="serviceAccount:$RUNTIME_SA" --role="$role" --condition=None >/dev/null
+      --member="serviceAccount:$RUNTIME_SA" \
+      --role="projects/$PROJECT_ID/roles/$role" --condition=None >/dev/null
   done
 }
 
@@ -256,7 +276,20 @@ vm() {
       --boot-disk-size=30GB --boot-disk-type=pd-standard --boot-disk-device-name="$VM" \
       --shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
       --service-account="$RUNTIME_SA" --scopes=cloud-platform \
-      --tags=voyager-web --resource-policies=voyager-daily "${md[@]}"
+      --tags=voyager-web "${md[@]}"
+  fi
+  # Snapshot schedules belong to disks, not instances. The boot disk is named
+  # after the VM; attach the schedule unless it already is.
+  local policies=""
+  if ((!DRY_RUN)); then
+    policies="$(gcloud --project="$PROJECT_ID" compute disks describe "$VM" \
+      --zone="$ZONE" --format='value(resourcePolicies)')"
+  fi
+  if [[ "$policies" == *voyager-daily* ]]; then
+    echo "  snapshot schedule already attached to disk $VM"
+  else
+    g compute disks add-resource-policies "$VM" --zone="$ZONE" \
+      --resource-policies=voyager-daily
   fi
   echo "  site: https://$host"
 }
@@ -277,8 +310,12 @@ budgets() {
   say "Budgets: $TOTAL_BUDGET $BUDGET_CURRENCY total (pre-tax) + $AI_SPEND_CAP $BUDGET_CURRENCY spend cap on Agent Platform"
   local existing="" number
   if ((!DRY_RUN)); then
+    # Fail closed: a listing error must never look like "no budgets"
     existing="$(gcloud billing budgets list --billing-account="$BILLING_ACCOUNT" \
-      --format='value(displayName)' 2>/dev/null || true)"
+      --format='value(displayName)')" || {
+      echo "  !! cannot list budgets on $BILLING_ACCOUNT; refusing to create any (duplicates)" >&2
+      exit 1
+    }
     number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
   else
     number="PROJECT_NUMBER"
@@ -396,29 +433,6 @@ JSON
   g alpha monitoring policies create --policy-from-file="$WORK/policy.json"
 }
 
-wif() {
-  say "Workload Identity Federation for $GITHUB_REPO (main, push only)"
-  local number
-  if ((DRY_RUN)); then number="PROJECT_NUMBER"; else
-    number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-  fi
-  gx iam workload-identity-pools describe github --location=global ||
-    g iam workload-identity-pools create github --location=global \
-      --display-name="GitHub Actions"
-  gx iam workload-identity-pools providers describe travel-planner \
-    --workload-identity-pool=github --location=global ||
-    g iam workload-identity-pools providers create-oidc travel-planner \
-      --location=global --workload-identity-pool=github \
-      --issuer-uri=https://token.actions.githubusercontent.com \
-      --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref,attribute.event_name=assertion.event_name" \
-      --attribute-condition="assertion.repository=='$GITHUB_REPO' && assertion.ref=='refs/heads/main' && assertion.event_name=='push'"
-  # Only that repo's main-branch push runs may act as ci-publisher, which has
-  # no project roles: CI publishes to GHCR and signs with Sigstore; it never
-  # touches the VM, its disk, secrets or the bucket.
-  g iam service-accounts add-iam-policy-binding "$CI_SA" \
-    --role=roles/iam.workloadIdentityUser \
-    --member="principalSet://iam.googleapis.com/projects/$number/locations/global/workloadIdentityPools/github/attribute.repository/$GITHUB_REPO" >/dev/null
-}
 
 main() {
   ((DRY_RUN)) && echo "# DRY RUN: nothing is called; commands are printed"
@@ -436,7 +450,6 @@ main() {
   vm
   budgets
   uptime
-  wif
   say "Done. Next (docs/Deployment-GCP.md):"
   cat <<EOF
   1. Add secret versions (values never pass through this script):
