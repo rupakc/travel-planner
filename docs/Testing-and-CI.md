@@ -91,7 +91,9 @@ Runs on every push to `main`. It calls `ci.yml` as a reusable workflow, so every
 1. builds the app image (`backend/Dockerfile`) and the Caddy + SPA image (`deploy/gcp/caddy.Dockerfile`);
 2. pushes them to GHCR with `sha-<commit>` tags;
 3. signs both digests with **cosign keyless** (GitHub OIDC → Sigstore) and verifies them with the identity the VM requires;
-4. moves the `prod` tags to those digests with `crane`.
+4. moves the `prod` tags to those digests with `docker buildx imagetools create`, checks that each tag resolves to exactly the signed digest, and does so only if the commit is still `main`'s HEAD.
+
+Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label `io.voyager.build` (the workflow run number), and the VM refuses an image from an older run than the one it is running.
 
 It has no GCP or VM credentials: the VM pulls and verifies by itself (see [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback)).
 

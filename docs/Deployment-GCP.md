@@ -46,7 +46,17 @@ Then run it for real (it is idempotent: re-running skips whatever exists):
 infrastructure/gcp/bootstrap.sh voyager-prod-ohzkl 010A0B-F39593-14A899 you@example.com
 ```
 
-It enables the APIs, creates the `vm-runtime` service account (Vertex AI user, FCM sender, `objectUser` on the backup bucket only, `secretAccessor` on each secret), the static IP, the firewall (80/443 open, 22 only from IAP; the default network's SSH/RDP-from-anywhere rules are deleted), the bucket, the empty secrets, the snapshot schedule, the VM, the uptime check with its alert, and Workload Identity Federation for this repository. The VM starts provisioning itself straight away (section 4); the app waits for its secrets.
+It enables the APIs and creates:
+
+- the `vm-runtime` service account, with two **custom roles** and per-resource grants: `voyagerGeminiInvoker` (only `aiplatform.endpoints.predict`, which authorises Gemini prompt requests), `voyagerFcmSender` (only `cloudmessaging.messages.create`), `objectUser` on the backup bucket only, and `secretAccessor` on each secret;
+- the static IP and the firewall: 80/443 open, 22 only from IAP; the default network's SSH/RDP-from-anywhere rules are deleted;
+- the bucket and the empty secrets;
+- the snapshot schedule, attached to the VM's boot disk;
+- the VM, and the uptime check with its alert.
+
+CI has no identity in GCP: it pushes to GHCR and signs with Sigstore.
+
+During rollout, check the narrow Gemini role with one real search. If Vertex answers `403 PERMISSION_DENIED`, the call needs another permission: add it to `GEMINI_PERMS` and re-run the script. Don't fall back to `roles/aiplatform.user`. The VM starts provisioning itself straight away (section 4); the app waits for its secrets.
 
 Optional overrides via environment: `ZONE`, `BUCKET`, `SITE_HOST` (your own domain), `ACME_EMAIL`, `BUDGET_CURRENCY`/`TOTAL_BUDGET`/`AI_SPEND_CAP` (used only when a budget is missing).
 
@@ -68,6 +78,7 @@ read -rs V; printf '%s' "$V" | gcloud secrets versions add smtp-password  --data
 There is no Anthropic key in production: Gemini on Vertex AI uses the VM's service account (`LLM_PROVIDER=gemini`, `GCP_PROJECT`, `GCP_LOCATION=global` in `app.env`).
 
 - `jwt-secret-key` is required: the app refuses to start without it.
+- The app runs as uid 10001 and Caddy as uid 10002. Both drop all capabilities, and only the app container can reach the metadata server: the governor's `VOYAGER-GUARD` chain blocks Caddy.
 - A secret with no version is simply skipped.
 - After changing a secret, restart the app: `sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager restart app` (or wait for the next deploy).
 
@@ -86,7 +97,7 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap -- \
   sudo journalctl -u google-startup-scripts -f
 ```
 
-`first-boot.sh` installs Docker Engine and the compose plugin, configures zram swap and unattended-upgrades, unpacks the host bundle from instance metadata into `/opt/voyager`, and writes the data-disk marker `/var/lib/voyager/data/.voyager-data-disk`. It also installs the systemd units and runs the first deploy. Each later boot re-runs it, which is harmless.
+`first-boot.sh` installs Docker Engine and the compose plugin, configures zram swap and unattended-upgrades, unpacks the host bundle from instance metadata into `/opt/voyager`, and writes the data-disk marker `/var/lib/voyager/data/.voyager-data-disk`. It also installs the systemd units and runs the first deploy. Each later boot re-runs it, which is harmless, and applies any changed `compose.yaml`/`app.env` with `compose up -d`. It fails closed: when required metadata (`voyager-bucket`, `voyager-site-host`, `voyager-acme-email`, `voyager-alert-email`, the bundle) is missing or the metadata server errors, it stops rather than write empty settings such as `BACKUP_BUCKET=`. `/opt/voyager/app.env` is required by compose.
 
 **Disk benchmark (rollout step 3).** pd-standard is slow (about 3.6 MiB/s). Benchmark it; if image pulls and the first reseed are painful, switch to a 10 GB pd-balanced boot disk (about +$1/month).
 
@@ -115,7 +126,12 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 
 The dry run on 2026-11-06 migrated users 17, plans 11, preferences 8, taste signals 73 and feedback 2 (about 270 KB). `preferences.visited_destinations` is no longer in the schema and is dropped. Price watches, notifications and devices didn't exist then.
 
-Put the file where restore-if-missing finds it, **before the app first starts** (or stop the app and delete `airports.db` first):
+Put the file where restore-if-missing finds it. Restore happens only when the disk has no DB, so the order matters:
+
+1. **Before the first boot** (the right time, right after bootstrap and before the first images are published): upload it, as below. The first start restores it.
+2. **If the app already started** (it created an empty DB): run `sudo systemctl stop voyager` on the VM, upload the file, run `sudo rm -f /var/lib/voyager/data/airports.db*` (keep the marker), then `sudo systemctl start voyager`.
+
+Upload:
 
 ```bash
 gcloud storage cp /tmp/voyager-migration/airports.db \
@@ -126,9 +142,10 @@ At start, the app sees no DB on the disk, restores this file and reseeds the pla
 
 ## 6. Day-to-day: deploys and rollback
 
-- **Auto-deploy.** Every merge to `main` that passes all of CI publishes images signed by `deploy.yml` and moves their `prod` tags. Within 5 minutes `voyager-deploy.timer` on the VM resolves `prod` to a digest and checks the cosign signature: it must come from `rupakc/travel-planner`'s `deploy.yml` on `refs/heads/main`. It then pulls by digest, pins the digest in `/opt/voyager/images.env` (keeping the previous one), runs `docker compose up -d`, and waits up to 120 s for the app to report healthy.
+- **Auto-deploy.** Every merge to `main` that passes all of CI publishes images signed by `deploy.yml` and moves their `prod` tags. Within 5 minutes `voyager-deploy.timer` on the VM resolves `prod` to a digest and checks the cosign signature: it must come from `rupakc/travel-planner`'s `deploy.yml` on `refs/heads/main`. It then pulls by digest, pins the digest in `/opt/voyager/images.env` (keeping the previous one), runs `docker compose up -d`, and waits up to 240 s for the app to report healthy (longer than the container's 180 s start period, so a slow reseed isn't mistaken for a failure). Each run also converges: `compose up -d` brings back anything that was stopped, e.g. by a Docker upgrade.
 - **Automatic rollback.** If the new app isn't healthy, the previous digest goes back in. The bad digest is recorded in `/opt/voyager/failed-digests` and never retried. You get an email if SMTP is set.
 - **Manual rollback** to the previous app digest: `sudo /opt/voyager/deploy.sh --rollback`.
+- **No silent downgrades.** An image built by an older deploy run than the running one (label `io.voyager.build`) is refused, even if `prod` points at it. That covers a moved tag and a re-run of an old workflow. To deploy it on purpose: `sudo /opt/voyager/deploy.sh --allow-downgrade`.
 - **Caddy** image changes drop open connections, so they are only verified and pre-pulled. They are applied in the weekly window (Sunday 04:00 Berlin). To apply one now: `sudo /opt/voyager/deploy.sh --window`.
 - **Logs.** Docker keeps 10 MB × 5 per container on the VM; there is no Cloud Logging agent and so no ingestion bill.
   - `sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs -f app`
@@ -144,6 +161,15 @@ The disk is authoritative (`BACKUP_MODE=vm`):
 - Every 5 minutes it exports the user tables to tmpfs and uploads them only when their SHA-256 changed. It flushes once more on a clean shutdown.
 - `/health` reports `backup_ok`. The uptime check alerts you when that is false, or when the site is down, for 10 minutes.
 - Daily disk snapshots (kept 7 days, stored in us-east1) are crash-consistent copies of the whole disk.
+
+**Which copy to restore from.** GCS holds the user tables at most about 5 minutes old; a disk snapshot can be up to 24 hours old.
+
+- When the **disk is lost**, prefer GCS: start from a fresh disk with the marker and no DB, and the app restores from GCS.
+- When you do restore a **snapshot** (the OS or Docker state is broken), the snapshot's DB is older than GCS, and the next changed export would overwrite the newer GCS copy. GCS keeps up to 100 noncurrent versions for 30 days, so nothing is lost, but restore in this order:
+  1. Stop the app on the restored VM: `sudo systemctl stop voyager`.
+  2. Download the current object: `gcloud storage cp gs://voyager-prod-ohzkl-voyager-backup/sqlite-backups/airports.db /tmp/gcs.db`.
+  3. Replace the snapshot's DB with it as uid 10001: `sudo rm -f /var/lib/voyager/data/airports.db*`, `sudo install -o 10001 -g 10001 -m 0644 /tmp/gcs.db /var/lib/voyager/data/airports.db`. Or simply delete the snapshot's DB and let restore-if-missing fetch it.
+  4. Start the app: `sudo systemctl start voyager`. It reseeds the place data.
 
 **Drill A, fresh disk from GCS** (about 5 min of data at risk). Then log in and check the plan counts:
 
