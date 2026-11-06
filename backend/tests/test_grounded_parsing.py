@@ -188,8 +188,18 @@ def test_each_place_is_listed_once_and_limit_applies():
         ("**Shop:**", "shop"),
         ("### Places to Stay:", "stay"),
         ("Stay", "stay"),
-        ("## Drink", None),
+        ("## Drink", "eat"),
+        ("## Eat (restaurants, cafés)", "eat"),
+        ("### 🍽️ Eat", "eat"),
+        ("## Where to eat", "eat"),
+        ("## 1. See", "see"),
+        ("**Sights**", "see"),
+        ("## Hotels:", "stay"),
+        ("## Food markets", ""),  # two sections: reset, never guessed
+        ("## Tips", ""),
+        ("**Getting around**", ""),
         ("* Shopping mall - x", None),
+        ("Time Out Market - food hall", None),
     ],
 )
 def test_headings(line, section):
@@ -393,8 +403,6 @@ def test_unparseable_quote_lines_are_omitted(line):
         ("- Kayak: NYC 2 adults USD 900", "Kayak", 900.0, "USD"),
         ("- MakeMyTrip, 2 nights: ₹4,500", "MakeMyTrip, 2 nights", 4500.0, "INR"),
         ("- Wotif, 3 nights: A$300", "Wotif, 3 nights", 300.0, "AUD"),
-        ("- Hotel site: EUR 412 3 nights", "Hotel site", 412.0, "EUR"),
-        ("- Agoda: for 2 EUR 450", "Agoda", 450.0, "EUR"),
     ],
 )
 def test_quote_formats(line, label, amount, currency):
@@ -583,3 +591,122 @@ def test_names_containing_a_dash_keep_a_clean_summary(line, title, summary):
     sections, _ = nearby_grounded.parse_sections(f"## Eat\n{line}", [chunk], 6)
     [item] = sections[1]["items"]
     assert (item["name"], item["summary"]) == (title, summary)
+
+
+# Property-style: every tricky string gives either None or exactly the
+# intended amount — never a different number.
+PRICE_CORPUS = [
+    ("EUR 412", (412.0, "EUR")),
+    ("412.50 EUR", (412.5, "EUR")),
+    ("EUR 1,230.00", (1230.0, "EUR")),
+    ("€98", (98.0, "EUR")),
+    ("US$1,045", (1045.0, "USD")),
+    ("₹4,500", (4500.0, "INR")),
+    ("A$300", (300.0, "AUD")),
+    ("EUR412", (412.0, "EUR")),
+    ("412EUR", (412.0, "EUR")),
+    ("from EUR 412.", (412.0, "EUR")),
+    ("EUR 412 per night", (412.0, "EUR")),
+    ("EUR 412 (EUR 137 a night)", (412.0, "EUR")),
+    ("TAP 1 stop, USD 512", (512.0, "USD")),
+    ("NYC 2 adults USD 900", (900.0, "USD")),
+    ("1045 USD per person", (1045.0, "USD")),
+    ("1 234 EUR", None),
+    ("1\u00a0234 EUR", None),
+    ("1\u202f234 EUR", None),
+    ("EUR 1\u2009234", None),
+    ("12 345 678 JPY", None),
+    ("CHF 1'234", None),
+    ("1'234 CHF", None),
+    ("1’234 CHF", None),
+    ("price 99 EUR 2 nights", None),
+    ("for 2 EUR 450", None),
+    ("EUR 412 3 nights", None),
+    ("EUR 5k", None),
+    ("USD 1.5 million", None),
+    ("INR 2 lakh", None),
+    ("1.234,56 EUR", None),
+    ("412,50 EUR", None),
+    ("1.234 EUR", None),
+    ("EUR 412 USD", None),
+    ("$412", None),
+    ("¥3000", None),
+    ("TAP 412", None),
+    ("Room5 at 412", None),
+    ("EUR 0", None),
+    ("EUR", None),
+]
+
+
+@pytest.mark.parametrize("text, expected", PRICE_CORPUS)
+def test_price_is_exact_or_nothing(text, expected):
+    got = live_check._price(text)
+    assert (got[:2] if got else None) == expected
+
+
+@pytest.mark.parametrize(
+    "line, label",
+    [
+        ("- **Booking.com:** EUR 412", "Booking.com"),
+        ("* Booking.com:EUR 412", "Booking.com"),
+        ("- Booking.com, 3 nights:   EUR 412", "Booking.com, 3 nights"),
+        ("- Flight 10:30: USD 512", "Flight 10:30"),
+        ("- __Kayak:__ USD 512", "Kayak"),
+    ],
+)
+def test_quote_label_separators(line, label):
+    _, index = live_check.sources_from(WEB)
+    text = line + "\n"
+    sup = [{"text": "", "start": 0, "end": len(text.encode()), "chunks": [0]}]
+    [quote] = live_check.parse_quotes(text, sup, index)
+    assert quote["label"] == label
+
+
+def test_token_bytes_after_bold_separator():
+    # the support covers only the price token (byte maths on raw offsets)
+    text = "Intro é.\n- **Booking.com:** EUR 412\n"
+    a = text.encode().index(b"EUR 412")
+    sup = [{"text": "", "start": a, "end": a + 7, "chunks": [0]}]
+    _, index = live_check.sources_from(WEB)
+    [quote] = live_check.parse_quotes(text, sup, index)
+    assert quote["amount"] == 412.0
+
+
+def test_heading_without_a_section_drops_its_items():
+    chunks = [
+        _maps("Castelo de São Jorge - Google Maps", "https://maps.google.com/?cid=1"),
+        _maps("Lisbon Card Office - Google Maps", "https://maps.google.com/?cid=2"),
+    ]
+    text = (
+        "## 🏰 Sights\n* Castelo de São Jorge - castle\n"
+        "## Tips\n* Lisbon Card Office - passes\n"
+    )
+    sections, _ = nearby_grounded.parse_sections(text, chunks, 6)
+    assert [i["name"] for i in sections[0]["items"]] == ["Castelo de São Jorge"]
+    assert all(s["items"] == [] for s in sections[1:])
+
+
+def test_colon_splits_only_without_a_dash():
+    assert nearby_grounded._split("* MUDE: Museu do Design - Design museum") == (
+        "MUDE: Museu do Design",
+        "Design museum",
+    )
+
+
+def test_place_chunk_wins_over_its_review_chunk():
+    review = _maps(
+        "Review of Don Quijote Shinjuku - Google Maps",
+        "https://maps.google.com/?cid=1&review=1",
+        "places/D",
+    )
+    place = _maps(
+        "Don Quijote Shinjuku - Google Maps",
+        "https://maps.google.com/?cid=1",
+        "places/D",
+    )
+    sections, _ = nearby_grounded.parse_sections(
+        "## Shop\n* Don Quijote Shinjuku - store", [review, place], 6
+    )
+    [item] = sections[2]["items"]
+    assert item["maps_uri"] == "https://maps.google.com/?cid=1"
+    assert "review" not in item

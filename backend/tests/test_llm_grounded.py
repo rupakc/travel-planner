@@ -199,3 +199,69 @@ async def test_timeout_reaches_the_request(gemini):
     gemini.replies = [grounded_reply("ok")]
     await llm.generate_grounded("q", tool="search", timeout=45)
     assert gemini.calls[0]["config"].http_options.timeout == 45_000
+
+
+async def test_grounded_calls_never_retry_in_the_sdk(gemini):
+    gemini.replies = [grounded_reply("ok")]
+    await llm.generate_grounded("q", tool="maps", timeout=45)
+    options = gemini.calls[0]["config"].http_options
+    assert options.retry_options.attempts == 1
+
+
+async def test_queue_wait_counts_against_the_deadline(gemini, monkeypatch):
+    import asyncio
+
+    from app.agents import base_agent
+
+    class Stuck:
+        async def __aenter__(self):
+            await asyncio.sleep(60)
+
+        async def __aexit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(base_agent, "_get_semaphore", lambda: Stuck())
+    monkeypatch.setattr(llm, "_GROUNDED_QUEUE_GRACE_S", 0)
+    started = time.monotonic()
+    with pytest.raises(llm.LLMError) as err:
+        await llm.generate_grounded("q", tool="search", timeout=0.05)
+    assert time.monotonic() - started < 5
+    assert err.value.retryable and gemini.calls == []
+
+
+async def test_support_offsets_are_shifted_to_their_part(gemini):
+    from types import SimpleNamespace as NS
+
+    intro, body = "Intro é.\n", "- Kayak: USD 512\n"
+    reply = grounded_reply(
+        intro + body,
+        supports=[
+            NS(  # in the second text part, start omitted (0)
+                segment=NS(text="", start_index=None, end_index=16, part_index=2),
+                grounding_chunk_indices=[0],
+            ),
+            NS(  # points at the thought part: offsets unusable
+                segment=NS(text="t", start_index=0, end_index=1, part_index=0),
+                grounding_chunk_indices=[0],
+            ),
+            NS(  # beyond the parts
+                segment=NS(text="x", start_index=0, end_index=1, part_index=7),
+                grounding_chunk_indices=[0],
+            ),
+        ],
+    )
+    reply.candidates[0].content = NS(
+        parts=[
+            NS(text="thinking…", thought=True),
+            NS(text=intro, thought=None),
+            NS(text=body, thought=None),
+        ]
+    )
+    gemini.replies = [reply]
+
+    out = await llm.generate_grounded("q", tool="search")
+
+    base = len(intro.encode())
+    assert (out.supports[0]["start"], out.supports[0]["end"]) == (base, base + 16)
+    assert out.supports[1]["start"] is None and out.supports[1]["end"] is None
+    assert out.supports[2]["start"] is None and out.supports[2]["text"] == "x"

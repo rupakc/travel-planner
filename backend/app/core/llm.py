@@ -10,6 +10,7 @@ provider, logs token usage per call (never content) and turns every provider
 error into :class:`LLMError`.
 """
 
+import asyncio
 import base64
 import contextvars
 import logging
@@ -48,6 +49,9 @@ GROUNDING_UNAVAILABLE_MESSAGE = "Live web and map results need the Gemini provid
 _NO_MINIMAL = re.compile(r"^gemini-3\.[78]-flash$")
 # Per-request ceiling for Gemini calls (the SDK default is no timeout at all)
 _GEMINI_TIMEOUT_S = 120
+# Grounded calls: extra seconds allowed for the concurrency-gate wait on top
+# of the request timeout (45 s + 5 s = the routes' 50 s ceiling)
+_GROUNDED_QUEUE_GRACE_S = 5
 # The IATA fallback runs during request validation on the event-loop thread:
 # keep it short and never retry, so a stalled call can't freeze the server.
 _SYNC_TIMEOUT_S = 8
@@ -466,15 +470,26 @@ async def generate_grounded(
     # base_agent imports this module
     from ..agents.base_agent import _get_semaphore
 
+    # One deadline for the queue wait and the call together (the request
+    # timeout alone wouldn't cover time spent waiting for the gate)
+    request_timeout = timeout if timeout is not None else _GEMINI_TIMEOUT_S
     started = time.monotonic()
     try:
-        async with _get_semaphore():
-            started = time.monotonic()
-            resp = await _gemini_client().aio.models.generate_content(
-                **_grounded_kwargs(
-                    prompt, tool, system, lat, lng, language, max_tokens, timeout
+        async with asyncio.timeout(request_timeout + _GROUNDED_QUEUE_GRACE_S):
+            async with _get_semaphore():
+                started = time.monotonic()
+                resp = await _gemini_client().aio.models.generate_content(
+                    **_grounded_kwargs(
+                        prompt,
+                        tool,
+                        system,
+                        lat,
+                        lng,
+                        language,
+                        max_tokens,
+                        request_timeout,
+                    )
                 )
-            )
         out = _grounded_response(resp)
     except LLMError:
         raise
@@ -663,6 +678,9 @@ def _gemini_kwargs(role, system, messages, max_tokens, json_output, timeout, ret
 def _grounded_kwargs(prompt, tool, system, lat, lng, language, max_tokens, timeout):
     from google.genai import types
 
+    # No SDK retries (HttpRetryOptions(attempts=1) per request, which
+    # google-genai 2.34 honours as stop_after_attempt(1)): the routes retry
+    # once themselves, and the deadline above must bound the whole call
     kwargs = _gemini_kwargs(
         "agent",
         system,
@@ -670,7 +688,7 @@ def _grounded_kwargs(prompt, tool, system, lat, lng, language, max_tokens, timeo
         max_tokens,
         False,
         timeout,
-        True,
+        False,
     )
     config = kwargs["config"]
     config.tools = [
@@ -687,6 +705,22 @@ def _grounded_kwargs(prompt, tool, system, lat, lng, language, max_tokens, timeo
             )
         )
     return kwargs
+
+
+def _text_part_bases(candidate) -> dict[int, int]:
+    """Part index → byte offset of that part in ``resp.text`` (the SDK joins
+    the non-thought text parts with nothing between them). Empty when the
+    reply carries no parts (then part 0 is the whole text)."""
+    parts = getattr(getattr(candidate, "content", None), "parts", None) or []
+    bases: dict[int, int] = {}
+    offset = 0
+    for i, part in enumerate(parts):
+        text = getattr(part, "text", None)
+        if not isinstance(text, str) or getattr(part, "thought", None) is True:
+            continue
+        bases[i] = offset
+        offset += len(text.encode())
+    return bases
 
 
 def _grounded_response(resp) -> GroundedResponse:
@@ -706,14 +740,26 @@ def _grounded_response(resp) -> GroundedResponse:
                 "place_id": getattr(src, "place_id", None) if kind == "maps" else None,
             }
         )
+    # Segment offsets are UTF-8 bytes within one Part (part_index; Vertex
+    # omits zeros). ``resp.text`` joins the non-thought text parts, so shift
+    # each offset by its part's start in that join; a segment in any other
+    # part keeps only its text.
+    bases = _text_part_bases(cands[0] if cands else None)
     supports = []
     for s in getattr(meta, "grounding_supports", None) or []:
         seg = getattr(s, "segment", None)
+        start, end = getattr(seg, "start_index", None), getattr(seg, "end_index", None)
+        part = getattr(seg, "part_index", None) or 0
+        base = bases.get(part) if bases else (0 if part == 0 else None)
+        if isinstance(end, int) and base is not None:
+            start, end = (start if isinstance(start, int) else 0) + base, end + base
+        else:
+            start = end = None
         supports.append(
             {
                 "text": getattr(seg, "text", None) or "",
-                "start": getattr(seg, "start_index", None),
-                "end": getattr(seg, "end_index", None),
+                "start": start,
+                "end": end,
                 "chunks": [
                     i
                     for i in getattr(s, "grounding_chunk_indices", None) or []

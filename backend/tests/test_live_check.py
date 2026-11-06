@@ -434,9 +434,12 @@ def test_expired_watch_is_409_without_a_model_call(client, grounded, case):
 
 def test_expired_helper():
     today = date(2026, 11, 6)
-    assert live_check.expired("flight", {"departure_date": "2026-11-05"}, today)
+    # still "today" somewhere on Earth until a full day has passed in UTC
+    assert live_check.expired("flight", {"departure_date": "2026-11-04"}, today)
+    assert not live_check.expired("flight", {"departure_date": "2026-11-05"}, today)
     assert not live_check.expired("flight", {"departure_date": "2026-11-06"}, today)
     assert live_check.expired("hotel", {"expires_on": "2026-11-01"}, today)
+    assert not live_check.expired("hotel", {"expires_on": "2026-11-05"}, today)
     assert not live_check.expired("trip", {"expires_on": "2026-12-01"}, today)
     assert live_check.expired("activity", {"status": "expired"}, today)
     assert not live_check.expired("activity", {"expires_on": None}, today)

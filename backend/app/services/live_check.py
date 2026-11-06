@@ -13,7 +13,7 @@ Pure helpers (no network): prompt building and quote parsing.
 """
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 KINDS = ("flight", "hotel", "activity", "trip")
 DISCLAIMER = (
@@ -150,12 +150,13 @@ def _trip(watch: dict) -> str:
 def expired(kind: str, watch: dict, today: date) -> bool:
     """True for a watch marked expired, or whose date (departure for a
     fare watch, ``expires_on`` — check-in / activity date / departure — for
-    a price watch) is before ``today``: nothing left to price."""
+    a price watch) is before yesterday (UTC): a date that is still today
+    somewhere on Earth (UTC−12 … UTC+14) can still be checked."""
     if watch.get("status") == "expired":
         return True
     raw = watch.get("departure_date" if kind == "flight" else "expires_on")
     try:
-        return date.fromisoformat(str(raw)[:10]) < today
+        return date.fromisoformat(str(raw)[:10]) < today - timedelta(days=1)
     except ValueError:
         return False
 
@@ -214,36 +215,100 @@ _SYMBOLS = {
     "HK$": "HKD",
 }
 _SYMBOL_RE = "|".join(re.escape(s) for s in sorted(_SYMBOLS, key=len, reverse=True))
-# 1,234.56 (comma thousands, dot decimals) or 1234.5; never touching other
-# digits or separators, and not followed by a space-separated thousands
-# group ("1 234", also with no-break spaces): "1.234,56" / "412,50" /
-# "1 234" match nothing rather than a wrong number
-_AMOUNT = (
-    r"(?<![\d.,])(?P<{n}>\d{{1,3}}(?:,\d{{3}})+(?:\.\d{{1,2}})?|\d+(?:\.\d{{1,2}})?)"
-    r"(?![.,]?\d)(?![\s  ]\d{{3}}(?!\d))"
+_GAP = "    "  # space, no-break, narrow no-break, thin
+# A maximal numeric run: digits with separators, spaces only between digits.
+# The whole run must be one well-formed number or it is rejected — a part of
+# it ("234" of "1 234") is never taken.
+_RUN = re.compile(rf"\d(?:[\d,.'’]|[{_GAP}](?=\d))*")
+_NUMBER = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?")
+_PREFIX = re.compile(
+    rf"(?:(?<![A-Za-z])(?P<code>[A-Z]{{3}})|(?P<sym>{_SYMBOL_RE}))[{_GAP}]?\Z"
 )
-_PRICE = re.compile(
-    rf"(?:(?<![A-Za-z])(?P<pre>[A-Z]{{3}}|{_SYMBOL_RE})\s?{_AMOUNT.format(n='amt')})"
-    rf"|(?:{_AMOUNT.format(n='amt2')}\s?(?P<post>[A-Z]{{3}})\b(?!\s?\d))"
+_SUFFIX = re.compile(rf"^[{_GAP}]?(?P<code>[A-Z]{{3}})(?![A-Za-z])")
+_NEXT_WORD = re.compile(rf"^[{_GAP}]?(?P<word>[A-Za-z]+)")
+_MULTIPLIERS = frozenset(
+    "k m mn bn b million millions billion billions thousand thousands lakh "
+    "lakhs crore crores hundred mio mil".split()
 )
 
 
 def _price(text: str) -> tuple[float, str, int, int] | None:
-    """(amount, ISO code, start, end) of the first price in ``text`` with a
-    known currency: ``EUR 412``, ``412.50 EUR``, ``€98``, ``US$1,045``.
-    Ambiguous amounts (comma decimals, space or dot thousands) and
-    three-letter words that aren't currencies are skipped, never guessed."""
-    for m in _PRICE.finditer(text):
-        if m["pre"]:
-            code, raw = _SYMBOLS.get(m["pre"], m["pre"]), m["amt"]
-        else:
-            code, raw = m["post"], m["amt2"]
-        if code not in CURRENCIES:
+    """(amount, ISO code, start, end) of the first price in ``text``, the
+    span covering the currency and the number: ``EUR 412``, ``412.50 EUR``,
+    ``€98``, ``US$1,045``. Never a wrong number — anything unclear is None:
+
+    - a numeric run must be one number in comma-thousands / dot-decimal form
+      ("1 234", "1'234", "1.234,56", "412,50" are rejected whole);
+    - no letter right after it ("5k") and no magnitude word ("1.5 million");
+    - the currency must touch it (one optional space): a known ISO 4217
+      code or an unambiguous symbol, on one side only;
+    - a code touching two numbers ("99 EUR 2 nights") voids the text."""
+    found: list[tuple[float, str, int, int, tuple[int, int]]] = []
+    for m in _RUN.finditer(text):
+        body = m.group().rstrip(".,'’")
+        start, end = m.start(), m.start() + len(body)
+        if not _NUMBER.fullmatch(body):
             continue
-        amount = float(raw.replace(",", ""))
+        after = text[end:]
+        post = _SUFFIX.match(after)
+        if post and post["code"] not in CURRENCIES:
+            post = None
+        if after[:1].isalpha() and not (post and post.start("code") == 0):
+            continue  # "5k": a letter, not a currency code, touches it
+        word = _NEXT_WORD.match(after)
+        if word and word["word"].lower() in _MULTIPLIERS:
+            continue
+        pre = _PREFIX.search(text[:start])
+        if pre and pre["code"] and pre["code"] not in CURRENCIES:
+            pre = None
+        if pre is None and text[:start][-1:].isalpha():
+            continue  # "Room5": a letter, not a currency, touches it
+        if pre and post:
+            continue  # "EUR 412 USD": which one?
+        if pre:
+            g = "code" if pre["code"] else "sym"
+            code = pre["code"] or _SYMBOLS[pre["sym"]]
+            span = (pre.start(g), pre.end(g))
+            token = (pre.start(), end)
+        elif post:
+            code = post["code"]
+            span = (end + post.start("code"), end + post.end("code"))
+            token = (start, end + post.end("code"))
+        else:
+            continue
+        amount = float(body.replace(",", ""))
         if 0 < amount < 10_000_000:
-            return amount, code, m.start(), m.end()
-    return None
+            found.append((amount, code, *token, span))
+    spans = [f[4] for f in found]
+    if len(spans) != len(set(spans)):
+        return None  # one currency touching two numbers
+    if not found:
+        return None
+    amount, code, a, b, _ = found[0]
+    return amount, code, a, b
+
+
+_SEP = re.compile(r":[*_]*\s*")
+
+
+def _quote_line(rest: str) -> tuple[str, tuple[float, str, int, int]] | None:
+    """(label, price) of a bullet's text ``Seller, what: EUR 412``: the
+    first price after the first colon (bold markers and spaces after it
+    allowed: ``**Booking.com:** EUR 412``, ``Booking.com:EUR 412``),
+    labelled by everything before the last colon ahead of it ("Flight: TAP,
+    1 stop: USD 512"). Offsets are into ``rest``."""
+    first = _SEP.search(rest)
+    if first is None or first.start() == 0:
+        return None
+    price = _price(rest[first.end() :])
+    if price is None:
+        return None
+    a, b = first.end() + price[2], first.end() + price[3]
+    last = [m for m in _SEP.finditer(rest, 0, a) if m.end() <= a][-1]
+    label = _norm(rest[: last.start()])
+    if not label:
+        return None
+    return label, (price[0], price[1], a, b)
 
 
 def _norm(text: str) -> str:
@@ -280,23 +345,6 @@ def _cited(
             if chunk in index:
                 return index[chunk]
     return None
-
-
-def _quote_line(rest: str) -> tuple[str, tuple[float, str, int, int]] | None:
-    """(label, price) of a bullet's text ``Seller, what: EUR 412``: the
-    first price after the first ": ", labelled by everything before the
-    last ": " ahead of it ("Flight: TAP, 1 stop: USD 512")."""
-    first = rest.find(": ")
-    if first <= 0:
-        return None
-    price = _price(rest[first + 2 :])
-    if price is None:
-        return None
-    at = first + 2 + price[2]
-    label = _norm(rest[: rest.rfind(": ", 0, at)])
-    if not label:
-        return None
-    return label, (price[0], price[1], at, first + 2 + price[3])
 
 
 def parse_quotes(text: str, supports: list[dict], index: dict[int, int]) -> list[dict]:
