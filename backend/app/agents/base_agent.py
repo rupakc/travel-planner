@@ -3,8 +3,7 @@ import json
 import logging
 import re
 
-import anthropic
-
+from ..core import llm
 from ..services.name_match import (
     STOP_WORDS,
     distinctive_words,
@@ -16,12 +15,10 @@ from .loader import AgentDefinition
 logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 4
-_MODEL = "claude-haiku-4-5-20251001"
 # Multi-city responses (per-city coverage quotas x 3 cities) can exceed 8192
 # output tokens; a truncated response is unparseable JSON and the whole
-# section "fails". Haiku 4.5 supports far larger outputs — cap generously.
+# section "fails". Both providers support far larger outputs — cap generously.
 _MAX_TOKENS = 16384
-_client: anthropic.AsyncAnthropic | None = None
 
 # All specialist agents fire at once when a search starts. A burst of 12
 # concurrent large-output calls trips org rate limits (429/529) and every
@@ -41,54 +38,40 @@ def _get_semaphore() -> asyncio.Semaphore:
     return _semaphore
 
 
-def _get_client() -> anthropic.AsyncAnthropic:
-    global _client
-    if _client is None:
-        from ..core.config import settings
-
-        # SDK-level retries handle 429/529 with Retry-After awareness
-        _client = anthropic.AsyncAnthropic(
-            api_key=settings.anthropic_api_key, max_retries=3
-        )
-    return _client
-
-
 class BaseAgent:
     def __init__(self, definition: AgentDefinition):
         self.definition = definition
 
     async def execute(self, prompt: str | list[dict]) -> dict:
-        """Execute agent via direct Anthropic API and return parsed JSON.
+        """Execute the agent with one model call per attempt (``core.llm``,
+        JSON output) and return parsed JSON.
 
         ``prompt`` is the user message: a string, or a list of content blocks
         (text and base64 image blocks for vision)."""
         compact_nudge = ""
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
-                client = _get_client()
                 system = (
                     self.definition.system_prompt
                     + "\n\nReturn ONLY valid JSON. No prose, no tool calls, no markdown."
                     + compact_nudge
                 )
                 async with _get_semaphore():
-                    response = await client.messages.create(
-                        model=_MODEL,
-                        max_tokens=_MAX_TOKENS,
+                    response = await llm.generate(
+                        [{"role": "user", "content": prompt}],
+                        role="agent",
                         system=system,
-                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=_MAX_TOKENS,
+                        json_output=True,
+                        label=self.definition.name,
                     )
-                result_text = response.content[0].text if response.content else ""
+                result_text = response.text
             except Exception as e:
+                if isinstance(e, llm.LLMError) and e.spend_cap:
+                    # Retrying can't help until the cap resets next month
+                    return llm.spend_cap_error()
                 # Rate limits and overloads need real backoff, not 0.5s bursts
-                is_capacity = isinstance(
-                    e,
-                    (
-                        anthropic.RateLimitError,
-                        anthropic.InternalServerError,
-                        anthropic.APIConnectionError,
-                    ),
-                )
+                is_capacity = isinstance(e, llm.LLMError) and e.retryable
                 logger.warning(
                     f"Agent {self.definition.name} attempt {attempt}/{_MAX_RETRIES} "
                     f"failed: {e}"
@@ -100,7 +83,7 @@ class BaseAgent:
                     continue
                 return {"error": str(e)}
 
-            if getattr(response, "stop_reason", None) == "max_tokens":
+            if response.truncated:
                 # Truncated output = unparseable JSON. Ask for a tighter
                 # response instead of burning retries on the same failure.
                 logger.warning(
@@ -165,9 +148,9 @@ class BaseAgent:
 
 
 class ToolAgent(BaseAgent):
-    """Agent that generates results via Haiku, then can enrich URLs separately.
+    """Agent that generates results via the model, then can enrich URLs separately.
 
-    execute() returns the fast Haiku result immediately.
+    execute() returns the fast model result immediately.
     enrich() runs web searches for real URLs — called in the background by
     the orchestrator AFTER the initial result has been streamed.
     """

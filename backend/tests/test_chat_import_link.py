@@ -46,14 +46,18 @@ def test_ignores_other_messages(message):
 
 async def test_stream_replies_with_an_import_action_and_never_fetches():
     agent = ChatAgent(agents_dir=settings.agents_dir)
-    with patch("app.agents.chat_agent._get_client") as get_client:
+    with (
+        patch("app.core.llm.generate") as generate,
+        patch("app.core.llm.stream") as stream,
+    ):
         events = [
             json.loads(e)
             async for e in agent.stream(
                 [{"role": "user", "content": "https://wander.example/48-hours-lisbon"}]
             )
         ]
-    get_client.assert_not_called()
+    generate.assert_not_called()
+    stream.assert_not_called()
     types = [e["type"] for e in events]
     assert types == ["delta", "import_link", "done"]
     assert events[1]["url"] == "https://wander.example/48-hours-lisbon"

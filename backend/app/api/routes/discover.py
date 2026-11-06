@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from ...agents.discovery_agent import DiscoveryAgent
+from ...core import llm
 from ...core.cache import get_cache
 from ...core.config import settings
 from ...schemas.request import DiscoveryRequest
@@ -47,5 +48,7 @@ async def discover(request: DiscoveryRequest):
             status_code=500, detail="Discovery failed — please try again"
         )
 
+    if result.get("error_code") == llm.SPEND_CAP_CODE:
+        raise HTTPException(status_code=503, detail=llm.SPEND_CAP_MESSAGE)
     cache[cache_key] = result
     return result

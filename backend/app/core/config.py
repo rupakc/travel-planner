@@ -14,7 +14,22 @@ _PROJECT_ROOT = _BACKEND_ROOT.parent  # / in container, project root locally
 
 
 class Settings(BaseSettings):
+    # LLM provider for every model call (core/llm.py): "gemini" = Gemini on
+    # Vertex AI with Application Default Credentials (no API key);
+    # "anthropic" = Claude via ANTHROPIC_API_KEY (local dev / rollback)
+    llm_provider: str = "gemini"
     anthropic_api_key: str = ""
+    # Vertex AI project (empty = GOOGLE_CLOUD_PROJECT / the ADC project) and
+    # location ("global" routes to any region with capacity)
+    gcp_project: str = ""
+    gcp_location: str = "global"
+    # Specialists, routing, extraction, itineraries → the cheap model;
+    # conversational chat answers and narrative → the stronger one
+    gemini_model_agent: str = "gemini-3.5-flash-lite"
+    gemini_model_chat: str = "gemini-3.8-flash"
+    # Thinking level (minimal | low | medium | high); 3.8 Flash rejects minimal
+    gemini_thinking_agent: str = "minimal"
+    gemini_thinking_chat: str = "low"
     # AGENTS_DIR env var overrides this; falls back to project-root .agents/ for local dev
     agents_dir: str = str(_PROJECT_ROOT / ".agents")
     cache_ttl_seconds: int = 1800
@@ -30,7 +45,7 @@ class Settings(BaseSettings):
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
-    # Max concurrent Anthropic API calls across all specialist agents — a
+    # Max concurrent LLM calls across all specialist agents — a
     # 12-agent burst with large outputs trips org rate limits and every
     # section fails at once
     agent_max_concurrency: int = 6

@@ -6,14 +6,12 @@ import re
 from datetime import date, timedelta
 from urllib.parse import quote
 
+from ..core import llm
 from ..core.rate_limit import try_consume
 from ..schemas.request import TravelSearchRequest
 from ..utils.geo import lookup_coords
-from .base_agent import _MODEL, _get_client
 from .chat_itinerary_agent import ChatItineraryAgent
 from .loader import load_agent_definition
-
-_CHAT_MODEL = "claude-sonnet-4-6"
 
 logger = logging.getLogger(__name__)
 
@@ -257,7 +255,7 @@ class ChatAgent:
         3. Specific intent -> knowledge-only answer; specialist agents run
            ONLY if the model fails to answer at all
         3.5. Modification of prior search -> re-run with modified params
-        3.6. Knowledge queries -> answer directly from Claude's expertise
+        3.6. Knowledge queries -> answer directly from the model's expertise
         4. Regular chat
         """
         if session_context:
@@ -299,6 +297,13 @@ class ChatAgent:
                     "href": f"/?import={quote(link, safe='')}",
                 }
             )
+            yield json.dumps({"type": "done"})
+            return
+
+        # 0.7 The monthly AI spend cap tripped: say so instead of failing
+        # every step below
+        if llm.spend_cap_active():
+            yield json.dumps({"type": "delta", "text": llm.SPEND_CAP_MESSAGE})
             yield json.dumps({"type": "done"})
             return
 
@@ -400,7 +405,7 @@ class ChatAgent:
                     yield chunk
                 return
 
-        # 3.6. Knowledge queries — answer from Claude's own expertise, no agents needed
+        # 3.6. Knowledge queries — answer from the model's own expertise, no agents needed
         if _KNOWLEDGE_PATTERNS.search(last_msg) and not _LIVE_DATA_TERMS.search(
             last_msg
         ):
@@ -465,16 +470,14 @@ class ChatAgent:
             "Reply with ONLY the label."
         )
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": prompt}],
+                role="agent",
                 max_tokens=8,
                 system="You classify travel-chat messages. Reply with one label only.",
-                messages=[{"role": "user", "content": prompt}],
+                label="chat-routing",
             )
-            label = (
-                (response.content[0].text if response.content else "").strip().lower()
-            )
+            label = response.text.strip().lower()
             if label in ("plan_trip", "plan_action", "knowledge", "chat"):
                 return label
         except Exception as e:
@@ -662,14 +665,15 @@ class ChatAgent:
         )
 
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": prompt}],
+                role="agent",
                 max_tokens=4096,
                 system="You manage a travel plan. Return only valid JSON with actions and a message.",
-                messages=[{"role": "user", "content": prompt}],
+                json_output=True,
+                label="chat-plan-command",
             )
-            result_text = response.content[0].text if response.content else ""
+            result_text = response.text
             parsed = self._parse_json_text(result_text)
             # Everything is resolved before the first event: once an action
             # has been sent, the reply never falls back to regular chat.
@@ -1053,19 +1057,24 @@ class ChatAgent:
 
         streamed_any = False
         try:
-            client = _get_client()
-            async with client.messages.stream(
-                model=_CHAT_MODEL,
+            async for text in llm.stream(
+                api_messages,
+                role="chat",
                 max_tokens=4096,
                 system=system_prompt,
-                messages=api_messages,
-            ) as stream:
-                async for text in stream.text_stream:
-                    if text:
-                        streamed_any = True
-                        yield json.dumps({"type": "delta", "text": text})
+                label="chat",
+            ):
+                if text:
+                    streamed_any = True
+                    yield json.dumps({"type": "delta", "text": text})
             yield json.dumps({"type": "done"})
         except Exception as e:
+            if isinstance(e, llm.LLMError) and e.spend_cap:
+                # The monthly AI cap tripped: a plain explanation, no error event
+                if not streamed_any:
+                    yield json.dumps({"type": "delta", "text": llm.SPEND_CAP_MESSAGE})
+                yield json.dumps({"type": "done"})
+                return
             logger.error(f"Chat agent error: {e}")
             # Always give the user a visible reply and terminate the stream —
             # a bare error event leaves the chat bubble blank on the client.
@@ -1275,14 +1284,15 @@ class ChatAgent:
             "IMPORTANT: Return ONLY valid JSON."
         )
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": prompt}],
+                role="agent",
                 max_tokens=512,
                 system="You modify travel search parameters. Return only valid JSON.",
-                messages=[{"role": "user", "content": prompt}],
+                json_output=True,
+                label="chat-modify-params",
             )
-            result_text = response.content[0].text if response.content else ""
+            result_text = response.text
             delta = self._parse_json_text(result_text)
             if not delta or not isinstance(delta, dict):
                 return base
@@ -1413,17 +1423,17 @@ class ChatAgent:
         )
 
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_CHAT_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": prompt}],
+                role="chat",
                 max_tokens=512,
                 system=(
                     "You are a friendly travel advisor summarising search results. "
                     "Return only the narrative prose — no preamble, no meta-commentary."
                 ),
-                messages=[{"role": "user", "content": prompt}],
+                label="chat-narrative",
             )
-            return response.content[0].text if response.content else ""
+            return response.text
         except Exception as e:
             logger.warning(f"Narrative synthesis failed: {e}")
             return ""
@@ -1449,14 +1459,15 @@ class ChatAgent:
             "Return ONLY a JSON array of strings. No punctuation at end of chips."
         )
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": prompt}],
+                role="agent",
                 max_tokens=256,
                 system="You generate travel follow-up suggestion chips. Return only a JSON array of strings.",
-                messages=[{"role": "user", "content": prompt}],
+                json_output=True,
+                label="chat-suggestions",
             )
-            result_text = response.content[0].text if response.content else ""
+            result_text = response.text
             cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", result_text.strip())
             match = re.search(r"\[.*\]", cleaned, re.DOTALL)
             parsed = json.loads(match.group(0) if match else cleaned)
@@ -1563,14 +1574,15 @@ class ChatAgent:
         )
 
         try:
-            client = _get_client()
-            response = await client.messages.create(
-                model=_MODEL,
+            response = await llm.generate(
+                [{"role": "user", "content": extraction_prompt}],
+                role="agent",
                 max_tokens=1024,
                 system="You extract travel parameters into JSON. Return only valid JSON, no explanation.",
-                messages=[{"role": "user", "content": extraction_prompt}],
+                json_output=True,
+                label="chat-extract-params",
             )
-            result_text = response.content[0].text if response.content else ""
+            result_text = response.text
 
             params = self._parse_json_text(result_text)
             if (
@@ -1646,7 +1658,7 @@ class ChatAgent:
           1. planning_start  (instant)
           2. trip_map        (instant — Python-computed city coords)
           3. itinerary_generating
-          4. comprehensive_itinerary  (Haiku LLM result)
+          4. comprehensive_itinerary  (chat-itinerary LLM result)
           5. planning_done
         No KnowledgePlanningEngine; no section_result events.
         """

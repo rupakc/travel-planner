@@ -11,6 +11,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 
 from ...agents.link_import_agent import LinkImportAgent
+from ...core import llm
 from ...core.auth import get_current_user
 from ...core.cache import get_cache
 from ...core.config import settings
@@ -29,6 +30,7 @@ router = APIRouter()
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 # Anthropic's per-image limit applies to the base64 text, so check that too
+# (kept on Gemini, whose inline request limit is far larger)
 MAX_IMAGE_BASE64 = 5 * 1024 * 1024
 _MIN_SOURCE_CHARS = 40
 
@@ -163,6 +165,8 @@ async def extract_trip(
     else:
         result = await agent.run(images=images, source_kind="images")
 
+    if result.get("error_code") == llm.SPEND_CAP_CODE:
+        raise _fail(503, llm.SPEND_CAP_CODE, llm.SPEND_CAP_MESSAGE)
     if result.get("error"):
         logger.warning("Link import extraction failed: %s", result["error"])
         raise _fail(

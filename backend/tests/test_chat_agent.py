@@ -116,10 +116,10 @@ class TestToApiMessages:
 class TestRegularChatErrorFallback:
     @pytest.mark.anyio
     async def test_yields_friendly_delta_and_done_on_failure(self, chat_agent):
-        def _boom():
+        def _boom(*args, **kwargs):
             raise RuntimeError("api exploded")
 
-        with patch("app.agents.chat_agent._get_client", _boom):
+        with patch("app.core.llm.stream", _boom):
             events = await _collect(
                 chat_agent._regular_chat([{"role": "user", "content": "hi"}])
             )

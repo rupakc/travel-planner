@@ -606,7 +606,7 @@ def _lookup_place(stripped: str, max_codes: int) -> str | None:
 
 
 def _web_search_iata(code: str) -> dict | None:
-    """Search the web for an IATA airport code, use Haiku to extract city/country,
+    """Search the web for an IATA airport code, use the LLM to extract city/country,
     persist to DB, and return info."""
     try:
         from ddgs import DDGS
@@ -643,17 +643,12 @@ def _web_search_iata(code: str) -> dict | None:
 def _llm_extract_city_country(
     code: str, search_text: str
 ) -> tuple[str | None, str | None]:
-    """Use Claude Haiku to reliably extract city and country from search results."""
+    """Use the agent LLM to reliably extract city and country from search results."""
     try:
-        import anthropic
+        from ..core import llm
 
-        from ..core.config import settings
-
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=100,
-            messages=[
+        resp = llm.generate_sync(
+            [
                 {
                     "role": "user",
                     "content": (
@@ -664,8 +659,11 @@ def _llm_extract_city_country(
                     ),
                 }
             ],
+            max_tokens=100,
+            json_output=True,
+            label="iata-lookup",
         )
-        text = resp.content[0].text.strip()
+        text = resp.text.strip()
         # Strip markdown code fences if present
         if text.startswith("```"):
             text = re.sub(r"^```(?:json)?\s*", "", text)

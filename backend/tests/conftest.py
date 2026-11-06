@@ -39,6 +39,27 @@ def _no_leftover_serp_client():
     serp_flights._client = before
 
 
+class _NoModelNetwork:
+    """Stands in for every real model client: tests never reach Vertex AI
+    or Anthropic (no credentials, no spend). Tests that need replies patch
+    ``app.core.llm.generate`` / ``stream`` or the client getters."""
+
+    def __getattr__(self, name):
+        raise RuntimeError("model network calls are disabled in tests")
+
+
+@pytest.fixture(autouse=True)
+def _no_model_network(monkeypatch):
+    from app.core import llm
+
+    monkeypatch.setattr(llm, "_gemini_client", lambda: _NoModelNetwork())
+    monkeypatch.setattr(llm, "_anthropic_client", lambda: _NoModelNetwork())
+    monkeypatch.setattr(llm, "_anthropic_sync", _NoModelNetwork())
+    llm.reset_spend_cap()
+    yield
+    llm.reset_spend_cap()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def place_data():
     """Seed the place data once, before any test: lookups (airports, static
