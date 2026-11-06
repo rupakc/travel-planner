@@ -3,6 +3,8 @@
 # deploy.sh, every 5 min): it resolves `prod` to a digest, verifies the cosign
 # signature against THIS workflow on refs/heads/main, pulls, health-checks and
 # rolls back on failure. This workflow has no access to the VM or GCP.
+# Every action is pinned to a full commit SHA: this job can sign as the
+# identity the VM trusts.
 name: Deploy
 
 on:
@@ -37,43 +39,51 @@ jobs:
       CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@refs/heads/main
       CERT_ISSUER: https://token.actions.githubusercontent.com
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: sigstore/cosign-installer@v3
-
-      - uses: imjasonh/setup-crane@v0.4
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+        with:
+          cosign-release: v2.4.1
 
       - name: Build and push app (sha tag only)
         id: app
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: backend/Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ env.APP_IMAGE }}:sha-${{ github.sha }}
-          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          # io.voyager.build: the VM refuses images from an older run (no downgrades)
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            io.voyager.build=${{ github.run_number }}
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
       - name: Build and push caddy + SPA (sha tag only)
         id: caddy
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: deploy/gcp/caddy.Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ env.CADDY_IMAGE }}:sha-${{ github.sha }}
-          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          # io.voyager.build: the VM refuses images from an older run (no downgrades)
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            io.voyager.build=${{ github.run_number }}
           cache-from: type=gha,scope=caddy
           cache-to: type=gha,mode=max,scope=caddy
 
@@ -95,13 +105,33 @@ jobs:
               --certificate-oidc-issuer "$CERT_ISSUER" "$ref" >/dev/null
           done
 
-      - name: Move the prod tags (same digests, nothing rebuilt)
-        env:
-          APP_REF: ${{ env.APP_IMAGE }}@${{ steps.app.outputs.digest }}
-          CADDY_REF: ${{ env.CADDY_IMAGE }}@${{ steps.caddy.outputs.digest }}
+      - name: Still main's HEAD? (never move prod back to an older commit)
+        id: head
         run: |
-          crane tag "$APP_REF" prod
-          crane tag "$CADDY_REF" prod
+          head="$(git ls-remote "https://github.com/${{ github.repository }}" refs/heads/main | cut -f1)"
+          if [ "$head" = "${{ github.sha }}" ]; then
+            echo "current=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "::notice::main moved on to $head; images stay signed under sha-${{ github.sha }}, prod not moved"
+            echo "current=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Move the prod tags (same digests, nothing rebuilt)
+        if: steps.head.outputs.current == 'true'
+        env:
+          APP_DIGEST: ${{ steps.app.outputs.digest }}
+          CADDY_DIGEST: ${{ steps.caddy.outputs.digest }}
+        run: |
+          set -euo pipefail
+          retag() {
+            docker buildx imagetools create --tag "$1:prod" "$1@$2"
+            got="$(docker buildx imagetools inspect "$1:prod" --format '{{json .Manifest}}' | jq -r .digest)"
+            [ "$got" = "$2" ] || { echo "::error::$1:prod is $got, expected $2"; exit 1; }
+          }
+          retag "$APP_IMAGE" "$APP_DIGEST"
+          retag "$CADDY_IMAGE" "$CADDY_DIGEST"
+          APP_REF="$APP_IMAGE@$APP_DIGEST"
+          CADDY_REF="$CADDY_IMAGE@$CADDY_DIGEST"
           {
             echo "### Published"
             echo "- app: \`$APP_REF\`"
