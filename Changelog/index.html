@@ -1337,6 +1337,7 @@
 <h2 id="unreleased-production-on-one-e2-micro-vm-gcp">Unreleased: production on one e2-micro VM (GCP)</h2>
 <p>Deployment kit for the approved lean GCP design (<code>docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md</code>): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: <a href="../Deployment-GCP/">Deployment on GCP</a>.</p>
 <ul>
+<li><strong>Operator password tool:</strong> <code>python -m app.set_password USERNAME</code> (reset, reactivate) or <code>--create --admin</code>; reads the password twice with getpass, never from arguments (runbook §5a).</li>
 <li><strong>Backend production mode:</strong></li>
 <li><code>BACKUP_MODE=vm</code>: disk authoritative, restore only if the DB is missing (stray WAL/SHM removed), mount-guard marker, no merge, user-table export to tmpfs uploaded on hash change every 5 min plus a clean-shutdown flush, <code>backup_ok</code> in <code>/health</code>.</li>
 <li><code>python -m app.entrypoint</code>: Secret Manager secrets into memory, refuses an empty <code>JWT_SECRET_KEY</code>, uvicorn with <code>--timeout-graceful-shutdown 5</code> and proxy headers only from the compose network.</li>

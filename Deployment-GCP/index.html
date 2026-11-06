@@ -1126,6 +1126,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#5a-forgotten-password-or-a-new-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a. Forgotten password or a new admin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#6-day-to-day-deploys-and-rollback" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1404,6 +1415,16 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
   gs://voyager-prod-ohzkl-voyager-backup/sqlite-backups/airports.db
 </code></pre>
 <p>At start, the app sees no DB on the disk, restores this file and reseeds the place data. The old passwords keep working.</p>
+<h2 id="5a-forgotten-password-or-a-new-admin">5a. Forgotten password or a new admin</h2>
+<p>There is no self-service reset; the operator sets a password on the VM. The tool asks for it twice with no echo, so it never appears in shell history, <code>ps</code> or a log, and nobody else (including an assistant) has to see it:</p>
+<pre><code class="language-bash">gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=voyager-prod-ohzkl -- -t \
+  sudo docker exec -it voyager-app-1 python -m app.set_password admin
+</code></pre>
+<ul>
+<li>A reset also reactivates the account and skips the forced change on next login (you chose the password).</li>
+<li>New admin: <code>python -m app.set_password NEWNAME --create --admin</code>.</li>
+<li>Minimum length is the app's (8 characters). The change reaches the GCS backup within 5 minutes.</li>
+</ul>
 <h2 id="6-day-to-day-deploys-and-rollback">6. Day-to-day: deploys and rollback</h2>
 <ul>
 <li><strong>Auto-deploy.</strong> Every merge to <code>main</code> that passes all of CI publishes images signed by <code>deploy.yml</code> and moves their <code>prod</code> tags. Within 5 minutes <code>voyager-deploy.timer</code> on the VM resolves <code>prod</code> to a digest and checks the cosign signature: it must come from <code>rupakc/travel-planner</code>'s <code>deploy.yml</code> on <code>refs/heads/main</code>. It then pulls by digest, pins the digest in <code>/opt/voyager/images.env</code> (keeping the previous one), runs <code>docker compose up -d</code>, and waits up to 240 s for the app to report healthy (longer than the container's 180 s start period, so a slow reseed isn't mistaken for a failure). Each run also converges: <code>compose up -d</code> brings back anything that was stopped, e.g. by a Docker upgrade.</li>
