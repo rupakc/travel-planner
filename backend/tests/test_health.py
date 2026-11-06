@@ -23,3 +23,24 @@ def test_health_reports_serpapi_configured(client, monkeypatch):
     assert client.get("/health").json()["serpapi_configured"] is False
     monkeypatch.setattr(settings, "serpapi_key", "k")
     assert client.get("/health").json()["serpapi_configured"] is True
+
+
+def test_health_has_no_backup_fields_outside_vm_mode(client):
+    body = client.get("/health").json()
+    assert "backup_ok" not in body
+
+
+def test_health_reports_vm_backup_status(client, monkeypatch):
+    """The uptime check content-matches "backup_ok":true."""
+    import time
+
+    from app.db import vm_backup
+
+    state = vm_backup.BackupState(started_at=time.time())
+    monkeypatch.setattr(vm_backup, "_state", state)
+    r = client.get("/health")
+    assert '"backup_ok":true' in r.text
+    state.last_error = "ConnectionError: gcs down"
+    body = client.get("/health").json()
+    assert body["backup_ok"] is False
+    assert body["backup"]["error"].startswith("ConnectionError")

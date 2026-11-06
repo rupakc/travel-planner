@@ -249,6 +249,8 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/price-watches/{watch_id}/check"): "light_ai",
     # Changing the alert email: authenticated, not verified, so rate-limited
     ("PUT", "/api/auth/email"): "light_ai",
+    # bcrypt on a small VM: password guessing and CPU floods
+    ("POST", "/api/auth/login"): "login",
 }
 
 
@@ -276,3 +278,77 @@ def test_route_buckets(client, limits, monkeypatch, bucket):
         if client.request(method, url, json={}).status_code == 429:
             blocked.add((method, path))
     assert blocked == {route for route, b in EXPECTED_BUCKETS.items() if b == bucket}
+
+
+# ── Login ───────────────────────────────────────────────────────────────────
+
+
+def _login(client, username="admin", password="wrong-password"):
+    return client.post(
+        "/api/auth/login", json={"username": username, "password": password}
+    )
+
+
+def test_login_attempts_are_limited_per_ip(client, limits, monkeypatch):
+    monkeypatch.setattr(settings, "rate_limit_login", 2)
+    codes = [_login(client).status_code for _ in range(3)]
+    assert codes == [401, 401, 429]
+    assert _login(client).headers["Retry-After"] == "600"
+
+
+def test_failed_logins_lock_the_username_not_others(client, limits, monkeypatch):
+    monkeypatch.setattr(settings, "rate_limit_login", 99)
+    monkeypatch.setattr(settings, "rate_limit_login_failures", 2)
+    assert [_login(client, "victim").status_code for _ in range(2)] == [401, 401]
+    # Locked: even a correct password waits (no oracle for the guesser)
+    assert _login(client, "victim").status_code == 429
+    assert _login(client, "admin", "test-admin-pw!").status_code == 200
+    limits.now += settings.rate_limit_window_seconds
+    assert _login(client, "victim").status_code == 401
+
+
+def test_successful_logins_do_not_count_as_failures(client, limits, monkeypatch):
+    monkeypatch.setattr(settings, "rate_limit_login", 99)
+    monkeypatch.setattr(settings, "rate_limit_login_failures", 1)
+    for _ in range(3):
+        assert _login(client, "admin", "test-admin-pw!").status_code == 200
+
+
+def test_peek_does_not_record_a_hit():
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(clock=clock)
+    assert limiter.peek("k", limit=1, window=60) is None
+    assert limiter.peek("k", limit=1, window=60) is None
+    limiter.hit("k", limit=1, window=60)
+    clock.now += 10
+    assert limiter.peek("k", limit=1, window=60) == 50
+
+
+# ── ALLOW_ANONYMOUS_AI ─────────────────────────────────────────────────────
+
+
+def test_anonymous_ai_allowed_by_default(client):
+    assert settings.allow_anonymous_ai is True
+    assert _visa_calls(client, 1)[0].status_code == 200
+
+
+def test_anonymous_ai_refused_when_disabled(client, monkeypatch, admin_headers):
+    monkeypatch.setattr(settings, "allow_anonymous_ai", False)
+    r = _visa_calls(client, 1)[0]
+    assert r.status_code == 401
+    assert "sign in" in r.json()["detail"].lower()
+    assert _visa_calls(client, 1, admin_headers)[0].status_code == 200
+
+
+@pytest.mark.parametrize(
+    "path", ["/api/search", "/api/discover", "/api/compare/destination", "/api/flights"]
+)
+def test_every_ai_router_requires_sign_in_when_disabled(client, monkeypatch, path):
+    monkeypatch.setattr(settings, "allow_anonymous_ai", False)
+    assert client.post(path, json={}).status_code == 401
+
+
+def test_non_ai_routes_stay_public_when_disabled(client, monkeypatch):
+    monkeypatch.setattr(settings, "allow_anonymous_ai", False)
+    assert client.get("/health").status_code == 200
+    assert client.get("/api/airports/search", params={"q": "ber"}).status_code == 200

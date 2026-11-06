@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # In the Docker container WORKDIR /app corresponds to the backend/ directory,
 # so going 4 levels up reaches "/" (container root), not the project root.
 # All production paths are therefore set explicitly via env vars (AGENTS_DIR,
-# DATA_DIR, BACKUP_BUCKET) injected by Cloud Run / Terraform.
+# DATA_DIR, BACKUP_BUCKET) injected by the deployment (deploy/gcp/app.env).
 _BACKEND_ROOT = Path(
     __file__
 ).parent.parent.parent  # /app in container, backend/ locally
@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # Storage — DATA_DIR env var overrides in production
     data_dir: str = str(_BACKEND_ROOT / "data")
     backup_bucket: str = ""  # GCS bucket name; empty = backup disabled
+    # "cloudrun" (default, legacy): restore at every start, periodic merge-safe
+    # uploads. "vm": the persistent disk is authoritative: restore only when
+    # the DB is missing (DATA_DIR must hold the .voyager-data-disk marker),
+    # never merge, upload the user tables when they changed (app/db/vm_backup.py)
+    backup_mode: str = "cloudrun"
+    backup_interval_seconds: int = 300  # vm mode cadence
+    backup_export_dir: str = ""  # vm mode scratch dir (a tmpfs); "" = system temp
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
@@ -34,6 +41,8 @@ class Settings(BaseSettings):
     # 12-agent burst with large outputs trips org rate limits and every
     # section fails at once
     agent_max_concurrency: int = 6
+    # /search and /chat: ": keepalive" after this many quiet seconds
+    sse_keepalive_seconds: float = 15.0
     serper_key: str = (
         ""  # Serper Google Search API key; enables Tier 2 activity URL resolution
     )
@@ -49,6 +58,12 @@ class Settings(BaseSettings):
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
     rate_limit_import: int = 20  # /import/extract (plan from a link)
+    # /auth/login: attempts per client IP, and failed attempts per username
+    rate_limit_login: int = 10
+    rate_limit_login_failures: int = 20
+    # false = every AI route requires sign-in (production); true keeps the
+    # anonymous /search, /discover and single-agent routes (local dev)
+    allow_anonymous_ai: bool = True
 
     # Fare watch: background re-checks of watched fares (needs SERPAPI_KEY).
     # One check = 1 SerpAPI call (exact dates) or up to 7 (±3 nearby dates);
@@ -71,6 +86,11 @@ class Settings(BaseSettings):
     # Push alerts to the Android app (optional): path to a Firebase service-account
     # JSON key; empty = push disabled (alerts stay in-app / email only)
     fcm_service_account_file: str = ""
+    # ...or, with no key file, Application Default Credentials (the VM's service
+    # account; needs FCM send rights). The project comes from FCM_PROJECT_ID,
+    # else GOOGLE_CLOUD_PROJECT (the entrypoint sets it from the metadata server)
+    fcm_use_adc: bool = False
+    fcm_project_id: str = ""
     # Public URL of the frontend, for links in emails
     app_base_url: str = "http://localhost:5174"
 
