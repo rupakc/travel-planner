@@ -1125,6 +1125,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#unreleased-live-web-check-and-near-me-v2-google-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased: live web check and Near me v2 (Google grounding)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#unreleased-production-on-one-e2-micro-vm-gcp" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1334,6 +1345,16 @@
 <h1 id="changelog">Changelog</h1>
 <p>Changes since the project started on 2026-05-17. From 2026-08-30 on, every change went through a pull request; dates are merge dates (UTC). A "(#N)" inside a PR title refers to a backlog item, not a PR.</p>
 <hr />
+<h2 id="unreleased-live-web-check-and-near-me-v2-google-grounding">Unreleased: live web check and Near me v2 (Google grounding)</h2>
+<p>Design: <code>docs/superpowers/specs/2026-11-06-live-check-and-near-me-v2.md</code>.</p>
+<ul>
+<li><strong><code>llm.generate_grounded()</code></strong>: one Gemini call with Google Search or Google Maps grounding (text output, agent model), returning the text, grounding chunks, supports and the searches run. Same timeout, spend-cap/billing handling and <code>llm_usage</code> log (plus <code>search_queries</code> and <code>grounding_chunks</code> counts). On the Anthropic provider it raises <code>grounding_unavailable</code>.</li>
+<li><strong><code>POST /api/live-check</code></strong> ("Search the web now"): a Search-grounded look at one of the caller's watches. Returns the answer, its sources, "Searched for" queries and quotes backed by a source. Never stored or cached, and never used for alerts. Sign-in, light_ai bucket.</li>
+<li><strong>Near me v2</strong>: <code>POST /api/nearby</code> with <code>sections: true</code> returns places to see / eat / shop / stay from one Maps-grounded call. Each item has its Google Maps link and place id, and nothing is cached. v1 is unchanged.</li>
+<li>Both answer within 45 s per call and retry once when Google returns an answer with no grounding sources. Live check answers <code>409 watch_expired</code> for an expired watch or one whose date is before yesterday (UTC). Quotes need a source covering the price and an unambiguous ISO amount; prices are tokenised so an unclear number is dropped, never misread. Grounded calls share the agents' concurrency gate.</li>
+<li>The web UI (Near me page, "Search the web now" on Alerts watch cards) ships in a separate branch merged right after this one.</li>
+<li>Docs: the Google terms these features follow (only for the requesting user, no storage, Search Suggestions) in <a href="../Trip-Planning-Features/#live-web-check-and-near-me-google-grounding">Trip Planning Features</a>.</li>
+</ul>
 <h2 id="unreleased-production-on-one-e2-micro-vm-gcp">Unreleased: production on one e2-micro VM (GCP)</h2>
 <p>Deployment kit for the approved lean GCP design (<code>docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md</code>): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: <a href="../Deployment-GCP/">Deployment on GCP</a>.</p>
 <ul>

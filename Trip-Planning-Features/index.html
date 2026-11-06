@@ -805,6 +805,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#live-web-check-and-near-me-google-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live web check and Near me (Google grounding)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#itinerary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1563,6 +1574,22 @@
 <li><strong>Anti-spam</strong> (same rules as fares): no alert on the baseline or for a rise; one notification per check; at most one per watch per 24 h unless the price is at least 5 % below the last alert; a repeat needs a further full-step drop unless the price rebounded first. Watching the same subject twice returns the existing watch (<code>already_watching</code>).</li>
 <li><strong>Checks and limits.</strong> One scheduler checks fare and price watches every <code>FARE_WATCH_INTERVAL_HOURS</code> from <strong>one</strong> daily SerpAPI budget (the price pass runs alongside, so it never delays fare checks, and price checks reserve their worst case so they can't push the budget over; creating a watch holds its worst case too — 2 calls for a hotel or an activity, 10 for a trip — and gives back what it didn't spend), and <code>FARE_WATCH_MAX_ACTIVE_PER_USER</code> counts every kind together. A watch ends on check-in, the activity date or the departure (<code>watch_expired</code>); three failed, or three "unavailable", looks in a row put it on hold (<code>watch_error</code>, with Retry). Notification kinds: <code>hotel_drop</code>, <code>hotel_target</code>, <code>activity_drop</code>, <code>activity_target</code>, <code>trip_drop</code>, <code>trip_target</code>.</li>
 <li><strong>Alerts page</strong>: a card per kind (<code>components/alerts/cards/</code>) with the current and lowest price, change since watching, sparkline, listing link, Check now, Pause/Resume, Edit and Delete; trip cards show the breakdown. <code>/alerts?kind=hotel&amp;watch=ID</code> opens one watch.</li>
+</ul>
+<hr />
+<h2 id="live-web-check-and-near-me-google-grounding">Live web check and Near me (Google grounding)</h2>
+<p>Two features use Gemini's grounding tools on Vertex AI through one seam, <code>llm.generate_grounded()</code> (text output, the agent model; links come only from the grounding metadata, never from the model's text). Design: <code>docs/superpowers/specs/2026-11-06-live-check-and-near-me-v2.md</code>. API: <a href="../API-Reference/#live-web-check">Live web check</a>, <a href="../API-Reference/#post-apinearby">Near me v2</a>.</p>
+<ul>
+<li><strong>"Search the web now"</strong> (<code>POST /api/live-check</code>, <code>services/live_check.py</code>): a signed-in user asks for a live look at one of their own watches (fare, hotel, activity or trip). The server builds the question from the stored watch and runs one Gemini call grounded with <strong>Google Search</strong>. The answer comes back with its sources, the searches it ran ("Searched for") and any prices it quoted that a source supports. It is a second opinion, not a measurement: watches, baselines, price history and alerts stay on SerpAPI and never see it.</li>
+<li><strong>Near me v2</strong> (<code>POST /api/nearby</code> with <code>sections: true</code>, <code>services/nearby_grounded.py</code>): one Gemini call grounded with <strong>Google Maps</strong> around the user's coordinates, returning places to see, eat, shop and stay. Each item comes from a Maps grounding chunk and carries its Google Maps link; a place the model names without one is dropped. <strong>Location privacy:</strong> v2 passes the request's <code>lat</code>/<code>lng</code> to Google Maps grounding through Vertex AI (Google's retrieval config) so results are near the user; clients round them to about 100 m first. The backend never stores or logs the coordinates (request logs hold the path only, and the <code>llm_usage</code> line holds counts). The v1 response (activities agent, no <code>sections</code>) is unchanged for installed apps.</li>
+<li><strong>Clients.</strong> This branch is the backend. The web UI — a "Near me" page and a "Search the web now" panel on every watch card on the Alerts page — ships in a separate branch merged right after it; the Android app follows the same rules.</li>
+<li><strong>Provider.</strong> Grounding exists only with <code>LLM_PROVIDER</code> resolved to <code>gemini</code>; on <code>anthropic</code> both answer <code>503 grounding_unavailable</code> (v1 Near me still works). Both use the <code>light_ai</code> rate limit, need sign-in, and count against the Gemini spend cap (<code>503 ai_limit</code> / <code>ai_billing</code>). Google bills each search or Maps query the model issues past a monthly free allowance (5,000 each), so Near me v2 makes one call for all four sections, not four.</li>
+</ul>
+<p><strong>Google's terms (Service Terms §20(k) Search, §20(m) Maps) — rules for this code and its clients:</strong></p>
+<ul>
+<li><strong>Only for the user who asked.</strong> Grounded results are shown only to the signed-in user whose request produced them. No background or scheduled grounded calls: the scheduler never uses Search grounding, and the Android "nearby" notification only invites the user to open Near me (its own request runs the call).</li>
+<li><strong>No storage, no cache, no analysis.</strong> Nothing grounded is written to the database, cached (<code>/api/live-check</code> and Near me v2 have no cache, unlike v1), compared with a baseline, fed into alerts or logged with content (the <code>llm_usage</code> line holds counts only). Clients keep results in memory only (web: component state; Android: ViewModel, not Room/DataStore). A Maps <code>place_id</code> may be stored under the terms, but we don't need to.</li>
+<li><strong>Display.</strong> Show sources directly under the content they support, viewable in one interaction; don't edit the grounded text or put ads or other content inside it. Near me shows the "Google Maps" attribution text (unmodified, not translated) and each item's Maps link, opened as is (no interstitial).</li>
+<li><strong>Search Suggestions.</strong> Google's docs ask for the Search Suggestions chip, but the pricing page and Service Terms allow not displaying it at standard pricing under 1 million grounded prompts per day. We rely on that: instead of the chip, clients show the returned queries as a "Searched for" line linking to Google Search. Revisit this if volume ever approaches that limit.</li>
 </ul>
 <hr />
 <h2 id="itinerary">Itinerary</h2>

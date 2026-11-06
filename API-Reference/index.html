@@ -1646,6 +1646,51 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="POST /api/nearby">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#near-me-v2-sections-true" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Near me v2: sections: true
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-web-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live web check
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Live web check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apilive-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/live-check
+      
+    </span>
+  </a>
+  
 </li>
         
       </ul>
@@ -2014,7 +2059,7 @@
 </tr>
 <tr>
 <td>light_ai</td>
-<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/live-check</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
 </tr>
 </tbody>
@@ -2381,7 +2426,13 @@
 <td>POST</td>
 <td><code>/api/nearby</code></td>
 <td>user</td>
-<td>Near me: nearest known place to a coordinate and things to do there</td>
+<td>Near me: nearest known place to a coordinate and things to do there (v1), or places to see / eat / shop / stay from Google Maps grounding (<code>sections: true</code>)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/live-check</code></td>
+<td>user</td>
+<td>"Search the web now" for one of the caller's watches (Google Search grounding; never stored)</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -3027,6 +3078,46 @@
 }
 </code></pre>
 <p><code>items</code> are the activities agent's <code>results</code>, unchanged (the shape of <code>POST /api/activities</code>), first <code>limit</code>. <code>region</code> is the state / province (GeoNames first-level division) name, or <code>null</code>. <code>distance_km</code> is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: <code>404 {"detail": {"code": "no_place", "message": "..."}}</code> when no known place is within 75 km; <code>502 {"detail": {"code": "agent_error", "message": "..."}}</code> when the agent fails (not cached); <code>503</code> with <code>code: ai_limit</code> when the monthly AI spend cap has tripped.</p>
+<h4 id="near-me-v2-sections-true">Near me v2: <code>sections: true</code></h4>
+<pre><code class="language-json">{&quot;lat&quot;: 38.72, &quot;lng&quot;: -9.14, &quot;limit&quot;: 6, &quot;sections&quot;: true, &quot;language&quot;: &quot;en&quot;}
+</code></pre>
+<p>Same place lookup as above, then <strong>one</strong> Gemini call grounded with Google Maps around <code>lat</code>/<code>lng</code> (<code>language</code>: optional BCP-47-style code such as <code>en</code> or <code>pt-PT</code>, default <code>en</code>; <code>limit</code>: per section, 1–10, default 6; <code>interests</code> as above, used as a hint). Without <code>sections</code> (or with <code>false</code>) the route is exactly v1, so installed apps keep working. → <code>200</code>:</p>
+<pre><code class="language-json">{
+  &quot;place&quot;: {&quot;name&quot;: &quot;Lisbon&quot;, &quot;region&quot;: null, &quot;country&quot;: &quot;Portugal&quot;, &quot;country_code&quot;: &quot;PT&quot;,
+            &quot;lat&quot;: 38.72, &quot;lng&quot;: -9.14, &quot;distance_km&quot;: 0.4},
+  &quot;sections&quot;: [
+    {&quot;id&quot;: &quot;see&quot;,  &quot;title&quot;: &quot;Places to see&quot;,  &quot;items&quot;: []},
+    {&quot;id&quot;: &quot;eat&quot;,  &quot;title&quot;: &quot;Places to eat&quot;,  &quot;items&quot;: [
+      {&quot;name&quot;: &quot;Time Out Market Lisboa&quot;, &quot;summary&quot;: &quot;One-line why, from the grounded answer&quot;,
+       &quot;maps_uri&quot;: &quot;https://maps.google.com/?cid=…&quot;, &quot;place_id&quot;: &quot;ChIJ…&quot;, &quot;category&quot;: &quot;eat&quot;}]},
+    {&quot;id&quot;: &quot;shop&quot;, &quot;title&quot;: &quot;Places to shop&quot;, &quot;items&quot;: []},
+    {&quot;id&quot;: &quot;stay&quot;, &quot;title&quot;: &quot;Places to stay&quot;, &quot;items&quot;: []}
+  ],
+  &quot;attribution&quot;: &quot;Google Maps&quot;,
+  &quot;sources&quot;: [{&quot;title&quot;: &quot;Time Out Market Lisboa&quot;, &quot;uri&quot;: &quot;https://maps.google.com/?cid=…&quot;}]
+}
+</code></pre>
+<p>The four sections always come in this order and may be empty. The model answers under one heading per group (<code>## See</code>, <code>## Eat</code>, <code>## Shop</code>, <code>## Stay</code>) with one place per line (<code>Name - why</code>; split on the first dash, or on <code>:</code> only when there is none). A heading is a <code>#</code> line, a fully bold line or a bare section word; its section comes from a keyword anywhere in it (see/sight, eat/food/restaurant/drink, shop/market, stay/hotel/sleep — so <code>## Where to eat</code>, <code>### 🍽️ Eat</code>, <code>## 1. See</code> work), and a heading naming no section, or several, stops the current one so its items are dropped rather than misfiled. Each line is matched to a Maps grounding chunk whose title matches the place's name (folded exact, or one containing the other for names of 6+ characters; chunks the line's grounding supports cite are tried first, but never taken on a support alone), and the item takes the chunk's title (without Google's " - Google Maps" suffix), <code>uri</code> (<code>maps_uri</code>) and <code>placeId</code> (<code>place_id</code>, without the <code>places/</code> prefix; may be <code>null</code>). A place without a Maps chunk with a link is dropped, so no item is invented. <code>sources</code> lists every Maps chunk with a link. Each model call has a 45 s request timeout and a 50 s ceiling including the wait for the shared AI concurrency gate, with no SDK-level retries; an answer with text but no Maps chunks is retried once, then returned with empty sections. A <code>Review of …</code> chunk (a link to a review of the place) loses that prefix, the place's own chunk is preferred over it, and a place appears at most once. <strong>Location privacy:</strong> v2 passes the request's <code>lat</code>/<code>lng</code> to Google Maps grounding through Vertex AI (Google's retrieval config) so results are near the user; clients round them to about 100 m first. The backend never stores or logs the coordinates (request logs hold the path only, and the <code>llm_usage</code> line holds counts). Not cached (Google's Maps grounding terms; see <a href="../Trip-Planning-Features/#live-web-check-and-near-me-google-grounding">Live web check and Near me</a>). Errors: <code>404 no_place</code> and <code>502 agent_error</code> (the model call failed) as in v1; <code>422</code> for <code>limit</code> &gt; 10 with <code>sections: true</code>; <code>503 {"detail": {"code": "ai_limit" | "ai_billing" | "grounding_unavailable", "message": "…"}}</code> — <code>grounding_unavailable</code> ("Live web and map results need the Gemini provider.") when the backend runs on the Anthropic provider (v1 is unaffected).</p>
+<hr />
+<h2 id="live-web-check">Live web check</h2>
+<h3 id="post-apilive-check">POST /api/live-check</h3>
+<p>Bucket: light_ai. Signed-in users only. "Search the web now" for one of the caller's watches: a Gemini call grounded with Google Search, built server-side from the stored watch (route, dates and travellers; hotel, dates and guests; activity, city and date; a trip's flight, hotel and activities). There is no free-text prompt: unknown fields are <code>422</code>.</p>
+<pre><code class="language-json">{&quot;kind&quot;: &quot;hotel&quot;, &quot;watch_id&quot;: 123}
+</code></pre>
+<p><code>kind</code> is <code>flight</code> (a fare watch, <code>/api/fare-watches/{id}</code>) or <code>hotel</code> / <code>activity</code> / <code>trip</code> (a price watch of that kind, <code>/api/price-watches/{id}</code>). → <code>200</code>:</p>
+<pre><code class="language-json">{
+  &quot;kind&quot;: &quot;hotel&quot;,
+  &quot;watch_id&quot;: 123,
+  &quot;checked_at&quot;: &quot;2026-11-06T18:00:00Z&quot;,
+  &quot;summary&quot;: &quot;Plain-text answer from Gemini (grounded), unmodified.&quot;,
+  &quot;quotes&quot;: [{&quot;label&quot;: &quot;Booking.com, 3 nights&quot;, &quot;amount&quot;: 412.0, &quot;currency&quot;: &quot;EUR&quot;, &quot;source_index&quot;: 0}],
+  &quot;sources&quot;: [{&quot;title&quot;: &quot;booking.com&quot;, &quot;uri&quot;: &quot;https://vertexaisearch.cloud.google.com/grounding-api-redirect/…&quot;}],
+  &quot;searched_for&quot;: [&quot;memmo alfama lisbon price 1-4 dec 2026&quot;],
+  &quot;disclaimer&quot;: &quot;From a live web search just now. Prices change quickly — check the provider before booking. Not used for your price alerts.&quot;
+}
+</code></pre>
+<p><code>summary</code> is the model's grounded text (whitespace-trimmed only). <code>sources</code> are the web grounding chunks with a link, once per link, as Google returns them. <code>quotes</code> are parsed from the answer's bullet lines (<code>- Seller, what: EUR 412</code>; also <code>- **Seller:** EUR 412</code> and <code>Seller:EUR 412</code> — the label is everything before the last colon ahead of the price). Each keeps only an amount and ISO 4217 currency copied from the text, and an unclear price gives no quote rather than a wrong one. The text is tokenised into whole numeric runs: a run counts only if it is one number in comma-thousands / dot-decimal form (<code>1 234</code>, <code>1'234</code>, <code>1.234,56</code>, <code>412,50</code> are rejected whole, never read as part of the run); no letter may touch it (<code>5k</code>) and no magnitude word may follow (<code>1.5 million</code>, <code>2 lakh</code>); the currency must touch it, with at most one space, on one side only — a known ISO code (<code>EUR 412</code>, <code>412.50 EUR</code>; <code>TAP</code>, <code>NYC</code> aren't currencies) or an unambiguous symbol (<code>€</code>, <code>£</code>, <code>₹</code>, <code>US$</code>, <code>C$</code>, <code>A$</code>, <code>NZ$</code>, <code>S$</code>, <code>HK$</code>; never a bare <code>$</code> or <code>¥</code>); a code touching two numbers (<code>99 EUR 2 nights</code>) voids the line. The price must be covered by a grounding support whose chunk is one of <code>sources</code> (<code>source_index</code>): by the support's byte range when Vertex gives one (a missing start means 0), else by its text (at least 12 characters, containing the price). Anything else is left out, so <code>quotes</code> may be empty. <code>searched_for</code> are the web searches the model ran (show them as "Searched for", linking to Google Search). Nothing is written to the database, cached or used for alerts; only an <code>llm_usage</code> line (tokens, search-query and chunk counts, latency; never content) is logged.</p>
+<p>Each model call has a 45 s request timeout and a 50 s ceiling including the wait for the shared AI concurrency gate, with no SDK-level retries; an answer without web sources is retried once. Errors: <code>404 {"detail": "Watch not found"}</code> (not the caller's watch, or not of that <code>kind</code>); <code>409 {"detail": {"code": "watch_expired", "message": "This trip's date has passed, so there's nothing left to check."}}</code> when the watch is expired or its date (departure; check-in / activity date / trip departure via <code>expires_on</code>) is more than a day in the past in UTC (before yesterday, so a date that is still today somewhere on Earth can be checked), without a model call; <code>429</code> rate limit; <code>502 {"detail": {"code": "live_check_failed", "message": "…"}}</code> when the model fails or the answer still has no grounding sources; <code>503 {"detail": {"code": "ai_limit" | "ai_billing" | "grounding_unavailable", "message": "…"}}</code>.</p>
 <hr />
 <h2 id="reference-data">Reference data</h2>
 <h3 id="get-apiairportssearchqlimit">GET /api/airports/search?q=&amp;limit=</h3>
