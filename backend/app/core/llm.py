@@ -39,18 +39,23 @@ _THINKING_HEADROOM = {"minimal": 512, "low": 2048, "medium": 4096, "high": 8192}
 # Google documents no API error for a tripped spend cap (only "usage is
 # paused"), so a 403/429 whose text names billing or a budget counts as one;
 # a bare 429 RESOURCE_EXHAUSTED stays a retryable quota error. Anthropic's
-# equivalents are "credit balance is too low" and the workspace spend limit.
-_SPEND_CAP_STATUSES = {400, 402, 403, 429}
-_SPEND_CAP_HINTS = (
-    "spend cap",
-    "spending cap",
-    "spend limit",
-    "spending limit",
-    "budget",
-    "billing",
-    "usage limit",
-    "credit balance",
-)
+# equivalents are a 400 "credit balance is too low" and the workspace spend
+# limit. A 400 needs the narrower hints ("thinking budget" is a bad request).
+_SPEND_CAP_HINTS = {
+    403: (
+        "spend cap",
+        "spending cap",
+        "spend limit",
+        "spending limit",
+        "budget",
+        "billing",
+        "usage limit",
+        "credit balance",
+    ),
+    400: ("credit balance", "spend limit", "spending limit", "spend cap"),
+}
+_SPEND_CAP_HINTS[429] = _SPEND_CAP_HINTS[403]
+_SPEND_CAP_HINTS[402] = _SPEND_CAP_HINTS[403]
 _RETRYABLE_STATUSES = {408, 429, 500, 502, 503, 504, 529}
 
 # Once the cap is seen, fail fast for a while instead of sending every agent
@@ -262,10 +267,17 @@ def _check_spend_cap() -> None:
 
 def _wrap(e: Exception) -> LLMError:
     global _spend_cap_until
-    status = getattr(e, "code", None) or getattr(e, "status_code", None)
-    status = status if isinstance(status, int) else None
+    # google-genai: .code; anthropic: .status_code
+    status = next(
+        (
+            v
+            for v in (getattr(e, "code", None), getattr(e, "status_code", None))
+            if isinstance(v, int)
+        ),
+        None,
+    )
     text = str(e).lower()
-    if status in _SPEND_CAP_STATUSES and any(h in text for h in _SPEND_CAP_HINTS):
+    if any(h in text for h in _SPEND_CAP_HINTS.get(status, ())):
         _spend_cap_until = time.monotonic() + _SPEND_CAP_HOLD_SECONDS
         logger.error(f"LLM spend cap reached ({provider()} {status}): {e}")
         return LLMError(SPEND_CAP_MESSAGE, spend_cap=True, status=status)

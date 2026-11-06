@@ -229,6 +229,38 @@ async def test_plain_quota_429_is_not_the_spend_cap(gemini, no_sleep, monkeypatc
     assert not llm.spend_cap_active()
 
 
+async def test_bad_request_naming_a_thinking_budget_is_not_the_cap(gemini, no_sleep):
+    gemini.replies = [
+        _api_error(400, "INVALID_ARGUMENT", "Thinking budget is out of range.")
+    ] * base_agent._MAX_RETRIES
+
+    result = await _agent().execute("x")
+
+    assert result.get("error_code") is None
+    assert not llm.spend_cap_active()
+
+
+async def test_anthropic_credit_balance_counts_as_the_cap(monkeypatch, no_sleep):
+    import anthropic
+    import httpx
+
+    monkeypatch.setattr(settings, "llm_provider", "anthropic")
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    error = anthropic.BadRequestError(
+        "Your credit balance is too low to access the Anthropic API.",
+        response=httpx.Response(400, request=request),
+        body=None,
+    )
+
+    async def create(**kwargs):
+        raise error
+
+    fake = SimpleNamespace(messages=SimpleNamespace(create=create))
+    monkeypatch.setattr(llm, "_anthropic_client", lambda: fake)
+
+    assert (await _agent().execute("x"))["error_code"] == "ai_limit"
+
+
 async def test_chat_reports_spend_cap_as_a_delta(gemini):
     gemini.stream_chunks = [_api_error(403, "PERMISSION_DENIED", "billing paused")]
     agent = ChatAgent(agents_dir=settings.agents_dir)
