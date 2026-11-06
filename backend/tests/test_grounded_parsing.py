@@ -16,27 +16,55 @@ def _web(title, uri):
 
 
 # ── Near Me v2 ────────────────────────────────────────────────────────────────
+# Shapes as Vertex returns them: Maps chunk titles end in " - Google Maps";
+# supports map a segment (often just the place name) to chunk indices.
+
+
+def _sup(text, chunks):
+    return {"text": text, "start": None, "end": None, "chunks": chunks}
 
 
 CHUNKS = [
-    _maps("Time Out Market Lisboa", "https://maps.google.com/?cid=10", "places/A"),
-    _maps("Castelo de São Jorge", "https://maps.google.com/?cid=11", "places/B"),
-    _maps("Memmo Alfama Hotel", "https://maps.google.com/?cid=12", "places/C"),
-    _maps("A Vida Portuguesa", "https://maps.google.com/?cid=13", None),
-    _maps("No link at all", None, "places/E"),
+    _maps(
+        "Time Out Market Lisboa - Google Maps",
+        "https://maps.google.com/?cid=10",
+        "places/A",
+    ),
+    _maps(
+        "Castelo de São Jorge - Google Maps",
+        "https://maps.google.com/?cid=11",
+        "places/B",
+    ),
+    _maps(
+        "Memmo Alfama Hotel - Google Maps",
+        "https://maps.google.com/?cid=12",
+        "places/C",
+    ),
+    _maps("A Vida Portuguesa - Google Maps", "https://maps.google.com/?cid=13", None),
+    _maps("No link at all - Google Maps", None, "places/E"),
+    _maps("Cafe Portugal - Google Maps", "https://maps.google.com/?cid=15", "places/F"),
+]
+TEXT = (
+    "Here are some places near you.\n\n"
+    "## See\n"
+    "* Castelo de Sao Jorge - Moorish castle with city views.\n"
+    "## **Eat:**\n"
+    "* **Time Out Market** – Food hall with local chefs.\n"
+    "- Nicolau - Brunch spot.\n"
+    "**Shop**\n"
+    "• A Vida Portuguesa: Classic Portuguese brands.\n"
+    "### Places to stay\n"
+    "1. Memmo Alfama Hotel — Boutique hotel, rooftop pool.\n"
+)
+SUPPORTS = [
+    _sup("Castelo de Sao Jorge", [1]),
+    # "Nicolau" is grounded by a chunk whose title differs: supports decide
+    _sup("Nicolau - Brunch spot.", [5]),
 ]
 
 
 def test_sections_map_lines_to_chunks_in_order():
-    text = (
-        "Here you go:\n"
-        "SEE|Castelo de Sao Jorge|Moorish castle with city views\n"
-        "EAT|**Time Out Market**|Food hall with local chefs\n"
-        "- SHOP | A Vida Portuguesa | Classic Portuguese brands\n"
-        "stay|Memmo Alfama Hotel|Boutique hotel, rooftop pool\n"
-    )
-
-    sections, sources = nearby_grounded.parse_sections(text, CHUNKS, limit=6)
+    sections, sources = nearby_grounded.parse_sections(TEXT, CHUNKS, 6, SUPPORTS)
 
     assert [s["id"] for s in sections] == ["see", "eat", "shop", "stay"]
     assert [s["title"] for s in sections] == [
@@ -49,38 +77,66 @@ def test_sections_map_lines_to_chunks_in_order():
     assert see == [
         {
             "name": "Castelo de São Jorge",
-            "summary": "Moorish castle with city views",
+            "summary": "Moorish castle with city views.",
             "maps_uri": "https://maps.google.com/?cid=11",
             "place_id": "B",
             "category": "see",
         }
     ]
-    # "Time Out Market" names the chunk "Time Out Market Lisboa"
-    assert eat[0]["name"] == "Time Out Market Lisboa"
-    assert eat[0]["maps_uri"] == "https://maps.google.com/?cid=10"
-    assert shop[0]["place_id"] is None
-    assert stay[0]["category"] == "stay"
+    # by name ("Time Out Market" names "Time Out Market Lisboa"), then by
+    # support (the chunk behind "Nicolau" is titled "Cafe Portugal")
+    assert [i["name"] for i in eat] == ["Time Out Market Lisboa", "Cafe Portugal"]
+    assert eat[0]["summary"] == "Food hall with local chefs."
+    assert eat[1]["maps_uri"] == "https://maps.google.com/?cid=15"
+    assert shop[0]["name"] == "A Vida Portuguesa" and shop[0]["place_id"] is None
+    assert shop[0]["summary"] == "Classic Portuguese brands."
+    assert stay[0]["name"] == "Memmo Alfama Hotel"
+    # titles lose Google's " - Google Maps" suffix, for display too
     assert sources == [
-        {"title": c["title"], "uri": c["uri"]} for c in CHUNKS if c["uri"]
+        {"title": c["title"].removesuffix(" - Google Maps"), "uri": c["uri"]}
+        for c in CHUNKS
+        if c["uri"]
     ]
+
+
+def test_supports_pick_the_matching_title_among_several_chunks():
+    text = "## Eat\n* Cafe Portugal - Pastries.\n"
+    sups = [_sup("Cafe Portugal - Pastries.", [0, 5])]
+    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, 6, sups)
+    assert sections[1]["items"][0]["maps_uri"] == "https://maps.google.com/?cid=15"
+
+
+def test_support_with_several_unrelated_chunks_is_not_guessed():
+    text = "## Eat\n* Nicolau - Brunch.\n"
+    sups = [_sup("Nicolau - Brunch.", [0, 5])]
+    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, 6, sups)
+    assert sections[1]["items"] == []
 
 
 def test_places_without_a_maps_chunk_are_dropped():
     text = (
-        "SEE|Invented Tower|Not on Maps\n"
-        "SEE|No link at all|Chunk without a uri\n"
-        "EAT|Time Out Market Lisboa|Real\n"
+        "## See\n"
+        "* Invented Tower - Not on Maps\n"
+        "* No link at all - Chunk without a uri\n"
+        "## Eat\n"
+        "* Time Out Market Lisboa - Real\n"
     )
-    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, limit=6)
+    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, 6)
     by_id = {s["id"]: s["items"] for s in sections}
     assert by_id["see"] == []
     assert [i["name"] for i in by_id["eat"]] == ["Time Out Market Lisboa"]
 
 
+def test_lines_before_any_heading_are_ignored():
+    text = "Castelo de São Jorge - a castle\n## Eat\n"
+    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, 6)
+    assert all(s["items"] == [] for s in sections)
+
+
 def test_web_chunks_never_become_places():
     chunks = [_web("Time Out Market", "https://example.com/tom")]
     sections, sources = nearby_grounded.parse_sections(
-        "EAT|Time Out Market|x", chunks, limit=6
+        "## Eat\n* Time Out Market - x", chunks, 6, [_sup("Time Out Market", [0])]
     )
     assert all(s["items"] == [] for s in sections)
     assert sources == []
@@ -88,46 +144,88 @@ def test_web_chunks_never_become_places():
 
 def test_each_place_is_listed_once_and_limit_applies():
     chunks = [
-        _maps(f"Cafe {i}", f"https://maps.google.com/?cid={i}", f"places/{i}")
+        _maps(
+            f"Cafe {i} - Google Maps",
+            f"https://maps.google.com/?cid={i}",
+            f"places/{i}",
+        )
         for i in range(5)
     ]
-    text = "\n".join(f"EAT|Cafe {i}|good" for i in range(5))
-    text += "\nSEE|Cafe 0|duplicate of an eat place"
+    text = "## Eat\n" + "\n".join(f"* Cafe {i} - good" for i in range(5))
+    text += "\n## See\n* Cafe 0 - duplicate of an eat place"
     sections, _ = nearby_grounded.parse_sections(text, chunks, limit=3)
     by_id = {s["id"]: s["items"] for s in sections}
     assert [i["name"] for i in by_id["eat"]] == ["Cafe 0", "Cafe 1", "Cafe 2"]
     assert by_id["see"] == []
 
 
-def test_unknown_groups_and_junk_lines_are_ignored():
-    text = "BAR|Time Out Market Lisboa|x\nnot a line\n|||\nEAT||empty name"
-    sections, _ = nearby_grounded.parse_sections(text, CHUNKS, limit=6)
-    assert all(s["items"] == [] for s in sections)
+@pytest.mark.parametrize(
+    "line, section",
+    [
+        ("## See", "see"),
+        ("# EAT", "eat"),
+        ("**Shop:**", "shop"),
+        ("### Places to Stay:", "stay"),
+        ("Stay", "stay"),
+        ("## Drink", None),
+        ("* Shopping mall - x", None),
+    ],
+)
+def test_headings(line, section):
+    assert nearby_grounded._heading(line) == section
+
+
+@pytest.mark.parametrize(
+    "line, name, why",
+    [
+        ("* Cafe Portugal - Pastries", "Cafe Portugal", "Pastries"),
+        ("- Cafe Portugal – Pastries", "Cafe Portugal", "Pastries"),
+        (
+            "• **Cafe Portugal** — Pastries - and more",
+            "Cafe Portugal",
+            "Pastries - and more",
+        ),
+        ("1. Cafe Portugal: Pastries", "Cafe Portugal", "Pastries"),
+        ("Cafe Portugal", "Cafe Portugal", ""),
+    ],
+)
+def test_item_lines(line, name, why):
+    assert nearby_grounded._split(line) == (name, why)
+
+
+def test_title_suffix_is_stripped():
+    assert nearby_grounded.clean_title("Cafe Portugal - Google Maps") == "Cafe Portugal"
+    assert nearby_grounded.clean_title("Isla & Co. - Midtown") == "Isla & Co. - Midtown"
 
 
 def test_short_names_need_an_exact_match():
     # "Bar" must not match "Memmo Alfama Hotel Bar"-style longer titles
     chunks = [_maps("Memmo Alfama Hotel Bar", "https://maps.google.com/?cid=9")]
-    sections, _ = nearby_grounded.parse_sections("EAT|Bar|x", chunks, limit=6)
+    sections, _ = nearby_grounded.parse_sections("## Eat\n* Bar - x", chunks, 6)
     assert sections[1]["items"] == []
 
 
 def test_missing_summary_is_empty_text():
     sections, _ = nearby_grounded.parse_sections(
-        "SEE|Castelo de São Jorge", CHUNKS, limit=6
+        "## See\n* Castelo de São Jorge", CHUNKS, 6
     )
     assert sections[0]["items"][0]["summary"] == ""
 
 
-def test_nearby_prompt_names_the_place_groups_and_limit():
+def test_maps_chunk_count():
+    assert nearby_grounded.maps_chunk_count(CHUNKS) == 5
+    assert nearby_grounded.maps_chunk_count([_web("x", "https://x")]) == 0
+
+
+def test_nearby_prompt_uses_headings_and_limit():
     system, prompt = nearby_grounded.build_prompt(
         "Lisbon, Portugal", 38.72, -9.14, 4, ["food", "art"], today="2026-11-06"
     )
-    assert "2026-11-06" in system
-    assert "Lisbon, Portugal" in prompt and "38.72" in prompt
-    for group in ("SEE", "EAT", "SHOP", "STAY"):
-        assert group in prompt
-    assert "up to 4" in prompt
+    assert system == "Today is 2026-11-06."
+    assert "Lisbon, Portugal" in prompt
+    for head in ("'## See'", "'## Eat'", "'## Shop'", "'## Stay'"):
+        assert head in prompt
+    assert "up to 4 places" in prompt and "' - '" in prompt
     assert "food, art" in prompt
 
 
@@ -146,10 +244,6 @@ WEB = [
     _web("hotels.com", "https://vertexaisearch.cloud.google.com/b"),
     _web("expedia.com", "https://vertexaisearch.cloud.google.com/c"),
 ]
-
-
-def _sup(text, chunks):
-    return {"text": text, "start": None, "end": None, "chunks": chunks}
 
 
 def test_sources_are_the_web_chunks_with_links():

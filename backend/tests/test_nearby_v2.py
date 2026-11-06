@@ -2,6 +2,7 @@
 sections, items only from Maps grounding chunks, never cached. v1 (no
 ``sections``) is covered by test_nearby.py and must stay unchanged."""
 
+import logging
 import time
 import uuid
 from unittest.mock import AsyncMock
@@ -24,7 +25,8 @@ def _maps(i, title):
     return {
         "kind": "maps",
         "uri": f"https://maps.google.com/?cid={i}",
-        "title": title,
+        # as Vertex returns them
+        "title": f"{title} - Google Maps",
         "place_id": f"places/ChIJ{i}",
     }
 
@@ -38,14 +40,22 @@ CHUNKS = [
 ]
 TEXT = "\n".join(
     [
-        "SEE|Castelo de São Jorge|Moorish castle",
-        "SEE|Imaginary Tower|not on Maps",
-        "EAT|Time Out Market|Food hall",
-        *[f"EAT|Tasca Number {i}|Petiscos" for i in range(12)],
-        "SHOP|A Vida Portuguesa|Heritage brands",
-        "STAY|Memmo Alfama Hotel|Rooftop pool",
+        "## See",
+        "* Castelo de São Jorge - Moorish castle",
+        "* Imaginary Tower - not on Maps",
+        "## Eat",
+        "* Time Out Market - Food hall",
+        *[f"* Tasca Number {i} - Petiscos" for i in range(12)],
+        "## Shop",
+        "* A Vida Portuguesa - Heritage brands",
+        "## Stay",
+        "* Memmo Alfama Hotel - Rooftop pool",
     ]
 )
+SUPPORTS = [
+    {"text": "Castelo de São Jorge", "start": None, "end": None, "chunks": [0]},
+    {"text": "Memmo Alfama Hotel", "start": None, "end": None, "chunks": [3]},
+]
 
 
 @pytest.fixture(autouse=True)
@@ -59,7 +69,11 @@ def _env(monkeypatch, client):
 @pytest.fixture
 def grounded(monkeypatch):
     stub = AsyncMock(
-        return_value=llm.GroundedResponse(text=TEXT, chunks=[dict(c) for c in CHUNKS])
+        return_value=llm.GroundedResponse(
+            text=TEXT,
+            chunks=[dict(c) for c in CHUNKS],
+            supports=[dict(x) for x in SUPPORTS],
+        )
     )
     monkeypatch.setattr(llm, "generate_grounded", stub)
     return stub
@@ -166,15 +180,36 @@ def test_v1_with_sections_false_is_v1(client, monkeypatch, grounded):
     grounded.assert_not_awaited()
 
 
-def test_ungrounded_answer_gives_empty_sections(client, monkeypatch):
+def test_ungrounded_answer_is_retried_once_then_empty(client, monkeypatch, caplog):
     stub = AsyncMock(
-        return_value=llm.GroundedResponse(text="SEE|Made Up Place|x", chunks=[])
+        return_value=llm.GroundedResponse(text="## See\n* Made Up Place - x", chunks=[])
     )
     monkeypatch.setattr(llm, "generate_grounded", stub)
-    r = client.post("/api/nearby", json=V2, headers=_headers())
+    with caplog.at_level(logging.INFO, logger="app.api.routes.nearby"):
+        r = client.post("/api/nearby", json=V2, headers=_headers())
     assert r.status_code == 200
     assert [s["items"] for s in r.json()["sections"]] == [[], [], [], []]
     assert r.json()["sources"] == []
+    assert stub.await_count == 2
+    assert any("retrying once" in m for m in caplog.messages)
+
+
+def test_retry_that_grounds_is_used(client, monkeypatch):
+    stub = AsyncMock(
+        side_effect=[
+            llm.GroundedResponse(text="## See\n* x - y", chunks=[]),
+            llm.GroundedResponse(text=TEXT, chunks=[dict(c) for c in CHUNKS]),
+        ]
+    )
+    monkeypatch.setattr(llm, "generate_grounded", stub)
+    r = client.post("/api/nearby", json=V2, headers=_headers())
+    assert stub.await_count == 2
+    assert r.json()["sections"][0]["items"][0]["name"] == "Castelo de São Jorge"
+
+
+def test_grounded_answer_is_not_retried(client, grounded):
+    client.post("/api/nearby", json=V2, headers=_headers())
+    assert grounded.await_count == 1
 
 
 def test_v2_is_never_cached(client, grounded):

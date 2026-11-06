@@ -1,7 +1,7 @@
 # Live "Search the web now" + Near Me v2 — design & API contract
 
-Status: decided (user, 2026-11-06). Sources: official Google terms/docs summarised in
-`scratchpad/gcp-plan/gemini-tools-facts.md` (Service Terms §20(k) Grounding with Google Search,
+Status: decided (user, 2026-11-06). Verified against Google's Service Terms §20(k)/(m) and
+Vertex grounding docs, 2026-11-06 (Service Terms §20(k) Grounding with Google Search,
 §20(m) Grounding with Google Maps; Agent Platform pricing).
 
 ## Decisions

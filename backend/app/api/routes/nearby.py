@@ -7,6 +7,7 @@
   Maps link (services/nearby_grounded.py). Never cached: Google's Maps
   grounding terms allow results only for the user who asked."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
@@ -25,6 +26,7 @@ from ...db.taste_db import derive_taste_context
 from ...schemas.request import TravelSearchRequest
 from ...services import nearby_grounded
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 V1_DEFAULT_LIMIT = 8
@@ -98,10 +100,11 @@ async def _sections(body: NearbyRequest, place: dict, user: dict) -> dict:
     """v2. One Maps-grounded call for all four sections, not one per
     section: every Maps query the model issues is billed past the free tier,
     and our estimate is ~8 queries for one combined prompt against ~12 for
-    four calls (plus 4x the prompt tokens and 4x the latency risk). Matching
-    the model's ``GROUP|name|why`` lines to grounding chunk titles keeps one
-    call reliable: a name without a chunk is simply dropped. Nothing is
-    cached or stored (Maps grounding terms)."""
+    four calls (plus 4x the prompt tokens and 4x the latency risk). The
+    combined prompt with one heading per group grounded in every real test
+    call; items map to chunks through the grounding supports (then by name),
+    and a name without a chunk is simply dropped. Nothing is cached or
+    stored (Maps grounding terms)."""
     limit = body.limit or V2_DEFAULT_LIMIT
     interests = (
         body.interests or get_preferences(user["username"]).get("interests") or []
@@ -115,22 +118,31 @@ async def _sections(body: NearbyRequest, place: dict, user: dict) -> dict:
         today=datetime.now(UTC).date().isoformat(),
     )
     try:
-        out = await llm.generate_grounded(
-            prompt,
-            tool="maps",
-            system=system,
-            lat=body.lat,
-            lng=body.lng,
-            language=body.language or "en",
-            label="nearby_maps",
-        )
+        out = None
+        # Google sometimes attaches no Maps chunks even though the model
+        # queried Maps; without them nothing can be shown, so retry once
+        for attempt in (1, 2):
+            out = await llm.generate_grounded(
+                prompt,
+                tool="maps",
+                system=system,
+                lat=body.lat,
+                lng=body.lng,
+                language=body.language or "en",
+                label="nearby_maps",
+            )
+            if nearby_grounded.maps_chunk_count(out.chunks) or attempt == 2:
+                break
+            logger.info("nearby_maps: no Maps grounding chunks, retrying once")
     except llm.LLMError as e:
         if e.user_facing:
             raise HTTPException(
                 status_code=503, detail={"code": e.user_code, "message": str(e)}
             ) from e
         raise _agent_error() from e
-    sections, sources = nearby_grounded.parse_sections(out.text, out.chunks, limit)
+    sections, sources = nearby_grounded.parse_sections(
+        out.text, out.chunks, limit, out.supports
+    )
     return {
         "place": place,
         "sections": sections,
