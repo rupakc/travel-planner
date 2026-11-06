@@ -15,4 +15,4 @@ anthropic>=0.40.0,<1.0.0
 # Gemini on Vertex AI (default LLM provider). 3.x swaps the HTTP client to httpx2
 google-genai==2.34.0
 # Converts GIF screenshots to PNG for Gemini (link import)
-Pillow==12.1.0
+Pillow==13.0.0
