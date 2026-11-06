@@ -1276,7 +1276,7 @@
 <tr>
 <td>1</td>
 <td>Plan commands ("add … to my plan", "remove …", "show my plan", "clear my plan")</td>
-<td><code>plan_action</code> events that the frontend applies to My Plan</td>
+<td><code>plan_action</code> events that the frontend applies to My Plan. The model sees one compact line per flight, hotel and activity in the current results (up to 20 each: name or airline, price, rating, tier…, with a ref such as <code>H2</code>), so "add the cheapest hotel" works; it answers with the ref and the server puts the full result item into the action</td>
 </tr>
 <tr>
 <td>1.5</td>
