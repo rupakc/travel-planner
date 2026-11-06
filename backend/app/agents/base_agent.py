@@ -67,9 +67,9 @@ class BaseAgent:
                     )
                 result_text = response.text
             except Exception as e:
-                if isinstance(e, llm.LLMError) and e.spend_cap:
-                    # Retrying can't help until the cap resets next month
-                    return llm.spend_cap_error()
+                if isinstance(e, llm.LLMError) and e.user_facing:
+                    # Spend cap / billing off: retrying can't help
+                    return e.as_result()
                 # Rate limits and overloads need real backoff, not 0.5s bursts
                 is_capacity = isinstance(e, llm.LLMError) and e.retryable
                 logger.warning(

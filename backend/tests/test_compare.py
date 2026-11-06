@@ -477,3 +477,12 @@ def test_factory_failure_leaves_no_unawaited_coroutines(client, admin_headers, a
 
         gc.collect()
     assert not [w for w in caught if "never awaited" in str(w.message)]
+
+
+def test_ai_spend_cap_keeps_the_friendly_message(client, admin_headers, agents):
+    from app.core import llm
+
+    agents["hotels"].return_value.run = AsyncMock(return_value=llm.spend_cap_error())
+    r = _post(client, admin_headers)
+    assert r.status_code == 503
+    assert r.json()["detail"] == llm.SPEND_CAP_MESSAGE

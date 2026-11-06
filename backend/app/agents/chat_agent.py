@@ -303,7 +303,7 @@ class ChatAgent:
         # 0.7 The monthly AI spend cap tripped: say so instead of failing
         # every step below
         if llm.spend_cap_active():
-            yield json.dumps({"type": "delta", "text": llm.SPEND_CAP_MESSAGE})
+            yield json.dumps({"type": "delta", "text": str(llm.pause_error())})
             yield json.dumps({"type": "done"})
             return
 
@@ -1069,10 +1069,10 @@ class ChatAgent:
                     yield json.dumps({"type": "delta", "text": text})
             yield json.dumps({"type": "done"})
         except Exception as e:
-            if isinstance(e, llm.LLMError) and e.spend_cap:
-                # The monthly AI cap tripped: a plain explanation, no error event
+            if isinstance(e, llm.LLMError) and e.user_facing:
+                # Spend cap / billing off: a plain explanation, no error event
                 if not streamed_any:
-                    yield json.dumps({"type": "delta", "text": llm.SPEND_CAP_MESSAGE})
+                    yield json.dumps({"type": "delta", "text": str(e)})
                 yield json.dumps({"type": "done"})
                 return
             logger.error(f"Chat agent error: {e}")

@@ -3740,8 +3740,8 @@ export default function ResultsPage() {
           setPricingData(data)
           return
         }
-        // The monthly AI spend cap tripped: one plain banner, not N failures
-        if (data?.error_code === 'ai_limit') setError(data.error)
+        // AI paused (monthly spend cap, billing off): one plain banner, not N failures
+        if (data?.error_code === 'ai_limit' || data?.error_code === 'ai_billing') setError(data.error)
         if (!AGENT_ORDER.includes(type)) return
         // Flights legs and weather days are already journey-ordered by the
         // backend; every other city-tagged list gets sorted client-side too.

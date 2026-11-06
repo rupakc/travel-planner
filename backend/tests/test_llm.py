@@ -43,7 +43,20 @@ class FakeGemini:
             generate_content=self._generate,
             generate_content_stream=self._stream,
         )
-        self.aio = SimpleNamespace(models=models)
+        self.aio = SimpleNamespace(models=models, aclose=self._aclose)
+        self.models = SimpleNamespace(generate_content=self._generate_sync)
+        self.stream_closed = False
+        self.closed = []
+
+    async def _aclose(self):
+        self.closed.append("aio")
+
+    def close(self):
+        self.closed.append("sync")
+
+    def _generate_sync(self, **kwargs):
+        self.calls.append(kwargs)
+        return self.replies.pop(0)
 
     async def _generate(self, **kwargs):
         self.calls.append(kwargs)
@@ -57,17 +70,23 @@ class FakeGemini:
         chunks = self.stream_chunks
 
         async def gen():
-            for chunk in chunks:
-                if isinstance(chunk, Exception):
-                    raise chunk
-                yield chunk
+            try:
+                for chunk in chunks:
+                    if isinstance(chunk, Exception):
+                        raise chunk
+                    yield chunk
+            finally:
+                self.stream_closed = True
 
         return gen()
 
 
-def _api_error(code, status, message):
+def _api_error(code, status, message, details=()):
     cls = genai_errors.ServerError if code >= 500 else genai_errors.ClientError
-    return cls(code, {"error": {"code": code, "status": status, "message": message}})
+    error = {"code": code, "status": status, "message": message}
+    if details:
+        error["details"] = list(details)
+    return cls(code, {"error": error})
 
 
 def _agent(name="probe", prompt="You are a probe agent."):
@@ -210,7 +229,7 @@ async def test_spend_cap_returns_friendly_error_without_retrying(
 
 
 async def test_once_tripped_calls_fail_fast_without_reaching_vertex(gemini):
-    gemini.replies = [_api_error(403, "PERMISSION_DENIED", "Billing is disabled")]
+    gemini.replies = [_api_error(429, "RESOURCE_EXHAUSTED", "Spend cap reached.")]
     await _agent().execute("x")
 
     result = await _agent().execute("y")
@@ -503,3 +522,206 @@ def test_health_agents_uses_the_configured_provider(client, gemini):
     assert body["llm"] == "ok" and body["llm_provider"] == "gemini"
     assert body["llm_provider_reason"] == "LLM_PROVIDER=gemini"
     assert gemini.calls[0]["model"] == "gemini-3.5-flash-lite"
+
+
+# ─── Error classification details ─────────────────────────────────────────
+
+
+async def test_billing_words_in_help_links_are_not_the_cap(
+    gemini, no_sleep, monkeypatch
+):
+    monkeypatch.setattr(base_agent, "_MAX_RETRIES", 1)
+    gemini.replies = [
+        _api_error(
+            403,
+            "PERMISSION_DENIED",
+            "Permission 'aiplatform.endpoints.predict' denied on resource.",
+            details=[
+                {
+                    "@type": "type.googleapis.com/google.rpc.Help",
+                    "links": [{"url": "https://console.cloud.google.com/billing"}],
+                },
+                {
+                    "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                    "reason": "IAM_PERMISSION_DENIED",
+                },
+            ],
+        )
+    ]
+
+    result = await _agent().execute("x")
+
+    assert result.get("error_code") is None
+    assert not llm.spend_cap_active()
+
+
+async def test_billing_disabled_has_its_own_message(gemini, no_sleep):
+    gemini.replies = [
+        _api_error(
+            403,
+            "PERMISSION_DENIED",
+            "This API method requires billing to be enabled.",
+            details=[
+                {
+                    "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                    "reason": "BILLING_DISABLED",
+                }
+            ],
+        )
+    ]
+
+    result = await _agent().execute("x")
+
+    assert result == {"error": llm.BILLING_MESSAGE, "error_code": "ai_billing"}
+    assert len(gemini.calls) == 1
+    events = await _collect(
+        ChatAgent(agents_dir=settings.agents_dir).stream(
+            [{"role": "user", "content": "What should I eat in Lisbon?"}]
+        )
+    )
+    assert events[0] == {"type": "delta", "text": llm.BILLING_MESSAGE}
+
+
+async def test_anthropic_usage_limits_count_as_the_cap(monkeypatch, no_sleep):
+    import anthropic
+    import httpx
+
+    monkeypatch.setattr(settings, "llm_provider", "anthropic")
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    error = anthropic.BadRequestError(
+        "You have reached your specified API usage limits. You will regain "
+        "access on 2026-12-01 at 00:00 UTC.",
+        response=httpx.Response(400, request=request),
+        body=None,
+    )
+
+    async def create(**kwargs):
+        raise error
+
+    monkeypatch.setattr(
+        llm,
+        "_anthropic_client",
+        lambda: SimpleNamespace(messages=SimpleNamespace(create=create)),
+    )
+
+    assert (await _agent().execute("x"))["error_code"] == "ai_limit"
+
+
+def test_aiohttp_transport_errors_are_retryable():
+    aiohttp = pytest.importorskip("aiohttp")
+
+    assert llm._wrap(aiohttp.ClientConnectionError("reset")).retryable
+    assert llm._wrap(TimeoutError()).retryable
+
+
+# ─── Timeouts, sync calls, stream cleanup, shutdown ───────────────────────
+
+
+def test_client_has_a_default_timeout(monkeypatch):
+    from google import genai
+
+    seen = {}
+    monkeypatch.setattr(genai, "Client", lambda **kw: seen.update(kw) or "client")
+
+    assert llm._new_gemini_client() == "client"
+    assert seen["vertexai"] is True
+    assert seen["http_options"].timeout == 120_000
+    assert seen["http_options"].retry_options.attempts == 3
+
+
+def test_generate_sync_is_short_and_never_retries(gemini):
+    gemini.replies = [_gemini_reply('{"city": "Lisbon", "country": "Portugal"}')]
+
+    resp = llm.generate_sync([{"role": "user", "content": "LIS?"}], json_output=True)
+
+    assert resp.text.startswith('{"city"')
+    options = gemini.calls[0]["config"].http_options
+    assert options.timeout == llm._SYNC_TIMEOUT_S * 1000
+    assert options.retry_options.attempts == 1
+
+
+async def test_aborted_stream_is_closed_and_its_usage_logged(gemini):
+    gemini.stream_chunks = [_gemini_reply("one "), _gemini_reply("two ")]
+
+    with llm.record_usage() as usage:
+        gen = llm.stream([{"role": "user", "content": "hi"}], label="chat")
+        assert await gen.__anext__() == "one "
+        await gen.aclose()  # the client disconnected
+
+    assert gemini.stream_closed
+    [record] = usage
+    assert record["aborted"] is True and record["label"] == "chat"
+
+
+async def test_finished_stream_is_not_marked_aborted(gemini):
+    gemini.stream_chunks = [_gemini_reply("done")]
+
+    with llm.record_usage() as usage:
+        assert [t async for t in llm.stream([{"role": "user", "content": "hi"}])] == [
+            "done"
+        ]
+
+    assert usage[0]["aborted"] is False
+
+
+async def test_aclose_closes_the_shared_client(monkeypatch):
+    fake = FakeGemini()
+    monkeypatch.setattr(llm, "_gemini", fake)
+
+    await llm.aclose()
+
+    assert fake.closed == ["aio", "sync"]
+    assert llm._gemini is None
+
+
+# ─── Thinking level vs model ──────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("agent_model", "agent_level", "chat_model", "chat_level", "error"),
+    [
+        ("gemini-3.5-flash-lite", "minimal", "gemini-3.8-flash", "low", None),
+        (
+            "gemini-3.5-flash-lite",
+            "low",
+            "gemini-3.8-flash",
+            "minimal",
+            "GEMINI_THINKING_CHAT=minimal",
+        ),
+        (
+            "gemini-3.8-flash",
+            "minimal",
+            "gemini-3.8-flash",
+            "low",
+            "GEMINI_THINKING_AGENT=minimal",
+        ),
+        (
+            "gemini-3.5-flash-lite",
+            "extreme",
+            "gemini-3.8-flash",
+            "low",
+            "not a thinking level",
+        ),
+    ],
+)
+def test_thinking_level_is_validated_at_startup(
+    monkeypatch, agent_model, agent_level, chat_model, chat_level, error
+):
+    monkeypatch.setattr(settings, "llm_provider", "gemini")
+    monkeypatch.setattr(settings, "gemini_model_agent", agent_model)
+    monkeypatch.setattr(settings, "gemini_thinking_agent", agent_level)
+    monkeypatch.setattr(settings, "gemini_model_chat", chat_model)
+    monkeypatch.setattr(settings, "gemini_thinking_chat", chat_level)
+
+    if error is None:
+        llm.log_provider()
+    else:
+        with pytest.raises(RuntimeError, match=error):
+            llm.log_provider()
+
+
+def test_anthropic_skips_gemini_validation(monkeypatch):
+    monkeypatch.setattr(settings, "llm_provider", "anthropic")
+    monkeypatch.setattr(settings, "gemini_thinking_chat", "minimal")
+
+    llm.validate_config()

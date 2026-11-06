@@ -13,9 +13,10 @@ error into :class:`LLMError`.
 import base64
 import contextvars
 import logging
+import re
 import time
 from collections.abc import AsyncIterator, Iterator
-from contextlib import contextmanager
+from contextlib import aclosing, contextmanager
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -30,6 +31,22 @@ ANTHROPIC_MODELS = {"agent": "claude-haiku-4-5-20251001", "chat": "claude-sonnet
 # Shown wherever an AI feature pauses because the monthly spend cap tripped.
 SPEND_CAP_MESSAGE = "AI limit reached for this month — try again on the 1st."
 SPEND_CAP_CODE = "ai_limit"
+# Billing switched off for the project (not the cap: it won't reset by itself).
+BILLING_MESSAGE = (
+    "AI features are unavailable right now: billing is disabled for the AI "
+    "service. Please try again later."
+)
+BILLING_CODE = "ai_billing"
+# Errors users see as-is (sections, chat deltas, route details)
+USER_ERROR_CODES = {SPEND_CAP_CODE, BILLING_CODE}
+
+# Gemini 3.x Flash (not Flash-Lite) rejects thinking level MINIMAL
+_NO_MINIMAL = re.compile(r"^gemini-3\.\d+-flash$")
+# Per-request ceiling for Gemini calls (the SDK default is no timeout at all)
+_GEMINI_TIMEOUT_S = 120
+# The IATA fallback runs during request validation on the event-loop thread:
+# keep it short and never retry, so a stalled call can't freeze the server.
+_SYNC_TIMEOUT_S = 8
 
 # Gemini counts thinking tokens against max_output_tokens: headroom keeps a
 # reply sized for the old Claude budget from being cut short by reasoning.
@@ -37,10 +54,13 @@ SPEND_CAP_CODE = "ai_limit"
 _THINKING_HEADROOM = {"minimal": 512, "low": 2048, "medium": 4096, "high": 8192}
 
 # Google documents no API error for a tripped spend cap (only "usage is
-# paused"), so a 403/429 whose text names billing or a budget counts as one;
-# a bare 429 RESOURCE_EXHAUSTED stays a retryable quota error. Anthropic's
-# equivalents are a 400 "credit balance is too low" and the workspace spend
-# limit. A 400 needs the narrower hints ("thinking budget" is a bad request).
+# paused"), so a 403/429 whose *message* (not the help links / metadata in
+# the details) names billing or a budget counts as one; a bare 429
+# RESOURCE_EXHAUSTED stays a retryable quota error. A BILLING_DISABLED
+# reason is reported separately. Anthropic's equivalents are a 400 "credit
+# balance is too low" and the workspace usage limit ("You have reached your
+# specified API usage limits. You will regain access on …"). A 400 needs the
+# narrower hints ("thinking budget" is a bad request).
 _SPEND_CAP_HINTS = {
     403: (
         "spend cap",
@@ -52,7 +72,14 @@ _SPEND_CAP_HINTS = {
         "usage limit",
         "credit balance",
     ),
-    400: ("credit balance", "spend limit", "spending limit", "spend cap"),
+    400: (
+        "credit balance",
+        "spend limit",
+        "spending limit",
+        "spend cap",
+        "usage limits",
+        "regain access",
+    ),
 }
 _SPEND_CAP_HINTS[429] = _SPEND_CAP_HINTS[403]
 _SPEND_CAP_HINTS[402] = _SPEND_CAP_HINTS[403]
@@ -62,6 +89,7 @@ _RETRYABLE_STATUSES = {408, 429, 500, 502, 503, 504, 529}
 # of every search into the same rejection.
 _SPEND_CAP_HOLD_SECONDS = 300
 _spend_cap_until = 0.0
+_pause_code = SPEND_CAP_CODE
 
 # Per-call usage records go here when a caller opened ``record_usage()``
 # (the eval harness); asyncio tasks inherit the list from their creator.
@@ -87,13 +115,26 @@ class LLMError(Exception):
         message: str,
         *,
         retryable: bool = False,
-        spend_cap: bool = False,
+        user_code: str | None = None,
         status: int | None = None,
     ):
         super().__init__(message)
         self.retryable = retryable
-        self.spend_cap = spend_cap
+        # SPEND_CAP_CODE / BILLING_CODE: the message is meant for users
+        self.user_code = user_code
         self.status = status
+
+    @property
+    def spend_cap(self) -> bool:
+        return self.user_code == SPEND_CAP_CODE
+
+    @property
+    def user_facing(self) -> bool:
+        return self.user_code is not None
+
+    def as_result(self) -> dict:
+        """The section/route payload for a user-facing error."""
+        return {"error": str(self), "error_code": self.user_code}
 
 
 def provider() -> str:
@@ -105,7 +146,9 @@ def provider_reason() -> str:
 
 
 def log_provider() -> None:
-    """Resolve the provider once at startup and say which one (and why)."""
+    """Resolve the provider once at startup, check its config and say which
+    one (and why). Raises RuntimeError on a model/thinking-level mismatch."""
+    validate_config()
     name, reason = _resolve()
     logger.info(
         f"LLM provider: {name} ({reason}), agent={model_for('agent')}, "
@@ -158,8 +201,45 @@ def model_for(role: Role) -> str:
     return settings.gemini_model_chat if role == "chat" else settings.gemini_model_agent
 
 
+def validate_config() -> None:
+    """Fail fast on settings every Gemini call would reject (400s)."""
+    if provider() != "gemini":
+        return
+    for role, model, level, var in (
+        (
+            "agent",
+            settings.gemini_model_agent,
+            settings.gemini_thinking_agent,
+            "GEMINI_THINKING_AGENT",
+        ),
+        (
+            "chat",
+            settings.gemini_model_chat,
+            settings.gemini_thinking_chat,
+            "GEMINI_THINKING_CHAT",
+        ),
+    ):
+        level = level.strip().lower()
+        if level not in _THINKING_HEADROOM:
+            raise RuntimeError(
+                f"{var}={level!r} is not a thinking level "
+                f"(use one of {', '.join(_THINKING_HEADROOM)})"
+            )
+        if level == "minimal" and _NO_MINIMAL.match(model):
+            raise RuntimeError(
+                f"{var}=minimal is rejected by {model} ({role} model): use low, "
+                "medium or high"
+            )
+
+
 def spend_cap_active() -> bool:
+    """True while AI calls are paused (spend cap or billing disabled)."""
     return time.monotonic() < _spend_cap_until
+
+
+def pause_error() -> "LLMError":
+    message = SPEND_CAP_MESSAGE if _pause_code == SPEND_CAP_CODE else BILLING_MESSAGE
+    return LLMError(message, user_code=_pause_code)
 
 
 def reset_spend_cap() -> None:
@@ -168,8 +248,15 @@ def reset_spend_cap() -> None:
 
 
 def spend_cap_error() -> dict:
-    """The section/route payload for a paused AI feature."""
+    """The section/route payload for a paused AI feature (spend cap)."""
     return {"error": SPEND_CAP_MESSAGE, "error_code": SPEND_CAP_CODE}
+
+
+def user_error(result) -> dict | None:
+    """``result`` if it is a user-facing AI error payload (spend cap, billing)."""
+    if isinstance(result, dict) and result.get("error_code") in USER_ERROR_CODES:
+        return result
+    return None
 
 
 @contextmanager
@@ -234,10 +321,14 @@ async def stream(
     max_tokens: int = 4096,
     label: str = "",
 ) -> AsyncIterator[str]:
-    """Yield text deltas as the model produces them. Raises LLMError."""
+    """Yield text deltas as the model produces them. Raises LLMError.
+
+    A consumer that stops early (client disconnect) closes the HTTP stream;
+    the tokens seen so far are still logged, marked ``aborted``."""
     _check_spend_cap()
     started = time.monotonic()
     out = LLMResponse(text="")
+    finished = False
     try:
         if provider() == "anthropic":
             async with _anthropic_client().messages.stream(
@@ -253,20 +344,24 @@ async def stream(
             chunks = await _gemini_client().aio.models.generate_content_stream(
                 **_gemini_kwargs(role, system, messages, max_tokens, False, None, True)
             )
-            async for chunk in chunks:
-                text = chunk.text or ""
-                if text:
-                    out.text += text
-                    yield text
-                # Usage and the finish reason ride on the last chunk
-                if getattr(chunk, "usage_metadata", None):
-                    out.usage = _gemini_usage(chunk)
-                out.truncated = out.truncated or _gemini_truncated(chunk)
+            async with aclosing(chunks):
+                async for chunk in chunks:
+                    text = chunk.text or ""
+                    if text:
+                        out.text += text
+                        yield text
+                    # Usage and the finish reason ride on the last chunk
+                    if getattr(chunk, "usage_metadata", None):
+                        out.usage = _gemini_usage(chunk)
+                    out.truncated = out.truncated or _gemini_truncated(chunk)
+        finished = True
     except LLMError:
         raise
     except Exception as e:
         raise _wrap(e) from e
-    _log_usage(label, role, out, started)
+    finally:
+        if finished or out.text:
+            _log_usage(label, role, out, started, aborted=not finished)
 
 
 def generate_sync(
@@ -277,8 +372,10 @@ def generate_sync(
     max_tokens: int = 1024,
     json_output: bool = False,
     label: str = "",
+    timeout: float = _SYNC_TIMEOUT_S,
 ) -> LLMResponse:
-    """Blocking variant for sync code paths (IATA lookup fallback)."""
+    """Blocking variant for sync code paths (IATA lookup fallback): a short
+    timeout and no retries, as it blocks whatever thread calls it."""
     _check_spend_cap()
     started = time.monotonic()
     try:
@@ -290,14 +387,14 @@ def generate_sync(
                 _anthropic_sync = anthropic.Anthropic(
                     api_key=settings.anthropic_api_key
                 )
-            resp = _anthropic_sync.messages.create(
-                **_anthropic_kwargs(role, system, messages, max_tokens)
-            )
+            resp = _anthropic_sync.with_options(
+                timeout=timeout, max_retries=0
+            ).messages.create(**_anthropic_kwargs(role, system, messages, max_tokens))
             out = _anthropic_response(resp)
         else:
             resp = _gemini_client().models.generate_content(
                 **_gemini_kwargs(
-                    role, system, messages, max_tokens, json_output, None, True
+                    role, system, messages, max_tokens, json_output, timeout, False
                 )
             )
             out = _gemini_response(resp)
@@ -314,11 +411,17 @@ def generate_sync(
 
 def _check_spend_cap() -> None:
     if spend_cap_active():
-        raise LLMError(SPEND_CAP_MESSAGE, spend_cap=True)
+        raise pause_error()
 
 
-def _wrap(e: Exception) -> LLMError:
-    global _spend_cap_until
+_BILLING_DISABLED = re.compile(
+    r"billing (is |has been )?(disabled|not enabled)|requires billing to be enabled"
+)
+
+
+def _error_fields(e: Exception) -> tuple[int | None, str, str, set[str]]:
+    """(HTTP status, message, status name, ErrorInfo reasons) of an SDK error —
+    the parts that classify it, without the help links and metadata."""
     # google-genai: .code; anthropic: .status_code
     status = next(
         (
@@ -328,11 +431,40 @@ def _wrap(e: Exception) -> LLMError:
         ),
         None,
     )
-    text = str(e).lower()
+    message = getattr(e, "message", None)
+    message = message if isinstance(message, str) else str(e)
+    status_name = getattr(e, "status", None)
+    status_name = status_name if isinstance(status_name, str) else ""
+    reasons = set()
+    details = getattr(e, "details", None)
+    error = details.get("error", details) if isinstance(details, dict) else {}
+    for item in (error.get("details") if isinstance(error, dict) else None) or []:
+        if isinstance(item, dict) and isinstance(item.get("reason"), str):
+            reasons.add(item["reason"].upper())
+    return status, message, status_name, reasons
+
+
+def _pause(code: str, status, status_name, reasons, message) -> LLMError:
+    global _spend_cap_until, _pause_code
+    _spend_cap_until = time.monotonic() + _SPEND_CAP_HOLD_SECONDS
+    _pause_code = code
+    logger.error(
+        f"LLM {'spend cap reached' if code == SPEND_CAP_CODE else 'billing disabled'}"
+        f" ({provider()} {status} {status_name} reasons={sorted(reasons)}): "
+        f"{message[:300]}"
+    )
+    return pause_error()
+
+
+def _wrap(e: Exception) -> LLMError:
+    status, message, status_name, reasons = _error_fields(e)
+    text = message.lower()
+    if status in (400, 403) and (
+        "BILLING_DISABLED" in reasons or _BILLING_DISABLED.search(text)
+    ):
+        return _pause(BILLING_CODE, status, status_name, reasons, message)
     if any(h in text for h in _SPEND_CAP_HINTS.get(status, ())):
-        _spend_cap_until = time.monotonic() + _SPEND_CAP_HOLD_SECONDS
-        logger.error(f"LLM spend cap reached ({provider()} {status}): {e}")
-        return LLMError(SPEND_CAP_MESSAGE, spend_cap=True, status=status)
+        return _pause(SPEND_CAP_CODE, status, status_name, reasons, message)
     retryable = status in _RETRYABLE_STATUSES or _is_transport_error(e)
     return LLMError(str(e), retryable=retryable, status=status)
 
@@ -342,6 +474,14 @@ def _is_transport_error(e: Exception) -> bool:
 
     if isinstance(e, httpx.TransportError | TimeoutError):
         return True
+    # google-genai uses aiohttp for async calls whenever it is installed
+    try:
+        import aiohttp
+
+        if isinstance(e, aiohttp.ClientError):
+            return True
+    except ImportError:
+        pass
     try:
         import anthropic
 
@@ -350,29 +490,53 @@ def _is_transport_error(e: Exception) -> bool:
         return False
 
 
+async def aclose() -> None:
+    """Close the shared clients (app shutdown)."""
+    global _gemini, _anthropic_async
+    if _gemini is not None:
+        try:
+            await _gemini.aio.aclose()
+            _gemini.close()
+        except Exception as e:  # pragma: no cover - best effort at shutdown
+            logger.warning(f"Closing the Gemini client failed: {e}")
+        _gemini = None
+    if _anthropic_async is not None:
+        try:
+            await _anthropic_async.close()
+        except Exception as e:  # pragma: no cover
+            logger.warning(f"Closing the Anthropic client failed: {e}")
+        _anthropic_async = None
+
+
 # ── Gemini (Vertex AI) ────────────────────────────────────────────────
 
 
 def _gemini_client():
     global _gemini
     if _gemini is None:
-        from google import genai
-        from google.genai import types
-
-        # Vertex AI with ADC (the VM's service account; `gcloud auth
-        # application-default login` locally). SDK retries cover 429/5xx
-        # bursts like the Anthropic client's max_retries did.
-        _gemini = genai.Client(
-            vertexai=True,
-            project=settings.gcp_project or None,
-            location=settings.gcp_location or "global",
-            http_options=types.HttpOptions(
-                retry_options=types.HttpRetryOptions(
-                    attempts=3, http_status_codes=[429, 500, 502, 503, 504]
-                )
-            ),
-        )
+        _gemini = _new_gemini_client()
     return _gemini
+
+
+def _new_gemini_client():
+    from google import genai
+    from google.genai import types
+
+    # Vertex AI with ADC (the VM's service account; `gcloud auth
+    # application-default login` locally). SDK retries cover 429/5xx bursts
+    # like the Anthropic client's max_retries did; the timeout bounds every
+    # call (the SDK default is none).
+    return genai.Client(
+        vertexai=True,
+        project=settings.gcp_project or None,
+        location=settings.gcp_location or "global",
+        http_options=types.HttpOptions(
+            timeout=_GEMINI_TIMEOUT_S * 1000,  # milliseconds
+            retry_options=types.HttpRetryOptions(
+                attempts=3, http_status_codes=[429, 500, 502, 503, 504]
+            ),
+        ),
+    )
 
 
 def _thinking_level(role: Role) -> str:
@@ -391,7 +555,7 @@ def _gemini_kwargs(role, system, messages, max_tokens, json_output, timeout, ret
     http_options = None
     if timeout is not None or not retries:
         http_options = types.HttpOptions(
-            timeout=int(timeout * 1000) if timeout is not None else None,
+            timeout=int((timeout or _GEMINI_TIMEOUT_S) * 1000),
             retry_options=None if retries else types.HttpRetryOptions(attempts=1),
         )
     config = types.GenerateContentConfig(
@@ -501,7 +665,9 @@ def _anthropic_response(resp) -> LLMResponse:
 # ── Usage accounting ──────────────────────────────────────────────────
 
 
-def _log_usage(label: str, role: Role, out: LLMResponse, started: float) -> None:
+def _log_usage(
+    label: str, role: Role, out: LLMResponse, started: float, aborted: bool = False
+) -> None:
     record = {
         "label": label or role,
         "provider": provider(),
@@ -517,6 +683,7 @@ def _log_usage(label: str, role: Role, out: LLMResponse, started: float) -> None
         },
         "latency_ms": int((time.monotonic() - started) * 1000),
         "truncated": out.truncated,
+        "aborted": aborted,
     }
     logger.info("llm_usage " + " ".join(f"{k}={v}" for k, v in record.items()))
     sink = _usage_sink.get()

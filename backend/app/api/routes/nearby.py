@@ -93,10 +93,10 @@ async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
         request.taste_context = taste
         agent = ActivitiesAgent(agents_dir=settings.agents_dir)
         result = await agent.run(request)
-        if result.get("error_code") == llm.SPEND_CAP_CODE:
+        if paused := llm.user_error(result):
             raise HTTPException(
                 status_code=503,
-                detail={"code": llm.SPEND_CAP_CODE, "message": llm.SPEND_CAP_MESSAGE},
+                detail={"code": paused["error_code"], "message": paused["error"]},
             )
         if result.get("error") or not isinstance(result.get("results"), list):
             raise HTTPException(

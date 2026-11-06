@@ -48,7 +48,7 @@ async def discover(request: DiscoveryRequest):
             status_code=500, detail="Discovery failed — please try again"
         )
 
-    if result.get("error_code") == llm.SPEND_CAP_CODE:
-        raise HTTPException(status_code=503, detail=llm.SPEND_CAP_MESSAGE)
+    if paused := llm.user_error(result):
+        raise HTTPException(status_code=503, detail=paused["error"])
     cache[cache_key] = result
     return result

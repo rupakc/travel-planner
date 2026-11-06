@@ -163,6 +163,7 @@ async def _run(args) -> Path:
     if args.ids:
         wanted = set(args.ids.split(","))
         entries = [e for e in entries if e["id"] in wanted]
+    llm.log_provider()  # also rejects a thinking level the model refuses
     orchestrator = TravelOrchestrator(agents_dir=settings.agents_dir)
     results = []
     for entry in entries:

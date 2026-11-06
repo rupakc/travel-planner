@@ -52,8 +52,8 @@ class ChatItineraryAgent(BaseAgent):
                         f"Response was {len(result_text)} chars. Attempting parse anyway."
                     )
             except Exception as e:
-                if isinstance(e, llm.LLMError) and e.spend_cap:
-                    return llm.spend_cap_error()
+                if isinstance(e, llm.LLMError) and e.user_facing:
+                    return e.as_result()
                 logger.error(
                     f"ChatItineraryAgent API call failed (attempt {attempt}): {e}"
                 )

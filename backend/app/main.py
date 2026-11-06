@@ -92,7 +92,9 @@ async def lifespan(app: FastAPI):
     price_watch.register_builtin_sources()
     from .core import llm
 
-    llm.log_provider()  # resolves LLM_PROVIDER=auto once and logs the choice
+    # Resolves LLM_PROVIDER=auto once and logs it; a thinking level the Gemini
+    # model rejects stops startup here instead of failing every call
+    llm.log_provider()
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
@@ -103,6 +105,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     await fare_watch.stop_scheduler(fare_watch_task)
+    await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled
     # SIGTERM: force=True always uploads our current state regardless of GCS generation.
     # This is safe — the dying instance holds the most up-to-date data.
@@ -263,9 +266,10 @@ async def health_agents():
         )
         llm = "ok" if resp.text else "empty-response"
     except llm_client.LLMError as e:
-        llm = (
-            "spend-cap" if e.spend_cap else f"error: {type(e.__cause__ or e).__name__}"
-        )
+        llm = {
+            llm_client.SPEND_CAP_CODE: "spend-cap",
+            llm_client.BILLING_CODE: "billing-disabled",
+        }.get(e.user_code) or f"error: {type(e.__cause__ or e).__name__}"
     result = {
         "llm": llm,
         "llm_provider": llm_client.provider(),
