@@ -50,3 +50,16 @@ async def test_tasks_started_inside_inherit_the_view():
     with fresh_reads():
         assert await asyncio.create_task(look()) is False
     assert await asyncio.create_task(look()) is True
+
+
+def test_len_and_iteration_agree_with_membership():
+    get_cache()["old"] = 1
+    with fresh_reads():
+        view = get_cache()
+        assert len(view) == 0 and list(view) == [] and view.keys() == []
+        view["new"] = 2
+        assert len(view) == 1 and list(view) == ["new"] and view.keys() == ["new"]
+        del view["new"]
+        assert len(view) == 0 and "new" not in view
+        assert not hasattr(view, "clear")  # no silent pass-through to the cache
+    assert len(get_cache()) == 1

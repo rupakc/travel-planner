@@ -27,7 +27,11 @@ _fresh: ContextVar[set | None] = ContextVar("cache_fresh_reads", default=None)
 
 
 class _FreshView:
-    """The shared cache, minus every entry this block hasn't written itself."""
+    """The shared cache, minus every entry this block hasn't written itself.
+
+    Not a full ``TTLCache``: it supports ``in``, ``[]``, ``get``, assignment,
+    ``del``, ``pop``, ``len``, iteration and ``keys`` — what the SerpAPI
+    adapters use."""
 
     def __init__(self, cache: TTLCache, written: set) -> None:
         self._cache = cache
@@ -56,8 +60,16 @@ class _FreshView:
         self._written.discard(key)
         return self._cache.pop(key, *default)
 
-    def __getattr__(self, name: str) -> Any:  # len, keys, clear, … as the cache
-        return getattr(self._cache, name)
+    # Size and iteration agree with ``in``: only entries this block wrote
+    # (and the cache still holds). Other TTLCache methods are not offered.
+    def __iter__(self) -> Iterator[Any]:
+        return (k for k in list(self._written) if k in self._cache)
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
+
+    def keys(self) -> list[Any]:
+        return list(self)
 
 
 def get_cache() -> TTLCache:
