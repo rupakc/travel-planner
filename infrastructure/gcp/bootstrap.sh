@@ -36,6 +36,11 @@
 # and custom-role permissions, which are re-asserted.
 #
 # --dry-run prints every command and calls nothing (no gcloud needed).
+#
+# Needs gcloud's `beta` component (notification channels have no GA command
+# yet); a real run checks for it first and stops with the install command.
+# Billing calls use the project as their quota project
+# (CLOUDSDK_BILLING_QUOTA_PROJECT), not the account's default project.
 # --update-host only refreshes the VM's host bundle metadata (after changes
 #   to deploy/gcp); then on the VM: sudo google_metadata_script_runner startup
 set -euo pipefail
@@ -90,8 +95,14 @@ FCM_PERMS="cloudmessaging.messages.create"
 IAP_RANGE="35.235.240.0/20"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# BOOTSTRAP_WORK (tests): keep the work files (host bundle, JSON) there
+if [[ -n "${BOOTSTRAP_WORK:-}" ]]; then
+  WORK="$BOOTSTRAP_WORK"
+  mkdir -p "$WORK"
+else
+  WORK="$(mktemp -d)"
+  trap 'rm -rf "$WORK"' EXIT
+fi
 
 say() { printf '\n==> %s\n' "$*"; }
 
@@ -115,13 +126,58 @@ g() { run gcloud --project="$PROJECT_ID" --quiet "$@"; }
 gx() { exists gcloud --project="$PROJECT_ID" "$@"; }
 
 host_bundle() {
-  # deploy/gcp without tests, as base64 tar.gz for instance metadata
-  tar -C "$ROOT/deploy/gcp" --exclude tests --exclude '__pycache__' -czf "$WORK/bundle.tgz" .
+  # deploy/gcp without tests, as base64 tar.gz for instance metadata.
+  # An explicit, C-sorted file list: the same order on every machine. No
+  # extended attributes or AppleDouble files: macOS tags files with
+  # com.apple.provenance, which bsdtar stores as LIBARCHIVE.xattr.* headers
+  # and Debian's GNU tar then warns about on every extraction.
+  local src="$ROOT/deploy/gcp" list="$WORK/bundle.list"
+  local -a flags
+  (cd "$src" && find . -type f ! -path './tests/*' ! -path '*/__pycache__/*' \
+    ! -name '.DS_Store' ! -name '._*' | LC_ALL=C sort) >"$list"
+  if tar --version 2>/dev/null | grep -q 'GNU tar'; then
+    flags=(--no-xattrs --no-acls --owner=0 --group=0 --numeric-owner)
+  else # bsdtar (macOS)
+    flags=(--no-mac-metadata --no-xattrs --no-acls --uid 0 --gid 0 --numeric-owner)
+  fi
+  COPYFILE_DISABLE=1 tar "${flags[@]}" -C "$src" -czf "$WORK/bundle.tgz" -T "$list"
   base64 <"$WORK/bundle.tgz" | tr -d '\n' >"$WORK/bundle.b64"
   local size
   size="$(wc -c <"$WORK/bundle.b64")"
   ((size < 250000)) || { echo "host bundle too large for metadata: $size bytes" >&2; exit 1; }
   echo "$WORK/bundle.b64"
+}
+
+# preflight — a real run needs gcloud's beta component (notification
+# channels); fail before changing anything, never install it silently
+preflight() {
+  ((DRY_RUN)) && return 0
+  command -v gcloud >/dev/null || { echo "gcloud CLI not found" >&2; exit 1; }
+  local installed missing=()
+  if installed="$(gcloud components list --only-local-state --format='value(id)' 2>/dev/null)"; then
+    grep -qx beta <<<"$installed" || missing+=(beta)
+  elif ! CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud beta monitoring channels --help </dev/null >/dev/null 2>&1; then
+    # Component manager disabled (apt/dnf install): probe the command group
+    missing+=(beta)
+  fi
+  if ((${#missing[@]})); then
+    cat >&2 <<EOF
+gcloud is missing the component(s): ${missing[*]}. Install, then re-run:
+  gcloud components install ${missing[*]} --quiet
+(gcloud from apt/dnf has no component manager: see
+ https://cloud.google.com/sdk/docs/components for the package to install)
+EOF
+    exit 1
+  fi
+}
+
+# Billing (budgets) and other user-billed calls go to the account's default
+# quota project unless told otherwise, and fail with "does not have
+# permission to access billingAccounts" when that is some other project.
+# Use this project from the moment it exists (unless the caller set one).
+quota_project() {
+  export CLOUDSDK_BILLING_QUOTA_PROJECT="${CLOUDSDK_BILLING_QUOTA_PROJECT:-$PROJECT_ID}"
+  echo "  quota project: $CLOUDSDK_BILLING_QUOTA_PROJECT (CLOUDSDK_BILLING_QUOTA_PROJECT)"
 }
 
 project() {
@@ -131,6 +187,9 @@ project() {
   else
     run gcloud projects create "$PROJECT_ID" --name="Voyager"
   fi
+  quota_project
+  # The quota project must have the API enabled before any billing call
+  g services enable cloudbilling.googleapis.com
   local linked=""
   if ((!DRY_RUN)); then
     linked="$(gcloud billing projects describe "$PROJECT_ID" --format='value(billingAccountName)' 2>/dev/null || true)"
@@ -403,7 +462,7 @@ uptime() {
       check="${check##*/}"
     fi
   fi
-  if ((!DRY_RUN)) && gcloud --project="$PROJECT_ID" alpha monitoring policies list \
+  if ((!DRY_RUN)) && gcloud --project="$PROJECT_ID" monitoring policies list \
     --filter='displayName="voyager-down"' --format='value(name)' | grep -q .; then
     echo "  alert policy exists"
     return
@@ -430,7 +489,7 @@ uptime() {
   "notificationChannels": ["$channel"]
 }
 JSON
-  g alpha monitoring policies create --policy-from-file="$WORK/policy.json"
+  g monitoring policies create --policy-from-file="$WORK/policy.json"
 }
 
 
@@ -440,6 +499,7 @@ main() {
     update_host
     return
   fi
+  preflight
   project
   apis
   service_accounts
