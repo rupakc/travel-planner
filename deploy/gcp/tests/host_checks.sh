@@ -3,7 +3,8 @@
 # VM's OS; iptables-nft by default):
 #   1. the governor's rules against real iptables, every tier, plus atomic
 #      rejection (iptables_harness.py);
-#   2. `systemd-analyze verify` of the systemd units.
+#   2. deploy.sh end to end with fake docker/curl (deploy_sim.sh);
+#   3. `systemd-analyze verify` of the systemd units.
 #
 # From the repo root:
 #   docker run --rm --cap-add NET_ADMIN -v "$PWD:/src:ro" debian:trixie \
@@ -14,10 +15,13 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq --no-install-recommends iptables ipset python3 systemd >/dev/null
+apt-get install -y -qq --no-install-recommends iptables ipset python3 systemd jq >/dev/null
 
 echo "== governor rules on real iptables"
 python3 /src/deploy/gcp/tests/iptables_harness.py
+
+echo "== deployer simulation (deploy.sh with fake docker/curl)"
+bash /src/deploy/gcp/tests/deploy_sim.sh
 
 echo "== systemd-analyze verify"
 install -d /opt/voyager

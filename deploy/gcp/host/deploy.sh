@@ -24,7 +24,7 @@
 # Config: /etc/voyager/deploy.env (optional overrides of the defaults below).
 set -euo pipefail
 
-CONFIG=/etc/voyager/deploy.env
+CONFIG="${VOYAGER_DEPLOY_CONFIG:-/etc/voyager/deploy.env}"
 # shellcheck source=/dev/null
 [[ -f "$CONFIG" ]] && . "$CONFIG"
 
@@ -43,9 +43,12 @@ CERT_ISSUER="${CERT_ISSUER:-https://token.actions.githubusercontent.com}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-240}"
 
 IMAGES_ENV="$COMPOSE_DIR/images.env"
-# Digests that failed their health check: never retried automatically
+# Held digests, never deployed automatically: ones that failed their health
+# check, and ones an operator rolled back from (--rollback). A newer digest
+# isn't on the list, so publishing one ends the hold. To release a digest by
+# hand, delete its line.
 FAILED="$COMPOSE_DIR/failed-digests"
-LOCK=/run/voyager-deploy.lock
+LOCK="${LOCK:-/run/voyager-deploy.lock}"
 
 log() { echo "voyager-deploy: $*" >&2; logger -t voyager-deploy -- "$*" 2>/dev/null || true; }
 die() { log "ERROR: $*"; exit 1; }
@@ -133,9 +136,10 @@ app_health() {
 
 wait_healthy() {
   local deadline=$((SECONDS + HEALTH_TIMEOUT)) status
-  while ((SECONDS < deadline)); do
+  while :; do  # check first, then wait: one check even with a 0 s timeout
     status="$(app_health)"
     [[ "$status" == healthy ]] && return 0
+    ((SECONDS < deadline)) || break
     sleep 5
   done
   log "app health after ${HEALTH_TIMEOUT}s: $(app_health)"
@@ -172,7 +176,10 @@ main() {
 
   if ((rollback)); then
     [[ -n "$prev_app" ]] || die "no previous app digest to roll back to"
-    log "manual rollback: $cur_app → $prev_app"
+    log "manual rollback: $cur_app → $prev_app (holding $cur_app)"
+    # Hold the digest we left, or the timer would redeploy it within 5 min
+    # while `prod` still points at it
+    grep -qxF "$cur_app" "$FAILED" 2>/dev/null || echo "$cur_app" >>"$FAILED"
     write_images "$prev_app" "$cur_caddy" "$cur_app" "$prev_caddy" "$pending"
     compose up -d app
     wait_healthy || die "rolled-back app is not healthy either"
@@ -208,7 +215,7 @@ main() {
   # ── App ──
   local next_app="$cur_app" next_prev_app="$prev_app"
   if [[ "$new_app" != "$cur_app" ]] && grep -qxF "$new_app" "$FAILED" 2>/dev/null; then
-    log "skipping $new_app: it failed its health check before"
+    log "skipping $new_app: held (failed its health check, or rolled back from)"
     new_app="$cur_app"
   fi
   if [[ "$new_app" != "$cur_app" ]]; then
