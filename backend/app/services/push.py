@@ -1,16 +1,21 @@
 """Push alerts to the Android app over FCM HTTP v1.
 
-Active only when ``FCM_SERVICE_ACCOUNT_FILE`` points at a Firebase
-service-account JSON key. The OAuth access token comes from a JWT signed
+Active when ``FCM_SERVICE_ACCOUNT_FILE`` points at a Firebase
+service-account JSON key: the OAuth access token comes from a JWT signed
 with that key (google-auth's signer, exchanged over httpx) and is cached
 until shortly before it expires (key file read once: restart, or call
-``reset()``, after rotating it). Never raises into callers: an alert is
+``reset()``, after rotating it). Without a key file, ``FCM_USE_ADC=true``
+uses Application Default Credentials instead (on the VM: its service
+account via the metadata server), with the project from ``FCM_PROJECT_ID``
+or ``GOOGLE_CLOUD_PROJECT``. Never raises into callers: an alert is
 already stored in-app when it is pushed, so push is best effort — tokens
 FCM says are dead are pruned, everything else is logged, with tokens
 masked to their last 6 characters.
 """
 
 import asyncio
+import contextvars
+import datetime
 import functools
 import json
 import logging
@@ -36,6 +41,7 @@ EXPIRY_MARGIN = 60  # refresh this long before Google's expiry
 # Watch ended / on hold: worth knowing, not worth waking the phone for
 QUIET_KINDS = frozenset({"watch_expired", "watch_error"})
 DRAIN_SECONDS = 5  # shutdown waits this long for pushes in flight
+ADC_EMAIL = "<adc>"  # cache key for the ADC token
 
 _transport: httpx.AsyncBaseTransport | None = None  # tests inject a MockTransport
 _access: dict = {}  # cached {"token", "expires_at", "email"}
@@ -47,16 +53,68 @@ _locks: dict[asyncio.AbstractEventLoop, asyncio.Lock] = {}
 _tasks: set[asyncio.Task] = set()
 
 
-def configured() -> bool:
+def _key_file_configured() -> bool:
     path = settings.fcm_service_account_file
     return bool(path) and os.path.isfile(path)
 
 
+def _adc_project() -> str:
+    return settings.fcm_project_id or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+
+
+def configured() -> bool:
+    if _key_file_configured():
+        return True
+    return settings.fcm_use_adc and bool(_adc_project())
+
+
 def reset() -> None:
     """Forget the cached access token and key file (tests, key rotation)."""
+    global _adc_creds
     _access.clear()
     _locks.clear()
     _account.cache_clear()
+    _adc_creds = None
+
+
+_adc_creds = None  # google.auth credentials, created on first use
+
+
+def _adc_credentials():
+    import google.auth
+
+    creds, _ = google.auth.default(scopes=[FCM_SCOPE])
+    return creds
+
+
+def _refresh_adc() -> tuple[str, float]:
+    """Blocking: refresh the ADC token (metadata server); (token, expires_at)."""
+    global _adc_creds
+    from google.auth.transport.requests import Request
+
+    if _adc_creds is None:
+        _adc_creds = _adc_credentials()
+    _adc_creds.refresh(Request())
+    expiry = getattr(_adc_creds, "expiry", None)
+    if expiry is not None:
+        # google-auth expiries are naive UTC datetimes
+        expires_at = expiry.replace(tzinfo=datetime.UTC).timestamp()
+    else:
+        expires_at = time.time() + TOKEN_LIFETIME
+    return _adc_creds.token, expires_at - EXPIRY_MARGIN
+
+
+async def _adc_access_token() -> str:
+    if token := _cached(ADC_EMAIL):
+        return token
+    loop = asyncio.get_running_loop()
+    lock = _locks.setdefault(loop, asyncio.Lock())
+    async with lock:
+        if token := _cached(ADC_EMAIL):
+            return token
+        token, expires_at = await loop.run_in_executor(None, _refresh_adc)
+        _access.update(token=token, expires_at=expires_at, email=ADC_EMAIL)
+        return token
 
 
 @functools.lru_cache(maxsize=2)
@@ -177,8 +235,13 @@ async def send_to_user(
         tokens = devices_db.tokens_for(username)
         if not tokens:
             return 0
-        account = _account(settings.fcm_service_account_file)
-        url = SEND_URL.format(project_id=account["project_id"])
+        if _key_file_configured():
+            account = _account(settings.fcm_service_account_file)
+            project_id = account["project_id"]
+        else:
+            account = None
+            project_id = _adc_project()
+        url = SEND_URL.format(project_id=project_id)
         # Data-only: the app always gets onMessageReceived, so it builds the
         # notification itself (channel, in-app toggle, seen-id dedupe, deep link)
         payload = {**data, "title": title, "body": body}
@@ -192,7 +255,10 @@ async def send_to_user(
         async with httpx.AsyncClient(
             transport=_transport, timeout=TIMEOUT_SECONDS
         ) as client:
-            access = await _access_token(client, account)
+            if account is not None:
+                access = await _access_token(client, account)
+            else:
+                access = await _adc_access_token()
             sent = await asyncio.gather(
                 *(_send_one(client, url, access, t, message) for t in tokens)
             )
@@ -235,7 +301,12 @@ def notify(user_id: str, note: dict, link: str) -> None:
         for key in ("watch_id", "watch_kind"):
             if extra.get(key) is not None:
                 data[key] = str(extra[key])
-        task = loop.create_task(_push(user_id, note["title"], note["body"], data))
+        # A fresh context: the push is never part of the request that caused
+        # it (an SSE stream cancels its own tasks when the client leaves)
+        task = loop.create_task(
+            _push(user_id, note["title"], note["body"], data),
+            context=contextvars.Context(),
+        )
         _tasks.add(task)
         task.add_done_callback(_tasks.discard)
     except Exception:  # noqa: BLE001 — never break the alert being created
