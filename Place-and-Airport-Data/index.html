@@ -1590,7 +1590,7 @@
 </tbody>
 </table>
 <h3 id="bare-airport-codes">Bare airport codes</h3>
-<p>The one web path: when a request's origin or destination is a bare 3-letter code that is not in the database or <code>REPLACED_CODES</code>, <code>lookup_iata</code> runs a DuckDuckGo search plus a Haiku extraction to name the city, and stores the answer (<code>backend/app/db/database.py</code>). Everything else is local.</p>
+<p>The one web path: when a request's origin or destination is a bare 3-letter code that is not in the database or <code>REPLACED_CODES</code>, <code>lookup_iata</code> runs a DuckDuckGo search plus an LLM extraction (agent model, <code>llm.generate_sync</code>) to name the city, and stores the answer (<code>backend/app/db/database.py</code>). Everything else is local.</p>
 <h3 id="folding-and-shared-rules">Folding and shared rules</h3>
 <p><code>app.core.places.fold_place</code> (accent and case folding) is shared by the generator and the runtime, so names match the same way in both. <code>backend/app/core/places.py</code> also loads <code>hints.json</code> and defines <code>OWN_AIRPORT_KM = 25</code> and <code>NEVER_LINK = {"ECN"}</code> (Ercan is never suggested for a place, only when typed). Region code tables for the US, Canada, Australia, Brazil and India live in <code>backend/app/db/airport_regions.py</code>.</p>
 <hr />

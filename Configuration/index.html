@@ -541,6 +541,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#storage-and-backup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1259,11 +1270,6 @@
 </thead>
 <tbody>
 <tr>
-<td><code>ANTHROPIC_API_KEY</code></td>
-<td><code>""</code></td>
-<td><strong>Needed.</strong> Used by every agent. Without it, every AI call fails.</td>
-</tr>
-<tr>
 <td><code>JWT_SECRET_KEY</code></td>
 <td><code>""</code></td>
 <td><strong>Needed.</strong> HS256 signing key for login tokens (24 h lifetime). Changing it logs everyone out. Generate one with <code>python3 -c "import secrets; print(secrets.token_hex(32))"</code>.</td>
@@ -1281,7 +1287,7 @@
 <tr>
 <td><code>AGENT_MAX_CONCURRENCY</code></td>
 <td><code>6</code></td>
-<td>Global cap on concurrent Anthropic calls across all agents.</td>
+<td>Global cap on concurrent model calls across all agents.</td>
 </tr>
 <tr>
 <td><code>CACHE_TTL_SECONDS</code></td>
@@ -1295,6 +1301,60 @@
 </tr>
 </tbody>
 </table>
+<h2 id="llm">LLM</h2>
+<p>Every model call goes through <code>backend/app/core/llm.py</code>; see <a href="../Architecture/#models">Architecture</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LLM_PROVIDER</code></td>
+<td><code>auto</code></td>
+<td><code>gemini</code>: Gemini on Vertex AI with Application Default Credentials (no API key). <code>anthropic</code>: Claude via <code>ANTHROPIC_API_KEY</code>, for local development or a rollback. <code>auto</code>: <code>gemini</code> when <code>GCP_PROJECT</code> is set; otherwise <code>anthropic</code> when <code>ANTHROPIC_API_KEY</code> is set; otherwise <code>gemini</code> if Application Default Credentials resolve a project, else <code>anthropic</code>. The choice is resolved once, logged at startup (<code>LLM provider: gemini (auto: GCP_PROJECT set) …</code>) and shown by <code>/health/agents</code> as <code>llm_provider</code> / <code>llm_provider_reason</code>.</td>
+</tr>
+<tr>
+<td><code>GCP_PROJECT</code></td>
+<td><code>""</code></td>
+<td><strong>Needed for Gemini.</strong> Google Cloud project that runs Vertex AI, e.g. <code>voyager-prod-ohzkl</code>; setting it also makes <code>auto</code> choose Gemini. Empty falls back to <code>GOOGLE_CLOUD_PROJECT</code> or the ADC project.</td>
+</tr>
+<tr>
+<td><code>GCP_LOCATION</code></td>
+<td><code>global</code></td>
+<td>Vertex AI location. <code>global</code> routes to any region with capacity; <code>us</code> and <code>eu</code> keep processing in that multi-region.</td>
+</tr>
+<tr>
+<td><code>GEMINI_MODEL_AGENT</code></td>
+<td><code>gemini-3.5-flash-lite</code></td>
+<td>Model for every specialist agent, itinerary, stress test, packing, pricing advisor, link import, discovery, layover, chat itinerary and chat routing/extraction.</td>
+</tr>
+<tr>
+<td><code>GEMINI_MODEL_CHAT</code></td>
+<td><code>gemini-3.8-flash</code></td>
+<td>Model for chat conversational answers and the planning narrative.</td>
+</tr>
+<tr>
+<td><code>GEMINI_THINKING_AGENT</code></td>
+<td><code>minimal</code></td>
+<td>Thinking level of the agent model: <code>minimal</code>, <code>low</code>, <code>medium</code> or <code>high</code>.</td>
+</tr>
+<tr>
+<td><code>GEMINI_THINKING_CHAT</code></td>
+<td><code>low</code></td>
+<td>Thinking level of the chat model: <code>low</code>, <code>medium</code> or <code>high</code> (Gemini 3.8 Flash rejects <code>minimal</code>). On Gemini, a level the model refuses stops the app at startup with a clear error.</td>
+</tr>
+<tr>
+<td><code>ANTHROPIC_API_KEY</code></td>
+<td><code>""</code></td>
+<td><strong>Needed for Claude</strong> (<code>LLM_PROVIDER=anthropic</code>, or <code>auto</code> without <code>GCP_PROJECT</code>). Unused on Gemini.</td>
+</tr>
+</tbody>
+</table>
+<p>With Gemini, the credentials need the Vertex AI User role (<code>roles/aiplatform.user</code>) on the project. Locally, run <code>gcloud auth application-default login</code> once. If no credentials are found, every AI section fails and <code>/health/agents</code> reports the error.</p>
 <h2 id="storage-and-backup">Storage and backup</h2>
 <table>
 <thead>
@@ -1531,7 +1591,10 @@
 <hr />
 <h2 id="examples">Examples</h2>
 <p><code>backend/.env</code> for local development:</p>
-<pre><code class="language-env">ANTHROPIC_API_KEY=sk-ant-...
+<pre><code class="language-env"># Claude: an Anthropic key and no GCP_PROJECT (LLM_PROVIDER=auto picks anthropic)
+ANTHROPIC_API_KEY=sk-ant-...
+# …or Gemini on Vertex AI (after `gcloud auth application-default login`):
+# GCP_PROJECT=voyager-prod-ohzkl
 JWT_SECRET_KEY=3f0c...   # 64 hex characters
 ADMIN_PASSWORD=LocalDevPassword123
 # Optional
@@ -1541,8 +1604,8 @@ FCM_SERVICE_ACCOUNT_FILE=   # e.g. /path/to/firebase-service-account.json (git-i
 RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 </code></pre>
-<p>Values set by <code>docker-compose.yml</code>: <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code> (default <code>change-me-in-compose</code>), <code>ADMIN_PASSWORD</code> (default <code>admin-dev-password</code>), <code>DATA_DIR=/data</code>, <code>BACKUP_BUCKET=</code> (empty) and <code>CORS_ORIGINS=http://localhost:8080</code> for the backend, and <code>BACKEND_URL=http://backend:8001</code> for the frontend.</p>
-<p>The retained Terraform (see <a href="../Deployment/">Deployment</a>) sets <code>DATA_DIR=/tmp/data</code>, <code>AGENTS_DIR=/app/.agents</code>, <code>LOG_FORMAT=json</code>, <code>CORS_ORIGINS</code>, <code>BACKUP_BUCKET</code>, and injects <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code>, <code>ADMIN_PASSWORD</code>, <code>SERPAPI_KEY</code> and <code>SERPER_KEY</code> from Secret Manager.</p>
+<p>Values set by <code>docker-compose.yml</code>: <code>LLM_PROVIDER</code> (default <code>auto</code>), <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code> (default <code>global</code>), <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code> (default <code>change-me-in-compose</code>), <code>ADMIN_PASSWORD</code> (default <code>admin-dev-password</code>), <code>DATA_DIR=/data</code>, <code>BACKUP_BUCKET=</code> (empty) and <code>CORS_ORIGINS=http://localhost:8080</code> for the backend, and <code>BACKEND_URL=http://backend:8001</code> for the frontend.</p>
+<p>The retained Terraform (see <a href="../Deployment/">Deployment</a>) predates the move to Gemini; it sets <code>DATA_DIR=/tmp/data</code>, <code>AGENTS_DIR=/app/.agents</code>, <code>LOG_FORMAT=json</code>, <code>CORS_ORIGINS</code>, <code>BACKUP_BUCKET</code>, and injects <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code>, <code>ADMIN_PASSWORD</code>, <code>SERPAPI_KEY</code> and <code>SERPER_KEY</code> from Secret Manager.</p>
 
 
 

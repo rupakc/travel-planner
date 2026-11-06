@@ -1229,7 +1229,7 @@
 <ul>
 <li><strong>Python 3.12</strong> (the Dockerfile and CI use 3.12; <code>pyproject.toml</code> allows 3.11 or later).</li>
 <li><strong>Node.js 20</strong> (the Dockerfile and CI use 20; vitest 4 needs <code>^20 || ^22 || &gt;=24</code> and jsdom 27 needs 20 or later).</li>
-<li><strong>An Anthropic API key.</strong> Every agent calls Claude. Without a key the app starts, but every AI section fails.</li>
+<li><strong>An LLM.</strong> Either an <strong>Anthropic API key</strong> (<code>ANTHROPIC_API_KEY</code>), or Gemini on Vertex AI: a Google Cloud project with the Vertex AI API enabled, Application Default Credentials (<code>gcloud auth application-default login</code>) and <code>GCP_PROJECT</code> set. With the default <code>LLM_PROVIDER=auto</code>, <code>GCP_PROJECT</code> selects Gemini; an Anthropic key without it selects Claude. Without either the app starts, but every AI section fails.</li>
 <li><strong>Docker with Compose</strong>, only for the container setup.</li>
 <li>Optional: a <strong>SerpAPI key</strong> (<code>SERPAPI_KEY</code>) for live Google Flights fares, the fare calendar and price insights, and a <strong>Serper key</strong> (<code>SERPER_KEY</code>) for Places-to-See data and link resolution. Without them, flights come from the LLM and the fare calendar is hidden.</li>
 </ul>
@@ -1245,7 +1245,8 @@ pip install -r requirements.txt          # add -r requirements-dev.txt for tests
 cd ..
 </code></pre>
 <p>Create <code>backend/.env</code>. The backend reads <code>.env</code> from its working directory, which is <code>backend/</code> when started by <code>start.sh</code>:</p>
-<pre><code class="language-env">ANTHROPIC_API_KEY=sk-ant-...
+<pre><code class="language-env">ANTHROPIC_API_KEY=sk-ant-...        # Claude (LLM_PROVIDER=auto picks it without GCP_PROJECT)
+# GCP_PROJECT=voyager-prod-ohzkl    # …or Gemini on Vertex AI, via ADC
 JWT_SECRET_KEY=&lt;output of: python3 -c &quot;import secrets; print(secrets.token_hex(32))&quot;&gt;
 ADMIN_PASSWORD=&lt;a password for the seeded admin account&gt;
 # Optional
@@ -1306,7 +1307,8 @@ cd frontend &amp;&amp; npm test
 <p>See <a href="../Testing-and-CI/">Testing and CI</a> for coverage, lint and the Node 20.18 workaround.</p>
 <hr />
 <h2 id="troubleshooting">Troubleshooting</h2>
-<p><strong>Every AI section shows an error.</strong> The Anthropic key is missing or invalid, or the account is out of quota. Check <code>.logs/backend.log</code>. <code>GET /health/agents</code> makes one tiny Haiku call and reports whether the LLM is reachable.</p>
+<p><strong>Every AI section shows an error.</strong> On Gemini: no Application Default Credentials, <code>GCP_PROJECT</code> unset, the Vertex AI API not enabled, or the credentials lack <code>roles/aiplatform.user</code>. On Anthropic: the key is missing or invalid, or the account is out of quota. Check <code>.logs/backend.log</code>. <code>GET /health/agents</code> makes one tiny call to the configured provider and reports whether the LLM is reachable.</p>
+<p><strong>"AI limit reached for this month".</strong> The project's Vertex AI spend cap has tripped; AI features resume on the 1st (or when the cap is lifted in Cloud Billing).</p>
 <p><strong>"Network Error" in the browser.</strong> The backend is not running on port 8001, which the Vite proxy expects.</p>
 <p><strong>No fare calendar and only estimated fares.</strong> <code>SERPAPI_KEY</code> is not set. <code>GET /health</code> reports <code>serpapi_configured</code>. The same key enables fare watch ("Watch fare" and the Alerts page); alert emails also need <code>SMTP_HOST</code> (see <a href="../Configuration/#fare-watch-and-email-alerts-optional">Configuration</a>).</p>
 <p><strong>429 "Too many requests".</strong> You hit a rate limit (for example 10 searches per 10 minutes). Raise the <code>RATE_LIMIT_*</code> values or set <code>RATE_LIMIT_ENABLED=false</code> for local work (see <a href="../Configuration/">Configuration</a>).</p>

@@ -1097,6 +1097,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#unreleased-gemini-on-vertex-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased: Gemini on Vertex AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#unreleased-fixes-from-the-android-end-to-end-run" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1284,6 +1295,15 @@
 <h1 id="changelog">Changelog</h1>
 <p>Changes since the project started on 2026-05-17. From 2026-08-30 on, every change went through a pull request; dates are merge dates (UTC). A "(#N)" inside a PR title refers to a backlog item, not a PR.</p>
 <hr />
+<h2 id="unreleased-gemini-on-vertex-ai">Unreleased: Gemini on Vertex AI</h2>
+<ul>
+<li><strong>Gemini replaces Claude in production.</strong> Every model call now goes through one provider seam, <code>backend/app/core/llm.py</code>. <code>LLM_PROVIDER=auto</code> (default) picks Gemini when <code>GCP_PROJECT</code> is set (or, with no Anthropic key, when ADC resolves a project) and Claude otherwise, so an existing local <code>.env</code> with only <code>ANTHROPIC_API_KEY</code> keeps working; the choice is logged at startup and shown by <code>/health/agents</code> (<code>llm_provider</code>, <code>llm_provider_reason</code>). Gemini Gemini on Vertex AI with Application Default Credentials (no API key; <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code> default <code>global</code>): <strong>Gemini 3.5 Flash-Lite</strong> (<code>gemini-3.5-flash-lite</code>, thinking <code>minimal</code>, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, chat itinerary and chat routing/extraction; <strong>Gemini 3.8 Flash</strong> (<code>gemini-3.8-flash</code>, thinking <code>low</code>) for chat answers, streamed token by token, and the planning narrative. <code>LLM_PROVIDER=anthropic</code> forces Claude (Haiku 4.5 / Sonnet 4.6) for local development and rollback. Agent prompts are unchanged. New settings: <code>LLM_PROVIDER</code>, <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code>, <code>GEMINI_MODEL_AGENT</code>, <code>GEMINI_MODEL_CHAT</code>, <code>GEMINI_THINKING_AGENT</code>, <code>GEMINI_THINKING_CHAT</code> (see <a href="../Configuration/#llm">Configuration</a>).</li>
+<li><strong>Monthly AI spend cap.</strong> When the Vertex AI spend-cap budget trips, users see "AI limit reached for this month — try again on the 1st." in search sections (<code>error_code: "ai_limit"</code>, one banner on the Results page), as a chat reply, and as <code>503</code> from <code>/api/discover</code>, <code>/api/import/extract</code> and <code>/api/nearby</code>, instead of failures; further calls are skipped for 5 minutes. <code>/health/agents</code> reports <code>llm_provider</code> and <code>llm: "spend-cap"</code>.</li>
+<li><strong>Hardening.</strong> Gemini requests time out after 120 s; the blocking IATA lookup fallback after 8 s, without retries. Abandoned chat streams are closed (usage still logged, <code>aborted=True</code>), clients are closed on shutdown, aiohttp network errors back off like other capacity errors, and a thinking level the Gemini model rejects stops startup with a clear error. Disabled billing (<code>BILLING_DISABLED</code>) gets its own message (<code>error_code: "ai_billing"</code>) instead of the spend-cap text; the cap is recognised from the error message and reasons, not help links. Compare mode shows the AI-paused text (<code>503</code>). On Gemini, GIF screenshots in Plan from a link are converted to PNG when Pillow is installed, otherwise refused with <code>422 gif_unsupported</code>; the copy now suggests PNG, JPEG or WebP.</li>
+<li><strong>Token usage per call.</strong> Every model call logs an <code>llm_usage</code> line (label, model, input/output/thinking tokens, latency; never content).</li>
+<li><strong>LLM eval harness.</strong> <code>backend/scripts/llm_eval.py</code> runs six saved searches on a chosen provider/model and compares two runs per section (validity, item counts, required fields, verification levels, cost) in a Markdown report. Manual only, never in CI.</li>
+<li>Dependencies: <code>google-genai</code> 2.34.0 added; the unused <code>claude-agent-sdk</code> and <code>python-dotenv</code> removed (pydantic-settings still brings python-dotenv for <code>.env</code>). Docker Compose passes <code>LLM_PROVIDER</code>, <code>GCP_PROJECT</code> and <code>GCP_LOCATION</code>.</li>
+</ul>
 <h2 id="unreleased-fixes-from-the-android-end-to-end-run">Unreleased: fixes from the Android end-to-end run</h2>
 <ul>
 <li><strong>Check now is live.</strong> <code>POST /api/fare-watches/{id}/check</code> and <code>POST /api/price-watches/{id}/check</code> no longer answer from the 30-minute result cache, so pressing Check now can show a new price; the fresh answer refreshes the cache. Their SerpAPI calls are reserved from the daily budget and the owner's share as before (a Check now right after a search is no longer free). Scheduled checks and a new watch's baseline still reuse cached prices (<code>core/cache.fresh_reads</code>).</li>

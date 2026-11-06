@@ -2365,7 +2365,7 @@
 <td>GET</td>
 <td><code>/health/agents</code></td>
 <td>none</td>
-<td>Deep check with one tiny Haiku call (cached 5 min)</td>
+<td>Deep check with one tiny call to the configured LLM provider (cached 5 min)</td>
 </tr>
 </tbody>
 </table>
@@ -2499,7 +2499,7 @@
 </tr>
 </tbody>
 </table>
-<p>Every non-error section carries <code>data.verification</code> (see <a href="../Agent-System/#source-verification">Agent System</a>). An agent that fails sends <code>{"error": "..."}</code> as its data (except the static-backed ones), so the UI can show "not available" instead of waiting.</p>
+<p>Every non-error section carries <code>data.verification</code> (see <a href="../Agent-System/#source-verification">Agent System</a>). An agent that fails sends <code>{"error": "..."}</code> as its data (except the static-backed ones), so the UI can show "not available" instead of waiting. When the monthly AI spend cap has tripped, the data is <code>{"error": "AI limit reached for this month — try again on the 1st.", "error_code": "ai_limit"}</code>; single-agent routes return the same object.</p>
 <h3 id="post-apisearchsync">POST /api/search/sync</h3>
 <p>Same request and agents, run sequentially; returns a single JSON object. For testing only.</p>
 <h3 id="post-apidiscover">POST /api/discover</h3>
@@ -2534,7 +2534,7 @@
   ]
 }
 </code></pre>
-<p><code>visa_verified: true</code> means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: <code>422</code> invalid request, <code>504</code> after 30 s, <code>500</code> agent failure. Results are cached for 30 minutes.</p>
+<p><code>visa_verified: true</code> means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: <code>422</code> invalid request, <code>504</code> after 30 s, <code>500</code> agent failure, <code>503</code> with <code>detail</code> "AI limit reached for this month — try again on the 1st." when the monthly AI spend cap has tripped (not cached). Results are cached for 30 minutes.</p>
 <h3 id="post-apiimportextract">POST /api/import/extract</h3>
 <p>Plan from a link: reads a web page, pasted text or screenshots and returns the places in it, resolved and grouped into a trip for the traveller to review. <strong>Auth:</strong> user. <strong>Bucket:</strong> import.</p>
 <p><strong>Request body</strong>: exactly one of:</p>
@@ -2542,7 +2542,7 @@
 {&quot;text&quot;: &quot;48 hours in Lisbon: Time Out Market, Belém Tower, LX Factory…&quot;}
 {&quot;images&quot;: [{&quot;media_type&quot;: &quot;image/png&quot;, &quot;data_base64&quot;: &quot;iVBORw0…&quot;}]}
 </code></pre>
-<p><code>text</code> is at most 20,000 characters. <code>images</code> holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.</p>
+<p><code>text</code> is at most 20,000 characters. <code>images</code> holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. On Gemini (Vertex AI reads no GIF) a GIF is converted to PNG when Pillow is installed, otherwise refused with <code>gif_unsupported</code>. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.</p>
 <p><strong>Link fetching</strong> (<code>backend/app/services/link_fetch.py</code>):
 - Only http and https on the default ports, with no credentials in the URL.
 - The host is resolved, and every address must be public. Private, loopback, link-local, multicast, reserved and CGNAT ranges are refused, as are their IPv6, IPv4-mapped, NAT64, 6to4 and Teredo forms. The connection goes to that vetted IP, with the original Host header and TLS SNI, so DNS rebinding cannot redirect it.
@@ -2555,7 +2555,7 @@
 - YouTube and TikTok links are read through their public oEmbed endpoints, plus the YouTube watch page's description.
 - Instagram, Facebook, X and Threads get a specific <code>blocked_source</code> error, including when a shortener redirects to them.
 - Scripts are never run, and links in the content are never followed.</p>
-<p><strong>Extraction</strong>: the <code>link_import</code> agent (<code>.agents/link_import.md</code>, Haiku; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between <code>&lt;&lt;&lt;SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> and <code>&lt;&lt;&lt;END_SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a <code>quote</code> is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same. A <code>day_hint</code> is kept only when the source text itself names that day ("Day 2", "Day 2–3", "days 4 to 5").</p>
+<p><strong>Extraction</strong>: the <code>link_import</code> agent (<code>.agents/link_import.md</code>, the agent model; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between <code>&lt;&lt;&lt;SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> and <code>&lt;&lt;&lt;END_SOURCE_&lt;nonce&gt;&gt;&gt;&gt;</code> markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a <code>quote</code> is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same. A <code>day_hint</code> is kept only when the source text itself names that day ("Day 2", "Day 2–3", "days 4 to 5").</p>
 <p><strong>Resolution</strong> (<code>backend/app/services/link_import.py</code>):
 - Each place's city is resolved with <code>resolve_place</code> to a canonical town, country, coordinates and airports. A town within 45 km of a bigger stop in the same country joins that stop as a day trip.
 - Stops are ordered by the source's day hints, then by source order. With more than 3 stops, the 3 with the most places are kept and the rest are listed in <code>also_mentioned</code>.
@@ -2603,13 +2603,13 @@
 <td>Nothing was found ("We couldn't spot any places — try pasting the part of the article with the list.")</td>
 </tr>
 <tr>
-<td><code>heic_unsupported</code>, <code>unsupported_image</code>, <code>image_too_large</code>, <code>too_many_images</code></td>
+<td><code>heic_unsupported</code>, <code>gif_unsupported</code>, <code>unsupported_image</code>, <code>image_too_large</code>, <code>too_many_images</code></td>
 <td>A screenshot problem</td>
 </tr>
 </tbody>
 </table>
 <p><code>413</code> (string <code>detail</code>) means the request body is over 30 MB. It is refused before it is parsed, whether the size is declared or streamed (chunked). Each image's base64 must be at most 5 MB (<code>image_too_large</code>). The browser shrinks screenshots before uploading them: long edge ≤ 1568 px, WebP or JPEG at quality 0.85.</p>
-<p><code>502</code> with <code>code: extract_failed</code> means the extraction agent failed. Plain FastAPI <code>422</code> validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.</p>
+<p><code>502</code> with <code>code: extract_failed</code> means the extraction agent failed; <code>503</code> with <code>code: ai_limit</code> means the monthly AI spend cap has tripped (<code>ai_billing</code>: billing is disabled for the AI service). Plain FastAPI <code>422</code> validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.</p>
 <h3 id="post-apiimportresolve-place">POST /api/import/resolve-place</h3>
 <p>Places one of the preview's "Couldn't place" spots in a town the traveller types. <strong>Auth:</strong> user. <strong>Bucket:</strong> import.</p>
 <p><strong>Request:</strong> <code>{id?, name, kind?, city, country?, note?, quote?}</code>.</p>
@@ -2644,7 +2644,7 @@
 </code></pre>
 <p>Any piece that failed or timed out is <code>null</code> and its name is listed in <code>missing</code>; <code>ease</code>/<code>daily_cost_usd</code> are <code>null</code> for destinations outside the static tables. <code>flight.source</code> of <code>estimate</code> marks a non-live fare; <code>visa.verified</code> is true only for static-table data. <code>ease.grade</code> is <code>green</code> (≥ 71), <code>amber</code> (41–70) or <code>red</code> (≤ 40).</p>
 <p><strong>Estimate (per traveller):</strong> <code>flight_usd</code> is the cheapest fare (<code>flight.price_usd</code>, round trip, per person). <code>daily_usd</code> = <code>daily_cost_usd</code> × days (days = nights, min 1; nights default to 7 without a <code>return_date</code>). <code>daily_cost_usd</code> is an all-in daily budget that already includes lodging, so when it is known <code>total_usd = flight_usd + daily_usd</code> and <code>stay_usd</code> is shown for reference only (<code>included_in_daily: true</code>) — above, 620 + 700 = 1320. When the daily figure is unknown, <code>total_usd = flight_usd + stay_usd</code> and <code>included_in_daily</code> is <code>false</code>. <code>stay_usd</code> = typical nightly × nights × rooms ÷ travellers, with rooms = ⌈(adults + seniors) ÷ 2⌉ (falling back to ⌈num_travelers ÷ 2⌉) — above, 110 × 7 × 1 ÷ 2 = 385. <code>partial</code> is <code>true</code> when the flight or the daily figure is unknown; the total then sums only the known parts. <code>budget_status</code> compares <code>total_usd × num_travelers</code> with <code>budget_usd</code> (the party's budget): <code>over</code>, <code>under</code> (only for a complete estimate), or <code>null</code> with no budget or when a partial total is still within it.</p>
-<p><strong>Errors:</strong> <code>422</code> for multi-city or invalid requests; <code>502</code> when every piece failed.</p>
+<p><strong>Errors:</strong> <code>422</code> for multi-city or invalid requests; <code>502</code> when every piece failed; <code>503</code> whose <code>detail</code> is the friendly AI-paused text ("AI limit reached for this month — try again on the 1st.", or the billing-disabled message) when any piece hit the AI spend cap or disabled billing.</p>
 <p><strong>Caching:</strong> only complete results (empty <code>missing</code>) are cached in the shared TTL cache, keyed on the full request; partial results and <code>502</code>s are never cached.</p>
 <hr />
 <h2 id="chat">Chat</h2>
@@ -2657,7 +2657,7 @@
   &quot;session_context&quot;: {}
 }
 </code></pre>
-<p>Event types: <code>delta</code> (text), <code>done</code>, <code>error</code>, <code>suggestions</code>, <code>session_context_update</code>, <code>plan_action</code>, <code>planning_start</code>, <code>trip_map</code>, <code>itinerary_generating</code>, <code>comprehensive_itinerary</code>, <code>planning_done</code>, <code>agent_status</code> and <code>section_result</code>. A planning request streams <code>planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done</code>; <code>section_result</code> appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback <code>delta</code>, <code>error</code> and <code>done</code>. See <a href="../Chat-Assistant/">Chat Assistant</a>.</p>
+<p>Event types: <code>delta</code> (text), <code>done</code>, <code>error</code>, <code>suggestions</code>, <code>session_context_update</code>, <code>plan_action</code>, <code>planning_start</code>, <code>trip_map</code>, <code>itinerary_generating</code>, <code>comprehensive_itinerary</code>, <code>planning_done</code>, <code>agent_status</code> and <code>section_result</code>. A planning request streams <code>planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done</code>; <code>section_result</code> appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback <code>delta</code>, <code>error</code> and <code>done</code>. When the monthly AI spend cap has tripped, the reply is a <code>delta</code> "AI limit reached for this month — try again on the 1st." and <code>done</code> (no <code>error</code>). See <a href="../Chat-Assistant/">Chat Assistant</a>.</p>
 <hr />
 <h2 id="plans-and-sharing">Plans and sharing</h2>
 <h3 id="get-apiplans-post-apiplans">GET /api/plans, POST /api/plans</h3>
@@ -2998,7 +2998,7 @@
              &quot;source&quot;: &quot;getyourguide&quot;, &quot;booking_url&quot;: &quot;https://www.getyourguide.com/s/?q=...&quot;, &quot;...&quot;: &quot;...&quot;}]
 }
 </code></pre>
-<p><code>items</code> are the activities agent's <code>results</code>, unchanged (the shape of <code>POST /api/activities</code>), first <code>limit</code>. <code>region</code> is the state / province (GeoNames first-level division) name, or <code>null</code>. <code>distance_km</code> is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: <code>404 {"detail": {"code": "no_place", "message": "..."}}</code> when no known place is within 75 km; <code>502 {"detail": {"code": "agent_error", "message": "..."}}</code> when the agent fails (not cached).</p>
+<p><code>items</code> are the activities agent's <code>results</code>, unchanged (the shape of <code>POST /api/activities</code>), first <code>limit</code>. <code>region</code> is the state / province (GeoNames first-level division) name, or <code>null</code>. <code>distance_km</code> is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: <code>404 {"detail": {"code": "no_place", "message": "..."}}</code> when no known place is within 75 km; <code>502 {"detail": {"code": "agent_error", "message": "..."}}</code> when the agent fails (not cached); <code>503</code> with <code>code: ai_limit</code> when the monthly AI spend cap has tripped.</p>
 <hr />
 <h2 id="reference-data">Reference data</h2>
 <h3 id="get-apiairportssearchqlimit">GET /api/airports/search?q=&amp;limit=</h3>
@@ -3010,7 +3010,7 @@
 <h3 id="get-health">GET /health</h3>
 <p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
-<p>A deep check: one tiny Haiku call, cached for 5 minutes. Reports <code>llm</code> status, <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
+<p>A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports <code>llm</code> (<code>ok</code>, <code>empty-response</code>, <code>spend-cap</code>, <code>billing-disabled</code> or <code>error: &lt;ExceptionType&gt;</code>), <code>llm_provider</code> (<code>gemini</code> or <code>anthropic</code>), <code>llm_provider_reason</code> (how <code>LLM_PROVIDER</code> resolved, e.g. <code>auto: GCP_PROJECT set</code>), <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 
 
 

@@ -1196,7 +1196,7 @@
 <li><strong>Phase 1 (parallel AI).</strong> Thirteen specialist agents run concurrently and stream their results as they finish. For the six static-backed agents (visa, sim, tips, getting_around, forex, emergency_card) an AI failure is suppressed, so the static data stays on screen. Two deferred agents, packing list and pricing advisor, start as soon as their inputs are ready.</li>
 <li><strong>Phase 2.</strong> The itinerary agent starts once activities and hotels are in (60 s timeout, template fallback). When the itinerary is final, the stress-test agent audits it.</li>
 </ol>
-<p>Every specialist agent uses Claude Haiku 4.5 through <code>BaseAgent</code>. Chat uses Claude Sonnet 4.6 for conversational answers. See <a href="../Architecture/">Architecture</a> and <a href="../Agent-System/">Agent System</a>.</p>
+<p>Every specialist agent uses Gemini 3.5 Flash-Lite on Vertex AI through <code>BaseAgent</code>. Chat uses Gemini 3.8 Flash for conversational answers. Without <code>GCP_PROJECT</code> and with an Anthropic key (or <code>LLM_PROVIDER=anthropic</code>) both use Claude (Haiku 4.5 / Sonnet 4.6). See <a href="../Architecture/">Architecture</a> and <a href="../Agent-System/">Agent System</a>.</p>
 <hr />
 <h2 id="pages">Pages</h2>
 <table>

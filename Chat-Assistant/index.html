@@ -1230,28 +1230,34 @@
 <thead>
 <tr>
 <th>Task</th>
-<th>Model</th>
+<th>Model on Gemini (production)</th>
+<th>On Anthropic</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Conversational answers and the planning narrative</td>
+<td>Conversational answers (streamed token by token) and the planning narrative</td>
+<td><code>gemini-3.8-flash</code>, thinking <code>low</code></td>
 <td><code>claude-sonnet-4-6</code></td>
 </tr>
 <tr>
-<td>Intent routing, trip-parameter extraction, plan commands</td>
+<td>Intent routing, trip-parameter extraction, plan commands, suggestion chips</td>
+<td><code>gemini-3.5-flash-lite</code>, thinking <code>minimal</code></td>
 <td><code>claude-haiku-4-5-20251001</code></td>
 </tr>
 <tr>
 <td>The chat itinerary (<code>.agents/chat-itinerary.md</code>, <code>ChatItineraryAgent</code>)</td>
+<td><code>gemini-3.5-flash-lite</code></td>
 <td><code>claude-haiku-4-5-20251001</code></td>
 </tr>
 <tr>
 <td>Specialist fallbacks and refinements</td>
-<td>the specialist agents (Haiku, via <code>BaseAgent</code>)</td>
+<td>the specialist agents (agent model, via <code>BaseAgent</code>)</td>
+<td>same</td>
 </tr>
 </tbody>
 </table>
+<p>All calls go through <code>backend/app/core/llm.py</code> (see <a href="../Architecture/#models">Architecture</a>). When the monthly AI spend cap has tripped, chat answers with one <code>delta</code>, "AI limit reached for this month — try again on the 1st.", then <code>done</code>.</p>
 <hr />
 <h2 id="knowledge-first-specialists-last">Knowledge first, specialists last</h2>
 <p>Topic questions ("do I need a visa for Japan?", "which area of Barcelona is best for nightlife?") are answered <strong>from the model's own knowledge</strong> and stream straight away. No agents run, and no background verification happens.</p>
@@ -1306,7 +1312,7 @@
 <tr>
 <td>3.7</td>
 <td>Anything of 4 or more words not caught yet</td>
-<td>One Haiku intent-classification call, which catches soft phrasings such as "we're thinking Lisbon in October, maybe with the kids?"</td>
+<td>One intent-classification call (agent model), which catches soft phrasings such as "we're thinking Lisbon in October, maybe with the kids?"</td>
 </tr>
 <tr>
 <td>4</td>
