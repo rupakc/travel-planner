@@ -44,6 +44,28 @@ def strip_live_fare(data: dict) -> dict:
     return data
 
 
+def accessibility_clause(request: TravelSearchRequest) -> str:
+    """Prompt line that keeps `accessibility_notes` on every flight result.
+
+    Some models drop optional keys entirely; naming the key with an explicit
+    null rule keeps it present, and makes it required when the travelers
+    listed accessibility needs.
+    """
+    if request.accessibility_needs:
+        needs = ", ".join(request.accessibility_needs)
+        return (
+            f"\nACCESSIBILITY ({needs}): every result MUST include "
+            "accessibility_notes — a short non-empty string for that airline/"
+            "route covering wheelchair and boarding assistance, onboard "
+            "accessible lavatory, mobility-aid/medical-equipment policy and how "
+            "to request help. Never null, never omitted."
+        )
+    return (
+        "\nEvery result must include the key accessibility_notes, set to null "
+        "(no accessibility needs were listed)."
+    )
+
+
 class FlightsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "flights"))
@@ -103,10 +125,13 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
                 f"both an outbound leg ({request.origin} → {request.destination} on {request.departure_date}) "
                 f"and a return leg ({request.destination} → {request.origin} on {request.return_date}). "
                 f"The price_usd should be the TOTAL round-trip price per person.\n"
-                f"Find 8-12 round-trip options sorted by total price."
+                f"Find 8-12 round-trip options (aim for 10 or more) sorted by total price."
             )
         else:
-            prompt += "Find 8-12 one-way flight options sorted by price."
+            prompt += (
+                "Find 8-12 one-way flight options (aim for 10 or more) sorted by price."
+            )
+        prompt += accessibility_clause(request)
 
         if request.taste_context:
             prompt += (
@@ -207,6 +232,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
             "IMPORTANT: identify the country for each city and use full "
             "locations in origin/destination fields (e.g. 'Rome, Italy')."
         )
+        prompt += accessibility_clause(request)
         if request.taste_context:
             prompt += (
                 f"\n{request.taste_context}\n"
@@ -243,6 +269,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
             "price_usd is a realistic current one-way price per person. "
             "Use full 'City, Country' locations in origin/destination fields."
         )
+        prompt += accessibility_clause(request)
         self._origin = request.origin
         self._destination = request.destination
         data = strip_live_fare(await self.execute(prompt))
