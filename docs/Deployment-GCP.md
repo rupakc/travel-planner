@@ -143,14 +143,14 @@ At start, the app sees no DB on the disk, restores this file and reseeds the pla
 ## 6. Day-to-day: deploys and rollback
 
 - **Auto-deploy.** Every merge to `main` that passes all of CI publishes images signed by `deploy.yml` and moves their `prod` tags. Within 5 minutes `voyager-deploy.timer` on the VM resolves `prod` to a digest and checks the cosign signature: it must come from `rupakc/travel-planner`'s `deploy.yml` on `refs/heads/main`. It then pulls by digest, pins the digest in `/opt/voyager/images.env` (keeping the previous one), runs `docker compose up -d`, and waits up to 240 s for the app to report healthy (longer than the container's 180 s start period, so a slow reseed isn't mistaken for a failure). Each run also converges: `compose up -d` brings back anything that was stopped, e.g. by a Docker upgrade.
-- **Automatic rollback.** If the new app isn't healthy, the previous digest goes back in. The bad digest is recorded in `/opt/voyager/failed-digests` and never retried. You get an email if SMTP is set.
-- **Manual rollback** to the previous app digest: `sudo /opt/voyager/deploy.sh --rollback`.
+- **Automatic rollback.** If the new app isn't healthy, the previous digest goes back in. The bad digest is held in `/opt/voyager/failed-digests` and never retried. You get an email if SMTP is set.
+- **Manual rollback** to the previous app digest: `sudo /opt/voyager/deploy.sh --rollback`. The digest you rolled back from is **held**: it goes into `/opt/voyager/failed-digests`, so the 5-minute timer doesn't redeploy it while `prod` still points there. Publishing a newer digest ends the hold, because only the listed digests are skipped. To release a held digest by hand, delete its line.
 - **No silent downgrades.** An image built by an older deploy run than the running one (label `io.voyager.build`) is refused, even if `prod` points at it. That covers a moved tag and a re-run of an old workflow. To deploy it on purpose: `sudo /opt/voyager/deploy.sh --allow-downgrade`.
 - **Caddy** image changes drop open connections, so they are only verified and pre-pulled. They are applied in the weekly window (Sunday 04:00 Berlin). To apply one now: `sudo /opt/voyager/deploy.sh --window`.
 - **Logs.** Docker keeps 10 MB × 5 per container on the VM; there is no Cloud Logging agent and so no ingestion bill.
   - `sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs -f app`
   - `journalctl -u voyager-deploy -u voyager-governor`
-- **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`.
+- **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`. It returns as soon as the bundle is unpacked and `compose up -d` has applied the changes; units are started with `--no-block`, so it never waits on itself.
 - **Schema changes stay additive.** A rollback must never meet a DB it can't read.
 
 ## 7. Backups and restore drills
@@ -194,7 +194,13 @@ sudo /opt/voyager/governor.py seed --gib 150
 
 ## 8. Egress governor
 
-Egress on the Standard tier is free up to 200 GiB a month per billing account, then $0.085/GiB. The governor enforces this on the VM itself (`/opt/voyager/governor.py`, every minute, rules in Docker's `DOCKER-USER` chain):
+Egress on the Standard tier is free up to 200 GiB a month per billing account, then $0.085/GiB. The governor enforces this on the VM itself (`/opt/voyager/governor.py`, every minute, rules in Docker's `DOCKER-USER` chain).
+
+How the rules are applied:
+
+- The governor owns `DOCKER-USER`; don't add rules of your own there.
+- Its rules are replaced in **one `iptables-restore` transaction**, validated first. A rejected ruleset leaves the previous rules in force and sends one email ("egress governor rules FAILED to apply", and another when they apply again). The `voyager-governor` unit then fails, so it shows in `systemctl --failed`.
+- CI runs the real rules against iptables-nft on Debian 13 for every tier (job `host-checks`).
 
 | Month-to-date egress (billing month, 00:00 America/Los_Angeles) | Action |
 |---|---|
