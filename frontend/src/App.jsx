@@ -15,6 +15,7 @@ import ChangePasswordPage  from './pages/ChangePasswordPage'
 import AdminPage           from './pages/AdminPage'
 import SharePage           from './pages/SharePage'
 import AlertsPage          from './pages/AlertsPage'
+import NearbyPage          from './pages/NearbyPage'
 import AlertToast          from './components/alerts/AlertToast'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
@@ -54,8 +55,8 @@ function SearchTab() {
   )
 }
 
-const PATH_LABEL = { '/': 'search', '/chat': 'chat', '/preferences': 'preferences', '/alerts': 'alerts', '/admin': 'admin' }
-const KNOWN_PATHS = new Set(['/', '/chat', '/preferences', '/alerts', '/admin'])
+const PATH_LABEL = { '/': 'search', '/chat': 'chat', '/nearby': 'nearby', '/preferences': 'preferences', '/alerts': 'alerts', '/admin': 'admin' }
+const KNOWN_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts', '/admin'])
 
 function Layout() {
   const location = useLocation()
@@ -84,6 +85,8 @@ function Layout() {
         <div style={{ display: path === '/chat' ? 'block' : 'none' }}><ChatPage /></div>
         {path === '/preferences' && <PreferencesPage />}
         {path === '/alerts'      && <AlertsPage />}
+        {/* Near me unmounts when left: its live results are never kept */}
+        {path === '/nearby'      && <NearbyPage />}
         {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
         <AttributionFooter />
         <AlertToast />

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Trash2 } from 'lucide-react'
 import { relativeTime, untilTime, watchStatus } from '../../../utils/fareWatch'
 import {
   checkPriceTarget, currencyLabel, currencySymbol, formatPrice, isUnavailable, priceWatchChange, watchDomId,
 } from '../../../utils/priceWatch'
 import Sparkline from '../Sparkline'
+import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from '../LiveCheck'
 
 const CHIP = {
   sky: 'bg-sky-50 text-sky-800 border-sky-200',
@@ -80,12 +81,14 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
  */
 export default function PriceWatchCard({
   watch, highlighted = false, busy = null, message = null, emailAvailable = false, hasEmail = false,
-  onCheck, onUpdate, onDelete, onOpen, now = new Date(), Details = null,
+  onCheck, onUpdate, onDelete, onLiveCheck = null, onOpen, now = new Date(), Details = null,
   openLabel = 'Open listing', unitLabel = 'per unit',
   unavailableText = 'Not available for your dates right now. We’ll keep checking and won’t alert you until it’s back.',
 }) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const live = useLiveCheck(onLiveCheck)
+  const liveButton = useRef(null)
   const status = watchStatus(watch)
   const change = priceWatchChange(watch)
   const money = (v) => formatPrice(v, watch.currency)
@@ -161,6 +164,11 @@ export default function PriceWatchCard({
         <p className={`mt-3 text-sm ${message.tone === 'good' ? 'text-emerald-700' : message.tone === 'warn' ? 'text-amber-800' : 'text-slate-600'}`}>{message.text}</p>
       )}
 
+      {onLiveCheck && (
+        <LiveCheckPanel live={live} title={watch.title} buttonRef={liveButton}
+          onDismissed={() => liveButton.current?.focus()} />
+      )}
+
       {editing && (
         <EditPanel watch={watch} emailAvailable={emailAvailable} hasEmail={hasEmail}
           onCancel={() => setEditing(false)}
@@ -174,6 +182,7 @@ export default function PriceWatchCard({
           </a>
         )}
         <span className="ml-auto flex flex-wrap items-center gap-1">
+          {!past && onLiveCheck && <LiveCheckButton live={live} buttonRef={liveButton} />}
           {!past && watch.status !== 'error' && (
             <button type="button" onClick={onCheck} disabled={busy === 'check'} className={quiet}>
               {busy === 'check' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}

@@ -17,6 +17,7 @@ frontend/src/
 │   ├── ChatPage.jsx          chat, TripPlanView, chat plan drawer
 │   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
 │   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
+│   ├── NearbyPage.jsx        Near me: places around the user's location
 │   ├── AdminPage.jsx         users and feedback (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
@@ -27,7 +28,8 @@ frontend/src/
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
 │   │   TripMap, VerificationBadge, WalkingToursSection
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
-│   │                         NotificationBell, AlertToast, AlertEmailField
+│   │                         NotificationBell, AlertToast, AlertEmailField,
+│   │                         LiveCheck ("Search the web now"), cards/
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
 │                             TravelerPanel, AttributionFooter
 ├── context/
@@ -57,12 +59,13 @@ Routes in `App.jsx`:
 | `/change-password` | ChangePasswordPage | Signed in |
 | `/` | SearchPage, then ResultsPage | Signed in |
 | `/chat` | ChatPage | Signed in |
+| `/nearby` | NearbyPage | Signed in |
 | `/alerts` | AlertsPage (`?watch=ID`, `&replan=1`) | Signed in |
 | `/preferences` | PreferencesPage | Signed in |
 | `/admin` | AdminPage | Admins (`RequireAdmin`) |
 | anything else | redirect to `/` | |
 
-Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Alerts and Admin mount on each visit. `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.
+Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.
 
 ---
 
@@ -72,6 +75,7 @@ Search/Results and Chat are **always mounted** and hidden with CSS, so navigatin
 - **AlertsContext** (inside the signed-in `Layout`) polls `GET /api/notifications/unread-count` every 60 s while the tab is visible (stopped while hidden, refreshed on return and focus), turns a newly arrived alert into one toast or, when the window isn't focused and permission was granted, a native notification, and caches each trip's watch for the "Watch fare" buttons. Outside the provider `useAlerts()` is inert, so components keep rendering in isolation.
 - **SearchDataContext** holds the search form, the streamed results and per-agent status, shared by SearchPage and ResultsPage.
 - Plan selections, itinerary overlays and planner settings are local state in ResultsPage and ChatPage.
+- Grounded live answers (Near me and "Search the web now") are component state only: never in context, browser storage or the React Query cache.
 
 ## Streaming workers
 

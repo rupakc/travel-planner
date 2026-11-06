@@ -3,11 +3,12 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
 import NotificationBell from '../alerts/NotificationBell'
-import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing } from 'lucide-react'
+import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
 
 const BASE_TABS = [
   { path: '/',            label: 'Search',      icon: Search },
   { path: '/chat',        label: 'Chat',         icon: MessageCircle },
+  { path: '/nearby',      label: 'Near me',      icon: MapPin },
   { path: '/alerts',      label: 'Alerts',       icon: BellRing },
   { path: '/preferences', label: 'Preferences',  icon: Settings },
 ]
@@ -23,21 +24,27 @@ export default function NavBar() {
     ? [...BASE_TABS, { path: '/admin', label: 'Admin', icon: ShieldCheck }]
     : BASE_TABS
 
-  const NavLinks = ({ onClick }) => tabs.map(({ path, label, icon: Icon }) => {
+  // `compact` (desktop bar): icon-only below lg so six or seven tabs fit from
+  // 640 px up; the name stays as the accessible name and tooltip.
+  const NavLinks = ({ onClick, compact = false }) => tabs.map(({ path, label, icon: Icon }) => {
     const isActive = location.pathname === path
     return (
       <button
         key={path}
-        data-tour={`nav-${label.toLowerCase()}`}
+        type="button"
+        aria-label={compact ? `${label}${path === '/alerts' && unread > 0 ? `, ${unread} unread` : ''}` : undefined}
+        title={compact ? label : undefined}
+        data-tour={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+        aria-current={isActive ? 'page' : undefined}
         onClick={() => { navigate(path); onClick?.() }}
-        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all ${
+        className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap py-1.5 rounded-md text-sm font-medium transition-all ${compact ? 'px-2.5 lg:px-3.5' : 'px-3.5'} ${
           isActive
             ? 'bg-white text-teal-700 shadow-sm'
             : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
         }`}
       >
-        <Icon size={14} />
-        <span>{label}</span>
+        <Icon size={14} aria-hidden="true" />
+        <span className={compact ? 'hidden lg:inline' : undefined}>{label}</span>
         {path === '/alerts' && unread > 0 && (
           <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-sky-500" aria-label={`${unread} unread`} />
         )}
@@ -57,7 +64,7 @@ export default function NavBar() {
             <span className="font-display font-bold text-slate-800 text-sm tracking-tight">Voyager</span>
           </Link>
           <div className="flex items-center gap-1 bg-slate-100/80 rounded-xl p-0.5">
-            <NavLinks />
+            <NavLinks compact />
           </div>
         </div>
 
@@ -72,10 +79,10 @@ export default function NavBar() {
 
         {/* User info */}
         {user && (
-          <div className="flex items-center gap-2 text-slate-600 text-sm">
+          <div className="flex min-w-0 items-center gap-2 text-slate-600 text-sm">
             <NotificationBell />
             <User size={14} />
-            <span className="font-medium hidden sm:inline">{user.username}</span>
+            <span className="font-medium hidden sm:inline max-w-[8rem] lg:max-w-[12rem] truncate" title={user.username}>{user.username}</span>
             {isAdmin && <span className="hidden sm:inline px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Admin</span>}
             <button
               onClick={logout}
