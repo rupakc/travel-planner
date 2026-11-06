@@ -261,7 +261,7 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 {"images": [{"media_type": "image/png", "data_base64": "iVBORw0…"}]}
 ```
 
-`text` is at most 20,000 characters. `images` holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.
+`text` is at most 20,000 characters. `images` holds 1–4 PNG, JPEG, WebP or GIF images of up to 5 MB each, decoded. On Gemini (Vertex AI reads no GIF) a GIF is converted to PNG when Pillow is installed, otherwise refused with `gif_unsupported`. The type is sniffed from the bytes, and HEIC is refused with a friendly message. Images are sent as JSON base64, not multipart.
 
 **Link fetching** (`backend/app/services/link_fetch.py`):
 - Only http and https on the default ports, with no credentials in the URL.
@@ -311,11 +311,11 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 | `blocked_source` | Instagram, Facebook, X or Threads ("…doesn't let apps read posts. Paste the caption or drop a screenshot instead.") |
 | `empty_page` | The page had almost no readable text |
 | `no_places` | Nothing was found ("We couldn't spot any places — try pasting the part of the article with the list.") |
-| `heic_unsupported`, `unsupported_image`, `image_too_large`, `too_many_images` | A screenshot problem |
+| `heic_unsupported`, `gif_unsupported`, `unsupported_image`, `image_too_large`, `too_many_images` | A screenshot problem |
 
 `413` (string `detail`) means the request body is over 30 MB. It is refused before it is parsed, whether the size is declared or streamed (chunked). Each image's base64 must be at most 5 MB (`image_too_large`). The browser shrinks screenshots before uploading them: long edge ≤ 1568 px, WebP or JPEG at quality 0.85.
 
-`502` with `code: extract_failed` means the extraction agent failed; `503` with `code: ai_limit` means the monthly AI spend cap has tripped. Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
+`502` with `code: extract_failed` means the extraction agent failed; `503` with `code: ai_limit` means the monthly AI spend cap has tripped (`ai_billing`: billing is disabled for the AI service). Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
 
 ### POST /api/import/resolve-place
 
@@ -363,7 +363,7 @@ Any piece that failed or timed out is `null` and its name is listed in `missing`
 
 **Estimate (per traveller):** `flight_usd` is the cheapest fare (`flight.price_usd`, round trip, per person). `daily_usd` = `daily_cost_usd` × days (days = nights, min 1; nights default to 7 without a `return_date`). `daily_cost_usd` is an all-in daily budget that already includes lodging, so when it is known `total_usd = flight_usd + daily_usd` and `stay_usd` is shown for reference only (`included_in_daily: true`) — above, 620 + 700 = 1320. When the daily figure is unknown, `total_usd = flight_usd + stay_usd` and `included_in_daily` is `false`. `stay_usd` = typical nightly × nights × rooms ÷ travellers, with rooms = ⌈(adults + seniors) ÷ 2⌉ (falling back to ⌈num_travelers ÷ 2⌉) — above, 110 × 7 × 1 ÷ 2 = 385. `partial` is `true` when the flight or the daily figure is unknown; the total then sums only the known parts. `budget_status` compares `total_usd × num_travelers` with `budget_usd` (the party's budget): `over`, `under` (only for a complete estimate), or `null` with no budget or when a partial total is still within it.
 
-**Errors:** `422` for multi-city or invalid requests; `502` when every piece failed.
+**Errors:** `422` for multi-city or invalid requests; `502` when every piece failed; `503` whose `detail` is the friendly AI-paused text ("AI limit reached for this month — try again on the 1st.", or the billing-disabled message) when any piece hit the AI spend cap or disabled billing.
 
 **Caching:** only complete results (empty `missing`) are cached in the shared TTL cache, keyed on the full request; partial results and `502`s are never cached.
 
@@ -831,4 +831,4 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health/agents
 
-A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports `llm` (`ok`, `empty-response`, `spend-cap` or `error: <ExceptionType>`), `llm_provider` (`gemini` or `anthropic`), `llm_provider_reason` (how `LLM_PROVIDER` resolved, e.g. `auto: GCP_PROJECT set`), `serpapi_configured` and `backup_configured`.
+A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports `llm` (`ok`, `empty-response`, `spend-cap`, `billing-disabled` or `error: <ExceptionType>`), `llm_provider` (`gemini` or `anthropic`), `llm_provider_reason` (how `LLM_PROVIDER` resolved, e.g. `auto: GCP_PROJECT set`), `serpapi_configured` and `backup_configured`.

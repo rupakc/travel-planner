@@ -29,7 +29,7 @@ Every model call goes through `backend/app/core/llm.py`; see [Architecture](Arch
 | `GEMINI_MODEL_AGENT` | `gemini-3.5-flash-lite` | Model for every specialist agent, itinerary, stress test, packing, pricing advisor, link import, discovery, layover, chat itinerary and chat routing/extraction. |
 | `GEMINI_MODEL_CHAT` | `gemini-3.8-flash` | Model for chat conversational answers and the planning narrative. |
 | `GEMINI_THINKING_AGENT` | `minimal` | Thinking level of the agent model: `minimal`, `low`, `medium` or `high`. |
-| `GEMINI_THINKING_CHAT` | `low` | Thinking level of the chat model: `low`, `medium` or `high` (Gemini 3.8 Flash rejects `minimal`). |
+| `GEMINI_THINKING_CHAT` | `low` | Thinking level of the chat model: `low`, `medium` or `high` (Gemini 3.8 Flash rejects `minimal`). On Gemini, a level the model refuses stops the app at startup with a clear error. |
 | `ANTHROPIC_API_KEY` | `""` | **Needed for Claude** (`LLM_PROVIDER=anthropic`, or `auto` without `GCP_PROJECT`). Unused on Gemini. |
 
 With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.user`) on the project. Locally, run `gcloud auth application-default login` once. If no credentials are found, every AI section fails and `/health/agents` reports the error.
