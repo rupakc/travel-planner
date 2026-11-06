@@ -1191,6 +1191,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#11-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#site-down-app-stuck-starting-netipv4ip_forward-is-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Site down, app stuck starting: net.ipv4.ip_forward is 0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1441,7 +1469,7 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 <li><strong>Logs.</strong> Docker keeps 10 MB × 5 per container on the VM; there is no Cloud Logging agent and so no ingestion bill.</li>
 <li><code>sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs -f app</code></li>
 <li><code>journalctl -u voyager-deploy -u voyager-governor</code></li>
-<li><strong>Host scripts changed</strong> (<code>deploy/gcp/**</code>): re-run <code>infrastructure/gcp/bootstrap.sh --update-host …</code>, then on the VM run <code>sudo google_metadata_script_runner startup</code>. It returns as soon as the bundle is unpacked and <code>compose up -d</code> has applied the changes; units are started with <code>--no-block</code>, so it never waits on itself.</li>
+<li><strong>Host scripts changed</strong> (<code>deploy/gcp/**</code>): re-run <code>infrastructure/gcp/bootstrap.sh --update-host …</code>, then on the VM run <code>sudo google_metadata_script_runner startup</code>. It returns as soon as the bundle is unpacked and <code>compose up -d</code> has applied the changes; units are started with <code>--no-block</code>, so it never waits on itself. <strong>Afterwards check IPv4 forwarding:</strong> <code>cat /proc/sys/net/ipv4/ip_forward</code> must print <code>1</code>, and <code>curl -m 10 https://&lt;host&gt;/health</code> must answer. If it prints <code>0</code>, see <a href="#11-troubleshooting">Troubleshooting</a>.</li>
 <li><strong>Schema changes stay additive.</strong> A rollback must never meet a DB it can't read.</li>
 </ul>
 <h2 id="7-backups-and-restore-drills">7. Backups and restore drills</h2>
@@ -1481,7 +1509,12 @@ sudo systemctl start voyager            # restores from GCS, reseeds place data
 <li>The governor owns <code>DOCKER-USER</code>; don't add rules of your own there.</li>
 <li>Its rules are replaced in <strong>one <code>iptables-restore</code> transaction</strong>, validated first. A rejected ruleset leaves the previous rules in force and sends one email ("egress governor rules FAILED to apply", and another when they apply again). The <code>voyager-governor</code> unit then fails, so it shows in <code>systemctl --failed</code>.</li>
 <li>CI runs the real rules against iptables-nft on Debian 13 for every tier (job <code>host-checks</code>).</li>
+<li>Every tick first checks <code>/proc/sys/net/ipv4/ip_forward</code>, before it reads the egress state, so a corrupt <code>state.json</code> can't stop the check. The check keeps its own small state in <code>/var/lib/voyager/governor/ip_forward.json</code>. If forwarding is <code>0</code>, the governor sets it back to <code>1</code> and logs an error, so a reset costs at most about a minute of downtime. Emails:</li>
+<li>after a successful restore: "net.ipv4.ip_forward was reset to 0; restored to 1", at most one a day;</li>
+<li>when the restore fails: "could NOT be restored", sent at once on the first failure even if a restore email went out shortly before, then repeated at most once a day, plus one email when forwarding is back to <code>1</code>.</li>
 </ul>
+<p>See <a href="#11-troubleshooting">Troubleshooting</a>.
+- Applying the rules also sets the <code>FORWARD</code> policy to <code>DROP</code> when it isn't already. Docker sets <code>DROP</code> only when it turns forwarding on itself, and with <code>99-voyager-docker.conf</code> forwarding is already on at boot. Only the built-in policy is changed; Docker's own chains are left alone. Check with <code>sudo iptables -S FORWARD | head -1</code>, which must print <code>-P FORWARD DROP</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1531,6 +1564,27 @@ sudo /opt/voyager/governor.py close             # close now (by hand)
 <li><strong>Monthly check:</strong> in Billing → Reports, filter on the project. Expect about $3.65 for the IP, cents for snapshots, $0 for egress and Gemini as used. Also check <code>governor.py status</code>, and in GCS that the bucket holds a few MB with no soft-deleted bytes.</li>
 <li><strong>Never add:</strong> a load balancer, Cloud NAT, Cloud Run, Artifact Registry (image scanning), a logging agent, external IPv6, or a second VM.</li>
 <li><strong>SerpAPI</strong> (free plan, 250 searches/month): <code>FARE_WATCH_DAILY_CALL_BUDGET=6</code> in <code>app.env</code>.</li>
+</ul>
+<h2 id="11-troubleshooting">11. Troubleshooting</h2>
+<h3 id="site-down-app-stuck-starting-netipv4ip_forward-is-0">Site down, app stuck starting: <code>net.ipv4.ip_forward</code> is 0</h3>
+<p><strong>Symptoms.</strong> The site doesn't answer on 80/443, the uptime check fires, and the app container hangs in its entrypoint because it can't reach the metadata server or Secret Manager. Docker itself looks healthy.</p>
+<p><strong>Check:</strong></p>
+<pre><code class="language-bash">cat /proc/sys/net/ipv4/ip_forward      # must print 1
+journalctl -u voyager-governor | grep ip_forward
+ls /etc/sysctl.d/                      # 99-voyager-docker.conf must be there
+</code></pre>
+<p><strong>Fix by hand</strong> (the governor does this within a minute):</p>
+<pre><code class="language-bash">sudo sysctl -w net.ipv4.ip_forward=1
+</code></pre>
+<p><strong>Why it happens.</strong> Docker needs IPv4 forwarding for its published ports (DNAT) and for the containers' own outbound traffic. It turns forwarding on only when <code>dockerd</code> starts. The GCE Debian image ships <code>/etc/sysctl.d/60-gce-network-security.conf</code> with <code>net.ipv4.ip_forward=0</code>, so any full sysctl reload under a running Docker turns forwarding off again. That includes <code>sysctl --system</code> and a restart of <code>systemd-sysctl</code>, for example by a package upgrade.</p>
+<p><strong>Incident 2026-11-06, about 17:15 UTC (about 10 minutes down).</strong> Re-running the startup script after <code>--update-host</code> reached <code>sysctl --system</code> in <code>first-boot.sh</code> (<code>configure_memory</code>). That reload re-applied the image's <code>ip_forward=0</code>. Docker was already running, and the re-run doesn't restart it, so forwarding stayed off: the app couldn't fetch its secrets, and inbound traffic was dropped. The hot-fix on the VM was <code>/etc/sysctl.d/99-voyager-docker.conf</code> (<code>net.ipv4.ip_forward=1</code>) plus <code>sysctl --system</code>.</p>
+<p>What prevents it now:</p>
+<ul>
+<li><code>first-boot.sh</code> writes <code>/etc/sysctl.d/99-voyager-docker.conf</code> before anything applies sysctl settings. The file sorts after <code>60-…</code>, so it wins at boot and on every reload.</li>
+<li><code>first-boot.sh</code> applies only its own files (<code>sysctl -p &lt;file&gt;</code>) and never runs <code>sysctl --system</code>.</li>
+<li><code>/etc/apt/apt.conf.d/99-voyager-ipfwd</code>, also written by <code>first-boot.sh</code>, is a <code>DPkg::Post-Invoke</code> hook. After every dpkg run, unattended upgrades included, it re-applies only <code>99-voyager-docker.conf</code>. That covers a package postinst that applies just the image's <code>60-…</code> file, which bypasses the file ordering.</li>
+<li>The governor's per-minute guard sets forwarding back to <code>1</code> and emails you (section 8). It also keeps the <code>FORWARD</code> policy at <code>DROP</code>.</li>
+<li>CI's <code>first_boot_sim.sh</code> (job <code>host-checks</code>) installs the image's <code>60-gce-network-security.conf</code>. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays <code>1</code>. It also runs a real <code>apt-get</code> in which a simulated postinst applies the <code>60-…</code> file alone, and checks that the hook restores <code>1</code>.</li>
 </ul>
 
 
