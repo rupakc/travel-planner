@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, StringConstraints
 
 from ...agents.activities_agent import ActivitiesAgent
+from ...core import llm
 from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.places import fold_place
@@ -92,6 +93,11 @@ async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
         request.taste_context = taste
         agent = ActivitiesAgent(agents_dir=settings.agents_dir)
         result = await agent.run(request)
+        if result.get("error_code") == llm.SPEND_CAP_CODE:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": llm.SPEND_CAP_CODE, "message": llm.SPEND_CAP_MESSAGE},
+            )
         if result.get("error") or not isinstance(result.get("results"), list):
             raise HTTPException(
                 status_code=502,

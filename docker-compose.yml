@@ -6,7 +6,12 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # LLM: Gemini on Vertex AI needs ADC in the container; LLM_PROVIDER=anthropic
+      # with ANTHROPIC_API_KEY needs nothing else
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GCP_PROJECT=${GCP_PROJECT:-}
+      - GCP_LOCATION=${GCP_LOCATION:-global}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-compose}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin-dev-password}
       - DATA_DIR=/data

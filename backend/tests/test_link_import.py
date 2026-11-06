@@ -535,6 +535,20 @@ def test_agent_failure_is_502(client, admin_headers, agent):
     assert r.json()["detail"]["code"] == "extract_failed"
 
 
+def test_spend_cap_is_503_with_the_friendly_message(client, admin_headers, agent):
+    from app.core import llm
+
+    agent.run.return_value = llm.spend_cap_error()
+    r = client.post(
+        "/api/import/extract", json={"text": "Lisbon"}, headers=admin_headers
+    )
+    assert r.status_code == 503
+    assert r.json()["detail"] == {
+        "code": "ai_limit",
+        "message": llm.SPEND_CAP_MESSAGE,
+    }
+
+
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 64
 HEIC = b"\x00\x00\x00\x18ftypheic" + b"\x00" * 64
