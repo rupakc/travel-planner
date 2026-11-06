@@ -23,8 +23,10 @@ jobs:
       # locally and in pre-commit, so formatting never diverges between
       # developer machines and CI.
       - run: pip install -r backend/requirements-dev.txt
-      - run: ruff check backend/
-      - run: ruff format --check backend/
+      - run: ruff check backend/ deploy/ infrastructure/gcp/
+      - run: ruff format --check backend/ deploy/ infrastructure/gcp/
+      # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
+      - run: shellcheck -x deploy/gcp/host/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
@@ -90,6 +92,8 @@ jobs:
         env:
           DATA_DIR: /tmp/test-data
           ADMIN_PASSWORD: test-admin-pw
+      # Egress governor + old-prod migration (pure logic, no root/network)
+      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests infrastructure/gcp/tests
 
   test-frontend:
     runs-on: ubuntu-latest
