@@ -23,6 +23,15 @@ but counted, so it errs towards closing early). It is reboot-safe: a new
 boot id or a counter that went backwards counts the new raw value as the
 delta. State is persisted atomically every tick.
 
+Every tick also guards net.ipv4.ip_forward, which Docker needs for its
+published ports and the containers' own traffic: when something reset it to
+0 (incident 2026-11-06: a full sysctl reload re-applied the GCE image's
+60-gce-network-security.conf), the tick sets it back to 1, logs loudly and
+emails, so an outage lasts at most a minute. The guard runs first, with
+its own state file (ip_forward.json next to state.json), so a corrupt
+egress state never disables it. ``apply`` also keeps FORWARD's policy at
+DROP (Docker sets that only when it enables forwarding itself).
+
 Usage: governor.py tick | apply | status | reopen [--extra-gib N]
                    | seed --gib N | close | mail --subject S --body B
 Config: /etc/voyager/governor.env (KEY=VALUE, optional).
@@ -57,6 +66,8 @@ CHAIN_CLOSE = "VOYAGER-CLOSE"
 CHAIN_GUARD = "VOYAGER-GUARD"
 METADATA_IP = "169.254.169.254"
 CONFIG_FILE = Path("/etc/voyager/governor.env")
+IP_FORWARD = Path("/proc/sys/net/ipv4/ip_forward")
+IP_FORWARD_ALERT_EVERY = 24 * 3600  # seconds between ip_forward emails
 METADATA = "http://metadata.google.internal/computeMetadata/v1"
 
 log = logging.getLogger("voyager-governor")
@@ -385,7 +396,8 @@ def wait_for_docker_user(timeout: float = 60) -> None:
 def apply_rules(cfg: Config, tier: str) -> None:
     """Replace the governor's rules atomically. The ruleset is checked with
     ``iptables-restore --test`` and then committed in one transaction; on
-    any error RulesError is raised and the previous rules stay in force."""
+    any error RulesError is raised and the previous rules stay in force.
+    Then FORWARD's policy is made DROP (ensure_forward_drop)."""
     wait_for_docker_user()
     r = run(ipset_command(cfg), check=False)
     if r.returncode:
@@ -397,12 +409,32 @@ def apply_rules(cfg: Config, tier: str) -> None:
         if r.returncode:
             step = "validation" if extra else "commit"
             raise RulesError(f"iptables-restore {step} failed: {r.stderr.strip()}")
+    ensure_forward_drop()
+
+
+def forward_policy_is_drop() -> bool:
+    out = run(_ipt("-S", "FORWARD"), check=False).stdout
+    return out.splitlines()[:1] == ["-P FORWARD DROP"]
+
+
+def ensure_forward_drop() -> None:
+    """FORWARD's policy must be DROP. Docker sets it only when *it* turns
+    ip_forward on; with 99-voyager-docker.conf forwarding is already on at
+    boot, so Docker leaves ACCEPT. Docker's own FORWARD rules accept its
+    traffic. Only the built-in chain's policy is set; Docker's chains are
+    never touched. Idempotent: no change when it is DROP already."""
+    if forward_policy_is_drop():
+        return
+    r = run(_ipt("-P", "FORWARD", "DROP"), check=False)
+    if r.returncode:
+        raise RulesError(f"iptables -P FORWARD DROP failed: {r.stderr.strip()}")
+    log.warning("FORWARD policy was not DROP: set it to DROP")
 
 
 def rules_in_place(cfg: Config) -> bool:
     """Every jump into our chains is present in DOCKER-USER (Docker may have
-    rebuilt its chains)."""
-    return all(
+    rebuilt its chains), and FORWARD's policy is DROP."""
+    return forward_policy_is_drop() and all(
         run(_ipt("-C", "DOCKER-USER", *spec), check=False).returncode == 0
         for spec in jump_specs(cfg)
     )
@@ -504,7 +536,105 @@ def _state_for_now(cfg: Config) -> dict:
     return state
 
 
+def ip_forward_guard(
+    cfg: Config, guard: dict, now: float, path: Path | None = None
+) -> dict:
+    """Keep net.ipv4.ip_forward at 1. Docker sets it only when dockerd
+    starts; anything that reloads sysctl later (``sysctl --system``,
+    systemd-sysctl) re-applies the GCE image's ip_forward=0, and every
+    container loses its routing (no metadata server, no inbound DNAT).
+
+    ``guard`` is the guard's own small state (not the egress state). On 0:
+    write 1 and log an error.
+      - restored: email, at most once per IP_FORWARD_ALERT_EVERY (a
+        flapping value must not email every minute);
+      - could NOT be restored: always email on the first failure (never held
+        back by an earlier "restored" email), repeats at most once per
+        IP_FORWARD_ALERT_EVERY, and one more email once it is 1 again."""
+    path = path or IP_FORWARD
+    try:
+        value = path.read_text().strip()
+    except OSError as exc:
+        log.error("Cannot read %s: %s", path, exc)
+        return guard
+    if value == "1":
+        if guard.get("error"):
+            log.warning("net.ipv4.ip_forward is 1 again")
+            send_email(cfg, "[voyager] net.ipv4.ip_forward is 1 again", "Recovered.\n")
+        return dict(guard, error=None)
+    try:
+        path.write_text("1\n")
+        healed = path.read_text().strip() == "1"
+        error = None if healed else f"still {path.read_text().strip()} after writing 1"
+    except OSError as exc:
+        healed, error = False, f"{type(exc).__name__}: {exc}"
+    check = "Check: cat /proc/sys/net/ipv4/ip_forward (must be 1); ls /etc/sysctl.d/\n"
+    if healed:
+        log.error(
+            "net.ipv4.ip_forward was %s: set it back to 1. Containers had no "
+            "routing (metadata server, Secret Manager, inbound 80/443) until now",
+            value,
+        )
+        last = guard.get("restored_alerted_at")
+        if last is None or now - last >= IP_FORWARD_ALERT_EVERY:
+            send_email(
+                cfg,
+                "[voyager] net.ipv4.ip_forward was reset to 0; restored to 1",
+                f"The governor found net.ipv4.ip_forward={value} and set it back "
+                "to 1. Until then the containers had no routing: the app could "
+                "not reach the metadata server or Secret Manager, and inbound "
+                "80/443 (DNAT) was dead. Something reloaded sysctl (e.g. "
+                "`sysctl --system`) and re-applied the GCE image's "
+                "60-gce-network-security.conf; /etc/sysctl.d/"
+                "99-voyager-docker.conf should override it.\n\n" + check,
+            )
+            guard = dict(guard, restored_alerted_at=now)
+        return dict(guard, error=None)
+    log.critical(
+        "net.ipv4.ip_forward is %s and could not be set to 1: %s", value, error
+    )
+    last = guard.get("failed_alerted_at")
+    first = not guard.get("error")
+    if first or last is None or now - last >= IP_FORWARD_ALERT_EVERY:
+        send_email(
+            cfg,
+            "[voyager] net.ipv4.ip_forward is 0 and could NOT be restored",
+            f"net.ipv4.ip_forward={value} and writing 1 failed ({error}). Every "
+            "container is cut off. Fix by hand: sudo sysctl -w "
+            "net.ipv4.ip_forward=1\n\n" + check,
+        )
+        guard = dict(guard, failed_alerted_at=now)
+    return dict(guard, error=error)
+
+
+def ip_forward_state_path(cfg: Config) -> Path:
+    return cfg.state_path.with_name("ip_forward.json")
+
+
+def run_ip_forward_guard(cfg: Config, now: float) -> None:
+    """The guard with its own state file, independent of the egress state: a
+    corrupt or unreadable state.json must never disable it. Its own state is
+    only alert bookkeeping, so a corrupt copy is replaced, not fatal."""
+    path = ip_forward_state_path(cfg)
+    try:
+        guard = load_state(path) or {}
+    except (StateError, OSError) as exc:
+        log.error("ip_forward guard state unreadable, starting fresh: %s", exc)
+        guard = {}
+    guard = ip_forward_guard(cfg, guard, now)
+    try:
+        save_state(path, guard)
+    except OSError as exc:
+        log.error("Cannot save %s: %s", path, exc)
+
+
 def cmd_tick(cfg: Config) -> None:
+    # First, before (and independent of) the egress state: without
+    # forwarding the site is down, and nothing below may stop the heal
+    try:
+        run_ip_forward_guard(cfg, time.time())
+    except Exception:
+        log.exception("ip_forward guard failed")
     state = apply_tick(_state_for_now(cfg), read_raw(cfg), read_boot_id(), time.time())
     save_state(cfg.state_path, state)  # counted bytes survive any failure below
     d = decide(state, cfg)

@@ -263,20 +263,35 @@ class FakeHost:
 
         self.restores: list[str] = []  # committed rulesets
         self.reject = False  # iptables-restore rejects the ruleset
+        self.forward_policy = "ACCEPT"  # what Docker leaves when forwarding was on
+        self.policy_fails = False  # iptables -P is refused
+        # /proc/sys/net/ipv4/ip_forward, healthy unless a test says otherwise
+        import tempfile
+
+        self.ip_forward = Path(tempfile.mkdtemp()) / "ip_forward"
+        self.ip_forward.write_text("1\n")
+        monkeypatch.setattr(gov, "IP_FORWARD", self.ip_forward)
 
     def run(self, cmd, check=True, input=None):
         import subprocess
 
         self.cmds.append(cmd)
-        rc = 0
-        if cmd[0] == "iptables-restore":
+        rc, out = 0, ""
+        if cmd[0] == "iptables" and cmd[-2:] == ["-S", "FORWARD"]:
+            out = f"-P FORWARD {self.forward_policy}\n-A FORWARD -j DOCKER-USER\n"
+        elif cmd[0] == "iptables" and "-P" in cmd:
+            if self.policy_fails:
+                rc = 1
+            else:
+                self.forward_policy = cmd[-1]
+        elif cmd[0] == "iptables-restore":
             if self.reject:
                 rc = 2
             elif "--test" not in cmd:
                 self.restores.append(input)
         elif "-C" in cmd:
             rc = 1  # checking a jump that isn't there fails, like iptables
-        return subprocess.CompletedProcess(cmd, rc, stdout="", stderr="bad rule")
+        return subprocess.CompletedProcess(cmd, rc, stdout=out, stderr="bad rule")
 
 
 def test_tick_closes_once_and_persists(monkeypatch, tmp_path, capsys):
@@ -400,6 +415,203 @@ def test_a_rejected_ruleset_keeps_the_old_rules_and_alerts_once(monkeypatch, tmp
     assert len(host.restores) == 2 and "-A VOYAGER-CLOSE" in host.restores[-1]
     assert any("applied again" in e for e in host.emails)
     assert gov.load_state(cfg.state_path)["rules_error"] is None
+
+
+# ── ip_forward guard (incident 2026-11-06) ───────────────────────────────────
+
+
+def test_tick_restores_ip_forward_and_emails_once(monkeypatch, tmp_path, caplog):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    gov.cmd_tick(cfg)
+    assert host.emails == []  # healthy: silent
+    host.ip_forward.write_text("0\n")  # a full sysctl reload re-applied the image's 0
+    gov.cmd_tick(cfg)
+    assert host.ip_forward.read_text().strip() == "1"  # self-healed within a tick
+    assert [e for e in host.emails if "ip_forward" in e] == [
+        "[voyager] net.ipv4.ip_forward was reset to 0; restored to 1"
+    ]
+    assert any(
+        r.levelname == "ERROR" and "ip_forward was 0" in r.getMessage()
+        for r in caplog.records
+    )
+    gov.cmd_tick(cfg)  # stays 1: no more mail
+    assert sum("ip_forward" in e for e in host.emails) == 1
+    # Its bookkeeping lives in its own file, not in the egress state
+    assert "error" in gov.load_state(gov.ip_forward_state_path(cfg))
+    assert not any("ip_forward" in k for k in gov.load_state(cfg.state_path))
+
+
+def test_corrupt_egress_state_never_disables_the_guard(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    cfg.state_path.write_text("{not json")
+    host.ip_forward.write_text("0\n")
+    with pytest.raises(gov.StateError):
+        gov.cmd_tick(cfg)  # the egress part still fails loudly...
+    assert host.ip_forward.read_text().strip() == "1"  # ...but the heal ran first
+    assert any("restored to 1" in e for e in host.emails)
+
+
+def test_corrupt_guard_state_starts_fresh(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    gov.ip_forward_state_path(cfg).write_text("{not json")
+    host.ip_forward.write_text("0\n")
+    gov.cmd_tick(cfg)
+    assert host.ip_forward.read_text().strip() == "1"
+    assert gov.load_state(gov.ip_forward_state_path(cfg))["error"] is None
+
+
+def test_a_crashing_guard_never_stops_the_tick(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    FakeHost(monkeypatch, raw=0)
+
+    def boom(cfg, guard, now, path=None):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(gov, "ip_forward_guard", boom)
+    gov.cmd_tick(cfg)
+    assert gov.load_state(cfg.state_path)["applied_tier"] == "open"
+
+
+def test_ip_forward_reset_again_soon_is_healed_without_another_email(tmp_path):
+    path = tmp_path / "ip_forward"
+    emails = []
+    guard = {}
+    for minute in range(3):  # something keeps resetting it
+        path.write_text("0\n")
+        guard = _guard(guard, path, emails, now=1000 + 60 * minute)
+        assert path.read_text().strip() == "1"
+    assert len(emails) == 1  # throttled
+    path.write_text("0\n")
+    _guard(guard, path, emails, now=1000 + gov.IP_FORWARD_ALERT_EVERY)
+    assert len(emails) == 2  # a day later: mail again
+
+
+def _unwritable(path):
+    path.write_text("0\n")
+    path.chmod(0o444)  # like a read-only /proc/sys
+    try:
+        path.write_text("0\n")
+    except OSError:
+        return
+    pytest.skip("running as root: chmod does not stop the write")
+
+
+def test_ip_forward_that_cannot_be_restored_alerts_once_then_recovers(tmp_path):
+    path = tmp_path / "ip_forward"
+    _unwritable(path)
+    emails = []
+    guard = _guard({}, path, emails, now=1000)
+    assert guard["error"] and "could NOT be restored" in emails[0]
+    guard = _guard(guard, path, emails, now=1060)
+    assert len(emails) == 1  # repeats are throttled
+    guard = _guard(guard, path, emails, now=1000 + gov.IP_FORWARD_ALERT_EVERY)
+    assert len(emails) == 2  # still broken a day later: reminded
+    path.chmod(0o644)
+    path.write_text("1\n")  # an operator fixed it
+    guard = _guard(guard, path, emails, now=1000 + gov.IP_FORWARD_ALERT_EVERY + 60)
+    assert emails[-1] == "[voyager] net.ipv4.ip_forward is 1 again"
+    assert guard["error"] is None
+
+
+def test_restore_failure_alerts_even_right_after_a_restored_email(tmp_path):
+    path = tmp_path / "ip_forward"
+    emails = []
+    path.write_text("0\n")
+    guard = _guard({}, path, emails, now=1000)  # healed: "restored" email
+    assert emails == ["[voyager] net.ipv4.ip_forward was reset to 0; restored to 1"]
+    _unwritable(path)
+    guard = _guard(guard, path, emails, now=1060)  # a minute later: can't heal
+    assert emails[-1] == "[voyager] net.ipv4.ip_forward is 0 and could NOT be restored"
+    path.chmod(0o644)
+    path.write_text("1\n")
+    guard = _guard(guard, path, emails, now=1120)
+    _unwritable(path)
+    _guard(guard, path, emails, now=1180)  # a new failure: a new first alert
+    assert sum("could NOT" in e for e in emails) == 2
+
+
+def test_unreadable_ip_forward_never_breaks_the_tick(tmp_path):
+    guard = _guard({"error": None}, tmp_path / "missing", [], now=1)
+    assert guard == {"error": None}
+
+
+def _guard(guard, path, emails, now):
+    orig = gov.send_email
+    gov.send_email = lambda cfg, subj, body: emails.append(subj)
+    try:
+        return gov.ip_forward_guard(CFG, guard, now, path=path)
+    finally:
+        gov.send_email = orig
+
+
+# ── FORWARD policy DROP ──────────────────────────────────────────────────────
+
+
+def _policy_sets(host):
+    return [c for c in host.cmds if c[0] == "iptables" and "-P" in c]
+
+
+def test_apply_sets_forward_policy_drop_once(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    gov.apply_rules(cfg, "open")
+    assert host.forward_policy == "DROP"
+    assert _policy_sets(host) == [["iptables", "-w", "5", "-P", "FORWARD", "DROP"]]
+    gov.apply_rules(cfg, "open")
+    assert len(_policy_sets(host)) == 1  # idempotent: no change when already DROP
+    # Only the built-in policy: no -A/-D/-F/-X on any chain, Docker's included
+    assert not any(
+        c[0] == "iptables" and set(c) & {"-A", "-D", "-F", "-X", "-I"}
+        for c in host.cmds
+    )
+
+
+def test_forward_policy_back_to_accept_triggers_a_rebuild(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    host_run = host.run
+
+    def run(cmd, check=True, input=None):  # jumps in place
+        import subprocess
+
+        if "-C" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        return host_run(cmd, check, input)
+
+    monkeypatch.setattr(gov, "run", run)
+    gov.cmd_tick(cfg)
+    gov.cmd_tick(cfg)
+    assert len(host.restores) == 1 and host.forward_policy == "DROP"
+    host.forward_policy = "ACCEPT"  # e.g. something reset it
+    gov.cmd_tick(cfg)
+    assert host.forward_policy == "DROP" and len(host.restores) == 2
+
+
+def test_forward_policy_failure_is_a_rules_error(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    host.policy_fails = True
+    with pytest.raises(gov.RulesError, match="FORWARD DROP"):
+        gov.apply_rules(cfg, "open")
+
+
+def test_first_boot_pins_ip_forward_and_never_reloads_all_of_sysctl():
+    import re
+
+    script = (HOST / "first-boot.sh").read_text()
+    assert "sysctl.d/99-voyager-docker.conf" in script
+    assert re.search(r"^net\.ipv4\.ip_forward=1$", script, re.MULTILINE)
+    assert "--system" not in re.sub(r"#[^\n]*", "", script)
+    main = script[script.index("\nmain() {") + 1 :]
+    body = [
+        ln.strip()
+        for ln in main.splitlines()[1:]
+        if ln.strip() and not ln.strip().startswith("#")
+    ]
+    assert body[0] == "configure_network"  # before anything applies sysctl
 
 
 # ── Boot-time unit wiring (no deadlock with the startup script) ─────────────

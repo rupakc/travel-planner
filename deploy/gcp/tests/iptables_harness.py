@@ -41,6 +41,16 @@ def main() -> None:
     sh("iptables", "-N", "DOCKER-USER")
     sh("iptables", "-A", "FORWARD", "-j", "DOCKER-USER")
     sh("iptables", "-A", "FORWARD", "-s", "192.0.2.1/32", "-j", "ACCEPT")
+    # One of Docker's own chains, which the governor must never touch
+    sh("iptables", "-N", "DOCKER-FORWARD")
+    sh("iptables", "-A", "DOCKER-FORWARD", "-o", "br-voyager", "-j", "ACCEPT")
+    sh("iptables", "-A", "FORWARD", "-j", "DOCKER-FORWARD")
+    docker_chain = sh("iptables", "-S", "DOCKER-FORWARD")
+    # ip_forward was already 1 when dockerd started, so it left ACCEPT
+    sh("iptables", "-P", "FORWARD", "ACCEPT")
+    check(
+        not gov.rules_in_place(gov.Config(iface="eth0")), "ACCEPT policy: not in place"
+    )
     print(sh("iptables", "-V").strip())
 
     cfg = gov.Config(iface="eth0", state_path=Path(tempfile.mkdtemp()) / "s.json")
@@ -62,6 +72,27 @@ def main() -> None:
             "-A FORWARD -s 192.0.2.1/32 -j ACCEPT" in sh("iptables", "-S", "FORWARD"),
             f"[{tier}] unrelated rules untouched",
         )
+        check(
+            sh("iptables", "-S", "FORWARD").splitlines()[0] == "-P FORWARD DROP",
+            f"[{tier}] FORWARD policy DROP",
+        )
+        check(
+            sh("iptables", "-S", "DOCKER-FORWARD") == docker_chain,
+            f"[{tier}] Docker's own chain untouched",
+        )
+    # Idempotent: applying again on a DROP policy changes nothing at all
+    snapshot = sh("iptables", "-S")
+    gov.apply_rules(cfg, "open")
+    check(sh("iptables", "-S") == snapshot, "re-apply with DROP already set: no change")
+    # Something resets the policy: no longer in place, and apply restores it
+    sh("iptables", "-P", "FORWARD", "ACCEPT")
+    check(not gov.rules_in_place(cfg), "policy reset to ACCEPT: rules not in place")
+    gov.apply_rules(cfg, "open")
+    check(
+        gov.rules_in_place(cfg)
+        and sh("iptables", "-S", "FORWARD").startswith("-P FORWARD DROP"),
+        "apply restores FORWARD policy DROP",
+    )
     check(
         "! --update-counters" in "".join(chain(gov.CHAIN_EGRESS)),
         "quota check never updates counters",
