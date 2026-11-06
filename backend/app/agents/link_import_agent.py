@@ -128,5 +128,8 @@ class LinkImportAgent(BaseAgent):
             result = await self.execute(prompt)
             source_text = body
         if not isinstance(result, dict) or result.get("error"):
-            return {"error": (result or {}).get("error") or "extraction failed"}
+            error = {"error": (result or {}).get("error") or "extraction failed"}
+            if isinstance(result, dict) and result.get("error_code"):
+                error["error_code"] = result["error_code"]  # e.g. the AI spend cap
+            return error
         return clean_extraction(result, source_text)

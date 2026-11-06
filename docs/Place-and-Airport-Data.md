@@ -146,7 +146,7 @@ Results from the current data:
 
 ### Bare airport codes
 
-The one web path: when a request's origin or destination is a bare 3-letter code that is not in the database or `REPLACED_CODES`, `lookup_iata` runs a DuckDuckGo search plus a Haiku extraction to name the city, and stores the answer (`backend/app/db/database.py`). Everything else is local.
+The one web path: when a request's origin or destination is a bare 3-letter code that is not in the database or `REPLACED_CODES`, `lookup_iata` runs a DuckDuckGo search plus an LLM extraction (agent model, `llm.generate_sync`) to name the city, and stores the answer (`backend/app/db/database.py`). Everything else is local.
 
 ### Folding and shared rules
 

@@ -94,7 +94,7 @@ export function checkImageFile(file, { beforeShrink = false } = {}) {
   if (type === 'image/heic' || type === 'image/heif' || /\.hei[cf]$/.test(name)) {
     return 'iPhone HEIC photos can\'t be read yet — take a screenshot instead (screenshots are PNG), or export it as JPEG.'
   }
-  if (!IMAGE_TYPES.has(type)) return `${file?.name || 'That file'} isn't an image we can read. Use PNG, JPEG, WebP or GIF.`
+  if (!IMAGE_TYPES.has(type)) return `${file?.name || 'That file'} isn't an image we can read. Use PNG, JPEG or WebP.`
   if (beforeShrink) {
     if (file.size > MAX_SOURCE_IMAGE_BYTES) return `${file.name || 'That image'} is too big to read here (over 40 MB). Crop it or save it smaller.`
     return null

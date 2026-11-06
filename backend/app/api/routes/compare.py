@@ -9,6 +9,7 @@ from ...agents.hotels_agent import HotelsAgent
 from ...agents.static_results import get_confidence_score, get_static_visa
 from ...agents.visa_agent import VisaAgent
 from ...agents.weather_agent import WeatherAgent
+from ...core import llm
 from ...core.auth import get_current_user
 from ...core.cache import get_cache
 from ...core.config import settings
@@ -59,8 +60,11 @@ def get_visa_agent() -> VisaAgent:
     return _visa_agent
 
 
-async def _piece(name: str, coro, timeout: float) -> dict | None:
-    """Await one agent call; None on timeout, exception or an error result."""
+async def _piece(
+    name: str, coro, timeout: float, paused: list | None = None
+) -> dict | None:
+    """Await one agent call; None on timeout, exception or an error result.
+    A user-facing AI error (spend cap, billing off) is added to ``paused``."""
     try:
         result = await asyncio.wait_for(coro, timeout=timeout)
     except TimeoutError:
@@ -71,6 +75,8 @@ async def _piece(name: str, coro, timeout: float) -> dict | None:
         return None
     if not isinstance(result, dict) or result.get("error"):
         logger.warning("Compare %s returned an error result", name)
+        if paused is not None and llm.user_error(result):
+            paused.append(result)
         return None
     return result
 
@@ -104,13 +110,18 @@ async def compare_destination(
     visa_task = (
         visa_agent.run(request) if visa_agent else asyncio.sleep(0, result=static_visa)
     )
+    paused: list[dict] = []
     flights, hotels, weather, visa = await asyncio.gather(
-        _piece("flights", flights_agent.run(request), _FLIGHTS_TIMEOUT),
-        _piece("hotels", hotels_agent.run(request), _HOTELS_TIMEOUT),
-        _piece("weather", weather_agent.run(request), _WEATHER_TIMEOUT),
-        _piece("visa", visa_task, _VISA_TIMEOUT),
+        _piece("flights", flights_agent.run(request), _FLIGHTS_TIMEOUT, paused),
+        _piece("hotels", hotels_agent.run(request), _HOTELS_TIMEOUT, paused),
+        _piece("weather", weather_agent.run(request), _WEATHER_TIMEOUT, paused),
+        _piece("visa", visa_task, _VISA_TIMEOUT, paused),
     )
 
+    # AI paused (spend cap, billing off): say so instead of a generic failure,
+    # even when live/static data filled a few cells
+    if paused:
+        raise HTTPException(status_code=503, detail=paused[0]["error"])
     if all(p is None for p in (flights, hotels, weather, visa)):
         raise HTTPException(
             status_code=502, detail="Couldn't load this destination — please retry"

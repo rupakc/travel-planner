@@ -90,6 +90,11 @@ async def lifespan(app: FastAPI):
     create_notifications_table()
     create_devices_table()
     price_watch.register_builtin_sources()
+    from .core import llm
+
+    # Resolves LLM_PROVIDER=auto once and logs it; a thinking level the Gemini
+    # model rejects stops startup here instead of failing every call
+    llm.log_provider()
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
@@ -100,6 +105,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     await fare_watch.stop_scheduler(fare_watch_task)
+    await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled
     # SIGTERM: force=True always uploads our current state regardless of GCS generation.
     # This is safe — the dying instance holds the most up-to-date data.
@@ -240,10 +246,10 @@ app.include_router(
 @app.get("/health/agents")
 async def health_agents():
     """Deep health: verifies the LLM pipeline actually works from this
-    instance (one tiny Haiku call, cached 5 min so it can't be abused).
-    Lets operators distinguish 'backend up' from 'agents can run'."""
-    import anthropic
-
+    instance (one tiny call to the configured provider, cached 5 min so it
+    can't be abused). Lets operators distinguish 'backend up' from 'agents
+    can run'."""
+    from .core import llm as llm_client
     from .core.cache import get_cache
 
     cache = get_cache()
@@ -251,19 +257,23 @@ async def health_agents():
     if cached:
         return cached
     try:
-        client = anthropic.AsyncAnthropic(
-            api_key=_settings.anthropic_api_key, max_retries=0, timeout=15
-        )
-        resp = await client.messages.create(
-            model="claude-haiku-4-5-20251001",
+        resp = await llm_client.generate(
+            [{"role": "user", "content": "Reply with the word OK"}],
             max_tokens=8,
-            messages=[{"role": "user", "content": "Reply with the word OK"}],
+            label="health",
+            timeout=15,
+            retries=False,
         )
-        llm = "ok" if resp.content else "empty-response"
-    except Exception as e:
-        llm = f"error: {type(e).__name__}"
+        llm = "ok" if resp.text else "empty-response"
+    except llm_client.LLMError as e:
+        llm = {
+            llm_client.SPEND_CAP_CODE: "spend-cap",
+            llm_client.BILLING_CODE: "billing-disabled",
+        }.get(e.user_code) or f"error: {type(e.__cause__ or e).__name__}"
     result = {
         "llm": llm,
+        "llm_provider": llm_client.provider(),
+        "llm_provider_reason": llm_client.provider_reason(),
         "serpapi_configured": bool(_settings.serpapi_key),
         "backup_configured": bool(_settings.backup_bucket),
     }

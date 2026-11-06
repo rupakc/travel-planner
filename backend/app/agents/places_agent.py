@@ -1,4 +1,4 @@
-"""Places-to-see agent — Serper Google data + Claude synthesis."""
+"""Places-to-see agent — Serper Google data + LLM synthesis."""
 
 from __future__ import annotations
 
@@ -94,7 +94,7 @@ class PlacesAgent(ToolAgent):
         if request.serendipity_context:
             prompt += f"\n{request.serendipity_context}"
 
-        # Claude synthesises Serper + internal knowledge → structured JSON
+        # The model synthesises Serper + internal knowledge → structured JSON
         result = strip_link_verified(await self.execute(prompt))
         if result.get("error"):
             return result
