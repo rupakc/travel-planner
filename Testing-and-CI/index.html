@@ -1353,13 +1353,14 @@ mkdocs build --strict      # or: mkdocs serve
 </ol>
 <p>Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label <code>io.voyager.build</code> (the workflow run number), and the VM refuses an image from an older run than the one it is running.</p>
 <p>It has no GCP or VM credentials: the VM pulls and verifies by itself (see <a href="../Deployment-GCP/#6-day-to-day-deploys-and-rollback">Deployment on GCP</a>).</p>
-<p>The <code>host-checks</code> job runs <code>deploy/gcp/tests/host_checks.sh</code> in <code>debian:trixie</code> (pinned by digest, <code>NET_ADMIN</code>). It checks three things:</p>
+<p>The <code>host-checks</code> job runs <code>deploy/gcp/tests/host_checks.sh</code> in <code>debian:trixie</code> (pinned by digest, <code>NET_ADMIN</code>). It checks four things:</p>
 <ol>
 <li><strong>Governor rules:</strong> the real rules on iptables-nft for every tier, and that a rejected ruleset leaves the old rules intact.</li>
-<li><strong>Deployer:</strong> <code>deploy.sh</code> end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal.</li>
+<li><strong>Deployer:</strong> <code>deploy.sh</code> end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal. Also that the first deploy starts <code>voyager.service</code> (with <code>--no-block</code>) and a stopped unit is started again.</li>
+<li><strong>First boot:</strong> <code>first-boot.sh</code> for real with fake curl, docker and systemctl (<code>first_boot_sim.sh</code>), on a first and a later boot: <code>voyager.service</code> ends up active, voyager units are only started with <code>--no-block</code>, and the bundle (built by <code>bootstrap.sh</code>) unpacks without tar warnings.</li>
 <li><strong>systemd units:</strong> <code>systemd-analyze verify</code>.</li>
 </ol>
-<p>The image build waits for it. CI also runs <code>shellcheck</code> on <code>deploy/gcp/host/*.sh</code> and <code>infrastructure/gcp/*.sh</code>, ruff on <code>deploy/</code> and <code>infrastructure/gcp/</code>, and the tests in <code>deploy/gcp/tests</code> (egress governor) and <code>infrastructure/gcp/tests</code> (old-prod migration).</p>
+<p>The image build waits for it. CI also runs <code>shellcheck</code> on <code>deploy/gcp/host/*.sh</code> and <code>infrastructure/gcp/*.sh</code>, ruff on <code>deploy/</code> and <code>infrastructure/gcp/</code>, and the tests in <code>deploy/gcp/tests</code> (egress governor) and <code>infrastructure/gcp/tests</code> (old-prod migration; <code>bootstrap.sh</code> against stub gcloud/curl: dry run calls nothing, beta preflight, billing quota project, clean sorted host bundle).</p>
 
 
 
