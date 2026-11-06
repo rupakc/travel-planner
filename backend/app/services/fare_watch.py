@@ -17,6 +17,7 @@ from datetime import UTC, date, datetime, timedelta
 from ..core.cache import fresh_reads
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
+from ..db.database import airport_city
 from ..schemas.request import TravelSearchRequest
 from . import price_rules, push, serp_flights
 from .serp_flights import SerpAPIError
@@ -69,8 +70,9 @@ class CheckOutcome:
 
 
 def _city(label: str | None, code: str) -> str:
-    name = (label or "").split(",")[0].strip()
-    return name or code.split(",")[0]
+    name = (label or "").split(",")[0].strip() or code.split(",")[0]
+    # a label that is itself an airport code ("LIS") reads as its city
+    return airport_city(name)
 
 
 def route_label(watch: dict) -> str:

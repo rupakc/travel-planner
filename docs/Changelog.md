@@ -7,6 +7,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 ## Unreleased: fixes from the Android end-to-end run
 
 - **Check now is live.** `POST /api/fare-watches/{id}/check` and `POST /api/price-watches/{id}/check` no longer answer from the 30-minute result cache, so pressing Check now can show a new price; the fresh answer refreshes the cache. Their SerpAPI calls are reserved from the daily budget and the owner's share as before (a Check now right after a search is no longer free). Scheduled checks and a new watch's baseline still reuse cached prices (`core/cache.fresh_reads`).
+- **Fare alerts name cities.** A fare watch whose labels are bare airport codes (as the Android app saves them, "JFK" → "LIS") now reads "New York → Lisbon" in alert titles, emails and pushes, using the local airport data; an unknown code stays as it is.
 - **Chat plan commands know the items.** The plan-command model now sees a compact, bounded line per flight, hotel and activity (name, price, rating…, with a ref) instead of only counts, so "add the cheapest hotel" works; the server fills the full result item in from the ref.
 - **Hotel alert numbers agree.** A Google nightly rate on another taxes basis than the stay's total (e.g. $73.60 a night before taxes next to $294 for 3 nights with taxes) is replaced by the total's per-night share, and hotel drop/target alerts (in-app, email and push) now read "That's the total for 3 nights, 2 guests ($98 a night) on Google Hotels, taxes and fees included.", as on the Alerts page.
 
