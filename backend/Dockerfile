@@ -12,6 +12,12 @@ COPY backend/ ./
 # Copy agent definitions (project root .agents/ → /app/.agents/)
 COPY .agents/ .agents/
 
+# Non-root (uid 10001). /data is the DB mount point: a fresh named volume
+# inherits this ownership; on the VM first-boot.sh chowns the host directory.
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin voyager \
+    && mkdir -p /data && chown voyager:voyager /data
+USER 10001
+
 EXPOSE 8001
 
 # Entrypoint: optional Secret Manager secrets into the process env, refuses an
