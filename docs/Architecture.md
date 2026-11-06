@@ -195,7 +195,7 @@ The Android app (its own repository) is a second client of the same API: it sign
 
 ## Cache
 
-One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE_MAXSIZE` 500, TTL `CACHE_TTL_SECONDS` 1800) holds full search runs, discover and compare results (complete ones only), the `/health/agents` result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart. Near me results have their own one-hour cache (`api/routes/nearby.py`).
+One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE_MAXSIZE` 500, TTL `CACHE_TTL_SECONDS` 1800) holds full search runs, discover and compare results (complete ones only), the `/health/agents` result, SerpAPI flight results and per-date calendar fares, activity and place link resolutions, Serper places data and walking-tour crawls. It does not survive a restart. Inside `fresh_reads()` (a watch's "Check now") `get_cache()` returns a view in which older entries are misses, so the look is live, and what it fetches is written back for everyone. Near me results have their own one-hour cache (`api/routes/nearby.py`).
 
 ---
 

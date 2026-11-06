@@ -14,6 +14,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
+from ..core.cache import fresh_reads
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
 from ..schemas.request import TravelSearchRequest
@@ -461,6 +462,31 @@ def _notify(watch: dict, note: dict, now: datetime) -> dict:
 
 
 async def check_watch(
+    watch_id: int,
+    *,
+    now: datetime,
+    api_key: str,
+    fetch: Callable[[dict, str], Awaitable[FareCheck]] | None = None,
+    rand: Callable[[], float] = random.random,
+    manual: bool = False,
+    fresh: bool = False,
+) -> CheckOutcome:
+    """Check one watch now and persist the result (``_check_watch``).
+
+    ``fresh`` ("Check now") ignores fares already in the shared 30-minute
+    cache, so the look is live and refreshes the cache; its calls are
+    reserved from the daily budget and the owner's share exactly as any
+    other look's. Scheduled checks and a new watch's baseline reuse cached
+    fares (cached answers are free).
+    """
+    kwargs = dict(now=now, api_key=api_key, fetch=fetch, rand=rand, manual=manual)
+    if fresh:
+        with fresh_reads():
+            return await _check_watch(watch_id, **kwargs)
+    return await _check_watch(watch_id, **kwargs)
+
+
+async def _check_watch(
     watch_id: int,
     *,
     now: datetime,

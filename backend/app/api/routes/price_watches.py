@@ -443,7 +443,8 @@ def delete_price_watch(watch_id: int, user: dict = Depends(get_current_user)):
     dependencies=[Depends(rate_limit("light_ai"))],
 )
 async def check_price_watch_now(watch_id: int, user: dict = Depends(get_current_user)):
-    """ "Check now": one live look, subject to the daily SerpAPI budget."""
+    """ "Check now": one live look (never the 30-minute cache; the answer
+    refreshes it), subject to the daily SerpAPI budget and the owner's share."""
     watch = _owned(watch_id, user)
     _require_live_prices()
     if watch["status"] == "expired":
@@ -455,7 +456,7 @@ async def check_price_watch_now(watch_id: int, user: dict = Depends(get_current_
             detail="We're checking this price right now — give it a moment.",
         )
     outcome = await price_watch.check_watch(
-        watch_id, now=now, api_key=settings.serpapi_key, manual=True
+        watch_id, now=now, api_key=settings.serpapi_key, manual=True, fresh=True
     )
     if outcome.status == "budget_exhausted":
         raise _busy(now, outcome.reason or "global")

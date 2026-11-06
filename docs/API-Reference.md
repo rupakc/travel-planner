@@ -626,7 +626,7 @@ Deletes the watch and its history. Returns `{"deleted": true}`.
 
 ### POST /api/fare-watches/{id}/check
 
-"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. Returns the watch plus `check_status` (`checked`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification` (the alert this check created, or `null`). `429` with `Retry-After` (seconds to the next UTC day) when today's fare-watch budget, or the caller's share of it (`FARE_WATCH_USER_DAILY_SHARE`), is spent — the `detail` says which; `409` while the watch is being checked or after it expired; `503` without SerpAPI. Rate-limited (light_ai).
+"Check now": one live check (also on a paused watch), with the same alert rules as scheduled checks. It never answers from the 30-minute result cache (fares a search or an earlier check left there are looked up again, and the fresh answer replaces them); its SerpAPI calls are reserved from the daily budget and the caller's share like any other check, so it is never free. A new watch's baseline and scheduled checks still reuse cached fares. Returns the watch plus `check_status` (`checked`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification` (the alert this check created, or `null`). `429` with `Retry-After` (seconds to the next UTC day) when today's fare-watch budget, or the caller's share of it (`FARE_WATCH_USER_DAILY_SHARE`), is spent — the `detail` says which; `409` while the watch is being checked or after it expired; `503` without SerpAPI. Rate-limited (light_ai).
 
 ### GET /api/fare-watches/unsubscribe?token=
 
@@ -710,7 +710,7 @@ Deletes the watch and its history. Returns `{"deleted": true}`.
 
 ### POST /api/price-watches/{id}/check
 
-"Check now" (also on a paused watch). Returns the watch plus `check_status` (`checked`, `unavailable`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification`. `429` / `409` / `503` as for fare watches. Rate-limited (light_ai).
+"Check now" (also on a paused watch). Like the fare-watch check, it never answers from the 30-minute cache: the look is live, refreshes the cache, and its calls count against the daily budget and the caller's share. Returns the watch plus `check_status` (`checked`, `unavailable`, `failed`, `errored`, `postponed`, `expired`, `skipped`, `deleted`) and `notification`. `429` / `409` / `503` as for fare watches. Rate-limited (light_ai).
 
 ### GET, POST /api/price-watches/unsubscribe?token=
 

@@ -253,7 +253,7 @@ def test_check_now_drop_alerts_with_hotel_copy_and_email(client, monkeypatch):
     text = msg.get_body(("plain",)).get_content()
     assert "Hotel price watch" in msg.get_body(("html",)).get_content()
     assert "$368 → $322" in text
-    assert "a night for 4 nights, 2 guests" in text
+    assert "the total for 4 nights, 2 guests ($80.50 a night)" in text
     assert "Lumen Hotel & The Lisbon Light Show · 10–14 Dec · 2 guests · 1 room" in text
     assert "https://www.lumenhotel.pt/" in text
     assert notifications_db.list_notifications(u["id"])["items"][0]["emailed_at"]
@@ -418,3 +418,71 @@ def test_hotel_watch_keeps_only_the_callers_own_plan_id(client):
         client, ha, hotel=_hotel(adults=3, plan_id=other["id"])
     )  # bob's plan, inside the spec
     assert w3["plan_id"] is None
+
+
+# ── Check now skips the 30-minute cache (E2E finding O6) ──────────────────────
+
+
+def _create_lumen_keep_cache(client, h, **over):
+    with serp(
+        load("named_search_lumen_single_property.json"),
+        load("property_details_lumen_generic_q.json"),
+    ):
+        r = _create(client, h, **over)
+    assert r.status_code == 200, r.text
+    return r.json()  # the $368 look stays in the shared cache
+
+
+def test_check_now_goes_live_despite_a_cached_look(client):
+    _, h = _user()
+    w = _create_lumen_keep_cache(client, h)
+    assert hotel_prices.price_is_cached(LUMEN_TOKEN, "2026-12-10", "2026-12-14", 2)
+    day = NOW.date().isoformat()
+    used = fare_watch_db.calls_used(day)
+    with serp(lumen_at(322, 80.5)) as call:
+        res = client.post(f"/api/price-watches/{w['id']}/check", headers=h).json()
+    assert call.await_count == 1  # live, not the cached $368
+    assert res["check_status"] == "checked"
+    assert res["last_price"] == 322.0
+    assert res["notification"]["kind"] == "hotel_drop"
+    assert fare_watch_db.calls_used(day) == used + 1  # charged as any live look
+
+
+async def test_check_now_refreshes_the_cache_for_scheduled_checks(client):
+    _, h = _user()
+    w = _create_lumen_keep_cache(client, h)
+    with serp(lumen_at(322, 80.5)):
+        client.post(f"/api/price-watches/{w['id']}/check", headers=h)
+    # A scheduled look within the cache TTL reuses the fresh answer: free
+    day = NOW.date().isoformat()
+    used = fare_watch_db.calls_used(day)
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE price_watches SET next_check_at = ? WHERE id = ?",
+            (NOW.isoformat(), w["id"]),
+        )
+    assert price_watch_db.claim_watch(w["id"], NOW, NOW + price_watch.LEASE)
+    with serp() as call:
+        outcome = await price_watch.check_watch(
+            w["id"], now=NOW, api_key="test-key", rand=lambda: 0.5
+        )
+    assert call.await_count == 0
+    assert outcome.status == "checked"
+    assert price_watch_db.get_watch(w["id"])["last_price"] == 322.0
+    assert fare_watch_db.calls_used(day) == used
+
+
+def test_check_now_out_of_budget_spends_nothing_even_with_a_cached_look(
+    client, monkeypatch
+):
+    _, h = _user()
+    w = _create_lumen_keep_cache(client, h)
+    day = NOW.date().isoformat()
+    monkeypatch.setattr(
+        settings, "fare_watch_daily_call_budget", fare_watch_db.calls_used(day)
+    )
+    with serp() as call:
+        r = client.post(f"/api/price-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 429 and "Retry-After" in r.headers
+    assert call.await_count == 0
+    assert price_watch_db.get_watch(w["id"])["last_price"] == 368.0

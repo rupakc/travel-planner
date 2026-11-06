@@ -791,3 +791,32 @@ def test_create_says_when_google_already_calls_it_low(client, alice):
     serp_flights._call.return_value = _serp([480.0], level="low")
     w = _create(client, alice[1]).json()
     assert w["already_low"] is True
+
+
+# ── Check now skips the 30-minute cache (E2E finding O6) ──────────────────────
+
+
+def test_check_now_goes_live_despite_cached_fares(client, alice, monkeypatch):
+    _, h = alice
+    w = _create(client, h).json()  # its $480 look stays cached
+    assert serp_flights._call.call_count == 1
+    used = fare_watch_db.calls_used(NOW.date().isoformat())
+    serp_flights._call.return_value = _serp([430.0])
+    r = client.post(f"/api/fare-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 200, r.text
+    assert serp_flights._call.call_count == 2  # live, not the cached $480
+    assert r.json()["last_price"] == 430.0
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == used + 1
+
+
+def test_check_now_with_cached_fares_still_needs_budget(client, alice, monkeypatch):
+    _, h = alice
+    w = _create(client, h).json()
+    monkeypatch.setattr(
+        settings,
+        "fare_watch_daily_call_budget",
+        fare_watch_db.calls_used(NOW.date().isoformat()),
+    )
+    r = client.post(f"/api/fare-watches/{w['id']}/check", headers=h)
+    assert r.status_code == 429 and "Retry-After" in r.headers
+    assert serp_flights._call.call_count == 1  # only the baseline

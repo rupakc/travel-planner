@@ -4,6 +4,12 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: fixes from the Android end-to-end run
+
+- **Check now is live.** `POST /api/fare-watches/{id}/check` and `POST /api/price-watches/{id}/check` no longer answer from the 30-minute result cache, so pressing Check now can show a new price; the fresh answer refreshes the cache. Their SerpAPI calls are reserved from the daily budget and the owner's share as before (a Check now right after a search is no longer free). Scheduled checks and a new watch's baseline still reuse cached prices (`core/cache.fresh_reads`).
+- **Chat plan commands know the items.** The plan-command model now sees a compact, bounded line per flight, hotel and activity (name, price, rating…, with a ref) instead of only counts, so "add the cheapest hotel" works; the server fills the full result item in from the ref.
+- **Hotel alert numbers agree.** A Google nightly rate on another taxes basis than the stay's total (e.g. $73.60 a night before taxes next to $294 for 3 nights with taxes) is replaced by the total's per-night share, and hotel drop/target alerts (in-app, email and push) now read "That's the total for 3 nights, 2 guests ($98 a night) on Google Hotels, taxes and fees included.", as on the Alerts page.
+
 ## Unreleased: backend for the Android app
 
 - Push alerts: `POST /api/devices`, `GET /api/devices`, `DELETE /api/devices/{id}` and `POST /api/devices/unregister` (sign-out) manage the app's FCM tokens (table `devices`, at most 20 per user, tokens shown masked and never in URLs). With `FCM_SERVICE_ACCOUNT_FILE` set, every new fare- or price-watch notification is also pushed to the owner's devices over FCM HTTP v1 in the background as data-only messages (data `title`, `body`, `kind`, `notification_id`, `link`; the app builds the notification itself), only tokens FCM reports as dead are pruned, and failures never affect the alert. `/health` reports `push_configured`. `google-auth` is now a direct dependency.
