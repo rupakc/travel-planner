@@ -1,12 +1,19 @@
-"""Near me (Android app): the nearest known place to a coordinate, then the
-existing activities agent for it — same item shape as /api/activities."""
+"""Near me: the nearest known place to a coordinate, then either
 
+- v1 (no ``sections``; the installed Android app): the existing activities
+  agent for it — same item shape as /api/activities, cached per ~5 km cell;
+- v2 (``sections: true``): one Gemini call grounded with Google Maps around
+  the coordinate — places to see / eat / shop / stay, each with its Google
+  Maps link (services/nearby_grounded.py). Never cached: Google's Maps
+  grounding terms allow results only for the user who asked."""
+
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 from ...agents.activities_agent import ActivitiesAgent
 from ...core import llm
@@ -17,9 +24,16 @@ from ...db.places_db import nearest_place
 from ...db.preferences_db import get_preferences
 from ...db.taste_db import derive_taste_context
 from ...schemas.request import TravelSearchRequest
+from ...services import nearby_grounded
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
+V1_DEFAULT_LIMIT = 8
+V2_DEFAULT_LIMIT = 6
+V2_MAX_LIMIT = 10
+# Per model call (a retry may add a second): the user is waiting on a screen
+V2_TIMEOUT_S = 45
 CELL_DEGREES = 0.05  # ~5 km: one cache entry per cell
 # Per (cell, place, interests, taste): an hour, longer than the shared
 # 30-minute search cache — what's near a spot changes slowly
@@ -38,7 +52,26 @@ class NearbyRequest(BaseModel):
         ]
         | None
     ) = Field(None, max_length=20)
-    limit: int = Field(8, ge=1, le=20)
+    # v1: 1..20, default 8; v2: per section, 1..10, default 6
+    limit: int | None = Field(None, ge=1, le=20)
+    sections: bool = False
+    language: (
+        Annotated[
+            str,
+            StringConstraints(
+                min_length=2,
+                max_length=35,
+                pattern=r"^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8}){0,3}$",
+            ),
+        ]
+        | None
+    ) = None
+
+    @model_validator(mode="after")
+    def _v2_limit(self):
+        if self.sections and self.limit is not None and self.limit > V2_MAX_LIMIT:
+            raise ValueError(f"limit must be at most {V2_MAX_LIMIT} per section")
+        return self
 
 
 def _cell(value: float) -> str:
@@ -55,6 +88,77 @@ def _label(place: dict) -> str:
     return ", ".join([*parts, place["country"]])
 
 
+def _agent_error() -> HTTPException:
+    return HTTPException(
+        status_code=502,
+        detail={
+            "code": "agent_error",
+            "message": "We couldn't find things to do nearby. Try again.",
+        },
+    )
+
+
+async def _sections(body: NearbyRequest, place: dict, user: dict) -> dict:
+    """v2. One Maps-grounded call for all four sections, not one per
+    section: every Maps query the model issues is billed past the free tier,
+    and our estimate is ~8 queries for one combined prompt against ~12 for
+    four calls (plus 4x the prompt tokens and 4x the latency risk). The
+    combined prompt with one heading per group grounded in every real test
+    call; items map to chunks through the grounding supports (then by name),
+    and a name without a chunk is simply dropped. Nothing is cached or
+    stored (Maps grounding terms)."""
+    limit = body.limit or V2_DEFAULT_LIMIT
+    interests = (
+        body.interests or get_preferences(user["username"]).get("interests") or []
+    )
+    system, prompt = nearby_grounded.build_prompt(
+        _label(place),
+        body.lat,
+        body.lng,
+        limit,
+        interests,
+        today=datetime.now(UTC).date().isoformat(),
+    )
+    try:
+        out = None
+        # Google sometimes attaches no Maps chunks even though the model
+        # queried Maps; without them nothing can be shown, so retry once (not
+        # for an empty answer: the model had nothing to say)
+        for attempt in (1, 2):
+            out = await llm.generate_grounded(
+                prompt,
+                tool="maps",
+                system=system,
+                lat=body.lat,
+                lng=body.lng,
+                language=body.language or "en",
+                label="nearby_maps",
+                timeout=V2_TIMEOUT_S,
+            )
+            if (
+                nearby_grounded.maps_chunk_count(out.chunks)
+                or not out.text.strip()
+                or attempt == 2
+            ):
+                break
+            logger.info("nearby_maps: no Maps grounding chunks, retrying once")
+    except llm.LLMError as e:
+        if e.user_facing:
+            raise HTTPException(
+                status_code=503, detail={"code": e.user_code, "message": str(e)}
+            ) from e
+        raise _agent_error() from e
+    sections, sources = nearby_grounded.parse_sections(
+        out.text, out.chunks, limit, out.supports
+    )
+    return {
+        "place": place,
+        "sections": sections,
+        "attribution": "Google Maps",
+        "sources": sources,
+    }
+
+
 @router.post("/nearby")
 async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
     place = nearest_place(body.lat, body.lng)
@@ -66,6 +170,8 @@ async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
                 "message": "We don't know a town or city near you yet.",
             },
         )
+    if body.sections:
+        return await _sections(body, place, user)
     prefs = get_preferences(user["username"])
     interests = body.interests or prefs.get("interests") or []
     taste = derive_taste_context(user["username"])
@@ -99,16 +205,10 @@ async def nearby(body: NearbyRequest, user: dict = Depends(get_current_user)):
                 detail={"code": paused["error_code"], "message": paused["error"]},
             )
         if result.get("error") or not isinstance(result.get("results"), list):
-            raise HTTPException(
-                status_code=502,
-                detail={
-                    "code": "agent_error",
-                    "message": "We couldn't find things to do nearby. Try again.",
-                },
-            )
+            raise _agent_error()
         items = result["results"]
         _cache[key] = items
     return {
         "place": place,
-        "items": items[: body.limit],
+        "items": items[: body.limit or V1_DEFAULT_LIMIT],
     }
