@@ -22,8 +22,9 @@
 #   backup bucket (us-east1, uniform access, PAP, no soft delete, capped
 #   versioning, 30-day noncurrent lifecycle)
 #   Secret Manager secrets, created EMPTY (you add versions; see the runbook)
-#   budget: $10 total (pre-tax) with 50/90/100 % + forecast alerts;
-#   spend cap: $20/month on Gemini Enterprise Agent Platform (Vertex AI)
+#   budget "Voyager total (alerts)": ₹2,300/month (pre-tax), 50/90/100 % +
+#   forecast alerts; "Voyager Gemini spend cap": ₹1,800/month hard cap on
+#   Gemini Enterprise Agent Platform (Vertex AI). Skipped when they exist.
 #   uptime check on https://<host>/health matching "backup_ok":true + email alert
 #   Workload Identity Federation pool/provider for rupakc/travel-planner,
 #   refs/heads/main, push events only
@@ -60,12 +61,20 @@ IP_NAME="${IP_NAME:-voyager-ip}"
 BUCKET="${BUCKET:-$PROJECT_ID-voyager-backup}"
 GITHUB_REPO="${GITHUB_REPO:-rupakc/travel-planner}"
 ACME_EMAIL="${ACME_EMAIL:-$ALERT_EMAIL}"
-TOTAL_BUDGET="${TOTAL_BUDGET:-10}"
-AI_SPEND_CAP="${AI_SPEND_CAP:-20}"
+# Amounts are in the billing account's currency. The voyager billing account
+# is in INR: ₹2,300 ≈ \$27 total alerts, ₹1,800 ≈ \$21 Gemini hard cap.
+# Both budgets already exist there (created in the console, 2026-11-06); they
+# are found by display name and never duplicated.
+BUDGET_CURRENCY="${BUDGET_CURRENCY:-INR}"
+TOTAL_BUDGET="${TOTAL_BUDGET:-2300}"
+AI_SPEND_CAP="${AI_SPEND_CAP:-1800}"
+TOTAL_BUDGET_NAME="${TOTAL_BUDGET_NAME:-Voyager total (alerts)}"
+AI_CAP_NAME="${AI_CAP_NAME:-Voyager Gemini spend cap}"
 # Gemini Enterprise Agent Platform (formerly Vertex AI), from
 # https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps
 AI_SERVICE_ID="${AI_SERVICE_ID:-C7E2-9256-1C43}"
-SECRETS=(jwt-secret-key admin-password anthropic-api-key serpapi-key serper-key smtp-password)
+# No anthropic-api-key: production uses Gemini on Vertex AI via the VM's SA
+SECRETS=(jwt-secret-key admin-password serpapi-key serper-key smtp-password)
 RUNTIME_SA="vm-runtime@$PROJECT_ID.iam.gserviceaccount.com"
 CI_SA="ci-publisher@$PROJECT_ID.iam.gserviceaccount.com"
 IAP_RANGE="35.235.240.0/20"
@@ -265,7 +274,7 @@ update_host() {
 }
 
 budgets() {
-  say "Budgets: \$$TOTAL_BUDGET total (pre-tax) + \$$AI_SPEND_CAP spend cap on Agent Platform"
+  say "Budgets: $TOTAL_BUDGET $BUDGET_CURRENCY total (pre-tax) + $AI_SPEND_CAP $BUDGET_CURRENCY spend cap on Agent Platform"
   local existing="" number
   if ((!DRY_RUN)); then
     existing="$(gcloud billing budgets list --billing-account="$BILLING_ACCOUNT" \
@@ -274,17 +283,17 @@ budgets() {
   else
     number="PROJECT_NUMBER"
   fi
-  if grep -qx "voyager-total" <<<"$existing"; then
-    echo "  voyager-total exists"
+  if grep -qxF "$TOTAL_BUDGET_NAME" <<<"$existing"; then
+    echo "  '$TOTAL_BUDGET_NAME' exists: left as is"
   else
     run gcloud billing budgets create --billing-account="$BILLING_ACCOUNT" \
-      --display-name=voyager-total --budget-amount="$TOTAL_BUDGET" \
+      --display-name="$TOTAL_BUDGET_NAME" --budget-amount="$TOTAL_BUDGET$BUDGET_CURRENCY" \
       --filter-projects="projects/$number" --calendar-period=month \
       --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 \
       --threshold-rule=percent=1.0 --threshold-rule=percent=1.0,basis=forecasted-spend
   fi
-  if grep -qx "voyager-ai-cap" <<<"$existing"; then
-    echo "  voyager-ai-cap exists"
+  if grep -qxF "$AI_CAP_NAME" <<<"$existing"; then
+    echo "  '$AI_CAP_NAME' exists: left as is"
     return
   fi
   # Spend caps have no gcloud flag (2026-11): Cloud Billing Budget API,
@@ -292,13 +301,13 @@ budgets() {
   # alerts at 50/80/100 % are fixed. Amount in the billing account's currency.
   cat >"$WORK/ai-cap.json" <<JSON
 {
-  "displayName": "voyager-ai-cap",
+  "displayName": "$AI_CAP_NAME",
   "budgetFilter": {
     "projects": ["projects/$number"],
     "services": ["services/$AI_SERVICE_ID"],
     "calendarPeriod": "MONTH"
   },
-  "amount": {"specifiedAmount": {"units": "$AI_SPEND_CAP"}},
+  "amount": {"specifiedAmount": {"currencyCode": "$BUDGET_CURRENCY", "units": "$AI_SPEND_CAP"}},
   "spendCap": {"inputState": "CONFIGURED"}
 }
 JSON
@@ -315,8 +324,8 @@ JSON
     cat >&2 <<EOF
   !! Could not create the spend cap through the API. Console fallback:
      Billing → Budgets & alerts → Create budget → "Spend cap enforcement",
-     name voyager-ai-cap, project $PROJECT_ID, service "Gemini Enterprise Agent
-     Platform" ($AI_SERVICE_ID), target amount $AI_SPEND_CAP → Finish.
+     name "$AI_CAP_NAME", project $PROJECT_ID, service "Gemini Enterprise
+     Agent Platform" ($AI_SERVICE_ID), target amount $AI_SPEND_CAP $BUDGET_CURRENCY → Finish.
 EOF
   fi
 }
@@ -433,7 +442,7 @@ main() {
   1. Add secret versions (values never pass through this script):
        printf '%s' "\$(openssl rand -base64 48)" | gcloud secrets versions add jwt-secret-key --data-file=- --project=$PROJECT_ID
        read -rs PW; printf '%s' "\$PW" | gcloud secrets versions add admin-password --data-file=- --project=$PROJECT_ID
-       ... anthropic-api-key, serpapi-key, serper-key, smtp-password
+       ... serpapi-key, serper-key, smtp-password (optional ones may stay empty)
   2. Add Firebase to $PROJECT_ID (console), download google-services.json for Android.
   3. Watch first boot: gcloud compute ssh $VM --zone=$ZONE --tunnel-through-iap -- sudo journalctl -u google-startup-scripts -f
   4. Open https://$(site_host)

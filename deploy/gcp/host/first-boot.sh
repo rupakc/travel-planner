@@ -110,15 +110,17 @@ unpack_bundle() {
 }
 
 write_config() {
-  local site acme bucket alert
+  local site acme bucket alert project
   site="$(md voyager-site-host)"
   acme="$(md voyager-acme-email)"
   bucket="$(md voyager-bucket)"
   alert="$(md voyager-alert-email)"
+  project="$(curl -fsS -H "Metadata-Flavor: Google" \
+    http://metadata.google.internal/computeMetadata/v1/project/project-id)"
   [[ -n "$site" && -n "$acme" ]] || { log "voyager-site-host/acme-email metadata missing"; exit 1; }
   printf 'SITE_HOST=%s\nACME_EMAIL=%s\n' "$site" "$acme" >"$OPT/site.env"
   # app.env is operator-editable; only fill BACKUP_BUCKET / APP_BASE_URL in
-  sed -i "s|^BACKUP_BUCKET=.*|BACKUP_BUCKET=$bucket|; s|^APP_BASE_URL=.*|APP_BASE_URL=https://$site|; s|^CORS_ORIGINS=.*|CORS_ORIGINS=[\"https://$site\"]|" "$OPT/app.env"
+  sed -i "s|^BACKUP_BUCKET=.*|BACKUP_BUCKET=$bucket|; s|^APP_BASE_URL=.*|APP_BASE_URL=https://$site|; s|^CORS_ORIGINS=.*|CORS_ORIGINS=[\"https://$site\"]|; s|^GCP_PROJECT=.*|GCP_PROJECT=$project|" "$OPT/app.env"
   install -d -m 0755 /etc/voyager
   {
     echo "# Written by first-boot.sh from instance metadata (no secrets)"
