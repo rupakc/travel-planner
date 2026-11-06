@@ -376,3 +376,32 @@ def test_real_schema_round_trip_reseeds_place_data(client, disk, tmp_path, monke
             "SELECT 1 FROM users WHERE username='roundtrip-user'"
         ).fetchone()
         assert conn.execute("SELECT COUNT(*) FROM places").fetchone()[0] > 1000
+
+
+def test_missing_export_dir_is_a_recorded_failure_not_a_crash(disk, tmp_path):
+    make_db(disk / "airports.db")
+    state = vm_backup.BackupState(0.0)
+    r = vm_backup.backup_once(
+        "b", str(disk), str(tmp_path / "gone"), state, FakeClient(), now=1
+    )
+    assert r == "failed" and state.last_error
+
+
+async def test_backup_loop_survives_unexpected_exceptions(monkeypatch):
+    import asyncio
+
+    calls = []
+
+    def flaky(*args):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("tmpfs full")
+        return "unchanged"
+
+    monkeypatch.setattr(vm_backup, "backup_once", flaky)
+    monkeypatch.setattr(vm_backup, "_state", vm_backup.BackupState(0.0))
+    task = asyncio.create_task(vm_backup._loop("b", "/d", "/t", 0.01))
+    await asyncio.sleep(0.1)
+    assert len(calls) >= 2 and not task.done()
+    assert vm_backup._state.last_error and "tmpfs full" in vm_backup._state.last_error
+    task.cancel()

@@ -234,10 +234,13 @@ def backup_once(
     db = Path(data_dir) / DB_NAME
     if not db.exists():
         return "skipped"
-    fd, name = tempfile.mkstemp(prefix="voyager-export-", suffix=".db", dir=export_dir)
-    os.close(fd)
-    export = Path(name)
+    export: Path | None = None
     try:
+        fd, name = tempfile.mkstemp(
+            prefix="voyager-export-", suffix=".db", dir=export_dir
+        )
+        os.close(fd)
+        export = Path(name)
         check_mount_guard(data_dir)
         digest = export_user_tables(db, export)
         client = client or _get_client()
@@ -269,8 +272,9 @@ def backup_once(
         logger.warning("GCS backup failed: %s", state.last_error)
         return "failed"
     finally:
-        export.unlink(missing_ok=True)
-        Path(str(export) + ".part").unlink(missing_ok=True)
+        if export is not None:
+            export.unlink(missing_ok=True)
+            Path(str(export) + ".part").unlink(missing_ok=True)
 
 
 # ── Status ─────────────────────────────────────────────────────────────────
@@ -321,9 +325,14 @@ async def _loop(bucket_name: str, data_dir: str, export_dir: str, interval: int)
     loop = asyncio.get_running_loop()
     while True:
         await asyncio.sleep(interval)
-        await loop.run_in_executor(
-            None, backup_once, bucket_name, data_dir, export_dir, _state
-        )
+        try:
+            await loop.run_in_executor(
+                None, backup_once, bucket_name, data_dir, export_dir, _state
+            )
+        except Exception as exc:  # noqa: BLE001 — never end the loop
+            if _state is not None:
+                _state.last_error = f"{type(exc).__name__}: {exc}"
+            logger.exception("Backup cycle crashed; retrying next interval")
 
 
 async def stop(task, bucket_name: str, data_dir: str, export_dir: str, timeout=10.0):
