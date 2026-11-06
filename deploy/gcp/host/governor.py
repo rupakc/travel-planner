@@ -10,7 +10,9 @@ Layers (design §2.2 + §13 item 9):
   200 GiB   close 80/443 until the billing month resets (00:00
             America/Los_Angeles) or an operator reopens (``reopen``).
 
-Rules live in Docker's DOCKER-USER chain: published ports are DNAT'd and go
+Rules live in Docker's DOCKER-USER chain (which the governor owns) and are
+replaced in one iptables-restore transaction, validated first, so a bad rule
+can never leave the box without rules: published ports are DNAT'd and go
 through FORWARD, so an INPUT rule would never see them. Docker rewrites its
 own chains when it starts, so ``apply`` runs after every docker start
 (voyager-governor-rules.service) and on every tick.
@@ -25,7 +27,7 @@ Usage: governor.py tick | apply | status | reopen [--extra-gib N]
                    | seed --gib N | close | mail --subject S --body B
 Config: /etc/voyager/governor.env (KEY=VALUE, optional).
 
-The pure functions (month_key, apply_tick, decide, render_rules, ...) are
+The pure functions (month_key, apply_tick, decide, render_restore, ...) are
 unit-tested in deploy/gcp/tests/test_governor.py.
 """
 
@@ -191,49 +193,68 @@ def _ipt(*args: str) -> list[str]:
     return ["iptables", "-w", "5", *args]
 
 
-def render_rules(cfg: Config, tier: str) -> list[list[str]]:
-    """iptables/ipset commands rebuilding the governor's chains (idempotent:
-    chains are flushed and refilled, jumps re-inserted at the top of
-    DOCKER-USER). The jumps' removal is done separately (see apply)."""
-    cmds = [
-        ["ipset", "create", cfg.ipset, "hash:ip", "timeout", "86400", "counters",
-         "-exist"],
-        _ipt("-N", CHAIN_EGRESS),
-        _ipt("-N", CHAIN_CLOSE),
-        _ipt("-N", CHAIN_GUARD),
-        _ipt("-F", CHAIN_EGRESS),
-        _ipt("-F", CHAIN_CLOSE),
-        _ipt("-F", CHAIN_GUARD),
+class RulesError(RuntimeError):
+    """The new ruleset was rejected; the previous rules are still in force."""
+
+
+def rule_lines(cfg: Config, tier: str) -> list[str]:
+    """The governor's rules in iptables-restore syntax (filter table)."""
+    ports = cfg.ports
+    lines = [
         # Only the app may reach the metadata server (ADC for Gemini, Secret
-        # Manager, GCS, FCM); a compromised Caddy gets no VM tokens
-        _ipt("-A", CHAIN_GUARD, "-i", cfg.bridge, "-s", cfg.subnet,
-             "!", "-s", f"{cfg.app_ip}/32", "-d", f"{METADATA_IP}/32", "-j", "DROP"),
+        # Manager, GCS, FCM); a compromised Caddy gets no VM tokens.
+        # (iptables allows one -s per rule: RETURN the app, then DROP the rest.)
+        f"-A {CHAIN_GUARD} -s {cfg.app_ip}/32 -d {METADATA_IP}/32 -j RETURN",
+        f"-A {CHAIN_GUARD} -i {cfg.bridge} -s {cfg.subnet} -d {METADATA_IP}/32 -j DROP",
         # Per destination IP (the client our web server is sending to):
         # remember it for 24 h (first packet starts the day), count its bytes
         # exactly once (the counting rule), drop above the daily quota (the
         # check never updates counters), and above ≈ 4 Mbit/s
-        _ipt("-A", CHAIN_EGRESS, "-j", "SET", "--add-set", cfg.ipset, "dst"),
-        _ipt("-A", CHAIN_EGRESS, "-m", "set", "--match-set", cfg.ipset, "dst"),
-        _ipt("-A", CHAIN_EGRESS, "-m", "set", "--match-set", cfg.ipset, "dst",
-             "!", "--update-counters",
-             "--bytes-gt", str(cfg.per_ip_daily_bytes), "-j", "DROP"),
-        _ipt("-A", CHAIN_EGRESS, "-m", "hashlimit", "--hashlimit-mode", "dstip",
-             "--hashlimit-name", "voyager_rate", "--hashlimit-above",
-             cfg.per_ip_rate, "--hashlimit-burst", cfg.per_ip_burst,
-             "--hashlimit-htable-expire", "120000",
-             "--hashlimit-htable-max", "65536", "-j", "DROP"),
-        _ipt("-A", CHAIN_EGRESS, "-j", "RETURN"),
-    ]  # fmt: skip
-    cmds += close_rules(cfg, closed=tier == "closed")
-    cmds += [
+        f"-A {CHAIN_EGRESS} -j SET --add-set {cfg.ipset} dst",
+        f"-A {CHAIN_EGRESS} -m set --match-set {cfg.ipset} dst",
+        (
+            f"-A {CHAIN_EGRESS} -m set --match-set {cfg.ipset} dst ! --update-counters"
+            f" --bytes-gt {cfg.per_ip_daily_bytes} -j DROP"
+        ),
+        (
+            f"-A {CHAIN_EGRESS} -m hashlimit --hashlimit-mode dstip"
+            f" --hashlimit-name voyager_rate --hashlimit-above {cfg.per_ip_rate}"
+            f" --hashlimit-burst {cfg.per_ip_burst} --hashlimit-htable-expire 120000"
+            f" --hashlimit-htable-max 65536 -j DROP"
+        ),
+        f"-A {CHAIN_EGRESS} -j RETURN",
+    ]
+    lines += close_rules(cfg, closed=tier == "closed")
+    # DOCKER-USER is the governor's: Docker never puts its own rules there
+    lines += [
+        f"-A DOCKER-USER -j {CHAIN_GUARD}",
+        f"-A DOCKER-USER -j {CHAIN_CLOSE}",
         # Egress: Caddy's replies leaving the bridge for the internet
-        _ipt("-I", "DOCKER-USER", "1", "-i", cfg.bridge, "-o", cfg.iface,
-             "-p", "tcp", "-m", "multiport", "--sports", cfg.ports,
-             "-j", CHAIN_EGRESS),
-        _ipt("-I", "DOCKER-USER", "1", "-j", CHAIN_CLOSE),
-        _ipt("-I", "DOCKER-USER", "1", "-j", CHAIN_GUARD),
-    ]  # fmt: skip
-    return cmds
+        (
+            f"-A DOCKER-USER -i {cfg.bridge} -o {cfg.iface} -p tcp -m multiport"
+            f" --sports {ports} -j {CHAIN_EGRESS}"
+        ),
+        "-A DOCKER-USER -j RETURN",
+    ]
+    return lines
+
+
+def render_restore(cfg: Config, tier: str) -> str:
+    """One iptables-restore transaction (``--noflush``: other chains and
+    tables are untouched; the chains declared here are flushed and refilled
+    in the same commit, so traffic never sees a half-built ruleset)."""
+    chains = ["DOCKER-USER", CHAIN_GUARD, CHAIN_CLOSE, CHAIN_EGRESS]
+    return (
+        "*filter\n"
+        + "".join(f":{c} - [0:0]\n" for c in chains)
+        + "".join(line + "\n" for line in rule_lines(cfg, tier))
+        + "COMMIT\n"
+    )
+
+
+def ipset_command(cfg: Config) -> list[str]:
+    return ["ipset", "create", cfg.ipset, "hash:ip", "timeout", "86400",
+            "counters", "-exist"]  # fmt: skip
 
 
 def jump_specs(cfg: Config) -> list[list[str]]:
@@ -245,15 +266,19 @@ def jump_specs(cfg: Config) -> list[list[str]]:
     ]  # fmt: skip
 
 
-def close_rules(cfg: Config, closed: bool) -> list[list[str]]:
+def close_rules(cfg: Config, closed: bool) -> list[str]:
     if not closed:
         return []
     return [
-        _ipt("-A", CHAIN_CLOSE, "-i", cfg.iface, "-o", cfg.bridge, "-p", "tcp",
-             "-m", "multiport", "--dports", cfg.ports, "-j", "DROP"),
-        _ipt("-A", CHAIN_CLOSE, "-i", cfg.bridge, "-o", cfg.iface, "-p", "tcp",
-             "-m", "multiport", "--sports", cfg.ports, "-j", "DROP"),
-    ]  # fmt: skip
+        (
+            f"-A {CHAIN_CLOSE} -i {cfg.iface} -o {cfg.bridge} -p tcp -m multiport"
+            f" --dports {cfg.ports} -j DROP"
+        ),
+        (
+            f"-A {CHAIN_CLOSE} -i {cfg.bridge} -o {cfg.iface} -p tcp -m multiport"
+            f" --sports {cfg.ports} -j DROP"
+        ),
+    ]
 
 
 def tc_command(cfg: Config, rate_mbit: int) -> list[str]:
@@ -324,8 +349,12 @@ def save_state(path: Path, state: dict) -> None:
 # ── Side effects (host only) ───────────────────────────────────────────────
 
 
-def run(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, check=check, capture_output=True, text=True)  # nosec B603
+def run(
+    cmd: list[str], check: bool = True, input: str | None = None
+) -> subprocess.CompletedProcess:
+    return subprocess.run(  # nosec B603
+        cmd, check=check, capture_output=True, text=True, input=input
+    )
 
 
 def default_iface() -> str | None:
@@ -354,15 +383,20 @@ def wait_for_docker_user(timeout: float = 60) -> None:
 
 
 def apply_rules(cfg: Config, tier: str) -> None:
+    """Replace the governor's rules atomically. The ruleset is checked with
+    ``iptables-restore --test`` and then committed in one transaction; on
+    any error RulesError is raised and the previous rules stay in force."""
     wait_for_docker_user()
-    for spec in jump_specs(cfg):  # drop old jumps (any number of copies)
-        while run(_ipt("-D", "DOCKER-USER", *spec), check=False).returncode == 0:
-            pass
-    for cmd in render_rules(cfg, tier):
-        quiet = cmd[3:4] == ["-N"]  # chain may exist already
-        result = run(cmd, check=not quiet)
-        if result.returncode and not quiet:
-            raise RuntimeError(f"{cmd}: {result.stderr}")
+    r = run(ipset_command(cfg), check=False)
+    if r.returncode:
+        raise RulesError(f"ipset create failed: {r.stderr.strip()}")
+    text = render_restore(cfg, tier)
+    for extra in (["--test"], []):
+        r = run(["iptables-restore", "-w", "5", "--noflush", *extra], check=False,
+                input=text)  # fmt: skip
+        if r.returncode:
+            step = "validation" if extra else "commit"
+            raise RulesError(f"iptables-restore {step} failed: {r.stderr.strip()}")
 
 
 def rules_in_place(cfg: Config) -> bool:
@@ -474,23 +508,53 @@ def cmd_tick(cfg: Config) -> None:
     state = apply_tick(_state_for_now(cfg), read_raw(cfg), read_boot_id(), time.time())
     save_state(cfg.state_path, state)  # counted bytes survive any failure below
     d = decide(state, cfg)
+    failure = None
     # Rebuild only on a tier change or when Docker dropped our jumps: a flush
     # would reset every client's rate bucket (hashlimit) each minute
     if state.get("applied_tier") != d.tier or not rules_in_place(cfg):
-        apply_rules(cfg, d.tier)
-        state = dict(state, applied_tier=d.tier)
+        try:
+            apply_rules(cfg, d.tier)
+            state = dict(state, applied_tier=d.tier)
+        except RulesError as exc:
+            # Old rules stay in force (atomic restore); shaping and the
+            # threshold emails below still run, then the unit fails loudly
+            failure = str(exc)
+            log.error("Governor rules not applied: %s", failure)
+    state = rules_alert(cfg, state, failure)
     state = apply_rate(cfg, state, d.rate_mbit)
     if d.notify:
         notify(cfg, state, d.notify)
     state = record(state, d)
     save_state(cfg.state_path, state)
     print(status_json(state, cfg))
+    if failure:
+        raise RulesError(failure)
+
+
+def rules_alert(cfg: Config, state: dict, failure: str | None) -> dict:
+    """Email once when the rules start failing, and once when they recover."""
+    before = state.get("rules_error")
+    if failure and not before:
+        send_email(
+            cfg,
+            "[voyager] egress governor rules FAILED to apply",
+            f"The new ruleset was rejected; the previous rules are still in "
+            f"force (tier {state.get('applied_tier')}).\n\n{failure}\n\n"
+            "Check: journalctl -u voyager-governor; sudo iptables -S DOCKER-USER\n",
+        )
+    elif before and not failure:
+        send_email(cfg, "[voyager] egress governor rules applied again", "Recovered.\n")
+    return dict(state, rules_error=failure)
 
 
 def cmd_apply(cfg: Config) -> None:
     state = _state_for_now(cfg)
     d = decide(state, cfg)
-    apply_rules(cfg, d.tier)
+    try:
+        apply_rules(cfg, d.tier)
+    except RulesError as exc:
+        save_state(cfg.state_path, rules_alert(cfg, state, str(exc)))
+        raise
     state = apply_rate(
         cfg, dict(state, applied_rate=None, applied_tier=d.tier), d.rate_mbit
     )

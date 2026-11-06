@@ -32,7 +32,7 @@ jobs:
       - run: ruff check backend/ deploy/ infrastructure/gcp/
       - run: ruff format --check backend/ deploy/ infrastructure/gcp/
       # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
-      - run: shellcheck -x deploy/gcp/host/*.sh infrastructure/gcp/*.sh
+      - run: shellcheck -x deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
@@ -113,10 +113,26 @@ jobs:
       - run: npm run test:coverage
         working-directory: frontend
 
+  # The VM kit's host layer for real: the governor's rules on iptables-nft
+  # (Debian 13, like the VM) for every tier, a rejected ruleset leaving the
+  # old one in force, and systemd-analyze verify of the units
+  host-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Kernel modules for the governor's matches
+        run: sudo modprobe -a ip_set ip_set_hash_ip xt_set xt_hashlimit xt_multiport nft_compat
+      - name: Governor on real iptables + systemd units (debian:trixie)
+        run: |
+          docker run --rm --cap-add NET_ADMIN -v "$PWD:/src:ro" \
+            debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 \
+            bash /src/deploy/gcp/tests/host_checks.sh
+
   build-and-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [lint-backend, lint-frontend, security, test-backend, test-frontend]
+    needs: [lint-backend, lint-frontend, security, test-backend, test-frontend, host-checks]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Build backend image

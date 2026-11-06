@@ -173,14 +173,35 @@ def test_missing_state_returns_none(tmp_path):
 
 
 def test_rules_live_in_docker_user_never_input():
-    cmds = gov.render_rules(CFG, tier="open")
-    flat = [" ".join(c) for c in cmds]
-    assert any("-I DOCKER-USER" in c and "VOYAGER" in c for c in flat)
-    assert not any(" INPUT " in f" {c} " for c in flat)
+    text = gov.render_restore(CFG, tier="open")
+    assert text.startswith("*filter\n") and text.endswith("COMMIT\n")
+    assert "-A DOCKER-USER -j VOYAGER-GUARD" in text
+    assert "INPUT" not in text
+
+
+def test_restore_declares_and_so_replaces_exactly_our_chains():
+    text = gov.render_restore(CFG, tier="open")
+    declared = [ln for ln in text.splitlines() if ln.startswith(":")]
+    assert declared == [
+        ":DOCKER-USER - [0:0]",
+        ":VOYAGER-GUARD - [0:0]",
+        ":VOYAGER-CLOSE - [0:0]",
+        ":VOYAGER-EGRESS - [0:0]",
+    ]
+
+
+def test_every_rule_is_valid_iptables_shape():
+    """iptables allows each of -s, -d, -i, -o once per rule (the bug that
+    once broke VOYAGER-GUARD); real parsing runs in CI (iptables_harness)."""
+    for tier in ("open", "warn", "closed"):
+        for line in gov.rule_lines(CFG, tier):
+            words = line.split()
+            for opt in ("-s", "-d", "-i", "-o", "-j", "-p"):
+                assert words.count(opt) <= 1, line
 
 
 def test_open_tier_has_per_ip_rate_and_quota_but_no_close():
-    flat = " | ".join(" ".join(c) for c in gov.render_rules(CFG, tier="open"))
+    flat = gov.render_restore(CFG, tier="open")
     assert "--hashlimit-mode dstip" in flat
     assert "--hashlimit-above 500kb/s" in flat  # ≈ 4 Mbit/s
     assert f"--bytes-gt {CFG.per_ip_daily_bytes}" in flat
@@ -188,7 +209,7 @@ def test_open_tier_has_per_ip_rate_and_quota_but_no_close():
 
 
 def test_closed_tier_drops_both_directions_of_web_traffic():
-    rules = [" ".join(c) for c in gov.close_rules(CFG, closed=True)]
+    rules = gov.close_rules(CFG, closed=True)
     assert any("--dports 80,443" in r and "DROP" in r for r in rules)
     assert any("--sports 80,443" in r and "DROP" in r for r in rules)
 
@@ -240,13 +261,22 @@ class FakeHost:
             gov, "send_email", lambda cfg, subj, body: self.emails.append(subj)
         )
 
-    def run(self, cmd, check=True):
+        self.restores: list[str] = []  # committed rulesets
+        self.reject = False  # iptables-restore rejects the ruleset
+
+    def run(self, cmd, check=True, input=None):
         import subprocess
 
         self.cmds.append(cmd)
-        # Deleting or checking a jump that isn't there fails, like iptables
-        rc = 1 if ("-D" in cmd or "-C" in cmd) else 0
-        return subprocess.CompletedProcess(cmd, rc, stdout="", stderr="")
+        rc = 0
+        if cmd[0] == "iptables-restore":
+            if self.reject:
+                rc = 2
+            elif "--test" not in cmd:
+                self.restores.append(input)
+        elif "-C" in cmd:
+            rc = 1  # checking a jump that isn't there fails, like iptables
+        return subprocess.CompletedProcess(cmd, rc, stdout="", stderr="bad rule")
 
 
 def test_tick_closes_once_and_persists(monkeypatch, tmp_path, capsys):
@@ -262,8 +292,9 @@ def test_tick_closes_once_and_persists(monkeypatch, tmp_path, capsys):
     assert "warning" in host.emails[0] and "CLOSED" in host.emails[1]
     state = gov.load_state(cfg.state_path)
     assert state["total"] == 260 and state["closed"] and state["warned"]
-    flat = [" ".join(c) for c in host.cmds]
-    assert any("VOYAGER-CLOSE" in c and "--dports 80,443" in c for c in flat)
+    assert any(
+        "-A VOYAGER-CLOSE" in r and "--dports 80,443" in r for r in host.restores
+    )
     tcs = [c for c in host.cmds if c[0] == "tc"]
     # 50 Mbit/s at start, 20 Mbit/s from the warning on; not re-applied each tick
     assert [c[c.index("rate") + 1] for c in tcs] == ["50mbit", "20mbit"]
@@ -274,7 +305,7 @@ def test_tick_closes_once_and_persists(monkeypatch, tmp_path, capsys):
 
 
 def test_quota_check_does_not_count_bytes_a_second_time():
-    rules = [" ".join(c) for c in gov.render_rules(CFG, tier="open")]
+    rules = gov.rule_lines(CFG, tier="open")
     check = [r for r in rules if "--bytes-gt" in r]
     assert len(check) == 1 and "! --update-counters" in check[0]
     counting = [r for r in rules if "--match-set" in r and "--bytes-gt" not in r]
@@ -282,15 +313,16 @@ def test_quota_check_does_not_count_bytes_a_second_time():
 
 
 def test_hashlimit_table_is_sized_explicitly():
-    flat = " ".join(" ".join(c) for c in gov.render_rules(CFG, tier="open"))
-    assert "--hashlimit-htable-max 65536" in flat
+    assert "--hashlimit-htable-max 65536" in gov.render_restore(CFG, tier="open")
 
 
 def test_only_the_app_container_may_reach_the_metadata_server():
-    rules = [" ".join(c) for c in gov.render_rules(CFG, tier="open")]
-    meta = [r for r in rules if "169.254.169.254" in r]
-    assert len(meta) == 1
-    assert f"! -s {CFG.app_ip}/32" in meta[0] and meta[0].endswith("-j DROP")
+    meta = [r for r in gov.rule_lines(CFG, "open") if "169.254.169.254" in r]
+    # The app's RETURN comes first; then everything else on the bridge drops
+    assert meta == [
+        f"-A VOYAGER-GUARD -s {CFG.app_ip}/32 -d 169.254.169.254/32 -j RETURN",
+        f"-A VOYAGER-GUARD -i {CFG.bridge} -s {CFG.subnet} -d 169.254.169.254/32 -j DROP",
+    ]
     assert any("VOYAGER-GUARD" in " ".join(s) for s in gov.jump_specs(CFG))
 
 
@@ -300,22 +332,21 @@ def test_unchanged_tier_does_not_rebuild_rules(monkeypatch, tmp_path):
     # -C (check) succeeds: jumps are in place
     host_run = host.run
 
-    def run(cmd, check=True):
+    def run(cmd, check=True, input=None):
         import subprocess
 
         if "-C" in cmd:
             host.cmds.append(cmd)
             return subprocess.CompletedProcess(cmd, 0, "", "")
-        return host_run(cmd, check)
+        return host_run(cmd, check, input)
 
     monkeypatch.setattr(gov, "run", run)
     gov.cmd_tick(cfg)
-    first = len([c for c in host.cmds if "-F" in c])
+    assert len(host.restores) == 1
     host.raw = 1000
     gov.cmd_tick(cfg)
     gov.cmd_tick(cfg)
-    assert first > 0
-    assert len([c for c in host.cmds if "-F" in c]) == first  # no flush later
+    assert len(host.restores) == 1  # no rebuild (and no bucket reset) later
 
 
 def test_missing_jumps_trigger_a_rebuild(monkeypatch, tmp_path):
@@ -323,7 +354,7 @@ def test_missing_jumps_trigger_a_rebuild(monkeypatch, tmp_path):
     host = FakeHost(monkeypatch, raw=0)  # its -C fails like -D: "missing"
     gov.cmd_tick(cfg)
     gov.cmd_tick(cfg)
-    assert len([c for c in host.cmds if "-F" in c]) >= 2 * 3
+    assert len(host.restores) == 2
 
 
 def test_counted_bytes_are_saved_even_if_rules_fail(monkeypatch, tmp_path):
@@ -339,3 +370,68 @@ def test_counted_bytes_are_saved_even_if_rules_fail(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError):
         gov.cmd_tick(cfg)
     assert gov.load_state(cfg.state_path)["total"] == 5000
+
+
+def test_a_rejected_ruleset_keeps_the_old_rules_and_alerts_once(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json", warn_bytes=100, close_bytes=200)
+    host = FakeHost(monkeypatch, raw=0)
+    gov.cmd_tick(cfg)  # open tier committed
+    assert len(host.restores) == 1
+    host.reject = True
+    host.raw = 300  # past the close threshold: a new ruleset is needed
+    with pytest.raises(gov.RulesError):
+        gov.cmd_tick(cfg)
+    # Validation failed, so nothing was committed: the old rules stay in force
+    assert len(host.restores) == 1
+    commits = [c for c in host.cmds if c[0] == "iptables-restore"]
+    assert all("--test" in c for c in commits[-1:])
+    state = gov.load_state(cfg.state_path)
+    assert state["total"] == 300 and state["rules_error"]
+    assert state["applied_tier"] == "open"  # not pretending it closed
+    # tc and the threshold emails still happened
+    assert any(c[0] == "tc" and "20mbit" in c for c in host.cmds)
+    assert any("FAILED to apply" in e for e in host.emails)
+    assert any("CLOSED" in e for e in host.emails)
+    with pytest.raises(gov.RulesError):
+        gov.cmd_tick(cfg)
+    assert sum("FAILED to apply" in e for e in host.emails) == 1  # once
+    host.reject = False
+    gov.cmd_tick(cfg)
+    assert len(host.restores) == 2 and "-A VOYAGER-CLOSE" in host.restores[-1]
+    assert any("applied again" in e for e in host.emails)
+    assert gov.load_state(cfg.state_path)["rules_error"] is None
+
+
+# ── Boot-time unit wiring (no deadlock with the startup script) ─────────────
+
+HOST = Path(__file__).resolve().parents[1] / "host"
+
+
+def test_first_boot_never_blocks_on_a_unit_start():
+    """first-boot.sh runs inside google-startup-scripts.service: a blocking
+    `systemctl start/restart` of our units (which multi-user.target and
+    docker.service also pull in) must never wait on a job queued behind it.
+    (docker and zramswap are restarted blocking on purpose: nothing orders
+    them after the startup script.)"""
+    import re
+
+    script = (HOST / "first-boot.sh").read_text()
+    calls = [
+        c
+        for c in re.findall(r"systemctl (?:start|restart)\b[^\n]*", script)
+        if "voyager" in c or "apt-daily" in c
+    ]
+    assert len(calls) >= 3
+    assert all("--no-block" in c for c in calls), calls
+
+
+def test_no_unit_waits_for_the_startup_script():
+    for unit in (HOST / "systemd").glob("voyager*"):
+        for line in unit.read_text().splitlines():
+            if line.startswith(("After=", "Requires=", "Wants=", "BindsTo=")):
+                assert "google-startup-scripts" not in line, (unit.name, line)
+
+
+def test_voyager_service_comes_back_with_docker():
+    unit = (HOST / "systemd" / "voyager.service").read_text()
+    assert "WantedBy=multi-user.target docker.service" in unit
