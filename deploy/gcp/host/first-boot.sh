@@ -100,6 +100,16 @@ net.ipv4.ip_forward=1
 EOF
   sysctl -q -p /etc/sysctl.d/99-voyager-docker.conf ||
     log "WARNING: could not set net.ipv4.ip_forward=1 (the governor retries every minute)"
+  # A package postinst may apply just its own file (e.g. a google-guest-configs
+  # upgrade: `sysctl -p .../60-gce-network-security.conf`), which bypasses
+  # the file ordering. Re-apply only our file after every dpkg run
+  # (unattended-upgrades included); never fails apt. PATH: apt hooks may run
+  # without /usr/sbin.
+  cat >/etc/apt/apt.conf.d/99-voyager-ipfwd <<'EOF'
+// Voyager: after every dpkg run, re-apply only 99-voyager-docker.conf
+// (net.ipv4.ip_forward=1, which Docker needs; incident 2026-11-06)
+DPkg::Post-Invoke { "if [ -f /etc/sysctl.d/99-voyager-docker.conf ]; then PATH=$PATH:/usr/sbin:/sbin sysctl -q -p /etc/sysctl.d/99-voyager-docker.conf || true; fi"; };
+EOF
 }
 
 configure_memory() {

@@ -225,7 +225,12 @@ How the rules are applied:
 - The governor owns `DOCKER-USER`; don't add rules of your own there.
 - Its rules are replaced in **one `iptables-restore` transaction**, validated first. A rejected ruleset leaves the previous rules in force and sends one email ("egress governor rules FAILED to apply", and another when they apply again). The `voyager-governor` unit then fails, so it shows in `systemctl --failed`.
 - CI runs the real rules against iptables-nft on Debian 13 for every tier (job `host-checks`).
-- Every tick also checks `/proc/sys/net/ipv4/ip_forward`. If it is `0`, the governor sets it back to `1`, logs an error and sends one email ("net.ipv4.ip_forward was reset to 0; restored to 1", at most one a day). So a reset costs at most about a minute of downtime. See [Troubleshooting](#11-troubleshooting).
+- Every tick first checks `/proc/sys/net/ipv4/ip_forward`, before it reads the egress state, so a corrupt `state.json` can't stop the check. The check keeps its own small state in `/var/lib/voyager/governor/ip_forward.json`. If forwarding is `0`, the governor sets it back to `1` and logs an error, so a reset costs at most about a minute of downtime. Emails:
+  - after a successful restore: "net.ipv4.ip_forward was reset to 0; restored to 1", at most one a day;
+  - when the restore fails: "could NOT be restored", sent at once on the first failure even if a restore email went out shortly before, then repeated at most once a day, plus one email when forwarding is back to `1`.
+
+  See [Troubleshooting](#11-troubleshooting).
+- Applying the rules also sets the `FORWARD` policy to `DROP` when it isn't already. Docker sets `DROP` only when it turns forwarding on itself, and with `99-voyager-docker.conf` forwarding is already on at boot. Only the built-in policy is changed; Docker's own chains are left alone. Check with `sudo iptables -S FORWARD | head -1`, which must print `-P FORWARD DROP`.
 
 | Month-to-date egress (billing month, 00:00 America/Los_Angeles) | Action |
 |---|---|
@@ -293,5 +298,6 @@ What prevents it now:
 
 - `first-boot.sh` writes `/etc/sysctl.d/99-voyager-docker.conf` before anything applies sysctl settings. The file sorts after `60-…`, so it wins at boot and on every reload.
 - `first-boot.sh` applies only its own files (`sysctl -p <file>`) and never runs `sysctl --system`.
-- The governor's per-minute guard sets forwarding back to `1` and emails you (section 8).
-- CI's `first_boot_sim.sh` (job `host-checks`) installs the image's `60-gce-network-security.conf`. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays `1`.
+- `/etc/apt/apt.conf.d/99-voyager-ipfwd`, also written by `first-boot.sh`, is a `DPkg::Post-Invoke` hook. After every dpkg run, unattended upgrades included, it re-applies only `99-voyager-docker.conf`. That covers a package postinst that applies just the image's `60-…` file, which bypasses the file ordering.
+- The governor's per-minute guard sets forwarding back to `1` and emails you (section 8). It also keeps the `FORWARD` policy at `DROP`.
+- CI's `first_boot_sim.sh` (job `host-checks`) installs the image's `60-gce-network-security.conf`. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays `1`. It also runs a real `apt-get` in which a simulated postinst applies the `60-…` file alone, and checks that the hook restores `1`.

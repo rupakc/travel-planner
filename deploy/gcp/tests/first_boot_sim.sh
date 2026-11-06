@@ -13,7 +13,8 @@
 #     Docker cut every container off. Checked after the first boot, after a
 #     re-run on the live VM (`google_metadata_script_runner startup` after
 #     --update-host, no reboot: the incident), after a reboot, and after a
-#     later full reload (systemd-sysctl, a package upgrade).
+#     later full reload (systemd-sysctl, a package upgrade); and the apt
+#     Post-Invoke hook undoes a postinst that applies only the image's file.
 # /proc/sys is read-only in an unprivileged container, so the kernel's
 # sysctls are a fake tree under $SIM/proc/sys, driven by a fake sysctl that
 # applies files the way procps does (--system: /etc/sysctl.d, /run/sysctl.d,
@@ -204,6 +205,9 @@ check_ip_forward() {
   if ! grep -qx 'net.ipv4.ip_forward=1' /etc/sysctl.d/99-voyager-docker.conf; then
     echo "FAIL $1: 99-voyager-docker.conf does not set net.ipv4.ip_forward=1"; exit 1
   fi
+  if ! apt-config dump DPkg::Post-Invoke | grep -q 'sysctl -q -p /etc/sysctl.d/99-voyager-docker.conf'; then
+    echo "FAIL $1: no apt DPkg::Post-Invoke hook re-applying 99-voyager-docker.conf"; exit 1
+  fi
   echo "ok   $1: net.ipv4.ip_forward stays 1 (no full sysctl reload, 99-voyager-docker.conf first)"
 }
 
@@ -229,4 +233,21 @@ if [[ "$(ip_forward)" != 1 ]]; then
   echo "FAIL full sysctl reload after provisioning: ip_forward is $(ip_forward)"; exit 1
 fi
 echo "ok   full sysctl reload after provisioning: net.ipv4.ip_forward still 1"
+# A package postinst that applies only the image's own file (bypassing the
+# file ordering), during a real apt run: modelled by a Pre-Invoke that does
+# `sysctl -p 60-gce-network-security.conf`; the Post-Invoke hook from
+# first-boot.sh (/etc/apt/apt.conf.d/99-voyager-ipfwd) must put 1 back
+: >"$SIM/sysctl.log"
+if ! apt-get -qq -o "DPkg::Pre-Invoke::=sysctl -q -p /etc/sysctl.d/60-gce-network-security.conf" \
+  install -y --reinstall --no-install-recommends jq >/dev/null 2>"$SIM/apt.err"; then
+  echo "FAIL apt run with the hook failed"; cat "$SIM/apt.err"; exit 1
+fi
+if ! grep -q '^sysctl -q -p /etc/sysctl.d/60-gce-network-security.conf' "$SIM/sysctl.log"; then
+  echo "FAIL the simulated postinst reset did not run"; cat "$SIM/sysctl.log"; exit 1
+fi
+if [[ "$(ip_forward)" != 1 ]] || ! tail -1 "$SIM/sysctl.log" | grep -q '^sysctl -q -p /etc/sysctl.d/99-voyager-docker.conf'; then
+  echo "FAIL dpkg run that re-applied 60-gce-network-security.conf: ip_forward is $(ip_forward)"
+  cat "$SIM/sysctl.log"; exit 1
+fi
+echo "ok   apt Post-Invoke hook: a postinst applying 60-gce-network-security.conf alone is undone right after dpkg"
 echo "first-boot simulation: ALL OK"
