@@ -1296,6 +1296,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Contributing/" class="md-nav__link">
         
   
@@ -1450,6 +1478,13 @@ data: {&quot;type&quot;: &quot;itinerary&quot;, &quot;data&quot;: {...}}
 data: {&quot;type&quot;: &quot;done&quot;}
 </code></pre>
 <p>The full list of event types is in <a href="../API-Reference/#post-apisearch">API Reference</a>. The frontend parses the stream in a Web Worker (<code>frontend/src/workers/sseWorker.js</code>) so that large JSON payloads do not block rendering. If the stream ends without <code>done</code>, the worker reports an interruption and the page says so.</p>
+<p>Both <code>/api/search</code> and <code>/api/chat</code> go through <code>core/sse.guarded_stream</code>:</p>
+<ul>
+<li><strong>Keepalives.</strong> It sends a <code>: keepalive</code> comment after 15 s of silence (<code>SSE_KEEPALIVE_SECONDS</code>). Proxies and phone networks keep the connection, and a vanished client is noticed at the next write.</li>
+<li><strong>Cancel on disconnect.</strong> When the client goes away before <code>done</code>, it cancels every task the stream started, nested ones included, so abandoned agents stop spending tokens and release the LLM semaphore.</li>
+<li>Tasks are attributed through a context variable that a small task factory reads, so agent code knows nothing about it.</li>
+<li>Alert pushes start in a fresh context, so they survive.</li>
+</ul>
 <hr />
 <h2 id="source-verification">Source verification</h2>
 <p>Every non-error section streamed by <code>/api/search</code>, and the responses of <code>/api/{flights,hotels,activities}/filtered</code>, carry <code>data.verification</code>: <code>{level, label, summary, checks[], items_verified, items_total, pending}</code>. <code>backend/app/services/verification.py</code> computes it from evidence the pipeline already holds: live SerpAPI fares, link checks from enrichment, crawl provenance, Open-Meteo provenance, and comparisons with the static visa and emergency tables. It makes no network or LLM calls. The levels are <code>verified</code> ("Verified"), <code>partial</code> ("Partly verified"), <code>unverified</code> ("AI-generated") and <code>conflict</code> ("Check details"). See <a href="../Agent-System/#source-verification">Agent System</a> for the per-section rules. Chat does not use verification.</p>
@@ -1580,7 +1615,17 @@ data: {&quot;type&quot;: &quot;done&quot;}
 </table>
 <p>The first six are reference data seeded from files committed to the repo; see <a href="../Place-and-Airport-Data/">Place and Airport Data</a>.</p>
 <h3 id="backups-optional">Backups (optional)</h3>
-<p><code>backend/app/db/backup.py</code> is active only when <code>BACKUP_BUCKET</code> is set. At startup it restores every <code>*.db</code> under <code>sqlite-backups/</code> in the bucket. Every 60 s it uploads a snapshot, using GCS generation checks: if another instance wrote newer data, it merges that data with <code>INSERT OR IGNORE</code> first, and it skips uploads during a 150 s startup window. On shutdown it forces one final upload. Snapshots leave out the regenerable place tables and the place-data version, so a restored database reseeds them on start. This was built for Cloud Run's ephemeral disk; locally it is off.</p>
+<p>Backups are active only when <code>BACKUP_BUCKET</code> is set, in one of two modes (<code>BACKUP_MODE</code>):</p>
+<ul>
+<li><strong><code>vm</code> (production, <code>backend/app/db/vm_backup.py</code>).</strong> The persistent disk is the source of truth.</li>
+<li><strong>Restore only if missing.</strong> At start the DB is downloaded from <code>sqlite-backups/airports.db</code> only when <code>airports.db</code> doesn't exist. Stray <code>-wal</code>/<code>-shm</code> files are deleted first, and the download is checked with <code>quick_check</code> and renamed into place atomically.</li>
+<li><strong>Mount guard.</strong> That happens only when <code>DATA_DIR</code> holds the provisioning marker <code>.voyager-data-disk</code>. A missing marker, or a missing DB that GCS can't supply, stops the start rather than run on the wrong directory or empty.</li>
+<li><strong>No merge, ever.</strong> A merge would bring back deleted watches, devices, plans and taste resets.</li>
+<li><strong>Change-only uploads.</strong> Every 5 min the non-place tables are exported from one read snapshot into a tmpfs. The export is uploaded only when its SHA-256 differs from the last upload, kept in the object's metadata so a restart doesn't re-upload. One more cycle runs at a clean shutdown.</li>
+<li><strong>Visible.</strong> <code>/health</code> reports <code>backup_ok</code>, which the uptime check content-matches.</li>
+<li><strong><code>cloudrun</code> (legacy, <code>backend/app/db/backup.py</code>, the default).</strong> Built for an ephemeral disk. It restores every <code>*.db</code> at startup, uploads a snapshot every 60 s with GCS generation checks and an <code>INSERT OR IGNORE</code> merge of newer remote data (skipped during a 150 s startup window), and forces one final upload on shutdown.</li>
+</ul>
+<p>In both modes the regenerable place tables and the place-data version are left out, so a restored database reseeds them on start. Locally backups are off.</p>
 <hr />
 <h2 id="fare-watch-scheduler">Fare-watch scheduler</h2>
 <p><code>backend/app/services/fare_watch.py</code>, started in the <code>lifespan</code> (<code>start_scheduler</code>) only when <code>SERPAPI_KEY</code> is set and <code>FARE_WATCH_ENABLED</code> is true, and cancelled on shutdown.</p>
@@ -1606,7 +1651,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <h2 id="mobile-client-and-push">Mobile client and push</h2>
 <p>The Android app (its own repository) is a second client of the same API: it signs in with the same JWT, streams <code>/api/search</code> and <code>/api/chat</code>, and reads <code>/api/notifications</code>. Two additions exist for it:</p>
 <ul>
-<li><strong>Push.</strong> The app registers its FCM token with <code>POST /api/devices</code> (<code>devices</code> table; a token belongs to one user at a time) and forgets it on sign-out with <code>POST /api/devices/unregister</code>; tokens travel only in request bodies and are logged masked. When <code>FCM_SERVICE_ACCOUNT_FILE</code> is set, <code>services/push.py</code> sends every new fare- or price-watch notification to the owner's devices. The hook is the <code>_notify</code> helper of each watch service, right after the notification row is stored: <code>push.notify</code> (guarded by its own <code>try</code>) starts a background task, so alert creation keeps its latency and outcome, and with push off it does nothing; shutdown gives pending pushes 5 s, then cancels them (<code>push.drain</code>). The task looks up the user (inactive users are skipped), signs a JWT with the service-account key (google-auth's RS256 signer), exchanges it for an OAuth access token (one exchange at a time, cached until a minute before it expires, dropped on an FCM <code>401</code>), and sends one data-only FCM HTTP v1 message per device concurrently over httpx (no <code>notification</code> block, so the app builds and dedupes the notification itself): string data <code>title</code>, <code>body</code>, <code>kind</code>, <code>notification_id</code>, <code>link</code> (the web deep link, <code>data.links.alerts</code>), <code>watch_id</code> and, for price watches, <code>watch_kind</code>. Expired / on-hold notices go at normal Android priority, alerts at high. Only FCM's own verdict that a token is dead deletes it (error code <code>UNREGISTERED</code>, or <code>INVALID_ARGUMENT</code> with a violation on <code>message.token</code>); a bare <code>404</code> (a wrong Firebase project) and every other failure is logged and dropped, keeping the token (the alert stays in-app and in email). The app polls <code>/api/notifications</code> as a safety net either way.</li>
+<li><strong>Push.</strong> The app registers its FCM token with <code>POST /api/devices</code> (<code>devices</code> table; a token belongs to one user at a time) and forgets it on sign-out with <code>POST /api/devices/unregister</code>; tokens travel only in request bodies and are logged masked. When <code>FCM_SERVICE_ACCOUNT_FILE</code> is set, or <code>FCM_USE_ADC=true</code> (production: the VM's service account, with no key file), <code>services/push.py</code> sends every new fare- or price-watch notification to the owner's devices. The hook is the <code>_notify</code> helper of each watch service, right after the notification row is stored: <code>push.notify</code> (guarded by its own <code>try</code>) starts a background task, so alert creation keeps its latency and outcome, and with push off it does nothing; shutdown gives pending pushes 5 s, then cancels them (<code>push.drain</code>). The task looks up the user (inactive users are skipped), signs a JWT with the service-account key (google-auth's RS256 signer) and exchanges it for an OAuth access token, or in ADC mode refreshes the metadata-server token in an executor (one exchange at a time, cached until a minute before it expires, dropped on an FCM <code>401</code>), and sends one data-only FCM HTTP v1 message per device concurrently over httpx (no <code>notification</code> block, so the app builds and dedupes the notification itself): string data <code>title</code>, <code>body</code>, <code>kind</code>, <code>notification_id</code>, <code>link</code> (the web deep link, <code>data.links.alerts</code>), <code>watch_id</code> and, for price watches, <code>watch_kind</code>. Expired / on-hold notices go at normal Android priority, alerts at high. Only FCM's own verdict that a token is dead deletes it (error code <code>UNREGISTERED</code>, or <code>INVALID_ARGUMENT</code> with a violation on <code>message.token</code>); a bare <code>404</code> (a wrong Firebase project) and every other failure is logged and dropped, keeping the token (the alert stays in-app and in email). The app polls <code>/api/notifications</code> as a safety net either way.</li>
 <li><strong>Near me.</strong> <code>POST /api/nearby</code> finds the nearest known place to a coordinate (<code>places_db.nearest_place</code>: a lat/lng bounding box on the <code>places</code> table's <code>idx_places_lat_lng</code> index, wrapping the antimeridian, then great-circle distances, up to 75 km; a ward or suburb yields to a place at least 10× bigger within 15 km), then runs the existing activities agent for "Place, Region, Country" (the GeoNames admin1 name tells Portland, Maine from Portland, Oregon; left out when it repeats the name) with the body's interests (else the saved preferences') and the caller's Taste Graph. Results are cached for an hour in their own <code>TTLCache</code>, per 0.05° cell, place, interests and taste.</li>
 </ul>
 <h2 id="cache">Cache</h2>
@@ -1616,10 +1661,10 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <ul>
 <li><code>POST /api/auth/login</code> returns an HS256 JWT valid for 24 h (<code>backend/app/core/auth.py</code>). Passwords are bcrypt-hashed. There is no registration endpoint; admins create users.</li>
 <li>Most routes require a valid token (<code>get_current_user</code>). Admin routes also require <code>is_admin</code>.</li>
-<li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls. They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
+<li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls, unless <code>ALLOW_ANONYMOUS_AI=false</code> (production): then every AI router answers <code>401</code> to anonymous callers (<code>require_ai_access</code>). They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
 </ul>
 <h2 id="rate-limiting">Rate limiting</h2>
-<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
+<p><code>backend/app/core/rate_limit.py</code> is an in-process sliding-window limiter attached to routers as a FastAPI dependency (<code>backend/app/main.py</code>). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60, and login 10 per client IP. Failed logins lock a username for the failing IP only (10), with a far higher ceiling per username across all IPs (200), both checked before bcrypt, so attackers elsewhere can't lock a user out. Behind Caddy the client IP comes from <code>X-Forwarded-For</code>, trusted only from the compose network (<code>FORWARDED_ALLOW_IPS</code>), so it can't be spoofed. A chat turn that starts a full trip plan also takes a search token (<code>try_consume</code>), answering with a friendly in-stream message when over. Over the limit the API returns <code>429</code> with <code>Retry-After</code> and a string <code>detail</code> that the frontend shows as-is. Being in-process, it only works for a single backend process. See <a href="../Configuration/#rate-limits">Configuration</a>. Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see <a href="#fare-watch-scheduler">Fare-watch scheduler</a>).</p>
 <h2 id="middleware">Middleware</h2>
 <ul>
 <li>CORS from <code>CORS_ORIGINS</code>.</li>

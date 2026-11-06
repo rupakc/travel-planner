@@ -1095,6 +1095,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Contributing/" class="md-nav__link">
         
   
@@ -1175,7 +1203,7 @@
 <p>Travel Planner turns a route, travel dates, a budget and a list of interests into a complete trip plan. A team of Claude agents builds the plan, and the results stream to the browser section by section as each agent finishes.</p>
 <p>These pages are the technical documentation for people working on the code. The project is open source under the MIT License (<code>LICENSE</code> at the repo root).</p>
 <blockquote>
-<p><strong>No hosted instance.</strong> The production deployment on Google Cloud Run was decommissioned on 2026-08-30: the GCP project was deleted and the old app URLs no longer work. To try the app, run it locally with <code>./start.sh</code> or <code>docker compose up --build</code> (see <a href="../Setup-and-Installation/">Setup and Installation</a>). <a href="../Deployment/">Deployment</a> explains how to bring a hosted copy back.</p>
+<p><strong>Hosting.</strong> Production deploys to a single always-free e2-micro VM on GCP (Caddy + the app container, SQLite on the disk, about $4 a month); every green merge to <code>main</code> deploys. See <a href="../Deployment-GCP/">Deployment on GCP</a>. To try the app yourself, run it locally with <code>./start.sh</code> or <code>docker compose up --build</code> (see <a href="../Setup-and-Installation/">Setup and Installation</a>).</p>
 </blockquote>
 <hr />
 <h2 id="what-the-app-does">What the app does</h2>
@@ -1261,7 +1289,11 @@
 </tr>
 <tr>
 <td><a href="../Deployment/">Deployment</a></td>
-<td>Current state (decommissioned) and how to redeploy from <code>infrastructure/</code></td>
+<td>Production on one GCP VM, the deploy pipeline, and deploying elsewhere</td>
+</tr>
+<tr>
+<td><a href="../Deployment-GCP/">Deployment on GCP</a></td>
+<td>Runbook: bootstrap, secrets, first boot, migration, rollback, restore drills, egress governor, cost watch</td>
 </tr>
 <tr>
 <td><a href="../Contributing/">Contributing</a></td>

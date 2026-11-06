@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../Deployment/">
+        <link rel="prev" href="../Deployment-GCP/">
       
       
         <link rel="next" href="../Changelog/">
@@ -1008,6 +1008,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1212,7 +1240,7 @@ make install-hooks
 <li>Make the change with tests: <code>backend/tests/</code> for Python, <code>*.test.js(x)</code> next to the code for the frontend.</li>
 <li>Run the checks locally with <code>make ci</code> from the repo root: lint (ruff and ESLint), the security scans and both test suites, mirroring CI. See <a href="../Testing-and-CI/">Testing and CI</a>.</li>
 <li>Push and open a pull request to <code>main</code>. CI (<code>ci.yml</code>) runs lint, security audits, both test suites with the 70% backend coverage gate, and an image build with a Trivy scan.</li>
-<li>Merging to <code>main</code> publishes the docs site (<code>docs.yml</code>). It does <strong>not</strong> deploy the app: <code>deploy.yml</code> is manual-only and decommissioned (see <a href="../Deployment/">Deployment</a>).</li>
+<li>Merging to <code>main</code> publishes the docs site (<code>docs.yml</code>) <strong>and deploys the app</strong>: <code>deploy.yml</code> reruns CI, then publishes signed images that the production VM picks up within about 5 minutes, rolling back on its own if the new app is unhealthy (see <a href="../Deployment-GCP/">Deployment on GCP</a>). Keep schema changes additive so a rollback can always read the database.</li>
 </ol>
 <p>Merged PRs are listed in the <a href="../Changelog/">Changelog</a>.</p>
 <h2 id="code-style">Code style</h2>

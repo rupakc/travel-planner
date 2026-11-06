@@ -1141,6 +1141,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Contributing/" class="md-nav__link">
         
   
@@ -1316,7 +1344,22 @@ npm run test:coverage       # with v8 coverage, as CI runs it
 mkdocs build --strict      # or: mkdocs serve
 </code></pre>
 <h3 id="deployyml">deploy.yml</h3>
-<p>Manual only and marked decommissioned. See <a href="../Deployment/">Deployment</a>.</p>
+<p>Runs on every push to <code>main</code>. It calls <code>ci.yml</code> as a reusable workflow, so every CI job must pass first; plain pushes to <code>main</code> don't run CI twice. Then one <code>publish</code> job runs with only <code>contents: read</code>, <code>packages: write</code> and <code>id-token: write</code>. It:</p>
+<ol>
+<li>builds the app image (<code>backend/Dockerfile</code>) and the Caddy + SPA image (<code>deploy/gcp/caddy.Dockerfile</code>);</li>
+<li>pushes them to GHCR with <code>sha-&lt;commit&gt;</code> tags;</li>
+<li>signs both digests with <strong>cosign keyless</strong> (GitHub OIDC → Sigstore) and verifies them with the identity the VM requires;</li>
+<li>moves the <code>prod</code> tags to those digests with <code>docker buildx imagetools create</code>, checks that each tag resolves to exactly the signed digest, and does so only if the commit is still <code>main</code>'s HEAD.</li>
+</ol>
+<p>Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label <code>io.voyager.build</code> (the workflow run number), and the VM refuses an image from an older run than the one it is running.</p>
+<p>It has no GCP or VM credentials: the VM pulls and verifies by itself (see <a href="../Deployment-GCP/#6-day-to-day-deploys-and-rollback">Deployment on GCP</a>).</p>
+<p>The <code>host-checks</code> job runs <code>deploy/gcp/tests/host_checks.sh</code> in <code>debian:trixie</code> (pinned by digest, <code>NET_ADMIN</code>). It checks three things:</p>
+<ol>
+<li><strong>Governor rules:</strong> the real rules on iptables-nft for every tier, and that a rejected ruleset leaves the old rules intact.</li>
+<li><strong>Deployer:</strong> <code>deploy.sh</code> end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal.</li>
+<li><strong>systemd units:</strong> <code>systemd-analyze verify</code>.</li>
+</ol>
+<p>The image build waits for it. CI also runs <code>shellcheck</code> on <code>deploy/gcp/host/*.sh</code> and <code>infrastructure/gcp/*.sh</code>, ruff on <code>deploy/</code> and <code>infrastructure/gcp/</code>, and the tests in <code>deploy/gcp/tests</code> (egress governor) and <code>infrastructure/gcp/tests</code> (old-prod migration).</p>
 
 
 

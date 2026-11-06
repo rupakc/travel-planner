@@ -14,7 +14,7 @@
         <link rel="prev" href="../Testing-and-CI/">
       
       
-        <link rel="next" href="../Contributing/">
+        <link rel="next" href="../Deployment-GCP/">
       
       
         
@@ -1043,77 +1043,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-state-decommissioned" class="md-nav__link">
+  <a href="#production-one-e2-micro-vm-on-gcp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current state: decommissioned
+        Production: one e2-micro VM on GCP
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-the-retained-setup-deploys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What the retained setup deploys
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#redeploying-to-gcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Redeploying to GCP
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Redeploying to GCP">
+    <nav class="md-nav" aria-label="Production: one e2-micro VM on GCP">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-bootstrap-the-project" class="md-nav__link">
+  <a href="#history" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Bootstrap the project
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-add-the-github-repository-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Add the GitHub repository secrets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-re-enable-and-run-the-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Re-enable and run the workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-after-the-first-deploy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. After the first deploy
+        History
       
     </span>
   </a>
@@ -1122,6 +1067,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running locally
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1140,6 +1096,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1229,144 +1213,73 @@
 
 
 <h1 id="deployment">Deployment</h1>
-<h2 id="current-state-decommissioned">Current state: decommissioned</h2>
-<p>Travel Planner ran on Google Cloud Run until <strong>2026-08-30</strong>, when production was decommissioned (PR #1, "chore: decommission GCP deploy pipeline"):</p>
+<h2 id="production-one-e2-micro-vm-on-gcp">Production: one e2-micro VM on GCP</h2>
+<p>Production runs on a single always-free <strong>e2-micro VM</strong> in <code>us-east1</code> (project <code>voyager-prod-ohzkl</code>). Caddy terminates TLS and serves the SPA, the app container runs FastAPI with SQLite on the VM's persistent disk, and Gemini on Vertex AI is called with the VM's service account. Hosting costs about $4 a month; Gemini is capped by a spend cap.</p>
 <ul>
-<li>The GCP project was deleted, together with its Cloud Run services, Artifact Registry, Terraform state bucket, backup bucket and Secret Manager secrets. The old frontend and backend URLs no longer resolve.</li>
-<li><code>.github/workflows/deploy.yml</code> is renamed <strong>"Deploy (decommissioned)"</strong>. Its <code>push</code> trigger was removed, so it runs only by hand (<code>workflow_dispatch</code>), and a run would fail because the project and secrets no longer exist.</li>
-<li><code>infrastructure/</code> (bootstrap scripts and Terraform) is kept unchanged for reference.</li>
-<li>The backend still contains the GCS backup code (<code>backend/app/db/backup.py</code>); it does nothing unless <code>BACKUP_BUCKET</code> is set.</li>
+<li><strong>Runbook:</strong> <a href="../Deployment-GCP/">Deployment on GCP</a> covers bootstrap, secrets, first boot, the data migration, deploys and rollback, restore drills, the egress governor and cost watch.</li>
+<li><strong>Design:</strong> <code>docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md</code>.</li>
+<li><strong>Files:</strong></li>
 </ul>
-<p>There is no hosted instance. To use the app, run it locally (see <a href="../Setup-and-Installation/">Setup and Installation</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deploy/gcp/compose.yaml</code></td>
+<td>app + caddy, images pinned by digest, memory limits, log rotation, health checks</td>
+</tr>
+<tr>
+<td><code>deploy/gcp/Caddyfile</code>, <code>deploy/gcp/caddy.Dockerfile</code></td>
+<td>TLS, SPA caching, <code>/api</code> + <code>/health</code> proxy (SSE-safe); the Caddy image bakes in the built SPA</td>
+</tr>
+<tr>
+<td><code>deploy/gcp/app.env.example</code></td>
+<td>non-secret app settings on the VM</td>
+</tr>
+<tr>
+<td><code>deploy/gcp/host/</code></td>
+<td><code>first-boot.sh</code> (provisioning), <code>deploy.sh</code> (signed-digest deployer with rollback), <code>governor.py</code> (egress governor), <code>window.sh</code>, systemd units</td>
+</tr>
+<tr>
+<td><code>infrastructure/gcp/bootstrap.sh</code></td>
+<td>idempotent gcloud bootstrap (<code>--dry-run</code>, <code>--update-host</code>)</td>
+</tr>
+<tr>
+<td><code>infrastructure/gcp/migrate_old_prod.py</code></td>
+<td>strips the 2026-08-30 export to the users and their data</td>
+</tr>
+<tr>
+<td><code>.github/workflows/deploy.yml</code></td>
+<td>on every green merge to <code>main</code>: build, push to GHCR, sign with cosign, move <code>prod</code></td>
+</tr>
+</tbody>
+</table>
+<p>The VM pulls; CI never has access to it.</p>
+<h3 id="history">History</h3>
+<p>The first production ran on Cloud Run (Terraform + a push deploy workflow) from 2026-05 until it was decommissioned on <strong>2026-08-30</strong>. That Terraform, its scripts and the old workflow were removed in the VM deployment change; git history keeps them.</p>
+<hr />
+<h2 id="running-locally">Running locally</h2>
 <pre><code class="language-bash">./start.sh                       # dev servers on :8001 and :5174
 # or
 docker compose up --build        # containers on :8001 and :8080
 </code></pre>
-<p>The documentation site (https://rupakc.github.io/travel-planner/) is separate and still published by <code>docs.yml</code>; see <a href="../Testing-and-CI/#workflows">Testing and CI</a>.</p>
-<hr />
-<h2 id="what-the-retained-setup-deploys">What the retained setup deploys</h2>
-<table>
-<thead>
-<tr>
-<th>Piece</th>
-<th>Where</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Backend image</td>
-<td><code>backend/Dockerfile</code> (python:3.12-slim, built from the repo root; copies <code>backend/</code> and <code>.agents/</code>; uvicorn on 8001, 1 worker)</td>
-</tr>
-<tr>
-<td>Frontend image</td>
-<td><code>frontend/Dockerfile</code> (node:20-alpine build, nginx:alpine on 8080; <code>BACKEND_URL</code> templated into <code>nginx.conf.template</code>)</td>
-</tr>
-<tr>
-<td>Cloud Run backend</td>
-<td><code>travel-planner-backend</code>, 2 vCPU / 2 GiB, <strong>min = max = 1 instance</strong> (the SQLite file and the in-process rate limiter assume a single process)</td>
-</tr>
-<tr>
-<td>Cloud Run frontend</td>
-<td><code>travel-planner-frontend</code>, 1 vCPU / 512 MiB, 0–3 instances</td>
-</tr>
-<tr>
-<td>Storage</td>
-<td><code>&lt;project&gt;-sqlite-backup</code> bucket for SQLite snapshots; <code>&lt;project&gt;-tf-state</code> for Terraform state</td>
-</tr>
-<tr>
-<td>Secrets</td>
-<td>Secret Manager: <code>anthropic-api-key</code>, <code>jwt-secret-key</code>, <code>admin-password</code>, <code>serpapi-key</code>, <code>serper-key</code></td>
-</tr>
-<tr>
-<td>Other modules</td>
-<td>Artifact Registry, IAM, monitoring (uptime check on <code>/health</code>, alert policies, log metrics, dashboard), project APIs</td>
-</tr>
-</tbody>
-</table>
-<p>Terraform lives in <code>infrastructure/terraform/</code> (modules <code>artifact_registry</code>, <code>backend_service</code>, <code>frontend_service</code>, <code>iam</code>, <code>monitoring</code>, <code>project</code>, <code>secrets</code>, <code>storage</code>). The backend service sets <code>DATA_DIR=/tmp/data</code>, <code>AGENTS_DIR=/app/.agents</code>, <code>LOG_FORMAT=json</code>, <code>BACKUP_BUCKET</code> and <code>CORS_ORIGINS</code> (the frontend URL), and injects the secrets as environment variables.</p>
-<p>Cloud Run's disk is ephemeral, which is why backups exist: on start the backend restores the database from the bucket, uploads a snapshot every 60 s and uploads once more on shutdown (see <a href="../Architecture/#backups-optional">Architecture</a>).</p>
-<hr />
-<h2 id="redeploying-to-gcp">Redeploying to GCP</h2>
-<p>A redeploy creates a <strong>new</strong> project; nothing from the old one can be recovered from GCP. These steps follow the retained scripts and workflow; they have not been run since the decommissioning, so expect to fix drift (provider versions, API changes).</p>
-<h3 id="1-bootstrap-the-project">1. Bootstrap the project</h3>
-<p>You need the <code>gcloud</code> CLI, authenticated, and a billing account.</p>
-<pre><code class="language-bash">BILLING_ACCOUNT=XXXXXX-XXXXXX-XXXXXX bash infrastructure/scripts/bootstrap.sh
-# optional: PROJECT_NAME=travel-planner REGION=europe-west1
-</code></pre>
-<p><code>bootstrap.sh</code> creates the project <code>&lt;PROJECT_NAME&gt;-prod</code>, links billing, enables the Cloud Run, Artifact Registry, Secret Manager, Storage, IAM, Resource Manager, Compute, Monitoring and Logging APIs, creates the versioned <code>&lt;project&gt;-tf-state</code> bucket, and creates a <code>github-actions-sa</code> service account with deploy roles. It writes a key file, <code>github-sa-key.json</code>, to the current directory. Keep it out of git and delete it once it is stored as a secret.</p>
-<h3 id="2-add-the-github-repository-secrets">2. Add the GitHub repository secrets</h3>
-<table>
-<thead>
-<tr>
-<th>Secret</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GCP_PROJECT_ID</code></td>
-<td>The new project ID (<code>&lt;PROJECT_NAME&gt;-prod</code>)</td>
-</tr>
-<tr>
-<td><code>GCP_SA_KEY</code></td>
-<td>Contents of <code>github-sa-key.json</code></td>
-</tr>
-<tr>
-<td><code>ANTHROPIC_API_KEY</code></td>
-<td>Anthropic key</td>
-</tr>
-<tr>
-<td><code>JWT_SECRET_KEY</code></td>
-<td>A random secret, for example <code>openssl rand -hex 32</code></td>
-</tr>
-<tr>
-<td><code>ADMIN_PASSWORD</code></td>
-<td>Password for the seeded admin</td>
-</tr>
-<tr>
-<td><code>SERPAPI_KEY</code></td>
-<td>SerpAPI key (live flights, fare calendar)</td>
-</tr>
-<tr>
-<td><code>SERPER_KEY</code></td>
-<td>Serper key (Places to See, link resolution)</td>
-</tr>
-</tbody>
-</table>
-<p>The workflow's bootstrap job copies the last five into Secret Manager. (<code>infrastructure/scripts/populate-secrets.sh</code> does the same interactively, after Terraform has created the secret shells; you need one or the other, not both.) <code>bootstrap.sh</code> also prints <code>TF_STATE_BUCKET</code> and <code>GCP_BILLING_ACCOUNT</code>; the current workflow derives the state bucket from the project ID and does not read either.</p>
-<p>Also check the <code>terraform</code> job's environment in <code>deploy.yml</code>: <code>TF_VAR_admin_email</code> is hard-coded and receives monitoring alerts. See <code>infrastructure/terraform/terraform.tfvars.example</code> for the Terraform variables (<code>project_id</code>, <code>region</code>, <code>admin_email</code>, <code>backend_image</code>, <code>frontend_image</code>, <code>frontend_url</code>).</p>
-<h3 id="3-re-enable-and-run-the-workflow">3. Re-enable and run the workflow</h3>
-<p>Edit <code>.github/workflows/deploy.yml</code>: remove the DECOMMISSIONED banner, rename it, and, if you want automatic deploys again, restore the trigger:</p>
-<pre><code class="language-yaml">on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-</code></pre>
-<p>Then run it from the Actions tab (or push to <code>main</code>). Its three jobs:</p>
-<ol>
-<li><strong>bootstrap</strong>: enables the APIs, creates the Terraform state bucket and the <code>travel-planner</code> Artifact Registry repository if missing, and upserts the Secret Manager secrets from the GitHub secrets.</li>
-<li><strong>push-images</strong>: builds both images with Buildx (<code>docker buildx build -f backend/Dockerfile .</code> and <code>frontend/</code>), tagged with the commit SHA and <code>latest</code>, and pushes them to <code>europe-west1-docker.pkg.dev/&lt;project&gt;/travel-planner</code>.</li>
-<li><strong>terraform</strong>: <code>init</code> against the state bucket, <code>validate</code>, imports resources that exist in GCP but not in state, reads the frontend URL for <code>CORS_ORIGINS</code>, then <code>plan</code> and <code>apply</code>, and prints both service URLs.</li>
-</ol>
-<p>On the very first apply the frontend does not exist yet, so CORS falls back to localhost; run the workflow a second time to pick up the frontend URL.</p>
-<h3 id="4-after-the-first-deploy">4. After the first deploy</h3>
-<ul>
-<li>Sign in as <code>admin</code> with <code>ADMIN_PASSWORD</code> and create users from the Admin page; there is no self-registration.</li>
-<li>Check <code>GET /health</code> and <code>GET /health/agents</code> on the backend URL.</li>
-<li>The place data seeds itself on the first start (about 2 s). Backups leave the place tables out, so every restore reseeds them.</li>
-</ul>
+<p>See <a href="../Setup-and-Installation/">Setup and Installation</a>. The documentation site is published separately by <code>docs.yml</code> (see <a href="../Testing-and-CI/#workflows">Testing and CI</a>).</p>
 <hr />
 <h2 id="deploying-elsewhere">Deploying elsewhere</h2>
-<p>Any host that can run the two containers works. Requirements:</p>
+<p>Any host that can run the containers works. Requirements:</p>
 <ul>
-<li>One backend process (rate limits and the SQLite file are per-process), with a persistent volume for <code>DATA_DIR</code>, or <code>BACKUP_BUCKET</code> and GCS credentials if the disk is ephemeral.</li>
-<li><code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code> and <code>ADMIN_PASSWORD</code> set; <code>SERPAPI_KEY</code> and <code>SERPER_KEY</code> optional.</li>
-<li><code>CORS_ORIGINS</code> set to the frontend's origin, and <code>BACKEND_URL</code> for the frontend container.</li>
-<li>If the backend sits behind a proxy, run uvicorn with <code>--proxy-headers</code> so anonymous rate limits key on real client IPs.</li>
-<li><strong>Fare watch</strong> runs inside the backend process when <code>SERPAPI_KEY</code> is set. Keep <strong>one</strong> backend worker (<code>uvicorn</code> without <code>--workers</code>, one instance): watches are leased in SQLite, so extra workers on the same file would not double-check a watch, but each would run its own scheduler loop and in-memory cache, and the SQLite file can't be shared across hosts. On a host that scales to zero (like Cloud Run without minimum instances) checks only run while an instance is up; set a minimum of one instance, or <code>FARE_WATCH_ENABLED=false</code> to turn background checks off. Size <code>FARE_WATCH_DAILY_CALL_BUDGET</code> to your SerpAPI plan.</li>
-<li><strong>Alert emails</strong> need <code>SMTP_HOST</code> (+ <code>SMTP_PORT</code>, <code>SMTP_USERNAME</code>, <code>SMTP_PASSWORD</code>, <code>SMTP_FROM</code>, <code>SMTP_STARTTLS</code>) and <code>APP_BASE_URL</code> set to the public frontend URL; the frontend host must proxy <code>/api</code> so the emails' one-click stop link works. Use a sender your provider has verified (SPF/DKIM) or the emails land in spam. Without SMTP everything else works and alerts stay in the app.</li>
+<li><strong>One backend process.</strong> Rate limits and the SQLite file are per-process. Give it a persistent volume for <code>DATA_DIR</code>. On a single VM like ours, set <code>BACKUP_MODE=vm</code> with a <code>BACKUP_BUCKET</code> and a marker file (<code>DATA_DIR/.voyager-data-disk</code>). On a host with an ephemeral disk, the legacy <code>BACKUP_MODE=cloudrun</code> restores at every start and merges.</li>
+<li><strong>Secrets.</strong> <code>JWT_SECRET_KEY</code> is required (<code>python -m app.entrypoint</code> refuses to start without it) and so is <code>ADMIN_PASSWORD</code>. LLM credentials depend on the provider. <code>SERPAPI_KEY</code> and <code>SERPER_KEY</code> are optional. They come from the environment, or from Secret Manager through <code>SECRET_MANAGER_SECRETS</code>.</li>
+<li><strong>Origins.</strong> Set <code>CORS_ORIGINS</code> to the frontend's origin. Serve the SPA and <code>/api</code> from the same origin, as Caddy here or nginx in <code>frontend/</code>.</li>
+<li><strong>Behind a proxy.</strong> Set <code>FORWARDED_ALLOW_IPS</code> to the proxy's address or network (never <code>*</code>), so rate limits key on real client IPs. In production set <code>ALLOW_ANONYMOUS_AI=false</code>.</li>
+<li><strong>SSE.</strong> The proxy must not buffer or compress <code>text/event-stream</code>. The app sends a keepalive every 15 s.</li>
+<li><strong>Fare and price watches</strong> run inside the backend process when <code>SERPAPI_KEY</code> is set. Keep <strong>one</strong> worker. Size <code>FARE_WATCH_DAILY_CALL_BUDGET</code> to your SerpAPI plan.</li>
+<li><strong>Alert emails</strong> need <code>SMTP_*</code> and <code>APP_BASE_URL</code> set to the public URL, whose host must proxy <code>/api</code>.</li>
 </ul>
-<p><code>docker-compose.yml</code> is a working single-host example (see <a href="../Setup-and-Installation/#option-c-docker-compose">Setup and Installation</a>).</p>
 
 
 

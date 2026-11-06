@@ -618,6 +618,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#production-container-entrypoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production (container entrypoint)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logging" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1179,6 +1190,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Contributing/" class="md-nav__link">
         
   
@@ -1373,7 +1412,22 @@
 <tr>
 <td><code>BACKUP_BUCKET</code></td>
 <td><code>""</code></td>
-<td>Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. When set, the database is restored at startup, uploaded every 60 s and uploaded once more on shutdown. Uses Application Default Credentials.</td>
+<td>Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. Uses Application Default Credentials.</td>
+</tr>
+<tr>
+<td><code>BACKUP_MODE</code></td>
+<td><code>cloudrun</code></td>
+<td><code>cloudrun</code> (legacy, for ephemeral disks): restore at every start, upload every 60 s with a generation-safe merge, force an upload on shutdown. <code>vm</code> (production): the disk is authoritative. The app restores only when <code>airports.db</code> is missing (stray <code>-wal</code>/<code>-shm</code> removed first), never merges, and uploads the user tables (everything except the regenerable place data) only when their SHA-256 changed, plus once at a clean shutdown. In <code>vm</code> mode, <code>DATA_DIR</code> must contain the marker file <code>.voyager-data-disk</code> written when the disk was provisioned, or the app refuses to start. A missing DB that can't be fetched from GCS also refuses to start. <code>GET /health</code> then reports <code>backup_ok</code> and <code>backup</code>.</td>
+</tr>
+<tr>
+<td><code>BACKUP_INTERVAL_SECONDS</code></td>
+<td><code>300</code></td>
+<td><code>vm</code> mode: how often the user tables are exported and compared. <code>backup_ok</code> turns false after 3 missed intervals or on any failed cycle.</td>
+</tr>
+<tr>
+<td><code>BACKUP_EXPORT_DIR</code></td>
+<td>system temp</td>
+<td><code>vm</code> mode: scratch directory for the export (a tmpfs in production, so the slow disk is never touched).</td>
 </tr>
 </tbody>
 </table>
@@ -1494,6 +1548,16 @@
 <td><code>""</code></td>
 <td>Path to a Firebase service-account JSON key (Firebase console → Project settings → Service accounts → Generate new private key) for the project the Android app is registered in. Its <code>project_id</code> picks the FCM project. Empty, or a path that does not exist, disables push (<code>GET /health</code> reports <code>push_configured</code>). Keep the file out of the repo (<code>*service-account*.json</code> and <code>*-key.json</code> are git-ignored) and readable only by the backend. The key is read once: restart the backend after rotating it.</td>
 </tr>
+<tr>
+<td><code>FCM_USE_ADC</code></td>
+<td><code>false</code></td>
+<td>With no key file: send with Application Default Credentials (on the VM, its service account through the metadata server; it needs FCM send rights, e.g. <code>roles/firebasecloudmessaging.admin</code>). The key file wins when both are set.</td>
+</tr>
+<tr>
+<td><code>FCM_PROJECT_ID</code></td>
+<td><code>""</code></td>
+<td>FCM project for ADC mode; empty uses <code>GOOGLE_CLOUD_PROJECT</code>, which the entrypoint sets from the metadata server.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="accounts">Accounts</h2>
@@ -1575,9 +1639,68 @@
 <td><code>60</code></td>
 <td>Single-agent routes, <code>/*/filtered</code>, <code>/api/flights/fare-calendar</code>, <code>/api/stress-test</code>, <code>/api/layover</code>, <code>/api/events</code>, <code>/api/walking-tours</code>, creating a fare watch, its "Check now", <code>/api/nearby</code> and changing the account email</td>
 </tr>
+<tr>
+<td><code>RATE_LIMIT_LOGIN</code></td>
+<td><code>10</code></td>
+<td><code>/api/auth/login</code> attempts per client IP</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_LOGIN_FAILURES</code></td>
+<td><code>10</code></td>
+<td>Failed logins per username <strong>from one client IP</strong> per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_LOGIN_FAILURES_GLOBAL</code></td>
+<td><code>200</code></td>
+<td>Failed logins per username from all IPs together: a backstop against distributed guessing</td>
+</tr>
 </tbody>
 </table>
 <p>Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn <code>--proxy-headers</code>).</p>
+<h2 id="production-container-entrypoint">Production (container entrypoint)</h2>
+<p>The image starts with <code>python -m app.entrypoint</code>, which execs uvicorn (one worker, <code>--timeout-graceful-shutdown 5</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SECRET_MANAGER_SECRETS</code></td>
+<td><code>""</code></td>
+<td>Comma-separated env vars to read from Secret Manager at start (Application Default Credentials), into the process environment only, never a file. The secret id is the lower-cased, dashed name (<code>JWT_SECRET_KEY</code> → <code>jwt-secret-key</code>), or give it as <code>ENV=secret-id</code>. A secret with no version is skipped; a variable already set wins. Any other error stops the start.</td>
+</tr>
+<tr>
+<td><code>GOOGLE_CLOUD_PROJECT</code></td>
+<td>from ADC</td>
+<td>Project for Secret Manager (and FCM ADC). The entrypoint sets it from the metadata server when missing.</td>
+</tr>
+<tr>
+<td><code>FORWARDED_ALLOW_IPS</code></td>
+<td><code>""</code></td>
+<td>Addresses or networks of the reverse proxy whose <code>X-Forwarded-For</code> is trusted (production: the compose network <code>172.30.0.0/24</code>). Empty turns proxy headers off. <code>*</code> and <code>0.0.0.0/0</code> are refused.</td>
+</tr>
+<tr>
+<td><code>ALLOW_ANONYMOUS_AI</code></td>
+<td><code>true</code></td>
+<td><code>false</code> (production) makes every AI route answer <code>401</code> unless signed in.</td>
+</tr>
+<tr>
+<td><code>SSE_KEEPALIVE_SECONDS</code></td>
+<td><code>15</code></td>
+<td><code>/api/search</code> and <code>/api/chat</code> send a <code>: keepalive</code> comment after this much silence. When the client disconnects, every task the stream started is cancelled.</td>
+</tr>
+<tr>
+<td><code>PORT</code>, <code>GRACEFUL_SHUTDOWN_SECONDS</code></td>
+<td><code>8001</code>, <code>5</code></td>
+<td>uvicorn port and graceful-shutdown timeout.</td>
+</tr>
+</tbody>
+</table>
+<p>The entrypoint refuses to start when <code>JWT_SECRET_KEY</code> is empty after the secrets are read.</p>
 <h2 id="logging">Logging</h2>
 <p><code>LOG_FORMAT</code> is read directly with <code>os.getenv</code> in <code>backend/app/main.py</code>, not through Settings. The default, <code>json</code>, gives one JSON object per line (stdlib <code>logging</code> with a custom formatter in <code>backend/app/core/logging_config.py</code>). Any other value gives plain-text logs.</p>
 <hr />
@@ -1605,7 +1728,7 @@ RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 </code></pre>
 <p>Values set by <code>docker-compose.yml</code>: <code>LLM_PROVIDER</code> (default <code>auto</code>), <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code> (default <code>global</code>), <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code> (default <code>change-me-in-compose</code>), <code>ADMIN_PASSWORD</code> (default <code>admin-dev-password</code>), <code>DATA_DIR=/data</code>, <code>BACKUP_BUCKET=</code> (empty) and <code>CORS_ORIGINS=http://localhost:8080</code> for the backend, and <code>BACKEND_URL=http://backend:8001</code> for the frontend.</p>
-<p>The retained Terraform (see <a href="../Deployment/">Deployment</a>) predates the move to Gemini; it sets <code>DATA_DIR=/tmp/data</code>, <code>AGENTS_DIR=/app/.agents</code>, <code>LOG_FORMAT=json</code>, <code>CORS_ORIGINS</code>, <code>BACKUP_BUCKET</code>, and injects <code>ANTHROPIC_API_KEY</code>, <code>JWT_SECRET_KEY</code>, <code>ADMIN_PASSWORD</code>, <code>SERPAPI_KEY</code> and <code>SERPER_KEY</code> from Secret Manager.</p>
+<p>Production on the VM (see <a href="../Deployment-GCP/">Deployment on GCP</a>): <code>deploy/gcp/compose.yaml</code> sets <code>DATA_DIR=/data</code> (the disk), <code>BACKUP_MODE=vm</code>, <code>BACKUP_EXPORT_DIR=/tmp</code> (tmpfs), <code>AGENTS_DIR</code>, <code>FORWARDED_ALLOW_IPS=172.30.0.0/24</code> and <code>LOG_FORMAT=json</code>. Everything else is in <code>/opt/voyager/app.env</code> (<code>deploy/gcp/app.env.example</code>): <code>SECRET_MANAGER_SECRETS</code>, <code>BACKUP_BUCKET</code>, <code>ALLOW_ANONYMOUS_AI=false</code>, <code>FCM_USE_ADC=true</code>, <code>LLM_PROVIDER=gemini</code>, <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code>, the SMTP settings and <code>FARE_WATCH_DAILY_CALL_BUDGET=6</code>.</p>
 
 
 

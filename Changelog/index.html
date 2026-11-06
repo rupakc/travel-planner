@@ -1009,6 +1009,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Contributing/" class="md-nav__link">
         
   
@@ -1095,6 +1123,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased-production-on-one-e2-micro-vm-gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased: production on one e2-micro VM (GCP)
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#unreleased-gemini-on-vertex-ai" class="md-nav__link">
@@ -1295,6 +1334,26 @@
 <h1 id="changelog">Changelog</h1>
 <p>Changes since the project started on 2026-05-17. From 2026-08-30 on, every change went through a pull request; dates are merge dates (UTC). A "(#N)" inside a PR title refers to a backlog item, not a PR.</p>
 <hr />
+<h2 id="unreleased-production-on-one-e2-micro-vm-gcp">Unreleased: production on one e2-micro VM (GCP)</h2>
+<p>Deployment kit for the approved lean GCP design (<code>docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md</code>): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: <a href="../Deployment-GCP/">Deployment on GCP</a>.</p>
+<ul>
+<li><strong>Backend production mode:</strong></li>
+<li><code>BACKUP_MODE=vm</code>: disk authoritative, restore only if the DB is missing (stray WAL/SHM removed), mount-guard marker, no merge, user-table export to tmpfs uploaded on hash change every 5 min plus a clean-shutdown flush, <code>backup_ok</code> in <code>/health</code>.</li>
+<li><code>python -m app.entrypoint</code>: Secret Manager secrets into memory, refuses an empty <code>JWT_SECRET_KEY</code>, uvicorn with <code>--timeout-graceful-shutdown 5</code> and proxy headers only from the compose network.</li>
+<li><code>login</code> rate-limit bucket plus a per-username failure lock, and <code>ALLOW_ANONYMOUS_AI=false</code> for production.</li>
+<li>FCM push through the VM's service account (<code>FCM_USE_ADC</code>).</li>
+<li>15 s SSE keepalives, and agent tasks cancelled when a search or chat client disconnects.</li>
+<li><strong>Image:</strong> runs through the entrypoint; the unused <code>claude-agent-sdk</code> and <code>python-dotenv</code> are gone.</li>
+<li><strong><code>deploy/gcp/</code>:</strong></li>
+<li>compose (memory limits, log rotation, health checks), Caddyfile and a Caddy image with the SPA baked in;</li>
+<li>a tiered egress governor in <code>DOCKER-USER</code>: per IP ≈ 4 Mbit/s and 3 GiB/day, a warning at 150 GiB, ports closed at 200 GiB, the billing month in Pacific time;</li>
+<li>a signed-digest pull deployer with automatic rollback;</li>
+<li>first-boot provisioning for Debian 13 (Docker, zram, unattended-upgrades, a weekly Berlin-night window) and systemd units.</li>
+<li><strong><code>infrastructure/gcp/</code>:</strong></li>
+<li>an idempotent <code>bootstrap.sh</code> with <code>--dry-run</code>; it detects the existing INR budgets and Gemini spend cap by name;</li>
+<li><code>migrate_old_prod.py</code>: strips the 886 MB 2026-08-30 export to its 17 users and their plans, preferences, taste signals and feedback.</li>
+<li><strong>CI/CD:</strong> <code>deploy.yml</code> runs on every push to <code>main</code>. After all of CI it builds, pushes to GHCR, signs with cosign keyless and moves <code>prod</code>; the VM verifies and pulls. The Cloud Run Terraform, its scripts and the old workflow were removed.</li>
+</ul>
 <h2 id="unreleased-gemini-on-vertex-ai">Unreleased: Gemini on Vertex AI</h2>
 <ul>
 <li><strong>Gemini replaces Claude in production.</strong> Every model call now goes through one provider seam, <code>backend/app/core/llm.py</code>. <code>LLM_PROVIDER=auto</code> (default) picks Gemini when <code>GCP_PROJECT</code> is set (or, with no Anthropic key, when ADC resolves a project) and Claude otherwise, so an existing local <code>.env</code> with only <code>ANTHROPIC_API_KEY</code> keeps working; the choice is logged at startup and shown by <code>/health/agents</code> (<code>llm_provider</code>, <code>llm_provider_reason</code>). Gemini Gemini on Vertex AI with Application Default Credentials (no API key; <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code> default <code>global</code>): <strong>Gemini 3.5 Flash-Lite</strong> (<code>gemini-3.5-flash-lite</code>, thinking <code>minimal</code>, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, chat itinerary and chat routing/extraction; <strong>Gemini 3.8 Flash</strong> (<code>gemini-3.8-flash</code>, thinking <code>low</code>) for chat answers, streamed token by token, and the planning narrative. <code>LLM_PROVIDER=anthropic</code> forces Claude (Haiku 4.5 / Sonnet 4.6) for local development and rollback. Agent prompts are unchanged. New settings: <code>LLM_PROVIDER</code>, <code>GCP_PROJECT</code>, <code>GCP_LOCATION</code>, <code>GEMINI_MODEL_AGENT</code>, <code>GEMINI_MODEL_CHAT</code>, <code>GEMINI_THINKING_AGENT</code>, <code>GEMINI_THINKING_CHAT</code> (see <a href="../Configuration/#llm">Configuration</a>).</li>
