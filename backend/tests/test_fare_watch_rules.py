@@ -492,3 +492,44 @@ def test_notification_carries_deep_links(over):
     assert links["book"].startswith("https://www.google.com/flights#flt=BER.LIS.")
     assert note["data"]["watch_id"] == 7
     assert note["data"]["num_travelers"] == 2
+
+
+def test_route_label_names_cities_for_bare_airport_codes():
+    """A watch started from the app's results stores the typed codes as labels
+    ("JFK", "LIS"); the alert names the cities, never invents one."""
+    from app.services.fare_watch import route_label
+
+    assert (
+        route_label(
+            {
+                "origin_label": "JFK",
+                "origin_code": "JFK",
+                "destination_label": "LIS",
+                "destination_code": "LIS",
+            }
+        )
+        == "New York → Lisbon"
+    )
+    assert (
+        route_label(
+            {
+                "origin_label": None,
+                "origin_code": "JFK",
+                "destination_label": "Lisbon, Portugal",
+                "destination_code": "LIS",
+            }
+        )
+        == "New York → Lisbon"
+    )
+    # an unknown code stays as it is
+    assert (
+        route_label(
+            {
+                "origin_label": "ZZQ",
+                "origin_code": "ZZQ",
+                "destination_label": "LIS",
+                "destination_code": "LIS",
+            }
+        )
+        == "ZZQ → Lisbon"
+    )
