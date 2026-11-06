@@ -19,17 +19,12 @@ def test_semaphore_limits_concurrent_agent_calls():
 
 @pytest.mark.anyio
 async def test_execute_backs_off_and_reports_error(monkeypatch):
-    class FakeMessages:
-        async def create(self, **kwargs):
-            raise anthropic_error
+    from app.core import llm
 
-    class FakeClient:
-        messages = FakeMessages()
+    async def failing_generate(*args, **kwargs):
+        raise llm.LLMError("connection reset", retryable=True)
 
-    import anthropic
-
-    anthropic_error = anthropic.APIConnectionError(request=None)
-    monkeypatch.setattr(base_agent, "_get_client", lambda: FakeClient())
+    monkeypatch.setattr(llm, "generate", failing_generate)
     monkeypatch.setattr(base_agent, "_MAX_RETRIES", 2)
 
     async def no_sleep(_):

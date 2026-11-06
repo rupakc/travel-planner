@@ -25,6 +25,12 @@ os.environ["SMTP_HOST"] = ""  # never send real email
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.core import llm as _llm  # noqa: E402
+
+# LLM_PROVIDER=auto never asks the machine's real ADC for a project (that can
+# reach the GCE metadata server); tests that need one patch it back.
+_llm._adc_project = lambda: None
+
 
 @pytest.fixture(autouse=True)
 def _no_leftover_serp_client():
@@ -37,6 +43,29 @@ def _no_leftover_serp_client():
     before = serp_flights._client
     yield
     serp_flights._client = before
+
+
+class _NoModelNetwork:
+    """Stands in for every real model client: tests never reach Vertex AI
+    or Anthropic (no credentials, no spend). Tests that need replies patch
+    ``app.core.llm.generate`` / ``stream`` or the client getters."""
+
+    def __getattr__(self, name):
+        raise RuntimeError("model network calls are disabled in tests")
+
+
+@pytest.fixture(autouse=True)
+def _no_model_network(monkeypatch):
+    from app.core import llm
+
+    monkeypatch.setattr(llm, "_gemini_client", lambda: _NoModelNetwork())
+    monkeypatch.setattr(llm, "_anthropic_client", lambda: _NoModelNetwork())
+    monkeypatch.setattr(llm, "_anthropic_sync", _NoModelNetwork())
+    llm.reset_spend_cap()
+    llm._resolved = None
+    yield
+    llm.reset_spend_cap()
+    llm._resolved = None
 
 
 @pytest.fixture(scope="session", autouse=True)

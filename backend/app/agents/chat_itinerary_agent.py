@@ -1,16 +1,15 @@
 import asyncio
 import logging
 
+from ..core import llm
 from ..schemas.request import TravelSearchRequest
-from .base_agent import _MAX_RETRIES, BaseAgent, _get_client
+from .base_agent import _MAX_RETRIES, BaseAgent
 from .loader import load_agent_definition
 
-# Haiku generates at ~150 tokens/s vs Sonnet's ~37 tokens/s.
-# With the concise prompt schema (no notes), an 11-day multi-city
-# itinerary uses ~2500-3500 tokens — well within Haiku's 8192 output limit.
-# This cuts generation time from ~100s to ~20-25s.
-_MODEL = "claude-haiku-4-5-20251001"
-_MAX_TOKENS = 8192  # Haiku ceiling — leave headroom with concise output rules below
+# Runs on the fast agent model (core.llm role "agent"). With the concise
+# prompt schema (no notes), an 11-day multi-city itinerary uses ~2500-3500
+# tokens — well within this cap, which keeps generation at ~20-25 s.
+_MAX_TOKENS = 8192
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +19,9 @@ class ChatItineraryAgent(BaseAgent):
         super().__init__(load_agent_definition(agents_dir, "chat-itinerary"))
 
     async def execute(self, prompt: str) -> dict:
-        """Override: use Sonnet with 16k token budget instead of Haiku."""
+        """Override: stricter conciseness rules and an 8k output budget."""
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
-                client = _get_client()
                 system = (
                     self.definition.system_prompt
                     + "\n\nReturn ONLY valid JSON. No prose, no markdown fences, no tool calls."
@@ -35,23 +33,27 @@ class ChatItineraryAgent(BaseAgent):
                     "\n- intercity_travel options: exactly 2 per leg"
                     "\n- hotel 'highlight': ≤ 8 words"
                 )
-                response = await client.messages.create(
-                    model=_MODEL,
-                    max_tokens=_MAX_TOKENS,
+                response = await llm.generate(
+                    [{"role": "user", "content": prompt}],
+                    role="agent",
                     system=system,
-                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=_MAX_TOKENS,
+                    json_output=True,
+                    label="chat-itinerary",
                 )
-                result_text = response.content[0].text if response.content else ""
+                result_text = response.text
                 logger.info(
                     f"ChatItineraryAgent raw response: {len(result_text)} chars, "
-                    f"stop_reason={response.stop_reason}"
+                    f"truncated={response.truncated}"
                 )
-                if response.stop_reason == "max_tokens":
+                if response.truncated:
                     logger.warning(
                         "ChatItineraryAgent hit max_tokens — JSON will be truncated. "
                         f"Response was {len(result_text)} chars. Attempting parse anyway."
                     )
             except Exception as e:
+                if isinstance(e, llm.LLMError) and e.user_facing:
+                    return e.as_result()
                 logger.error(
                     f"ChatItineraryAgent API call failed (attempt {attempt}): {e}"
                 )

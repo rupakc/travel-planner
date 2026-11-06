@@ -6,12 +6,14 @@ The chat (`POST /api/chat`, `frontend/src/pages/ChatPage.jsx`, `backend/app/agen
 
 ## Models
 
-| Task | Model |
-|---|---|
-| Conversational answers and the planning narrative | `claude-sonnet-4-6` |
-| Intent routing, trip-parameter extraction, plan commands | `claude-haiku-4-5-20251001` |
-| The chat itinerary (`.agents/chat-itinerary.md`, `ChatItineraryAgent`) | `claude-haiku-4-5-20251001` |
-| Specialist fallbacks and refinements | the specialist agents (Haiku, via `BaseAgent`) |
+| Task | Model on Gemini (production) | On Anthropic |
+|---|---|---|
+| Conversational answers (streamed token by token) and the planning narrative | `gemini-3.8-flash`, thinking `low` | `claude-sonnet-4-6` |
+| Intent routing, trip-parameter extraction, plan commands, suggestion chips | `gemini-3.5-flash-lite`, thinking `minimal` | `claude-haiku-4-5-20251001` |
+| The chat itinerary (`.agents/chat-itinerary.md`, `ChatItineraryAgent`) | `gemini-3.5-flash-lite` | `claude-haiku-4-5-20251001` |
+| Specialist fallbacks and refinements | the specialist agents (agent model, via `BaseAgent`) | same |
+
+All calls go through `backend/app/core/llm.py` (see [Architecture](Architecture.md#models)). When the monthly AI spend cap has tripped, chat answers with one `delta`, "AI limit reached for this month — try again on the 1st.", then `done`.
 
 ---
 
@@ -36,7 +38,7 @@ Each message goes through an ordered router in `ChatAgent.stream()`:
 | 3 | A specific topic (flights, hotels, visa, SIM, tips, transport, forex…) | Knowledge-only answer; specialists only on failure |
 | 3.5 | A change to the trip being discussed ("make it cheaper", "add 2 days") | Refinement: re-runs only the affected specialists |
 | 3.6 | Knowledge patterns (culture, packing, weather, neighbourhoods…) | Knowledge answer |
-| 3.7 | Anything of 4 or more words not caught yet | One Haiku intent-classification call, which catches soft phrasings such as "we're thinking Lisbon in October, maybe with the kids?" |
+| 3.7 | Anything of 4 or more words not caught yet | One intent-classification call (agent model), which catches soft phrasings such as "we're thinking Lisbon in October, maybe with the kids?" |
 | 4 | Everything else | Plan-aware conversation |
 
 ---

@@ -11,7 +11,7 @@ python3 -m pytest -q
 ```
 
 - `tests/conftest.py` points `DATA_DIR` at a temporary directory (deleted at exit), sets a JWT secret, `RATE_LIMIT_ENABLED=false` and an empty `BACKUP_BUCKET`, and seeds the place data once per session.
-- `pyproject.toml` sets `asyncio_mode = "auto"`. Tests mock the Anthropic API; they make no real LLM calls.
+- `pyproject.toml` sets `asyncio_mode = "auto"`. An autouse fixture replaces the Gemini and Anthropic clients in `core/llm.py` with stubs, so tests never reach a model; tests that need replies fake `llm.generate` / `llm.stream` or the client (`tests/test_llm.py`). `scripts/llm_eval.py`, which does call the real model, is never run by CI (it refuses when `CI` is set).
 - `tests/test_golden_places_runtime.py` runs the 693-case golden set (`tests/data/golden_places.csv`) against place resolution and autocomplete and forbids web calls. `tests/test_build_place_data.py` checks the place-data generator. See [Place and Airport Data](Place-and-Airport-Data.md#quality).
 - Coverage, as CI runs it:
 

@@ -7,13 +7,13 @@ answers with ``{"ref": ...}``; the server swaps in the full result item.
 """
 
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from app.agents.chat_agent import ChatAgent
 from app.core.config import settings
+from app.core.llm import LLMResponse
 
 HOTELS = [
     {
@@ -123,16 +123,7 @@ def test_a_bare_name_resolves_too():
 
 
 def _model_reply(payload: dict):
-    client = SimpleNamespace(
-        messages=SimpleNamespace(
-            create=AsyncMock(
-                return_value=SimpleNamespace(
-                    content=[SimpleNamespace(text=json.dumps(payload))]
-                )
-            )
-        )
-    )
-    return client
+    return AsyncMock(return_value=LLMResponse(text=json.dumps(payload)))
 
 
 async def test_add_the_cheapest_hotel_resolves_to_the_real_hotel():
@@ -143,7 +134,7 @@ async def test_add_the_cheapest_hotel_resolves_to_the_real_hotel():
             "message": "Added **Casa Alfama**, the cheapest hotel.",
         }
     )
-    with patch("app.agents.chat_agent._get_client", return_value=client):
+    with patch("app.core.llm.generate", client):
         events = [
             json.loads(e)
             async for e in agent._handle_plan_command(
@@ -153,7 +144,7 @@ async def test_add_the_cheapest_hotel_resolves_to_the_real_hotel():
                 RESULTS,
             )
         ]
-    prompt = client.messages.create.await_args.kwargs["messages"][0]["content"]
+    prompt = client.await_args.args[0][0]["content"]
     assert "H2: Casa Alfama, $72.50/night, $290 total" in prompt
     assert '{"ref": "<ref>"}' in prompt
     [action] = [e for e in events if e["type"] == "plan_action"]
@@ -268,7 +259,7 @@ async def test_a_failure_while_resolving_sends_no_partial_actions():
         yield json.dumps({"type": "done"})
 
     with (
-        patch("app.agents.chat_agent._get_client", return_value=client),
+        patch("app.core.llm.generate", client),
         patch.object(
             ChatAgent, "_resolve_plan_actions", side_effect=RuntimeError("boom")
         ),
@@ -292,7 +283,7 @@ async def test_once_actions_are_sent_the_reply_completes_without_fallback():
             "message": {"not": "a string"},
         }
     )
-    with patch("app.agents.chat_agent._get_client", return_value=client):
+    with patch("app.core.llm.generate", client):
         events = [
             json.loads(e)
             async for e in agent._handle_plan_command(

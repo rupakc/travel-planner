@@ -10,13 +10,29 @@ Settings are read from the process environment and from a `.env` file in the **w
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `""` | **Needed.** Used by every agent. Without it, every AI call fails. |
 | `JWT_SECRET_KEY` | `""` | **Needed.** HS256 signing key for login tokens (24 h lifetime). Changing it logs everyone out. Generate one with `python3 -c "import secrets; print(secrets.token_hex(32))"`. |
 | `CORS_ORIGINS` | `["http://localhost:5174","http://localhost:5173"]` | Allowed browser origins, as a JSON list. |
 | `AGENTS_DIR` | `<repo>/.agents` | Directory of the agent definition files. A relative path that does not exist falls back to `<repo>/.agents`. |
-| `AGENT_MAX_CONCURRENCY` | `6` | Global cap on concurrent Anthropic calls across all agents. |
+| `AGENT_MAX_CONCURRENCY` | `6` | Global cap on concurrent model calls across all agents. |
 | `CACHE_TTL_SECONDS` | `1800` | TTL of the in-memory result cache. |
 | `CACHE_MAXSIZE` | `500` | Maximum entries in that cache. |
+
+## LLM
+
+Every model call goes through `backend/app/core/llm.py`; see [Architecture](Architecture.md#models).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `LLM_PROVIDER` | `auto` | `gemini`: Gemini on Vertex AI with Application Default Credentials (no API key). `anthropic`: Claude via `ANTHROPIC_API_KEY`, for local development or a rollback. `auto`: `gemini` when `GCP_PROJECT` is set; otherwise `anthropic` when `ANTHROPIC_API_KEY` is set; otherwise `gemini` if Application Default Credentials resolve a project, else `anthropic`. The choice is resolved once, logged at startup (`LLM provider: gemini (auto: GCP_PROJECT set) …`) and shown by `/health/agents` as `llm_provider` / `llm_provider_reason`. |
+| `GCP_PROJECT` | `""` | **Needed for Gemini.** Google Cloud project that runs Vertex AI, e.g. `voyager-prod-ohzkl`; setting it also makes `auto` choose Gemini. Empty falls back to `GOOGLE_CLOUD_PROJECT` or the ADC project. |
+| `GCP_LOCATION` | `global` | Vertex AI location. `global` routes to any region with capacity; `us` and `eu` keep processing in that multi-region. |
+| `GEMINI_MODEL_AGENT` | `gemini-3.5-flash-lite` | Model for every specialist agent, itinerary, stress test, packing, pricing advisor, link import, discovery, layover, chat itinerary and chat routing/extraction. |
+| `GEMINI_MODEL_CHAT` | `gemini-3.8-flash` | Model for chat conversational answers and the planning narrative. |
+| `GEMINI_THINKING_AGENT` | `minimal` | Thinking level of the agent model: `minimal`, `low`, `medium` or `high`. |
+| `GEMINI_THINKING_CHAT` | `low` | Thinking level of the chat model: `low`, `medium` or `high` (Gemini 3.8 Flash rejects `minimal`). On Gemini, a level the model refuses stops the app at startup with a clear error. |
+| `ANTHROPIC_API_KEY` | `""` | **Needed for Claude** (`LLM_PROVIDER=anthropic`, or `auto` without `GCP_PROJECT`). Unused on Gemini. |
+
+With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.user`) on the project. Locally, run `gcloud auth application-default login` once. If no credentials are found, every AI section fails and `/health/agents` reports the error.
 
 ## Storage and backup
 
@@ -134,7 +150,10 @@ Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_o
 `backend/.env` for local development:
 
 ```env
+# Claude: an Anthropic key and no GCP_PROJECT (LLM_PROVIDER=auto picks anthropic)
 ANTHROPIC_API_KEY=sk-ant-...
+# …or Gemini on Vertex AI (after `gcloud auth application-default login`):
+# GCP_PROJECT=voyager-prod-ohzkl
 JWT_SECRET_KEY=3f0c...   # 64 hex characters
 ADMIN_PASSWORD=LocalDevPassword123
 # Optional
@@ -145,6 +164,6 @@ RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 ```
 
-Values set by `docker-compose.yml`: `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
+Values set by `docker-compose.yml`: `LLM_PROVIDER` (default `auto`), `GCP_PROJECT`, `GCP_LOCATION` (default `global`), `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
 
 Production on the VM (see [Deployment on GCP](Deployment-GCP.md)): `deploy/gcp/compose.yaml` sets `DATA_DIR=/data` (the disk), `BACKUP_MODE=vm`, `BACKUP_EXPORT_DIR=/tmp` (tmpfs), `AGENTS_DIR`, `FORWARDED_ALLOW_IPS=172.30.0.0/24` and `LOG_FORMAT=json`. Everything else is in `/opt/voyager/app.env` (`deploy/gcp/app.env.example`): `SECRET_MANAGER_SECRETS`, `BACKUP_BUCKET`, `ALLOW_ANONYMOUS_AI=false`, `FCM_USE_ADC=true`, `LLM_PROVIDER=gemini`, `GCP_PROJECT`, `GCP_LOCATION`, the SMTP settings and `FARE_WATCH_DAILY_CALL_BUDGET=6`.

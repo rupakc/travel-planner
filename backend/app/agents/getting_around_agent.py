@@ -45,7 +45,7 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
 
     @staticmethod
     def _clean_multi_url(url: str) -> str:
-        """Extract the first URL if Haiku returned multiple joined by | or space."""
+        """Extract the first URL if the model returned multiple joined by | or space."""
         if not url:
             return url
         for sep in (" | ", " |", "| ", "|"):
@@ -59,7 +59,7 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
             return data
 
         for item in items[: self._MAX_ENRICH]:
-            # First, clean up any multi-URL values from Haiku
+            # First, clean up any multi-URL values from the model
             raw_url = item.get("booking_url", "")
             if raw_url and "|" in raw_url:
                 item["booking_url"] = self._clean_multi_url(raw_url)
