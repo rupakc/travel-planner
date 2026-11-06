@@ -1125,7 +1125,7 @@ def nearest_place(
                 [lat - dlat, lat + dlat, *lng_params],
             ).fetchall()
     except sqlite3.Error as exc:  # tables missing (unseeded DB)
-        logger.debug("Nearest place failed for %s,%s: %s", lat, lng, exc)
+        logger.debug("Nearest place lookup failed: %s", exc)  # no coordinates
         return None
     dists = ((_km(lat, lng, row["lat"], row["lng"]), row) for row in rows)
     near = sorted((d for d in dists if d[0] <= max_km), key=lambda d: d[0])
