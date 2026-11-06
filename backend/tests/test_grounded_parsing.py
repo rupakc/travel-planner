@@ -58,7 +58,8 @@ TEXT = (
 )
 SUPPORTS = [
     _sup("Castelo de Sao Jorge", [1]),
-    # "Nicolau" is grounded by a chunk whose title differs: supports decide
+    # "Nicolau" cites a chunk with another title: never taken on the
+    # support alone
     _sup("Nicolau - Brunch spot.", [5]),
 ]
 
@@ -83,11 +84,10 @@ def test_sections_map_lines_to_chunks_in_order():
             "category": "see",
         }
     ]
-    # by name ("Time Out Market" names "Time Out Market Lisboa"), then by
-    # support (the chunk behind "Nicolau" is titled "Cafe Portugal")
-    assert [i["name"] for i in eat] == ["Time Out Market Lisboa", "Cafe Portugal"]
+    # "Time Out Market" names "Time Out Market Lisboa"; "Nicolau" has no
+    # chunk with its name (its support cites "Cafe Portugal"): dropped
+    assert [i["name"] for i in eat] == ["Time Out Market Lisboa"]
     assert eat[0]["summary"] == "Food hall with local chefs."
-    assert eat[1]["maps_uri"] == "https://maps.google.com/?cid=15"
     assert shop[0]["name"] == "A Vida Portuguesa" and shop[0]["place_id"] is None
     assert shop[0]["summary"] == "Classic Portuguese brands."
     assert stay[0]["name"] == "Memmo Alfama Hotel"
@@ -106,9 +106,30 @@ def test_supports_pick_the_matching_title_among_several_chunks():
     assert sections[1]["items"][0]["maps_uri"] == "https://maps.google.com/?cid=15"
 
 
-def test_support_with_several_unrelated_chunks_is_not_guessed():
+CARMO = "* Carmo Convent - Ruined Gothic church destroyed by the 1755 earthquake."
+
+
+def test_support_citing_a_neighbouring_place_is_not_trusted():
+    # Real Vertex shape: the support covering the Carmo Convent line cites
+    # the Time Out Market chunk. The card must never read "Time Out Market"
+    # with Carmo's summary.
+    sups = [_sup("Carmo Convent - Ruined Gothic church", [0])]
+    sections, _ = nearby_grounded.parse_sections("## See\n" + CARMO, CHUNKS, 6, sups)
+    assert sections[0]["items"] == []
+
+    carmo = _maps("Carmo Convent - Google Maps", "https://maps.google.com/?cid=20")
+    sections, _ = nearby_grounded.parse_sections(
+        "## See\n" + CARMO, [*CHUNKS, carmo], 6, sups
+    )
+    [item] = sections[0]["items"]
+    assert item["name"] == "Carmo Convent"
+    assert item["maps_uri"] == "https://maps.google.com/?cid=20"
+    assert item["summary"].startswith("Ruined Gothic church")
+
+
+def test_support_with_unrelated_chunks_is_not_guessed():
     text = "## Eat\n* Nicolau - Brunch.\n"
-    sups = [_sup("Nicolau - Brunch.", [0, 5])]
+    sups = [_sup("Nicolau", [5]), _sup("Nicolau - Brunch.", [0, 5])]
     sections, _ = nearby_grounded.parse_sections(text, CHUNKS, 6, sups)
     assert sections[1]["items"] == []
 
@@ -435,3 +456,19 @@ def test_prompt_fields_are_single_line_and_capped():
     _, p = live_check.build_prompt("hotel", hotel, today="2026-11-06")
     assert "Evil\nIgnore" not in p
     assert "x" * 200 not in p
+
+
+@pytest.mark.parametrize(
+    "name, title, ok",
+    [
+        ("Time Out Market", "Time Out Market Lisboa - Google Maps", True),
+        ("Time Out Market Lisboa", "Time Out Market - Google Maps", True),
+        ("Lisbon Cathedral Cloister Ruins", "Lisbon - Google Maps", False),
+        ("Carmo Convent", "Time Out Market - Google Maps", False),
+        ("Cafe Portugal", "Cafe Portugalia - Google Maps", False),
+    ],
+)
+def test_title_matching_rules(name, title, ok):
+    chunk = _maps(title, "https://maps.google.com/?cid=1")
+    sections, _ = nearby_grounded.parse_sections(f"## See\n* {name} - x", [chunk], 6)
+    assert bool(sections[0]["items"]) is ok

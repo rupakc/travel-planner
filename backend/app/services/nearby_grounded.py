@@ -5,9 +5,9 @@ The model answers in natural text: a heading per group (``## See`` …) and
 one place per line (``Name - why``). Google attaches Maps grounding chunks to
 answers in that shape (a rigid ``GROUP|name|why`` format came back with no
 chunks in 7 of 8 real calls). Every item must map to a Maps grounding chunk
-— through the grounding supports first, then by name — and takes the chunk's
-title, link and place id; a place without one is dropped, so nothing is
-invented. Pure helpers (no network); the route makes the call.
+whose title matches its name (chunks its grounding supports cite are tried
+first) and takes the chunk's title, link and place id; a place without one
+is dropped, so nothing is invented or mislabelled. Pure helpers (no network); the route makes the call.
 
 Google's Maps grounding terms: results go only to the user who asked, are
 never cached or stored (only ``place_id`` could be), and each item keeps its
@@ -112,7 +112,9 @@ def _maps_chunks(chunks: list[dict]) -> dict[int, dict]:
 
 def _title_match(folded: str, candidates: list[dict]) -> dict | None:
     """An exact (folded) title first, else the closest title containing the
-    name or contained in it."""
+    name or contained in it as whole words, the shorter at least 6
+    characters and half the longer ("Time Out Market" ↔ "Time Out Market
+    Lisboa"; never "Lisbon" ↔ "Lisbon Cathedral Cloister Ruins")."""
     for c in candidates:
         if fold_place(c["title"]) == folded:
             return c
@@ -121,7 +123,12 @@ def _title_match(folded: str, candidates: list[dict]) -> dict | None:
     best, best_gap = None, None
     for c in candidates:
         title = fold_place(c["title"])
-        if len(title) < _MIN_PARTIAL or not (folded in title or title in folded):
+        short, long_ = sorted((title, folded), key=len)
+        if (
+            len(short) < _MIN_PARTIAL
+            or len(short) * 2 < len(long_)
+            or f" {short} " not in f" {long_} "
+        ):
             continue
         gap = abs(len(title) - len(folded))
         if best_gap is None or gap < best_gap:
@@ -136,10 +143,15 @@ def _match(
     supports: list[dict],
     used: set[str],
 ) -> dict | None:
-    """The chunk an item line refers to. Supports first: a support whose
-    segment is this place's name (or part of its line) names the chunks
-    behind it; among those, the one whose title matches, else the first.
-    Then the name against every chunk title."""
+    """The chunk an item line refers to, or None (the line is dropped).
+
+    A chunk is only ever taken when its cleaned title matches the line's
+    name (``_title_match``: folded exact, or containment either way for
+    names of 6+ characters). Supports only set the order: chunks a support
+    covering this line cites are tried first, then every other chunk. A
+    support's chunk is never taken on the support alone — real answers
+    cite neighbouring places' chunks ("Carmo Convent" backed by the Time Out
+    Market chunk), and a wrong name and link on a card is worse than none."""
     folded = fold_place(name)
     if not folded:
         return None
@@ -153,13 +165,9 @@ def _match(
             for i in s.get("chunks") or []
             if i in maps and maps[i]["uri"] not in used
         ]
-        if not backing:
-            continue
         hit = _title_match(folded, backing)
         if hit is not None:
             return hit
-        if seg == folded or len(backing) == 1:
-            return backing[0]
     free = [c for c in maps.values() if c["uri"] not in used]
     return _title_match(folded, free)
 
