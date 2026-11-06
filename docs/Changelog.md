@@ -4,6 +4,27 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: production on one e2-micro VM (GCP)
+
+Deployment kit for the approved lean GCP design (`docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md`): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: [Deployment on GCP](Deployment-GCP.md).
+
+- **Backend production mode:**
+  - `BACKUP_MODE=vm`: disk authoritative, restore only if the DB is missing (stray WAL/SHM removed), mount-guard marker, no merge, user-table export to tmpfs uploaded on hash change every 5 min plus a clean-shutdown flush, `backup_ok` in `/health`.
+  - `python -m app.entrypoint`: Secret Manager secrets into memory, refuses an empty `JWT_SECRET_KEY`, uvicorn with `--timeout-graceful-shutdown 5` and proxy headers only from the compose network.
+  - `login` rate-limit bucket plus a per-username failure lock, and `ALLOW_ANONYMOUS_AI=false` for production.
+  - FCM push through the VM's service account (`FCM_USE_ADC`).
+  - 15 s SSE keepalives, and agent tasks cancelled when a search or chat client disconnects.
+- **Image:** runs through the entrypoint; the unused `claude-agent-sdk` and `python-dotenv` are gone.
+- **`deploy/gcp/`:**
+  - compose (memory limits, log rotation, health checks), Caddyfile and a Caddy image with the SPA baked in;
+  - a tiered egress governor in `DOCKER-USER`: per IP ≈ 4 Mbit/s and 3 GiB/day, a warning at 150 GiB, ports closed at 200 GiB, the billing month in Pacific time;
+  - a signed-digest pull deployer with automatic rollback;
+  - first-boot provisioning for Debian 13 (Docker, zram, unattended-upgrades, a weekly Berlin-night window) and systemd units.
+- **`infrastructure/gcp/`:**
+  - an idempotent `bootstrap.sh` with `--dry-run`; it detects the existing INR budgets and Gemini spend cap by name;
+  - `migrate_old_prod.py`: strips the 886 MB 2026-08-30 export to its 17 users and their plans, preferences, taste signals and feedback.
+- **CI/CD:** `deploy.yml` runs on every push to `main`. After all of CI it builds, pushes to GHCR, signs with cosign keyless and moves `prod`; the VM verifies and pulls. The Cloud Run Terraform, its scripts and the old workflow were removed.
+
 ## Unreleased: fixes from the Android end-to-end run
 
 - **Check now is live.** `POST /api/fare-watches/{id}/check` and `POST /api/price-watches/{id}/check` no longer answer from the 30-minute result cache, so pressing Check now can show a new price; the fresh answer refreshes the cache. Their SerpAPI calls are reserved from the daily budget and the owner's share as before (a Check now right after a search is no longer free). Scheduled checks and a new watch's baseline still reuse cached prices (`core/cache.fresh_reads`).

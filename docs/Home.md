@@ -4,7 +4,7 @@ Travel Planner turns a route, travel dates, a budget and a list of interests int
 
 These pages are the technical documentation for people working on the code. The project is open source under the MIT License (`LICENSE` at the repo root).
 
-> **No hosted instance.** The production deployment on Google Cloud Run was decommissioned on 2026-08-30: the GCP project was deleted and the old app URLs no longer work. To try the app, run it locally with `./start.sh` or `docker compose up --build` (see [Setup and Installation](Setup-and-Installation.md)). [Deployment](Deployment.md) explains how to bring a hosted copy back.
+> **Hosting.** Production deploys to a single always-free e2-micro VM on GCP (Caddy + the app container, SQLite on the disk, about $4 a month); every green merge to `main` deploys. See [Deployment on GCP](Deployment-GCP.md). To try the app yourself, run it locally with `./start.sh` or `docker compose up --build` (see [Setup and Installation](Setup-and-Installation.md)).
 
 ---
 
@@ -49,7 +49,8 @@ Every specialist agent uses Claude Haiku 4.5 through `BaseAgent`. Chat uses Clau
 | [Frontend](Frontend.md) | React app structure, routing, contexts, workers, utilities |
 | [API Reference](API-Reference.md) | Every endpoint, SSE event types, rate-limit buckets |
 | [Testing and CI](Testing-and-CI.md) | Test commands, lint gates, GitHub Actions workflows |
-| [Deployment](Deployment.md) | Current state (decommissioned) and how to redeploy from `infrastructure/` |
+| [Deployment](Deployment.md) | Production on one GCP VM, the deploy pipeline, and deploying elsewhere |
+| [Deployment on GCP](Deployment-GCP.md) | Runbook: bootstrap, secrets, first boot, migration, rollback, restore drills, egress governor, cost watch |
 | [Contributing](Contributing.md) | Workflow, code style, adding an agent |
 | [Changelog](Changelog.md) | Merged PRs by theme, and the history before them |
 

@@ -105,6 +105,13 @@ data: {"type": "done"}
 
 The full list of event types is in [API Reference](API-Reference.md#post-apisearch). The frontend parses the stream in a Web Worker (`frontend/src/workers/sseWorker.js`) so that large JSON payloads do not block rendering. If the stream ends without `done`, the worker reports an interruption and the page says so.
 
+Both `/api/search` and `/api/chat` go through `core/sse.guarded_stream`:
+
+- **Keepalives.** It sends a `: keepalive` comment after 15 s of silence (`SSE_KEEPALIVE_SECONDS`). Proxies and phone networks keep the connection, and a vanished client is noticed at the next write.
+- **Cancel on disconnect.** When the client goes away before `done`, it cancels every task the stream started, nested ones included, so abandoned agents stop spending tokens and release the LLM semaphore.
+  - Tasks are attributed through a context variable that a small task factory reads, so agent code knows nothing about it.
+  - Alert pushes start in a fresh context, so they survive.
+
 ---
 
 ## Source verification
@@ -155,7 +162,17 @@ The first six are reference data seeded from files committed to the repo; see [P
 
 ### Backups (optional)
 
-`backend/app/db/backup.py` is active only when `BACKUP_BUCKET` is set. At startup it restores every `*.db` under `sqlite-backups/` in the bucket. Every 60 s it uploads a snapshot, using GCS generation checks: if another instance wrote newer data, it merges that data with `INSERT OR IGNORE` first, and it skips uploads during a 150 s startup window. On shutdown it forces one final upload. Snapshots leave out the regenerable place tables and the place-data version, so a restored database reseeds them on start. This was built for Cloud Run's ephemeral disk; locally it is off.
+Backups are active only when `BACKUP_BUCKET` is set, in one of two modes (`BACKUP_MODE`):
+
+- **`vm` (production, `backend/app/db/vm_backup.py`).** The persistent disk is the source of truth.
+  - **Restore only if missing.** At start the DB is downloaded from `sqlite-backups/airports.db` only when `airports.db` doesn't exist. Stray `-wal`/`-shm` files are deleted first, and the download is checked with `quick_check` and renamed into place atomically.
+  - **Mount guard.** That happens only when `DATA_DIR` holds the provisioning marker `.voyager-data-disk`. A missing marker, or a missing DB that GCS can't supply, stops the start rather than run on the wrong directory or empty.
+  - **No merge, ever.** A merge would bring back deleted watches, devices, plans and taste resets.
+  - **Change-only uploads.** Every 5 min the non-place tables are exported from one read snapshot into a tmpfs. The export is uploaded only when its SHA-256 differs from the last upload, kept in the object's metadata so a restart doesn't re-upload. One more cycle runs at a clean shutdown.
+  - **Visible.** `/health` reports `backup_ok`, which the uptime check content-matches.
+- **`cloudrun` (legacy, `backend/app/db/backup.py`, the default).** Built for an ephemeral disk. It restores every `*.db` at startup, uploads a snapshot every 60 s with GCS generation checks and an `INSERT OR IGNORE` merge of newer remote data (skipped during a 150 s startup window), and forces one final upload on shutdown.
+
+In both modes the regenerable place tables and the place-data version are left out, so a restored database reseeds them on start. Locally backups are off.
 
 ---
 
@@ -190,7 +207,7 @@ The fare scheduler (`fare_watch.run_scheduler`) runs the fare pass on every tick
 
 The Android app (its own repository) is a second client of the same API: it signs in with the same JWT, streams `/api/search` and `/api/chat`, and reads `/api/notifications`. Two additions exist for it:
 
-- **Push.** The app registers its FCM token with `POST /api/devices` (`devices` table; a token belongs to one user at a time) and forgets it on sign-out with `POST /api/devices/unregister`; tokens travel only in request bodies and are logged masked. When `FCM_SERVICE_ACCOUNT_FILE` is set, `services/push.py` sends every new fare- or price-watch notification to the owner's devices. The hook is the `_notify` helper of each watch service, right after the notification row is stored: `push.notify` (guarded by its own `try`) starts a background task, so alert creation keeps its latency and outcome, and with push off it does nothing; shutdown gives pending pushes 5 s, then cancels them (`push.drain`). The task looks up the user (inactive users are skipped), signs a JWT with the service-account key (google-auth's RS256 signer), exchanges it for an OAuth access token (one exchange at a time, cached until a minute before it expires, dropped on an FCM `401`), and sends one data-only FCM HTTP v1 message per device concurrently over httpx (no `notification` block, so the app builds and dedupes the notification itself): string data `title`, `body`, `kind`, `notification_id`, `link` (the web deep link, `data.links.alerts`), `watch_id` and, for price watches, `watch_kind`. Expired / on-hold notices go at normal Android priority, alerts at high. Only FCM's own verdict that a token is dead deletes it (error code `UNREGISTERED`, or `INVALID_ARGUMENT` with a violation on `message.token`); a bare `404` (a wrong Firebase project) and every other failure is logged and dropped, keeping the token (the alert stays in-app and in email). The app polls `/api/notifications` as a safety net either way.
+- **Push.** The app registers its FCM token with `POST /api/devices` (`devices` table; a token belongs to one user at a time) and forgets it on sign-out with `POST /api/devices/unregister`; tokens travel only in request bodies and are logged masked. When `FCM_SERVICE_ACCOUNT_FILE` is set, or `FCM_USE_ADC=true` (production: the VM's service account, with no key file), `services/push.py` sends every new fare- or price-watch notification to the owner's devices. The hook is the `_notify` helper of each watch service, right after the notification row is stored: `push.notify` (guarded by its own `try`) starts a background task, so alert creation keeps its latency and outcome, and with push off it does nothing; shutdown gives pending pushes 5 s, then cancels them (`push.drain`). The task looks up the user (inactive users are skipped), signs a JWT with the service-account key (google-auth's RS256 signer) and exchanges it for an OAuth access token, or in ADC mode refreshes the metadata-server token in an executor (one exchange at a time, cached until a minute before it expires, dropped on an FCM `401`), and sends one data-only FCM HTTP v1 message per device concurrently over httpx (no `notification` block, so the app builds and dedupes the notification itself): string data `title`, `body`, `kind`, `notification_id`, `link` (the web deep link, `data.links.alerts`), `watch_id` and, for price watches, `watch_kind`. Expired / on-hold notices go at normal Android priority, alerts at high. Only FCM's own verdict that a token is dead deletes it (error code `UNREGISTERED`, or `INVALID_ARGUMENT` with a violation on `message.token`); a bare `404` (a wrong Firebase project) and every other failure is logged and dropped, keeping the token (the alert stays in-app and in email). The app polls `/api/notifications` as a safety net either way.
 - **Near me.** `POST /api/nearby` finds the nearest known place to a coordinate (`places_db.nearest_place`: a lat/lng bounding box on the `places` table's `idx_places_lat_lng` index, wrapping the antimeridian, then great-circle distances, up to 75 km; a ward or suburb yields to a place at least 10× bigger within 15 km), then runs the existing activities agent for "Place, Region, Country" (the GeoNames admin1 name tells Portland, Maine from Portland, Oregon; left out when it repeats the name) with the body's interests (else the saved preferences') and the caller's Taste Graph. Results are cached for an hour in their own `TTLCache`, per 0.05° cell, place, interests and taste.
 
 ## Cache
@@ -203,11 +220,11 @@ One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE
 
 - `POST /api/auth/login` returns an HS256 JWT valid for 24 h (`backend/app/core/auth.py`). Passwords are bcrypt-hashed. There is no registration endpoint; admins create users.
 - Most routes require a valid token (`get_current_user`). Admin routes also require `is_admin`.
-- `/api/search`, `/api/search/sync`, `/api/discover` and every single-agent ("light_ai") route accept **anonymous** calls. They use `get_optional_user`: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except `/share/:token`.
+- `/api/search`, `/api/search/sync`, `/api/discover` and every single-agent ("light_ai") route accept **anonymous** calls, unless `ALLOW_ANONYMOUS_AI=false` (production): then every AI router answers `401` to anonymous callers (`require_ai_access`). They use `get_optional_user`: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except `/share/:token`.
 
 ## Rate limiting
 
-`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits). Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see [Fare-watch scheduler](#fare-watch-scheduler)).
+`backend/app/core/rate_limit.py` is an in-process sliding-window limiter attached to routers as a FastAPI dependency (`backend/app/main.py`). Defaults per 10 minutes: search 10, chat 30, compare 30, discover 10, import 20, light_ai 60, and login 10 per client IP plus 20 failed logins per username (checked before bcrypt). Behind Caddy the client IP comes from `X-Forwarded-For`, trusted only from the compose network (`FORWARDED_ALLOW_IPS`), so it can't be spoofed. A chat turn that starts a full trip plan also takes a search token (`try_consume`), answering with a friendly in-stream message when over. Over the limit the API returns `429` with `Retry-After` and a string `detail` that the frontend shows as-is. Being in-process, it only works for a single backend process. See [Configuration](Configuration.md#rate-limits). Fare and price watches share their own daily SerpAPI budget, stored in SQLite (see [Fare-watch scheduler](#fare-watch-scheduler)).
 
 ## Middleware
 

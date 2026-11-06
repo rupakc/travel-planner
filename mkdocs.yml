@@ -43,5 +43,6 @@ nav:
   - Operations:
       - Testing and CI: Testing-and-CI.md
       - Deployment: Deployment.md
+      - Deployment on GCP: Deployment-GCP.md
       - Contributing: Contributing.md
       - Changelog: Changelog.md
