@@ -52,6 +52,8 @@ GiB = 1024**3
 BILLING_TZ = ZoneInfo("America/Los_Angeles")
 CHAIN_EGRESS = "VOYAGER-EGRESS"
 CHAIN_CLOSE = "VOYAGER-CLOSE"
+CHAIN_GUARD = "VOYAGER-GUARD"
+METADATA_IP = "169.254.169.254"
 CONFIG_FILE = Path("/etc/voyager/governor.env")
 METADATA = "http://metadata.google.internal/computeMetadata/v1"
 
@@ -75,6 +77,8 @@ class Config:
     bridge: str = "br-voyager"
     ports: str = "80,443"
     ipset: str = "voyager_perip"
+    subnet: str = "172.30.0.0/24"  # compose network
+    app_ip: str = "172.30.0.10"  # the only container allowed to reach metadata
     state_path: Path = Path("/var/lib/voyager/governor/state.json")
     smtp: dict = field(default_factory=dict)
 
@@ -120,6 +124,7 @@ def new_state(month: str, raw: int, boot_id: str) -> dict:
         "closed": False,
         "close_at": None,
         "applied_rate": None,
+        "applied_tier": None,
         "updated": None,
     }
 
@@ -195,19 +200,28 @@ def render_rules(cfg: Config, tier: str) -> list[list[str]]:
          "-exist"],
         _ipt("-N", CHAIN_EGRESS),
         _ipt("-N", CHAIN_CLOSE),
+        _ipt("-N", CHAIN_GUARD),
         _ipt("-F", CHAIN_EGRESS),
         _ipt("-F", CHAIN_CLOSE),
+        _ipt("-F", CHAIN_GUARD),
+        # Only the app may reach the metadata server (ADC for Gemini, Secret
+        # Manager, GCS, FCM); a compromised Caddy gets no VM tokens
+        _ipt("-A", CHAIN_GUARD, "-i", cfg.bridge, "-s", cfg.subnet,
+             "!", "-s", f"{cfg.app_ip}/32", "-d", f"{METADATA_IP}/32", "-j", "DROP"),
         # Per destination IP (the client our web server is sending to):
-        # remember it for 24 h (first packet starts the day), count bytes,
-        # drop above the daily quota, and above ≈ 4 Mbit/s
+        # remember it for 24 h (first packet starts the day), count its bytes
+        # exactly once (the counting rule), drop above the daily quota (the
+        # check never updates counters), and above ≈ 4 Mbit/s
         _ipt("-A", CHAIN_EGRESS, "-j", "SET", "--add-set", cfg.ipset, "dst"),
         _ipt("-A", CHAIN_EGRESS, "-m", "set", "--match-set", cfg.ipset, "dst"),
         _ipt("-A", CHAIN_EGRESS, "-m", "set", "--match-set", cfg.ipset, "dst",
+             "!", "--update-counters",
              "--bytes-gt", str(cfg.per_ip_daily_bytes), "-j", "DROP"),
         _ipt("-A", CHAIN_EGRESS, "-m", "hashlimit", "--hashlimit-mode", "dstip",
              "--hashlimit-name", "voyager_rate", "--hashlimit-above",
              cfg.per_ip_rate, "--hashlimit-burst", cfg.per_ip_burst,
-             "--hashlimit-htable-expire", "120000", "-j", "DROP"),
+             "--hashlimit-htable-expire", "120000",
+             "--hashlimit-htable-max", "65536", "-j", "DROP"),
         _ipt("-A", CHAIN_EGRESS, "-j", "RETURN"),
     ]  # fmt: skip
     cmds += close_rules(cfg, closed=tier == "closed")
@@ -217,12 +231,14 @@ def render_rules(cfg: Config, tier: str) -> list[list[str]]:
              "-p", "tcp", "-m", "multiport", "--sports", cfg.ports,
              "-j", CHAIN_EGRESS),
         _ipt("-I", "DOCKER-USER", "1", "-j", CHAIN_CLOSE),
+        _ipt("-I", "DOCKER-USER", "1", "-j", CHAIN_GUARD),
     ]  # fmt: skip
     return cmds
 
 
 def jump_specs(cfg: Config) -> list[list[str]]:
     return [
+        ["-j", CHAIN_GUARD],
         ["-j", CHAIN_CLOSE],
         ["-i", cfg.bridge, "-o", cfg.iface, "-p", "tcp", "-m", "multiport",
          "--sports", cfg.ports, "-j", CHAIN_EGRESS],
@@ -349,6 +365,15 @@ def apply_rules(cfg: Config, tier: str) -> None:
             raise RuntimeError(f"{cmd}: {result.stderr}")
 
 
+def rules_in_place(cfg: Config) -> bool:
+    """Every jump into our chains is present in DOCKER-USER (Docker may have
+    rebuilt its chains)."""
+    return all(
+        run(_ipt("-C", "DOCKER-USER", *spec), check=False).returncode == 0
+        for spec in jump_specs(cfg)
+    )
+
+
 def apply_rate(cfg: Config, state: dict, rate: int) -> dict:
     if state.get("applied_rate") != rate:
         run(tc_command(cfg, rate))
@@ -447,8 +472,13 @@ def _state_for_now(cfg: Config) -> dict:
 
 def cmd_tick(cfg: Config) -> None:
     state = apply_tick(_state_for_now(cfg), read_raw(cfg), read_boot_id(), time.time())
+    save_state(cfg.state_path, state)  # counted bytes survive any failure below
     d = decide(state, cfg)
-    apply_rules(cfg, d.tier)
+    # Rebuild only on a tier change or when Docker dropped our jumps: a flush
+    # would reset every client's rate bucket (hashlimit) each minute
+    if state.get("applied_tier") != d.tier or not rules_in_place(cfg):
+        apply_rules(cfg, d.tier)
+        state = dict(state, applied_tier=d.tier)
     state = apply_rate(cfg, state, d.rate_mbit)
     if d.notify:
         notify(cfg, state, d.notify)
@@ -461,7 +491,9 @@ def cmd_apply(cfg: Config) -> None:
     state = _state_for_now(cfg)
     d = decide(state, cfg)
     apply_rules(cfg, d.tier)
-    state = apply_rate(cfg, dict(state, applied_rate=None), d.rate_mbit)
+    state = apply_rate(
+        cfg, dict(state, applied_rate=None, applied_tier=d.tier), d.rate_mbit
+    )
     save_state(cfg.state_path, state)
     print(status_json(state, cfg))
 

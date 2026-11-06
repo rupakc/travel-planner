@@ -244,8 +244,8 @@ class FakeHost:
         import subprocess
 
         self.cmds.append(cmd)
-        # Deleting a jump that isn't there fails, like the real iptables
-        rc = 1 if "-D" in cmd else 0
+        # Deleting or checking a jump that isn't there fails, like iptables
+        rc = 1 if ("-D" in cmd or "-C" in cmd) else 0
         return subprocess.CompletedProcess(cmd, rc, stdout="", stderr="")
 
 
@@ -268,3 +268,74 @@ def test_tick_closes_once_and_persists(monkeypatch, tmp_path, capsys):
     # 50 Mbit/s at start, 20 Mbit/s from the warning on; not re-applied each tick
     assert [c[c.index("rate") + 1] for c in tcs] == ["50mbit", "20mbit"]
     assert json.loads(capsys.readouterr().out.splitlines()[-1])["tier"] == "closed"
+
+
+# ── Review fixes ─────────────────────────────────────────────────────────────
+
+
+def test_quota_check_does_not_count_bytes_a_second_time():
+    rules = [" ".join(c) for c in gov.render_rules(CFG, tier="open")]
+    check = [r for r in rules if "--bytes-gt" in r]
+    assert len(check) == 1 and "! --update-counters" in check[0]
+    counting = [r for r in rules if "--match-set" in r and "--bytes-gt" not in r]
+    assert len(counting) == 1  # exactly one rule updates the per-IP counters
+
+
+def test_hashlimit_table_is_sized_explicitly():
+    flat = " ".join(" ".join(c) for c in gov.render_rules(CFG, tier="open"))
+    assert "--hashlimit-htable-max 65536" in flat
+
+
+def test_only_the_app_container_may_reach_the_metadata_server():
+    rules = [" ".join(c) for c in gov.render_rules(CFG, tier="open")]
+    meta = [r for r in rules if "169.254.169.254" in r]
+    assert len(meta) == 1
+    assert f"! -s {CFG.app_ip}/32" in meta[0] and meta[0].endswith("-j DROP")
+    assert any("VOYAGER-GUARD" in " ".join(s) for s in gov.jump_specs(CFG))
+
+
+def test_unchanged_tier_does_not_rebuild_rules(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    # -C (check) succeeds: jumps are in place
+    host_run = host.run
+
+    def run(cmd, check=True):
+        import subprocess
+
+        if "-C" in cmd:
+            host.cmds.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        return host_run(cmd, check)
+
+    monkeypatch.setattr(gov, "run", run)
+    gov.cmd_tick(cfg)
+    first = len([c for c in host.cmds if "-F" in c])
+    host.raw = 1000
+    gov.cmd_tick(cfg)
+    gov.cmd_tick(cfg)
+    assert first > 0
+    assert len([c for c in host.cmds if "-F" in c]) == first  # no flush later
+
+
+def test_missing_jumps_trigger_a_rebuild(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)  # its -C fails like -D: "missing"
+    gov.cmd_tick(cfg)
+    gov.cmd_tick(cfg)
+    assert len([c for c in host.cmds if "-F" in c]) >= 2 * 3
+
+
+def test_counted_bytes_are_saved_even_if_rules_fail(monkeypatch, tmp_path):
+    cfg = gov.Config(state_path=tmp_path / "s.json")
+    host = FakeHost(monkeypatch, raw=0)
+    gov.cmd_tick(cfg)
+    host.raw = 5000
+
+    def docker_down(*a, **k):
+        raise RuntimeError("DOCKER-USER chain missing")
+
+    monkeypatch.setattr(gov, "apply_rules", docker_down)
+    with pytest.raises(RuntimeError):
+        gov.cmd_tick(cfg)
+    assert gov.load_state(cfg.state_path)["total"] == 5000
