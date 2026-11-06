@@ -28,7 +28,8 @@ GitHub: merge to main → CI → build, sign (cosign) → GHCR `prod` tag ──
 
 ## 1. Before you start
 
-- `gcloud` CLI installed and signed in as the account that owns the project (`gcloud auth login`).
+- `gcloud` CLI installed and signed in as the account that owns the project (`gcloud auth login`), with the **`beta` component**: notification channels have no GA command yet (alerting policies and uptime checks use GA commands, so `alpha` isn't needed). The script checks this first and stops before changing anything; install it with `gcloud components install beta --quiet`. A gcloud installed with apt/dnf has no component manager; see [Managing gcloud CLI components](https://cloud.google.com/sdk/docs/components).
+- You don't need to change gcloud's default project. As soon as the project exists, the script sets `CLOUDSDK_BILLING_QUOTA_PROJECT=voyager-prod-ohzkl` (unless you already set it), so billing, budget and monitoring calls bill their quota to this project. Without it they used the account's default quota project and failed with *does not have permission to access billingAccounts* (first run, 2026-11-06).
 - Check that nothing else on the billing account uses the free tier: one free e2-micro, 30 GB of standard disk and 200 GiB of Standard-tier egress are free **per billing account**, not per project.
 - The project `voyager-prod-ohzkl` exists with billing linked and `aiplatform.googleapis.com` enabled. The two budgets also exist already: **"Voyager total (alerts)"** (₹2,300, email alerts) and **"Voyager Gemini spend cap"** (₹1,800, a hard cap on Agent Platform). The bootstrap script finds them by name and doesn't duplicate them.
 
@@ -58,7 +59,9 @@ CI has no identity in GCP: it pushes to GHCR and signs with Sigstore.
 
 During rollout, check the narrow Gemini role with one real search. If Vertex answers `403 PERMISSION_DENIED`, the call needs another permission: add it to `GEMINI_PERMS` and re-run the script. Don't fall back to `roles/aiplatform.user`. The VM starts provisioning itself straight away (section 4); the app waits for its secrets.
 
-Optional overrides via environment: `ZONE`, `BUCKET`, `SITE_HOST` (your own domain), `ACME_EMAIL`, `BUDGET_CURRENCY`/`TOTAL_BUDGET`/`AI_SPEND_CAP` (used only when a budget is missing).
+Optional overrides via environment: `ZONE`, `BUCKET`, `SITE_HOST` (your own domain), `ACME_EMAIL`, `BUDGET_CURRENCY`/`TOTAL_BUDGET`/`AI_SPEND_CAP` (used only when a budget is missing), `CLOUDSDK_BILLING_QUOTA_PROJECT`.
+
+The host bundle (`deploy/gcp` without its tests, sent as instance metadata) is built with `COPYFILE_DISABLE=1` and without extended attributes or AppleDouble files (`--no-mac-metadata --no-xattrs` on macOS, `--no-xattrs` with GNU tar), from a sorted file list. Built on a Mac it used to carry `com.apple.provenance` as `LIBARCHIVE.xattr` headers, which Debian's tar warned about on every boot.
 
 **Spend cap fallback.** If the script can't create the spend cap through the Budget API (it has no gcloud flag yet), create it in the console: Billing → Budgets & alerts → Create budget → **Spend cap enforcement**, name "Voyager Gemini spend cap", project `voyager-prod-ohzkl`, service *Gemini Enterprise Agent Platform* (`C7E2-9256-1C43`), amount ₹1,800. When the cap trips, Gemini calls fail until the 1st (or until you lift it on the budget's page), and the rest of the app keeps working.
 
@@ -97,7 +100,7 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap -- \
   sudo journalctl -u google-startup-scripts -f
 ```
 
-`first-boot.sh` installs Docker Engine and the compose plugin, configures zram swap and unattended-upgrades, unpacks the host bundle from instance metadata into `/opt/voyager`, and writes the data-disk marker `/var/lib/voyager/data/.voyager-data-disk`. It also installs the systemd units and runs the first deploy. Each later boot re-runs it, which is harmless, and applies any changed `compose.yaml`/`app.env` with `compose up -d`. It fails closed: when required metadata (`voyager-bucket`, `voyager-site-host`, `voyager-acme-email`, `voyager-alert-email`, the bundle) is missing or the metadata server errors, it stops rather than write empty settings such as `BACKUP_BUCKET=`. `/opt/voyager/app.env` is required by compose.
+`first-boot.sh` installs Docker Engine and the compose plugin, configures zram swap and unattended-upgrades, unpacks the host bundle from instance metadata into `/opt/voyager`, and writes the data-disk marker `/var/lib/voyager/data/.voyager-data-disk`. It also installs the systemd units, runs the first deploy, and then starts `voyager.service` with `--no-block` (the script runs inside `google-startup-scripts.service`, so it never waits on another unit). The unit must be **active** even though the first deploy, not the unit, started the containers: only an active unit runs its `ExecStop` (graceful stop and backup flush) at shutdown. If the first deploy fails, the unit's start is skipped (no `images.env` yet) and `deploy.sh` starts it once a later deploy lands. The unit's `compose up`, `deploy.sh` and `first-boot.sh`'s own `compose up` all hold `/run/voyager-deploy.lock`, so they never run at the same time. Each later boot re-runs it, which is harmless, and applies any changed `compose.yaml`/`app.env` with `compose up -d`. It fails closed: when required metadata (`voyager-bucket`, `voyager-site-host`, `voyager-acme-email`, `voyager-alert-email`, the bundle) is missing or the metadata server errors, it stops rather than write empty settings such as `BACKUP_BUCKET=`. `/opt/voyager/app.env` is required by compose.
 
 **Disk benchmark (rollout step 3).** pd-standard is slow (about 3.6 MiB/s). Benchmark it; if image pulls and the first reseed are painful, switch to a 10 GB pd-balanced boot disk (about +$1/month).
 
@@ -106,12 +109,20 @@ sudo apt-get install -y fio && sudo fio --name=t --filename=/var/lib/voyager/fio
   --rw=randrw --bs=4k --direct=1 --runtime=30 --time_based && sudo rm /var/lib/voyager/fio.tmp
 ```
 
+**Check the unit.** After the first boot has finished (and after every reboot):
+
+```bash
+gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap -- systemctl is-active voyager
+```
+
+It must print `active`. On the first boot of 2026-11-06 it printed `inactive` although the containers were up, so a shutdown would have skipped the graceful stop and the backup flush. If you see `inactive` and `/opt/voyager/images.env` exists, run `sudo systemctl start voyager` (a no-op `compose up -d`); if it is `failed`, see `journalctl -u voyager`. CI checks this with `deploy/gcp/tests/first_boot_sim.sh` (job `host-checks`).
+
 **Smoke test.** Then check:
 
 - `https://<host>/health` shows `"backup_ok":true`.
 - Log in, run a search (the results stream) and send a chat message.
 - Run a watch check (Alerts → Check now) and send a push to a real phone.
-- Reboot: `sudo systemctl reboot`.
+- Reboot: `sudo systemctl reboot`. Afterwards `systemctl is-active voyager` prints `active` again.
 - Run both restore drills (section 7) and the governor test (section 8).
 - Deploy during an active search: Caddy holds new requests while the app restarts, but open streams end.
 

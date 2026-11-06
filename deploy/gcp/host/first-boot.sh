@@ -198,16 +198,23 @@ main() {
   systemctl start --no-block voyager-governor.timer voyager-deploy.timer voyager-window.timer
   # First deploy now (also brings up compose). Later runs (every boot, or
   # after --update-host) apply the possibly changed compose.yaml/app.env:
-  # `up -d` recreates only the services whose config changed.
+  # `up -d` recreates only the services whose config changed. Under the
+  # deployer's lock, so it never runs alongside deploy.sh or voyager.service.
   if [[ ! -f "$OPT/images.env" ]]; then
     "$OPT/deploy.sh" || log "first deploy failed; the timer retries every 5 min"
   else
-    docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
+    flock -w 900 /run/voyager-deploy.lock \
+      docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
       --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans
-    # --no-block: this script runs inside google-startup-scripts.service, so
-    # it must never wait on another unit's start job (boot deadlock)
-    systemctl start --no-block voyager.service
   fi
+  # voyager.service must be *active*, also on the first boot (where the
+  # deploy above, not the unit, started the containers): only an active unit
+  # runs its ExecStop (graceful stop + backup flush) at shutdown. Its start
+  # is a no-op `compose up -d`; skipped by its condition while there is no
+  # images.env (deploy.sh starts it once the first deploy lands).
+  # --no-block: this script runs inside google-startup-scripts.service, so
+  # it must never wait on another unit's start job (boot deadlock).
+  systemctl start --no-block voyager.service
   log "done"
 }
 

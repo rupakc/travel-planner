@@ -146,6 +146,19 @@ wait_healthy() {
   return 1
 }
 
+# ensure_unit — queue a start of voyager.service when it isn't active (the
+# first deploy runs compose itself, and the unit's start is skipped while
+# images.env is missing). Only an active unit gets its ExecStop (graceful
+# stop + backup flush) at shutdown. --no-block: the unit's ExecStart waits
+# for this script's lock, so waiting here would deadlock.
+ensure_unit() {
+  [[ -f "$IMAGES_ENV" ]] || return 0
+  command -v systemctl >/dev/null || return 0
+  systemctl is-active --quiet voyager.service && return 0
+  systemctl start --no-block voyager.service 2>/dev/null ||
+    log "could not queue a start of voyager.service"
+}
+
 notify() {
   # Same SMTP path as the governor (best effort)
   if [[ -x "$COMPOSE_DIR/governor.py" ]]; then
@@ -183,6 +196,7 @@ main() {
     write_images "$prev_app" "$cur_caddy" "$cur_app" "$prev_caddy" "$pending"
     compose up -d app
     wait_healthy || die "rolled-back app is not healthy either"
+    ensure_unit
     exit 0
   fi
 
@@ -236,6 +250,7 @@ main() {
     # Converge: bring back anything that was stopped (no-op when all is up)
     [[ -z "$cur_app" ]] || compose up -d --remove-orphans >/dev/null 2>&1 ||
       log "compose up (converge) failed"
+    ensure_unit
     exit 0
   fi
 
@@ -246,6 +261,7 @@ main() {
   if wait_healthy; then
     log "deploy healthy"
     docker image prune -f >/dev/null 2>&1 || true
+    ensure_unit
     exit 0
   fi
 
@@ -263,6 +279,7 @@ main() {
   else
     notify "[voyager] first deploy unhealthy" "$next_app is not healthy and there is nothing to roll back to."
   fi
+  ensure_unit  # whatever runs now still needs its graceful stop
   exit 1
 }
 
