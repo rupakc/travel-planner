@@ -2,9 +2,15 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    # main runs CI through deploy.yml (workflow_call), which publishes only
+    # after every job here passes
+    branches-ignore: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   lint-backend:
