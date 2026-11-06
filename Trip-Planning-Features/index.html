@@ -802,6 +802,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Price watch: hotels, activities and trips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-the-web-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search the web now
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#near-me" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Near me
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1399,7 +1427,7 @@
 <hr />
 <h2 id="app-shell">App shell</h2>
 <ul>
-<li>Routes (<code>frontend/src/App.jsx</code>): <code>/login</code>, <code>/share/:token</code> (public), <code>/change-password</code>, and the signed-in layout with <code>/</code> (Search and Results), <code>/chat</code>, <code>/alerts</code>, <code>/preferences</code> and <code>/admin</code> (admins only). Any other path redirects to <code>/</code>.</li>
+<li>Routes (<code>frontend/src/App.jsx</code>): <code>/login</code>, <code>/share/:token</code> (public), <code>/change-password</code>, and the signed-in layout with <code>/</code> (Search and Results), <code>/chat</code>, <code>/nearby</code> (Near me), <code>/alerts</code>, <code>/preferences</code> and <code>/admin</code> (admins only). Any other path redirects to <code>/</code>.</li>
 <li>Search, Results and Chat stay mounted and are hidden with CSS, so a running search or chat stream survives switching tabs. Logging out clears all search state.</li>
 <li>A user who must change their password is sent to <code>/change-password</code> first.</li>
 <li>The header has a notification bell for fare and price alerts (see <a href="#fare-watch-and-price-alerts">Fare watch and price alerts</a> and <a href="#price-watch-hotels-activities-and-trips">Price watch</a>).</li>
@@ -1558,7 +1586,7 @@
 <li><strong>Alerts page</strong> (<code>pages/AlertsPage.jsx</code>, <code>components/alerts/WatchCard.jsx</code>): a card per watch with the route, dates and travellers, the current price, the change since watching, lowest seen, Google's verdict, a price sparkline with the target as a dashed line, and last/next check. Actions: Re-plan with this fare (runs the normal search with the traveller's preferences; flexible watches also offer the cheaper nearby departure), Book on Google Flights, Check now, Pause/Resume, Edit, and Delete (confirmed inline). Grouped Active / Past trips, with an empty state that points to search. <code>/alerts?watch=ID</code> scrolls to a watch; <code>&amp;replan=1</code> (from emails) re-plans directly. Signed out, any such link goes through the login page (<code>/login?next=…</code>, same-site paths only) and returns to it after signing in. A watch on hold shows a plain-language reason (never the raw error).</li>
 <li><strong>Notifications</strong> (<code>context/AlertsContext.jsx</code>, <code>components/alerts/NotificationBell.jsx</code>, <code>AlertToast.jsx</code>): the header bell shows the unread count and the latest 10 alerts ("Berlin → Lisbon dropped to $150 (−$70)"), each opening its watch and marking it read, with "Mark all as read". The unread count is polled every 60 s only while the tab is visible (and on focus). A new alert shows as one dismissible toast (a polite live region), or as a native browser notification when the window isn't focused and the traveller allowed it.</li>
 <li><strong>Email</strong> (<code>backend/app/services/alert_email.py</code>, optional): when <code>SMTP_HOST</code> is set, the watch has email on and the account has an address (set on Preferences), fare alerts are also emailed: plain text plus inline-styled HTML with no remote images, old → new price, lowest seen, a text sparkline (▆▄█▁), "See flights" and "Re-plan with this fare" links to <code>APP_BASE_URL</code>, and a link that stops emails for that watch (it opens a confirmation page, so mail scanners that follow links can't turn emails off; mail clients' one-click unsubscribe, RFC 8058, works directly). Expiry and error notices stay in the app. The account email is not verified; changing it is signed-in only and rate-limited.</li>
-<li><strong>Analytics</strong> (<code>track()</code>): <code>watch_created</code> (mode, flex, email), <code>watch_checked_now</code>, <code>alert_clicked</code> (kind), <code>watch_replanned</code>, <code>watch_booked</code>.</li>
+<li><strong>Analytics</strong> (<code>track()</code>): <code>watch_created</code> (mode, flex, email), <code>watch_checked_now</code>, <code>watch_live_checked</code> (kind), <code>alert_clicked</code> (kind), <code>watch_replanned</code>, <code>watch_booked</code>.</li>
 </ul>
 <hr />
 <h2 id="price-watch-hotels-activities-and-trips">Price watch: hotels, activities and trips</h2>
@@ -1573,7 +1601,23 @@
 <li><strong>Thresholds.</strong> A step per kind sets the drop needed for an alert, for a repeat alert and for re-arming after a rebound: fares and hotels max($15, 5 %), activities max(1 unit of the listing's currency, 5 %), whole trips max($25, 4 %) on the total.</li>
 <li><strong>Anti-spam</strong> (same rules as fares): no alert on the baseline or for a rise; one notification per check; at most one per watch per 24 h unless the price is at least 5 % below the last alert; a repeat needs a further full-step drop unless the price rebounded first. Watching the same subject twice returns the existing watch (<code>already_watching</code>).</li>
 <li><strong>Checks and limits.</strong> One scheduler checks fare and price watches every <code>FARE_WATCH_INTERVAL_HOURS</code> from <strong>one</strong> daily SerpAPI budget (the price pass runs alongside, so it never delays fare checks, and price checks reserve their worst case so they can't push the budget over; creating a watch holds its worst case too — 2 calls for a hotel or an activity, 10 for a trip — and gives back what it didn't spend), and <code>FARE_WATCH_MAX_ACTIVE_PER_USER</code> counts every kind together. A watch ends on check-in, the activity date or the departure (<code>watch_expired</code>); three failed, or three "unavailable", looks in a row put it on hold (<code>watch_error</code>, with Retry). Notification kinds: <code>hotel_drop</code>, <code>hotel_target</code>, <code>activity_drop</code>, <code>activity_target</code>, <code>trip_drop</code>, <code>trip_target</code>.</li>
-<li><strong>Alerts page</strong>: a card per kind (<code>components/alerts/cards/</code>) with the current and lowest price, change since watching, sparkline, listing link, Check now, Pause/Resume, Edit and Delete; trip cards show the breakdown. <code>/alerts?kind=hotel&amp;watch=ID</code> opens one watch.</li>
+<li><strong>Alerts page</strong>: a card per kind (<code>components/alerts/cards/</code>) with the current and lowest price, change since watching, sparkline, listing link, Check now, Search the web now, Pause/Resume, Edit and Delete; trip cards show the breakdown. <code>/alerts?kind=hotel&amp;watch=ID</code> opens one watch.</li>
+</ul>
+<h3 id="search-the-web-now">Search the web now</h3>
+<p>Every active watch card (flight, hotel, activity, trip) has <strong>Search the web now</strong> (<code>components/alerts/LiveCheck.jsx</code>). It asks <code>POST /api/live-check</code> for one live Google Search–grounded answer about that watch (the server builds the question from the stored watch; nothing is typed). The answer opens under the card: the summary exactly as returned, any prices found with the source each one cites, "Searched for" (each query links to Google Search), the Sources list and the disclaimer ("…Not used for your price alerts."). It can be dismissed and is gone when you leave the page.</p>
+<ul>
+<li>It is separate from <strong>Check now</strong>: watches, alerts, notifications and price history still come only from the scheduled SerpAPI checks. The live answer never changes the card's price, sparkline or history, and is never stored (component state only, no browser storage).</li>
+<li>Errors read in plain words: a removed watch (404), a watch whose dates have passed (409 <code>watch_expired</code>, no retry), the rate limit (429, the server's message as-is), the monthly AI limit or disabled billing (503 <code>ai_limit</code> / <code>ai_billing</code>), live search not available on this server (503 <code>grounding_unavailable</code>, e.g. a local Anthropic setup), and no grounded answer (502, with Try again).</li>
+<li>Google's Search Suggestions widget is not shown; the "Searched for" queries link to Google Search instead.</li>
+</ul>
+<hr />
+<h2 id="near-me">Near me</h2>
+<p><strong>Near me</strong> (<code>/nearby</code>, <code>pages/NearbyPage.jsx</code>, a header tab next to Chat; between 640 and 1024 px the desktop tabs show icons only, with the names as tooltips and accessible names) shows places to see, eat, shop and stay around where you are, from Google Maps grounding (<code>POST /api/nearby</code> with <code>sections: true</code>).</p>
+<ul>
+<li>The page explains first and asks the browser for your location only when you press <strong>Use my location</strong>. Coordinates are rounded to about 100 m before they are sent, with the browser's language. While it waits for the browser there is a Cancel button, and after 20 s without an answer (e.g. a dismissed prompt in Firefox or Safari) it stops with the timeout message.</li>
+<li>Results: the nearest known place ("Lisbon, Portugal", distance; a region or country that repeats the name is left out), then four sections of cards, each with a one-line summary and <strong>Open in Google Maps</strong> (new tab). A section with nothing shows a short note. Under the cards: "Places from Google Maps" and the Sources list.</li>
+<li>Location denied, unavailable, timed out or unsupported each get their own explanation, with Try again where it can help. API errors: no known place nearby (404, offering to check again from where you are now rather than a plain retry), the rate limit (429), the AI limit, billing or map results not available here (503), and a failed lookup (502).</li>
+<li>Results live only in the page's state: nothing goes to browser storage, and they are gone when you leave the page. There is no "use a city instead" fallback yet (the airport typeahead has no coordinates).</li>
 </ul>
 <hr />
 <h2 id="live-web-check-and-near-me-google-grounding">Live web check and Near me (Google grounding)</h2>
@@ -1581,7 +1625,7 @@
 <ul>
 <li><strong>"Search the web now"</strong> (<code>POST /api/live-check</code>, <code>services/live_check.py</code>): a signed-in user asks for a live look at one of their own watches (fare, hotel, activity or trip). The server builds the question from the stored watch and runs one Gemini call grounded with <strong>Google Search</strong>. The answer comes back with its sources, the searches it ran ("Searched for") and any prices it quoted that a source supports. It is a second opinion, not a measurement: watches, baselines, price history and alerts stay on SerpAPI and never see it.</li>
 <li><strong>Near me v2</strong> (<code>POST /api/nearby</code> with <code>sections: true</code>, <code>services/nearby_grounded.py</code>): one Gemini call grounded with <strong>Google Maps</strong> around the user's coordinates, returning places to see, eat, shop and stay. Each item comes from a Maps grounding chunk and carries its Google Maps link; a place the model names without one is dropped. <strong>Location privacy:</strong> v2 passes the request's <code>lat</code>/<code>lng</code> to Google Maps grounding through Vertex AI (Google's retrieval config) so results are near the user; clients round them to about 100 m first. The backend never stores or logs the coordinates (request logs hold the path only, and the <code>llm_usage</code> line holds counts). The v1 response (activities agent, no <code>sections</code>) is unchanged for installed apps.</li>
-<li><strong>Clients.</strong> This branch is the backend. The web UI — a "Near me" page and a "Search the web now" panel on every watch card on the Alerts page — ships in a separate branch merged right after it; the Android app follows the same rules.</li>
+<li><strong>Clients.</strong> The web app has a "Near me" page (above) and a "Search the web now" panel on every active watch card on the Alerts page; the Android app follows the same rules.</li>
 <li><strong>Provider.</strong> Grounding exists only with <code>LLM_PROVIDER</code> resolved to <code>gemini</code>; on <code>anthropic</code> both answer <code>503 grounding_unavailable</code> (v1 Near me still works). Both use the <code>light_ai</code> rate limit, need sign-in, and count against the Gemini spend cap (<code>503 ai_limit</code> / <code>ai_billing</code>). Google bills each search or Maps query the model issues past a monthly free allowance (5,000 each), so Near me v2 makes one call for all four sections, not four.</li>
 </ul>
 <p><strong>Google's terms (Service Terms §20(k) Search, §20(m) Maps) — rules for this code and its clients:</strong></p>

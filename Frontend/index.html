@@ -1264,6 +1264,7 @@
 │   ├── ChatPage.jsx          chat, TripPlanView, chat plan drawer
 │   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
 │   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
+│   ├── NearbyPage.jsx        Near me: places around the user's location
 │   ├── AdminPage.jsx         users and feedback (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
@@ -1274,7 +1275,8 @@
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
 │   │   TripMap, VerificationBadge, WalkingToursSection
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
-│   │                         NotificationBell, AlertToast, AlertEmailField
+│   │                         NotificationBell, AlertToast, AlertEmailField,
+│   │                         LiveCheck (&quot;Search the web now&quot;), cards/
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
 │                             TravelerPanel, AttributionFooter
 ├── context/
@@ -1327,6 +1329,11 @@
 <td>Signed in</td>
 </tr>
 <tr>
+<td><code>/nearby</code></td>
+<td>NearbyPage</td>
+<td>Signed in</td>
+</tr>
+<tr>
 <td><code>/alerts</code></td>
 <td>AlertsPage (<code>?watch=ID</code>, <code>&amp;replan=1</code>)</td>
 <td>Signed in</td>
@@ -1348,7 +1355,7 @@
 </tr>
 </tbody>
 </table>
-<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Alerts and Admin mount on each visit. <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.</p>
+<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.</p>
 <hr />
 <h2 id="state">State</h2>
 <ul>
@@ -1356,6 +1363,7 @@
 <li><strong>AlertsContext</strong> (inside the signed-in <code>Layout</code>) polls <code>GET /api/notifications/unread-count</code> every 60 s while the tab is visible (stopped while hidden, refreshed on return and focus), turns a newly arrived alert into one toast or, when the window isn't focused and permission was granted, a native notification, and caches each trip's watch for the "Watch fare" buttons. Outside the provider <code>useAlerts()</code> is inert, so components keep rendering in isolation.</li>
 <li><strong>SearchDataContext</strong> holds the search form, the streamed results and per-agent status, shared by SearchPage and ResultsPage.</li>
 <li>Plan selections, itinerary overlays and planner settings are local state in ResultsPage and ChatPage.</li>
+<li>Grounded live answers (Near me and "Search the web now") are component state only: never in context, browser storage or the React Query cache.</li>
 </ul>
 <h2 id="streaming-workers">Streaming workers</h2>
 <p><code>sseWorker.js</code> POSTs to <code>/api/search</code>, reads the body as a stream, splits <code>data:</code> events, and posts each parsed event to the main thread, which only updates React state. If the stream closes without a <code>done</code> event it posts <code>__interrupted</code>. <code>chatWorker.js</code> does the same for <code>/api/chat</code>. Keeping the parsing off the main thread keeps the UI responsive while large payloads arrive.</p>
