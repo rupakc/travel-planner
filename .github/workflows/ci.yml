@@ -98,7 +98,7 @@ jobs:
         env:
           DATA_DIR: /tmp/test-data
           ADMIN_PASSWORD: test-admin-pw
-      # Egress governor + old-prod migration (pure logic, no root/network)
+      # Egress governor, old-prod migration, bootstrap.sh with stub gcloud (no root/network)
       - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests infrastructure/gcp/tests
 
   test-frontend:
@@ -115,7 +115,8 @@ jobs:
 
   # The VM kit's host layer for real: the governor's rules on iptables-nft
   # (Debian 13, like the VM) for every tier, a rejected ruleset leaving the
-  # old one in force, and systemd-analyze verify of the units
+  # old one in force, the deployer and first boot with fake docker/curl/
+  # systemctl, and systemd-analyze verify of the units
   host-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15

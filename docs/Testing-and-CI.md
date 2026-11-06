@@ -97,10 +97,11 @@ Every action in every workflow is pinned to a full commit SHA, with a version co
 
 It has no GCP or VM credentials: the VM pulls and verifies by itself (see [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback)).
 
-The `host-checks` job runs `deploy/gcp/tests/host_checks.sh` in `debian:trixie` (pinned by digest, `NET_ADMIN`). It checks three things:
+The `host-checks` job runs `deploy/gcp/tests/host_checks.sh` in `debian:trixie` (pinned by digest, `NET_ADMIN`). It checks four things:
 
 1. **Governor rules:** the real rules on iptables-nft for every tier, and that a rejected ruleset leaves the old rules intact.
-2. **Deployer:** `deploy.sh` end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal.
-3. **systemd units:** `systemd-analyze verify`.
+2. **Deployer:** `deploy.sh` end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal. Also that the first deploy starts `voyager.service` (with `--no-block`) and a stopped unit is started again.
+3. **First boot:** `first-boot.sh` for real with fake curl, docker and systemctl (`first_boot_sim.sh`), on a first and a later boot: `voyager.service` ends up active, voyager units are only started with `--no-block`, and the bundle (built by `bootstrap.sh`) unpacks without tar warnings.
+4. **systemd units:** `systemd-analyze verify`.
 
-The image build waits for it. CI also runs `shellcheck` on `deploy/gcp/host/*.sh` and `infrastructure/gcp/*.sh`, ruff on `deploy/` and `infrastructure/gcp/`, and the tests in `deploy/gcp/tests` (egress governor) and `infrastructure/gcp/tests` (old-prod migration).
+The image build waits for it. CI also runs `shellcheck` on `deploy/gcp/host/*.sh` and `infrastructure/gcp/*.sh`, ruff on `deploy/` and `infrastructure/gcp/`, and the tests in `deploy/gcp/tests` (egress governor) and `infrastructure/gcp/tests` (old-prod migration; `bootstrap.sh` against stub gcloud/curl: dry run calls nothing, beta preflight, billing quota project, clean sorted host bundle).

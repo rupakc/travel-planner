@@ -4,7 +4,10 @@
 #   1. the governor's rules against real iptables, every tier, plus atomic
 #      rejection (iptables_harness.py);
 #   2. deploy.sh end to end with fake docker/curl (deploy_sim.sh);
-#   3. `systemd-analyze verify` of the systemd units.
+#   3. first-boot.sh for real with fake curl/docker/systemctl: voyager.service
+#      ends up active on the first boot, only --no-block starts, no tar
+#      warnings from the bundle (first_boot_sim.sh);
+#   4. `systemd-analyze verify` of the systemd units.
 #
 # From the repo root:
 #   docker run --rm --cap-add NET_ADMIN -v "$PWD:/src:ro" debian:trixie \
@@ -22,6 +25,9 @@ python3 /src/deploy/gcp/tests/iptables_harness.py
 
 echo "== deployer simulation (deploy.sh with fake docker/curl)"
 bash /src/deploy/gcp/tests/deploy_sim.sh
+
+echo "== first-boot simulation (first-boot.sh with fake curl/docker/systemctl)"
+bash /src/deploy/gcp/tests/first_boot_sim.sh
 
 echo "== systemd-analyze verify"
 install -d /opt/voyager

@@ -2,7 +2,8 @@
 # Simulates deploy.sh end to end with fake docker/curl (no registry, no
 # containers): first deploy, upgrade, manual rollback + hold, a newer digest
 # ending the hold, automatic rollback of an unhealthy image, downgrade
-# refusal. Linux only (flock); run by host_checks.sh in CI.
+# refusal, and that the first deploy makes voyager.service active (queued
+# with --no-block, once). Linux only (flock); run by host_checks.sh in CI.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -52,6 +53,19 @@ case "$1" in
     esac ;;
 esac
 EOF
+# systemctl: records calls; a blocking start (deadlock: the unit waits for
+# deploy.sh's lock) fails the run
+cat >"$SIM/bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$SIM/systemctl.log"
+case "$1" in
+  is-active) [[ -f "$SIM/unit_active" ]] ;;
+  start)
+    [[ " $* " == *" --no-block "* ]] || { echo "BLOCKING systemctl $*" >>"$SIM/systemctl.log"; exit 99; }
+    touch "$SIM/unit_active" ;;
+esac
+EOF
+: >"$SIM/systemctl.log"
 printf '#!/bin/sh\nexit 0\n' >"$SIM/bin/logger"
 chmod +x "$SIM/bin/"*
 
@@ -72,8 +86,18 @@ held() {
   fi
 }
 
+# starts N — voyager.service start queued N times in all, never blocking
+starts() {
+  local n
+  n="$(grep -cx 'start --no-block voyager.service' "$SIM/systemctl.log" || true)"
+  if [[ "$n" == "$1" ]] && ! grep -q BLOCKING "$SIM/systemctl.log"; then echo "ok   $2"; else
+    echo "FAIL $2: systemctl calls:"; cat "$SIM/systemctl.log"; exit 1
+  fi
+}
+
 build 1 1; build 2 2; build 3 3; build 4 4
 run;                                    expect 1 "first deploy"
+starts 1 "first deploy queues voyager.service (--no-block): its ExecStop must run at shutdown"
 d 2 >"$SIM/prod_app"; run;    expect 2 "upgrade to a new signed digest"
 run --rollback;                         expect 1 "manual rollback to the previous digest"
 held 2 "rolled-back digest is held"
@@ -85,4 +109,6 @@ held 4 "unhealthy digest is held"
 run;                                    expect 3 "held unhealthy digest not retried"
 d 1 >"$SIM/prod_app"; run;    expect 3 "older build refused (prod moved back)"
 run --allow-downgrade;                  expect 1 "--allow-downgrade deploys it on purpose"
+starts 1 "an active voyager.service is not started again"
+rm "$SIM/unit_active"; run;             starts 2 "a stopped voyager.service is started again (converge)"
 echo "deploy simulation: ALL OK"
