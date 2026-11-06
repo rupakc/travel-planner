@@ -116,9 +116,9 @@ Every non-error section streamed by `/api/search`, and the responses of `/api/{f
 
 ## Models
 
-Every model call goes through one module, `backend/app/core/llm.py` (`generate`, `stream`, and `generate_sync` for the IATA lookup fallback). `LLM_PROVIDER` picks the provider; callers only name a **role**.
+Every model call goes through one module, `backend/app/core/llm.py` (`generate`, `stream`, and `generate_sync` for the IATA lookup fallback). `LLM_PROVIDER` picks the provider; callers only name a **role**. The default, `auto`, resolves to `gemini` when `GCP_PROJECT` is set (production), to `anthropic` when only `ANTHROPIC_API_KEY` is set (a typical local `.env`), and otherwise to `gemini` if Application Default Credentials resolve a project, else `anthropic`. The choice is logged once at startup and reported by `/health/agents`.
 
-| Role | Used by | `gemini` (default) | `anthropic` (local dev / rollback) |
+| Role | Used by | `gemini` (production) | `anthropic` (local dev / rollback) |
 |---|---|---|---|
 | `agent` | Every specialist agent (`BaseAgent`), packing list, pricing advisor, itinerary, stress test, link import, discovery, layover, the chat-itinerary agent, chat routing, parameter extraction, plan actions and suggestion chips, `/health/agents` | `gemini-3.5-flash-lite` (`GEMINI_MODEL_AGENT`), thinking `minimal` | `claude-haiku-4-5-20251001` |
 | `chat` | Chat conversational answers (streamed token by token) and the planning narrative | `gemini-3.8-flash` (`GEMINI_MODEL_CHAT`), thinking `low` | `claude-sonnet-4-6` |

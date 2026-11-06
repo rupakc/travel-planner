@@ -431,11 +431,64 @@ async def test_anthropic_provider_keeps_the_claude_path(monkeypatch):
     assert [e["text"] for e in events if e["type"] == "delta"] == ["Hi ", "there"]
 
 
-def test_provider_defaults_to_gemini():
-    assert settings.llm_provider == "gemini"
+def test_provider_defaults_to_auto():
+    from app.core.config import Settings
+
+    assert Settings.model_fields["llm_provider"].default == "auto"
+
+
+@pytest.mark.parametrize(
+    ("choice", "project", "key", "adc", "expected"),
+    [
+        # prod: GCP_PROJECT set → Gemini, even with an Anthropic key around
+        ("auto", "voyager-prod-ohzkl", "sk-ant-x", None, "gemini"),
+        # the existing local .env: Anthropic key, no GCP settings
+        ("auto", "", "sk-ant-x", "some-adc-project", "anthropic"),
+        # no key, ADC resolves a project
+        ("auto", "", "", "some-adc-project", "gemini"),
+        # nothing configured at all
+        ("auto", "", "", None, "anthropic"),
+        # explicit choices win
+        ("gemini", "", "sk-ant-x", None, "gemini"),
+        ("ANTHROPIC", "voyager-prod-ohzkl", "", None, "anthropic"),
+    ],
+)
+def test_auto_provider_resolution(monkeypatch, choice, project, key, adc, expected):
+    monkeypatch.setattr(settings, "llm_provider", choice)
+    monkeypatch.setattr(settings, "gcp_project", project)
+    monkeypatch.setattr(settings, "anthropic_api_key", key)
+    monkeypatch.setattr(llm, "_adc_project", lambda: adc)
+
+    assert llm.provider() == expected
+    assert llm.model_for("agent") == (
+        "gemini-3.5-flash-lite" if expected == "gemini" else "claude-haiku-4-5-20251001"
+    )
+
+
+def test_adc_lookup_runs_only_when_needed(monkeypatch):
+    calls = []
+    monkeypatch.setattr(settings, "llm_provider", "auto")
+    monkeypatch.setattr(settings, "gcp_project", "")
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    monkeypatch.setattr(llm, "_adc_project", lambda: calls.append(1) or "p")
+
     assert llm.provider() == "gemini"
-    assert llm.model_for("agent") == "gemini-3.5-flash-lite"
-    assert llm.model_for("chat") == "gemini-3.8-flash"
+    assert llm.provider() == "gemini"
+    assert calls == [1]  # cached for the same settings
+
+    monkeypatch.setattr(settings, "gcp_project", "voyager-prod-ohzkl")
+    assert llm.provider_reason() == "auto: GCP_PROJECT set"
+    assert calls == [1]
+
+
+def test_resolved_provider_is_logged(monkeypatch, caplog):
+    monkeypatch.setattr(settings, "llm_provider", "auto")
+    monkeypatch.setattr(settings, "gcp_project", "voyager-prod-ohzkl")
+
+    with caplog.at_level(logging.INFO, logger="app.core.llm"):
+        llm.log_provider()
+
+    assert "LLM provider: gemini (auto: GCP_PROJECT set)" in caplog.text
 
 
 def test_health_agents_uses_the_configured_provider(client, gemini):
@@ -448,4 +501,5 @@ def test_health_agents_uses_the_configured_provider(client, gemini):
     get_cache().pop("health:agents", None)
 
     assert body["llm"] == "ok" and body["llm_provider"] == "gemini"
+    assert body["llm_provider_reason"] == "LLM_PROVIDER=gemini"
     assert gemini.calls[0]["model"] == "gemini-3.5-flash-lite"

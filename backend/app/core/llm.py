@@ -97,7 +97,59 @@ class LLMError(Exception):
 
 
 def provider() -> str:
-    return "anthropic" if settings.llm_provider.lower() == "anthropic" else "gemini"
+    return _resolve()[0]
+
+
+def provider_reason() -> str:
+    return _resolve()[1]
+
+
+def log_provider() -> None:
+    """Resolve the provider once at startup and say which one (and why)."""
+    name, reason = _resolve()
+    logger.info(
+        f"LLM provider: {name} ({reason}), agent={model_for('agent')}, "
+        f"chat={model_for('chat')}"
+    )
+
+
+# LLM_PROVIDER=auto is resolved once per settings combination (the ADC
+# lookup can take a moment); tests that change settings get a fresh answer.
+_resolved: tuple[tuple, tuple[str, str]] | None = None
+
+
+def _resolve() -> tuple[str, str]:
+    global _resolved
+    key = (
+        settings.llm_provider,
+        settings.gcp_project,
+        bool(settings.anthropic_api_key),
+    )
+    if _resolved is not None and _resolved[0] == key:
+        return _resolved[1]
+    choice = settings.llm_provider.strip().lower()
+    if choice in ("gemini", "anthropic"):
+        result = (choice, f"LLM_PROVIDER={choice}")
+    elif settings.gcp_project:
+        result = ("gemini", "auto: GCP_PROJECT set")
+    elif settings.anthropic_api_key:
+        result = ("anthropic", "auto: ANTHROPIC_API_KEY set, no GCP_PROJECT")
+    elif _adc_project():
+        result = ("gemini", "auto: ADC project, no ANTHROPIC_API_KEY")
+    else:
+        result = ("anthropic", "auto: no GCP project found")
+    _resolved = (key, result)
+    return result
+
+
+def _adc_project() -> str | None:
+    """The project Application Default Credentials resolve to, if any."""
+    try:
+        import google.auth
+
+        return google.auth.default()[1]
+    except Exception:
+        return None
 
 
 def model_for(role: Role) -> str:

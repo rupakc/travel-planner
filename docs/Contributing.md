@@ -7,7 +7,7 @@
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-# create backend/.env with GCP_PROJECT (Gemini via ADC) or LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY,
+# create backend/.env with ANTHROPIC_API_KEY (Claude) or GCP_PROJECT (Gemini via ADC),
 # plus JWT_SECRET_KEY, ADMIN_PASSWORD
 
 # Frontend

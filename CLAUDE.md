@@ -18,8 +18,8 @@ Agent definitions live in `.agents/*.md` (22 files) using YAML frontmatter (`nam
 
 Each specialist agent subclass in `backend/app/agents/` overrides `run(request)` to build a user prompt and parse the JSON result. All execution goes through `BaseAgent` — no per-agent API plumbing. `ToolAgent.enrich()` does background link lookups (DuckDuckGo via `ddgs` in `web_tools.py`; Serper as tier 2).
 
-**Models:** every model call goes through `backend/app/core/llm.py` (`generate`, `stream`, `generate_sync`), which picks the provider from `LLM_PROVIDER`:
-- `gemini` (default): Gemini on Vertex AI with Application Default Credentials (no API key; `GCP_PROJECT`, `GCP_LOCATION` default `global`). **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, thinking `minimal`, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, the chat-itinerary agent and chat routing/extraction; **Gemini 3.8 Flash** (`gemini-3.8-flash`, thinking `low`) only for chat conversational answers (streamed token by token) and narrative.
+**Models:** every model call goes through `backend/app/core/llm.py` (`generate`, `stream`, `generate_sync`), which picks the provider from `LLM_PROVIDER`. `auto` (the default) picks `gemini` when `GCP_PROJECT` is set, or when no `ANTHROPIC_API_KEY` is configured and Application Default Credentials resolve a project; otherwise `anthropic` — so prod (GCP_PROJECT set) runs Gemini and a local `.env` with only an Anthropic key keeps Claude. The resolved provider is logged at startup and reported by `/health/agents` (`llm_provider`, `llm_provider_reason`).
+- `gemini`: Gemini on Vertex AI with Application Default Credentials (no API key; `GCP_PROJECT`, `GCP_LOCATION` default `global`). **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, thinking `minimal`, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, the chat-itinerary agent and chat routing/extraction; **Gemini 3.8 Flash** (`gemini-3.8-flash`, thinking `low`) only for chat conversational answers (streamed token by token) and narrative.
 - `anthropic` (local dev / rollback, needs `ANTHROPIC_API_KEY`): Haiku 4.5 (`claude-haiku-4-5-20251001`) and Sonnet 4.6 (`claude-sonnet-4-6`) in the same two roles.
 
 Every call logs an `llm_usage` line (label, model, input/output/thinking tokens, latency; never content). AI spend is hard-capped by a GCP spend-cap budget: a 403/429 that names billing/budget becomes `LLMError(spend_cap=True)`, later calls fail fast for 5 min, sections get `{"error": "AI limit reached for this month — try again on the 1st.", "error_code": "ai_limit"}`, chat sends that text as a `delta`, and `/discover`, `/import/extract` and `/nearby` answer `503`. `backend/scripts/llm_eval.py` (manual, never CI) runs the six saved searches in `backend/tests/fixtures/llm_eval/` on a provider/model and compares two runs into a Markdown report.
@@ -142,7 +142,7 @@ npm run dev
 docker compose up --build
 ```
 
-LLM locally: the default provider is Gemini on Vertex AI — run `gcloud auth application-default login` and set `GCP_PROJECT` (e.g. `voyager-prod-ohzkl`) in `backend/.env`; or set `LLM_PROVIDER=anthropic` with `ANTHROPIC_API_KEY` to keep using Claude.
+LLM locally: with `LLM_PROVIDER=auto` (default) a `backend/.env` holding only `ANTHROPIC_API_KEY` keeps using Claude. For Gemini, run `gcloud auth application-default login` and set `GCP_PROJECT` (e.g. `voyager-prod-ohzkl`).
 
 Tests: `cd backend && python3 -m pytest -q` (model clients are stubbed in `conftest.py`; tests never reach Vertex or Anthropic); `cd frontend && npm test` (on Node 20.18 prefix `NODE_OPTIONS=--experimental-require-module`). Lint: `ruff check backend/`, `cd frontend && npx eslint src/ --max-warnings 0`. Docs: `mkdocs build --strict`.
 

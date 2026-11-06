@@ -52,7 +52,7 @@ There are 22 definition files:
 
 `backend/app/agents/base_agent.py`:
 
-- **One API call per attempt.** `execute(prompt)` calls `core.llm.generate` with role `agent` (Gemini 3.5 Flash-Lite by default, Claude Haiku 4.5 with `LLM_PROVIDER=anthropic`; see [Architecture](Architecture.md#models)), `max_tokens` 16384, JSON output, the definition's prompt as the system prompt (plus "Return ONLY valid JSON") and the agent's prompt as the single user message (text, or text and image blocks for vision). No tools are passed to the model.
+- **One API call per attempt.** `execute(prompt)` calls `core.llm.generate` with role `agent` (Gemini 3.5 Flash-Lite on Gemini, Claude Haiku 4.5 on Anthropic; see [Architecture](Architecture.md#models)), `max_tokens` 16384, JSON output, the definition's prompt as the system prompt (plus "Return ONLY valid JSON") and the agent's prompt as the single user message (text, or text and image blocks for vision). No tools are passed to the model.
 - **Concurrency.** A global semaphore limits concurrent calls to `AGENT_MAX_CONCURRENCY` (default 6), so a burst of agents does not trip the organisation's rate limits. The SDK client also retries 429/5xx 3 times on its own.
 - **Retries.** Up to 4 attempts. Rate-limit, overload and connection errors back off `min(2^n, 10)` seconds; other errors back off `2n` seconds.
 - **Token cap.** If a response stops at `max_tokens`, the next attempt adds a "be compact" instruction instead of repeating the same request.

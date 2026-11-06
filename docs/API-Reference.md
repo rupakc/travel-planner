@@ -831,4 +831,4 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health/agents
 
-A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports `llm` (`ok`, `empty-response`, `spend-cap` or `error: <ExceptionType>`), `llm_provider` (`gemini` or `anthropic`), `serpapi_configured` and `backup_configured`.
+A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports `llm` (`ok`, `empty-response`, `spend-cap` or `error: <ExceptionType>`), `llm_provider` (`gemini` or `anthropic`), `llm_provider_reason` (how `LLM_PROVIDER` resolved, e.g. `auto: GCP_PROJECT set`), `serpapi_configured` and `backup_configured`.

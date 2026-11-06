@@ -23,14 +23,14 @@ Every model call goes through `backend/app/core/llm.py`; see [Architecture](Arch
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `LLM_PROVIDER` | `gemini` | `gemini`: Gemini on Vertex AI with Application Default Credentials (no API key). `anthropic`: Claude via `ANTHROPIC_API_KEY`, for local development or a rollback. |
-| `GCP_PROJECT` | `""` | **Needed for Gemini.** Google Cloud project that runs Vertex AI, e.g. `voyager-prod-ohzkl`. Empty falls back to `GOOGLE_CLOUD_PROJECT` or the ADC project. |
+| `LLM_PROVIDER` | `auto` | `gemini`: Gemini on Vertex AI with Application Default Credentials (no API key). `anthropic`: Claude via `ANTHROPIC_API_KEY`, for local development or a rollback. `auto`: `gemini` when `GCP_PROJECT` is set; otherwise `anthropic` when `ANTHROPIC_API_KEY` is set; otherwise `gemini` if Application Default Credentials resolve a project, else `anthropic`. The choice is resolved once, logged at startup (`LLM provider: gemini (auto: GCP_PROJECT set) …`) and shown by `/health/agents` as `llm_provider` / `llm_provider_reason`. |
+| `GCP_PROJECT` | `""` | **Needed for Gemini.** Google Cloud project that runs Vertex AI, e.g. `voyager-prod-ohzkl`; setting it also makes `auto` choose Gemini. Empty falls back to `GOOGLE_CLOUD_PROJECT` or the ADC project. |
 | `GCP_LOCATION` | `global` | Vertex AI location. `global` routes to any region with capacity; `us` and `eu` keep processing in that multi-region. |
 | `GEMINI_MODEL_AGENT` | `gemini-3.5-flash-lite` | Model for every specialist agent, itinerary, stress test, packing, pricing advisor, link import, discovery, layover, chat itinerary and chat routing/extraction. |
 | `GEMINI_MODEL_CHAT` | `gemini-3.8-flash` | Model for chat conversational answers and the planning narrative. |
 | `GEMINI_THINKING_AGENT` | `minimal` | Thinking level of the agent model: `minimal`, `low`, `medium` or `high`. |
 | `GEMINI_THINKING_CHAT` | `low` | Thinking level of the chat model: `low`, `medium` or `high` (Gemini 3.8 Flash rejects `minimal`). |
-| `ANTHROPIC_API_KEY` | `""` | **Needed with `LLM_PROVIDER=anthropic`.** Unused on Gemini. |
+| `ANTHROPIC_API_KEY` | `""` | **Needed for Claude** (`LLM_PROVIDER=anthropic`, or `auto` without `GCP_PROJECT`). Unused on Gemini. |
 
 With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.user`) on the project. Locally, run `gcloud auth application-default login` once. If no credentials are found, every AI section fails and `/health/agents` reports the error.
 
@@ -127,11 +127,10 @@ Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_o
 `backend/.env` for local development:
 
 ```env
-# Gemini on Vertex AI (after `gcloud auth application-default login`)
-GCP_PROJECT=voyager-prod-ohzkl
-# …or keep using Claude:
-# LLM_PROVIDER=anthropic
-# ANTHROPIC_API_KEY=sk-ant-...
+# Claude: an Anthropic key and no GCP_PROJECT (LLM_PROVIDER=auto picks anthropic)
+ANTHROPIC_API_KEY=sk-ant-...
+# …or Gemini on Vertex AI (after `gcloud auth application-default login`):
+# GCP_PROJECT=voyager-prod-ohzkl
 JWT_SECRET_KEY=3f0c...   # 64 hex characters
 ADMIN_PASSWORD=LocalDevPassword123
 # Optional
@@ -142,6 +141,6 @@ RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 ```
 
-Values set by `docker-compose.yml`: `LLM_PROVIDER` (default `gemini`), `GCP_PROJECT`, `GCP_LOCATION` (default `global`), `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
+Values set by `docker-compose.yml`: `LLM_PROVIDER` (default `auto`), `GCP_PROJECT`, `GCP_LOCATION` (default `global`), `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
 
 The retained Terraform (see [Deployment](Deployment.md)) predates the move to Gemini; it sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `CORS_ORIGINS`, `BACKUP_BUCKET`, and injects `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY`, `ADMIN_PASSWORD`, `SERPAPI_KEY` and `SERPER_KEY` from Secret Manager.

@@ -6,7 +6,7 @@ The chat (`POST /api/chat`, `frontend/src/pages/ChatPage.jsx`, `backend/app/agen
 
 ## Models
 
-| Task | Model (`LLM_PROVIDER=gemini`, default) | With `LLM_PROVIDER=anthropic` |
+| Task | Model on Gemini (production) | On Anthropic |
 |---|---|---|
 | Conversational answers (streamed token by token) and the planning narrative | `gemini-3.8-flash`, thinking `low` | `claude-sonnet-4-6` |
 | Intent routing, trip-parameter extraction, plan commands, suggestion chips | `gemini-3.5-flash-lite`, thinking `minimal` | `claude-haiku-4-5-20251001` |

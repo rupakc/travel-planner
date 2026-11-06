@@ -16,8 +16,10 @@ _PROJECT_ROOT = _BACKEND_ROOT.parent  # / in container, project root locally
 class Settings(BaseSettings):
     # LLM provider for every model call (core/llm.py): "gemini" = Gemini on
     # Vertex AI with Application Default Credentials (no API key);
-    # "anthropic" = Claude via ANTHROPIC_API_KEY (local dev / rollback)
-    llm_provider: str = "gemini"
+    # "anthropic" = Claude via ANTHROPIC_API_KEY (local dev / rollback);
+    # "auto" = gemini when GCP_PROJECT is set (or, without an Anthropic key,
+    # when ADC resolves a project), otherwise anthropic
+    llm_provider: str = "auto"
     anthropic_api_key: str = ""
     # Vertex AI project (empty = GOOGLE_CLOUD_PROJECT / the ADC project) and
     # location ("global" routes to any region with capacity)

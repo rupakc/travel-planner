@@ -8,7 +8,7 @@ How to run Travel Planner on your own machine. There is no hosted instance any m
 
 - **Python 3.12** (the Dockerfile and CI use 3.12; `pyproject.toml` allows 3.11 or later).
 - **Node.js 20** (the Dockerfile and CI use 20; vitest 4 needs `^20 || ^22 || >=24` and jsdom 27 needs 20 or later).
-- **An LLM.** By default Gemini on Vertex AI: a Google Cloud project with the Vertex AI API enabled and Application Default Credentials (`gcloud auth application-default login`), with `GCP_PROJECT` set. Or an **Anthropic API key** with `LLM_PROVIDER=anthropic`. Without either the app starts, but every AI section fails.
+- **An LLM.** Either an **Anthropic API key** (`ANTHROPIC_API_KEY`), or Gemini on Vertex AI: a Google Cloud project with the Vertex AI API enabled, Application Default Credentials (`gcloud auth application-default login`) and `GCP_PROJECT` set. With the default `LLM_PROVIDER=auto`, `GCP_PROJECT` selects Gemini; an Anthropic key without it selects Claude. Without either the app starts, but every AI section fails.
 - **Docker with Compose**, only for the container setup.
 - Optional: a **SerpAPI key** (`SERPAPI_KEY`) for live Google Flights fares, the fare calendar and price insights, and a **Serper key** (`SERPER_KEY`) for Places-to-See data and link resolution. Without them, flights come from the LLM and the fare calendar is hidden.
 
@@ -30,9 +30,8 @@ cd ..
 Create `backend/.env`. The backend reads `.env` from its working directory, which is `backend/` when started by `start.sh`:
 
 ```env
-GCP_PROJECT=voyager-prod-ohzkl      # Gemini on Vertex AI, via ADC
-# LLM_PROVIDER=anthropic            # …or Claude instead:
-# ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=sk-ant-...        # Claude (LLM_PROVIDER=auto picks it without GCP_PROJECT)
+# GCP_PROJECT=voyager-prod-ohzkl    # …or Gemini on Vertex AI, via ADC
 JWT_SECRET_KEY=<output of: python3 -c "import secrets; print(secrets.token_hex(32))">
 ADMIN_PASSWORD=<a password for the seeded admin account>
 # Optional
@@ -70,7 +69,7 @@ The Vite dev server proxies `/api` and `/health` to `http://localhost:8001` (`fr
 ```bash
 git clone https://github.com/rupakc/travel-planner.git
 cd travel-planner
-export LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-...   # or put them in a .env file at the repo root
+export ANTHROPIC_API_KEY=sk-ant-...   # or put it in a .env file at the repo root
 docker compose up --build
 ```
 

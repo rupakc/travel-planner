@@ -25,6 +25,12 @@ os.environ["SMTP_HOST"] = ""  # never send real email
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.core import llm as _llm  # noqa: E402
+
+# LLM_PROVIDER=auto never asks the machine's real ADC for a project (that can
+# reach the GCE metadata server); tests that need one patch it back.
+_llm._adc_project = lambda: None
+
 
 @pytest.fixture(autouse=True)
 def _no_leftover_serp_client():
@@ -56,8 +62,10 @@ def _no_model_network(monkeypatch):
     monkeypatch.setattr(llm, "_anthropic_client", lambda: _NoModelNetwork())
     monkeypatch.setattr(llm, "_anthropic_sync", _NoModelNetwork())
     llm.reset_spend_cap()
+    llm._resolved = None
     yield
     llm.reset_spend_cap()
+    llm._resolved = None
 
 
 @pytest.fixture(scope="session", autouse=True)
