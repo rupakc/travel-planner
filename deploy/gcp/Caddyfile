@@ -1,0 +1,87 @@
+# Voyager edge: TLS (Let's Encrypt, ZeroSSL fallback), the SPA, and /api +
+# /health proxied to the app. Baked into the Caddy image (caddy.Dockerfile).
+#
+# SITE_HOST: the sslip.io name of the static IP (e.g. 34-23-1-2.sslip.io),
+# later your own domain: change it in images.env, no rebuild needed.
+{
+	email {$ACME_EMAIL}
+	admin 127.0.0.1:2019
+	servers {
+		# HTTP/1.1 + HTTP/2 only: no UDP (HTTP/3), so every byte is TCP the
+		# egress governor can meter
+		protocols h1 h2
+		# Slow-client (slowloris) limits. No write timeout: SSE streams run
+		# for minutes and keepalives arrive every 15 s.
+		timeouts {
+			read_header 10s
+			read_body 2m
+			idle 2m
+		}
+	}
+}
+
+{$SITE_HOST} {
+	# Screenshots for "plan from a link" (4 × ≤ 5 MB base64) fit; anything
+	# larger is refused before it reaches the app (the app checks too)
+	request_body {
+		max_size 32MB
+	}
+
+	# Compress text, but never text/event-stream: SSE must flush per event
+	encode {
+		zstd
+		gzip
+		match {
+			header Content-Type text/html*
+			header Content-Type text/css*
+			header Content-Type text/plain*
+			header Content-Type text/javascript*
+			header Content-Type application/javascript*
+			header Content-Type application/json*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+		}
+	}
+
+	header {
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+		# The built SPA has no inline scripts and no eval; React and Leaflet
+		# set inline styles; map tiles and result images come from anywhere
+		Content-Security-Policy "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+		-Server
+	}
+
+	@backend path /api/* /health /health/*
+	handle @backend {
+		reverse_proxy app:8001 {
+			# SSE: write every event as it arrives
+			flush_interval -1
+			# Hold requests while the app restarts during a deploy
+			lb_try_duration 30s
+			lb_try_interval 250ms
+			# Caddy ignores client-sent X-Forwarded-For (no trusted_proxies)
+			# and sets it to the real peer; X-Real-IP for logs
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# Hashed build assets never change: cache for a year. A missing one is a
+	# plain 404 (never index.html, which would be cached as JS for a year).
+	handle /assets/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# index.html and SPA routes: always revalidate, so a deploy shows up
+	handle {
+		root * /srv
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -42,6 +42,18 @@ class SlidingWindowLimiter:
             hits.append(now)
             return None
 
+    def peek(self, key: str, limit: int, window: float) -> int | None:
+        """Like hit(), without recording: None if a request would be allowed,
+        else seconds to wait."""
+        with self._lock:
+            now = self._clock()
+            hits = [t for t in self._hits.get(key, ()) if t > now - window]
+            if len(hits) < limit:
+                return None
+            if limit <= 0:
+                return max(1, math.ceil(window))
+            return max(1, math.ceil(hits[len(hits) - limit] + window - now))
+
     def prune(self, window: float) -> None:
         """Drop keys with no request inside the window."""
         with self._lock:
@@ -81,6 +93,55 @@ def try_consume(bucket: str, key: str) -> int | None:
     )
 
 
+def too_many(wait: int) -> HTTPException:
+    return HTTPException(
+        status_code=429,
+        detail=f"Too many requests — please wait {wait} seconds and try again.",
+        headers={"Retry-After": str(wait)},
+    )
+
+
+async def require_ai_access(user: dict | None = Depends(get_optional_user)) -> None:
+    """AI routes: with ALLOW_ANONYMOUS_AI=false (production) only signed-in
+    users may spend model tokens."""
+    if not settings.allow_anonymous_ai and not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Please sign in to use the AI planner.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def _failure_keys(username: str, caller: str) -> list[tuple[str, int]]:
+    """(limiter key, limit) pairs a failed login counts against: this
+    username from this caller (IP), and this username from anywhere."""
+    name = username.strip().lower()
+    return [
+        (f"login_failures:user:{name}:{caller}", settings.rate_limit_login_failures),
+        (f"login_failures:user:{name}", settings.rate_limit_login_failures_global),
+    ]
+
+
+def login_locked(username: str, caller: str) -> int | None:
+    """Seconds until ``username`` may try again from ``caller`` (an
+    ``ip:...`` key), or None. Failures from other IPs only count towards the
+    high global ceiling, so nobody can lock a user out cheaply."""
+    if not settings.rate_limit_enabled:
+        return None
+    waits = [
+        limiter.peek(key, limit, settings.rate_limit_window_seconds)
+        for key, limit in _failure_keys(username, caller)
+    ]
+    waits = [w for w in waits if w is not None]
+    return max(waits) if waits else None
+
+
+def record_login_failure(username: str, caller: str) -> None:
+    if settings.rate_limit_enabled:
+        for key, limit in _failure_keys(username, caller):
+            limiter.hit(key, limit, settings.rate_limit_window_seconds)
+
+
 def rate_limit(bucket: str) -> Callable:
     """FastAPI dependency enforcing the ``rate_limit_<bucket>`` setting."""
     _bucket_limit(bucket)  # fail fast on a bucket with no setting
@@ -90,10 +151,6 @@ def rate_limit(bucket: str) -> Callable:
     ) -> None:
         wait = try_consume(bucket, caller_key(request, user))
         if wait is not None:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Too many requests — please wait {wait} seconds and try again.",
-                headers={"Retry-After": str(wait)},
-            )
+            raise too_many(wait)
 
     return enforce

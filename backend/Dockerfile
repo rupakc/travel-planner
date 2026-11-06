@@ -12,6 +12,15 @@ COPY backend/ ./
 # Copy agent definitions (project root .agents/ → /app/.agents/)
 COPY .agents/ .agents/
 
+# Non-root (uid 10001). /data is the DB mount point: a fresh named volume
+# inherits this ownership; on the VM first-boot.sh chowns the host directory.
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin voyager \
+    && mkdir -p /data && chown voyager:voyager /data
+USER 10001
+
 EXPOSE 8001
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Entrypoint: optional Secret Manager secrets into the process env, refuses an
+# empty JWT_SECRET_KEY, then execs uvicorn (1 worker, graceful shutdown 5 s,
+# proxy headers only from FORWARDED_ALLOW_IPS) — see app/entrypoint.py
+CMD ["python", "-m", "app.entrypoint"]

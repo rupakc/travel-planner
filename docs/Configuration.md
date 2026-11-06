@@ -39,7 +39,10 @@ With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.use
 | Variable | Default | Meaning |
 |---|---|---|
 | `DATA_DIR` | `backend/data` | Directory of the single SQLite file `airports.db`, which holds every table (users, plans, preferences, place data and so on). Created automatically. |
-| `BACKUP_BUCKET` | `""` | Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. When set, the database is restored at startup, uploaded every 60 s and uploaded once more on shutdown. Uses Application Default Credentials. |
+| `BACKUP_BUCKET` | `""` | Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. Uses Application Default Credentials. |
+| `BACKUP_MODE` | `cloudrun` | `cloudrun` (legacy, for ephemeral disks): restore at every start, upload every 60 s with a generation-safe merge, force an upload on shutdown. `vm` (production): the disk is authoritative. The app restores only when `airports.db` is missing (stray `-wal`/`-shm` removed first), never merges, and uploads the user tables (everything except the regenerable place data) only when their SHA-256 changed, plus once at a clean shutdown. In `vm` mode, `DATA_DIR` must contain the marker file `.voyager-data-disk` written when the disk was provisioned, or the app refuses to start. A missing DB that can't be fetched from GCS also refuses to start. `GET /health` then reports `backup_ok` and `backup`. |
+| `BACKUP_INTERVAL_SECONDS` | `300` | `vm` mode: how often the user tables are exported and compared. `backup_ok` turns false after 3 missed intervals or on any failed cycle. |
+| `BACKUP_EXPORT_DIR` | system temp | `vm` mode: scratch directory for the export (a tmpfs in production, so the slow disk is never touched). |
 
 ## Live data (optional)
 
@@ -77,6 +80,8 @@ Fare- and price-watch alerts can also be pushed to the Android app's registered 
 | Variable | Default | Meaning |
 |---|---|---|
 | `FCM_SERVICE_ACCOUNT_FILE` | `""` | Path to a Firebase service-account JSON key (Firebase console → Project settings → Service accounts → Generate new private key) for the project the Android app is registered in. Its `project_id` picks the FCM project. Empty, or a path that does not exist, disables push (`GET /health` reports `push_configured`). Keep the file out of the repo (`*service-account*.json` and `*-key.json` are git-ignored) and readable only by the backend. The key is read once: restart the backend after rotating it. |
+| `FCM_USE_ADC` | `false` | With no key file: send with Application Default Credentials (on the VM, its service account through the metadata server; it needs FCM send rights, e.g. `roles/firebasecloudmessaging.admin`). The key file wins when both are set. |
+| `FCM_PROJECT_ID` | `""` | FCM project for ADC mode; empty uses `GOOGLE_CLOUD_PROJECT`, which the entrypoint sets from the metadata server. |
 
 ## Accounts
 
@@ -102,8 +107,26 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby` and changing the account email |
+| `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
+| `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |
+| `RATE_LIMIT_LOGIN_FAILURES_GLOBAL` | `200` | Failed logins per username from all IPs together: a backstop against distributed guessing |
 
 Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
+
+## Production (container entrypoint)
+
+The image starts with `python -m app.entrypoint`, which execs uvicorn (one worker, `--timeout-graceful-shutdown 5`).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SECRET_MANAGER_SECRETS` | `""` | Comma-separated env vars to read from Secret Manager at start (Application Default Credentials), into the process environment only, never a file. The secret id is the lower-cased, dashed name (`JWT_SECRET_KEY` → `jwt-secret-key`), or give it as `ENV=secret-id`. A secret with no version is skipped; a variable already set wins. Any other error stops the start. |
+| `GOOGLE_CLOUD_PROJECT` | from ADC | Project for Secret Manager (and FCM ADC). The entrypoint sets it from the metadata server when missing. |
+| `FORWARDED_ALLOW_IPS` | `""` | Addresses or networks of the reverse proxy whose `X-Forwarded-For` is trusted (production: the compose network `172.30.0.0/24`). Empty turns proxy headers off. `*` and `0.0.0.0/0` are refused. |
+| `ALLOW_ANONYMOUS_AI` | `true` | `false` (production) makes every AI route answer `401` unless signed in. |
+| `SSE_KEEPALIVE_SECONDS` | `15` | `/api/search` and `/api/chat` send a `: keepalive` comment after this much silence. When the client disconnects, every task the stream started is cancelled. |
+| `PORT`, `GRACEFUL_SHUTDOWN_SECONDS` | `8001`, `5` | uvicorn port and graceful-shutdown timeout. |
+
+The entrypoint refuses to start when `JWT_SECRET_KEY` is empty after the secrets are read.
 
 ## Logging
 
@@ -143,4 +166,4 @@ LOG_FORMAT=text
 
 Values set by `docker-compose.yml`: `LLM_PROVIDER` (default `auto`), `GCP_PROJECT`, `GCP_LOCATION` (default `global`), `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
 
-The retained Terraform (see [Deployment](Deployment.md)) predates the move to Gemini; it sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `CORS_ORIGINS`, `BACKUP_BUCKET`, and injects `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY`, `ADMIN_PASSWORD`, `SERPAPI_KEY` and `SERPER_KEY` from Secret Manager.
+Production on the VM (see [Deployment on GCP](Deployment-GCP.md)): `deploy/gcp/compose.yaml` sets `DATA_DIR=/data` (the disk), `BACKUP_MODE=vm`, `BACKUP_EXPORT_DIR=/tmp` (tmpfs), `AGENTS_DIR`, `FORWARDED_ALLOW_IPS=172.30.0.0/24` and `LOG_FORMAT=json`. Everything else is in `/opt/voyager/app.env` (`deploy/gcp/app.env.example`): `SECRET_MANAGER_SECRETS`, `BACKUP_BUCKET`, `ALLOW_ANONYMOUS_AI=false`, `FCM_USE_ADC=true`, `LLM_PROVIDER=gemini`, `GCP_PROJECT`, `GCP_LOCATION`, the SMTP settings and `FARE_WATCH_DAILY_CALL_BUDGET=6`.

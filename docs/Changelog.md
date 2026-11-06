@@ -4,6 +4,27 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: production on one e2-micro VM (GCP)
+
+Deployment kit for the approved lean GCP design (`docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md`): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: [Deployment on GCP](Deployment-GCP.md).
+
+- **Backend production mode:**
+  - `BACKUP_MODE=vm`: disk authoritative, restore only if the DB is missing (stray WAL/SHM removed), mount-guard marker, no merge, user-table export to tmpfs uploaded on hash change every 5 min plus a clean-shutdown flush, `backup_ok` in `/health`.
+  - `python -m app.entrypoint`: Secret Manager secrets into memory, refuses an empty `JWT_SECRET_KEY`, uvicorn with `--timeout-graceful-shutdown 5` and proxy headers only from the compose network.
+  - `login` rate-limit bucket plus a per-username failure lock, and `ALLOW_ANONYMOUS_AI=false` for production.
+  - FCM push through the VM's service account (`FCM_USE_ADC`).
+  - 15 s SSE keepalives, and agent tasks cancelled when a search or chat client disconnects.
+- **Image:** runs through the entrypoint; the unused `claude-agent-sdk` and `python-dotenv` are gone.
+- **`deploy/gcp/`:**
+  - compose (memory limits, log rotation, health checks), Caddyfile and a Caddy image with the SPA baked in;
+  - a tiered egress governor in `DOCKER-USER`: per IP ≈ 4 Mbit/s and 3 GiB/day, a warning at 150 GiB, ports closed at 200 GiB, the billing month in Pacific time;
+  - a signed-digest pull deployer with automatic rollback;
+  - first-boot provisioning for Debian 13 (Docker, zram, unattended-upgrades, a weekly Berlin-night window) and systemd units.
+- **`infrastructure/gcp/`:**
+  - an idempotent `bootstrap.sh` with `--dry-run`; it detects the existing INR budgets and Gemini spend cap by name;
+  - `migrate_old_prod.py`: strips the 886 MB 2026-08-30 export to its 17 users and their plans, preferences, taste signals and feedback.
+- **CI/CD:** `deploy.yml` runs on every push to `main`. After all of CI it builds, pushes to GHCR, signs with cosign keyless and moves `prod`; the VM verifies and pulls. The Cloud Run Terraform, its scripts and the old workflow were removed.
+
 ## Unreleased: Gemini on Vertex AI
 
 - **Gemini replaces Claude in production.** Every model call now goes through one provider seam, `backend/app/core/llm.py`. `LLM_PROVIDER=auto` (default) picks Gemini when `GCP_PROJECT` is set (or, with no Anthropic key, when ADC resolves a project) and Claude otherwise, so an existing local `.env` with only `ANTHROPIC_API_KEY` keeps working; the choice is logged at startup and shown by `/health/agents` (`llm_provider`, `llm_provider_reason`). Gemini Gemini on Vertex AI with Application Default Credentials (no API key; `GCP_PROJECT`, `GCP_LOCATION` default `global`): **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, thinking `minimal`, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, chat itinerary and chat routing/extraction; **Gemini 3.8 Flash** (`gemini-3.8-flash`, thinking `low`) for chat answers, streamed token by token, and the planning narrative. `LLM_PROVIDER=anthropic` forces Claude (Haiku 4.5 / Sonnet 4.6) for local development and rollback. Agent prompts are unchanged. New settings: `LLM_PROVIDER`, `GCP_PROJECT`, `GCP_LOCATION`, `GEMINI_MODEL_AGENT`, `GEMINI_MODEL_CHAT`, `GEMINI_THINKING_AGENT`, `GEMINI_THINKING_CHAT` (see [Configuration](Configuration.md#llm)).

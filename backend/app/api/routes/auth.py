@@ -1,10 +1,16 @@
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from ...core.auth import MIN_PASSWORD_LENGTH, create_access_token, get_current_user
-from ...core.rate_limit import rate_limit
+from ...core.rate_limit import (
+    caller_key,
+    login_locked,
+    rate_limit,
+    record_login_failure,
+    too_many,
+)
 from ...db.users_db import (
     EmailInUseError,
     authenticate_user,
@@ -25,10 +31,18 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
-@router.post("/auth/login")
-def login(req: LoginRequest):
+@router.post("/auth/login", dependencies=[Depends(rate_limit("login"))])
+def login(req: LoginRequest, request: Request):
+    # Per-IP attempts are the "login" bucket. Failures lock this username for
+    # this IP (and, far higher, from everywhere), checked before bcrypt so a
+    # guesser learns nothing; other IPs can't lock the real user out.
+    caller = caller_key(request, None)
+    wait = login_locked(req.username, caller)
+    if wait is not None:
+        raise too_many(wait)
     user = authenticate_user(req.username, req.password)
     if not user:
+        record_login_failure(req.username, caller)
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_access_token(
         {

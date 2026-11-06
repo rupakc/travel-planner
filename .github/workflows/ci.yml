@@ -2,19 +2,25 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    # main runs CI through deploy.yml (workflow_call), which publishes only
+    # after every job here passes
+    branches-ignore: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   lint-backend:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with: { python-version: "3.12" }
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.12-${{ hashFiles('backend/requirements*.txt') }}
@@ -23,15 +29,17 @@ jobs:
       # locally and in pre-commit, so formatting never diverges between
       # developer machines and CI.
       - run: pip install -r backend/requirements-dev.txt
-      - run: ruff check backend/
-      - run: ruff format --check backend/
+      - run: ruff check backend/ deploy/ infrastructure/gcp/
+      - run: ruff format --check backend/ deploy/ infrastructure/gcp/
+      # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
+      - run: shellcheck -x deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
         working-directory: frontend
@@ -42,10 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with: { python-version: "3.12" }
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.12-${{ hashFiles('backend/requirements*.txt') }}
@@ -62,7 +70,7 @@ jobs:
           pip-audit -r backend/requirements.txt \
             --timeout 60 \
             --ignore-vuln PYSEC-2023-62
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
         working-directory: frontend
@@ -75,10 +83,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with: { python-version: "3.12" }
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.12-${{ hashFiles('backend/requirements*.txt') }}
@@ -90,25 +98,43 @@ jobs:
         env:
           DATA_DIR: /tmp/test-data
           ADMIN_PASSWORD: test-admin-pw
+      # Egress governor + old-prod migration (pure logic, no root/network)
+      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests infrastructure/gcp/tests
 
   test-frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
         working-directory: frontend
       - run: npm run test:coverage
         working-directory: frontend
 
+  # The VM kit's host layer for real: the governor's rules on iptables-nft
+  # (Debian 13, like the VM) for every tier, a rejected ruleset leaving the
+  # old one in force, and systemd-analyze verify of the units
+  host-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Kernel modules for the governor's matches
+        run: sudo modprobe -a ip_set ip_set_hash_ip xt_set xt_hashlimit xt_multiport nft_compat
+      - name: Governor on real iptables + systemd units (debian:trixie)
+        run: |
+          docker run --rm --cap-add NET_ADMIN -v "$PWD:/src:ro" \
+            debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 \
+            bash /src/deploy/gcp/tests/host_checks.sh
+
   build-and-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [lint-backend, lint-frontend, security, test-backend, test-frontend]
+    needs: [lint-backend, lint-frontend, security, test-backend, test-frontend, host-checks]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Build backend image
         run: docker build -f backend/Dockerfile . -t backend:${{ github.sha }}
       - name: Build frontend image

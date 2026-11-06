@@ -455,3 +455,106 @@ def test_hook_without_a_running_loop_is_a_no_op(google):
     u, _ = _user_with_devices(1)
     note = {"kind": "fare_drop", "title": "t", "body": "b", "data": {}}
     assert fare_watch._notify({"id": 1, "user_id": u["id"]}, note, NOW)["id"]
+
+
+# ── ADC (the VM's service account, no key file) ──────────────────────────────
+
+
+class FakeCreds:
+    def __init__(self):
+        self.refreshes = 0
+        self.token = None
+        self.expiry = None
+
+    @property
+    def valid(self):
+        return self.token is not None
+
+    def refresh(self, request):
+        from datetime import timedelta
+
+        self.refreshes += 1
+        self.token = "ya29.test"
+        self.expiry = datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)
+
+
+@pytest.fixture
+def adc(monkeypatch, client):
+    monkeypatch.setattr("app.db.users_db._hash", lambda pw: "unused")
+    monkeypatch.setattr(settings, "fcm_service_account_file", "")
+    monkeypatch.setattr(settings, "fcm_use_adc", True)
+    monkeypatch.setattr(settings, "fcm_project_id", "tp-test")
+    creds = FakeCreds()
+    monkeypatch.setattr(push, "_adc_credentials", lambda: creds)
+    fake = FakeGoogle()
+    monkeypatch.setattr(push, "_transport", httpx.MockTransport(fake))
+    push.reset()
+    yield fake, creds
+    push.reset()
+
+
+def test_adc_needs_a_project(monkeypatch):
+    monkeypatch.setattr(settings, "fcm_service_account_file", "")
+    monkeypatch.setattr(settings, "fcm_use_adc", True)
+    monkeypatch.setattr(settings, "fcm_project_id", "")
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+    assert push.configured() is False
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "from-metadata")
+    assert push.configured() is True
+
+
+def test_adc_off_by_default(monkeypatch):
+    monkeypatch.setattr(settings, "fcm_service_account_file", "")
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "p")
+    assert push.configured() is False
+
+
+@pytest.mark.asyncio
+async def test_adc_sends_with_the_metadata_token(adc):
+    fake, creds = adc
+    u, tokens = _user_with_devices(2)
+    assert await push.send_to_user(u["username"], "t", "b", {"kind": "x"}) == 2
+    assert fake.token_calls == 0  # no JWT exchange: ADC token used directly
+    assert sorted(m["token"] for m in fake.sends) == sorted(tokens)
+    # Cached until expiry
+    assert await push.send_to_user(u["username"], "t", "b", {"kind": "x"}) == 2
+    assert creds.refreshes == 1
+
+
+@pytest.mark.asyncio
+async def test_key_file_wins_over_adc(google, monkeypatch):
+    monkeypatch.setattr(settings, "fcm_use_adc", True)
+    u, _ = _user_with_devices(1)
+    assert await push.send_to_user(u["username"], "t", "b", {}) == 1
+    assert google.token_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_adc_failure_never_raises(adc, monkeypatch):
+    def broken():
+        raise RuntimeError("no metadata server")
+
+    monkeypatch.setattr(push, "_adc_credentials", broken)
+    push.reset()
+    u, _ = _user_with_devices(1)
+    assert await push.send_to_user(u["username"], "t", "b", {}) == 0
+
+
+@pytest.mark.asyncio
+async def test_background_push_is_detached_from_the_request_stream(google):
+    """A push started inside an SSE stream must survive the client leaving."""
+    from app.core import sse
+
+    sse._install_task_factory(asyncio.get_running_loop())
+    marker = set()
+    token = sse._scope.set(marker)
+    try:
+        u, _ = _user_with_devices(1)
+        push.notify(
+            u["id"], {"id": 1, "kind": "fare_drop", "title": "t", "body": "b"}, "/a"
+        )
+    finally:
+        sse._scope.reset(token)
+    assert push._tasks
+    assert not marker  # not attributed to the stream
+    await push.drain()

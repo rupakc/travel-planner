@@ -4,7 +4,7 @@
 
 **[Docs site](https://rupakc.github.io/travel-planner/)** · **[Wiki](https://github.com/rupakc/travel-planner/wiki)** · **[Quick start](#quick-start)** · **[Changelog](docs/Changelog.md)**
 
-> **The hosted demo is offline.** Production was decommissioned on 2026-08-30. To try the app, run it locally with `./start.sh` or `docker compose up`. The infrastructure code (Terraform, deploy workflow) is kept for self-hosting; see [Deployment](docs/Deployment.md).
+> **Hosting.** Production deploys to one always-free e2-micro VM on GCP (about $4 a month); every green merge to `main` ships. See [Deployment](docs/Deployment.md) and the [GCP runbook](docs/Deployment-GCP.md). To try the app yourself, run it locally with `./start.sh` or `docker compose up`.
 
 ---
 
@@ -205,7 +205,8 @@ frontend/src/
   utils/            pure helpers (budget, schedule, export, compare, ...)
   workers/          SSE parsers (sseWorker, chatWorker)
 docs/               documentation sources (published to the docs site)
-infrastructure/     Terraform + scripts for GCP (kept for self-hosting)
+infrastructure/gcp/ bootstrap.sh (gcloud, idempotent) + old-prod migration
+deploy/gcp/         VM kit: compose, Caddy, host scripts (governor, deployer)
 ```
 
 ---

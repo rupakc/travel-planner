@@ -1,5 +1,6 @@
 import asyncio
 import os
+import tempfile
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -43,7 +44,8 @@ from .api.routes.walking_tours import router as walking_tours_router
 from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
-from .core.rate_limit import rate_limit
+from .core.rate_limit import rate_limit, require_ai_access
+from .db import vm_backup
 from .db.backup import backup_to_gcs, restore_from_gcs, start_periodic_backup
 from .db.database import create_tables
 from .db.plans_db import create_plans_table
@@ -62,7 +64,14 @@ configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await restore_from_gcs(_settings.backup_bucket, _settings.data_dir)
+    vm_mode = _settings.backup_mode == "vm"
+    export_dir = _settings.backup_export_dir or tempfile.gettempdir()
+    if vm_mode:
+        # The disk is authoritative: guard + restore only if the DB is missing.
+        # Raises (refuses to start) rather than run on the wrong directory.
+        await vm_backup.startup(_settings.backup_bucket, _settings.data_dir)
+    else:
+        await restore_from_gcs(_settings.backup_bucket, _settings.data_dir)
     seed_airports()
     from .db.places_db import warm as warm_place_index
 
@@ -98,18 +107,32 @@ async def lifespan(app: FastAPI):
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
-    asyncio.create_task(
-        start_periodic_backup(
-            _settings.backup_bucket, _settings.data_dir, interval_seconds=60
+    if vm_mode:
+        backup_task = vm_backup.start(
+            _settings.backup_bucket,
+            _settings.data_dir,
+            export_dir,
+            _settings.backup_interval_seconds,
         )
-    )
+    else:
+        backup_task = asyncio.create_task(
+            start_periodic_backup(
+                _settings.backup_bucket, _settings.data_dir, interval_seconds=60
+            )
+        )
     yield
     await fare_watch.stop_scheduler(fare_watch_task)
     await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled
-    # SIGTERM: force=True always uploads our current state regardless of GCS generation.
-    # This is safe — the dying instance holds the most up-to-date data.
-    await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)
+    if vm_mode:
+        # Clean shutdown: one more export, uploaded only if it changed
+        await vm_backup.stop(
+            backup_task, _settings.backup_bucket, _settings.data_dir, export_dir
+        )
+    else:
+        # SIGTERM: force=True always uploads our current state regardless of GCS
+        # generation. Safe: the dying instance holds the most up-to-date data.
+        await backup_to_gcs(_settings.backup_bucket, _settings.data_dir, force=True)
     await _close_serp_client()
     await _close_activity_client()
 
@@ -145,8 +168,9 @@ app.add_middleware(RequestIdMiddleware)
 
 
 def _limited(bucket: str) -> list:
-    """Router dependencies applying one rate-limit bucket to every route."""
-    return [Depends(rate_limit(bucket))]
+    """Router dependencies for AI routes: sign-in when ALLOW_ANONYMOUS_AI is
+    false, then one rate-limit bucket for every route."""
+    return [Depends(require_ai_access), Depends(rate_limit(bucket))]
 
 
 # Every route on the routers marked _limited(...) calls an LLM; see
@@ -283,7 +307,7 @@ async def health_agents():
 
 @app.get("/health")
 async def health():
-    return {
+    body = {
         "status": "ok",
         "service": "travel-planner-backend",
         # Cheap capability flag: the UI offers the fare calendar only when set
@@ -296,3 +320,9 @@ async def health():
         # Alerts also go to registered phones (FCM) only when set
         "push_configured": push.configured(),
     }
+    # VM backups: the uptime check content-matches "backup_ok":true
+    backup = vm_backup.status()
+    if backup is not None:
+        body["backup_ok"] = backup["ok"]
+        body["backup"] = backup
+    return body

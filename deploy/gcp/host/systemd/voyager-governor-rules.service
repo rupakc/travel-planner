@@ -1,0 +1,14 @@
+[Unit]
+Description=Voyager egress governor rules in DOCKER-USER (re-applied whenever Docker starts)
+# Docker rebuilds its iptables chains when it starts; re-apply ours after it
+After=docker.service
+BindsTo=docker.service
+Before=voyager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/voyager/governor.py apply
+
+[Install]
+WantedBy=docker.service

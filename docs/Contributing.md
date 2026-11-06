@@ -26,7 +26,7 @@ Run both servers with `./start.sh` (backend 8001, frontend 5174) and stop them w
 2. Make the change with tests: `backend/tests/` for Python, `*.test.js(x)` next to the code for the frontend.
 3. Run the checks locally with `make ci` from the repo root: lint (ruff and ESLint), the security scans and both test suites, mirroring CI. See [Testing and CI](Testing-and-CI.md).
 4. Push and open a pull request to `main`. CI (`ci.yml`) runs lint, security audits, both test suites with the 70% backend coverage gate, and an image build with a Trivy scan.
-5. Merging to `main` publishes the docs site (`docs.yml`). It does **not** deploy the app: `deploy.yml` is manual-only and decommissioned (see [Deployment](Deployment.md)).
+5. Merging to `main` publishes the docs site (`docs.yml`) **and deploys the app**: `deploy.yml` reruns CI, then publishes signed images that the production VM picks up within about 5 minutes, rolling back on its own if the new app is unhealthy (see [Deployment on GCP](Deployment-GCP.md)). Keep schema changes additive so a rollback can always read the database.
 
 Merged PRs are listed in the [Changelog](Changelog.md).
 

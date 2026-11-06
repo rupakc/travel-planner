@@ -9,6 +9,7 @@ from ...agents.orchestrator import TravelOrchestrator
 from ...core.auth import get_optional_user
 from ...core.cache import get_cache
 from ...core.config import settings
+from ...core.sse import guarded_stream
 from ...db.taste_db import derive_taste_context
 from ...schemas.request import TravelSearchRequest
 
@@ -84,8 +85,9 @@ async def search(
                 "Search run had errored sections or ended early — not cached"
             )
 
+    # Keepalives while agents think; agents cancelled if the client leaves
     return StreamingResponse(
-        generate(),
+        guarded_stream(generate(), keepalive=settings.sse_keepalive_seconds),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

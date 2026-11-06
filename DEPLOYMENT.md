@@ -1,3 +1,3 @@
 # Deployment
 
-Production was decommissioned on 2026-08-30, and `deploy.yml` now runs only by hand. See [docs/Deployment.md](docs/Deployment.md) for the current state and how to redeploy from `infrastructure/`.
+Production runs on one e2-micro VM on GCP; every green merge to `main` deploys. See [docs/Deployment.md](docs/Deployment.md) for the overview and [docs/Deployment-GCP.md](docs/Deployment-GCP.md) for the runbook.

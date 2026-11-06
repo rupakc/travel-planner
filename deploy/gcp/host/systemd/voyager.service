@@ -1,0 +1,24 @@
+[Unit]
+Description=Voyager (docker compose: app + caddy)
+Requires=docker.service
+Wants=network-online.target
+# Not ordered after google-startup-scripts: first-boot.sh runs inside that
+# unit and starts this one (--no-block), which would otherwise wait forever
+After=docker.service network-online.target voyager-governor-rules.service
+# First boot: nothing to start until the deployer has verified and pinned images
+ConditionPathExists=/opt/voyager/images.env
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/voyager
+ExecStart=/usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml up -d --remove-orphans
+# Graceful stop on shutdown/reboot: the app flushes its backup (stop_grace_period 20s)
+ExecStop=/usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml stop
+TimeoutStopSec=90
+
+[Install]
+# Also start whenever Docker (re)starts: a docker-ce upgrade that stops and
+# starts Docker stops this unit (Requires=), and nothing else would bring the
+# containers back
+WantedBy=multi-user.target docker.service

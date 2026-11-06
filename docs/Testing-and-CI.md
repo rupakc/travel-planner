@@ -86,4 +86,21 @@ mkdocs build --strict      # or: mkdocs serve
 
 ### deploy.yml
 
-Manual only and marked decommissioned. See [Deployment](Deployment.md).
+Runs on every push to `main`. It calls `ci.yml` as a reusable workflow, so every CI job must pass first; plain pushes to `main` don't run CI twice. Then one `publish` job runs with only `contents: read`, `packages: write` and `id-token: write`. It:
+
+1. builds the app image (`backend/Dockerfile`) and the Caddy + SPA image (`deploy/gcp/caddy.Dockerfile`);
+2. pushes them to GHCR with `sha-<commit>` tags;
+3. signs both digests with **cosign keyless** (GitHub OIDC → Sigstore) and verifies them with the identity the VM requires;
+4. moves the `prod` tags to those digests with `docker buildx imagetools create`, checks that each tag resolves to exactly the signed digest, and does so only if the commit is still `main`'s HEAD.
+
+Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label `io.voyager.build` (the workflow run number), and the VM refuses an image from an older run than the one it is running.
+
+It has no GCP or VM credentials: the VM pulls and verifies by itself (see [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback)).
+
+The `host-checks` job runs `deploy/gcp/tests/host_checks.sh` in `debian:trixie` (pinned by digest, `NET_ADMIN`). It checks three things:
+
+1. **Governor rules:** the real rules on iptables-nft for every tier, and that a rejected ruleset leaves the old rules intact.
+2. **Deployer:** `deploy.sh` end to end with fake docker and curl. The scenarios are first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal.
+3. **systemd units:** `systemd-analyze verify`.
+
+The image build waits for it. CI also runs `shellcheck` on `deploy/gcp/host/*.sh` and `infrastructure/gcp/*.sh`, ruff on `deploy/` and `infrastructure/gcp/`, and the tests in `deploy/gcp/tests` (egress governor) and `infrastructure/gcp/tests` (old-prod migration).

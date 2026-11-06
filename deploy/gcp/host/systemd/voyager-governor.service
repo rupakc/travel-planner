@@ -1,0 +1,7 @@
+[Unit]
+Description=Voyager egress governor tick (count TX bytes, apply tier)
+After=docker.service voyager-governor-rules.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/voyager/governor.py tick
