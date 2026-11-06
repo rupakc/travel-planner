@@ -23,6 +23,12 @@ FAILED = {
     "code": "live_check_failed",
     "message": "We couldn't get a live answer from the web just now. Try again.",
 }
+EXPIRED = {
+    "code": "watch_expired",
+    "message": "This trip's date has passed, so there's nothing left to check.",
+}
+# Per model call (a retry may add a second): the user is waiting on a button
+GROUNDED_TIMEOUT_S = 45
 
 
 class LiveCheckRequest(BaseModel):
@@ -52,6 +58,8 @@ async def live_check_now(
 ):
     watch = _owned(body.kind, body.watch_id, user)
     now = datetime.now(UTC)
+    if live_check.expired(body.kind, watch, now.date()):
+        raise HTTPException(status_code=409, detail=EXPIRED)
     system, prompt = live_check.build_prompt(
         body.kind, watch, today=now.date().isoformat()
     )
@@ -61,7 +69,11 @@ async def live_check_now(
         # so retry once
         for attempt in (1, 2):
             out = await llm.generate_grounded(
-                prompt, tool="search", system=system, label=f"live_check_{body.kind}"
+                prompt,
+                tool="search",
+                system=system,
+                label=f"live_check_{body.kind}",
+                timeout=GROUNDED_TIMEOUT_S,
             )
             sources, index = live_check.sources_from(out.chunks)
             if (sources and out.text.strip()) or attempt == 2:

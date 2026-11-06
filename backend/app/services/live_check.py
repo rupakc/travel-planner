@@ -147,6 +147,19 @@ def _trip(watch: dict) -> str:
     )
 
 
+def expired(kind: str, watch: dict, today: date) -> bool:
+    """True for a watch marked expired, or whose date (departure for a
+    fare watch, ``expires_on`` — check-in / activity date / departure — for
+    a price watch) is before ``today``: nothing left to price."""
+    if watch.get("status") == "expired":
+        return True
+    raw = watch.get("departure_date" if kind == "flight" else "expires_on")
+    try:
+        return date.fromisoformat(str(raw)[:10]) < today
+    except ValueError:
+        return False
+
+
 _BUILDERS = {"flight": _flight, "hotel": _hotel, "activity": _activity, "trip": _trip}
 
 
@@ -178,54 +191,89 @@ def sources_from(chunks: list[dict]) -> tuple[list[dict], dict[int, int]]:
     return sources, index
 
 
-_BULLET = re.compile(
-    r"^\s*(?:[-*•]|\d{1,2}[.)])\s+(?P<label>[^:\n]+?)\s*:\s*(?P<body>.+)$"
+_BULLET = re.compile(r"^\s*(?:[-*•]|\d{1,2}[.)])\s+(?P<rest>.+)$")
+# ISO 4217 codes we accept: three capitals alone ("TAP", "NYC") are not money
+CURRENCIES = frozenset(
+    "USD EUR GBP CHF JPY CNY HKD TWD KRW SGD MYR THB IDR PHP VND INR LKR NPR "
+    "PKR BDT AUD NZD CAD MXN BRL ARS CLP COP PEN UYU SEK NOK DKK ISK PLN CZK "
+    "HUF RON BGN TRY ILS AED SAR QAR KWD BHD OMR JOD EGP MAD TND ZAR KES NGN "
+    "GHS TZS UGX MUR".split()
 )
-_SYMBOLS = {"€": "EUR", "£": "GBP", "US$": "USD"}
-_AMOUNT = r"(?P<amt>\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![.,]?\d)"
+# Only unambiguous symbols ("$" and "¥" could be several currencies)
+_SYMBOLS = {
+    "€": "EUR",
+    "£": "GBP",
+    "₹": "INR",
+    "US$": "USD",
+    "C$": "CAD",
+    "CA$": "CAD",
+    "A$": "AUD",
+    "AU$": "AUD",
+    "NZ$": "NZD",
+    "S$": "SGD",
+    "HK$": "HKD",
+}
+_SYMBOL_RE = "|".join(re.escape(s) for s in sorted(_SYMBOLS, key=len, reverse=True))
+# 1,234.56 (comma thousands, dot decimals) or 1234.5; never touching other
+# digits or separators, and not followed by a space-separated thousands
+# group ("1 234", also with no-break spaces): "1.234,56" / "412,50" /
+# "1 234" match nothing rather than a wrong number
+_AMOUNT = (
+    r"(?<![\d.,])(?P<{n}>\d{{1,3}}(?:,\d{{3}})+(?:\.\d{{1,2}})?|\d+(?:\.\d{{1,2}})?)"
+    r"(?![.,]?\d)(?![\s  ]\d{{3}}(?!\d))"
+)
 _PRICE = re.compile(
-    rf"(?:(?P<pre>[A-Z]{{3}}|US\$|€|£)\s?{_AMOUNT})"
-    rf"|(?:{_AMOUNT.replace('amt', 'amt2')}\s?(?P<post>[A-Z]{{3}})\b)"
+    rf"(?:(?<![A-Za-z])(?P<pre>[A-Z]{{3}}|{_SYMBOL_RE})\s?{_AMOUNT.format(n='amt')})"
+    rf"|(?:{_AMOUNT.format(n='amt2')}\s?(?P<post>[A-Z]{{3}})\b(?!\s?\d))"
 )
 
 
-def _price(body: str) -> tuple[float, str] | None:
-    m = _PRICE.search(body)
-    if not m:
-        return None
-    if m["pre"]:
-        code, raw = _SYMBOLS.get(m["pre"], m["pre"]), m["amt"]
-    else:
-        code, raw = m["post"], m["amt2"]
-    amount = float(raw.replace(",", ""))
-    if not 0 < amount < 10_000_000:
-        return None
-    return amount, code
+def _price(text: str) -> tuple[float, str, int, int] | None:
+    """(amount, ISO code, start, end) of the first price in ``text`` with a
+    known currency: ``EUR 412``, ``412.50 EUR``, ``€98``, ``US$1,045``.
+    Ambiguous amounts (comma decimals, space or dot thousands) and
+    three-letter words that aren't currencies are skipped, never guessed."""
+    for m in _PRICE.finditer(text):
+        if m["pre"]:
+            code, raw = _SYMBOLS.get(m["pre"], m["pre"]), m["amt"]
+        else:
+            code, raw = m["post"], m["amt2"]
+        if code not in CURRENCIES:
+            continue
+        amount = float(raw.replace(",", ""))
+        if 0 < amount < 10_000_000:
+            return amount, code, m.start(), m.end()
+    return None
 
 
 def _norm(text: str) -> str:
     return " ".join(re.sub(r"[*_`]+", "", text or "").split())
 
 
+_MIN_SEGMENT = 12
+
+
 def _cited(
-    line: str, span: tuple[int, int], supports: list[dict], index: dict[int, int]
+    token: tuple[int, int],
+    token_text: str,
+    line: str,
+    supports: list[dict],
+    index: dict[int, int],
 ) -> int | None:
-    """The source a grounding support gives this line: one whose segment
-    text is part of the line (or contains it), else whose byte range
-    overlaps the line's."""
-    flat = _norm(line).lstrip("-*• ").strip()
+    """The source a grounding support gives this price. With byte offsets
+    (Vertex omits ``start`` when it is 0), the segment must cover the price
+    token's bytes; without them, its text must be part of the line, contain
+    the price and be at least 12 characters. A segment like "EUR" or "3"
+    never cites."""
+    norm_line, norm_token = _norm(line), _norm(token_text)
     for s in supports:
-        seg = _norm(s.get("text") or "")
-        if seg:
-            covers = seg in _norm(line) or (len(flat) > 3 and flat in seg)
+        start, end = s.get("start"), s.get("end")
+        if isinstance(end, int):
+            start = start if isinstance(start, int) else 0
+            covers = start <= token[0] and end >= token[1]
         else:
-            start, end = s.get("start"), s.get("end")
-            covers = (
-                isinstance(start, int)
-                and isinstance(end, int)
-                and start < span[1]
-                and end > span[0]
-            )
+            seg = _norm(s.get("text") or "")
+            covers = len(seg) >= _MIN_SEGMENT and norm_token in seg and seg in norm_line
         if not covers:
             continue
         for chunk in s.get("chunks") or []:
@@ -234,32 +282,54 @@ def _cited(
     return None
 
 
+def _quote_line(rest: str) -> tuple[str, tuple[float, str, int, int]] | None:
+    """(label, price) of a bullet's text ``Seller, what: EUR 412``: the
+    first price after the first ": ", labelled by everything before the
+    last ": " ahead of it ("Flight: TAP, 1 stop: USD 512")."""
+    first = rest.find(": ")
+    if first <= 0:
+        return None
+    price = _price(rest[first + 2 :])
+    if price is None:
+        return None
+    at = first + 2 + price[2]
+    label = _norm(rest[: rest.rfind(": ", 0, at)])
+    if not label:
+        return None
+    return label, (price[0], price[1], at, first + 2 + price[3])
+
+
 def parse_quotes(text: str, supports: list[dict], index: dict[int, int]) -> list[dict]:
     """Prices from the answer's bullet lines (``- Seller, what: EUR 412``),
-    each with the index of the source a grounding support cites for it. A
-    line without a parseable price or a citing source is left out: amounts
-    are copied from the grounded text, never inferred."""
+    each with the index of the source a grounding support cites for that
+    price. A line without a parseable price or a citing source is left out:
+    amounts are copied from the grounded text, never inferred. Offsets are
+    UTF-8 bytes, as Vertex reports them."""
     quotes: list[dict] = []
     offset = 0
-    raw = text or ""
-    for line in raw.splitlines(keepends=True):
-        start = offset
+    for line in (text or "").splitlines(keepends=True):
+        line_start = offset
         offset += len(line.encode())
-        m = _BULLET.match(line.rstrip("\r\n"))
+        body = line.rstrip("\r\n")
+        m = _BULLET.match(body)
         if not m:
             continue
-        label = _norm(m["label"])
-        price = _price(m["body"])
-        if not label or price is None:
+        parsed = _quote_line(m["rest"])
+        if parsed is None:
             continue
-        source = _cited(line.rstrip("\r\n"), (start, offset), supports, index)
+        label, (amount, code, a, b) = parsed
+        rest_at = m.start("rest")
+        tok_start = line_start + len(body[: rest_at + a].encode())
+        tok_end = line_start + len(body[: rest_at + b].encode())
+        token_text = m["rest"][a:b]
+        source = _cited((tok_start, tok_end), token_text, body, supports, index)
         if source is None:
             continue
         quotes.append(
             {
                 "label": label[:_FIELD_CAP],
-                "amount": price[0],
-                "currency": price[1],
+                "amount": amount,
+                "currency": code,
                 "source_index": source,
             }
         )

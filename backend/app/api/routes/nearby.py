@@ -32,6 +32,8 @@ router = APIRouter()
 V1_DEFAULT_LIMIT = 8
 V2_DEFAULT_LIMIT = 6
 V2_MAX_LIMIT = 10
+# Per model call (a retry may add a second): the user is waiting on a screen
+V2_TIMEOUT_S = 45
 CELL_DEGREES = 0.05  # ~5 km: one cache entry per cell
 # Per (cell, place, interests, taste): an hour, longer than the shared
 # 30-minute search cache — what's near a spot changes slowly
@@ -120,7 +122,8 @@ async def _sections(body: NearbyRequest, place: dict, user: dict) -> dict:
     try:
         out = None
         # Google sometimes attaches no Maps chunks even though the model
-        # queried Maps; without them nothing can be shown, so retry once
+        # queried Maps; without them nothing can be shown, so retry once (not
+        # for an empty answer: the model had nothing to say)
         for attempt in (1, 2):
             out = await llm.generate_grounded(
                 prompt,
@@ -130,8 +133,13 @@ async def _sections(body: NearbyRequest, place: dict, user: dict) -> dict:
                 lng=body.lng,
                 language=body.language or "en",
                 label="nearby_maps",
+                timeout=V2_TIMEOUT_S,
             )
-            if nearby_grounded.maps_chunk_count(out.chunks) or attempt == 2:
+            if (
+                nearby_grounded.maps_chunk_count(out.chunks)
+                or not out.text.strip()
+                or attempt == 2
+            ):
                 break
             logger.info("nearby_maps: no Maps grounding chunks, retrying once")
     except llm.LLMError as e:

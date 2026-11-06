@@ -305,19 +305,54 @@ def test_quotes_need_a_supporting_source():
     ]
 
 
-def test_support_by_byte_offsets_when_segment_text_is_missing():
-    text = "Fares found.\n- Kayak, round trip: USD 512\n"
+def _bytes_of(text, part):
+    start = text.encode().index(part.encode())
+    return start, start + len(part.encode())
+
+
+def test_byte_offsets_must_cover_the_price():
+    text = "Fares found for São Paulo.\n- Kayak, round trip: USD 512\n"
     line = "- Kayak, round trip: USD 512"
-    start = text.encode().index(line.encode())
-    supports = [{"text": "", "start": start, "end": start + 10, "chunks": [0]}]
+    start, end = _bytes_of(text, line)
     _, index = live_check.sources_from([_web("kayak.com", "https://k")])
-    [quote] = live_check.parse_quotes(text, supports, index)
+    # covers the line's start only, not "USD 512": no quote
+    short = [{"text": "", "start": start, "end": start + 10, "chunks": [0]}]
+    assert live_check.parse_quotes(text, short, index) == []
+    full = [{"text": "", "start": start, "end": end, "chunks": [0]}]
+    [quote] = live_check.parse_quotes(text, full, index)
     assert quote["amount"] == 512.0 and quote["source_index"] == 0
+
+
+def test_missing_start_offset_means_zero():
+    # Vertex omits start_index when it is 0: {"start": None, "end": 148}
+    text = "- Kayak, round trip: USD 512\n"
+    sup = [{"text": "", "start": None, "end": len(text.encode()), "chunks": [0]}]
+    _, index = live_check.sources_from([_web("kayak.com", "https://k")])
+    [quote] = live_check.parse_quotes(text, sup, index)
+    assert quote["amount"] == 512.0
+
+
+def test_offsets_win_over_segment_text():
+    text = "- Kayak, round trip: USD 512\n"
+    # the text would cite, the offsets (elsewhere) don't
+    sup = [
+        {"text": "Kayak, round trip: USD 512", "start": 100, "end": 140, "chunks": [0]}
+    ]
+    _, index = live_check.sources_from([_web("kayak.com", "https://k")])
+    assert live_check.parse_quotes(text, sup, index) == []
+
+
+@pytest.mark.parametrize("segment", ["EUR", "3", "412", "EUR 412", "Booking.com"])
+def test_short_or_priceless_segments_never_cite(segment):
+    line = "- Booking.com, 3 nights: EUR 412"
+    _, index = live_check.sources_from(WEB)
+    assert live_check.parse_quotes(line, [_sup(segment, [0])], index) == []
 
 
 def test_support_pointing_at_a_linkless_chunk_does_not_count():
     _, index = live_check.sources_from([_web("x", None)])
-    assert live_check.parse_quotes("- A: USD 10", [_sup("A: USD 10", [0])], index) == []
+    line = "- Agency: USD 10.00 per person"
+    assert live_check.parse_quotes(line, [_sup(line[2:], [0])], index) == []
 
 
 @pytest.mark.parametrize(
@@ -327,29 +362,51 @@ def test_support_pointing_at_a_linkless_chunk_does_not_count():
         "- Booking.com: EUR",
         "- Booking.com: EUR 0",
         "- Booking.com: EUR 1.234,50",
+        "- Booking.com: 1.234,56 EUR",
+        "- Booking.com: 412,50 EUR",
+        "- Booking.com: EUR 1 234",
+        "- Booking.com: EUR 1 234",
+        "- Booking.com: 1.234 EUR",
+        "- Booking.com: $412",
+        "- Booking.com: ¥3000",
+        "- Booking.com: TAP 412",
         "Booking.com: EUR 412",  # not a bullet
         "- : EUR 412",
+        "- Booking.com EUR 412",  # no ": " before the price
     ],
 )
 def test_unparseable_quote_lines_are_omitted(line):
     _, index = live_check.sources_from(WEB)
-    assert live_check.parse_quotes(line, [_sup(line, [0])], index) == []
+    seg = line.lstrip("- ")
+    assert live_check.parse_quotes(line, [_sup(seg, [0])], index) == []
 
 
 @pytest.mark.parametrize(
-    "line, amount, currency",
+    "line, label, amount, currency",
     [
-        ("* **Viator**, 2 people: €98", 98.0, "EUR"),
-        ("1. British Airways, return: £640", 640.0, "GBP"),
-        ("- Google Flights, return: US$1,045", 1045.0, "USD"),
-        ("- Trip.com, return: 1045 USD per person", 1045.0, "USD"),
+        ("* **Viator**, 2 people: €98", "Viator, 2 people", 98.0, "EUR"),
+        ("1. British Airways, return: £640", "British Airways, return", 640.0, "GBP"),
+        ("- Google Flights, return: US$1,045", "Google Flights, return", 1045.0, "USD"),
+        ("- Trip.com, return: 1045 USD per person", "Trip.com, return", 1045.0, "USD"),
+        ("- Flight: TAP 1 stop, USD 512", "Flight", 512.0, "USD"),
+        ("- Flight: TAP, 1 stop: USD 512", "Flight: TAP, 1 stop", 512.0, "USD"),
+        ("- Kayak: NYC 2 adults USD 900", "Kayak", 900.0, "USD"),
+        ("- MakeMyTrip, 2 nights: ₹4,500", "MakeMyTrip, 2 nights", 4500.0, "INR"),
+        ("- Wotif, 3 nights: A$300", "Wotif, 3 nights", 300.0, "AUD"),
+        ("- Hotel site: EUR 412 3 nights", "Hotel site", 412.0, "EUR"),
+        ("- Agoda: for 2 EUR 450", "Agoda", 450.0, "EUR"),
     ],
 )
-def test_quote_formats(line, amount, currency):
+def test_quote_formats(line, label, amount, currency):
     _, index = live_check.sources_from(WEB)
-    [quote] = live_check.parse_quotes(line, [_sup(line, [1])], index)
-    assert (quote["amount"], quote["currency"]) == (amount, currency)
-    assert "*" not in quote["label"]
+    seg = line.lstrip("-*1. ").replace("**", "")
+    [quote] = live_check.parse_quotes(line, [_sup(seg, [1])], index)
+    assert (quote["label"], quote["amount"], quote["currency"]) == (
+        label,
+        amount,
+        currency,
+    )
+    assert quote["source_index"] == 1
 
 
 # ── Live check: prompts from the stored watch ─────────────────────────────────

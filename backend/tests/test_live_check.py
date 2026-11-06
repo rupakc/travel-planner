@@ -5,11 +5,12 @@ the model is stubbed (no Vertex)."""
 import logging
 import time
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from unittest.mock import AsyncMock
 
 import pytest
 
+from app.api.routes import live_check as live_check_route
 from app.core import cache as shared_cache
 from app.core import llm
 from app.core.auth import create_access_token
@@ -397,3 +398,45 @@ def test_billing_disabled_is_503_ai_billing(client, monkeypatch):
     )
     assert r.status_code == 503
     assert r.json()["detail"]["code"] == "ai_billing"
+
+
+def test_live_check_has_a_short_timeout(client, grounded):
+    u, h = _user()
+    w = _price_watch(u)
+    client.post(
+        "/api/live-check", json={"kind": "hotel", "watch_id": w["id"]}, headers=h
+    )
+    assert grounded.await_args.kwargs["timeout"] == 45
+
+
+@pytest.mark.parametrize("case", ["status", "fare_date", "price_date"])
+def test_expired_watch_is_409_without_a_model_call(client, grounded, case):
+    u, h = _user()
+    if case == "fare_date":
+        w = _fare_watch(u)
+        fare_watch_db.update_watch(w["id"], departure_date="2020-01-01")
+        kind = "flight"
+    else:
+        w = _price_watch(u)
+        kind = "hotel"
+        if case == "status":
+            price_watch_db.update_watch(w["id"], status="expired")
+        else:
+            price_watch_db.update_watch(w["id"], expires_on="2020-01-01")
+    r = client.post(
+        "/api/live-check", json={"kind": kind, "watch_id": w["id"]}, headers=h
+    )
+    assert r.status_code == 409
+    assert r.json() == {"detail": live_check_route.EXPIRED}
+    assert r.json()["detail"]["code"] == "watch_expired"
+    grounded.assert_not_awaited()
+
+
+def test_expired_helper():
+    today = date(2026, 11, 6)
+    assert live_check.expired("flight", {"departure_date": "2026-11-05"}, today)
+    assert not live_check.expired("flight", {"departure_date": "2026-11-06"}, today)
+    assert live_check.expired("hotel", {"expires_on": "2026-11-01"}, today)
+    assert not live_check.expired("trip", {"expires_on": "2026-12-01"}, today)
+    assert live_check.expired("activity", {"status": "expired"}, today)
+    assert not live_check.expired("activity", {"expires_on": None}, today)

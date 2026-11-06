@@ -172,3 +172,30 @@ async def test_grounded_usage_is_logged_without_content(gemini, caplog):
 async def test_rejects_an_unknown_tool(gemini):
     with pytest.raises(ValueError):
         await llm.generate_grounded("q", tool="bing")
+
+
+async def test_grounded_calls_share_the_agent_concurrency_gate(gemini, monkeypatch):
+    from app.agents import base_agent
+
+    entered = []
+
+    class Gate:
+        async def __aenter__(self):
+            entered.append(len(gemini.calls))
+
+        async def __aexit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(base_agent, "_get_semaphore", lambda: Gate())
+    gemini.replies = [grounded_reply("ok")]
+
+    await llm.generate_grounded("q", tool="search")
+
+    # the gate is held before the model call is made
+    assert entered == [0] and len(gemini.calls) == 1
+
+
+async def test_timeout_reaches_the_request(gemini):
+    gemini.replies = [grounded_reply("ok")]
+    await llm.generate_grounded("q", tool="search", timeout=45)
+    assert gemini.calls[0]["config"].http_options.timeout == 45_000

@@ -461,13 +461,20 @@ async def generate_grounded(
             GROUNDING_UNAVAILABLE_MESSAGE, user_code=GROUNDING_UNAVAILABLE_CODE
         )
     _check_spend_cap()
+    # Same global gate as the specialist agents (AGENT_MAX_CONCURRENCY), so
+    # grounded calls never add to a search's burst; imported here because
+    # base_agent imports this module
+    from ..agents.base_agent import _get_semaphore
+
     started = time.monotonic()
     try:
-        resp = await _gemini_client().aio.models.generate_content(
-            **_grounded_kwargs(
-                prompt, tool, system, lat, lng, language, max_tokens, timeout
+        async with _get_semaphore():
+            started = time.monotonic()
+            resp = await _gemini_client().aio.models.generate_content(
+                **_grounded_kwargs(
+                    prompt, tool, system, lat, lng, language, max_tokens, timeout
+                )
             )
-        )
         out = _grounded_response(resp)
     except LLMError:
         raise

@@ -281,3 +281,16 @@ def test_v2_model_failure_is_502_agent_error(client, monkeypatch):
 
 def test_v2_requires_auth(client, grounded):
     assert client.post("/api/nearby", json=V2).status_code == 401
+
+
+def test_empty_answer_is_not_retried(client, monkeypatch):
+    stub = AsyncMock(return_value=llm.GroundedResponse(text="", chunks=[]))
+    monkeypatch.setattr(llm, "generate_grounded", stub)
+    r = client.post("/api/nearby", json=V2, headers=_headers())
+    assert r.status_code == 200
+    assert stub.await_count == 1
+
+
+def test_v2_has_a_short_timeout(client, grounded):
+    client.post("/api/nearby", json=V2, headers=_headers())
+    assert grounded.await_args.kwargs["timeout"] == 45
