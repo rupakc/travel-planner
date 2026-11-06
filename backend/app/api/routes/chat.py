@@ -9,6 +9,7 @@ from ...agents.chat_agent import ChatAgent
 from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.rate_limit import caller_key
+from ...core.sse import guarded_stream
 from ...db.preferences_db import get_preferences
 from ...db.taste_db import derive_taste_context
 
@@ -75,8 +76,9 @@ async def chat(
             yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
+    # Keepalives while agents think; agents cancelled if the client leaves
     return StreamingResponse(
-        generate(),
+        guarded_stream(generate(), keepalive=settings.sse_keepalive_seconds),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
