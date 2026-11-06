@@ -3,8 +3,6 @@ uvicorn[standard]>=0.32.0,<1.0.0
 pydantic>=2.9.0,<3.0.0
 pydantic-settings>=2.6.0,<3.0.0
 httpx>=0.28.0,<1.0.0
-claude-agent-sdk
-python-dotenv
 cachetools
 pyyaml
 PyJWT>=2.15.1,<3.0.0

@@ -14,4 +14,7 @@ COPY .agents/ .agents/
 
 EXPOSE 8001
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Entrypoint: optional Secret Manager secrets into the process env, refuses an
+# empty JWT_SECRET_KEY, then execs uvicorn (1 worker, graceful shutdown 5 s,
+# proxy headers only from FORWARDED_ALLOW_IPS) — see app/entrypoint.py
+CMD ["python", "-m", "app.entrypoint"]
