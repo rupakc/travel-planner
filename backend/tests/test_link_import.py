@@ -2,6 +2,7 @@
 POST /api/import/extract endpoint. Anthropic, Serper and the web are mocked."""
 
 import base64
+import io
 import re
 from unittest.mock import AsyncMock, patch
 
@@ -533,6 +534,60 @@ def test_agent_failure_is_502(client, admin_headers, agent):
     )
     assert r.status_code == 502
     assert r.json()["detail"]["code"] == "extract_failed"
+
+
+@pytest.fixture
+def gemini_provider(monkeypatch):
+    monkeypatch.setattr(settings, "llm_provider", "gemini")
+
+
+def _gif_bytes() -> bytes:
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4), "red").save(buf, format="GIF")
+    return buf.getvalue()
+
+
+def test_gif_becomes_png_on_gemini(client, admin_headers, agent, gemini_provider):
+    pytest.importorskip("PIL")
+    agent.run.return_value = clean_extraction({"places": []}, source_text=None)
+    client.post(
+        "/api/import/extract",
+        json={"images": [_img(_gif_bytes(), "image/gif")]},
+        headers=admin_headers,
+    )
+    [image] = agent.run.await_args.kwargs["images"]
+    assert image["media_type"] == "image/png"
+    assert base64.b64decode(image["data_base64"]).startswith(b"\x89PNG")
+
+
+def test_gif_without_pillow_is_a_clear_422_on_gemini(
+    client, admin_headers, agent, gemini_provider
+):
+    with patch("app.api.routes.link_import._gif_to_png", return_value=None):
+        r = client.post(
+            "/api/import/extract",
+            json={"images": [_img(b"GIF89a" + b"\x00" * 10, "image/gif")]},
+            headers=admin_headers,
+        )
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert detail["code"] == "gif_unsupported"
+    assert "PNG or JPEG" in detail["message"]
+    agent.run.assert_not_called()
+
+
+def test_gif_passes_through_on_anthropic(client, admin_headers, agent, monkeypatch):
+    monkeypatch.setattr(settings, "llm_provider", "anthropic")
+    agent.run.return_value = clean_extraction({"places": []}, source_text=None)
+    client.post(
+        "/api/import/extract",
+        json={"images": [_img(b"GIF89a" + b"\x00" * 10, "image/gif")]},
+        headers=admin_headers,
+    )
+    [image] = agent.run.await_args.kwargs["images"]
+    assert image["media_type"] == "image/gif"
 
 
 def test_spend_cap_is_503_with_the_friendly_message(client, admin_headers, agent):

@@ -5,6 +5,7 @@ then runs as a normal search with ``must_include``."""
 import base64
 import binascii
 import hashlib
+import io
 import json
 import logging
 
@@ -70,6 +71,18 @@ def _sniff(data: bytes) -> str | None:
     return None
 
 
+def _gif_to_png(data: bytes) -> bytes | None:
+    """First frame of a GIF as PNG, or None when Pillow isn't installed."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    with Image.open(io.BytesIO(data)) as img:
+        out = io.BytesIO()
+        img.convert("RGBA").save(out, format="PNG")
+        return out.getvalue()
+
+
 def _checked_images(body: ImportRequest) -> list[dict]:
     images = body.images or []
     if len(images) > MAX_IMAGES:
@@ -104,8 +117,7 @@ def _checked_images(body: ImportRequest) -> list[dict]:
             raise _fail(
                 422,
                 "unsupported_image",
-                f"Screenshot {i} isn't an image we can read. Use PNG, JPEG, "
-                "WebP or GIF.",
+                f"Screenshot {i} isn't an image we can read. Use PNG, JPEG or WebP.",
             )
         if len(data) > MAX_IMAGE_BYTES:
             raise _fail(
@@ -114,6 +126,20 @@ def _checked_images(body: ImportRequest) -> list[dict]:
                 f"Screenshot {i} is over 5 MB. Crop it, or save it as a "
                 "smaller PNG or JPEG.",
             )
+        if media_type == "image/gif" and llm.provider() == "gemini":
+            # Vertex AI reads PNG, JPEG and WebP but not GIF
+            try:
+                png = _gif_to_png(data)
+            except Exception:
+                png = None
+            if png is None:
+                raise _fail(
+                    422,
+                    "gif_unsupported",
+                    f"Screenshot {i} is a GIF, which we can't read. Save it as "
+                    "PNG or JPEG and try again.",
+                )
+            media_type, data = "image/png", png
         checked.append(
             {"media_type": media_type, "data_base64": base64.b64encode(data).decode()}
         )
@@ -165,8 +191,8 @@ async def extract_trip(
     else:
         result = await agent.run(images=images, source_kind="images")
 
-    if result.get("error_code") == llm.SPEND_CAP_CODE:
-        raise _fail(503, llm.SPEND_CAP_CODE, llm.SPEND_CAP_MESSAGE)
+    if paused := llm.user_error(result):
+        raise _fail(503, paused["error_code"], paused["error"])
     if result.get("error"):
         logger.warning("Link import extraction failed: %s", result["error"])
         raise _fail(
