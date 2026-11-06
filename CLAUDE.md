@@ -14,11 +14,15 @@ The backend uses a **three-phase orchestrator pattern** (`backend/app/agents/orc
 2. **Phase 1 (parallel AI)** — Thirteen specialist agents run **in parallel** (flights, weather, hotels, activities, places-to-see, walking-tours, events, visa, sim, tips, emergency-card, getting-around, forex), 240 s ceiling each. As each completes, its result streams to the frontend. Hotels, activities and places_to_see stream again after URL enrichment. Two deferred agents start mid-phase: packing-list (once activities + weather are in) and pricing-advisor (once flights have ≥ 3 results); both give up after 120 s. For the six static-backed agents, error results are suppressed so the static data remains.
 3. **Phase 2** — The itinerary agent synthesises activities + hotels into a day-by-day plan. Starts as soon as both inputs are ready, with a 60-second timeout and template fallback. Once the itinerary is final, a stress-test agent (90 s timeout) adversarially audits the plan (pacing, timings, visa deadlines, weather clashes).
 
-Agent definitions live in `.agents/*.md` (22 files) using YAML frontmatter (`name`, `description`) and a markdown body for the system prompt. They are loaded by `backend/app/agents/loader.py`. `BaseAgent.execute()` makes one Anthropic Messages call per attempt via `AsyncAnthropic` (`claude-haiku-4-5-20251001`, `max_tokens` 16384, no tools), behind a global concurrency semaphore (`AGENT_MAX_CONCURRENCY`, default 6), with up to 4 attempts, exponential backoff on rate limits and a compact-retry when output hits the token cap.
+Agent definitions live in `.agents/*.md` (22 files) using YAML frontmatter (`name`, `description`) and a markdown body for the system prompt. They are loaded by `backend/app/agents/loader.py`. `BaseAgent.execute()` makes one model call per attempt through `core/llm.py` (agent model, JSON output, `max_tokens` 16384, no tools), behind a global concurrency semaphore (`AGENT_MAX_CONCURRENCY`, default 6), with up to 4 attempts, exponential backoff on rate limits and a compact-retry when output hits the token cap.
 
 Each specialist agent subclass in `backend/app/agents/` overrides `run(request)` to build a user prompt and parse the JSON result. All execution goes through `BaseAgent` — no per-agent API plumbing. `ToolAgent.enrich()` does background link lookups (DuckDuckGo via `ddgs` in `web_tools.py`; Serper as tier 2).
 
-**Models:** Haiku 4.5 for every specialist agent, the chat-itinerary agent and chat routing/extraction; Sonnet 4.6 (`claude-sonnet-4-6`) only for chat conversational answers and narrative.
+**Models:** every model call goes through `backend/app/core/llm.py` (`generate`, `stream`, `generate_sync`), which picks the provider from `LLM_PROVIDER`:
+- `gemini` (default): Gemini on Vertex AI with Application Default Credentials (no API key; `GCP_PROJECT`, `GCP_LOCATION` default `global`). **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, thinking `minimal`, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, the chat-itinerary agent and chat routing/extraction; **Gemini 3.8 Flash** (`gemini-3.8-flash`, thinking `low`) only for chat conversational answers (streamed token by token) and narrative.
+- `anthropic` (local dev / rollback, needs `ANTHROPIC_API_KEY`): Haiku 4.5 (`claude-haiku-4-5-20251001`) and Sonnet 4.6 (`claude-sonnet-4-6`) in the same two roles.
+
+Every call logs an `llm_usage` line (label, model, input/output/thinking tokens, latency; never content). AI spend is hard-capped by a GCP spend-cap budget: a 403/429 that names billing/budget becomes `LLMError(spend_cap=True)`, later calls fail fast for 5 min, sections get `{"error": "AI limit reached for this month — try again on the 1st.", "error_code": "ai_limit"}`, chat sends that text as a `delta`, and `/discover`, `/import/extract` and `/nearby` answer `503`. `backend/scripts/llm_eval.py` (manual, never CI) runs the six saved searches in `backend/tests/fixtures/llm_eval/` on a provider/model and compares two runs into a Markdown report.
 
 ### SSE Streaming
 
@@ -72,6 +76,7 @@ backend/
   Dockerfile            build from the repo root (copies backend/ and .agents/)
   requirements.txt      runtime deps; requirements-dev.txt for tests/lint
   scripts/build_place_data.py   offline place-data generator
+  scripts/llm_eval.py           offline LLM provider/model eval (run + compare)
   tests/                pytest suite + data/golden_places.csv
   app/
     main.py             FastAPI app, lifespan (restore → seed → tables → admin → backup loop), routers, /health
@@ -83,7 +88,7 @@ backend/
                         recent_searches, taste, airports, nationalities, auth, admin,
                         feedback, analytics, link_import, fare_watches, price_watches,
                         notifications, devices, nearby
-    core/               config, auth, cache, rate_limit, logging_config, places (fold_place, hints)
+    core/               config, llm (provider seam), auth, cache, rate_limit, logging_config, places (fold_place, hints)
     db/                 database (schema, lookup_city_iata, search_airports), places_db,
                         seed_airports, seed_nationalities, airport_regions, backup,
                         users_db, plans_db, preferences_db, recent_searches_db, feedback_db, taste_db,
@@ -137,7 +142,9 @@ npm run dev
 docker compose up --build
 ```
 
-Tests: `cd backend && python3 -m pytest -q`; `cd frontend && npm test` (on Node 20.18 prefix `NODE_OPTIONS=--experimental-require-module`). Lint: `ruff check backend/`, `cd frontend && npx eslint src/ --max-warnings 0`. Docs: `mkdocs build --strict`.
+LLM locally: the default provider is Gemini on Vertex AI — run `gcloud auth application-default login` and set `GCP_PROJECT` (e.g. `voyager-prod-ohzkl`) in `backend/.env`; or set `LLM_PROVIDER=anthropic` with `ANTHROPIC_API_KEY` to keep using Claude.
+
+Tests: `cd backend && python3 -m pytest -q` (model clients are stubbed in `conftest.py`; tests never reach Vertex or Anthropic); `cd frontend && npm test` (on Node 20.18 prefix `NODE_OPTIONS=--experimental-require-module`). Lint: `ruff check backend/`, `cd frontend && npx eslint src/ --max-warnings 0`. Docs: `mkdocs build --strict`.
 
 ## Key Conventions
 
@@ -180,7 +187,7 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 | `GET /api/airports/search`, `GET /api/nationalities/search` | Typeaheads |
 | `GET/POST /api/devices`, `DELETE /api/devices/{id}`, `POST /api/devices/unregister` | Android push devices (FCM tokens: masked in lists, only ever in bodies; auth) |
 | `POST /api/nearby` | Near me: nearest known place to `lat`/`lng` + activities there (auth, light_ai, cached 1 h per ~5 km cell) |
-| `GET /health`, `GET /health/agents` | Health (reports `serpapi_configured`, `push_configured`); deep LLM check |
+| `GET /health`, `GET /health/agents` | Health (reports `serpapi_configured`, `push_configured`); deep LLM check on the configured provider (`llm`, `llm_provider`) |
 
 **Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
 
@@ -205,6 +212,6 @@ Optional: `adults`/`children`/`seniors`/`infants`, `accessibility_needs`, `desti
 
 ## Dependencies
 
-**Backend**: fastapi, uvicorn, pydantic, pydantic-settings, httpx, anthropic, PyJWT, bcrypt, cachetools, pyyaml, ddgs, beautifulsoup4, google-cloud-storage, google-auth (FCM signing) (also listed but not imported: claude-agent-sdk, python-dotenv)
+**Backend**: fastapi, uvicorn, pydantic, pydantic-settings, httpx, google-genai (Gemini on Vertex AI, pinned 2.34.0), anthropic (fallback provider), PyJWT, bcrypt, cachetools, pyyaml, ddgs, beautifulsoup4, google-cloud-storage, google-auth (FCM signing)
 
 **Frontend**: react, react-dom, react-router-dom 6, leaflet, react-leaflet, axios, lucide-react, @tanstack/react-query (provider only), tailwindcss 3.4, vite 6, vitest (date-fns and clsx are listed but unused)

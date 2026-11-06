@@ -52,12 +52,12 @@ There are 22 definition files:
 
 `backend/app/agents/base_agent.py`:
 
-- **One API call per attempt.** `execute(prompt)` calls `AsyncAnthropic.messages.create` with model `claude-haiku-4-5-20251001`, `max_tokens` 16384, the definition's prompt as the system prompt (plus "Return ONLY valid JSON") and the agent's prompt as the single user message. No tools are passed to the model.
-- **Concurrency.** A global semaphore limits concurrent calls to `AGENT_MAX_CONCURRENCY` (default 6), so a burst of agents does not trip the organisation's rate limits. The SDK client also retries 3 times on its own.
+- **One API call per attempt.** `execute(prompt)` calls `core.llm.generate` with role `agent` (Gemini 3.5 Flash-Lite by default, Claude Haiku 4.5 with `LLM_PROVIDER=anthropic`; see [Architecture](Architecture.md#models)), `max_tokens` 16384, JSON output, the definition's prompt as the system prompt (plus "Return ONLY valid JSON") and the agent's prompt as the single user message (text, or text and image blocks for vision). No tools are passed to the model.
+- **Concurrency.** A global semaphore limits concurrent calls to `AGENT_MAX_CONCURRENCY` (default 6), so a burst of agents does not trip the organisation's rate limits. The SDK client also retries 429/5xx 3 times on its own.
 - **Retries.** Up to 4 attempts. Rate-limit, overload and connection errors back off `min(2^n, 10)` seconds; other errors back off `2n` seconds.
 - **Token cap.** If a response stops at `max_tokens`, the next attempt adds a "be compact" instruction instead of repeating the same request.
 - **JSON parsing** (`_parse_json`), three strategies: parse the whole text, extract a fenced code block, then take the outermost `{...}`.
-- **Failure.** After the last attempt the agent returns `{"error": "..."}` rather than raising.
+- **Failure.** After the last attempt the agent returns `{"error": "..."}` rather than raising. When the monthly AI spend cap has tripped it returns `{"error": "AI limit reached for this month — try again on the 1st.", "error_code": "ai_limit"}` at once, without retrying.
 
 `ToolAgent` (a `BaseAgent` subclass) adds `enrich(data)`, which the orchestrator runs in the background after the first result has streamed; a changed result is streamed again. Flights (LLM results only), hotels, activities, places, visa, sim, tips, getting around and forex override it to look up real links (DuckDuckGo through `web_tools.py`, at most 4 concurrent searches; Serper as a second tier for activities and places when `SERPER_KEY` is set). Only hotels, activities and places_to_see mark their first yield as verification-pending.
 

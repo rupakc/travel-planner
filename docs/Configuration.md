@@ -10,13 +10,29 @@ Settings are read from the process environment and from a `.env` file in the **w
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `""` | **Needed.** Used by every agent. Without it, every AI call fails. |
 | `JWT_SECRET_KEY` | `""` | **Needed.** HS256 signing key for login tokens (24 h lifetime). Changing it logs everyone out. Generate one with `python3 -c "import secrets; print(secrets.token_hex(32))"`. |
 | `CORS_ORIGINS` | `["http://localhost:5174","http://localhost:5173"]` | Allowed browser origins, as a JSON list. |
 | `AGENTS_DIR` | `<repo>/.agents` | Directory of the agent definition files. A relative path that does not exist falls back to `<repo>/.agents`. |
-| `AGENT_MAX_CONCURRENCY` | `6` | Global cap on concurrent Anthropic calls across all agents. |
+| `AGENT_MAX_CONCURRENCY` | `6` | Global cap on concurrent model calls across all agents. |
 | `CACHE_TTL_SECONDS` | `1800` | TTL of the in-memory result cache. |
 | `CACHE_MAXSIZE` | `500` | Maximum entries in that cache. |
+
+## LLM
+
+Every model call goes through `backend/app/core/llm.py`; see [Architecture](Architecture.md#models).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `LLM_PROVIDER` | `gemini` | `gemini`: Gemini on Vertex AI with Application Default Credentials (no API key). `anthropic`: Claude via `ANTHROPIC_API_KEY`, for local development or a rollback. |
+| `GCP_PROJECT` | `""` | **Needed for Gemini.** Google Cloud project that runs Vertex AI, e.g. `voyager-prod-ohzkl`. Empty falls back to `GOOGLE_CLOUD_PROJECT` or the ADC project. |
+| `GCP_LOCATION` | `global` | Vertex AI location. `global` routes to any region with capacity; `us` and `eu` keep processing in that multi-region. |
+| `GEMINI_MODEL_AGENT` | `gemini-3.5-flash-lite` | Model for every specialist agent, itinerary, stress test, packing, pricing advisor, link import, discovery, layover, chat itinerary and chat routing/extraction. |
+| `GEMINI_MODEL_CHAT` | `gemini-3.8-flash` | Model for chat conversational answers and the planning narrative. |
+| `GEMINI_THINKING_AGENT` | `minimal` | Thinking level of the agent model: `minimal`, `low`, `medium` or `high`. |
+| `GEMINI_THINKING_CHAT` | `low` | Thinking level of the chat model: `low`, `medium` or `high` (Gemini 3.8 Flash rejects `minimal`). |
+| `ANTHROPIC_API_KEY` | `""` | **Needed with `LLM_PROVIDER=anthropic`.** Unused on Gemini. |
+
+With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.user`) on the project. Locally, run `gcloud auth application-default login` once. If no credentials are found, every AI section fails and `/health/agents` reports the error.
 
 ## Storage and backup
 
@@ -111,7 +127,11 @@ Browser storage used by the app: `tp_token` (login token), `tp_recent_searches_o
 `backend/.env` for local development:
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-...
+# Gemini on Vertex AI (after `gcloud auth application-default login`)
+GCP_PROJECT=voyager-prod-ohzkl
+# …or keep using Claude:
+# LLM_PROVIDER=anthropic
+# ANTHROPIC_API_KEY=sk-ant-...
 JWT_SECRET_KEY=3f0c...   # 64 hex characters
 ADMIN_PASSWORD=LocalDevPassword123
 # Optional
@@ -122,6 +142,6 @@ RATE_LIMIT_ENABLED=false
 LOG_FORMAT=text
 ```
 
-Values set by `docker-compose.yml`: `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
+Values set by `docker-compose.yml`: `LLM_PROVIDER` (default `gemini`), `GCP_PROJECT`, `GCP_LOCATION` (default `global`), `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY` (default `change-me-in-compose`), `ADMIN_PASSWORD` (default `admin-dev-password`), `DATA_DIR=/data`, `BACKUP_BUCKET=` (empty) and `CORS_ORIGINS=http://localhost:8080` for the backend, and `BACKEND_URL=http://backend:8001` for the frontend.
 
-The retained Terraform (see [Deployment](Deployment.md)) sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `CORS_ORIGINS`, `BACKUP_BUCKET`, and injects `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY`, `ADMIN_PASSWORD`, `SERPAPI_KEY` and `SERPER_KEY` from Secret Manager.
+The retained Terraform (see [Deployment](Deployment.md)) predates the move to Gemini; it sets `DATA_DIR=/tmp/data`, `AGENTS_DIR=/app/.agents`, `LOG_FORMAT=json`, `CORS_ORIGINS`, `BACKUP_BUCKET`, and injects `ANTHROPIC_API_KEY`, `JWT_SECRET_KEY`, `ADMIN_PASSWORD`, `SERPAPI_KEY` and `SERPER_KEY` from Secret Manager.

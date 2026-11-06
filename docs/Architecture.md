@@ -30,7 +30,8 @@ FastAPI backend (uvicorn, one process)
   └── SQLite: $DATA_DIR/airports.db (22 tables) ── optional GCS backup every 60 s
             │
             ▼
-External: Anthropic API (Haiku 4.5, Sonnet 4.6), SerpAPI, Serper, DuckDuckGo,
+External: Gemini on Vertex AI (3.5 Flash-Lite, 3.8 Flash; or Anthropic as a fallback),
+          SerpAPI, Serper, DuckDuckGo,
           Open-Meteo, walking-tour provider sites, optional SMTP server,
           optional Firebase Cloud Messaging (FCM HTTP v1)
 ```
@@ -75,7 +76,7 @@ A complete, error-free run is stored as its list of SSE events in the TTL cache 
 
 ```
 url ──► link_fetch.read_link ──► text ─┐
-text ──────────────────────────────────┼─► LinkImportAgent (Haiku; vision for images)
+text ──────────────────────────────────┼─► LinkImportAgent (agent model; vision for images)
 images (sniffed, ≤4 × 5 MB) ───────────┘        │  untrusted-data fencing, Pydantic validation
                                                 ▼
                      link_import.build_preview: resolve_place per city → stops
@@ -115,12 +116,22 @@ Every non-error section streamed by `/api/search`, and the responses of `/api/{f
 
 ## Models
 
-| Use | Model |
-|---|---|
-| Every specialist agent (`BaseAgent`), the chat-itinerary agent, chat routing, parameter extraction and plan actions, `/health/agents` | `claude-haiku-4-5-20251001` |
-| Chat conversational answers and planning narrative | `claude-sonnet-4-6` |
+Every model call goes through one module, `backend/app/core/llm.py` (`generate`, `stream`, and `generate_sync` for the IATA lookup fallback). `LLM_PROVIDER` picks the provider; callers only name a **role**.
 
-`BaseAgent.execute()` makes one `AsyncAnthropic.messages.create` call per attempt with `max_tokens` 16384, behind a global semaphore (`AGENT_MAX_CONCURRENCY`, default 6). See [Agent System](Agent-System.md).
+| Role | Used by | `gemini` (default) | `anthropic` (local dev / rollback) |
+|---|---|---|---|
+| `agent` | Every specialist agent (`BaseAgent`), packing list, pricing advisor, itinerary, stress test, link import, discovery, layover, the chat-itinerary agent, chat routing, parameter extraction, plan actions and suggestion chips, `/health/agents` | `gemini-3.5-flash-lite` (`GEMINI_MODEL_AGENT`), thinking `minimal` | `claude-haiku-4-5-20251001` |
+| `chat` | Chat conversational answers (streamed token by token) and the planning narrative | `gemini-3.8-flash` (`GEMINI_MODEL_CHAT`), thinking `low` | `claude-sonnet-4-6` |
+
+**Gemini on Vertex AI** uses the `google-genai` SDK with `vertexai=True` and Application Default Credentials (the VM's service account in production, `gcloud auth application-default login` locally); there is no API key. The project and location come from `GCP_PROJECT` (empty: the ADC / `GOOGLE_CLOUD_PROJECT` project) and `GCP_LOCATION` (default `global`). Agent prompts (`.agents/*.md`) are sent unchanged as the system instruction; JSON callers also set `response_mime_type: application/json`. Because Gemini counts thinking tokens against `max_output_tokens`, each call adds headroom for the thinking level on top of the caller's budget (512 for `minimal`, 2048 for `low`); only generated tokens are billed. The SDK retries 429/5xx up to 3 times, like the Anthropic client's `max_retries`. Safety filters are left at the Vertex default, which is off for Gemini 3.5 Flash and later; a blocked reply would arrive as empty text and be retried as unparseable.
+
+`BaseAgent.execute()` makes one `llm.generate` call per attempt with `max_tokens` 16384, behind a global semaphore (`AGENT_MAX_CONCURRENCY`, default 6). See [Agent System](Agent-System.md).
+
+**Usage accounting.** Every call logs one `llm_usage` line: `label` (the agent or chat step), `provider`, `model`, `input_tokens`, `output_tokens`, `thinking_tokens`, `cached_tokens`, `latency_ms`, `truncated`. Prompts and replies are never logged. `llm.record_usage()` collects the same records for a block of code (the eval harness uses it to price a whole search).
+
+**Spend cap.** Production AI spend is hard-capped by a Cloud Billing spend-cap budget on Vertex AI: when it trips, new calls are refused until the 1st of the next month. Google documents no specific API error for this (only that usage is "paused"), so a `403` or `429` (or Anthropic `400`/`402`) whose message names billing, a budget, a spend cap/limit, a usage limit or the credit balance is treated as the cap; a plain `429 RESOURCE_EXHAUSTED` stays an ordinary retryable quota error. On the cap, `llm` raises `LLMError(spend_cap=True)` and refuses further calls for 5 minutes without contacting the provider. Users see "AI limit reached for this month — try again on the 1st.": as a section's `{"error": ..., "error_code": "ai_limit"}` in searches (static-backed sections keep their static data; the Results page shows the text once as a banner), as a chat `delta`, and as `503` from `/api/discover`, `/api/import/extract` and `/api/nearby`. `/health/agents` reports `llm: "spend-cap"`.
+
+**Evaluation.** `backend/scripts/llm_eval.py` is a manual tool (never run in CI) that sends the six saved searches in `backend/tests/fixtures/llm_eval/requests.json` (single city, multi-city, family, budget, accessibility, long trip) through the real search pipeline on a chosen provider and model, stores the final sections, per-call usage, latency and estimated cost, and in `compare` mode writes a Markdown report per section (validity, item counts, fields the baseline always had, verification levels, cost per search).
 
 ---
 

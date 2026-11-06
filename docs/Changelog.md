@@ -4,6 +4,14 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: Gemini on Vertex AI
+
+- **Gemini replaces Claude by default.** Every model call now goes through one provider seam, `backend/app/core/llm.py`. `LLM_PROVIDER=gemini` (default) uses Gemini on Vertex AI with Application Default Credentials (no API key; `GCP_PROJECT`, `GCP_LOCATION` default `global`): **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, thinking `minimal`, JSON mode) for every specialist agent, packing, pricing advisor, itinerary, stress test, link import, discovery, layover, chat itinerary and chat routing/extraction; **Gemini 3.8 Flash** (`gemini-3.8-flash`, thinking `low`) for chat answers, streamed token by token, and the planning narrative. `LLM_PROVIDER=anthropic` keeps Claude (Haiku 4.5 / Sonnet 4.6) for local development and rollback. Agent prompts are unchanged. New settings: `LLM_PROVIDER`, `GCP_PROJECT`, `GCP_LOCATION`, `GEMINI_MODEL_AGENT`, `GEMINI_MODEL_CHAT`, `GEMINI_THINKING_AGENT`, `GEMINI_THINKING_CHAT` (see [Configuration](Configuration.md#llm)).
+- **Monthly AI spend cap.** When the Vertex AI spend-cap budget trips, users see "AI limit reached for this month — try again on the 1st." in search sections (`error_code: "ai_limit"`, one banner on the Results page), as a chat reply, and as `503` from `/api/discover`, `/api/import/extract` and `/api/nearby`, instead of failures; further calls are skipped for 5 minutes. `/health/agents` reports `llm_provider` and `llm: "spend-cap"`.
+- **Token usage per call.** Every model call logs an `llm_usage` line (label, model, input/output/thinking tokens, latency; never content).
+- **LLM eval harness.** `backend/scripts/llm_eval.py` runs six saved searches on a chosen provider/model and compares two runs per section (validity, item counts, required fields, verification levels, cost) in a Markdown report. Manual only, never in CI.
+- Dependencies: `google-genai` 2.34.0 added; the unused `claude-agent-sdk` and `python-dotenv` removed (pydantic-settings still brings python-dotenv for `.env`). Docker Compose passes `LLM_PROVIDER`, `GCP_PROJECT` and `GCP_LOCATION`.
+
 ## Unreleased: fixes from the Android end-to-end run
 
 - **Check now is live.** `POST /api/fare-watches/{id}/check` and `POST /api/price-watches/{id}/check` no longer answer from the 30-minute result cache, so pressing Check now can show a new price; the fresh answer refreshes the cache. Their SerpAPI calls are reserved from the daily budget and the owner's share as before (a Check now right after a search is no longer free). Scheduled checks and a new watch's baseline still reuse cached prices (`core/cache.fresh_reads`).

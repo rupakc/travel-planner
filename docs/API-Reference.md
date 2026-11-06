@@ -97,7 +97,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/devices/unregister` | user | Sign-out: forget a token sent in the body (`204`, idempotent) |
 | POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there |
 | GET | `/health` | none | Liveness and capability flags |
-| GET | `/health/agents` | none | Deep check with one tiny Haiku call (cached 5 min) |
+| GET | `/health/agents` | none | Deep check with one tiny call to the configured LLM provider (cached 5 min) |
 
 The single-agent routes accept anonymous calls; only the rate limit protects them.
 
@@ -202,7 +202,7 @@ Two optional fields carry a trip imported with `POST /api/import/extract`:
 | `stress_test` | after the itinerary | `ai` | 90 s timeout; on error an error section is sent |
 | `done` | — | — | Always last |
 
-Every non-error section carries `data.verification` (see [Agent System](Agent-System.md#source-verification)). An agent that fails sends `{"error": "..."}` as its data (except the static-backed ones), so the UI can show "not available" instead of waiting.
+Every non-error section carries `data.verification` (see [Agent System](Agent-System.md#source-verification)). An agent that fails sends `{"error": "..."}` as its data (except the static-backed ones), so the UI can show "not available" instead of waiting. When the monthly AI spend cap has tripped, the data is `{"error": "AI limit reached for this month — try again on the 1st.", "error_code": "ai_limit"}`; single-agent routes return the same object.
 
 ### POST /api/search/sync
 
@@ -247,7 +247,7 @@ Same request and agents, run sequentially; returns a single JSON object. For tes
 }
 ```
 
-`visa_verified: true` means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: `422` invalid request, `504` after 30 s, `500` agent failure. Results are cached for 30 minutes.
+`visa_verified: true` means the visa type came from the static visa table; otherwise it is the model's guess and the UI shows a warning badge. Errors: `422` invalid request, `504` after 30 s, `500` agent failure, `503` with `detail` "AI limit reached for this month — try again on the 1st." when the monthly AI spend cap has tripped (not cached). Results are cached for 30 minutes.
 
 ### POST /api/import/extract
 
@@ -276,7 +276,7 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 - Instagram, Facebook, X and Threads get a specific `blocked_source` error, including when a shortener redirects to them.
 - Scripts are never run, and links in the content are never followed.
 
-**Extraction**: the `link_import` agent (`.agents/link_import.md`, Haiku; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between `<<<SOURCE_<nonce>>>>` and `<<<END_SOURCE_<nonce>>>>` markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a `quote` is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same. A `day_hint` is kept only when the source text itself names that day ("Day 2", "Day 2–3", "days 4 to 5").
+**Extraction**: the `link_import` agent (`.agents/link_import.md`, the agent model; screenshots go as vision image blocks). Everything taken from the source (site name, title, author, description, text) is wrapped as untrusted data between `<<<SOURCE_<nonce>>>>` and `<<<END_SOURCE_<nonce>>>>` markers. The nonce is random for each request, and anything in the source that looks like a marker is stripped. Only fixed labels ("a web page", "pasted text", "screenshots") sit outside the fence. The system prompt says to ignore any instructions inside the source. The output is validated with Pydantic: places without a name are dropped, at most 40 are kept, fields are clamped, and a `quote` is kept only when it appears in the source text word for word: case-sensitive, whole words only, with curly and straight quote marks treated as the same. A `day_hint` is kept only when the source text itself names that day ("Day 2", "Day 2–3", "days 4 to 5").
 
 **Resolution** (`backend/app/services/link_import.py`):
 - Each place's city is resolved with `resolve_place` to a canonical town, country, coordinates and airports. A town within 45 km of a bigger stop in the same country joins that stop as a day trip.
@@ -315,7 +315,7 @@ Plan from a link: reads a web page, pasted text or screenshots and returns the p
 
 `413` (string `detail`) means the request body is over 30 MB. It is refused before it is parsed, whether the size is declared or streamed (chunked). Each image's base64 must be at most 5 MB (`image_too_large`). The browser shrinks screenshots before uploading them: long edge ≤ 1568 px, WebP or JPEG at quality 0.85.
 
-`502` with `code: extract_failed` means the extraction agent failed. Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
+`502` with `code: extract_failed` means the extraction agent failed; `503` with `code: ai_limit` means the monthly AI spend cap has tripped. Plain FastAPI `422` validation errors mean the body did not carry exactly one source. Successful previews are cached for 30 minutes, keyed by a hash of the request.
 
 ### POST /api/import/resolve-place
 
@@ -384,7 +384,7 @@ Any piece that failed or timed out is `null` and its name is listed in `missing`
 }
 ```
 
-Event types: `delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. A planning request streams `planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done`; `section_result` appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback `delta`, `error` and `done`. See [Chat Assistant](Chat-Assistant.md).
+Event types: `delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. A planning request streams `planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done`; `section_result` appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback `delta`, `error` and `done`. When the monthly AI spend cap has tripped, the reply is a `delta` "AI limit reached for this month — try again on the 1st." and `done` (no `error`). See [Chat Assistant](Chat-Assistant.md).
 
 ---
 
@@ -807,7 +807,7 @@ Bucket: light_ai.
 }
 ```
 
-`items` are the activities agent's `results`, unchanged (the shape of `POST /api/activities`), first `limit`. `region` is the state / province (GeoNames first-level division) name, or `null`. `distance_km` is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: `404 {"detail": {"code": "no_place", "message": "..."}}` when no known place is within 75 km; `502 {"detail": {"code": "agent_error", "message": "..."}}` when the agent fails (not cached).
+`items` are the activities agent's `results`, unchanged (the shape of `POST /api/activities`), first `limit`. `region` is the state / province (GeoNames first-level division) name, or `null`. `distance_km` is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: `404 {"detail": {"code": "no_place", "message": "..."}}` when no known place is within 75 km; `502 {"detail": {"code": "agent_error", "message": "..."}}` when the agent fails (not cached); `503` with `code: ai_limit` when the monthly AI spend cap has tripped.
 
 ---
 
@@ -831,4 +831,4 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health/agents
 
-A deep check: one tiny Haiku call, cached for 5 minutes. Reports `llm` status, `serpapi_configured` and `backup_configured`.
+A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports `llm` (`ok`, `empty-response`, `spend-cap` or `error: <ExceptionType>`), `llm_provider` (`gemini` or `anthropic`), `serpapi_configured` and `backup_configured`.

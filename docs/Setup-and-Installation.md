@@ -8,7 +8,7 @@ How to run Travel Planner on your own machine. There is no hosted instance any m
 
 - **Python 3.12** (the Dockerfile and CI use 3.12; `pyproject.toml` allows 3.11 or later).
 - **Node.js 20** (the Dockerfile and CI use 20; vitest 4 needs `^20 || ^22 || >=24` and jsdom 27 needs 20 or later).
-- **An Anthropic API key.** Every agent calls Claude. Without a key the app starts, but every AI section fails.
+- **An LLM.** By default Gemini on Vertex AI: a Google Cloud project with the Vertex AI API enabled and Application Default Credentials (`gcloud auth application-default login`), with `GCP_PROJECT` set. Or an **Anthropic API key** with `LLM_PROVIDER=anthropic`. Without either the app starts, but every AI section fails.
 - **Docker with Compose**, only for the container setup.
 - Optional: a **SerpAPI key** (`SERPAPI_KEY`) for live Google Flights fares, the fare calendar and price insights, and a **Serper key** (`SERPER_KEY`) for Places-to-See data and link resolution. Without them, flights come from the LLM and the fare calendar is hidden.
 
@@ -30,7 +30,9 @@ cd ..
 Create `backend/.env`. The backend reads `.env` from its working directory, which is `backend/` when started by `start.sh`:
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-...
+GCP_PROJECT=voyager-prod-ohzkl      # Gemini on Vertex AI, via ADC
+# LLM_PROVIDER=anthropic            # …or Claude instead:
+# ANTHROPIC_API_KEY=sk-ant-...
 JWT_SECRET_KEY=<output of: python3 -c "import secrets; print(secrets.token_hex(32))">
 ADMIN_PASSWORD=<a password for the seeded admin account>
 # Optional
@@ -68,7 +70,7 @@ The Vite dev server proxies `/api` and `/health` to `http://localhost:8001` (`fr
 ```bash
 git clone https://github.com/rupakc/travel-planner.git
 cd travel-planner
-export ANTHROPIC_API_KEY=sk-ant-...   # or put it in a .env file at the repo root
+export LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-...   # or put them in a .env file at the repo root
 docker compose up --build
 ```
 
@@ -116,7 +118,9 @@ See [Testing and CI](Testing-and-CI.md) for coverage, lint and the Node 20.18 wo
 
 ## Troubleshooting
 
-**Every AI section shows an error.** The Anthropic key is missing or invalid, or the account is out of quota. Check `.logs/backend.log`. `GET /health/agents` makes one tiny Haiku call and reports whether the LLM is reachable.
+**Every AI section shows an error.** On Gemini: no Application Default Credentials, `GCP_PROJECT` unset, the Vertex AI API not enabled, or the credentials lack `roles/aiplatform.user`. On Anthropic: the key is missing or invalid, or the account is out of quota. Check `.logs/backend.log`. `GET /health/agents` makes one tiny call to the configured provider and reports whether the LLM is reachable.
+
+**"AI limit reached for this month".** The project's Vertex AI spend cap has tripped; AI features resume on the 1st (or when the cap is lifted in Cloud Billing).
 
 **"Network Error" in the browser.** The backend is not running on port 8001, which the Vite proxy expects.
 

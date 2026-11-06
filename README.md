@@ -91,7 +91,7 @@ POST /api/search ──► Phase 0  static lookup tables ───────�
   - **Phase 0** sends curated static data for visa, SIM, tips, getting around, forex and the emergency card, plus the Travel Ease grade, straight away.
   - **Phase 1** runs 13 agents concurrently: flights, weather, hotels, activities, places to see, walking tours, events, visa, SIM, tips, emergency card, getting around and forex. Packing list and pricing advisor are deferred and start as soon as their inputs arrive.
   - **Phase 2** builds the itinerary from activities and hotels. It has a 60 s timeout and falls back to a template. The stress test then audits the final plan.
-- **Agents are config.** There are 22 agent definitions in `.agents/*.md`: YAML frontmatter plus a system prompt. `BaseAgent` calls the Anthropic Messages API (Claude Haiku 4.5) behind a global concurrency cap (default 6). It backs off on capacity errors and retries with a compact prompt when it hits the token limit. Chat conversation uses Claude Sonnet 4.6.
+- **Agents are config.** There are 22 agent definitions in `.agents/*.md`: YAML frontmatter plus a system prompt. `BaseAgent` calls the model through one provider seam (`core/llm.py`: Gemini 3.5 Flash-Lite on Vertex AI by default, Claude Haiku 4.5 with `LLM_PROVIDER=anthropic`) behind a global concurrency cap (default 6). It backs off on capacity errors and retries with a compact prompt when it hits the token limit. Chat conversation uses Claude Sonnet 4.6.
 - **SSE streaming.** `/api/search` and `/api/chat` stream `data: {JSON}` events. The frontend parses them in Web Workers (`sseWorker.js`, `chatWorker.js`) and renders each section as it arrives. A complete search is cached for 30 minutes.
 - **Static-first, AI-enhanced.** Static data is shown as "Enhancing…" and the AI result replaces it. If an AI agent fails, the static data stays: the backend suppresses the error and the frontend refuses to overwrite good data with it.
 - **Verification badges.** Every result section carries a level: Verified, Partly verified, AI-generated, or Check details for a conflict with reference data. The level comes from existing evidence only (live fares, checked links, crawl and Open-Meteo provenance, the static visa and emergency tables), with no extra network calls (`backend/app/services/verification.py`).
@@ -106,13 +106,15 @@ Details: [Architecture](docs/Architecture.md) · [Agent System](docs/Agent-Syste
 ### Prerequisites
 - **Python 3.12** (3.11+ is supported; CI and Docker use 3.12)
 - **Node.js 20+** (CI and Docker use 20; vitest 4 needs `^20 || ^22 || >=24`)
-- An **Anthropic API key**
+- **Gemini on Vertex AI** (a Google Cloud project + `gcloud auth application-default login`), or an **Anthropic API key** with `LLM_PROVIDER=anthropic`
 
 ### 1. Configure
 Create `backend/.env`. Every setting has a default, but these matter:
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...       # powers every agent
+GCP_PROJECT=voyager-prod-ohzkl     # Gemini on Vertex AI (ADC), powers every agent
+# LLM_PROVIDER=anthropic           # …or Claude, with:
+# ANTHROPIC_API_KEY=sk-ant-...
 JWT_SECRET_KEY=<long random string> # signs login tokens; must be set
 ADMIN_PASSWORD=<choose one>        # seeds the admin user (username: admin); empty = no admin
 # Optional
@@ -145,7 +147,7 @@ cd frontend && npm install && npm run dev
 ### Docker
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # or put it in a .env file at the repo root
+export LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-...   # or put them in a .env file at the repo root
 docker compose up --build
 open http://localhost:8080
 ```
@@ -236,7 +238,7 @@ The docs live on the **[docs site](https://rupakc.github.io/travel-planner/)** a
 
 ## Built with
 
-- **AI**: [Anthropic Claude](https://www.anthropic.com) via the `anthropic` Python SDK (Haiku 4.5 for the agents, Sonnet 4.6 for chat)
+- **AI**: Google Gemini on Vertex AI via the `google-genai` SDK (Gemini 3.5 Flash-Lite for the agents, Gemini 3.8 Flash for chat); [Anthropic Claude](https://www.anthropic.com) via the `anthropic` SDK as a fallback provider (Haiku 4.5 / Sonnet 4.6)
 - **Backend**: Python 3.12, FastAPI, Uvicorn, Pydantic v2 and pydantic-settings, SQLite, cachetools, httpx, BeautifulSoup, ddgs, PyJWT and bcrypt
 - **Frontend**: React 18, React Router 6.28, Vite 6, Tailwind CSS 3.4, TanStack Query 5, axios, Leaflet / react-leaflet, lucide-react, Vitest 4
 - **Data and services**: Open-Meteo (weather), SerpAPI (Google Flights, optional), Serper.dev (places, optional), OurAirports, GeoNames
