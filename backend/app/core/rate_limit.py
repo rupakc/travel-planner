@@ -112,28 +112,34 @@ async def require_ai_access(user: dict | None = Depends(get_optional_user)) -> N
         )
 
 
-def _failure_key(username: str) -> str:
-    return f"login_failures:user:{username.strip().lower()}"
+def _failure_keys(username: str, caller: str) -> list[tuple[str, int]]:
+    """(limiter key, limit) pairs a failed login counts against: this
+    username from this caller (IP), and this username from anywhere."""
+    name = username.strip().lower()
+    return [
+        (f"login_failures:user:{name}:{caller}", settings.rate_limit_login_failures),
+        (f"login_failures:user:{name}", settings.rate_limit_login_failures_global),
+    ]
 
 
-def login_locked(username: str) -> int | None:
-    """Seconds until ``username`` may try again after too many failures."""
+def login_locked(username: str, caller: str) -> int | None:
+    """Seconds until ``username`` may try again from ``caller`` (an
+    ``ip:...`` key), or None. Failures from other IPs only count towards the
+    high global ceiling, so nobody can lock a user out cheaply."""
     if not settings.rate_limit_enabled:
         return None
-    return limiter.peek(
-        _failure_key(username),
-        settings.rate_limit_login_failures,
-        settings.rate_limit_window_seconds,
-    )
+    waits = [
+        limiter.peek(key, limit, settings.rate_limit_window_seconds)
+        for key, limit in _failure_keys(username, caller)
+    ]
+    waits = [w for w in waits if w is not None]
+    return max(waits) if waits else None
 
 
-def record_login_failure(username: str) -> None:
+def record_login_failure(username: str, caller: str) -> None:
     if settings.rate_limit_enabled:
-        limiter.hit(
-            _failure_key(username),
-            settings.rate_limit_login_failures,
-            settings.rate_limit_window_seconds,
-        )
+        for key, limit in _failure_keys(username, caller):
+            limiter.hit(key, limit, settings.rate_limit_window_seconds)
 
 
 def rate_limit(bucket: str) -> Callable:

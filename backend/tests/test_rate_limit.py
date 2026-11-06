@@ -296,15 +296,47 @@ def test_login_attempts_are_limited_per_ip(client, limits, monkeypatch):
     assert _login(client).headers["Retry-After"] == "600"
 
 
-def test_failed_logins_lock_the_username_not_others(client, limits, monkeypatch):
+def test_failed_logins_lock_that_username_from_that_ip(client, limits, monkeypatch):
     monkeypatch.setattr(settings, "rate_limit_login", 99)
     monkeypatch.setattr(settings, "rate_limit_login_failures", 2)
     assert [_login(client, "victim").status_code for _ in range(2)] == [401, 401]
-    # Locked: even a correct password waits (no oracle for the guesser)
+    # Locked for this IP: even a correct password waits (no oracle)
     assert _login(client, "victim").status_code == 429
     assert _login(client, "admin", "test-admin-pw!").status_code == 200
     limits.now += settings.rate_limit_window_seconds
     assert _login(client, "victim").status_code == 401
+
+
+def test_attackers_elsewhere_cannot_lock_out_the_real_user(client, limits, monkeypatch):
+    """Failures from other IPs never lock the victim's own IP (no lockout DoS)."""
+    monkeypatch.setattr(settings, "rate_limit_login", 99)
+    monkeypatch.setattr(settings, "rate_limit_login_failures", 2)
+    for i in range(25):  # 50 failures, 2 per attacker IP: each attacker locked
+        for _ in range(2):
+            rate_limit.record_login_failure("admin", f"ip:203.0.113.{i}")
+    assert rate_limit.login_locked("admin", "ip:203.0.113.1") is not None
+    assert _login(client, "admin", "test-admin-pw!").status_code == 200
+
+
+def test_global_per_username_ceiling_stops_distributed_guessing(limits, monkeypatch):
+    monkeypatch.setattr(settings, "rate_limit_login_failures", 5)
+    monkeypatch.setattr(settings, "rate_limit_login_failures_global", 30)
+    for i in range(30):
+        rate_limit.record_login_failure("target", f"ip:198.51.100.{i}")
+    # A fresh IP is now refused too: the botnet backstop
+    assert rate_limit.login_locked("target", "ip:192.0.2.77") is not None
+    assert rate_limit.login_locked("someone-else", "ip:192.0.2.77") is None
+
+
+def test_default_login_limits(monkeypatch):
+    from app.core.config import Settings
+
+    s = Settings(_env_file=None)
+    assert (
+        s.rate_limit_login,
+        s.rate_limit_login_failures,
+        s.rate_limit_login_failures_global,
+    ) == (10, 10, 200)
 
 
 def test_successful_logins_do_not_count_as_failures(client, limits, monkeypatch):
