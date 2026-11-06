@@ -443,10 +443,11 @@ async def generate_grounded(
     timeout: float | None = None,
 ) -> GroundedResponse:
     """One Gemini call grounded with Google Search (``tool="search"``) or
-    Google Maps (``tool="maps"``) on the agent model. Text output only: JSON
-    mode is not combined with grounding (undocumented on Vertex), so callers
-    parse structure from the text and take links only from the grounding
-    metadata. ``lat``/``lng``/``language`` bias results to the user.
+    Google Maps (``tool="maps"``) on the agent model. Text output only:
+    Google attaches grounding chunks reliably only to natural text (a rigid
+    pipe format came back unattributed in real calls), so JSON mode is never
+    combined with grounding; callers ask for headings / bullet lines, parse
+    them and take links only from the grounding metadata. ``lat``/``lng``/``language`` bias results to the user.
 
     Raises LLMError: ``GROUNDING_UNAVAILABLE_CODE`` on the Anthropic
     provider, the spend-cap / billing codes like every other call. Google's

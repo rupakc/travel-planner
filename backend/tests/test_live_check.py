@@ -2,6 +2,7 @@
 grounded look at one of the caller's watches. Never persisted, never cached;
 the model is stubbed (no Vertex)."""
 
+import logging
 import time
 import uuid
 from datetime import UTC, datetime
@@ -280,9 +281,34 @@ def test_nothing_is_written_or_cached(client, grounded):
     assert grounded.await_count == 2
 
 
-def test_no_grounding_is_502(client, monkeypatch):
+def test_no_grounding_is_retried_once_then_502(client, monkeypatch, caplog):
     stub = AsyncMock(
         return_value=llm.GroundedResponse(text="I think about EUR 400.", chunks=[])
+    )
+    monkeypatch.setattr(llm, "generate_grounded", stub)
+    u, h = _user()
+    w = _price_watch(u)
+    with caplog.at_level(logging.INFO, logger="app.api.routes.live_check"):
+        r = client.post(
+            "/api/live-check", json={"kind": "hotel", "watch_id": w["id"]}, headers=h
+        )
+    assert r.status_code == 502
+    assert r.json()["detail"]["code"] == "live_check_failed"
+    assert stub.await_count == 2
+    [line] = [m for m in caplog.messages if "retrying once" in m]
+    assert "EUR" not in line and "Memmo" not in line
+
+
+def test_retry_that_grounds_is_used(client, monkeypatch):
+    stub = AsyncMock(
+        side_effect=[
+            llm.GroundedResponse(text="Nothing found.", chunks=[]),
+            llm.GroundedResponse(
+                text=ANSWER,
+                chunks=[dict(c) for c in CHUNKS],
+                supports=[dict(s) for s in SUPPORTS],
+            ),
+        ]
     )
     monkeypatch.setattr(llm, "generate_grounded", stub)
     u, h = _user()
@@ -290,8 +316,18 @@ def test_no_grounding_is_502(client, monkeypatch):
     r = client.post(
         "/api/live-check", json={"kind": "hotel", "watch_id": w["id"]}, headers=h
     )
-    assert r.status_code == 502
-    assert r.json()["detail"]["code"] == "live_check_failed"
+    assert r.status_code == 200
+    assert stub.await_count == 2
+    assert len(r.json()["quotes"]) == 2
+
+
+def test_grounded_answer_is_not_retried(client, grounded):
+    u, h = _user()
+    w = _price_watch(u)
+    client.post(
+        "/api/live-check", json={"kind": "hotel", "watch_id": w["id"]}, headers=h
+    )
+    assert grounded.await_count == 1
 
 
 def test_empty_answer_is_502(client, monkeypatch):
