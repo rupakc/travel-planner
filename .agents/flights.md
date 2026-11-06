@@ -77,11 +77,14 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
         "layovers": [
           {"city": "Doha, Qatar", "airport": "DOH", "duration_hours": 6.5}
         ]
-      }
+      },
+      "accessibility_notes": null
     }
   ]
 }
 ```
+
+`accessibility_notes` is ALWAYS present on every result. When the travelers list accessibility needs, it is REQUIRED and must be a short string for that airline/route: wheelchair and boarding assistance, onboard accessible lavatory, mobility-aid/medical-equipment policy, how to request help (e.g. "Free wheelchair assistance on request 48 h ahead; aisle chair on board; accessible lavatory on the A350"). When there are no accessibility needs, set it to `null`. Never omit the key.
 
 **For one-way searches** (no return date), omit the `return` field and set `trip_type` to `"one_way"`.
 
@@ -99,6 +102,6 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 
 `leg_index` is 0-based and matches the leg numbering in the prompt (Leg 1 → 0). Provide 3–5 options per leg, each with `trip_type: "one_way"` and its own `outbound` object; omit `return`.
 
-Include 8–12 options from different airlines and sources. **Sort by price_usd ascending** (cheapest first). Set fields to null if unknown. Deduplicate: if the same flight combo appears on multiple platforms, keep the cheapest price and note the source.
+Include 8–12 options (aim for 10 or more when the route has them) from different airlines and sources. **Sort by price_usd ascending** (cheapest first). Set fields to null if unknown. Deduplicate: if the same flight combo appears on multiple platforms, keep the cheapest price and note the source.
 
 `layovers` must have exactly one entry per stop (empty list for non-stop). Each entry: `city` ("City, Country"), `airport` (IATA code), `duration_hours` (decimal hours between arrival and connecting departure). Use the typical/realistic connection for that route and airline when the exact layover is not stated.

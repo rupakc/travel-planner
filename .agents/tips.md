@@ -85,4 +85,4 @@ Use one of: `safety`, `health`, `money`, `culture`, `transport`, `scam`, `touris
 
 Always include a `source_url` pointing to an authoritative source (government travel advisory, official tourism board, WHO, or reputable travel authority). Use real URLs that actually exist. Do NOT use `null` for `source_url` — every tip must have a valid URL.
 
-Return 18–25 tips. Sort: danger first, then warning, then info. Include at least 4–5 tips about tourist traps and scams specifically.
+Return 18–25 tips (aim for 22 or more). Sort: danger first, then warning, then info. Include at least 4–5 tips about tourist traps and scams specifically.

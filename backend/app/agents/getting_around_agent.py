@@ -24,8 +24,9 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
             f"Budget: {'$' + str(int(request.budget_usd)) if request.budget_usd else 'flexible'}\n"
             f"If the group includes children, infants, seniors or accessibility needs, note child fares, stroller/wheelchair access and elevator availability in the relevant options' tips.\n"
             f"Cover both intra-city transit AND inter-city travel within {request.destination}'s country.\n"
-            f"Return 10-18 transportation options. Include intra-city first, then inter-city.\n"
-            f"Every option must have: name, type, scope, description, coverage, price_info, operating_hours, tips, booking_url.\n"
+            f"Return 10-18 transportation options (aim for 14 or more when the destination has them). Include intra-city first, then inter-city.\n"
+            f"Every option must have ALL of these keys: name, type, scope, description, coverage, price_info, operating_hours, tips, booking_url, tourist_pass.\n"
+            f"tourist_pass: ALWAYS include the key — the visitor/day/multi-day pass or travel card covering this option (name, durations, price when known), or null when none applies. Never omit it.\n"
             f"IMPORTANT: booking_url must be a SINGLE URL, not multiple URLs."
         )
         if request.is_multi_city:

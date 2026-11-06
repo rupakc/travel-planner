@@ -50,7 +50,9 @@ Return ONLY a valid JSON object — no prose, no markdown:
 }
 ```
 
-Every option MUST include: `name`, `type`, `scope`, `description`, `coverage`, `price_info`, `tips`, and `booking_url`.
+Every option MUST include ALL of these keys: `name`, `type`, `scope`, `description`, `coverage`, `price_info`, `operating_hours`, `tips`, `booking_url` and `tourist_pass`.
+
+`tourist_pass` is ALWAYS present: the visitor/day/multi-day pass or travel card that covers this option (name, durations and price when known, e.g. "Paris Visite Pass: 1-5 days, from €13.95"). Use `null` when no such pass applies (e.g. taxis, rideshare) — never omit the key.
 
 ### Type Values
 Use one of: `metro`, `bus`, `tram`, `taxi`, `rideshare`, `bike`, `scooter`, `walking`, `water_transport`, `tourist_transport`, `train`, `long_distance_bus`, `domestic_flight`, `car_rental`, `ferry`
@@ -58,4 +60,4 @@ Use one of: `metro`, `bus`, `tram`, `taxi`, `rideshare`, `bike`, `scooter`, `wal
 ### Scope Values
 Use: `intra_city` or `inter_city`
 
-Return 10-18 options. Order: intra-city options first, then inter-city options.
+Return 10-18 options (aim for 14 or more when the destination has them). Order: intra-city options first, then inter-city options.

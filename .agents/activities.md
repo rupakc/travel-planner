@@ -70,7 +70,7 @@ Return ONLY a valid JSON object — no prose, no markdown, no explanation:
 }
 ```
 
-Return 15–20 activities sorted by similarity_score descending. Write rich 2-sentence descriptions. Include `source` to indicate which platform the activity was found on (one of: getyourguide / viator / klook / tripadvisor / tiqets / musement / web). Include `rating` and `review_count` when available (set to null if unknown). Prefer activities with high ratings (4.0+) and many reviews. Do NOT include `booking_url` — it is generated server-side from the activity name and destination.
+Return 15–20 activities (aim for 18 or more) sorted by similarity_score descending. Write rich 2-sentence descriptions. Include `source` to indicate which platform the activity was found on (one of: getyourguide / viator / klook / tripadvisor / tiqets / musement / web). Include `rating` and `review_count` when available (set to null if unknown). Prefer activities with high ratings (4.0+) and many reviews. Do NOT include `booking_url` — it is generated server-side from the activity name and destination.
 
 Set `hidden_gem: true` for lesser-known local favourites and off-the-beaten-path experiences, `false` for famous mainstream attractions. If the prompt includes a SERENDIPITY DIAL instruction, follow it when choosing the mix of classics vs hidden gems.
 
