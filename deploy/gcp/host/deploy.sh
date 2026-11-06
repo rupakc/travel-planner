@@ -8,13 +8,19 @@
 #   4. Pin the digest in images.env (previous one kept for rollback),
 #      `docker compose up -d`, poll the app's health for up to 120 s.
 #   5. Unhealthy → put the previous digest back and bring it up again.
+#   Every run also converges: `compose up -d` (a no-op when nothing changed)
+#   restarts containers that were stopped (e.g. by a Docker package upgrade).
+#   An image built by an OLDER deploy run than the running one (label
+#   io.voyager.build = the workflow's run number) is refused: moving `prod`
+#   back, or re-running an old workflow run, can't downgrade production.
+#   Use --rollback (previous digest) or --allow-downgrade on purpose.
 #
 # The app deploys as soon as a new signed digest appears. Caddy changes drop
 # every open connection (SSE included), so a new Caddy digest is only
 # verified and pre-pulled here and applied in the weekly night window
 # (--window), or at once when no Caddy is running yet (first boot).
 #
-# Usage: deploy.sh [--window] [--rollback]
+# Usage: deploy.sh [--window] [--rollback] [--allow-downgrade]
 # Config: /etc/voyager/deploy.env (optional overrides of the defaults below).
 set -euo pipefail
 
@@ -32,7 +38,9 @@ COMPOSE_DIR="${COMPOSE_DIR:-/opt/voyager}"
 COSIGN_IMAGE="${COSIGN_IMAGE:-ghcr.io/sigstore/cosign/cosign:v2.4.1@sha256:b03690aa52bfe94054187142fba24dc54137650682810633901767d8a3e15b31}"
 CERT_IDENTITY="${CERT_IDENTITY:-https://github.com/$REPO/.github/workflows/deploy.yml@refs/heads/main}"
 CERT_ISSUER="${CERT_ISSUER:-https://token.actions.githubusercontent.com}"
-HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
+# ≥ the app's health start_period (180 s) + margin: a place-data reseed on
+# pd-standard must not be mistaken for a failed deploy
+HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-240}"
 
 IMAGES_ENV="$COMPOSE_DIR/images.env"
 # Digests that failed their health check: never retried automatically
@@ -99,6 +107,22 @@ verify() {
     "$ref" >/dev/null 2>&1 || return 1
 }
 
+# build_of IMAGE → the io.voyager.build label (workflow run number), or ""
+build_of() {
+  [[ -n "$1" ]] || return 0
+  docker image inspect -f '{{ index .Config.Labels "io.voyager.build" }}' "$1" 2>/dev/null |
+    sed 's/<no value>//'
+}
+
+# older_than NEW CURRENT → true if NEW was built by an earlier deploy run
+older_than() {
+  local new cur
+  new="$(build_of "$1")"
+  cur="$(build_of "$2")"
+  [[ "$new" =~ ^[0-9]+$ && "$cur" =~ ^[0-9]+$ ]] || return 1
+  ((new < cur))
+}
+
 app_health() {
   local cid status
   cid="$(compose ps -q app 2>/dev/null || true)"
@@ -126,11 +150,12 @@ notify() {
 }
 
 main() {
-  local window=0 rollback=0
+  local window=0 rollback=0 allow_downgrade=0
   for arg in "$@"; do
     case "$arg" in
       --window) window=1 ;;
       --rollback) rollback=1 ;;
+      --allow-downgrade) allow_downgrade=1 ;;
       *) die "unknown argument: $arg" ;;
     esac
   done
@@ -166,7 +191,10 @@ main() {
       docker pull -q "$new_caddy" >/dev/null
       next_pending="$new_caddy"
     fi
-    if [[ -z "$cur_caddy" ]] || ((window)); then
+    if ((!allow_downgrade)) && older_than "$new_caddy" "$cur_caddy"; then
+      log "refusing $new_caddy: built before the running Caddy (use --allow-downgrade)"
+      next_pending=""
+    elif [[ -z "$cur_caddy" ]] || ((window)); then
       next_prev_caddy="$cur_caddy"
       next_caddy="$new_caddy"
       next_pending=""
@@ -187,13 +215,20 @@ main() {
     verify "$new_app" || die "signature check FAILED for $new_app: refusing it"
     log "pulling $new_app"
     docker pull -q "$new_app" >/dev/null
-    next_prev_app="$cur_app"
-    next_app="$new_app"
+    if ((!allow_downgrade)) && older_than "$new_app" "$cur_app"; then
+      log "refusing $new_app: built before the running app (use --allow-downgrade)"
+    else
+      next_prev_app="$cur_app"
+      next_app="$new_app"
+    fi
   fi
 
   if [[ "$next_app" == "$cur_app" && "$next_caddy" == "$cur_caddy" ]]; then
     [[ "$next_pending" == "$pending" ]] ||
       write_images "$cur_app" "$cur_caddy" "$prev_app" "$prev_caddy" "$next_pending"
+    # Converge: bring back anything that was stopped (no-op when all is up)
+    [[ -z "$cur_app" ]] || compose up -d --remove-orphans >/dev/null 2>&1 ||
+      log "compose up (converge) failed"
     exit 0
   fi
 

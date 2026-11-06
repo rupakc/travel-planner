@@ -2,7 +2,7 @@
 Description=Voyager (docker compose: app + caddy)
 Requires=docker.service
 Wants=network-online.target
-After=docker.service network-online.target voyager-governor-rules.service
+After=docker.service network-online.target voyager-governor-rules.service google-startup-scripts.service
 # First boot: nothing to start until the deployer has verified and pinned images
 ConditionPathExists=/opt/voyager/images.env
 
@@ -16,4 +16,7 @@ ExecStop=/usr/bin/docker compose --env-file site.env --env-file images.env -f co
 TimeoutStopSec=90
 
 [Install]
-WantedBy=multi-user.target
+# Also start whenever Docker (re)starts: a docker-ce upgrade that stops and
+# starts Docker stops this unit (Requires=), and nothing else would bring the
+# containers back
+WantedBy=multi-user.target docker.service

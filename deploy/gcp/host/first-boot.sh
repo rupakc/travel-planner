@@ -18,8 +18,27 @@
 set -euo pipefail
 
 MD="http://metadata.google.internal/computeMetadata/v1/instance/attributes"
-md() { curl -fsS -H "Metadata-Flavor: Google" "$MD/$1" 2>/dev/null || true; }
-log() { echo "voyager-first-boot: $*"; logger -t voyager-first-boot -- "$*" || true; }
+# md KEY → optional attribute ("" when absent). A metadata *error* (not a
+# 404) aborts: a transient failure must never write empty settings.
+md() {
+  local out code
+  out="$(curl -sS -w '\n%{http_code}' -H "Metadata-Flavor: Google" "$MD/$1")" ||
+    { log "metadata server unreachable reading $1"; exit 1; }
+  code="${out##*$'\n'}"
+  case "$code" in
+    200) printf '%s' "${out%$'\n'*}" ;;
+    404) ;;
+    *) log "metadata read of $1 failed (HTTP $code)"; exit 1 ;;
+  esac
+}
+# need KEY → required attribute; aborts when absent or empty
+need() {
+  local v
+  v="$(md "$1")"
+  [[ -n "$v" ]] || { log "required metadata $1 is missing; refusing to continue"; exit 1; }
+  printf '%s' "$v"
+}
+log() { echo "voyager-first-boot: $*" >&2; logger -t voyager-first-boot -- "$*" || true; }
 
 OPT=/opt/voyager
 DATA=/var/lib/voyager/data
@@ -94,8 +113,7 @@ EOF
 
 unpack_bundle() {
   local bundle tmp
-  bundle="$(md voyager-bundle)"
-  [[ -n "$bundle" ]] || { log "no voyager-bundle metadata"; exit 1; }
+  bundle="$(need voyager-bundle)"
   tmp="$(mktemp -d)"
   echo "$bundle" | base64 -d | tar -xz -C "$tmp"
   install -d -m 0755 "$OPT" "$OPT/host"
@@ -111,13 +129,16 @@ unpack_bundle() {
 
 write_config() {
   local site acme bucket alert project
-  site="$(md voyager-site-host)"
-  acme="$(md voyager-acme-email)"
-  bucket="$(md voyager-bucket)"
-  alert="$(md voyager-alert-email)"
+  # Required, fail closed: an empty BACKUP_BUCKET would silently turn
+  # backups off, an empty ALERT_TO would hide the governor's emails
+  site="$(need voyager-site-host)"
+  acme="$(need voyager-acme-email)"
+  bucket="$(need voyager-bucket)"
+  alert="$(need voyager-alert-email)"
   project="$(curl -fsS -H "Metadata-Flavor: Google" \
-    http://metadata.google.internal/computeMetadata/v1/project/project-id)"
-  [[ -n "$site" && -n "$acme" ]] || { log "voyager-site-host/acme-email metadata missing"; exit 1; }
+    http://metadata.google.internal/computeMetadata/v1/project/project-id)" ||
+    { log "cannot read the project id"; exit 1; }
+  [[ -n "$project" ]] || { log "empty project id"; exit 1; }
   printf 'SITE_HOST=%s\nACME_EMAIL=%s\n' "$site" "$acme" >"$OPT/site.env"
   # app.env is operator-editable; only fill BACKUP_BUCKET / APP_BASE_URL in
   sed -i "s|^BACKUP_BUCKET=.*|BACKUP_BUCKET=$bucket|; s|^APP_BASE_URL=.*|APP_BASE_URL=https://$site|; s|^CORS_ORIGINS=.*|CORS_ORIGINS=[\"https://$site\"]|; s|^GCP_PROJECT=.*|GCP_PROJECT=$project|" "$OPT/app.env"
@@ -142,6 +163,8 @@ write_config() {
 
 prepare_data_dir() {
   install -d -m 0755 /var/lib/voyager "$DATA"
+  # The app runs as uid 10001 (backend/Dockerfile)
+  chown -R 10001:10001 "$DATA"
   if [[ ! -f "$STAMP" ]]; then
     # First provisioning of this disk: mark it as the data disk. A disk
     # restored from a snapshot already has both files.
@@ -173,10 +196,14 @@ main() {
   install_units
   systemctl start voyager-governor-rules.service
   systemctl start voyager-governor.timer voyager-deploy.timer voyager-window.timer
-  # First deploy now (also brings up compose); later boots: voyager.service
+  # First deploy now (also brings up compose). Later runs (every boot, or
+  # after --update-host) apply the possibly changed compose.yaml/app.env:
+  # `up -d` recreates only the services whose config changed.
   if [[ ! -f "$OPT/images.env" ]]; then
     "$OPT/deploy.sh" || log "first deploy failed; the timer retries every 5 min"
   else
+    docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
+      --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans
     systemctl start voyager.service
   fi
   log "done"

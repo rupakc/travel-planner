@@ -20,8 +20,10 @@ services:
     image: ${APP_IMAGE:?APP_IMAGE must be set (images.env)}
     restart: unless-stopped
     env_file:
+      # Required: without it the app would run with dev defaults
+      # (anonymous AI allowed, no backups)
       - path: app.env
-        required: false
+        required: true
     environment:
       DATA_DIR: /data
       BACKUP_MODE: vm
@@ -41,8 +43,12 @@ services:
       - "8001" # never published on the host: only Caddy reaches it
     mem_limit: 550m
     memswap_limit: 800m
-    # uvicorn --timeout-graceful-shutdown 5, then push drain + backup flush
-    stop_grace_period: 20s
+    # uvicorn graceful 5 s + push drain 5 s + backup flush (10 s timeout),
+    # with 10 s to spare before SIGKILL
+    stop_grace_period: 30s
+    # Runs as uid 10001 (image USER); no capabilities needed
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
       test:
         [
@@ -79,6 +85,12 @@ services:
       - caddy_config:/config
     mem_limit: 96m
     stop_grace_period: 10s
+    # Non-root (uid 10002, image USER) binding 80/443 without capabilities.
+    # The governor's DOCKER-USER rules keep it away from the metadata server.
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: 0
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     depends_on:
       - app
     healthcheck:
@@ -89,7 +101,8 @@ services:
       start_period: 30s
     logging: *logging
     networks:
-      - voyager
+      voyager:
+        ipv4_address: 172.30.0.20
 
 networks:
   voyager:
