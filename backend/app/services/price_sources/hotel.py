@@ -14,7 +14,9 @@ the page showed (``estimate_total``), labelled as an estimate. Estimates are
 never watched and never alert.
 
 Prices are USD totals for the whole stay and all rooms (after taxes and
-fees), with the nightly rate as ``unit_price``.
+fees), with the nightly rate as ``unit_price`` — always on the total's basis
+(``hotel_prices._stay_prices``), so alerts never pair a before-tax nightly
+rate with a taxes-included total.
 
 Rooms default to the shared rule (``hotel_prices.rooms_for``: one room for
 up to 4 guests, then one per 4) — the same rooms a trip watch prices and the
@@ -451,13 +453,20 @@ class HotelSource:
         )
         stay = f"{_plural(nights, 'night')}, {guests}"
         nightly = obs.unit_price
+        if (
+            nightly is not None
+            and nights > 0
+            and (abs(nightly * nights - p) > hotel_prices.NIGHTLY_SLACK * nights)
+        ):
+            nightly = round(p / nights, 2)  # never a rate the total disagrees with
+        # The watch tracks the stay's total (the title's price); the nightly
+        # rate is shown as its share, as the Alerts page does.
+        body = f"That's the total for {stay}"
         if nightly is not None and rooms > 1:
             per_room = f"{_plural(rooms, 'room')} × {usd(nightly / rooms)} a night"
-            body = f"That's {usd(nightly)} a night ({per_room}) for {stay}"
+            body += f" ({usd(nightly)} a night: {per_room})"
         elif nightly is not None:
-            body = f"That's {usd(nightly)} a night for {stay}"
-        else:
-            body = f"That's the total for {stay}"
+            body += f" ({usd(nightly)} a night)"
         taxes = (obs.observed or {}).get("taxes_included")
         body += {
             True: " on Google Hotels, taxes and fees included.",
@@ -471,7 +480,7 @@ class HotelSource:
             "title": title,
             "body": body,
             "data": {
-                "nightly": obs.unit_price,
+                "nightly": nightly,
                 "check_in": ci,
                 "check_out": co,
                 "nights": nights,

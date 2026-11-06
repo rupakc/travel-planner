@@ -709,3 +709,81 @@ async def test_deliver_ignores_a_missing_watch():
     from app.services.alert_email import deliver
 
     assert await deliver(None, {"kind": "fare_drop", "id": 1}, NOW) is False
+
+
+# ── fresh=True ("Check now") skips cached fares ───────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_fresh_check_ignores_a_cached_search_and_refreshes_it(user, monkeypatch):
+    call = AsyncMock(return_value=_serp([430], INSIGHTS))
+    monkeypatch.setattr(serp_flights, "_call", call)
+    w = fare_watch_db.get_watch(_new_watch(user)["id"])
+    get_cache()[
+        serp_flights._main_key("BER", "LIS", date(2026, 12, 1), date(2026, 12, 8), 2)
+    ] = {"results": [{"price_usd": 455.0}], "price_insights": INSIGHTS}
+    day = NOW.date().isoformat()
+
+    outcome = await check_watch(
+        w["id"], now=NOW, api_key=KEY, rand=lambda: 0.5, manual=True, fresh=True
+    )
+    assert outcome.status == "checked"
+    assert outcome.watch["last_price"] == 430.0
+    assert call.call_count == 1
+    assert fare_watch_db.calls_used(day) == 1
+    # the fresh answer is in the shared cache: a plain look is free and agrees
+    assert fare_watch._estimate_calls(w) == 0
+    assert (await fare_watch.fetch_fares(w, KEY)).price == 430.0
+    assert call.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_plain_manual_check_still_reuses_cached_fares(user, monkeypatch):
+    """A new watch's baseline (manual, not fresh) stays free after a search."""
+    call = AsyncMock()
+    monkeypatch.setattr(serp_flights, "_call", call)
+    w = fare_watch_db.get_watch(_new_watch(user)["id"])
+    get_cache()[
+        serp_flights._main_key("BER", "LIS", date(2026, 12, 1), date(2026, 12, 8), 2)
+    ] = {"results": [{"price_usd": 455.0}], "price_insights": INSIGHTS}
+    outcome = await check_watch(
+        w["id"], now=NOW, api_key=KEY, rand=lambda: 0.5, manual=True
+    )
+    assert outcome.watch["last_price"] == 455.0
+    call.assert_not_called()
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 0
+
+
+@pytest.mark.asyncio
+async def test_fresh_flexible_check_reserves_every_date(user, monkeypatch):
+    async def fake_call(params):
+        return _serp([500], INSIGHTS)
+
+    call = AsyncMock(side_effect=fake_call)
+    monkeypatch.setattr(serp_flights, "_call", call)
+    w = fare_watch_db.get_watch(_new_watch(user, flexible_days=3)["id"])
+    await fare_watch.fetch_fares(w, KEY)  # everything cached now
+    assert fare_watch._estimate_calls(w) == 0
+    call.reset_mock()
+    outcome = await check_watch(
+        w["id"], now=NOW, api_key=KEY, rand=lambda: 0.5, manual=True, fresh=True
+    )
+    assert outcome.status == "checked"
+    assert call.call_count == 7
+    assert fare_watch_db.calls_used(NOW.date().isoformat()) == 7
+
+
+@pytest.mark.asyncio
+async def test_fresh_check_out_of_budget_makes_no_call(user, monkeypatch):
+    call = AsyncMock(return_value=_serp([430], INSIGHTS))
+    monkeypatch.setattr(serp_flights, "_call", call)
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 0)
+    w = fare_watch_db.get_watch(_new_watch(user)["id"])
+    get_cache()[
+        serp_flights._main_key("BER", "LIS", date(2026, 12, 1), date(2026, 12, 8), 2)
+    ] = {"results": [{"price_usd": 455.0}], "price_insights": INSIGHTS}
+    outcome = await check_watch(
+        w["id"], now=NOW, api_key=KEY, rand=lambda: 0.5, manual=True, fresh=True
+    )
+    assert outcome.status == "budget_exhausted"
+    call.assert_not_called()

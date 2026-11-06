@@ -575,3 +575,51 @@ def test_city_is_cut_at_the_comma_like_activities_and_trips():
 
 def test_create_holds_two_calls():
     assert SOURCE.max_create_calls == 2
+
+
+# ── Nightly rate agrees with the tracked total (E2E finding O7) ───────────────
+
+
+def _pre_tax_nightly(data: dict, nightly: float, total: float) -> dict:
+    """Google's nightly block before taxes, its total after (the E2E fixture)."""
+    data = copy.deepcopy(data)
+    data["rate_per_night"] = {
+        "before_taxes_fees": f"${nightly}",
+        "extracted_before_taxes_fees": nightly,
+    }
+    data["total_rate"]["extracted_lowest"] = total
+    return data
+
+
+async def test_a_before_tax_nightly_rate_never_sits_next_to_a_taxed_total():
+    subject = {**LUMEN_SUBJECT, "check_in": "2026-12-10", "check_out": "2026-12-13"}
+    look = _pre_tax_nightly(load("property_details_lumen_generic_q.json"), 73.6, 294)
+    with serp(look):
+        obs = await SOURCE.check(watch_for(subject), "k")
+    assert (obs.price, obs.unit_price) == (294.0, 98.0)
+    assert obs.observed["nightly"] == 98.0
+    assert obs.observed["taxes_included"] is True
+    note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 330.0)
+    assert note["title"].startswith(
+        "🏨 Lumen Hotel & The Lisbon Light Show dropped to $294"
+    )
+    assert note["body"].startswith(
+        "That's the total for 3 nights, 2 guests ($98 a night) on Google Hotels, "
+        "taxes and fees included."
+    )
+    assert "73.60" not in note["body"]
+    assert note["data"]["nightly"] == 98.0
+
+
+def test_compose_never_quotes_a_nightly_rate_the_total_disagrees_with():
+    subject = {**LUMEN_SUBJECT, "check_in": "2026-12-10", "check_out": "2026-12-13"}
+    obs = PriceObservation(price=294.0, unit_price=73.6, observed={})
+    note = SOURCE.compose("hotel_drop", watch_for(subject), obs, 330.0)
+    assert "($98 a night)" in note["body"] and "73.60" not in note["body"]
+    assert note["data"]["nightly"] == 98.0
+
+
+def test_compose_keeps_googles_rounded_nightly_rate():
+    obs = PriceObservation(price=398.0, unit_price=100.0, observed={})
+    note = SOURCE.compose("hotel_drop", watch_for(LUMEN_SUBJECT), obs, 420.0)
+    assert "($100 a night)" in note["body"]  # 398 / 4 = 99.50: Google's rounding

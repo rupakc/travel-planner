@@ -654,6 +654,9 @@ class ChatAgent:
             "For 'remove' with a specific type (e.g., 'remove the flight'), use action='clear' with the field name.\n"
             "For 'add' requests, pick the best matching item from search results.\n"
             "For 'change/swap' requests, use action='set' with the new item from search results.\n"
+            "Flights, hotels and activities in the search results carry a ref (F1, H2, A3): "
+            'for set/add of one of them, use data={"ref": "<ref>"} — the full item is filled in for you. '
+            "Pick by the listed fields (e.g. 'cheapest hotel' = lowest total, then per-night price).\n"
             "If the user asks to add something not in search results, return actions=[] and explain in the message.\n"
             "IMPORTANT: Return ONLY valid JSON."
         )
@@ -668,19 +671,27 @@ class ChatAgent:
             )
             result_text = response.content[0].text if response.content else ""
             parsed = self._parse_json_text(result_text)
-
-            if parsed:
-                actions = parsed.get("actions", [])
-                message = parsed.get("message", "Done!")
-
-                for action in actions:
-                    yield json.dumps({"type": "plan_action", **action})
-
-                yield json.dumps({"type": "delta", "text": message})
-                yield json.dumps({"type": "done"})
-                return
+            # Everything is resolved before the first event: once an action
+            # has been sent, the reply never falls back to regular chat.
+            if isinstance(parsed, dict):
+                actions = self._resolve_plan_actions(
+                    parsed.get("actions", []), search_results
+                )
+                message = parsed.get("message") or "Done!"
+                reply = (actions, message if isinstance(message, str) else "Done!")
+            else:
+                reply = None
         except Exception as e:
             logger.warning(f"Plan command handling failed: {e}")
+            reply = None
+
+        if reply is not None:
+            actions, message = reply
+            for action in actions:
+                yield json.dumps({"type": "plan_action", **action})
+            yield json.dumps({"type": "delta", "text": message})
+            yield json.dumps({"type": "done"})
+            return
 
         async for chunk in self._regular_chat(messages, preferences, selections):
             yield chunk
@@ -794,8 +805,10 @@ class ChatAgent:
 
     # ── Helpers for plan context ──────────────────────────────────────
 
-    @staticmethod
-    def _summarize_selections(selections: dict) -> str:
+    _SELECTION_LIST_LIMIT = 30
+
+    @classmethod
+    def _summarize_selections(cls, selections: dict) -> str:
         if not selections or all(
             not v
             for k, v in selections.items()
@@ -803,72 +816,212 @@ class ChatAgent:
         ):
             return "Plan is empty — no items selected yet."
 
+        def text(item, key: str, default: str = "Unknown") -> str:
+            value = item.get(key) if isinstance(item, dict) else None
+            return cls._clean(value) if value not in (None, "") else default
+
+        def money(item, key: str) -> str:
+            value = item.get(key) if isinstance(item, dict) else None
+            return cls._money(value) or "$?"
+
+        def listed(key: str) -> list:
+            items = selections.get(key)
+            return items[: cls._SELECTION_LIST_LIMIT] if isinstance(items, list) else []
+
         lines = []
         if selections.get("flight"):
             f = selections["flight"]
-            lines.append(
-                f"- Flight: {f.get('airline', 'Unknown')} — ${f.get('price_usd', '?')}"
-            )
+            lines.append(f"- Flight: {text(f, 'airline')} — {money(f, 'price_usd')}")
         if selections.get("hotel"):
             h = selections["hotel"]
             lines.append(
-                f"- Hotel: {h.get('name', 'Unknown')} — ${h.get('price_per_night_usd', '?')}/night"
+                f"- Hotel: {text(h, 'name')} — {money(h, 'price_per_night_usd')}/night"
             )
-        if selections.get("activities"):
-            for a in selections["activities"]:
-                lines.append(
-                    f"- Activity: {a.get('name', 'Unknown')} — ${a.get('price_usd', '?')}"
-                )
+        for a in listed("activities"):
+            lines.append(f"- Activity: {text(a, 'name')} — {money(a, 'price_usd')}")
         if selections.get("sim"):
-            s = selections["sim"]
+            sim = selections["sim"]
             lines.append(
-                f"- SIM: {s.get('provider', 'Unknown')} {s.get('plan_name', '')} — ${s.get('price_usd', '?')}"
+                f"- SIM: {text(sim, 'provider')} {text(sim, 'plan_name', '')} — "
+                f"{money(sim, 'price_usd')}"
             )
-        if selections.get("tips"):
-            for t in selections["tips"]:
-                lines.append(f"- Tip: {t.get('title', 'Unknown')}")
-        if selections.get("getting_around"):
-            for g in selections["getting_around"]:
-                lines.append(f"- Transport: {g.get('name', 'Unknown')}")
+        for t in listed("tips"):
+            lines.append(f"- Tip: {text(t, 'title')}")
+        for g in listed("getting_around"):
+            lines.append(f"- Transport: {text(g, 'name')}")
         if selections.get("itinerary_slots"):
             lines.append(
                 f"- Itinerary: {len(selections['itinerary_slots'])} slots selected"
             )
         return "\n".join(lines) if lines else "Plan is empty."
 
+    # Compact per-item lines the plan-command model picks from (bounded)
+    _RESULT_LIST_LIMIT = 20
+    _RESULT_NAME_CHARS = 80
+    _REF_FIELDS = {"F": "flights", "H": "hotels", "A": "activities"}
+    _FIELD_FOR = {"flights": "flight", "hotels": "hotel", "activities": "activities"}
+
     @staticmethod
-    def _summarize_search_results(results: dict) -> str:
+    def _result_items(results: dict, section: str) -> list[dict]:
+        block = (results or {}).get(section)
+        items = block.get("results") if isinstance(block, dict) else None
+        if not isinstance(items, list):
+            return []
+        return [i for i in items if isinstance(i, dict) and not i.get("error")]
+
+    _REF = re.compile(r"[FHA][1-9][0-9]*", re.ASCII)
+    _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]+")
+
+    @classmethod
+    def _clean(cls, value, limit: int | None = None) -> str:
+        """An external string made safe for one prompt line: control
+        characters and newlines become spaces, runs of space collapse, and
+        it is cut at ``limit`` (default ``_RESULT_NAME_CHARS``)."""
+        text = " ".join(cls._CONTROL.sub(" ", str(value)).split())
+        return text[: limit or cls._RESULT_NAME_CHARS]
+
+    @staticmethod
+    def _number(value) -> float | None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        return float(value) if math.isfinite(value) else None
+
+    @classmethod
+    def _money(cls, value) -> str | None:
+        value = cls._number(value)
+        if value is None:
+            return None
+        return f"${value:,.0f}" if value == int(value) else f"${value:,.2f}"
+
+    @classmethod
+    def _flight_line(cls, f: dict) -> str:
+        out = f.get("outbound") if isinstance(f.get("outbound"), dict) else {}
+        parts = [cls._clean(f.get("airline") or out.get("airline") or "?")]
+        if out.get("flight_number"):
+            parts.append(cls._clean(out["flight_number"], 20))
+        price = cls._money(f.get("price_usd") or f.get("total_price_usd"))
+        parts.append(price or "price ?")
+        stops = out.get("stops", f.get("stops"))
+        if isinstance(stops, int) and not isinstance(stops, bool) and 0 <= stops < 10:
+            parts.append("non-stop" if stops == 0 else f"{stops} stop(s)")
+        if out.get("departure_time"):
+            parts.append(f"departs {cls._clean(out['departure_time'], 20)}")
+        minutes = cls._number(out.get("duration_minutes"))
+        if minutes is not None and minutes > 0:
+            parts.append(f"{int(minutes) // 60}h{int(minutes) % 60:02d}")
+        return ", ".join(parts)
+
+    @classmethod
+    def _hotel_line(cls, h: dict) -> str:
+        parts = [cls._clean(h.get("name") or "?")]
+        nightly = cls._money(h.get("price_per_night_usd"))
+        parts.append(f"{nightly}/night" if nightly else "price ?")
+        total = cls._money(h.get("total_price_usd"))
+        if total:
+            parts.append(f"{total} total")
+        stars = cls._number(h.get("star_rating"))
+        if stars is not None:
+            parts.append(f"{stars:g}★")
+        review = cls._number(h.get("review_score", h.get("rating")))
+        if review is not None:
+            parts.append(f"reviews {review:g}")
+        if h.get("tier"):
+            parts.append(cls._clean(h["tier"], 20))
+        return ", ".join(parts)
+
+    @classmethod
+    def _activity_line(cls, a: dict) -> str:
+        parts = [cls._clean(a.get("name") or "?")]
+        parts.append(cls._money(a.get("price_usd")) or "price ?")
+        rating = cls._number(a.get("rating"))
+        if rating is not None:
+            parts.append(f"rating {rating:g}")
+        if a.get("category"):
+            parts.append(cls._clean(a["category"], 30))
+        return ", ".join(parts)
+
+    @classmethod
+    def _item_lines(cls, label: str, prefix: str, items: list[dict], line) -> list[str]:
+        shown = items[: cls._RESULT_LIST_LIMIT]
+        lines = [f"{label}: {len(items)} options"]
+        lines += [f"  - {prefix}{i}: {line(item)}" for i, item in enumerate(shown, 1)]
+        if len(items) > len(shown):
+            lines.append(f"  (+{len(items) - len(shown)} more not listed)")
+        return lines
+
+    @classmethod
+    def _resolve_plan_actions(cls, actions: list, results: dict) -> list[dict]:
+        """Swap a ``{"ref": "H2"}`` (or a bare name) in set/add data for the
+        full search-result item, so the plan stores the real hotel / flight /
+        activity. A ref that isn't exactly ``^[FHA][1-9][0-9]*$`` or names no
+        result drops its action: ``{"ref": …}`` is never passed on as data."""
+        resolved = []
+        for action in actions if isinstance(actions, list) else []:
+            if not isinstance(action, dict):
+                continue
+            data = action.get("data")
+            if action.get("action") not in ("set", "add") or not isinstance(data, dict):
+                resolved.append(action)
+                continue
+            if "ref" in data:
+                ref = (
+                    data["ref"].strip().upper() if isinstance(data["ref"], str) else ""
+                )
+                if not cls._REF.fullmatch(ref):
+                    logger.info("Plan command gave an invalid result ref")
+                    continue
+                section = cls._REF_FIELDS[ref[0]]
+                items = cls._result_items(results, section)
+                index = int(ref[1:]) - 1
+                if not 0 <= index < len(items):
+                    logger.info("Plan command named unknown result %s", ref)
+                    continue
+                resolved.append(
+                    {**action, "field": cls._FIELD_FOR[section], "data": items[index]}
+                )
+                continue
+            section = {v: k for k, v in cls._FIELD_FOR.items()}.get(action.get("field"))
+            name = str(data.get("name") or "").strip().casefold()
+            if section and name and section != "flights":
+                match = next(
+                    (
+                        i
+                        for i in cls._result_items(results, section)
+                        if str(i.get("name") or "").strip().casefold() == name
+                    ),
+                    None,
+                )
+                if match is not None:
+                    resolved.append({**action, "data": match})
+                    continue
+            resolved.append(action)
+        return resolved
+
+    @classmethod
+    def _summarize_search_results(cls, results: dict) -> str:
         if not results:
             return "No search results available."
 
         lines = []
-        if results.get("flights", {}).get("results"):
-            flights = results["flights"]["results"]
-            prices = [
-                f.get("price_usd")
-                for f in flights
-                if isinstance(f.get("price_usd"), (int, float))
-            ]
-            if prices:
-                lines.append(
-                    f"Flights: {len(flights)} options (${min(prices)}-${max(prices)})"
-                )
-            else:
-                lines.append(f"Flights: {len(flights)} options")
-        if results.get("hotels", {}).get("results"):
-            hotels = results["hotels"]["results"]
-            lines.append(f"Hotels: {len(hotels)} options")
-        if results.get("activities", {}).get("results"):
-            acts = results["activities"]["results"]
-            lines.append(f"Activities: {len(acts)} options")
-            for a in acts[:5]:
-                lines.append(f"  - {a.get('name', '?')} (${a.get('price_usd', '?')})")
+        flights = cls._result_items(results, "flights")
+        if flights:
+            lines += cls._item_lines("Flights", "F", flights, cls._flight_line)
+        hotels = cls._result_items(results, "hotels")
+        if hotels:
+            lines += cls._item_lines("Hotels", "H", hotels, cls._hotel_line)
+        acts = cls._result_items(results, "activities")
+        if acts:
+            lines += cls._item_lines("Activities", "A", acts, cls._activity_line)
         if results.get("sim", {}).get("plans"):
             sims = results["sim"]["plans"]
             lines.append(f"SIM cards: {len(sims)} options")
             for s in sims[:3]:
+                if not isinstance(s, dict):
+                    continue
                 lines.append(
-                    f"  - {s.get('provider', '?')} {s.get('plan_name', '')} (${s.get('price_usd', '?')})"
+                    f"  - {cls._clean(s.get('provider') or '?')} "
+                    f"{cls._clean(s.get('plan_name') or '')} "
+                    f"({cls._money(s.get('price_usd')) or '$?'})"
                 )
         if results.get("tips", {}).get("tips"):
             lines.append(f"Tips: {len(results['tips']['tips'])} available")

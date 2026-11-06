@@ -30,7 +30,7 @@ Each message goes through an ordered router in `ChatAgent.stream()`:
 | Step | Trigger | Behaviour |
 |---|---|---|
 | 0 | Jailbreak or off-topic patterns | Polite refusal; chat only discusses travel |
-| 1 | Plan commands ("add … to my plan", "remove …", "show my plan", "clear my plan") | `plan_action` events that the frontend applies to My Plan |
+| 1 | Plan commands ("add … to my plan", "remove …", "show my plan", "clear my plan") | `plan_action` events that the frontend applies to My Plan. The model sees one compact line per flight, hotel and activity in the current results (up to 20 each: name or airline, price, rating, tier…, with a ref such as `H2`), so "add the cheapest hotel" works; it answers with the ref and the server puts the full result item into the action |
 | 1.5 | A reply to a pending clarifying question (for example the origin) | Resumes planning with that slot filled |
 | 2 | Planning patterns ("plan a week in Lisbon…") | Comprehensive planning, or a clarifying question if something essential is missing |
 | 3 | A specific topic (flights, hotels, visa, SIM, tips, transport, forex…) | Knowledge-only answer; specialists only on failure |

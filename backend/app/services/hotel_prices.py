@@ -66,6 +66,10 @@ CURRENCY = "USD"
 # Hotel" vs "Lumen Hotel & The Lisbon Light Show" = 2/4).
 MATCH_THRESHOLD = 0.6
 
+# Google rounds the nightly rate; a rate further than this (USD a night) from
+# total / nights is on another taxes basis, and the total's share replaces it.
+NIGHTLY_SLACK = 1.0
+
 # Words that never identify a property ("hotel", articles). name_match.words
 # already drops words of 1-2 letters ("da", "de", "&", "by").
 _GENERIC = frozenset({"the", "and", "hotel", "hotels", "des", "del", "los", "las"})
@@ -184,12 +188,26 @@ def _nights(check_in: str, check_out: str) -> int:
 def _stay_prices(
     prop: dict, nights: int, rooms: int
 ) -> tuple[float | None, float | None]:
-    """(nightly, total) for all rooms; one is derived from the other if missing."""
+    """(nightly, total) for all rooms; one is derived from the other if missing.
+
+    The total is what watches track, so the nightly figure must agree with
+    it: Google's ``rate_per_night`` can be a before-tax rate next to a
+    taxes-included ``total_rate`` ($73.60 a night, $294 for 3 nights). A
+    nightly rate more than ``NIGHTLY_SLACK`` a night off total / nights is
+    replaced by that share; within it (Google rounds each night) it stays.
+    """
     nightly = _rate(prop.get("rate_per_night"))
     total = _rate(prop.get("total_rate"))
     if total is None and nightly is not None:
         total = nightly * nights
     if nightly is None and total is not None:
+        nightly = total / nights
+    if (
+        nightly is not None
+        and total is not None
+        and nights > 0
+        and abs(nightly * nights - total) > NIGHTLY_SLACK * nights
+    ):
         nightly = total / nights
     if nightly is not None:
         nightly = round(nightly * rooms, 2)

@@ -567,3 +567,39 @@ async def test_cached_price_observed_is_a_copy():
         p1.observed["name"] = "mutated"
         p2 = await price_property(BROWNS_TOKEN, "2027-01-14", "2027-01-17", 2, API_KEY)
     assert p2.observed["name"] == "Brown's | Avenue Hotel"
+
+
+# ── Nightly rate agrees with the total (E2E finding O7) ───────────────────────
+
+
+def test_stay_prices_replace_a_nightly_rate_on_another_taxes_basis():
+    from app.services.hotel_prices import _stay_prices
+
+    prop = {
+        "rate_per_night": {"extracted_before_taxes_fees": 73.6},
+        "total_rate": {"extracted_lowest": 294},
+    }
+    assert _stay_prices(prop, 3, 1) == (98.0, 294.0)
+    assert _stay_prices(prop, 3, 2) == (196.0, 588.0)
+
+
+def test_stay_prices_keep_googles_rounding():
+    prop = {
+        "rate_per_night": {"extracted_lowest": 100},
+        "total_rate": {"extracted_lowest": 398},
+    }
+    assert _stay_prices_of(prop, 4) == (100.0, 398.0)
+    assert _stay_prices_of({"total_rate": {"extracted_lowest": 300}}, 4) == (
+        75.0,
+        300.0,
+    )
+    assert _stay_prices_of({"rate_per_night": {"extracted_lowest": 80}}, 3) == (
+        80.0,
+        240.0,
+    )
+
+
+def _stay_prices_of(prop, nights):
+    from app.services.hotel_prices import _stay_prices
+
+    return _stay_prices(prop, nights, 1)

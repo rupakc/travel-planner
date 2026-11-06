@@ -25,6 +25,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal, Protocol, runtime_checkable
 
+from ..core.cache import fresh_reads
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
 from . import fare_watch, price_rules, push
@@ -535,6 +536,29 @@ _budget_logged_day: str | None = None
 
 
 async def check_watch(
+    watch_id: int,
+    *,
+    now: datetime,
+    api_key: str,
+    rand: Callable[[], float] = random.random,
+    manual: bool = False,
+    fresh: bool = False,
+) -> CheckOutcome:
+    """Check one price watch now and persist the result (``_check_watch``).
+
+    ``fresh`` ("Check now") ignores prices already in the shared 30-minute
+    cache, so the look is live and refreshes the cache. The source's
+    ``estimate_calls`` and call counts see the same view, so the daily budget
+    and the owner's share are reserved and settled as for any other look.
+    """
+    kwargs = dict(now=now, api_key=api_key, rand=rand, manual=manual)
+    if fresh:
+        with fresh_reads():
+            return await _check_watch(watch_id, **kwargs)
+    return await _check_watch(watch_id, **kwargs)
+
+
+async def _check_watch(
     watch_id: int,
     *,
     now: datetime,
