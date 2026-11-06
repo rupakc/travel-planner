@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Route, Trash2 } from 'lucide-react'
 import { formatUsd, formatDay } from '../../utils/fareCalendar'
 import {
@@ -6,6 +6,7 @@ import {
   untilTime, watchStatus,
 } from '../../utils/fareWatch'
 import Sparkline from './Sparkline'
+import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from './LiveCheck'
 
 const CHIP = {
   sky: 'bg-sky-50 text-sky-800 border-sky-200',
@@ -86,10 +87,12 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
  */
 export default function WatchCard({
   watch, highlighted = false, busy = null, message = null, emailAvailable = false, hasEmail = false,
-  onCheck, onUpdate, onDelete, onReplan, onBook, now = new Date(),
+  onCheck, onUpdate, onDelete, onLiveCheck = null, onReplan, onBook, now = new Date(),
 }) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const live = useLiveCheck(onLiveCheck)
+  const liveButton = useRef(null)
   const status = watchStatus(watch)
   const change = priceChange(watch)
   const nearby = cheaperNearby(watch)
@@ -165,6 +168,10 @@ export default function WatchCard({
         <p className={`mt-3 text-sm ${message.tone === 'good' ? 'text-emerald-700' : message.tone === 'warn' ? 'text-amber-800' : 'text-slate-600'}`}>{message.text}</p>
       )}
 
+      {onLiveCheck && (
+        <LiveCheckPanel live={live} title={routeLabel(watch)} onDismissed={() => liveButton.current?.focus()} />
+      )}
+
       {editing && (
         <EditPanel watch={watch} emailAvailable={emailAvailable} hasEmail={hasEmail}
           onCancel={() => setEditing(false)}
@@ -190,6 +197,7 @@ export default function WatchCard({
           </a>
         )}
         <span className="ml-auto flex flex-wrap items-center gap-1">
+          {!past && onLiveCheck && <LiveCheckButton live={live} buttonRef={liveButton} />}
           {!past && watch.status !== 'error' && (
             <button type="button" onClick={onCheck} disabled={busy === 'check'} className={quiet}>
               {busy === 'check' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}

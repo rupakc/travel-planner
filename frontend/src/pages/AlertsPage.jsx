@@ -6,7 +6,7 @@ import { useAlerts } from '../context/AlertsContext'
 import { useSearchData } from '../context/SearchDataContext'
 import {
   checkFareWatchNow, checkPriceWatchNow, deleteFareWatch, deletePriceWatch, listFareWatches,
-  listPriceWatches, updateFareWatch, updatePriceWatch,
+  listPriceWatches, liveCheckWatch, updateFareWatch, updatePriceWatch,
 } from '../services/api'
 import { axiosErrorDetail } from '../utils/httpError'
 import { formatUsd } from '../utils/fareCalendar'
@@ -55,6 +55,12 @@ const ACTIONS = {
   },
 }
 const actionsFor = (w) => (w.kind ? ACTIONS.price : ACTIONS.fare)
+// "Search the web now": a fare watch is kind 'flight' to the live-check API.
+// The answer is shown once on the card and never feeds the watch's price/history.
+const liveCheckFor = (w, token) => () => {
+  track('watch_live_checked', 'alerts', { kind: w.kind || 'flight' })
+  return liveCheckWatch(w.kind || 'flight', w.id, token)
+}
 const sortDate = (w) => (w.kind ? w.expires_on : w.departure_date) || ''
 
 /** Every fare and price the traveller watches: filter chips by kind, then Active / Past. */
@@ -203,6 +209,7 @@ export default function AlertsPage() {
       watch: w, highlighted: isFocus(w), busy: busy[id], message: messages[id],
       emailAvailable: caps.email, hasEmail: !!user?.email,
       onCheck: () => onCheck(w), onUpdate: (c) => onUpdate(w, c), onDelete: () => onDelete(w),
+      onLiveCheck: liveCheckFor(w, token),
     }
     if (!w.kind) {
       return (

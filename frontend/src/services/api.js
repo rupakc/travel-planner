@@ -274,3 +274,17 @@ export async function markNotificationsRead(ids, token) {
 export async function updateAccountEmail(email, token) {
   return (await api.put('/auth/email', { email }, authHeaders(token))).data
 }
+
+// ── Near me (v2) and "Search the web now" ───────────────────────────────────
+// Both answers are live, grounded results for the signed-in user only: callers
+// keep them in component state and never write them to storage or caches.
+
+/** Places to see / eat / shop / stay around a point (Google Maps grounding). */
+export async function fetchNearby({ lat, lng }, token) {
+  return (await api.post('/nearby', { lat, lng, sections: true }, authHeaders(token))).data
+}
+
+/** One live web search for a watch the user owns (kind: flight | hotel | activity | trip). */
+export async function liveCheckWatch(kind, watchId, token) {
+  return (await api.post('/live-check', { kind, watch_id: watchId }, authHeaders(token))).data
+}

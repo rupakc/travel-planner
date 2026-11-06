@@ -3,11 +3,12 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
 import NotificationBell from '../alerts/NotificationBell'
-import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing } from 'lucide-react'
+import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
 
 const BASE_TABS = [
   { path: '/',            label: 'Search',      icon: Search },
   { path: '/chat',        label: 'Chat',         icon: MessageCircle },
+  { path: '/nearby',      label: 'Near me',      icon: MapPin },
   { path: '/alerts',      label: 'Alerts',       icon: BellRing },
   { path: '/preferences', label: 'Preferences',  icon: Settings },
 ]
@@ -28,7 +29,8 @@ export default function NavBar() {
     return (
       <button
         key={path}
-        data-tour={`nav-${label.toLowerCase()}`}
+        data-tour={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+        aria-current={isActive ? 'page' : undefined}
         onClick={() => { navigate(path); onClick?.() }}
         className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all ${
           isActive
