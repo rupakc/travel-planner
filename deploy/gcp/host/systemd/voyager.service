@@ -16,7 +16,7 @@ WorkingDirectory=/opt/voyager
 # compose run (both start this unit with --no-block while holding it)
 ExecStart=/usr/bin/flock -w 900 /run/voyager-deploy.lock /usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml up -d --remove-orphans
 TimeoutStartSec=20min
-# Graceful stop on shutdown/reboot: the app flushes its backup (stop_grace_period 20s)
+# Graceful stop on shutdown/reboot: the app flushes its backup (stop_grace_period 30s)
 ExecStop=/usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml stop
 TimeoutStopSec=90
 

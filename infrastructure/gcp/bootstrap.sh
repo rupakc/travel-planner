@@ -462,8 +462,14 @@ uptime() {
       check="${check##*/}"
     fi
   fi
-  if ((!DRY_RUN)) && gcloud --project="$PROJECT_ID" monitoring policies list \
-    --filter='displayName="voyager-down"' --format='value(name)' | grep -q .; then
+  local policies=""
+  if ((!DRY_RUN)); then
+    # Captured first: `| grep -q` could break the pipe and, under pipefail,
+    # read as "no policy" (a duplicate). A listing error stops the script.
+    policies="$(gcloud --project="$PROJECT_ID" monitoring policies list \
+      --filter='displayName="voyager-down"' --format='value(name)')"
+  fi
+  if [[ -n "$policies" ]]; then
     echo "  alert policy exists"
     return
   fi

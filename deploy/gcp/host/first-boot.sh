@@ -84,15 +84,19 @@ JSON
 
 configure_memory() {
   # zram instead of a swapfile: no disk thrash at 22 IOPS, no snapshot churn
-  cat >/etc/default/zramswap <<'EOF'
-ALGO=lz4
-SIZE=512
-PRIORITY=100
-EOF
+  local want=$'ALGO=lz4\nSIZE=512\nPRIORITY=100'
   echo "vm.swappiness=10" >/etc/sysctl.d/90-voyager.conf
   sysctl -q --system || true
   systemctl enable zramswap
-  systemctl restart zramswap || log "zramswap failed to start (continuing)"
+  # Restart only when the config changed (or zramswap isn't running): a
+  # restart swapoffs zram, which on the live VM pulls swapped app pages back
+  # into its cgroup and can OOM-kill it (re-runs after --update-host)
+  if [[ "$(cat /etc/default/zramswap 2>/dev/null)" != "$want" ]]; then
+    printf '%s\n' "$want" >/etc/default/zramswap
+    systemctl restart zramswap || log "zramswap failed to start (continuing)"
+  elif ! systemctl is-active --quiet zramswap; then
+    systemctl restart zramswap || log "zramswap failed to start (continuing)"
+  fi
 }
 
 configure_upgrades() {
@@ -205,7 +209,8 @@ main() {
   else
     flock -w 900 /run/voyager-deploy.lock \
       docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
-      --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans
+      --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans ||
+      log "compose up failed or the deploy lock stayed busy; the deployer converges within 5 min"
   fi
   # voyager.service must be *active*, also on the first boot (where the
   # deploy above, not the unit, started the containers): only an active unit

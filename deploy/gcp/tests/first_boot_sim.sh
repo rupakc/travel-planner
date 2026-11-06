@@ -60,7 +60,8 @@ cat >"$SIM/bin/systemctl" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >>"$SIM/systemctl.log"
 case "$1" in
-  is-active) [[ -f "$SIM/voyager_active" ]] ;;
+  is-active)  # voyager.service per the marker; anything else is running
+    if [[ " $* " == *" voyager.service "* ]]; then [[ -f "$SIM/voyager_active" ]]; else exit 0; fi ;;
   start)
     if [[ " $* " == *" voyager"* && " $* " != *" --no-block "* ]]; then
       echo "BLOCKING systemctl $*" >>"$SIM/systemctl.log"; exit 99
@@ -97,6 +98,17 @@ boot() {
   echo "ok   $1: voyager.service active"
 }
 
+# zram_restarts N LABEL — zramswap restarted N times on the last boot
+zram_restarts() {
+  local n
+  n="$(grep -cx 'restart zramswap' "$SIM/systemctl.log" || true)"
+  if [[ "$n" == "$1" ]]; then echo "ok   $2"; else
+    echo "FAIL $2: zramswap restarted $n times"; cat "$SIM/systemctl.log"; exit 1
+  fi
+}
+
 boot "first boot (no images.env yet)"
+zram_restarts 1 "first boot: zramswap configured and restarted"
 boot "later boot (images.env present)"
+zram_restarts 0 "later run, config unchanged: zramswap not restarted (no swapoff on the live VM)"
 echo "first-boot simulation: ALL OK"
