@@ -106,7 +106,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
-| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby` and changing the account email |
+| `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
 | `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |
 | `RATE_LIMIT_LOGIN_FAILURES_GLOBAL` | `200` | Failed logins per username from all IPs together: a backstop against distributed guessing |

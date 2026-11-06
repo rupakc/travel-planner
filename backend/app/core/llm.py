@@ -39,6 +39,10 @@ BILLING_MESSAGE = (
 BILLING_CODE = "ai_billing"
 # Errors users see as-is (sections, chat deltas, route details)
 USER_ERROR_CODES = {SPEND_CAP_CODE, BILLING_CODE}
+# Google Search / Maps grounding exists only on Gemini (Vertex AI): the
+# grounded routes answer 503 with this on the Anthropic provider.
+GROUNDING_UNAVAILABLE_CODE = "grounding_unavailable"
+GROUNDING_UNAVAILABLE_MESSAGE = "Live web and map results need the Gemini provider."
 
 # Gemini 3.7 / 3.8 Flash reject thinking level MINIMAL (3.5 / 3.6 Flash and Flash-Lite accept it)
 _NO_MINIMAL = re.compile(r"^gemini-3\.[78]-flash$")
@@ -106,6 +110,23 @@ _anthropic_sync = None
 class LLMResponse:
     text: str
     truncated: bool = False  # the reply hit the output-token cap
+    usage: dict = field(default_factory=dict)
+
+
+@dataclass
+class GroundedResponse:
+    """A grounded answer: the model's text plus what grounded it.
+
+    ``chunks``: ``{"kind": "web"|"maps", "uri", "title", "place_id"}`` in the
+    model's order (``supports`` index into this list). ``supports``:
+    ``{"text", "start", "end", "chunks"}`` — a span of ``text`` and the
+    chunks backing it. ``search_queries``: the web searches the model ran."""
+
+    text: str
+    chunks: list[dict] = field(default_factory=list)
+    search_queries: list[str] = field(default_factory=list)
+    supports: list[dict] = field(default_factory=list)
+    truncated: bool = False
     usage: dict = field(default_factory=dict)
 
 
@@ -406,6 +427,65 @@ def generate_sync(
     return out
 
 
+GroundingTool = Literal["search", "maps"]
+
+
+async def generate_grounded(
+    prompt: str,
+    *,
+    tool: GroundingTool,
+    system: str | None = None,
+    lat: float | None = None,
+    lng: float | None = None,
+    language: str | None = None,
+    max_tokens: int = 2048,
+    label: str = "",
+    timeout: float | None = None,
+) -> GroundedResponse:
+    """One Gemini call grounded with Google Search (``tool="search"``) or
+    Google Maps (``tool="maps"``) on the agent model. Text output only: JSON
+    mode is not combined with grounding (undocumented on Vertex), so callers
+    parse structure from the text and take links only from the grounding
+    metadata. ``lat``/``lng``/``language`` bias results to the user.
+
+    Raises LLMError: ``GROUNDING_UNAVAILABLE_CODE`` on the Anthropic
+    provider, the spend-cap / billing codes like every other call. Google's
+    terms bind what comes back: show it only to the user who asked, never
+    store or cache it (docs/Trip-Planning-Features.md, "Live web check and
+    Near me")."""
+    if tool not in ("search", "maps"):
+        raise ValueError(f"unknown grounding tool {tool!r}")
+    if provider() != "gemini":
+        raise LLMError(
+            GROUNDING_UNAVAILABLE_MESSAGE, user_code=GROUNDING_UNAVAILABLE_CODE
+        )
+    _check_spend_cap()
+    started = time.monotonic()
+    try:
+        resp = await _gemini_client().aio.models.generate_content(
+            **_grounded_kwargs(
+                prompt, tool, system, lat, lng, language, max_tokens, timeout
+            )
+        )
+        out = _grounded_response(resp)
+    except LLMError:
+        raise
+    except Exception as e:
+        raise _wrap(e) from e
+    _log_usage(
+        label or f"grounded_{tool}",
+        "agent",
+        LLMResponse(text="", truncated=out.truncated, usage=out.usage),
+        started,
+        extra={
+            "tool": tool,
+            "search_queries": len(out.search_queries),
+            "grounding_chunks": len(out.chunks),
+        },
+    )
+    return out
+
+
 # ── Errors ────────────────────────────────────────────────────────────
 
 
@@ -572,6 +652,82 @@ def _gemini_kwargs(role, system, messages, max_tokens, json_output, timeout, ret
     }
 
 
+def _grounded_kwargs(prompt, tool, system, lat, lng, language, max_tokens, timeout):
+    from google.genai import types
+
+    kwargs = _gemini_kwargs(
+        "agent",
+        system,
+        [{"role": "user", "content": prompt}],
+        max_tokens,
+        False,
+        timeout,
+        True,
+    )
+    config = kwargs["config"]
+    config.tools = [
+        types.Tool(google_search=types.GoogleSearch())
+        if tool == "search"
+        else types.Tool(google_maps=types.GoogleMaps())
+    ]
+    located = lat is not None and lng is not None
+    if located or language:
+        config.tool_config = types.ToolConfig(
+            retrieval_config=types.RetrievalConfig(
+                lat_lng=types.LatLng(latitude=lat, longitude=lng) if located else None,
+                language_code=language or None,
+            )
+        )
+    return kwargs
+
+
+def _grounded_response(resp) -> GroundedResponse:
+    cands = getattr(resp, "candidates", None) or []
+    meta = getattr(cands[0], "grounding_metadata", None) if cands else None
+    chunks = []
+    for c in getattr(meta, "grounding_chunks", None) or []:
+        maps, web = getattr(c, "maps", None), getattr(c, "web", None)
+        src, kind = (maps, "maps") if maps is not None else (web, "web")
+        if src is None:  # image / retrieved-context chunks: kept for indices
+            kind = None
+        chunks.append(
+            {
+                "kind": kind,
+                "uri": getattr(src, "uri", None) or None,
+                "title": (getattr(src, "title", None) or "").strip(),
+                "place_id": getattr(src, "place_id", None) if kind == "maps" else None,
+            }
+        )
+    supports = []
+    for s in getattr(meta, "grounding_supports", None) or []:
+        seg = getattr(s, "segment", None)
+        supports.append(
+            {
+                "text": getattr(seg, "text", None) or "",
+                "start": getattr(seg, "start_index", None),
+                "end": getattr(seg, "end_index", None),
+                "chunks": [
+                    i
+                    for i in getattr(s, "grounding_chunk_indices", None) or []
+                    if isinstance(i, int)
+                ],
+            }
+        )
+    queries = [
+        q
+        for q in getattr(meta, "web_search_queries", None) or []
+        if isinstance(q, str) and q.strip()
+    ]
+    return GroundedResponse(
+        text=resp.text or "",
+        chunks=chunks,
+        search_queries=queries,
+        supports=supports,
+        truncated=_gemini_truncated(resp),
+        usage=_gemini_usage(resp),
+    )
+
+
 def _gemini_contents(messages: list[dict]) -> list:
     from google.genai import types
 
@@ -666,7 +822,12 @@ def _anthropic_response(resp) -> LLMResponse:
 
 
 def _log_usage(
-    label: str, role: Role, out: LLMResponse, started: float, aborted: bool = False
+    label: str,
+    role: Role,
+    out: LLMResponse,
+    started: float,
+    aborted: bool = False,
+    extra: dict | None = None,
 ) -> None:
     record = {
         "label": label or role,
@@ -684,6 +845,7 @@ def _log_usage(
         "latency_ms": int((time.monotonic() - started) * 1000),
         "truncated": out.truncated,
         "aborted": aborted,
+        **(extra or {}),
     }
     logger.info("llm_usage " + " ".join(f"{k}={v}" for k, v in record.items()))
     sink = _usage_sink.get()

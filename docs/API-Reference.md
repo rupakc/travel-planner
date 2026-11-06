@@ -22,7 +22,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/live-check`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -95,7 +95,8 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | GET, POST | `/api/devices` | user | List own push devices (tokens masked); register an FCM token |
 | DELETE | `/api/devices/{id}` | user | Remove one of own devices by id (`204`, or `404`) |
 | POST | `/api/devices/unregister` | user | Sign-out: forget a token sent in the body (`204`, idempotent) |
-| POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there |
+| POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there (v1), or places to see / eat / shop / stay from Google Maps grounding (`sections: true`) |
+| POST | `/api/live-check` | user | "Search the web now" for one of the caller's watches (Google Search grounding; never stored) |
 | GET | `/health` | none | Liveness and capability flags |
 | GET | `/health/agents` | none | Deep check with one tiny call to the configured LLM provider (cached 5 min) |
 
@@ -808,6 +809,64 @@ Bucket: light_ai.
 ```
 
 `items` are the activities agent's `results`, unchanged (the shape of `POST /api/activities`), first `limit`. `region` is the state / province (GeoNames first-level division) name, or `null`. `distance_km` is from the point to the place's centre. Results are cached for an hour per 0.05° cell (about 5 km), place, interests and taste profile. Errors: `404 {"detail": {"code": "no_place", "message": "..."}}` when no known place is within 75 km; `502 {"detail": {"code": "agent_error", "message": "..."}}` when the agent fails (not cached); `503` with `code: ai_limit` when the monthly AI spend cap has tripped.
+
+#### Near me v2: `sections: true`
+
+```json
+{"lat": 38.72, "lng": -9.14, "limit": 6, "sections": true, "language": "en"}
+```
+
+Same place lookup as above, then **one** Gemini call grounded with Google Maps around `lat`/`lng` (`language`: optional BCP-47-style code such as `en` or `pt-PT`, default `en`; `limit`: per section, 1–10, default 6; `interests` as above, used as a hint). Without `sections` (or with `false`) the route is exactly v1, so installed apps keep working. → `200`:
+
+```json
+{
+  "place": {"name": "Lisbon", "region": null, "country": "Portugal", "country_code": "PT",
+            "lat": 38.72, "lng": -9.14, "distance_km": 0.4},
+  "sections": [
+    {"id": "see",  "title": "Places to see",  "items": []},
+    {"id": "eat",  "title": "Places to eat",  "items": [
+      {"name": "Time Out Market Lisboa", "summary": "One-line why, from the grounded answer",
+       "maps_uri": "https://maps.google.com/?cid=…", "place_id": "ChIJ…", "category": "eat"}]},
+    {"id": "shop", "title": "Places to shop", "items": []},
+    {"id": "stay", "title": "Places to stay", "items": []}
+  ],
+  "attribution": "Google Maps",
+  "sources": [{"title": "Time Out Market Lisboa", "uri": "https://maps.google.com/?cid=…"}]
+}
+```
+
+The four sections always come in this order and may be empty. The model answers in `GROUP|place name|why` lines; each line is matched to a Maps grounding chunk by name, and the item takes the chunk's title, `uri` (`maps_uri`) and `placeId` (`place_id`, without the `places/` prefix; may be `null`). A place without a Maps chunk with a link is dropped, so no item is invented. `sources` lists every Maps chunk with a link. Not cached (Google's Maps grounding terms; see [Live web check and Near me](Trip-Planning-Features.md#live-web-check-and-near-me-google-grounding)). Errors: `404 no_place` and `502 agent_error` (the model call failed) as in v1; `422` for `limit` > 10 with `sections: true`; `503 {"detail": {"code": "ai_limit" | "ai_billing" | "grounding_unavailable", "message": "…"}}` — `grounding_unavailable` ("Live web and map results need the Gemini provider.") when the backend runs on the Anthropic provider (v1 is unaffected).
+
+---
+
+## Live web check
+
+### POST /api/live-check
+
+Bucket: light_ai. Signed-in users only. "Search the web now" for one of the caller's watches: a Gemini call grounded with Google Search, built server-side from the stored watch (route, dates and travellers; hotel, dates and guests; activity, city and date; a trip's flight, hotel and activities). There is no free-text prompt: unknown fields are `422`.
+
+```json
+{"kind": "hotel", "watch_id": 123}
+```
+
+`kind` is `flight` (a fare watch, `/api/fare-watches/{id}`) or `hotel` / `activity` / `trip` (a price watch of that kind, `/api/price-watches/{id}`). → `200`:
+
+```json
+{
+  "kind": "hotel",
+  "watch_id": 123,
+  "checked_at": "2026-11-06T18:00:00Z",
+  "summary": "Plain-text answer from Gemini (grounded), unmodified.",
+  "quotes": [{"label": "Booking.com, 3 nights", "amount": 412.0, "currency": "EUR", "source_index": 0}],
+  "sources": [{"title": "booking.com", "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/…"}],
+  "searched_for": ["memmo alfama lisbon price 1-4 dec 2026"],
+  "disclaimer": "From a live web search just now. Prices change quickly — check the provider before booking. Not used for your price alerts."
+}
+```
+
+`summary` is the model's grounded text (whitespace-trimmed only). `sources` are the web grounding chunks with a link, once per link, as Google returns them. `quotes` are parsed from the answer's bullet lines (`- Seller, what: EUR 412`); each keeps only an amount and ISO currency copied from the text and must be backed by a grounding support whose chunk is one of `sources` (`source_index`); anything else is left out, so `quotes` may be empty. `searched_for` are the web searches the model ran (show them as "Searched for", linking to Google Search). Nothing is written to the database, cached or used for alerts; only an `llm_usage` line (tokens, search-query and chunk counts, latency; never content) is logged.
+
+Errors: `404 {"detail": "Watch not found"}` (not the caller's watch, or not of that `kind`); `429` rate limit; `502 {"detail": {"code": "live_check_failed", "message": "…"}}` when the model fails or the answer has no grounding sources; `503 {"detail": {"code": "ai_limit" | "ai_billing" | "grounding_unavailable", "message": "…"}}`.
 
 ---
 

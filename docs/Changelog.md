@@ -4,6 +4,15 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: live web check and Near me v2 (Google grounding)
+
+Design: `docs/superpowers/specs/2026-11-06-live-check-and-near-me-v2.md`.
+
+- **`llm.generate_grounded()`**: one Gemini call with Google Search or Google Maps grounding (text output, agent model), returning the text, grounding chunks, supports and the searches run. Same timeout, spend-cap/billing handling and `llm_usage` log (plus `search_queries` and `grounding_chunks` counts). On the Anthropic provider it raises `grounding_unavailable`.
+- **`POST /api/live-check`** ("Search the web now"): a Search-grounded look at one of the caller's watches. Returns the answer, its sources, "Searched for" queries and quotes backed by a source. Never stored or cached, and never used for alerts. Sign-in, light_ai bucket.
+- **Near me v2**: `POST /api/nearby` with `sections: true` returns places to see / eat / shop / stay from one Maps-grounded call. Each item has its Google Maps link and place id, and nothing is cached. v1 is unchanged.
+- Docs: the Google terms these features follow (only for the requesting user, no storage, Search Suggestions) in [Trip Planning Features](Trip-Planning-Features.md#live-web-check-and-near-me-google-grounding).
+
 ## Unreleased: production on one e2-micro VM (GCP)
 
 Deployment kit for the approved lean GCP design (`docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md`): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: [Deployment on GCP](Deployment-GCP.md).

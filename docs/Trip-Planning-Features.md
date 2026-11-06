@@ -157,6 +157,23 @@ The fare-watch machinery also covers a hotel's price, an activity's price and a 
 
 ---
 
+## Live web check and Near me (Google grounding)
+
+Two features use Gemini's grounding tools on Vertex AI through one seam, `llm.generate_grounded()` (text output, the agent model; links come only from the grounding metadata, never from the model's text). Design: `docs/superpowers/specs/2026-11-06-live-check-and-near-me-v2.md`. API: [Live web check](API-Reference.md#live-web-check), [Near me v2](API-Reference.md#post-apinearby).
+
+- **"Search the web now"** (`POST /api/live-check`, `services/live_check.py`): a signed-in user asks for a live look at one of their own watches (fare, hotel, activity or trip). The server builds the question from the stored watch and runs one Gemini call grounded with **Google Search**. The answer comes back with its sources, the searches it ran ("Searched for") and any prices it quoted that a source supports. It is a second opinion, not a measurement: watches, baselines, price history and alerts stay on SerpAPI and never see it.
+- **Near me v2** (`POST /api/nearby` with `sections: true`, `services/nearby_grounded.py`): one Gemini call grounded with **Google Maps** around the user's coordinates, returning places to see, eat, shop and stay. Each item comes from a Maps grounding chunk and carries its Google Maps link; a place the model names without one is dropped. The v1 response (activities agent, no `sections`) is unchanged for installed apps.
+- **Provider.** Grounding exists only with `LLM_PROVIDER` resolved to `gemini`; on `anthropic` both answer `503 grounding_unavailable` (v1 Near me still works). Both use the `light_ai` rate limit, need sign-in, and count against the Gemini spend cap (`503 ai_limit` / `ai_billing`). Google bills each search or Maps query the model issues past a monthly free allowance (5,000 each), so Near me v2 makes one call for all four sections, not four.
+
+**Google's terms (Service Terms §20(k) Search, §20(m) Maps) — rules for this code and its clients:**
+
+- **Only for the user who asked.** Grounded results are shown only to the signed-in user whose request produced them. No background or scheduled grounded calls: the scheduler never uses Search grounding, and the Android "nearby" notification only invites the user to open Near me (its own request runs the call).
+- **No storage, no cache, no analysis.** Nothing grounded is written to the database, cached (`/api/live-check` and Near me v2 have no cache, unlike v1), compared with a baseline, fed into alerts or logged with content (the `llm_usage` line holds counts only). Clients keep results in memory only (web: component state; Android: ViewModel, not Room/DataStore). A Maps `place_id` may be stored under the terms, but we don't need to.
+- **Display.** Show sources directly under the content they support, viewable in one interaction; don't edit the grounded text or put ads or other content inside it. Near me shows the "Google Maps" attribution text (unmodified, not translated) and each item's Maps link, opened as is (no interstitial).
+- **Search Suggestions.** Google's docs ask for the Search Suggestions chip, but the pricing page and Service Terms allow not displaying it at standard pricing under 1 million grounded prompts per day. We rely on that: instead of the chip, clients show the returned queries as a "Searched for" line linking to Google Search. Revisit this if volume ever approaches that limit.
+
+---
+
 ## Itinerary
 
 `components/ItinerarySection.jsx`, with helpers in `utils/`.
