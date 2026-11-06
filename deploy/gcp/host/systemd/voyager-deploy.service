@@ -1,0 +1,10 @@
+[Unit]
+Description=Voyager signed-digest deployer (GHCR prod tag → verify → pull → up → health → rollback)
+Requires=docker.service
+Wants=network-online.target
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/voyager/deploy.sh
+TimeoutStartSec=20min

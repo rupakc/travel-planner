@@ -1,0 +1,107 @@
+# Voyager on the e2-micro VM: app (FastAPI + SQLite) behind Caddy (TLS + SPA).
+#
+# Lives at /opt/voyager on the VM and is driven by voyager.service and the
+# deployer (deploy.sh). Images are pinned by digest in images.env, which the
+# deployer writes after verifying each image's cosign signature; site.env
+# holds SITE_HOST and ACME_EMAIL (written at first boot from VM metadata):
+#   docker compose --env-file site.env --env-file images.env -f compose.yaml up -d
+# Non-secret settings: app.env (see app.env.example). Secrets are read from
+# Secret Manager by the app's entrypoint into memory, never written here.
+name: voyager
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  app:
+    image: ${APP_IMAGE:?APP_IMAGE must be set (images.env)}
+    restart: unless-stopped
+    env_file:
+      - path: app.env
+        required: false
+    environment:
+      DATA_DIR: /data
+      BACKUP_MODE: vm
+      BACKUP_EXPORT_DIR: /tmp
+      AGENTS_DIR: /app/.agents
+      # Trust X-Forwarded-For only from Caddy's network (never "*")
+      FORWARDED_ALLOW_IPS: 172.30.0.0/24
+      LOG_FORMAT: json
+    volumes:
+      # The persistent disk; the provisioning marker (.voyager-data-disk)
+      # lives here, so a missing mount refuses to start instead of restoring
+      - /var/lib/voyager/data:/data
+    tmpfs:
+      # Backup exports (≈ 1-5 MB) never touch the slow pd-standard disk
+      - /tmp:size=64m,mode=1777
+    expose:
+      - "8001" # never published on the host: only Caddy reaches it
+    mem_limit: 550m
+    memswap_limit: 800m
+    # uvicorn --timeout-graceful-shutdown 5, then push drain + backup flush
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=4).status == 200 else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # A fresh disk reseeds the place data (slow on pd-standard)
+      start_period: 180s
+    logging: *logging
+    networks:
+      voyager:
+        ipv4_address: 172.30.0.10
+
+  caddy:
+    image: ${CADDY_IMAGE:?CADDY_IMAGE must be set (images.env)}
+    restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST:?SITE_HOST must be set (site.env), e.g. 34-23-1-2.sslip.io}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL must be set (site.env)}
+    ports:
+      # IPv4 only (IPv6 egress would be Premium tier, outside the free 200 GiB).
+      # No 443/udp: HTTP/3 is off (Caddyfile), so the governor sees all TCP.
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      # Certificates + ACME account survive container re-creation
+      # (Let's Encrypt allows 5 duplicate certificates per week)
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 96m
+    stop_grace_period: 10s
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *logging
+    networks:
+      - voyager
+
+networks:
+  voyager:
+    driver: bridge
+    enable_ipv6: false
+    driver_opts:
+      # Stable name: the egress governor's DOCKER-USER rules match on it
+      com.docker.network.bridge.name: br-voyager
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  caddy_data:
+  caddy_config:

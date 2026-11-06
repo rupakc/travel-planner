@@ -1,0 +1,9 @@
+[Unit]
+Description=Voyager weekly night window (Caddy updates, reboot if required)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/voyager/window.sh
+TimeoutStartSec=30min

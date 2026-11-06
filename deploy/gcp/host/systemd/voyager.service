@@ -1,0 +1,19 @@
+[Unit]
+Description=Voyager (docker compose: app + caddy)
+Requires=docker.service
+Wants=network-online.target
+After=docker.service network-online.target voyager-governor-rules.service
+# First boot: nothing to start until the deployer has verified and pinned images
+ConditionPathExists=/opt/voyager/images.env
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/voyager
+ExecStart=/usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml up -d --remove-orphans
+# Graceful stop on shutdown/reboot: the app flushes its backup (stop_grace_period 20s)
+ExecStop=/usr/bin/docker compose --env-file site.env --env-file images.env -f compose.yaml stop
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

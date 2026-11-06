@@ -1,0 +1,72 @@
+# Voyager edge: TLS (Let's Encrypt, ZeroSSL fallback), the SPA, and /api +
+# /health proxied to the app. Baked into the Caddy image (caddy.Dockerfile).
+#
+# SITE_HOST: the sslip.io name of the static IP (e.g. 34-23-1-2.sslip.io),
+# later your own domain: change it in images.env, no rebuild needed.
+{
+	email {$ACME_EMAIL}
+	admin 127.0.0.1:2019
+	servers {
+		# HTTP/1.1 + HTTP/2 only: no UDP (HTTP/3), so every byte is TCP the
+		# egress governor can meter
+		protocols h1 h2
+	}
+}
+
+{$SITE_HOST} {
+	# Screenshots for "plan from a link" (4 × ≤ 5 MB base64) fit; anything
+	# larger is refused before it reaches the app (the app checks too)
+	request_body {
+		max_size 32MB
+	}
+
+	# Compress text, but never text/event-stream: SSE must flush per event
+	encode {
+		zstd
+		gzip
+		match {
+			header Content-Type text/html*
+			header Content-Type text/css*
+			header Content-Type text/plain*
+			header Content-Type text/javascript*
+			header Content-Type application/javascript*
+			header Content-Type application/json*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+		}
+	}
+
+	header {
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	@backend path /api/* /health /health/*
+	handle @backend {
+		reverse_proxy app:8001 {
+			# SSE: write every event as it arrives
+			flush_interval -1
+			# Hold requests while the app restarts during a deploy
+			lb_try_duration 30s
+			lb_try_interval 250ms
+			# Caddy ignores client-sent X-Forwarded-For (no trusted_proxies)
+			# and sets it to the real peer; X-Real-IP for logs
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle {
+		root * /srv
+		# Hashed build assets never change: cache for a year
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		# index.html and SPA routes: always revalidate, so a deploy shows up
+		@shell not path /assets/*
+		header @shell Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

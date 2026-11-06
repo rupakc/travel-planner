@@ -1,0 +1,9 @@
+[Unit]
+Description=Voyager weekly night window: Sunday 04:00 Berlin time
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00 Europe/Berlin
+Persistent=false
+
+[Install]
+WantedBy=timers.target
