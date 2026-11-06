@@ -6,7 +6,7 @@ What a user can do in the app, and where each feature lives in the code. Chat, m
 
 ## App shell
 
-- Routes (`frontend/src/App.jsx`): `/login`, `/share/:token` (public), `/change-password`, and the signed-in layout with `/` (Search and Results), `/chat`, `/alerts`, `/preferences` and `/admin` (admins only). Any other path redirects to `/`.
+- Routes (`frontend/src/App.jsx`): `/login`, `/share/:token` (public), `/change-password`, and the signed-in layout with `/` (Search and Results), `/chat`, `/nearby` (Near me), `/alerts`, `/preferences` and `/admin` (admins only). Any other path redirects to `/`.
 - Search, Results and Chat stay mounted and are hidden with CSS, so a running search or chat stream survives switching tabs. Logging out clears all search state.
 - A user who must change their password is sent to `/change-password` first.
 - The header has a notification bell for fare and price alerts (see [Fare watch and price alerts](#fare-watch-and-price-alerts) and [Price watch](#price-watch-hotels-activities-and-trips)).
@@ -136,7 +136,7 @@ A traveller can watch a trip's live fare and be told when it's worth acting on. 
 - **Alerts page** (`pages/AlertsPage.jsx`, `components/alerts/WatchCard.jsx`): a card per watch with the route, dates and travellers, the current price, the change since watching, lowest seen, Google's verdict, a price sparkline with the target as a dashed line, and last/next check. Actions: Re-plan with this fare (runs the normal search with the traveller's preferences; flexible watches also offer the cheaper nearby departure), Book on Google Flights, Check now, Pause/Resume, Edit, and Delete (confirmed inline). Grouped Active / Past trips, with an empty state that points to search. `/alerts?watch=ID` scrolls to a watch; `&replan=1` (from emails) re-plans directly. Signed out, any such link goes through the login page (`/login?next=…`, same-site paths only) and returns to it after signing in. A watch on hold shows a plain-language reason (never the raw error).
 - **Notifications** (`context/AlertsContext.jsx`, `components/alerts/NotificationBell.jsx`, `AlertToast.jsx`): the header bell shows the unread count and the latest 10 alerts ("Berlin → Lisbon dropped to $150 (−$70)"), each opening its watch and marking it read, with "Mark all as read". The unread count is polled every 60 s only while the tab is visible (and on focus). A new alert shows as one dismissible toast (a polite live region), or as a native browser notification when the window isn't focused and the traveller allowed it.
 - **Email** (`backend/app/services/alert_email.py`, optional): when `SMTP_HOST` is set, the watch has email on and the account has an address (set on Preferences), fare alerts are also emailed: plain text plus inline-styled HTML with no remote images, old → new price, lowest seen, a text sparkline (▆▄█▁), "See flights" and "Re-plan with this fare" links to `APP_BASE_URL`, and a link that stops emails for that watch (it opens a confirmation page, so mail scanners that follow links can't turn emails off; mail clients' one-click unsubscribe, RFC 8058, works directly). Expiry and error notices stay in the app. The account email is not verified; changing it is signed-in only and rate-limited.
-- **Analytics** (`track()`): `watch_created` (mode, flex, email), `watch_checked_now`, `alert_clicked` (kind), `watch_replanned`, `watch_booked`.
+- **Analytics** (`track()`): `watch_created` (mode, flex, email), `watch_checked_now`, `watch_live_checked` (kind), `alert_clicked` (kind), `watch_replanned`, `watch_booked`.
 
 ---
 
@@ -153,7 +153,26 @@ The fare-watch machinery also covers a hotel's price, an activity's price and a 
 - **Thresholds.** A step per kind sets the drop needed for an alert, for a repeat alert and for re-arming after a rebound: fares and hotels max($15, 5 %), activities max(1 unit of the listing's currency, 5 %), whole trips max($25, 4 %) on the total.
 - **Anti-spam** (same rules as fares): no alert on the baseline or for a rise; one notification per check; at most one per watch per 24 h unless the price is at least 5 % below the last alert; a repeat needs a further full-step drop unless the price rebounded first. Watching the same subject twice returns the existing watch (`already_watching`).
 - **Checks and limits.** One scheduler checks fare and price watches every `FARE_WATCH_INTERVAL_HOURS` from **one** daily SerpAPI budget (the price pass runs alongside, so it never delays fare checks, and price checks reserve their worst case so they can't push the budget over; creating a watch holds its worst case too — 2 calls for a hotel or an activity, 10 for a trip — and gives back what it didn't spend), and `FARE_WATCH_MAX_ACTIVE_PER_USER` counts every kind together. A watch ends on check-in, the activity date or the departure (`watch_expired`); three failed, or three "unavailable", looks in a row put it on hold (`watch_error`, with Retry). Notification kinds: `hotel_drop`, `hotel_target`, `activity_drop`, `activity_target`, `trip_drop`, `trip_target`.
-- **Alerts page**: a card per kind (`components/alerts/cards/`) with the current and lowest price, change since watching, sparkline, listing link, Check now, Pause/Resume, Edit and Delete; trip cards show the breakdown. `/alerts?kind=hotel&watch=ID` opens one watch.
+- **Alerts page**: a card per kind (`components/alerts/cards/`) with the current and lowest price, change since watching, sparkline, listing link, Check now, Search the web now, Pause/Resume, Edit and Delete; trip cards show the breakdown. `/alerts?kind=hotel&watch=ID` opens one watch.
+
+### Search the web now
+
+Every active watch card (flight, hotel, activity, trip) has **Search the web now** (`components/alerts/LiveCheck.jsx`). It asks `POST /api/live-check` for one live Google Search–grounded answer about that watch (the server builds the question from the stored watch; nothing is typed). The answer opens under the card: the summary exactly as returned, any prices found with the source each one cites, "Searched for" (each query links to Google Search), the Sources list and the disclaimer ("…Not used for your price alerts."). It can be dismissed and is gone when you leave the page.
+
+- It is separate from **Check now**: watches, alerts, notifications and price history still come only from the scheduled SerpAPI checks. The live answer never changes the card's price, sparkline or history, and is never stored (component state only, no browser storage).
+- Errors read in plain words: a removed watch (404), the rate limit (429, the server's message as-is), the monthly AI limit or disabled billing (503 `ai_limit` / `ai_billing`), live search not available on this server (503 `grounding_unavailable`, e.g. a local Anthropic setup), and no grounded answer (502, with Try again).
+- Google's Search Suggestions widget is not shown; the "Searched for" queries link to Google Search instead.
+
+---
+
+## Near me
+
+**Near me** (`/nearby`, `pages/NearbyPage.jsx`, a header tab next to Chat) shows places to see, eat, shop and stay around where you are, from Google Maps grounding (`POST /api/nearby` with `sections: true`).
+
+- The page explains first and asks the browser for your location only when you press **Use my location**. Coordinates are rounded to about 100 m before they are sent.
+- Results: the nearest known place ("Lisbon, Portugal", distance), then four sections of cards, each with a one-line summary and **Open in Google Maps** (new tab). A section with nothing shows a short note. Under the cards: "Places from Google Maps" and the Sources list.
+- Location denied, unavailable, timed out or unsupported each get their own explanation, with Try again where it can help. API errors: no known place nearby (404), the rate limit (429), the AI limit, billing or map results not available here (503), and a failed lookup (502).
+- Results live only in the page's state: nothing goes to browser storage, and they are gone when you leave the page. There is no "use a city instead" fallback yet (the airport typeahead has no coordinates).
 
 ---
 

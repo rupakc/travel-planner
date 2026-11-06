@@ -4,6 +4,11 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: Near me v2 and "Search the web now" (web)
+
+- **Near me page** (`/nearby`, new header tab): asks for the browser's location after a short explainer, then shows places to see, eat, shop and stay from Google Maps grounding (`POST /api/nearby` with `sections: true`), each with an "Open in Google Maps" link, plus Google Maps attribution and sources. Clear copy for denied / unavailable / timed-out location and for 404 / 429 / 502 / 503 errors. Results are kept in component state only.
+- **Search the web now** on every active fare, hotel, activity and trip watch card (`POST /api/live-check`): one live, Google Search–grounded answer shown under the card with its quotes, sources, "Searched for" links and disclaimer. Dismissible, never stored, and never used for the watch's price, history or alerts.
+
 ## Unreleased: production on one e2-micro VM (GCP)
 
 Deployment kit for the approved lean GCP design (`docs/superpowers/specs/2026-11-06-gcp-lean-deploy-design.md`): one always-free e2-micro VM in us-east1, Caddy + the app, SQLite on the persistent disk, about $4/month for hosting. Runbook: [Deployment on GCP](Deployment-GCP.md).
