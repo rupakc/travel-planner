@@ -681,6 +681,15 @@ async def test_aclose_closes_the_shared_client(monkeypatch):
     ("agent_model", "agent_level", "chat_model", "chat_level", "error"),
     [
         ("gemini-3.5-flash-lite", "minimal", "gemini-3.8-flash", "low", None),
+        # 3.5 / 3.6 Flash accept MINIMAL; only 3.7 / 3.8 Flash reject it
+        ("gemini-3.5-flash", "minimal", "gemini-3.8-flash", "low", None),
+        (
+            "gemini-3.7-flash",
+            "minimal",
+            "gemini-3.8-flash",
+            "low",
+            "GEMINI_THINKING_AGENT=minimal",
+        ),
         (
             "gemini-3.5-flash-lite",
             "low",

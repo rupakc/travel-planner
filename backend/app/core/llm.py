@@ -40,8 +40,8 @@ BILLING_CODE = "ai_billing"
 # Errors users see as-is (sections, chat deltas, route details)
 USER_ERROR_CODES = {SPEND_CAP_CODE, BILLING_CODE}
 
-# Gemini 3.x Flash (not Flash-Lite) rejects thinking level MINIMAL
-_NO_MINIMAL = re.compile(r"^gemini-3\.\d+-flash$")
+# Gemini 3.7 / 3.8 Flash reject thinking level MINIMAL (3.5 / 3.6 Flash and Flash-Lite accept it)
+_NO_MINIMAL = re.compile(r"^gemini-3\.[78]-flash$")
 # Per-request ceiling for Gemini calls (the SDK default is no timeout at all)
 _GEMINI_TIMEOUT_S = 120
 # The IATA fallback runs during request validation on the event-loop thread:
