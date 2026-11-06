@@ -1,0 +1,101 @@
+[
+  {
+    "id": "single-city",
+    "note": "Classic single-city couple trip",
+    "request": {
+      "origin": "New York",
+      "destination": "Tokyo",
+      "departure_date": "2027-04-05",
+      "return_date": "2027-04-12",
+      "interests": ["food", "history", "culture"],
+      "nationality": "American",
+      "budget_usd": 6000,
+      "num_travelers": 2,
+      "adults": 2
+    }
+  },
+  {
+    "id": "multi-city",
+    "note": "Three cities with fixed nights",
+    "request": {
+      "origin": "Berlin",
+      "destination": "Barcelona",
+      "destinations": ["Paris", "Rome", "Barcelona"],
+      "destination_nights": [3, 4, 3],
+      "departure_date": "2027-05-10",
+      "return_date": "2027-05-20",
+      "interests": ["art", "architecture", "food"],
+      "nationality": "German",
+      "budget_usd": 5000,
+      "num_travelers": 2,
+      "adults": 2
+    }
+  },
+  {
+    "id": "family",
+    "note": "Family with young children and an infant, relaxed pace",
+    "request": {
+      "origin": "London",
+      "destination": "Lisbon",
+      "departure_date": "2027-07-18",
+      "return_date": "2027-07-25",
+      "interests": ["beaches", "kid-friendly", "nature"],
+      "nationality": "British",
+      "budget_usd": 7000,
+      "num_travelers": 5,
+      "adults": 2,
+      "children": 2,
+      "infants": 1,
+      "pace": "relaxed"
+    }
+  },
+  {
+    "id": "budget",
+    "note": "Solo backpacker on a tight budget, packed pace",
+    "request": {
+      "origin": "Delhi",
+      "destination": "Bangkok",
+      "departure_date": "2027-02-02",
+      "return_date": "2027-02-09",
+      "interests": ["street food", "nightlife", "temples"],
+      "nationality": "Indian",
+      "budget_usd": 700,
+      "num_travelers": 1,
+      "adults": 1,
+      "pace": "packed"
+    }
+  },
+  {
+    "id": "accessibility",
+    "note": "Seniors with a wheelchair user",
+    "request": {
+      "origin": "Toronto",
+      "destination": "Vienna",
+      "departure_date": "2027-09-14",
+      "return_date": "2027-09-21",
+      "interests": ["music", "museums", "coffee houses"],
+      "nationality": "Canadian",
+      "budget_usd": 8000,
+      "num_travelers": 2,
+      "adults": 0,
+      "seniors": 2,
+      "accessibility_needs": ["wheelchair"],
+      "pace": "relaxed"
+    }
+  },
+  {
+    "id": "long-trip",
+    "note": "Three-week trip, long itinerary output",
+    "request": {
+      "origin": "Sydney",
+      "destination": "Lima",
+      "departure_date": "2027-10-01",
+      "return_date": "2027-10-22",
+      "interests": ["hiking", "history", "food", "adventure"],
+      "nationality": "Australian",
+      "budget_usd": 9000,
+      "num_travelers": 2,
+      "adults": 2
+    }
+  }
+]

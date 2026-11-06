@@ -60,3 +60,6 @@ htmlcov/
 .idea/
 .vscode/
 *.swp
+
+# LLM eval runs (backend/scripts/llm_eval.py)
+backend/eval-runs/
