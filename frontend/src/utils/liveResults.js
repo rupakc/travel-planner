@@ -57,6 +57,26 @@ export function googleSearchUrl(query) {
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`
 }
 
+const fold = (v) => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+
+/** "Lisbon, Portugal" — the region and country are left out when they repeat a part before them. */
+export function placeLabel(place) {
+  if (!place) return ''
+  const parts = []
+  for (const part of [place.name, place.region, place.country]) {
+    if (typeof part !== 'string' || !part.trim()) continue
+    if (parts.some(p => fold(p) === fold(part))) continue
+    parts.push(part.trim())
+  }
+  return parts.join(', ')
+}
+
+/** The browser's language tag for the API (BCP-47, 2–35 chars), else 'en'. */
+export function browserLanguage(nav = typeof navigator !== 'undefined' ? navigator : null) {
+  const tag = nav?.language
+  return typeof tag === 'string' && /^[A-Za-z0-9_-]{2,35}$/.test(tag) ? tag : 'en'
+}
+
 /** Coordinates as sent to the API: ~100 m precision is plenty for "near me". */
 export function roundCoord(v) {
   return Math.round(v * 1000) / 1000
@@ -70,7 +90,7 @@ const AI_COPY = {
 /**
  * What to tell the user when a live request fails. Handles the string
  * `detail` (429 rate limit, 404 "Watch not found") and the `{code, message}`
- * details (404 no_place, 502 agent_error / live_check_failed, 503 ai_limit /
+ * details (404 no_place, 409 watch_expired, 502 agent_error / live_check_failed, 503 ai_limit /
  * ai_billing / grounding_unavailable).
  * @param {unknown} err  axios error
  * @param {'nearby'|'live'} scope
@@ -105,9 +125,12 @@ export function liveErrorMessage(err, scope = 'live') {
   }
   if (status === 404) {
     if (near) {
-      return { code: 'no_place', retry: true, text: message || 'We don’t know a town or city near you yet.' }
+      return { code: 'no_place', retry: false, text: message || 'We don’t know a town or city near you yet.' }
     }
     return { code: 'not_found', retry: false, text: 'This watch no longer exists. Refresh the page to update your list.' }
+  }
+  if (status === 409 && code === 'watch_expired') {
+    return { code, retry: false, text: 'This trip’s dates have passed, so there’s nothing live to check.' }
   }
   if (status === 401) {
     return { code: 'signed_out', retry: false, text: 'Your session has ended. Sign in again to continue.' }

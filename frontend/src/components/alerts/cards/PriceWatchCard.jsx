@@ -165,7 +165,8 @@ export default function PriceWatchCard({
       )}
 
       {onLiveCheck && (
-        <LiveCheckPanel live={live} title={watch.title} onDismissed={() => liveButton.current?.focus()} />
+        <LiveCheckPanel live={live} title={watch.title} buttonRef={liveButton}
+          onDismissed={() => liveButton.current?.focus()} />
       )}
 
       {editing && (

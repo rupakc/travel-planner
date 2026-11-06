@@ -160,18 +160,18 @@ The fare-watch machinery also covers a hotel's price, an activity's price and a 
 Every active watch card (flight, hotel, activity, trip) has **Search the web now** (`components/alerts/LiveCheck.jsx`). It asks `POST /api/live-check` for one live Google Search–grounded answer about that watch (the server builds the question from the stored watch; nothing is typed). The answer opens under the card: the summary exactly as returned, any prices found with the source each one cites, "Searched for" (each query links to Google Search), the Sources list and the disclaimer ("…Not used for your price alerts."). It can be dismissed and is gone when you leave the page.
 
 - It is separate from **Check now**: watches, alerts, notifications and price history still come only from the scheduled SerpAPI checks. The live answer never changes the card's price, sparkline or history, and is never stored (component state only, no browser storage).
-- Errors read in plain words: a removed watch (404), the rate limit (429, the server's message as-is), the monthly AI limit or disabled billing (503 `ai_limit` / `ai_billing`), live search not available on this server (503 `grounding_unavailable`, e.g. a local Anthropic setup), and no grounded answer (502, with Try again).
+- Errors read in plain words: a removed watch (404), a watch whose dates have passed (409 `watch_expired`, no retry), the rate limit (429, the server's message as-is), the monthly AI limit or disabled billing (503 `ai_limit` / `ai_billing`), live search not available on this server (503 `grounding_unavailable`, e.g. a local Anthropic setup), and no grounded answer (502, with Try again).
 - Google's Search Suggestions widget is not shown; the "Searched for" queries link to Google Search instead.
 
 ---
 
 ## Near me
 
-**Near me** (`/nearby`, `pages/NearbyPage.jsx`, a header tab next to Chat) shows places to see, eat, shop and stay around where you are, from Google Maps grounding (`POST /api/nearby` with `sections: true`).
+**Near me** (`/nearby`, `pages/NearbyPage.jsx`, a header tab next to Chat; between 640 and 1024 px the desktop tabs show icons only, with the names as tooltips and accessible names) shows places to see, eat, shop and stay around where you are, from Google Maps grounding (`POST /api/nearby` with `sections: true`).
 
-- The page explains first and asks the browser for your location only when you press **Use my location**. Coordinates are rounded to about 100 m before they are sent.
-- Results: the nearest known place ("Lisbon, Portugal", distance), then four sections of cards, each with a one-line summary and **Open in Google Maps** (new tab). A section with nothing shows a short note. Under the cards: "Places from Google Maps" and the Sources list.
-- Location denied, unavailable, timed out or unsupported each get their own explanation, with Try again where it can help. API errors: no known place nearby (404), the rate limit (429), the AI limit, billing or map results not available here (503), and a failed lookup (502).
+- The page explains first and asks the browser for your location only when you press **Use my location**. Coordinates are rounded to about 100 m before they are sent, with the browser's language. While it waits for the browser there is a Cancel button, and after 20 s without an answer (e.g. a dismissed prompt in Firefox or Safari) it stops with the timeout message.
+- Results: the nearest known place ("Lisbon, Portugal", distance; a region or country that repeats the name is left out), then four sections of cards, each with a one-line summary and **Open in Google Maps** (new tab). A section with nothing shows a short note. Under the cards: "Places from Google Maps" and the Sources list.
+- Location denied, unavailable, timed out or unsupported each get their own explanation, with Try again where it can help. API errors: no known place nearby (404, offering to check again from where you are now rather than a plain retry), the rate limit (429), the AI limit, billing or map results not available here (503), and a failed lookup (502).
 - Results live only in the page's state: nothing goes to browser storage, and they are gone when you leave the page. There is no "use a city instead" fallback yet (the airport typeahead has no coordinates).
 
 ---

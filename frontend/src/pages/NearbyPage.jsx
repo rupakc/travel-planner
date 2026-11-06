@@ -4,15 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import { fetchNearby } from '../services/api'
 import { track } from '../utils/analytics'
 import {
-  NEARBY_SECTIONS, geoErrorMessage, liveErrorMessage, nearbySections, roundCoord, safeHttpUrl, usableSources,
+  NEARBY_SECTIONS, browserLanguage, geoErrorMessage, liveErrorMessage, nearbySections, placeLabel, roundCoord,
+  safeHttpUrl, usableSources,
 } from '../utils/liveResults'
 
 const GEO_OPTIONS = { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 * 60 * 1000 }
-
-function placeLabel(place) {
-  if (!place) return ''
-  return [place.name, place.region, place.country].filter(Boolean).join(', ')
-}
+// The geolocation timeout only starts once permission is granted: a dismissed
+// (not blocked) prompt in Firefox/Safari never calls back. Give up after this.
+export const GEO_WATCHDOG_MS = 20000
 
 function ItemCard({ item }) {
   const href = safeHttpUrl(item.maps_uri)
@@ -60,14 +59,19 @@ export default function NearbyPage() {
   const [error, setError] = useState(null)   // { kind: 'geo'|'api', code, text, retry }
   const [data, setData] = useState(null)
   const run = useRef(0)
+  const watchdog = useRef(null)
   const headingRef = useRef(null)
+  const startRef = useRef(null)
 
-  useEffect(() => () => { run.current += 1 }, []) // drop answers that land after leaving
+  const clearWatchdog = () => { clearTimeout(watchdog.current); watchdog.current = null }
+  useEffect(() => () => { run.current += 1; clearWatchdog() }, []) // drop answers that land after leaving
 
   const load = useCallback(async (coords, id) => {
     setPhase('loading')
     try {
-      const res = await fetchNearby({ lat: roundCoord(coords.latitude), lng: roundCoord(coords.longitude) }, token)
+      const res = await fetchNearby({
+        lat: roundCoord(coords.latitude), lng: roundCoord(coords.longitude), language: browserLanguage(),
+      }, token)
       if (run.current !== id) return
       setData(res)
       setPhase('done')
@@ -81,6 +85,7 @@ export default function NearbyPage() {
 
   const locate = useCallback(() => {
     const id = ++run.current
+    clearWatchdog()
     setError(null)
     setData(null)
     const geo = typeof navigator !== 'undefined' ? navigator.geolocation : null
@@ -90,16 +95,32 @@ export default function NearbyPage() {
       return
     }
     setPhase('locating')
+    const fail = (code) => {
+      if (run.current !== id) return
+      run.current += 1 // a late answer from the browser is ignored
+      clearWatchdog()
+      setError({ kind: 'geo', retry: true, ...geoErrorMessage(code) })
+      setPhase('error')
+    }
+    watchdog.current = setTimeout(() => fail(3), GEO_WATCHDOG_MS)
     geo.getCurrentPosition(
-      (pos) => { if (run.current === id) load(pos.coords, id) },
-      (err) => {
+      (pos) => {
         if (run.current !== id) return
-        setError({ kind: 'geo', retry: true, ...geoErrorMessage(err?.code) })
-        setPhase('error')
+        clearWatchdog()
+        load(pos.coords, id)
       },
+      (err) => fail(err?.code),
       GEO_OPTIONS,
     )
   }, [load])
+
+  // Stop waiting for the browser (e.g. its prompt was dismissed) and go back to the start
+  const cancel = useCallback(() => {
+    run.current += 1
+    clearWatchdog()
+    setPhase('intro')
+    requestAnimationFrame(() => startRef.current?.focus())
+  }, [])
 
   // Move focus to the result heading so keyboard and screen-reader users land on it
   useEffect(() => {
@@ -124,10 +145,10 @@ export default function NearbyPage() {
             Places to see, eat, shop and stay around where you are right now.
           </p>
         </div>
-        {(phase === 'done' || (phase === 'error' && error?.retry)) && (
+        {phase === 'done' && (
           <button type="button" onClick={locate}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-            <RefreshCw size={13} aria-hidden="true" /> {phase === 'done' ? 'Refresh' : 'Try again'}
+            <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         )}
       </header>
@@ -145,7 +166,7 @@ export default function NearbyPage() {
             places around you on Google Maps. It isn’t saved, and neither are the results — they disappear when you
             leave this page.
           </p>
-          <button type="button" onClick={locate}
+          <button type="button" ref={startRef} onClick={locate}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500">
             <LocateFixed size={15} aria-hidden="true" /> Use my location
           </button>
@@ -154,9 +175,15 @@ export default function NearbyPage() {
 
       {busy && (
         <div aria-busy="true" data-testid="nearby-loading" className="space-y-8">
-          <p className="flex items-center gap-2 text-sm text-slate-500">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <Loader2 size={15} className="animate-spin" aria-hidden="true" />
             {phase === 'locating' ? 'Finding your location…' : 'Looking for places near you…'}
+            {phase === 'locating' && (
+              <button type="button" onClick={cancel}
+                className="ml-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
+                Cancel
+              </button>
+            )}
           </p>
           {phase === 'loading' && NEARBY_SECTIONS.map(s => <SkeletonSection key={s.id} title={s.title} />)}
         </div>
@@ -169,10 +196,10 @@ export default function NearbyPage() {
             {error.kind === 'geo' ? 'We couldn’t get your location' : 'We couldn’t load places near you'}
           </h2>
           <p className="mt-1 text-sm">{error.text}</p>
-          {error.retry && (
+          {(error.retry || error.code === 'no_place') && (
             <button type="button" onClick={locate}
               className="mt-3 rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-              Try again
+              {error.code === 'no_place' ? 'Check again from where you are now' : 'Try again'}
             </button>
           )}
         </div>

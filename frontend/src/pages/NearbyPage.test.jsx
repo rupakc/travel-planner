@@ -9,12 +9,12 @@ vi.mock('../services/api', () => ({ fetchNearby: vi.fn() }))
 vi.mock('../utils/analytics', () => ({ track: vi.fn() }))
 
 import * as api from '../services/api'
-import NearbyPage from './NearbyPage'
+import NearbyPage, { GEO_WATCHDOG_MS } from './NearbyPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const DATA = {
-  place: { name: 'Lisbon', region: null, country: 'Portugal', country_code: 'PT', lat: 38.72, lng: -9.14, distance_km: 0.4 },
+  place: { name: 'Lisbon', region: 'LISBON', country: 'Portugal', country_code: 'PT', lat: 38.72, lng: -9.14, distance_km: 0.4 },
   sections: [
     { id: 'see', title: 'Places to see', items: [
       { name: 'Belém Tower', summary: 'A 16th-century fort on the river.', maps_uri: 'https://maps.google.com/?cid=1', place_id: 'p1', category: 'see' },
@@ -64,8 +64,8 @@ describe('NearbyPage', () => {
     await click(button('Use my location'))
     await flush()
 
-    expect(api.fetchNearby).toHaveBeenCalledWith({ lat: 38.722, lng: -9.14 }, 'tok')
-    expect(container.querySelector('h2').textContent).toBe('Lisbon, Portugal')
+    expect(api.fetchNearby).toHaveBeenCalledWith({ lat: 38.722, lng: -9.14, language: navigator.language || 'en' }, 'tok')
+    expect(container.querySelector('h2').textContent).toBe('Lisbon, Portugal') // the region repeats the name
     for (const id of ['see', 'eat', 'shop', 'stay']) {
       expect(container.querySelector(`[data-testid="nearby-section-${id}"]`)).not.toBeNull()
     }
@@ -107,6 +107,8 @@ describe('NearbyPage', () => {
     await click(button('Use my location'))
     expect(container.querySelector('[role="alert"]').textContent).toMatch(/Location access is turned off/)
     expect(api.fetchNearby).not.toHaveBeenCalled()
+    // One "Try again", not two
+    expect([...container.querySelectorAll('button')].filter(b => b.textContent.includes('Try again'))).toHaveLength(1)
 
     success()
     api.fetchNearby.mockResolvedValue(DATA)
@@ -142,6 +144,41 @@ describe('NearbyPage', () => {
     const alert = container.querySelector('[role="alert"]')
     expect(alert.textContent).toMatch(text)
     expect(alert.textContent).not.toMatch(/Gemini provider/)
+  })
+
+  it('gives up after the watchdog when the browser never answers (dismissed prompt)', async () => {
+    vi.useFakeTimers()
+    try {
+      await click(button('Use my location')) // getCurrentPosition never calls back
+      expect(container.textContent).toMatch(/Finding your location/)
+      await act(async () => { vi.advanceTimersByTime(GEO_WATCHDOG_MS) })
+      expect(container.querySelector('[role="alert"]').textContent).toMatch(/took too long/)
+      expect(button('Try again')).toBeDefined()
+      // A late answer from the browser is ignored
+      const [ok] = geo.getCurrentPosition.mock.calls[0]
+      await act(async () => ok({ coords: { latitude: 1, longitude: 2 } }))
+      expect(api.fetchNearby).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('can cancel while waiting for the location', async () => {
+    await click(button('Use my location'))
+    await click(button('Cancel'))
+    expect(container.textContent).toMatch(/Use your location\?/)
+    const [ok] = geo.getCurrentPosition.mock.calls[0]
+    await act(async () => ok({ coords: { latitude: 1, longitude: 2 } }))
+    expect(api.fetchNearby).not.toHaveBeenCalled()
+  })
+
+  it('does not offer no_place as a plain retry', async () => {
+    success()
+    api.fetchNearby.mockRejectedValue({ response: { status: 404, data: { detail: { code: 'no_place', message: 'We don\'t know a town or city near you yet.' } } } })
+    await click(button('Use my location'))
+    await flush()
+    expect(button('Try again')).toBeUndefined()
+    expect(button('Check again from where you are now')).toBeDefined()
   })
 
   it('never writes results to storage', async () => {

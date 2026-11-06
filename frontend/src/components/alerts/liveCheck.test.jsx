@@ -122,6 +122,23 @@ describe('Search the web now', () => {
     expect(api.updatePriceWatch).not.toHaveBeenCalled()
   })
 
+  it('announces briefly and leaves focus alone when the user has moved on', async () => {
+    let resolve
+    api.liveCheckWatch.mockReturnValue(new Promise(r => { resolve = r }))
+    await render()
+    const card = container.querySelector('#price-watch-7')
+    await act(async () => button('Search the web now', card).click())
+    expect(card.querySelector('[data-testid="live-check-status"]').textContent).toBe('Searching the web…')
+    // Only the short status line is live, never the whole panel
+    expect(card.querySelector('[data-testid="live-check-region"]').getAttribute('aria-live')).toBeNull()
+    const elsewhere = button('Search the web now', container.querySelector('#price-watch-9'))
+    elsewhere.focus()
+    await act(async () => { resolve(RESULT) })
+    expect(card.querySelector('[data-testid="live-check-panel"]')).not.toBeNull()
+    expect(card.querySelector('[data-testid="live-check-status"]').textContent).toBe('Live web search result ready.')
+    expect(document.activeElement).toBe(elsewhere)
+  })
+
   it('can be dismissed, returning focus to the button', async () => {
     api.liveCheckWatch.mockResolvedValue(RESULT)
     await render()
@@ -149,6 +166,7 @@ describe('Search the web now', () => {
   it.each([
     [404, 'Watch not found', /no longer exists/, false],
     [429, 'Too many requests — please wait 12 seconds.', /please wait 12 seconds/, true],
+    [409, { code: 'watch_expired', message: 'Expired.' }, /dates have passed, so there’s nothing live to check/, false],
     [503, { code: 'ai_limit', message: 'AI limit reached for this month — try again on the 1st.' }, /AI limit reached/, false],
     [503, { code: 'ai_billing', message: 'AI features are unavailable right now.' }, /unavailable right now/, false],
     [503, { code: 'grounding_unavailable', message: 'Live web and map results need the Gemini provider.' }, /Live web search isn’t available/, false],

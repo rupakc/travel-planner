@@ -280,8 +280,8 @@ export async function updateAccountEmail(email, token) {
 // keep them in component state and never write them to storage or caches.
 
 /** Places to see / eat / shop / stay around a point (Google Maps grounding). */
-export async function fetchNearby({ lat, lng }, token) {
-  return (await api.post('/nearby', { lat, lng, sections: true }, authHeaders(token))).data
+export async function fetchNearby({ lat, lng, language = 'en' }, token) {
+  return (await api.post('/nearby', { lat, lng, sections: true, language }, authHeaders(token))).data
 }
 
 /** One live web search for a watch the user owns (kind: flight | hotel | activity | trip). */

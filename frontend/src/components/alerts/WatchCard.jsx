@@ -169,7 +169,8 @@ export default function WatchCard({
       )}
 
       {onLiveCheck && (
-        <LiveCheckPanel live={live} title={routeLabel(watch)} onDismissed={() => liveButton.current?.focus()} />
+        <LiveCheckPanel live={live} title={routeLabel(watch)} buttonRef={liveButton}
+          onDismissed={() => liveButton.current?.focus()} />
       )}
 
       {editing && (

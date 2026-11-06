@@ -56,11 +56,15 @@ function quoteAmount(q) {
  * their sources, what was searched for, all sources and the disclaimer.
  * Live region so the outcome is read out; dismissible.
  */
-export function LiveCheckPanel({ live, onDismissed, title }) {
+export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
   const headingRef = useRef(null)
   useEffect(() => {
-    if (live.status === 'done' || live.status === 'error') headingRef.current?.focus()
-  }, [live.status])
+    if (live.status !== 'done' && live.status !== 'error') return
+    // Only take focus if the user is still where they started (the card's
+    // button, or nowhere because the disabled button dropped it)
+    const active = document.activeElement
+    if (!active || active === document.body || active === buttonRef?.current) headingRef.current?.focus()
+  }, [live.status, buttonRef])
 
   const close = () => { live.dismiss(); onDismissed?.() }
   const r = live.result
@@ -70,7 +74,11 @@ export function LiveCheckPanel({ live, onDismissed, title }) {
   const queries = (Array.isArray(r?.searched_for) ? r.searched_for : []).filter(q => typeof q === 'string' && q.trim())
 
   return (
-    <div aria-live="polite" data-testid="live-check-region">
+    <div data-testid="live-check-region">
+      {/* One short announcement; the panel itself isn't a live region (errors use role=alert) */}
+      <p className="sr-only" role="status" data-testid="live-check-status">
+        {live.status === 'loading' ? 'Searching the web…' : live.status === 'done' ? 'Live web search result ready.' : ''}
+      </p>
       {live.status === 'loading' && (
         <p className="mt-3 flex items-center gap-2 text-sm text-slate-500" data-testid="live-check-loading">
           <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Searching the web for {title || 'this'}…

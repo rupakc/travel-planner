@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
-  NEARBY_SECTIONS, geoErrorMessage, googleSearchUrl, liveErrorMessage, nearbySections, roundCoord,
+  NEARBY_SECTIONS, browserLanguage, placeLabel, geoErrorMessage, googleSearchUrl, liveErrorMessage, nearbySections, roundCoord,
   safeHttpUrl, usableSources,
 } from './liveResults'
 
@@ -71,9 +71,14 @@ describe('liveErrorMessage', () => {
 
   it('maps 404 per feature', () => {
     expect(liveErrorMessage(httpErr(404, { code: 'no_place', message: 'We don\'t know a town or city near you yet.' }), 'nearby'))
-      .toMatchObject({ code: 'no_place', text: 'We don\'t know a town or city near you yet.' })
+      .toMatchObject({ code: 'no_place', retry: false, text: 'We don\'t know a town or city near you yet.' })
     expect(liveErrorMessage(httpErr(404, 'Watch not found'), 'live'))
       .toMatchObject({ code: 'not_found', retry: false })
+  })
+
+  it('maps 409 watch_expired without a retry', () => {
+    expect(liveErrorMessage(httpErr(409, { code: 'watch_expired', message: 'The watch has expired.' }), 'live'))
+      .toEqual({ code: 'watch_expired', retry: false, text: 'This trip’s dates have passed, so there’s nothing live to check.' })
   })
 
   it('maps 502 with or without a message', () => {
@@ -95,5 +100,26 @@ describe('geoErrorMessage', () => {
     expect(geoErrorMessage(2).code).toBe('unavailable')
     expect(geoErrorMessage(3).code).toBe('timeout')
     expect(geoErrorMessage('unsupported').code).toBe('unsupported')
+  })
+})
+
+describe('placeLabel', () => {
+  it('drops a region or country that repeats an earlier part (case and accents ignored)', () => {
+    expect(placeLabel({ name: 'Lisbon', region: 'Lisbon', country: 'Portugal' })).toBe('Lisbon, Portugal')
+    expect(placeLabel({ name: 'Bogotá', region: 'BOGOTA', country: 'Colombia' })).toBe('Bogotá, Colombia')
+    expect(placeLabel({ name: 'Singapore', region: null, country: 'Singapore' })).toBe('Singapore')
+    expect(placeLabel({ name: 'Portland', region: 'Maine', country: 'United States' })).toBe('Portland, Maine, United States')
+    expect(placeLabel(null)).toBe('')
+  })
+})
+
+describe('browserLanguage', () => {
+  it('passes a BCP-47 tag through and falls back to en', () => {
+    expect(browserLanguage({ language: 'pt-PT' })).toBe('pt-PT')
+    expect(browserLanguage({ language: 'zh_Hant_TW' })).toBe('zh_Hant_TW')
+    expect(browserLanguage({ language: 'x' })).toBe('en')
+    expect(browserLanguage({ language: 'en US;bad' })).toBe('en')
+    expect(browserLanguage({})).toBe('en')
+    expect(browserLanguage(null)).toBe('en')
   })
 })
