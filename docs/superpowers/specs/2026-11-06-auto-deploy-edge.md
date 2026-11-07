@@ -54,6 +54,9 @@ The SPA was baked into the Caddy image, so every frontend change produced a new 
 
 ## Proposals (not done; they would save minutes but touch CI gates)
 
+The first two were done on 2026-11-07 (branch `perf/faster-deploy`): `build` runs in parallel with CI and Trivy-scans the shipped images by digest before signing; `promote` moves `prod` after CI; unchanged images (`io.voyager.app-inputs` / `io.voyager.caddy-inputs`) are not rebuilt. See [Testing and CI](../../Testing-and-CI.md#deployyml).
+
+
 - `build-and-scan` builds and Trivy-scans the legacy nginx `frontend/` image, which isn't deployed, and waits for every test job. Scanning the Caddy image that ships instead (and the app image `publish` builds, by digest) would be more useful and could run in `publish` after the push and before moving `prod`, saving about 1 min.
 - The app image gets a new digest on every merge (revision label), so the app restarts, cutting its SSE streams, even on frontend-only merges. A content label for the app (like the Caddy runtime id) would skip those restarts. The same drain could also run before app recreates.
 - `start_interval: 5s` on the app's healthcheck (Docker ≥ 25) would shorten the health wait from about 30 s to about 5 s. Left out: changing the app service would restart the app during the migration.

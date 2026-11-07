@@ -1,6 +1,6 @@
 # Travel Planner
 
-AI-powered travel planning application that uses specialized Claude agents to produce comprehensive trip plans — flights, weather, hotels, activities, places to see, free walking tours, events, visa info, SIM cards, travel tips, emergency card, local transportation, forex, packing list and a day-by-day itinerary. Open source (MIT). Production: one always-free e2-micro VM on GCP (project `voyager-prod-ohzkl`, us-east1): Caddy + the app container, SQLite on the persistent disk; every green merge to `main` deploys (signed images pulled by the VM every minute: app, then the SPA + Caddyfile swapped in without restarting Caddy; only a Caddy runtime change recreates Caddy, after draining SSE streams; merge → live ≈ 7–9 min). The SPA can go live before its app (app retrying or held), so frontend changes must tolerate the previous backend. The Cloud Run production was decommissioned on 2026-08-30. Runbook: `docs/Deployment-GCP.md`.
+AI-powered travel planning application that uses specialized Claude agents to produce comprehensive trip plans — flights, weather, hotels, activities, places to see, free walking tours, events, visa info, SIM cards, travel tips, emergency card, local transportation, forex, packing list and a day-by-day itinerary. Open source (MIT). Production: one always-free e2-micro VM on GCP (project `voyager-prod-ohzkl`, us-east1): Caddy + the app container, SQLite on the persistent disk; every green merge to `main` deploys (signed images pulled by the VM every minute: app, then the SPA + Caddyfile swapped in without restarting Caddy; only a Caddy runtime change recreates Caddy, after draining SSE streams; only images whose build inputs changed are rebuilt, so a frontend-only merge never restarts the app; merge → live ≈ 4–5.5 min frontend-only, ≈ 5–8 min with backend changes). The SPA can go live before its app (app retrying or held), so frontend changes must tolerate the previous backend. The Cloud Run production was decommissioned on 2026-08-30. Runbook: `docs/Deployment-GCP.md`.
 
 Developer docs live in `docs/` (TitleCase pages, built by mkdocs and synced to the GitHub wiki); `docs_homepage/index.html` is the gh-pages landing page.
 
@@ -70,15 +70,19 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
                         visa, sim, tips, emergency_card, getting-around, forex, packing_list,
                         pricing_advisor, itinerary, stress_test, discovery, layover, chat,
                         chat-itinerary, orchestrator (descriptive only)
-.github/workflows/      ci.yml (also reusable), docs.yml, deploy.yml (push to main: CI → build →
-                        GHCR → cosign sign → move `prod`; no VM/GCP access)
+.github/workflows/      ci.yml (also reusable; PRs/branches: build-only image checks, path-filtered),
+                        docs.yml, deploy.yml (push to main: `ci` ∥ `build` [per image: skip if `prod`'s
+                        io.voyager.{app,caddy}-inputs label = image-inputs-id.sh, else build → GHCR →
+                        Trivy → cosign sign] → `promote` moves `prod` only if both passed; no VM/GCP access)
 
 deploy/gcp/             VM kit: compose.yaml (app + caddy), Caddyfile, caddy.Dockerfile (SPA + Caddyfile
-                        inside; label io.voyager.caddy-runtime from caddy-runtime-id.sh), app.env.example,
+                        inside; label io.voyager.caddy-runtime from caddy-runtime-id.sh),
+                        image-inputs-id.sh (build-inputs hash of an image, for skipping), app.env.example,
                         host/ (first-boot.sh, deploy.sh signed-digest deployer: app + edge releases in
                         /var/lib/voyager/edge (current/prev1/prev2 symlinks, admin-API reload, drain +
                         recreate on runtime change, rollback), governor.py egress governor, window.sh
-                        weekly reboot window, systemd units), tests/ (test_deploy.py + fakes)
+                        weekly reboot window, systemd units), tests/ (test_deploy.py + fakes,
+                        test_image_inputs_id.py)
 
 backend/
   Dockerfile            build from the repo root (copies backend/ and .agents/)

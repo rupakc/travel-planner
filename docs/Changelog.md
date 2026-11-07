@@ -4,6 +4,16 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: faster deploys (build alongside CI, skip unchanged images)
+
+Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback); workflows: [Testing and CI](Testing-and-CI.md#deployyml).
+
+- **Build in parallel with CI, promote only after it passes.** `deploy.yml`'s single `publish` job is now `build` (runs alongside `ci`: builds, pushes `sha-<commit>`, Trivy-scans, signs and verifies, still as `deploy.yml@refs/heads/main`) and `promote` (plain `needs: [ci, build]`, `packages: write` only: the HEAD check, then moves `prod`). A signed image whose CI failed is never deployed: the VM only follows `prod`.
+- **Unchanged images aren't rebuilt.** New `deploy/gcp/image-inputs-id.sh` hashes everything a build can read (Dockerfile, `.dockerignore`, the files its `COPY`s take, derived from the Dockerfile, and the base image pinned by digest); images carry it as `io.voyager.app-inputs` / `io.voyager.caddy-inputs`. When `prod` already has the id, nothing is built and `prod` stays, so a frontend-only merge no longer restarts the app (open chats survive) and a backend-only merge leaves the SPA alone. Anything unreadable builds. `backend/Dockerfile` takes its base as `ARG PYTHON_BASE` (the workflow pins the digest), like `caddy.Dockerfile`.
+- **The images that ship are scanned.** The Trivy scan (same version and policy: unfixed CRITICAL fails, `.trivyignore`) moved from CI's `build-and-scan`, which scanned the undeployed nginx image after all tests, to `build`, by digest before signing; Trivy's download is checksum-pinned there. A failed scan blocks `promote`.
+- **CI.** `build-and-scan` is replaced by `image-builds`: build-only, in parallel, only for the images a change touches (app, Caddy, and the nginx image that `docker compose up` uses locally), skipped when `deploy.yml` calls CI. The deploy-kit tests moved out of `test-backend` into their own parallel job `test-deploy-kit`.
+- **Timing (estimated from recent job times).** Workflow ≈ 3–4 min (was 6–8). Merge → live ≈ 4–5.5 min for frontend-only merges, ≈ 5–8 min with backend changes (was 7–9, measured 8 min 53 s).
+
 ## Unreleased: everything auto-deploys within minutes (no Caddy window)
 
 Design: `docs/superpowers/specs/2026-11-06-auto-deploy-edge.md`. Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback).
