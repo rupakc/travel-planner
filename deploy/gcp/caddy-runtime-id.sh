@@ -11,7 +11,7 @@
 # Caddyfile check) gives a new id.
 #
 # Usage: caddy-runtime-id.sh BASE_REF [DOCKERFILE]
-#   BASE_REF  e.g. caddy:2.10-alpine@sha256:… (exactly the CADDY_BASE build arg)
+#   BASE_REF  e.g. caddy:2.11-alpine@sha256:… (exactly the CADDY_BASE build arg)
 set -euo pipefail
 
 base="${1:?usage: caddy-runtime-id.sh BASE_REF [DOCKERFILE]}"

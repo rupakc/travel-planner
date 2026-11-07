@@ -16,16 +16,18 @@
 # to caddy-runtime-id.sh's inputs, or the VM won't recreate Caddy for it.
 #
 # Separately, the workflow skips the whole build when nothing this file can
-# read changed: io.voyager.caddy-inputs (deploy/gcp/image-inputs-id.sh) hashes
-# this file, .dockerignore, every COPY source from the context and the pinned
-# base. Use COPY (not ADD) for context files, or the id can't be computed and
-# every merge rebuilds.
+# read changed: io.voyager.caddy-inputs (deploy/ci/image-inputs-id.sh) hashes
+# this file, .dockerignore, every COPY source from the context and both
+# pinned bases. Use COPY (not ADD) for context files, or the id can't be
+# computed and every merge rebuilds.
 #
-# CADDY_BASE: the workflow passes the tag pinned to the digest it resolved
-# (the same string goes into the runtime hash).
-ARG CADDY_BASE=caddy:2.10-alpine
+# CADDY_BASE / NODE_BASE: the workflow passes each tag pinned to the digest it
+# resolved (CADDY_BASE also goes into the runtime hash; both into the inputs
+# id). The defaults are for local builds.
+ARG CADDY_BASE=caddy:2.11-alpine
+ARG NODE_BASE=node:20-alpine
 
-FROM node:20-alpine AS spa
+FROM ${NODE_BASE} AS spa
 WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm ci
