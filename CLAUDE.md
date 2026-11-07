@@ -1,6 +1,6 @@
 # Travel Planner
 
-AI-powered travel planning application that uses specialized Claude agents to produce comprehensive trip plans — flights, weather, hotels, activities, places to see, free walking tours, events, visa info, SIM cards, travel tips, emergency card, local transportation, forex, packing list and a day-by-day itinerary. Open source (MIT). Production: one always-free e2-micro VM on GCP (project `voyager-prod-ohzkl`, us-east1): Caddy + the app container, SQLite on the persistent disk; every green merge to `main` deploys (signed images pulled by the VM). The Cloud Run production was decommissioned on 2026-08-30. Runbook: `docs/Deployment-GCP.md`.
+AI-powered travel planning application that uses specialized Claude agents to produce comprehensive trip plans — flights, weather, hotels, activities, places to see, free walking tours, events, visa info, SIM cards, travel tips, emergency card, local transportation, forex, packing list and a day-by-day itinerary. Open source (MIT). Production: one always-free e2-micro VM on GCP (project `voyager-prod-ohzkl`, us-east1): Caddy + the app container, SQLite on the persistent disk; every green merge to `main` deploys (signed images pulled by the VM every minute: app, then the SPA + Caddyfile swapped in without restarting Caddy; only a Caddy runtime change recreates Caddy, after draining SSE streams; merge → live ≈ 7–9 min). The SPA can go live before its app (app retrying or held), so frontend changes must tolerate the previous backend. The Cloud Run production was decommissioned on 2026-08-30. Runbook: `docs/Deployment-GCP.md`.
 
 Developer docs live in `docs/` (TitleCase pages, built by mkdocs and synced to the GitHub wiki); `docs_homepage/index.html` is the gh-pages landing page.
 
@@ -73,9 +73,12 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
 .github/workflows/      ci.yml (also reusable), docs.yml, deploy.yml (push to main: CI → build →
                         GHCR → cosign sign → move `prod`; no VM/GCP access)
 
-deploy/gcp/             VM kit: compose.yaml (app + caddy), Caddyfile, caddy.Dockerfile (bakes the SPA),
-                        app.env.example, host/ (first-boot.sh, deploy.sh signed-digest deployer with
-                        rollback, governor.py egress governor, window.sh, systemd units), tests/
+deploy/gcp/             VM kit: compose.yaml (app + caddy), Caddyfile, caddy.Dockerfile (SPA + Caddyfile
+                        inside; label io.voyager.caddy-runtime from caddy-runtime-id.sh), app.env.example,
+                        host/ (first-boot.sh, deploy.sh signed-digest deployer: app + edge releases in
+                        /var/lib/voyager/edge (current/prev1/prev2 symlinks, admin-API reload, drain +
+                        recreate on runtime change, rollback), governor.py egress governor, window.sh
+                        weekly reboot window, systemd units), tests/ (test_deploy.py + fakes)
 
 backend/
   Dockerfile            build from the repo root (copies backend/ and .agents/)
@@ -150,7 +153,7 @@ docker compose up --build
 
 LLM locally: with `LLM_PROVIDER=auto` (default) a `backend/.env` holding only `ANTHROPIC_API_KEY` keeps using Claude. For Gemini, run `gcloud auth application-default login` and set `GCP_PROJECT` (e.g. `voyager-prod-ohzkl`).
 
-Tests: `cd backend && python3 -m pytest -q` (model clients are stubbed in `conftest.py`; tests never reach Vertex or Anthropic); deploy kit: `python3 -m pytest -q deploy/gcp/tests infrastructure/gcp/tests`, `shellcheck -x deploy/gcp/host/*.sh infrastructure/gcp/*.sh`; `cd frontend && npm test` (on Node 20.18 prefix `NODE_OPTIONS=--experimental-require-module`). Lint: `ruff check backend/`, `cd frontend && npx eslint src/ --max-warnings 0`. Docs: `mkdocs build --strict`.
+Tests: `cd backend && python3 -m pytest -q` (model clients are stubbed in `conftest.py`; tests never reach Vertex or Anthropic); deploy kit: `python3 -m pytest -q deploy/gcp/tests infrastructure/gcp/tests`, `shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh` (CI's ubuntu-latest has shellcheck 0.9; check with `docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.9.0 -x …`), deploy tests need Linux (`deploy/gcp/tests/host_checks.sh` in `debian:trixie`); `cd frontend && npm test` (on Node 20.18 prefix `NODE_OPTIONS=--experimental-require-module`). Lint: `ruff check backend/`, `cd frontend && npx eslint src/ --max-warnings 0`. Docs: `mkdocs build --strict`.
 
 ## Key Conventions
 
@@ -198,7 +201,7 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 
 **Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`, `/live-check`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). `/auth/login` has its own `login` bucket (10 per IP) plus a per-username failure lock (20). `ALLOW_ANONYMOUS_AI=false` (production) makes every AI router require sign-in. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
 
-**Production runtime.** The image runs `python -m app.entrypoint`: optional Secret Manager secrets (`SECRET_MANAGER_SECRETS`) into the process env only, refuses an empty `JWT_SECRET_KEY`, execs uvicorn (1 worker, `--timeout-graceful-shutdown 5`, proxy headers only from `FORWARDED_ALLOW_IPS`, never `*`). `/search` and `/chat` stream through `core/sse.guarded_stream` (15 s keepalives; every task the stream started is cancelled when the client disconnects). Push can use ADC (`FCM_USE_ADC`).
+**Production runtime.** The image runs `python -m app.entrypoint`: optional Secret Manager secrets (`SECRET_MANAGER_SECRETS`) into the process env only, refuses an empty `JWT_SECRET_KEY`, execs uvicorn (1 worker, `--timeout-graceful-shutdown 5`, proxy headers only from `FORWARDED_ALLOW_IPS`, never `*`). `/search` and `/chat` stream through `core/sse.guarded_stream` (15 s keepalives; every task the stream started is cancelled when the client disconnects). Push can use ADC (`FCM_USE_ADC`). `GET /internal/streams` (`{"active_streams": n}`, 404 when forwarded, not routed by Caddy) lets the VM's deployer drain before recreating Caddy.
 
 ### TravelSearchRequest
 

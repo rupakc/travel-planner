@@ -1,6 +1,6 @@
 # Deploy: every merge to main that passes all of CI publishes signed images
 # and moves their `prod` tag. The VM pulls them itself (deploy/gcp/host/
-# deploy.sh, every 5 min): it resolves `prod` to a digest, verifies the cosign
+# deploy.sh, every minute): it resolves `prod` to a digest, verifies the cosign
 # signature against THIS workflow on refs/heads/main, pulls, health-checks and
 # rolls back on failure. This workflow has no access to the VM or GCP.
 # Every action is pinned to a full commit SHA: this job can sign as the
@@ -70,6 +70,20 @@ jobs:
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
+      # The Caddy base pinned to the digest it has right now, and the runtime
+      # id derived from it: the VM recreates Caddy only when this id changes
+      # (SPA and Caddyfile changes are swapped in without a restart)
+      - name: Caddy base digest and runtime id
+        id: caddy_runtime
+        run: |
+          set -euo pipefail
+          tag="$(sed -n 's/^ARG CADDY_BASE=//p' deploy/gcp/caddy.Dockerfile)"
+          digest="$(docker buildx imagetools inspect "$tag" --format '{{json .Manifest}}' | jq -r .digest)"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no digest for $tag"; exit 1; }
+          base="$tag@$digest"
+          echo "base=$base" >>"$GITHUB_OUTPUT"
+          echo "id=$(bash deploy/gcp/caddy-runtime-id.sh "$base")" >>"$GITHUB_OUTPUT"
+
       - name: Build and push caddy + SPA (sha tag only)
         id: caddy
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
@@ -79,11 +93,15 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.CADDY_IMAGE }}:sha-${{ github.sha }}
+          build-args: |
+            CADDY_BASE=${{ steps.caddy_runtime.outputs.base }}
           # io.voyager.build: the VM refuses images from an older run (no downgrades)
+          # io.voyager.caddy-runtime: a change recreates Caddy on the VM
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.voyager.build=${{ github.run_number }}
+            io.voyager.caddy-runtime=${{ steps.caddy_runtime.outputs.id }}
           cache-from: type=gha,scope=caddy
           cache-to: type=gha,mode=max,scope=caddy
 
@@ -136,5 +154,5 @@ jobs:
             echo "### Published"
             echo "- app: \`$APP_REF\`"
             echo "- caddy: \`$CADDY_REF\`"
-            echo "The VM picks these up within ~5 min (app at once; Caddy in the Sunday window)."
+            echo "The VM picks these up within about a minute: app, then SPA/Caddyfile (no Caddy restart; a new Caddy runtime recreates Caddy after draining open streams)."
           } >>"$GITHUB_STEP_SUMMARY"

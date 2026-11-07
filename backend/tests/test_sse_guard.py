@@ -152,6 +152,58 @@ async def test_tasks_finishing_normally_are_not_cancelled_after_the_end():
     assert survivors == [1]
 
 
+# ── Open-stream count (deploy.sh drains on it before recreating Caddy) ──────
+
+
+async def test_active_stream_count_tracks_open_streams():
+    from app.core.sse import active_streams
+
+    release = asyncio.Event()
+
+    async def src():
+        yield "data: a\n\n"
+        await release.wait()
+        yield "data: b\n\n"
+
+    base = active_streams()
+    gen = guarded_stream(src(), keepalive=5)
+    assert await gen.__anext__() == "data: a\n\n"
+    assert active_streams() == base + 1
+    release.set()
+    assert [c async for c in gen] == ["data: b\n\n"]
+    assert active_streams() == base
+
+
+async def test_active_stream_count_drops_when_the_client_goes_away():
+    from app.core.sse import active_streams
+
+    async def src():
+        yield "data: a\n\n"
+        await asyncio.sleep(30)
+
+    base = active_streams()
+    gen = guarded_stream(src(), keepalive=5)
+    await gen.__anext__()
+    assert active_streams() == base + 1
+    await gen.aclose()
+    assert active_streams() == base
+
+
+async def test_active_stream_count_drops_when_the_source_fails():
+    from app.core.sse import active_streams
+
+    async def src():
+        yield "data: a\n\n"
+        raise ValueError("boom")
+
+    base = active_streams()
+    gen = guarded_stream(src(), keepalive=5)
+    await gen.__anext__()
+    with pytest.raises(ValueError):
+        await gen.__anext__()
+    assert active_streams() == base
+
+
 # ── Wired into the routes ───────────────────────────────────────────────────
 
 

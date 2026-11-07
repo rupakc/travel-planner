@@ -1,8 +1,16 @@
 # Voyager edge: TLS (Let's Encrypt, ZeroSSL fallback), the SPA, and /api +
-# /health proxied to the app. Baked into the Caddy image (caddy.Dockerfile).
+# /health proxied to the app.
+#
+# Shipped inside the Caddy image (caddy.Dockerfile) together with the SPA, but
+# never served from there: the VM's deploy.sh copies both out of every new
+# signed image into /var/lib/voyager/edge/releases/<id>/{srv,Caddyfile} and
+# switches symlinks (current, prev1, prev2). Caddy mounts that directory
+# read-only at /edge and runs with --config /edge/current/Caddyfile, so a new
+# SPA goes live without a restart and a changed Caddyfile is reloaded through
+# the admin API (open SSE streams keep running).
 #
 # SITE_HOST: the sslip.io name of the static IP (e.g. 34-23-1-2.sslip.io),
-# later your own domain: change it in images.env, no rebuild needed.
+# later your own domain: change it in site.env, no rebuild needed.
 {
 	email {$ACME_EMAIL}
 	admin 127.0.0.1:2019
@@ -69,17 +77,32 @@
 		}
 	}
 
-	# Hashed build assets never change: cache for a year. A missing one is a
-	# plain 404 (never index.html, which would be cached as JS for a year).
-	handle /assets/* {
-		root * /srv
+	# Hashed build assets never change: cache for a year. They are looked up
+	# in the current release and the two before it, so a browser still
+	# holding an older index.html gets its lazy chunks after a deploy.
+	@asset {
+		path /assets/*
+		file {
+			root /edge
+			try_files /current/srv{path} /prev1/srv{path} /prev2/srv{path}
+		}
+	}
+	handle @asset {
+		root * /edge
+		rewrite * {file_match.relative}
 		header Cache-Control "public, max-age=31536000, immutable"
 		file_server
+	}
+	# A missing asset is a plain, uncached 404 (never index.html, which would
+	# be cached as JS for a year)
+	handle /assets/* {
+		header Cache-Control "no-store"
+		respond 404
 	}
 
 	# index.html and SPA routes: always revalidate, so a deploy shows up
 	handle {
-		root * /srv
+		root * /edge/current/srv
 		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server

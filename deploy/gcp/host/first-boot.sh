@@ -42,6 +42,7 @@ log() { echo "voyager-first-boot: $*" >&2; logger -t voyager-first-boot -- "$*" 
 
 OPT=/opt/voyager
 DATA=/var/lib/voyager/data
+EDGE=/var/lib/voyager/edge
 STAMP=/var/lib/voyager/.provisioned
 MARKER="$DATA/.voyager-data-disk"
 export DEBIAN_FRONTEND=noninteractive
@@ -153,13 +154,18 @@ unpack_bundle() {
   tmp="$(mktemp -d)"
   echo "$bundle" | base64 -d | tar -xz -C "$tmp"
   install -d -m 0755 "$OPT" "$OPT/host"
-  install -m 0644 "$tmp/compose.yaml" "$OPT/compose.yaml"
+  # Under the deployer's lock: a timer run must never see a new compose.yaml
+  # with the old deploy.sh, or the other way round (fd 8, released below)
+  exec 8>/run/voyager-deploy.lock
+  flock -w 900 8 || log "deploy lock busy for 15 min; unpacking anyway"
   install -m 0755 "$tmp/host/governor.py" "$OPT/governor.py"
   install -m 0755 "$tmp/host/deploy.sh" "$OPT/deploy.sh"
   install -m 0755 "$tmp/host/window.sh" "$OPT/window.sh"
+  install -m 0644 "$tmp/compose.yaml" "$OPT/compose.yaml"
   rm -rf "$OPT/host/systemd"
   cp -r "$tmp/host/systemd" "$OPT/host/systemd"
   [[ -f "$OPT/app.env" ]] || install -m 0644 "$tmp/app.env.example" "$OPT/app.env"
+  exec 8>&-
   rm -rf "$tmp"
 }
 
@@ -201,6 +207,10 @@ prepare_data_dir() {
   install -d -m 0755 /var/lib/voyager "$DATA"
   # The app runs as uid 10001 (backend/Dockerfile)
   chown -R 10001:10001 "$DATA"
+  # SPA + Caddyfile releases: written by deploy.sh (root), mounted read-only
+  # into Caddy (uid 10002 only reads). Owner and mode only on these two
+  # directories, never recursively: the releases' files are deploy.sh's.
+  install -d -m 0755 -o 0 -g 0 "$EDGE" "$EDGE/releases"
   if [[ ! -f "$STAMP" ]]; then
     # First provisioning of this disk: mark it as the data disk. A disk
     # restored from a snapshot already has both files.
@@ -234,19 +244,17 @@ main() {
   prepare_data_dir
   install_units
   systemctl start --no-block voyager-governor-rules.service
-  systemctl start --no-block voyager-governor.timer voyager-deploy.timer voyager-window.timer
+  systemctl start --no-block voyager-governor.timer voyager-window.timer
+  # restart, not start: on a re-run it applies a changed schedule at once
+  systemctl restart --no-block voyager-deploy.timer
   # First deploy now (also brings up compose). Later runs (every boot, or
-  # after --update-host) apply the possibly changed compose.yaml/app.env:
-  # `up -d` recreates only the services whose config changed. Under the
-  # deployer's lock, so it never runs alongside deploy.sh or voyager.service.
-  if [[ ! -f "$OPT/images.env" ]]; then
-    "$OPT/deploy.sh" || log "first deploy failed; the timer retries every 5 min"
-  else
-    flock -w 900 /run/voyager-deploy.lock \
-      docker compose --project-directory "$OPT" --env-file "$OPT/site.env" \
-      --env-file "$OPT/images.env" -f "$OPT/compose.yaml" up -d --remove-orphans ||
-      log "compose up failed or the deploy lock stayed busy; the deployer converges within 5 min"
-  fi
+  # after --update-host) run the deployer too: it rebuilds the edge release
+  # if it is missing (migration from the image-baked SPA), deploys whatever
+  # `prod` points at, and applies the possibly changed compose.yaml/app.env
+  # (`up -d` recreates only the services whose config changed; Caddy only
+  # after draining open streams). deploy.sh holds the deployer's lock; if a
+  # timer run holds it already, that run does the same work.
+  "$OPT/deploy.sh" || log "deploy failed; the timer retries every minute (journalctl -u voyager-deploy)"
   # voyager.service must be *active*, also on the first boot (where the
   # deploy above, not the unit, started the containers): only an active unit
   # runs its ExecStop (graceful stop + backup flush) at shutdown. Its start

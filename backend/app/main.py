@@ -3,7 +3,7 @@ import os
 import tempfile
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import (
@@ -42,6 +42,7 @@ from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.walking_tours import router as walking_tours_router
+from .core import sse as _sse
 from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
@@ -333,3 +334,19 @@ async def health():
         body["backup_ok"] = backup["ok"]
         body["backup"] = backup
     return body
+
+
+# Deployer-only: the VM's deploy.sh asks the app container directly
+# (172.30.0.10:8001, compose network) how many SSE streams are open and waits
+# for 0 (up to ~90 s) before it recreates Caddy. Not under /api or /health,
+# so Caddy never routes it (the SPA catch-all answers instead); a request that
+# arrives through a proxy anyway (forwarding headers) gets a plain 404.
+# Exposes one number, nothing about who is streaming.
+_FORWARDING_HEADERS = ("x-forwarded-for", "x-real-ip", "forwarded")
+
+
+@app.get("/internal/streams", include_in_schema=False)
+async def internal_streams(request: Request):
+    if any(h in request.headers for h in _FORWARDING_HEADERS):
+        raise HTTPException(status_code=404)
+    return {"active_streams": _sse.active_streams()}

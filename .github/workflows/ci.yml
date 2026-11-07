@@ -32,7 +32,7 @@ jobs:
       - run: ruff check backend/ deploy/ infrastructure/gcp/
       - run: ruff format --check backend/ deploy/ infrastructure/gcp/
       # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
-      - run: shellcheck -x deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
+      - run: shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
