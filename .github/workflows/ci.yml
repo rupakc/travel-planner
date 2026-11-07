@@ -8,6 +8,11 @@ on:
   pull_request:
     branches: [main]
   workflow_call:
+    inputs:
+      skip-image-builds:
+        # deploy.yml: its `build` job builds and Trivy-scans the images that ship
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -31,8 +36,9 @@ jobs:
       - run: pip install -r backend/requirements-dev.txt
       - run: ruff check backend/ deploy/ infrastructure/gcp/
       - run: ruff format --check backend/ deploy/ infrastructure/gcp/
-      # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
-      - run: shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
+      # VM host scripts (deploy/gcp, infrastructure/gcp) and the deploy
+      # workflow's scripts (deploy/ci); shellcheck ships on ubuntu-latest
+      - run: shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh deploy/ci/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
@@ -75,7 +81,7 @@ jobs:
       - run: npm ci
         working-directory: frontend
       # Only HIGH/CRITICAL fails CI. Moderate vulns in dev-only chains (esbuild/vitest)
-      # are accepted — they are never present in the production nginx image.
+      # are accepted — they are never present in the production Caddy image (static SPA).
       - run: npm audit --audit-level=high
         working-directory: frontend
 
@@ -98,8 +104,25 @@ jobs:
         env:
           DATA_DIR: /tmp/test-data
           ADMIN_PASSWORD: test-admin-pw
-      # Egress governor, old-prod migration, bootstrap.sh with stub gcloud (no root/network)
-      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests infrastructure/gcp/tests
+
+  # The VM kit's Python tests, in their own job so they run in parallel with
+  # the backend suite (together they were the slowest job, ~2 min each):
+  # egress governor, deploy.sh with fakes, image-inputs-id.sh, old-prod
+  # migration, bootstrap.sh with stub gcloud (no root/network)
+  test-deploy-kit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with: { python-version: "3.12" }
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.12-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: ${{ runner.os }}-pip-3.12-
+      - run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests deploy/ci/tests infrastructure/gcp/tests
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -130,38 +153,89 @@ jobs:
             debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 \
             bash /src/deploy/gcp/tests/host_checks.sh
 
-  build-and-scan:
+  # PRs and branch pushes: do the images still build, and would the deploy
+  # workflow's Trivy gate pass? Nothing is pushed. In parallel with the
+  # tests, and only for the images whose inputs the change touches; no usable
+  # base to diff against, or a change to ci.yml, deploy.yml or a deploy/ci
+  # script, does all of them. Reads the deploy workflow's BuildKit cache,
+  # writes none. Skipped when deploy.yml calls CI: its build jobs build and
+  # scan the images that ship.
+  #   app    backend/Dockerfile: backend/, .agents/ (+ .dockerignore); build + scan
+  #   caddy  deploy/gcp/caddy.Dockerfile: frontend/, deploy/gcp/Caddyfile; build + scan
+  #   nginx  frontend/Dockerfile, used only by local `docker compose up`:
+  #          its own files and frontend/package*.json; build only (not shipped)
+  image-builds:
+    if: ${{ !inputs.skip-image-builds }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: [lint-backend, lint-frontend, security, test-backend, test-frontend, host-checks]
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Build backend image
-        run: docker build -f backend/Dockerfile . -t backend:${{ github.sha }}
-      - name: Build frontend image
-        run: docker build frontend/ -t frontend:${{ github.sha }}
-      - name: Install Trivy
+        with:
+          fetch-depth: 2
+      - name: Which images does this change touch?
+        id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
         run: |
-          TRIVY_VERSION=0.70.0
-          wget -qO trivy.tar.gz \
-            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
-          tar -xzf trivy.tar.gz trivy
-          sudo mv trivy /usr/local/bin/trivy
-          rm trivy.tar.gz
-          trivy --version
-      - name: Scan backend image
+          set -euo pipefail
+          files=""
+          if [ "$EVENT" = pull_request ]; then
+            # The merge commit's first parent is the base branch
+            files="$(git diff --name-only HEAD^1 HEAD)" || files=""
+          elif [[ "$BEFORE" =~ ^[0-9a-f]{40}$ && ! "$BEFORE" =~ ^0+$ ]] &&
+            git fetch -q --depth=1 origin "$BEFORE" 2>/dev/null; then
+            files="$(git diff --name-only "$BEFORE" HEAD)" || files=""
+          fi
+          printf '%s\n' "${files:-(unknown: building all)}"
+          if [ -z "$files" ] ||
+            grep -qE '^(\.github/workflows/(ci|deploy)\.yml|deploy/ci/[^/]+\.sh)$' <<<"$files"; then
+            printf 'app=true\ncaddy=true\nnginx=true\n' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          has() { if grep -qE "$1" <<<"$files"; then echo true; else echo false; fi; }
+          {
+            echo "app=$(has '^(backend/|\.agents/|\.dockerignore$)')"
+            echo "caddy=$(has '^(frontend/|deploy/gcp/(Caddyfile|caddy\.Dockerfile)$|\.dockerignore$)')"
+            echo "nginx=$(has '^frontend/(Dockerfile|nginx\.conf\.template|package(-lock)?\.json|\.dockerignore)$')"
+          } >>"$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        if: steps.changed.outputs.app == 'true' || steps.changed.outputs.caddy == 'true'
+      - name: Build app image (no push)
+        if: steps.changed.outputs.app == 'true'
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: backend/Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: voyager-app:ci
+          cache-from: type=gha,scope=app
+      - name: Build caddy + SPA image (no push)
+        if: steps.changed.outputs.caddy == 'true'
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: deploy/gcp/caddy.Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: voyager-caddy:ci
+          cache-from: type=gha,scope=caddy
+      # The deploy build jobs' gate, early: same script, same policy
+      - name: Trivy scan (same policy as deploy)
+        if: steps.changed.outputs.app == 'true' || steps.changed.outputs.caddy == 'true'
+        env:
+          APP: ${{ steps.changed.outputs.app }}
+          CADDY: ${{ steps.changed.outputs.caddy }}
+          TRIVY_IMAGE_SRC: docker
         run: |
-          trivy image \
-            --exit-code 1 \
-            --severity CRITICAL \
-            --ignore-unfixed \
-            --no-progress \
-            backend:${{ github.sha }}
-      - name: Scan frontend image
-        run: |
-          trivy image \
-            --exit-code 1 \
-            --severity CRITICAL \
-            --ignore-unfixed \
-            --no-progress \
-            frontend:${{ github.sha }}
+          set -euo pipefail
+          refs=()
+          if [ "$APP" = true ]; then refs+=(voyager-app:ci); fi
+          if [ "$CADDY" = true ]; then refs+=(voyager-caddy:ci); fi
+          bash deploy/ci/trivy-scan.sh "${refs[@]}"
+      - name: Build the local nginx frontend image
+        if: steps.changed.outputs.nginx == 'true'
+        run: docker build frontend/ -t frontend:ci

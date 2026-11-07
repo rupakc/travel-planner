@@ -1,0 +1,30 @@
+# Daily Trivy scan of what production runs: the two images `prod` points at,
+# with the same policy as the deploy build jobs (deploy/ci/trivy-scan.sh:
+# unfixed-ignored CRITICAL fails). A failure is a red run and a GitHub
+# notification, nothing else: it never promotes, signs or touches `prod`.
+# To ship fixes: merge them, or run Deploy by hand (force rebuild; the weekly
+# scheduled Deploy run does the same).
+# GitHub disables scheduled workflows after 60 days without repository
+# activity: re-enable with `gh workflow enable prod-scan.yml` (and deploy.yml).
+name: Prod scan
+
+on:
+  schedule:
+    - cron: "41 5 * * *" # daily 05:41 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # checkout (the script and .trivyignore); the images are public
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Trivy scan of the prod images
+        run: |
+          bash deploy/ci/trivy-scan.sh \
+            ghcr.io/rupakc/travel-planner-app:prod \
+            ghcr.io/rupakc/travel-planner-caddy:prod

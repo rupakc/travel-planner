@@ -4,6 +4,19 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: faster deploys (per-image build alongside CI, skip unchanged images)
+
+Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback); workflows: [Testing and CI](Testing-and-CI.md#deployyml).
+
+- **Build in parallel with CI; sign and promote only after it passes, per image.** `deploy.yml`'s single `publish` job is now `build-app` / `build-caddy` (alongside `ci`, no `id-token`: build, push `sha-<commit>`, Trivy-scan) and `promote-app` / `promote-caddy` (plain `needs: [ci, build-<image>]`; `deploy/ci/promote-image.sh`: HEAD check, cosign sign, verify as the VM will, move `prod`). Every signed image has passed CI and was `main`'s HEAD when signed, and one image's failure never blocks the other.
+- **Unchanged images aren't rebuilt.** `deploy/ci/image-inputs-id.sh` hashes everything a build can read: the Dockerfile, `.dockerignore`, the files its `COPY`s take (derived from the Dockerfile) and the base images pinned by digest (`PYTHON_BASE`; `CADDY_BASE` and the SPA builder's `NODE_BASE`). Images carry it as `io.voyager.app-inputs` / `io.voyager.caddy-inputs`. When `prod` already has the id, nothing is built and `prod` stays, so a frontend-only merge no longer restarts the app (open chats survive) and a backend-only merge leaves the SPA alone. Anything it can't account for exactly builds: foreign `--from`, context mounts (any case of `type=bind`), a `FROM` that is neither an earlier stage, a pinned build arg nor a digest-pinned image, and unusual `.dockerignore` re-includes. `!**/NAME` re-includes files and whole directories named NAME.
+- **Weekly refresh and daily prod scan.** pip's version ranges resolve at build time and aren't in the id, so the Deploy workflow also runs every Monday (and by hand, `force`) and rebuilds both images without cache. The new digests also end holds on the VM. Images record their last refresh (`io.voyager.fresh-at`), and any run refreshes an image whose `prod` copy is over 8 days old, so a scheduled run dropped from the queue or disabled by GitHub (after 60 days without repository activity; `gh workflow enable`) doesn't stop refreshes. `prod-scan.yml` scans both `prod` images daily and fails visibly.
+- **Compatibility in both directions.** The images ship independently, so backend changes must keep serving the previous SPA (no removed or renamed endpoints, fields or semantics without a deprecation step), just as frontend changes already had to tolerate the previous backend.
+- **The images that ship are scanned.** One Trivy policy (`deploy/ci/trivy-scan.sh`: 0.70.0, checksum-pinned, fixed CRITICAL fails, `.trivyignore`) replaces CI's `build-and-scan`, which scanned the undeployed nginx image. It runs in the deploy build jobs before signing, in PR CI's `image-builds` (app and Caddy, path-filtered) and daily on `prod`.
+- **Caddy 2.11** (`caddy:2.11-alpine`, was 2.10). The 2.10 base carries fixed CRITICAL CVEs (CVE-2025-44005, CVE-2025-68121, CVE-2026-30836, CVE-2026-31789, CVE-2026-33186) that would fail the new gate. The runtime id changes, so the rollout recreates Caddy once, after draining open streams.
+- **CI.** `image-builds` builds and scans only the images a change touches (plus the nginx image `docker compose up` uses, build only), and is skipped when `deploy.yml` calls CI. The deploy-kit tests run in their own parallel job, `test-deploy-kit`.
+- **Timing (estimated from recent job times).** Workflow ≈ 3.5–4.5 min (was 6–8). Merge → live ≈ 4.5–6 min for frontend-only merges, ≈ 5.5–8.5 min with backend changes (was 7–9, measured 8 min 53 s).
+
 ## Unreleased: everything auto-deploys within minutes (no Caddy window)
 
 Design: `docs/superpowers/specs/2026-11-06-auto-deploy-edge.md`. Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback).

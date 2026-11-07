@@ -180,7 +180,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push and on PRs to `ma
 - backend and frontend lint;
 - a security audit (bandit, pip-audit, npm audit);
 - backend tests with at least 70% coverage, and frontend tests;
-- Docker image builds with a Trivy scan.
+- build-only checks of the Docker images a change touches (the deploy workflow Trivy-scans the images that ship).
 
 `docs.yml` publishes the docs site from `main`. See [Testing and CI](docs/Testing-and-CI.md).
 
