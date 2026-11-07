@@ -173,7 +173,7 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=v
   - Held by runtime id: a Caddy runtime that fails its checks after a recreate, in `/opt/voyager/held-runtimes`.
   - Held as well: an SPA release that Caddy serves wrongly right after the switch (it is switched back).
   - Retried after 5 min, nothing held: infrastructure failures (pull, `docker create`/`cp`, `compose up`, a full disk, Caddy or its admin API not answering). A `compose up` that fails, or leaves the old container, twice in a row for the same digest holds it.
-  - While the app only waits to retry, the edge still deploys.
+  - While the app only waits to retry, the edge still deploys. So a frontend release can go live **before** its app (the app waiting to retry, or held after a failed health check). Frontend changes must therefore work against the previous backend: feature-detect new endpoints or fields, and never assume an API change is live just because the SPA is.
   - Refused images (downgrades, no build label) are removed from the disk.
   - A build label that can't be read is refused (fail closed), never treated as "not a downgrade".
   - Emails and repeated error logs go out at most once an hour per kind.

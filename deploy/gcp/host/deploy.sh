@@ -59,8 +59,6 @@
 #   --rollback-caddy  Caddy runtime → previous image (its runtime held), drain + recreate
 #   --window          accepted and ignored (Caddy no longer waits for a window)
 # Config: /etc/voyager/deploy.env (optional overrides of the defaults below).
-# Functions run through `step FN …` (see step), which shellcheck can't follow:
-# shellcheck disable=SC2329
 set -euo pipefail
 
 CONFIG="${VOYAGER_DEPLOY_CONFIG:-/etc/voyager/deploy.env}"
@@ -210,11 +208,19 @@ waiting_retry() {
 # `set -e` inside anything called from if/&&/|| context), status in STEP_RC.
 # Steps persist their state in images.env, which is read back afterwards.
 STEP_RC=0
+# The deploy steps are named explicitly so they're plain calls (and visible
+# to shellcheck); anything else runs as given.
 step() {
   set +e
   (
     set -e
-    "$@"
+    case "$1" in
+      ensure_edge) ensure_edge ;;
+      first_deploy) first_deploy "$2" "$3" ;;
+      deploy_app) deploy_app "$2" ;;
+      deploy_edge) deploy_edge "$2" ;;
+      *) "$@" ;;
+    esac
   )
   STEP_RC=$?
   set -e
@@ -761,6 +767,12 @@ https_baseline() {
   id="${id#releases/}"
   [[ -n "$id" ]] || { echo 1; return 0; }
   served "$id" >/dev/null 2>&1 || rc=$?
+  if ((rc == 2)); then
+    # Once more: a single slow or dropped probe must not loosen the check
+    sleep "$POLL"
+    rc=0
+    served "$id" >/dev/null 2>&1 || rc=$?
+  fi
   if ((rc == 2)); then echo 1; else echo 0; fi
 }
 
@@ -788,7 +800,13 @@ caddy_healthy() {
     ((SECONDS < deadline)) || break
     sleep "$POLL"
   done
-  log "Caddy not healthy after ${CADDY_HEALTH_TIMEOUT}s$( ((rc == 1)) && echo ': wrong HTTPS answer' || true)$( ((rc == 2)) && echo ': no HTTPS answer' || true)"
+  local what=""
+  if ((rc == 1)); then
+    what=": wrong HTTPS answer"
+  elif ((rc == 2)); then
+    what=": no HTTPS answer"
+  fi
+  log "Caddy not healthy after ${CADDY_HEALTH_TIMEOUT}s$what"
   return 1
 }
 

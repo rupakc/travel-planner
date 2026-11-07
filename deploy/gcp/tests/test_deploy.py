@@ -890,7 +890,7 @@ def test_step_really_stops_a_function_at_its_first_failing_command(tmp_path):
     deploy.sh runs every deploy step through `step`, in plain context, so an
     unchecked failing command ends the step there (and the caller goes on)."""
     src = DEPLOY.read_text()
-    body = src[src.index("STEP_RC=0\nstep() {") : src.index("# ── images.env")]
+    body = src[src.index("STEP_RC=0\n") : src.index("# ── images.env")]
     script = tmp_path / "s.sh"
     script.write_text(
         "set -euo pipefail\nload_images() { :; }\n"
@@ -1017,3 +1017,26 @@ def test_converge_after_docker_stop(live):
     w.flag("stopped", "caddy")
     w.run()
     assert any(c.startswith("compose up") for c in w.calls)
+
+
+def test_one_dropped_baseline_probe_does_not_loosen_the_https_check(live):
+    """Final review: the 'no HTTPS before the change' baseline is probed
+    twice; one slow/dropped probe must not let a runtime without HTTPS pass."""
+    w = live
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.flag("no_tls", new)
+    (w.sim / "tls_flaky").write_text("1")  # the first baseline probe drops
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert w.images()["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert (w.opt / "held-runtimes").read_text().split() == ["r2"]
+
+
+def test_two_dropped_baseline_probes_mean_no_https_before(live):
+    w = live
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.flag("no_tls", new)
+    (w.sim / "tls_flaky").write_text("2")  # HTTPS really gave no answer before
+    w.prod(caddy=new)
+    assert w.run() == 0, w.output
+    assert w.images()["CADDY_IMAGE"] == new
