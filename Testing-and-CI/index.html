@@ -1092,6 +1092,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#prod-scanyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prod-scan.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1332,8 +1343,16 @@ npm run test:coverage       # with v8 coverage, as CI runs it
 <td>Node 20, <code>npm run test:coverage</code></td>
 </tr>
 <tr>
-<td><code>build-and-scan</code></td>
-<td>Needs all of the above. Builds both images (<code>docker build -f backend/Dockerfile .</code> and <code>docker build frontend/</code>) and scans them with Trivy 0.70.0, failing on unfixed CRITICAL findings (<code>.trivyignore</code> lists accepted ones)</td>
+<td><code>test-deploy-kit</code></td>
+<td><code>pytest deploy/gcp/tests deploy/ci/tests infrastructure/gcp/tests</code> (governor, deployer with fakes, the deploy workflow's scripts, old-prod migration, <code>bootstrap.sh</code>). Its own job so it runs in parallel with <code>test-backend</code> (together they took 4–6 min)</td>
+</tr>
+<tr>
+<td><code>host-checks</code></td>
+<td>The VM kit's host layer (see below)</td>
+</tr>
+<tr>
+<td><code>image-builds</code></td>
+<td>Builds (nothing pushed), in parallel with the rest, the images whose inputs the change touches: the app (<code>backend/</code>, <code>.agents/</code>) and Caddy + SPA (<code>frontend/</code>, <code>deploy/gcp/Caddyfile</code>, <code>caddy.Dockerfile</code>), each then <strong>Trivy-scanned with the deploy policy</strong> (<code>deploy/ci/trivy-scan.sh</code>), and the local-only nginx <code>frontend/Dockerfile</code> (its own files and <code>package*.json</code>; build only, it doesn't ship). It reads the deploy workflow's BuildKit cache. A push with no usable base, or a change to <code>ci.yml</code>, <code>deploy.yml</code> or a <code>deploy/ci</code> script, does all three. Skipped when <code>deploy.yml</code> calls CI (<code>skip-image-builds</code>): its build jobs build and scan the images that ship</td>
 </tr>
 </tbody>
 </table>
@@ -1344,23 +1363,39 @@ npm run test:coverage       # with v8 coverage, as CI runs it
 mkdocs build --strict      # or: mkdocs serve
 </code></pre>
 <h3 id="deployyml">deploy.yml</h3>
-<p>Runs on every push to <code>main</code>. It calls <code>ci.yml</code> as a reusable workflow, so every CI job must pass first; plain pushes to <code>main</code> don't run CI twice. Then one <code>publish</code> job runs with only <code>contents: read</code>, <code>packages: write</code> and <code>id-token: write</code>. It:</p>
-<ol>
-<li>builds the app image (<code>backend/Dockerfile</code>) and the Caddy + SPA image (<code>deploy/gcp/caddy.Dockerfile</code>);</li>
-<li>pushes them to GHCR with <code>sha-&lt;commit&gt;</code> tags;</li>
-<li>signs both digests with <strong>cosign keyless</strong> (GitHub OIDC → Sigstore) and verifies them with the identity the VM requires;</li>
-<li>moves the <code>prod</code> tags to those digests with <code>docker buildx imagetools create</code>, checks that each tag resolves to exactly the signed digest, and does so only if the commit is still <code>main</code>'s HEAD.</li>
-</ol>
-<p>Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label <code>io.voyager.build</code> (the workflow run number), and the VM refuses an image from an older run than the one it is running.</p>
+<p>Runs on every push to <code>main</code>, <strong>weekly</strong> (Mondays 04:17 UTC, a no-cache refresh of both images) and by hand (<code>workflow_dispatch</code>, input <code>force</code>, default on). One run at a time (runs queue, a tag is never half-moved). The two images are independent, so a Caddy failure never blocks an app fix and vice versa:</p>
+<pre><code>ci ─────────────┬──► promote-app    (needs ci + build-app)
+build-app ──────┘
+ci ─────────────┬──► promote-caddy  (needs ci + build-caddy)
+build-caddy ────┘
+</code></pre>
+<ul>
+<li><strong><code>ci</code></strong> calls <code>ci.yml</code> as a reusable workflow (<code>contents: read</code>; plain pushes to <code>main</code> don't run CI twice). Its <code>image-builds</code> job is skipped here.</li>
+<li><strong><code>build-app</code>, <code>build-caddy</code></strong> run <strong>in parallel with <code>ci</code></strong> (<code>contents: read</code>, <code>packages: write</code>; no <code>id-token</code>, so they can't sign). Each:</li>
+<li>pins its base images to their current digests (<code>PYTHON_BASE</code>; <code>CADDY_BASE</code> and the SPA builder's <code>NODE_BASE</code>) and computes the image's <strong>inputs id</strong> with <code>deploy/ci/image-inputs-id.sh</code>: a SHA-256 over the Dockerfile, <code>.dockerignore</code>, every file the Dockerfile's <code>COPY</code>s take from the context (derived from the Dockerfile itself) and the pinned bases;</li>
+<li><code>deploy/ci/build-decision.sh</code> reads the label <code>io.voyager.app-inputs</code> / <code>io.voyager.caddy-inputs</code> of the image <code>prod</code> points at. Equal → nothing is built and <code>prod</code> stays (a frontend-only merge doesn't restart the app; a backend-only merge doesn't touch the SPA; a docs-only merge publishes nothing). Missing, unreadable or different → build. A forced run, or a <code>prod</code> image whose <code>io.voyager.fresh-at</code> is missing or over 8 days old → refresh (build with <code>no-cache</code>). An id that can't be computed is empty and also builds: <code>ADD</code>, a JSON or heredoc <code>COPY</code>, a variable in a source, <code>COPY --from</code>/<code>--mount from=</code> naming anything but an earlier stage, a <code>--mount</code> without <code>type=</code> or a bind mount of the context (type in any case), a <code>FROM</code> that is neither an earlier stage, a pinned build arg passed as <code>NAME=ref@sha256:…</code> nor an image pinned by digest, and <code>.dockerignore</code> re-includes other than <code>!**/NAME</code> (those switch all exclusions off instead; <code>!**/NAME</code> re-includes files and directories named NAME);</li>
+<li>builds and pushes a <code>sha-&lt;commit&gt;</code> tag;</li>
+<li>scans it <strong>by digest</strong> with <code>deploy/ci/trivy-scan.sh</code> (Trivy 0.70.0, checksum-pinned): any fixed CRITICAL finding fails (<code>.trivyignore</code> lists accepted ones).</li>
+<li><strong><code>promote-app</code>, <code>promote-caddy</code></strong> have a plain <code>needs: [ci, build-&lt;image&gt;]</code>, so each is <strong>skipped unless both succeeded</strong> (no <code>always()</code>). They are the only jobs with <code>id-token: write</code> (plus <code>contents: read</code>, <code>packages: write</code>) and run <code>deploy/ci/promote-image.sh</code>:</li>
+<li><code>main</code>'s HEAD must be a 40-hex SHA (else fail). If it isn't this commit, stop: nothing is signed, <code>prod</code> doesn't move;</li>
+<li>a built image is signed with <strong>cosign keyless</strong> (GitHub OIDC → Sigstore), verified with the identity the VM requires, then <code>prod</code> moves to it and must resolve to exactly that digest;</li>
+<li>a skipped image is not signed again; <code>prod</code> must still be the digest the build job compared, else the job fails.</li>
+</ul>
+<p>So every image signed as <code>deploy.yml@refs/heads/main</code> has passed CI and was <code>main</code>'s HEAD when signed. Scheduled and dispatched runs on <code>main</code> sign with the same identity: the certificate carries the workflow file and ref (<code>job_workflow_ref</code>), not the event. Every job is skipped unless <code>github.ref</code> is <code>refs/heads/main</code>.</p>
+<p>Building before CI has passed is safe: the image stays unsigned under its <code>sha-</code> tag, the VM refuses unsigned images, and it only ever deploys the digest the <code>prod</code> tag points at. <code>deploy.sh</code> compares each image's <code>io.voyager.build</code> only with its own predecessor (the running app; the live SPA release), so promoting one image while the other keeps an older run number is not a downgrade.</p>
+<p><strong>Not in the inputs id:</strong> what a <code>RUN</code> step resolves at build time, i.e. pip resolving the version ranges in <code>backend/requirements.txt</code> (npm follows <code>package-lock.json</code>). The weekly <strong>refresh</strong> picks up those and any new base image: forced builds run with <code>no-cache</code>, and their new digests also end a hold on the VM. It restarts the app once a week (after draining open streams). Each image carries <code>io.voyager.fresh-at</code> (the time of its last refresh, carried forward by cached builds), and <code>build-decision.sh</code> refreshes an image on <em>any</em> run when <code>prod</code>'s value is missing or over 8 days old, so a dropped scheduled run (replaced by a queued push) or a schedule GitHub disabled after 60 days of repository inactivity (<code>gh workflow enable deploy.yml</code> / <code>prod-scan.yml</code> re-enables them) doesn't stop refreshes.</p>
+<p>Every action in every workflow is pinned to a full commit SHA, with a version comment, because the promote jobs can sign as the identity the VM trusts. Images carry the label <code>io.voyager.build</code> (the workflow run number), and the VM refuses an image from an older run than the one it is running.</p>
+<h3 id="prod-scanyml">prod-scan.yml</h3>
+<p>Daily (05:41 UTC) and by hand: <code>deploy/ci/trivy-scan.sh</code> on <code>ghcr.io/rupakc/travel-planner-app:prod</code> and <code>…-caddy:prod</code>, with the same policy. A finding makes the run fail (a GitHub notification); it never signs or moves anything. Ship the fix by merging it or by running Deploy by hand.</p>
 <p>It has no GCP or VM credentials: the VM pulls and verifies by itself (see <a href="../Deployment-GCP/#6-day-to-day-deploys-and-rollback">Deployment on GCP</a>).</p>
 <p>The <code>host-checks</code> job runs <code>deploy/gcp/tests/host_checks.sh</code> in <code>debian:trixie</code> (pinned by digest, <code>NET_ADMIN</code>). It checks four things:</p>
 <ol>
 <li><strong>Governor rules:</strong> the real rules on iptables-nft for every tier, and that a rejected ruleset leaves the old rules intact.</li>
-<li><strong>Deployer:</strong> <code>deploy/gcp/tests/test_deploy.py</code> drives <code>deploy.sh</code> end to end with fake docker, curl and systemctl (<code>deploy_fakes.py</code>). It runs here as root and again in <code>test-backend</code>'s deploy-kit step as a normal user; it is skipped off Linux. App scenarios: first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal (remembered), plus <code>voyager.service</code> started with <code>--no-block</code>. Edge scenarios: an SPA-only swap (no restart; asserts the absence of recreate and reload), a Caddyfile hot reload, an invalid Caddyfile, a reload failure, a failed post-switch check, a symlink or missing asset in the image, pruning to three releases with older assets still reachable, a runtime change (drain, recreate, checks), the drain timeout, a runtime rollback, Caddy downgrades, signature failure, a <code>compose.yaml</code> change drained, GHCR <code>429</code> back-off, the cheap no-change run, <code>--rollback-edge</code> (and toggling it back), <code>--rollback-caddy</code>, <code>--window</code>, migration from the old <code>images.env</code> (with and without the new image) and a lost edge directory. The fakes can make <code>docker pull</code>, <code>create</code>, <code>cp</code>, <code>compose up</code> (failing, or exiting 0 while leaving the old container) and <code>caddy adapt</code> fail. The tests then check that infrastructure failures hold nothing and retry, that a failed pull never skips the downgrade check, that a held runtime ships content only, that a broken edge never blocks the app, that emails are rate-limited, that a no-change run makes exactly one <code>docker ps</code>, and that <code>step</code> stops a function at its first failing command.</li>
+<li><strong>Deployer:</strong> <code>deploy/gcp/tests/test_deploy.py</code> drives <code>deploy.sh</code> end to end with fake docker, curl and systemctl (<code>deploy_fakes.py</code>). It runs here as root and again in <code>test-deploy-kit</code> as a normal user; it is skipped off Linux. App scenarios: first deploy, upgrade, manual rollback with a hold, a newer digest ending the hold, automatic rollback, and downgrade refusal (remembered), plus <code>voyager.service</code> started with <code>--no-block</code>. Edge scenarios: an SPA-only swap (no restart; asserts the absence of recreate and reload), a Caddyfile hot reload, an invalid Caddyfile, a reload failure, a failed post-switch check, a symlink or missing asset in the image, pruning to three releases with older assets still reachable, a runtime change (drain, recreate, checks), the drain timeout, a runtime rollback, Caddy downgrades, signature failure, a <code>compose.yaml</code> change drained, GHCR <code>429</code> back-off, the cheap no-change run, <code>--rollback-edge</code> (and toggling it back), <code>--rollback-caddy</code>, <code>--window</code>, migration from the old <code>images.env</code> (with and without the new image) and a lost edge directory. The fakes can make <code>docker pull</code>, <code>create</code>, <code>cp</code>, <code>compose up</code> (failing, or exiting 0 while leaving the old container) and <code>caddy adapt</code> fail. The tests then check that infrastructure failures hold nothing and retry, that a failed pull never skips the downgrade check, that a held runtime ships content only, that a broken edge never blocks the app, that emails are rate-limited, that a no-change run makes exactly one <code>docker ps</code>, and that <code>step</code> stops a function at its first failing command.</li>
 <li><strong>First boot:</strong> <code>first-boot.sh</code> for real with fake curl, docker and systemctl (<code>first_boot_sim.sh</code>), on a first and a later boot: <code>voyager.service</code> ends up active, voyager units are only started with <code>--no-block</code>, and the bundle (built by <code>bootstrap.sh</code>) unpacks without tar warnings.</li>
 <li><strong>systemd units:</strong> <code>systemd-analyze verify</code>.</li>
 </ol>
-<p>The image build waits for it. CI also runs <code>shellcheck</code> on <code>deploy/gcp/*.sh</code>, <code>deploy/gcp/host/*.sh</code> and <code>infrastructure/gcp/*.sh</code>, ruff on <code>deploy/</code> and <code>infrastructure/gcp/</code>, and the tests in <code>deploy/gcp/tests</code> (egress governor) and <code>infrastructure/gcp/tests</code> (old-prod migration; <code>bootstrap.sh</code> against stub gcloud/curl: dry run calls nothing, beta preflight, billing quota project, clean sorted host bundle).</p>
+<p>CI also runs <code>shellcheck</code> on <code>deploy/gcp/*.sh</code>, <code>deploy/gcp/host/*.sh</code>, <code>deploy/ci/*.sh</code> and <code>infrastructure/gcp/*.sh</code>, ruff on <code>deploy/</code> and <code>infrastructure/gcp/</code>, and the tests in <code>deploy/gcp/tests</code> (egress governor, the deployer), <code>deploy/ci/tests</code> (<code>build-decision.sh</code> and <code>promote-image.sh</code> against fake docker/git/cosign: skip only on an equal label, sign → verify → move in that order, never sign a skipped or superseded image, fail closed on an unreadable HEAD or digest; <code>image-inputs-id.sh</code>: same inputs give the same id regardless of order and mtime; any change to a source, <code>requirements.txt</code>, <code>.agents/</code>, the Dockerfile, <code>.dockerignore</code>, the base, an executable bit, a new, deleted or renamed file changes it; <code>.dockerignore</code>d, gitignored and un-<code>COPY</code>ed files don't; unsupported Dockerfiles, foreign <code>--from</code> and context mounts fail; unusual re-includes switch exclusions off; and the real app and Caddy input lists) and <code>infrastructure/gcp/tests</code> (old-prod migration; <code>bootstrap.sh</code> against stub gcloud/curl: dry run calls nothing, beta preflight, billing quota project, clean sorted host bundle).</p>
 
 
 

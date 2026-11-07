@@ -1178,6 +1178,7 @@
 </tbody>
 </table>
 <h2 id="proposals-not-done-they-would-save-minutes-but-touch-ci-gates">Proposals (not done; they would save minutes but touch CI gates)</h2>
+<p>The first two were done on 2026-11-07 (branch <code>perf/faster-deploy</code>): per-image build jobs run in parallel with CI and Trivy-scan the shipped images by digest; per-image promote jobs sign them and move <code>prod</code> after CI; unchanged images (<code>io.voyager.app-inputs</code> / <code>io.voyager.caddy-inputs</code>) are not rebuilt. See <a href="../../../Testing-and-CI/#deployyml">Testing and CI</a>.</p>
 <ul>
 <li><code>build-and-scan</code> builds and Trivy-scans the legacy nginx <code>frontend/</code> image, which isn't deployed, and waits for every test job. Scanning the Caddy image that ships instead (and the app image <code>publish</code> builds, by digest) would be more useful and could run in <code>publish</code> after the push and before moving <code>prod</code>, saving about 1 min.</li>
 <li>The app image gets a new digest on every merge (revision label), so the app restarts, cutting its SSE streams, even on frontend-only merges. A content label for the app (like the Caddy runtime id) would skip those restarts. The same drain could also run before app recreates.</li>
