@@ -9,17 +9,21 @@
 # Jobs:
 #   ci       all of ci.yml (lint, audits, tests, host checks)        ─┐
 #   build    in parallel with ci: build only what changed, push the   ├→ promote
-#            sha-<sha> tag, Trivy-scan, sign, verify                  ─┘
+#            sha-<sha> tag, Trivy-scan (no signing, no id-token)      ─┘
 #   promote  only when BOTH succeeded (plain `needs`, no always()/failure()):
-#            still main's HEAD? → move `prod` to the new digests
+#            still main's HEAD? → sign the new digests, verify them as
+#            the VM will → move `prod` to them
 #
-# Building before CI has passed is safe: an image signed by `build` but never
-# promoted is never deployed, because deploy.sh only ever resolves and deploys
-# the digest of the `prod` tag (TAG=prod; resolve_digest → deploy_app /
-# deploy_edge), never a sha-* tag or any other signed digest. And each image
-# is checked against its own live predecessor only (app: the running app's
-# io.voyager.build; Caddy: the live release's BUILD), so promoting one image
-# while the other keeps an older run number is not a downgrade.
+# Invariant: every image signed by deploy.yml@refs/heads/main has passed CI
+# and was main's HEAD when signed. Only `promote` holds id-token, and it
+# signs only the digests it is about to move (never a skipped image).
+# Building before CI has passed is safe: an unsigned sha-* image is refused
+# by the VM, and deploy.sh only ever resolves and deploys the digest of the
+# `prod` tag (TAG=prod; resolve_digest → deploy_app / deploy_edge), never a
+# sha-* tag or any other digest. Each image is checked against its own live
+# predecessor only (app: the running app's io.voyager.build; Caddy: the live
+# release's BUILD), so promoting one image while the other keeps an older run
+# number is not a downgrade.
 #
 # Skips: each image carries io.voyager.<app|caddy>-inputs, a hash of every
 # input its build can read (deploy/gcp/image-inputs-id.sh: the Dockerfile,
@@ -61,12 +65,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      packages: write # push to ghcr.io/rupakc/travel-planner-*
-      id-token: write # cosign keyless: GitHub OIDC → Sigstore certificate
-    env:
-      # The identity the VM's deployer requires (deploy.sh CERT_IDENTITY)
-      CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@refs/heads/main
-      CERT_ISSUER: https://token.actions.githubusercontent.com
+      packages: write # push to ghcr.io/rupakc/travel-planner-* (no id-token: nothing is signed here)
     outputs:
       app_build: ${{ steps.state.outputs.app_build }}
       app_digest: ${{ steps.app.outputs.digest }}
@@ -181,9 +180,9 @@ jobs:
           cache-from: type=gha,scope=caddy
           cache-to: type=gha,mode=max,scope=caddy
 
-      # The images that ship, by digest, before they are signed. Same policy
-      # as CI had for the old images: unfixed-ignored CRITICAL fails
-      # (.trivyignore lists accepted ones). Checksum-pinned: this job can sign.
+      # The images that ship, by digest, before they can be signed. Same
+      # policy as CI had for the old images: unfixed-ignored CRITICAL fails
+      # (.trivyignore lists accepted ones). Checksum-pinned: this job can push.
       - name: Install Trivy
         if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
         run: |
@@ -210,34 +209,24 @@ jobs:
           trivy image --image-src remote --exit-code 1 --severity CRITICAL \
             --ignore-unfixed --no-progress "$CADDY_IMAGE@${{ steps.caddy.outputs.digest }}"
 
-      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
-        if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
-        with:
-          cosign-release: v2.4.1
-
-      - name: Sign by digest (keyless) and verify exactly as the VM will
-        if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
-        env:
-          APP_DIGEST: ${{ steps.app.outputs.digest }}
-          CADDY_DIGEST: ${{ steps.caddy.outputs.digest }}
-        run: |
-          set -euo pipefail
-          refs=()
-          if [ -n "$APP_DIGEST" ]; then refs+=("$APP_IMAGE@$APP_DIGEST"); fi
-          if [ -n "$CADDY_DIGEST" ]; then refs+=("$CADDY_IMAGE@$CADDY_DIGEST"); fi
-          for ref in "${refs[@]}"; do cosign sign --yes "$ref"; done
-          for ref in "${refs[@]}"; do
-            cosign verify --certificate-identity "$CERT_IDENTITY" \
-              --certificate-oidc-issuer "$CERT_ISSUER" "$ref" >/dev/null
-          done
-
   promote:
     # Plain needs: skipped unless ci AND build succeeded
     needs: [ci, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      packages: write # move the prod tags (no id-token: nothing is signed here)
+      packages: write # sign (signatures live in GHCR) and move the prod tags
+      id-token: write # cosign keyless: GitHub OIDC → Sigstore certificate
+    env:
+      # The identity the VM's deployer requires (deploy.sh CERT_IDENTITY)
+      CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@refs/heads/main
+      CERT_ISSUER: https://token.actions.githubusercontent.com
+      APP_BUILD: ${{ needs.build.outputs.app_build }}
+      APP_DIGEST: ${{ needs.build.outputs.app_digest }}
+      APP_PROD: ${{ needs.build.outputs.app_prod }}
+      CADDY_BUILD: ${{ needs.build.outputs.caddy_build }}
+      CADDY_DIGEST: ${{ needs.build.outputs.caddy_digest }}
+      CADDY_PROD: ${{ needs.build.outputs.caddy_prod }}
     steps:
       - name: Still main's HEAD? (never move prod back to an older commit)
         id: head
@@ -246,7 +235,7 @@ jobs:
           if [ "$head" = "${{ github.sha }}" ]; then
             echo "current=true" >>"$GITHUB_OUTPUT"
           else
-            echo "::notice::main moved on to $head; images stay signed under sha-${{ github.sha }}, prod not moved"
+            echo "::notice::main moved on to $head; images stay unsigned under sha-${{ github.sha }}, prod not moved"
             echo "current=false" >>"$GITHUB_OUTPUT"
           fi
 
@@ -257,17 +246,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+        if: steps.head.outputs.current == 'true' && (env.APP_BUILD == 'true' || env.CADDY_BUILD == 'true')
+        with:
+          cosign-release: v2.4.1
+
+      # Only the digests this job is about to move (a skipped image was signed
+      # by the run that built it and is not signed again), before prod moves
+      - name: Sign by digest (keyless) and verify exactly as the VM will
+        if: steps.head.outputs.current == 'true' && (env.APP_BUILD == 'true' || env.CADDY_BUILD == 'true')
+        run: |
+          set -euo pipefail
+          refs=()
+          if [ "$APP_BUILD" = true ]; then refs+=("$APP_IMAGE@$APP_DIGEST"); fi
+          if [ "$CADDY_BUILD" = true ]; then refs+=("$CADDY_IMAGE@$CADDY_DIGEST"); fi
+          for ref in "${refs[@]}"; do
+            [[ "$ref" =~ @sha256:[0-9a-f]{64}$ ]] || { echo "::error::not a digest reference: $ref"; exit 1; }
+          done
+          for ref in "${refs[@]}"; do cosign sign --yes "$ref"; done
+          for ref in "${refs[@]}"; do
+            cosign verify --certificate-identity "$CERT_IDENTITY" \
+              --certificate-oidc-issuer "$CERT_ISSUER" "$ref" >/dev/null
+          done
+
       # Built → move prod to it (app first, like the VM deploys). Skipped →
       # prod must still be the digest whose label `build` compared, else fail.
       - name: Move the prod tags (same digests, nothing rebuilt)
         if: steps.head.outputs.current == 'true'
-        env:
-          APP_BUILD: ${{ needs.build.outputs.app_build }}
-          APP_DIGEST: ${{ needs.build.outputs.app_digest }}
-          APP_PROD: ${{ needs.build.outputs.app_prod }}
-          CADDY_BUILD: ${{ needs.build.outputs.caddy_build }}
-          CADDY_DIGEST: ${{ needs.build.outputs.caddy_digest }}
-          CADDY_PROD: ${{ needs.build.outputs.caddy_prod }}
         run: |
           set -euo pipefail
           prod_digest() { docker buildx imagetools inspect "$1:prod" --format '{{json .Manifest}}' | jq -r .digest; }

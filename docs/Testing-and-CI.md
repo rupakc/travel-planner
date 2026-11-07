@@ -91,17 +91,20 @@ mkdocs build --strict      # or: mkdocs serve
 Runs on every push to `main`; one run at a time (runs queue, a tag is never half-moved). Three jobs:
 
 - **`ci`** calls `ci.yml` as a reusable workflow (`contents: read`; plain pushes to `main` don't run CI twice). Its `image-builds` job is skipped here.
-- **`build`** runs **in parallel with `ci`** (`contents: read`, `packages: write`, `id-token: write`). For each image it:
+- **`build`** runs **in parallel with `ci`** (`contents: read`, `packages: write`; no `id-token`, so it can't sign). For each image it:
   1. pins the base image (`PYTHON_BASE`, `CADDY_BASE`) to its current digest and computes the image's **inputs id** with `deploy/gcp/image-inputs-id.sh`: a SHA-256 over the Dockerfile, `.dockerignore`, every file the Dockerfile's `COPY`s take from the context (derived from the Dockerfile itself) and the pinned base;
   2. reads the label `io.voyager.app-inputs` / `io.voyager.caddy-inputs` of the image `prod` points at. Equal → nothing is built and `prod` stays (a frontend-only merge doesn't restart the app; a backend-only merge doesn't touch the SPA; a docs-only merge publishes nothing). Missing, unreadable or different → build. An id that can't be computed (an `ADD`, a variable in a `COPY` source, a bind mount of the context…) is empty and also builds;
   3. builds and pushes what changed with a `sha-<commit>` tag;
-  4. scans it **by digest, before signing**, with Trivy 0.70.0 (checksum-pinned), failing on unfixed CRITICAL findings (`.trivyignore` lists accepted ones);
-  5. signs it with **cosign keyless** (GitHub OIDC → Sigstore) and verifies it with the identity the VM requires.
-- **`promote`** has a plain `needs: [ci, build]`, so it is **skipped unless both succeeded** (no `always()`), and has only `packages: write` (no `id-token`). If the commit is still `main`'s HEAD it moves `prod` to each newly built digest with `docker buildx imagetools create` and checks that the tag resolves to exactly that digest; for a skipped image it checks that `prod` is still the digest `build` compared, and fails otherwise.
+  4. scans it **by digest** with Trivy 0.70.0 (checksum-pinned), failing on unfixed CRITICAL findings (`.trivyignore` lists accepted ones).
+- **`promote`** has a plain `needs: [ci, build]`, so it is **skipped unless both succeeded** (no `always()`). It is the only job with `id-token: write` (plus `packages: write`). If the commit is still `main`'s HEAD it:
+  1. signs each newly built digest with **cosign keyless** (GitHub OIDC → Sigstore) and verifies it with the identity the VM requires. A skipped image is not signed again;
+  2. moves `prod` to it with `docker buildx imagetools create` and checks that the tag resolves to exactly that digest. For a skipped image it checks that `prod` is still the digest `build` compared, and fails otherwise.
 
-Building and signing before CI has passed is safe because the VM only ever deploys the digest the `prod` tag points at, and only `promote` moves `prod`. A signed image whose CI failed stays under its `sha-` tag. `deploy.sh` compares each image's `io.voyager.build` only with its own predecessor (the running app; the live SPA release), so promoting one image while the other keeps an older run number is not a downgrade.
+  So every image signed as `deploy.yml@refs/heads/main` has passed CI and was `main`'s HEAD when signed.
 
-Every action in every workflow is pinned to a full commit SHA, with a version comment, because this job can sign as the identity the VM trusts. Images carry the label `io.voyager.build` (the workflow run number), and the VM refuses an image from an older run than the one it is running.
+Building before CI has passed is safe: the image stays unsigned under its `sha-` tag, the VM refuses unsigned images, and it only ever deploys the digest the `prod` tag points at. `deploy.sh` compares each image's `io.voyager.build` only with its own predecessor (the running app; the live SPA release), so promoting one image while the other keeps an older run number is not a downgrade.
+
+Every action in every workflow is pinned to a full commit SHA, with a version comment, because `promote` can sign as the identity the VM trusts. Images carry the label `io.voyager.build` (the workflow run number), and the VM refuses an image from an older run than the one it is running.
 
 It has no GCP or VM credentials: the VM pulls and verifies by itself (see [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback)).
 
