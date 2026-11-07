@@ -5,8 +5,8 @@
 #   - every file the Dockerfile's COPY instructions take from the context
 #     (derived from the Dockerfile, not listed by hand: a new COPY is covered
 #     automatically), by path, executable bit and content,
-#   - EXTRA strings: the base images pinned by digest (the exact build args),
-#     so a new base digest gives a new id.
+#   - EXTRA build args, NAME=REF with REF pinned by digest (exactly what the
+#     workflow passes as --build-arg), so a new base digest gives a new id.
 # The deploy workflow stores it in the image label io.voyager.app-inputs or
 # io.voyager.caddy-inputs and skips the build (and so the VM's restart) when
 # the `prod` image already carries this id.
@@ -22,20 +22,25 @@
 #   - COPY --from= or RUN --mount from= naming anything but an earlier stage
 #     (an image or a named build context);
 #   - RUN --mount without type= (the default type is bind) or a bind mount
-#     without from= (the build context).
+#     (type compared case-insensitively) without from= (the build context);
+#   - a FROM that is neither an earlier stage, nor ${NAME}/$NAME for a NAME
+#     given as an EXTRA, nor an image pinned by digest (a floating tag would
+#     change the image without changing the id);
+#   - an EXTRA that isn't NAME=REF@sha256:<64 hex>.
 # Over-counting is harmless (a needless rebuild); under-counting is not:
 #   - .dockerignore is applied only for plain path entries (e.g.
 #     backend/tests). Glob entries (**/*.pyc) are not applied: those files
 #     are untracked and gitignored, so they are not in a CI checkout anyway.
 #   - A `!` re-include of the form `!**/NAME` (NAME without glob characters)
-#     keeps every file named NAME under an excluded path. Any other `!` entry
-#     turns all exclusions off.
+#     keeps, under an excluded path, every file with a path component named
+#     NAME (the file itself, or anything inside a directory named NAME). Any
+#     other `!` entry turns all exclusions off.
 #   - A Dockerfile-specific DOCKERFILE.dockerignore turns all exclusions off.
 #
 # Files: tracked plus untracked-but-not-gitignored (git ls-files), contents
 # from the working tree. Order- and mtime-independent.
 #
-# Usage: image-inputs-id.sh [--list] DOCKERFILE [EXTRA...]
+# Usage: image-inputs-id.sh [--list] DOCKERFILE [NAME=REF@sha256:…...]
 #   --list  print what is hashed (one line per input) instead of the id
 set -euo pipefail
 
@@ -50,6 +55,13 @@ dockerfile="${1:?usage: image-inputs-id.sh [--list] DOCKERFILE [EXTRA...]}"
 shift
 [[ -f "$dockerfile" ]] || die "no such Dockerfile: $dockerfile"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git work tree"
+pinned_ref='^[^[:space:]@]+@sha256:[0-9a-f]{64}$'
+args_given=() # NAMEs of the EXTRA build args
+for x in "$@"; do
+  [[ "$x" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.+)$ && "${BASH_REMATCH[2]}" =~ $pinned_ref ]] ||
+    die "EXTRA must be NAME=REF@sha256:<64 hex>: $x"
+  args_given+=("${x%%=*}")
+done
 
 sha256() { if command -v sha256sum >/dev/null; then sha256sum; else shasum -a 256; fi | cut -c1-64; }
 digest() { if ((list)); then cat; else sha256; fi; }
@@ -91,6 +103,17 @@ while IFS= read -r ins; do
       # FROM [--platform=…] IMAGE [AS NAME]
       args=()
       for w in "${words[@]:1}"; do [[ "$w" == --* ]] || args+=("$w"); done
+      ((${#args[@]})) || die "FROM without an image: $ins"
+      img="${args[0]}"
+      if ! is_stage "$img"; then
+        if [[ "$img" =~ ^\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?$ ]]; then
+          a="${BASH_REMATCH[1]}" found=0
+          for g in "${args_given[@]+"${args_given[@]}"}"; do [[ "$g" == "$a" ]] && found=1; done
+          ((found)) || die "FROM \$$a, but $a is not a pinned EXTRA build arg: $ins"
+        elif [[ ! "$img" =~ $pinned_ref ]]; then
+          die "FROM must be an earlier stage, a pinned EXTRA build arg or an image pinned by digest: $ins"
+        fi
+      fi
       if ((${#args[@]} >= 3)) && [[ "$(lower "${args[1]}")" == as ]]; then
         stages+=("$(lower "${args[2]}")")
       else
@@ -109,7 +132,7 @@ while IFS= read -r ins; do
         IFS=, read -r -a opts <<<"${w#--mount=}"
         for o in "${opts[@]}"; do
           case "$o" in
-            type=*) type="${o#type=}" ;;
+            type=* | TYPE=* | Type=*) type="$(lower "${o#*=}")" ;;
             from=*) from="${o#from=}" ;;
           esac
         done
@@ -185,12 +208,17 @@ elif [[ -f .dockerignore ]]; then
   fi
 fi
 
+# excluded FILE → under an excluded path, and no path component is a
+# re-included NAME (`!**/NAME` matches a file or directory of that name
+# anywhere; a re-included directory brings everything inside it back)
 excluded() {
-  local f="$1" e n base="${1##*/}"
+  local f="$1" e n c
+  local -a parts
+  IFS=/ read -r -a parts <<<"$f"
   for e in "${excludes[@]+"${excludes[@]}"}"; do
     if [[ "$f" == "$e" || "$f" == "$e"/* ]]; then
       for n in "${keep_names[@]+"${keep_names[@]}"}"; do
-        [[ "$base" == "$n" ]] && return 1
+        for c in "${parts[@]}"; do [[ "$c" == "$n" ]] && return 1; done
       done
       return 0
     fi

@@ -36,10 +36,16 @@
 # means build (fail safe). The revision label still changes with every build;
 # it is the skip that keeps the digest.
 # Not in the id: what a RUN step resolves at build time, i.e. pip's version
-# ranges in backend/requirements.txt (npm ci follows package-lock.json). The
-# weekly scheduled run (and workflow_dispatch with force) rebuilds both images
-# regardless, so base and dependency fixes flow, and a new digest also ends a
-# hold on the VM.
+# ranges in backend/requirements.txt (npm ci follows package-lock.json).
+# Refresh: the weekly scheduled run (and workflow_dispatch with force)
+# rebuilds both images WITHOUT CACHE, so base and dependency fixes flow, and a
+# new digest also ends a hold on the VM. Each image records its last refresh
+# in io.voyager.fresh-at (carried forward by cached builds); any run, a push
+# included, refreshes an image whose prod copy is missing it or is over 7 days
+# old (deploy/ci/build-decision.sh). So a scheduled run that a queued push
+# replaced in the concurrency group, or a schedule GitHub disabled (cron stops
+# after 60 days without repository activity; re-enable with
+# `gh workflow enable deploy.yml`), still gets its refresh on the next push.
 #
 # schedule / workflow_dispatch: they run on main, so the OIDC token's
 # job_workflow_ref, and with it the certificate identity, is still
@@ -52,7 +58,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 4 * * 1" # Mondays 04:17 UTC: forced rebuild of both images
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC: refresh (no-cache rebuild) of both images
   workflow_dispatch:
     inputs:
       force:
@@ -114,7 +120,7 @@ jobs:
           [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no digest for $tag"; exit 1; }
           base="$tag@$digest"
           # An id that can't be computed is empty: never equal → build
-          inputs="$(bash deploy/ci/image-inputs-id.sh backend/Dockerfile "$base")" || inputs=""
+          inputs="$(bash deploy/ci/image-inputs-id.sh backend/Dockerfile "PYTHON_BASE=$base")" || inputs=""
           printf 'base=%s\ninputs=%s\n' "$base" "$inputs" >>"$GITHUB_OUTPUT"
           bash deploy/ci/build-decision.sh app "$APP_IMAGE" "$inputs" "$FORCE"
 
@@ -132,11 +138,15 @@ jobs:
             PYTHON_BASE=${{ steps.state.outputs.base }}
           # io.voyager.build: the VM refuses images from an older run (no downgrades)
           # io.voyager.app-inputs: equal on the next run → no rebuild, no restart
+          # io.voyager.fresh-at: last build without cache (see the header)
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.voyager.build=${{ github.run_number }}
             io.voyager.app-inputs=${{ steps.state.outputs.inputs }}
+            io.voyager.fresh-at=${{ steps.state.outputs.fresh_at }}
+          # A refresh (weekly / forced / stale) rebuilds every layer
+          no-cache: ${{ steps.state.outputs.fresh == 'true' }}
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
@@ -183,7 +193,8 @@ jobs:
           caddy_base="$(pin CADDY_BASE)"
           node_base="$(pin NODE_BASE)"
           runtime="$(bash deploy/gcp/caddy-runtime-id.sh "$caddy_base")"
-          inputs="$(bash deploy/ci/image-inputs-id.sh deploy/gcp/caddy.Dockerfile "$caddy_base" "$node_base")" || inputs=""
+          inputs="$(bash deploy/ci/image-inputs-id.sh deploy/gcp/caddy.Dockerfile \
+            "CADDY_BASE=$caddy_base" "NODE_BASE=$node_base")" || inputs=""
           printf 'caddy_base=%s\nnode_base=%s\nruntime=%s\ninputs=%s\n' \
             "$caddy_base" "$node_base" "$runtime" "$inputs" >>"$GITHUB_OUTPUT"
           bash deploy/ci/build-decision.sh caddy "$CADDY_IMAGE" "$inputs" "$FORCE"
@@ -204,12 +215,16 @@ jobs:
           # io.voyager.build: the VM refuses images from an older run (no downgrades)
           # io.voyager.caddy-runtime: a change recreates Caddy on the VM
           # io.voyager.caddy-inputs: equal on the next run → no rebuild
+          # io.voyager.fresh-at: last build without cache (see the header)
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.voyager.build=${{ github.run_number }}
             io.voyager.caddy-runtime=${{ steps.state.outputs.runtime }}
             io.voyager.caddy-inputs=${{ steps.state.outputs.inputs }}
+            io.voyager.fresh-at=${{ steps.state.outputs.fresh_at }}
+          # A refresh (weekly / forced / stale) rebuilds every layer
+          no-cache: ${{ steps.state.outputs.fresh == 'true' }}
           cache-from: type=gha,scope=caddy
           cache-to: type=gha,mode=max,scope=caddy
 

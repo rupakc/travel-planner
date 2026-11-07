@@ -80,6 +80,10 @@ def make_repo(root: Path, files: dict[str, str] = FILES, order=None) -> Path:
     return root
 
 
+B1 = "PYTHON_BASE=python:3.12-slim@sha256:" + "1" * 64
+B2 = "PYTHON_BASE=python:3.12-slim@sha256:" + "2" * 64
+
+
 def run(root: Path, *args: str, dockerfile="backend/Dockerfile"):
     return subprocess.run(
         ["bash", str(SCRIPT), dockerfile, *args],
@@ -98,9 +102,9 @@ def ident(root: Path, *args: str, dockerfile="backend/Dockerfile") -> str:
     return out
 
 
-def listed(root: Path, dockerfile="backend/Dockerfile") -> list[str]:
+def listed(root: Path, dockerfile="backend/Dockerfile", extra=(B1,)) -> list[str]:
     r = subprocess.run(
-        ["bash", str(SCRIPT), "--list", dockerfile],
+        ["bash", str(SCRIPT), "--list", dockerfile, *extra],
         cwd=root,
         capture_output=True,
         text=True,
@@ -120,13 +124,13 @@ def repo(tmp_path):
 
 
 def test_same_inputs_same_id_regardless_of_order_and_mtime(repo, tmp_path):
-    a = ident(repo, "base@sha256:1")
-    assert ident(repo, "base@sha256:1") == a
+    a = ident(repo, B1)
+    assert ident(repo, B1) == a
     other = make_repo(tmp_path / "other", order=list(reversed(list(FILES))))
     for p in other.rglob("*"):
         if p.is_file() and ".git" not in p.parts:
             os.utime(p, (1_000_000, 1_000_000))
-    assert ident(other, "base@sha256:1") == a
+    assert ident(other, B1) == a
 
 
 @pytest.mark.parametrize(
@@ -163,14 +167,28 @@ def test_same_inputs_same_id_regardless_of_order_and_mtime(repo, tmp_path):
     ],
 )
 def test_any_input_change_changes_the_id(repo, change):
-    before = ident(repo, "base@sha256:1")
+    before = ident(repo, B1)
     change(repo)
-    assert ident(repo, "base@sha256:1") != before
+    assert ident(repo, B1) != before
 
 
 def test_extra_inputs_count(repo):
-    assert ident(repo, "base@sha256:1") != ident(repo, "base@sha256:2")
-    assert ident(repo, "base@sha256:1") != ident(repo)
+    assert ident(repo, B1) != ident(repo, B2)
+    assert ident(repo, B1) != ident(repo, B1, "OTHER=x@sha256:" + "3" * 64)
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "python:3.12-slim@sha256:" + "1" * 64,  # no NAME=
+        "PYTHON_BASE=python:3.12-slim",  # floating tag
+        "PYTHON_BASE=python@sha256:abc",  # not a digest
+        "1X=python@sha256:" + "1" * 64,  # not an arg name
+    ],
+    ids=["no-name", "floating", "short-digest", "bad-name"],
+)
+def test_unpinned_or_malformed_extras_fail(repo, extra):
+    assert run(repo, extra).returncode != 0
 
 
 @pytest.mark.parametrize(
@@ -190,27 +208,32 @@ def test_extra_inputs_count(repo):
     ids=["tests", "ignored-dir", "frontend", "docs", "gitignored", "mtime"],
 )
 def test_changes_outside_the_image_keep_the_id(repo, change):
-    before = ident(repo, "base@sha256:1")
+    before = ident(repo, B1)
     change(repo)
-    assert ident(repo, "base@sha256:1") == before
+    assert ident(repo, B1) == before
 
 
 @pytest.mark.parametrize(
     "dockerfile",
     [
-        "FROM x\nADD backend/ /app\n",
-        "FROM x\nCOPY $SRC /app\n",
-        'FROM x\nCOPY ["backend/", "/app"]\n',
-        "FROM x\nCOPY <<EOF /a\nhi\nEOF\n",
-        "FROM x\nRUN --mount=type=bind,target=/src make\n",
-        "FROM x\nRUN --mount=target=/src make\nCOPY .agents/ /a\n",
-        "FROM x\nRUN --mount=source=.,target=/src make\nCOPY .agents/ /a\n",
-        "FROM x\nRUN --mount=type=bind,from=alpine:3,target=/a ls\nCOPY .agents/ /a\n",
-        "FROM x\nCOPY --from=nginx:alpine /etc/nginx /n\nCOPY .agents/ /a\n",
-        "FROM x\nCOPY --from=later /a /b\nFROM y AS later\nCOPY .agents/ /a\n",
-        "FROM x\nCOPY --from=1 /a /b\nCOPY .agents/ /a\n",
-        "FROM x\nCOPY nothing-here/ /app\n",
-        "FROM x\nRUN echo no copy\n",
+        "FROM ${PYTHON_BASE}\nADD backend/ /app\n",
+        "FROM ${PYTHON_BASE}\nCOPY $SRC /app\n",
+        'FROM ${PYTHON_BASE}\nCOPY ["backend/", "/app"]\n',
+        "FROM ${PYTHON_BASE}\nCOPY <<EOF /a\nhi\nEOF\n",
+        "FROM ${PYTHON_BASE}\nRUN --mount=type=bind,target=/src make\n",
+        "FROM ${PYTHON_BASE}\nRUN --mount=target=/src make\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nRUN --mount=source=.,target=/src make\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nRUN --mount=type=bind,from=alpine:3,target=/a ls\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nCOPY --from=nginx:alpine /etc/nginx /n\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nCOPY --from=later /a /b\nFROM y AS later\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nCOPY --from=1 /a /b\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nCOPY nothing-here/ /app\n",
+        "FROM ${PYTHON_BASE}\nRUN echo no copy\n",
+        "FROM ${PYTHON_BASE}\nRUN --mount=type=BIND,target=/src make\nCOPY .agents/ /a\n",
+        "FROM python:3.12-slim\nCOPY .agents/ /a\n",
+        "FROM ${NODE_BASE}\nCOPY .agents/ /a\n",
+        "FROM $NODE_BASE AS b\nCOPY .agents/ /a\n",
+        "FROM ${PYTHON_BASE}\nCOPY .agents/ /a\nFROM other AS x\n",
     ],
     ids=[
         "add",
@@ -226,21 +249,34 @@ def test_changes_outside_the_image_keep_the_id(repo, change):
         "copy-from-unknown-index",
         "no-match",
         "no-copy",
+        "bind-mount-uppercase-type",
+        "from-floating-tag",
+        "from-arg-not-given",
+        "from-bare-arg-not-given",
+        "from-unknown-later",
     ],
 )
 def test_unsupported_dockerfiles_fail_so_the_workflow_builds(repo, dockerfile):
     (repo / "backend/Dockerfile").write_text(dockerfile)
-    r = run(repo)
+    r = run(repo, B1)
     assert r.returncode != 0
     assert r.stdout == ""
 
 
 def test_stage_copies_and_mounts_from_stages_are_not_context(repo):
     (repo / "backend/Dockerfile").write_text(
-        "FROM x AS a\nCOPY .agents/ /a\nFROM y AS B\n"
+        "FROM ${PYTHON_BASE} AS a\nCOPY .agents/ /a\nFROM a AS B\n"
         "RUN --mount=type=bind,from=a,target=/a --mount=type=cache,target=/c ls\n"
         "COPY --from=a /a /b\nCOPY --from=0 /a /c\nCOPY --from=b /a /d\n"
         "RUN --mount=type=secret,id=s cat /run/secrets/s\n"
+    )
+    assert listed(repo) == [".agents/flights.md"]
+
+
+def test_from_pinned_literal_and_bare_arg_are_accepted(repo):
+    (repo / "backend/Dockerfile").write_text(
+        "FROM alpine@sha256:" + "4" * 64 + " AS a\n"
+        "FROM --platform=linux/amd64 $PYTHON_BASE\nCOPY .agents/ /a\n"
     )
     assert listed(repo) == [".agents/flights.md"]
 
@@ -267,6 +303,21 @@ def test_simple_negation_keeps_only_that_name(repo):
     assert "backend/tests/test_x.py" not in files
 
 
+def test_simple_negation_reincludes_a_directory_of_that_name(repo):
+    # `!**/fixtures` brings back backend/tests/fixtures/ and everything inside
+    (repo / ".dockerignore").write_text(DOCKERIGNORE + "!**/fixtures\n")
+    for name in ("backend/tests/fixtures/a.json", "backend/tests/fixtures/deep/b.json"):
+        (repo / name).parent.mkdir(parents=True, exist_ok=True)
+        (repo / name).write_text("{}\n")
+    files = listed(repo)
+    assert "backend/tests/fixtures/a.json" in files
+    assert "backend/tests/fixtures/deep/b.json" in files
+    assert "backend/tests/test_x.py" not in files
+    before = ident(repo, B1)
+    (repo / "backend/tests/fixtures/deep/b.json").write_text("[]\n")
+    assert ident(repo, B1) != before
+
+
 def test_dockerfile_specific_ignore_file_disables_root_exclusions(repo):
     (repo / "backend/Dockerfile.dockerignore").write_text(".git\n")
     assert "backend/tests/test_x.py" in listed(repo)
@@ -282,7 +333,11 @@ def test_real_app_image_inputs():
 
 
 def test_real_caddy_image_inputs():
-    files = listed(REPO, "deploy/gcp/caddy.Dockerfile")
+    files = listed(
+        REPO,
+        "deploy/gcp/caddy.Dockerfile",
+        ("CADDY_BASE=caddy@sha256:" + "5" * 64, "NODE_BASE=node@sha256:" + "6" * 64),
+    )
     assert "frontend/package.json" in files
     assert "frontend/package-lock.json" in files
     assert "frontend/index.html" in files

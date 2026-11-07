@@ -71,44 +71,94 @@ def fake(tmp_path):
             return r
 
     f = Fake()
-    f.registry({f"{IMG}:prod": OLD}, {f"{IMG}@{OLD}": {"io.voyager.app-inputs": "ID1"}})
+    f.registry(
+        {f"{IMG}:prod": OLD},
+        {
+            f"{IMG}@{OLD}": {
+                "io.voyager.app-inputs": "ID1",
+                "io.voyager.fresh-at": str(FRESH),
+            }
+        },
+    )
     return f
 
 
 # ── build-decision.sh ─────────────────────────────────────────────────────
-def test_same_inputs_skip_and_report_prod(fake):
-    r = fake.run(DECIDE, "app", IMG, "ID1", "false")
-    assert r.returncode == 0, r.stderr
-    assert r.outputs == {"build": "false", "prod": OLD}
+NOW = 2_000_000_000
+FRESH = NOW - 3 * 86400  # refreshed 3 days ago
+WEEK = 7 * 86400
+
+
+def decide(fake, want, force="false", now=NOW):
+    r = fake.run(DECIDE, "app", IMG, want, force, NOW=str(now))
+    assert r.returncode == 0, r.stdout + r.stderr
+    return r.outputs
+
+
+def prod_labels(fake, labels):
+    fake.registry({f"{IMG}:prod": OLD}, {f"{IMG}@{OLD}": labels})
+
+
+def test_same_inputs_and_recent_refresh_skip(fake):
+    assert decide(fake, "ID1") == {"build": "false", "prod": OLD}
+
+
+def test_changed_inputs_build_with_cache_and_carry_the_refresh_time(fake):
+    assert decide(fake, "ID2") == {
+        "build": "true",
+        "fresh": "false",
+        "fresh_at": str(FRESH),
+    }
+
+
+def test_unknown_id_builds(fake):
+    assert decide(fake, "")["build"] == "true"
+
+
+def test_forced_run_refreshes(fake):
+    assert decide(fake, "ID1", "true") == {
+        "build": "true",
+        "fresh": "true",
+        "fresh_at": str(NOW),
+    }
+
+
+def test_a_push_refreshes_when_the_weekly_refresh_was_missed(fake):
+    # e.g. the scheduled run was replaced by a queued push, or cron was disabled
+    assert decide(fake, "ID1", now=FRESH + WEEK) == {"build": "false", "prod": OLD}
+    assert decide(fake, "ID1", now=FRESH + WEEK + 1) == {
+        "build": "true",
+        "fresh": "true",
+        "fresh_at": str(FRESH + WEEK + 1),
+    }
 
 
 @pytest.mark.parametrize(
-    "args, setup",
+    "setup",
     [
-        (("ID2", "false"), None),  # inputs changed
-        (("ID1", "true"), None),  # forced (weekly / dispatch)
-        (("", "false"), None),  # id unknown
-        (("ID1", "false"), lambda f: f.registry({}, {})),  # no prod tag
-        (
-            ("ID1", "false"),
-            lambda f: f.registry({f"{IMG}:prod": OLD}, {f"{IMG}@{OLD}": None}),
-        ),  # no labels
-        (
-            ("ID1", "false"),
-            lambda f: f.registry(
-                {f"{IMG}:prod": OLD},
-                {f"{IMG}@{OLD}": {"io.voyager.caddy-inputs": "ID1"}},
-            ),
+        lambda f: f.registry({}, {}),  # no prod tag
+        lambda f: prod_labels(f, None),  # no labels at all
+        lambda f: prod_labels(f, {"io.voyager.app-inputs": "ID1"}),  # no fresh-at
+        lambda f: prod_labels(
+            f, {"io.voyager.app-inputs": "ID1", "io.voyager.fresh-at": "soon"}
         ),
     ],
-    ids=["changed", "forced", "unknown-id", "no-prod", "no-labels", "other-label"],
+    ids=["no-prod", "no-labels", "no-fresh-at", "bad-fresh-at"],
 )
-def test_anything_else_builds(fake, args, setup):
-    if setup:
-        setup(fake)
-    r = fake.run(DECIDE, "app", IMG, *args)
-    assert r.returncode == 0, r.stderr
-    assert r.outputs == {"build": "true"}
+def test_unreadable_prod_state_refreshes(fake, setup):
+    setup(fake)
+    assert decide(fake, "ID1") == {
+        "build": "true",
+        "fresh": "true",
+        "fresh_at": str(NOW),
+    }
+
+
+def test_other_images_inputs_label_doesnt_count(fake):
+    prod_labels(
+        fake, {"io.voyager.caddy-inputs": "ID1", "io.voyager.fresh-at": str(FRESH)}
+    )
+    assert decide(fake, "ID1")["build"] == "true"
 
 
 # ── promote-image.sh ──────────────────────────────────────────────────────

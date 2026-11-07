@@ -4,6 +4,8 @@
 # notification, nothing else: it never promotes, signs or touches `prod`.
 # To ship fixes: merge them, or run Deploy by hand (force rebuild; the weekly
 # scheduled Deploy run does the same).
+# GitHub disables scheduled workflows after 60 days without repository
+# activity: re-enable with `gh workflow enable prod-scan.yml` (and deploy.yml).
 name: Prod scan
 
 on:
