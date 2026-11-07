@@ -229,14 +229,30 @@ def test_release_files_are_plain_world_readable_and_described(live):
 
 
 def test_nothing_new_is_cheap(live):
+    assert live.run() == 0, live.output  # converges once (stamp written)
     assert live.run() == 0, live.output
-    assert live.count("COSIGN") == 0
-    assert live.count("PULL") == 0
-    assert live.count("RECREATE") == 0
+    docker = [c for c in live.calls if c.startswith("docker ")]
+    # one `docker ps` and nothing else: no compose, no pull, no cosign
+    assert docker == [c for c in docker if c.startswith("docker ps")], docker
+    assert len(docker) == 1
     assert live.count("CURL head") == 2
     # the anonymous token is cached: two HEAD requests and nothing else
-    assert live.count("CURL token") == 0
-    assert not any(c.startswith(("docker run", "docker create")) for c in live.calls)
+    assert live.count("CURL") == 2
+
+
+def test_stopped_container_is_brought_back(live):
+    live.run()
+    live.flag("stopped", "caddy")
+    assert live.run() == 0
+    assert live.count("START caddy") == 1
+    assert live.count("RECREATE") == 0
+
+
+def test_changed_app_env_converges(live):
+    live.run()
+    (live.opt / "app.env").write_text("X=1\n")
+    assert live.run() == 0
+    assert live.count("docker compose") >= 1
 
 
 # ── App ─────────────────────────────────────────────────────────────────
@@ -342,8 +358,14 @@ def test_content_only_update_swaps_the_spa_without_restart(live):
     assert w.link("prev1") == w.release_of(f"{CADDY}@{d(100)}")
     assert "index-v101.js" in w.served_index()
     assert w.count("GET /") >= 2  # index + an asset checked through Caddy
-    assert f"RMI {new}" in w.calls  # content image dropped once extracted
+    # the live content image is kept (offline rebuild of a lost edge dir)...
+    assert not any(c.startswith("RMI") for c in w.calls)
     assert w.run() == 0 and w.count("COSIGN") == 0
+    # ...and dropped once it is replaced (never the runtime image)
+    w.prod(caddy=w.caddy_image(102, 3))
+    assert w.run() == 0
+    assert f"RMI {new}" in w.calls
+    assert f"RMI {CADDY}@{d(100)}" not in w.calls
 
 
 def test_changed_caddyfile_is_validated_and_hot_reloaded(live):
@@ -389,14 +411,19 @@ def test_reload_failure_keeps_old_config_and_switches_back(live):
     assert w.run() == 0 and w.count("COSIGN") == 0  # held
 
 
-def test_spa_not_served_after_switch_rolls_back(live):
+def test_spa_not_served_after_switch_rolls_back_without_holding(live):
     w = live
     w.flag("serve_500")
     new = w.caddy_image(101, 2)
     w.prod(caddy=new)
     assert w.run() == 1
     assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
-    assert new in w.held()
+    assert new not in w.held()  # could be Caddy, not the content: retried
+    assert w.run() == 1 and w.count("COSIGN") == 0  # waits RETRY_SECONDS
+    w.unflag("serve_500")
+    w.env["RETRY_SECONDS"] = "0"
+    assert w.run() == 0
+    assert w.link("current") == w.release_of(new)
 
 
 def test_symlink_in_the_spa_is_refused(live):
@@ -475,7 +502,7 @@ def test_drain_gives_up_after_the_timeout(live):
     assert w.count("RECREATE caddy") == 1
 
 
-def test_runtime_recreate_failure_rolls_back(live):
+def test_runtime_recreate_failure_rolls_back_and_holds_the_runtime(live):
     w = live
     new = w.caddy_image(101, 2, runtime="r2")
     w.flag("broken", new)
@@ -485,10 +512,16 @@ def test_runtime_recreate_failure_rolls_back(live):
     assert img["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
     assert img["CADDY_CONTENT_IMAGE"] == f"{CADDY}@{d(100)}"
     assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
-    assert new in w.held()
+    assert (w.opt / "held-runtimes").read_text().split() == ["r2"]
     assert w.count("RECREATE caddy") == 2  # new, then back
+    assert f"RMI {new}" in w.calls  # the failed runtime image is dropped
     assert "[voyager]_Caddy_deploy_rolled_back" in w.mails()
-    assert w.run() == 0 and w.count("RECREATE") == 0 and w.count("COSIGN") == 0
+    # next run: the runtime is held, so the image ships only its SPA, on r1
+    assert w.run() == 0, w.output
+    assert w.count("RECREATE") == 0
+    assert w.images()["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert w.images()["CADDY_CONTENT_IMAGE"] == new
+    assert "index-v101.js" in w.served_index()
 
 
 def test_caddy_downgrade_refused_and_remembered(live):
@@ -576,7 +609,28 @@ def test_rollback_caddy_runtime(live):
     img = w.images()
     assert img["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
     assert img["PREV_CADDY_IMAGE"] == new
-    assert new in w.held()
+    assert (w.opt / "held-runtimes").read_text().split() == ["r2"]
+    assert w.count("RECREATE caddy") == 1
+
+
+def test_rollback_caddy_then_frontend_merge_ships_spa_without_recreate(live):
+    """Reviewer I2: a frontend-only merge after --rollback-caddy must not
+    recreate Caddy onto the runtime the operator rolled back from."""
+    w = live
+    bad = w.caddy_image(101, 2, runtime="r2")
+    w.prod(caddy=bad)
+    assert w.run() == 0
+    assert w.run("--rollback-caddy") == 0, w.output
+    nxt = w.caddy_image(102, 3, runtime="r2")  # same (held) runtime
+    w.prod(caddy=nxt)
+    assert w.run() == 0, w.output
+    assert w.count("RECREATE") == 0
+    assert w.images()["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert w.images()["CADDY_CONTENT_IMAGE"] == nxt
+    assert "index-v102.js" in w.served_index()
+    # a new runtime id ends the hold
+    w.prod(caddy=w.caddy_image(103, 4, runtime="r3"))
+    assert w.run() == 0
     assert w.count("RECREATE caddy") == 1
 
 
@@ -649,3 +703,201 @@ def test_lost_edge_directory_is_rebuilt_from_the_pinned_image(live):
     assert w.run() == 0, w.output
     assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
     assert w.count("RECREATE") == 0
+
+
+# ── Failures: infrastructure retries, content holds (review C1/I1/I3) ──
+
+
+def test_failing_app_pull_aborts_before_the_downgrade_check(live):
+    """Probe C1: a failed pull used to leave the label unreadable, skip the
+    downgrade check and pin an older digest."""
+    w = live
+    w.prod(app=w.app_image(3, 3))
+    assert w.run() == 0
+    old = w.app_image(2, 2)  # signed, but built by an older run
+    w.flag("fail_pull")
+    w.prod(app=old)
+    assert w.run() == 1
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(3)}"
+    assert old not in w.held()
+    assert w.count("RECREATE") == 0
+    w.unflag("fail_pull")
+    w.env["RETRY_SECONDS"] = "0"
+    assert w.run() == 0
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(3)}"  # refused once readable
+    assert old in (w.opt / "refused-digests").read_text().split()
+
+
+def test_transient_caddy_pull_failure_holds_nothing(live):
+    """Probe I1: a GHCR blip must not hold a good, signed digest."""
+    w = live
+    new = w.caddy_image(101, 2)
+    w.flag("fail_pull")
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert new not in w.held()
+    assert w.mails() == []
+    w.unflag("fail_pull")
+    assert w.run() == 1 and w.count("COSIGN") == 0  # waits RETRY_SECONDS
+    w.env["RETRY_SECONDS"] = "0"
+    assert w.run() == 0
+    assert w.images()["CADDY_CONTENT_IMAGE"] == new
+
+
+def test_unreadable_build_label_is_refused_not_pinned(live):
+    w = live
+    img = w.app_image(2, 2)
+    (w.sim / "images" / d(2)[7:] / "labels").write_text("")  # no build label
+    w.prod(app=img)
+    assert w.run() == 1
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
+    assert img in (w.opt / "refused-digests").read_text().split()
+
+
+def test_app_compose_failure_rolls_back_without_holding(live):
+    w = live
+    new = w.app_image(2, 2)
+    w.flag("fail_up", "app")
+    w.prod(app=new)
+    assert w.run() == 1
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
+    assert new not in w.held()
+    assert "[voyager]_app_deploy_failed_(docker)" in w.mails()
+    w.unflag("fail_up")
+    w.env["RETRY_SECONDS"] = "0"
+    assert w.run() == 0
+    assert w.images()["APP_IMAGE"] == new
+
+
+def test_compose_up_that_keeps_the_old_container_is_not_trusted(live):
+    """compose exits 0 but the old container still runs: health of the OLD
+    image must not count for the new digest."""
+    w = live
+    new = w.app_image(2, 2)
+    w.flag("noop_up", "app")
+    w.prod(app=new)
+    assert w.run() == 1
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
+    assert "app deploy failed (image)" in w.output
+
+
+def test_caddy_runtime_compose_failure_rolls_back_without_holding(live):
+    w = live
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.flag("noop_up", "caddy")
+    w.prod(caddy=new)
+    assert w.run() == 1
+    img = w.images()
+    assert img["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert not (w.opt / "held-runtimes").exists()
+    assert new not in w.held()
+
+
+def test_docker_create_or_cp_failure_holds_nothing(live):
+    w = live
+    for fault in ("fail_create", "fail_cp"):
+        new = w.caddy_image(101 if fault == "fail_create" else 102, 2)
+        w.flag(fault)
+        w.prod(caddy=new)
+        assert w.run() == 1, fault
+        assert new not in w.held(), fault
+        assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
+        assert w.mails() == []
+        w.unflag(fault)
+
+
+def test_adapt_that_cannot_run_holds_nothing(live):
+    w = live
+    new = w.caddy_image(101, 2, caddyfile=CADDYFILE + "# x\n")
+    w.flag("fail_adapt_infra")
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert new not in w.held()
+    assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
+
+
+def test_reload_with_caddy_down_holds_nothing(live):
+    w = live
+    w.flag("broken", f"{CADDY}@{d(100)}")
+    new = w.caddy_image(101, 2, caddyfile=CADDYFILE + "# x\n")
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert new not in w.held()
+    assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
+
+
+def test_missing_release_build_falls_back_to_the_runtime_label(live):
+    """Review M1: no current/BUILD → the running Caddy's label, never 'any'."""
+    w = live
+    (w.edge / "current" / "BUILD").write_text("")
+    w.prod(caddy=w.caddy_image(101, 0))  # older than the runtime (build 1)
+    assert w.run() == 0
+    assert w.images()["CADDY_CONTENT_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert "built before the live release" in w.output
+
+
+def test_broken_edge_does_not_block_app_deploys_and_mails_once(live):
+    """Review I3."""
+    w = live
+    shutil.rmtree(w.edge)
+    w.flag("fail_create")  # the edge can't be rebuilt
+    w.prod(app=w.app_image(2, 2))
+    assert w.run() == 0, w.output
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(2)}"
+    assert w.count("RECREATE caddy") == 0
+    assert w.mails() == ["[voyager]_edge_release_missing"]
+    assert w.run() == 0
+    assert w.mails() == ["[voyager]_edge_release_missing"]  # not again within the hour
+    assert w.run("--rollback") == 0  # app rollback still works
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
+
+
+def test_old_app_images_are_removed_keeping_current_and_previous(live):
+    w = live
+    for n in (2, 3):
+        w.prod(app=w.app_image(n, n))
+        assert w.run() == 0
+    assert f"RMI {APP}@{d(1)}" in w.calls
+    img = w.images()
+    assert (img["APP_IMAGE"], img["PREV_APP_IMAGE"]) == (
+        f"{APP}@{d(3)}",
+        f"{APP}@{d(2)}",
+    )
+
+
+def test_staging_directory_is_private(live):
+    assert (live.edge / ".staging").stat().st_mode & 0o777 == 0o700
+
+
+def test_rollback_edge_twice_toggles_back_and_releases_the_hold(live):
+    w = live
+    new = w.caddy_image(101, 2)
+    w.prod(caddy=new)
+    assert w.run() == 0
+    assert w.run("--rollback-edge") == 0
+    assert new in w.held()
+    assert w.run("--rollback-edge") == 0, w.output
+    assert w.link("current") == w.release_of(new)
+    assert new not in w.held()
+    assert f"{CADDY}@{d(100)}" in w.held()
+
+
+def test_step_really_stops_a_function_at_its_first_failing_command(tmp_path):
+    """Review C1: bash ignores `set -e` inside functions called from if/||/&&.
+    deploy.sh runs every deploy step through `step`, in plain context, so an
+    unchecked failing command ends the step there (and the caller goes on)."""
+    src = DEPLOY.read_text()
+    body = src[src.index("STEP_RC=0\nstep() {") : src.index("# ── images.env")]
+    script = tmp_path / "s.sh"
+    script.write_text(
+        "set -euo pipefail\nload_images() { :; }\n"
+        + body
+        + "f() { echo before; false; echo AFTER-FAILURE; }\n"
+        + "g() { if true; then f; fi; }\n"
+        + 'step g; echo "rc=$STEP_RC"\n'
+        + 'step true; echo "rc=$STEP_RC"\n'
+    )
+    out = subprocess.run(
+        ["bash", str(script)], capture_output=True, text=True, check=True
+    )
+    assert out.stdout.split() == ["before", "rc=1", "rc=0"], out.stdout

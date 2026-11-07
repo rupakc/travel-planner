@@ -12,12 +12,18 @@ writes the simulated world under $SIM:
   running/app, running/caddy     ref each container runs
   running/caddy.hash             compose config hash Caddy was created with
   running/caddy.config           the config Caddy serves (adapted JSON)
+  stopped                        services whose container exists but is stopped
   unhealthy                      app refs that never get healthy
   broken                         Caddy refs whose container never answers
-  serve_500                      present → Caddy answers 500 for everything
+  serve_500                      present → Caddy answers 500 over HTTPS
   verify_fail                    refs whose cosign verification fails
   reload_fail                    present → the admin API refuses /load
   streams                        open SSE streams (count; decays by 1 per poll)
+  fail_pull, fail_create,        present → that docker command fails
+  fail_cp, fail_adapt_infra      (adapt: docker's own exit 125)
+  fail_up                        services whose `compose up` fails
+  noop_up                        services whose `compose up` exits 0 but
+                                 leaves the old container running
   calls.log                      one line per call, for assertions
 
 Nothing here touches a real registry, container or unit.
@@ -48,6 +54,10 @@ def lines(name: str) -> list[str]:
 def add_line(name: str, value: str) -> None:
     with open(SIM / name, "a") as f:
         f.write(value + "\n")
+
+
+def flag(name: str) -> bool:
+    return (SIM / name).exists()
 
 
 def hexof(ref: str) -> str:
@@ -86,15 +96,30 @@ def running(svc: str) -> str:
     return p.read_text() if p.exists() else ""
 
 
+def up(svc: str) -> bool:
+    """The service's container is running (exists and not stopped)."""
+    return bool(running(svc)) and svc not in lines("stopped")
+
+
+def caddy_ok() -> bool:
+    return up("caddy") and running("caddy") not in lines("broken")
+
+
 def edge_path(container_path: str) -> Path:
     assert container_path.startswith("/edge/"), container_path
     return EDGE / container_path.removeprefix("/edge/")
+
+
+def unstop(svc: str) -> None:
+    keep = [s for s in lines("stopped") if s != svc]
+    (SIM / "stopped").write_text("".join(s + "\n" for s in keep))
 
 
 # ── docker ───────────────────────────────────────────────────────────────
 
 
 def compose(args: list[str]) -> int:
+    call("compose " + " ".join(args[args.index("-f") + 2 :]))
     i = args.index("-f") + 2  # past `-f compose.yaml`
     sub = args[i:]
     if sub[:2] == ["ps", "-q"]:
@@ -107,24 +132,38 @@ def compose(args: list[str]) -> int:
         return 0
     if sub[0] == "up":
         svcs = [a for a in sub[1:] if not a.startswith("-")] or ["app", "caddy"]
+        if any(s in lines("fail_up") for s in svcs):
+            print(
+                "Error response from daemon: no space left on device", file=sys.stderr
+            )
+            return 1
         env = images_env()
         (SIM / "running").mkdir(exist_ok=True)
-        if "app" in svcs:
-            ref = env["APP_IMAGE"]
-            if running("app") != ref:
-                call(f"RECREATE app {ref}")
-            (SIM / "running" / "app").write_text(ref)
-        if "caddy" in svcs:
-            ref, h = env["CADDY_IMAGE"], caddy_hash()
-            hp = SIM / "running" / "caddy.hash"
-            if running("caddy") != ref or not hp.exists() or hp.read_text() != h:
-                call(f"RECREATE caddy {ref}")
-                cf = EDGE / "current" / "Caddyfile"
-                (SIM / "running" / "caddy.config").write_text(
-                    "caddyfile:" + (cf.read_text() if cf.exists() else "MISSING")
-                )
-            (SIM / "running" / "caddy").write_text(ref)
-            hp.write_text(h)
+        for svc in svcs:
+            if svc in lines("noop_up"):
+                continue
+            if svc == "app":
+                ref = env["APP_IMAGE"]
+                if running("app") != ref:
+                    call(f"RECREATE app {ref}")
+                elif "app" in lines("stopped"):
+                    call("START app")
+                (SIM / "running" / "app").write_text(ref)
+                unstop("app")
+            if svc == "caddy":
+                ref, h = env["CADDY_IMAGE"], caddy_hash()
+                hp = SIM / "running" / "caddy.hash"
+                if running("caddy") != ref or not hp.exists() or hp.read_text() != h:
+                    call(f"RECREATE caddy {ref}")
+                    cf = EDGE / "current" / "Caddyfile"
+                    (SIM / "running" / "caddy.config").write_text(
+                        "caddyfile:" + (cf.read_text() if cf.exists() else "MISSING")
+                    )
+                elif "caddy" in lines("stopped"):
+                    call("START caddy")
+                (SIM / "running" / "caddy").write_text(ref)
+                hp.write_text(h)
+                unstop("caddy")
         return 0
     return 0
 
@@ -134,6 +173,11 @@ def docker(args: list[str]) -> int:
     cmd = args[0]
     if cmd == "compose":
         return compose(args)
+    if cmd == "ps":
+        for svc in ("app", "caddy"):
+            if running(svc):
+                print(f"{svc} {'exited' if svc in lines('stopped') else 'running'}")
+        return 0
     if cmd == "run":
         if "verify" in args and "--certificate-identity" in args:
             ref = args[-1]
@@ -141,9 +185,14 @@ def docker(args: list[str]) -> int:
             return 1 if ref in lines("verify_fail") else 0
         if "--entrypoint" in args and "adapt" in args:
             image = args[args.index("--entrypoint") + 2]
+            if flag("fail_adapt_infra"):
+                print(
+                    "docker: Error response from daemon: OCI runtime", file=sys.stderr
+                )
+                return 125
             if image not in lines("present"):
                 print(f"no such image {image}", file=sys.stderr)
-                return 1
+                return 125
             cfg = edge_path(args[args.index("--config") + 1]).read_text()
             call(f"ADAPT {image}")
             if "INVALID" in cfg:
@@ -156,6 +205,9 @@ def docker(args: list[str]) -> int:
         return 0
     if cmd == "pull":
         ref = args[-1]
+        if flag("fail_pull"):
+            print("pull: TLS handshake timeout", file=sys.stderr)
+            return 1
         if not (SIM / "images" / hexof(ref)).exists():
             return 1
         call(f"PULL {ref}")
@@ -169,8 +221,10 @@ def docker(args: list[str]) -> int:
                 return 1
             if "-f" in args:
                 fmt = args[args.index("-f") + 1]
-                key = fmt.split('"')[1]
-                print(labels(ref).get(key, "<no value>"))
+                if fmt == "{{.Id}}":
+                    print(f"id-{hexof(ref)}")
+                else:
+                    print(labels(ref).get(fmt.split('"')[1], "<no value>"))
             return 0
         if sub == "rm":
             if ref in (running("app"), running("caddy")):
@@ -182,11 +236,13 @@ def docker(args: list[str]) -> int:
         return 0
     if cmd == "create":
         ref = args[-1]
-        if ref not in lines("present"):
+        if flag("fail_create") or ref not in lines("present"):
             return 1
         print(f"ctr-{hexof(ref)}")
         return 0
     if cmd == "cp":
+        if flag("fail_cp"):
+            return 1
         src, dest = args[1], args[2]
         cid, _, path = src.partition(":")
         img = SIM / "images" / cid.removeprefix("ctr-")
@@ -201,13 +257,14 @@ def docker(args: list[str]) -> int:
     if cmd == "rm":
         return 0
     if cmd == "exec":
-        cid, url = args[1], args[-1]
-        if cid != "caddy-cid" or not running("caddy"):
+        cid = args[1]
+        if cid != "caddy-cid" or not caddy_ok():
             return 1
-        if running("caddy") in lines("broken"):
-            return 1
+        if args[2] == "test":
+            return 0 if edge_path(args[-1]).is_file() else 1
+        url = args[-1]
         if url.endswith("/load"):
-            if (SIM / "reload_fail").exists():
+            if flag("reload_fail"):
                 call("RELOAD-REFUSED")
                 return 1
             body = edge_path(args[args.index("--post-file") + 1]).read_text()
@@ -219,15 +276,19 @@ def docker(args: list[str]) -> int:
         return 0  # admin /config/
     if cmd == "inspect":
         fmt, cid = args[2], args[3]
+        svc = cid.removesuffix("-cid")
         if "State.Health" in fmt:
             ref = running("app")
-            if not ref:
+            if not up("app"):
                 print("missing")
             else:
                 print("unhealthy" if ref in lines("unhealthy") else "healthy")
             return 0
         if "State.Running" in fmt:
-            print("true" if running(cid.removesuffix("-cid")) else "false")
+            print("true" if up(svc) else "false")
+            return 0
+        if fmt == "{{.Image}}":
+            print(f"id-{hexof(running(svc))}")
             return 0
         if "config-hash" in fmt:
             p = SIM / "running" / "caddy.hash"
@@ -270,15 +331,23 @@ def curl(args: list[str]) -> int:
             p.write_text(str(n - 1))
         print(json.dumps({"active_streams": n}))
         return 0
-    elif url.startswith("https://") and "--resolve" in opts:
-        path = "/" + url.split("/", 3)[3] if url.count("/") >= 3 else "/"
-        call(f"GET {path}")
-        caddy = running("caddy")
-        if not caddy or caddy in lines("broken"):
+    elif url.startswith("http://") and opts.get("-H", "").startswith("Host: "):
+        # plain HTTP to Caddy: the site's redirect to HTTPS (no certificate needed)
+        call("HTTP site")
+        if not caddy_ok():
             if "-w" in opts:
                 sys.stdout.write("000")
             return 7
-        if (SIM / "serve_500").exists():
+        host = opts["-H"].removeprefix("Host: ")
+        code, headers = 308, f"Location: https://{host}/\r\n"
+    elif url.startswith("https://") and "--resolve" in opts:
+        path = "/" + url.split("/", 3)[3] if url.count("/") >= 3 else "/"
+        call(f"GET {path}")
+        if not caddy_ok():
+            if "-w" in opts:
+                sys.stdout.write("000")
+            return 7
+        if flag("serve_500"):
             code = 500
         elif path == "/":
             body = (EDGE / "current" / "srv" / "index.html").read_text()
@@ -295,7 +364,8 @@ def curl(args: list[str]) -> int:
     if "-D" in opts:
         Path(opts["-D"]).write_text(f"HTTP/2 {code}\r\n{headers}\r\n")
     if "-o" in opts:
-        Path(opts["-o"]).write_text(body)
+        if opts["-o"] != "/dev/null":
+            Path(opts["-o"]).write_text(body)
     else:
         sys.stdout.write(body)
     if "-w" in opts:

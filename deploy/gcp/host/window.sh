@@ -2,12 +2,11 @@
 # Weekly window (Sunday 04:00 Europe/Berlin, voyager-window.timer): reboot
 # only if an upgrade asked for it. The app stops gracefully first (backup
 # flush). Caddy changes no longer wait for this window: deploy.sh applies
-# them within a minute (SPA/Caddyfile without a restart).
+# them within a minute (SPA/Caddyfile without a restart), and it removes old
+# images itself (no `docker image prune` here racing a deploy).
 set -euo pipefail
 
 log() { echo "voyager-window: $*" >&2; logger -t voyager-window -- "$*" 2>/dev/null || true; }
-
-docker image prune -f >/dev/null 2>&1 || true
 
 if [[ -f /run/reboot-required ]]; then
   log "reboot required by: $(tr '\n' ' ' </run/reboot-required.pkgs 2>/dev/null || echo '?')"

@@ -10,6 +10,10 @@
 #     out of each new image and swaps them in without a restart.
 # Keep the runtime layers ABOVE the content COPYs: they then stay cached and
 # identical across releases, so the VM pulls only the small SPA layer.
+# The runtime id hashes these Dockerfile LINES (plus the base digest), not
+# file contents: a runtime COPY of a host file (a plugin, a config) changes
+# nothing in the id when only that file changes. Add such a file's contents
+# to caddy-runtime-id.sh's inputs, or the VM won't recreate Caddy for it.
 #
 # CADDY_BASE: the workflow passes the tag pinned to the digest it resolved
 # (the same string goes into the runtime hash).

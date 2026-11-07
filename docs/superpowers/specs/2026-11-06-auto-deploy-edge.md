@@ -57,3 +57,20 @@ The SPA was baked into the Caddy image, so every frontend change produced a new 
 - `build-and-scan` builds and Trivy-scans the legacy nginx `frontend/` image, which isn't deployed, and waits for every test job. Scanning the Caddy image that ships instead (and the app image `publish` builds, by digest) would be more useful and could run in `publish` after the push and before moving `prod`, saving about 1 min.
 - The app image gets a new digest on every merge (revision label), so the app restarts, cutting its SSE streams, even on frontend-only merges. A content label for the app (like the Caddy runtime id) would skip those restarts. The same drain could also run before app recreates.
 - `start_interval: 5s` on the app's healthcheck (Docker ≥ 25) would shorten the health wait from about 30 s to about 5 s. Left out: changing the app service would restart the app during the migration.
+
+## Review fixes (2026-11-07)
+
+- **Errexit that works.** Bash ignores `set -e` in functions called from `if`/`||`/`&&`. Every deploy step now runs through `step FN`: in plain context, in a subshell with `set -e`, with its status in a variable, and images.env is read back afterwards. Every pull, `docker create`/`cp`, `compose up` and write is also checked explicitly.
+- **Fail closed.** An unreadable or non-numeric build label (on the new image, or the live one's, falling back from the release's `BUILD` to the runtime image's label) refuses instead of skipping the downgrade check. After `compose up`, the container's image ID must equal the intended digest's before health counts.
+- **Holds vs retries.**
+  - Holds: content/validation failures and an admin-API refusal (by digest), an unhealthy app (by digest), and an unhealthy Caddy runtime (by **runtime id**, `held-runtimes`; also written by `--rollback-caddy`).
+  - Retried after 5 min, nothing held: infrastructure failures, and an SPA that Caddy doesn't serve after the switch.
+  - An image with a held runtime ships its content on the current runtime when its Caddyfile validates there; nothing is ever recreated onto a held runtime.
+- **Containment.** A broken edge directory never blocks app deploys or app/Caddy rollbacks. Emails and repeated infrastructure errors go out at most once an hour per kind. The live content image is kept until it is replaced, at the cost of one SPA layer of disk, so a lost edge directory is rebuilt offline.
+- **Cheap no-change run.** Converge runs only when the hash of `compose.yaml`/`site.env`/`app.env`/`images.env` changed or one `docker ps` shows a service not running.
+- **Minors.**
+  - `.staging` is 0700.
+  - `window.sh` no longer prunes images; `deploy.sh` removes old app and Caddy images by digest, keeping current and previous. A failed runtime image is removed.
+  - Caddy health: running image ID, admin API, readable `/edge/current/srv/index.html` and plain-HTTP redirect; HTTPS only warns.
+  - `--rollback-edge` is a toggle (it releases the hold of the release it returns to).
+  - `caddy.Dockerfile` notes that the runtime id hashes lines, not the contents of COPYed host files.
