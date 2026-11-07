@@ -1,43 +1,79 @@
-# Deploy: every merge to main that passes all of CI publishes signed images
-# and moves their `prod` tag. The VM pulls them itself (deploy/gcp/host/
-# deploy.sh, every minute): it resolves `prod` to a digest, verifies the cosign
+# Deploy: every merge to main that passes all of CI moves the `prod` tags of
+# the signed images. The VM pulls them itself (deploy/gcp/host/deploy.sh,
+# every minute): it resolves `prod` to a digest, verifies the cosign
 # signature against THIS workflow on refs/heads/main, pulls, health-checks and
 # rolls back on failure. This workflow has no access to the VM or GCP.
-# Every action is pinned to a full commit SHA: this job can sign as the
+# Every action is pinned to a full commit SHA: this workflow can sign as the
 # identity the VM trusts.
+#
+# Jobs:
+#   ci       all of ci.yml (lint, audits, tests, host checks)        ─┐
+#   build    in parallel with ci: build only what changed, push the   ├→ promote
+#            sha-<sha> tag, Trivy-scan, sign, verify                  ─┘
+#   promote  only when BOTH succeeded (plain `needs`, no always()/failure()):
+#            still main's HEAD? → move `prod` to the new digests
+#
+# Building before CI has passed is safe: an image signed by `build` but never
+# promoted is never deployed, because deploy.sh only ever resolves and deploys
+# the digest of the `prod` tag (TAG=prod; resolve_digest → deploy_app /
+# deploy_edge), never a sha-* tag or any other signed digest. And each image
+# is checked against its own live predecessor only (app: the running app's
+# io.voyager.build; Caddy: the live release's BUILD), so promoting one image
+# while the other keeps an older run number is not a downgrade.
+#
+# Skips: each image carries io.voyager.<app|caddy>-inputs, a hash of every
+# input its build can read (deploy/gcp/image-inputs-id.sh: the Dockerfile,
+# .dockerignore, the files its COPYs take, the pinned base image). When the
+# `prod` image already has this run's id, nothing is built and `prod` stays
+# where it is: a frontend-only merge doesn't restart the app (open chats
+# survive), a backend-only merge doesn't touch the SPA. A missing/unreadable
+# label or id means build (fail safe). The org.opencontainers.image.revision
+# label still changes with every build; it is the skip that keeps the digest.
 name: Deploy
 
 on:
   push:
     branches: [main]
 
-# One publish at a time; never cancel a half-moved tag
+# One publish at a time; never cancel a half-moved tag. Whole runs queue, so
+# a run's build reads `prod` only after the previous run's promote finished.
 concurrency:
   group: deploy-main
   cancel-in-progress: false
 
 permissions: {}
 
+env:
+  APP_IMAGE: ghcr.io/rupakc/travel-planner-app
+  CADDY_IMAGE: ghcr.io/rupakc/travel-planner-caddy
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    with:
+      # `build` below builds and scans the images that actually ship
+      skip-image-builds: true
     permissions:
       contents: read
 
-  publish:
-    needs: ci
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write # push to ghcr.io/rupakc/travel-planner-*
       id-token: write # cosign keyless: GitHub OIDC → Sigstore certificate
     env:
-      APP_IMAGE: ghcr.io/rupakc/travel-planner-app
-      CADDY_IMAGE: ghcr.io/rupakc/travel-planner-caddy
       # The identity the VM's deployer requires (deploy.sh CERT_IDENTITY)
       CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@refs/heads/main
       CERT_ISSUER: https://token.actions.githubusercontent.com
+    outputs:
+      app_build: ${{ steps.state.outputs.app_build }}
+      app_digest: ${{ steps.app.outputs.digest }}
+      app_prod: ${{ steps.state.outputs.app_prod }}
+      caddy_build: ${{ steps.state.outputs.caddy_build }}
+      caddy_digest: ${{ steps.caddy.outputs.digest }}
+      caddy_prod: ${{ steps.state.outputs.caddy_prod }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -49,12 +85,59 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
-        with:
-          cosign-release: v2.4.1
+      # Base images pinned to the digests they have right now (the same
+      # strings go into the build args, the inputs ids and the Caddy runtime
+      # id: the VM recreates Caddy only when that id changes). Then, per
+      # image: does `prod` already carry these exact inputs?
+      - name: Inputs ids and what prod already has
+        id: state
+        run: |
+          set -euo pipefail
+          pin() {
+            local tag digest
+            tag="$(sed -n "s/^ARG $1=//p" "$2")"
+            digest="$(docker buildx imagetools inspect "$tag" --format '{{json .Manifest}}' | jq -r .digest)"
+            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no digest for $tag"; exit 1; }
+            echo "$tag@$digest"
+          }
+          app_base="$(pin PYTHON_BASE backend/Dockerfile)"
+          caddy_base="$(pin CADDY_BASE deploy/gcp/caddy.Dockerfile)"
+          caddy_runtime="$(bash deploy/gcp/caddy-runtime-id.sh "$caddy_base")"
+          # An id that can't be computed is empty: never equal → build
+          app_inputs="$(bash deploy/gcp/image-inputs-id.sh backend/Dockerfile "$app_base")" || app_inputs=""
+          caddy_inputs="$(bash deploy/gcp/image-inputs-id.sh deploy/gcp/caddy.Dockerfile "$caddy_base")" || caddy_inputs=""
+          {
+            echo "app_base=$app_base"
+            echo "app_inputs=$app_inputs"
+            echo "caddy_base=$caddy_base"
+            echo "caddy_runtime=$caddy_runtime"
+            echo "caddy_inputs=$caddy_inputs"
+          } >>"$GITHUB_OUTPUT"
+
+          # decide NAME IMAGE WANT → NAME_build=false + NAME_prod=<digest> only
+          # when prod's label equals WANT; anything unreadable → build
+          decide() {
+            local name="$1" image="$2" want="$3" digest="" have=""
+            if [[ -n "$want" ]] &&
+              digest="$(docker buildx imagetools inspect "$image:prod" --format '{{json .Manifest}}' | jq -r .digest)" &&
+              [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] &&
+              have="$(docker buildx imagetools inspect "$image@$digest" --format '{{json .Image}}' |
+                jq -r --arg k "io.voyager.$name-inputs" 'if type == "object" and has("config") then (.config.Labels[$k] // "") else "" end')" &&
+              [[ "$have" == "$want" ]]; then
+              echo "::notice::$name unchanged (inputs $want): prod stays $image@$digest, nothing built"
+              echo "${name}_build=false" >>"$GITHUB_OUTPUT"
+              echo "${name}_prod=$digest" >>"$GITHUB_OUTPUT"
+            else
+              echo "$name: inputs ${want:-unknown}, prod has ${have:-none}: building"
+              echo "${name}_build=true" >>"$GITHUB_OUTPUT"
+            fi
+          }
+          decide app "$APP_IMAGE" "$app_inputs"
+          decide caddy "$CADDY_IMAGE" "$caddy_inputs"
 
       - name: Build and push app (sha tag only)
         id: app
+        if: steps.state.outputs.app_build == 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
@@ -62,30 +145,21 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.APP_IMAGE }}:sha-${{ github.sha }}
+          build-args: |
+            PYTHON_BASE=${{ steps.state.outputs.app_base }}
           # io.voyager.build: the VM refuses images from an older run (no downgrades)
+          # io.voyager.app-inputs: equal on the next run → no rebuild, no restart
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.voyager.build=${{ github.run_number }}
+            io.voyager.app-inputs=${{ steps.state.outputs.app_inputs }}
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
-      # The Caddy base pinned to the digest it has right now, and the runtime
-      # id derived from it: the VM recreates Caddy only when this id changes
-      # (SPA and Caddyfile changes are swapped in without a restart)
-      - name: Caddy base digest and runtime id
-        id: caddy_runtime
-        run: |
-          set -euo pipefail
-          tag="$(sed -n 's/^ARG CADDY_BASE=//p' deploy/gcp/caddy.Dockerfile)"
-          digest="$(docker buildx imagetools inspect "$tag" --format '{{json .Manifest}}' | jq -r .digest)"
-          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no digest for $tag"; exit 1; }
-          base="$tag@$digest"
-          echo "base=$base" >>"$GITHUB_OUTPUT"
-          echo "id=$(bash deploy/gcp/caddy-runtime-id.sh "$base")" >>"$GITHUB_OUTPUT"
-
       - name: Build and push caddy + SPA (sha tag only)
         id: caddy
+        if: steps.state.outputs.caddy_build == 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
@@ -94,35 +168,77 @@ jobs:
           push: true
           tags: ${{ env.CADDY_IMAGE }}:sha-${{ github.sha }}
           build-args: |
-            CADDY_BASE=${{ steps.caddy_runtime.outputs.base }}
+            CADDY_BASE=${{ steps.state.outputs.caddy_base }}
           # io.voyager.build: the VM refuses images from an older run (no downgrades)
           # io.voyager.caddy-runtime: a change recreates Caddy on the VM
+          # io.voyager.caddy-inputs: equal on the next run → no rebuild
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.voyager.build=${{ github.run_number }}
-            io.voyager.caddy-runtime=${{ steps.caddy_runtime.outputs.id }}
+            io.voyager.caddy-runtime=${{ steps.state.outputs.caddy_runtime }}
+            io.voyager.caddy-inputs=${{ steps.state.outputs.caddy_inputs }}
           cache-from: type=gha,scope=caddy
           cache-to: type=gha,mode=max,scope=caddy
 
-      - name: Sign by digest (keyless)
-        env:
-          APP_REF: ${{ env.APP_IMAGE }}@${{ steps.app.outputs.digest }}
-          CADDY_REF: ${{ env.CADDY_IMAGE }}@${{ steps.caddy.outputs.digest }}
+      # The images that ship, by digest, before they are signed. Same policy
+      # as CI had for the old images: unfixed-ignored CRITICAL fails
+      # (.trivyignore lists accepted ones). Checksum-pinned: this job can sign.
+      - name: Install Trivy
+        if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
         run: |
-          cosign sign --yes "$APP_REF"
-          cosign sign --yes "$CADDY_REF"
+          set -euo pipefail
+          TRIVY_VERSION=0.70.0
+          TRIVY_SHA256=8b4376d5d6befe5c24d503f10ff136d9e0c49f9127a4279fd110b727929a5aa9
+          wget -qO trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "$TRIVY_SHA256  trivy.tar.gz" | sha256sum -c -
+          tar -xzf trivy.tar.gz trivy
+          sudo mv trivy /usr/local/bin/trivy
+          rm trivy.tar.gz
+          trivy --version
 
-      - name: Verify exactly as the VM will
-        env:
-          APP_REF: ${{ env.APP_IMAGE }}@${{ steps.app.outputs.digest }}
-          CADDY_REF: ${{ env.CADDY_IMAGE }}@${{ steps.caddy.outputs.digest }}
+      - name: Scan app image
+        if: steps.state.outputs.app_build == 'true'
         run: |
-          for ref in "$APP_REF" "$CADDY_REF"; do
+          trivy image --image-src remote --exit-code 1 --severity CRITICAL \
+            --ignore-unfixed --no-progress "$APP_IMAGE@${{ steps.app.outputs.digest }}"
+
+      - name: Scan caddy image
+        if: steps.state.outputs.caddy_build == 'true'
+        run: |
+          trivy image --image-src remote --exit-code 1 --severity CRITICAL \
+            --ignore-unfixed --no-progress "$CADDY_IMAGE@${{ steps.caddy.outputs.digest }}"
+
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+        if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
+        with:
+          cosign-release: v2.4.1
+
+      - name: Sign by digest (keyless) and verify exactly as the VM will
+        if: steps.state.outputs.app_build == 'true' || steps.state.outputs.caddy_build == 'true'
+        env:
+          APP_DIGEST: ${{ steps.app.outputs.digest }}
+          CADDY_DIGEST: ${{ steps.caddy.outputs.digest }}
+        run: |
+          set -euo pipefail
+          refs=()
+          if [ -n "$APP_DIGEST" ]; then refs+=("$APP_IMAGE@$APP_DIGEST"); fi
+          if [ -n "$CADDY_DIGEST" ]; then refs+=("$CADDY_IMAGE@$CADDY_DIGEST"); fi
+          for ref in "${refs[@]}"; do cosign sign --yes "$ref"; done
+          for ref in "${refs[@]}"; do
             cosign verify --certificate-identity "$CERT_IDENTITY" \
               --certificate-oidc-issuer "$CERT_ISSUER" "$ref" >/dev/null
           done
 
+  promote:
+    # Plain needs: skipped unless ci AND build succeeded
+    needs: [ci, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      packages: write # move the prod tags (no id-token: nothing is signed here)
+    steps:
       - name: Still main's HEAD? (never move prod back to an older commit)
         id: head
         run: |
@@ -134,25 +250,45 @@ jobs:
             echo "current=false" >>"$GITHUB_OUTPUT"
           fi
 
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        if: steps.head.outputs.current == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Built → move prod to it (app first, like the VM deploys). Skipped →
+      # prod must still be the digest whose label `build` compared, else fail.
       - name: Move the prod tags (same digests, nothing rebuilt)
         if: steps.head.outputs.current == 'true'
         env:
-          APP_DIGEST: ${{ steps.app.outputs.digest }}
-          CADDY_DIGEST: ${{ steps.caddy.outputs.digest }}
+          APP_BUILD: ${{ needs.build.outputs.app_build }}
+          APP_DIGEST: ${{ needs.build.outputs.app_digest }}
+          APP_PROD: ${{ needs.build.outputs.app_prod }}
+          CADDY_BUILD: ${{ needs.build.outputs.caddy_build }}
+          CADDY_DIGEST: ${{ needs.build.outputs.caddy_digest }}
+          CADDY_PROD: ${{ needs.build.outputs.caddy_prod }}
         run: |
           set -euo pipefail
-          retag() {
-            docker buildx imagetools create --tag "$1:prod" "$1@$2"
-            got="$(docker buildx imagetools inspect "$1:prod" --format '{{json .Manifest}}' | jq -r .digest)"
-            [ "$got" = "$2" ] || { echo "::error::$1:prod is $got, expected $2"; exit 1; }
+          prod_digest() { docker buildx imagetools inspect "$1:prod" --format '{{json .Manifest}}' | jq -r .digest; }
+          # publish NAME IMAGE BUILT NEW_DIGEST PROD_DIGEST
+          publish() {
+            local got
+            if [ "$3" = true ]; then
+              [[ "$4" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::$1: no built digest"; exit 1; }
+              docker buildx imagetools create --tag "$2:prod" "$2@$4"
+              got="$(prod_digest "$2")"
+              [ "$got" = "$4" ] || { echo "::error::$2:prod is $got, expected $4"; exit 1; }
+              echo "- $1: \`$2@$4\` (new)" >>"$GITHUB_STEP_SUMMARY"
+            elif [ "$3" = false ]; then
+              got="$(prod_digest "$2")"
+              [ "$got" = "$5" ] || { echo "::error::$2:prod moved to $got while this run kept $5"; exit 1; }
+              echo "- $1: \`$2@$5\` (unchanged, prod not moved)" >>"$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::$1: build decision missing"; exit 1
+            fi
           }
-          retag "$APP_IMAGE" "$APP_DIGEST"
-          retag "$CADDY_IMAGE" "$CADDY_DIGEST"
-          APP_REF="$APP_IMAGE@$APP_DIGEST"
-          CADDY_REF="$CADDY_IMAGE@$CADDY_DIGEST"
-          {
-            echo "### Published"
-            echo "- app: \`$APP_REF\`"
-            echo "- caddy: \`$CADDY_REF\`"
-            echo "The VM picks these up within about a minute: app, then SPA/Caddyfile (no Caddy restart; a new Caddy runtime recreates Caddy after draining open streams)."
-          } >>"$GITHUB_STEP_SUMMARY"
+          echo "### Published" >>"$GITHUB_STEP_SUMMARY"
+          publish app "$APP_IMAGE" "$APP_BUILD" "$APP_DIGEST" "$APP_PROD"
+          publish caddy "$CADDY_IMAGE" "$CADDY_BUILD" "$CADDY_DIGEST" "$CADDY_PROD"
+          echo "The VM picks new digests up within about a minute: app, then SPA/Caddyfile (no Caddy restart; a new Caddy runtime recreates Caddy after draining open streams). An unchanged image is not touched." >>"$GITHUB_STEP_SUMMARY"
