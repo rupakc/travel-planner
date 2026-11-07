@@ -15,6 +15,12 @@
 # nothing in the id when only that file changes. Add such a file's contents
 # to caddy-runtime-id.sh's inputs, or the VM won't recreate Caddy for it.
 #
+# Separately, the workflow skips the whole build when nothing this file can
+# read changed: io.voyager.caddy-inputs (deploy/gcp/image-inputs-id.sh) hashes
+# this file, .dockerignore, every COPY source from the context and the pinned
+# base. Use COPY (not ADD) for context files, or the id can't be computed and
+# every merge rebuilds.
+#
 # CADDY_BASE: the workflow passes the tag pinned to the digest it resolved
 # (the same string goes into the runtime hash).
 ARG CADDY_BASE=caddy:2.10-alpine

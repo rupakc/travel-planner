@@ -1,4 +1,8 @@
-FROM python:3.12-slim
+# PYTHON_BASE: the deploy workflow passes this tag pinned to the digest it
+# resolved; the same string goes into the image's inputs id
+# (deploy/gcp/image-inputs-id.sh), so a new base digest rebuilds the image.
+ARG PYTHON_BASE=python:3.12-slim
+FROM ${PYTHON_BASE}
 
 WORKDIR /app
 
