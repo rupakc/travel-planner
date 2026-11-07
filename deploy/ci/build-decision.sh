@@ -22,14 +22,15 @@
 #
 # Usage: build-decision.sh NAME IMAGE WANT [FORCE]
 #   NAME  app | caddy (labels io.voyager.NAME-inputs, io.voyager.fresh-at)
-# Env: MAX_AGE seconds (default 604800 = 7 days), NOW (default: date +%s)
+# Env: MAX_AGE seconds (default 691200 = 8 days: a day of slack over the weekly
+# schedule, so a late cron run never causes a second refresh the same Monday), NOW (default: date +%s)
 set -euo pipefail
 
 name="${1:?usage: build-decision.sh NAME IMAGE WANT [FORCE]}"
 image="${2:?usage: build-decision.sh NAME IMAGE WANT [FORCE]}"
 want="${3-}"
 force="${4:-false}"
-max_age="${MAX_AGE:-604800}"
+max_age="${MAX_AGE:-691200}"
 now="${NOW:-$(date +%s)}"
 [[ "$name" =~ ^[a-z]+$ ]] || { echo "build-decision: bad NAME: $name" >&2; exit 2; }
 [[ "$now" =~ ^[0-9]+$ && "$max_age" =~ ^[0-9]+$ ]] || { echo "build-decision: bad NOW/MAX_AGE" >&2; exit 2; }

@@ -86,7 +86,7 @@ def fake(tmp_path):
 # ── build-decision.sh ─────────────────────────────────────────────────────
 NOW = 2_000_000_000
 FRESH = NOW - 3 * 86400  # refreshed 3 days ago
-WEEK = 7 * 86400
+WEEK = 8 * 86400  # build-decision.sh's MAX_AGE
 
 
 def decide(fake, want, force="false", now=NOW):

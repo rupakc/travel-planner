@@ -72,7 +72,7 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
                         chat-itinerary, orchestrator (descriptive only)
 .github/workflows/      ci.yml (also reusable; PRs/branches: build-only image checks, path-filtered),
                         docs.yml, prod-scan.yml (daily Trivy of both :prod images), deploy.yml (push to
-                        main + weekly no-cache refresh, also forced by any run when prod's io.voyager.fresh-at is >7 days old: `ci` ∥ `build-app` / `build-caddy` [skip if `prod`'s
+                        main + weekly no-cache refresh, also forced by any run when prod's io.voyager.fresh-at is >8 days old: `ci` ∥ `build-app` / `build-caddy` [skip if `prod`'s
                         io.voyager.{app,caddy}-inputs = deploy/ci/image-inputs-id.sh, else build → GHCR
                         → Trivy] → `promote-app` / `promote-caddy`, each only if ci + its build passed:
                         deploy/ci/promote-image.sh = HEAD check → cosign sign + verify → move `prod`;

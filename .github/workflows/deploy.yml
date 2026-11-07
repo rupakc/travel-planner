@@ -41,7 +41,7 @@
 # rebuilds both images WITHOUT CACHE, so base and dependency fixes flow, and a
 # new digest also ends a hold on the VM. Each image records its last refresh
 # in io.voyager.fresh-at (carried forward by cached builds); any run, a push
-# included, refreshes an image whose prod copy is missing it or is over 7 days
+# included, refreshes an image whose prod copy is missing it or is over 8 days
 # old (deploy/ci/build-decision.sh). So a scheduled run that a queued push
 # replaced in the concurrency group, or a schedule GitHub disabled (cron stops
 # after 60 days without repository activity; re-enable with
