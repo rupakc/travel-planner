@@ -16,6 +16,10 @@ factory installed on the event loop: a task belongs to the stream whose
 context created it. A task created with a fresh ``contextvars.Context()``
 (``push.notify``) is detached on purpose and survives. No agent code needs
 to know about any of this.
+
+:func:`active_streams` is the number of streams open right now. The VM's
+deployer reads it (``GET /internal/streams``) and waits for 0, up to ~90 s,
+before it recreates Caddy, which would cut every open stream.
 """
 
 from __future__ import annotations
@@ -63,10 +67,18 @@ class _Failure:
 
 _END = object()
 
+_active = 0
+
+
+def active_streams() -> int:
+    """Streams currently open on this process (one uvicorn worker)."""
+    return _active
+
 
 async def guarded_stream(
     source: AsyncIterator[str], *, keepalive: float = 15.0
 ) -> AsyncIterator[str]:
+    global _active
     loop = asyncio.get_running_loop()
     _install_task_factory(loop)
     scope: set[asyncio.Task] = set()
@@ -97,6 +109,7 @@ async def guarded_stream(
         _scope.reset(token)
 
     finished = False
+    _active += 1
     try:
         while True:
             try:
@@ -112,6 +125,7 @@ async def guarded_stream(
                 raise item.exc
             yield item
     finally:
+        _active -= 1
         if not finished:
             pending = [t for t in (*scope, pump_task) if not t.done()]
             for task in pending:

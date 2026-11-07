@@ -68,7 +68,11 @@ services:
         ipv4_address: 172.30.0.10
 
   caddy:
+    # The Caddy *runtime* (changes rarely: base image, binary). The SPA and
+    # the Caddyfile come from /edge, which deploy.sh fills from every new
+    # signed image and switches without restarting this container.
     image: ${CADDY_IMAGE:?CADDY_IMAGE must be set (images.env)}
+    command: ["caddy", "run", "--config", "/edge/current/Caddyfile", "--adapter", "caddyfile"]
     restart: unless-stopped
     environment:
       SITE_HOST: ${SITE_HOST:?SITE_HOST must be set (site.env), e.g. 34-23-1-2.sslip.io}
@@ -83,6 +87,10 @@ services:
       # (Let's Encrypt allows 5 duplicate certificates per week)
       - caddy_data:/data
       - caddy_config:/config
+      # SPA + Caddyfile releases (deploy.sh). The directory, never a single
+      # file: deploy.sh switches releases by renaming symlinks, which a
+      # single-file bind mount (pinned to one inode) would never see.
+      - /var/lib/voyager/edge:/edge:ro
     mem_limit: 96m
     stop_grace_period: 10s
     # Non-root (uid 10002, image USER) binding 80/443 without capabilities.

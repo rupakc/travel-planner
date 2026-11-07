@@ -1,0 +1,338 @@
+#!/usr/bin/env python3
+"""Fake docker / curl / systemctl / governor for test_deploy.py.
+
+Installed into a temp bin directory under each command's name; reads and
+writes the simulated world under $SIM:
+
+  registry/app, registry/caddy   digest `prod` points at (sha256:...)
+  registry/429                   present → manifests answer 429 (Retry-After)
+  images/<hex>/labels            key=value image labels
+  images/<hex>/srv/, Caddyfile   a Caddy image's content
+  present                        refs pulled into the local image store
+  running/app, running/caddy     ref each container runs
+  running/caddy.hash             compose config hash Caddy was created with
+  running/caddy.config           the config Caddy serves (adapted JSON)
+  unhealthy                      app refs that never get healthy
+  broken                         Caddy refs whose container never answers
+  serve_500                      present → Caddy answers 500 for everything
+  verify_fail                    refs whose cosign verification fails
+  reload_fail                    present → the admin API refuses /load
+  streams                        open SSE streams (count; decays by 1 per poll)
+  calls.log                      one line per call, for assertions
+
+Nothing here touches a real registry, container or unit.
+"""
+
+import hashlib
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+SIM = Path(os.environ["SIM"])
+EDGE = Path(os.environ["EDGE_DIR"])
+COMPOSE_DIR = Path(os.environ["COMPOSE_DIR"])
+
+
+def call(line: str) -> None:
+    with open(SIM / "calls.log", "a") as f:
+        f.write(line + "\n")
+
+
+def lines(name: str) -> list[str]:
+    p = SIM / name
+    return p.read_text().split() if p.exists() else []
+
+
+def add_line(name: str, value: str) -> None:
+    with open(SIM / name, "a") as f:
+        f.write(value + "\n")
+
+
+def hexof(ref: str) -> str:
+    return ref.rsplit("@sha256:", 1)[-1]
+
+
+def labels(ref: str) -> dict[str, str]:
+    p = SIM / "images" / hexof(ref) / "labels"
+    out = {}
+    if p.exists():
+        for ln in p.read_text().splitlines():
+            k, _, v = ln.partition("=")
+            out[k] = v
+    return out
+
+
+def images_env() -> dict[str, str]:
+    out = {}
+    p = COMPOSE_DIR / "images.env"
+    if p.exists():
+        for ln in p.read_text().splitlines():
+            if "=" in ln and not ln.startswith("#"):
+                k, _, v = ln.partition("=")
+                out[k] = v
+    return out
+
+
+def caddy_hash() -> str:
+    env = images_env()
+    compose = (COMPOSE_DIR / "compose.yaml").read_text()
+    return hashlib.sha256((env.get("CADDY_IMAGE", "") + compose).encode()).hexdigest()
+
+
+def running(svc: str) -> str:
+    p = SIM / "running" / svc
+    return p.read_text() if p.exists() else ""
+
+
+def edge_path(container_path: str) -> Path:
+    assert container_path.startswith("/edge/"), container_path
+    return EDGE / container_path.removeprefix("/edge/")
+
+
+# ── docker ───────────────────────────────────────────────────────────────
+
+
+def compose(args: list[str]) -> int:
+    i = args.index("-f") + 2  # past `-f compose.yaml`
+    sub = args[i:]
+    if sub[:2] == ["ps", "-q"]:
+        svc = sub[2]
+        if running(svc):
+            print(f"{svc}-cid")
+        return 0
+    if sub[:2] == ["config", "--hash"]:
+        print(f"caddy {caddy_hash()}")
+        return 0
+    if sub[0] == "up":
+        svcs = [a for a in sub[1:] if not a.startswith("-")] or ["app", "caddy"]
+        env = images_env()
+        (SIM / "running").mkdir(exist_ok=True)
+        if "app" in svcs:
+            ref = env["APP_IMAGE"]
+            if running("app") != ref:
+                call(f"RECREATE app {ref}")
+            (SIM / "running" / "app").write_text(ref)
+        if "caddy" in svcs:
+            ref, h = env["CADDY_IMAGE"], caddy_hash()
+            hp = SIM / "running" / "caddy.hash"
+            if running("caddy") != ref or not hp.exists() or hp.read_text() != h:
+                call(f"RECREATE caddy {ref}")
+                cf = EDGE / "current" / "Caddyfile"
+                (SIM / "running" / "caddy.config").write_text(
+                    "caddyfile:" + (cf.read_text() if cf.exists() else "MISSING")
+                )
+            (SIM / "running" / "caddy").write_text(ref)
+            hp.write_text(h)
+        return 0
+    return 0
+
+
+def docker(args: list[str]) -> int:
+    call("docker " + " ".join(args))
+    cmd = args[0]
+    if cmd == "compose":
+        return compose(args)
+    if cmd == "run":
+        if "verify" in args and "--certificate-identity" in args:
+            ref = args[-1]
+            call(f"COSIGN {ref}")
+            return 1 if ref in lines("verify_fail") else 0
+        if "--entrypoint" in args and "adapt" in args:
+            image = args[args.index("--entrypoint") + 2]
+            if image not in lines("present"):
+                print(f"no such image {image}", file=sys.stderr)
+                return 1
+            cfg = edge_path(args[args.index("--config") + 1]).read_text()
+            call(f"ADAPT {image}")
+            if "INVALID" in cfg:
+                print("Error: adapting config using caddyfile: INVALID", file=sys.stderr)
+                return 1
+            print(json.dumps({"adapted": cfg}))
+            return 0
+        return 0
+    if cmd == "pull":
+        ref = args[-1]
+        if not (SIM / "images" / hexof(ref)).exists():
+            return 1
+        call(f"PULL {ref}")
+        if ref not in lines("present"):
+            add_line("present", ref)
+        return 0
+    if cmd == "image":
+        sub, ref = args[1], args[-1]
+        if sub == "inspect":
+            if ref not in lines("present"):
+                return 1
+            if "-f" in args:
+                fmt = args[args.index("-f") + 1]
+                key = fmt.split('"')[1]
+                print(labels(ref).get(key, "<no value>"))
+            return 0
+        if sub == "rm":
+            if ref in (running("app"), running("caddy")):
+                return 1
+            call(f"RMI {ref}")
+            keep = [r for r in lines("present") if r != ref]
+            (SIM / "present").write_text("".join(r + "\n" for r in keep))
+            return 0
+        return 0
+    if cmd == "create":
+        ref = args[-1]
+        if ref not in lines("present"):
+            return 1
+        print(f"ctr-{hexof(ref)}")
+        return 0
+    if cmd == "cp":
+        src, dest = args[1], args[2]
+        cid, _, path = src.partition(":")
+        img = SIM / "images" / cid.removeprefix("ctr-")
+        what = img / ("srv" if path == "/srv" else "Caddyfile")
+        if not what.exists():
+            return 1
+        if what.is_dir():
+            shutil.copytree(what, dest, symlinks=True)
+        else:
+            shutil.copy(what, dest)
+        return 0
+    if cmd == "rm":
+        return 0
+    if cmd == "exec":
+        cid, url = args[1], args[-1]
+        if cid != "caddy-cid" or not running("caddy"):
+            return 1
+        if running("caddy") in lines("broken"):
+            return 1
+        if url.endswith("/load"):
+            if (SIM / "reload_fail").exists():
+                call("RELOAD-REFUSED")
+                return 1
+            body = edge_path(args[args.index("--post-file") + 1]).read_text()
+            call("RELOAD")
+            (SIM / "running" / "caddy.config").write_text(
+                "caddyfile:" + json.loads(body)["adapted"]
+            )
+            return 0
+        return 0  # admin /config/
+    if cmd == "inspect":
+        fmt, cid = args[2], args[3]
+        if "State.Health" in fmt:
+            ref = running("app")
+            if not ref:
+                print("missing")
+            else:
+                print("unhealthy" if ref in lines("unhealthy") else "healthy")
+            return 0
+        if "State.Running" in fmt:
+            print("true" if running(cid.removesuffix("-cid")) else "false")
+            return 0
+        if "config-hash" in fmt:
+            p = SIM / "running" / "caddy.hash"
+            print(p.read_text() if p.exists() else "")
+            return 0
+    return 0
+
+
+# ── curl ─────────────────────────────────────────────────────────────────
+
+
+def curl(args: list[str]) -> int:
+    url = args[-1]
+    opts: dict[str, str] = {}
+    i = 0
+    while i < len(args) - 1:
+        a = args[i]
+        if a in ("-D", "-o", "-w", "--resolve", "--max-time", "-H"):
+            opts[a] = args[i + 1]
+            i += 2
+            continue
+        i += 1
+    code, headers, body = 200, "", ""
+    if "/token?" in url:
+        call("CURL token")
+        body = '{"token":"t"}'
+    elif "/manifests/" in url:
+        repo = "caddy" if "-caddy/" in url else "app"
+        call(f"CURL head {repo}")
+        if (SIM / "registry" / "429").exists():
+            code, headers = 429, "Retry-After: 120\r\n"
+        else:
+            digest = (SIM / "registry" / repo).read_text().strip()
+            headers = f"Docker-Content-Digest: {digest}\r\n"
+    elif "/internal/streams" in url:
+        p = SIM / "streams"
+        n = int(p.read_text()) if p.exists() else 0
+        call(f"STREAMS {n}")
+        if n > 0:
+            p.write_text(str(n - 1))
+        print(json.dumps({"active_streams": n}))
+        return 0
+    elif url.startswith("https://") and "--resolve" in opts:
+        path = "/" + url.split("/", 3)[3] if url.count("/") >= 3 else "/"
+        call(f"GET {path}")
+        caddy = running("caddy")
+        if not caddy or caddy in lines("broken"):
+            if "-w" in opts:
+                sys.stdout.write("000")
+            return 7
+        if (SIM / "serve_500").exists():
+            code = 500
+        elif path == "/":
+            body = (EDGE / "current" / "srv" / "index.html").read_text()
+        else:
+            code = 404
+            for name in ("current", "prev1", "prev2"):
+                f = EDGE / name / "srv" / path.lstrip("/")
+                if f.is_file():
+                    code, body = 200, f.read_text()
+                    break
+    else:
+        call(f"CURL unexpected {url}")
+        return 6
+    if "-D" in opts:
+        Path(opts["-D"]).write_text(f"HTTP/2 {code}\r\n{headers}\r\n")
+    if "-o" in opts:
+        Path(opts["-o"]).write_text(body)
+    else:
+        sys.stdout.write(body)
+    if "-w" in opts:
+        sys.stdout.write(str(code))
+    return 0
+
+
+# ── systemctl / governor (mail) ──────────────────────────────────────────
+
+
+def systemctl(args: list[str]) -> int:
+    add_line("systemctl.log", " ".join(args))
+    if args[0] == "is-active":
+        return 0 if (SIM / "unit_active").exists() else 3
+    if args[0] == "start":
+        if "--no-block" not in args:
+            add_line("systemctl.log", "BLOCKING")
+            return 99
+        (SIM / "unit_active").touch()
+    return 0
+
+
+def governor(args: list[str]) -> int:
+    subject = args[args.index("--subject") + 1]
+    add_line("mail.log", subject.replace(" ", "_"))
+    call(f"MAIL {subject}")
+    return 0
+
+
+def main() -> int:
+    name = Path(sys.argv[0]).name
+    handler = {
+        "docker": docker,
+        "curl": curl,
+        "systemctl": systemctl,
+        "governor.py": governor,
+    }[name]
+    return handler(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(main())

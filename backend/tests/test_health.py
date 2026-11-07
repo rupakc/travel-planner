@@ -44,3 +44,22 @@ def test_health_reports_vm_backup_status(client, monkeypatch):
     body = client.get("/health").json()
     assert body["backup_ok"] is False
     assert body["backup"]["error"].startswith("ConnectionError")
+
+
+def test_internal_streams_reports_the_open_stream_count(client, monkeypatch):
+    """deploy.sh (on the VM, straight to the app container) waits for this to
+    reach 0 before it recreates Caddy."""
+    from app.core import sse
+
+    monkeypatch.setattr(sse, "_active", 3)
+    r = client.get("/internal/streams")
+    assert r.status_code == 200
+    assert r.json() == {"active_streams": 3}
+
+
+def test_internal_streams_is_refused_when_forwarded(client):
+    """Caddy never routes /internal/*. Should a later proxy rule widen the
+    match, a forwarded request still gets a plain 404."""
+    for header in ("X-Forwarded-For", "X-Real-IP", "Forwarded"):
+        r = client.get("/internal/streams", headers={header: "203.0.113.9"})
+        assert r.status_code == 404, header

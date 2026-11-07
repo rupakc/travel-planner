@@ -1,10 +1,13 @@
 [Unit]
-Description=Voyager deployer, every 5 minutes
+Description=Voyager deployer, every minute
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=5min
-RandomizedDelaySec=30s
+# A run with nothing new is one cached GHCR token + two HEAD requests (no
+# pull, no cosign); a merge goes live about a minute after `prod` moves
+OnUnitActiveSec=60s
+RandomizedDelaySec=5s
+AccuracySec=1s
 
 [Install]
 WantedBy=timers.target

@@ -1,5 +1,5 @@
 [Unit]
-Description=Voyager weekly night window (Caddy updates, reboot if required)
+Description=Voyager weekly window (reboot if an upgrade requires it)
 Requires=docker.service
 After=docker.service
 

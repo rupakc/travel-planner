@@ -1,5 +1,5 @@
 [Unit]
-Description=Voyager weekly night window: Sunday 04:00 Berlin time
+Description=Voyager weekly reboot window: Sunday 04:00 Berlin time
 
 [Timer]
 OnCalendar=Sun *-*-* 04:00:00 Europe/Berlin
