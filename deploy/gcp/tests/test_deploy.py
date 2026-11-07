@@ -277,6 +277,47 @@ def test_app_upgrade_rollback_hold_and_downgrade(live):
     assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
 
 
+def test_app_upgrade_drains_open_streams_first(live):
+    w = live
+    new = w.app_image(2, 2)
+    w.prod(app=new)
+    (w.sim / "streams").write_text("2")
+    assert w.run() == 0, w.output
+    calls = w.calls
+    assert calls.index("STREAMS 0") < calls.index(f"RECREATE app {new}")
+    assert w.count("STREAMS") == 3
+    assert "drain: no open streams" in w.output
+
+
+def test_app_drain_gives_up_after_the_timeout(live):
+    w = live
+    w.env["DRAIN_TIMEOUT"] = "0"
+    w.prod(app=w.app_image(2, 2))
+    (w.sim / "streams").write_text("50")
+    assert w.run() == 0
+    assert "still open after 0s; recreating app anyway" in w.output
+    assert w.count("RECREATE app") == 1
+
+
+def test_unhealthy_app_rolls_back_without_a_second_drain(live):
+    w = live
+    bad = w.app_image(2, 2)
+    w.flag("unhealthy", bad)
+    w.prod(app=bad)
+    assert w.run() == 1
+    assert w.count("STREAMS") == 1  # before the upgrade only, not the rollback
+    assert w.count("RECREATE app") == 2
+
+
+def test_refused_app_downgrade_does_not_drain(live):
+    w = live
+    w.prod(app=w.app_image(2, 2))
+    assert w.run() == 0
+    w.prod(app=f"{APP}@{d(1)}")
+    assert w.run() == 0
+    assert w.count("STREAMS") == 0 and w.count("RECREATE") == 0
+
+
 def test_stopped_unit_is_started_again(live):
     (live.sim / "unit_active").unlink()
     assert live.run() == 0

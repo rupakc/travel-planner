@@ -7,9 +7,10 @@
 #      exponentially, up to 30 min).
 #   2. Verify each new digest's cosign keyless signature: it must come from
 #      this repo's deploy workflow on refs/heads/main. Anything else is refused.
-#   3. App: pull by digest, pin it in images.env (previous one kept),
-#      `compose up -d app`, wait for healthy (240 s); unhealthy → previous
-#      digest back, the bad one held.
+#   3. App: pull by digest, wait up to 90 s for open SSE streams to end
+#      (drain), pin it in images.env (previous one kept), `compose up -d app`,
+#      wait for healthy (240 s); unhealthy → previous digest back at once (no
+#      drain), the bad one held.
 #   4. Caddy image (SPA + Caddyfile + Caddy runtime), never restarting Caddy
 #      for content:
 #      - copy /srv and the Caddyfile out of the image (docker create + cp,
@@ -314,6 +315,8 @@ deploy_app() {
     echo "$new" >>"$REFUSED"
     return 0
   fi
+  # New app pulled and checked: let open streams finish before it restarts
+  drain app
   PREV_APP="$APP" APP="$new"
   save_images
   log "deploying app=$APP"
@@ -532,14 +535,14 @@ caddy_healthy() {
   return 1
 }
 
-# drain — before a Caddy recreate (which cuts every open connection): wait up
-# to DRAIN_TIMEOUT for the app's open SSE streams to end
+# drain [WHAT] — before recreating Caddy or the app (either cuts every open
+# SSE stream): wait up to DRAIN_TIMEOUT for the app's open streams to end
 drain() {
-  local deadline=$((SECONDS + DRAIN_TIMEOUT)) n
+  local deadline=$((SECONDS + DRAIN_TIMEOUT)) n what="${1:-Caddy}"
   while :; do
     n="$(curl -fsS --max-time 3 "$APP_STREAMS_URL" 2>/dev/null | jq -r '.active_streams // empty' 2>/dev/null || true)"
     if [[ ! "$n" =~ ^[0-9]+$ ]]; then
-      log "drain: open-stream count unavailable; recreating Caddy now"
+      log "drain: open-stream count unavailable; recreating $what now"
       return 0
     fi
     if ((n == 0)); then
@@ -547,7 +550,7 @@ drain() {
       return 0
     fi
     if ((SECONDS >= deadline)); then
-      log "drain: $n stream(s) still open after ${DRAIN_TIMEOUT}s; recreating Caddy anyway"
+      log "drain: $n stream(s) still open after ${DRAIN_TIMEOUT}s; recreating $what anyway"
       return 0
     fi
     sleep "$POLL"
