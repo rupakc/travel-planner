@@ -36,8 +36,9 @@ jobs:
       - run: pip install -r backend/requirements-dev.txt
       - run: ruff check backend/ deploy/ infrastructure/gcp/
       - run: ruff format --check backend/ deploy/ infrastructure/gcp/
-      # VM host scripts (deploy/gcp, infrastructure/gcp); shellcheck ships on ubuntu-latest
-      - run: shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh infrastructure/gcp/*.sh
+      # VM host scripts (deploy/gcp, infrastructure/gcp) and the deploy
+      # workflow's scripts (deploy/ci); shellcheck ships on ubuntu-latest
+      - run: shellcheck -x deploy/gcp/*.sh deploy/gcp/host/*.sh deploy/gcp/tests/*.sh deploy/ci/*.sh infrastructure/gcp/*.sh
 
   lint-frontend:
     runs-on: ubuntu-latest
@@ -121,7 +122,7 @@ jobs:
           key: ${{ runner.os }}-pip-3.12-${{ hashFiles('backend/requirements*.txt') }}
           restore-keys: ${{ runner.os }}-pip-3.12-
       - run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
-      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests infrastructure/gcp/tests
+      - run: python -m pytest -q -p no:cacheprovider deploy/gcp/tests deploy/ci/tests infrastructure/gcp/tests
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -152,21 +153,21 @@ jobs:
             debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 \
             bash /src/deploy/gcp/tests/host_checks.sh
 
-  # PRs and branch pushes: do the images still build? Build-only (nothing
-  # pushed), in parallel with the tests, and only the images whose inputs the
-  # change touches; no usable base to diff against, or a change to this file,
-  # builds all. Reads the deploy workflow's BuildKit cache, writes none.
-  # Skipped when deploy.yml calls CI: its `build` job builds the images that
-  # ship and Trivy-scans them before they are signed.
-  #   app    backend/Dockerfile: backend/, .agents/ (+ .dockerignore)
-  #   caddy  deploy/gcp/caddy.Dockerfile: frontend/, deploy/gcp/Caddyfile
-  #   nginx  frontend/Dockerfile, used only by local `docker compose up`: its
-  #          own files and frontend/package*.json (the SPA build itself is
-  #          covered by caddy)
+  # PRs and branch pushes: do the images still build, and would the deploy
+  # workflow's Trivy gate pass? Nothing is pushed. In parallel with the
+  # tests, and only for the images whose inputs the change touches; no usable
+  # base to diff against, or a change to ci.yml, deploy.yml or a deploy/ci
+  # script, does all of them. Reads the deploy workflow's BuildKit cache,
+  # writes none. Skipped when deploy.yml calls CI: its build jobs build and
+  # scan the images that ship.
+  #   app    backend/Dockerfile: backend/, .agents/ (+ .dockerignore); build + scan
+  #   caddy  deploy/gcp/caddy.Dockerfile: frontend/, deploy/gcp/Caddyfile; build + scan
+  #   nginx  frontend/Dockerfile, used only by local `docker compose up`:
+  #          its own files and frontend/package*.json; build only (not shipped)
   image-builds:
     if: ${{ !inputs.skip-image-builds }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -187,7 +188,8 @@ jobs:
             files="$(git diff --name-only "$BEFORE" HEAD)" || files=""
           fi
           printf '%s\n' "${files:-(unknown: building all)}"
-          if [ -z "$files" ] || grep -qx '.github/workflows/ci.yml' <<<"$files"; then
+          if [ -z "$files" ] ||
+            grep -qE '^(\.github/workflows/(ci|deploy)\.yml|deploy/ci/[^/]+\.sh)$' <<<"$files"; then
             printf 'app=true\ncaddy=true\nnginx=true\n' >>"$GITHUB_OUTPUT"
             exit 0
           fi
@@ -207,6 +209,8 @@ jobs:
           file: backend/Dockerfile
           platforms: linux/amd64
           push: false
+          load: true
+          tags: voyager-app:ci
           cache-from: type=gha,scope=app
       - name: Build caddy + SPA image (no push)
         if: steps.changed.outputs.caddy == 'true'
@@ -216,7 +220,22 @@ jobs:
           file: deploy/gcp/caddy.Dockerfile
           platforms: linux/amd64
           push: false
+          load: true
+          tags: voyager-caddy:ci
           cache-from: type=gha,scope=caddy
+      # The deploy build jobs' gate, early: same script, same policy
+      - name: Trivy scan (same policy as deploy)
+        if: steps.changed.outputs.app == 'true' || steps.changed.outputs.caddy == 'true'
+        env:
+          APP: ${{ steps.changed.outputs.app }}
+          CADDY: ${{ steps.changed.outputs.caddy }}
+          TRIVY_IMAGE_SRC: docker
+        run: |
+          set -euo pipefail
+          refs=()
+          if [ "$APP" = true ]; then refs+=(voyager-app:ci); fi
+          if [ "$CADDY" = true ]; then refs+=(voyager-caddy:ci); fi
+          bash deploy/ci/trivy-scan.sh "${refs[@]}"
       - name: Build the local nginx frontend image
         if: steps.changed.outputs.nginx == 'true'
         run: docker build frontend/ -t frontend:ci

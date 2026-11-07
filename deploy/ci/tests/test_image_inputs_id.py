@@ -1,5 +1,5 @@
 """image-inputs-id.sh: the content id the deploy workflow compares with the
-`prod` image's io.voyager.inputs label to skip a build (and the VM's restart).
+`prod` image's io.voyager.app-inputs / io.voyager.caddy-inputs label to skip a build (and the VM's restart).
 
 The rule that matters: any change the image could see changes the id
 (under-counting would ship a stale image); changes it can't see may or may
@@ -203,10 +203,30 @@ def test_changes_outside_the_image_keep_the_id(repo, change):
         'FROM x\nCOPY ["backend/", "/app"]\n',
         "FROM x\nCOPY <<EOF /a\nhi\nEOF\n",
         "FROM x\nRUN --mount=type=bind,target=/src make\n",
+        "FROM x\nRUN --mount=target=/src make\nCOPY .agents/ /a\n",
+        "FROM x\nRUN --mount=source=.,target=/src make\nCOPY .agents/ /a\n",
+        "FROM x\nRUN --mount=type=bind,from=alpine:3,target=/a ls\nCOPY .agents/ /a\n",
+        "FROM x\nCOPY --from=nginx:alpine /etc/nginx /n\nCOPY .agents/ /a\n",
+        "FROM x\nCOPY --from=later /a /b\nFROM y AS later\nCOPY .agents/ /a\n",
+        "FROM x\nCOPY --from=1 /a /b\nCOPY .agents/ /a\n",
         "FROM x\nCOPY nothing-here/ /app\n",
         "FROM x\nRUN echo no copy\n",
     ],
-    ids=["add", "variable", "json", "heredoc", "bind-mount", "no-match", "no-copy"],
+    ids=[
+        "add",
+        "variable",
+        "json",
+        "heredoc",
+        "bind-mount",
+        "mount-without-type",
+        "mount-source-without-type",
+        "bind-from-image",
+        "copy-from-image",
+        "copy-from-later-stage",
+        "copy-from-unknown-index",
+        "no-match",
+        "no-copy",
+    ],
 )
 def test_unsupported_dockerfiles_fail_so_the_workflow_builds(repo, dockerfile):
     (repo / "backend/Dockerfile").write_text(dockerfile)
@@ -215,12 +235,36 @@ def test_unsupported_dockerfiles_fail_so_the_workflow_builds(repo, dockerfile):
     assert r.stdout == ""
 
 
-def test_stage_copies_and_bind_mounts_from_stages_are_not_context(repo):
+def test_stage_copies_and_mounts_from_stages_are_not_context(repo):
     (repo / "backend/Dockerfile").write_text(
-        "FROM x AS a\nCOPY .agents/ /a\nFROM y\n"
-        "RUN --mount=type=bind,from=a,target=/a ls\nCOPY --from=a /a /b\n"
+        "FROM x AS a\nCOPY .agents/ /a\nFROM y AS B\n"
+        "RUN --mount=type=bind,from=a,target=/a --mount=type=cache,target=/c ls\n"
+        "COPY --from=a /a /b\nCOPY --from=0 /a /c\nCOPY --from=b /a /d\n"
+        "RUN --mount=type=secret,id=s cat /run/secrets/s\n"
     )
     assert listed(repo) == [".agents/flights.md"]
+
+
+@pytest.mark.parametrize(
+    "negation",
+    [
+        "!backend/tests/keep.txt",
+        "!**/*.example",
+        "!backend/**/.env.example",
+        "!.env.example",
+    ],
+)
+def test_other_negations_turn_all_exclusions_off(repo, negation):
+    (repo / ".dockerignore").write_text(DOCKERIGNORE + negation + "\n")
+    files = listed(repo)
+    assert "backend/tests/test_x.py" in files
+    assert "backend/data/seed.csv" in files
+
+
+def test_simple_negation_keeps_only_that_name(repo):
+    files = listed(repo)
+    assert "backend/tests/.env.example" in files
+    assert "backend/tests/test_x.py" not in files
 
 
 def test_dockerfile_specific_ignore_file_disables_root_exclusions(repo):

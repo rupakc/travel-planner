@@ -71,19 +71,23 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
                         pricing_advisor, itinerary, stress_test, discovery, layover, chat,
                         chat-itinerary, orchestrator (descriptive only)
 .github/workflows/      ci.yml (also reusable; PRs/branches: build-only image checks, path-filtered),
-                        docs.yml, deploy.yml (push to main: `ci` ∥ `build` [per image: skip if `prod`'s
-                        io.voyager.{app,caddy}-inputs label = image-inputs-id.sh, else build → GHCR →
-                        Trivy] → `promote` (only if both passed: HEAD check → cosign sign + verify
-                        the new digests → move `prod`); no VM/GCP access)
+                        docs.yml, prod-scan.yml (daily Trivy of both :prod images), deploy.yml (push to
+                        main + weekly forced rebuild: `ci` ∥ `build-app` / `build-caddy` [skip if `prod`'s
+                        io.voyager.{app,caddy}-inputs = deploy/ci/image-inputs-id.sh, else build → GHCR
+                        → Trivy] → `promote-app` / `promote-caddy`, each only if ci + its build passed:
+                        deploy/ci/promote-image.sh = HEAD check → cosign sign + verify → move `prod`;
+                        no VM/GCP access)
 
 deploy/gcp/             VM kit: compose.yaml (app + caddy), Caddyfile, caddy.Dockerfile (SPA + Caddyfile
                         inside; label io.voyager.caddy-runtime from caddy-runtime-id.sh),
-                        image-inputs-id.sh (build-inputs hash of an image, for skipping), app.env.example,
+                        app.env.example,
                         host/ (first-boot.sh, deploy.sh signed-digest deployer: app + edge releases in
                         /var/lib/voyager/edge (current/prev1/prev2 symlinks, admin-API reload, drain +
                         recreate on runtime change, rollback), governor.py egress governor, window.sh
-                        weekly reboot window, systemd units), tests/ (test_deploy.py + fakes,
-                        test_image_inputs_id.py)
+                        weekly reboot window, systemd units), tests/ (test_deploy.py + fakes)
+deploy/ci/              deploy workflow scripts (not shipped to the VM): image-inputs-id.sh (build-inputs
+                        hash), build-decision.sh, promote-image.sh, trivy-scan.sh (the one Trivy
+                        policy); tests/
 
 backend/
   Dockerfile            build from the repo root (copies backend/ and .agents/)
