@@ -19,7 +19,7 @@ Design: `docs/superpowers/specs/2026-11-06-auto-deploy-edge.md`. Runbook: [Deplo
   - Only content/validation failures, unhealthy apps and unhealthy Caddy runtimes (by runtime id, `held-runtimes`) are held; infrastructure failures retry after 5 min. A held runtime never gets recreated onto; its images ship content only.
   - Emails and repeated errors are rate-limited (1 an hour), and a broken edge directory never blocks app deploys or rollbacks.
   - A no-change run is one `docker ps`; converge runs only on config changes or stopped services.
-  - Old images are removed by digest (current + previous kept), and the Caddy health check no longer needs a certificate.
+  - Old images are removed by digest (current + previous kept). Caddy health needs no certificate on a fresh VM, but a wrong HTTPS answer always fails, and so does no answer when HTTPS worked before the change. An SPA served wrongly after its switch is held, and a compose failure that repeats twice holds the digest.
 - `caddy.Dockerfile`: runtime layers come before the SPA layer (the VM pulls only the SPA on frontend changes), and `/edge/current` falls back to the image's own content. Missing assets are now an uncached 404 instead of being cached for a year.
 
 ## Unreleased: live web check and Near me v2 (Google grounding)

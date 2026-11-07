@@ -16,6 +16,7 @@ writes the simulated world under $SIM:
   unhealthy                      app refs that never get healthy
   broken                         Caddy refs whose container never answers
   serve_500                      present → Caddy answers 500 over HTTPS
+  no_tls                         Caddy refs that give no HTTPS answer (no cert)
   verify_fail                    refs whose cosign verification fails
   reload_fail                    present → the admin API refuses /load
   streams                        open SSE streams (count; decays by 1 per poll)
@@ -343,7 +344,7 @@ def curl(args: list[str]) -> int:
     elif url.startswith("https://") and "--resolve" in opts:
         path = "/" + url.split("/", 3)[3] if url.count("/") >= 3 else "/"
         call(f"GET {path}")
-        if not caddy_ok():
+        if not caddy_ok() or running("caddy") in lines("no_tls"):
             if "-w" in opts:
                 sys.stdout.write("000")
             return 7

@@ -74,3 +74,9 @@ The SPA was baked into the Caddy image, so every frontend change produced a new 
   - Caddy health: running image ID, admin API, readable `/edge/current/srv/index.html` and plain-HTTP redirect; HTTPS only warns.
   - `--rollback-edge` is a toggle (it releases the hold of the release it returns to).
   - `caddy.Dockerfile` notes that the runtime id hashes lines, not the contents of COPYed host files.
+
+## Re-review fixes (2026-11-07)
+
+- **HTTPS is part of Caddy health.** A wrong HTTPS answer is always unhealthy. No HTTPS answer is tolerated only when HTTPS gave no answer before the change too (`https_baseline`, probed before the recreate) or on a first deploy. This applies to runtime deploys, converge recreates and `--rollback-caddy`. The previous runtime image is removed only after the new one passes.
+- **No flip-flopping.** An SPA that Caddy serves wrongly after a successful switch/reload is held (email once). A runtime or app `compose up` that fails, or leaves the old container, twice in a row for the same digest is held.
+- **Minors.** While the app step only waits to retry, the edge step still runs. Refused images (downgrade, no build label) are removed. An unknown live build falls back to the label of the image the live release came from, else the deploy retries; it never uses another image's label.

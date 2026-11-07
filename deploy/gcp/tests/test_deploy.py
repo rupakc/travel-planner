@@ -411,19 +411,22 @@ def test_reload_failure_keeps_old_config_and_switches_back(live):
     assert w.run() == 0 and w.count("COSIGN") == 0  # held
 
 
-def test_spa_not_served_after_switch_rolls_back_without_holding(live):
+def test_spa_served_wrongly_after_switch_is_switched_back_and_held(live):
+    """Re-review N2: a wrong answer with the release in place is the
+    content's fault; retrying would flip it live every 5 min forever."""
     w = live
-    w.flag("serve_500")
-    new = w.caddy_image(101, 2)
-    w.prod(caddy=new)
-    assert w.run() == 1
-    assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
-    assert new not in w.held()  # could be Caddy, not the content: retried
-    assert w.run() == 1 and w.count("COSIGN") == 0  # waits RETRY_SECONDS
-    w.unflag("serve_500")
     w.env["RETRY_SECONDS"] = "0"
-    assert w.run() == 0
-    assert w.link("current") == w.release_of(new)
+    new = w.caddy_image(101, 2, caddyfile=CADDYFILE + "# changed\n")
+    w.flag("serve_500")
+    w.prod(caddy=new)
+    reloads = 0
+    for _ in range(3):
+        w.run()
+        reloads += w.count("RELOAD")
+    assert w.link("current") == w.release_of(f"{CADDY}@{d(100)}")
+    assert new in w.held()
+    assert reloads == 2  # the new Caddyfile, then the old one back: once
+    assert w.mails() == ["[voyager]_Caddy_deploy_refused"]
 
 
 def test_symlink_in_the_spa_is_refused(live):
@@ -901,3 +904,116 @@ def test_step_really_stops_a_function_at_its_first_failing_command(tmp_path):
         ["bash", str(script)], capture_output=True, text=True, check=True
     )
     assert out.stdout.split() == ["before", "rc=1", "rc=0"], out.stdout
+
+
+# ── Re-review: HTTPS health, repeated failures, minors ──────────────────
+
+
+def test_runtime_serving_https_wrongly_is_rolled_back(live):
+    """Re-review N1: the plain-HTTP redirect still answers, HTTPS serves 500."""
+    w = live
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.prod(caddy=new)
+    w.flag("serve_500")
+    assert w.run() == 1
+    assert w.images()["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+    assert (w.opt / "held-runtimes").read_text().split() == ["r2"]
+    assert f"RMI {CADDY}@{d(100)}" not in w.calls  # PREV never deleted
+
+
+def test_runtime_without_https_answer_is_rolled_back_when_https_worked(live):
+    w = live
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.flag("no_tls", new)  # only the new runtime loses HTTPS
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert w.images()["CADDY_IMAGE"] == f"{CADDY}@{d(100)}"
+
+
+def test_runtime_without_https_answer_is_fine_when_there_was_none_before(live):
+    """No certificate yet (both before and after): not the runtime's fault."""
+    w = live
+    old, new = f"{CADDY}@{d(100)}", w.caddy_image(101, 2, runtime="r2")
+    w.flag("no_tls", old)
+    w.flag("no_tls", new)
+    w.prod(caddy=new)
+    assert w.run() == 0, w.output
+    assert w.images()["CADDY_IMAGE"] == new
+    assert "no HTTPS answer" in w.output
+
+
+def test_compose_failing_twice_for_a_runtime_holds_the_digest(live):
+    w = live
+    w.env["RETRY_SECONDS"] = "0"
+    new = w.caddy_image(101, 2, runtime="r2")
+    w.flag("noop_up", "caddy")
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert new not in w.held()
+    assert w.run() == 1
+    assert new in w.held()
+    assert w.run() == 0 and w.count("RECREATE") == 0  # no more flipping
+
+
+def test_compose_failing_twice_for_the_app_holds_the_digest(live):
+    w = live
+    w.env["RETRY_SECONDS"] = "0"
+    new = w.app_image(2, 2)
+    w.flag("fail_up", "app")
+    w.prod(app=new)
+    assert w.run() == 1 and new not in w.held()
+    assert w.run() == 1 and new in w.held()
+
+
+def test_edge_still_deploys_while_the_app_waits_to_retry(live):
+    w = live
+    w.flag("fail_pull")
+    w.prod(app=w.app_image(2, 2))
+    assert w.run() == 1  # the app pull fails (and the edge waits this run)
+    w.unflag("fail_pull")
+    new = w.caddy_image(101, 2)
+    w.prod(caddy=new)
+    assert w.run() == 0, w.output  # app waits RETRY_SECONDS; edge goes on
+    assert w.images()["CADDY_CONTENT_IMAGE"] == new
+    assert w.images()["APP_IMAGE"] == f"{APP}@{d(1)}"
+
+
+def test_refused_images_are_removed(live):
+    w = live
+    w.prod(app=w.app_image(3, 3), caddy=w.caddy_image(102, 3))
+    assert w.run() == 0
+    old_app, old_caddy = w.app_image(2, 2), w.caddy_image(101, 2)
+    w.prod(app=old_app, caddy=old_caddy)
+    assert w.run() == 0
+    assert f"RMI {old_app}" in w.calls and f"RMI {old_caddy}" in w.calls
+    nolabel = w.app_image(4, 4)
+    (w.sim / "images" / d(4)[7:] / "labels").write_text("")
+    w.prod(app=nolabel)
+    w.run()
+    assert f"RMI {nolabel}" in w.calls
+
+
+def test_unknown_live_build_retries_instead_of_borrowing_another_label(live):
+    """Re-review minor: no BUILD file and the content image's label not
+    readable → retry, never the runtime image's label."""
+    w = live
+    w.prod(caddy=w.caddy_image(101, 2))
+    assert w.run() == 0
+    (w.edge / "current" / "BUILD").write_text("")
+    (w.sim / "images" / d(101)[7:] / "labels").write_text(
+        "io.voyager.caddy-runtime=r1\n"
+    )
+    new = w.caddy_image(102, 3)
+    w.prod(caddy=new)
+    assert w.run() == 1
+    assert "cannot tell which build the live release is" in w.output
+    assert w.images()["CADDY_CONTENT_IMAGE"] == f"{CADDY}@{d(101)}"
+    assert new not in w.held()
+
+
+def test_converge_after_docker_stop(live):
+    w = live
+    assert w.run() == 0
+    w.flag("stopped", "caddy")
+    w.run()
+    assert any(c.startswith("compose up") for c in w.calls)

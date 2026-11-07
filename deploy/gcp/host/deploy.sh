@@ -186,6 +186,21 @@ retry_later() {
   stamp "retry-$(key "$1")"
   log_rl "retry-$(key "$1")" "$2: retrying $1 in ${RETRY_SECONDS}s (nothing held)"
 }
+# strike REF → count consecutive compose/image failures of REF; true at the
+# second (then the count restarts): a failure that repeats is the image's
+# own, and the digest gets held instead of flipping every RETRY_SECONDS
+strike() {
+  local f n
+  f="$STATE_DIR/strikes-$(key "$1")"
+  n=$(($(cat "$f" 2>/dev/null || echo 0) + 1))
+  if ((n >= 2)); then
+    rm -f "$f"
+    return 0
+  fi
+  echo "$n" >"$f"
+  return 1
+}
+clear_strikes() { rm -f "$STATE_DIR/strikes-$(key "$1")"; }
 waiting_retry() {
   fresh_stamp "retry-$(key "$1")" "$RETRY_SECONDS" || return 1
   log_once "wait-$(key "$1")" "waiting to retry $1 after an infrastructure failure"
@@ -443,7 +458,8 @@ app_up() {
   fi
 }
 
-# deploy_app NEW → 0 nothing to do or deployed; 1 refused/failed
+# deploy_app NEW → 0 nothing to do or deployed; 1 refused/failed; 3 only
+# waiting to retry an earlier infrastructure failure (the edge still runs)
 deploy_app() {
   local new="$1" old="$APP" old_prev="$PREV_APP" nb cb why
   [[ "$new" != "$APP" ]] || return 0
@@ -455,12 +471,13 @@ deploy_app() {
     log_once app-refused "skipping $new: refused (downgrade or no build label; use --allow-downgrade)"
     return 0
   fi
-  waiting_retry "$new" && return 1
+  waiting_retry "$new" && return 3
   verified "$new" || return 1
   pull "$new" || { retry_later "$new" "pull failed"; return 1; }
   if ! nb="$(build_of "$new")"; then
     log "refusing $new: no readable io.voyager.build label"
     refuse "$new"
+    rm_image "$new" "$APP" "$PREV_APP"
     return 1
   fi
   if ((!ALLOW_DOWNGRADE)); then
@@ -471,6 +488,7 @@ deploy_app() {
     if ((nb < cb)); then
       log "refusing $new: built before the running app (use --allow-downgrade)"
       refuse "$new"
+      rm_image "$new" "$APP" "$PREV_APP"
       return 0
     fi
   fi
@@ -482,6 +500,7 @@ deploy_app() {
   why="$(app_up "$APP")"
   if [[ -z "$why" ]]; then
     log "app healthy"
+    clear_strikes "$new"
     rm_image "$old_prev" "$APP" "$PREV_APP"
     return 0
   fi
@@ -494,6 +513,9 @@ deploy_app() {
     hold "$new"
     rm_image "$new" "$APP" "$PREV_APP"
     notify "[voyager] deploy rolled back" "New app $new failed its health check; ${back:-ok}: $old is running again."
+  elif strike "$new"; then
+    hold "$new"
+    notify "[voyager] app deploy held" "compose could not start $new twice in a row ($why); held in $FAILED. $old is back (${back:-ok})."
   else
     retry_later "$new" "docker could not start it ($why)"
     notify "[voyager] app deploy failed (docker)" "compose could not start $new ($why); $old is back (${back:-ok}). It is retried in ${RETRY_SECONDS}s."
@@ -730,12 +752,26 @@ caddy_site_up() {
   return 1
 }
 
-# caddy_healthy ID REF — after a (re)create: the container runs REF, its
-# admin API answers, it can read /edge/current/srv/index.html and serves the
-# site over plain HTTP. HTTPS (index + asset) is checked too but only warns:
-# a fresh VM has no certificate yet.
+# https_baseline → 1 if HTTPS through Caddy gives NO answer right now (e.g.
+# no certificate yet), else 0. Probed before a recreate: only then may the
+# new container also give no HTTPS answer and still count as healthy.
+https_baseline() {
+  local id rc=0
+  id="$(link current)"
+  id="${id#releases/}"
+  [[ -n "$id" ]] || { echo 1; return 0; }
+  served "$id" >/dev/null 2>&1 || rc=$?
+  if ((rc == 2)); then echo 1; else echo 0; fi
+}
+
+# caddy_healthy ID REF [NO_TLS_OK] — after a (re)create: the container runs
+# REF, its admin API answers, it can read /edge/current/srv/index.html,
+# plain HTTP gets the site's redirect, and HTTPS serves ID's index.html and
+# an asset. A WRONG HTTPS answer is always unhealthy; NO HTTPS answer is
+# accepted only with NO_TLS_OK=1 (first deploy, or HTTPS gave no answer
+# before the change either).
 caddy_healthy() {
-  local deadline=$((SECONDS + CADDY_HEALTH_TIMEOUT)) cid rc
+  local deadline=$((SECONDS + CADDY_HEALTH_TIMEOUT)) cid rc=0 no_tls_ok="${3:-0}"
   while :; do
     cid="$(caddy_cid)"
     if [[ -n "$cid" ]] && runs caddy "$2" && caddy_admin &&
@@ -743,13 +779,16 @@ caddy_healthy() {
       caddy_site_up; then
       rc=0
       served "$1" || rc=$?
-      ((rc == 0)) || log "warning: HTTPS check of release $1 through Caddy: $([[ $rc == 2 ]] && echo 'no answer (certificate not issued yet?)' || echo 'wrong answer')"
-      return 0
+      ((rc == 0)) && return 0
+      if ((rc == 2 && no_tls_ok)); then
+        log "warning: no HTTPS answer from Caddy (no certificate yet?), as before the change"
+        return 0
+      fi
     fi
     ((SECONDS < deadline)) || break
     sleep "$POLL"
   done
-  log "Caddy not healthy after ${CADDY_HEALTH_TIMEOUT}s"
+  log "Caddy not healthy after ${CADDY_HEALTH_TIMEOUT}s$( ((rc == 1)) && echo ': wrong HTTPS answer' || true)$( ((rc == 2)) && echo ': no HTTPS answer' || true)"
   return 1
 }
 
@@ -813,11 +852,14 @@ deploy_edge() {
   if ! nb="$(build_of "$new")"; then
     log "refusing Caddy $new: no readable io.voyager.build label"
     refuse "$new"
+    drop_caddy_image "$new"
     return 1
   fi
   if ((!ALLOW_DOWNGRADE)); then
+    # The live release's build: its BUILD file, else the label of the image
+    # it came from (CONTENT, kept on disk); never another image's
     cb="$(cat "$EDGE_DIR/current/BUILD" 2>/dev/null || true)"
-    if [[ ! "$cb" =~ ^[0-9]+$ ]] && ! cb="$(build_of "$CADDY")"; then
+    if [[ ! "$cb" =~ ^[0-9]+$ ]] && ! cb="$(build_of "$CONTENT")"; then
       retry_later "$new" "cannot tell which build the live release is"
       return 1
     fi
@@ -893,8 +935,9 @@ deploy_content() {
         log "could not reload the previous Caddyfile"
       fi
     fi
-    retry_later "$new" "Caddy did not serve the new index.html and its assets"
-    notify "[voyager] SPA deploy switched back" "$new was not served correctly after the switch; the previous release is live again. It is retried in ${RETRY_SECONDS}s."
+    # Caddy answers, but wrongly, with this release (and its Caddyfile) in
+    # place: the content's fault. Held, or it would flip live every retry.
+    refuse_edge "$new" "Caddy did not serve its index.html and assets after the switch (switched back)"
     prune
     return 1
   fi
@@ -924,6 +967,9 @@ deploy_runtime() {
   fi
   log "Caddy runtime changed ($(label "$CADDY" io.voyager.caddy-runtime 2>/dev/null | cut -c1-12) → ${rt:0:12}): recreating Caddy"
   save_links
+  # No HTTPS answer is acceptable afterwards only if there was none before
+  local no_tls_ok
+  no_tls_ok="$(https_baseline)"
   drain
   if ! switch_to "$id"; then
     restore_links
@@ -940,12 +986,14 @@ deploy_runtime() {
     why=compose
   elif ! runs caddy "$new"; then
     why=image # compose left the old container: docker, not the runtime
-  elif ! caddy_healthy "$id" "$new"; then
+  elif ! caddy_healthy "$id" "$new" "$no_tls_ok"; then
     why=unhealthy
   fi
   if [[ -z "$why" ]]; then
     log "Caddy healthy on the new runtime: release $id from $new"
+    clear_strikes "$new"
     prune
+    # Only now, with the new runtime proven, may the one before PREV go
     rm_image "$o_prev" "$CADDY" "$PREV_CADDY" "$CONTENT"
     drop_caddy_image "$o_content"
     return 0
@@ -956,14 +1004,17 @@ deploy_runtime() {
   save_images || log "could not write images.env back (disk full?)"
   compose up -d --no-deps caddy >/dev/null || log "compose up caddy (rollback) failed"
   local back=ok
-  caddy_healthy "${SAVED_LINKS[0]#releases/}" "$CADDY" || back="NOT healthy either"
+  caddy_healthy "${SAVED_LINKS[0]#releases/}" "$CADDY" "$no_tls_ok" || back="NOT healthy either"
   if [[ "$why" == unhealthy ]]; then
     hold_runtime "$rt"
     rm_image "$new" "$CADDY" "$PREV_CADDY" "$CONTENT"
     notify "[voyager] Caddy deploy rolled back" "New Caddy runtime ${rt:0:12} ($new) failed its checks and is held in $HELD_RUNTIMES; $o_caddy is back ($back). Images with that runtime now ship only their SPA/Caddyfile."
+  elif strike "$new"; then
+    hold "$new"
+    notify "[voyager] Caddy deploy held" "compose could not recreate Caddy on $new twice in a row ($why); held in $FAILED. $o_caddy is back ($back)."
   else
-    retry_later "$new" "compose could not recreate Caddy"
-    notify "[voyager] Caddy deploy failed (docker)" "compose could not recreate Caddy on $new; $o_caddy is back ($back). It is retried in ${RETRY_SECONDS}s."
+    retry_later "$new" "compose could not recreate Caddy ($why)"
+    notify "[voyager] Caddy deploy failed (docker)" "compose could not recreate Caddy on $new ($why); $o_caddy is back ($back). It is retried in ${RETRY_SECONDS}s."
   fi
   prune
   return 1
@@ -999,7 +1050,8 @@ first_deploy() {
     notify "[voyager] first deploy unhealthy" "$new_app is not healthy and there is nothing to roll back to."
     return 1
   fi
-  caddy_healthy "$id" "$CADDY" ||
+  # Fresh VM: no certificate yet, so no HTTPS answer is fine (a wrong one isn't)
+  caddy_healthy "$id" "$CADDY" 1 ||
     notify "[voyager] first deploy: Caddy not answering" "Check: docker compose logs caddy"
   log "first deploy healthy"
 }
@@ -1066,9 +1118,11 @@ rollback_caddy() {
   if [[ -n "$rt" ]]; then hold_runtime "$rt"; else hold "$CADDY"; fi
   CADDY="$PREV_CADDY" PREV_CADDY="$cur"
   save_images || die "could not write images.env"
+  local no_tls_ok
+  no_tls_ok="$(https_baseline)"
   drain
   compose up -d --no-deps caddy >/dev/null || die "compose up caddy failed"
-  caddy_healthy "$id" "$CADDY" || die "rolled-back Caddy is not healthy either"
+  caddy_healthy "$id" "$CADDY" "$no_tls_ok" || die "rolled-back Caddy is not healthy either"
 }
 
 # ── Converge ──────────────────────────────────────────────────────────────
@@ -1109,9 +1163,11 @@ converge() {
   fi
   if caddy_stale; then
     log "compose config of Caddy changed: draining, then recreating it"
+    local no_tls_ok
+    no_tls_ok="$(https_baseline)"
     drain
     if compose up -d --no-deps caddy >/dev/null; then
-      caddy_healthy "$(link current | sed 's|^releases/||')" "$CADDY" ||
+      caddy_healthy "$(link current | sed 's|^releases/||')" "$CADDY" "$no_tls_ok" ||
         notify "[voyager] Caddy unhealthy after a config change" "Check: docker compose logs caddy"
     else
       log "compose up caddy failed"
@@ -1196,6 +1252,8 @@ main() {
   # App first (the new SPA may call new endpoints), then the edge
   step deploy_app "$new_app"
   rc=$STEP_RC
+  # 3: the app only waits to retry an infrastructure failure; the edge goes on
+  if ((rc == 3)); then rc=0; fi
   if ((rc == 0 && !EDGE_BROKEN)); then
     step deploy_edge "$new_caddy"
     rc=$STEP_RC
