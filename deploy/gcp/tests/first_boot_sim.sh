@@ -47,7 +47,14 @@ BOOTSTRAP_WORK="$SIM/work" bash "$ROOT/infrastructure/gcp/bootstrap.sh" --dry-ru
 
 cat >"$SIM/bin/curl" <<'EOF'
 #!/usr/bin/env bash
-url="${!#}" body="" code=200
+url="${!#}" body="" code=200 headers="" hfile="" ofile=""
+args=("$@")
+for ((i = 0; i < ${#args[@]} - 1; i++)); do
+  case "${args[i]}" in
+    -D) hfile="${args[i + 1]}" ;;
+    -o) ofile="${args[i + 1]}" ;;
+  esac
+done
 case "$url" in
   */attributes/voyager-bundle) body="$(cat "$SIM/work/bundle.b64")" ;;
   */attributes/voyager-site-host) body=x.sslip.io ;;
@@ -56,17 +63,28 @@ case "$url" in
   */attributes/*) code=404 ;;
   */project/project-id) body=voyager-test ;;
   *token*) body='{"token":"t"}' ;;
-  *travel-planner-app/manifests/prod*) printf 'Docker-Content-Digest: sha256:%064d\r\n' 1; exit 0 ;;
-  *travel-planner-caddy/manifests/prod*) printf 'Docker-Content-Digest: sha256:%064d\r\n' 2; exit 0 ;;
+  *travel-planner-app/manifests/prod*) headers="$(printf 'Docker-Content-Digest: sha256:%064d\r\n' 1)" ;;
+  *travel-planner-caddy/manifests/prod*) headers="$(printf 'Docker-Content-Digest: sha256:%064d\r\n' 2)" ;;
   *) exit 1 ;;
 esac
+# deploy.sh's registry calls: headers to -D, body to -o, only the code on stdout
+if [[ -n "$hfile" ]]; then printf 'HTTP/2 %s\r\n%s\r\n\r\n' "$code" "$headers" >"$hfile"; fi
+if [[ -n "$ofile" ]]; then printf '%s' "$body" >"$ofile"; printf '%s' "$code"; exit 0; fi
 if [[ "$*" == *http_code* ]]; then printf '%s\n%s' "$body" "$code"; else printf '%s' "$body"; fi
 EOF
+# docker: compose and health as before; `docker create` + `docker cp` give the
+# deployer a Caddy image's SPA and Caddyfile to put into the edge release
 cat >"$SIM/bin/docker" <<'EOF'
 #!/usr/bin/env bash
 case "$1 ${2:-}" in
   "compose version") exit 0 ;;
-  compose*) [[ "$*" == *" ps -q app"* ]] && echo cid; exit 0 ;;
+  compose*) [[ "$*" == *" ps -q "* ]] && echo cid; exit 0 ;;
+  "create "*) echo ctr ;;
+  "cp "*)
+    case "$2" in
+      *:/srv) mkdir -p "$3/assets"; echo '<script src="/assets/a.js"></script>' >"$3/index.html"; echo js >"$3/assets/a.js" ;;
+      *:/etc/caddy/Caddyfile) printf '{$SITE_HOST} {\n}\n' >"$3" ;;
+    esac ;;
   "inspect "*) echo healthy ;;
 esac
 exit 0
@@ -182,6 +200,13 @@ run_first_boot() {
   fi
   echo "ok   $1: voyager units only started with --no-block"
   [[ -f /opt/voyager/images.env ]] || { echo "FAIL $1: no images.env after the deploy"; exit 1; }
+  local e=/var/lib/voyager/edge
+  if [[ "$(stat -c '%u:%g %a' "$e" "$e/releases" | sort -u)" != "0:0 755" ]] ||
+    [[ ! -f "$e/current/srv/index.html" || ! -f "$e/current/Caddyfile" ]]; then
+    echo "FAIL $1: edge directory (root 0755) or its current release missing"
+    stat -c '%n %u:%g %a' "$e" "$e/releases"; ls -l "$e"; exit 1
+  fi
+  echo "ok   $1: edge directory root-owned 0755, current release in place"
   if [[ ! -f "$SIM/voyager_active" ]]; then
     echo "FAIL $1: voyager.service not active (ExecStop would not run at shutdown)"
     cat "$SIM/systemctl.log"; exit 1

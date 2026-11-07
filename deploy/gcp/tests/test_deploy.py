@@ -43,7 +43,12 @@ class World:
         self.opt = root / "opt"
         self.edge = root / "edge"
         self.state = root / "run"
-        for p in (self.sim / "bin", self.sim / "images", self.sim / "registry", self.opt):
+        for p in (
+            self.sim / "bin",
+            self.sim / "images",
+            self.sim / "registry",
+            self.opt,
+        ):
             p.mkdir(parents=True)
         (self.opt / "site.env").write_text("SITE_HOST=x.sslip.io\nACME_EMAIL=a@b.c\n")
         (self.opt / "compose.yaml").write_text("services: {} # v1\n")
@@ -131,6 +136,7 @@ class World:
             capture_output=True,
             text=True,
             timeout=120,
+            check=False,
         )
         self.output = p.stderr
         return p.returncode

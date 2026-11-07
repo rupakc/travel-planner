@@ -147,7 +147,9 @@ def docker(args: list[str]) -> int:
             cfg = edge_path(args[args.index("--config") + 1]).read_text()
             call(f"ADAPT {image}")
             if "INVALID" in cfg:
-                print("Error: adapting config using caddyfile: INVALID", file=sys.stderr)
+                print(
+                    "Error: adapting config using caddyfile: INVALID", file=sys.stderr
+                )
                 return 1
             print(json.dumps({"adapted": cfg}))
             return 0

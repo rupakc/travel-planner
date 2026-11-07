@@ -4,6 +4,16 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: everything auto-deploys within minutes (no Caddy window)
+
+Design: `docs/superpowers/specs/2026-11-06-auto-deploy-edge.md`. Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback).
+
+- **SPA and Caddyfile without a Caddy restart.** `deploy.sh` copies `/srv` and the Caddyfile out of each signed Caddy image into `/var/lib/voyager/edge/releases/<digest>`. It refuses symlinks, missing assets and oversize releases, then switches `current`/`prev1`/`prev2` symlinks. Caddy mounts the directory read-only and serves `/assets/*` from the last three releases. A changed Caddyfile is validated in a throwaway container and hot-reloaded through the admin API, so open SSE streams survive. Failures switch back, hold the digest and send an email.
+- **Caddy runtime changes are automatic.** New image label `io.voyager.caddy-runtime` (`deploy/gcp/caddy-runtime-id.sh`: pinned base digest plus the Dockerfile's runtime lines). Only a change there recreates Caddy: it drains open streams (new app endpoint `GET /internal/streams`, up to 90 s), then checks health and rolls back on failure. A changed `compose.yaml` for Caddy is drained the same way.
+- **Faster pickup.** `voyager-deploy.timer` runs every 60 s. A no-change run is one cached GHCR token plus two `HEAD`s, with back-off on `429`, failed signature checks retried after 10 min, and refused downgrades remembered. Merge to live is about 7–9 min.
+- `--rollback-edge` and `--rollback-caddy` join `--rollback`. `--window` is a no-op alias, and the weekly window now only reboots when an upgrade requires it.
+- `caddy.Dockerfile`: runtime layers come before the SPA layer (the VM pulls only the SPA on frontend changes), and `/edge/current` falls back to the image's own content. Missing assets are now an uncached 404 instead of being cached for a year.
+
 ## Unreleased: live web check and Near me v2 (Google grounding)
 
 Design: `docs/superpowers/specs/2026-11-06-live-check-and-near-me-v2.md`.

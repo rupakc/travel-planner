@@ -42,8 +42,8 @@ from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.walking_tours import router as walking_tours_router
-from .core.body_limit import BodySizeLimit
 from .core import sse as _sse
+from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
 from .core.logging_config import configure_logging
 from .core.rate_limit import rate_limit, require_ai_access
