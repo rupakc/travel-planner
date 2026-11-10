@@ -2,19 +2,19 @@
   "modal": {
     "namePlaceholder": "Nom du plan…",
     "close": "Fermer",
-    "empty": "Ce plan n'a pas encore de sélections enregistrées.",
+    "empty": "Ce plan n’a pas encore de sélections enregistrées.",
     "trip_one": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageur",
     "trip_many": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageurs",
     "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageurs",
     "watchFare": "Surveiller ce tarif",
     "delete": "Supprimer",
     "share": "Partager",
-    "shareTitle": "Copiez un lien public : tout le monde peut voir cette fiche de voyage, sans connexion",
+    "shareTitle": "Copiez un lien public : tout le monde peut voir cette fiche de voyage, sans connexion",
     "save": "Enregistrer",
-    "confirmDelete": "Supprimer « {{name}} » ?",
+    "confirmDelete": "Supprimer « {{name}} » ?",
     "msg": {
       "saved": "Enregistré ✓",
-      "saveFailed": "Échec de l'enregistrement",
+      "saveFailed": "Échec de l’enregistrement",
       "shared": "Lien copié ✓",
       "shareFailed": "Échec du partage"
     },
@@ -30,15 +30,15 @@
       "tips": "Conseils ({{count}})",
       "events": "Événements ({{count}})",
       "walkingTours": "Visites à pied ({{count}})",
-      "itinerarySlots": "Créneaux de l'itinéraire ({{count}})",
+      "itinerarySlots": "Créneaux de l’itinéraire ({{count}})",
       "fullItinerary_one": "Itinéraire complet ({{count}} jour)",
       "fullItinerary_many": "Itinéraire complet ({{count}} jours)",
       "fullItinerary_other": "Itinéraire complet ({{count}} jours)"
     },
     "flight": {
-      "outbound": "Aller :",
-      "return": "Retour :",
-      "leg": "Tronçon {{n}} :",
+      "outbound": "Aller :",
+      "return": "Retour :",
+      "leg": "Tronçon {{n}} :",
       "roundTrip": "{{price}} aller-retour",
       "oneWay": "{{price}} aller simple",
       "bookThis": "Réserver ce vol"
@@ -73,19 +73,19 @@
     "calendarTitle": "Téléchargez un fichier .ics pour Google Agenda, Apple Calendrier ou Outlook",
     "print": "Imprimer / PDF",
     "printTitle": "Ouvrez une version imprimable à imprimer ou enregistrer en PDF",
-    "popupBlocked": "Votre navigateur a bloqué le nouvel onglet : autorisez les pop-ups pour ce site et réessayez."
+    "popupBlocked": "Votre navigateur a bloqué le nouvel onglet : autorisez les pop-ups pour ce site et réessayez."
   },
   "cost": {
-    "heading": "Où va l'argent",
+    "heading": "Où va l’argent",
     "cat": {
       "flights": "Vols",
       "hotel": "Hôtel",
       "activities": "Activités",
       "sim": "SIM / eSIM"
     },
-    "transportNote": "Le transport local n'est pas inclus : les tarifs varient selon le voyage.",
+    "transportNote": "Le transport local n’est pas inclus : les tarifs varient selon le voyage.",
     "total": "Total",
-    "budget": "Budget : {{amount}}"
+    "budget": "Budget : {{amount}}"
   },
   "budget": {
     "title": "Planificateur de budget",
@@ -133,12 +133,12 @@
     "title": "Forfait meilleur rapport qualité-prix",
     "subtitle": "Notre sélection au meilleur rapport qualité-prix parmi vos résultats",
     "total": "Total du forfait",
-    "myPlanTotal": "Total de Mon plan : {{amount}}",
+    "myPlanTotal": "Total de Mon plan : {{amount}}",
     "perPerson": "Les prix des vols sont par personne",
     "add": "Tout ajouter à Mon plan",
     "added": "Ajouté à Mon plan",
     "undo": "Annuler",
-    "replaces": "Remplace votre {{items}} actuel.",
+    "replaces": "Remplace votre sélection actuelle : {{items}}.",
     "listAnd": "{{head}} et {{last}}",
     "listSep": ", ",
     "free": "Gratuit",
@@ -169,7 +169,7 @@
   "print": {
     "defaultName": "Plan de voyage",
     "printButton": "Imprimer / Enregistrer en PDF",
-    "footer": "Planifié avec Voyager. Les prix et la disponibilité sont des estimations : confirmez avant de réserver.",
+    "footer": "Planifié avec Voyager. Les prix et la disponibilité sont des estimations : confirmez avant de réserver.",
     "inspiredBy": "Inspiré de {{source}}",
     "travelers_one": "{{count}} voyageur",
     "travelers_many": "{{count}} voyageurs",
@@ -179,7 +179,7 @@
     "getPlan": "Choisir ce forfait",
     "hotelTotal": "{{price}} au total",
     "fromLink": "Depuis votre lien",
-    "alsoFromLink": "Également depuis votre lien : {{names}}",
+    "alsoFromLink": "Également depuis votre lien : {{names}}",
     "section": {
       "flights": "Vols",
       "hotel": "Hôtel",
@@ -194,12 +194,12 @@
     }
   },
   "ics": {
-    "dayTheme": "Jour {{n}} : {{theme}}",
-    "fromLinkQuote": "Depuis votre lien : « {{quote}} »",
-    "estCost": "Coût est. : {{amount}}",
+    "dayTheme": "Jour {{n}} : {{theme}}",
+    "fromLinkQuote": "Depuis votre lien : « {{quote}} »",
+    "estCost": "Coût est. : {{amount}}",
     "arrives": "Arrivée à {{time}} heure locale",
-    "booking": "Réservation : {{url}}",
-    "price": "Prix : {{price}}",
+    "booking": "Réservation : {{url}}",
+    "price": "Prix : {{price}}",
     "trip": "Voyage"
   },
   "util": {

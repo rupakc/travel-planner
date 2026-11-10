@@ -2,8 +2,8 @@
   "login": {
     "tagline": "Planifiez le voyage parfait",
     "title": "Connectez-vous à votre compte",
-    "username": "Nom d'utilisateur",
-    "usernamePlaceholder": "Saisissez votre nom d'utilisateur",
+    "username": "Nom d’utilisateur",
+    "usernamePlaceholder": "Saisissez votre nom d’utilisateur",
     "password": "Mot de passe",
     "passwordPlaceholder": "Saisissez votre mot de passe",
     "showPassword": "Afficher le mot de passe",
@@ -14,7 +14,7 @@
   },
   "changePassword": {
     "title": "Définissez votre mot de passe",
-    "welcome": "Bienvenue, <strong>{{username}}</strong> ! Définissez un nouveau mot de passe pour continuer.",
+    "welcome": "Bienvenue, <strong>{{username}}</strong> ! Définissez un nouveau mot de passe pour continuer.",
     "temporary": "Mot de passe temporaire",
     "new": "Nouveau mot de passe",
     "newPlaceholder": "Au moins 8 caractères",
@@ -36,13 +36,13 @@
       "built_one": "Établi à partir de {{count}} signal dans vos plans enregistrés.",
       "built_many": "Établi à partir de {{count}} signaux dans vos plans enregistrés.",
       "built_other": "Établi à partir de {{count}} signaux dans vos plans enregistrés.",
-      "personalised": "Les recherches en étant connecté sont automatiquement personnalisées avec ce profil.",
-      "empty": "Rien appris pour l’instant : enregistrez quelques plans et vos prochaines recherches seront personnalisées automatiquement.",
-      "confirmReset": "Réinitialiser votre profil de goûts ? Les prochaines recherches ne seront plus personnalisées d’après vos plans passés."
+      "personalised": "Les recherches effectuées une fois connecté sont personnalisées automatiquement avec ce profil.",
+      "empty": "Rien appris pour l’instant : enregistrez quelques plans et vos prochaines recherches seront personnalisées automatiquement.",
+      "confirmReset": "Réinitialiser votre profil de goûts ? Les prochaines recherches ne seront plus personnalisées d’après vos plans passés."
     },
     "signal": {
-      "activity_category": "Types d'activités préférés",
-      "event_category": "Types d'événements préférés",
+      "activity_category": "Types d’activités préférés",
+      "event_category": "Types d’événements préférés",
       "hotel_tier": "Style d’hôtel",
       "flight_style": "Style de vol",
       "interest": "Centres d’intérêt récurrents",
@@ -95,20 +95,20 @@
     "style": {
       "section": "Style de voyage",
       "group": "Groupe de voyage par défaut",
-      "groupHint": "Adultes, enfants, seniors, bébés et besoins d’accessibilité : préremplis à chaque recherche",
+      "groupHint": "Adultes, enfants, seniors, bébés et besoins d’accessibilité : préremplis à chaque recherche",
       "interests": "Centres d’intérêt"
     },
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "saved": "Préférences enregistrées !",
-    "errorWithDetail": "Erreur : {{detail}}",
+    "saved": "Préférences enregistrées !",
+    "errorWithDetail": "Erreur : {{detail}}",
     "saveFailed": "Échec de l’enregistrement"
   },
   "admin": {
     "title": "Espace administrateur",
     "tabs": {
       "users": "Utilisateurs",
-      "feedback": "Retours"
+      "feedback": "Avis"
     },
     "users": {
       "count_one": "{{count}} utilisateur",
@@ -116,13 +116,13 @@
       "count_other": "{{count}} utilisateurs",
       "create": "+ Créer un utilisateur",
       "newUser": "Nouvel utilisateur",
-      "usernameRequired": "Nom d'utilisateur *",
+      "usernameRequired": "Nom d’utilisateur *",
       "emailOptional": "E-mail (facultatif)",
       "tempPasswordRequired": "Mot de passe temporaire *",
       "adminPrivileges": "Droits administrateur",
       "createSubmit": "Créer",
       "creating": "Création…",
-      "createFailed": "Échec de la création de l'utilisateur",
+      "createFailed": "Échec de la création de l’utilisateur",
       "resetOwnHint": "Réinitialiser votre propre mot de passe vous obligera à en définir un nouveau au prochain chargement de la page",
       "resetOwn": "Réinit. le mien",
       "reset": "Réinit. mdp",
@@ -136,7 +136,7 @@
       "close": "Fermer"
     },
     "table": {
-      "username": "Nom d'utilisateur",
+      "username": "Nom d’utilisateur",
       "email": "E-mail",
       "created": "Créé le",
       "role": "Rôle",
@@ -174,13 +174,13 @@
       "all": "Toutes",
       "any": "Toutes",
       "export": "Exporter en CSV",
-      "empty": "Aucun retour pour le moment.",
+      "empty": "Aucun avis pour le moment.",
       "pages": {
-        "search": "recherche",
-        "results": "résultats",
-        "chat": "chat",
-        "preferences": "préférences",
-        "admin": "admin"
+        "search": "Recherche",
+        "results": "Résultats",
+        "chat": "Chat",
+        "preferences": "Préférences",
+        "admin": "Admin"
       },
       "categories": {
         "bug": "bug",
