@@ -284,10 +284,26 @@ Steps for each sub-task:
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement.** **Step 4: Run** → PASS.
 - [ ] **Step 5: Commit** `feat(admin): telemetry analytics tab`
 
+### Task 14: Sign-in buttons on the login page (owner request, 2026-11-10)
+
+The OAuth flows themselves are Phase 1. This task puts the buttons in the UI now.
+
+**Files:**
+- Create: `frontend/src/components/auth/SocialSignInButtons.jsx` (+ `.test.jsx`), `frontend/src/components/auth/providerIcons.jsx` (inline SVG marks drawn to each provider's published brand guidelines: Google "G", Facebook "f", GitHub mark, Apple logo), `frontend/src/i18n/locales/<lang>/auth.json`
+- Modify: `frontend/src/pages/LoginPage.jsx` (buttons above the username/password form, separated by "or"), `frontend/src/services/api.js` (`getAuthProviders()`)
+
+**Interfaces:**
+- Consumes: `GET /api/auth/providers` → `{"providers": [{"id": "google"|"facebook"|"github"|"apple", "configured": bool, "start_url": str|null}]}` (built in Phase 1; on 404 every provider counts as not configured).
+- Produces: `<SocialSignInButtons mode="signin"|"signup" />`. Order: Apple, Google, Facebook, GitHub. Each is a full-width button with the provider mark and "Continue with {{provider}}", `data-tid="auth.provider.<id>"`, and it emits `ui_tap` via autocapture. Configured → navigate to `start_url`. Not configured → an inline, polite note under the buttons (`aria-live="polite"`): "{{provider}} sign-in is coming soon — use your username and password for now." No navigation and no error.
+
+- [ ] **Step 1: Write failing tests**: four buttons render in order; with a 404 from providers, clicking Google shows the coming-soon note and doesn't navigate; with `configured:true` it navigates to `start_url`; the existing LoginPage tests still pass.
+- [ ] **Step 2: Run** → FAIL. **Step 3: Implement**, in both themes, and translate `auth` into all 7 languages. **Step 4: Run** → PASS.
+- [ ] **Step 5: Commit** `feat(auth): sign-in buttons for Apple, Google, Facebook, GitHub`
+
 ## Execution waves
 
 - **Wave A (parallel):** Tasks 1+2 (one agent: backend storage + registry), Task 4 (theme), Task 7 (i18n framework).
 - **Wave B (parallel, after A merges):** Task 3 (API), Task 5 (SDK; its interface with Task 3 is fixed above), Task 6 (dark polish), Task 8a, 8b, 8d–8i.
-- **Wave C:** Task 8c (after 8b), Task 10, Task 11, Task 13.
+- **Wave C:** Task 8c (after 8b), Task 10, Task 11, Task 13, Task 14 (after 8h, which owns LoginPage strings).
 - **Wave D:** Task 9 (one reviewer per language, in parallel), Task 12.
 - Each wave ends with three review passes on the combined diff: spec compliance, correctness (`/code-review high`), and UX/visual (screenshots in both themes and in `de`/`bn`). One PR per wave, merged when CI is green.
