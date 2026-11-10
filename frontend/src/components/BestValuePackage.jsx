@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
+import { fmtNumber } from '../i18n/format'
 import { Package, Plane, Hotel, MapPin, Smartphone, Footprints, Landmark, Check, Undo2 } from 'lucide-react'
 import { safeUrl } from '../utils/planPrint'
 import { computePlanCost } from '../utils/planHelpers'
 import { isPackageApplied, packageConflicts } from '../utils/bestValuePackage'
 
-const usd = (n) => `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+const usd = (n) => fmtNumber(Number(n), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 const ICONS = {
   flight: Plane,
@@ -17,7 +19,7 @@ const ICONS = {
 
 const known = (n) => n != null && n !== '' && Number.isFinite(Number(n))
 
-function describe({ type, item }) {
+function describe({ type, item }, t) {
   const it = item || {}
   switch (type) {
     case 'flight':
@@ -25,7 +27,7 @@ function describe({ type, item }) {
       const airline = it.outbound?.airline ?? it.airline
       const number = it.outbound?.flight_number ?? it.flight_number
       return {
-        name: [airline, number].filter(Boolean).join(' ') || 'Flight',
+        name: [airline, number].filter(Boolean).join(' ') || t('best.flight'),
         href: it.booking_url,
         price: known(it.price_usd) ? usd(it.price_usd) : null,
       }
@@ -34,13 +36,13 @@ function describe({ type, item }) {
       return {
         name: it.name,
         href: it.booking_url,
-        price: known(it.price_per_night_usd) ? `${usd(it.price_per_night_usd)}/night` : null,
+        price: known(it.price_per_night_usd) ? t('best.perNight', { price: usd(it.price_per_night_usd) }) : null,
       }
     case 'activities':
       return {
         name: it.name,
         href: it.booking_url,
-        price: known(it.price_usd) ? (Number(it.price_usd) === 0 ? 'Free' : usd(it.price_usd)) : null,
+        price: known(it.price_usd) ? (Number(it.price_usd) === 0 ? t('best.free') : usd(it.price_usd)) : null,
       }
     case 'walking_tours':
       return { name: it.name, href: it.url, price: null }
@@ -48,7 +50,7 @@ function describe({ type, item }) {
       return { name: it.name, href: it.info_url, price: null }
     case 'sim':
       return {
-        name: [it.provider, it.plan_name].filter(Boolean).join(' ') || 'SIM plan',
+        name: [it.provider, it.plan_name].filter(Boolean).join(' ') || t('best.simPlan'),
         href: it.url,
         price: known(it.price_usd) ? usd(it.price_usd) : null,
       }
@@ -57,16 +59,20 @@ function describe({ type, item }) {
   }
 }
 
-const joinLabels = (labels) =>
-  labels.length < 2 ? labels.join('') : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+const joinLabels = (labels, t) =>
+  labels.length < 2
+    ? labels.join('')
+    : t('best.listAnd', { head: labels.slice(0, -1).join(t('best.listSep')), last: labels[labels.length - 1] })
 
 function Row({ entry }) {
+  const { t } = useTranslation('plan')
   const Icon = ICONS[entry.type] || MapPin
-  const { name, href, price } = describe(entry)
+  const { name, href, price } = describe(entry, t)
   const safe = href ? safeUrl(href) : null
   const label = safe ? (
     <a
       href={safe}
+      data-tid="plan.best-item-link"
       target="_blank"
       rel="noopener noreferrer"
       className="text-sm font-semibold text-gray-800 hover:text-teal-700 hover:underline break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded"
@@ -96,6 +102,7 @@ function Row({ entry }) {
 }
 
 export default function BestValuePackage({ pkg, selections, searchData, onApply, onUndo, canUndo, disabledReason }) {
+  const { t } = useTranslation('plan')
   if (!pkg) return null
   const applied = isPackageApplied(selections, pkg)
   const conflicts = applied ? [] : packageConflicts(selections, pkg)
@@ -112,8 +119,8 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
           <Package size={14} className="text-white" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-gray-800">Best-value package</h3>
-          <p className="text-xs text-gray-500">Our picks for the best price-to-quality balance from your results</p>
+          <h3 className="text-sm font-bold text-gray-800">{t('best.title')}</h3>
+          <p className="text-xs text-gray-500">{t('best.subtitle')}</p>
         </div>
       </div>
 
@@ -124,7 +131,7 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
       </ul>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-xs text-gray-500">Package total</span>
+        <span className="text-xs text-gray-500">{t('best.total')}</span>
         <span className="text-base font-bold text-gray-900">{usd(pkg.total)}</span>
         {pkg.budget && (
           <span
@@ -136,13 +143,14 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
           </span>
         )}
       </div>
-      {showPlanTotal && <p className="text-xs text-gray-600 mt-1">My Plan total: {usd(planTotal)}</p>}
-      {hasFlight && <p className="text-xs text-gray-500 mt-1">Flight prices are per person</p>}
+      {showPlanTotal && <p className="text-xs text-gray-600 mt-1">{t('best.myPlanTotal', { amount: usd(planTotal) })}</p>}
+      {hasFlight && <p className="text-xs text-gray-500 mt-1">{t('best.perPerson')}</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={onApply}
+          data-tid="plan.best-apply"
           disabled={disabled}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 ${
             disabled
@@ -151,15 +159,16 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
           }`}
         >
           {applied && <Check size={12} />}
-          {applied ? 'Added to My Plan' : 'Add all to My Plan'}
+          {applied ? t('best.added') : t('best.add')}
         </button>
         {applied && canUndo && (
           <button
             type="button"
             onClick={onUndo}
+            data-tid="plan.best-undo"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1"
           >
-            <Undo2 size={12} />Undo
+            <Undo2 size={12} />{t('best.undo')}
           </button>
         )}
       </div>
@@ -167,9 +176,9 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
         {disabledReason ? (
           <p className="text-amber-700">{disabledReason}</p>
         ) : conflicts.length > 0 ? (
-          <p className="text-gray-500">Replaces your current {joinLabels(conflicts)}.</p>
+          <p className="text-gray-500">{t('best.replaces', { items: joinLabels(conflicts.map((c) => t(`best.conflict.${c.toLowerCase()}`)), t) })}</p>
         ) : applied ? (
-          <p className="text-emerald-700">Added to My Plan</p>
+          <p className="text-emerald-700">{t('best.added')}</p>
         ) : null}
       </div>
     </div>

@@ -1,0 +1,182 @@
+{
+  "modal": {
+    "namePlaceholder": "योजना का नाम…",
+    "close": "बंद करें",
+    "empty": "इस योजना में अभी कोई सहेजा गया चयन नहीं है।",
+    "trip_one": "{{origin}} → {{destination}} · {{dates}} · {{count}} यात्री",
+    "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} यात्री",
+    "watchFare": "इस किराये पर नज़र रखें",
+    "delete": "हटाएँ",
+    "share": "साझा करें",
+    "shareTitle": "सार्वजनिक लिंक कॉपी करें — कोई भी बिना लॉगिन के यह ट्रिप कार्ड देख सकता है",
+    "save": "बदलाव सहेजें",
+    "confirmDelete": "\"{{name}}\" हटाएँ?",
+    "msg": {
+      "saved": "सहेजा गया ✓",
+      "saveFailed": "सहेजना विफल रहा",
+      "shared": "शेयर लिंक कॉपी हुआ ✓",
+      "shareFailed": "साझा करना विफल रहा"
+    },
+    "section": {
+      "flight": "उड़ान",
+      "flights_one": "उड़ानें ({{count}} चरण)",
+      "flights_other": "उड़ानें ({{count}} चरण)",
+      "hotel": "होटल",
+      "activities": "गतिविधियाँ ({{count}})",
+      "sim": "सिम कार्ड",
+      "gettingAround": "आना-जाना ({{count}})",
+      "tips": "सुझाव ({{count}})",
+      "events": "कार्यक्रम ({{count}})",
+      "walkingTours": "वॉकिंग टूर ({{count}})",
+      "itinerarySlots": "यात्रा-कार्यक्रम स्लॉट ({{count}})",
+      "fullItinerary_one": "पूरा यात्रा-कार्यक्रम ({{count}} दिन)",
+      "fullItinerary_other": "पूरा यात्रा-कार्यक्रम ({{count}} दिन)"
+    },
+    "flight": {
+      "outbound": "जाना:",
+      "return": "वापसी:",
+      "leg": "चरण {{n}}:",
+      "roundTrip": "{{price}} राउंड-ट्रिप",
+      "oneWay": "{{price}} एकतरफ़ा",
+      "bookThis": "यह उड़ान बुक करें"
+    },
+    "book": "बुक करें",
+    "hotel": {
+      "perNight": "{{price}}/रात",
+      "perNightTotal": "{{price}}/रात · कुल {{total}}",
+      "viewBook": "देखें और बुक करें"
+    },
+    "activity": {
+      "hours": "{{hours}} घंटे"
+    },
+    "sim": {
+      "data": "{{gb}} GB",
+      "days_one": "{{count}} दिन",
+      "days_other": "{{count}} दिन",
+      "getPlan": "प्लान लें"
+    },
+    "moreInfo": "अधिक जानकारी",
+    "source": "स्रोत",
+    "day": "दिन {{n}}",
+    "timeOfDay": {
+      "morning": "सुबह",
+      "afternoon": "दोपहर",
+      "evening": "शाम"
+    }
+  },
+  "export": {
+    "calendar": "कैलेंडर में जोड़ें",
+    "calendarTitle": "Google Calendar, Apple Calendar या Outlook के लिए .ics फ़ाइल डाउनलोड करें",
+    "print": "प्रिंट / PDF",
+    "printTitle": "प्रिंट करने योग्य संस्करण खोलें, जिसे आप प्रिंट या PDF के रूप में सहेज सकते हैं",
+    "popupBlocked": "आपके ब्राउज़र ने नया टैब रोक दिया — इस साइट के लिए पॉप-अप की अनुमति दें और फिर कोशिश करें।"
+  },
+  "cost": {
+    "heading": "पैसा कहाँ जाता है",
+    "cat": {
+      "flights": "उड़ानें",
+      "hotel": "होटल",
+      "activities": "गतिविधियाँ",
+      "sim": "सिम / eSIM"
+    },
+    "transportNote": "स्थानीय परिवहन शामिल नहीं है — किराया हर यात्रा में अलग होता है।",
+    "total": "कुल",
+    "budget": "बजट: {{amount}}"
+  },
+  "budget": {
+    "title": "बजट प्लानर",
+    "subtitle": "अपना बजट बाँटें और देखें कौन से विकल्प फिट बैठते हैं",
+    "total": "कुल बजट",
+    "perPerson": "प्रति व्यक्ति",
+    "reset": "रीसेट",
+    "resetDone": "बजट विभाजन सुझाए गए हिस्सों पर रीसेट हुआ",
+    "totalSet": "कुल बजट {{amount}}",
+    "cheaper": "सस्ते होटल खोजें",
+    "findingCheaper": "सस्ते होटल खोजे जा रहे हैं…",
+    "else": "बाकी सब कुछ",
+    "elseHint": "खाना, परिवहन, अतिरिक्त",
+    "onlyFits": "सिर्फ़ फिट होने वाले दिखाएँ",
+    "cat": {
+      "flights": "उड़ानें",
+      "stay": "ठहरना",
+      "activities": "गतिविधियाँ"
+    },
+    "noun": {
+      "flights": "उड़ानें",
+      "stay": "ठहरना",
+      "activities": "गतिविधियाँ"
+    },
+    "announceName": {
+      "flights": "उड़ान",
+      "stay": "ठहरना",
+      "activities": "गतिविधियाँ"
+    },
+    "announce": "{{name}} बजट {{amount}} — {{detail}}",
+    "valueText": "{{noun}} के लिए {{amount}}",
+    "fit": {
+      "flights_one": "{{count}} में से {{fits}} उड़ान फिट",
+      "flights_other": "{{count}} में से {{fits}} उड़ानें फिट",
+      "hotels_one": "{{count}} में से {{fits}} होटल फिट",
+      "hotels_other": "{{count}} में से {{fits}} होटल फिट",
+      "activities_one": "{{count}} गतिविधि फिट ({{spent}})",
+      "activities_other": "{{count}} गतिविधियाँ फिट ({{spent}})"
+    }
+  },
+  "best": {
+    "title": "बेस्ट-वैल्यू पैकेज",
+    "subtitle": "आपके नतीजों में से सबसे अच्छे दाम-गुणवत्ता संतुलन वाले हमारे चुनाव",
+    "total": "पैकेज कुल",
+    "myPlanTotal": "मेरी योजना का कुल: {{amount}}",
+    "perPerson": "उड़ान के दाम प्रति व्यक्ति हैं",
+    "add": "सब मेरी योजना में जोड़ें",
+    "added": "मेरी योजना में जोड़ा गया",
+    "undo": "पूर्ववत करें",
+    "replaces": "आपके मौजूदा {{items}} की जगह लेगा।",
+    "listAnd": "{{head}} और {{last}}",
+    "listSep": ", ",
+    "free": "मुफ़्त",
+    "perNight": "{{price}}/रात",
+    "flight": "उड़ान",
+    "simPlan": "सिम प्लान",
+    "conflict": {
+      "flight": "उड़ान",
+      "hotel": "होटल",
+      "sim": "सिम"
+    }
+  },
+  "print": {
+    "defaultName": "यात्रा योजना",
+    "printButton": "प्रिंट / PDF के रूप में सहेजें",
+    "footer": "Voyager के साथ बनाई गई योजना। दाम और उपलब्धता अनुमान हैं — बुक करने से पहले पुष्टि करें।",
+    "inspiredBy": "प्रेरणा: {{source}}",
+    "travelers_one": "{{count}} यात्री",
+    "travelers_other": "{{count}} यात्री",
+    "book": "बुक करें",
+    "viewTour": "टूर देखें",
+    "getPlan": "प्लान लें",
+    "hotelTotal": "कुल {{price}}",
+    "fromLink": "आपके लिंक से",
+    "alsoFromLink": "आपके लिंक से यह भी: {{names}}",
+    "section": {
+      "flights": "उड़ानें",
+      "hotel": "होटल",
+      "itinerary": "यात्रा-कार्यक्रम",
+      "activities": "गतिविधियाँ",
+      "places": "देखने की जगहें",
+      "walkingTours": "मुफ़्त वॉकिंग टूर",
+      "events": "कार्यक्रम",
+      "sim": "सिम / eSIM",
+      "gettingAround": "आना-जाना",
+      "tips": "सुझाव"
+    }
+  },
+  "ics": {
+    "dayTheme": "दिन {{n}}: {{theme}}",
+    "fromLinkQuote": "आपके लिंक से: “{{quote}}”",
+    "estCost": "अनुमानित लागत: {{amount}}",
+    "arrives": "स्थानीय समय {{time}} पर पहुँचेगी",
+    "booking": "बुकिंग: {{url}}",
+    "price": "कीमत: {{price}}",
+    "trip": "यात्रा"
+  }
+}

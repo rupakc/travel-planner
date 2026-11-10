@@ -1,5 +1,11 @@
 import { arrangeItinerary, slotKey } from './itineraryLayout'
 import { scheduleDays } from './schedule'
+import i18n from '../i18n'
+import { fmtNumber } from '../i18n/format'
+
+// Resolved at call time, so the file follows the language in use when it is built
+const tr = (key, opts) => i18n.t(`plan:${key}`, opts)
+const usd = (n) => fmtNumber(Number(n), { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
 // Plan export: an iCalendar (.ics, RFC 5545) file of the trip, built from
 // the same selections the My Plan drawer shows.
@@ -149,11 +155,11 @@ function itineraryEvents(days, selections, searchData) {
       }
       const cost = edit.cost ?? slot.estimated_cost_usd
       const description = [
-        day.theme && `Day ${day.day_number}: ${day.theme}`,
-        slot.from_link && `From your link${slot.link_quote ? `: “${slot.link_quote}”` : ''}`,
+        day.theme && tr('ics.dayTheme', { n: day.day_number, theme: day.theme }),
+        slot.from_link && (slot.link_quote ? tr('ics.fromLinkQuote', { quote: slot.link_quote }) : tr('print.fromLink')),
         slot.notes,
         note,
-        cost > 0 && `Est. cost: $${Number(cost).toLocaleString('en-US')}`,
+        cost > 0 && tr('ics.estCost', { amount: usd(cost) }),
       ].filter(Boolean).join('\n')
       events.push({
         id: `slot-${key}`,
@@ -167,7 +173,7 @@ function itineraryEvents(days, selections, searchData) {
     if (day.link_extras?.length) {
       events.push({
         id: `extras-${day.day_number}`,
-        summary: `Also from your link: ${day.link_extras.map((x) => x.name).join(', ')}`,
+        summary: tr('print.alsoFromLink', { names: day.link_extras.map((x) => x.name).join(', ') }),
         description: day.link_extras.map((x) => [x.name, x.note].filter(Boolean).join(' — ')).join('\n'),
         allDay: true,
         start: icsDate(date),
@@ -186,8 +192,8 @@ function flightEvent(id, leg, date, fallback = {}, bookingUrl = null) {
   // Floating times follow the departure clock, so the arrival — in the
   // destination's clock — is spelled out instead
   const description = [
-    leg.arrival_time && `Arrives ${leg.arrival_time} local time`,
-    bookingUrl && `Booking: ${bookingUrl}`,
+    leg.arrival_time && tr('ics.arrives', { time: leg.arrival_time }),
+    bookingUrl && tr('ics.booking', { url: bookingUrl }),
   ].filter(Boolean).join('\n')
   const departs = parseTime(leg.departure_time)
   if (departs == null) {
@@ -227,7 +233,7 @@ function hotelEvent(hotel, searchData) {
     id: 'hotel',
     summary: `🏨 ${hotel.name}`,
     location: hotel.location,
-    description: hotel.booking_url ? `Booking: ${hotel.booking_url}` : '',
+    description: hotel.booking_url ? tr('ics.booking', { url: hotel.booking_url }) : '',
     allDay: true,
     start: icsDate(checkIn),
     end: icsDate(checkOut),
@@ -243,7 +249,7 @@ function localEvents(events) {
         id: `event-${fingerprint(`${ev.name}|${ev.start_date}`)}`,
         summary: `🎉 ${ev.name}`,
         location: ev.location,
-        description: [ev.description, ev.price && `Price: ${ev.price}`].filter(Boolean).join('\n'),
+        description: [ev.description, ev.price && tr('ics.price', { price: ev.price })].filter(Boolean).join('\n'),
         allDay: true,
         start: icsDate(ev.start_date),
         // All-day DTEND is exclusive: the day after the last day
@@ -284,12 +290,12 @@ export function buildPlanIcs({ planName, searchData, selections, itinerary = nul
     'PRODID:-//Voyager Travel Planner//Plan Export//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${icsEscape(planName || 'Trip plan')}`,
+    `X-WR-CALNAME:${icsEscape(planName || tr('print.defaultName'))}`,
   ]
   const source = searchData?.import_source
   if (source?.title || source?.url) {
     const url = /^https?:\/\//i.test(source.url || '') ? source.url : ''
-    lines.push(`X-WR-CALDESC:${icsEscape(['Inspired by', [source.title, url].filter(Boolean).join(' — ')].join(' '))}`)
+    lines.push(`X-WR-CALDESC:${icsEscape(tr('print.inspiredBy', { source: [source.title, url].filter(Boolean).join(' — ') }))}`)
   }
   for (const ev of events) {
     const dateParam = ev.allDay ? ';VALUE=DATE' : ''
@@ -300,7 +306,7 @@ export function buildPlanIcs({ planName, searchData, selections, itinerary = nul
       `DTSTAMP:${stamp}`,
       `DTSTART${dateParam}:${ev.start}`,
       ...(ev.end ? [`DTEND${dateParam}:${ev.end}`] : []),
-      `SUMMARY:${icsEscape(ev.summary || 'Trip')}`,
+      `SUMMARY:${icsEscape(ev.summary || tr('ics.trip'))}`,
       ...(ev.location ? [`LOCATION:${icsEscape(ev.location)}`] : []),
       ...(ev.description ? [`DESCRIPTION:${icsEscape(ev.description)}`] : []),
       'END:VEVENT',
