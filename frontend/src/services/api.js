@@ -190,7 +190,7 @@ export async function compareDestination(request, token) {
 // Re-run the Trip Health Check against the user's edited itinerary.
 // Auth is optional on /api/stress-test.
 export async function recheckStressTest(payload, token) {
-  const res = await api.post('/stress-test', payload, token ? authHeaders(token) : undefined)
+  const res = await api.post('/stress-test', { ...payload, ...localeField() }, token ? authHeaders(token) : undefined)
   return res.data
 }
 

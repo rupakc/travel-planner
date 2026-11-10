@@ -69,3 +69,17 @@ describe('localeField', () => {
     expect(await withLanguage('ja')).toEqual({ locale: 'en' })
   })
 })
+
+describe('recheckStressTest', () => {
+  afterEach(() => vi.resetModules())
+
+  it('sends the UI language as locale', async () => {
+    vi.resetModules()
+    const { default: i18n } = await import('../i18n')
+    await i18n.changeLanguage('fr')
+    const mod = await import('./api')
+    const post = vi.spyOn(mod.default, 'post').mockResolvedValue({ data: { ok: 1 } })
+    await mod.recheckStressTest({ itinerary: { days: [] } }, null)
+    expect(post).toHaveBeenCalledWith('/stress-test', { itinerary: { days: [] }, locale: 'fr' }, undefined)
+  })
+})

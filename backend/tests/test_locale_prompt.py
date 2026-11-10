@@ -2,7 +2,6 @@
 and request validation. English / absent locale must stay byte-identical."""
 
 import asyncio
-import hashlib
 from datetime import date
 
 import pytest
@@ -85,13 +84,15 @@ def test_specialist_run_threads_request_locale(monkeypatch):
     assert "Write every human-readable" not in seen[1]
 
 
+# MD5 of _req().model_dump_json() computed with the pre-locale schema
+# (backend/app/schemas/request.py at b5b023d): a deploy must not change it.
+PRE_LOCALE_DIGEST = "d2c0790f0474b8bb6e8705066d274967"
+
+
 def test_cache_key_english_unchanged_and_locales_differ():
-    base = _req()
-    before_change = hashlib.md5(
-        base.model_dump_json(exclude={"locale"}).encode(), usedforsecurity=False
-    ).hexdigest()
-    assert request_digest(base) == request_digest(_req(locale="en")) == before_change
-    assert request_digest(_req(locale="de")) != before_change
+    assert request_digest(_req()) == PRE_LOCALE_DIGEST
+    assert request_digest(_req(locale="en")) == PRE_LOCALE_DIGEST
+    assert request_digest(_req(locale="de")) != PRE_LOCALE_DIGEST
     assert request_digest(_req(locale="de")) != request_digest(_req(locale="fr"))
 
 
