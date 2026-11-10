@@ -1,0 +1,396 @@
+{
+  "agents": {
+    "flights": {
+      "label": "Flights",
+      "badge": "Flights"
+    },
+    "weather": {
+      "label": "Weather Forecast",
+      "badge": "Weather"
+    },
+    "hotels": {
+      "label": "Hotels",
+      "badge": "Hotels"
+    },
+    "activities": {
+      "label": "Activities",
+      "badge": "Activities"
+    },
+    "places_to_see": {
+      "label": "Places to See",
+      "badge": "Places"
+    },
+    "walking_tours": {
+      "label": "Free Walking Tours",
+      "badge": "Walking Tours"
+    },
+    "events": {
+      "label": "What's On",
+      "badge": "What's On"
+    },
+    "visa": {
+      "label": "Visa",
+      "badge": "Visa"
+    },
+    "sim": {
+      "label": "SIM Cards",
+      "badge": "SIM"
+    },
+    "tips": {
+      "label": "Travel Tips",
+      "badge": "Tips"
+    },
+    "getting_around": {
+      "label": "Getting Around",
+      "badge": "Transport"
+    },
+    "forex": {
+      "label": "Currency & Forex",
+      "badge": "Forex"
+    },
+    "itinerary": {
+      "label": "Itinerary",
+      "badge": "Itinerary"
+    },
+    "stress_test": {
+      "label": "Trip Health Check",
+      "badge": "Health Check"
+    },
+    "emergency_card": {
+      "label": "Emergency Card",
+      "badge": "Emergency"
+    },
+    "packing_list": {
+      "label": "Packing List",
+      "badge": "Packing"
+    }
+  },
+  "interests": {
+    "food": "🍜 Food",
+    "history": "🏛️ History",
+    "adventure": "🧗 Adventure",
+    "culture": "🎭 Culture",
+    "nature": "🌿 Nature",
+    "shopping": "🛍️ Shopping",
+    "nightlife": "🌙 Nightlife",
+    "wellness": "🧘 Wellness",
+    "art": "🎨 Art",
+    "family": "👨‍👩‍👧 Family"
+  },
+  "loading": {
+    "flights": {
+      "m1": "Scanning airlines for the best deals...",
+      "m2": "Comparing prices across carriers...",
+      "m3": "Checking direct and connecting flights..."
+    },
+    "hotels": {
+      "m1": "Finding hotels across all budgets...",
+      "m2": "Checking room availability...",
+      "m3": "Comparing luxury to budget stays..."
+    },
+    "activities": {
+      "m1": "Discovering things to do...",
+      "m2": "Matching activities to your interests...",
+      "m3": "Finding hidden gems and must-sees..."
+    },
+    "visa": {
+      "m1": "Checking entry requirements...",
+      "m2": "Verifying visa and passport rules...",
+      "m3": "Looking up vaccination requirements..."
+    },
+    "sim": {
+      "m1": "Finding the best SIM and eSIM plans...",
+      "m2": "Comparing data packages...",
+      "m3": "Checking coverage and prices..."
+    },
+    "tips": {
+      "m1": "Gathering local travel tips...",
+      "m2": "Checking safety advisories...",
+      "m3": "Finding cultural etiquette tips..."
+    },
+    "getting_around": {
+      "m1": "Mapping out transport options...",
+      "m2": "Checking public transit routes...",
+      "m3": "Finding the best ways to get around..."
+    },
+    "forex": {
+      "m1": "Checking current exchange rates...",
+      "m2": "Finding the best places to exchange money...",
+      "m3": "Researching card and ATM options..."
+    },
+    "itinerary": {
+      "m1": "Building your day-by-day plan...",
+      "m2": "Organizing activities by day...",
+      "m3": "Crafting the perfect itinerary..."
+    },
+    "places_to_see": {
+      "m1": "Finding must-see attractions...",
+      "m2": "Searching Google for top landmarks...",
+      "m3": "Discovering iconic sites and hidden gems..."
+    },
+    "walking_tours": {
+      "m1": "Checking GuruWalk and FreeTour.com…",
+      "m2": "Reading SANDEMANs and FreeWalkingTour.com…",
+      "m3": "Picking tours for your interests…"
+    },
+    "events": {
+      "m1": "Checking what's on during your dates...",
+      "m2": "Scanning festivals, concerts and exhibitions...",
+      "m3": "Looking for seasonal happenings and disruptions..."
+    },
+    "weather": {
+      "m1": "Fetching weather forecast...",
+      "m2": "Checking daily conditions...",
+      "m3": "Preparing weather outlook for your trip..."
+    },
+    "emergency_card": {
+      "m1": "Finding emergency contacts...",
+      "m2": "Looking up embassy details...",
+      "m3": "Compiling safety information..."
+    },
+    "packing_list": {
+      "m1": "Checking weather...",
+      "m2": "Planning what to pack...",
+      "m3": "Finalising your packing list..."
+    },
+    "stress_test": {
+      "m1": "Playing devil's advocate on your plan...",
+      "m2": "Checking opening days, timings and pacing...",
+      "m3": "Auditing budget, visa deadlines and weather clashes..."
+    },
+    "default": "Loading..."
+  },
+  "plan": {
+    "add": "Add",
+    "added": "Added",
+    "addToPlan": "Add to Plan",
+    "addedToPlan": "Added to Plan",
+    "inPlan": "In Plan"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "total": "{{amount}} total",
+  "status": {
+    "enhancing": "Enhancing…",
+    "enhancingTitle": "AI is refining this with additional data"
+  },
+  "toggle": {
+    "less": "Less ▲",
+    "details": "Details ▼",
+    "why": "Why? ▼"
+  },
+  "filter": {
+    "any": "Any",
+    "earliest": "Earliest",
+    "latest": "Latest",
+    "clearAll": "Clear All",
+    "searching": "Searching...",
+    "apply": "Apply Filters",
+    "from": "From",
+    "to": "To"
+  },
+  "budget": {
+    "overFlight": "Over your flight budget",
+    "overStay": "Over your stay budget",
+    "hiddenShowAll": "{{count}} hidden — show all"
+  },
+  "weather": {
+    "estimate": "Historical climate estimate — actual conditions may vary",
+    "enRoute": "En route",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "poorDays_one": "{{count}} day with poor weather — outdoor activities may be affected",
+    "poorDays_other": "{{count}} days with poor weather — outdoor activities may be affected",
+    "precip": "💧{{mm}} mm"
+  },
+  "flights": {
+    "duration": "{{h}}h {{min}}m",
+    "depart": "Depart",
+    "return": "Return",
+    "direct": "Direct",
+    "nonStop": "Non-stop",
+    "stops_one": "{{count}} stop",
+    "stops_other": "{{count}} stops",
+    "stopsBtn_one": "{{count}} Stop",
+    "stopsBtn_other": "{{count}} Stops",
+    "layoverIn": "{{hours}}h in {{place}}",
+    "stopIn": "Stop in {{place}}",
+    "makeMostOfIt": "Make the most of it",
+    "multiCity": "Multi-city trip — pick one flight per leg ({{chosen}}/{{total}} selected)",
+    "leg": "Leg {{n}}",
+    "noLegFlights": "No flights found for this leg — check trains/buses in Getting Around",
+    "perPerson": "per person",
+    "roundTripPerPerson": "round-trip / person",
+    "book": "Book",
+    "bookThis": "Book this flight",
+    "none": "No flights found — try adjusting your dates or clearing filters",
+    "col": {
+      "airline": "Airline",
+      "price": "Price",
+      "stops": "Stops",
+      "duration": "Duration",
+      "departArrive": "Depart / Arrive",
+      "source": "Source",
+      "book": "Book"
+    },
+    "oneWay": "One-way",
+    "roundTrip": "Round-trip",
+    "filterTitle": "Flight Filters",
+    "numStops": "Number of Stops",
+    "maxPrice": "Max Price (per person)",
+    "departureTime": "Departure Time",
+    "arrivalTime": "Arrival Time"
+  },
+  "hotels": {
+    "none": "No hotels found — try expanding your budget or clearing filters",
+    "perNight": "/night",
+    "viewBook": "View & Book",
+    "filterTitle": "Hotel Filters",
+    "numBeds": "Number of Beds",
+    "beds_one": "{{count}} Bed",
+    "beds_other": "{{count}} Beds",
+    "maxCost": "Max Cost per Night",
+    "wifiQuality": "WiFi Quality",
+    "wifi": {
+      "basic": "Basic",
+      "good": "Good",
+      "excellent": "Excellent"
+    },
+    "distance": "Distance from Center",
+    "km": "{{km}} km",
+    "privateWashroom": "Private Washroom",
+    "required": "Required"
+  },
+  "activities": {
+    "none": "No activities found — try different interests or adjusting dates",
+    "match": "{{percent}}% match",
+    "hours": "{{h}}h",
+    "bookNow": "Book Now",
+    "fitsBudget": "Fits your budget",
+    "filterTitle": "Activity Filters",
+    "interests": "Interests",
+    "maxCost": "Max Cost (per person)",
+    "availability": "Availability Dates",
+    "minRating": "Minimum Rating"
+  },
+  "tags": {
+    "hiddenGem": "Hidden gem",
+    "family": "Family",
+    "accessible": "Accessible",
+    "checkWeather": "Check weather",
+    "goodWeather": "Good weather"
+  },
+  "places": {
+    "none": "No places found",
+    "landmark": "Landmark",
+    "approxHours": "~{{h}}h",
+    "freeEntry": "Free entry",
+    "viewDetails": "View details"
+  },
+  "events": {
+    "error": "Couldn't check local events this time — the rest of your plan is unaffected.",
+    "none": "No notable events found during your dates.",
+    "typicalSeason": "Typical season — exact dates may vary",
+    "planAround": "Plan around these"
+  },
+  "visa": {
+    "unavailable": "Visa info unavailable — check your government's official travel portal",
+    "confidence": "Confidence: {{level}}",
+    "maxStay": "Max Stay",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "processing": "Processing",
+    "fee": "Fee",
+    "free": "Free",
+    "officialSource": "Official Source",
+    "vaccination": "Vaccination & Health",
+    "required": "Required",
+    "recommended": "Recommended",
+    "healthSource": "Health Source",
+    "customs": "Customs & Import Regulations",
+    "dutyFree": "Duty-Free Allowances",
+    "prohibited": "Prohibited Items",
+    "mustDeclare": "Must Declare",
+    "customsSource": "Customs Source"
+  },
+  "sim": {
+    "none": "No SIM plans found — check local carriers on arrival",
+    "dataGb": "{{gb}}GB data",
+    "unlimited": "Unlimited data",
+    "validity_one": "{{count}} day validity",
+    "validity_other": "{{count}} days validity",
+    "getPlan": "Get Plan"
+  },
+  "tips": {
+    "none": "No travel tips available yet",
+    "source": "Source"
+  },
+  "transport": {
+    "none": "No transport info available — check local transit apps on arrival",
+    "inCity": "In the City",
+    "betweenCities": "Between Cities",
+    "other": "Other",
+    "coverage": "Coverage:",
+    "price": "Price:",
+    "hours": "Hours:",
+    "touristPass": "Tourist Pass:",
+    "moreInfo": "More Info"
+  },
+  "forex": {
+    "unavailable": "Currency info unavailable — check xe.com for live rates",
+    "yourCurrency": "Your Currency",
+    "rateLoading": "Live rate loading…",
+    "whereToExchange": "Where to Exchange",
+    "fees": "Fees:",
+    "cardAcceptance": "Card Acceptance",
+    "visaMc": "Visa/MC:",
+    "amex": "Amex:",
+    "contactless": "Contactless:",
+    "digital": "Digital:",
+    "surcharges": "Surcharges:",
+    "cashAdvice": "Cash Advice",
+    "cashDependency": "Cash dependency: {{level}}",
+    "denominations": "Denominations:",
+    "bringUsdEur": "Bring USD/EUR?",
+    "atmInfo": "ATM Information",
+    "availability": "Availability:",
+    "networks": "Networks:",
+    "limit": "Limit:",
+    "tippingExpected": "Tipping expected",
+    "tippingNotExpected": "Tipping not expected",
+    "moneyTips": "Money Tips",
+    "sourceN": "Source {{n}}"
+  },
+  "confidence": {
+    "title": "Travel Ease Score"
+  },
+  "pricing": {
+    "now": "Now",
+    "days90": "90d",
+    "bookNow": "Book now",
+    "considerWaiting": "Consider waiting",
+    "confidence": "{{level}} confidence",
+    "bestWindow": "Best window: {{window}}",
+    "estimate": "Historical pattern estimate — not live market data. {{disclaimer}}"
+  },
+  "emergency": {
+    "numbers": "Emergency Numbers",
+    "police": "Police",
+    "ambulance": "Ambulance",
+    "fire": "Fire",
+    "touristPolice": "Tourist Police",
+    "embassy": "Embassy",
+    "afterHours": "After hours: {{value}}",
+    "hospitals": "Hospitals",
+    "phrases": "Essential Phrases",
+    "english": "English",
+    "local": "Local",
+    "phonetic": "Phonetic",
+    "laws": "Laws to Know",
+    "cardTitle": "Emergency Card — {{title}}",
+    "verify": "Verify all details before travel — information may be outdated.",
+    "disclaimer": "Information provided for general guidance only. Always verify current details with official sources. Embassy hours and hospital services may change.",
+    "printThis": "Print this card"
+  }
+}
