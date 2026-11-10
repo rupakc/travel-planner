@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Info } from 'lucide-react'
 import { getAuthProviders } from '../../services/api'
 import { navigateTo } from './navigate'
 import { AppleIcon, GoogleIcon, FacebookIcon, GitHubIcon } from './providerIcons'
 
 // Brand names are not translated. Button colours follow each provider's
-// published guidance, with the dark-theme variant they publish.
+// published guidance, with the dark-theme variant they publish. They are
+// literal hex: palette names (white, neutral-*, …) are CSS variables that
+// html.dark remaps (white turns navy), which made Apple vanish in dark mode.
+// In dark, Apple is the white button Apple's guidelines ask for, with a
+// light edge so it reads as a button on the dark card.
 const PROVIDERS = [
   { id: 'apple', name: 'Apple', Icon: AppleIcon,
-    cls: 'bg-black text-white border-black hover:bg-neutral-800 dark:bg-white dark:text-black dark:border-white dark:hover:bg-neutral-200' },
+    cls: 'bg-black text-[#ffffff] border-black hover:bg-[#262626] dark:bg-[#ffffff] dark:text-[#000000] dark:border-[#d4d4d4] dark:hover:bg-[#e5e5e5]' },
   { id: 'google', name: 'Google', Icon: GoogleIcon,
-    cls: 'bg-white text-[#1f1f1f] border-[#747775] hover:bg-gray-50 dark:bg-[#131314] dark:text-[#e3e3e3] dark:border-[#8e918f] dark:hover:bg-[#1e1f20]' },
+    cls: 'bg-[#ffffff] text-[#1f1f1f] border-[#747775] hover:bg-[#f8fafb] dark:bg-[#131314] dark:text-[#e3e3e3] dark:border-[#8e918f] dark:hover:bg-[#1e1f20]' },
   { id: 'facebook', name: 'Facebook', Icon: FacebookIcon,
-    cls: 'bg-[#1877F2] text-white border-[#1877F2] hover:bg-[#166fe5]' },
+    cls: 'bg-[#1877F2] text-[#ffffff] border-[#1877F2] hover:bg-[#166fe5]' },
   { id: 'github', name: 'GitHub', Icon: GitHubIcon,
-    cls: 'bg-[#24292f] text-white border-[#24292f] hover:bg-[#32383f] dark:bg-[#f6f8fa] dark:text-[#24292f] dark:border-[#d0d7de] dark:hover:bg-white' },
+    cls: 'bg-[#24292f] text-[#ffffff] border-[#24292f] hover:bg-[#32383f] dark:bg-[#f6f8fa] dark:text-[#24292f] dark:border-[#d0d7de] dark:hover:bg-[#ffffff]' },
 ]
 
 // Only a same-origin OAuth start path is ever navigated to.
@@ -65,9 +70,17 @@ export default function SocialSignInButtons({ mode = 'signin' }) {
           <span>{t('continueWith', { provider: p.name })}</span>
         </button>
       ))}
-      <p aria-live="polite" className="text-xs text-slate-500 dark:text-slate-400 min-h-[1rem]">
-        {soon ? t('comingSoon', { provider: soon }) : ''}
-      </p>
+      {/* Under the buttons, above the "or" divider; the live region stays
+          mounted so the note is announced when it appears. */}
+      <div aria-live="polite">
+        {soon && (
+          <p data-tid="auth.coming-soon"
+            className="flex items-start gap-2 rounded-lg bg-sky-50 px-3 py-2 text-sm text-slate-800">
+            <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-sky-700" />
+            <span>{t('comingSoon', { provider: soon })}</span>
+          </p>
+        )}
+      </div>
     </div>
   )
 }

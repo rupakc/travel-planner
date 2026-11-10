@@ -89,3 +89,36 @@ describe('SocialSignInButtons', () => {
     expect(container.querySelectorAll('button').length).toBe(4)
   })
 })
+
+describe('SocialSignInButtons theming', () => {
+  // Palette names (white, gray-*, neutral-*, …) are CSS variables that html.dark
+  // swaps (white becomes navy), so a brand colour must be a literal hex or black.
+  it('uses literal brand colours that dark mode cannot remap', async () => {
+    getAuthProviders.mockResolvedValue([])
+    await render()
+    for (const b of container.querySelectorAll('[data-tid^="auth.provider."]')) {
+      const themed = b.className.split(/\s+/).filter((c) =>
+        /^(?:dark:)?(?:hover:)?(?:bg|text|border)-(?!\[#|black$)[a-z]+(?:-\d+)?$/.test(c)
+        && !/-(?:sm|xs|lg)$/.test(c))
+      expect(themed, b.dataset.tid).toEqual([])
+    }
+  })
+
+  it('Apple is a white button with a visible edge in dark mode', async () => {
+    getAuthProviders.mockResolvedValue([])
+    await render()
+    const cls = btn('apple').className.split(/\s+/)
+    expect(cls).toEqual(expect.arrayContaining(['dark:bg-[#ffffff]', 'dark:text-[#000000]']))
+    expect(cls.some((c) => c.startsWith('dark:border-[#'))).toBe(true)
+  })
+
+  it('the coming-soon note is body-sized, normal contrast, with an info icon', async () => {
+    getAuthProviders.mockResolvedValue([])
+    await render()
+    await click(btn('apple'))
+    const note = container.querySelector('[data-tid="auth.coming-soon"]')
+    expect(note.className).toContain('text-sm')
+    expect(note.className).not.toMatch(/text-slate-[45]00|text-gray-[45]00/)
+    expect(note.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+  })
+})
