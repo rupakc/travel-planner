@@ -1,5 +1,7 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
+import { fmtNumber } from '../i18n/format'
 import {
   DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
   GripVertical, ArrowRightLeft, Undo2, RotateCcw,
@@ -9,7 +11,7 @@ import FromLinkChip from './FromLinkChip'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
-import { listedInScheduleOrder, pickedTimes, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
+import { listedInScheduleOrder, pickedTimes, scheduleDays, timeRange } from '../utils/schedule'
 
 // Custom MIME so the drawer (which treats application/json as a plan) never
 // mistakes an itinerary drag for a plan drop.
@@ -17,8 +19,7 @@ const SLOT_MIME = 'application/x-itinerary-slot'
 const DROP_HIGHLIGHT = 'ring-2 ring-teal-400 bg-teal-50'
 const SLOT_ICONS = { morning: '🌅', afternoon: '☀️', evening: '🌙' }
 
-const timeLabel = (tod) => tod.charAt(0).toUpperCase() + tod.slice(1)
-const positionLabel = (dayNumber, tod) => `Day ${dayNumber} · ${timeLabel(tod)}`
+const usd = (n) => fmtNumber(n, { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 })
 const FOCUS_UNDO = Symbol('undo')
 const carriesSlot = (e) => Array.from(e.dataTransfer?.types || []).includes(SLOT_MIME)
 
@@ -142,6 +143,7 @@ function MoveMenu({ label, anchorRect, anchorKey, getAnchor, removeItem, groups,
 
   const itemButton = (item, className) => (
     <button key={item.id} type="button" role="menuitem" aria-label={item.ariaLabel} onClick={item.onSelect}
+      data-tid="itinerary.menu-item"
       data-move-target={item.isTarget ? '' : undefined}
       onMouseDown={(e) => e.preventDefault()}
       className={`block w-full text-left px-3 py-1.5 text-xs focus:outline-none ${className}`}>
@@ -183,6 +185,18 @@ export default function ItinerarySection({
   const [dragKey,     setDragKey]     = useState(null)
   const [dropAt,      setDropAt]      = useState(null) // highlighted position
   const [status,      setStatus]      = useState('')
+  const { t } = useTranslation('itinerary')
+  const timeLabel = (tod) => t(`time.${tod}`, { defaultValue: tod.charAt(0).toUpperCase() + tod.slice(1) })
+  const positionLabel = (dayNumber, tod) => t('position', { day: dayNumber, time: timeLabel(tod) })
+  const swapSuffix = (key, other) => (other ? t(key, { name: activityName(other.key, other.activity) }) : '')
+  const transitText = (tr) => {
+    if (!tr) return ''
+    if (tr.mode !== 'walk') return `🚇 ${t('transit.transit', { minutes: tr.minutes })}`
+    // km is rounded to 0.1, so anything shorter reads "0 km": leave it out
+    return tr.km >= 0.1
+      ? `🚶 ${t('transit.walkKm', { minutes: tr.minutes, km: tr.km })}`
+      : `🚶 ${t('transit.walk', { minutes: tr.minutes })}`
+  }
   const moveButtons = useRef({})
   const undoButton = useRef(null)
   const sectionRef = useRef(null)
@@ -227,18 +241,19 @@ export default function ItinerarySection({
     }
   })
 
-  if (!data?.days?.length) return <div className="p-4 text-sm text-gray-500">No itinerary available</div>
+  const activityName = (key, fallback) => edits?.[key]?.activity || fallback
+
+  if (!data?.days?.length) return <div className="p-4 text-sm text-gray-500">{t('section.empty')}</div>
 
   const isMovable = (key) => (targetsByKey.get(key) || []).length > 0
   const findTarget = (key, dayNumber, tod) => (targetsByKey.get(key) || [])
     .find((t) => t.day_number === dayNumber && t.time_of_day === tod)
-  const activityName = (key, fallback) => edits?.[key]?.activity || fallback
   const changeCount = editable ? layoutChangeCount(data, layout) : 0
 
   const move = (key, name, target, method) => {
     onMoveSlot(key, target.day_number, target.time_of_day, method)
-    const swap = target.swapWith ? ` (swapped with ${activityName(target.swapWith.key, target.swapWith.activity)})` : ''
-    setStatus(`Moved ${name} to ${positionLabel(target.day_number, target.time_of_day)}${swap}`)
+    const swap = swapSuffix('menu.swappedWith', target.swapWith)
+    setStatus(t('status.moved', { name, position: positionLabel(target.day_number, target.time_of_day), swap }))
   }
 
   const closeMenu = (key) => {
@@ -287,36 +302,36 @@ export default function ItinerarySection({
         {arranged.total_estimated_cost_usd > 0 && (
           <div className="flex items-center gap-2 p-2.5 bg-teal-50 rounded-lg border border-teal-200 text-sm">
             <DollarSign size={13} className="text-teal-600" />
-            <span className="text-teal-800 font-medium">Est. itinerary cost: ${arranged.total_estimated_cost_usd.toLocaleString()}</span>
+            <span className="text-teal-800 font-medium">{t('section.estCost', { cost: usd(arranged.total_estimated_cost_usd) })}</span>
           </div>
         )}
         {data.source === 'template' && (
-          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">Auto-generated — click any slot to edit</span>
+          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">{t('section.autoGenerated')}</span>
         )}
       </div>
 
-      {hasTimes && <p data-times-note className="text-xs text-gray-400">Times are estimates based on typical durations and distances.</p>}
+      {hasTimes && <p data-times-note className="text-xs text-gray-400">{t('section.timesNote')}</p>}
 
       {/* Layout toolbar */}
       {editable && (changeCount > 0 || canUndo) && (
-        <div role="group" aria-label="Itinerary changes"
+        <div role="group" aria-label={t('toolbar.label')}
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-200 bg-teal-50/60 text-xs">
           {changeCount > 0 && (
-            <span className="font-medium text-teal-800">{changeCount} {changeCount === 1 ? 'change' : 'changes'}</span>
+            <span className="font-medium text-teal-800">{t('toolbar.changes', { count: changeCount })}</span>
           )}
           <span className="flex-1" />
           {onUndoLayout && (
-            <button type="button" ref={undoButton} disabled={!canUndo}
-              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onUndoLayout(); setStatus('Undid the last change') }}
+            <button type="button" ref={undoButton} disabled={!canUndo} data-tid="itinerary.undo"
+              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onUndoLayout(); setStatus(t('status.undone')) }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-600">
-              <Undo2 size={10} /> Undo
+              <Undo2 size={10} /> {t('toolbar.undo')}
             </button>
           )}
           {changeCount > 0 && onResetLayout && (
-            <button type="button"
-              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onResetLayout(); setStatus('Itinerary reset to the original order') }}
+            <button type="button" data-tid="itinerary.reset"
+              onClick={() => { focusAfterRender.current = FOCUS_UNDO; onResetLayout(); setStatus(t('status.reset')) }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 text-gray-600 hover:bg-teal-100 hover:text-teal-700">
-              <RotateCcw size={10} /> Reset
+              <RotateCcw size={10} /> {t('toolbar.reset')}
             </button>
           )}
         </div>
@@ -327,7 +342,7 @@ export default function ItinerarySection({
           {/* Day header */}
           <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
             <div>
-              <span className="font-bold">Day {day.day_number}</span>
+              <span className="font-bold">{t('day.heading', { day: day.day_number })}</span>
               {day.date && <span className="ml-2 text-teal-200 text-sm">{day.date}</span>}
               {day.city && (
                 <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
@@ -337,13 +352,13 @@ export default function ItinerarySection({
             </div>
             <div className="text-right">
               {day.theme && <p className="text-sm font-medium">{day.theme}</p>}
-              {day.daily_estimated_cost_usd > 0 && <p className="text-xs text-teal-200">${day.daily_estimated_cost_usd} est.</p>}
+              {day.daily_estimated_cost_usd > 0 && <p className="text-xs text-teal-200">{t('cost.est', { cost: usd(day.daily_estimated_cost_usd) })}</p>}
             </div>
           </div>
 
           {day.schedule_warnings?.length > 0 && (
             <div data-schedule-warnings className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800">
-              <span className="inline-block mb-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 font-semibold">Tight schedule</span>
+              <span className="inline-block mb-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 font-semibold">{t('section.tightSchedule')}</span>
               <ul className="list-disc pl-4 space-y-0.5">
                 {day.schedule_warnings.map((warning, i) => <li key={i}>{warning}</li>)}
               </ul>
@@ -362,9 +377,9 @@ export default function ItinerarySection({
                       <span className="w-4 shrink-0" />
                       <div className="w-20 shrink-0 text-sm text-gray-400 font-medium capitalize flex items-center gap-1">
                         <span>{SLOT_ICONS[row.free]}</span>
-                        <span>{row.free}</span>
+                        <span>{timeLabel(row.free)}</span>
                       </div>
-                      <p className="flex-1 text-sm text-gray-400 italic border border-dashed border-gray-200 rounded-lg px-3 py-1.5">Free time</p>
+                      <p className="flex-1 text-sm text-gray-400 italic border border-dashed border-gray-200 rounded-lg px-3 py-1.5">{t('section.freeTime')}</p>
                     </div>
                   </div>
                 )
@@ -389,39 +404,39 @@ export default function ItinerarySection({
               const inPlan   = selections.itinerary_slots?.some(s => s.key === key)
 
               const menuGroups = []
-              for (const t of movable ? targetsByKey.get(key) : []) {
+              for (const tg of movable ? targetsByKey.get(key) : []) {
                 let group = menuGroups.at(-1)
-                if (group?.day_number !== t.day_number) {
-                  const city = arranged.days.find((d) => d.day_number === t.day_number)?.city
-                  group = { day_number: t.day_number, heading: `Day ${t.day_number}${city ? ` · ${city}` : ''}`, items: [] }
+                if (group?.day_number !== tg.day_number) {
+                  const city = arranged.days.find((d) => d.day_number === tg.day_number)?.city
+                  group = { day_number: tg.day_number, heading: city ? t('day.headingCity', { day: tg.day_number, city }) : t('day.heading', { day: tg.day_number }), items: [] }
                   menuGroups.push(group)
                 }
-                const swap = t.swapWith ? ` (swap with ${activityName(t.swapWith.key, t.swapWith.activity)})` : ''
+                const swap = swapSuffix('menu.swapWith', tg.swapWith)
                 group.items.push({
-                  id: slotKey(t.day_number, t.time_of_day),
-                  label: `${timeLabel(t.time_of_day)}${swap}`,
+                  id: slotKey(tg.day_number, tg.time_of_day),
+                  label: t('menu.item', { time: timeLabel(tg.time_of_day), swap }),
                   isTarget: true,
-                  ariaLabel: `Move to ${positionLabel(t.day_number, t.time_of_day)}${swap}`,
+                  ariaLabel: t('menu.moveTo', { position: positionLabel(tg.day_number, tg.time_of_day), swap }),
                   onSelect: () => {
                     focusAfterRender.current = key
                     setMenuFor(null)
-                    move(key, activity, t, 'menu')
+                    move(key, activity, tg, 'menu')
                   },
                 })
               }
               const removeItem = movable && onRemoveSlot ? {
                 id: 'remove',
-                label: 'Remove from day',
+                label: t('menu.removeFromDay'),
                 onSelect: () => {
                   focusAfterRender.current = FOCUS_UNDO
                   setMenuFor(null)
                   onRemoveSlot(key)
-                  setStatus(`Removed ${activity} from Day ${day.day_number}`)
+                  setStatus(t('status.removed', { name: activity, day: day.day_number }))
                 },
               } : null
 
               const range = timeRange(slot)
-              const transit = outOfOrderDays.has(day.day_number) ? '' : transitLabel(slot.transit_from_prev)
+              const transit = outOfOrderDays.has(day.day_number) ? '' : transitText(slot.transit_from_prev)
 
               return (
                 <Fragment key={key}>
@@ -444,7 +459,7 @@ export default function ItinerarySection({
                     className={`px-4 py-3 transition-colors ${dropAt === pos && movable ? DROP_HIGHLIGHT : isEditing ? 'bg-teal-50' : 'hover:bg-gray-50'} ${dragKey === key ? 'opacity-50' : ''}`}>
                     <div className="flex gap-3">
                       {editable && (canDrag ? (
-                        <span data-drag-handle aria-hidden="true" title="Drag to move"
+                        <span data-drag-handle aria-hidden="true" title={t('section.dragToMove')}
                           className="w-4 shrink-0 flex items-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
                           <GripVertical size={14} aria-hidden="true" />
                         </span>
@@ -454,7 +469,7 @@ export default function ItinerarySection({
                       <div className="w-20 shrink-0">
                         <div className="text-sm text-gray-500 font-medium capitalize flex items-center gap-1">
                           <span>{SLOT_ICONS[slot.time_of_day]}</span>
-                          <span>{slot.time_of_day}</span>
+                          <span>{timeLabel(slot.time_of_day)}</span>
                         </div>
                         {range && <p data-slot-time className="mt-0.5 text-[11px] text-gray-400 tabular-nums">{range}</p>}
                       </div>
@@ -464,7 +479,7 @@ export default function ItinerarySection({
                         {isEditing ? (
                           <div className="space-y-2">
                             <div>
-                              <label className="text-xs text-teal-600 font-medium">Activity</label>
+                              <label className="text-xs text-teal-600 font-medium">{t('edit.activity')}</label>
                               <input
                                 autoFocus
                                 type="text"
@@ -475,7 +490,7 @@ export default function ItinerarySection({
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="text-xs text-teal-600 font-medium">Location</label>
+                                <label className="text-xs text-teal-600 font-medium">{t('edit.location')}</label>
                                 <input
                                   type="text"
                                   value={edit.location ?? slot.location ?? ''}
@@ -484,7 +499,7 @@ export default function ItinerarySection({
                                 />
                               </div>
                               <div>
-                                <label className="text-xs text-teal-600 font-medium">Est. cost ($)</label>
+                                <label className="text-xs text-teal-600 font-medium">{t('edit.cost')}</label>
                                 <input
                                   type="number"
                                   value={edit.cost ?? slot.estimated_cost_usd ?? ''}
@@ -494,18 +509,18 @@ export default function ItinerarySection({
                               </div>
                             </div>
                             <div>
-                              <label className="text-xs text-teal-600 font-medium">Personal note</label>
+                              <label className="text-xs text-teal-600 font-medium">{t('edit.note')}</label>
                               <textarea
                                 value={note}
                                 onChange={e => onNoteChange(key, e.target.value)}
-                                placeholder="Add your note…"
+                                placeholder={t('edit.notePlaceholder')}
                                 className="mt-0.5 w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-400 resize-none bg-white"
                                 rows={2}
                               />
                             </div>
-                            <button onClick={() => setEditingSlot(null)}
+                            <button type="button" data-tid="itinerary.edit-done" onClick={() => setEditingSlot(null)}
                               className="flex items-center gap-1 px-3 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold hover:bg-teal-700">
-                              <Check size={10}/> Done
+                              <Check size={10}/> {t('edit.done')}
                             </button>
                           </div>
                         ) : (
@@ -524,34 +539,34 @@ export default function ItinerarySection({
                       {/* Actions */}
                       {!isEditing && (
                         <div className="shrink-0 flex flex-col items-end gap-1.5">
-                          {cost != null && <span className="text-sm text-gray-400">${cost}</span>}
-                          <button type="button" aria-label={`Edit ${activity}`} onClick={() => { setEditingSlot(key); setOpenNote(null) }}
+                          {cost != null && <span className="text-sm text-gray-400">{usd(cost)}</span>}
+                          <button type="button" aria-label={t('aria.edit', { name: activity })} data-tid="itinerary.edit" onClick={() => { setEditingSlot(key); setOpenNote(null) }}
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${(edit.activity || edit.location) ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                            <PenLine size={10}/> {(edit.activity || edit.location) ? 'Edited' : 'Edit'}
+                            <PenLine size={10}/> {(edit.activity || edit.location) ? t('action.edited') : t('action.edit')}
                           </button>
-                          <button type="button" aria-label={note ? `Edit note for ${activity}` : `Add note to ${activity}`}
+                          <button type="button" aria-label={note ? t('aria.editNote', { name: activity }) : t('aria.addNote', { name: activity })} data-tid="itinerary.note"
                               onClick={() => { setOpenNote(isNoteOpen ? null : key); setEditingSlot(null) }}
                               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${note ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'}`}>
-                              <MessageSquare size={10}/> {note ? 'Note ✓' : 'Note'}
+                              <MessageSquare size={10}/> {note ? t('action.noted') : t('action.note')}
                             </button>
                           {movable && (
                             <div>
                               <button type="button" ref={(el) => { moveButtons.current[key] = el }}
-                                aria-label={`Move ${activity}`} aria-haspopup="menu" aria-expanded={menuOpen}
+                                aria-label={t('aria.move', { name: activity })} data-tid="itinerary.move" aria-haspopup="menu" aria-expanded={menuOpen}
                                 onClick={(e) => {
                                   setMenuAnchor(e.currentTarget.getBoundingClientRect())
                                   setMenuFor(menuOpen ? null : key)
                                 }}
                                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${menuOpen ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                                <ArrowRightLeft size={10}/> Move
+                                <ArrowRightLeft size={10}/> {t('action.move')}
                               </button>
                               {menuOpen && (
-                                <MoveMenu label={`Move ${activity}`} anchorRect={menuAnchor} anchorKey={key} getAnchor={getMoveButton}
+                                <MoveMenu label={t('aria.move', { name: activity })} anchorRect={menuAnchor} anchorKey={key} getAnchor={getMoveButton}
                                   removeItem={removeItem} groups={menuGroups} onClose={() => closeMenu(key)} onDismiss={dismissMenu} />
                               )}
                             </div>
                           )}
-                          <button type="button" aria-label={inPlan ? `Remove ${activity} from plan` : `Add ${activity} to plan`}
+                          <button type="button" aria-label={inPlan ? t('aria.removeFromPlan', { name: activity }) : t('aria.addToPlan', { name: activity })} data-tid="itinerary.plan"
                             onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost, ...pickedTimes(slot) })}
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                               inPlan
@@ -559,8 +574,8 @@ export default function ItinerarySection({
                                 : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
                             }`}>
                             {inPlan
-                              ? <><Check size={10}/> In Plan</>
-                              : <><Plus size={10}/> Plan</>
+                              ? <><Check size={10}/> {t('action.inPlan')}</>
+                              : <><Plus size={10}/> {t('action.plan')}</>
                             }
                           </button>
                         </div>
@@ -574,7 +589,7 @@ export default function ItinerarySection({
                           autoFocus
                           value={note}
                           onChange={e => onNoteChange(key, e.target.value)}
-                          placeholder="Add your personal note…"
+                          placeholder={t('edit.notePlaceholderInline')}
                           className="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none bg-amber-50"
                           rows={2}
                         />
@@ -587,8 +602,8 @@ export default function ItinerarySection({
           </div>
           {day.link_extras?.length > 0 && (
             <p data-link-extras className="px-4 py-2.5 border-t border-amber-100 bg-amber-50/60 text-xs text-amber-900">
-              <span className="font-semibold">Also from your link:</span>{' '}
-              {day.link_extras.map((x) => x.name).join(', ')} — fit {day.link_extras.length === 1 ? 'it' : 'them'} in around the day.
+              <span className="font-semibold">{t('extras.label')}</span>{' '}
+              {t('extras.fit', { count: day.link_extras.length, names: day.link_extras.map((x) => x.name).join(', ') })}
             </p>
           )}
         </div>
@@ -597,7 +612,7 @@ export default function ItinerarySection({
       {/* Removed activities */}
       {removed.length > 0 && (
         <div data-removed-list className="border border-dashed border-gray-300 rounded-xl p-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Removed</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('removed.heading')}</p>
           <ul className="space-y-1.5">
             {removed.map(({ key, slot }) => {
               const name = activityName(key, slot.activity)
@@ -607,15 +622,15 @@ export default function ItinerarySection({
                 <li key={key} className="flex items-center justify-between gap-2 text-sm">
                   <span className="text-gray-600 truncate">{name}</span>
                   {onRestoreSlot && (
-                    <button type="button" disabled={!canRestore} aria-label={`Restore ${name}`}
-                      title={canRestore ? undefined : `No free time left on Day ${originalDay?.day_number} — move or remove something there first`}
+                    <button type="button" disabled={!canRestore} aria-label={t('removed.restoreAria', { name })} data-tid="itinerary.restore"
+                      title={canRestore ? undefined : t('removed.noRoom', { day: originalDay?.day_number })}
                       onClick={() => {
                         focusAfterRender.current = FOCUS_UNDO
                         onRestoreSlot(key)
-                        setStatus(`Restored ${name}`)
+                        setStatus(t('status.restored', { name }))
                       }}
                       className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700 disabled:opacity-40 disabled:hover:bg-gray-100 disabled:hover:text-gray-600">
-                      <RotateCcw size={10}/> Restore
+                      <RotateCcw size={10}/> {t('removed.restore')}
                     </button>
                   )}
                 </li>

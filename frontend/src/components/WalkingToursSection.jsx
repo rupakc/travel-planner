@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Star, Clock, Check, Plus, ExternalLink, MapPin, X } from 'lucide-react'
 import { safeUrl } from '../utils/planPrint'
+import { fmtNumber } from '../i18n/format'
 
 const LINK_REL = 'noopener noreferrer'
 const cityName = (c) => String(c || '').split(',')[0].trim()
@@ -26,6 +28,7 @@ function TourImage({ src }) {
 }
 
 function TourCard({ tour, isSelected, showCity, onSelect }) {
+  const { t } = useTranslation('itinerary')
   const href = safeUrl(tour.url)
   const stop = e => e.stopPropagation()
   return (
@@ -37,12 +40,13 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
       <div className="flex items-start justify-between mb-2 gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700">{tour.provider}</span>
-          {tour.top_pick && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Top pick</span>}
+          {tour.top_pick && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">{t('tours.topPick')}</span>}
         </div>
-        <button type="button" aria-label={`${isSelected ? 'Remove' : 'Add'} ${tour.name}`}
+        <button type="button" aria-label={t(isSelected ? 'tours.removeAria' : 'tours.addAria', { name: tour.name })}
+          data-tid="tours.toggle"
           onClick={e => { e.stopPropagation(); onSelect('walking_tours', tour) }}
           className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all shrink-0 ${isSelected ? 'bg-lime-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-lime-100 hover:text-lime-700'}`}>
-          {isSelected ? <><Check size={11} /> Added</> : <><Plus size={11} /> Add</>}
+          {isSelected ? <><Check size={11} /> {t('tours.added')}</> : <><Plus size={11} /> {t('tours.add')}</>}
         </button>
       </div>
       <h3 className="font-semibold text-gray-900 mb-1">
@@ -55,7 +59,7 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
           <span className="text-amber-600 font-semibold flex items-center gap-0.5">
             <Star size={10} className="fill-amber-400 text-amber-400" />
             {Number(tour.rating).toFixed(1)}
-            {tour.review_count ? <span className="text-gray-400 font-normal ml-0.5">({tour.review_count.toLocaleString('en-US')} reviews)</span> : null}
+            {tour.review_count ? <span className="text-gray-400 font-normal ml-0.5">({t('tours.reviews', { count: tour.review_count, formatted: fmtNumber(tour.review_count) })})</span> : null}
           </span>
         )}
         {tour.duration && <span className="flex items-center gap-1"><Clock size={10} />{tour.duration}</span>}
@@ -67,7 +71,7 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
         {href && (
           <a href={href} target="_blank" rel={LINK_REL} onClick={stop}
             className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
-            <ExternalLink size={10} /> View on {tour.provider} ↗
+            <ExternalLink size={10} /> {t('tours.viewOn', { provider: tour.provider })}
           </a>
         )}
       </div>
@@ -87,15 +91,16 @@ function sortTopPicksPerCity(results) {
     [...group].sort((a, b) => Number(!!b.top_pick) - Number(!!a.top_pick)))
 }
 
-function sourceLabel(s, multiCity) {
+function sourceLabel(t, s, multiCity) {
   const name = multiCity && s.city ? `${s.provider} · ${cityName(s.city)}` : s.provider
-  if (s.status === 'error') return `${name} (unavailable)`
-  if (s.status === 'none') return `${name} (0)`
-  return `${name} (${s.count})`
+  if (s.status === 'error') return t('tours.sourceUnavailable', { name })
+  if (s.status === 'none') return t('tours.sourceCount', { name, n: 0 })
+  return t('tours.sourceCount', { name, n: s.count })
 }
 
 // One selected walking tour in the My Plan drawer.
 export function WalkingTourPlanRow({ tour, onRemove }) {
+  const { t } = useTranslation('itinerary')
   const href = safeUrl(tour.url)
   return (
     <div className="flex items-start justify-between border-b border-teal-100 last:border-0 pb-1.5 last:pb-0">
@@ -106,21 +111,22 @@ export function WalkingTourPlanRow({ tour, onRemove }) {
           {tour.city && <span className="truncate">{tour.city}</span>}
         </div>
         {href && (
-          <a href={href} target="_blank" rel={LINK_REL} className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
+          <a href={href} target="_blank" rel={LINK_REL} className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('tours.details')}</a>
         )}
       </div>
-      <button type="button" aria-label={`Remove ${tour.name}`} onClick={() => onRemove(tour)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+      <button type="button" aria-label={t('tours.removeAria', { name: tour.name })} data-tid="tours.plan-remove" onClick={() => onRemove(tour)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
     </div>
   )
 }
 
 export default function WalkingToursSection({ data, selections, onSelect }) {
+  const { t } = useTranslation('itinerary')
   if (data?.error) {
-    return <div className="p-4 text-sm text-gray-500">Couldn't reach the walking-tour sites this time — the rest of your plan is unaffected.</div>
+    return <div className="p-4 text-sm text-gray-500">{t('tours.unreachable')}</div>
   }
   const results = data?.results || []
   if (!results.length) {
-    return <div className="p-4 text-sm text-gray-500">No free walking tours listed for this destination on GuruWalk, FreeTour.com, SANDEMANs or FreeWalkingTour.com.</div>
+    return <div className="p-4 text-sm text-gray-500">{t('tours.none')}</div>
   }
   const sorted = sortTopPicksPerCity(results)
   const showCity = new Set(results.map(t => cityName(t.city)).filter(Boolean)).size > 1
@@ -137,10 +143,10 @@ export default function WalkingToursSection({ data, selections, onSelect }) {
       </div>
       {sources.length > 0 && (
         <p data-testid="walking-tours-sources" className="text-xs text-gray-400 mt-3">
-          Searched:{' '}
+          {t('tours.searched')}{' '}
           {sources.map((s, i) => {
             const href = s.status === 'ok' ? safeUrl(s.url) : null
-            const label = sourceLabel(s, multiCitySources)
+            const label = sourceLabel(t, s, multiCitySources)
             return (
               <span key={`${s.provider_key}-${s.city}-${i}`}>
                 {i > 0 && (multiCitySources ? ', ' : ' · ')}
