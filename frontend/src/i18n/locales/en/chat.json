@@ -1,0 +1,204 @@
+{
+  "page": {
+    "title": "Travel Planner Chat",
+    "intro": "Chat with your AI travel assistant. Ask for a full trip plan and results will stream in real-time with interactive cards.",
+    "placeholder": "Ask about your next trip...",
+    "disclaimer": "AI-powered travel assistant. Verify important details with official sources.",
+    "clear": "Clear chat",
+    "stop": "Stop",
+    "send": "Send",
+    "planFromLink": "Plan a trip from this link"
+  },
+  "suggestion": {
+    "1": "Plan a 5-day trip to Tokyo on a $2000 budget",
+    "2": "What do I need for a visa to Thailand as a US citizen?",
+    "3": "Find me cheap flights from NYC to Paris in June",
+    "4": "Suggest a romantic getaway in Europe for a week"
+  },
+  "error": {
+    "generic": "Sorry — something went wrong while answering that. Please try again.",
+    "noResponse": "Sorry — I didn't get a response there. Please try asking again.",
+    "withMessage": "Sorry, something went wrong: {{message}}"
+  },
+  "bubble": {
+    "planning": "Planning your trip..."
+  },
+  "action": {
+    "add": "Add",
+    "added": "Added",
+    "inPlan": "In Plan",
+    "book": "Book",
+    "get": "Get",
+    "info": "Info",
+    "source": "Source",
+    "officialSource": "Official Source",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "close": "Close",
+    "remove": "Remove"
+  },
+  "list": {
+    "showMore": "Show {{n}} more →",
+    "showLess": "Show less"
+  },
+  "units": {
+    "hoursShort": "{{value}}h",
+    "daysShort": "{{value}}d"
+  },
+  "enum": {
+    "excellent": "excellent",
+    "good": "good",
+    "moderate": "moderate",
+    "high": "high",
+    "medium": "medium",
+    "low": "low"
+  },
+  "agent": {
+    "flights": "Flights",
+    "hotels": "Hotels",
+    "activities": "Activities",
+    "visa": "Visa",
+    "sim": "SIM Cards",
+    "tips": "Travel Tips",
+    "getting_around": "Getting Around",
+    "forex": "Currency & Forex",
+    "itinerary": "Itinerary"
+  },
+  "section": {
+    "building": "Building your itinerary…",
+    "searching": "Searching {{what}}…"
+  },
+  "estimates": {
+    "warning": "Prices are estimates — verify with booking sites before booking"
+  },
+  "flights": {
+    "none": "No flights found",
+    "roundTripNote": "(round-trip)"
+  },
+  "hotels": {
+    "none": "No hotels found",
+    "perNightShort": "/n"
+  },
+  "activities": {
+    "none": "No activities found"
+  },
+  "sim": {
+    "none": "No SIM plans found"
+  },
+  "tips": {
+    "none": "No tips available"
+  },
+  "transport": {
+    "none": "No transport info available"
+  },
+  "visa": {
+    "none": "No visa info available",
+    "maxStay": "Max stay: {{days}}d",
+    "fee": "Fee: {{fee}}",
+    "free": "Free",
+    "type": {
+      "visa-free": "visa free",
+      "visa-on-arrival": "visa on arrival",
+      "e-visa": "e visa",
+      "visa-required": "visa required"
+    }
+  },
+  "forex": {
+    "none": "No forex info available",
+    "your": "YOUR",
+    "loading": "Loading...",
+    "fees": "Fees: {{fees}}",
+    "cards": "Cards",
+    "cash": "Cash",
+    "dependency": "{{level}} dependency",
+    "tippingExpected": "Tipping expected",
+    "tippingNotExpected": "Tipping not expected"
+  },
+  "itinerary": {
+    "none": "No itinerary available",
+    "day": "Day {{n}}",
+    "timeOfDay": {
+      "morning": "morning",
+      "afternoon": "afternoon",
+      "evening": "evening"
+    }
+  },
+  "plan": {
+    "defaultName": "My Trip Plan"
+  },
+  "budget": {
+    "planCost": "Plan Cost"
+  },
+  "drawer": {
+    "title": "My Plan",
+    "editingSaved": "Editing saved plan",
+    "planName": "Plan Name",
+    "dragToSaved": "· drag to send to saved",
+    "flight": "Flight",
+    "hotel": "Hotel",
+    "sim": "SIM",
+    "outbound": "Outbound:",
+    "return": "Return:",
+    "roundTrip": "round-trip",
+    "oneWay": "one-way",
+    "hotelLine": "{{price}}/night",
+    "hotelLineTotal": "{{price}}/night · {{total}} total",
+    "activitiesCount": "Activities ({{n}})",
+    "gettingAroundCount": "Getting Around ({{n}})",
+    "tipsCount": "Tips ({{n}})",
+    "itinerarySlots_one": "Itinerary ({{count}} slot)",
+    "itinerarySlots_other": "Itinerary ({{count}} slots)",
+    "slotLine": "Day {{day}} · {{time}}",
+    "dropToLoad": "Drop to load this plan",
+    "selectItems": "Select items from search results\nto build your plan",
+    "dragSavedHere": "or drag a saved plan here",
+    "new": "New",
+    "saving": "Saving…",
+    "update": "Update Plan",
+    "save": "Save Plan",
+    "saveSend": "Save & Send to Saved Plans",
+    "savedPlans": "Saved Plans",
+    "dropToSave": "↓ Drop here to save plan",
+    "loading": "Loading…",
+    "noSaved": "No saved plans yet",
+    "deletePlan": "Delete plan",
+    "loaded": "Loaded",
+    "load": "Load",
+    "watch": "Watch",
+    "view": "View",
+    "share": "Share",
+    "shareTitle": "Copy a public share link — no login needed to view",
+    "shareFailed": "Couldn't create share link",
+    "linkCopied": "🔗 Link copied: {{url}}",
+    "msg": {
+      "login": "Please log in",
+      "updated": "Plan updated!",
+      "saved": "Saved!",
+      "failed": "Save failed",
+      "sentBack": "Plan sent back!",
+      "planSaved": "Plan saved!"
+    }
+  },
+  "trip": {
+    "origin": "Origin",
+    "departureCity": "Departure city",
+    "plotting": "Plotting your journey…",
+    "nights_one": "{{count}} night",
+    "nights_other": "{{count}} nights",
+    "fullDays_one": "{{count}} full day",
+    "fullDays_other": "{{count}} full days",
+    "travelers_one": "{{count}} traveler",
+    "travelers_other": "{{count}} travelers",
+    "estPerPerson": "est. per person",
+    "gettingThere": "Getting there",
+    "buildFailed": "Could not build itinerary — please try again.",
+    "daysItinerary": "{{n}}-day itinerary",
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "travelDay": "✈️ Travel",
+    "perNight": "/night",
+    "mustSee": "Must See",
+    "dining": "Dining"
+  }
+}
