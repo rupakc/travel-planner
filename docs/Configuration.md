@@ -39,6 +39,9 @@ With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.use
 | Variable | Default | Meaning |
 |---|---|---|
 | `DATA_DIR` | `backend/data` | Directory of the single SQLite file `airports.db`, which holds every table (users, plans, preferences, place data and so on). Created automatically. |
+| `TELEMETRY_ENABLED` | `true` | Product telemetry. `false` makes `POST /api/telemetry` answer `404` (clients then switch themselves off) and `GET /api/config` report it disabled. Raw events live in `$DATA_DIR/telemetry.db` (not backed up); daily aggregates in the `telemetry_daily` table of `airports.db`. |
+| `TELEMETRY_RETENTION_DAYS` | `90` | Raw telemetry events older than this are pruned by the hourly maintenance loop, which also rolls up each finished UTC day. |
+| `PUBLIC_BASE_URL` | `""` | Absolute origin returned by `GET /api/config` (for share links). Empty: the request's own base URL. |
 | `BACKUP_BUCKET` | `""` | Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. Uses Application Default Credentials. |
 | `BACKUP_MODE` | `cloudrun` | `cloudrun` (legacy, for ephemeral disks): restore at every start, upload every 60 s with a generation-safe merge, force an upload on shutdown. `vm` (production): the disk is authoritative. The app restores only when `airports.db` is missing (stray `-wal`/`-shm` removed first), never merges, and uploads the user tables (everything except the regenerable place data) only when their SHA-256 changed, plus once at a clean shutdown. In `vm` mode, `DATA_DIR` must contain the marker file `.voyager-data-disk` written when the disk was provisioned, or the app refuses to start. A missing DB that can't be fetched from GCS also refuses to start. `GET /health` then reports `backup_ok` and `backup`. |
 | `BACKUP_INTERVAL_SECONDS` | `300` | `vm` mode: how often the user tables are exported and compared. `backup_ok` turns false after 3 missed intervals or on any failed cycle. |
@@ -106,6 +109,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
+| `RATE_LIMIT_TELEMETRY` | `600` | `POST /api/telemetry` (batches per caller; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`) |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
 | `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |
