@@ -63,3 +63,6 @@ htmlcov/
 
 # LLM eval runs (backend/scripts/llm_eval.py)
 backend/eval-runs/
+
+# Agent workspace scratch (plans, ledgers, reports)
+.superpowers/
