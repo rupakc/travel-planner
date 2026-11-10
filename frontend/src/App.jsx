@@ -20,6 +20,7 @@ import AlertToast          from './components/alerts/AlertToast'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
 import AttributionFooter   from './components/ui/AttributionFooter'
+import ConsentPrompt       from './components/ConsentPrompt'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -115,6 +116,7 @@ export default function App() {
   }, [isAuthenticated])
 
   return (
+    <>
     <Routes>
       <Route path="/login"           element={<LoginPage />} />
       {/* Public share link — works without login */}
@@ -122,5 +124,7 @@ export default function App() {
       <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
     </Routes>
+    <ConsentPrompt />
+    </>
   )
 }

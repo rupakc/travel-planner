@@ -21,7 +21,7 @@ export default function ThemeToggle({ className = '' }) {
   const onClick = () => {
     const to = NEXT[mode]
     setTheme(to)
-    report('theme_change', { from: mode, to })
+    report('theme_change', { theme: to })
   }
 
   return (

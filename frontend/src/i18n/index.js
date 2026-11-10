@@ -127,7 +127,7 @@ export function setLanguage(code) {
   if (!isSupportedLanguage(code)) return Promise.resolve()
   const from = i18n.resolvedLanguage || i18n.language
   try { localStorage.setItem(STORAGE_KEY, code) } catch { /* storage blocked */ }
-  if (from !== code) report('language_change', { from, to: code })
+  if (from !== code) report('language_change', { lang: code })
   return i18n.changeLanguage(code).then(() => {})
 }
 
