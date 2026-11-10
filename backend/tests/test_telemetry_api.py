@@ -258,6 +258,32 @@ def test_maintenance_rerolls_late_events_for_rolled_up_day():
     assert ev == 2
 
 
+def _rollup_tables():
+    with get_connection() as conn:
+        return {
+            t: sorted(tuple(r) for r in conn.execute(f"SELECT * FROM {t}"))  # nosec B608
+            for t in ("telemetry_daily", "telemetry_daily_totals", "telemetry_rollups")
+        }
+
+
+def test_maintenance_idle_rerun_changes_nothing():
+    # vm_backup uploads user tables when their digest changes: an idle hourly
+    # re-roll of the trailing window must leave every row byte-identical.
+    now = datetime(2026, 11, 10, 3, tzinfo=UTC)
+    telemetry_db.insert_events(
+        [
+            _row(_ms(now - timedelta(days=2)), anon="a", session="s1"),
+            _row(_ms(now - timedelta(days=1)), anon="b", session="s2"),
+        ]
+    )
+    maintenance.maintain_once(now)
+    first = _rollup_tables()
+    assert first["telemetry_rollups"]
+    time.sleep(0.01)
+    maintenance.maintain_once(now + timedelta(hours=1))
+    assert _rollup_tables() == first
+
+
 def test_maintenance_never_raises(monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("x")

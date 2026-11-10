@@ -116,7 +116,9 @@ def insert_events(rows: list[dict]) -> int:
 
 def rollup_day(day: str) -> int:
     """Aggregate one UTC day (``YYYY-MM-DD``) into ``telemetry_daily``.
-    Idempotent: replaces that day's rows. Returns the number of rows written."""
+    Idempotent: replaces that day's rows, and writes nothing when they (and
+    the ``telemetry_rollups`` marker) are already current. Returns the number
+    of per-event rows for the day."""
     start = datetime.fromisoformat(day).replace(tzinfo=UTC)
     start_ms = int(start.timestamp() * 1000)
     end_ms = int((start + timedelta(days=1)).timestamp() * 1000)
@@ -144,21 +146,46 @@ def rollup_day(day: str) -> int:
         ).fetchone()
         if allp["events"]:
             totals.append(("*", allp["users"], allp["sessions"], allp["events"]))
+    new_daily = sorted(
+        (r["event"], r["platform"], r["events"], r["users"], r["sessions"])
+        for r in agg
+    )
+    new_totals = sorted(totals)
     with get_connection() as conn:
+        # Unchanged day (the hourly trailing-window re-roll, usually): write
+        # nothing, so the backed-up user tables keep their digest.
+        done = conn.execute(
+            "SELECT 1 FROM telemetry_rollups WHERE day = ?", (day,)
+        ).fetchone()
+        old_daily = sorted(
+            tuple(r)
+            for r in conn.execute(
+                "SELECT event, platform, events, users, sessions "
+                "FROM telemetry_daily WHERE day = ?",
+                (day,),
+            )
+        )
+        old_totals = sorted(
+            tuple(r)
+            for r in conn.execute(
+                "SELECT platform, users, sessions, events "
+                "FROM telemetry_daily_totals WHERE day = ?",
+                (day,),
+            )
+        )
+        if done and old_daily == new_daily and old_totals == new_totals:
+            return len(agg)
         conn.execute("DELETE FROM telemetry_daily WHERE day = ?", (day,))
         conn.execute("DELETE FROM telemetry_daily_totals WHERE day = ?", (day,))
         conn.executemany(
             "INSERT INTO telemetry_daily_totals "
             "(day, platform, users, sessions, events) VALUES (?, ?, ?, ?, ?)",
-            [(day, *t) for t in totals],
+            [(day, *t) for t in new_totals],
         )
         conn.executemany(
             "INSERT INTO telemetry_daily (day, event, platform, events, users, sessions) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            [
-                (day, r["event"], r["platform"], r["events"], r["users"], r["sessions"])
-                for r in agg
-            ],
+            [(day, *r) for r in new_daily],
         )
         conn.execute(
             "INSERT OR REPLACE INTO telemetry_rollups (day, done_at) VALUES (?, ?)",
