@@ -3,7 +3,7 @@ import logging
 
 from ..core import llm
 from ..schemas.request import TravelSearchRequest
-from .base_agent import _MAX_RETRIES, BaseAgent
+from .base_agent import _MAX_RETRIES, BaseAgent, locale_kw, with_language
 from .loader import load_agent_definition
 
 # Runs on the fast agent model (core.llm role "agent"). With the concise
@@ -18,7 +18,7 @@ class ChatItineraryAgent(BaseAgent):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "chat-itinerary"))
 
-    async def execute(self, prompt: str) -> dict:
+    async def execute(self, prompt: str, locale: str | None = None) -> dict:
         """Override: stricter conciseness rules and an 8k output budget."""
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
@@ -33,6 +33,7 @@ class ChatItineraryAgent(BaseAgent):
                     "\n- intercity_travel options: exactly 2 per leg"
                     "\n- hotel 'highlight': ≤ 8 words"
                 )
+                system = with_language(system, locale)
                 response = await llm.generate(
                     [{"role": "user", "content": prompt}],
                     role="agent",
@@ -172,4 +173,4 @@ class ChatItineraryAgent(BaseAgent):
                 "6. Keep activity descriptions under 20 words.\n"
             )
 
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))

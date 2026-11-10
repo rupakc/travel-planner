@@ -9,6 +9,7 @@ count SerpAPI calls sees the same view, so budgets are reserved and settled
 for the calls the look really makes.
 """
 
+import hashlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -88,3 +89,13 @@ def fresh_reads() -> Iterator[None]:
         yield
     finally:
         _fresh.reset(token)
+
+
+def request_digest(request) -> str:
+    """MD5 of a request model for cache keys. An absent or English ``locale``
+    is left out, so English requests keep their pre-locale keys (a deploy
+    doesn't invalidate the cache) while other languages get their own."""
+    exclude = {"locale"} if getattr(request, "locale", None) in (None, "en") else None
+    return hashlib.md5(
+        request.model_dump_json(exclude=exclude).encode(), usedforsecurity=False
+    ).hexdigest()

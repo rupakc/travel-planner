@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -38,4 +38,4 @@ class EventsAgent(BaseAgent):
             "seasonal happenings overlapping these dates, plus any disruptions "
             "worth planning around."
         )
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))

@@ -1,5 +1,5 @@
 from ..schemas.request import TravelSearchRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -51,4 +51,4 @@ class PackingListAgent(BaseAgent):
             f"  Planned activities: {activity_summary}\n\n"
             "Generate a comprehensive packing list for this trip."
         )
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))

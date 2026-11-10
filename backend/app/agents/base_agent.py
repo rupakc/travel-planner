@@ -38,11 +38,48 @@ def _get_semaphore() -> asyncio.Semaphore:
     return _semaphore
 
 
+_LANGUAGE_NAMES = {
+    "es": "Spanish",
+    "de": "German",
+    "fr": "French",
+    "hi": "Hindi",
+    "zh": "Simplified Chinese",
+    "bn": "Bengali",
+}
+
+
+def language_instruction(locale: str | None) -> str:
+    """System-prompt suffix asking for human-readable text in the user's
+    language. Empty for ``None``/``en`` so English prompts are unchanged."""
+    name = _LANGUAGE_NAMES.get(locale or "")
+    if not name:
+        return ""
+    return (
+        f"Write every human-readable text value in {name}. Keep JSON keys, "
+        "enum values, codes, URLs, prices, currency codes, dates and proper "
+        "names of places exactly as you would in English output."
+    )
+
+
+def locale_kw(request) -> dict:
+    """``execute()`` kwargs for ``request``: empty for English/absent, so
+    English calls are exactly ``execute(prompt)``."""
+    loc = getattr(request, "locale", None)
+    return {"locale": loc} if loc and loc != "en" else {}
+
+
+def with_language(system: str, locale: str | None) -> str:
+    extra = language_instruction(locale)
+    return f"{system}\n\n{extra}" if extra else system
+
+
 class BaseAgent:
     def __init__(self, definition: AgentDefinition):
         self.definition = definition
 
-    async def execute(self, prompt: str | list[dict]) -> dict:
+    async def execute(
+        self, prompt: str | list[dict], locale: str | None = None
+    ) -> dict:
         """Execute the agent with one model call per attempt (``core.llm``,
         JSON output) and return parsed JSON.
 
@@ -56,6 +93,7 @@ class BaseAgent:
                     + "\n\nReturn ONLY valid JSON. No prose, no tool calls, no markdown."
                     + compact_nudge
                 )
+                system = with_language(system, locale)
                 async with _get_semaphore():
                     response = await llm.generate(
                         [{"role": "user", "content": prompt}],

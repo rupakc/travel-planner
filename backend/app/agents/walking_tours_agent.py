@@ -8,7 +8,7 @@ from ..services.walking_tours import (
     fetch_city_tours,
     split_city_country,
 )
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 _MAX_PER_CITY = 8
@@ -187,7 +187,9 @@ class WalkingToursAgent(BaseAgent):
         if not tours:
             return {"results": [], "sources": sources}
 
-        llm = await self.execute(build_prompt(request, destinations, tours))
+        llm = await self.execute(
+            build_prompt(request, destinations, tours), **locale_kw(request)
+        )
         picked = merge_recommendations(tours, llm)
         results = top_up(tours, picked) if picked else rank_fallback(tours)
         return {"results": results, "sources": sources}

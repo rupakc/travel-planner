@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +10,7 @@ from ...agents.visa_agent import VisaAgent
 from ...agents.weather_agent import WeatherAgent
 from ...core import llm
 from ...core.auth import get_current_user
-from ...core.cache import get_cache
+from ...core.cache import get_cache, request_digest
 from ...core.config import settings
 from ...schemas.request import TravelSearchRequest
 from ...services.compare import summarize_destination
@@ -90,12 +89,7 @@ async def compare_destination(
             status_code=422, detail="Compare works with single destinations"
         )
 
-    cache_key = (
-        "compare:"
-        + hashlib.md5(
-            request.model_dump_json().encode(), usedforsecurity=False
-        ).hexdigest()
-    )
+    cache_key = "compare:" + request_digest(request)
     cache = get_cache()
     if cached := cache.get(cache_key):
         return cached

@@ -2,7 +2,7 @@ import json
 
 from ..schemas.request import TravelSearchRequest
 from ..services.must_include import ensure_must_include, itinerary_prompt_block
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -120,7 +120,7 @@ class ItineraryAgent(BaseAgent):
                 "Lean the day plans toward this profile where it fits the destination."
             )
         prompt += itinerary_prompt_block(request)
-        result = await self.execute(prompt)
+        result = await self.execute(prompt, **locale_kw(request))
         if isinstance(result, dict) and result.get("days") and not result.get("error"):
             result = ensure_must_include(result, request)
         return result

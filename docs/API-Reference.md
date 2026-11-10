@@ -180,9 +180,12 @@ The main endpoint. It streams results as Server-Sent Events. **Auth:** optional.
   "destinations": null,
   "destination_nights": null,
   "pace": "balanced",
-  "serendipity": 0.5
+  "serendipity": 0.5,
+  "locale": "de"
 }
 ```
+
+`locale` is optional: one of `en`, `es`, `de`, `fr`, `hi`, `zh`, `bn` (anything else is a `422`). When it is not English, every model call for the request is told to write its human-readable text in that language (JSON keys, enum values, codes, URLs, prices, currency codes, dates and place names stay as in English), and the response cache keeps a separate entry per language. Absent or `en` behaves exactly as before. The static Phase 0 data (visa, SIM, tips, getting around, forex, emergency card) stays English until the AI result replaces it. The same field is accepted by `POST /api/chat`, `/api/discover`, `/api/compare/destination` and the single-agent and `/filtered` routes. The web app sends the UI language.
 
 Two optional fields carry a trip imported with `POST /api/import/extract`:
 
@@ -384,9 +387,12 @@ Any piece that failed or timed out is `null` and its name is listed in `missing`
   "messages": [{ "role": "user", "content": "Plan a 5-day trip to Bangkok for two people" }],
   "selections": {},
   "search_results": {},
-  "session_context": {}
+  "session_context": {},
+  "locale": "de"
 }
 ```
+
+`locale` is optional (see [POST /api/search](#post-apisearch)): replies, narrative, suggestion chips and the itinerary text come back in that language.
 
 Event types: `delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. A planning request streams `planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done`; `section_result` appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback `delta`, `error` and `done`. When the monthly AI spend cap has tripped, the reply is a `delta` "AI limit reached for this month — try again on the 1st." and `done` (no `error`). See [Chat Assistant](Chat-Assistant.md).
 

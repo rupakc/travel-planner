@@ -7,7 +7,7 @@ from ..schemas.request import TravelSearchRequest
 from ..services.serp_flights import SerpAPIError
 from ..services.serp_flights import search as serp_search
 from ..services.serp_flights import search_multi_city as serp_search_multi_city
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -173,7 +173,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         self._origin = request.origin
         self._destination = request.destination
-        return strip_live_fare(await self.execute(prompt))
+        return strip_live_fare(await self.execute(prompt, **locale_kw(request)))
 
     async def _run_multi_city(
         self, request: TravelSearchRequest, filters: dict | None = None
@@ -242,7 +242,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
 
         self._origin = request.origin
         self._destination = request.destination
-        data = strip_live_fare(await self.execute(prompt))
+        data = strip_live_fare(await self.execute(prompt, **locale_kw(request)))
         return self._group_legs(data, legs)
 
     async def _ai_fill_legs(
@@ -272,7 +272,7 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         prompt += accessibility_clause(request)
         self._origin = request.origin
         self._destination = request.destination
-        data = strip_live_fare(await self.execute(prompt))
+        data = strip_live_fare(await self.execute(prompt, **locale_kw(request)))
         if "error" in data:
             logger.warning("AI leg fill failed: %s", data.get("error"))
             return {}

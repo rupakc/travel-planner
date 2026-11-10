@@ -10,6 +10,7 @@ from ..core import llm
 from ..core.rate_limit import try_consume
 from ..schemas.request import TravelSearchRequest
 from ..utils.geo import lookup_coords
+from .base_agent import with_language
 from .chat_itinerary_agent import ChatItineraryAgent
 from .loader import load_agent_definition
 
@@ -225,6 +226,8 @@ class ChatAgent:
         self._session_context: dict = {}
         self._taste_context: str | None = None
         self._rate_limit_key: str | None = None
+        # ChatAgent is built per request, so instance state is per request.
+        self._locale: str | None = None
 
     @staticmethod
     def _classify_intent(message: str) -> list[str]:
@@ -242,6 +245,7 @@ class ChatAgent:
         session_context: dict | None = None,
         taste_context: str | None = None,
         rate_limit_key: str | None = None,
+        locale: str | None = None,
     ):
         """Stream chat responses with plan management.
 
@@ -258,6 +262,7 @@ class ChatAgent:
         3.6. Knowledge queries -> answer directly from the model's expertise
         4. Regular chat
         """
+        self._locale = locale
         if session_context:
             self._session_context = {**session_context}
         self._taste_context = taste_context
@@ -669,7 +674,10 @@ class ChatAgent:
                 [{"role": "user", "content": prompt}],
                 role="agent",
                 max_tokens=4096,
-                system="You manage a travel plan. Return only valid JSON with actions and a message.",
+                system=with_language(
+                    "You manage a travel plan. Return only valid JSON with actions and a message.",
+                    self._locale,
+                ),
                 json_output=True,
                 label="chat-plan-command",
             )
@@ -1061,7 +1069,7 @@ class ChatAgent:
                 api_messages,
                 role="chat",
                 max_tokens=4096,
-                system=system_prompt,
+                system=with_language(system_prompt, self._locale),
                 label="chat",
             ):
                 if text:
@@ -1263,6 +1271,7 @@ class ChatAgent:
                 budget_usd=ctx.get("budget_usd"),
                 num_travelers=ctx.get("num_travelers") or 1,
                 destinations=ctx.get("destinations"),
+                locale=self._locale,
             )
         except Exception:
             return None
@@ -1315,6 +1324,7 @@ class ChatAgent:
                 existing_visas=base.existing_visas,
                 budget_usd=current.get("budget_usd"),
                 num_travelers=current.get("num_travelers") or base.num_travelers,
+                locale=self._locale,
             )
         except Exception as e:
             logger.warning(f"Modification hint failed: {e}")
@@ -1427,9 +1437,10 @@ class ChatAgent:
                 [{"role": "user", "content": prompt}],
                 role="chat",
                 max_tokens=512,
-                system=(
+                system=with_language(
                     "You are a friendly travel advisor summarising search results. "
-                    "Return only the narrative prose — no preamble, no meta-commentary."
+                    "Return only the narrative prose — no preamble, no meta-commentary.",
+                    self._locale,
                 ),
                 label="chat-narrative",
             )
@@ -1463,7 +1474,10 @@ class ChatAgent:
                 [{"role": "user", "content": prompt}],
                 role="agent",
                 max_tokens=256,
-                system="You generate travel follow-up suggestion chips. Return only a JSON array of strings.",
+                system=with_language(
+                    "You generate travel follow-up suggestion chips. Return only a JSON array of strings.",
+                    self._locale,
+                ),
                 json_output=True,
                 label="chat-suggestions",
             )
@@ -1638,6 +1652,7 @@ class ChatAgent:
                 num_travelers=params.get("num_travelers") or 1,
                 destinations=destinations_list,
                 destination_nights=nights_list,
+                locale=self._locale,
             )
         except Exception as e:
             logger.warning(f"Travel param extraction failed: {e}")
