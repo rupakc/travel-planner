@@ -130,11 +130,13 @@ These apply to every client; the web implementation is `frontend/src/telemetry/`
 | Raw events (`telemetry_events`) | `$DATA_DIR/telemetry.db`, its own SQLite file in WAL mode so ingestion never contends with user data | `TELEMETRY_RETENTION_DAYS` (default 90); not backed up |
 | Daily rollups (`telemetry_daily`, `telemetry_daily_totals`, `telemetry_rollups`) | `airports.db` | Indefinitely; backed up with the user tables |
 
+Ingestion has a global disk guard on top of the per-caller rate limit (`RATE_LIMIT_TELEMETRY`, 60 batches per 10 minutes). While `telemetry.db` plus its WAL is over `TELEMETRY_MAX_DB_MB` (default 1024), or the current UTC day already holds `TELEMETRY_MAX_EVENTS_PER_DAY` stored events (default 200000), `POST /api/telemetry` still answers `204` but drops the batch, and logs one warning per hour at most. The file size and the day's count are re-read about once a minute and counted in memory in between, so the check costs nothing per request.
+
 An hourly lifespan task (`backend/app/telemetry/maintenance.py`) rolls up every finished UTC day, re-rolls the trailing 7 days (late events from offline clients) and prunes raw events past retention. `telemetry_daily_totals` rows with `platform = '*'` hold exact distinct users and sessions across all events and platforms.
 
 ## Reading it
 
-`GET /api/admin/telemetry/summary?days=30` (admin) returns daily users, sessions and events, top events, top screens and `users_7d`, the distinct users over the last 7 UTC days. The web admin page shows it as the Analytics tab, hidden when the endpoint answers `404`. Settings: `TELEMETRY_ENABLED`, `TELEMETRY_RETENTION_DAYS`, `RATE_LIMIT_TELEMETRY` (see [Configuration](Configuration.md)).
+`GET /api/admin/telemetry/summary?days=30` (admin) returns daily users, sessions and events, top events, top screens and `users_7d`, the distinct users over the last 7 UTC days. The web admin page shows it as the Analytics tab, hidden when the endpoint answers `404`. Settings: `TELEMETRY_ENABLED`, `TELEMETRY_RETENTION_DAYS`, `TELEMETRY_MAX_DB_MB`, `TELEMETRY_MAX_EVENTS_PER_DAY`, `RATE_LIMIT_TELEMETRY` (see [Configuration](Configuration.md)).
 
 ## Adding an event
 

@@ -5,13 +5,19 @@ not backed up). Daily aggregates live in the main DB (``telemetry_daily``) and
 are backed up with the other user tables.
 """
 
+import logging
+import os
 import sqlite3
+import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from .database import get_connection
+
+logger = logging.getLogger(__name__)
 
 _COLUMNS = (
     "ts",
@@ -95,6 +101,8 @@ def create_telemetry_tables() -> None:
                 ON telemetry_events (ts);
             CREATE INDEX IF NOT EXISTS idx_telemetry_event_ts
                 ON telemetry_events (event, ts);
+            CREATE INDEX IF NOT EXISTS idx_telemetry_received
+                ON telemetry_events (received_at);
         """)
     with get_connection() as conn:
         conn.executescript("""
@@ -133,6 +141,88 @@ def insert_events(rows: list[dict]) -> int:
             [{c: r.get(c) for c in _COLUMNS} for r in rows],
         )
     return len(rows)
+
+
+# --- global disk guard ------------------------------------------------------
+# Per-caller rate limits don't bound the total: before every insert, the batch
+# is dropped (the route still answers 204) once telemetry.db + its WAL exceed
+# TELEMETRY_MAX_DB_MB or today's (UTC, by received_at) stored rows reach
+# TELEMETRY_MAX_EVENTS_PER_DAY. The size and the day count are re-read about
+# once a minute; inserts in between are counted in memory.
+
+_GUARD_REFRESH_S = 60.0
+_WARN_INTERVAL_S = 3600.0
+_guard_lock = threading.Lock()
+_guard: dict = {}
+
+
+def reset_ingest_guard() -> None:
+    """Forget the cached size/count (and the warning clock); tests."""
+    with _guard_lock:
+        _guard.clear()
+
+
+def _file_bytes(path: Path) -> int:
+    try:
+        return os.path.getsize(path)
+    except OSError:
+        return 0
+
+
+def _store_bytes() -> int:
+    db = telemetry_db_path()
+    return _file_bytes(db) + _file_bytes(db.with_name(db.name + "-wal"))
+
+
+def _utc_day_start_ms(now_s: float) -> int:
+    d = datetime.fromtimestamp(now_s, UTC)
+    return int(datetime(d.year, d.month, d.day, tzinfo=UTC).timestamp() * 1000)
+
+
+def _count_today(day_start_ms: int) -> int:
+    with _telemetry_connection() as conn:
+        return conn.execute(
+            "SELECT COUNT(*) FROM telemetry_events WHERE received_at >= ?",
+            (day_start_ms,),
+        ).fetchone()[0]
+
+
+def _over_cap(now_s: float) -> str | None:
+    """Why ingest is paused (``"size"`` / ``"daily"``), or None. Caller holds
+    ``_guard_lock``."""
+    from ..core.config import settings
+
+    day = _utc_day_start_ms(now_s)
+    stale = now_s - _guard.get("checked", float("-inf")) >= _GUARD_REFRESH_S
+    if stale or _guard.get("day") != day:
+        _guard.update(
+            checked=now_s, day=day, bytes=_store_bytes(), count=_count_today(day)
+        )
+    if _guard["bytes"] > settings.telemetry_max_db_mb * 1024 * 1024:
+        return "size"
+    if _guard["count"] >= settings.telemetry_max_events_per_day:
+        return "daily"
+    return None
+
+
+def insert_events_guarded(rows: list[dict]) -> int:
+    """``insert_events`` behind the global disk guard: returns the count
+    stored, 0 when the batch was dropped (one warning per hour at most)."""
+    if not rows:
+        return 0
+    now_s = time.time()
+    with _guard_lock:
+        reason = _over_cap(now_s)
+        if reason:
+            if now_s - _guard.get("warned", float("-inf")) >= _WARN_INTERVAL_S:
+                _guard["warned"] = now_s
+                logger.warning(
+                    "telemetry ingest paused: %s cap reached, dropping batches",
+                    "size" if reason == "size" else "daily event",
+                )
+            return 0
+        _guard["count"] += len(rows)
+    return insert_events(rows)
 
 
 def rollup_day(day: str) -> int:

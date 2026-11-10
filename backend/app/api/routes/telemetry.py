@@ -96,5 +96,6 @@ async def ingest_telemetry(
             }
         )
     if rows:
-        await asyncio.to_thread(telemetry_db.insert_events, rows)
+        # past the global disk guard the batch is dropped, still 204
+        await asyncio.to_thread(telemetry_db.insert_events_guarded, rows)
     return Response(status_code=204)

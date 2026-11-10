@@ -24,6 +24,7 @@ def _isolated():
     telemetry_db.create_telemetry_tables()
     with telemetry_db._telemetry_connection() as tconn:
         tconn.execute("DELETE FROM telemetry_events")
+    telemetry_db.reset_ingest_guard()
     with get_connection() as conn:
         conn.execute("DELETE FROM telemetry_daily")
         conn.execute("DELETE FROM telemetry_rollups")
@@ -208,8 +209,81 @@ def test_not_behind_ai_access(client, monkeypatch):
     assert client.post("/api/telemetry", json=_body()).status_code == 204
 
 
+# --- global disk guard ------------------------------------------------------
+
+
+def _guard_warnings(caplog):
+    return [r for r in caplog.records if "telemetry ingest paused" in r.getMessage()]
+
+
+def test_size_cap_drops_batch_but_answers_204(client, monkeypatch, caplog):
+    monkeypatch.setattr(settings, "telemetry_max_db_mb", 0)  # any file is over
+    assert client.post("/api/telemetry", json=_body()).status_code == 204
+    assert client.post("/api/telemetry", json=_body()).status_code == 204
+    assert _rows() == []
+    assert len(_guard_warnings(caplog)) == 1  # at most one warning per hour
+
+
+def test_size_cap_counts_the_wal(monkeypatch):
+    db = telemetry_db.telemetry_db_path()
+    wal = db.with_name(db.name + "-wal")
+    monkeypatch.setattr(settings, "telemetry_max_db_mb", 1)
+    main = db.stat().st_size
+    wal_size = wal.stat().st_size if wal.exists() else 0
+    assert main + wal_size < 1024 * 1024
+    real_size = telemetry_db._file_bytes
+    monkeypatch.setattr(
+        telemetry_db,
+        "_file_bytes",
+        lambda p: real_size(p) + (1024 * 1024 if str(p).endswith("-wal") else 0),
+    )
+    telemetry_db.reset_ingest_guard()
+    assert telemetry_db.insert_events_guarded([_row(int(time.time() * 1000))]) == 0
+
+
+def test_daily_cap_counts_todays_rows(client, monkeypatch, caplog):
+    monkeypatch.setattr(settings, "telemetry_max_events_per_day", 3)
+    now = int(time.time() * 1000)
+    # two rows already stored today (e.g. before a restart), one yesterday
+    telemetry_db.insert_events(
+        [
+            {**_row(now), "received_at": now},
+            {**_row(now), "received_at": now},
+            {**_row(now), "received_at": now - 86_400_000 * 2},
+        ]
+    )
+    telemetry_db.reset_ingest_guard()
+    assert client.post("/api/telemetry", json=_body()).status_code == 204
+    assert len(_rows()) == 4  # 2 today + 1 new < cap before insert
+    # today's count is now 3 = the cap: further batches are dropped
+    assert client.post("/api/telemetry", json=_body()).status_code == 204
+    assert client.post("/api/telemetry", json=_body()).status_code == 204
+    assert len(_rows()) == 4
+    assert len(_guard_warnings(caplog)) == 1
+
+
+def test_guard_caches_its_checks(monkeypatch):
+    calls = []
+    real = telemetry_db._count_today
+
+    def counting(*a, **k):
+        calls.append(1)
+        return real(*a, **k)
+
+    monkeypatch.setattr(telemetry_db, "_count_today", counting)
+    now = int(time.time() * 1000)
+    for _ in range(5):
+        telemetry_db.insert_events_guarded([_row(now)])
+    assert len(calls) == 1  # refreshed at most once a minute, counted in between
+
+
+def test_guard_defaults():
+    assert settings.telemetry_max_db_mb == 1024
+    assert settings.telemetry_max_events_per_day == 200_000
+
+
 def test_rate_limit_bucket_resolves_to_setting():
-    assert _bucket_limit("telemetry") == settings.rate_limit_telemetry == 600
+    assert _bucket_limit("telemetry") == settings.rate_limit_telemetry == 60
 
 
 # --- maintenance -----------------------------------------------------------
