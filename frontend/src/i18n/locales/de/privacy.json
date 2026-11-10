@@ -1,13 +1,13 @@
 {
   "prompt": {
     "title": "Hilf mit, Voyager zu verbessern",
-    "body": "Wir erfassen anonyme Nutzungsdaten (Ansichten, Tipper, Zeiten), um Fehler zu beheben und die App zu verbessern. Nie, was du eingibst.",
+    "body": "Wir erfassen Nutzungsdaten (Ansichten, Antippen, Zeiten), verknüpft mit einer zufälligen ID oder, wenn du angemeldet bist, mit deinem Konto, um Fehler zu beheben und die App zu verbessern. Nie, was du eingibst, deinen Standort oder deine E-Mail.",
     "allow": "Erlauben",
     "deny": "Nein danke"
   },
   "switch": {
     "label": "Hilf mit, Voyager zu verbessern",
-    "hint": "Teile anonyme Nutzungsdaten. Nie, was du eingibst, deinen Standort oder deine E-Mail."
+    "hint": "Teile Nutzungsdaten, verknüpft mit einer zufälligen ID oder, wenn du angemeldet bist, mit deinem Konto. Nie, was du eingibst, deinen Standort oder deine E-Mail."
   },
   "policy": "Datenschutzerklärung",
   "section": {

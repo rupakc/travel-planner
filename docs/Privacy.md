@@ -1,10 +1,14 @@
 # Privacy
 
-Voyager collects anonymous usage data so the project can find bugs and see which features are used. This page lists exactly what is collected, what never is, how long it is kept and how to switch it off. The list below comes from the closed event schema in `backend/app/telemetry/registry.py`: the server accepts only these events and these properties and silently drops everything else.
+Voyager collects usage data, tied to a random device ID (and to your account when you are signed in), so the project can find bugs and see which features are used. This page lists exactly what is collected, what never is, how long it is kept and how to switch it off. The list below comes from the closed event schema in `backend/app/telemetry/registry.py`: the server accepts only these events and these properties and silently drops everything else.
 
 ## What is collected
 
-Every batch of events carries a small client block:
+Every batch of events carries a small client block. The telemetry tables store no IP address and no user agent.
+
+The `anon_id` is a persistent device identifier, so events from one browser can be linked to each other, and to your account when you are signed in. (This is pseudonymous, not anonymous.)
+
+The client block:
 
 | Field | Meaning |
 |---|---|
@@ -56,6 +60,10 @@ The schema has no field for any of these, and the server drops unknown fields:
 - Precise location.
 - Your email address or name.
 - Other people's content.
+
+## Server request logs
+
+Separately from telemetry, the app's request-log line records only the HTTP method, path, status code, duration and username (or `anonymous`), with no IP address or user agent; uvicorn's standard access log is not disabled in the app container, and it records the connecting client address.
 
 ## Retention
 
