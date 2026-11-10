@@ -44,6 +44,8 @@ export function setConsent(choice) {
     if (!CHOICES.has(choice)) return
     memoryChoice = choice
     try { localStorage.setItem(KEY, choice) } catch { /* memory only */ }
+    // The client sends a grant; a denial is stored locally only: the client
+    // clears its queue and sends nothing, not even the choice.
     emit('consent', { choice })
   } catch { /* never break the caller */ }
 }

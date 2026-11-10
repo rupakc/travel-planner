@@ -71,7 +71,7 @@ describe('autocapture', () => {
     const input = document.querySelector('input')
     input.value = 'jane@x.com'
     input.dispatchEvent(new Event('change', { bubbles: true }))
-    expect(emit).toHaveBeenCalledWith('ui_toggle', { tid: 'login.user', route: '/' })
+    expect(emit).toHaveBeenCalledWith('ui_change', { tid: 'login.user', route: '/' })
     document.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     expect(emit).toHaveBeenCalledWith('ui_submit', { tid: 'login.form', route: '/' })
     const sent = JSON.stringify(emit.mock.calls)
@@ -85,6 +85,40 @@ describe('autocapture', () => {
     box.checked = true
     box.dispatchEvent(new Event('change', { bubbles: true }))
     expect(emit).toHaveBeenCalledWith('ui_toggle', { tid: 'prefs.email', route: '/', on: true })
+  })
+
+  it('selects and textareas emit ui_change without a value', () => {
+    document.body.innerHTML = '<select data-tid="search.pace"><option value="slow">Slow</option></select><textarea data-tid="feedback.text"></textarea>'
+    document.querySelector('select').dispatchEvent(new Event('change', { bubbles: true }))
+    const ta = document.querySelector('textarea')
+    ta.value = 'my secret note'
+    ta.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(emit.mock.calls).toEqual([
+      ['ui_change', { tid: 'search.pace', route: '/' }],
+      ['ui_change', { tid: 'feedback.text', route: '/' }],
+    ])
+  })
+
+  it('radios and role=switch emit ui_toggle with on', () => {
+    document.body.innerHTML = '<input type="radio" data-tid="pace.slow"><button role="switch" aria-checked="false" data-tid="prefs.dark">D</button>'
+    const radio = document.querySelector('input')
+    radio.checked = true
+    radio.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(emit).toHaveBeenLastCalledWith('ui_toggle', { tid: 'pace.slow', route: '/', on: true })
+    click(document.querySelector('button'))
+    expect(emit).toHaveBeenLastCalledWith('ui_toggle', { tid: 'prefs.dark', route: '/', on: true })
+  })
+
+  it('never sends entity ids from element ids (digits or uuid-like segments)', () => {
+    document.body.innerHTML = [
+      '<div id="watch-123"><button>a</button></div>',
+      '<div id="nearby-5f3a9c1e"><button>b</button></div>',
+      '<div id="section-deadbeefcafe"><button>c</button></div>',
+      '<div id="results-panel"><button>d</button></div>',
+    ].join('')
+    for (const b of document.querySelectorAll('button')) click(b)
+    expect(emit.mock.calls.map(([, p]) => p.tid)).toEqual(['auto:button', 'auto:button', 'auto:button', 'id:results-panel'])
+    expect(JSON.stringify(emit.mock.calls)).not.toMatch(/123|5f3a9c1e|deadbeef/)
   })
 
   it('drops tids that would fail the server id rule', () => {

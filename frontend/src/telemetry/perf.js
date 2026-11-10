@@ -38,9 +38,13 @@ function basename(file) {
   return clean.slice(clean.lastIndexOf('/') + 1)
 }
 
+// Only a script file's basename is ever used: anything else (a page URL such
+// as /share/<token>, an inline script) reports `unknown`.
+const SCRIPT_RE = /^[A-Za-z0-9_.-]{1,54}\.(?:m?js|jsx|ts)$/
+
 export function errorSource(file, line) {
-  const name = basename(file).replace(/[^A-Za-z0-9_.-]/g, '_').slice(0, 54)
-  if (!name) return 'unknown'
+  const name = basename(file)
+  if (!SCRIPT_RE.test(name)) return 'unknown'
   const value = Number.isFinite(line) && line > 0 ? `${name}:${line}` : name
   return ID_RE.test(value) ? value : 'unknown'
 }
@@ -48,7 +52,7 @@ export function errorSource(file, line) {
 // First "file.js:line" frame in a stack trace.
 function stackSource(stack) {
   if (typeof stack !== 'string') return 'unknown'
-  const m = stack.match(/([^\s/()@]+\.(?:m?js|jsx|ts|tsx)(?:\?[^:\s)]*)?):(\d+)/)
+  const m = stack.match(/([^\s/()@]+\.(?:m?js|jsx|ts)(?:\?[^:\s)]*)?):(\d+)/)
   return m ? errorSource(m[1], Number(m[2])) : 'unknown'
 }
 

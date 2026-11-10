@@ -96,3 +96,14 @@ def test_every_event_documented():
     doc = Path(__file__).resolve().parents[2] / "docs" / "Telemetry.md"
     text = doc.read_text()
     assert all(name in text for name in EVENTS)
+
+
+def test_ui_change_event_keeps_only_tid_and_route():
+    ev = clean_event(
+        {
+            "event": "ui_change",
+            "props": {"tid": "search.dest", "route": "/", "value": "Paris"},
+        }
+    )
+    assert ev is not None
+    assert ev["props"] == {"tid": "search.dest", "route": "/"}

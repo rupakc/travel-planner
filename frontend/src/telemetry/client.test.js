@@ -14,7 +14,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{1
 const ID = /^[A-Za-z0-9_.:/-]{1,64}$/
 const CONFIG = { telemetry: { enabled: true, flush_interval_s: 15, max_batch: 50 } }
 
-const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
+const res = (status, body, hdrs = {}) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  json: async () => body,
+  headers: { get: (k) => hdrs[k.toLowerCase()] ?? null },
+})
 
 let c, fetchMock, telemetryReply
 const telemetryCalls = () => fetchMock.mock.calls.filter(([u]) => u === '/api/telemetry')
@@ -65,6 +70,15 @@ describe('emit + flush', () => {
     expect(typeof ev.ts).toBe('number')
     expect(JSON.stringify(body)).not.toContain('tok-123')
     expect(body.events.map((e) => e.event)).toEqual(expect.arrayContaining(['app_open', 'session_start']))
+  })
+
+  it('sanitises app_version to the server id rule (the default build value has a "+")', async () => {
+    await load()
+    c.initTelemetry({ appVersion: '0.0.0+20261110' })
+    c.emit('app_background')
+    await c.flush()
+    expect(lastBody().client.app_version).toBe('0.0.0_20261110')
+    expect(lastBody().client.app_version).toMatch(ID)
   })
 
   it('keeps the anon id in tp_anon across loads', async () => {
@@ -266,7 +280,7 @@ describe('consent', () => {
     expect(c._queueForTests().length).toBe(0)
   })
 
-  it('a consent event goes through and clears earlier events on denial', async () => {
+  it('a denial sends nothing at all and clears what was queued', async () => {
     await load()
     c.initTelemetry({ appVersion: '1' })
     await vi.advanceTimersByTimeAsync(0)
@@ -274,19 +288,37 @@ describe('consent', () => {
     consent.allowed = false
     c.emit('consent', { choice: 'denied' })
     await c.flush()
-    expect(lastBody().events.map((e) => e.event)).toEqual(['consent'])
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(telemetryCalls().length).toBe(0)
+    expect(c._queueForTests().length).toBe(0)
+  })
+
+  it('a later grant restores the persisted queue and emits app_open, like init', async () => {
+    localStorage.setItem('tp_tq', JSON.stringify([
+      { event: 'screen_view', ts: Date.now() - 1000, props: { route: '/chat' }, screen: '/chat', sid: '6f1c1d36-8a43-4d1a-9c55-0f7a1f6a7e11' },
+    ]))
+    consent.allowed = false
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await c.flush()
+    expect(telemetryCalls().length).toBe(0)
+    consent.allowed = true
+    c.emit('consent', { choice: 'granted' })
+    await c.flush()
+    const evs = telemetryCalls().flatMap(([, o]) => JSON.parse(o.body).events).map((e) => e.event)
+    expect(evs).toEqual(expect.arrayContaining(['consent', 'app_open', 'screen_view']))
   })
 })
 
 describe('consent before init', () => {
-  it('a denial recorded before /api/config answers is still sent, nothing else', async () => {
+  it('a denial recorded before /api/config answers sends nothing', async () => {
     await load()
     c.emit('app_background')
     consent.allowed = false
     c.emit('consent', { choice: 'denied' })
     c.initTelemetry({ appVersion: '1' })
     await c.flush()
-    expect(telemetryCalls().flatMap(([, o]) => JSON.parse(o.body).events).map((e) => e.event)).toEqual(['consent'])
+    expect(telemetryCalls().length).toBe(0)
   })
 })
 
@@ -420,5 +452,90 @@ describe('utils/analytics track()', () => {
     expect(evs).toEqual(expect.arrayContaining([
       expect.objectContaining({ event: 'feature_used', props: { feature: 'plan_saved', page: 'results' } }),
     ]))
+  })
+})
+
+describe('429 Retry-After', () => {
+  it('honours Retry-After in seconds', async () => {
+    telemetryReply = async () => res(429, null, { 'retry-after': '120' })
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await c.flush()
+    expect(telemetryCalls().length).toBe(1)
+    telemetryReply = async () => res(204)
+    await c.flush()
+    await vi.advanceTimersByTimeAsync(100_000)
+    expect(telemetryCalls().length).toBe(1)
+    await vi.advanceTimersByTimeAsync(25_000)
+    expect(telemetryCalls().length).toBe(2)
+  })
+
+  it('honours Retry-After as an HTTP date', async () => {
+    telemetryReply = async () => res(429, null, { 'retry-after': new Date(Date.now() + 90_000).toUTCString() })
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await c.flush()
+    telemetryReply = async () => res(204)
+    await vi.advanceTimersByTimeAsync(80_000)
+    expect(telemetryCalls().length).toBe(1)
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(telemetryCalls().length).toBe(2)
+  })
+})
+
+describe('no duplicate sends on hide', () => {
+  const setVisibility = (v) => {
+    Object.defineProperty(document, 'visibilityState', { value: v, configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }
+  afterEach(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+  })
+
+  it('signed-in hide flush: keepalive events are in flight, not persisted, not re-sent', async () => {
+    localStorage.setItem('tp_token', 'tok')
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await vi.advanceTimersByTimeAsync(0)
+    c.emit('ui_tap', { tid: 'sent.on.hide', route: '/' })
+    telemetryReply = () => new Promise(() => {}) // the page unloads mid round trip
+    setVisibility('hidden')
+    expect(telemetryCalls().length).toBe(1)
+    expect(telemetryCalls()[0][1].keepalive).toBe(true)
+    // a timer or drain during the round trip does not send them again
+    await c.flush()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(telemetryCalls().length).toBe(1)
+    // simulated unload, then the next page load
+    const saved = localStorage.getItem('tp_tq')
+    expect(saved === null || !saved.includes('sent.on.hide')).toBe(true)
+    c._resetForTests()
+    if (saved !== null) localStorage.setItem('tp_tq', saved)
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    telemetryReply = async () => res(204)
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await c.flush()
+    const resent = telemetryCalls().flatMap(([, o]) => JSON.parse(o.body).events)
+    expect(resent.some((e) => e.props?.tid === 'sent.on.hide')).toBe(false)
+  })
+})
+
+describe('auto-captured ui_change through the client', () => {
+  it('a text input change is sent as ui_change with tid + route only', async () => {
+    await load()
+    c.initTelemetry({ appVersion: '1' })
+    await vi.advanceTimersByTimeAsync(0)
+    document.body.innerHTML = '<input data-tid="search.dest">'
+    const input = document.querySelector('input')
+    input.value = 'Paris jane@x.com'
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+    await c.flush()
+    const body = lastBody()
+    expect(body.events).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: 'ui_change', props: { tid: 'search.dest', route: '/' } }),
+    ]))
+    expect(JSON.stringify(body)).not.toMatch(/Paris|jane/)
+    document.body.innerHTML = ''
   })
 })

@@ -30,6 +30,7 @@ EVENTS: dict[str, dict[str, str]] = {
     "screen_time": {"route": "id", "ms": "int"},
     "ui_tap": {"tid": "id", "route": "id"},
     "ui_toggle": {"tid": "id", "route": "id", "on": "bool"},
+    "ui_change": {"tid": "id", "route": "id"},
     "ui_submit": {"tid": "id", "route": "id"},
     "search_submit": {
         "mode": _enum("search", "chat", "compare", "link", "discover"),

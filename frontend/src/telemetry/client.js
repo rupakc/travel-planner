@@ -26,6 +26,7 @@ const FAILS_BEFORE_BACKOFF = 3
 const MAX_BACKOFF_MS = 5 * 60 * 1000
 const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000 // the server's clock-skew window
 const SERVER_MAX_BATCH = 100
+const MAX_RETRY_AFTER_MS = 60 * 60 * 1000
 
 const ID_RE = /^[A-Za-z0-9_.:/-]{1,64}$/
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -33,7 +34,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // ── module state ────────────────────────────────────────────────────────────
 let state = 'pending' // 'pending' (before /api/config) | 'on' | 'off'
 let queue = []
-let inflight = new Set() // events in a regular POST right now
+let inflight = new Set() // events handed to a POST, keepalive or beacon right now
 let cfg = { interval: 15000, maxBatch: 50 }
 let appVersion = '0.0.0'
 let ready = null
@@ -176,13 +177,18 @@ function clearQueue() {
   sRemove(QUEUE_KEY)
 }
 
+const pending = () => queue.filter((e) => !inflight.has(e))
+
 // The queue is written to storage only when the page is hidden or a send
 // fails, and claimed (read + removed) at start-up, so two tabs don't keep
-// resending each other's events.
+// resending each other's events. Events already handed to a request are never
+// written: if the page dies mid round trip they may be lost, but they are
+// never sent twice.
 function persist() {
   if (state !== 'on') return
-  if (!queue.length) return sRemove(QUEUE_KEY)
-  try { sSet(QUEUE_KEY, JSON.stringify(queue)) } catch { /* ignore */ }
+  const rest = pending()
+  if (!rest.length) return sRemove(QUEUE_KEY)
+  try { sSet(QUEUE_KEY, JSON.stringify(rest)) } catch { /* ignore */ }
 }
 
 function restoreQueue() {
@@ -259,9 +265,11 @@ function schedule(delay) {
 }
 
 function scheduleFlush() {
-  if (state !== 'on' || !queue.length) return
+  if (state !== 'on') return
+  const n = pending().length
+  if (!n) return
   const wait = Math.max(0, blockedUntil - Date.now())
-  schedule(queue.length >= cfg.maxBatch ? wait : Math.max(wait, cfg.interval))
+  schedule(n >= cfg.maxBatch ? wait : Math.max(wait, cfg.interval))
 }
 
 function onFailure() {
@@ -278,11 +286,26 @@ function onSuccess() {
   blockedUntil = 0
 }
 
+// Retry-After as seconds or an HTTP date → ms from now (0 if absent/invalid).
+function retryAfterMs(r) {
+  let v
+  try { v = r.headers?.get?.('Retry-After') } catch { return 0 }
+  if (typeof v !== 'string' || !v.trim()) return 0
+  const ms = /^\d+$/.test(v.trim()) ? Number(v.trim()) * 1000 : Date.parse(v) - Date.now()
+  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, MAX_RETRY_AFTER_MS) : 0
+}
+
 // Handles one response. Returns true when the batch is done with (sent, or
 // rejected for good), false to keep it for a retry.
 function handleResponse(r, batch) {
   if (r.status === 404) {
     disable()
+    return false
+  }
+  if (r.status === 429) {
+    onFailure()
+    const wait = retryAfterMs(r)
+    if (wait) blockedUntil = Math.max(blockedUntil, Date.now() + wait)
     return false
   }
   // 2xx sent; other 4xx (413/422/...) would fail forever, so drop the batch.
@@ -296,10 +319,10 @@ function handleResponse(r, batch) {
 }
 
 async function sendOne() {
-  const { batch, sid } = takeBatch(new Set())
+  const { batch, sid } = takeBatch(inflight)
   if (!batch.length) return false
   for (const e of batch) inflight.add(e)
-  let r
+  let r = null
   try {
     r = await fetch(ENDPOINT, {
       method: 'POST',
@@ -307,13 +330,13 @@ async function sendOne() {
       body: payload(batch, sid),
       credentials: 'same-origin',
     })
-  } catch {
-    if (state === 'on') onFailure()
-    return false
-  } finally {
-    for (const e of batch) inflight.delete(e)
-  }
+  } catch { /* network error: r stays null */ }
+  for (const e of batch) inflight.delete(e)
   if (state !== 'on') return false
+  if (!r) {
+    onFailure()
+    return false
+  }
   return handleResponse(r, batch)
 }
 
@@ -321,7 +344,7 @@ async function drain() {
   if (sending) return
   sending = true
   try {
-    while (state === 'on' && queue.length && Date.now() >= blockedUntil) {
+    while (state === 'on' && pending().length && Date.now() >= blockedUntil) {
       if (!(await sendOne())) break
     }
   } finally {
@@ -350,23 +373,36 @@ function beacon(body) {
 
 // Page hidden: send everything left. Signed in → fetch(keepalive) with auth,
 // falling back to an (anonymous) beacon; anonymous → beacon straight away.
+// Handed-over events are in flight until the request settles, so neither the
+// timer, drain() nor persist() touches them meanwhile.
 function flushOnHide() {
   if (state !== 'on' || Date.now() < blockedUntil) return
-  const taken = new Set(inflight)
   for (;;) {
-    const { batch, sid } = takeBatch(taken)
+    const { batch, sid } = takeBatch(inflight)
     if (!batch.length) break
-    for (const e of batch) taken.add(e)
+    for (const e of batch) inflight.add(e)
     const body = payload(batch, sid)
     const headers = authHeaders()
+    const settle = () => { for (const e of batch) inflight.delete(e) }
+    // true when the beacon took it; otherwise the events stay queued and are
+    // written to storage for the next page load.
     const viaBeacon = () => {
-      if (beacon(body)) removeSent(batch)
+      settle()
+      if (beacon(body)) {
+        removeSent(batch)
+        return true
+      }
+      persist()
+      return false
     }
     if (headers.Authorization || typeof navigator.sendBeacon !== 'function') {
       try {
         fetch(ENDPOINT, { method: 'POST', headers, body, keepalive: true, credentials: 'same-origin' })
-          .then((r) => { if (state === 'on') handleResponse(r, batch) })
-          .catch(() => viaBeacon())
+          .then((r) => {
+            settle()
+            if (state === 'on') handleResponse(r, batch)
+          })
+          .catch(() => { if (state === 'on') viaBeacon() })
       } catch {
         viaBeacon()
       }
@@ -457,13 +493,18 @@ function apply(conf) {
   state = 'on'
   startListening()
   if (!telemetryAllowed()) {
-    // Not consented: only a recorded consent choice (and its session) may go.
-    const keep = queue.filter((e) => e.event === 'consent' || e.event === 'session_start')
-    clearQueue()
-    queue = keep.some((e) => e.event === 'consent') ? keep : []
-    scheduleFlush()
+    // Not consented: nothing goes. Stored events stay for a later grant (a
+    // denial removes them).
+    queue = []
+    inflight = new Set()
     return
   }
+  activate()
+}
+
+// Start collecting: at init when allowed, or when consent is granted later.
+function activate() {
+  if (state !== 'on' || collectors) return
   restoreQueue()
   emit('app_open')
   startCollectors()
@@ -493,14 +534,16 @@ export function emit(event, props) {
   try {
     if (state === 'off' || typeof event !== 'string' || !ID_RE.test(event)) return
     if (event === 'consent') {
-      // The choice itself is always recorded; a denial drops everything else.
       const choice = props && props.choice
       if (choice === 'denied') {
+        // Stored locally only (consent.js): send nothing, not even the choice.
         clearQueue()
         stopCollectors()
+        return
       }
+      if (choice !== 'granted') return
       enqueue(event, props)
-      if (choice === 'granted') startCollectors()
+      activate() // no-op if already collecting (or before /api/config answers)
       return
     }
     if (!telemetryAllowed()) return
@@ -524,6 +567,17 @@ export function screenView(pathname) {
 /** Whether a signed-in user is present: false never attaches the bearer token. */
 export function setUserPresent(present) {
   try { userPresent = !!present } catch { /* ignore */ }
+}
+
+// Dev only: a hot reload of this module must not leave its listeners behind.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    try {
+      clearTimeout(timer)
+      stopCollectors()
+      stopListening()
+    } catch { /* ignore */ }
+  })
 }
 
 // ── test hooks ──────────────────────────────────────────────────────────────

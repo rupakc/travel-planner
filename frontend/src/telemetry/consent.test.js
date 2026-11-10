@@ -48,12 +48,13 @@ describe('getConsent / setConsent / telemetryAllowed', () => {
     expect(getConsent()).toBe(null)
   })
 
-  it('stores the choice and emits a consent event', () => {
+  it('stores the choice and tells the client (which sends nothing for a denial)', () => {
     setConsent('granted')
     expect(getConsent()).toBe('granted')
     expect(emit).toHaveBeenCalledWith('consent', { choice: 'granted' })
     setConsent('denied')
     expect(getConsent()).toBe('denied')
+    // the client turns this into "clear the queue, send nothing" (client.test.js)
     expect(emit).toHaveBeenLastCalledWith('consent', { choice: 'denied' })
   })
 
