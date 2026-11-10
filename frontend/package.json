@@ -7,6 +7,7 @@
     "dev": "vite --port 5174",
     "build": "vite build",
     "preview": "vite preview",
+    "tokens": "node scripts/build-tokens.mjs",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
