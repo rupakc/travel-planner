@@ -1303,6 +1303,67 @@ SPA reads plans exactly as today and ignores the new columns.</p>
 <li>Web: the Web Share API with files where supported; otherwise X/Facebook/WhatsApp/LinkedIn intents,
     copy link and download image.</li>
 </ul>
+<h2 id="5a-gamification-across-the-whole-journey-owner-2026-11-10">5a. Gamification across the whole journey (owner, 2026-11-10)</h2>
+<p>Gamification isn't only the Play tab: every phase of a trip and every main feature earns and shows progress.
+One engine powers it, built in Phase 1 next to accounts, so each later phase only adds <em>hooks</em>:
+- <strong>Engine</strong>: an append-only XP ledger (idempotency key per award), a rules table (event → points, daily cap per
+  rule), badges with progress (<code>3/5 countries in Asia</code>), levels, streaks with a weekly "streak freeze", and
+  seasonal challenges. Awards are computed server-side from events the server already sees (plan saved,
+  watch created, quiz answered), never from client claims, so they can't be faked through telemetry.
+- <strong>Where it shows (same on all clients)</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Moment</th>
+<th>Gamified touch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Onboarding</td>
+<td>The traveller-type result is the first badge; finishing setup gives starter XP and unlocks the scratch map.</td>
+</tr>
+<tr>
+<td>Dreaming</td>
+<td>Saving ideas from the feed and remixing them; a "bucket list" goal ("visit 30 countries") with a progress ring.</td>
+</tr>
+<tr>
+<td>Planning</td>
+<td>A <strong>plan completeness meter</strong> (flights, stay, days filled, visa checked, packing); stress-test fixes earn "Smart planner" progress.</td>
+</tr>
+<tr>
+<td>Ready</td>
+<td>The prep checklist is a quest: each ticked item fills a "Trip ready" bar, and at 100 % a badge appears with a confetti moment (reduced motion respected).</td>
+</tr>
+<tr>
+<td>Price alerts</td>
+<td>A "Deal hunter" track: XP for each real drop caught, a savings milestones badge ($50/$200/$1,000 saved), and a target-hit celebration. Estimates never award points.</td>
+</tr>
+<tr>
+<td>On the road</td>
+<td>Daily check-in streak during the trip, "local explorer" for places visited from Near me, a passport-stamp animation on arriving in a new country.</td>
+</tr>
+<tr>
+<td>Memories</td>
+<td>Finishing the recap gives XP plus a scratch-map reveal of new countries and region badges (continents, UNESCO sites seen, cuisines tried from ratings).</td>
+</tr>
+<tr>
+<td>Social</td>
+<td>XP when others <em>save/remix</em> your idea (not for likes), helpful-comment badges chosen by the idea's author, friend leaderboards.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>The daily quiz, topic packs, a head-to-head quiz with friends (asynchronous) and weekly challenges tied to destinations in the user's upcoming trips ("Know before you go: Japan").</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Guardrails</strong>: no points for raw volume (posts, likes, searches); daily caps per rule; streaks are never
+  punishing (a freeze, no loss messaging); every game element can be hidden in Settings ("Hide Play &amp;
+  points"); points never gate core features.</li>
+<li><strong>Telemetry</strong> measures whether each touch helps (retention, plan completion, alert engagement), so point
+  values can be tuned. Values are config, not code.</li>
+</ul>
 <h2 id="6-price-alerts-that-delight">6. Price alerts that delight</h2>
 <p>Keep every honesty rule. Add:
 - A <strong>price story</strong> per watch: sparkline/history, the lowest seen, "typical" range, a target price slider,
@@ -1404,8 +1465,8 @@ SPA reads plans exactly as today and ignores the new columns.</p>
 </tr>
 <tr>
 <td>1</td>
-<td><strong>Accounts</strong></td>
-<td>Sign-up/verify/reset, OAuth (config-gated), sessions, account area, delete/export, daily AI quotas</td>
+<td><strong>Accounts + game engine</strong></td>
+<td>Sign-up/verify/reset, OAuth (config-gated; the owner sends provider credentials after the build), sessions, account area, delete/export, daily AI quotas, the XP/badge/streak engine and its first hooks (onboarding, email verified)</td>
 <td>0</td>
 </tr>
 <tr>
@@ -1428,8 +1489,8 @@ SPA reads plans exactly as today and ignores the new columns.</p>
 </tr>
 <tr>
 <td>5</td>
-<td><strong>Social + gamification</strong></td>
-<td>Profiles, ideas feed, moderation, quizzes, XP, badges, leaderboards</td>
+<td><strong>Social + Play</strong></td>
+<td>Profiles, ideas feed, moderation, quizzes, head-to-head, leaderboards, challenges</td>
 <td>1, 4</td>
 </tr>
 <tr>
@@ -1452,7 +1513,8 @@ SPA reads plans exactly as today and ignores the new columns.</p>
 </tr>
 </tbody>
 </table>
-<p>Phases 7 and 8 run in parallel with 2–6 once the API for a phase is merged. Each phase follows the same loop:
+<p>Each phase from 2 onwards includes its gamified touches from §5a; they belong to its "done", not to Phase 5.
+Phases 7 and 8 run in parallel with 2–6 once the API for a phase is merged. Each phase follows the same loop:
 plan → parallel implementation agents in worktrees → tests → three independent review passes → fix → PR → merge
 (green CI deploys).</p>
 <h2 id="12-left-to-the-builder">12. Left to the builder</h2>
