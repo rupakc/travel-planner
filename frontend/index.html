@@ -6,22 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <!-- Apply the saved theme before any CSS loads (no light flash in dark mode).
-         Light is the default; the OS setting is only consulted when 'system' was chosen.
-         Mirrors src/theme/ThemeContext.jsx; #121a2b is tokens.json dark.white. -->
-    <script>
-      (function () {
-        var t = null, dark = false, root = document.documentElement;
-        try { t = localStorage.getItem('tp_theme'); } catch (e) {}
-        try {
-          dark = t === 'dark' || (t === 'system' && !!window.matchMedia &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches);
-        } catch (e) {}
-        if (dark) root.classList.add('dark');
-        root.style.colorScheme = dark ? 'dark' : 'light';
-        var m = document.querySelector('meta[name="theme-color"]');
-        if (m && dark) m.setAttribute('content', '#121a2b');
-      })();
-    </script>
+         Render-blocking classic script, kept external: production CSP is script-src 'self'. -->
+    <script src="/theme-init.js"></script>
     <meta name="description" content="Plan a whole trip in one search: flights, weather, hotels, activities, visa, local tips and a day-by-day itinerary." />
     <title>Travel Planner — AI-Powered Trip Planning</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
