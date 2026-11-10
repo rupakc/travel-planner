@@ -27,7 +27,7 @@ FastAPI backend (uvicorn, one process)
   ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP),
   │                                         alert pushes to registered phones (FCM, optional)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (22 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (25 tables) + telemetry.db ── optional GCS backup every 60 s
             │
             ▼
 External: Gemini on Vertex AI (3.5 Flash-Lite, 3.8 Flash; or Anthropic as a fallback),
@@ -144,7 +144,7 @@ Every model call goes through one module, `backend/app/core/llm.py` (`generate`,
 
 ## Persistence
 
-There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`), opened in WAL mode with `synchronous=NORMAL` and a 5 s busy timeout. Despite its name it holds every table:
+There is one main SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`), opened in WAL mode with `synchronous=NORMAL` and a 5 s busy timeout. Despite its name it holds every application table (25). The one exception is raw telemetry, `telemetry_events` in a separate `$DATA_DIR/telemetry.db` so event ingestion never contends with user data (see [Telemetry](Telemetry.md)); it is pruned after 90 days and not backed up.
 
 | Table | Holds |
 |---|---|
@@ -166,6 +166,9 @@ There is one SQLite file, `$DATA_DIR/airports.db` (`backend/app/db/database.py`)
 | `fare_watch_user_quota` | The same per user, for the per-user daily share |
 | `price_watches` | Watched hotel / activity / trip prices: `kind`, the matched `subject` (JSON, kind-specific), `match_key`, title and subtitle, alert settings, baseline / last / lowest prices, alert state (last alerted price and time, peak since), `last_observation` (JSON: status, unit price, source, link, trip breakdown), failure and unavailable streaks, `expires_on`, status, schedule and lease |
 | `price_watch_history` | Each look: total price (null when unavailable), trip breakdown and raw observed details as JSON (up to 120 rows per watch) |
+| `telemetry_daily` | Telemetry rollups: events, users and sessions per day, event and platform |
+| `telemetry_daily_totals` | Exact distinct users, sessions and events per day and platform (`*` = all) |
+| `telemetry_rollups` | UTC days already rolled up |
 | `notifications` | In-app notifications (fare and price alerts, watch ended / on hold), read and emailed times |
 | `devices` | Push devices: `id`, `username`, FCM `token` (unique: one owner at a time), `platform` (`android`), `locale`, created and last-seen times; at most 20 per user |
 

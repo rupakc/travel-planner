@@ -4,8 +4,6 @@ import time
 import uuid
 from pathlib import Path
 
-import pytest
-
 from app.telemetry.registry import EVENTS, PROP_TYPES, clean_client, clean_event
 
 
@@ -91,7 +89,6 @@ def test_registry_shape():
             assert t in PROP_TYPES or t.startswith("enum:")
 
 
-@pytest.mark.xfail(strict=True, reason="docs/Telemetry.md is written in Task 12")
 def test_every_event_documented():
     doc = Path(__file__).resolve().parents[2] / "docs" / "Telemetry.md"
     text = doc.read_text()

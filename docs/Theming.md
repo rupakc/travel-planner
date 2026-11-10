@@ -1,0 +1,34 @@
+# Theming
+
+The web app has a light theme (the default) and a designed dark theme. Colours are defined once as design tokens and consumed through Tailwind, so existing classes such as `bg-white/80` or `text-teal-700` theme themselves.
+
+## Tokens
+
+`frontend/design/tokens.json` is the source of truth:
+
+| Key | Holds |
+|---|---|
+| `palette` | Light-mode colours: 22 families (`gray`, `slate`, `stone`, `teal`, `amber`, `sky`, `red`, `emerald`, `green`, `violet`, `rose`, `cyan`, `blue`, `purple`, `yellow`, `indigo`, `pink`, `orange`, `lime`, `fuchsia`, `primary`, `accent`) with stops `50` to `950`, plus `white`. Values equal Tailwind 3.4's defaults, plus the primary teal and the accent coral. |
+| `dark` | The same families and stops for `html.dark`, plus `white` (the dark page surface). |
+| `semantic` | Named roles pointing at a stop: `surface`, `surface-raised`, `text`, `text-muted`, `border`, `accent`. |
+
+Edit the JSON, then run `cd frontend && npm run tokens`. That runs `scripts/build-tokens.mjs`, which writes `src/theme/tokens.css`: one CSS variable per colour holding space-separated RGB channels (`--c-gray-50: 249 250 251;`) under `:root` (light) and `html.dark` (dark), plus a print rule that forces the light values. Do not edit `tokens.css` by hand; a test fails if it differs from the generator output. `tailwind.config.js` maps each colour to `rgb(var(--c-<family>-<stop>) / <alpha-value>)`, so opacity modifiers keep working. `black` is deliberately not remapped (overlays).
+
+The semantic colours are also available as utilities: `bg-surface`, `bg-surface-raised`, `text-text`, `text-text-muted`, `border-border`, `bg-accent`.
+
+The token tests (`src/theme/tokens.test.js`) check that both modes cover the same families and stops with valid hex values and that text/surface pairs meet WCAG contrast. `src/theme/darkSurfaces.test.jsx` checks that the map and import map render no literal hex colours in dark mode.
+
+## Switching
+
+`darkMode: 'class'` in `tailwind.config.js`: dark styles apply under `html.dark`. For a component use a token class and it follows the theme; write an explicit `dark:` variant only where a fixed colour is needed (for example the social sign-in buttons use each provider's published dark variant).
+
+`src/theme/ThemeContext.jsx` (`ThemeProvider`, `useTheme()` returning `{theme, resolved, setTheme}`):
+
+- `theme` is `system`, `light` or `dark`; the default is `light`. The OS setting is consulted only when `system` is chosen, and followed live.
+- The choice is stored in `localStorage['tp_theme']` (`src/theme/themeStorage.js`; every access is guarded for private mode).
+- The provider toggles `html.dark`, sets `color-scheme` and updates `<meta name="theme-color">` (`#ffffff` light, the dark surface colour in dark).
+- The control is `ThemeToggle` (NavBar and Preferences, `data-tid="nav.theme"`), a button that cycles light, dark, system and emits `theme_change`.
+
+## No flash
+
+`frontend/public/theme-init.js` is loaded by `index.html` as a render-blocking classic script before any CSS. It reads `tp_theme` and sets `html.dark`, `color-scheme` and the `theme-color` meta before first paint. It is an external file because the production CSP is `script-src 'self'` (no inline scripts). Keep its logic in step with `ThemeContext.jsx`; `src/theme/antiFlash.test.js` covers it.

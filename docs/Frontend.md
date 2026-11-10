@@ -8,7 +8,7 @@ A React 18 single-page app built with Vite 6, React Router 6 (`react-router-dom`
 
 ```
 frontend/src/
-├── main.jsx                  QueryClientProvider, BrowserRouter, AuthProvider
+├── main.jsx                  QueryClientProvider, BrowserRouter, ThemeProvider, AuthProvider, i18n and telemetry start-up
 ├── App.jsx                   routes, auth guards, always-mounted tabs, footer
 ├── index.css                 Tailwind directives
 ├── pages/
@@ -18,7 +18,7 @@ frontend/src/
 │   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
 │   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
 │   ├── NearbyPage.jsx        Near me: places around the user's location
-│   ├── AdminPage.jsx         users and feedback (admins only)
+│   ├── AdminPage.jsx         users, feedback and Analytics tab (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
 │   └── SharePage.jsx         public read-only shared plan, PNG download
@@ -26,17 +26,22 @@ frontend/src/
 │   ├── BestValuePackage, BudgetPlanner, CompareTable, CostBreakdown,
 │   │   FareCalendarStrip (+ PriceInsightsChip), FeedbackWidget, ItinerarySection,
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
-│   │   TripMap, VerificationBadge, WalkingToursSection
+│   │   TripMap, VerificationBadge, WalkingToursSection, ConsentPrompt
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
 │   │                         NotificationBell, AlertToast, AlertEmailField,
 │   │                         LiveCheck ("Search the web now"), cards/
+│   ├── admin/                TelemetrySummary (Analytics tab)
+│   ├── auth/                 SocialSignInButtons (Apple, Google, Facebook, GitHub)
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
-│                             TravelerPanel, AttributionFooter
+│                             TravelerPanel, AttributionFooter, LanguagePicker, ThemeToggle
 ├── context/
 │   ├── AuthContext.jsx       token, user, preferences and two-way sync
 │   ├── AlertsContext.jsx     unread count polling, toasts, watch lookups
 │   └── SearchDataContext.jsx search form and results state
 ├── hooks/useFirstRunTour.js  when to show the onboarding tour
+├── i18n/                     i18next set-up, locales/<lang>/<ns>.json, format.js (see Internationalization)
+├── telemetry/                web SDK: client, consent, autocapture, perf, routes (see Telemetry)
+├── theme/                    ThemeContext, themeStorage, generated tokens.css (see Theming)
 ├── services/api.js           axios client and API helpers
 ├── utils/                    pure helpers (see below)
 └── workers/
@@ -65,7 +70,7 @@ Routes in `App.jsx`:
 | `/admin` | AdminPage | Admins (`RequireAdmin`) |
 | anything else | redirect to `/` | |
 
-Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.
+Search/Results and Chat are **always mounted** and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). `SearchDataProvider` sits inside the signed-in `Layout`, so logging out discards all search state. A user flagged `requires_password_change` is redirected to `/change-password`. `AttributionFooter` renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event, and the telemetry SDK records a screen view. `LoginPage` shows `SocialSignInButtons`, which ask `GET /api/auth/providers` (the endpoint does not exist yet): a `404`, an empty list or an unconfigured provider shows "coming soon" (OAuth itself arrives in Phase 1). `ConsentPrompt` shows the one-time telemetry choice where consent is required.
 
 ---
 
