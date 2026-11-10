@@ -97,8 +97,10 @@ function Layout() {
   )
 }
 
-// Telemetry is resolved at call time and never awaited (its own chunk, loaded
-// in idle time): it can't delay navigation, and a failing SDK is ignored.
+// Telemetry is called through import() and never awaited: it can't delay
+// navigation, and a failing SDK is ignored. The SDK is not a separate chunk
+// (ConsentPrompt -> telemetry/consent.js -> client.js import it statically,
+// so it is in the main bundle); import() here only keeps the call async.
 const telemetry = (fn) => {
   import('./telemetry/client').then(fn).catch(() => {})
 }

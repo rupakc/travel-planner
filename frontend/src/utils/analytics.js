@@ -36,8 +36,8 @@ function _schedule() {
 }
 
 // Mirrored into product telemetry as feature_used (feature + page only, never
-// the metadata). Resolved at call time and never awaited, so it can't slow the
-// caller, and a missing or failing SDK is ignored.
+// the metadata). Called through import() and never awaited, so it can't slow
+// the caller, and a failing SDK is ignored (the SDK is in the main bundle).
 function _mirror(feature, page) {
   try {
     import('../telemetry/client')

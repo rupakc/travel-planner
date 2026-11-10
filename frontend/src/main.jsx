@@ -29,8 +29,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 )
 
-// Telemetry starts after the first render, in idle time, from its own chunk;
-// a failure to load or start it is ignored.
+// Telemetry starts after the first render, in idle time; a failure to start
+// it is ignored. The SDK code itself is already in the main bundle (pulled in
+// statically via ConsentPrompt -> telemetry/consent.js -> client.js), so this
+// defers the work, not the download.
 const startTelemetry = () => {
   import('./telemetry/client')
     .then((m) => m.initTelemetry({ appVersion: import.meta.env.VITE_APP_VERSION || '0.0.0' }))

@@ -85,8 +85,10 @@ function applyLanguage(lng) {
   } catch { /* never break rendering over this */ }
 }
 
-// Telemetry is resolved at call time and never awaited: it can't delay the
-// switch, and a missing or failing SDK is ignored.
+// Telemetry is called through import() and never awaited: it can't delay the
+// switch, and a failing SDK is ignored. The SDK is in the main bundle anyway
+// (statically imported via ConsentPrompt -> telemetry/consent.js), so this
+// import() does not split it into its own chunk.
 function report(event, props) {
   import('../telemetry/client')
     .then((m) => m.emit(event, props))
