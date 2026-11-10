@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Globe, X, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-export default function NationalitySearch({ label, value, onChange, placeholder = 'Search nationality…', required = false }) {
+export default function NationalitySearch({ label, value, onChange, placeholder, required = false }) {
+  const { t } = useTranslation('search')
   const [displayText, setDisplayText] = useState('')
   const [results, setResults] = useState([])
   const [isOpen, setIsOpen] = useState(false)
@@ -79,7 +81,7 @@ export default function NationalitySearch({ label, value, onChange, placeholder 
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('nationality.placeholder')}
           required={required}
           autoComplete="off"
           className="w-full px-3 py-2.5 pl-9 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-colors text-sm bg-white"
@@ -89,7 +91,7 @@ export default function NationalitySearch({ label, value, onChange, placeholder 
           {isLoading
             ? <Loader2 size={14} className="text-gray-400 animate-spin" />
             : displayText
-              ? <button type="button" onClick={handleClear} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={14} /></button>
+              ? <button type="button" onClick={handleClear} aria-label={t('nationality.clear')} data-tid="search.nationality-clear" className="text-gray-400 hover:text-gray-600 transition-colors"><X size={14} /></button>
               : null}
         </div>
       </div>
@@ -99,7 +101,7 @@ export default function NationalitySearch({ label, value, onChange, placeholder 
           {results.map((nat, idx) => (
             <li key={nat.nationality}>
               <button
-                type="button"
+                type="button" data-tid="search.nationality-option"
                 onMouseDown={(e) => { e.preventDefault(); handleSelect(nat) }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${idx === highlightIdx ? 'bg-teal-50' : 'hover:bg-gray-50'}`}
               >

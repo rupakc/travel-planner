@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Users, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const ACCESSIBILITY_OPTIONS = [
-  { id: 'wheelchair',           label: '♿ Wheelchair / Mobility aid' },
-  { id: 'visual_impairment',    label: '👁️ Visual impairment' },
-  { id: 'hearing_impairment',   label: '🦻 Hearing impairment' },
-  { id: 'cognitive_disability', label: '🧠 Cognitive / Neurodivergent' },
-]
+const ACCESSIBILITY_IDS = ['wheelchair', 'visual_impairment', 'hearing_impairment', 'cognitive_disability']
 
 const ACCESS_EMOJI = {
   wheelchair:           '♿',
@@ -16,6 +12,7 @@ const ACCESS_EMOJI = {
 }
 
 export default function TravelerPanel({ form, setForm }) {
+  const { t } = useTranslation('search')
   const [open, setOpen] = useState(false)
   const panelRef = useRef(null)
 
@@ -29,10 +26,10 @@ export default function TravelerPanel({ form, setForm }) {
   }, [open])
 
   const counts = [
-    { key: 'adults',   label: 'Adults',   sub: '18–64' },
-    { key: 'seniors',  label: 'Seniors',  sub: '65+' },
-    { key: 'children', label: 'Children', sub: '5–17' },
-    { key: 'infants',  label: 'Infants',  sub: '0–4' },
+    { key: 'adults',   label: t('travelers.adults'),   sub: '18–64' },
+    { key: 'seniors',  label: t('travelers.seniors'),  sub: '65+' },
+    { key: 'children', label: t('travelers.children'), sub: '5–17' },
+    { key: 'infants',  label: t('travelers.infants'),  sub: '0–4' },
   ]
 
   const total = (form.adults || 0) + (form.seniors || 0) + (form.children || 0) + (form.infants || 0)
@@ -68,14 +65,14 @@ export default function TravelerPanel({ form, setForm }) {
   return (
     <div className="relative" ref={panelRef}>
       <button
-        type="button"
+        type="button" data-tid="search.travelers-toggle"
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
           <Users size={13} className="text-gray-500 shrink-0" />
           <span className="text-sm text-gray-700 whitespace-nowrap">
-            {chips.length ? chips.join(' ') : `${total} traveler${total !== 1 ? 's' : ''}`}
+            {chips.length ? chips.join(' ') : t('travelers.total', { count: total })}
             {accessEmojis.length > 0 && <span className="text-teal-600"> {accessEmojis.join('')}</span>}
           </span>
         </div>
@@ -92,7 +89,8 @@ export default function TravelerPanel({ form, setForm }) {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  type="button"
+                  type="button" data-tid={`search.travelers-${key}-minus`}
+                  aria-label={t('travelers.fewer', { group: label })}
                   onClick={() => change(key, -1)}
                   disabled={!form[key] || (key === 'adults' && total <= 1 && (form[key] || 0) <= 1)}
                   className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -101,7 +99,8 @@ export default function TravelerPanel({ form, setForm }) {
                 </button>
                 <span className="w-5 text-center text-sm font-semibold text-gray-800">{form[key] || 0}</span>
                 <button
-                  type="button"
+                  type="button" data-tid={`search.travelers-${key}-plus`}
+                  aria-label={t('travelers.more', { group: label })}
                   onClick={() => change(key, 1)}
                   className="w-7 h-7 flex items-center justify-center rounded-full border border-teal-200 bg-teal-50 hover:bg-teal-100 transition-colors text-teal-700"
                 >
@@ -112,17 +111,17 @@ export default function TravelerPanel({ form, setForm }) {
           ))}
 
           <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs font-medium text-gray-600 mb-2">Accessibility needs</p>
+            <p className="text-xs font-medium text-gray-600 mb-2">{t('travelers.accessibility')}</p>
             <div className="space-y-1.5">
-              {ACCESSIBILITY_OPTIONS.map(({ id, label }) => (
+              {ACCESSIBILITY_IDS.map((id) => (
                 <label key={id} className="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="checkbox"
+                    type="checkbox" data-tid={`search.travelers-access-${id}`}
                     checked={(form.accessibility_needs || []).includes(id)}
                     onChange={() => toggleAccess(id)}
                     className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-400"
                   />
-                  <span className="text-sm text-gray-700">{label}</span>
+                  <span className="text-sm text-gray-700">{t(`travelers.access.${id}`)}</span>
                 </label>
               ))}
             </div>
