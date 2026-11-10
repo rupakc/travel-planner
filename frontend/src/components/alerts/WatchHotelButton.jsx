@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { hotelPreview, hotelWatchSpec } from '../../utils/hotelWatch'
@@ -26,9 +28,11 @@ const STYLES = {
 }
 
 export const hotelWatchingLabel = (w) => {
-  if (w.status === 'paused') return 'Watch paused'
-  if (w.status === 'error') return 'Watch on hold'
-  return w.last_price != null ? `Watching · ${formatPrice(w.last_price, w.currency)}` : 'Watching'
+  if (w.status === 'paused') return i18n.t('alerts:btn.watchPaused')
+  if (w.status === 'error') return i18n.t('alerts:btn.watchHold')
+  return w.last_price != null
+    ? i18n.t('alerts:btn.watchingPrice', { price: formatPrice(w.last_price, w.currency) })
+    : i18n.t('alerts:btn.watching')
 }
 
 /**
@@ -52,19 +56,21 @@ export default function WatchHotelButton({ hotel, searchData, variant = 'inline'
 }
 
 function SignInToWatch({ hotel, variant }) {
+  const { t } = useTranslation('alerts')
   const navigate = useNavigate()
   const location = useLocation()
   const style = STYLES[variant] || STYLES.inline
   return (
-    <button type="button" className={style.idle} title="Sign in to watch this hotel’s price"
-      aria-label={`Watch price of ${hotel.name} — sign in first`}
+    <button type="button" data-tid="alerts.watch-hotel-signin" className={style.idle} title={t('btn.signInHotel')}
+      aria-label={t('btn.signInHotelAria', { name: hotel.name })}
       onClick={(e) => { e.stopPropagation(); navigate(loginPathFor(location)) }}>
-      <BellPlus size={style.size} aria-hidden="true" /> Watch price
+      <BellPlus size={style.size} aria-hidden="true" /> {t('btn.watchPrice')}
     </button>
   )
 }
 
 function ActiveHotelButton({ hotel, spec, variant, source }) {
+  const { t } = useTranslation('alerts')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [watch, setWatch] = usePriceWatchFor('hotel', spec)
@@ -81,16 +87,16 @@ function ActiveHotelButton({ hotel, spec, variant, source }) {
 
   return (
     <>
-      <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${hotelWatchingLabel(watch)}, ${hotel.name} — open your alerts` : `Watch price of ${hotel.name}`}
-        title={watching ? 'Open this watch on your Alerts page' : 'Get told when this hotel’s price drops'}>
+      <button type="button" data-tid="alerts.watch-hotel" onClick={onClick} className={watching ? style.on : style.idle}
+        aria-label={watching ? t('btn.openAriaNamed', { label: hotelWatchingLabel(watch), name: hotel.name }) : t('btn.watchHotelAria', { name: hotel.name })}
+        title={watching ? t('btn.openWatch') : t('btn.hotelTitle')}>
         {watching ? <BellRing size={style.size} aria-hidden="true" /> : <BellPlus size={style.size} aria-hidden="true" />}
-        <span className="tabular-nums">{watching ? hotelWatchingLabel(watch) : 'Watch price'}</span>
+        <span className="tabular-nums">{watching ? hotelWatchingLabel(watch) : t('btn.watchPrice')}</span>
       </button>
       {open && (
         // Clicks inside the (portalled) dialog must not reach the card's own onClick
         <span onClick={e => e.stopPropagation()}>
-          <PriceWatchDialog kind="hotel" spec={spec} preview={hotelPreview(hotel, spec)} unitLabel="a night" source={source}
+          <PriceWatchDialog kind="hotel" spec={spec} preview={hotelPreview(hotel, spec)} unitLabel={t('unit.night')} source={source}
             onClose={() => setOpen(false)} onWatched={onWatched} />
         </span>
       )}

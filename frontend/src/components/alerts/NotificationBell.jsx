@@ -1,19 +1,23 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
 import { listNotifications } from '../../services/api'
-import { notificationLink, relativeTime } from '../../utils/fareWatch'
+import { notificationLink } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
-import { alertKindFor, keepDeltaTogether } from './alertKinds'
+import i18n from '../../i18n'
+import { actionText, alertKindFor, keepDeltaTogether } from './alertKinds'
+import { agoLabel } from './localized'
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
+  const { t } = useTranslation('alerts')
   const { Icon, tone, action } = alertKindFor(n)
   const unread = !n.read_at
   return (
     <li>
-      <button type="button" onClick={() => onOpen(n)}
+      <button type="button" data-tid="alerts.notification-item" onClick={() => onOpen(n)}
         className="flex w-full gap-3 px-4 py-3 text-left hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none">
         <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tone}`}>
           <Icon size={15} aria-hidden="true" />
@@ -22,11 +26,11 @@ export function NotificationItem({ n, onOpen, now = new Date() }) {
           <span className={`block text-sm leading-snug ${unread ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{keepDeltaTogether(n.title)}</span>
           <span className="mt-0.5 line-clamp-2 block text-xs text-slate-500">{n.body}</span>
           <span className="mt-1 flex items-center gap-2 text-[11px]">
-            <span className="text-slate-400">{relativeTime(n.created_at, now)}</span>
-            <span className="font-medium text-sky-700">{action}</span>
+            <span className="text-slate-400">{agoLabel(n.created_at, now)}</span>
+            <span className="font-medium text-sky-700">{actionText(action)}</span>
           </span>
         </span>
-        {unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-sky-500" aria-label="Unread" />}
+        {unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-sky-500" aria-label={t('bell.unreadBadge')} />}
       </button>
     </li>
   )
@@ -34,6 +38,7 @@ export function NotificationItem({ n, onOpen, now = new Date() }) {
 
 /** Header bell: unread badge, and a panel with the latest 10 notifications. */
 export default function NotificationBell() {
+  const { t } = useTranslation('alerts')
   const { token } = useAuth()
   const { unread, markRead } = useAlerts()
   const navigate = useNavigate()
@@ -51,7 +56,7 @@ export default function NotificationBell() {
   useEffect(() => {
     if (unread > prev.current) {
       setNudge(true)
-      setAnnouncement(`${unread} unread price alert${unread === 1 ? '' : 's'}`)
+      setAnnouncement(i18n.t('alerts:bell.announce', { count: unread }))
     }
     prev.current = unread
   }, [unread])
@@ -91,9 +96,9 @@ export default function NotificationBell() {
   const badge = unread > 9 ? '9+' : String(unread)
   return (
     <div ref={wrapRef} className="relative">
-      <button ref={buttonRef} type="button" onClick={() => setOpen(o => !o)}
+      <button ref={buttonRef} type="button" data-tid="alerts.bell" onClick={() => setOpen(o => !o)}
         aria-expanded={open} aria-controls={panelId}
-        aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+        aria-label={unread ? t('bell.notificationsUnread', { n: unread }) : t('bell.notifications')}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
         <Bell size={17} className={nudge ? 'bell-nudge' : ''} onAnimationEnd={() => setNudge(false)} />
         {unread > 0 && (
@@ -106,24 +111,24 @@ export default function NotificationBell() {
       <span className="sr-only" aria-live="polite">{announcement}</span>
 
       {open && (
-        <div id={panelId} role="region" aria-label="Notifications"
+        <div id={panelId} role="region" aria-label={t('bell.notifications')}
           className="alert-pop fixed inset-x-4 top-16 z-[55] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-[22rem]">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-            <h2 className="text-sm font-semibold text-slate-800">Price alerts</h2>
-            <button type="button" onClick={markAll} disabled={!unread}
+            <h2 className="text-sm font-semibold text-slate-800">{t('bell.title')}</h2>
+            <button type="button" data-tid="alerts.mark-all-read" onClick={markAll} disabled={!unread}
               className="text-xs font-medium text-sky-700 hover:text-sky-900 disabled:cursor-default disabled:text-slate-300">
-              Mark all as read
+              {t('bell.markAll')}
             </button>
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
             {items === null && !failed && (
-              <p className="flex items-center gap-2 px-4 py-6 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Loading…</p>
+              <p className="flex items-center gap-2 px-4 py-6 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> {t('bell.loading')}</p>
             )}
-            {failed && <p className="px-4 py-6 text-sm text-slate-500">Couldn’t load alerts. Check your connection and open this again.</p>}
+            {failed && <p className="px-4 py-6 text-sm text-slate-500">{t('bell.loadFailed')}</p>}
             {items?.length === 0 && (
               <div className="px-4 py-6 text-sm text-slate-500">
-                <p className="font-medium text-slate-700">No alerts yet</p>
-                <p className="mt-1">Watch a flight, hotel, activity or whole trip and we’ll tell you here when its price drops.</p>
+                <p className="font-medium text-slate-700">{t('bell.emptyTitle')}</p>
+                <p className="mt-1">{t('bell.emptyBody')}</p>
               </div>
             )}
             {items?.length > 0 && (
@@ -132,9 +137,9 @@ export default function NotificationBell() {
               </ul>
             )}
           </div>
-          <Link to="/alerts" onClick={() => setOpen(false)}
+          <Link to="/alerts" data-tid="alerts.see-all" onClick={() => setOpen(false)}
             className="block border-t border-slate-100 px-4 py-2.5 text-center text-sm font-medium text-sky-700 hover:bg-slate-50">
-            See all watched prices
+            {t('bell.seeAll')}
           </Link>
         </div>
       )}

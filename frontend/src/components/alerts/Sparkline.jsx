@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import { formatUsd } from '../../utils/fareCalendar'
 import { sparkGeometry } from '../../utils/fareWatch'
 
@@ -8,12 +9,13 @@ import { sparkGeometry } from '../../utils/fareWatch'
  * (`format` writes its prices; fares use whole US dollars).
  */
 export default function Sparkline({ history, target = null, width = 280, height = 48, className = '', format = formatUsd }) {
+  const { t } = useTranslation('alerts')
   const gradientId = useId()
   const g = sparkGeometry(history, { width, height, pad: 4, target })
   if (!g || g.points.length < 2) {
     return (
       <p className={`text-xs text-slate-400 ${className}`}>
-        {g ? 'The price line appears after the next check.' : 'No prices yet.'}
+        {g ? t('spark.later') : t('spark.none')}
       </p>
     )
   }
@@ -21,8 +23,10 @@ export default function Sparkline({ history, target = null, width = 280, height 
   const first = g.points[0]
   const down = last.price < first.price
   const stroke = down ? 'rgb(var(--c-emerald-600))' : 'rgb(var(--c-sky-600))'
-  const summary = `Price over ${g.points.length} checks: from ${format(first.price)} to ${format(last.price)}, low ${format(Math.min(...g.points.map(p => p.price)))}`
-    + (target ? `. Your target is ${format(target)}.` : '.')
+  const summary = t(target ? 'spark.summaryTarget' : 'spark.summary', {
+    n: g.points.length, from: format(first.price), to: format(last.price),
+    low: format(Math.min(...g.points.map(p => p.price))), target: target ? format(target) : '',
+  })
   return (
     <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={summary}
       className={`block h-auto w-full overflow-visible ${className}`}>
