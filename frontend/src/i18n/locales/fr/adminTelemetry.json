@@ -1,0 +1,17 @@
+{
+  "tab": "Analytique",
+  "usersToday": "Utilisateurs aujourd'hui",
+  "sessionsToday": "Sessions aujourd'hui",
+  "users7d": "Utilisateurs, 7 derniers jours (somme quotidienne)",
+  "chartTitle": "Utilisateurs par jour, 30 derniers jours",
+  "chartSummary": "Diagramme à barres des utilisateurs par jour du {{from}} au {{to}}. Pic : {{max}} le {{peak}}.",
+  "topEvents": "Événements principaux",
+  "topScreens": "Écrans principaux",
+  "colEvent": "Événement",
+  "colEvents": "Événements",
+  "colScreen": "Écran",
+  "colViews": "Vues",
+  "empty": "Pas encore de données.",
+  "loading": "Chargement de l'analytique…",
+  "error": "Impossible de charger l'analytique. Réessayez plus tard."
+}
