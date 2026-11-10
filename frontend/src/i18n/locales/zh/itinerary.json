@@ -4,13 +4,13 @@
     "afternoon": "下午",
     "evening": "晚上"
   },
-  "position": "第{{day}}天 · {{time}}",
+  "position": "第 {{day}} 天 · {{time}}",
   "cost": {
     "est": "预计 {{cost}}"
   },
   "day": {
-    "heading": "第{{day}}天",
-    "headingCity": "第{{day}}天 · {{city}}"
+    "heading": "第 {{day}} 天",
+    "headingCity": "第 {{day}} 天 · {{city}}"
   },
   "timeline": {
     "durationShort": "{{hours}}小时",
@@ -38,7 +38,7 @@
     "undone": "已撤销上一项更改",
     "reset": "行程已恢复为原始顺序",
     "moved": "已将{{name}}移至{{position}}{{swap}}",
-    "removed": "已从第{{day}}天移除{{name}}",
+    "removed": "已从第 {{day}} 天移除{{name}}",
     "restored": "已恢复{{name}}"
   },
   "menu": {
@@ -80,19 +80,19 @@
     "transit": "公共交通约 {{minutes}} 分钟"
   },
   "extras": {
-    "label": "来自你链接的其他内容：",
+    "label": "链接中的其他内容：",
     "fit_other": "{{names}}——请在当天灵活安排。"
   },
   "removed": {
     "heading": "已移除",
     "restore": "恢复",
     "restoreAria": "恢复{{name}}",
-    "noRoom": "第{{day}}天已没有空闲时段——请先移动或移除当天的其他活动"
+    "noRoom": "第 {{day}} 天已没有空闲时段——请先移动或移除当天的其他活动"
   },
   "map": {
     "fromLink": "来自你的链接",
-    "dayLine": "第{{day}}天 · {{time}}",
-    "dayLineCity": "第{{day}}天 · {{city}} · {{time}}"
+    "dayLine": "第 {{day}} 天 · {{time}}",
+    "dayLineCity": "第 {{day}} 天 · {{city}} · {{time}}"
   },
   "tours": {
     "topPick": "精选",

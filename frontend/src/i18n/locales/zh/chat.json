@@ -1,8 +1,8 @@
 {
   "page": {
     "title": "旅行规划聊天",
-    "intro": "与你的 AI 旅行助手聊天。请他制定完整行程，结果会以互动卡片的形式实时呈现。",
-    "placeholder": "问问你的下一次旅行...",
+    "intro": "与你的 AI 旅行助手聊天。你可以让它制定完整行程，结果会以互动卡片的形式实时呈现。",
+    "placeholder": "问问你的下一次旅行…",
     "disclaimer": "AI 旅行助手。重要信息请向官方渠道核实。",
     "clear": "清空聊天",
     "stop": "停止",
@@ -21,7 +21,7 @@
     "withMessage": "抱歉，出了点问题：{{message}}"
   },
   "bubble": {
-    "planning": "正在规划你的行程..."
+    "planning": "正在规划你的行程…"
   },
   "action": {
     "add": "添加",
@@ -55,11 +55,11 @@
     "low": "低"
   },
   "agent": {
-    "flights": "机票",
+    "flights": "航班",
     "hotels": "酒店",
     "activities": "活动",
     "visa": "签证",
-    "sim": "电话卡",
+    "sim": "SIM 卡",
     "tips": "旅行贴士",
     "getting_around": "当地交通",
     "forex": "货币与汇兑",
@@ -84,7 +84,7 @@
     "none": "未找到活动"
   },
   "sim": {
-    "none": "未找到电话卡套餐"
+    "none": "未找到 SIM 套餐"
   },
   "tips": {
     "none": "暂无贴士"
@@ -107,7 +107,7 @@
   "forex": {
     "none": "暂无汇兑信息",
     "your": "你的",
-    "loading": "加载中...",
+    "loading": "加载中…",
     "fees": "手续费：{{fees}}",
     "cards": "银行卡",
     "cash": "现金",
@@ -135,9 +135,9 @@
     "editingSaved": "正在编辑已保存的计划",
     "planName": "计划名称",
     "dragToSaved": "· 拖动以发送到已保存",
-    "flight": "机票",
+    "flight": "航班",
     "hotel": "酒店",
-    "sim": "电话卡",
+    "sim": "SIM 卡",
     "outbound": "去程：",
     "return": "返程：",
     "roundTrip": "往返",
@@ -164,7 +164,7 @@
     "deletePlan": "删除计划",
     "loaded": "已加载",
     "load": "加载",
-    "watch": "价格提醒",
+    "watch": "关注",
     "view": "查看",
     "share": "分享",
     "shareTitle": "复制公开分享链接，无需登录即可查看",
@@ -175,7 +175,7 @@
       "updated": "计划已更新！",
       "saved": "已保存！",
       "failed": "保存失败",
-      "sentBack": "计划已退回！",
+      "sentBack": "计划已移回！",
       "planSaved": "计划已保存！"
     }
   },
@@ -192,7 +192,7 @@
     "daysItinerary": "{{n}} 日行程",
     "collapseAll": "全部收起",
     "expandAll": "全部展开",
-    "travelDay": "✈️ 赶路",
+    "travelDay": "✈️ 出行",
     "perNight": "/晚",
     "mustSee": "必看",
     "dining": "美食"
