@@ -26,11 +26,11 @@
     "dark": "डार्क"
   },
   "footer": {
-    "attribution": "स्थान डेटा © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · हवाई अड्डा डेटा: <ourairports>OurAirports</ourairports>"
+    "attribution": "जगह डेटा © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · हवाई अड्डा डेटा: <ourairports>OurAirports</ourairports>"
   },
   "enum": {
     "level": {
-      "high": "उच्च",
+      "high": "ज़्यादा",
       "medium": "मध्यम",
       "low": "कम"
     },
@@ -43,7 +43,7 @@
     "severity": {
       "info": "जानकारी",
       "warning": "चेतावनी",
-      "danger": "खतरा",
+      "danger": "ख़तरा",
       "critical": "गंभीर"
     }
   }
