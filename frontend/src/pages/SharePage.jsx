@@ -289,7 +289,7 @@ export default function SharePage() {
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100 py-10 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Poster card */}
-        <div className="rounded-3xl shadow-2xl overflow-hidden text-white relative" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
+        <div className="rounded-3xl shadow-2xl overflow-hidden text-white relative" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})`, '--c-white': '255 255 255' }}>
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 -left-16 w-64 h-64 rounded-full bg-white/10" />
           <div className="relative p-8 space-y-5">

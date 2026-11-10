@@ -65,6 +65,14 @@ describe('buildPlanPrintHtml', () => {
     expect(html).toContain('<title>Tokyo Trip</title>')
   })
 
+  it('always renders light: color-scheme light, no theme variables, no dark class', () => {
+    const html = build()
+    expect(html).toContain('color-scheme: light')
+    expect(html).toContain('<meta name="color-scheme" content="light">')
+    expect(html).not.toContain('var(--c-')
+    expect(html).not.toMatch(/class="[^"]*\bdark\b/)
+  })
+
   it('shows the trip summary', () => {
     const html = build()
     expect(html).toContain('New York → Tokyo')
