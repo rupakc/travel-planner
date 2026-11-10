@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, useWatchFor } from '../../context/AlertsContext'
-import { isWatchableTrip, watchingLabel } from '../../utils/fareWatch'
+import { isWatchableTrip } from '../../utils/fareWatch'
 import { formatUsd } from '../../utils/fareCalendar'
 import WatchDialog from './WatchDialog'
 
@@ -48,15 +49,21 @@ export default function WatchFareButton(props) {
   return <ActiveWatchButton {...props} />
 }
 
-function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inline', source = 'results', label = 'Watch fare', defaultFlexible = false }) {
+function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inline', source = 'results', label: labelProp = null, defaultFlexible = false }) {
+  const { t } = useTranslation('alerts')
+  const label = labelProp || t('btn.watchFare')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [watch, setWatch] = useWatchFor(trip)
   const style = STYLES[variant]
   const watching = watch && watch.status !== 'expired'
+  const watchingText = (w) => {
+    if (w.status === 'paused') return t('btn.watchPaused')
+    return Number.isFinite(w.last_price) ? t('btn.watchingPrice', { price: formatUsd(w.last_price) }) : t('btn.watching')
+  }
   const watchedText = watching && style.short
-    ? (watch.last_price != null ? formatUsd(watch.last_price) : 'Watching')
-    : watching && watchingLabel(watch)
+    ? (watch.last_price != null ? formatUsd(watch.last_price) : t('btn.watching'))
+    : watching && watchingText(watch)
 
   const onClick = (e) => {
     e.stopPropagation()
@@ -66,9 +73,9 @@ function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inl
 
   return (
     <>
-      <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${watchingLabel(watch)} — open your alerts` : undefined}
-        title={watching ? 'Open this watch on your Alerts page' : 'Get told when this fare drops'}>
+      <button type="button" data-tid="alerts.watch-fare" onClick={onClick} className={watching ? style.on : style.idle}
+        aria-label={watching ? t('btn.openAria', { label: watchingText(watch) }) : undefined}
+        title={watching ? t('btn.openWatch') : t('btn.fareTitle')}>
         {watching ? <BellRing size={style.size} /> : <BellPlus size={style.size} />}
         <span className="tabular-nums">{watching ? watchedText : label}</span>
       </button>

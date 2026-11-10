@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * The frame every "Watch …" dialog shares (fares and price watches):
@@ -9,6 +10,7 @@ import { X } from 'lucide-react'
  * back to the opener on close. `children` is the dialog body.
  */
 export default function WatchDialogShell({ title, subtitle, onClose, children }) {
+  const { t } = useTranslation('alerts')
   const titleId = useId()
   const dialogRef = useRef(null)
 
@@ -56,7 +58,7 @@ export default function WatchDialogShell({ title, subtitle, onClose, children })
             <h2 id={titleId} className="text-base font-semibold text-slate-900">{title}</h2>
             {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close"
+          <button type="button" data-tid="alerts.dialog-close" onClick={onClose} aria-label={t('dialog.close')}
             className="-mr-1 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
             <X size={18} />
           </button>

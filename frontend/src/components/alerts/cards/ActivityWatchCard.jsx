@@ -1,13 +1,14 @@
 import { Star } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
+import { fmtNumber } from '../../../i18n/format'
 import { isUnavailable } from '../../../utils/priceWatch'
 import {
   formatPrice, perPerson, providerName, titleDiffers, watchCurrency,
 } from '../../../utils/activityWatch'
 import PriceWatchCard from './PriceWatchCard'
 
-const people = (n) => (n === 1 ? '1 traveller' : `${n} travellers`)
-
 function ActivityDetails({ watch }) {
+  const { t } = useTranslation('alerts')
   const subject = watch.subject || {}
   const obs = watch.last_observation || {}
   const observed = obs.observed || {}
@@ -25,31 +26,40 @@ function ActivityDetails({ watch }) {
         {rating != null && (
           <span className="inline-flex items-center gap-0.5">
             <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" />{rating}
-            {observed.reviews ? ` (${observed.reviews.toLocaleString('en-US')})` : ''}
+            {observed.reviews ? ` (${fmtNumber(observed.reviews)})` : ''}
           </span>
         )}
-        {titleDiffers(subject.name, watch.title) && <span>for “{subject.name}”</span>}
+        {titleDiffers(subject.name, watch.title) && <span>{t('act.forName', { name: subject.name })}</span>}
       </p>
       {!isUnavailable(watch) && unit != null && (
         <p className="tabular-nums">
-          from <strong className="text-slate-800">{money(unit)}</strong> per person
-          {n > 1 && total != null && <> × {people(n)} = <strong className="text-slate-800">{money(total)}</strong></>}
+          {n > 1 && total != null
+            ? (
+              <Trans t={t} i18nKey="act.fromPersonTotal"
+                values={{ unit: money(unit), people: t('act.people', { count: n }), total: money(total) }}
+                components={{ strong: <strong className="text-slate-800" /> }} />
+            )
+            : (
+              <Trans t={t} i18nKey="act.fromPerson" values={{ unit: money(unit) }}
+                components={{ strong: <strong className="text-slate-800" /> }} />
+            )}
         </p>
       )}
       {isUnavailable(watch) && observed.reason === 'currency_changed' && (
         <p className="text-xs text-slate-500">
-          The listing now shows prices in {observed.seen_currency}; we only compare {currency} with {currency}.
+          {t('act.currencyChanged', { seen: observed.seen_currency, currency })}
         </p>
       )}
-      <p className="text-[11px] text-slate-400">Price as shown in Google results for {provider}.</p>
+      <p className="text-[11px] text-slate-400">{t('act.cardSource', { provider })}</p>
     </div>
   )
 }
 
 /** An activity price watch on the Alerts page (see ./PriceWatchCard). */
 export default function ActivityWatchCard(props) {
+  const { t } = useTranslation('alerts')
   return (
-    <PriceWatchCard {...props} Details={ActivityDetails} openLabel="Open listing" unitLabel="per person"
-      unavailableText="Not currently listed with a price in Google results. We’ll keep looking and won’t alert you until it’s back." />
+    <PriceWatchCard {...props} Details={ActivityDetails} openLabel={t('card.openListing')} unitLabel={t('unit.person')}
+      unavailableText={t('act.unavailable')} />
   )
 }

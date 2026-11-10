@@ -1,13 +1,15 @@
 import { ExternalLink, Star } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
+import { fmtNumber } from '../../../i18n/format'
 import {
   formatPrice, perPerson, providerName, titleDiffers, watchCurrency,
 } from '../../../utils/activityWatch'
 
-const people = (n) => (n === 1 ? '1 traveller' : `${n} travellers`)
+import { dayLabel as formatDay } from '../localized'
 
 function dayLabel(iso) {
   const d = new Date(`${iso}T12:00:00`)
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  return Number.isNaN(d.getTime()) ? iso : formatDay(iso)
 }
 
 /**
@@ -19,18 +21,21 @@ function dayLabel(iso) {
  * differ from what the page showed).
  */
 export default function ActivityDialogBody({ spec = {}, watch = null }) {
+  const { t } = useTranslation('alerts')
   if (watch) return <Matched watch={watch} />
   const n = spec.travellers || 1
+  const people = t('act.people', { count: n })
   if (spec.listing_url) {
     return (
       <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <p>
-          We’ll watch the listing you picked for <strong className="text-slate-800">{spec.name}</strong>
-          {n > 1 ? `, for ${people(n)}` : ''}.
+          <Trans t={t} i18nKey={n > 1 ? 'act.watchListingPeople' : 'act.watchListing'}
+            values={{ name: spec.name, people }}
+            components={{ strong: <strong className="text-slate-800" /> }} />
         </p>
-        <a href={spec.listing_url} target="_blank" rel="noopener noreferrer"
+        <a href={spec.listing_url} data-tid="alerts.activity-listing" target="_blank" rel="noopener noreferrer"
           className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-700 underline-offset-2 hover:underline">
-          <ExternalLink size={11} aria-hidden="true" /> See the listing
+          <ExternalLink size={11} aria-hidden="true" /> {t('act.seeListing')}
         </a>
       </div>
     )
@@ -38,14 +43,14 @@ export default function ActivityDialogBody({ spec = {}, watch = null }) {
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <p>
-        We’ll look for <strong className="text-slate-800">{spec.name}</strong>
-        {spec.city ? ` in ${spec.city}` : ''} on GetYourGuide and Viator and watch its “from” price per person
-        {n > 1 ? `, for ${people(n)}` : ''}.
+        <Trans t={t} i18nKey={`act.lookFor${spec.city ? 'City' : ''}${n > 1 ? 'People' : ''}`}
+          values={{ name: spec.name, city: spec.city, people }}
+          components={{ strong: <strong className="text-slate-800" /> }} />
       </p>
-      {spec.date && <p className="mt-1 text-xs text-slate-500">For {dayLabel(spec.date)} — we stop checking after that day.</p>}
+      {spec.date && <p className="mt-1 text-xs text-slate-500">{t('act.forDay', { day: dayLabel(spec.date) })}</p>}
       {spec.estimate_price != null && (
         <p className="mt-1.5 text-xs text-slate-500">
-          AI estimate: <span className="tabular-nums">{formatPrice(spec.estimate_price, 'USD')}</span> per person — an estimate, not a live price.
+          {t('act.estimate', { price: formatPrice(spec.estimate_price, 'USD') })}
         </p>
       )}
     </div>
@@ -53,6 +58,7 @@ export default function ActivityDialogBody({ spec = {}, watch = null }) {
 }
 
 function Matched({ watch }) {
+  const { t } = useTranslation('alerts')
   const subject = watch.subject || {}
   const obs = watch.last_observation || {}
   const observed = obs.observed || {}
@@ -71,28 +77,29 @@ function Matched({ watch }) {
       {observed.rating != null && (
         <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
           <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" />
-          <span>{observed.rating}{observed.reviews ? ` · ${observed.reviews.toLocaleString('en-US')} reviews` : ''}</span>
+          <span>{observed.reviews ? t('act.reviews', { count: observed.reviews, rating: observed.rating, formatted: fmtNumber(observed.reviews) }) : observed.rating}</span>
         </p>
       )}
       {unit != null && (
         <p className="mt-1.5 text-sm tabular-nums">
-          from <strong>{money(unit)}</strong> per person
-          {n > 1 && total != null && <> × {people(n)} = <strong>{money(total)}</strong></>}
+          {n > 1 && total != null
+            ? <Trans t={t} i18nKey="act.fromPersonTotal" values={{ unit: money(unit), people: t('act.people', { count: n }), total: money(total) }} components={{ strong: <strong /> }} />
+            : <Trans t={t} i18nKey="act.fromPerson" values={{ unit: money(unit) }} components={{ strong: <strong /> }} />}
         </p>
       )}
       {titleDiffers(subject.name, title) && (
         <p className="mt-1.5 text-xs text-amber-800">
-          This is the closest listing we found for “{subject.name}”. Check it’s the one you want.
+          {t('act.closest', { name: subject.name })}
         </p>
       )}
       <p className="mt-1.5 text-[11px] text-slate-500">
-        Price as shown in Google results for {provider} — the listing’s lowest “from” price; your date and options may cost more.
-        {currency !== 'USD' && ` Prices are in ${currency}, as the listing shows them.`}
+        {t('act.priceSource', { provider })}
+        {currency !== 'USD' && ` ${t('act.currencyNote', { currency })}`}
       </p>
       {link && (
-        <a href={link} target="_blank" rel="noopener noreferrer"
+        <a href={link} data-tid="alerts.activity-provider" target="_blank" rel="noopener noreferrer"
           className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sky-700 underline-offset-2 hover:underline">
-          <ExternalLink size={11} aria-hidden="true" /> See it on {provider}
+          <ExternalLink size={11} aria-hidden="true" /> {t('act.seeOn', { provider })}
         </a>
       )}
     </div>

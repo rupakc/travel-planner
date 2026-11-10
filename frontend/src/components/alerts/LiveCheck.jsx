@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Globe, Loader2, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatPrice } from '../../utils/priceWatch'
 import { googleSearchUrl, liveErrorMessage, usableSources } from '../../utils/liveResults'
 
 const quiet = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500'
-const DISCLAIMER = 'From a live web search just now. Prices change quickly — check the provider before booking. Not used for your price alerts.'
 
 /**
  * State for one card's "Search the web now". `run` performs the request (it
@@ -37,11 +37,12 @@ export function useLiveCheck(run) {
 
 /** The card's action-row button. */
 export function LiveCheckButton({ live, buttonRef }) {
+  const { t } = useTranslation('alerts')
   const loading = live.status === 'loading'
   return (
-    <button type="button" ref={buttonRef} onClick={live.start} disabled={loading} className={quiet}>
+    <button type="button" data-tid="alerts.live-check" ref={buttonRef} onClick={live.start} disabled={loading} className={quiet}>
       {loading ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <Globe size={12} aria-hidden="true" />}
-      {loading ? 'Searching the web…' : 'Search the web now'}
+      {loading ? t('live.searching') : t('live.searchNow')}
     </button>
   )
 }
@@ -57,6 +58,7 @@ function quoteAmount(q) {
  * Live region so the outcome is read out; dismissible.
  */
 export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
+  const { t } = useTranslation('alerts')
   const headingRef = useRef(null)
   useEffect(() => {
     if (live.status !== 'done' && live.status !== 'error') return
@@ -77,11 +79,11 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
     <div data-testid="live-check-region">
       {/* One short announcement; the panel itself isn't a live region (errors use role=alert) */}
       <p className="sr-only" role="status" data-testid="live-check-status">
-        {live.status === 'loading' ? 'Searching the web…' : live.status === 'done' ? 'Live web search result ready.' : ''}
+        {live.status === 'loading' ? t('live.searching') : live.status === 'done' ? t('live.ready') : ''}
       </p>
       {live.status === 'loading' && (
         <p className="mt-3 flex items-center gap-2 text-sm text-slate-500" data-testid="live-check-loading">
-          <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Searching the web for {title || 'this'}…
+          <Loader2 size={14} className="animate-spin" aria-hidden="true" /> {title ? t('live.searchingFor', { title }) : t('live.searchingThis')}
         </p>
       )}
 
@@ -90,10 +92,10 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
           <p ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">{live.error.text}</p>
           <span className="flex items-center gap-1">
             {live.error.retry && (
-              <button type="button" onClick={live.start}
-                className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">Try again</button>
+              <button type="button" data-tid="alerts.live-retry" onClick={live.start}
+                className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">{t('ui.tryAgain')}</button>
             )}
-            <button type="button" onClick={close} aria-label="Dismiss" className="rounded-full p-1 hover:bg-amber-100">
+            <button type="button" data-tid="alerts.live-error-dismiss" onClick={close} aria-label={t('ui.dismiss')} className="rounded-full p-1 hover:bg-amber-100">
               <X size={14} aria-hidden="true" />
             </button>
           </span>
@@ -101,13 +103,13 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
       )}
 
       {live.status === 'done' && r && (
-        <section aria-label="Live web search result" data-testid="live-check-panel"
+        <section aria-label={t('live.resultLabel')} data-testid="live-check-panel"
           className="mt-3 rounded-xl border border-sky-100 bg-sky-50/60 p-4 text-sm text-slate-700">
           <div className="flex items-start justify-between gap-2">
             <h4 ref={headingRef} tabIndex={-1} className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-800 focus:outline-none">
-              <Globe size={12} aria-hidden="true" /> Live web search
+              <Globe size={12} aria-hidden="true" /> {t('live.heading')}
             </h4>
-            <button type="button" onClick={close} aria-label="Dismiss the web search result"
+            <button type="button" data-tid="alerts.live-dismiss" onClick={close} aria-label={t('live.dismissResult')}
               className="-mr-1 -mt-1 rounded-full p-1 text-slate-500 hover:bg-white hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
               <X size={14} aria-hidden="true" />
             </button>
@@ -116,7 +118,7 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
           {r.summary && <p className="mt-2 whitespace-pre-line" data-testid="live-check-summary">{r.summary}</p>}
 
           {quotes.length > 0 && (
-            <ul className="mt-3 space-y-1" aria-label="Prices found">
+            <ul className="mt-3 space-y-1" aria-label={t('live.pricesFound')}>
               {quotes.map((q, i) => {
                 const src = byIndex.get(q.source_index)
                 return (
@@ -124,7 +126,7 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
                     <span className="font-semibold tabular-nums text-slate-900">{quoteAmount(q)}</span>
                     {q.label && <span>{q.label}</span>}
                     {src && (
-                      <a href={src.uri} target="_blank" rel="noopener noreferrer"
+                      <a href={src.uri} data-tid="alerts.live-quote-source" target="_blank" rel="noopener noreferrer"
                         className="text-xs text-sky-700 underline-offset-2 hover:underline">{src.title}</a>
                     )}
                   </li>
@@ -135,11 +137,11 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
 
           {queries.length > 0 && (
             <p className="mt-3 text-xs text-slate-500">
-              Searched for:{' '}
+              {t('live.searchedFor')}{' '}
               {queries.map((q, i) => (
                 <span key={i}>
                   {i > 0 && ', '}
-                  <a href={googleSearchUrl(q)} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">{q}</a>
+                  <a href={googleSearchUrl(q)} data-tid="alerts.live-query" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">{q}</a>
                 </span>
               ))}
             </p>
@@ -147,18 +149,18 @@ export function LiveCheckPanel({ live, onDismissed, title, buttonRef = null }) {
 
           {sources.length > 0 && (
             <div className="mt-3">
-              <h5 className="text-xs font-semibold text-slate-600">Sources</h5>
+              <h5 className="text-xs font-semibold text-slate-600">{t('live.sources')}</h5>
               <ul className="mt-1 space-y-0.5 text-xs">
                 {sources.map(s => (
                   <li key={s.index}>
-                    <a href={s.uri} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">{s.title}</a>
+                    <a href={s.uri} data-tid="alerts.live-source" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">{s.title}</a>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          <p className="mt-3 text-[11px] text-slate-500">{r.disclaimer || DISCLAIMER}</p>
+          <p className="mt-3 text-[11px] text-slate-500">{r.disclaimer || t('live.disclaimer')}</p>
         </section>
       )}
     </div>

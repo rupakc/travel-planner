@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { formatPrice } from '../../../utils/priceWatch'
 
 /**
@@ -10,13 +11,15 @@ import { formatPrice } from '../../../utils/priceWatch'
  * after a unit price ("per night", "per person").
  */
 export default function GenericPriceBody({ preview = {}, watch = null, unitLabel = null }) {
+  const { t } = useTranslation('alerts')
   if (watch) {
     const unit = watch.last_observation?.unit_price
     return (
       <p className="text-sm text-slate-600">
-        Tracking <strong className="text-slate-800">{watch.title}</strong>
+        <Trans t={t} i18nKey="body.tracking" values={{ title: watch.title }}
+          components={{ strong: <strong className="text-slate-800" /> }} />
         {watch.subtitle ? ` · ${watch.subtitle}` : ''}
-        {unit != null ? ` · ${formatPrice(unit, watch.currency)} ${unitLabel || 'per unit'}` : ''}
+        {unit != null ? ` · ${formatPrice(unit, watch.currency)} ${unitLabel || t('unit.unit')}` : ''}
       </p>
     )
   }
@@ -24,10 +27,10 @@ export default function GenericPriceBody({ preview = {}, watch = null, unitLabel
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
       <p className="text-sm text-slate-600">
-        Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.price, preview.currency)}</span>
+        {t('body.shownNow')} <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.price, preview.currency)}</span>
         {(preview.priceLabel || unitLabel) && <span className="ml-1.5 text-xs text-slate-500">{preview.priceLabel || unitLabel}</span>}
       </p>
-      <p className="mt-1 text-xs text-slate-500">We’ll look up the live price when you start watching.</p>
+      <p className="mt-1 text-xs text-slate-500">{t('body.lookupLater')}</p>
     </div>
   )
 }
