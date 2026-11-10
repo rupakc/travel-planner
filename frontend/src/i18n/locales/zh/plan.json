@@ -1,8 +1,8 @@
 {
   "modal": {
-    "namePlaceholder": "行程名称…",
+    "namePlaceholder": "计划名称…",
     "close": "关闭",
-    "empty": "此行程尚无已保存的选择。",
+    "empty": "此计划尚无已保存的选择。",
     "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} 位旅客",
     "watchFare": "关注此票价",
     "delete": "删除",
@@ -89,7 +89,7 @@
     "totalSet": "总预算 {{amount}}",
     "cheaper": "查找更便宜的酒店",
     "findingCheaper": "正在查找更便宜的酒店…",
-    "else": "其他所有",
+    "else": "其他开销",
     "elseHint": "餐饮、交通、其他",
     "onlyFits": "只显示符合预算的",
     "cat": {
@@ -107,7 +107,7 @@
       "stay": "住宿",
       "activities": "活动"
     },
-    "announce": "{{name}}预算 {{amount}} — {{detail}}",
+    "announce": "{{name}}预算 {{amount}}——{{detail}}",
     "valueText": "{{noun}}：{{amount}}",
     "fit": {
       "flights_other": "{{count}} 个航班中 {{fits}} 个合适",
@@ -119,10 +119,10 @@
     "title": "超值套餐",
     "subtitle": "从你的结果中挑选的性价比最佳组合",
     "total": "套餐总价",
-    "myPlanTotal": "我的行程合计：{{amount}}",
-    "perPerson": "机票价格为每人价格",
-    "add": "全部加入我的行程",
-    "added": "已加入我的行程",
+    "myPlanTotal": "我的计划合计：{{amount}}",
+    "perPerson": "航班价格均为每人价格",
+    "add": "全部加入我的计划",
+    "added": "已加入我的计划",
     "undo": "撤销",
     "replaces": "将替换你当前的{{items}}。",
     "listAnd": "{{head}}和{{last}}",
@@ -145,7 +145,7 @@
       "bestReviewed": "同档次中评价最高",
       "typicalPrice": "{{price}} · 不高于当地常见价格",
       "matches": "{{base}} · 符合你的兴趣",
-      "freeTour": "免费徒步游",
+      "freeTour": "免费步行游览",
       "freeEntry": "免费入场",
       "coversTrip": "覆盖你的 {{days}} 天行程",
       "cheapestPlan": "最便宜的套餐",
@@ -153,7 +153,7 @@
     }
   },
   "print": {
-    "defaultName": "行程计划",
+    "defaultName": "旅行计划",
     "printButton": "打印 / 另存为 PDF",
     "footer": "由 Voyager 规划。价格和可用性均为估算——预订前请确认。",
     "inspiredBy": "灵感来源：{{source}}",

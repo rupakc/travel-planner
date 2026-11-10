@@ -29,7 +29,7 @@
     "tabAria": "{{label}}，{{n}}",
     "nothingHere": "这里还没有关注项。",
     "active": "进行中",
-    "past": "已过期"
+    "past": "已结束"
   },
   "tabs": {
     "all": "全部",
@@ -54,10 +54,10 @@
   "checks": {
     "justNow": "刚刚检查：{{price}}。暂时没有值得提醒的变化。",
     "noFares": "刚刚检查过，但这些日期没有找到票价。",
-    "failed": "实时票价没有响应。我们会在一小时内再试。",
+    "failed": "实时票价服务没有响应。我们会在一小时内再试。",
     "errored": "实时票价连续三次失败，因此已暂停检查。准备好后请点“重试”。",
     "expired": "这趟行程已出发，所以我们不再关注它的票价。",
-    "postponed": "实时票价目前繁忙，我们明天再检查。",
+    "postponed": "实时票价服务暂时繁忙，我们明天再检查。",
     "deleted": "此关注项已移除。",
     "default": "未检查任何内容：此票价当前未被关注。",
     "checkFailed": "暂时无法检查，请稍后再试。",
@@ -74,8 +74,8 @@
     "saved": "已保存",
     "invalid": "请输入完整的邮箱地址，例如 name@example.com。",
     "saveFailed": "无法保存你的邮箱，请重试。",
-    "helpOn": "仅用于你选择通过邮件接收的票价关注。留空即可删除。",
-    "helpOff": "此服务器暂未发送邮件，你仍会在应用内收到提醒。"
+    "helpOn": "仅用于你选择通过邮件接收的票价提醒。留空即可删除。",
+    "helpOff": "此服务器暂未发送邮件，应用内仍会收到价格提醒。"
   },
   "kinds": {
     "seeFare": "查看票价",
@@ -88,7 +88,7 @@
     "checkTrip": "检查行程"
   },
   "toast": {
-    "dismiss": "关闭提醒"
+    "dismiss": "关闭价格提醒"
   },
   "bell": {
     "unreadBadge": "未读",
@@ -98,8 +98,8 @@
     "title": "价格提醒",
     "markAll": "全部标为已读",
     "loading": "加载中…",
-    "loadFailed": "无法加载提醒。请检查网络后重新打开。",
-    "emptyTitle": "暂无提醒",
+    "loadFailed": "无法加载价格提醒。请检查网络后重新打开。",
+    "emptyTitle": "暂无价格提醒",
     "emptyBody": "关注航班、酒店、活动或整个行程，价格下降时我们会在这里通知你。",
     "seeAll": "查看全部关注的价格"
   },
@@ -129,7 +129,7 @@
     "hint": "按出发日期显示最低实时票价 · 行程天数相同",
     "watchDates": "关注这些日期",
     "yourDates": "你当前的日期",
-    "replanFor": "改为 {{day}} 重新规划",
+    "replanFor": "改期至 {{day}} 重新规划",
     "yours": "当前",
     "none": "没有可比较的邻近日期。",
     "replan": "重新规划",
@@ -139,7 +139,7 @@
       "high": "当前票价偏高"
     },
     "typical": "常规 {{low}}–{{high}}",
-    "replanPrompt": "改为 {{range}} 重新规划？这会进行一次新的搜索。",
+    "replanPrompt": "改期至 {{range}} 重新规划？这会进行一次新的搜索。",
     "same": "持平"
   },
   "btn": {
@@ -149,10 +149,10 @@
     "watching": "关注中",
     "watchingPrice": "关注中 · {{price}}",
     "watchPaused": "关注已暂停",
-    "watchHold": "关注已搁置",
-    "openWatch": "在提醒页面打开此关注项",
-    "openAria": "{{label}}，打开你的提醒",
-    "openAriaNamed": "{{label}}，{{name}}，打开你的提醒",
+    "watchHold": "检查已暂停",
+    "openWatch": "在价格提醒页面打开此关注项",
+    "openAria": "{{label}}，打开你的价格提醒",
+    "openAriaNamed": "{{label}}，{{name}}，打开你的价格提醒",
     "fareTitle": "此票价下降时通知你",
     "activityTitle": "此活动价格下降时通知你",
     "hotelTitle": "此酒店价格下降时通知你",
@@ -196,11 +196,11 @@
     "confirmDelete": "确认删除",
     "stopWatching": "停止关注？",
     "openListing": "打开详情页",
-    "unavailable": "你的日期暂时无法预订。我们会继续检查，恢复前不会提醒你。",
+    "unavailable": "你的日期目前无法预订。我们会继续检查，恢复可订之前不会提醒你。",
     "flexDays": "±3 天"
   },
   "edit": {
-    "aria": "编辑提醒设置",
+    "aria": "编辑价格提醒设置",
     "tellMe": "通知我",
     "whenDrops": "价格下降时",
     "belowSymbol": "低于 {{symbol}} 时",
@@ -216,14 +216,14 @@
     "anyDrop": "价格下降时",
     "belowTarget": "低于我设定的价格时",
     "start": "开始关注",
-    "seeAlerts": "查看我的提醒",
+    "seeAlerts": "查看我的价格提醒",
     "alreadyBelow": "已低于你的目标价，若继续下降会通知你。",
     "today": "今天",
     "fare": {
       "watch": "关注此票价",
       "watching": "正在关注此票价",
       "already": "你已在关注此票价",
-      "anyDropHint": "仅在明显降价时提醒：至少降 $15 且 5%。每天最多一次。",
+      "anyDropHint": "仅在明显降价时提醒：至少降 $15 且降幅达 5%。每天最多一次。",
       "prefilled": "已预填为常规价格区间的低端。",
       "nearbyHint": "如果提前或推迟几天出发（行程天数不变）至少能省 $25，我们也会通知你。",
       "targetAria": "目标价（美元）",
@@ -241,11 +241,11 @@
     "browser": {
       "title": "也在此设备上提醒你吗？",
       "body": "当 Voyager 在另一个窗口中打开时，价格下降后浏览器可以弹出一条小提醒。你随时可以在浏览器中更改。",
-      "allow": "允许浏览器提醒",
+      "allow": "允许浏览器通知",
       "notNow": "暂不"
     },
     "price": {
-      "estimateNote": "我们的 AI 估价为 {{price}}{{label}}，这只是估价而非实时价格，因此无法关注。",
+      "estimateNote": "我们的 AI 估价为 {{price}}{{label}}。这只是估价，并非实时价格，因此无法关注。",
       "liveFound": "我们找到的实时价格：",
       "watchInstead": "改为关注这个",
       "finding": "正在查找实时价格…",
@@ -292,12 +292,12 @@
   "act": {
     "people_other": "{{count}} 位旅客",
     "watchListing": "我们将关注你为 <strong>{{name}}</strong> 选择的详情页。",
-    "watchListingPeople": "我们将关注你为 <strong>{{name}}</strong> 选择的详情页，{{people}}。",
+    "watchListingPeople": "我们将关注你为 <strong>{{name}}</strong> 选择的详情页（{{people}}）。",
     "seeListing": "查看详情页",
     "lookFor": "我们会在 GetYourGuide 和 Viator 上查找 <strong>{{name}}</strong>，并关注其每人“起”价。",
     "lookForCity": "我们会在 GetYourGuide 和 Viator 上查找 {{city}} 的 <strong>{{name}}</strong>，并关注其每人“起”价。",
-    "lookForPeople": "我们会在 GetYourGuide 和 Viator 上查找 <strong>{{name}}</strong>，并关注其每人“起”价，{{people}}。",
-    "lookForCityPeople": "我们会在 GetYourGuide 和 Viator 上查找 {{city}} 的 <strong>{{name}}</strong>，并关注其每人“起”价，{{people}}。",
+    "lookForPeople": "我们会在 GetYourGuide 和 Viator 上查找 <strong>{{name}}</strong>，并关注其每人“起”价（按 {{people}} 计算）。",
+    "lookForCityPeople": "我们会在 GetYourGuide 和 Viator 上查找 {{city}} 的 <strong>{{name}}</strong>，并关注其每人“起”价（按 {{people}} 计算）。",
     "forDay": "针对 {{day}}，该日之后我们将停止检查。",
     "estimate": "AI 估价：每人 {{price}}，这只是估价，并非实时价格。",
     "reviews_other": "{{rating}} · {{formatted}} 条评价",
@@ -310,19 +310,19 @@
     "forName": "对应“{{name}}”",
     "currencyChanged": "该详情页现在以 {{seen}} 显示价格；我们只将 {{currency}} 与 {{currency}} 进行比较。",
     "cardSource": "价格取自 Google 结果中 {{provider}} 的页面。",
-    "unavailable": "目前 Google 结果中没有带价格的条目。我们会继续查找，恢复前不会提醒你。",
-    "theListing": "该商品页"
+    "unavailable": "目前 Google 结果中没有带价格的条目。我们会继续查找，重新出现之前不会提醒你。",
+    "theListing": "原网站"
   },
   "hotel": {
     "aiEstimate": "AI 估价",
     "thisHotel": "此酒店",
-    "yourStay": "你的住宿",
-    "find": "我们会在 Google Hotels 上找到 <strong>{{name}}</strong>，并关注 {{stay}} 的实时价格。",
-    "findCity": "我们会在 Google Hotels 上找到 {{city}} 的 <strong>{{name}}</strong>，并关注 {{stay}} 的实时价格。",
+    "yourStay": "你的入住日期",
+    "find": "我们会在 Google Hotels 上找到 <strong>{{name}}</strong>，并关注其实时价格（{{stay}}）。",
+    "findCity": "我们会在 Google Hotels 上找到 {{city}} 的 <strong>{{name}}</strong>，并关注其实时价格（{{stay}}）。",
     "tracking": "正在关注：Google Hotels 上的 <strong>{{title}}</strong>",
     "priceNights_other": "{{count}} 晚共 {{price}}",
     "calledIt": "你的计划称其为“{{requested}}”；Google Hotels 上显示为“{{title}}”。",
-    "notThisRemove": "不是这家？<pagelink>在提醒页面中移除</pagelink>。",
+    "notThisRemove": "不是这家？<pagelink>在价格提醒页面中移除</pagelink>。",
     "notThis": "不是这家？",
     "others": "Google Hotels 上的其他酒店",
     "switchFailed": "无法切换到该酒店，你仍在关注第一家。",
@@ -335,16 +335,16 @@
     "planCalled": "你的计划称其为“{{requested}}”。",
     "soldOut": "你的日期已订满",
     "book": "预订",
-    "unavailable": "你的日期目前没有空房。我们会继续检查，恢复前不会提醒你。",
-    "estimateRooms": "AI 估价：{{rooms}} 间房 × {{price}}，整个行程",
-    "estimateOne": "AI 估价：1 间房，整个行程",
+    "unavailable": "你的日期目前没有空房。我们会继续检查，有空房之前不会提醒你。",
+    "estimateRooms": "AI 估价：{{rooms}} 间房 × {{price}}，整段住宿",
+    "estimateOne": "AI 估价：1 间房，整段住宿",
     "nights_other": "{{count}} 晚",
     "guests_other": "{{count}} 位住客",
     "rooms_other": "{{count}} 间房"
   },
   "trip": {
-    "yourPlan": "按我们的算法计入的计划",
-    "lookup": "开始后，我们会查询你的航班（你所选日期的最低票价，而非某个具体航班）、酒店和最多 5 个活动的实时价格，并显示实时总价。没有实时价格的部分保持估价。",
+    "yourPlan": "我们如何计算你的计划",
+    "lookup": "开始关注后，我们会查询你的航班（你所选日期的最低票价，而非某个具体航班）、酒店和最多 5 个活动的实时价格，并显示实时总价。没有实时价格的部分保持估价。",
     "estimatesNote": "估价保持不变，不会触发提醒。",
     "alertsNote": "只有实时价格使总价变动至少 $25 或 4% 时才会提醒。",
     "caption_other": "关注内容 · {{live}} 项实时，{{count}} 项估价",
@@ -359,13 +359,13 @@
     "replan": "重新规划此行程",
     "open": "打开",
     "group": {
-      "flights": "机票",
+      "flights": "航班",
       "stay": "住宿",
       "activities": "活动",
       "other": "其他"
     },
     "groupWord": {
-      "flights": "机票",
+      "flights": "航班",
       "stay": "酒店",
       "activities": "活动",
       "other": "其他"
@@ -394,8 +394,8 @@
     "noMove": "上次检查：没有实时价格变动。",
     "couldntPrice": "无法获取 {{list}} 的价格——保留最后的实时价格。",
     "reason": {
-      "flight": "机票按你所选日期的最低实时票价计算，而不是你选的那个航班",
-      "hotel": "酒店按 Google 酒店的实时价格计算",
+      "flight": "航班按你所选日期的最低实时票价计算，而不是你选的那个航班",
+      "hotel": "酒店按 Google Hotels 的实时价格计算",
       "activityPer": "活动按每人 × {{n}} 计算",
       "activityLive": "活动按其实时“起”价计算"
     }
@@ -403,7 +403,7 @@
   "time": {
     "justNow": "刚刚",
     "yesterday": "昨天",
-    "soon": "即将",
+    "soon": "稍后",
     "minAgo_other": "{{count}} 分钟前",
     "hourAgo_other": "{{count}} 小时前",
     "daysAgo_other": "{{count}} 天前",

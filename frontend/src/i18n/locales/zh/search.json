@@ -26,35 +26,35 @@
   "tour": {
     "recent": {
       "title": "从上次中断的地方继续",
-      "body": "你最近的搜索都在这里。可以载入后修改，也可以原样再搜一次。"
+      "body": "你最近的搜索都在这里。可以加载后修改，也可以原样再搜一次。"
     },
     "route": {
-      "title": "你要去哪里?",
-      "body": "填写出发地和目的地。想玩多个城市,可以添加途经停留点。"
+      "title": "你要去哪里？",
+      "body": "填写出发地和目的地。想玩多个城市，可以添加途经停留点。"
     },
     "interests": {
       "title": "告诉我们你的喜好",
-      "body": "你的兴趣和探索偏好会影响每一条推荐,从知名经典到小众宝藏。"
+      "body": "你的兴趣和探索偏好会影响每一条推荐，从知名经典到小众宝藏。"
     },
     "preferences": {
       "title": "我们会记住你的信息",
-      "body": "你在这里填写的国籍、签证、出行人数和兴趣会保存到偏好设置,下次自动填入此表单。"
+      "body": "你在这里填写的国籍、签证、出行人数和兴趣会保存到偏好设置，下次自动填入此表单。"
     },
     "plan": {
       "title": "看你的行程逐步成形",
-      "body": "航班、酒店、签证、天气等内容会逐个板块陆续显示,几秒内就能看到第一批结果。"
+      "body": "航班、酒店、签证、天气等内容会逐个板块陆续显示，几秒内就能看到第一批结果。"
     },
     "myPlan": {
       "title": "制定你的计划",
-      "body": "把喜欢的航班、酒店和活动加入“我的计划”,查看费用去向,再添加到日历或保存为 PDF。过程中有任何问题都可以问聊天助手。"
+      "body": "把喜欢的航班、酒店和活动加入“我的计划”，查看费用去向，再添加到日历或保存为 PDF。过程中有任何问题都可以问聊天助手。"
     }
   },
   "hero": {
     "badge": "AI 驱动的旅行规划",
     "title": "规划你的完美旅程",
-    "subtitle": "航班、酒店、活动、签证、电话卡和行程,尽在一处。",
-    "tour": "第一次来?快速看一遍导览",
-    "importLead": "在网上看到了不错的行程?",
+    "subtitle": "航班、酒店、活动、签证、SIM 卡和行程，尽在一处。",
+    "tour": "第一次来？快速看一遍导览",
+    "importLead": "在网上看到了不错的行程？",
     "importLink": "粘贴链接"
   },
   "drop": {
@@ -69,7 +69,7 @@
   },
   "import": {
     "heading": "把任何旅行帖子变成你的行程",
-    "subheading": "博客、YouTube 或 TikTok 视频、朋友的消息或截图都可以,我们会找出每个地点并围绕它们安排每天的行程。",
+    "subheading": "博客、YouTube 或 TikTok 视频、朋友的消息或截图都可以，我们会找出每个地点并围绕它们安排每天的行程。",
     "steps": {
       "url": "正在读取页面",
       "text": "正在读取你的文字",
@@ -84,32 +84,32 @@
     },
     "elapsed": " · 已用 {{seconds}} 秒",
     "cancel": "取消",
-    "escKey": "(Esc)",
+    "escKey": "（Esc）",
     "formAria": "从链接规划",
     "pasteLabel": "粘贴链接或直接粘贴文字",
     "placeholder": "旅行博客、YouTube 或 TikTok 链接…\n或一段文案、朋友的消息、地点清单",
-    "shotsNote_other": "我们会读取你的 {{count}} 张截图,如要改用文字,请先移除",
-    "detectedUrl": "链接 — 我们会读取该页面",
-    "detectedText": "文字 — 我们会从中找出地点",
+    "shotsNote_other": "我们会读取你的 {{count}} 张截图，如要改用文字，请先移除",
+    "detectedUrl": "链接——我们会读取该页面",
+    "detectedText": "文字——我们会从中找出地点",
     "counter": "{{n}} / {{max}}",
     "chooseAria": "选择截图",
     "removeShot": "移除 {{name}}",
     "addAnother": "再添加一张",
-    "dropLead": "将截图拖到此处,或",
+    "dropLead": "将截图拖到此处，或",
     "chooseFiles": "选择文件",
     "dropHint": "最多 {{max}} 张 · 也可直接粘贴",
     "screenshot": "截图",
     "thatScreenshot": "该截图",
     "thatScreenshotCap": "该截图",
-    "tooMany": "一次最多 {{max}} 张截图,已保留前 {{kept}} 张。",
-    "tooBig": "{{name}} 压缩后仍然太大,请裁剪后重试。",
-    "unreadable": "无法读取 {{name}},请另存为 PNG 或 JPEG 后再试。",
+    "tooMany": "一次最多 {{max}} 张截图，已保留前 {{kept}} 张。",
+    "tooBig": "{{name}} 压缩后仍然太大，请裁剪后重试。",
+    "unreadable": "无法读取 {{name}}，请另存为 PNG 或 JPEG 后再试。",
     "actions": {
       "text": "粘贴文字",
       "images": "拖入截图",
       "retry": "重试"
     },
-    "examples": "试试示例:",
+    "examples": "试试示例：",
     "find": "查找地点",
     "findInShots_other": "从 {{count}} 张截图中查找地点",
     "example": {
@@ -147,53 +147,53 @@
     "departure": "出发日期",
     "return": "返程日期",
     "nationality": "国籍",
-    "budget": "预算(美元)",
-    "budgetOptional": "预算(美元,可选)",
+    "budget": "预算（美元）",
+    "budgetOptional": "预算（美元，可选）",
     "travelers": "出行人数",
     "cityOrAirport": "城市或机场…",
     "nationalityPlaceholder": "美国、印度…",
     "optional": "可选",
     "totalBudget": "行程总预算",
-    "permits": "🏠 居留许可(如有)",
+    "permits": "🏠 居留许可（如有）",
     "permitsPlaceholder": "申根、英国、阿联酋…",
-    "visas": "📋 已有签证(如有)",
+    "visas": "📋 已有签证（如有）",
     "visasPlaceholder": "美国、日本、加拿大…",
     "interests": "✨ 兴趣",
-    "interestsDiscover": "✨ 你喜欢什么?",
+    "interestsDiscover": "✨ 你喜欢什么？",
     "plan": "规划我的行程"
   },
   "recent": {
-    "loaded": "已载入 {{route}}。可随意修改,然后开始规划。",
-    "loadedShifted": "已载入 {{route}}。原日期已过,现已改为下周出发,行程天数不变。请核对后再规划。",
+    "loaded": "已加载 {{route}}。可随意修改，然后开始规划。",
+    "loadedShifted": "已加载 {{route}}。原日期已过，现已改为下周出发，行程天数不变。请核对后再规划。",
     "dismiss": "关闭",
     "title": "最近搜索",
-    "loadTitle": "载入表单,搜索前可修改任何内容",
+    "loadTitle": "加载表单，搜索前可修改任何内容",
     "datesPassed": "日期已过",
     "searchAgain": "再次搜索",
     "rerunTitle": "原样重新搜索",
-    "rerunPassedTitle": "这些日期已过,请载入后选择新日期",
+    "rerunPassedTitle": "这些日期已过，请加载后选择新日期",
     "removeAria": "移除最近搜索 {{route}}"
   },
   "stops": {
     "label": "第 {{n}} 站 · 途经",
     "placeholder": "中转城市…",
     "nights": "晚数",
-    "optional": "(可选)",
+    "optional": "（可选）",
     "auto": "自动",
     "remove": "移除此站",
-    "add": "添加途经站(多城市)",
+    "add": "添加途经站（多城市）",
     "originFallback": "出发地",
     "stopsFallback": "途经站",
     "destinationFallback": "你的目的地",
-    "route": "你的路线:{{origin}} → {{stops}} → <b>{{destination}}</b>。",
-    "routeNote": "途经站会在路上依次游览,“目的地”城市是最终目的地。留空的晚数会自动分配。"
+    "route": "你的路线：{{origin}} → {{stops}} → <b>{{destination}}</b>。",
+    "routeNote": "途经站会在路上依次游览，“目的地”城市是最终目的地。留空的晚数会自动分配。"
   },
   "dial": {
     "label": "🎯 探索风格",
     "classics": "🏛️ 知名经典",
     "gems": "💎 小众宝藏",
     "balanced": "⚖️ 均衡搭配",
-    "aria": "探索偏好滑块:从经典到小众宝藏",
+    "aria": "探索偏好滑块：从经典到小众宝藏",
     "iconic": "必看地标",
     "offBeaten": "避开人流"
   },
@@ -201,8 +201,8 @@
     "finding": "正在寻找目的地…",
     "find": "找到我的完美目的地",
     "picks": "为你精选 ✨",
-    "none": "没有找到目的地,试试其他兴趣或提高预算。",
-    "failed": "探索失败,请重试",
+    "none": "没有找到目的地，试试其他兴趣或提高预算。",
+    "failed": "探索失败，请重试",
     "visaFree": "✓ 免签",
     "visaOnArrival": "落地签",
     "eVisa": "电子签证",
@@ -213,7 +213,7 @@
     "planThisTrip": "规划这趟旅行 →"
   },
   "compare": {
-    "intro": "在制定完整计划之前,并排对比两三个目的地的费用、航班、酒店、天气和签证。",
+    "intro": "在制定完整计划之前，并排对比两三个目的地的费用、航班、酒店、天气和签证。",
     "destination": "目的地 {{n}}",
     "removeDestination": "移除此目的地",
     "removeDestinationN": "移除目的地 {{n}}",
@@ -231,7 +231,7 @@
     "clear": "清除"
   },
   "tags": {
-    "placeholder": "输入后按回车...",
+    "placeholder": "输入后按回车…",
     "hint": "按回车或逗号添加"
   },
   "travelers": {
@@ -240,8 +240,8 @@
     "seniors": "老人",
     "children": "儿童",
     "infants": "婴儿",
-    "fewer": "减少:{{group}}",
-    "more": "增加:{{group}}",
+    "fewer": "减少：{{group}}",
+    "more": "增加：{{group}}",
     "accessibility": "无障碍需求",
     "access": {
       "wheelchair": "♿ 轮椅/助行设备",
@@ -252,7 +252,7 @@
   },
   "map": {
     "aria": "所找到地点的地图",
-    "approximate": "大致位置 — {{city}} 某处"
+    "approximate": "大致位置——{{city}} 某处"
   },
   "kinds": {
     "sight": "景点",
@@ -274,7 +274,7 @@
     "yourText": "你粘贴的文字",
     "by": "作者 {{author}}",
     "readJustNow": "刚刚读取",
-    "sourceFound_other": "{{meta}} — 找到 {{count}} 个地点",
+    "sourceFound_other": "{{meta}}——找到 {{count}} 个地点",
     "includeAria": "包含 {{name}}",
     "newNameAria": "{{name}} 的新名称",
     "renameAria": "重命名 {{name}}",
@@ -283,20 +283,20 @@
     "onMap": "已在地图上",
     "rating": " · ★ {{rating}}",
     "approximate": "大致位置",
-    "approximateTitle": "只知道所在城镇,不知道具体位置",
+    "approximateTitle": "只知道所在城镇，不知道具体位置",
     "stop": "站点",
     "stopFor": "{{name}} 所属站点",
-    "placeFailed": "无法定位该地点,请试试其他拼写。",
+    "placeFailed": "无法定位该地点，请试试其他拼写。",
     "townFor": "{{name}} 所在城镇",
-    "whichTown": "哪个城镇?",
+    "whichTown": "哪个城镇？",
     "placing": "定位中…",
     "placeIt": "定位",
     "orAddTo": "或添加到",
-    "whichStop": "{{name}} 属于哪个站点?",
+    "whichStop": "{{name}} 属于哪个站点？",
     "leaveOut": "不包含",
-    "tooManyStops": "{{city}} 不是此行程的站点,且一次行程最多 3 站,请把它加入现有站点。",
+    "tooManyStops": "{{city}} 不是此行程的站点，且一次行程最多 3 站，请把它加入现有站点。",
     "missingOrigin": "请填写出发地。",
-    "missingNationality": "请填写国籍,签证信息取决于它。",
+    "missingNationality": "请填写国籍，签证信息取决于它。",
     "route": "你的路线",
     "oneLess": "{{city}} 少住一晚",
     "oneMore": "{{city}} 多住一晚",
@@ -305,9 +305,9 @@
     "nights_other": "{{count}} 晚",
     "totalNights_other": "共 {{count}} 晚",
     "suggestedDays_other": "来源建议约 {{count}} 天",
-    "totalWithHint": "{{total}},{{hint}}。",
+    "totalWithHint": "{{total}}，{{hint}}。",
     "totalPlain": "{{total}}。",
-    "bestTime": "最佳时间:{{season}}。",
+    "bestTime": "最佳时间：{{season}}。",
     "placesIn": "{{city}} 的地点",
     "selectAll": "全选 {{city}}",
     "selectNone": "取消全选 {{city}}",
@@ -315,13 +315,13 @@
     "none": "全不选",
     "unplacedAria": "无法定位的地点",
     "unplaced_other": "无法定位这 {{count}} 个地点",
-    "unplacedHint": "输入每个地点所在的城镇,我们会把它标到地图上并排进行程。",
+    "unplacedHint": "输入每个地点所在的城镇，我们会把它标到地图上并排进行程。",
     "leavingOn": "出发日期",
     "back": "返程 {{date}}",
-    "interests": "兴趣:{{list}}",
+    "interests": "兴趣：{{list}}",
     "tickOne": "请至少勾选一个地点来围绕规划。",
-    "capNote": "我们会规划前 {{max}} 个已勾选的地点,取消部分勾选即可自行选择。",
+    "capNote": "我们会规划前 {{max}} 个已勾选的地点，取消部分勾选即可自行选择。",
     "startOver": "重新开始",
-    "plan_other": "规划这趟旅行({{count}} 个地点)"
+    "plan_other": "规划这趟旅行（{{count}} 个地点）"
   }
 }

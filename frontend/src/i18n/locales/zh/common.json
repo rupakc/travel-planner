@@ -3,7 +3,7 @@
     "search": "搜索",
     "chat": "聊天",
     "nearby": "附近",
-    "alerts": "提醒",
+    "alerts": "价格提醒",
     "preferences": "偏好设置",
     "admin": "管理",
     "menu": "菜单",
@@ -11,7 +11,7 @@
     "adminBadge": "管理员",
     "home": "Voyager 首页",
     "unread_other": "{{count}} 条未读",
-    "alertsUnread_other": "提醒，{{count}} 条未读"
+    "alertsUnread_other": "价格提醒，{{count}} 条未读"
   },
   "language": {
     "label": "语言"

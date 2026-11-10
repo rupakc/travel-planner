@@ -1,7 +1,7 @@
 {
   "login": {
     "tagline": "规划你的完美旅行",
-    "title": "登录你的账户",
+    "title": "登录你的账号",
     "username": "用户名",
     "usernamePlaceholder": "输入用户名",
     "password": "密码",
@@ -40,7 +40,7 @@
     },
     "signal": {
       "activity_category": "喜爱的活动类型",
-      "event_category": "喜爱的活动类别",
+      "event_category": "喜爱的节庆演出类型",
       "hotel_tier": "酒店风格",
       "flight_style": "航班偏好",
       "interest": "常见兴趣",
@@ -71,7 +71,7 @@
       "nature": "自然",
       "shopping": "购物",
       "nightlife": "夜生活",
-      "wellness": "养生",
+      "wellness": "健康养生",
       "art": "艺术",
       "family": "亲子"
     },
