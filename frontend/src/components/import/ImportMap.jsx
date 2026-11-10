@@ -26,12 +26,12 @@ function FitBounds({ points }) {
   return null
 }
 
-function pinIcon(number, kind, approximate, delayMs) {
+export function pinIcon(number, kind, approximate, delayMs) {
   const color = kindOf(kind).color
   const drop = delayMs == null ? '' : `class="import-pin" style="animation-delay:${delayMs}ms;`
   const style = approximate
-    ? `background:#fff;color:${color};border:2.5px solid ${color}`
-    : `background:${color};color:#fff;border:2px solid #fff`
+    ? `background:rgb(var(--c-white));color:${color};border:2.5px solid ${color}`
+    : `background:${color};color:rgb(var(--c-white));border:2px solid rgb(var(--c-white))`
   return L.divIcon({
     html: `<div ${drop || 'style="'}${style};width:24px;height:24px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font:700 11px/1 Inter,system-ui,sans-serif;

@@ -128,7 +128,7 @@ export default function OnboardingTour({ open, steps, onClose }) {
         className={`absolute inset-0 ${showSpot ? '' : 'bg-slate-900/55'}`} />
       {showSpot && (
         <div aria-hidden="true"
-          className="absolute rounded-xl ring-2 ring-teal-300 pointer-events-none transition-all duration-200 motion-reduce:transition-none"
+          className="absolute rounded-xl ring-2 ring-teal-300 dark:ring-teal-600 pointer-events-none transition-all duration-200 motion-reduce:transition-none"
           style={{
             top: spot.top - SPOTLIGHT_PADDING,
             left: spot.left - SPOTLIGHT_PADDING,

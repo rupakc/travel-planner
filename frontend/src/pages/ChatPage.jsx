@@ -1690,7 +1690,7 @@ const CITY_PALETTE = [
 
 const SLOT_ICONS = { morning: '☀️', afternoon: '🌤️', evening: '🌙' }
 
-const PALETTE_HEX = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#6366f1']
+const PALETTE_HEX = ['sky-500', 'violet-500', 'emerald-500', 'amber-500', 'rose-500', 'indigo-500'].map((c) => `rgb(var(--c-${c}))`)
 
 function makeNumberedIcon(num, color) {
   return L.divIcon({
@@ -1703,7 +1703,7 @@ function makeNumberedIcon(num, color) {
 function makeOriginIcon() {
   return L.divIcon({
     className: '',
-    html: `<div style="width:18px;height:18px;border-radius:50%;background:#64748b;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)"></div>`,
+    html: `<div style="width:18px;height:18px;border-radius:50%;background:rgb(var(--c-slate-500));border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)"></div>`,
     iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -10],
   })
 }
@@ -1842,13 +1842,13 @@ function TripPlanView({ tripMap, itinerary, generating }) {
 
             {/* Destination-city route polyline */}
             {destCityPoints.length >= 2 && (
-              <Polyline positions={destCityPoints} color="#0d9488" weight={2} opacity={0.55} dashArray="7 5" />
+              <Polyline positions={destCityPoints} color="rgb(var(--c-teal-600))" weight={2} opacity={0.55} dashArray="7 5" />
             )}
 
             {/* Origin departure pin (decorative only — not included in bounds) */}
             {originPoint && (
               <Marker position={originPoint} icon={makeOriginIcon()}>
-                <Popup><strong>{tripMap?.origin || 'Origin'}</strong><br/><span style={{color:'#64748b',fontSize:'11px'}}>Departure city</span></Popup>
+                <Popup><strong>{tripMap?.origin || 'Origin'}</strong><br/><span style={{color:'rgb(var(--c-slate-500))',fontSize:'11px'}}>Departure city</span></Popup>
               </Marker>
             )}
 
@@ -1857,7 +1857,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
               <Marker key={`city-${i}`} position={[c.lat, c.lng]} icon={makeNumberedIcon(i + 1, PALETTE_HEX[i % PALETTE_HEX.length])}>
                 <Popup>
                   <strong>{c.city}</strong>
-                  {c.nights && <><br/><span style={{color:'#64748b',fontSize:'11px'}}>{c.nights} nights</span></>}
+                  {c.nights && <><br/><span style={{color:'rgb(var(--c-slate-500))',fontSize:'11px'}}>{c.nights} nights</span></>}
                 </Popup>
               </Marker>
             ))}
@@ -1867,9 +1867,9 @@ function TripPlanView({ tripMap, itinerary, generating }) {
               <Marker key={`place-${i}`} position={[p.lat, p.lng]} icon={makeSmallDotIcon(p.hex)}>
                 <Popup>
                   <strong style={{fontSize:'12px'}}>{p.name}</strong><br/>
-                  {p.why && <span style={{color:'#4b5563',fontSize:'11px'}}>{p.why}</span>}
+                  {p.why && <span style={{color:'rgb(var(--c-gray-600))',fontSize:'11px'}}>{p.why}</span>}
                   {p.why && <br/>}
-                  <span style={{color:'#64748b',fontSize:'11px'}}>{p.city}</span>
+                  <span style={{color:'rgb(var(--c-slate-500))',fontSize:'11px'}}>{p.city}</span>
                 </Popup>
               </Marker>
             ))}

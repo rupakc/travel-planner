@@ -30,6 +30,12 @@ const EXPECTED_FAMILIES = [
 ]
 
 describe('design tokens', () => {
+  it('forces light values when printing', () => {
+    const m = /@media print \{\s*html\.dark \{([\s\S]*?)\n  \}\n\}/.exec(tokensCss)
+    expect(m).toBeTruthy()
+    expect(m[1]).toContain('--c-white: 255 255 255;')
+  })
+
   it('the committed tokens.css is exactly what the generator writes', () => {
     expect(buildCss(tokens)).toBe(tokensCss)
   })

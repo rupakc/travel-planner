@@ -1933,11 +1933,11 @@ function PricingSparkline({ trendData, daysUntilDeparture }) {
 
   return (
     <svg width={W} height={H + 14} className="overflow-visible">
-      <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx={nowX} cy={nowY} r="5" fill="#0ea5e9" opacity="0.25" />
-      <circle cx={nowX} cy={nowY} r="3" fill="#0ea5e9" />
-      <text x={nowX} y={H + 13} textAnchor="middle" fontSize="8" fill="#94a3b8">Now</text>
-      <text x={PAD} y={H + 13} textAnchor="start" fontSize="8" fill="#94a3b8">90d</text>
+      <path d={pathD} fill="none" stroke="rgb(var(--c-sky-500))" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx={nowX} cy={nowY} r="5" fill="rgb(var(--c-sky-500))" opacity="0.25" />
+      <circle cx={nowX} cy={nowY} r="3" fill="rgb(var(--c-sky-500))" />
+      <text x={nowX} y={H + 13} textAnchor="middle" fontSize="8" fill="rgb(var(--c-slate-400))">Now</text>
+      <text x={PAD} y={H + 13} textAnchor="start" fontSize="8" fill="rgb(var(--c-slate-400))">90d</text>
     </svg>
   )
 }

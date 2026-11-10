@@ -496,7 +496,7 @@ export default function SearchPage() {
         {mode !== 'import' && (
           <p className="mt-3">
             <button type="button" onClick={() => openImport()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 dark:bg-amber-500/15 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
               <Link2 size={14} /> Saw a great trip online? <span className="font-semibold">Paste the link</span>
             </button>
           </p>

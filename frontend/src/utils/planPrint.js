@@ -109,6 +109,7 @@ const CSP = [
 ].join('; ')
 
 const STYLES = `
+  :root{color-scheme: light}
   *{box-sizing:border-box}
   body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2937;background:#fff;margin:0 auto;max-width:780px;padding:32px 24px}
   h1{font-size:24px;margin:0 0 4px;color:#0f766e}
@@ -167,6 +168,7 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(name)}</title>

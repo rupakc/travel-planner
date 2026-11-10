@@ -20,7 +20,7 @@ export default function Sparkline({ history, target = null, width = 280, height 
   const last = g.points[g.points.length - 1]
   const first = g.points[0]
   const down = last.price < first.price
-  const stroke = down ? '#059669' : '#0284c7'
+  const stroke = down ? 'rgb(var(--c-emerald-600))' : 'rgb(var(--c-sky-600))'
   const summary = `Price over ${g.points.length} checks: from ${format(first.price)} to ${format(last.price)}, low ${format(Math.min(...g.points.map(p => p.price)))}`
     + (target ? `. Your target is ${format(target)}.` : '.')
   return (
@@ -33,13 +33,13 @@ export default function Sparkline({ history, target = null, width = 280, height 
         </linearGradient>
       </defs>
       {g.targetY != null && (
-        <line x1="0" x2={width} y1={g.targetY} y2={g.targetY} stroke="#94a3b8" strokeWidth="1"
+        <line x1="0" x2={width} y1={g.targetY} y2={g.targetY} stroke="rgb(var(--c-slate-400))" strokeWidth="1"
           strokeDasharray="4 4" vectorEffect="non-scaling-stroke" data-testid="spark-target" />
       )}
       <path d={g.area} fill={`url(#${gradientId})`} />
       <path d={g.line} fill="none" stroke={stroke} strokeWidth="2" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={last.x} cy={last.y} r="3.5" fill="#fff" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <circle cx={last.x} cy={last.y} r="3.5" fill="rgb(var(--c-white))" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }

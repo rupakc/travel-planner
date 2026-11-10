@@ -34,6 +34,12 @@
   .scrollbar-none::-webkit-scrollbar { display: none; }
 }
 
+/* Dim OSM tiles in dark mode; markers and popups live in other panes. */
+html.dark .leaflet-tile-pane { filter: brightness(.75) contrast(1.1) saturate(.8); }
+/* Popups follow the theme surface. */
+html.dark .leaflet-popup-content-wrapper,
+html.dark .leaflet-popup-tip { background: rgb(var(--c-white)); color: rgb(var(--c-gray-900)); }
+
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
