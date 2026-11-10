@@ -30,7 +30,19 @@ function _schedule() {
   _timer = setTimeout(() => { _timer = null; _flush() }, FLUSH_INTERVAL)
 }
 
+// Mirrored into product telemetry as feature_used (feature + page only, never
+// the metadata). Resolved at call time and never awaited, so it can't slow the
+// caller, and a missing or failing SDK is ignored.
+function _mirror(feature, page) {
+  try {
+    import('../telemetry/client')
+      .then((m) => m.emit('feature_used', { feature, page }))
+      .catch(() => {})
+  } catch { /* telemetry must never break tracking */ }
+}
+
 export function track(feature, page, metadata = {}) {
+  _mirror(feature, page)
   _batch.push({ feature, page, metadata, ts: Date.now() })
   if (_batch.length >= FLUSH_SIZE) {
     clearTimeout(_timer)
