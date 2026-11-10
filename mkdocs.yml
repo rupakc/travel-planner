@@ -35,11 +35,15 @@ nav:
       - Personalization: Personalization.md
       - Sharing and Plans: Sharing-and-Plans.md
       - Privacy: Privacy.md
+      - Feature Parity: Feature-Parity.md
   - Internals:
       - Architecture: Architecture.md
       - Agent System: Agent-System.md
       - Place and Airport Data: Place-and-Airport-Data.md
       - Frontend: Frontend.md
+      - Theming: Theming.md
+      - Internationalization: Internationalization.md
+      - Telemetry: Telemetry.md
       - API Reference: API-Reference.md
   - Operations:
       - Testing and CI: Testing-and-CI.md

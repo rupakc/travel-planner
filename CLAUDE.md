@@ -45,10 +45,12 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
 - **Validation**: Pydantic v2 models in `backend/app/schemas/` (`request.py`: `TravelSearchRequest` resolves origin/destination to airport codes)
 - **Config**: pydantic-settings with `.env` support (`backend/app/core/config.py`); every setting has a default
 - **Auth**: JWT (HS256, PyJWT, 24 h) + bcrypt. **No self-registration** — admins create users (`api/routes/admin.py`). `/search`, `/discover` and single-agent routes accept anonymous calls via `get_optional_user` (inactive users count as anonymous)
-- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 22 tables (airports, places, place_names, features, feature_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals, notifications, devices, fare_watches, fare_watch_history, fare_watch_quota, fare_watch_user_quota, price_watches, price_watch_history). Optional GCS backup (`BACKUP_BUCKET`): `BACKUP_MODE=vm` in production (disk authoritative, restore only if the DB is missing and `DATA_DIR/.voyager-data-disk` exists, no merge, user tables uploaded when their hash changes every 5 min + at shutdown, `backup_ok` in `/health`; `db/vm_backup.py`); default `cloudrun` mode is the legacy restore-every-start + 60 s merge (`db/backup.py`)
+- **Persistence**: one SQLite file, `$DATA_DIR/airports.db`, holding all 25 tables (airports, places, place_names, features, feature_names, admin1, meta, nationalities, users, plans, preferences, recent_searches, feedback, taste_signals, notifications, devices, fare_watches, fare_watch_history, fare_watch_quota, fare_watch_user_quota, price_watches, price_watch_history, telemetry_daily, telemetry_daily_totals, telemetry_rollups); raw product-telemetry events are the one exception, `telemetry_events` in a separate `$DATA_DIR/telemetry.db` (WAL, pruned after `TELEMETRY_RETENTION_DAYS` = 90, never backed up; the daily rollup tables above are). Optional GCS backup (`BACKUP_BUCKET`): `BACKUP_MODE=vm` in production (disk authoritative, restore only if the DB is missing and `DATA_DIR/.voyager-data-disk` exists, no merge, user tables uploaded when their hash changes every 5 min + at shutdown, `backup_ok` in `/health`; `db/vm_backup.py`); default `cloudrun` mode is the legacy restore-every-start + 60 s merge (`db/backup.py`)
 - **Place data**: OurAirports + GeoNames files committed in `backend/app/db/data/`, versioned seed at startup; `lookup_city_iata` / `resolve_place` resolve typed places to airports locally; country names in any language (`countries.csv` `names`), suburbs yield to namesakes with their own airport (`places.satellite`), and notable islands/parks/mountains resolve via `features.csv.gz`
 - **Caching**: in-memory cachetools TTLCache (TTL 30 min, max 500 entries)
 - **Rate limits**: in-process sliding window (`core/rate_limit.py`)
+- **Telemetry**: `POST /api/telemetry` (anonymous-friendly, own `telemetry` bucket, 204; 404 when `TELEMETRY_ENABLED=false`) validates every event against the closed registry `telemetry/registry.py` (unknown events/props dropped; props are tokens, numbers, booleans or enums, so no free text), appends to `telemetry.db` (`db/telemetry_db.py`); an hourly lifespan task (`telemetry/maintenance.py`) rolls up UTC days and prunes. `GET /api/config` hands clients `public_base_url`, telemetry settings and feature flags; `GET /api/admin/telemetry/summary?days=` feeds the admin Analytics tab (`users_7d` included). Docs: `docs/Telemetry.md` (event table, a registry test requires every event be listed there), `docs/Privacy.md`.
+- **UI language**: AI-calling requests accept `locale` (`en es de fr hi zh bn`, default English); `BaseAgent.execute(locale=)` appends a language instruction to the system prompt and the search cache keys per language (`core/cache.request_digest`; English keys unchanged). Static Phase 0 tables stay English.
 - **Logging**: stdlib logging, JSON unless `LOG_FORMAT` is set to something other than `json`
 
 ### Frontend — React / Vite
@@ -59,7 +61,11 @@ Six agents are backed by static lookup tables in `static_results.py` (visa, SIM,
 - **Maps**: Leaflet + react-leaflet
 - **State**: React context for auth/preferences (`AuthContext.jsx`) and search results (`SearchDataContext.jsx`), local state for selections
 - **Streaming**: Web Workers for SSE parsing (`sseWorker.js`, `chatWorker.js`)
-- **Pages**: `SearchPage` → `ResultsPage`, `ChatPage`, `PreferencesPage`, `AdminPage`, `LoginPage`, `ChangePasswordPage`, `SharePage` (public)
+- **Pages**: `SearchPage` → `ResultsPage`, `ChatPage`, `PreferencesPage`, `AdminPage` (Users, Feedback, Analytics tabs), `LoginPage`, `ChangePasswordPage`, `SharePage` (public)
+- **Theme**: light default, dark via Tailwind `darkMode: 'class'` (`html.dark`). Colours come from `frontend/design/tokens.json` → `npm run tokens` → generated `src/theme/tokens.css` (CSS variables, never hand-edited); `src/theme/ThemeContext.jsx` (`system|light|dark`, `localStorage tp_theme`); `public/theme-init.js` sets the class before first paint (external because CSP is `script-src 'self'`). Docs: `docs/Theming.md`.
+- **i18n**: i18next + react-i18next, 7 languages (en es de fr hi zh bn); catalogues `src/i18n/locales/<lang>/<ns>.json` (13 namespaces; en bundled, others lazy chunks), plurals `_one/_other`, keys `ns:area.thing`, language in `localStorage tp_lang`, `src/i18n/format.js` (`fmtNumber/fmtCurrency/fmtDate/fmtRelative`); `src/i18n/catalog.test.js` fails on any missing key, bad plural form, or placeholder/tag mismatch. New UI strings go in all 7 languages. Docs: `docs/Internationalization.md`.
+- **Telemetry SDK**: `src/telemetry/` (`client.js` queue/batching, `consent.js`, `autocapture.js`, `perf.js`, `routes.js`); never blocks the UI, switches itself off on a 404 from `/api/config`; routes are templates; EU/EEA/UK/CH timezones are opted out until the user answers `ConsentPrompt` (`tp_consent`), Preferences has the switch. Interactive elements carry `data-tid` (the element name in telemetry, never its text). Social sign-in buttons (`components/auth/`) show "coming soon" until `GET /api/auth/providers` exists (Phase 1).
+- **Parity**: `docs/Feature-Parity.md` lists each feature per client (web / Android / iOS); update it with any client-visible feature.
 - **My Plan**: Drawer widget on both ResultsPage and ChatPage for selecting flights, hotels, activities, places, free walking tours, events, SIM plans, tips, transport options, packing items and itinerary slots. Plans are persisted to the backend.
 
 ## Project Layout
@@ -99,17 +105,18 @@ backend/
     main.py             FastAPI app, lifespan (restore → seed → tables → admin → backup loop), routers, /health
     agents/             loader, base_agent, orchestrator, chat_agent, chat_itinerary_agent,
                         *_agent.py specialists, static_results.py, web_tools.py
-    api/routes/         one router per domain (33): search, chat, compare, discover, flights,
+    api/routes/         one router per domain (36): search, chat, compare, discover, flights,
                         hotels, activities, visa, sim, tips, getting_around, forex, itinerary,
                         events, walking_tours, layover, stress_test, plans, preferences,
                         recent_searches, taste, airports, nationalities, auth, admin,
                         feedback, analytics, link_import, fare_watches, price_watches,
-                        notifications, devices, nearby
+                        notifications, devices, nearby, live_check, telemetry, client_config
+    telemetry/          registry (closed event schema), maintenance (hourly rollup + prune)
     core/               config, llm (provider seam), auth, cache, rate_limit, logging_config, places (fold_place, hints)
     db/                 database (schema, lookup_city_iata, search_airports), places_db,
                         seed_airports, seed_nationalities, airport_regions, backup,
                         users_db, plans_db, preferences_db, recent_searches_db, feedback_db, taste_db,
-                        fare_watch_db, price_watch_db, notifications_db, devices_db
+                        fare_watch_db, price_watch_db, notifications_db, devices_db, telemetry_db
       data/             committed place data, hints.json, README (sources/licences)
     middleware/         analytics (request logging), request_id
     schemas/            request.py, travel.py
@@ -126,14 +133,21 @@ frontend/src/
   components/           BestValuePackage, BudgetPlanner, CompareTable, CostBreakdown,
                         FareCalendarStrip, FeedbackWidget, ItinerarySection, OnboardingTour,
                         PlanExport, PlanViewModal, RecentSearches, TimelineView, TripMap,
-                        VerificationBadge, WalkingToursSection
-    ui/                 AirportSearch, NationalitySearch, NavBar, TagInput, TravelerPanel, AttributionFooter
-  context/              AuthContext, SearchDataContext
+                        VerificationBadge, WalkingToursSection, ConsentPrompt
+    admin/              TelemetrySummary (Analytics tab)
+    auth/               SocialSignInButtons
+    ui/                 AirportSearch, NationalitySearch, NavBar, TagInput, TravelerPanel, AttributionFooter,
+                        LanguagePicker, ThemeToggle
+  context/              AuthContext, SearchDataContext (+ AlertsContext)
+  i18n/                 index (i18next set-up), format, languages, locales/<lang>/<ns>.json
+  telemetry/            client, consent, autocapture, perf, routes
+  theme/                ThemeContext, themeStorage, tokens.css (generated)
   hooks/                useFirstRunTour
   services/api.js       axios client + streamSearch and API helpers
   utils/                pure helpers (bestValuePackage, budgetPlanner, compare, fareCalendar,
                         itineraryLayout, schedule, planExport, planPrint, planHelpers, remix, …)
   workers/              sseWorker, chatWorker
+frontend/design/tokens.json   colour tokens (source of truth); frontend/public/theme-init.js anti-flash
 
 infrastructure/gcp/     bootstrap.sh (idempotent gcloud, --dry-run, --update-host),
                         migrate_old_prod.py (old-prod export → user tables), tests/
@@ -206,9 +220,12 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 | `GET/POST /api/devices`, `DELETE /api/devices/{id}`, `POST /api/devices/unregister` | Android push devices (FCM tokens: masked in lists, only ever in bodies; auth) |
 | `POST /api/nearby` | Near me: nearest known place to `lat`/`lng` + activities there (auth, light_ai, cached 1 h per ~5 km cell); `sections: true` → v2: see/eat/shop/stay from one Google-Maps-grounded Gemini call, items only from Maps chunks, `attribution`, `sources`, never cached |
 | `POST /api/live-check` | "Search the web now" for one of the caller's watches (`kind` flight/hotel/activity/trip + `watch_id`, 404 if not theirs): prompt built from the stored watch, Google Search grounding, `summary`/`quotes`/`sources`/`searched_for`; never stored or cached (auth, light_ai; 502 `live_check_failed`) |
+| `POST /api/telemetry` | Batch (≤ 100) of product-telemetry events from any client; gzip accepted, 64 KB cap; closed registry, always 204 for a well-formed batch; 404 when disabled; own `telemetry` bucket (600 / 10 min), never behind `ALLOW_ANONYMOUS_AI` |
+| `GET /api/config` | Public client config: `public_base_url`, `telemetry {enabled, flush_interval_s, max_batch}`, `features`; `Cache-Control: max-age=300` |
+| `GET /api/admin/telemetry/summary` | Admin: daily users/sessions/events, top events and screens, `users_7d` (`days` 1–90) |
 | `GET /health`, `GET /health/agents` | Health (reports `serpapi_configured`, `push_configured`); deep LLM check on the configured provider (`llm`, `llm_provider`) |
 
-**Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`, `/live-check`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). `/auth/login` has its own `login` bucket (10 per IP) plus a per-username failure lock (20). `ALLOW_ANONYMOUS_AI=false` (production) makes every AI router require sign-in. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
+**Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`, `/live-check`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). `/telemetry` has its own `telemetry` bucket (`RATE_LIMIT_TELEMETRY`, 600). `/auth/login` has its own `login` bucket (10 per IP) plus a per-username failure lock (20). `ALLOW_ANONYMOUS_AI=false` (production) makes every AI router require sign-in. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
 
 **Production runtime.** The image runs `python -m app.entrypoint`: optional Secret Manager secrets (`SECRET_MANAGER_SECRETS`) into the process env only, refuses an empty `JWT_SECRET_KEY`, execs uvicorn (1 worker, `--timeout-graceful-shutdown 5`, proxy headers only from `FORWARDED_ALLOW_IPS`, never `*`). `/search` and `/chat` stream through `core/sse.guarded_stream` (15 s keepalives; every task the stream started is cancelled when the client disconnects). Push can use ADC (`FCM_USE_ADC`). `GET /internal/streams` (`{"active_streams": n}`, 404 when forwarded, not routed by Caddy) lets the VM's deployer drain before recreating Caddy.
 
@@ -235,4 +252,4 @@ Optional: `adults`/`children`/`seniors`/`infants`, `accessibility_needs`, `desti
 
 **Backend**: fastapi, uvicorn, pydantic, pydantic-settings, httpx, google-genai (Gemini on Vertex AI, pinned 2.34.0), anthropic (fallback provider), PyJWT, bcrypt, cachetools, pyyaml, ddgs, beautifulsoup4, google-cloud-storage, google-auth (FCM signing)
 
-**Frontend**: react, react-dom, react-router-dom 6, leaflet, react-leaflet, axios, lucide-react, @tanstack/react-query (provider only), tailwindcss 3.4, vite 6, vitest (date-fns and clsx are listed but unused)
+**Frontend**: react, react-dom, react-router-dom 6, i18next 26.5.11, react-i18next 17.1.9, leaflet, react-leaflet, axios, lucide-react, @tanstack/react-query (provider only), tailwindcss 3.4, vite 6, vitest (date-fns and clsx are listed but unused)

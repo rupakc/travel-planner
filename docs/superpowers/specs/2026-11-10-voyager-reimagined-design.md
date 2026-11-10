@@ -268,8 +268,9 @@ Keep every honesty rule. Add:
   Light is the default: warm off-white, an ocean-teal primary, a sunset-coral accent.
   The dark theme is designed rather than inverted. Motion is short and purposeful, and `prefers-reduced-motion`
   is respected. Final visual direction is set in the design phase with mockups before building.
-- **i18n [call]**: a canonical catalogue `i18n/<locale>.json` (ICU MessageFormat for plurals). Generators emit
-  Android `strings.xml` and iOS `.xcstrings`, and CI fails on missing keys. Dates/numbers/currency are formatted
+- **i18n [call]**: the web catalogue is `frontend/src/i18n/locales/<lang>/<namespace>.json` (i18next, JSON v4 plural
+  suffixes such as `_one`/`_other`). Generators emit
+  Android `strings.xml` and iOS `.xcstrings` from it, and CI fails on missing keys (on web, the catalogue parity test). Dates/numbers/currency are formatted
   per locale. Noto Sans Devanagari/Bengali/SC fallbacks are loaded only when needed. AI outputs come back in
   the user's language (a language instruction in agent prompts). Static tables keep English content, with UI
   chrome translated. Translations are machine-drafted, then reviewed by a second model for meaning; **native
