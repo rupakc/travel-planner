@@ -26,6 +26,7 @@
   "action": {
     "add": "添加",
     "added": "已添加",
+    "inPlan": "已在计划中",
     "book": "预订",
     "get": "获取",
     "info": "详情",

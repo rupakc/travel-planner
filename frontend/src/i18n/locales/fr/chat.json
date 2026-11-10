@@ -26,6 +26,7 @@
   "action": {
     "add": "Ajouter",
     "added": "Ajouté",
+    "inPlan": "Dans le plan",
     "book": "Réserver",
     "get": "Obtenir",
     "info": "Infos",

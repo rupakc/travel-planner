@@ -126,7 +126,7 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
             {f.outbound && <p className="text-gray-500">{f.outbound.origin} → {f.outbound.destination}{f.return ? ` ${t('flights.roundTripNote')}` : ''}</p>}
             <div className="flex items-center gap-2 mt-1">
               {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" onClick={e => e.stopPropagation()} className="text-sky-600 hover:text-sky-800 font-medium flex items-center gap-0.5"><ExternalLink size={9} /> {t('action.book')}</a>}
-              {isSelected && <span className="text-sky-700 font-semibold flex items-center gap-0.5"><Check size={9} /> In Plan</span>}
+              {isSelected && <span className="text-sky-700 font-semibold flex items-center gap-0.5"><Check size={9} /> {t('action.inPlan')}</span>}
             </div>
           </div>
         )

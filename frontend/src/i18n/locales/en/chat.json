@@ -26,6 +26,7 @@
   "action": {
     "add": "Add",
     "added": "Added",
+    "inPlan": "In Plan",
     "book": "Book",
     "get": "Get",
     "info": "Info",

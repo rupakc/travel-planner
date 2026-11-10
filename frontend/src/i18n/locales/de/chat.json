@@ -26,6 +26,7 @@
   "action": {
     "add": "Hinzufügen",
     "added": "Hinzugefügt",
+    "inPlan": "Im Plan",
     "book": "Buchen",
     "get": "Holen",
     "info": "Info",

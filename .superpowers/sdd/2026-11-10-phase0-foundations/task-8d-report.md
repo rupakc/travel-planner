@@ -25,3 +25,9 @@ Branch feat/p0-i18n-chat (from feat/phase0-wave-a).
 ## Concerns
 - `budget.label` text in drawer/tracker stays English until planHelpers is extracted (8e).
 - Hindi/Bengali strings are machine-quality; a native review is advisable.
+
+## Fix round 1
+- Changes: `ChatPage.jsx` flight card badge "In Plan" now `t('action.inPlan')`; key added to all 7 `chat.json` (en "In Plan", es "En el plan", de "Im Plan", fr "Dans le plan", hi "प्लान में", zh "已在计划中", bn "পরিকল্পনায় আছে").
+- Re-grep of JSX text nodes (`>text<` and bare text lines) found nothing else; only remaining literal is the OpenStreetMap attribution (brand/link, left as is).
+- Tests: `cd frontend && NODE_OPTIONS=--experimental-require-module npx vitest run` -> Test Files 83 passed (83), Tests 1161 passed (1161).
+- Lint: `npx eslint src/ --max-warnings 0` -> exit 0, no output.
