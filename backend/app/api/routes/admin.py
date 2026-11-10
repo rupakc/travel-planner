@@ -3,10 +3,11 @@
 import logging
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, field_validator
 
 from ...core.auth import MIN_PASSWORD_LENGTH, require_admin
+from ...db import telemetry_db
 from ...db.users_db import (
     admin_reset_password,
     create_user,
@@ -42,6 +43,15 @@ class CreateUserRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     new_password: str
+
+
+@router.get("/admin/telemetry/summary")
+def admin_telemetry_summary(
+    days: int = Query(30, ge=1, le=90),
+    _admin: dict = Depends(require_admin),
+):
+    """Daily users/sessions/events, top events and top screens."""
+    return telemetry_db.summary(days)
 
 
 @router.post("/admin/users", status_code=201)

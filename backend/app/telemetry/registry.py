@@ -62,6 +62,9 @@ def _valid_id(v) -> bool:
     return isinstance(v, str) and _ID_RE.fullmatch(v) is not None
 
 
+valid_id = _valid_id  # public: the route validates the event-level `screen` with it
+
+
 _MAX_INT = 2**53
 
 

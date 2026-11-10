@@ -144,3 +144,81 @@ def prune(before_ms: int) -> int:
         return conn.execute(
             "DELETE FROM telemetry_events WHERE ts < ?", (before_ms,)
         ).rowcount
+
+
+def summary(days: int, now: datetime | None = None) -> dict:
+    """Admin overview: per-day users/sessions/events for the last ``days`` UTC
+    days (rolled-up days from ``telemetry_daily``, today live from raw events),
+    top events and top screens.
+
+    A rolled-up day's ``users``/``sessions`` are the largest per-event count
+    (the rollup keeps distinct counts per event, which cannot be added up), so
+    they are a lower bound; today's are exact."""
+    now = now or datetime.now(UTC)
+    today = now.date()
+    first = today - timedelta(days=days - 1)
+    first_ms = int(
+        datetime(first.year, first.month, first.day, tzinfo=UTC).timestamp() * 1000
+    )
+    today_ms = int(
+        datetime(today.year, today.month, today.day, tzinfo=UTC).timestamp() * 1000
+    )
+    with get_connection() as conn:
+        daily = conn.execute(
+            "SELECT day, MAX(users) AS users, MAX(sessions) AS sessions, "
+            "SUM(events) AS events FROM telemetry_daily "
+            "WHERE day >= ? AND day < ? GROUP BY day ORDER BY day",
+            (first.isoformat(), today.isoformat()),
+        ).fetchall()
+        top_events = conn.execute(
+            "SELECT event, SUM(events) AS events FROM telemetry_daily "
+            "WHERE day >= ? AND day < ? GROUP BY event",
+            (first.isoformat(), today.isoformat()),
+        ).fetchall()
+    with _telemetry_connection() as conn:
+        live = conn.execute(
+            "SELECT COUNT(*) AS events, "
+            "COUNT(DISTINCT coalesce(user_id, anon_id)) AS users, "
+            "COUNT(DISTINCT session_id) AS sessions "
+            "FROM telemetry_events WHERE ts >= ?",
+            (today_ms,),
+        ).fetchone()
+        live_events = conn.execute(
+            "SELECT event, COUNT(*) AS events FROM telemetry_events "
+            "WHERE ts >= ? GROUP BY event",
+            (today_ms,),
+        ).fetchall()
+        screens = conn.execute(
+            "SELECT json_extract(props, '$.route') AS route, COUNT(*) AS views "
+            "FROM telemetry_events WHERE event = 'screen_view' AND ts >= ? "
+            "AND json_extract(props, '$.route') IS NOT NULL "
+            "GROUP BY route ORDER BY views DESC, route LIMIT 20",
+            (first_ms,),
+        ).fetchall()
+    out_days = [
+        {
+            "day": r["day"],
+            "users": r["users"],
+            "sessions": r["sessions"],
+            "events": r["events"],
+        }
+        for r in daily
+    ]
+    if live["events"]:
+        out_days.append(
+            {
+                "day": today.isoformat(),
+                "users": live["users"],
+                "sessions": live["sessions"],
+                "events": live["events"],
+            }
+        )
+    totals: dict[str, int] = {r["event"]: r["events"] for r in top_events}
+    for r in live_events:
+        totals[r["event"]] = totals.get(r["event"], 0) + r["events"]
+    ranked = sorted(totals.items(), key=lambda kv: (-kv[1], kv[0]))[:20]
+    return {
+        "days": out_days,
+        "top_events": [{"event": e, "events": n} for e, n in ranked],
+        "top_screens": [{"route": r["route"], "views": r["views"]} for r in screens],
+    }
