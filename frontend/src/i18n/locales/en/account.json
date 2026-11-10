@@ -1,0 +1,191 @@
+{
+  "login": {
+    "tagline": "Plan your perfect trip",
+    "title": "Sign in to your account",
+    "username": "Username",
+    "usernamePlaceholder": "Enter username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submit": "Sign In",
+    "submitting": "Signing in…",
+    "failed": "Login failed. Please try again."
+  },
+  "changePassword": {
+    "title": "Set your password",
+    "welcome": "Welcome, <strong>{{username}}</strong>! Please set a new password to continue.",
+    "temporary": "Temporary password",
+    "new": "New password",
+    "newPlaceholder": "At least 8 characters",
+    "confirm": "Confirm new password",
+    "submit": "Set password & continue",
+    "saving": "Saving…",
+    "mismatch": "New passwords do not match",
+    "tooShort": "Password must be at least 8 characters",
+    "failed": "Password change failed",
+    "generic": "Something went wrong. Please try again."
+  },
+  "prefs": {
+    "title": "Travel Preferences",
+    "subtitle": "Set your defaults to pre-fill the search form and get personalized results.",
+    "taste": {
+      "title": "Taste Graph",
+      "reset": "Reset",
+      "heading": "What we've learned about your travel taste",
+      "built_one": "Built from {{count}} signal in your saved plans.",
+      "built_other": "Built from {{count}} signals in your saved plans.",
+      "personalised": "Logged-in searches are automatically personalised with this profile.",
+      "empty": "Nothing learned yet — save a few trip plans and your future searches will be personalised automatically.",
+      "confirmReset": "Reset your learned taste profile? Future searches will no longer be personalised from past plans."
+    },
+    "signal": {
+      "activity_category": "Favourite activity types",
+      "event_category": "Favourite event types",
+      "hotel_tier": "Hotel style",
+      "flight_style": "Flight style",
+      "interest": "Recurring interests",
+      "destination": "Planned destinations",
+      "pace": "Trip pace"
+    },
+    "budget": {
+      "section": "Travel Budget",
+      "category": "Budget Category",
+      "low": {
+        "label": "Budget",
+        "desc": "Hostels, street food, public transport"
+      },
+      "medium": {
+        "label": "Mid-range",
+        "desc": "Comfortable hotels, nice restaurants"
+      },
+      "high": {
+        "label": "Luxury",
+        "desc": "Premium hotels, fine dining, private tours"
+      }
+    },
+    "interest": {
+      "food": "Food",
+      "history": "History",
+      "adventure": "Adventure",
+      "culture": "Culture",
+      "nature": "Nature",
+      "shopping": "Shopping",
+      "nightlife": "Nightlife",
+      "wellness": "Wellness",
+      "art": "Art",
+      "family": "Family"
+    },
+    "identity": {
+      "section": "Identity",
+      "nationality": "Nationality",
+      "nationalityPlaceholder": "American, Indian, British…",
+      "residence": "Current Residence",
+      "residencePlaceholder": "e.g. Munich, Germany",
+      "residenceHint": "Used as default departure city when planning trips"
+    },
+    "documents": {
+      "section": "Documents",
+      "permits": "Residence Permits",
+      "permitsPlaceholder": "Schengen, UK, UAE…",
+      "visas": "Existing Visas",
+      "visasPlaceholder": "US, Japan, Canada…"
+    },
+    "style": {
+      "section": "Travel Style",
+      "group": "Default Travel Group",
+      "groupHint": "Adults, children, seniors, infants and accessibility needs — pre-fills every search",
+      "interests": "Interests"
+    },
+    "save": "Save Preferences",
+    "saving": "Saving…",
+    "saved": "Preferences saved!",
+    "errorWithDetail": "Error: {{detail}}",
+    "saveFailed": "Save failed"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "tabs": {
+      "users": "Users",
+      "feedback": "Feedback"
+    },
+    "users": {
+      "count_one": "{{count}} user",
+      "count_other": "{{count}} users",
+      "create": "+ Create user",
+      "newUser": "New user",
+      "usernameRequired": "Username *",
+      "emailOptional": "Email (optional)",
+      "tempPasswordRequired": "Temporary password *",
+      "adminPrivileges": "Admin privileges",
+      "createSubmit": "Create",
+      "creating": "Creating…",
+      "createFailed": "Failed to create user",
+      "resetOwnHint": "Resetting your own password will require you to set a new one on next page load",
+      "resetOwn": "Reset own pw",
+      "reset": "Reset pw",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate"
+    },
+    "common": {
+      "cancel": "Cancel",
+      "loading": "Loading…",
+      "wentWrong": "Something went wrong",
+      "close": "Close"
+    },
+    "table": {
+      "username": "Username",
+      "email": "Email",
+      "created": "Created",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "role": {
+      "admin": "Admin",
+      "user": "User"
+    },
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "reset": {
+      "title": "Reset password",
+      "intro": "Setting a new password for <name>{{username}}</name>. They will be required to change it on next login.",
+      "selfWarning": "You are resetting your own password. You will be redirected to the change-password page on your next page load.",
+      "success": "Password reset for {{username}}. They will be prompted to set a new password on next login.",
+      "newPassword": "New password *",
+      "confirmPassword": "Confirm password *",
+      "minPlaceholder": "Min. 8 characters",
+      "repeatPlaceholder": "Repeat the new password",
+      "submit": "Reset password",
+      "submitting": "Resetting…",
+      "tooShort": "Password must be at least 8 characters",
+      "mismatch": "Passwords do not match",
+      "failed": "Failed to reset password"
+    },
+    "feedback": {
+      "page": "Page",
+      "category": "Category",
+      "minRating": "Min rating",
+      "all": "All",
+      "any": "Any",
+      "export": "Export CSV",
+      "empty": "No feedback yet.",
+      "pages": {
+        "search": "search",
+        "results": "results",
+        "chat": "chat",
+        "preferences": "preferences",
+        "admin": "admin"
+      },
+      "categories": {
+        "bug": "bug",
+        "feature_request": "feature request",
+        "general": "general",
+        "praise": "praise"
+      }
+    }
+  }
+}
