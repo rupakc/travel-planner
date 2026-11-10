@@ -29,6 +29,7 @@
     "bookFlight": "Réserver ce vol",
     "budgetOf": "(budget : {{amount}})",
     "daySlot": "Jour {{day}} · {{tod}}",
+    "defaultPlanName": "Mon plan de voyage",
     "details": "Détails",
     "dragTip": "Astuce : faites glisser le nom du plan vers « Plans enregistrés » pour l'archiver",
     "dragToSend": "· glissez pour enregistrer",

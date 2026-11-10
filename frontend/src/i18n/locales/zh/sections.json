@@ -29,6 +29,7 @@
     "bookFlight": "预订此航班",
     "budgetOf": "（预算：{{amount}}）",
     "daySlot": "第 {{day}} 天 · {{tod}}",
+    "defaultPlanName": "我的旅行计划",
     "details": "详情",
     "dragTip": "提示：把行程名称拖到“已存行程”即可存档",
     "dragToSend": "· 拖动即可存档",

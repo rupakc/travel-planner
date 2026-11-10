@@ -2578,7 +2578,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         loadPlans()
         onClearLoadedPlan()
         onClearSelections()
-        onPlanNameChange('My Trip Plan')
+        onPlanNameChange(t('drawer.defaultPlanName'))
         setTimeout(() => setSaveMsg(''), 3000)
       } else setSaveMsg('failed')
     } catch { setSaveMsg('failed') }
@@ -2637,7 +2637,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               {t('drawer.planName')} {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">{t('drawer.dragToSend')}</span>}
             </label>
-            <input type="text" data-tid="drawer.plan-name" value={planName} onChange={e => onPlanNameChange(e.target.value)}
+            <input type="text" data-tid="drawer.plan-name" placeholder={t('drawer.defaultPlanName')} value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
             {selectedCount > 0 && (
               <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -2971,7 +2971,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Save buttons */}
           <div className="flex gap-2">
             {loadedPlanId && (
-              <button data-tid="drawer.new" onClick={() => { onClearLoadedPlan(); onPlanNameChange('My Trip Plan') }}
+              <button data-tid="drawer.new" onClick={() => { onClearLoadedPlan(); onPlanNameChange(t('drawer.defaultPlanName')) }}
                 className="px-3 py-2.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition-all shrink-0">
                 {t('drawer.new')}
               </button>
@@ -3076,6 +3076,9 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   )
 }
 
+// Date-only ISO string -> localized day, pinned to UTC so it never shifts
+const fmtDay = (d) => (d ? fmtDate(`${String(d).slice(0, 10)}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' }) : '')
+
 // ─── Search Panel ─────────────────────────────────────────────────────────────
 
 function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
@@ -3110,7 +3113,7 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
           <RefreshCw size={14} className="text-teal-500 shrink-0" />
           <span className="shrink-0">{t('searchPanel.title')}</span>
           <span className="text-gray-400 font-normal text-xs truncate hidden sm:inline">
-            {searchData.origin} → {searchData.destination} · {searchData.departure_date} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}
+            {searchData.origin} → {searchData.destination} · {fmtDay(searchData.departure_date)} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}
           </span>
         </div>
         {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
@@ -3347,7 +3350,7 @@ export default function ResultsPage() {
   const [isPlanOpen, setIsPlanOpen] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
-  const [planName,   setPlanName]   = useState('My Trip Plan')
+  const [planName,   setPlanName]   = useState(() => i18n.t('sections:drawer.defaultPlanName'))
   const [selections, setSelections] = useState({
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null,
@@ -4099,7 +4102,7 @@ export default function ResultsPage() {
                 <p className="font-semibold text-xs sm:text-sm truncate">
                   {searchData.origin} → {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}
                 </p>
-                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}</p>
+                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{fmtDay(searchData.departure_date)}{searchData.return_date ? ` – ${fmtDay(searchData.return_date)}` : ''} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}</p>
                 {searchData.budget_usd > 0 && (
                   <p className="text-slate-300 text-[10px] hidden md:block">{t('page.budget', { amount: `$${fmtNumber(searchData.budget_usd)}` })}</p>
                 )}

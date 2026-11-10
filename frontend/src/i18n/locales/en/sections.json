@@ -29,6 +29,7 @@
     "bookFlight": "Book this flight",
     "budgetOf": "(budget: {{amount}})",
     "daySlot": "Day {{day}} · {{tod}}",
+    "defaultPlanName": "My Trip Plan",
     "details": "Details",
     "dragTip": "Tip: drag the plan name down to \"Saved Plans\" to archive it",
     "dragToSend": "· drag to send to saved",

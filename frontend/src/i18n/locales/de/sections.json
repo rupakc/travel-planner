@@ -29,6 +29,7 @@
     "bookFlight": "Diesen Flug buchen",
     "budgetOf": "(Budget: {{amount}})",
     "daySlot": "Tag {{day}} · {{tod}}",
+    "defaultPlanName": "Mein Reiseplan",
     "details": "Details",
     "dragTip": "Tipp: Zieh den Plannamen nach unten zu „Gespeicherte Pläne“, um ihn zu archivieren",
     "dragToSend": "· zum Speichern ziehen",
