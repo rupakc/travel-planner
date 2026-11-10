@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { consentRequired, getConsent, setConsent, telemetryAllowed } from '../telemetry/consent'
 
@@ -22,36 +23,103 @@ function useConsentTick() {
   }, [])
 }
 
-// A small bottom sheet, not a modal: nothing is blocked or focus-trapped, the
-// buttons are plain tab stops. Shown once, only where consent is required.
-export default function ConsentPrompt() {
-  const { t } = useTranslation('privacy')
-  useConsentTick()
-  if (!(consentRequired() && getConsent() === null)) return null
+// "Privacy choices" (footer, every page): reopens the sheet below, showing the
+// current choice, for any visitor, signed in or not.
+const OPEN = 'tp-consent-open'
 
-  const btn = 'flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 ' +
-    'bg-white hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500'
+export function openPrivacyChoices() {
+  try { window.dispatchEvent(new Event(OPEN)) } catch { /* ignore */ }
+}
+
+// A small bottom sheet, not a modal: nothing is blocked or focus-trapped, the
+// buttons are plain tab stops. Shown once where consent is required, and
+// again whenever "Privacy choices" is used. Compact on phones, with an
+// in-flow spacer of its height so the bottom of the page can scroll clear.
+export default function ConsentPrompt() {
+  const { t } = useTranslation(['privacy', 'misc'])
+  useConsentTick()
+  const [reopened, setReopened] = useState(false)
+  const [height, setHeight] = useState(0)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const open = () => setReopened(true)
+    const close = () => setReopened(false)
+    window.addEventListener(OPEN, open)
+    window.addEventListener(CHANGED, close)
+    return () => {
+      window.removeEventListener(OPEN, open)
+      window.removeEventListener(CHANGED, close)
+    }
+  }, [])
+
+  const firstRun = consentRequired() && getConsent() === null
+  const shown = firstRun || reopened
+
+  useEffect(() => {
+    const el = ref.current
+    if (!shown || !el) return undefined
+    const measure = () => setHeight(el.offsetHeight || 0)
+    measure()
+    if (reopened) {
+      try { el.focus({ preventScroll: true }) } catch { /* ignore */ }
+    }
+    if (typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [shown, reopened])
+
+  if (!shown) return null
+
+  // Reopened: the buttons show what is in force now (opted out until chosen
+  // where consent is required).
+  const current = reopened ? (telemetryAllowed() ? 'granted' : 'denied') : null
+  const btn = (choice) => 'flex-1 rounded-lg border px-3 py-1.5 text-sm font-semibold sm:py-2 ' +
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ' +
+    (current === choice
+      ? 'border-teal-600 bg-teal-50 text-teal-800 ring-1 ring-teal-600'
+      : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50')
   return (
-    <section
-      aria-labelledby="tp-consent-title"
-      data-tid="privacy.prompt"
-      className="fixed bottom-4 left-4 right-4 z-[60] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:left-auto sm:w-96"
-    >
-      <h2 id="tp-consent-title" className="text-sm font-semibold text-slate-800">{t('prompt.title')}</h2>
-      <p className="mt-1 text-xs leading-relaxed text-slate-600">
-        {t('prompt.body')}{' '}
-        <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" data-tid="privacy.prompt-policy"
-          className="font-medium text-teal-700 underline">{t('policy')}</a>
-      </p>
-      <div className="mt-3 flex gap-2">
-        <button type="button" data-tid="privacy.allow" onClick={() => applyConsent('granted')} className={btn}>
-          {t('prompt.allow')}
-        </button>
-        <button type="button" data-tid="privacy.deny" onClick={() => applyConsent('denied')} className={btn}>
-          {t('prompt.deny')}
-        </button>
-      </div>
-    </section>
+    <>
+      <div aria-hidden="true" className="sm:hidden" style={{ height: height ? height + 24 : 0 }} />
+      <section
+        ref={ref}
+        tabIndex={-1}
+        aria-labelledby="tp-consent-title"
+        data-tid="privacy.prompt"
+        className="fixed bottom-3 left-3 right-3 z-[60] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl focus:outline-none sm:bottom-4 sm:left-auto sm:right-4 sm:w-96 sm:p-4"
+      >
+        <div className="flex items-start gap-2">
+          <h2 id="tp-consent-title"
+            className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 sm:whitespace-normal">
+            {t('prompt.title')}
+          </h2>
+          {reopened && (
+            <button type="button" data-tid="privacy.close" onClick={() => setReopened(false)}
+              aria-label={t('misc:feedback.close')}
+              className="-m-1 shrink-0 rounded p-1 text-slate-500 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+              <X size={16} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <p className="mt-1 text-xs leading-snug text-slate-600 sm:leading-relaxed">
+          {t('prompt.body')}{' '}
+          <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" data-tid="privacy.prompt-policy"
+            className="font-medium text-teal-700 underline">{t('policy')}</a>
+        </p>
+        <div className="mt-2 flex gap-2 sm:mt-3">
+          <button type="button" data-tid="privacy.allow" aria-pressed={current ? current === 'granted' : undefined}
+            onClick={() => applyConsent('granted')} className={btn('granted')}>
+            {t('prompt.allow')}
+          </button>
+          <button type="button" data-tid="privacy.deny" aria-pressed={current ? current === 'denied' : undefined}
+            onClick={() => applyConsent('denied')} className={btn('denied')}>
+            {t('prompt.deny')}
+          </button>
+        </div>
+      </section>
+    </>
   )
 }
 

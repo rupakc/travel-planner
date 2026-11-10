@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { returnPathFrom } from '../utils/returnPath'
 import SocialSignInButtons from '../components/auth/SocialSignInButtons'
+import AttributionFooter from '../components/ui/AttributionFooter'
 
 export default function LoginPage() {
   const { t } = useTranslation('account')
@@ -105,6 +106,7 @@ export default function LoginPage() {
           </form>
 
         </div>
+        <AttributionFooter />
       </div>
     </div>
   )

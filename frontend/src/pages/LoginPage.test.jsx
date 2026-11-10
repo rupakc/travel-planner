@@ -59,3 +59,10 @@ describe('sign-in return path', () => {
     expect(location.pathname).toBe('/')
   })
 })
+
+describe('privacy choices on the login page', () => {
+  it('offers the footer "Privacy choices" button to signed-out visitors', async () => {
+    await render('/login')
+    expect(container.querySelector('[data-tid="privacy.choices"]')).not.toBeNull()
+  })
+})

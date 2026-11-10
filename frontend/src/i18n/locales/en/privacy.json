@@ -15,5 +15,6 @@
     "theme": "Theme",
     "language": "Language",
     "privacy": "Privacy"
-  }
+  },
+  "choices": "Privacy choices"
 }

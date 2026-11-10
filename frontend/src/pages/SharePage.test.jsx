@@ -61,3 +61,27 @@ describe('SharePage download', () => {
     expect(container.querySelector('[role="alert"]')).toBeNull()
   })
 })
+
+describe('SharePage privacy choices', () => {
+  let container, root
+  afterEach(() => { act(() => root.unmount()); container.remove() })
+
+  it.each([
+    ['a shared plan', () => Promise.resolve({ ok: true, json: () => Promise.resolve(PLAN) })],
+    ['a missing plan', () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) })],
+  ])('offers the footer "Privacy choices" button on %s', async (_label, respond) => {
+    globalThis.fetch = vi.fn(respond)
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    await act(async () => {
+      root.render(
+        <MemoryRouter initialEntries={['/share/abc']}>
+          <Routes><Route path="/share/:token" element={<SharePage />} /></Routes>
+        </MemoryRouter>,
+      )
+    })
+    await flush()
+    expect(container.querySelector('[data-tid="privacy.choices"]')).not.toBeNull()
+  })
+})

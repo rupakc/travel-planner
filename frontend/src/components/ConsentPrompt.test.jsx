@@ -9,6 +9,7 @@ import i18n from 'i18next'
 import '../i18n'
 import { _resetConsentForTests, getConsent, telemetryAllowed } from '../telemetry/consent'
 import ConsentPrompt, { PrivacySwitch } from './ConsentPrompt'
+import AttributionFooter from './ui/AttributionFooter'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let container, root
@@ -92,5 +93,54 @@ describe('PrivacySwitch', () => {
     await mount(<><ConsentPrompt /><PrivacySwitch /></>)
     await act(async () => tid('privacy.switch').click())
     expect(tid('privacy.allow')).toBeNull()
+  })
+})
+
+describe('Privacy choices (footer)', () => {
+  const page = () => mount(<><AttributionFooter /><ConsentPrompt /></>)
+
+  it('reopens the sheet for a visitor outside the EU, showing the current choice', async () => {
+    zone('America/New_York')
+    await page()
+    expect(tid('privacy.allow')).toBeNull()
+    const link = tid('privacy.choices')
+    expect(link.tagName).toBe('BUTTON')
+    expect(link.textContent).toBe('Privacy choices')
+    await act(async () => link.click())
+    expect(tid('privacy.prompt')).not.toBeNull()
+    expect(tid('privacy.allow').getAttribute('aria-pressed')).toBe('true')
+    expect(tid('privacy.deny').getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('"No thanks" there switches telemetry off and closes the sheet', async () => {
+    zone('America/New_York')
+    await page()
+    expect(telemetryAllowed()).toBe(true)
+    await act(async () => tid('privacy.choices').click())
+    await act(async () => tid('privacy.deny').click())
+    expect(telemetryAllowed()).toBe(false)
+    expect(getConsent()).toBe('denied')
+    expect(tid('privacy.prompt')).toBeNull()
+    await act(async () => tid('privacy.choices').click())
+    expect(tid('privacy.deny').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('reopens after an EU choice, and can be closed without changing it', async () => {
+    zone('Europe/Paris')
+    await page()
+    await act(async () => tid('privacy.allow').click())
+    expect(tid('privacy.prompt')).toBeNull()
+    await act(async () => tid('privacy.choices').click())
+    expect(tid('privacy.allow').getAttribute('aria-pressed')).toBe('true')
+    await act(async () => tid('privacy.close').click())
+    expect(tid('privacy.prompt')).toBeNull()
+    expect(getConsent()).toBe('granted')
+  })
+
+  it('is translated', async () => {
+    zone('America/New_York')
+    await i18n.changeLanguage('de')
+    await page()
+    expect(tid('privacy.choices').textContent).toBe('Datenschutz-Einstellungen')
   })
 })

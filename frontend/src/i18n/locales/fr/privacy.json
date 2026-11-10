@@ -15,5 +15,6 @@
     "theme": "Thème",
     "language": "Langue",
     "privacy": "Confidentialité"
-  }
+  },
+  "choices": "Choix de confidentialité"
 }

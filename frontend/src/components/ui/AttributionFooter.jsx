@@ -1,4 +1,5 @@
-import { Trans } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
+import { openPrivacyChoices } from '../ConsentPrompt'
 
 const linkClass = 'underline hover:text-gray-600'
 
@@ -8,7 +9,11 @@ const ExternalLink = ({ href, tid, children }) => (
   <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass} data-tid={tid}>{children}</a>
 )
 
+// Shown on every page (the signed-in layout, login, share, change password).
+// "Privacy choices" reopens the consent sheet, so signed-out visitors can
+// switch telemetry off too.
 export default function AttributionFooter() {
+  const { t } = useTranslation('privacy')
   return (
     <footer className="py-4 text-center text-xs text-gray-400 print:hidden">
       <Trans
@@ -20,6 +25,10 @@ export default function AttributionFooter() {
           ourairports: <ExternalLink href="https://ourairports.com/" tid="footer.ourairports" />,
         }}
       />
+      <span aria-hidden="true"> · </span>
+      <button type="button" onClick={openPrivacyChoices} className={linkClass} data-tid="privacy.choices">
+        {t('choices')}
+      </button>
     </footer>
   )
 }

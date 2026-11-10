@@ -10,6 +10,7 @@ import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
 import { scheduleDays, timeRange } from '../utils/schedule'
 import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
+import AttributionFooter from '../components/ui/AttributionFooter'
 import i18n from '../i18n'
 import { fmtDate, fmtNumber } from '../i18n/format'
 import { SCRIPT_FONTS } from '../i18n/languages'
@@ -333,6 +334,7 @@ export default function SharePage({ download = downloadCard }) {
         <h1 className="text-xl font-bold text-slate-800">{t('share.unavailableTitle')}</h1>
         <p className="text-sm text-slate-500">{t('share.unavailableBody')}</p>
         <Link to="/" data-tid="share.plan-own-error" className="mt-2 px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">{t('share.planOwn')}</Link>
+        <AttributionFooter />
       </div>
     )
   }
@@ -648,6 +650,7 @@ export default function SharePage({ download = downloadCard }) {
         {downloadFailed && <p role="alert" className="text-center text-sm text-red-600">{t('share.downloadError')}</p>}
         <p className="text-center text-xs text-gray-400">{t('share.readOnly')}</p>
       </div>
+      <AttributionFooter />
     </div>
   )
 }

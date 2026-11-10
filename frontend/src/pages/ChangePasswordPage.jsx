@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import { useTranslation, Trans } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import AttributionFooter from '../components/ui/AttributionFooter'
 
 export default function ChangePasswordPage() {
   const { t } = useTranslation('account')
@@ -40,7 +41,7 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 px-4">
       <div className="bg-white rounded-3xl shadow-lg ring-1 ring-gray-100 w-full max-w-md p-8">
         <div className="mb-6 text-center">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-4 shadow-lg">
@@ -104,6 +105,7 @@ export default function ChangePasswordPage() {
           </button>
         </form>
       </div>
+      <AttributionFooter />
     </div>
   )
 }
