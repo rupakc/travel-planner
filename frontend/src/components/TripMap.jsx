@@ -53,7 +53,7 @@ function nearestNeighborOrder(stops) {
 function makeNumberedIcon(num, color = 'rgb(var(--c-teal-600))', fromLink = false) {
   const ring = fromLink ? 'border:2px solid rgb(var(--c-white));box-shadow:0 0 0 3px rgb(var(--c-amber-500)),0 1px 4px rgba(0,0,0,.35)' : 'border:2px solid rgb(var(--c-white));box-shadow:0 1px 4px rgba(0,0,0,.35)'
   return L.divIcon({
-    html: `<div style="background:${color};color:white;width:22px;height:22px;border-radius:50%;
+    html: `<div style="background:${color};color:rgb(var(--c-white));width:22px;height:22px;border-radius:50%;
            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
            ${ring}">${num}</div>`,
     className: '',

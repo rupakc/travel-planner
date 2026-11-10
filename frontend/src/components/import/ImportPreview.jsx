@@ -70,7 +70,7 @@ function PlaceRow({ place, number, stops, onChange }) {
         aria-label={`Include ${place.name}`}
         className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-teal-600" />
       <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-        style={place.approximate ? { color, boxShadow: `inset 0 0 0 2px ${color}` } : { background: color, color: 'white' }}>
+        style={place.approximate ? { color, boxShadow: `inset 0 0 0 2px ${color}` } : { background: color, color: 'rgb(var(--c-white))' }}>
         {number}
       </span>
       <div className="min-w-0 flex-1">

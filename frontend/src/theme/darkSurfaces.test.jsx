@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import TripMap from '../components/TripMap'
+import { pinIcon } from '../components/import/ImportMap'
 
 const OLD_LITERALS = ['#0d9488', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280', '#b45309']
 
@@ -33,8 +34,19 @@ describe('dark surfaces', () => {
     // Leaflet's own attribution flag SVG carries hex fills; ours must not.
     const ours = html.replace(/<svg[^>]*leaflet-attribution-flag[\s\S]*?<\/svg>/g, '')
     expect(ours).not.toMatch(/#[0-9a-f]{3,6}\b/)
+    // Pin numbers follow the theme (white in light, the dark surface in dark), not a fixed white.
+    expect(html).toContain('color:rgb(var(--c-white))')
+    expect(html).not.toMatch(/color:\s*white/)
     act(() => root.unmount())
     container.remove()
+  })
+
+  it('import pins use the theme variable for the number colour', () => {
+    for (const approximate of [false, true]) {
+      const html = pinIcon(1, 'sight', approximate, null).options.html
+      expect(html).not.toMatch(/color:\s*white|#fff/i)
+      if (!approximate) expect(html).toContain('color:rgb(var(--c-white))')
+    }
   })
 
   it('index.css dims map tiles in dark mode only', () => {
