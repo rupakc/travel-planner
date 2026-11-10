@@ -34,7 +34,7 @@
     "officialSource": "Offizielle Quelle",
     "copy": "Kopieren",
     "copied": "Kopiert",
-    "retry": "Erneut",
+    "retry": "Wiederholen",
     "close": "Schließen",
     "remove": "Entfernen"
   },
@@ -63,14 +63,14 @@
     "tips": "Reisetipps",
     "getting_around": "Fortbewegung",
     "forex": "Währung & Geldwechsel",
-    "itinerary": "Reiseplan"
+    "itinerary": "Reiseverlauf"
   },
   "section": {
-    "building": "Dein Reiseplan wird erstellt…",
+    "building": "Dein Reiseverlauf wird erstellt…",
     "searching": "Suche nach {{what}}…"
   },
   "estimates": {
-    "warning": "Preise sind Schätzungen — vor der Buchung auf den Buchungsseiten prüfen"
+    "warning": "Preise sind Schätzungen – vor der Buchung auf den Buchungsseiten prüfen"
   },
   "flights": {
     "none": "Keine Flüge gefunden",
@@ -111,12 +111,12 @@
     "fees": "Gebühren: {{fees}}",
     "cards": "Karten",
     "cash": "Bargeld",
-    "dependency": "Bargeldbedarf: {{level}}",
-    "tippingExpected": "Trinkgeld erwartet",
-    "tippingNotExpected": "Trinkgeld nicht erwartet"
+    "dependency": "Bargeldabhängigkeit: {{level}}",
+    "tippingExpected": "Trinkgeld üblich",
+    "tippingNotExpected": "Trinkgeld nicht üblich"
   },
   "itinerary": {
-    "none": "Kein Reiseplan verfügbar",
+    "none": "Kein Reiseverlauf verfügbar",
     "day": "Tag {{n}}",
     "timeOfDay": {
       "morning": "Vormittag",
@@ -147,8 +147,8 @@
     "activitiesCount": "Aktivitäten ({{n}})",
     "gettingAroundCount": "Fortbewegung ({{n}})",
     "tipsCount": "Tipps ({{n}})",
-    "itinerarySlots_one": "Reiseplan ({{count}} Slot)",
-    "itinerarySlots_other": "Reiseplan ({{count}} Slots)",
+    "itinerarySlots_one": "Reiseverlauf ({{count}} Programmpunkt)",
+    "itinerarySlots_other": "Reiseverlauf ({{count}} Programmpunkte)",
     "slotLine": "Tag {{day}} · {{time}}",
     "dropToLoad": "Zum Laden dieses Plans ablegen",
     "selectItems": "Wähle Einträge aus den Ergebnissen,\num deinen Plan zu erstellen",
@@ -168,7 +168,7 @@
     "watch": "Preisalarm",
     "view": "Ansehen",
     "share": "Teilen",
-    "shareTitle": "Öffentlichen Link kopieren — zum Ansehen ist keine Anmeldung nötig",
+    "shareTitle": "Öffentlichen Link kopieren – zum Ansehen ist keine Anmeldung nötig",
     "shareFailed": "Link konnte nicht erstellt werden",
     "linkCopied": "🔗 Link kopiert: {{url}}",
     "msg": {
@@ -176,7 +176,7 @@
       "updated": "Plan aktualisiert!",
       "saved": "Gespeichert!",
       "failed": "Speichern fehlgeschlagen",
-      "sentBack": "Plan zurückgeschickt!",
+      "sentBack": "Plan zurückgelegt!",
       "planSaved": "Plan gespeichert!"
     }
   },
@@ -192,8 +192,8 @@
     "travelers_other": "{{count}} Reisende",
     "estPerPerson": "ca. pro Person",
     "gettingThere": "Anreise",
-    "buildFailed": "Reiseplan konnte nicht erstellt werden — bitte versuche es erneut.",
-    "daysItinerary": "{{n}}-Tage-Reiseplan",
+    "buildFailed": "Reiseverlauf konnte nicht erstellt werden – bitte versuche es erneut.",
+    "daysItinerary": "{{n}}-Tage-Reiseverlauf",
     "collapseAll": "Alle einklappen",
     "expandAll": "Alle ausklappen",
     "travelDay": "✈️ Reisetag",

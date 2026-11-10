@@ -21,8 +21,8 @@
       "badge": "Orte"
     },
     "walking_tours": {
-      "label": "Kostenlose Stadtführungen",
-      "badge": "Stadtführungen"
+      "label": "Kostenlose Walking Tours",
+      "badge": "Walking Tours"
     },
     "events": {
       "label": "Was ist los",
@@ -49,8 +49,8 @@
       "badge": "Geld"
     },
     "itinerary": {
-      "label": "Reiseplan",
-      "badge": "Reiseplan"
+      "label": "Reiseverlauf",
+      "badge": "Reiseverlauf"
     },
     "stress_test": {
       "label": "Reise-Check",
@@ -121,7 +121,7 @@
     "itinerary": {
       "m1": "Wir erstellen deinen Tagesplan ...",
       "m2": "Wir verteilen die Aktivitäten auf die Tage ...",
-      "m3": "Wir feilen am perfekten Reiseplan ..."
+      "m3": "Wir feilen am perfekten Reiseverlauf ..."
     },
     "places_to_see": {
       "m1": "Wir suchen die wichtigsten Sehenswürdigkeiten ...",
@@ -163,8 +163,8 @@
   "plan": {
     "add": "Hinzufügen",
     "added": "Hinzugefügt",
-    "addToPlan": "Zum Plan hinzufügen",
-    "addedToPlan": "Zum Plan hinzugefügt",
+    "addToPlan": "Zum Plan",
+    "addedToPlan": "Im Plan",
     "inPlan": "Im Plan"
   },
   "common": {
@@ -216,7 +216,7 @@
     "stopsBtn_other": "{{count}} Stopps",
     "layoverIn": "{{hours}} Std. in {{place}}",
     "stopIn": "Zwischenstopp in {{place}}",
-    "makeMostOfIt": "Layover nutzen",
+    "makeMostOfIt": "Zwischenstopp nutzen",
     "multiCity": "Mehrstädtereise – wähle einen Flug pro Etappe ({{chosen}}/{{total}} gewählt)",
     "leg": "Etappe {{n}}",
     "noLegFlights": "Keine Flüge für diese Etappe gefunden – schau unter Fortbewegung nach Zügen und Bussen",
@@ -264,7 +264,7 @@
   },
   "activities": {
     "none": "Keine Aktivitäten gefunden – probiere andere Interessen oder ändere die Daten",
-    "match": "{{percent}} % Übereinstimmung",
+    "match": "{{percent}} % passend",
     "hours": "{{h}} Std.",
     "bookNow": "Jetzt buchen",
     "fitsBudget": "Passt zu deinem Budget",
@@ -289,7 +289,7 @@
     "viewDetails": "Details ansehen"
   },
   "events": {
-    "error": "Lokale Events konnten diesmal nicht geprüft werden – der Rest deines Plans bleibt unberührt.",
+    "error": "Lokale Events konnten diesmal nicht geprüft werden – der Rest deines Plans ist nicht betroffen.",
     "none": "In deinem Zeitraum wurden keine nennenswerten Events gefunden.",
     "typicalSeason": "Übliche Saison – genaue Termine können abweichen",
     "planAround": "Hierauf solltest du achten"
@@ -297,7 +297,7 @@
   "visa": {
     "unavailable": "Visa-Infos nicht verfügbar – schau auf dem offiziellen Reiseportal deiner Regierung nach",
     "confidence": "Zuverlässigkeit: {{level}}",
-    "maxStay": "Max. Aufenthalt",
+    "maxStay": "Max. Dauer",
     "days_one": "{{count}} Tag",
     "days_other": "{{count}} Tage",
     "processing": "Bearbeitung",
@@ -368,7 +368,7 @@
   "pricing": {
     "now": "Jetzt",
     "days90": "90 T",
-    "bookNow": "Jetzt buchen",
+    "bookNow": "Buchen",
     "considerWaiting": "Abwarten erwägen",
     "confidence": "Zuverlässigkeit: {{level}}",
     "bestWindow": "Bester Zeitraum: {{window}}",

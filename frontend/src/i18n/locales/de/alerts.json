@@ -2,8 +2,8 @@
   "ui": {
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "retry": "Erneut versuchen",
-    "tryAgain": "Nochmal versuchen",
+    "retry": "Wiederholen",
+    "tryAgain": "Erneut versuchen",
     "done": "Fertig",
     "dismiss": "Schließen",
     "delete": "Löschen",
@@ -57,10 +57,10 @@
     }
   },
   "checks": {
-    "justNow": "Gerade geprüft: {{price}}. Noch nichts, was einen Alarm wert wäre.",
+    "justNow": "Gerade geprüft: {{price}}. Noch nichts, was einen Preisalarm wert wäre.",
     "noFares": "Gerade geprüft, aber für diese Daten wurden keine Preise gefunden.",
     "failed": "Die Live-Preise haben nicht geantwortet. Wir versuchen es innerhalb einer Stunde erneut.",
-    "errored": "Die Live-Preise sind dreimal in Folge fehlgeschlagen, deshalb sind die Prüfungen pausiert. Tippe auf „Erneut versuchen“, wenn du so weit bist.",
+    "errored": "Die Live-Preise sind dreimal in Folge fehlgeschlagen, deshalb sind die Prüfungen pausiert. Tippe auf „Wiederholen“, wenn du so weit bist.",
     "expired": "Diese Reise hat begonnen, deshalb beobachten wir den Preis nicht mehr.",
     "postponed": "Die Live-Preise sind gerade ausgelastet – wir prüfen morgen wieder.",
     "deleted": "Diese Beobachtung wurde entfernt.",
@@ -80,7 +80,7 @@
     "invalid": "Gib eine vollständige E-Mail-Adresse ein, z. B. name@example.com.",
     "saveFailed": "Deine E-Mail konnte nicht gespeichert werden. Versuch es nochmal.",
     "helpOn": "Wird nur für Preisbeobachtungen genutzt, die du per E-Mail erhalten möchtest. Leer lassen, um sie zu entfernen.",
-    "helpOff": "Dieser Server versendet noch keine E-Mails – Alarme bekommst du weiterhin in der App."
+    "helpOff": "Dieser Server versendet noch keine E-Mails – Preisalarme bekommst du weiterhin in der App."
   },
   "kinds": {
     "seeFare": "Preis ansehen",
@@ -89,11 +89,11 @@
     "seeActivity": "Aktivität ansehen",
     "seeTrip": "Reise ansehen",
     "view": "Ansehen",
-    "retry": "Erneut versuchen",
+    "retry": "Wiederholen",
     "checkTrip": "Reise prüfen"
   },
   "toast": {
-    "dismiss": "Alarm schließen"
+    "dismiss": "Preisalarm schließen"
   },
   "bell": {
     "unreadBadge": "Ungelesen",
@@ -104,8 +104,8 @@
     "title": "Preisalarme",
     "markAll": "Alle als gelesen markieren",
     "loading": "Lädt…",
-    "loadFailed": "Alarme konnten nicht geladen werden. Prüf deine Verbindung und öffne es erneut.",
-    "emptyTitle": "Noch keine Alarme",
+    "loadFailed": "Preisalarme konnten nicht geladen werden. Prüf deine Verbindung und öffne es erneut.",
+    "emptyTitle": "Noch keine Preisalarme",
     "emptyBody": "Beobachte einen Flug, ein Hotel, eine Aktivität oder eine ganze Reise – hier erfährst du, wenn der Preis fällt.",
     "seeAll": "Alle beobachteten Preise ansehen"
   },
@@ -156,9 +156,9 @@
     "watchingPrice": "Beobachtet · {{price}}",
     "watchPaused": "Beobachtung pausiert",
     "watchHold": "Beobachtung angehalten",
-    "openWatch": "Diese Beobachtung auf deiner Alarmseite öffnen",
-    "openAria": "{{label}} – deine Alarme öffnen",
-    "openAriaNamed": "{{label}}, {{name}} – deine Alarme öffnen",
+    "openWatch": "Diese Beobachtung auf deiner Preisalarm-Seite öffnen",
+    "openAria": "{{label}} – deine Preisalarme öffnen",
+    "openAriaNamed": "{{label}}, {{name}} – deine Preisalarme öffnen",
     "fareTitle": "Du erfährst, wenn dieser Preis fällt",
     "activityTitle": "Du erfährst, wenn der Preis dieser Aktivität fällt",
     "hotelTitle": "Du erfährst, wenn der Preis dieses Hotels fällt",
@@ -184,8 +184,8 @@
     "googleTypical": "Google: typischer Preis",
     "googleHigh": "Google: hoch für diese Strecke",
     "oneWay": "(einfach)",
-    "alertsTarget": "Alarm, wenn es {{price}} oder weniger kostet",
-    "alertsDrops": "Alarm bei deutlichen Rückgängen",
+    "alertsTarget": "Preisalarm, wenn es {{price}} oder weniger kostet",
+    "alertsDrops": "Preisalarm bei deutlichen Preisrückgängen",
     "alsoEmail": "auch per E-Mail",
     "noPriceFound": "Es wurde kein Preis gefunden",
     "noPriceYet": "Noch kein Preis",
@@ -207,7 +207,7 @@
     "flexDays": "±3 Tage"
   },
   "edit": {
-    "aria": "Alarmeinstellungen bearbeiten",
+    "aria": "Preisalarm-Einstellungen bearbeiten",
     "tellMe": "Benachrichtige mich",
     "whenDrops": "Wenn der Preis fällt",
     "belowSymbol": "Wenn er unter {{symbol}} liegt",
@@ -223,7 +223,7 @@
     "anyDrop": "Wenn der Preis fällt",
     "belowTarget": "Wenn er unter einem Preis liegt, den ich wähle",
     "start": "Beobachtung starten",
-    "seeAlerts": "Deine Alarme ansehen",
+    "seeAlerts": "Deine Preisalarme ansehen",
     "alreadyBelow": "Bereits unter deinem Zielpreis – wir melden uns, wenn er weiter fällt.",
     "today": "Heute",
     "fare": {
@@ -332,7 +332,7 @@
     "priceNights_one": "{{price}} für {{count}} Nacht",
     "priceNights_other": "{{price}} für {{count}} Nächte",
     "calledIt": "Dein Plan nennt es „{{requested}}“; Google Hotels führt es als „{{title}}“.",
-    "notThisRemove": "Nicht dieses? <pagelink>Auf deiner Alarmseite entfernen</pagelink>.",
+    "notThisRemove": "Nicht dieses? <pagelink>Auf deiner Preisalarm-Seite entfernen</pagelink>.",
     "notThis": "Nicht dieses?",
     "others": "Weitere Hotels bei Google Hotels",
     "switchFailed": "Der Wechsel zu diesem Hotel hat nicht geklappt – du beobachtest weiterhin das erste.",
@@ -360,8 +360,8 @@
   "trip": {
     "yourPlan": "Dein Plan, so wie wir ihn rechnen",
     "lookup": "Beim Start rufen wir Live-Preise für deinen Flug (den günstigsten Preis an deinen Daten, nicht einen bestimmten Flug), das Hotel und bis zu 5 Aktivitäten ab und zeigen die Live-Summe. Alles ohne Live-Preis bleibt bei der Schätzung.",
-    "estimatesNote": "Schätzungen bleiben fest und lösen nie Alarme aus.",
-    "alertsNote": "Alarme entstehen nur, wenn Live-Preise die Summe um mindestens 25 $ oder 4 % verändern.",
+    "estimatesNote": "Schätzungen bleiben fest und lösen nie Preisalarme aus.",
+    "alertsNote": "Preisalarme entstehen nur, wenn Live-Preise die Summe um mindestens 25 $ oder 4 % verändern.",
     "caption_one": "Das beobachten wir · {{live}} live, {{count}} Schätzung",
     "caption_other": "Das beobachten wir · {{live}} live, {{count}} Schätzungen",
     "part": "Teil",
@@ -396,7 +396,7 @@
     },
     "badge": {
       "estimate": "Schätzung",
-      "estimateTitle": "Eine KI-Schätzung aus deiner Suche, die fest bleibt. Schätzungen lösen nie Alarme aus.",
+      "estimateTitle": "Eine KI-Schätzung aus deiner Suche, die fest bleibt. Schätzungen lösen nie Preisalarme aus.",
       "unavailable": "Nicht verfügbar",
       "unavailableTitle": "Bei der letzten Prüfung nicht verfügbar – angezeigt wird der zuletzt gesehene Live-Preis.",
       "notChecked": "Nicht geprüft",
@@ -407,11 +407,11 @@
       "liveTitle": "Live-Preis aus der letzten Prüfung."
     },
     "lastCheck": "Letzte Prüfung: {{moves}}.",
-    "noMove": "Letzte Prüfung: kein Live-Preis hat sich bewegt.",
+    "noMove": "Letzte Prüfung: Kein Live-Preis hat sich geändert.",
     "couldntPrice": "Für {{list}} gab es keinen Preis – der letzte Live-Preis bleibt.",
     "reason": {
       "flight": "Flüge sind der günstigste Live-Preis für deine Daten, nicht der Flug, den du gewählt hast",
-      "hotel": "das Hotel hat seinen Live-Preis von Google Hotels",
+      "hotel": "das Hotel zählt mit seinem Live-Preis von Google Hotels",
       "activityPer": "Aktivitäten werden pro Person × {{n}} gerechnet",
       "activityLive": "Aktivitäten nutzen ihre Live-„ab“-Preise"
     }
@@ -460,7 +460,7 @@
     "checked": "Gerade geprüft.",
     "unavailable": "Für deine Daten ist es gerade nicht verfügbar. Wir prüfen weiter.",
     "failed": "Die Live-Preise haben nicht geantwortet. Wir versuchen es innerhalb einer Stunde erneut.",
-    "errored": "Die Prüfungen ruhen nach drei Fehlversuchen in Folge. Tippe auf Erneut versuchen, wenn du bereit bist.",
+    "errored": "Die Prüfungen ruhen nach drei Fehlversuchen in Folge. Tippe auf „Wiederholen“, wenn du bereit bist.",
     "expired": "Diese Beobachtung ist beendet, wir prüfen nicht mehr.",
     "postponed": "Die Live-Preise sind gerade überlastet – wir prüfen morgen erneut.",
     "default": "Es wurde nichts geprüft: Dieser Preis wird gerade nicht beobachtet."

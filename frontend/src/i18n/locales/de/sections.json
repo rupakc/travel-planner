@@ -1,11 +1,11 @@
 {
   "clientItinerary": {
     "airport": "Flughafen",
-    "arrive": "Ankunft in {{dest}}, Transfer zu {{hotel}}",
+    "arrive": "Ankunft: {{dest}} – Transfer: {{hotel}}",
     "arriveNote": "Hol dir am Flughafen eine lokale Nahverkehrskarte",
-    "checkIn": "Check-in im {{hotel}}, kurz frischmachen und die Gegend erkunden",
+    "checkIn": "Check-in: {{hotel}} – kurz frischmachen und die Gegend erkunden",
     "checkInNote": "Ruh dich nach der Reise aus",
-    "checkOut": "Check-out im {{hotel}} und Fahrt zum Flughafen",
+    "checkOut": "Check-out: {{hotel}} – dann Fahrt zum Flughafen",
     "checkOutNote": "Plane genug Zeit für den Check-in ein",
     "departureFlight": "Abflug",
     "finalBreakfast": "Letztes Frühstück und Last-Minute-Shopping",
@@ -38,8 +38,8 @@
     "editingSaved": "Gespeicherter Plan",
     "events": "Events ({{count}})",
     "flight": "Flug",
-    "flightsLegs_one": "Flüge ({{count}} Strecke)",
-    "flightsLegs_other": "Flüge ({{count}} Strecken)",
+    "flightsLegs_one": "Flüge ({{count}} Etappe)",
+    "flightsLegs_other": "Flüge ({{count}} Etappen)",
     "free": "Kostenlos",
     "fromLink": "Aus einem Link geplant",
     "getPlan": "Tarif holen",
@@ -48,9 +48,9 @@
     "hotelLine": "{{location}} · {{price}}/Nacht",
     "hotelLineTotal": "{{location}} · {{price}}/Nacht · {{total}} gesamt",
     "hoursShort": "{{h}} Std.",
-    "itinerarySlots_one": "Reiseplan ({{count}} Slot)",
-    "itinerarySlots_other": "Reiseplan ({{count}} Slots)",
-    "leg": "Strecke {{n}}:",
+    "itinerarySlots_one": "Reiseverlauf ({{count}} Programmpunkt)",
+    "itinerarySlots_other": "Reiseverlauf ({{count}} Programmpunkte)",
+    "leg": "Etappe {{n}}:",
     "linkCopied": "Link kopiert: {{url}}",
     "load": "Laden",
     "loaded": "Geladen",
@@ -77,7 +77,7 @@
     "savedPlans": "Gespeicherte Pläne",
     "saving": "Speichern …",
     "selectLine1": "Wähle Flüge, Hotels & Aktivitäten",
-    "selectLine2": "um deinen Plan zu bauen",
+    "selectLine2": "um deinen Plan zu erstellen",
     "severity": {
       "danger": "Gefahr",
       "info": "Info",
@@ -96,15 +96,15 @@
     "tod": {
       "afternoon": "Nachmittag",
       "evening": "Abend",
-      "morning": "Morgen",
+      "morning": "Vormittag",
       "night": "Nacht"
     },
     "totalFlights": "{{amount}} Flüge gesamt",
     "update": "Plan aktualisieren",
     "view": "Ansehen",
     "viewBook": "Ansehen & buchen",
-    "walkingTours": "Stadtspaziergänge ({{count}})",
-    "watch": "Beobachten"
+    "walkingTours": "Walking Tours ({{count}})",
+    "watch": "Preisalarm"
   },
   "emergency": {
     "disclaimer": "Prüfe alle Angaben vor der Reise – sie können veraltet sein. Lass sie dir bei der Ankunft an der Hotelrezeption bestätigen.",
@@ -143,7 +143,7 @@
     "clearFlightFilters": "Flugfilter zurücksetzen",
     "clearHotelFilters": "Hotelfilter zurücksetzen",
     "done": "Fertig",
-    "editingOff": "Bearbeiten ist deaktiviert, solange ein gespeicherter Plan geöffnet ist. Tippe in „Mein Plan“ auf „Neu“, um diesen Reiseplan zu bearbeiten.",
+    "editingOff": "Bearbeiten ist deaktiviert, solange ein gespeicherter Plan geöffnet ist. Tippe in „Mein Plan“ auf „Neu“, um diesen Reiseverlauf zu bearbeiten.",
     "fareCalendar": "Preiskalender",
     "filterError": "Filter konnten nicht angewendet werden – versuch es erneut",
     "filters": "Filter",
@@ -192,7 +192,7 @@
     "metric": {
       "min_flight_usd": "Günstigster Flug",
       "min_hotel_nightly_usd": "Hotel / Nacht",
-      "itinerary_total_usd": "Kosten der Reiseroute",
+      "itinerary_total_usd": "Kosten des Reiseverlaufs",
       "poor_weather_days": "Tage mit schlechtem Wetter"
     }
   },
@@ -219,7 +219,7 @@
     "visasPh": "USA, Japan …"
   },
   "stress": {
-    "blurb": "Kritische Prüfung von Reiseplan, Flügen, Visa-Fristen, Wetter und Budget.",
+    "blurb": "Kritische Prüfung von Reiseverlauf, Flügen, Visa-Fristen, Wetter und Budget.",
     "category": {
       "budget": "Budget",
       "logistics": "Logistik",
@@ -228,8 +228,8 @@
       "visa": "Visum",
       "weather": "Wetter"
     },
-    "checkedEdited": "Gegen deinen bearbeiteten Reiseplan geprüft",
-    "checkedOriginal": "Gegen den ursprünglichen Reiseplan geprüft – deine Verschiebungen sind nicht berücksichtigt.",
+    "checkedEdited": "Gegen deinen bearbeiteten Reiseverlauf geprüft",
+    "checkedOriginal": "Gegen den ursprünglichen Reiseverlauf geprüft – deine Verschiebungen sind nicht berücksichtigt.",
     "day": "Tag {{n}}",
     "none": "Keine Probleme gefunden – dieser Plan hat der Prüfung standgehalten.",
     "overall": {
