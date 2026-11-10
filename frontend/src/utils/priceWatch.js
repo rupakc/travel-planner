@@ -1,5 +1,10 @@
 // Pure helpers for price watches (hotel / activity / trip) next to fare
 // watches on the Alerts page. API shapes: docs/API-Reference.md.
+import i18n from '../i18n'
+import { intlLocale } from '../i18n/format'
+
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
+const locale = () => intlLocale(i18n.resolvedLanguage || i18n.language)
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const codeOf = (currency) => (typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD')
@@ -7,7 +12,7 @@ const codeOf = (currency) => (typeof currency === 'string' && currency.trim() ? 
 /** Minor-unit digits a currency normally shows (0 for JPY; 2 when Intl doesn't know the code). */
 function currencyDigits(code) {
   try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits
+    return new Intl.NumberFormat(locale(), { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits
   } catch {
     return 2
   }
@@ -27,11 +32,11 @@ export function formatPrice(amount, currency = 'USD', { cents = false } = {}) {
   const fractional = Math.abs(rounded) < 100 && rounded !== Math.round(rounded)
   const digits = (cents || fractional) && currencyDigits(code) > 0 ? 2 : 0
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale(), {
       style: 'currency', currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits,
     }).format(amount)
   } catch {
-    return `${code} ${amount.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`
+    return `${code} ${amount.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })}`
   }
 }
 
@@ -39,7 +44,7 @@ export function formatPrice(amount, currency = 'USD', { cents = false } = {}) {
 export function currencySymbol(currency = 'USD') {
   const code = codeOf(currency)
   try {
-    const part = new Intl.NumberFormat('en-US', { style: 'currency', currency: code })
+    const part = new Intl.NumberFormat(locale(), { style: 'currency', currency: code })
       .formatToParts(0).find(p => p.type === 'currency')
     return part?.value || code
   } catch {
@@ -48,14 +53,14 @@ export function currencySymbol(currency = 'USD') {
 }
 
 /** Words for labels: "US dollars" for USD, else the code ("EUR"). */
-export const currencyLabel = (currency = 'USD') => (codeOf(currency) === 'USD' ? 'US dollars' : codeOf(currency))
+export const currencyLabel = (currency = 'USD') => (codeOf(currency) === 'USD' ? tt('currency.usd') : codeOf(currency))
 
 /** A typed target price (symbols, commas and spaces allowed). */
 export function checkPriceTarget(raw) {
   const text = String(raw ?? '')
   const value = Number(text.replace(/[^\d.-]/g, ''))
   if (!text.trim() || !Number.isFinite(value) || value <= 0) {
-    return { error: 'Enter a price, like 450.', value: null }
+    return { error: tt('target.errorPrice'), value: null }
   }
   return { error: null, value }
 }
@@ -64,30 +69,26 @@ export function checkPriceTarget(raw) {
 export function priceWatchChange(w) {
   if (!isNum(w?.baseline_price) || !isNum(w?.last_price)) return null
   const delta = Math.round((w.last_price - w.baseline_price) * 100) / 100
-  if (Math.abs(delta) < 0.005) return { delta: 0, direction: 'same', text: 'Same as when you started' }
+  if (Math.abs(delta) < 0.005) return { delta: 0, direction: 'same', text: tt('change.same') }
   const amount = formatPrice(Math.abs(delta), w.currency)
   return delta < 0
-    ? { delta, direction: 'down', text: `${amount} less than when you started` }
-    : { delta, direction: 'up', text: `${amount} more than when you started` }
+    ? { delta, direction: 'down', text: tt('change.less', { amount }) }
+    : { delta, direction: 'up', text: tt('change.more', { amount }) }
 }
 
 /** Filter chips on the Alerts page, in order. `kind` matches watchKind(). */
-export const ALERT_TABS = [
-  { id: 'all', label: 'All', noun: 'watch' },
-  { id: 'flight', label: 'Flights', noun: 'flight watch',
-    empty: 'No flights watched yet. Search a trip and choose “Watch fare” in the Flights section.' },
-  { id: 'hotel', label: 'Hotels', noun: 'hotel watch',
-    empty: 'No hotels watched yet. Watch a hotel from its card in your results.' },
-  { id: 'activity', label: 'Activities', noun: 'activity watch',
-    empty: 'No activities watched yet. Watch an activity from its card in your results.' },
-  { id: 'trip', label: 'Trips', noun: 'trip watch',
-    empty: 'No trips watched yet. Save a plan, then choose “Watch whole trip”.' },
-]
+const TAB_IDS = ['all', 'flight', 'hotel', 'activity', 'trip']
+// label / empty read at use time so they follow a language switch
+export const ALERT_TABS = TAB_IDS.map(id => ({
+  id,
+  get label() { return tt(`tabs.${id}`) },
+  get empty() { return id === 'all' ? undefined : tt(`tabs.empty.${id}`) },
+}))
 
 /** What the filter shows, for a polite live region: "Showing 1 hotel watch". */
 export function filterStatus(tab, n) {
   const t = ALERT_TABS.find(x => x.id === tab) || ALERT_TABS[0]
-  return `Showing ${n} ${t.noun}${n === 1 ? '' : 'es'}`
+  return tt(`tabs.status.${t.id}`, { count: n })
 }
 
 /** 'flight' for a fare watch, else the price watch's kind. */
@@ -134,23 +135,23 @@ export function priceCheckMessage(res) {
     case 'checked':
       if (res.notification) return { tone: 'good', text: res.notification.title }
       if (res.last_price != null) {
-        return { tone: 'neutral', text: `Checked just now: ${formatPrice(res.last_price, res.currency)}. Nothing worth an alert yet.` }
+        return { tone: 'neutral', text: tt('checks.justNow', { price: formatPrice(res.last_price, res.currency) }) }
       }
-      return { tone: 'neutral', text: 'Checked just now.' }
+      return { tone: 'neutral', text: tt('checksPrice.checked') }
     case 'unavailable':
-      return { tone: 'warn', text: 'It isn’t available for your dates right now. We’ll keep checking.' }
+      return { tone: 'warn', text: tt('checksPrice.unavailable') }
     case 'failed':
-      return { tone: 'warn', text: 'Live prices didn’t respond. We’ll try again within the hour.' }
+      return { tone: 'warn', text: tt('checksPrice.failed') }
     case 'errored':
-      return { tone: 'warn', text: 'Checks are on hold after three tries in a row. Use Retry when you’re ready.' }
+      return { tone: 'warn', text: tt('checksPrice.errored') }
     case 'expired':
-      return { tone: 'neutral', text: 'This watch has ended, so we’ve stopped checking.' }
+      return { tone: 'neutral', text: tt('checksPrice.expired') }
     case 'postponed':
-      return { tone: 'warn', text: 'Live prices are busy right now — we’ll check again tomorrow.' }
+      return { tone: 'warn', text: tt('checksPrice.postponed') }
     case 'deleted':
-      return { tone: 'neutral', text: 'This watch was removed.' }
+      return { tone: 'neutral', text: tt('checks.deleted') }
     default:
-      return { tone: 'neutral', text: 'Nothing was checked: this price isn’t being watched right now.' }
+      return { tone: 'neutral', text: tt('checksPrice.default') }
   }
 }
 

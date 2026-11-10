@@ -111,7 +111,34 @@
     },
     "examples": "试试示例:",
     "find": "查找地点",
-    "findInShots_other": "从 {{count}} 张截图中查找地点"
+    "findInShots_other": "从 {{count}} 张截图中查找地点",
+    "example": {
+      "lisbon": {
+        "label": "里斯本 48 小时",
+        "text": "里斯本 48 小时：在 Time Out Market 吃午餐，参观贝伦塔并在 Pastéis de Belém 尝蛋挞，逛 LX Factory，在 Miradouro da Senhora do Monte 看日落，再一日游辛特拉的佩纳宫。"
+      },
+      "tokyo": {
+        "label": "朋友的东京攻略",
+        "text": "我这趟东京行的必去清单！！早餐去筑地场外市场，teamLab Planets（要提前订票），趁人少一早去浅草寺，在黄金街喝一杯，日落时去涩谷天空。有时间的话，去箱根泡温泉。"
+      },
+      "rome": {
+        "label": "罗马和佛罗伦萨",
+        "text": "第 1–2 天罗马：斗兽场、在特拉斯提弗列吃晚餐、万神殿、去 Giolitti 吃冰淇淋。第 3–4 天佛罗伦萨：乌菲兹美术馆、登上大教堂穹顶、日落时的米开朗基罗广场，午餐在中央市场。"
+      }
+    },
+    "err": {
+      "network": "无法连接到 Voyager。请检查网络后重试。",
+      "unknown": "读取时出了问题，请稍后再试。",
+      "tooLarge": "上传内容太大——最多使用 4 张、每张不超过 5 MB 的截图。"
+    },
+    "file": {
+      "heic": "暂不支持读取 iPhone 的 HEIC 照片——请改用截图（截图是 PNG 格式），或导出为 JPEG。",
+      "notImage": "{{name}} 不是我们能读取的图片。请使用 PNG、JPEG 或 WebP。",
+      "thatFile": "该文件",
+      "thatImage": "该图片",
+      "tooBigSource": "{{name}} 太大，无法在此读取（超过 40 MB）。请裁剪或另存为更小的文件。",
+      "over5": "{{name}} 超过 5 MB。请裁剪或另存为更小的 PNG 或 JPEG。"
+    }
   },
   "form": {
     "from": "出发地",

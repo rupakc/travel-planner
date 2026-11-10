@@ -11,6 +11,7 @@ import WatchFareButton from './alerts/WatchFareButton'
 import WatchTripButton from './alerts/WatchTripButton'
 import { tripFromPlan } from '../utils/fareWatch'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
+import { enumLabel } from '../utils/enumLabel'
 import PlanExport from './PlanExport'
 import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
@@ -311,7 +312,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     {sel.sim.data_gb && <span>{t('modal.sim.data', { gb: sel.sim.data_gb })}</span>}
                     {sel.sim.validity_days && <span>{t('modal.sim.days', { count: sel.sim.validity_days })}</span>}
                     {sel.sim.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={9}/>{sel.sim.network_quality.speed}</span>}
-                    {sel.sim.network_quality?.coverage_rating && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${sel.sim.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : sel.sim.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : sel.sim.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{sel.sim.network_quality.coverage_rating}</span>}
+                    {sel.sim.network_quality?.coverage_rating && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${sel.sim.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : sel.sim.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : sel.sim.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{enumLabel('coverage', sel.sim.network_quality.coverage_rating)}</span>}
                   </div>
                   {sel.sim.url && (
                     <a href={sel.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.sim.getPlan')}</a>
@@ -359,7 +360,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     <div className="flex-1 min-w-0 mr-2">
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium text-gray-900">{t.title}</p>
-                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t.severity}</span>}
+                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{enumLabel('severity', t.severity)}</span>}
                       </div>
                       {t.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.body}</p>}
                       {t.source_url && (

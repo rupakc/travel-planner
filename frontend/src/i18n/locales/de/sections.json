@@ -166,7 +166,35 @@
     "dismiss": "Vergleich schließen",
     "notApplicable": "Für diese Suche nicht anwendbar",
     "notEnough": "Zu wenige vergleichbare Daten zwischen beiden Läufen – sieh dir unten die neuen Ergebnisse an.",
-    "title": "Reise neu mixen"
+    "title": "Reise neu mixen",
+    "preset": {
+      "week_later": {
+        "label": "Eine Woche später",
+        "description": "Verschiebe die ganze Reise um 7 Tage – gleiche Dauer"
+      },
+      "half_budget": {
+        "label": "Halbes Budget",
+        "description": "Dieselbe Reise mit 50 % des Budgets"
+      },
+      "luxe": {
+        "label": "Mach es luxuriös",
+        "description": "Verdopple das Budget und peile gehobene Angebote an"
+      },
+      "slower_pace": {
+        "label": "Ruhiger angehen",
+        "description": "Entspanntes Tempo – weniger Aktivitäten, mehr Pausen"
+      },
+      "long_weekend": {
+        "label": "Langes Wochenende",
+        "description": "Kürze auf einen 3-Nächte-Kurztrip ab demselben Starttag"
+      }
+    },
+    "metric": {
+      "min_flight_usd": "Günstigster Flug",
+      "min_hotel_nightly_usd": "Hotel / Nacht",
+      "itinerary_total_usd": "Kosten der Reiseroute",
+      "poor_weather_days": "Tage mit schlechtem Wetter"
+    }
   },
   "searchPanel": {
     "budget": "Budget (USD)",

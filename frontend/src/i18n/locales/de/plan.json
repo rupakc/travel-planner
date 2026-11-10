@@ -142,6 +142,21 @@
       "flight": "Flug",
       "hotel": "Hotel",
       "sim": "SIM"
+    },
+    "reason": {
+      "cheapestFare": "Günstigster Preis",
+      "fewerStops": "Weniger Stopps für {{amount}} mehr als der günstigste Preis",
+      "saves": "Spart {{time}} Reisezeit für {{amount}} mehr als der günstigste Preis",
+      "midRange": "Mittelklasse (3★), in seiner Klasse am besten bewertet",
+      "starsBest": "{{stars}}★, in seiner Klasse am besten bewertet",
+      "bestReviewed": "In seiner Klasse am besten bewertet",
+      "typicalPrice": "{{price}} · auf oder unter dem hier üblichen Preis",
+      "matches": "{{base}} · passt zu deinen Interessen",
+      "freeTour": "Kostenlose Stadtführung",
+      "freeEntry": "Freier Eintritt",
+      "coversTrip": "Deckt deine {{days}}-tägige Reise ab",
+      "cheapestPlan": "Günstigster Tarif",
+      "cheaperStay": "Günstigere Unterkunft, die zu deinem Budget passt"
     }
   },
   "print": {
@@ -178,5 +193,11 @@
     "booking": "Buchung: {{url}}",
     "price": "Preis: {{price}}",
     "trip": "Reise"
+  },
+  "util": {
+    "budgetUnder": "{{amount}} unter dem Budget",
+    "budgetOver": "{{amount}} über dem Budget",
+    "hours": "{{n}} Std.",
+    "minutes": "{{n}} Min."
   }
 }

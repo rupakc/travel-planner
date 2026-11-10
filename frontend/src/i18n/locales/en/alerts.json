@@ -145,7 +145,8 @@
       "high": "Fares are high right now"
     },
     "typical": "typical {{low}}–{{high}}",
-    "replanPrompt": "Re-plan for {{range}}? This runs a new search."
+    "replanPrompt": "Re-plan for {{range}}? This runs a new search.",
+    "same": "same"
   },
   "btn": {
     "watchFare": "Watch fare",
@@ -318,7 +319,8 @@
     "forName": "for “{{name}}”",
     "currencyChanged": "The listing now shows prices in {{seen}}; we only compare {{currency}} with {{currency}}.",
     "cardSource": "Price as shown in Google results for {{provider}}.",
-    "unavailable": "Not currently listed with a price in Google results. We’ll keep looking and won’t alert you until it’s back."
+    "unavailable": "Not currently listed with a price in Google results. We’ll keep looking and won’t alert you until it’s back.",
+    "theListing": "the listing"
   },
   "hotel": {
     "aiEstimate": "AI estimate",
@@ -345,7 +347,15 @@
     "planCalled": "Your plan called it “{{requested}}”.",
     "soldOut": "Sold out for your dates",
     "book": "Book",
-    "unavailable": "No rooms for your dates right now. We’ll keep checking and won’t alert you until it’s back."
+    "unavailable": "No rooms for your dates right now. We’ll keep checking and won’t alert you until it’s back.",
+    "estimateRooms": "AI estimate: {{rooms}} rooms × {{price}}, whole stay",
+    "estimateOne": "AI estimate for 1 room, whole stay",
+    "nights_one": "{{count}} night",
+    "nights_other": "{{count}} nights",
+    "guests_one": "{{count}} guest",
+    "guests_other": "{{count}} guests",
+    "rooms_one": "{{count}} room",
+    "rooms_other": "{{count}} rooms"
   },
   "trip": {
     "yourPlan": "Your plan, as we’ll count it",
@@ -363,18 +373,65 @@
     "diffMore": "That’s {{amount}} more than your My Plan total ({{plan}}){{tail}}",
     "breakdown": "Trip price breakdown",
     "replan": "Re-plan this trip",
-    "open": "Open"
+    "open": "Open",
+    "group": {
+      "flights": "Flights",
+      "stay": "Stay",
+      "activities": "Activities",
+      "other": "Other"
+    },
+    "groupWord": {
+      "flights": "flights",
+      "stay": "hotel",
+      "activities": "activities",
+      "other": "other"
+    },
+    "partName": {
+      "hotel": "Hotel",
+      "sim": "SIM / eSIM"
+    },
+    "note": {
+      "cheapest": "tracked as the cheapest fare on your dates",
+      "perPerson": "per person × {{n}}"
+    },
+    "badge": {
+      "estimate": "Estimate",
+      "estimateTitle": "An AI estimate from your search, held fixed. Estimates never trigger alerts.",
+      "unavailable": "Unavailable",
+      "unavailableTitle": "Not available in the last check — showing the last live price we saw.",
+      "notChecked": "Not checked",
+      "notCheckedTitle": "The last check of this part failed — showing the last live price we saw.",
+      "stale": "Live · earlier check",
+      "staleTitle": "Checked in an earlier round (we re-check up to 5 activities each time).",
+      "live": "Live",
+      "liveTitle": "Live price from the last check."
+    },
+    "lastCheck": "Last check: {{moves}}.",
+    "noMove": "Last check: no live price moved.",
+    "couldntPrice": "Couldn’t price {{list}} — kept the last live price.",
+    "reason": {
+      "flight": "flights are the cheapest live fare on your dates, not the flight you picked",
+      "hotel": "the hotel is its live Google Hotels price",
+      "activityPer": "activities are counted per person × {{n}}",
+      "activityLive": "activities use their live “from” prices"
+    }
   },
   "time": {
     "justNow": "just now",
-    "minAgo": "{{n}} min ago",
-    "hourAgo": "{{n}} h ago",
     "yesterday": "yesterday",
-    "daysAgo": "{{n}} days ago",
     "soon": "soon",
-    "inMin": "in {{n}} min",
-    "inHours": "in {{n}} h",
-    "inDays": "in {{n}} days"
+    "minAgo_one": "{{count}} min ago",
+    "minAgo_other": "{{count}} min ago",
+    "hourAgo_one": "{{count}} h ago",
+    "hourAgo_other": "{{count}} h ago",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "inMin_one": "in {{count}} min",
+    "inMin_other": "in {{count}} min",
+    "inHours_one": "in {{count}} h",
+    "inHours_other": "in {{count}} h",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days"
   },
   "status": {
     "pending": "Getting today’s price",
@@ -390,5 +447,22 @@
     "more": "{{amount}} more than when you started"
   },
   "travellersTotal_one": "total for {{count}} traveller",
-  "travellersTotal_other": "total for {{count}} travellers"
+  "travellersTotal_other": "total for {{count}} travellers",
+  "target": {
+    "errorUsd": "Enter a price in dollars, like 450.",
+    "note": "Today’s fare ({{price}}) is already under this — we’ll tell you when it drops below today’s price.",
+    "errorPrice": "Enter a price, like 450."
+  },
+  "currency": {
+    "usd": "US dollars"
+  },
+  "checksPrice": {
+    "checked": "Checked just now.",
+    "unavailable": "It isn’t available for your dates right now. We’ll keep checking.",
+    "failed": "Live prices didn’t respond. We’ll try again within the hour.",
+    "errored": "Checks are on hold after three tries in a row. Use Retry when you’re ready.",
+    "expired": "This watch has ended, so we’ve stopped checking.",
+    "postponed": "Live prices are busy right now — we’ll check again tomorrow.",
+    "default": "Nothing was checked: this price isn’t being watched right now."
+  }
 }

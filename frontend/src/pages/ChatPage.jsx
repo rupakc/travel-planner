@@ -26,6 +26,7 @@ import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
+import { enumLabel } from '../utils/enumLabel'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
@@ -266,7 +267,7 @@ function ChatSimSection({ data, selections, onSelect, isExpanded, onToggleExpand
                 {p.data_gb && <span>{p.data_gb}GB</span>}
                 {p.validity_days && <span>{t('units.daysShort', { value: p.validity_days })}</span>}
                 {p.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={8}/>{p.network_quality.speed}</span>}
-                {p.network_quality?.coverage_rating && <span className={`px-1 py-0.5 rounded-full text-[9px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{t(`enum.${p.network_quality.coverage_rating}`, { defaultValue: p.network_quality.coverage_rating })}</span>}
+                {p.network_quality?.coverage_rating && <span className={`px-1 py-0.5 rounded-full text-[9px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{enumLabel('coverage', p.network_quality.coverage_rating)}</span>}
                 {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-get" className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> {t('action.get')}</a>}
               </div>
             </div>

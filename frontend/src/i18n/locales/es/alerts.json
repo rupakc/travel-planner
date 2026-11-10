@@ -151,7 +151,8 @@
       "high": "Las tarifas están altas ahora mismo"
     },
     "typical": "habitual {{low}}–{{high}}",
-    "replanPrompt": "¿Replanificar para {{range}}? Esto lanza una búsqueda nueva."
+    "replanPrompt": "¿Replanificar para {{range}}? Esto lanza una búsqueda nueva.",
+    "same": "igual"
   },
   "btn": {
     "watchFare": "Vigilar tarifa",
@@ -326,7 +327,8 @@
     "cardSource": "Precio tal como aparece en los resultados de Google para {{provider}}.",
     "unavailable": "Ahora mismo no aparece con precio en los resultados de Google. Seguiremos buscando y no te avisaremos hasta que vuelva.",
     "people_many": "{{count}} viajeros",
-    "reviews_many": "{{rating}} · {{formatted}} reseñas"
+    "reviews_many": "{{rating}} · {{formatted}} reseñas",
+    "theListing": "el anuncio"
   },
   "hotel": {
     "aiEstimate": "Estimación de IA",
@@ -356,7 +358,18 @@
     "unavailable": "No hay habitaciones para tus fechas ahora mismo. Seguiremos comprobando y no te avisaremos hasta que vuelva.",
     "priceNights_many": "{{price}} por {{count}} noches",
     "cardTotal_many": "Total por {{count}} noches en Google Hotels",
-    "cardTotal_city_many": "Total por {{count}} noches en {{city}} en Google Hotels"
+    "cardTotal_city_many": "Total por {{count}} noches en {{city}} en Google Hotels",
+    "estimateRooms": "Estimación de IA: {{rooms}} habitaciones × {{price}}, estancia completa",
+    "estimateOne": "Estimación de IA para 1 habitación, estancia completa",
+    "nights_one": "{{count}} noche",
+    "nights_many": "{{count}} noches",
+    "nights_other": "{{count}} noches",
+    "guests_one": "{{count}} huésped",
+    "guests_many": "{{count}} huéspedes",
+    "guests_other": "{{count}} huéspedes",
+    "rooms_one": "{{count}} habitación",
+    "rooms_many": "{{count}} habitaciones",
+    "rooms_other": "{{count}} habitaciones"
   },
   "trip": {
     "yourPlan": "Tu plan, tal como lo contaremos",
@@ -375,18 +388,71 @@
     "breakdown": "Desglose del precio del viaje",
     "replan": "Replanificar este viaje",
     "open": "Abrir",
-    "caption_many": "Lo que vigilamos · {{live}} en directo, {{count}} estimaciones"
+    "caption_many": "Lo que vigilamos · {{live}} en directo, {{count}} estimaciones",
+    "group": {
+      "flights": "Vuelos",
+      "stay": "Alojamiento",
+      "activities": "Actividades",
+      "other": "Otros"
+    },
+    "groupWord": {
+      "flights": "vuelos",
+      "stay": "hotel",
+      "activities": "actividades",
+      "other": "otros"
+    },
+    "partName": {
+      "hotel": "Hotel",
+      "sim": "SIM / eSIM"
+    },
+    "note": {
+      "cheapest": "seguido como la tarifa más barata en tus fechas",
+      "perPerson": "por persona × {{n}}"
+    },
+    "badge": {
+      "estimate": "Estimación",
+      "estimateTitle": "Una estimación de IA de tu búsqueda, que no cambia. Las estimaciones nunca activan alertas.",
+      "unavailable": "No disponible",
+      "unavailableTitle": "No disponible en la última comprobación: se muestra el último precio en vivo que vimos.",
+      "notChecked": "Sin comprobar",
+      "notCheckedTitle": "La última comprobación de esta parte falló: se muestra el último precio en vivo que vimos.",
+      "stale": "En directo · comprobación anterior",
+      "staleTitle": "Comprobado en una ronda anterior (volvemos a comprobar hasta 5 actividades cada vez).",
+      "live": "En directo",
+      "liveTitle": "Precio en vivo de la última comprobación."
+    },
+    "lastCheck": "Última comprobación: {{moves}}.",
+    "noMove": "Última comprobación: ningún precio en vivo cambió.",
+    "couldntPrice": "No pudimos obtener el precio de {{list}}; mantenemos el último precio en vivo.",
+    "reason": {
+      "flight": "los vuelos son la tarifa en vivo más barata en tus fechas, no el vuelo que elegiste",
+      "hotel": "el hotel tiene su precio en vivo de Google Hotels",
+      "activityPer": "las actividades se cuentan por persona × {{n}}",
+      "activityLive": "las actividades usan sus precios «desde» en vivo"
+    }
   },
   "time": {
     "justNow": "justo ahora",
-    "minAgo": "hace {{n}} min",
-    "hourAgo": "hace {{n}} h",
     "yesterday": "ayer",
-    "daysAgo": "hace {{n}} días",
     "soon": "pronto",
-    "inMin": "en {{n}} min",
-    "inHours": "en {{n}} h",
-    "inDays": "en {{n}} días"
+    "minAgo_one": "hace {{count}} min",
+    "minAgo_many": "hace {{count}} min",
+    "minAgo_other": "hace {{count}} min",
+    "hourAgo_one": "hace {{count}} h",
+    "hourAgo_many": "hace {{count}} h",
+    "hourAgo_other": "hace {{count}} h",
+    "daysAgo_one": "hace {{count}} día",
+    "daysAgo_many": "hace {{count}} días",
+    "daysAgo_other": "hace {{count}} días",
+    "inMin_one": "en {{count}} min",
+    "inMin_many": "en {{count}} min",
+    "inMin_other": "en {{count}} min",
+    "inHours_one": "en {{count}} h",
+    "inHours_many": "en {{count}} h",
+    "inHours_other": "en {{count}} h",
+    "inDays_one": "en {{count}} día",
+    "inDays_many": "en {{count}} días",
+    "inDays_other": "en {{count}} días"
   },
   "status": {
     "pending": "Obteniendo el precio de hoy",
@@ -404,5 +470,22 @@
   "travellersTotal_one": "total para {{count}} viajero",
   "travellersTotal_other": "total para {{count}} viajeros",
   "travellers_many": "{{count}} viajeros",
-  "travellersTotal_many": "total para {{count}} viajeros"
+  "travellersTotal_many": "total para {{count}} viajeros",
+  "target": {
+    "errorUsd": "Introduce un precio en dólares, por ejemplo 450.",
+    "note": "El precio de hoy ({{price}}) ya está por debajo de esto: te avisaremos cuando baje del precio de hoy.",
+    "errorPrice": "Introduce un precio, por ejemplo 450."
+  },
+  "currency": {
+    "usd": "dólares estadounidenses"
+  },
+  "checksPrice": {
+    "checked": "Comprobado ahora mismo.",
+    "unavailable": "No está disponible para tus fechas ahora mismo. Seguiremos comprobándolo.",
+    "failed": "Los precios en vivo no respondieron. Lo intentaremos de nuevo en menos de una hora.",
+    "errored": "Las comprobaciones están en pausa tras tres intentos seguidos. Pulsa Reintentar cuando quieras.",
+    "expired": "Esta vigilancia ha terminado, así que hemos dejado de comprobarla.",
+    "postponed": "Los precios en vivo están saturados ahora mismo: volveremos a comprobar mañana.",
+    "default": "No se comprobó nada: este precio no se está vigilando ahora mismo."
+  }
 }

@@ -27,5 +27,24 @@
   },
   "footer": {
     "attribution": "স্থানের তথ্য © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · বিমানবন্দরের তথ্য: <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "উচ্চ",
+      "medium": "মাঝারি",
+      "low": "কম"
+    },
+    "coverage": {
+      "excellent": "চমৎকার",
+      "good": "ভালো",
+      "moderate": "মাঝারি",
+      "limited": "সীমিত"
+    },
+    "severity": {
+      "info": "তথ্য",
+      "warning": "সতর্কতা",
+      "danger": "বিপদ",
+      "critical": "গুরুতর"
+    }
   }
 }

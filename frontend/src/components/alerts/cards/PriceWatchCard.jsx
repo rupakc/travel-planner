@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { watchStatus } from '../../../utils/fareWatch'
+import { relativeTime as agoLabel, untilTime as untilLabel, watchStatus } from '../../../utils/fareWatch'
 import {
   checkPriceTarget, currencyLabel, currencySymbol, formatPrice, isUnavailable, priceWatchChange, watchDomId,
 } from '../../../utils/priceWatch'
 import Sparkline from '../Sparkline'
-import { agoLabel, changeText, statusLabel, untilLabel } from '../localized'
 import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from '../LiveCheck'
 
 const CHIP = {
@@ -112,7 +111,7 @@ export default function PriceWatchCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 id={`${domId}-title`} className="font-display text-lg font-semibold text-slate-900">{watch.title}</h3>
-            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${CHIP[status.tone]}`}>{statusLabel(status)}</span>
+            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${CHIP[status.tone]}`}>{status.label}</span>
           </div>
           {watch.subtitle && <p className="mt-0.5 text-sm text-slate-500">{watch.subtitle}</p>}
           <p className="mt-0.5 text-xs text-slate-400">
@@ -126,9 +125,9 @@ export default function PriceWatchCard({
               <p className="text-3xl font-semibold leading-none tabular-nums text-slate-900">{money(price)}</p>
               {unit != null && <p className="mt-1 text-[11px] text-slate-400">{money(unit)} {unitLabel}</p>}
               {change && change.direction !== 'same' && (
-                <p className={`mt-1 text-xs font-medium ${change.direction === 'down' ? 'text-emerald-700' : 'text-rose-700'}`}>{changeText(change, money)}</p>
+                <p className={`mt-1 text-xs font-medium ${change.direction === 'down' ? 'text-emerald-700' : 'text-rose-700'}`}>{change.text}</p>
               )}
-              {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{changeText(change, money)}</p>}
+              {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{change.text}</p>}
             </>
           ) : (
             <p className="text-sm text-slate-500">{t('card.noPriceYet')}</p>

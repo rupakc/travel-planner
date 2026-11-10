@@ -9,7 +9,7 @@ import { notificationLink } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
 import i18n from '../../i18n'
 import { actionText, alertKindFor, keepDeltaTogether } from './alertKinds'
-import { agoLabel } from './localized'
+import { relativeTime as agoLabel } from '../../utils/fareWatch'
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
   const { t } = useTranslation('alerts')

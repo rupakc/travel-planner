@@ -25,5 +25,24 @@
   },
   "footer": {
     "attribution": "地点数据 © <geonames>GeoNames</geonames>（<licence>CC BY 4.0</licence>）· 机场数据：<ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "coverage": {
+      "excellent": "极佳",
+      "good": "良好",
+      "moderate": "一般",
+      "limited": "有限"
+    },
+    "severity": {
+      "info": "提示",
+      "warning": "警告",
+      "danger": "危险",
+      "critical": "严重"
+    }
   }
 }

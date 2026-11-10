@@ -115,7 +115,34 @@
     "find": "Trouver les lieux",
     "findInShots_one": "Trouver les lieux dans ma capture",
     "findInShots_other": "Trouver les lieux dans {{count}} captures",
-    "findInShots_many": "Trouver les lieux dans {{count}} captures"
+    "findInShots_many": "Trouver les lieux dans {{count}} captures",
+    "example": {
+      "lisbon": {
+        "label": "48 heures à Lisbonne",
+        "text": "48 heures à Lisbonne : déjeuner au Time Out Market, tour de Belém et pastéis de nata chez Pastéis de Belém, balade à la LX Factory, coucher de soleil au Miradouro da Senhora do Monte, puis excursion d’une journée au palais de Pena à Sintra."
+      },
+      "tokyo": {
+        "label": "Les conseils d’un ami pour Tokyo",
+        "text": "Les incontournables de Tokyo de mon voyage !! Petit-déjeuner au marché extérieur de Tsukiji, teamLab Planets (réservez à l’avance), Senso-ji à l’aube avant la foule, verres à Golden Gai et Shibuya Sky au coucher du soleil. Si vous avez le temps, Hakone pour l’onsen."
+      },
+      "rome": {
+        "label": "Rome et Florence",
+        "text": "Jours 1–2 Rome : Colisée, dîner au Trastevere, le Panthéon, glace chez Giolitti. Jours 3–4 Florence : les Offices, montée au Duomo, Piazzale Michelangelo au coucher du soleil et déjeuner au Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "Impossible de joindre Voyager. Vérifiez votre connexion et réessayez.",
+      "unknown": "Un problème est survenu pendant la lecture. Réessayez dans un instant.",
+      "tooLarge": "Cet envoi est trop volumineux : utilisez jusqu’à 4 captures de 5 Mo maximum."
+    },
+    "file": {
+      "heic": "Les photos HEIC de l’iPhone ne sont pas encore lisibles : faites plutôt une capture d’écran (au format PNG) ou exportez en JPEG.",
+      "notImage": "{{name}} n’est pas une image lisible. Utilisez PNG, JPEG ou WebP.",
+      "thatFile": "Ce fichier",
+      "thatImage": "Cette image",
+      "tooBigSource": "{{name}} est trop volumineuse pour être lue ici (plus de 40 Mo). Recadrez-la ou enregistrez-la plus petite.",
+      "over5": "{{name}} dépasse 5 Mo. Recadrez-la ou enregistrez-la en PNG ou JPEG plus léger."
+    }
   },
   "form": {
     "from": "De",

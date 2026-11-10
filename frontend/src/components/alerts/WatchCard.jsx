@@ -1,13 +1,11 @@
 import { useRef, useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Route, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { formatUsd } from '../../utils/fareCalendar'
+import { formatDay as dayLabel, formatUsd } from '../../utils/fareCalendar'
 import {
-  checkTarget, priceChange, routeLabel, watchStatus,
+  checkTarget, formatDateRange as rangeLabel, priceChange, relativeTime as agoLabel, routeLabel, untilTime as untilLabel,
+  watchStatus,
 } from '../../utils/fareWatch'
-import {
-  agoLabel, changeText, dayLabel, rangeLabel, statusLabel, untilLabel,
-} from './localized'
 import Sparkline from './Sparkline'
 import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from './LiveCheck'
 
@@ -112,7 +110,7 @@ export default function WatchCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 id={`watch-${watch.id}-title`} className="font-display text-lg font-semibold text-slate-900">{routeLabel(watch)}</h3>
-            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${CHIP[status.tone]}`}>{statusLabel(status)}</span>
+            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${CHIP[status.tone]}`}>{status.label}</span>
           </div>
           <p className="mt-0.5 text-sm text-slate-500">
             {rangeLabel(watch.departure_date, watch.return_date)}
@@ -133,9 +131,9 @@ export default function WatchCard({
               <p className="text-3xl font-semibold leading-none tabular-nums text-slate-900">{formatUsd(price)}</p>
               <p className="mt-1 text-[11px] text-slate-400">{t('travellersTotal', { count: watch.num_travelers })}</p>
               {change && change.direction !== 'same' && (
-                <p className={`mt-1 text-xs font-medium ${change.direction === 'down' ? 'text-emerald-700' : 'text-rose-700'}`}>{changeText(change, formatUsd)}</p>
+                <p className={`mt-1 text-xs font-medium ${change.direction === 'down' ? 'text-emerald-700' : 'text-rose-700'}`}>{change.text}</p>
               )}
-              {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{changeText(change, formatUsd)}</p>}
+              {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{change.text}</p>}
             </>
           ) : (
             <p className="text-sm text-slate-500">{past ? t('card.noPriceFound') : watch.status === 'error' ? t('card.noPriceYet') : t('card.gettingPrice')}</p>

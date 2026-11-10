@@ -151,7 +151,8 @@
       "high": "Les tarifs sont élevés en ce moment"
     },
     "typical": "habituel {{low}}–{{high}}",
-    "replanPrompt": "Replanifier pour {{range}} ? Cela lance une nouvelle recherche."
+    "replanPrompt": "Replanifier pour {{range}} ? Cela lance une nouvelle recherche.",
+    "same": "identique"
   },
   "btn": {
     "watchFare": "Surveiller le tarif",
@@ -326,7 +327,8 @@
     "cardSource": "Prix tel qu’affiché dans les résultats Google pour {{provider}}.",
     "unavailable": "Actuellement sans prix dans les résultats Google. Nous continuons de chercher et ne vous alerterons qu’à son retour.",
     "people_many": "{{count}} voyageurs",
-    "reviews_many": "{{rating}} · {{formatted}} avis"
+    "reviews_many": "{{rating}} · {{formatted}} avis",
+    "theListing": "l’annonce"
   },
   "hotel": {
     "aiEstimate": "Estimation par IA",
@@ -356,7 +358,18 @@
     "unavailable": "Aucune chambre pour vos dates actuellement. Nous continuons de vérifier et ne vous alerterons qu’à leur retour.",
     "priceNights_many": "{{price}} pour {{count}} nuits",
     "cardTotal_many": "Total pour {{count}} nuits sur Google Hotels",
-    "cardTotal_city_many": "Total pour {{count}} nuits à {{city}} sur Google Hotels"
+    "cardTotal_city_many": "Total pour {{count}} nuits à {{city}} sur Google Hotels",
+    "estimateRooms": "Estimation par IA : {{rooms}} chambres × {{price}}, séjour entier",
+    "estimateOne": "Estimation par IA pour 1 chambre, séjour entier",
+    "nights_one": "{{count}} nuit",
+    "nights_many": "{{count}} nuits",
+    "nights_other": "{{count}} nuits",
+    "guests_one": "{{count}} voyageur",
+    "guests_many": "{{count}} voyageurs",
+    "guests_other": "{{count}} voyageurs",
+    "rooms_one": "{{count}} chambre",
+    "rooms_many": "{{count}} chambres",
+    "rooms_other": "{{count}} chambres"
   },
   "trip": {
     "yourPlan": "Votre plan, tel que nous le comptons",
@@ -375,18 +388,71 @@
     "breakdown": "Détail du prix du voyage",
     "replan": "Replanifier ce voyage",
     "open": "Ouvrir",
-    "caption_many": "Ce que nous surveillons · {{live}} en direct, {{count}} estimations"
+    "caption_many": "Ce que nous surveillons · {{live}} en direct, {{count}} estimations",
+    "group": {
+      "flights": "Vols",
+      "stay": "Hébergement",
+      "activities": "Activités",
+      "other": "Autres"
+    },
+    "groupWord": {
+      "flights": "vols",
+      "stay": "hôtel",
+      "activities": "activités",
+      "other": "autres"
+    },
+    "partName": {
+      "hotel": "Hôtel",
+      "sim": "SIM / eSIM"
+    },
+    "note": {
+      "cheapest": "suivi comme le tarif le moins cher à vos dates",
+      "perPerson": "par personne × {{n}}"
+    },
+    "badge": {
+      "estimate": "Estimation",
+      "estimateTitle": "Une estimation par IA issue de votre recherche, figée. Les estimations ne déclenchent jamais d’alertes.",
+      "unavailable": "Indisponible",
+      "unavailableTitle": "Indisponible lors de la dernière vérification : dernier prix en direct connu affiché.",
+      "notChecked": "Non vérifié",
+      "notCheckedTitle": "La dernière vérification de cet élément a échoué : dernier prix en direct connu affiché.",
+      "stale": "En direct · vérification précédente",
+      "staleTitle": "Vérifié lors d’un passage précédent (nous revérifions jusqu’à 5 activités à chaque fois).",
+      "live": "En direct",
+      "liveTitle": "Prix en direct de la dernière vérification."
+    },
+    "lastCheck": "Dernière vérification : {{moves}}.",
+    "noMove": "Dernière vérification : aucun prix en direct n’a bougé.",
+    "couldntPrice": "Impossible de chiffrer {{list}} : dernier prix en direct conservé.",
+    "reason": {
+      "flight": "les vols sont le tarif en direct le moins cher à vos dates, et non le vol que vous avez choisi",
+      "hotel": "l’hôtel est à son prix en direct sur Google Hotels",
+      "activityPer": "les activités sont comptées par personne × {{n}}",
+      "activityLive": "les activités utilisent leurs prix « à partir de » en direct"
+    }
   },
   "time": {
     "justNow": "à l’instant",
-    "minAgo": "il y a {{n}} min",
-    "hourAgo": "il y a {{n}} h",
     "yesterday": "hier",
-    "daysAgo": "il y a {{n}} jours",
     "soon": "bientôt",
-    "inMin": "dans {{n}} min",
-    "inHours": "dans {{n}} h",
-    "inDays": "dans {{n}} jours"
+    "minAgo_one": "il y a {{count}} min",
+    "minAgo_many": "il y a {{count}} min",
+    "minAgo_other": "il y a {{count}} min",
+    "hourAgo_one": "il y a {{count}} h",
+    "hourAgo_many": "il y a {{count}} h",
+    "hourAgo_other": "il y a {{count}} h",
+    "daysAgo_one": "il y a {{count}} jour",
+    "daysAgo_many": "il y a {{count}} jours",
+    "daysAgo_other": "il y a {{count}} jours",
+    "inMin_one": "dans {{count}} min",
+    "inMin_many": "dans {{count}} min",
+    "inMin_other": "dans {{count}} min",
+    "inHours_one": "dans {{count}} h",
+    "inHours_many": "dans {{count}} h",
+    "inHours_other": "dans {{count}} h",
+    "inDays_one": "dans {{count}} jour",
+    "inDays_many": "dans {{count}} jours",
+    "inDays_other": "dans {{count}} jours"
   },
   "status": {
     "pending": "Récupération du prix du jour",
@@ -404,5 +470,22 @@
   "travellersTotal_one": "total pour {{count}} voyageur",
   "travellersTotal_other": "total pour {{count}} voyageurs",
   "travellers_many": "{{count}} voyageurs",
-  "travellersTotal_many": "total pour {{count}} voyageurs"
+  "travellersTotal_many": "total pour {{count}} voyageurs",
+  "target": {
+    "errorUsd": "Saisissez un prix en dollars, par exemple 450.",
+    "note": "Le tarif d’aujourd’hui ({{price}}) est déjà inférieur à ce seuil : nous vous préviendrons s’il passe sous le prix du jour.",
+    "errorPrice": "Saisissez un prix, par exemple 450."
+  },
+  "currency": {
+    "usd": "dollars américains"
+  },
+  "checksPrice": {
+    "checked": "Vérifié à l’instant.",
+    "unavailable": "Ce n’est pas disponible à vos dates pour le moment. Nous continuons de vérifier.",
+    "failed": "Les prix en direct n’ont pas répondu. Nous réessaierons d’ici une heure.",
+    "errored": "Les vérifications sont suspendues après trois échecs d’affilée. Utilisez Réessayer quand vous voulez.",
+    "expired": "Cette surveillance est terminée, nous avons arrêté les vérifications.",
+    "postponed": "Les prix en direct sont surchargés pour le moment : nous revérifierons demain.",
+    "default": "Rien n’a été vérifié : ce prix n’est pas surveillé pour le moment."
+  }
 }

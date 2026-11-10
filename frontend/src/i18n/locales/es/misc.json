@@ -124,7 +124,10 @@
     "planThis": "Planificar este viaje",
     "couldntLoad": "No se pudo cargar",
     "retry": "Reintentar",
-    "missing": "Falta: {{list}}"
+    "missing": "Falta: {{list}}",
+    "duration": "{{h}} h {{m}} min",
+    "errorCheck": "Revisa los datos del viaje",
+    "errorUnavailable": "Servicio no disponible: inténtalo de nuevo"
   },
   "nearby": {
     "title": "Cerca de mí",
@@ -244,5 +247,20 @@
     "download": "Descargar tarjeta del viaje",
     "downloadError": "No pudimos crear la tarjeta del viaje. Inténtalo de nuevo.",
     "readOnly": "Compartido solo para lectura: nunca se incluyen datos personales."
+  },
+  "live": {
+    "source": "Fuente",
+    "rateLimited": "Has hecho muchas solicitudes. Espera unos minutos e inténtalo de nuevo.",
+    "aiLimit": "Se alcanzó el límite de IA de este mes: inténtalo de nuevo el día 1.",
+    "aiBilling": "Las funciones de IA no están disponibles ahora. Inténtalo más tarde.",
+    "groundingWeb": "La búsqueda web en vivo no está disponible en este servidor ahora mismo.",
+    "noPlace": "Todavía no conocemos ninguna ciudad o pueblo cerca de ti.",
+    "notFound": "Esta vigilancia ya no existe. Actualiza la página para refrescar tu lista.",
+    "watchExpired": "Las fechas de este viaje ya pasaron, así que no hay nada en vivo que comprobar.",
+    "signedOut": "Tu sesión ha terminado. Inicia sesión de nuevo para continuar.",
+    "agentNear": "No pudimos encontrar lugares cerca de ti ahora mismo. Inténtalo de nuevo.",
+    "agentWeb": "La búsqueda web no encontró una respuesta clara esta vez. Inténtalo de nuevo en un momento.",
+    "failedNear": "Algo salió mal al buscar lugares cerca de ti. Inténtalo de nuevo.",
+    "failedWeb": "No se pudo buscar en la web ahora mismo. Inténtalo de nuevo en un momento."
   }
 }

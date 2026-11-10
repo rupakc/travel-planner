@@ -117,7 +117,10 @@
     "planThis": "Diese Reise planen",
     "couldntLoad": "Konnte nicht geladen werden",
     "retry": "Erneut versuchen",
-    "missing": "Fehlt: {{list}}"
+    "missing": "Fehlt: {{list}}",
+    "duration": "{{h}} Std. {{m}} Min.",
+    "errorCheck": "Bitte prüfe die Reisedaten",
+    "errorUnavailable": "Dienst nicht verfügbar – versuche es erneut"
   },
   "nearby": {
     "title": "In meiner Nähe",
@@ -225,5 +228,20 @@
     "download": "Reisekarte herunterladen",
     "downloadError": "Die Reisekarte konnte nicht erstellt werden. Bitte versuche es erneut.",
     "readOnly": "Nur zum Ansehen geteilt – persönliche Daten sind nie enthalten."
+  },
+  "live": {
+    "source": "Quelle",
+    "rateLimited": "Du hast viele Anfragen gestellt. Warte ein paar Minuten und versuche es erneut.",
+    "aiLimit": "KI-Limit für diesen Monat erreicht – versuche es am 1. erneut.",
+    "aiBilling": "Die KI-Funktionen sind gerade nicht verfügbar. Bitte versuche es später erneut.",
+    "groundingWeb": "Die Live-Websuche ist auf diesem Server gerade nicht verfügbar.",
+    "noPlace": "Wir kennen noch keine Stadt in deiner Nähe.",
+    "notFound": "Diese Beobachtung gibt es nicht mehr. Lade die Seite neu, um deine Liste zu aktualisieren.",
+    "watchExpired": "Die Reisedaten sind vorbei, deshalb gibt es nichts Live zu prüfen.",
+    "signedOut": "Deine Sitzung ist abgelaufen. Melde dich erneut an, um fortzufahren.",
+    "agentNear": "Wir konnten gerade keine Orte in deiner Nähe finden. Versuche es erneut.",
+    "agentWeb": "Die Websuche hat diesmal keine klare Antwort gefunden. Versuche es gleich noch einmal.",
+    "failedNear": "Beim Suchen von Orten in deiner Nähe ist etwas schiefgelaufen. Versuche es erneut.",
+    "failedWeb": "Die Websuche ist gerade nicht möglich. Versuche es gleich noch einmal."
   }
 }

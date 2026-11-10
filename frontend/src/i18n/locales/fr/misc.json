@@ -124,7 +124,10 @@
     "planThis": "Planifier ce voyage",
     "couldntLoad": "Chargement impossible",
     "retry": "Réessayer",
-    "missing": "Manquant : {{list}}"
+    "missing": "Manquant : {{list}}",
+    "duration": "{{h}} h {{m}} min",
+    "errorCheck": "Vérifiez les détails du voyage",
+    "errorUnavailable": "Service indisponible : réessayez"
   },
   "nearby": {
     "title": "Près de moi",
@@ -244,5 +247,20 @@
     "download": "Télécharger la carte du voyage",
     "downloadError": "Impossible de créer la carte du voyage. Veuillez réessayer.",
     "readOnly": "Partagé en lecture seule — aucune donnée personnelle n’est incluse."
+  },
+  "live": {
+    "source": "Source",
+    "rateLimited": "Vous avez fait beaucoup de requêtes. Patientez quelques minutes puis réessayez.",
+    "aiLimit": "Limite d’IA atteinte pour ce mois-ci : réessayez le 1er.",
+    "aiBilling": "Les fonctions d’IA sont indisponibles pour le moment. Réessayez plus tard.",
+    "groundingWeb": "La recherche web en direct n’est pas disponible sur ce serveur pour le moment.",
+    "noPlace": "Nous ne connaissons pas encore de ville près de chez vous.",
+    "notFound": "Cette surveillance n’existe plus. Actualisez la page pour mettre à jour votre liste.",
+    "watchExpired": "Les dates de ce voyage sont passées : il n’y a rien à vérifier en direct.",
+    "signedOut": "Votre session a expiré. Reconnectez-vous pour continuer.",
+    "agentNear": "Nous n’avons pas pu trouver de lieux près de chez vous. Réessayez.",
+    "agentWeb": "La recherche web n’a pas trouvé de réponse claire cette fois. Réessayez dans un instant.",
+    "failedNear": "Un problème est survenu lors de la recherche de lieux près de chez vous. Réessayez.",
+    "failedWeb": "Impossible de lancer la recherche web pour le moment. Réessayez dans un instant."
   }
 }

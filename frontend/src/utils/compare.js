@@ -1,4 +1,6 @@
 // Pure helpers for the trip-comparison feature.
+import i18n from '../i18n'
+import { fmtNumber } from '../i18n/format'
 
 /**
  * A cleared <input type="date"> is ''; the API wants null (one-way / open
@@ -78,12 +80,12 @@ export function bestByRow(summaries) {
   return out
 }
 
-export const fmtUsd = (v) => (num(v) === null ? '—' : `$${Math.round(v).toLocaleString('en-US')}`)
+export const fmtUsd = (v) => (num(v) === null ? '—' : fmtNumber(Math.round(v), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }))
 
 export function fmtDuration(minutes) {
   const m = num(minutes)
   if (m === null || m <= 0) return null
-  return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
+  return i18n.t('misc:compare.duration', { h: Math.floor(m / 60), m: Math.round(m % 60) })
 }
 
 /**
@@ -96,6 +98,6 @@ export function compareErrorReason(err) {
   const detail = res?.data?.detail
   if (typeof detail === 'string' && detail.trim()) return detail.trim()
   const status = res?.status
-  if (typeof status === 'number' && status >= 400 && status < 500) return 'Please check the trip details'
-  return 'Service unavailable — try again'
+  if (typeof status === 'number' && status >= 400 && status < 500) return i18n.t('misc:compare.errorCheck')
+  return i18n.t('misc:compare.errorUnavailable')
 }

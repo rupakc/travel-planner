@@ -1,6 +1,8 @@
 // Recent searches: the Search form as submitted, stored per user so a past
 // trip can be reloaded into the form and tweaked rather than retyped.
 
+import { fmtDate } from '../i18n/format'
+
 const DAY_MS = 86400000
 // Expired searches are moved this far out, matching the form's default dates
 const SHIFT_DAYS = 7
@@ -88,7 +90,7 @@ export function recentSearchToForm(search, today) {
 }
 
 const formatDay = (iso, withYear) =>
-  new Date(toUtc(iso)).toLocaleDateString('en-US', {
+  fmtDate(new Date(toUtc(iso)), {
     month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' } : {}), timeZone: 'UTC',
   })
 

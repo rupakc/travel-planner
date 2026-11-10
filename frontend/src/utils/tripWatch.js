@@ -4,15 +4,19 @@
 // { id, type, group, label, live, price, currency, in_total, source,
 //   status, unit_price?, unit?, previous_price?, delta?, link? }.
 // Status: ok | unavailable | stale | error (live parts), estimate.
+import i18n from '../i18n'
 import { formatPrice } from './priceWatch'
 
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
+
 /** Stacked-bar groups, in order, with their (literal, Tailwind-safe) colours. */
-export const TRIP_GROUPS = [
-  { key: 'flights', label: 'Flights', color: 'bg-sky-500' },
-  { key: 'stay', label: 'Stay', color: 'bg-purple-500' },
-  { key: 'activities', label: 'Activities', color: 'bg-green-500' },
-  { key: 'other', label: 'Other', color: 'bg-pink-500' },
+const GROUPS = [
+  { key: 'flights', color: 'bg-sky-500' },
+  { key: 'stay', color: 'bg-purple-500' },
+  { key: 'activities', color: 'bg-green-500' },
+  { key: 'other', color: 'bg-pink-500' },
 ]
+export const TRIP_GROUPS = GROUPS.map(g => ({ ...g, get label() { return tt(`trip.group.${g.key}`) } }))
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 
@@ -46,22 +50,20 @@ export const percent = (share) => (share > 0 && share < 0.005 ? '<1%' : `${Math.
 
 /** Badge for one row: what kind of price it is and how fresh. */
 export function rowBadge(row) {
-  if (!row.live) return { label: 'Estimate', tone: 'slate', title: 'An AI estimate from your search, held fixed. Estimates never trigger alerts.' }
+  const badge = (key, tone) => ({ label: tt(`trip.badge.${key}`), tone, title: tt(`trip.badge.${key}Title`) })
+  if (!row.live) return badge('estimate', 'slate')
   switch (row.status) {
-    case 'unavailable':
-      return { label: 'Unavailable', tone: 'amber', title: 'Not available in the last check — showing the last live price we saw.' }
-    case 'error':
-      return { label: 'Not checked', tone: 'amber', title: 'The last check of this part failed — showing the last live price we saw.' }
-    case 'stale':
-      return { label: 'Live · earlier check', tone: 'sky', title: 'Checked in an earlier round (we re-check up to 5 activities each time).' }
-    default:
-      return { label: 'Live', tone: 'emerald', title: 'Live price from the last check.' }
+    case 'unavailable': return badge('unavailable', 'amber')
+    case 'error': return badge('notChecked', 'amber')
+    case 'stale': return badge('stale', 'sky')
+    default: return badge('live', 'emerald')
   }
 }
 
 const signed = (delta) => `${delta < 0 ? '−' : '+'}${formatPrice(Math.abs(delta))}`
 
 const GROUP_WORDS = { flights: 'flights', stay: 'hotel', activities: 'activities', other: 'other' }
+const groupWord = (g) => (g in GROUP_WORDS ? tt(`trip.groupWord.${g}`) : g)
 
 /**
  * One line about the latest check: which live parts moved ("flights −$70,
@@ -79,10 +81,10 @@ export function whatChanged(watch) {
   const moves = [...byGroup.entries()]
     .filter(([, d]) => Math.round(d) !== 0)
     .sort((a, b) => a[1] - b[1])
-    .map(([g, d]) => `${GROUP_WORDS[g] || g} ${signed(d)}`)
+    .map(([g, d]) => `${groupWord(g)} ${signed(d)}`)
   const missing = rows.filter(r => r.live && (r.status === 'unavailable' || r.status === 'error')).map(r => r.label)
-  let text = moves.length ? `Last check: ${moves.join(', ')}.` : 'Last check: no live price moved.'
-  if (missing.length) text += ` Couldn’t price ${missing.join(', ')} — kept the last live price.`
+  let text = moves.length ? tt('trip.lastCheck', { moves: moves.join(', ') }) : tt('trip.noMove')
+  if (missing.length) text += ` ${tt('trip.couldntPrice', { list: missing.join(', ') })}`
   return text
 }
 
@@ -91,9 +93,9 @@ export const estimateCount = (rows) => (rows || []).filter(r => !r.live).length
 
 /** "Watching · $2,140" for a trip watch (paused reads so). */
 export function tripWatchingLabel(watch) {
-  if (watch.status === 'paused') return 'Watch paused'
+  if (watch.status === 'paused') return tt('btn.watchPaused')
   const price = watch.last_price ?? watch.baseline_price
-  return isNum(price) ? `Watching · ${formatPrice(price)}` : 'Watching'
+  return isNum(price) ? tt('btn.watchingPrice', { price: formatPrice(price) }) : tt('btn.watching')
 }
 
 /** A saved plan can be watched when it has an id and hasn't departed. */
@@ -136,21 +138,21 @@ export function tripPreviewParts(selections, searchData) {
   const legs = sel.flights || []
   const parts = [
     {
-      key: 'flights', label: 'Flights',
+      key: 'flights', label: tt('trip.group.flights'),
       amount: positive(sel.flight?.price_usd) + legs.reduce((t, f) => t + positive(f.price_usd), 0),
-      note: sel.flight && !legs.length ? 'tracked as the cheapest fare on your dates' : null,
+      note: sel.flight && !legs.length ? tt('trip.note.cheapest') : null,
     },
     {
-      key: 'hotel', label: 'Hotel',
+      key: 'hotel', label: tt('trip.partName.hotel'),
       amount: sel.hotel ? (positive(sel.hotel.total_price_usd) || positive(sel.hotel.price_per_night_usd) * nights) : 0,
       note: null,
     },
     {
-      key: 'activities', label: 'Activities',
+      key: 'activities', label: tt('trip.group.activities'),
       amount: (sel.activities || []).reduce((t, a) => t + positive(a.price_usd) * n, 0),
-      note: `per person × ${n}`,
+      note: tt('trip.note.perPerson', { n }),
     },
-    { key: 'sim', label: 'SIM / eSIM', amount: positive(sel.sim?.price_usd), note: null },
+    { key: 'sim', label: tt('trip.partName.sim'), amount: positive(sel.sim?.price_usd), note: null },
   ]
   return parts.filter(p => p.amount > 0)
 }
@@ -167,9 +169,9 @@ export function totalDifference(watch, planTotal) {
   const rows = watch.subject?.components || []
   const n = watch.subject?.travellers || 1
   const reasons = []
-  if (rows.some(r => r.type === 'flight' && r.live)) reasons.push('flights are the cheapest live fare on your dates, not the flight you picked')
-  if (rows.some(r => r.type === 'hotel' && r.live)) reasons.push('the hotel is its live Google Hotels price')
-  if (n > 1 && rows.some(r => r.type === 'activity')) reasons.push(`activities are counted per person × ${n}`)
-  else if (rows.some(r => r.type === 'activity' && r.live)) reasons.push('activities use their live “from” prices')
+  if (rows.some(r => r.type === 'flight' && r.live)) reasons.push(tt('trip.reason.flight'))
+  if (rows.some(r => r.type === 'hotel' && r.live)) reasons.push(tt('trip.reason.hotel'))
+  if (n > 1 && rows.some(r => r.type === 'activity')) reasons.push(tt('trip.reason.activityPer', { n }))
+  else if (rows.some(r => r.type === 'activity' && r.live)) reasons.push(tt('trip.reason.activityLive'))
   return { watched, plan: planTotal, delta, reasons }
 }
