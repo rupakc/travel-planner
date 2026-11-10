@@ -2123,8 +2123,9 @@ function EmergencyCityCard({ card }) {
 }
 
 function EmergencyCardSection({ data, status }) {
+  const { t } = useTranslation('sections')
   if (!data?.emergency_numbers && !data?.cities && status === 'waiting') return null
-  if (!data) return <div className="p-4 text-sm text-gray-500">Emergency information unavailable</div>
+  if (!data) return <div className="p-4 text-sm text-gray-500">{t('emergency.unavailable')}</div>
 
   // Multi-city trips carry a per-stop `cities` array; single-city stays flat.
   const cities = Array.isArray(data.cities) && data.cities.length ? data.cities : null
@@ -2136,16 +2137,16 @@ function EmergencyCardSection({ data, status }) {
       <VerificationConflictBanner verification={data.verification} />
       {/* Subtitle / print row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
-        <button onClick={() => printEmergencyCard(data, destination)}
+        <p className="text-xs text-gray-500">{isEnhancing ? t('emergency.loadingEmbassy') : t('emergency.printableOffline')}</p>
+        <button data-tid="emergency.print" onClick={() => printEmergencyCard(data, destination)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-          🖨️ Print Card
+          🖨️ {t('emergency.printCard')}
         </button>
       </div>
 
       {/* Disclaimer */}
       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        ⚠️ Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.
+        ⚠️ {t('emergency.disclaimer')}
       </p>
 
       {cities ? (
@@ -2165,6 +2166,7 @@ function EmergencyCardSection({ data, status }) {
 // ─── Packing List Section ─────────────────────────────────────────────────────
 
 function PackingListSection({ data, status, selections, onSavePacking }) {
+  const { t } = useTranslation('sections')
   const lsKey = 'packing_checked'
   const isSavedToPlan = !!selections?.packing_list
 
@@ -2181,7 +2183,7 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
   const [customInputs, setCustomInputs] = useState({})
 
   if (!data?.categories?.length) return (
-    <div className="p-4 text-sm text-gray-500">Packing list unavailable — try re-running the search.</div>
+    <div className="p-4 text-sm text-gray-500">{t('packing.unavailable')}</div>
   )
 
   const buildPlanState = (checked, custom) => ({
@@ -2225,22 +2227,24 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
         </p>
       )}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+        <p className="text-xs text-gray-500">{t('packing.itemsPacked', { checked: checkedCount, total: totalItems })}</p>
         {isSavedToPlan ? (
           <button
             type="button"
+            data-tid="packing.remove"
             onClick={() => onSavePacking(null)}
             className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
           >
-            <Check size={11} /> Saved to Plan · Remove
+            <Check size={11} /> {t('packing.savedRemove')}
           </button>
         ) : (
           <button
             type="button"
+            data-tid="packing.save"
             onClick={() => onSavePacking(buildPlanState(checkedItems, customItems))}
             className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-teal-100 transition-colors"
           >
-            <Bookmark size={11} /> Save to Plan
+            <Bookmark size={11} /> {t('packing.save')}
           </button>
         )}
       </div>
@@ -2260,7 +2264,7 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
                 const isChecked = checkedItems[key]
                 return (
                   <label key={idx} className="flex items-start gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={!!isChecked} onChange={() => toggleItem(cat.name, item.item)}
+                    <input type="checkbox" data-tid="packing.item" checked={!!isChecked} onChange={() => toggleItem(cat.name, item.item)}
                       className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-400 shrink-0" />
                     <div className={`flex-1 min-w-0 ${isChecked ? 'opacity-50 line-through' : ''}`}>
                       <span className={`text-sm text-gray-700 ${item.essential ? 'font-medium' : ''}`}>{item.item}</span>
@@ -2272,17 +2276,17 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
               })}
             </div>
             <div className="flex gap-1.5 mt-2">
-              <input type="text" value={customInputs[cat.name] || ''} placeholder="Add item..."
+              <input type="text" data-tid="packing.add-input" value={customInputs[cat.name] || ''} placeholder={t('packing.addItem')}
                 onChange={e => setCustomInputs(p => ({ ...p, [cat.name]: e.target.value }))}
                 onKeyDown={e => e.key === 'Enter' && addCustomItem(cat.name)}
                 className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400" />
-              <button type="button" onClick={() => addCustomItem(cat.name)}
+              <button type="button" data-tid="packing.add" onClick={() => addCustomItem(cat.name)}
                 className="text-xs px-2 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded hover:bg-teal-100 transition-colors">+</button>
             </div>
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-400">* = essential items</p>
+      <p className="text-xs text-gray-400">{t('packing.essentialLegend')}</p>
     </div>
   )
 }
@@ -2290,17 +2294,18 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
 // Build a client-side fallback itinerary from activities + hotels data
 export function buildClientItinerary(activities, hotels, searchData) {
   if (!searchData) return null
+  const tc = (k, o) => i18n.t(`sections:clientItinerary.${k}`, o)
   const dep = new Date(searchData.departure_date)
   const ret = searchData.return_date ? new Date(searchData.return_date) : null
   const nights = ret ? Math.round((ret - dep) / 86400000) : 7
   const actList = (activities?.results || []).filter(a => !a.error)
-  const hotelName = hotels?.results?.[0]?.name || 'your hotel'
-  const dest = searchData.destination || 'your destination'
+  const hotelName = hotels?.results?.[0]?.name || tc('yourHotel')
+  const dest = searchData.destination || tc('yourDestination')
 
   const themes = [
-    'Arrival & First Impressions',
-    ...Array.from({ length: Math.max(0, nights - 1) }, (_, i) => `Day ${i + 2} — Exploration`),
-    'Departure Day',
+    tc('themeArrival'),
+    ...Array.from({ length: Math.max(0, nights - 1) }, (_, i) => tc('themeDay', { n: i + 2 })),
+    tc('themeDeparture'),
   ]
 
   const days = []
@@ -2316,23 +2321,23 @@ export function buildClientItinerary(activities, hotels, searchData) {
     let slots = []
     if (isFirst) {
       slots = [
-        { time_of_day: 'morning',   activity: `Arrive at ${dest}, transfer to ${hotelName}`, location: dest, duration_hours: 3, notes: 'Pick up local transport card at the airport', estimated_cost_usd: 30 },
-        { time_of_day: 'afternoon', activity: `Check in to ${hotelName}, freshen up and explore the area`, location: dest, duration_hours: 3, notes: 'Rest after the journey', estimated_cost_usd: 20 },
-        { time_of_day: 'evening',   activity: 'Welcome dinner at a local restaurant', location: dest, duration_hours: 2, notes: 'Ask hotel staff for recommendations', estimated_cost_usd: 40 },
+        { time_of_day: 'morning',   activity: tc('arrive', { dest, hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('arriveNote'), estimated_cost_usd: 30 },
+        { time_of_day: 'afternoon', activity: tc('checkIn', { hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('checkInNote'), estimated_cost_usd: 20 },
+        { time_of_day: 'evening',   activity: tc('welcomeDinner'), location: dest, duration_hours: 2, notes: tc('welcomeNote'), estimated_cost_usd: 40 },
       ]
     } else if (isLast) {
       slots = [
-        { time_of_day: 'morning',   activity: 'Final breakfast and last-minute shopping', location: dest, duration_hours: 2, notes: 'Pack the evening before', estimated_cost_usd: 25 },
-        { time_of_day: 'afternoon', activity: `Check out of ${hotelName} and head to airport`, location: dest, duration_hours: 3, notes: 'Allow extra time for check-in', estimated_cost_usd: 25 },
-        { time_of_day: 'evening',   activity: 'Departure flight', location: 'Airport', duration_hours: 3, notes: 'Safe travels!', estimated_cost_usd: 0 },
+        { time_of_day: 'morning',   activity: tc('finalBreakfast'), location: dest, duration_hours: 2, notes: tc('finalNote'), estimated_cost_usd: 25 },
+        { time_of_day: 'afternoon', activity: tc('checkOut', { hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('checkOutNote'), estimated_cost_usd: 25 },
+        { time_of_day: 'evening',   activity: tc('departureFlight'), location: tc('airport'), duration_hours: 3, notes: tc('safeTravels'), estimated_cost_usd: 0 },
       ]
     } else {
       slots = ['morning', 'afternoon', 'evening'].map(tod => {
         if (actIdx < actList.length) {
           const a = actList[actIdx++]
-          return { time_of_day: tod, activity: a.name || 'Local exploration', location: a.location || dest, duration_hours: a.duration_hours || 2, notes: a.description || '', estimated_cost_usd: Number(a.price_usd) || 25 }
+          return { time_of_day: tod, activity: a.name || tc('localExploration'), location: a.location || dest, duration_hours: a.duration_hours || 2, notes: a.description || '', estimated_cost_usd: Number(a.price_usd) || 25 }
         }
-        return { time_of_day: tod, activity: `Free time — explore ${dest}`, location: dest, duration_hours: 3, notes: 'Great for spontaneous discoveries', estimated_cost_usd: 30 }
+        return { time_of_day: tod, activity: tc('freeTime', { dest }), location: dest, duration_hours: 3, notes: tc('freeNote'), estimated_cost_usd: 30 }
       })
     }
 
@@ -2351,15 +2356,15 @@ export function buildClientItinerary(activities, hotels, searchData) {
 // ─── Trip Stress-Test (Trip Health Check) ────────────────────────────────────
 
 const STRESS_OVERALL_STYLES = {
-  green: { ring: 'text-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Looking solid' },
-  amber: { ring: 'text-amber-500',   chip: 'bg-amber-50 text-amber-700 border-amber-200',       label: 'Needs attention' },
-  red:   { ring: 'text-red-500',     chip: 'bg-red-50 text-red-700 border-red-200',             label: 'At risk' },
+  green: { ring: 'text-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  amber: { ring: 'text-amber-500',   chip: 'bg-amber-50 text-amber-700 border-amber-200' },
+  red:   { ring: 'text-red-500',     chip: 'bg-red-50 text-red-700 border-red-200' },
 }
 
 const STRESS_SEVERITY_STYLES = {
-  high:   { chip: 'bg-red-50 text-red-700 border-red-200',          icon: AlertCircle,   label: 'High' },
-  medium: { chip: 'bg-amber-50 text-amber-700 border-amber-200',    icon: AlertTriangle, label: 'Medium' },
-  low:    { chip: 'bg-sky-50 text-sky-700 border-sky-200',          icon: Info,          label: 'Low' },
+  high:   { chip: 'bg-red-50 text-red-700 border-red-200',          icon: AlertCircle },
+  medium: { chip: 'bg-amber-50 text-amber-700 border-amber-200',    icon: AlertTriangle },
+  low:    { chip: 'bg-sky-50 text-sky-700 border-sky-200',          icon: Info },
 }
 
 const STRESS_CATEGORY_EMOJI = { pacing: '🏃', timing: '⏰', visa: '🛂', weather: '🌧️', budget: '💸', logistics: '🧭' }
@@ -2384,12 +2389,13 @@ function StressScoreRing({ score, overall }) {
 // `recheck` ({ data, stale }) is a re-run against the edited itinerary; it
 // only applies while the layout differs from the original.
 export function StressTestSection({ data: original, layoutMoved = false, recheck = null, rechecking = false, recheckError = null, onRecheck }) {
+  const { t } = useTranslation('sections')
   const rechecked = layoutMoved && recheck?.data ? recheck : null
   const data = rechecked ? rechecked.data : original
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
-    <div className="p-4 text-sm text-gray-500">Health check unavailable for this plan — try re-running the search.</div>
+    <div className="p-4 text-sm text-gray-500">{t('stress.unavailable')}</div>
   )
 
   const overall = ['green', 'amber', 'red'].includes(data.overall) ? data.overall : 'amber'
@@ -2404,22 +2410,22 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
       <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/60">
         <StressScoreRing score={data.score} overall={overall} />
         <div className="min-w-0">
-          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
+          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{t(`stress.overall.${overall}`)}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
-          <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
+          <p className="text-[11px] text-gray-400 mt-1">{t('stress.blurb')}</p>
           {layoutMoved && (rechecked ? (
             rechecked.stale
-              ? <p className="text-[11px] text-amber-600 mt-1">Your plan changed since this check — re-check again</p>
-              : <p className="text-[11px] text-teal-700 mt-1">Checked against your edited itinerary</p>
+              ? <p className="text-[11px] text-amber-600 mt-1">{t('stress.staleNote')}</p>
+              : <p className="text-[11px] text-teal-700 mt-1">{t('stress.checkedEdited')}</p>
           ) : (
-            <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>
+            <p className="text-[11px] text-amber-600 mt-1">{t('stress.checkedOriginal')}</p>
           ))}
           {layoutMoved && (!rechecked || rechecked.stale) && (
-            <button type="button" onClick={onRecheck} disabled={rechecking}
+            <button type="button" data-tid="stress.recheck" onClick={onRecheck} disabled={rechecking}
               className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-default">
               {rechecking
-                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />Re-checking…</>
-                : <><RefreshCw size={12} aria-hidden="true" />Re-check my edited plan</>}
+                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />{t('stress.rechecking')}</>
+                : <><RefreshCw size={12} aria-hidden="true" />{t('stress.recheck')}</>}
             </button>
           )}
           {layoutMoved && recheckError && <p role="alert" className="text-[11px] text-rose-600 mt-1">{recheckError}</p>}
@@ -2427,7 +2433,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
       </div>
 
       {findings.length === 0 ? (
-        <p className="text-sm text-gray-500">No issues found — this plan held up under scrutiny.</p>
+        <p className="text-sm text-gray-500">{t('stress.none')}</p>
       ) : (
         <ul className="space-y-3">
           {findings.map((f, i) => {
@@ -2437,15 +2443,15 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
               <li key={i} className="border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${sev.chip}`}>
-                    <SevIcon size={11} /> {sev.label}
+                    <SevIcon size={11} /> {t(`stress.severity.${STRESS_SEVERITY_STYLES[f?.severity] ? f.severity : 'low'}`)}
                   </span>
                   {f?.category && (
                     <span className="text-[11px] text-gray-500 font-medium">
-                      {STRESS_CATEGORY_EMOJI[f.category] || '🔎'} {f.category}
+                      {STRESS_CATEGORY_EMOJI[f.category] || '🔎'} {t(`stress.category.${f.category}`, { defaultValue: f.category })}
                     </span>
                   )}
                   {(f?.day_number || f?.day_number === 0) && (
-                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">Day {f.day_number}</span>
+                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{t('stress.day', { n: f.day_number })}</span>
                   )}
                 </div>
                 <p className="text-sm text-slate-800 mt-1.5">{f?.issue}</p>
@@ -2462,6 +2468,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
 }
 
 export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+  const { t } = useTranslation('sections')
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -2503,7 +2510,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   const save = async () => {
-    if (!token) { setSaveMsg('Please log in to save plans'); return }
+    if (!token) { setSaveMsg('loginToSave'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -2519,11 +2526,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         body,
       })
       if (res.ok) {
-        setSaveMsg(isUpdate ? 'Plan updated!' : 'Plan saved!')
+        setSaveMsg(isUpdate ? 'updated' : 'saved')
         track('plan_saved', 'results', { is_update: isUpdate })
         loadPlans(); setTimeout(() => setSaveMsg(''), 3000)
-      } else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      } else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -2555,7 +2562,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   const saveAndClear = async () => {
-    if (!token) { setSaveMsg('Please log in to save plans'); return }
+    if (!token) { setSaveMsg('loginToSave'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -2567,14 +2574,14 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         : JSON.stringify({ name: planName, search_data: searchData, selections: sel })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
-        setSaveMsg(isUpdate ? 'Plan sent back!' : 'Plan saved!')
+        setSaveMsg(isUpdate ? 'sentBack' : 'saved')
         loadPlans()
         onClearLoadedPlan()
         onClearSelections()
         onPlanNameChange('My Trip Plan')
         setTimeout(() => setSaveMsg(''), 3000)
-      } else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      } else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -2595,24 +2602,24 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bookmark size={18} />
-              <h2 className="font-semibold">My Plan</h2>
+              <h2 className="font-semibold">{t('drawer.title')}</h2>
               {selectedCount > 0 && <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedCount}</span>}
-              {loadedPlanId && <span className="bg-amber-200 text-amber-900 text-[10px] font-medium px-1.5 py-0.5 rounded">Editing saved plan</span>}
+              {loadedPlanId && <span className="bg-amber-200 text-amber-900 text-[10px] font-medium px-1.5 py-0.5 rounded">{t('drawer.editingSaved')}</span>}
             </div>
             <div className="flex items-center gap-3">
               {estimatedCost > 0 && (
                 <div className="text-right">
-                  <p className="font-bold text-sm">${estimatedCost.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                  <p className="font-bold text-sm">${fmtNumber(estimatedCost, { maximumFractionDigits: 0 })}</p>
                 </div>
               )}
-              <button onClick={onClose} className="text-white/80 hover:text-white"><X size={18} /></button>
+              <button data-tid="drawer.close" onClick={onClose} className="text-white/80 hover:text-white"><X size={18} /></button>
             </div>
           </div>
           {budget && (
             <div className={`mt-1.5 text-xs font-medium px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 ${budget.status === 'under' ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
               <DollarSign size={11} />
               {budget.label}
-              {searchData?.budget_usd && <span className="text-white/50 ml-1">(budget: ${searchData.budget_usd.toLocaleString()})</span>}
+              {searchData?.budget_usd && <span className="text-white/50 ml-1">{t('drawer.budgetOf', { amount: `$${fmtNumber(searchData.budget_usd)}` })}</span>}
             </div>
           )}
           {searchData?.import_source && (
@@ -2628,13 +2635,13 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             className={selectedCount > 0 ? 'cursor-grab active:cursor-grabbing' : ''}
           >
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Plan Name {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">· drag to send to saved</span>}
+              {t('drawer.planName')} {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">{t('drawer.dragToSend')}</span>}
             </label>
-            <input type="text" value={planName} onChange={e => onPlanNameChange(e.target.value)}
+            <input type="text" data-tid="drawer.plan-name" value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
             {selectedCount > 0 && (
               <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                <Info size={10} /> Tip: drag the plan name down to "Saved Plans" to archive it
+                <Info size={10} /> {t('drawer.dragTip')}
               </p>
             )}
           </div>
@@ -2647,23 +2654,23 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide"><Plane size={11}/> Flight</div>
-                <button onClick={() => onRemoveSelection('flight')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide"><Plane size={11}/> {t('drawer.flight')}</div>
+                <button data-tid="drawer.remove.flight" onClick={() => onRemoveSelection('flight')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               {selections.flight.outbound ? (
                 <>
-                  <p className="text-xs text-gray-500 mb-0.5">Outbound: <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
-                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">Return: <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
-                  <p className="text-xs font-semibold text-sky-700 mt-1">${selections.flight.price_usd?.toLocaleString()} {selections.flight.trip_type === 'round_trip' ? 'round-trip' : 'one-way'}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('drawer.outbound')} <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
+                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">{t('drawer.return')} <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
+                  <p className="text-xs font-semibold text-sky-700 mt-1">{t(selections.flight.trip_type === 'round_trip' ? 'drawer.priceRound' : 'drawer.priceOneWay', { price: `$${fmtNumber(selections.flight.price_usd ?? 0)}` })}</p>
                 </>
               ) : (
                 <>
                   <p className="text-sm font-medium">{selections.flight.airline}{selections.flight.flight_number && <span className="text-xs text-gray-400 ml-1">{selections.flight.flight_number}</span>}</p>
-                  <p className="text-xs text-gray-500">{selections.flight.origin} → {selections.flight.destination} · ${selections.flight.price_usd?.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{selections.flight.origin} → {selections.flight.destination} · ${fmtNumber(selections.flight.price_usd ?? 0)}</p>
                 </>
               )}
               {selections.flight.booking_url && (
-                <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> Book this flight</a>
+                <a data-tid="drawer.book-flight" href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.bookFlight')}</a>
               )}
               <div className="mt-1.5">
                 <WatchFareButton variant="inline" trip={tripFromSearch(searchData)} source="my_plan"
@@ -2675,23 +2682,23 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected multi-city flights (one per leg) */}
           {(selections.flights || []).length > 0 && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide mb-1.5"><Plane size={11}/> Flights ({selections.flights.length} leg{selections.flights.length > 1 ? 's' : ''})</div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide mb-1.5"><Plane size={11}/> {t('drawer.flightsLegs', { count: selections.flights.length })}</div>
               <div className="space-y-2">
                 {selections.flights.map((f, i) => (
                   <div key={i} className="flex items-start justify-between gap-2 border-t border-sky-100 pt-1.5 first:border-t-0 first:pt-0">
                     <div className="min-w-0">
                       <p className="text-xs text-gray-500">
-                        <span className="font-semibold text-sky-700">Leg {(f.leg_index ?? i) + 1}:</span>{' '}
+                        <span className="font-semibold text-sky-700">{t('drawer.leg', { n: (f.leg_index ?? i) + 1 })}</span>{' '}
                         <span className="font-medium text-gray-700">{f.outbound?.airline || f.airline}</span>
                         {(f.outbound?.flight_number || f.flight_number) && <span className="text-gray-400 ml-1">{f.outbound?.flight_number || f.flight_number}</span>}
                       </p>
-                      <p className="text-[11px] text-gray-500">{(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {(f.leg_to || f.outbound?.destination || '').split(',')[0]}{f.leg_date ? ` · ${f.leg_date}` : ''} · <span className="font-semibold text-sky-700">${Number(f.price_usd || 0).toLocaleString()}</span></p>
+                      <p className="text-[11px] text-gray-500">{(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {(f.leg_to || f.outbound?.destination || '').split(',')[0]}{f.leg_date ? ` · ${f.leg_date}` : ''} · <span className="font-semibold text-sky-700">${fmtNumber(Number(f.price_usd || 0))}</span></p>
                     </div>
-                    <button onClick={() => onRemoveSelection('flights', f)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={13}/></button>
+                    <button data-tid="drawer.remove.flights" onClick={() => onRemoveSelection('flights', f)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={13}/></button>
                   </div>
                 ))}
               </div>
-              <p className="text-xs font-semibold text-sky-700 mt-2">${selections.flights.reduce((t, f) => t + (Number(f.price_usd) || 0), 0).toLocaleString()} total flights</p>
+              <p className="text-xs font-semibold text-sky-700 mt-2">{t('drawer.totalFlights', { amount: `$${fmtNumber(selections.flights.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0))}` })}</p>
             </div>
           )}
 
@@ -2699,17 +2706,17 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.hotel && (
             <div className="border border-purple-200 bg-purple-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 uppercase tracking-wide"><Hotel size={11}/> Hotel</div>
-                <button onClick={() => onRemoveSelection('hotel')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 uppercase tracking-wide"><Hotel size={11}/> {t('drawer.hotel')}</div>
+                <button data-tid="drawer.remove.hotel" onClick={() => onRemoveSelection('hotel')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               <p className="text-sm font-medium">{selections.hotel.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
                 {selections.hotel.star_rating > 0 && <div className="flex">{[...Array(Math.round(selections.hotel.star_rating))].map((_, j) => <Star key={j} size={9} className="text-yellow-400 fill-yellow-400" />)}</div>}
                 {selections.hotel.review_score && <span className="text-xs text-gray-400">{selections.hotel.review_score}/10</span>}
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{selections.hotel.location} · ${selections.hotel.price_per_night_usd?.toLocaleString()}/night{selections.hotel.total_price_usd ? ` · $${selections.hotel.total_price_usd.toLocaleString()} total` : ''}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{t(selections.hotel.total_price_usd ? 'drawer.hotelLineTotal' : 'drawer.hotelLine', { location: selections.hotel.location || '', price: `$${fmtNumber(selections.hotel.price_per_night_usd ?? 0)}`, total: `$${fmtNumber(selections.hotel.total_price_usd ?? 0)}` })}</p>
               {selections.hotel.booking_url && (
-                <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> View & Book</a>
+                <a data-tid="drawer.book-hotel" href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.viewBook')}</a>
               )}
               <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchData} source="my_plan" /></div>
             </div>
@@ -2718,7 +2725,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected activities */}
           {selections.activities.length > 0 && (
             <div className="border border-green-200 bg-green-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapPin size={11}/> Activities ({selections.activities.length})</div>
+              <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapPin size={11}/> {t('drawer.activities', { count: selections.activities.length })}</div>
               <div className="space-y-2">
                 {selections.activities.map((a, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-green-100 last:border-0 pb-1.5 last:pb-0">
@@ -2726,15 +2733,15 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       <p className="text-xs font-medium text-gray-800">{a.name}</p>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                         {a.price_usd != null && <span>${a.price_usd}</span>}
-                        {a.duration_hours && <span>{a.duration_hours}h</span>}
+                        {a.duration_hours && <span>{t('drawer.hoursShort', { h: a.duration_hours })}</span>}
                         {a.location && <span className="truncate">{a.location}</span>}
                       </div>
                       {a.booking_url && (
-                        <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> Book</a>
+                        <a data-tid="drawer.book-activity" href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.book')}</a>
                       )}
                       <div className="mt-0.5"><WatchActivityButton activity={a} source="my_plan" /></div>
                     </div>
-                    <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.activities" onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2744,7 +2751,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected places */}
           {(selections.places_to_see?.length > 0) && (
             <div className="border border-lime-200 bg-lime-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapIcon size={11}/> Places to See ({selections.places_to_see.length})</div>
+              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapIcon size={11}/> {t('drawer.places', { count: selections.places_to_see.length })}</div>
               <div className="space-y-2">
                 {selections.places_to_see.map((place, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-lime-100 last:border-0 pb-1.5 last:pb-0">
@@ -2753,13 +2760,13 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                         {place.category && <span>{place.category}</span>}
                         {place.neighbourhood && <span className="truncate">{place.neighbourhood}</span>}
-                        {place.admission_fee_usd === 0 && <span className="text-green-600">Free</span>}
+                        {place.admission_fee_usd === 0 && <span className="text-green-600">{t('drawer.free')}</span>}
                       </div>
                       {place.info_url && (
-                        <a href={place.info_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
+                        <a data-tid="drawer.place-details" href={place.info_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.details')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('places_to_see', place)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.places_to_see" onClick={() => onRemoveSelection('places_to_see', place)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2769,11 +2776,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected walking tours */}
           {(selections.walking_tours?.length > 0) && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> Walking tours ({selections.walking_tours.length})</div>
+              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> {t('drawer.walkingTours', { count: selections.walking_tours.length })}</div>
               <div className="space-y-2">
                 {selections.walking_tours.map((tour, i) => (
                   <WalkingTourPlanRow key={tour.url || i} tour={tour}
-                    onRemove={t => onRemoveSelection('walking_tours', t)} />
+                    onRemove={wt => onRemoveSelection('walking_tours', wt)} />
                 ))}
               </div>
             </div>
@@ -2783,18 +2790,18 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.sim && (
             <div className="border border-pink-200 bg-pink-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-pink-700 uppercase tracking-wide"><Smartphone size={11}/> SIM</div>
-                <button onClick={() => onRemoveSelection('sim')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-pink-700 uppercase tracking-wide"><Smartphone size={11}/> {t('drawer.sim')}</div>
+                <button data-tid="drawer.remove.sim" onClick={() => onRemoveSelection('sim')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               <p className="text-sm font-medium">{selections.sim.provider}</p>
               <p className="text-xs text-gray-500">{selections.sim.plan_name} · ${selections.sim.price_usd}</p>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                {selections.sim.data_gb && <span>{selections.sim.data_gb}GB</span>}
-                {selections.sim.validity_days && <span>{selections.sim.validity_days} days</span>}
+                {selections.sim.data_gb && <span>{t('drawer.simGb', { n: selections.sim.data_gb })}</span>}
+                {selections.sim.validity_days && <span>{t('drawer.simDays', { count: selections.sim.validity_days })}</span>}
                 {selections.sim.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={9}/>{selections.sim.network_quality.speed}</span>}
               </div>
               {selections.sim.url && (
-                <a href={selections.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1.5"><ExternalLink size={10} /> Get Plan</a>
+                <a data-tid="drawer.sim-link" href={selections.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.getPlan')}</a>
               )}
             </div>
           )}
@@ -2802,7 +2809,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected transport */}
           {selections.getting_around?.length > 0 && (
             <div className="border border-cyan-200 bg-cyan-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-cyan-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Bus size={11}/> Getting Around ({selections.getting_around.length})</div>
+              <div className="text-xs font-semibold text-cyan-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Bus size={11}/> {t('drawer.gettingAround', { count: selections.getting_around.length })}</div>
               <div className="space-y-2">
                 {selections.getting_around.map((opt, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-cyan-100 last:border-0 pb-1.5 last:pb-0">
@@ -2814,10 +2821,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       </div>
                       {opt.price_info && <p className="text-xs text-gray-500 mt-0.5">{opt.price_info}</p>}
                       {opt.booking_url && (
-                        <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={9} /> More Info</a>
+                        <a data-tid="drawer.transport-info" href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.moreInfo')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('getting_around', opt)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.getting_around" onClick={() => onRemoveSelection('getting_around', opt)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2827,21 +2834,21 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected tips */}
           {selections.tips?.length > 0 && (
             <div className="border border-amber-200 bg-amber-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Lightbulb size={11}/> Tips ({selections.tips.length})</div>
+              <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Lightbulb size={11}/> {t('drawer.tips', { count: selections.tips.length })}</div>
               <div className="space-y-2">
-                {selections.tips.map((t, i) => (
+                {selections.tips.map((tip, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-amber-100 last:border-0 pb-1.5 last:pb-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium text-gray-800">{t.title}</p>
-                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t.severity}</span>}
+                        <p className="text-xs font-medium text-gray-800">{tip.title}</p>
+                        {tip.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${tip.severity === 'danger' ? 'bg-red-100 text-red-700' : tip.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t(`drawer.severity.${tip.severity}`, { defaultValue: tip.severity })}</span>}
                       </div>
-                      {t.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.body}</p>}
-                      {t.source_url && (
-                        <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={9} /> Source</a>
+                      {tip.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{tip.body}</p>}
+                      {tip.source_url && (
+                        <a data-tid="drawer.tip-source" href={tip.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.source')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('tips', t)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.tips" onClick={() => onRemoveSelection('tips', tip)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2851,7 +2858,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected events */}
           {selections.events?.length > 0 && (
             <div className="border border-fuchsia-200 bg-fuchsia-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PartyPopper size={11}/> Events ({selections.events.length})</div>
+              <div className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PartyPopper size={11}/> {t('drawer.events', { count: selections.events.length })}</div>
               <div className="space-y-2">
                 {selections.events.map((ev, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-fuchsia-100 last:border-0 pb-1.5 last:pb-0">
@@ -2864,7 +2871,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       </div>
                       {ev.location && <p className="text-xs text-gray-500 mt-0.5">{ev.location}</p>}
                     </div>
-                    <button onClick={() => onRemoveSelection('events', ev)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.events" onClick={() => onRemoveSelection('events', ev)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2874,7 +2881,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Itinerary notes */}
           {Object.entries(selections.itinerary_notes).filter(([,v]) => v).length > 0 && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PenLine size={11}/> Notes</div>
+              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PenLine size={11}/> {t('drawer.notes')}</div>
               <div className="space-y-1.5">
                 {Object.entries(selections.itinerary_notes).filter(([,v]) => v).map(([k, v]) => (
                   <div key={k}><p className="text-xs text-teal-600 font-medium capitalize">{k.replace('-', ' – ')}</p><p className="text-xs text-gray-700">{v}</p></div>
@@ -2887,16 +2894,16 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {(selections.itinerary_slots?.length > 0) && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
               <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                <Calendar size={11}/> Itinerary ({selections.itinerary_slots.length} slots)
+                <Calendar size={11}/> {t('drawer.itinerarySlots', { count: selections.itinerary_slots.length })}
               </div>
               <div className="space-y-1.5">
                 {selections.itinerary_slots.map((slot, i) => (
                   <div key={i} className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-xs font-medium text-gray-800 truncate">{slot.activity}</p>
-                      <p className="text-xs text-teal-500">{timeRange(slot) ? slotWhen(slot) : `Day ${slot.day_number} · ${slot.time_of_day}`}</p>
+                      <p className="text-xs text-teal-500">{timeRange(slot) ? slotWhen(slot) : t('drawer.daySlot', { day: slot.day_number, tod: t(`drawer.tod.${slot.time_of_day}`, { defaultValue: slot.time_of_day }) })}</p>
                     </div>
-                    <button onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12}/></button>
+                    <button data-tid="drawer.remove.itinerary_slots" onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2907,9 +2914,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             <div className="border border-teal-200 bg-teal-50/60 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-teal-800 flex items-center gap-1.5">
-                  <ShoppingBag size={14} /> Packing List
+                  <ShoppingBag size={14} /> {t('packing.title')}
                 </span>
                 <button
+                  data-tid="drawer.remove.packing_list"
                   onClick={() => onRemoveSelection('packing_list')}
                   className="text-teal-400 hover:text-red-500 transition-colors"
                 >
@@ -2917,7 +2925,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                 </button>
               </div>
               <div className="flex items-center justify-between text-xs text-teal-700 mb-1.5">
-                <span>{selections.packing_list.checked_count ?? 0}/{selections.packing_list.total_items ?? 0} items packed</span>
+                <span>{t('packing.itemsPacked', { checked: selections.packing_list.checked_count ?? 0, total: selections.packing_list.total_items ?? 0 })}</span>
                 <span className="text-teal-500">{Math.round(((selections.packing_list.checked_count ?? 0) / Math.max(1, selections.packing_list.total_items ?? 1)) * 100)}%</span>
               </div>
               <div className="h-1.5 bg-teal-200 rounded-full overflow-hidden mb-2">
@@ -2951,10 +2959,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             >
               <Bookmark size={32} className={`mx-auto mb-2 ${isDragOver ? 'text-teal-400 opacity-80' : 'opacity-30'}`} />
               {isDragOver
-                ? <p className="text-sm text-teal-600 font-medium">Drop to load this plan</p>
+                ? <p className="text-sm text-teal-600 font-medium">{t('drawer.dropLoad')}</p>
                 : <>
-                    <p className="text-sm">Select flights, hotels &amp; activities<br/>to build your plan</p>
-                    <p className="text-xs mt-2 text-gray-300">or drag a saved plan here</p>
+                    <p className="text-sm">{t('drawer.selectLine1')}<br/>{t('drawer.selectLine2')}</p>
+                    <p className="text-xs mt-2 text-gray-300">{t('drawer.orDrag')}</p>
                   </>
               }
             </div>
@@ -2963,24 +2971,24 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Save buttons */}
           <div className="flex gap-2">
             {loadedPlanId && (
-              <button onClick={() => { onClearLoadedPlan(); onPlanNameChange('My Trip Plan') }}
+              <button data-tid="drawer.new" onClick={() => { onClearLoadedPlan(); onPlanNameChange('My Trip Plan') }}
                 className="px-3 py-2.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition-all shrink-0">
-                New
+                {t('drawer.new')}
               </button>
             )}
-            <button onClick={save} disabled={saving || selectedCount === 0}
+            <button data-tid="drawer.save" onClick={save} disabled={saving || selectedCount === 0}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 text-sm transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Saving…' : loadedPlanId ? 'Update Plan' : 'Save Plan'}
+              {saving ? t('drawer.saving') : loadedPlanId ? t('drawer.update') : t('drawer.savePlan')}
             </button>
           </div>
           {selectedCount > 0 && (
-            <button onClick={saveAndClear} disabled={saving}
+            <button data-tid="drawer.archive" onClick={saveAndClear} disabled={saving}
               className="w-full flex items-center justify-center gap-2 py-2 border border-slate-300 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50">
-              <Bookmark size={12} /> Archive Plan
+              <Bookmark size={12} /> {t('drawer.archive')}
             </button>
           )}
-          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{saveMsg}</p>}
+          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg === 'failed' ? 'text-red-600' : 'text-green-600'}`}>{t(`drawer.msg.${saveMsg}`)}</p>}
 
           {/* Saved plans — drop zone for current plan */}
           <div
@@ -2997,11 +3005,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             }}
           >
             <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 px-2 py-1.5 rounded-lg transition-all ${isDragOverSaved ? 'bg-teal-100 text-teal-700 border-2 border-dashed border-teal-400' : 'text-gray-500'}`}>
-              {isDragOverSaved ? '↓ Drop here to save plan' : 'Saved Plans'}
+              {isDragOverSaved ? t('drawer.dropHere') : t('drawer.savedPlans')}
             </h3>
-            {loadingPlans && <div className="text-xs text-gray-400 text-center py-2">Loading…</div>}
+            {loadingPlans && <div className="text-xs text-gray-400 text-center py-2">{t('drawer.loading')}</div>}
             {savedPlans.length === 0 && !loadingPlans && !isDragOverSaved && (
-              <p className="text-xs text-gray-300 text-center py-2">No saved plans yet</p>
+              <p className="text-xs text-gray-300 text-center py-2">{t('drawer.noSaved')}</p>
             )}
             <div className="space-y-2">
               {savedPlans.map(plan => {
@@ -3017,12 +3025,12 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate flex items-center gap-1">
-                          {plan.search_data?.import_source && <Link2 size={12} className="shrink-0 text-amber-600" aria-label="Planned from a link" />}
+                          {plan.search_data?.import_source && <Link2 size={12} className="shrink-0 text-amber-600" aria-label={t('drawer.fromLink')} />}
                           <span className="truncate">{plan.name}</span>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-gray-400">{plan.created_at?.slice(0,10)}</p>
-                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${planCost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
+                          <p className="text-xs text-gray-400">{plan.created_at ? fmtDate(plan.created_at.slice(0, 10), { dateStyle: 'medium', timeZone: 'UTC' }) : ''}</p>
+                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${fmtNumber(planCost, { maximumFractionDigits: 0 })}</span>}
                           {planBudget && (
                             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${planBudget.status === 'under' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                               {planBudget.label}
@@ -3030,32 +3038,32 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                           )}
                         </div>
                       </div>
-                      <button onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id}
+                      <button data-tid="drawer.delete-plan" onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id}
                         className="ml-2 text-gray-400 hover:text-red-500 transition-colors shrink-0">
                         {deletingId === plan.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                       </button>
                     </div>
                     <div className="flex gap-1.5 mt-1.5">
-                      <button onClick={() => onLoadPlan(plan)}
+                      <button data-tid="drawer.load-plan" onClick={() => onLoadPlan(plan)}
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
-                        {isLoaded ? <><Check size={11} /> Loaded</> : <><RefreshCw size={11} /> Load</>}
+                        {isLoaded ? <><Check size={11} /> {t('drawer.loaded')}</> : <><RefreshCw size={11} /> {t('drawer.load')}</>}
                       </button>
-                      <WatchFareButton variant="card" label="Watch" trip={tripFromPlan(plan)} source="saved_plan" />
-                      <button onClick={() => onViewPlan(plan)}
+                      <WatchFareButton variant="card" label={t('drawer.watch')} trip={tripFromPlan(plan)} source="saved_plan" />
+                      <button data-tid="drawer.view-plan" onClick={() => onViewPlan(plan)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
-                        <Eye size={11} /> View
+                        <Eye size={11} /> {t('drawer.view')}
                       </button>
-                      <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
-                        title="Copy a public share link — no login needed to view"
+                      <button data-tid="drawer.share-plan" onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
+                        title={t('drawer.shareTitle')}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
-                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
+                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} {t('drawer.share')}
                       </button>
                     </div>
                     <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
-                        ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
-                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 Link copied: {shareMsg.url}</p>
+                        ? <p className="text-[11px] text-red-500 mt-1">{t('drawer.shareError')}</p>
+                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 {t('drawer.linkCopied', { url: shareMsg.url })}</p>
                     )}
                   </div>
                 )
@@ -3071,6 +3079,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
 // ─── Search Panel ─────────────────────────────────────────────────────────────
 
 function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
+  const { t } = useTranslation('sections')
   const today = new Date().toISOString().split('T')[0]
   const [form, setForm] = useState({
     ...searchData,
@@ -3096,12 +3105,12 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
   return (
     <div className="bg-white border-b border-gray-200">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm min-w-0">
+      <button data-tid="searchPanel.toggle" onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm min-w-0">
         <div className="flex items-center gap-2 text-gray-700 font-medium min-w-0 flex-1">
           <RefreshCw size={14} className="text-teal-500 shrink-0" />
-          <span className="shrink-0">Search Criteria</span>
+          <span className="shrink-0">{t('searchPanel.title')}</span>
           <span className="text-gray-400 font-normal text-xs truncate hidden sm:inline">
-            {searchData.origin} → {searchData.destination} · {searchData.departure_date} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}
+            {searchData.origin} → {searchData.destination} · {searchData.departure_date} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}
           </span>
         </div>
         {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
@@ -3110,43 +3119,43 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
       {isOpen && (
         <form onSubmit={handleSubmit} className="px-4 pb-4 space-y-3 border-t border-gray-100">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3">
-            <AirportSearch label="From" value={form.origin} onChange={v=>setForm(f=>({...f,origin:v}))} placeholder="Origin…" required />
-            <AirportSearch label="To" value={form.destination} onChange={v=>setForm(f=>({...f,destination:v}))} placeholder="Destination…" required />
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Departure</label><input type="date" value={form.departure_date} min={today} onChange={e=>setForm(f=>({...f,departure_date:e.target.value}))} className={inputClass} /></div>
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Return</label><input type="date" value={form.return_date} min={form.departure_date} onChange={e=>setForm(f=>({...f,return_date:e.target.value}))} className={inputClass} /></div>
+            <AirportSearch label={t('searchPanel.from')} value={form.origin} onChange={v=>setForm(f=>({...f,origin:v}))} placeholder={t('searchPanel.originPh')} required />
+            <AirportSearch label={t('searchPanel.to')} value={form.destination} onChange={v=>setForm(f=>({...f,destination:v}))} placeholder={t('searchPanel.destPh')} required />
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.departure')}</label><input type="date" data-tid="searchPanel.departure" value={form.departure_date} min={today} onChange={e=>setForm(f=>({...f,departure_date:e.target.value}))} className={inputClass} /></div>
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.return')}</label><input type="date" data-tid="searchPanel.return" value={form.return_date} min={form.departure_date} onChange={e=>setForm(f=>({...f,return_date:e.target.value}))} className={inputClass} /></div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <NationalitySearch
-                label="Nationality"
+                label={t('searchPanel.nationality')}
                 value={form.nationality}
                 onChange={v => setForm(f => ({ ...f, nationality: v }))}
-                placeholder="American, Indian…"
+                placeholder={t('searchPanel.nationalityPh')}
               />
             </div>
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Budget (USD)</label><input type="number" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder="Optional" className={inputClass} /></div>
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.budget')}</label><input type="number" data-tid="searchPanel.budget" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder={t('searchPanel.optional')} className={inputClass} /></div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Travelers</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.travelers')}</label>
               <TravelerPanel form={form} setForm={setForm} />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TagInput label="Residence Permits" value={form.residence_permits} onChange={v=>setForm(f=>({...f,residence_permits:v}))} placeholder="Schengen, UK…" />
-            <TagInput label="Existing Visas" value={form.existing_visas} onChange={v=>setForm(f=>({...f,existing_visas:v}))} placeholder="US, Japan…" />
+            <TagInput label={t('searchPanel.permits')} value={form.residence_permits} onChange={v=>setForm(f=>({...f,residence_permits:v}))} placeholder={t('searchPanel.permitsPh')} />
+            <TagInput label={t('searchPanel.visas')} value={form.existing_visas} onChange={v=>setForm(f=>({...f,existing_visas:v}))} placeholder={t('searchPanel.visasPh')} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Interests</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.interests')}</label>
             <div className="flex flex-wrap gap-1.5">
               {INTEREST_LIST.map(id => (
-                <button key={id} type="button" onClick={()=>toggle(id)}
+                <button key={id} type="button" data-tid={`searchPanel.interest.${id}`} onClick={()=>toggle(id)}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${form.interests.includes(id)?'bg-teal-600 border-teal-600 text-white':'bg-white border-gray-200 text-gray-600 hover:border-teal-300'}`}>
                   {INTEREST_LABELS[id] || id}
                 </button>
               ))}
             </div>
           </div>
-          <button type="submit" className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors">
-            <RefreshCw size={14} /> Update Search
+          <button type="submit" data-tid="searchPanel.update" className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors">
+            <RefreshCw size={14} /> {t('searchPanel.update')}
           </button>
         </form>
       )}
@@ -3156,9 +3165,8 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
 // ─── Layover Optimizer ──────────────────────────────────────────────────────
 
-const FILTER_ERROR_FALLBACK = "Couldn't apply filters — try again"
-
 function LayoverModal({ info, onClose }) {
+  const { t } = useTranslation('sections')
   if (!info) return null
   const { city, airport, duration_hours, status, data, message } = info
   const label = city || airport
@@ -3167,18 +3175,18 @@ function LayoverModal({ info, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-white">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            ✈️ {duration_hours}h layover in {label}
+            ✈️ {t('layover.title', { hours: duration_hours, place: label })}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+          <button data-tid="layover.close" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
         </div>
         <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
           {status === 'loading' && (
             <div className="flex items-center gap-3 text-gray-500 text-sm py-6 justify-center">
-              <Loader2 size={18} className="animate-spin text-teal-500" /> Planning your layover…
+              <Loader2 size={18} className="animate-spin text-teal-500" /> {t('layover.planning')}
             </div>
           )}
           {status === 'error' && (
-            <p className="text-sm text-red-600">{message || "Couldn't plan this layover right now — please try again."}</p>
+            <p className="text-sm text-red-600">{message || t('layover.error')}</p>
           )}
           {status === 'done' && data && (
             <>
@@ -3186,11 +3194,11 @@ function LayoverModal({ info, onClose }) {
                 <span className="text-lg">{data.feasible_to_exit ? '🏙️' : '🛋️'}</span>
                 <div>
                   <p className={`text-sm font-semibold ${data.feasible_to_exit ? 'text-green-800' : 'text-amber-800'}`}>
-                    {data.feasible_to_exit ? 'You can leave the airport' : 'Better to stay airside'}
+                    {data.feasible_to_exit ? t('layover.canLeave') : t('layover.stayAirside')}
                   </p>
                   {data.verdict_summary && <p className="text-xs text-gray-600 mt-0.5">{data.verdict_summary}</p>}
                   {data.feasible_to_exit && data.usable_city_hours > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">~{data.usable_city_hours}h usable in the city after buffers</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('layover.usableHours', { hours: data.usable_city_hours })}</p>
                   )}
                 </div>
               </div>
@@ -3199,7 +3207,7 @@ function LayoverModal({ info, onClose }) {
                 <div className="flex items-start gap-2 text-sm">
                   <Shield size={14} className={`mt-0.5 shrink-0 ${data.transit_visa.required ? 'text-amber-500' : 'text-green-500'}`} />
                   <p className="text-gray-700">
-                    <span className="font-semibold">{data.transit_visa.required ? 'Transit visa required. ' : 'No transit visa needed. '}</span>
+                    <span className="font-semibold">{data.transit_visa.required ? t('layover.visaRequired') : t('layover.visaNotNeeded')}{' '}</span>
                     {data.transit_visa.notes}
                   </p>
                 </div>
@@ -3207,7 +3215,7 @@ function LayoverModal({ info, onClose }) {
 
               {(data.plan || []).length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your mini-plan</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('layover.miniPlan')}</p>
                   <div className="space-y-2">
                     {data.plan.map((step, i) => (
                       <div key={i} className="flex items-start gap-2.5 border border-gray-100 rounded-lg p-2.5">
@@ -3226,7 +3234,7 @@ function LayoverModal({ info, onClose }) {
                 </div>
               )}
               {data.airside_alternative && (
-                <p className="text-xs text-gray-500"><span className="font-semibold">Rather stay in?</span> {data.airside_alternative}</p>
+                <p className="text-xs text-gray-500"><span className="font-semibold">{t('layover.stayIn')}</span> {data.airside_alternative}</p>
               )}
               {(data.notes || []).length > 0 && (
                 <ul className="text-xs text-gray-500 space-y-1 list-disc pl-4">
@@ -3244,6 +3252,7 @@ function LayoverModal({ info, onClose }) {
 // ─── Trip Remix ───────────────────────────────────────────────────────────────
 
 function RemixBar({ searchData, onRemix }) {
+  const { t } = useTranslation('sections')
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -3251,8 +3260,8 @@ function RemixBar({ searchData, onRemix }) {
           <Wand2 size={14} className="text-white" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-gray-800">Remix this trip</h3>
-          <p className="text-xs text-gray-500">One click to see a what-if version — we'll re-plan everything and show you what changed</p>
+          <h3 className="text-sm font-bold text-gray-800">{t('remix.title')}</h3>
+          <p className="text-xs text-gray-500">{t('remix.blurb')}</p>
         </div>
       </div>
       <div className="flex gap-2 flex-wrap">
@@ -3261,9 +3270,10 @@ function RemixBar({ searchData, onRemix }) {
           return (
             <button
               key={preset.id}
+              data-tid={`remix.preset.${preset.id}`}
               onClick={() => onRemix(preset)}
               disabled={disabled}
-              title={disabled ? 'Not applicable to this search' : preset.description}
+              title={disabled ? t('remix.notApplicable') : preset.description}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 disabled
                   ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
@@ -3280,6 +3290,7 @@ function RemixBar({ searchData, onRemix }) {
 }
 
 function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
+  const { t } = useTranslation('sections')
   const rows = diffMetrics(remixInfo.before, snapshotMetrics(results))
   return (
     <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
@@ -3287,10 +3298,10 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
         <div className="flex items-center gap-2">
           <Wand2 size={15} className="text-violet-600 shrink-0" />
           <p className="text-sm font-semibold text-violet-900">
-            Remixed: {remixInfo.label} — here's what changed vs your original plan
+            {t('remix.banner', { label: remixInfo.label })}
           </p>
         </div>
-        <button onClick={onDismiss} title="Dismiss comparison" className="text-violet-400 hover:text-violet-700 shrink-0">
+        <button data-tid="remix.dismiss" onClick={onDismiss} title={t('remix.dismiss')} className="text-violet-400 hover:text-violet-700 shrink-0">
           <X size={15} />
         </button>
       </div>
@@ -3313,7 +3324,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-violet-700">Not enough comparable data between the two runs — browse the new results below.</p>
+        <p className="mt-2 text-xs text-violet-700">{t('remix.notEnough')}</p>
       )}
     </div>
   )
@@ -3322,6 +3333,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
 // ─── Main ResultsPage ─────────────────────────────────────────────────────────
 
 export default function ResultsPage() {
+  const { t } = useTranslation('sections')
   const { user, token, logout } = useAuth()
   const { pendingSearchData, clearPendingSearch, showResults, clearSearchResults } = useSearchData()
 
@@ -3743,7 +3755,7 @@ export default function ResultsPage() {
         searchData,
         onEvent,
         finalize,
-        (err) => setError(err.message || 'Search error'),
+        (err) => setError(err.message || t('page.searchError')),
         token,
         () => {
           // Stream severed before the server finished (instance rollout,
@@ -3753,7 +3765,7 @@ export default function ResultsPage() {
           if (interrupts <= 1) {
             startStream()
           } else {
-            setStreamWarning('The connection was interrupted — some sections may be incomplete. Re-run the search to fill them in.')
+            setStreamWarning(t('page.interrupted'))
             finalize()
           }
         },
@@ -3870,7 +3882,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, flights: 'done' }))
     } catch (err) {
       setActiveFlightFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, flights: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, flights: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, flights: 'done' }))
     } finally {
       setIsFlightFilterLoading(false)
@@ -3892,7 +3904,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } catch (err) {
       setActiveHotelFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, hotels: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, hotels: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } finally {
       setIsHotelFilterLoading(false)
@@ -3914,7 +3926,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, activities: 'done' }))
     } catch (err) {
       setActiveActivityFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, activities: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, activities: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, activities: 'done' }))
     } finally {
       setIsActivityFilterLoading(false)
@@ -3962,7 +3974,7 @@ export default function ResultsPage() {
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
         {...(loadedPlanId ? {
-          editingDisabledReason: 'Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.',
+          editingDisabledReason: t('page.editingOff'),
         } : {
           onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
           onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
@@ -3979,8 +3991,9 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeFlightFilterCount > 0 && (
             <button
+              data-tid="page.clear-flight-filters"
               onClick={e => { e.stopPropagation(); handleApplyFlightFilters({}) }}
-              title="Clear flight filters"
+              title={t('page.clearFlightFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
@@ -3988,19 +4001,19 @@ export default function ResultsPage() {
           <WatchFareButton variant="header" trip={tripFromSearch(searchData)} source="flights_header"
             price={cheapestFlightPrice(data)} insights={data?.price_insights} />
           {canShowFareCalendar && (
-            <button onClick={e => {
+            <button data-tid="page.fare-calendar" onClick={e => {
               e.stopPropagation()
               if (!isFareCalendarOpen) setCollapsedSections(prev => ({ ...prev, flights: false }))
               setIsFareCalendarOpen(v => !v)
             }}
               aria-pressed={isFareCalendarOpen}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm transition-all border border-white/20 ${isFareCalendarOpen ? 'bg-white/40' : 'bg-white/20 hover:bg-white/30'}`}>
-              <CalendarDays size={12} /><span>Fare calendar</span>
+              <CalendarDays size={12} /><span>{t('page.fareCalendar')}</span>
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
+          <button data-tid="page.flight-filters" onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeFlightFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-sky-600 text-[10px] font-bold">{activeFlightFilterCount}</span>}
           </button>
         </div>
@@ -4009,15 +4022,16 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeHotelFilterCount > 0 && (
             <button
+              data-tid="page.clear-hotel-filters"
               onClick={e => { e.stopPropagation(); handleApplyHotelFilters({}) }}
-              title="Clear hotel filters"
+              title={t('page.clearHotelFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
+          <button data-tid="page.hotel-filters" onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeHotelFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-violet-600 text-[10px] font-bold">{activeHotelFilterCount}</span>}
           </button>
         </div>
@@ -4026,15 +4040,16 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeActivityFilterCount > 0 && (
             <button
+              data-tid="page.clear-activity-filters"
               onClick={e => { e.stopPropagation(); handleApplyActivityFilters({}) }}
-              title="Clear activity filters"
+              title={t('page.clearActivityFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
+          <button data-tid="page.activity-filters" onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeActivityFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-emerald-600 text-[10px] font-bold">{activeActivityFilterCount}</span>}
           </button>
         </div>
@@ -4049,7 +4064,7 @@ export default function ResultsPage() {
             {filterErrors[agent] && (
               <p role="alert" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{filterErrors[agent]}</p>
             )}
-            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>}
+            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">{t('page.noResults')}</div>}
           </div>
         )}
       </div>
@@ -4059,7 +4074,7 @@ export default function ResultsPage() {
   const completionBanner = isDone && (
     <div className="flex items-center justify-center gap-2 py-3 px-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium">
       <CheckCircle2 size={16} className="text-green-600 shrink-0" />
-      Your travel plan is ready — select items below to build your trip
+      {t('page.ready')}
     </div>
   )
 
@@ -4072,25 +4087,25 @@ export default function ResultsPage() {
         <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <button onClick={() => {
+              <button data-tid="page.new-search" onClick={() => {
                 if (!isDone && completedCount > 0) {
-                  if (!window.confirm('Leave this page? Your search results will be lost.')) return
+                  if (!window.confirm(t('page.leaveConfirm'))) return
                 }
                 clearSearchResults()
               }} className="flex items-center gap-1 sm:gap-1.5 text-slate-200 hover:text-white text-xs sm:text-sm shrink-0">
-                <ArrowLeft size={14}/><span className="hidden xs:inline">New Search</span><span className="xs:hidden">Back</span>
+                <ArrowLeft size={14}/><span className="hidden xs:inline">{t('page.newSearch')}</span><span className="xs:hidden">{t('page.back')}</span>
               </button>
               <div className="text-center min-w-0 flex-1">
                 <p className="font-semibold text-xs sm:text-sm truncate">
                   {searchData.origin} → {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}
                 </p>
-                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
+                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}</p>
                 {searchData.budget_usd > 0 && (
-                  <p className="text-slate-300 text-[10px] hidden md:block">Budget: ${searchData.budget_usd.toLocaleString()}</p>
+                  <p className="text-slate-300 text-[10px] hidden md:block">{t('page.budget', { amount: `$${fmtNumber(searchData.budget_usd)}` })}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> Done</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
+                {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> {t('page.done')}</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
               </div>
             </div>
           </div>
@@ -4139,11 +4154,11 @@ export default function ResultsPage() {
               <Globe size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Planning your trip to {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}</h2>
+              <h2 className="text-lg font-bold text-gray-800">{t('page.planning', { dest: searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination })}</h2>
               <p className="text-sm text-gray-500">
-                {completedCount === 0 ? "Getting everything ready for you..."
-                 : completedCount < 4 ? `Found ${completedCount} results so far — more coming!`
-                 : `Almost there! ${completedCount} of ${AGENT_ORDER.length} sections ready.`}
+                {completedCount === 0 ? t('page.gettingReady')
+                 : completedCount < 4 ? t('page.foundSoFar', { count: completedCount })
+                 : t('page.almostThere', { done: completedCount, total: AGENT_ORDER.length })}
               </p>
             </div>
           </div>
@@ -4200,7 +4215,7 @@ export default function ResultsPage() {
               onApply={handleApplyPackage}
               onUndo={handleUndoPackage}
               canUndo={!!packageUndo}
-              disabledReason={loadedPlanSearchData ? 'A saved plan is open. Click New in My Plan to add a package.' : null}
+              disabledReason={loadedPlanSearchData ? t('page.packageDisabled') : null}
             />
           </div>
         )}
@@ -4225,20 +4240,22 @@ export default function ResultsPage() {
         {results.itinerary?.days?.length > 0 && (
           <div className="flex gap-1 p-1 bg-white rounded-lg border border-gray-200 shadow-sm max-w-fit mb-4">
             <button
+              data-tid="page.view-cards"
               onClick={() => setView('cards')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 view === 'cards' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <LayoutList size={14} /> Cards
+              <LayoutList size={14} /> {t('page.cards')}
             </button>
             <button
+              data-tid="page.view-timeline"
               onClick={() => setView('timeline')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 view === 'timeline' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <CalendarDays size={14} /> Timeline
+              <CalendarDays size={14} /> {t('page.timeline')}
             </button>
           </div>
         )}
@@ -4258,15 +4275,15 @@ export default function ResultsPage() {
       </div>
 
       {/* Floating plan button */}
-      <button onClick={() => setIsPlanOpen(true)}
+      <button data-tid="page.my-plan" onClick={() => setIsPlanOpen(true)}
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-teal-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl hover:bg-teal-700 transition-all">
         <Bookmark size={16} />
-        <span className="text-sm">My Plan</span>
+        <span className="text-sm">{t('drawer.title')}</span>
         {selectedCount > 0 && (
           <span className="bg-white text-teal-700 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{selectedCount}</span>
         )}
         {computePlanCost(selections, loadedPlanSearchData || searchData) > 0 && (
-          <span className="text-teal-100 text-xs font-medium">${computePlanCost(selections, loadedPlanSearchData || searchData).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+          <span className="text-teal-100 text-xs font-medium">${fmtNumber(computePlanCost(selections, loadedPlanSearchData || searchData), { maximumFractionDigits: 0 })}</span>
         )}
       </button>
 
