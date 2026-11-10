@@ -110,7 +110,10 @@
     "planThis": "规划这次旅行",
     "couldntLoad": "无法加载",
     "retry": "重试",
-    "missing": "缺少：{{list}}"
+    "missing": "缺少：{{list}}",
+    "duration": "{{h}} 小时 {{m}} 分钟",
+    "errorCheck": "请检查行程信息",
+    "errorUnavailable": "服务暂不可用——请重试"
   },
   "nearby": {
     "title": "附近",
@@ -206,5 +209,20 @@
     "download": "下载行程卡片",
     "downloadError": "无法生成行程卡片，请重试。",
     "readOnly": "仅供查看——不包含任何个人信息。"
+  },
+  "live": {
+    "source": "来源",
+    "rateLimited": "你的请求太多了，请等几分钟后再试。",
+    "aiLimit": "本月 AI 额度已用完——请在 1 号再试。",
+    "aiBilling": "AI 功能暂时不可用，请稍后再试。",
+    "groundingWeb": "此服务器目前无法使用实时网页搜索。",
+    "noPlace": "我们还不知道你附近的城镇。",
+    "notFound": "该关注已不存在。请刷新页面以更新列表。",
+    "watchExpired": "这趟行程的日期已过，没有可检查的实时内容。",
+    "signedOut": "你的登录已过期，请重新登录后继续。",
+    "agentNear": "暂时找不到你附近的地点，请重试。",
+    "agentWeb": "这次网页搜索没有找到明确答案，请稍后再试。",
+    "failedNear": "查找你附近的地点时出了问题，请重试。",
+    "failedWeb": "暂时无法搜索网页，请稍后再试。"
   }
 }

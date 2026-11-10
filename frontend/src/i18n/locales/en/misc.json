@@ -117,7 +117,10 @@
     "planThis": "Plan this trip",
     "couldntLoad": "Couldn't load",
     "retry": "Retry",
-    "missing": "Missing: {{list}}"
+    "missing": "Missing: {{list}}",
+    "duration": "{{h}}h {{m}}m",
+    "errorCheck": "Please check the trip details",
+    "errorUnavailable": "Service unavailable — try again"
   },
   "nearby": {
     "title": "Near me",
@@ -225,5 +228,20 @@
     "download": "Download trip card",
     "downloadError": "Couldn’t create the trip card. Please try again.",
     "readOnly": "Shared read-only — personal details are never included."
+  },
+  "live": {
+    "source": "Source",
+    "rateLimited": "You’ve made a lot of requests. Please wait a few minutes and try again.",
+    "aiLimit": "AI limit reached for this month — try again on the 1st.",
+    "aiBilling": "AI features are unavailable right now. Please try again later.",
+    "groundingWeb": "Live web search isn’t available on this server right now.",
+    "noPlace": "We don’t know a town or city near you yet.",
+    "notFound": "This watch no longer exists. Refresh the page to update your list.",
+    "watchExpired": "This trip’s dates have passed, so there’s nothing live to check.",
+    "signedOut": "Your session has ended. Sign in again to continue.",
+    "agentNear": "We couldn’t find places near you right now. Try again.",
+    "agentWeb": "The web search didn’t find a clear answer this time. Try again in a moment.",
+    "failedNear": "Something went wrong finding places near you. Try again.",
+    "failedWeb": "Couldn’t search the web right now. Try again in a moment."
   }
 }

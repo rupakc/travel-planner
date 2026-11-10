@@ -1,3 +1,8 @@
+import i18n from '../i18n'
+import { fmtNumber } from '../i18n/format'
+
+const usd0 = (n) => fmtNumber(Math.round(n), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+
 const THEMES = {
   food: ['Foodie', 'Culinary', 'Gourmet', 'Tasty'],
   history: ['Historic', 'Ancient', 'Timeless', 'Heritage'],
@@ -93,9 +98,9 @@ export function getBudgetStatus(cost, budgetUsd) {
   if (!budgetUsd || cost <= 0) return null
   const diff = budgetUsd - cost
   if (diff >= 0) {
-    return { status: 'under', amount: Math.round(diff), label: `$${Math.round(diff).toLocaleString()} under budget` }
+    return { status: 'under', amount: Math.round(diff), label: i18n.t('plan:util.budgetUnder', { amount: usd0(diff) }) }
   }
-  return { status: 'over', amount: Math.round(Math.abs(diff)), label: `$${Math.round(Math.abs(diff)).toLocaleString()} over budget` }
+  return { status: 'over', amount: Math.round(Math.abs(diff)), label: i18n.t('plan:util.budgetOver', { amount: usd0(Math.abs(diff)) }) }
 }
 
 // Identity check for per-leg flight selections (multi-city trips)

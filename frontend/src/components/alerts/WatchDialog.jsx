@@ -8,9 +8,8 @@ import { createFareWatch } from '../../services/api'
 import { axiosErrorDetail } from '../../utils/httpError'
 import { formatUsd } from '../../utils/fareCalendar'
 import {
-  checkTarget, defaultTarget, rangePosition, routeLabel,
+  checkTarget, defaultTarget, formatDateRange as rangeLabel, rangePosition, routeLabel,
 } from '../../utils/fareWatch'
-import { rangeLabel } from './localized'
 import { track } from '../../utils/analytics'
 import WatchDialogShell from './WatchDialogShell'
 import { BrowserAlertsOffer, EmailOption, Option } from './WatchDialogParts'

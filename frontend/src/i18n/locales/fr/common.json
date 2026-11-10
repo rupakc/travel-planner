@@ -29,5 +29,24 @@
   },
   "footer": {
     "attribution": "Données de lieux © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Données d’aéroports : <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "élevé",
+      "medium": "moyen",
+      "low": "faible"
+    },
+    "coverage": {
+      "excellent": "excellente",
+      "good": "bonne",
+      "moderate": "moyenne",
+      "limited": "limitée"
+    },
+    "severity": {
+      "info": "info",
+      "warning": "avertissement",
+      "danger": "danger",
+      "critical": "critique"
+    }
   }
 }

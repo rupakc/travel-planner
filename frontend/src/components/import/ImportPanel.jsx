@@ -335,7 +335,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-gray-500">{t('import.examples')}</span>
         {IMPORT_EXAMPLES.map((ex) => (
-          <button key={ex.label} type="button" data-tid="search.import-example"
+          <button key={ex.id} type="button" data-tid="search.import-example"
             onClick={() => { setShots([]); setText(ex.text); setError(null); textRef.current?.focus() }}
             className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
             {ex.label}

@@ -166,7 +166,35 @@
     "dismiss": "Dismiss comparison",
     "notApplicable": "Not applicable to this search",
     "notEnough": "Not enough comparable data between the two runs — browse the new results below.",
-    "title": "Remix this trip"
+    "title": "Remix this trip",
+    "preset": {
+      "week_later": {
+        "label": "A week later",
+        "description": "Shift the whole trip 7 days forward — same length"
+      },
+      "half_budget": {
+        "label": "Half the budget",
+        "description": "Same trip on 50% of the budget"
+      },
+      "luxe": {
+        "label": "Make it luxe",
+        "description": "Double the budget and aim upmarket"
+      },
+      "slower_pace": {
+        "label": "Slow it down",
+        "description": "Relaxed pacing — fewer activities, more downtime"
+      },
+      "long_weekend": {
+        "label": "Long weekend",
+        "description": "Compress to a 3-night getaway from the same start date"
+      }
+    },
+    "metric": {
+      "min_flight_usd": "Cheapest flight",
+      "min_hotel_nightly_usd": "Hotel / night",
+      "itinerary_total_usd": "Itinerary cost",
+      "poor_weather_days": "Poor-weather days"
+    }
   },
   "searchPanel": {
     "budget": "Budget (USD)",

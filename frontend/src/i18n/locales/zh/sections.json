@@ -162,7 +162,35 @@
     "dismiss": "关闭对比",
     "notApplicable": "不适用于本次搜索",
     "notEnough": "两次结果之间可比较的数据不足——请查看下方的新结果。",
-    "title": "改造这趟旅行"
+    "title": "改造这趟旅行",
+    "preset": {
+      "week_later": {
+        "label": "推迟一周",
+        "description": "整个行程顺延 7 天，时长不变"
+      },
+      "half_budget": {
+        "label": "预算减半",
+        "description": "同样的行程，只用 50% 的预算"
+      },
+      "luxe": {
+        "label": "升级奢华",
+        "description": "预算翻倍，向高端看齐"
+      },
+      "slower_pace": {
+        "label": "放慢节奏",
+        "description": "轻松节奏——活动更少，休息更多"
+      },
+      "long_weekend": {
+        "label": "周末小长假",
+        "description": "从同一出发日起压缩为 3 晚短途游"
+      }
+    },
+    "metric": {
+      "min_flight_usd": "最低票价",
+      "min_hotel_nightly_usd": "酒店 / 晚",
+      "itinerary_total_usd": "行程费用",
+      "poor_weather_days": "天气不佳的天数"
+    }
   },
   "searchPanel": {
     "budget": "预算（美元）",

@@ -142,6 +142,21 @@
       "flight": "flight",
       "hotel": "hotel",
       "sim": "SIM"
+    },
+    "reason": {
+      "cheapestFare": "Cheapest fare",
+      "fewerStops": "Fewer stops for {{amount}} more than the cheapest fare",
+      "saves": "Saves {{time}} of travel for {{amount}} more than the cheapest fare",
+      "midRange": "Mid-range (3★), best-reviewed in its class",
+      "starsBest": "{{stars}}★, best-reviewed in its class",
+      "bestReviewed": "Best-reviewed in its class",
+      "typicalPrice": "{{price}} · at or below the typical price here",
+      "matches": "{{base}} · matches your interests",
+      "freeTour": "Free walking tour",
+      "freeEntry": "Free entry",
+      "coversTrip": "Covers your {{days}}-day trip",
+      "cheapestPlan": "Cheapest plan",
+      "cheaperStay": "Cheaper stay to fit your budget"
     }
   },
   "print": {
@@ -178,5 +193,11 @@
     "booking": "Booking: {{url}}",
     "price": "Price: {{price}}",
     "trip": "Trip"
+  },
+  "util": {
+    "budgetUnder": "{{amount}} under budget",
+    "budgetOver": "{{amount}} over budget",
+    "hours": "{{n}}h",
+    "minutes": "{{n}}m"
   }
 }

@@ -113,7 +113,34 @@
     "examples": "Probiere ein Beispiel:",
     "find": "Orte finden",
     "findInShots_one": "Orte in meinem Screenshot finden",
-    "findInShots_other": "Orte in {{count}} Screenshots finden"
+    "findInShots_other": "Orte in {{count}} Screenshots finden",
+    "example": {
+      "lisbon": {
+        "label": "48 Stunden in Lissabon",
+        "text": "48 Stunden in Lissabon: Mittagessen im Time Out Market, Torre de Belém und Pastéis de Nata bei Pastéis de Belém, Stöbern in der LX Factory, Sonnenuntergang am Miradouro da Senhora do Monte, dann ein Tagesausflug zum Palácio da Pena in Sintra."
+      },
+      "tokyo": {
+        "label": "Tokio-Tipps von einem Freund",
+        "text": "Tokio-Highlights von meiner Reise!! Frühstück auf dem Tsukiji Outer Market, teamLab Planets (vorher buchen), Senso-ji im Morgengrauen vor dem Andrang, Drinks in Golden Gai und Shibuya Sky bei Sonnenuntergang. Wenn die Zeit reicht, Hakone für das Onsen."
+      },
+      "rome": {
+        "label": "Rom und Florenz",
+        "text": "Tag 1–2 Rom: Kolosseum, Abendessen in Trastevere, das Pantheon, Eis bei Giolitti. Tag 3–4 Florenz: die Uffizien, Aufstieg auf den Dom, Piazzale Michelangelo bei Sonnenuntergang und Mittagessen im Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "Wir konnten Voyager nicht erreichen. Prüfe deine Verbindung und versuche es erneut.",
+      "unknown": "Beim Lesen ist etwas schiefgelaufen. Versuche es gleich noch einmal.",
+      "tooLarge": "Dieser Upload ist zu groß – nutze bis zu 4 Screenshots mit höchstens 5 MB."
+    },
+    "file": {
+      "heic": "iPhone-HEIC-Fotos können noch nicht gelesen werden – mache stattdessen einen Screenshot (Screenshots sind PNG) oder exportiere als JPEG.",
+      "notImage": "{{name}} ist kein Bild, das wir lesen können. Nutze PNG, JPEG oder WebP.",
+      "thatFile": "Diese Datei",
+      "thatImage": "Dieses Bild",
+      "tooBigSource": "{{name}} ist zu groß, um hier gelesen zu werden (über 40 MB). Schneide es zu oder speichere es kleiner.",
+      "over5": "{{name}} ist größer als 5 MB. Schneide es zu oder speichere es als kleineres PNG oder JPEG."
+    }
   },
   "form": {
     "from": "Von",

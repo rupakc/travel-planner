@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import i18n from '../i18n'
 import { fetchFareCalendar } from '../services/api'
 import { axiosErrorDetail } from '../utils/httpError'
 import { tripFromSearch } from '../utils/fareWatch'
 import WatchFareButton from './alerts/WatchFareButton'
-import { dayLabel, dayParts, tripRangeLabel } from './alerts/localized'
 import {
-  cheapestDeparture, dayOffset, fareDelta, formatDelta, formatUsd,
-  priceInsightsChip,
+  cheapestDeparture, dayOffset, dayParts, fareDelta, formatDay as dayLabel, formatDelta, formatTripRange as tripRangeLabel,
+  formatUsd, priceInsightsChip,
 } from '../utils/fareCalendar'
 
 const CHIP_TONES = {
@@ -77,7 +75,7 @@ export default function FareCalendarStrip({ searchData, token, onReplan, load = 
     load(searchData, token)
       .then(data => { if (!cancelled) setState({ status: 'done', data, error: null }) })
       .catch(err => {
-        if (!cancelled) setState({ status: 'error', data: null, error: axiosErrorDetail(err).detail || i18n.t('alerts:fare.error') })
+        if (!cancelled) setState({ status: 'error', data: null, error: { detail: axiosErrorDetail(err).detail } })
       })
     return () => { cancelled = true }
   }, [searchData, token, load, attempt])
@@ -117,7 +115,7 @@ export default function FareCalendarStrip({ searchData, token, onReplan, load = 
 
       {state.status === 'error' && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          <span>{state.error}</span>
+          <span>{state.error?.detail || t('fare.error')}</span>
           <button type="button" data-tid="fare-calendar.retry" onClick={() => setAttempt(a => a + 1)}
             className="rounded-full border border-amber-300 bg-white px-3 py-1 font-semibold hover:bg-amber-100">{t('ui.retry')}</button>
         </div>

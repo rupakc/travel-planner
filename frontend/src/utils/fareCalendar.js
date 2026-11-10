@@ -4,6 +4,9 @@
  * day arithmetic never drifts across DST or the viewer's time zone.
  */
 
+import i18n from '../i18n'
+import { fmtDate, fmtNumber } from '../i18n/format'
+
 const DAY_MS = 86400000
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -15,6 +18,11 @@ const toUtc = (iso) => {
 }
 const toIso = (ms) => new Date(ms).toISOString().slice(0, 10)
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
+const lang = () => i18n.resolvedLanguage || i18n.language || 'en'
+/** English keeps the app's short forms ("Tue 3 Nov"); other languages go through Intl. */
+export const isEnglish = () => lang().startsWith('en')
+export const utcDate = (iso) => new Date(`${iso}T00:00:00Z`)
 
 /** Both trip dates moved by `offset` days (trip length unchanged). */
 export function shiftDates(departure, ret, offset) {
@@ -45,21 +53,35 @@ export function fareDelta(entry, selected) {
 }
 
 export function formatUsd(amount) {
-  return `$${Math.round(amount).toLocaleString('en-US')}`
+  return fmtNumber(Math.round(amount), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
 
 /** "−$45" / "+$30" / "same"; empty for an unknown delta. */
 export function formatDelta(delta) {
   if (!isNum(delta)) return ''
   const rounded = Math.round(delta)
-  if (rounded === 0) return 'same'
+  if (rounded === 0) return tt('fare.same')
   return `${rounded < 0 ? '−' : '+'}${formatUsd(Math.abs(rounded))}`
 }
 
 /** "Tue 3 Nov" */
 export function formatDay(iso) {
+  if (!isEnglish()) return fmtDate(utcDate(iso), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
   const d = new Date(toUtc(iso))
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
+}
+
+/** Weekday and date apart, for the fare calendar cells. */
+export function dayParts(iso) {
+  if (isEnglish()) {
+    const [weekday, ...date] = formatDay(iso).split(' ')
+    return { weekday, date: date.join(' ') }
+  }
+  const d = utcDate(iso)
+  return {
+    weekday: fmtDate(d, { weekday: 'short', timeZone: 'UTC' }),
+    date: fmtDate(d, { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+  }
 }
 
 /** "Tue 3 Nov – Tue 10 Nov" (just the departure for one-way trips). */
@@ -68,7 +90,7 @@ export function formatTripRange(departure, ret) {
 }
 
 export function replanPrompt(departure, ret) {
-  return `Re-plan for ${formatTripRange(departure, ret)}? This runs a new search.`
+  return tt('fare.replanPrompt', { range: formatTripRange(departure, ret) })
 }
 
 /**
@@ -80,7 +102,8 @@ export function priceInsightsChip(insights) {
   if (!LEVELS.has(level)) return null
   const range = insights.typical_price_range
   const hasRange = Array.isArray(range) && range.length === 2 && range.every(isNum)
-  const text = `Fares are ${level} right now${hasRange ? ` · typical ${formatUsd(range[0])}–${formatUsd(range[1])}` : ''}`
+  const text = tt(`fare.level.${level}`)
+    + (hasRange ? ` · ${tt('fare.typical', { low: formatUsd(range[0]), high: formatUsd(range[1]) })}` : '')
   return { level, text }
 }
 

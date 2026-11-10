@@ -170,7 +170,35 @@
     "dismiss": "Fermer la comparaison",
     "notApplicable": "Non applicable à cette recherche",
     "notEnough": "Pas assez de données comparables entre les deux recherches — parcourez les nouveaux résultats ci-dessous.",
-    "title": "Remixer ce voyage"
+    "title": "Remixer ce voyage",
+    "preset": {
+      "week_later": {
+        "label": "Une semaine plus tard",
+        "description": "Décale tout le voyage de 7 jours, même durée"
+      },
+      "half_budget": {
+        "label": "Budget divisé par deux",
+        "description": "Même voyage avec 50 % du budget"
+      },
+      "luxe": {
+        "label": "Version luxe",
+        "description": "Doublez le budget et visez le haut de gamme"
+      },
+      "slower_pace": {
+        "label": "Ralentir le rythme",
+        "description": "Rythme détendu : moins d’activités, plus de temps libre"
+      },
+      "long_weekend": {
+        "label": "Long week-end",
+        "description": "Réduisez à une escapade de 3 nuits depuis la même date de départ"
+      }
+    },
+    "metric": {
+      "min_flight_usd": "Vol le moins cher",
+      "min_hotel_nightly_usd": "Hôtel / nuit",
+      "itinerary_total_usd": "Coût de l’itinéraire",
+      "poor_weather_days": "Jours de mauvais temps"
+    }
   },
   "searchPanel": {
     "budget": "Budget (USD)",

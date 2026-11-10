@@ -170,7 +170,35 @@
     "dismiss": "Cerrar comparación",
     "notApplicable": "No se aplica a esta búsqueda",
     "notEnough": "No hay datos comparables suficientes entre las dos búsquedas: mira los resultados nuevos más abajo.",
-    "title": "Remezcla este viaje"
+    "title": "Remezcla este viaje",
+    "preset": {
+      "week_later": {
+        "label": "Una semana después",
+        "description": "Mueve todo el viaje 7 días adelante, con la misma duración"
+      },
+      "half_budget": {
+        "label": "Mitad de presupuesto",
+        "description": "El mismo viaje con el 50 % del presupuesto"
+      },
+      "luxe": {
+        "label": "Hazlo de lujo",
+        "description": "Duplica el presupuesto y apunta a algo más exclusivo"
+      },
+      "slower_pace": {
+        "label": "Más tranquilo",
+        "description": "Ritmo relajado: menos actividades, más descanso"
+      },
+      "long_weekend": {
+        "label": "Fin de semana largo",
+        "description": "Reduce el viaje a una escapada de 3 noches desde la misma fecha de salida"
+      }
+    },
+    "metric": {
+      "min_flight_usd": "Vuelo más barato",
+      "min_hotel_nightly_usd": "Hotel / noche",
+      "itinerary_total_usd": "Coste del itinerario",
+      "poor_weather_days": "Días de mal tiempo"
+    }
   },
   "searchPanel": {
     "budget": "Presupuesto (USD)",

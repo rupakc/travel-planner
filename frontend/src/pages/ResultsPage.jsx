@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, sameFlight, EMPTY_SELECTIONS } from '../utils/planHelpers'
 import { clearPendingVerification, stripLinkEvidence } from '../utils/verification'
+import { enumLabel } from '../utils/enumLabel'
 import { REMIX_PRESETS, applyRemix, snapshotMetrics, diffMetrics, formatMetricValue } from '../utils/remix'
 import { track } from '../utils/analytics'
 import { buildBestValuePackage, applyPackage } from '../utils/bestValuePackage'
@@ -1421,7 +1422,7 @@ function VisaSection({ data }) {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${typeColors[req.visa_type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>{req.visa_type?.replace(/-/g,' ').toUpperCase() || 'UNKNOWN'}</span>
-            {req.confidence && <span className="text-xs text-gray-500">{t('visa.confidence', { level: req.confidence })}</span>}
+            {req.confidence && <span className="text-xs text-gray-500">{t('visa.confidence', { level: enumLabel('level', req.confidence) })}</span>}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {req.max_stay_days && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">{t('visa.maxStay')}</p><p className="font-semibold">{t('visa.days', { count: req.max_stay_days })}</p></div>}
@@ -1515,7 +1516,7 @@ function SimSection({ data, selections, onSelect }) {
               {p.data_gb ? <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{t('sim.dataGb', { gb: p.data_gb })}</div> : <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{t('sim.unlimited')}</div>}
               {p.validity_days && <div className="flex items-center gap-1.5"><Clock size={10} className="text-pink-400" />{t('sim.validity', { count: p.validity_days })}</div>}
               {p.network_quality && (
-                <div className="flex items-center gap-1.5"><Wifi size={10} className="text-pink-400" />{p.network_quality.speed}{p.network_quality.coverage_rating && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{p.network_quality.coverage_rating}</span>}</div>
+                <div className="flex items-center gap-1.5"><Wifi size={10} className="text-pink-400" />{p.network_quality.speed}{p.network_quality.coverage_rating && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{enumLabel('coverage', p.network_quality.coverage_rating)}</span>}</div>
               )}
               {p.network_quality?.coverage_description && <p className="text-[11px] text-gray-400 leading-snug pl-4">{p.network_quality.coverage_description}</p>}
             </div>
@@ -1725,7 +1726,7 @@ function ForexSection({ data }) {
                 data.cash_advice.cash_dependency === 'high' ? 'bg-red-100 text-red-700' :
                 data.cash_advice.cash_dependency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-green-100 text-green-700'
-              }`}>{t('forex.cashDependency', { level: data.cash_advice.cash_dependency })}</span>
+              }`}>{t('forex.cashDependency', { level: enumLabel('level', data.cash_advice.cash_dependency) })}</span>
             )}
             <div className="space-y-1.5 text-sm">
               {data.cash_advice.recommendation && <p>{data.cash_advice.recommendation}</p>}
@@ -1918,7 +1919,7 @@ function PricingAdvisorBanner({ data, departureDate }) {
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${recColors}`}>
               {data.recommendation === 'book_now' ? `✓ ${t('pricing.bookNow')}` : `⏳ ${t('pricing.considerWaiting')}`}
             </span>
-            <span className="text-xs text-gray-400">{t('pricing.confidence', { level: data.confidence })}</span>
+            <span className="text-xs text-gray-400">{t('pricing.confidence', { level: enumLabel('level', data.confidence) })}</span>
           </div>
           {expanded && (
             <>
@@ -3237,7 +3238,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
         <div className="flex items-center gap-2">
           <Wand2 size={15} className="text-violet-600 shrink-0" />
           <p className="text-sm font-semibold text-violet-900">
-            {t('remix.banner', { label: remixInfo.label })}
+            {t('remix.banner', { label: REMIX_PRESETS.find((p) => p.id === remixInfo.id)?.label ?? remixInfo.label })}
           </p>
         </div>
         <button data-tid="remix.dismiss" onClick={onDismiss} title={t('remix.dismiss')} className="text-violet-400 hover:text-violet-700 shrink-0">
@@ -3502,11 +3503,13 @@ export default function ResultsPage() {
   const flightBudget = budgetCards ? { over: budgetFit.flights.over, hideOver: budgetShowOnlyFits, onShowAll: showAllBudget } : null
   const activityBudget = budgetCards ? { picked: budgetFit.activities.picked } : null
 
+  // The package's reasons are translated text: rebuild them when the language changes
+  const uiLanguage = i18n.language
   const bestValue = useMemo(
     () => (isDone
       ? buildBestValuePackage(results, searchData, budgetTouched && budgetFit ? { caps: capsFromFit(budgetFit) } : undefined)
       : null),
-    [isDone, results, searchData, budgetTouched, budgetFit],
+    [isDone, results, searchData, budgetTouched, budgetFit, uiLanguage],
   )
   const handleApplyPackage = () => {
     if (!bestValue) return
@@ -3613,7 +3616,7 @@ export default function ResultsPage() {
     const remixed = applyRemix(searchData, preset.id)
     if (remixed === searchData) return
     track('remix_applied', 'results', { preset: preset.id })
-    setRemixInfo({ label: preset.label, before: snapshotMetrics(results) })
+    setRemixInfo({ id: preset.id, label: preset.label, before: snapshotMetrics(results) })
     runSearch(remixed)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }

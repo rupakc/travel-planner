@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { computePlanCost } from '../../utils/planHelpers'
-import { formatPrice, priceWatchLink } from '../../utils/priceWatch'
-import { isWatchablePlan, tripPreviewParts } from '../../utils/tripWatch'
-import { rangeLabel } from './localized'
+import { formatDateRange as rangeLabel } from '../../utils/fareWatch'
+import { priceWatchLink } from '../../utils/priceWatch'
+import { isWatchablePlan, tripPreviewParts, tripWatchingLabel as watchingLabel } from '../../utils/tripWatch'
 import { useAirportCities } from '../../hooks/useAirportCities'
 import PriceWatchDialog from './PriceWatchDialog'
 
@@ -72,12 +72,6 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label: labelPr
   // No target is suggested: the parts above are estimates until the first
   // live look, and an estimate never seeds the target
   preview.price = null
-
-  const watchingLabel = (w) => {
-    if (w.status === 'paused') return t('btn.watchPaused')
-    const p = w.last_price ?? w.baseline_price
-    return Number.isFinite(p) ? t('btn.watchingPrice', { price: formatPrice(p) }) : t('btn.watching')
-  }
 
   const onClick = (e) => {
     e.stopPropagation()

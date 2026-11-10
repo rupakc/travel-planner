@@ -2,7 +2,12 @@
 // guests, rooms) and the spec the backend's hotel source matches to a live
 // Google Hotels property. API shapes: docs/API-Reference.md.
 import { allocateDays, cityKey } from './mustInclude'
+import i18n from '../i18n'
+import { intlLocale } from '../i18n/format'
+import { isEnglish } from './fareCalendar'
 import { formatPrice } from './priceWatch'
+
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
 
 const MAX_ADULTS = 16
 const GUESTS_PER_ROOM = 4
@@ -12,7 +17,6 @@ const DAY_MS = 86400000
 const isoDay = (d) => d.toISOString().slice(0, 10)
 const addDays = (iso, n) => isoDay(new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY_MS))
 const nightsBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / DAY_MS)
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /**
  * The party as Google Hotels guests. Google Hotels (and our adapter) price
@@ -77,6 +81,12 @@ export function hotelWatchSpec(hotel, sd, now = new Date()) {
 
 /** '10–14 Dec', '30 Dec – 2 Jan' (UTC calendar days). */
 function stayDates(ci, co) {
+  if (!isEnglish()) {
+    try {
+      const fmt = new Intl.DateTimeFormat(intlLocale(i18n.resolvedLanguage || i18n.language), { day: 'numeric', month: 'short', timeZone: 'UTC' })
+      return fmt.formatRange(new Date(`${ci}T00:00:00Z`), new Date(`${co}T00:00:00Z`))
+    } catch { return `${ci} – ${co}` }
+  }
   const fmt = (iso, month) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', ...(month ? { month: 'short' } : {}), timeZone: 'UTC' })
   return ci.slice(0, 7) === co.slice(0, 7) ? `${fmt(ci, false)}–${fmt(co, true)}` : `${fmt(ci, true)} – ${fmt(co, true)}`
 }
@@ -90,7 +100,10 @@ function stayDates(ci, co) {
 export function hotelPreview(hotel, spec) {
   const nights = nightsBetween(spec.check_in, spec.check_out)
   const rooms = spec.rooms || 1
-  const parts = [stayDates(spec.check_in, spec.check_out), plural(nights, 'night'), plural(spec.adults, 'guest'), plural(rooms, 'room')]
+  const parts = [
+    stayDates(spec.check_in, spec.check_out),
+    tt('hotel.nights', { count: nights }), tt('hotel.guests', { count: spec.adults }), tt('hotel.rooms', { count: rooms }),
+  ]
   const perRoom = perRoomEstimate(hotel, nights)
   return {
     title: hotel.name,
@@ -98,8 +111,8 @@ export function hotelPreview(hotel, spec) {
     price: null,
     estimate: spec.estimate_total ?? null,
     estimateLabel: rooms > 1 && perRoom
-      ? `AI estimate: ${rooms} rooms × ${formatPrice(perRoom)}, whole stay`
-      : 'AI estimate for 1 room, whole stay',
+      ? tt('hotel.estimateRooms', { rooms, price: formatPrice(perRoom) })
+      : tt('hotel.estimateOne'),
     currency: 'USD',
   }
 }

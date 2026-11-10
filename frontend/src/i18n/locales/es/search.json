@@ -115,7 +115,34 @@
     "find": "Encontrar los lugares",
     "findInShots_one": "Encontrar los lugares en mi captura",
     "findInShots_other": "Encontrar los lugares en {{count}} capturas",
-    "findInShots_many": "Encontrar los lugares en {{count}} capturas"
+    "findInShots_many": "Encontrar los lugares en {{count}} capturas",
+    "example": {
+      "lisbon": {
+        "label": "48 horas en Lisboa",
+        "text": "48 horas en Lisboa: comer en el Time Out Market, la Torre de Belém y pasteles de nata en Pastéis de Belém, curiosear en LX Factory, atardecer en el Miradouro da Senhora do Monte y luego una excursión de un día al Palacio de Pena, en Sintra."
+      },
+      "tokyo": {
+        "label": "Consejos de Tokio de un amigo",
+        "text": "Imprescindibles de Tokio de mi viaje!! Mercado exterior de Tsukiji para desayunar, teamLab Planets (reserva con antelación), Senso-ji al amanecer antes de las multitudes, copas en Golden Gai y Shibuya Sky al atardecer. Si te da tiempo, Hakone para el onsen."
+      },
+      "rome": {
+        "label": "Roma y Florencia",
+        "text": "Día 1–2 Roma: Coliseo, cena en el Trastevere, el Panteón, helado en Giolitti. Día 3–4 Florencia: la Galería Uffizi, subir a la Cúpula del Duomo, Piazzale Michelangelo al atardecer y comida en el Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "No pudimos conectar con Voyager. Revisa tu conexión e inténtalo de nuevo.",
+      "unknown": "Algo salió mal al leer eso. Inténtalo de nuevo en un momento.",
+      "tooLarge": "Esa subida es demasiado grande: usa hasta 4 capturas de 5 MB o menos."
+    },
+    "file": {
+      "heic": "Las fotos HEIC del iPhone aún no se pueden leer: haz una captura de pantalla (son PNG) o expórtala como JPEG.",
+      "notImage": "{{name}} no es una imagen que podamos leer. Usa PNG, JPEG o WebP.",
+      "thatFile": "Ese archivo",
+      "thatImage": "Esa imagen",
+      "tooBigSource": "{{name}} es demasiado grande para leerla aquí (más de 40 MB). Recórtala o guárdala más pequeña.",
+      "over5": "{{name}} supera los 5 MB. Recórtala o guárdala como un PNG o JPEG más pequeño."
+    }
   },
   "form": {
     "from": "Origen",

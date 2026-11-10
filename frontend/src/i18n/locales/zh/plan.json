@@ -135,6 +135,21 @@
       "flight": "航班",
       "hotel": "酒店",
       "sim": "SIM 卡"
+    },
+    "reason": {
+      "cheapestFare": "最低票价",
+      "fewerStops": "比最低票价多 {{amount}}，但中转更少",
+      "saves": "比最低票价多 {{amount}}，可节省 {{time}} 行程时间",
+      "midRange": "中档（3★），同档次中评价最高",
+      "starsBest": "{{stars}}★，同档次中评价最高",
+      "bestReviewed": "同档次中评价最高",
+      "typicalPrice": "{{price}} · 不高于当地常见价格",
+      "matches": "{{base}} · 符合你的兴趣",
+      "freeTour": "免费徒步游",
+      "freeEntry": "免费入场",
+      "coversTrip": "覆盖你的 {{days}} 天行程",
+      "cheapestPlan": "最便宜的套餐",
+      "cheaperStay": "更便宜的住宿，符合你的预算"
     }
   },
   "print": {
@@ -170,5 +185,11 @@
     "booking": "预订：{{url}}",
     "price": "价格：{{price}}",
     "trip": "行程"
+  },
+  "util": {
+    "budgetUnder": "低于预算 {{amount}}",
+    "budgetOver": "超出预算 {{amount}}",
+    "hours": "{{n}} 小时",
+    "minutes": "{{n}} 分钟"
   }
 }

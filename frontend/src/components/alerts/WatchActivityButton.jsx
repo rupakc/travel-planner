@@ -7,7 +7,7 @@ import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { loginPathFor } from '../../utils/returnPath'
 import { priceWatchLink } from '../../utils/priceWatch'
 import {
-  activitySpec, formatPrice, ownWatch, perPerson, watchCurrency,
+  activitySpec, activityWatchingLabel as watchingLabel, ownWatch,
 } from '../../utils/activityWatch'
 import { ActivityTripContext } from './activityTripContext'
 import { useAirportCities } from '../../hooks/useAirportCities'
@@ -70,11 +70,6 @@ function ActiveButton({ activity, spec, style, source }) {
   const [open, setOpen] = useState(false)
   const [watch, setWatch] = usePriceWatchFor('activity', spec)
   const watching = watch && watch.status !== 'expired'
-  const watchingLabel = (w) => {
-    if (w?.status === 'paused') return t('btn.watchPaused')
-    const unit = perPerson(w)
-    return unit != null ? t('btn.watchingFrom', { price: formatPrice(unit, watchCurrency(w)) }) : t('btn.watching')
-  }
   const label = watching ? watchingLabel(watch) : t('btn.watchPrice')
   const people = t('act.people', { count: spec.travellers })
 

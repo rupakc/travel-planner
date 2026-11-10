@@ -113,7 +113,34 @@
     "examples": "Try an example:",
     "find": "Find the places",
     "findInShots_one": "Find the places in my screenshot",
-    "findInShots_other": "Find the places in {{count}} screenshots"
+    "findInShots_other": "Find the places in {{count}} screenshots",
+    "example": {
+      "lisbon": {
+        "label": "48 hours in Lisbon",
+        "text": "48 hours in Lisbon: lunch at Time Out Market, Belém Tower and custard tarts at Pastéis de Belém, browse LX Factory, sunset at Miradouro da Senhora do Monte, then a day trip to Pena Palace in Sintra."
+      },
+      "tokyo": {
+        "label": "A friend's Tokyo tips",
+        "text": "Tokyo musts from my trip!! Tsukiji Outer Market for breakfast, teamLab Planets (book ahead), Senso-ji at dawn before the crowds, drinks in Golden Gai, and Shibuya Sky at sunset. If you have time, Hakone for the onsen."
+      },
+      "rome": {
+        "label": "Rome and Florence",
+        "text": "Day 1–2 Rome: Colosseum, dinner in Trastevere, the Pantheon, gelato at Giolitti. Day 3–4 Florence: the Uffizi, climb the Duomo, Piazzale Michelangelo at sunset and lunch at Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "We couldn't reach Voyager. Check your connection and try again.",
+      "unknown": "Something went wrong while reading that. Try again in a moment.",
+      "tooLarge": "That upload is too big — use up to 4 screenshots of 5 MB or less."
+    },
+    "file": {
+      "heic": "iPhone HEIC photos can't be read yet — take a screenshot instead (screenshots are PNG), or export it as JPEG.",
+      "notImage": "{{name}} isn't an image we can read. Use PNG, JPEG or WebP.",
+      "thatFile": "That file",
+      "thatImage": "That image",
+      "tooBigSource": "{{name}} is too big to read here (over 40 MB). Crop it or save it smaller.",
+      "over5": "{{name}} is over 5 MB. Crop it or save it as a smaller PNG or JPEG."
+    }
   },
   "form": {
     "from": "From",

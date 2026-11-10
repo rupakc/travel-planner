@@ -1,14 +1,17 @@
 // Pure helpers for activity price watches (GetYourGuide / Viator "from"
 // prices as Google shows them). API shape: docs/API-Reference.md.
 
+import i18n from '../i18n'
 import { formatPrice } from './priceWatch'
+
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
 
 export { formatPrice }
 
 const PROVIDERS = { getyourguide: 'GetYourGuide', viator: 'Viator' }
 
 /** "GetYourGuide" / "Viator" (text only — no logos). */
-export const providerName = (p) => PROVIDERS[p] || p || 'the listing'
+export const providerName = (p) => PROVIDERS[p] || p || tt('act.theListing')
 
 const fold = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
@@ -106,7 +109,7 @@ export function messageTrip(message, fallback = null) {
 
 /** "Watching · from $11.63 pp" (or paused / no price yet). */
 export function activityWatchingLabel(w) {
-  if (w?.status === 'paused') return 'Watch paused'
+  if (w?.status === 'paused') return tt('btn.watchPaused')
   const unit = perPerson(w)
-  return unit != null ? `Watching · from ${formatPrice(unit, watchCurrency(w))} pp` : 'Watching'
+  return unit != null ? tt('btn.watchingFrom', { price: formatPrice(unit, watchCurrency(w)) }) : tt('btn.watching')
 }

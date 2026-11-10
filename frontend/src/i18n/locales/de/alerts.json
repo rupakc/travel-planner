@@ -145,7 +145,8 @@
       "high": "Die Preise sind gerade hoch"
     },
     "typical": "üblich {{low}}–{{high}}",
-    "replanPrompt": "Für {{range}} neu planen? Das startet eine neue Suche."
+    "replanPrompt": "Für {{range}} neu planen? Das startet eine neue Suche.",
+    "same": "gleich"
   },
   "btn": {
     "watchFare": "Preis beobachten",
@@ -318,7 +319,8 @@
     "forName": "für „{{name}}“",
     "currencyChanged": "Das Angebot zeigt jetzt Preise in {{seen}}; wir vergleichen nur {{currency}} mit {{currency}}.",
     "cardSource": "Preis wie in den Google-Ergebnissen für {{provider}}.",
-    "unavailable": "Derzeit in den Google-Ergebnissen nicht mit Preis gelistet. Wir suchen weiter und melden uns erst, wenn es wieder da ist."
+    "unavailable": "Derzeit in den Google-Ergebnissen nicht mit Preis gelistet. Wir suchen weiter und melden uns erst, wenn es wieder da ist.",
+    "theListing": "das Angebot"
   },
   "hotel": {
     "aiEstimate": "KI-Schätzung",
@@ -345,7 +347,15 @@
     "planCalled": "Dein Plan nannte es „{{requested}}“.",
     "soldOut": "Für deine Daten ausgebucht",
     "book": "Buchen",
-    "unavailable": "Für deine Daten sind derzeit keine Zimmer frei. Wir prüfen weiter und melden uns erst, wenn wieder welche da sind."
+    "unavailable": "Für deine Daten sind derzeit keine Zimmer frei. Wir prüfen weiter und melden uns erst, wenn wieder welche da sind.",
+    "estimateRooms": "KI-Schätzung: {{rooms}} Zimmer × {{price}}, gesamter Aufenthalt",
+    "estimateOne": "KI-Schätzung für 1 Zimmer, gesamter Aufenthalt",
+    "nights_one": "{{count}} Nacht",
+    "nights_other": "{{count}} Nächte",
+    "guests_one": "{{count}} Gast",
+    "guests_other": "{{count}} Gäste",
+    "rooms_one": "{{count}} Zimmer",
+    "rooms_other": "{{count}} Zimmer"
   },
   "trip": {
     "yourPlan": "Dein Plan, so wie wir ihn rechnen",
@@ -363,18 +373,65 @@
     "diffMore": "Das sind {{amount}} mehr als die Summe in Mein Plan ({{plan}}){{tail}}",
     "breakdown": "Preisaufschlüsselung der Reise",
     "replan": "Diese Reise neu planen",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "group": {
+      "flights": "Flüge",
+      "stay": "Unterkunft",
+      "activities": "Aktivitäten",
+      "other": "Sonstiges"
+    },
+    "groupWord": {
+      "flights": "Flüge",
+      "stay": "Hotel",
+      "activities": "Aktivitäten",
+      "other": "Sonstiges"
+    },
+    "partName": {
+      "hotel": "Hotel",
+      "sim": "SIM / eSIM"
+    },
+    "note": {
+      "cheapest": "als günstigster Preis für deine Daten beobachtet",
+      "perPerson": "pro Person × {{n}}"
+    },
+    "badge": {
+      "estimate": "Schätzung",
+      "estimateTitle": "Eine KI-Schätzung aus deiner Suche, die fest bleibt. Schätzungen lösen nie Alarme aus.",
+      "unavailable": "Nicht verfügbar",
+      "unavailableTitle": "Bei der letzten Prüfung nicht verfügbar – angezeigt wird der zuletzt gesehene Live-Preis.",
+      "notChecked": "Nicht geprüft",
+      "notCheckedTitle": "Die letzte Prüfung dieses Teils ist fehlgeschlagen – angezeigt wird der zuletzt gesehene Live-Preis.",
+      "stale": "Live · frühere Prüfung",
+      "staleTitle": "In einer früheren Runde geprüft (wir prüfen jedes Mal bis zu 5 Aktivitäten neu).",
+      "live": "Live",
+      "liveTitle": "Live-Preis aus der letzten Prüfung."
+    },
+    "lastCheck": "Letzte Prüfung: {{moves}}.",
+    "noMove": "Letzte Prüfung: kein Live-Preis hat sich bewegt.",
+    "couldntPrice": "Für {{list}} gab es keinen Preis – der letzte Live-Preis bleibt.",
+    "reason": {
+      "flight": "Flüge sind der günstigste Live-Preis für deine Daten, nicht der Flug, den du gewählt hast",
+      "hotel": "das Hotel hat seinen Live-Preis von Google Hotels",
+      "activityPer": "Aktivitäten werden pro Person × {{n}} gerechnet",
+      "activityLive": "Aktivitäten nutzen ihre Live-„ab“-Preise"
+    }
   },
   "time": {
     "justNow": "gerade eben",
-    "minAgo": "vor {{n}} Min.",
-    "hourAgo": "vor {{n}} Std.",
     "yesterday": "gestern",
-    "daysAgo": "vor {{n}} Tagen",
     "soon": "bald",
-    "inMin": "in {{n}} Min.",
-    "inHours": "in {{n}} Std.",
-    "inDays": "in {{n}} Tagen"
+    "minAgo_one": "vor {{count}} Min.",
+    "minAgo_other": "vor {{count}} Min.",
+    "hourAgo_one": "vor {{count}} Std.",
+    "hourAgo_other": "vor {{count}} Std.",
+    "daysAgo_one": "vor {{count}} Tag",
+    "daysAgo_other": "vor {{count}} Tagen",
+    "inMin_one": "in {{count}} Min.",
+    "inMin_other": "in {{count}} Min.",
+    "inHours_one": "in {{count}} Std.",
+    "inHours_other": "in {{count}} Std.",
+    "inDays_one": "in {{count}} Tag",
+    "inDays_other": "in {{count}} Tagen"
   },
   "status": {
     "pending": "Heutiger Preis wird abgerufen",
@@ -390,5 +447,22 @@
     "more": "{{amount}} mehr als zu Beginn"
   },
   "travellersTotal_one": "Gesamtpreis für {{count}} Reisenden",
-  "travellersTotal_other": "Gesamtpreis für {{count}} Reisende"
+  "travellersTotal_other": "Gesamtpreis für {{count}} Reisende",
+  "target": {
+    "errorUsd": "Gib einen Preis in Dollar ein, z. B. 450.",
+    "note": "Der heutige Preis ({{price}}) liegt bereits darunter – wir melden uns, wenn er unter den heutigen Preis fällt.",
+    "errorPrice": "Gib einen Preis ein, z. B. 450."
+  },
+  "currency": {
+    "usd": "US-Dollar"
+  },
+  "checksPrice": {
+    "checked": "Gerade geprüft.",
+    "unavailable": "Für deine Daten ist es gerade nicht verfügbar. Wir prüfen weiter.",
+    "failed": "Die Live-Preise haben nicht geantwortet. Wir versuchen es innerhalb einer Stunde erneut.",
+    "errored": "Die Prüfungen ruhen nach drei Fehlversuchen in Folge. Tippe auf Erneut versuchen, wenn du bereit bist.",
+    "expired": "Diese Beobachtung ist beendet, wir prüfen nicht mehr.",
+    "postponed": "Die Live-Preise sind gerade überlastet – wir prüfen morgen erneut.",
+    "default": "Es wurde nichts geprüft: Dieser Preis wird gerade nicht beobachtet."
+  }
 }

@@ -5,7 +5,7 @@ import {
   formatPrice, perPerson, providerName, titleDiffers, watchCurrency,
 } from '../../../utils/activityWatch'
 
-import { dayLabel as formatDay } from '../localized'
+import { formatDay } from '../../../utils/fareCalendar'
 
 function dayLabel(iso) {
   const d = new Date(`${iso}T12:00:00`)

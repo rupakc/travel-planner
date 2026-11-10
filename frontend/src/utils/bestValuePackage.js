@@ -1,4 +1,8 @@
+import i18n from '../i18n'
+import { fmtNumber } from '../i18n/format'
 import { computePlanCost, getBudgetStatus, sameFlight } from './planHelpers'
+
+const tt = (key, opts) => i18n.t(`plan:${key}`, opts)
 
 // Deterministic "best-value package" over the streamed search results.
 // Every pick is a real listed item. Agent output is LLM-driven, so every
@@ -59,7 +63,7 @@ const sortBy = (arr, ...cmps) =>
     })
     .map(([v]) => v)
 
-const money = (n) => `$${Math.round(n).toLocaleString()}`
+const money = (n) => fmtNumber(Math.round(n), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 // ---- flights ----
 
@@ -75,7 +79,7 @@ const duration = (mins) => {
   const total = Math.round(mins)
   const h = Math.floor(total / 60)
   const m = total % 60
-  return [h && `${h}h`, m && `${m}m`].filter(Boolean).join(' ')
+  return [h && tt('util.hours', { n: h }), m && tt('util.minutes', { n: m })].filter(Boolean).join(' ')
 }
 
 // Keep only items the caps allow; if none are allowed, keep them all
@@ -102,12 +106,12 @@ function pickFlight(flights, allow) {
   })
   const best = faster.length ? sortBy(faster, byAsc(flightDuration), byAsc(flightPrice))[0] : base
   const extra = Math.round(flightPrice(best) - cheapestPrice)
-  let reason = 'Cheapest fare'
+  let reason = tt('best.reason.cheapestFare')
   if (extra > 0) {
     reason =
       flightStops(best) < flightStops(cheapestOverall)
-        ? `Fewer stops for ${money(extra)} more than the cheapest fare`
-        : `Saves ${duration(baseDuration - flightDuration(best))} of travel for ${money(extra)} more than the cheapest fare`
+        ? tt('best.reason.fewerStops', { amount: money(extra) })
+        : tt('best.reason.saves', { time: duration(baseDuration - flightDuration(best)), amount: money(extra) })
   }
   return { item: best, reason }
 }
@@ -169,10 +173,10 @@ function pickHotel(cands, first) {
   const city = first ? best.city || first : null
   const label =
     stars === 3
-      ? 'Mid-range (3★), best-reviewed in its class'
+      ? tt('best.reason.midRange')
       : stars > 0
-        ? `${stars}★, best-reviewed in its class`
-        : 'Best-reviewed in its class'
+        ? tt('best.reason.starsBest', { stars })
+        : tt('best.reason.bestReviewed')
   return { item: best, reason: city ? `${label} · ${city}` : label }
 }
 
@@ -214,8 +218,8 @@ function pickActivities(section) {
   const sorted = sortBy(cands, byDesc((a) => num(a.similarity_score)), byAsc((a) => num(a.price_usd)))
   return takePerCity(sorted, CAPS.activitiesPerCity, CAPS.activities).map((a) => {
     const p = num(a.price_usd)
-    const base = p === 0 ? 'Free' : p > ACTIVITY_PRICE_FLOOR ? `${money(p)} · at or below the typical price here` : money(p)
-    return { item: a, reason: num(a.similarity_score) >= 0.5 ? `${base} · matches your interests` : base }
+    const base = p === 0 ? tt('best.free') : p > ACTIVITY_PRICE_FLOOR ? tt('best.reason.typicalPrice', { price: money(p) }) : money(p)
+    return { item: a, reason: num(a.similarity_score) >= 0.5 ? tt('best.reason.matches', { base }) : base }
   })
 }
 
@@ -229,13 +233,13 @@ function pickWalkingTours(section) {
   const ranked = sortBy(perCity, (a, b) => Number(!!b.top_pick) - Number(!!a.top_pick), byDesc((t) => num(t.rating)))
   return ranked
     .slice(0, CAPS.walkingTours)
-    .map((t) => ({ item: t, reason: t.price_note || 'Free walking tour' }))
+    .map((t) => ({ item: t, reason: t.price_note || tt('best.reason.freeTour') }))
 }
 
 function pickPlaces(section) {
   const free = listOf(section).filter((p) => p.name && num(p.admission_fee_usd) === 0)
   const sorted = sortBy(free, byDesc((p) => num(p.rating)))
-  return takePerCity(sorted, CAPS.placesPerCity, CAPS.places).map((p) => ({ item: p, reason: 'Free entry' }))
+  return takePerCity(sorted, CAPS.placesPerCity, CAPS.places).map((p) => ({ item: p, reason: tt('best.reason.freeEntry') }))
 }
 
 // ---- SIM ----
@@ -258,9 +262,9 @@ function pickSim(section, searchData) {
       const v = num(p.validity_days)
       return v === null || v >= days
     })
-    if (covering.length) return { item: cheapest(covering), reason: `Covers your ${days}-day trip` }
+    if (covering.length) return { item: cheapest(covering), reason: tt('best.reason.coversTrip', { days }) }
   }
-  return { item: cheapest(priced), reason: 'Cheapest plan' }
+  return { item: cheapest(priced), reason: tt('best.reason.cheapestPlan') }
 }
 
 // ---- builder ----
@@ -302,7 +306,7 @@ export function buildBestValuePackage(results, searchData, { caps } = {}) {
       byAsc(cost),
     )[0]
     if (cheaper && cost(cheaper) < cost(hotel.item)) {
-      hotel = { item: cheaper, reason: 'Cheaper stay to fit your budget' }
+      hotel = { item: cheaper, reason: tt('best.reason.cheaperStay') }
       selections = selectionsFor(hotel)
       total = computePlanCost(selections, searchData)
     }
