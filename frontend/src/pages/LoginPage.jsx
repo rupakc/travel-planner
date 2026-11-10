@@ -4,9 +4,11 @@ import { Plane, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { returnPathFrom } from '../utils/returnPath'
+import SocialSignInButtons from '../components/auth/SocialSignInButtons'
 
 export default function LoginPage() {
   const { t } = useTranslation('account')
+  const { t: tAuth } = useTranslation('auth')
   const { login } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
@@ -52,6 +54,14 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          <SocialSignInButtons mode="signin" />
+
+          <div className="flex items-center gap-3 my-5" role="separator">
+            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="text-xs uppercase tracking-wide text-gray-400">{tAuth('divider')}</span>
+            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

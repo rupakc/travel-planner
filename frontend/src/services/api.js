@@ -293,3 +293,14 @@ export async function fetchNearby({ lat, lng, language = 'en' }, token) {
 export async function liveCheckWatch(kind, watchId, token) {
   return (await api.post('/live-check', { kind, watch_id: watchId }, authHeaders(token))).data
 }
+
+// Sign-in providers the backend has configured. Any failure (404 on an older
+// backend, network, 5xx) means "none configured": never throws to the UI.
+export async function getAuthProviders() {
+  try {
+    const list = (await api.get('/auth/providers')).data?.providers
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
