@@ -33,8 +33,9 @@ def test_instruction_absent_for_english(loc):
 def test_instruction_present_for_german():
     assert language_instruction("de") == (
         "Write every human-readable text value in German. Keep JSON keys, enum "
-        "values, codes, URLs, prices, currency codes, dates and proper names of "
-        "places exactly as you would in English output."
+        "values, codes, URLs, prices, currency codes, dates and names of places, "
+        "venues, hotels, restaurants, tours, events and airlines exactly as you "
+        "would in English output."
     )
 
 

@@ -50,14 +50,17 @@ _LANGUAGE_NAMES = {
 
 def language_instruction(locale: str | None) -> str:
     """System-prompt suffix asking for human-readable text in the user's
-    language. Empty for ``None``/``en`` so English prompts are unchanged."""
+    language. Empty for ``None``/``en`` so English prompts are unchanged.
+    Names stay as in English output: enrichment, verification and price
+    lookups key on them."""
     name = _LANGUAGE_NAMES.get(locale or "")
     if not name:
         return ""
     return (
         f"Write every human-readable text value in {name}. Keep JSON keys, "
-        "enum values, codes, URLs, prices, currency codes, dates and proper "
-        "names of places exactly as you would in English output."
+        "enum values, codes, URLs, prices, currency codes, dates and names of "
+        "places, venues, hotels, restaurants, tours, events and airlines "
+        "exactly as you would in English output."
     )
 
 
