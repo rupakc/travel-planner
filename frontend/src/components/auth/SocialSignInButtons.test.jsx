@@ -61,6 +61,27 @@ describe('SocialSignInButtons', () => {
     expect(container.querySelector('[aria-live="polite"]').textContent).toMatch(/GitHub sign-in is coming soon/)
   })
 
+  it.each([
+    '/api/auth/../x',
+    '/api/auth/%2e%2e/x',
+    '/api/auth/%2E%2E/x',
+    '//evil.com/api/auth/',
+    '/api/auth\\x',
+  ])('treats %s as not configured', async (start) => {
+    getAuthProviders.mockResolvedValue([{ id: 'github', configured: true, start_url: start }])
+    await render()
+    await click(btn('github'))
+    expect(navigateTo).not.toHaveBeenCalled()
+    expect(container.querySelector('[aria-live="polite"]').textContent).toMatch(/coming soon/)
+  })
+
+  it('keeps the query string of a valid start_url', async () => {
+    getAuthProviders.mockResolvedValue([{ id: 'google', configured: true, start_url: '/api/auth/google/start?x=1' }])
+    await render()
+    await click(btn('google'))
+    expect(navigateTo).toHaveBeenCalledWith('/api/auth/google/start?x=1')
+  })
+
   it('fetches providers once and renders the same buttons in signup mode', async () => {
     getAuthProviders.mockResolvedValue([])
     await render({ mode: 'signup' })
