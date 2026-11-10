@@ -25,3 +25,11 @@ Concerns
 - `downloadCard` is async: for hi/bn/zh the Noto family from `SCRIPT_FONTS` leads the canvas font stack (measure and draw), and it awaits `Promise.race([document.fonts.load(400/600/700), 1500 ms timeout])`; skipped when `document.fonts` is missing.
 - Canvas and page use `usd()` for prices and `dateText()` (fmtDate, raw fallback) for leg/day/event dates; shadowed `t` renamed (`wt`, `tip`, `tour`).
 - Commands: `NODE_OPTIONS=--experimental-require-module npx vitest run` -> 84 files, 1164 tests passed; `npx eslint src/ --max-warnings 0` -> clean.
+
+## Fix round 2 (SharePage download)
+- `handleDownload`: busy guard (ref + `downloading` state; button `disabled` + `aria-busy`, spinner), try/catch, inline `role="alert"` message from new key `misc:share.downloadError` (7 languages, 191 keys now).
+- Safari activation: script font is preloaded (fire-and-forget `document.fonts.load`, 400/600/700) when the plan loads and when the language changes, with a sample of the misc strings + plan name; the click-time await then normally resolves instantly. If `a.click()` throws, falls back to `window.open(dataUrl)`; a blocked popup throws and shows the error message.
+- `usd()` returns '' for null/non-numeric amounts (no `$NaN`).
+- `SharePage` takes an optional `download` prop (default `downloadCard`) so the tests can inject it. New `pages/SharePage.test.jsx`: second click while busy does nothing (1 call, disabled, aria-busy), then re-enabled; failure shows the translated error, cleared on retry.
+- Commands: `NODE_OPTIONS=--experimental-require-module npx vitest run` -> 85 files, 1166 tests passed; `npx eslint src/ --max-warnings 0` -> clean.
+- Not covered: no real-browser check of font preload / Safari activation, and no image-inline fallback (error message only when popups are blocked).

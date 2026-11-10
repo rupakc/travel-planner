@@ -242,6 +242,7 @@
     "validityDays_other": "{{count}} jours",
     "validityDays_many": "{{count}} jours",
     "download": "Télécharger la carte du voyage",
+    "downloadError": "Impossible de créer la carte du voyage. Veuillez réessayer.",
     "readOnly": "Partagé en lecture seule — aucune donnée personnelle n’est incluse."
   }
 }

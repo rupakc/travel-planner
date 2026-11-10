@@ -223,6 +223,7 @@
     "validityDays_one": "{{count}} Tag",
     "validityDays_other": "{{count}} Tage",
     "download": "Reisekarte herunterladen",
+    "downloadError": "Die Reisekarte konnte nicht erstellt werden. Bitte versuche es erneut.",
     "readOnly": "Nur zum Ansehen geteilt – persönliche Daten sind nie enthalten."
   }
 }

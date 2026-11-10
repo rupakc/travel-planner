@@ -223,6 +223,7 @@
     "validityDays_one": "{{count}} day",
     "validityDays_other": "{{count}} days",
     "download": "Download trip card",
+    "downloadError": "Couldn’t create the trip card. Please try again.",
     "readOnly": "Shared read-only — personal details are never included."
   }
 }

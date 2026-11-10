@@ -204,6 +204,7 @@
     "dataGb": "{{n}}GB",
     "validityDays_other": "{{count}} 天",
     "download": "下载行程卡片",
+    "downloadError": "无法生成行程卡片，请重试。",
     "readOnly": "仅供查看——不包含任何个人信息。"
   }
 }

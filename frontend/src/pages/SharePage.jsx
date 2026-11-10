@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,11 +19,28 @@ import { wrapCanvasText } from '../utils/wrapCanvasText'
 // call time. SharePage itself calls useTranslation so it re-renders on a
 // language switch.
 const tt = (key, opts) => i18n.t(`misc:${key}`, opts)
-const usd = (n) => `$${fmtNumber(Number(n))}`
+// Non-numeric amounts render nothing rather than `$NaN`
+const usd = (n) => (n != null && n !== '' && Number.isFinite(Number(n)) ? `$${fmtNumber(Number(n))}` : '')
 // ISO date strings from the plan, in the reader's locale; raw text if unparsable
 const dateText = (d) => fmtDate(`${d}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' }) || String(d)
 
 const FONT_TIMEOUT_MS = 1500
+const FONT_WEIGHTS = [400, 600, 700]
+
+// Starts (or awaits) the script font the canvas will draw with. Calling it
+// early (on mount / language change) means the await at click time is instant,
+// which keeps the download inside the browser's user-activation window.
+function loadCardFonts(lang, sample) {
+  const family = SCRIPT_FONTS[lang]
+  if (!family || typeof document === 'undefined' || !document.fonts?.load) return Promise.resolve()
+  return Promise.all(FONT_WEIGHTS.map((w) => document.fonts.load(`${w} 30px "${family}"`, sample)))
+}
+
+const fontSample = (lang, plan) => {
+  let bundle = ''
+  try { bundle = JSON.stringify(i18n.getResourceBundle(lang, 'misc') || {}) } catch { /* none */ }
+  return `${bundle}${plan?.name || ''}${plan?.search_data?.destination || ''}`.slice(0, 2000)
+}
 const fontStack = (lang) => (SCRIPT_FONTS[lang] ? `"${SCRIPT_FONTS[lang]}", system-ui, sans-serif` : 'system-ui, sans-serif')
 const stopsText = (n) => (n === 0 ? tt('share.nonstop') : tt('share.stops', { count: n }))
 
@@ -206,16 +223,12 @@ async function downloadCard(plan) {
   // The Noto family for this language's script is loaded lazily by the i18n
   // framework; wait (briefly) for it so measuring and drawing use the same font.
   const stack = fontStack(i18n.resolvedLanguage || i18n.language)
-  if (stack.startsWith('"') && typeof document !== 'undefined' && document.fonts?.load) {
+  if (stack.startsWith('"')) {
     const sample = lines.map((l) => l.text).join('').slice(0, 2000)
-    const family = stack.split(',')[0]
     let timer
     const timeout = new Promise((resolve) => { timer = setTimeout(resolve, FONT_TIMEOUT_MS) })
     try {
-      await Promise.race([
-        Promise.all([400, 600, 700].map((w) => document.fonts.load(`${w} 30px ${family}`, sample))),
-        timeout,
-      ])
+      await Promise.race([loadCardFonts(i18n.resolvedLanguage || i18n.language, sample), timeout])
     } catch { /* fall back to the system font */ }
     clearTimeout(timer)
   }
@@ -258,15 +271,25 @@ async function downloadCard(plan) {
 
   const a = document.createElement('a')
   a.download = `${(plan.name || 'trip-card').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`
-  a.href = canvas.toDataURL('image/png')
-  a.click()
+  const dataUrl = canvas.toDataURL('image/png')
+  a.href = dataUrl
+  try {
+    a.click()
+  } catch {
+    // The download click can't run here: open the image so it can be saved
+    // from the new tab (a null window means popups are blocked: report it).
+    if (!window.open(dataUrl, '_blank')) throw new Error('download blocked')
+  }
 }
 
-export default function SharePage() {
-  const { t } = useTranslation('misc')
+export default function SharePage({ download = downloadCard }) {
+  const { t, i18n: i18nHook } = useTranslation('misc')
   const { token } = useParams()
   const [plan, setPlan] = useState(null)
   const [status, setStatus] = useState('loading')
+  const [downloading, setDownloading] = useState(false)
+  const [downloadFailed, setDownloadFailed] = useState(false)
+  const busy = useRef(false)
 
   useEffect(() => {
     fetch(`/api/share/${encodeURIComponent(token)}`)
@@ -275,7 +298,26 @@ export default function SharePage() {
       .catch(() => setStatus('error'))
   }, [token])
 
-  const handleDownload = useCallback(() => plan && downloadCard(plan), [plan])
+  // Warm the script font as soon as the plan is here (and when the language changes)
+  const lang = i18nHook.resolvedLanguage || i18nHook.language
+  useEffect(() => {
+    if (plan) loadCardFonts(lang, fontSample(lang, plan)).catch(() => {})
+  }, [plan, lang])
+
+  const handleDownload = useCallback(async () => {
+    if (!plan || busy.current) return
+    busy.current = true
+    setDownloading(true)
+    setDownloadFailed(false)
+    try {
+      await download(plan)
+    } catch {
+      setDownloadFailed(true)
+    } finally {
+      busy.current = false
+      setDownloading(false)
+    }
+  }, [plan, download])
 
   if (status === 'loading') {
     return (
@@ -595,14 +637,15 @@ export default function SharePage() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <button onClick={handleDownload} data-tid="share.download"
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-md text-sm">
-            <Download size={15} /> {t('share.download')}
+          <button onClick={handleDownload} data-tid="share.download" disabled={downloading} aria-busy={downloading}
+            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-md text-sm disabled:opacity-70">
+            {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} {t('share.download')}
           </button>
           <Link to="/" data-tid="share.plan-own" className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-white text-teal-700 font-semibold rounded-xl border border-teal-200 hover:bg-teal-50 transition-colors text-sm">
             {t('share.planOwnArrow')}
           </Link>
         </div>
+        {downloadFailed && <p role="alert" className="text-center text-sm text-red-600">{t('share.downloadError')}</p>}
         <p className="text-center text-xs text-gray-400">{t('share.readOnly')}</p>
       </div>
     </div>
