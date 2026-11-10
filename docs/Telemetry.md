@@ -2,7 +2,7 @@
 
 Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web today; Android and iOS later). What users are told is in [Privacy](Privacy.md); this page is the developer contract. The closed schema lives in `backend/app/telemetry/registry.py` (`EVENTS`), and a test fails if an event there is missing from this page.
 
-It is separate from `POST /api/analytics/events` (signed-in only, writes log lines, unchanged).
+It is separate from `POST /api/analytics/events` (signed-in only, writes log lines, endpoint unchanged), but the web client sends to that endpoint only while `telemetryAllowed()`, so one switch covers both.
 
 ## Envelope
 
@@ -121,7 +121,7 @@ These apply to every client; the web implementation is `frontend/src/telemetry/`
 
 ## Consent
 
-`consentRequired()` is true for devices in an EU, EEA, UK or Switzerland time zone (every `Europe/*` zone except Istanbul, Moscow, Minsk and Kiev/Kyiv, plus Reykjavik, Canary, Madeira, Azores and Faroe). Those devices send nothing until the user chooses in the one-time prompt (`ConsentPrompt`). Elsewhere telemetry is on and can be switched off in Preferences, Privacy (`PrivacySwitch`). The choice is stored in `localStorage` as `tp_consent` (`granted` or `denied`). A denial clears the queue and stops the collectors; a later grant starts them. The wording users see is in [Privacy](Privacy.md).
+`consentRequired()` is true for devices in an EU, EEA, UK or Switzerland time zone (every `Europe/*` zone except Istanbul, Moscow, Minsk and Kiev/Kyiv, plus Reykjavik, Canary, Madeira, Azores and Faroe). Those devices send nothing until the user chooses in the one-time prompt (`ConsentPrompt`). Elsewhere telemetry is on and can be switched off in Preferences, Privacy (`PrivacySwitch`). Any visitor, signed in or not, can reopen the prompt from the **Privacy choices** button in the footer of every page (`data-tid="privacy.choices"`, `openPrivacyChoices()`); it then marks the choice in force with `aria-pressed` and has a close button. The choice is stored in `localStorage` as `tp_consent` (`granted` or `denied`). A denial clears the queue and stops the collectors; a later grant starts them. The wording users see is in [Privacy](Privacy.md).
 
 ## Storage and retention
 

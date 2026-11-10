@@ -67,12 +67,13 @@ Separately from telemetry, the app's request-log line records only the HTTP meth
 
 ## Retention
 
-Raw events are kept for 90 days in a separate database file on the server (`telemetry.db`) and are not backed up. Daily aggregate counts (events, users and sessions per day, event and platform) are kept longer in the main database and are backed up with the user tables.
+Raw events are kept for 90 days in a separate database file on the server (`telemetry.db`) and are not backed up. Events already sent stay on the server until that 90-day retention ends, even after you switch collection off; there is no way yet to ask for them to be deleted. Daily aggregate counts (events, users and sessions per day, event and platform) are kept longer in the main database and are backed up with the user tables.
 
 ## Consent and how to switch it off
 
 - If your device time zone is in the EU, EEA, UK or Switzerland, collection is off until you choose. Voyager shows a one-time prompt with **Allow** and **No thanks**.
 - Everywhere else collection is on by default and can be switched off at any time.
-- To change your choice, open **Preferences**, then **Privacy**, and use the **Help improve Voyager** switch.
+- To change your choice, use the **Privacy choices** link in the footer of any page (including the sign-in page and shared trip pages, so it works without an account), or, when signed in, open **Preferences**, then **Privacy**, and use the **Help improve Voyager** switch.
 - Choosing **No thanks** (or switching it off) stops collection and clears any events still waiting on your device. The denial itself is stored only on your device; nothing is sent about it.
+- The same switch covers the app's older feature-usage log (`POST /api/analytics/events`, which records the feature, page and your username in the server log when you are signed in): while collection is off, nothing is sent there either.
 - Telemetry can also be disabled on a self-hosted server with `TELEMETRY_ENABLED=false`.
