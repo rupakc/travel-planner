@@ -19,3 +19,9 @@ Behaviour notes
 
 Concerns
 - Share-card PNG canvas wraps on spaces only: Chinese (no spaces) lines can overflow the card width; Devanagari/Bengali depend on system fonts in canvas.
+
+## Fix round 1 (share-card canvas)
+- New pure `utils/wrapCanvasText.js` (+ test): wraps on spaces; a token wider than a line is split per grapheme (`Intl.Segmenter`, `Array.from` fallback) and pieces are joined without spaces. Tests: 60 Chinese chars at a 10-char width give 6 lines of <= 10 chars; English wraps on spaces; short/empty text.
+- `downloadCard` is async: for hi/bn/zh the Noto family from `SCRIPT_FONTS` leads the canvas font stack (measure and draw), and it awaits `Promise.race([document.fonts.load(400/600/700), 1500 ms timeout])`; skipped when `document.fonts` is missing.
+- Canvas and page use `usd()` for prices and `dateText()` (fmtDate, raw fallback) for leg/day/event dates; shadowed `t` renamed (`wt`, `tip`, `tour`).
+- Commands: `NODE_OPTIONS=--experimental-require-module npx vitest run` -> 84 files, 1164 tests passed; `npx eslint src/ --max-warnings 0` -> clean.

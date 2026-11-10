@@ -12,12 +12,19 @@ import { scheduleDays, timeRange } from '../utils/schedule'
 import FromLinkChip, { InspiredBy } from '../components/FromLinkChip'
 import i18n from '../i18n'
 import { fmtDate, fmtNumber } from '../i18n/format'
+import { SCRIPT_FONTS } from '../i18n/languages'
+import { wrapCanvasText } from '../utils/wrapCanvasText'
 
 // Module-level helpers (and the canvas card) have no hook: look the copy up at
 // call time. SharePage itself calls useTranslation so it re-renders on a
 // language switch.
 const tt = (key, opts) => i18n.t(`misc:${key}`, opts)
 const usd = (n) => `$${fmtNumber(Number(n))}`
+// ISO date strings from the plan, in the reader's locale; raw text if unparsable
+const dateText = (d) => fmtDate(`${d}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' }) || String(d)
+
+const FONT_TIMEOUT_MS = 1500
+const fontStack = (lang) => (SCRIPT_FONTS[lang] ? `"${SCRIPT_FONTS[lang]}", system-ui, sans-serif` : 'system-ui, sans-serif')
 const stopsText = (n) => (n === 0 ? tt('share.nonstop') : tt('share.stops', { count: n }))
 
 // Public, read-only trip card — reachable without login via /share/:token
@@ -69,7 +76,7 @@ function FlightRow({ tag, leg, price }) {
         </p>
         <p className="text-xs text-gray-500">
           {leg.origin} → {leg.destination}
-          {leg.departure_date ? ` · ${leg.departure_date}` : ''}
+          {leg.departure_date ? ` · ${dateText(leg.departure_date)}` : ''}
           {leg.departure_time ? ` · ${leg.departure_time}–${leg.arrival_time || '?'}` : ''}
           {fmtDuration(leg.duration_minutes) ? ` · ${fmtDuration(leg.duration_minutes)}` : ''}
           {leg.stops != null ? ` · ${stopsText(leg.stops)}` : ''}
@@ -92,7 +99,7 @@ function DetailCard({ title, icon: Icon, accent, children }) {
 
 // Draws the FULL trip page (poster + every detail section) onto a canvas
 // and triggers a PNG download — no extra deps. Two passes: measure, then draw.
-function downloadCard(plan) {
+async function downloadCard(plan) {
   const sd = plan.search_data || {}
   const sel = plan.selections || {}
   const [c1, c2] = pickGradient(plan.name)
@@ -126,7 +133,7 @@ function downloadCard(plan) {
       add(`${tag}: ${leg.airline || tt('share.flight')}${leg.flight_number ? ' ' + leg.flight_number : ''}${price != null ? ` — ${usd(price)}` : ''}`, { size: 32, weight: 600, gap: 4 })
       const bits = [
         `${leg.origin || ''} → ${leg.destination || ''}`,
-        leg.departure_date, 
+        leg.departure_date ? dateText(leg.departure_date) : null,
         leg.departure_time ? `${leg.departure_time}–${leg.arrival_time || '?'}` : null,
         fmtDuration(leg.duration_minutes),
         leg.stops != null ? stopsText(leg.stops) : null,
@@ -162,7 +169,7 @@ function downloadCard(plan) {
   if (itinDays.length) {
     section(`📅 ${tt('share.canvasItinerary', { count: itinDays.length })}`)
     for (const day of itinDays) {
-      add(`${tt('share.dayN', { n: day.day_number })}${day.date ? ` · ${day.date}` : ''}${day.city ? ` · ${city(day.city)}` : ''}${day.theme ? ` — ${day.theme}` : ''}`, { size: 30, weight: 700, gap: 6 })
+      add(`${tt('share.dayN', { n: day.day_number })}${day.date ? ` · ${dateText(day.date)}` : ''}${day.city ? ` · ${city(day.city)}` : ''}${day.theme ? ` — ${day.theme}` : ''}`, { size: 30, weight: 700, gap: 6 })
       for (const slot of day.slots || []) {
         const key = slot.key ?? slotKey(day.day_number, slot.time_of_day)
         const edit = sel.itinerary_edits?.[key] || {}
@@ -181,36 +188,45 @@ function downloadCard(plan) {
     for (const item of items) add(`• ${fmt(item)}`, { size: 28, color: dim, gap: 8 })
   }
   listSection(`🎯 ${tt('share.activitiesTitle', { n: (sel.activities || []).length })}`, sel.activities, a =>
-    `${a.name}${a.city ? ` — ${city(a.city)}` : ''}${a.price_usd != null ? ` ($${a.price_usd})` : ''}`)
+    `${a.name}${a.city ? ` — ${city(a.city)}` : ''}${a.price_usd != null ? ` (${usd(a.price_usd)})` : ''}`)
   listSection(`🎉 ${tt('share.eventsTitle', { n: (sel.events || []).length })}`, sel.events, e =>
-    `${e.name}${e.city ? ` — ${city(e.city)}` : ''}${e.start_date ? ` (${e.start_date})` : ''}`)
-  listSection(`🚶 ${tt('share.walkingToursTitle', { n: (sel.walking_tours || []).length })}`, sel.walking_tours, t =>
-    `${t.name}${t.city ? ` — ${city(t.city)}` : ''}${t.provider ? ` (${t.provider})` : ''}`)
+    `${e.name}${e.city ? ` — ${city(e.city)}` : ''}${e.start_date ? ` (${dateText(e.start_date)})` : ''}`)
+  listSection(`🚶 ${tt('share.walkingToursTitle', { n: (sel.walking_tours || []).length })}`, sel.walking_tours, wt =>
+    `${wt.name}${wt.city ? ` — ${city(wt.city)}` : ''}${wt.provider ? ` (${wt.provider})` : ''}`)
   if (sel.sim) listSection(`📶 ${tt('share.simTitle')}`, [sel.sim], s2 =>
-    `${s2.provider} ${s2.plan_name || ''}${s2.price_usd != null ? ` ($${s2.price_usd})` : ''}`)
+    `${s2.provider} ${s2.plan_name || ''}${s2.price_usd != null ? ` (${usd(s2.price_usd)})` : ''}`)
   listSection(`🚇 ${tt('share.gettingAroundTitle', { n: (sel.getting_around || []).length })}`, sel.getting_around, o =>
     `${o.name}${o.city ? ` — ${city(o.city)}` : ''}`)
-  listSection(`💡 ${tt('share.tipsTitle', { n: (sel.tips || []).length })}`, sel.tips, t => t.title)
+  listSection(`💡 ${tt('share.tipsTitle', { n: (sel.tips || []).length })}`, sel.tips, tip => tip.title)
 
   space(40)
   add(plan.name || tt('share.defaultPlanName'), { size: 30, color: faint, gap: 0 })
 
   // ── Measure (with wrapping), then draw ─────────────────────────────
+  // The Noto family for this language's script is loaded lazily by the i18n
+  // framework; wait (briefly) for it so measuring and drawing use the same font.
+  const stack = fontStack(i18n.resolvedLanguage || i18n.language)
+  if (stack.startsWith('"') && typeof document !== 'undefined' && document.fonts?.load) {
+    const sample = lines.map((l) => l.text).join('').slice(0, 2000)
+    const family = stack.split(',')[0]
+    let timer
+    const timeout = new Promise((resolve) => { timer = setTimeout(resolve, FONT_TIMEOUT_MS) })
+    try {
+      await Promise.race([
+        Promise.all([400, 600, 700].map((w) => document.fonts.load(`${w} 30px ${family}`, sample))),
+        timeout,
+      ])
+    } catch { /* fall back to the system font */ }
+    clearTimeout(timer)
+  }
+
   const measurer = document.createElement('canvas').getContext('2d')
   const wrapped = []
   for (const ln of lines) {
     if (!ln.text) { wrapped.push(ln); continue }
-    measurer.font = `${ln.weight} ${ln.size}px system-ui, sans-serif`
-    const words = String(ln.text).split(' ')
-    let cur = ''
-    for (const w of words) {
-      const test = cur ? `${cur} ${w}` : w
-      if (measurer.measureText(test).width > maxW - ln.indent && cur) {
-        wrapped.push({ ...ln, text: cur, gap: 6 })
-        cur = w
-      } else cur = test
-    }
-    wrapped.push({ ...ln, text: cur })
+    measurer.font = `${ln.weight} ${ln.size}px ${stack}`
+    const parts = wrapCanvasText(String(ln.text), maxW - ln.indent, (txt) => measurer.measureText(txt).width)
+    parts.forEach((text, i) => wrapped.push({ ...ln, text, gap: i < parts.length - 1 ? 6 : ln.gap }))
   }
 
   const TOP = 110, BOTTOM = 90
@@ -233,7 +249,7 @@ function downloadCard(plan) {
   for (const ln of wrapped) {
     y += ln.size * 1.18
     if (ln.text) {
-      ctx.font = `${ln.weight} ${ln.size}px system-ui, sans-serif`
+      ctx.font = `${ln.weight} ${ln.size}px ${stack}`
       ctx.fillStyle = ln.color
       ctx.fillText(ln.text, M + ln.indent, y)
     }
@@ -405,7 +421,7 @@ export default function SharePage() {
               {itinDays.map((day, i) => (
                 <div key={i}>
                   <p className="text-xs font-bold text-teal-700 uppercase tracking-wide">
-                    {t('share.dayN', { n: day.day_number })}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${city(day.city)}` : ''}
+                    {t('share.dayN', { n: day.day_number })}{day.date ? ` · ${dateText(day.date)}` : ''}{day.city ? ` · ${city(day.city)}` : ''}
                   </p>
                   {day.theme && <p className="text-xs text-gray-400 italic">{day.theme}</p>}
                   <ul className="mt-1.5 space-y-1">
@@ -477,7 +493,7 @@ export default function SharePage() {
                   <p className="text-xs text-gray-500 flex flex-wrap items-center gap-x-2">
                     {a.category && <span className="capitalize">{a.category}</span>}
                     {a.duration_hours && <span className="flex items-center gap-0.5"><Clock size={9} />{t('share.hours', { n: a.duration_hours })}</span>}
-                    {a.price_usd != null && <span>${a.price_usd}</span>}
+                    {a.price_usd != null && <span>{usd(a.price_usd)}</span>}
                     {a.location && <span>{a.location}</span>}
                   </p>
                 </li>
@@ -498,7 +514,7 @@ export default function SharePage() {
                   </p>
                   <p className="text-xs text-gray-500 flex flex-wrap items-center gap-x-2">
                     {ev.category && <span className="capitalize">{ev.category}</span>}
-                    {ev.start_date && <span>{ev.start_date}{ev.end_date && ev.end_date !== ev.start_date ? ` – ${ev.end_date}` : ''}</span>}
+                    {ev.start_date && <span>{dateText(ev.start_date)}{ev.end_date && ev.end_date !== ev.start_date ? ` – ${dateText(ev.end_date)}` : ''}</span>}
                     {ev.price && <span>{ev.price}</span>}
                     {ev.location && <span>{ev.location}</span>}
                   </p>
@@ -512,17 +528,17 @@ export default function SharePage() {
         {(sel.walking_tours || []).length > 0 && (
           <DetailCard title={t('share.walkingToursTitle', { n: sel.walking_tours.length })} icon={Footprints} accent="text-green-700">
             <ul className="space-y-2.5">
-              {sel.walking_tours.map((t, i) => {
-                const href = safeUrl(t.url)
+              {sel.walking_tours.map((tour, i) => {
+                const href = safeUrl(tour.url)
                 return (
-                  <li key={t.url || i} className="text-sm">
+                  <li key={tour.url || i} className="text-sm">
                     <p className="text-gray-800 font-medium">
                       {href ? (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{t.name}</a>
-                      ) : t.name}
-                      {t.city && <span className="ml-1.5 text-xs text-indigo-600 font-semibold">{city(t.city)}</span>}
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{tour.name}</a>
+                      ) : tour.name}
+                      {tour.city && <span className="ml-1.5 text-xs text-indigo-600 font-semibold">{city(tour.city)}</span>}
                     </p>
-                    {t.provider && <p className="text-xs text-gray-500">{t.provider}</p>}
+                    {tour.provider && <p className="text-xs text-gray-500">{tour.provider}</p>}
                   </li>
                 )
               })}
@@ -535,7 +551,7 @@ export default function SharePage() {
           <DetailCard title={t('share.simTitle')} icon={Smartphone} accent="text-pink-700">
             <p className="text-sm font-medium text-gray-800">{sel.sim.provider} — {sel.sim.plan_name}</p>
             <p className="text-xs text-gray-500 mt-0.5 flex flex-wrap items-center gap-x-2">
-              {sel.sim.price_usd != null && <span className="font-semibold text-pink-700">${sel.sim.price_usd}</span>}
+              {sel.sim.price_usd != null && <span className="font-semibold text-pink-700">{usd(sel.sim.price_usd)}</span>}
               {sel.sim.data_gb ? <span>{t('share.dataGb', { n: sel.sim.data_gb })}</span> : <span>{t('share.unlimitedData')}</span>}
               {sel.sim.validity_days && <span>{t('share.validityDays', { count: sel.sim.validity_days })}</span>}
               {sel.sim.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={9} />{sel.sim.network_quality.speed}</span>}
@@ -567,10 +583,10 @@ export default function SharePage() {
         {(sel.tips || []).length > 0 && (
           <DetailCard title={t('share.tipsTitle', { n: sel.tips.length })} icon={Lightbulb} accent="text-amber-700">
             <ul className="space-y-2">
-              {sel.tips.map((t, i) => (
+              {sel.tips.map((tip, i) => (
                 <li key={i} className="text-sm">
-                  <p className="text-gray-800 font-medium">{t.title}</p>
-                  {t.body && <p className="text-xs text-gray-500">{t.body}</p>}
+                  <p className="text-gray-800 font-medium">{tip.title}</p>
+                  {tip.body && <p className="text-xs text-gray-500">{tip.body}</p>}
                 </li>
               ))}
             </ul>
