@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, useMemo, startTransition } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
+import { fmtDate, fmtNumber } from '../i18n/format'
 import {
   ArrowLeft, Plane, Hotel, MapPin, Shield, Smartphone,
   Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
@@ -57,23 +60,24 @@ import TravelerPanel from '../components/ui/TravelerPanel'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+// Labels live in the results catalogue (agents.<id>.label / .badge).
 const AGENT_CONFIG = {
-  flights:        { label: 'Flights',          icon: Plane,       color: 'blue'    },
-  weather:        { label: 'Weather Forecast', icon: Cloud,       color: 'sky'     },
-  hotels:         { label: 'Hotels',           icon: Hotel,       color: 'purple'  },
-  activities:     { label: 'Activities',       icon: MapPin,      color: 'green'   },
-  places_to_see:  { label: 'Places to See',    icon: MapIcon,     color: 'lime'    },
-  walking_tours:  { label: 'Free Walking Tours', icon: Footprints, color: 'teal'   },
-  events:         { label: "What's On",        icon: PartyPopper, color: 'fuchsia' },
-  visa:           { label: 'Visa',             icon: Shield,      color: 'orange'  },
-  sim:            { label: 'SIM Cards',        icon: Smartphone,  color: 'pink'    },
-  tips:           { label: 'Travel Tips',      icon: Lightbulb,   color: 'yellow'  },
-  getting_around: { label: 'Getting Around',   icon: Bus,         color: 'cyan'    },
-  forex:          { label: 'Currency & Forex', icon: DollarSign,  color: 'emerald' },
-  itinerary:      { label: 'Itinerary',        icon: Calendar,    color: 'indigo'  },
-  stress_test:    { label: 'Trip Health Check', icon: HeartPulse, color: 'rose'    },
-  emergency_card: { label: 'Emergency Card',   icon: Shield,      color: 'red'     },
-  packing_list:   { label: 'Packing List',     icon: ShoppingBag, color: 'teal'    },
+  flights:        { icon: Plane,       color: 'blue'    },
+  weather:        { icon: Cloud,       color: 'sky'     },
+  hotels:         { icon: Hotel,       color: 'purple'  },
+  activities:     { icon: MapPin,      color: 'green'   },
+  places_to_see:  { icon: MapIcon,     color: 'lime'    },
+  walking_tours:  { icon: Footprints, color: 'teal'   },
+  events:         { icon: PartyPopper, color: 'fuchsia' },
+  visa:           { icon: Shield,      color: 'orange'  },
+  sim:            { icon: Smartphone,  color: 'pink'    },
+  tips:           { icon: Lightbulb,   color: 'yellow'  },
+  getting_around: { icon: Bus,         color: 'cyan'    },
+  forex:          { icon: DollarSign,  color: 'emerald' },
+  itinerary:      { icon: Calendar,    color: 'indigo'  },
+  stress_test:    { icon: HeartPulse, color: 'rose'    },
+  emergency_card: { icon: Shield,      color: 'red'     },
+  packing_list:   { icon: ShoppingBag, color: 'teal'    },
 }
 const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'walking_tours', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
@@ -114,18 +118,21 @@ const SECTION_ACCENT = {
   fuchsia: { icon: 'text-fuchsia-600', line: 'border-l-fuchsia-400', bg: 'bg-fuchsia-50/30' },
 }
 
-const INTEREST_LABELS = { food:'🍜 Food',history:'🏛️ History',adventure:'🧗 Adventure',culture:'🎭 Culture',nature:'🌿 Nature',shopping:'🛍️ Shopping',nightlife:'🌙 Nightlife',wellness:'🧘 Wellness',art:'🎨 Art',family:'👨‍👩‍👧 Family' }
+const INTEREST_IDS = ['food', 'history', 'adventure', 'culture', 'nature', 'shopping', 'nightlife', 'wellness', 'art', 'family']
+// Resolved at read time so a language switch shows without a reload.
+const INTEREST_LABELS = {}
+INTEREST_IDS.forEach(id => Object.defineProperty(INTEREST_LABELS, id, { get: () => i18n.t(`results:interests.${id}`), enumerable: true }))
 
 // ─── Small sub-components ────────────────────────────────────────────────────
 
-const BADGE_LABELS = { flights: 'Flights', weather: 'Weather', hotels: 'Hotels', activities: 'Activities', places_to_see: 'Places', walking_tours: 'Walking Tours', events: "What's On", visa: 'Visa', sim: 'SIM', tips: 'Tips', getting_around: 'Transport', forex: 'Forex', itinerary: 'Itinerary', stress_test: 'Health Check', emergency_card: 'Emergency', packing_list: 'Packing' }
-
 function AgentBadge({ agent, status, onClick }) {
+  const { t } = useTranslation('results')
   const { icon: Icon, color } = AGENT_CONFIG[agent]
-  const badgeLabel = BADGE_LABELS[agent] || AGENT_CONFIG[agent].label
+  const badgeLabel = t(`agents.${agent}.badge`)
   const isClickable = status !== 'waiting'
   return (
     <button
+      data-tid={`results.badge.${agent}`}
       onClick={() => isClickable && onClick?.(agent)}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[13px] font-semibold tracking-wide ${COLOR_MAP[color].badge} ${isClickable ? 'cursor-pointer hover:scale-105 hover:shadow-sm active:scale-95 transition-all duration-150' : 'opacity-50 cursor-default'}`}
     >
@@ -141,7 +148,9 @@ function AgentBadge({ agent, status, onClick }) {
 export const sectionBodyId = (agent) => `section-body-${agent}`
 
 export function SectionHeader({ agent, status, isOpen, onToggle, actions, verification }) {
-  const { label, icon: Icon, color } = AGENT_CONFIG[agent]
+  const { t } = useTranslation('results')
+  const { icon: Icon, color } = AGENT_CONFIG[agent]
+  const label = t(`agents.${agent}.label`)
   const acc = SECTION_ACCENT[color] || SECTION_ACCENT.indigo
   // The title is the keyboard toggle; the chip and actions stay outside it
   // (no nested interactive elements). The row itself stays clickable for
@@ -152,7 +161,7 @@ export function SectionHeader({ agent, status, isOpen, onToggle, actions, verifi
       className={`flex items-center gap-3 px-4 py-3.5 w-full text-left border-l-4 ${acc.line} ${acc.bg} bg-white cursor-pointer transition-colors hover:bg-gray-50/80 ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
     >
       <h2 className="font-semibold text-base text-slate-800 flex-1 min-w-0">
-        <button type="button" aria-expanded={isOpen} aria-controls={isOpen ? sectionBodyId(agent) : undefined}
+        <button type="button" data-tid="results.section.toggle" aria-expanded={isOpen} aria-controls={isOpen ? sectionBodyId(agent) : undefined}
           onClick={(e) => { e.stopPropagation(); onToggle() }}
           className="flex items-center gap-3 w-full text-left rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
           <Icon size={18} className={acc.icon} aria-hidden="true" />
@@ -162,7 +171,7 @@ export function SectionHeader({ agent, status, isOpen, onToggle, actions, verifi
       {actions}
       <VerificationBadge verification={verification} />
       {status === 'loading'   && <Loader2 size={15} className="animate-spin text-gray-400" />}
-      {status === 'enhancing' && <span title="AI is refining this with additional data" className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> Enhancing…</span>}
+      {status === 'enhancing' && <span title={t('status.enhancingTitle')} className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Loader2 size={11} className="animate-spin" /> {t('status.enhancing')}</span>}
       {status === 'done'      && <CheckCircle2 size={15} className="text-teal-500 opacity-70" />}
       <ChevronDown size={16} aria-hidden="true" className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </div>
@@ -182,92 +191,13 @@ const WMO_EMOJI = {
 
 const OUTDOOR_CATS = ['adventure', 'nature', 'outdoor', 'sports', 'hiking', 'beach']
 
-const LOADING_MESSAGES = {
-  flights: [
-    "Scanning airlines for the best deals...",
-    "Comparing prices across carriers...",
-    "Checking direct and connecting flights..."
-  ],
-  hotels: [
-    "Finding hotels across all budgets...",
-    "Checking room availability...",
-    "Comparing luxury to budget stays..."
-  ],
-  activities: [
-    "Discovering things to do...",
-    "Matching activities to your interests...",
-    "Finding hidden gems and must-sees..."
-  ],
-  visa: [
-    "Checking entry requirements...",
-    "Verifying visa and passport rules...",
-    "Looking up vaccination requirements..."
-  ],
-  sim: [
-    "Finding the best SIM and eSIM plans...",
-    "Comparing data packages...",
-    "Checking coverage and prices..."
-  ],
-  tips: [
-    "Gathering local travel tips...",
-    "Checking safety advisories...",
-    "Finding cultural etiquette tips..."
-  ],
-  getting_around: [
-    "Mapping out transport options...",
-    "Checking public transit routes...",
-    "Finding the best ways to get around..."
-  ],
-  forex: [
-    "Checking current exchange rates...",
-    "Finding the best places to exchange money...",
-    "Researching card and ATM options..."
-  ],
-  itinerary: [
-    "Building your day-by-day plan...",
-    "Organizing activities by day...",
-    "Crafting the perfect itinerary..."
-  ],
-  places_to_see: [
-    "Finding must-see attractions...",
-    "Searching Google for top landmarks...",
-    "Discovering iconic sites and hidden gems..."
-  ],
-  walking_tours: [
-    "Checking GuruWalk and FreeTour.com…",
-    "Reading SANDEMANs and FreeWalkingTour.com…",
-    "Picking tours for your interests…"
-  ],
-  events: [
-    "Checking what's on during your dates...",
-    "Scanning festivals, concerts and exhibitions...",
-    "Looking for seasonal happenings and disruptions..."
-  ],
-  weather: [
-    "Fetching weather forecast...",
-    "Checking daily conditions...",
-    "Preparing weather outlook for your trip..."
-  ],
-  emergency_card: [
-    "Finding emergency contacts...",
-    "Looking up embassy details...",
-    "Compiling safety information..."
-  ],
-  packing_list: [
-    "Checking weather...",
-    "Planning what to pack...",
-    "Finalising your packing list..."
-  ],
-  stress_test: [
-    "Playing devil's advocate on your plan...",
-    "Checking opening days, timings and pacing...",
-    "Auditing budget, visa deadlines and weather clashes..."
-  ],
-}
+// Three rotating messages per section: loading.<agent>.m1..m3 in the catalogue.
+const LOADING_AGENTS = new Set(['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary', 'places_to_see', 'walking_tours', 'events', 'weather', 'emergency_card', 'packing_list', 'stress_test'])
 
 function Skeleton({ agent }) {
+  const { t } = useTranslation('results')
   const [msgIdx, setMsgIdx] = useState(0)
-  const msgs = LOADING_MESSAGES[agent] || ["Loading..."]
+  const msgs = LOADING_AGENTS.has(agent) ? [1, 2, 3].map(n => t(`loading.${agent}.m${n}`)) : [t('loading.default')]
 
   useEffect(() => {
     const timer = setInterval(() => setMsgIdx(i => (i + 1) % msgs.length), 3000)
@@ -292,12 +222,13 @@ function Skeleton({ agent }) {
 // ─── Section renderers ────────────────────────────────────────────────────────
 
 function WeatherDayCard({ day }) {
+  const { t } = useTranslation('results')
   const emoji = WMO_EMOJI[day.weather_code] ?? '🌡️'
   return (
     <div className={`flex-shrink-0 w-28 rounded-xl border p-3 text-center ${day.is_poor ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
       {day.city && <p className="text-[10px] font-bold text-indigo-500 truncate mb-0.5">{(day.city || '').split(',')[0]}</p>}
       <p className="text-xs text-gray-400 mb-1">
-        {new Date(day.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        {fmtDate(new Date(day.date + 'T00:00:00'), { month: 'short', day: 'numeric' })}
       </p>
       <div className="text-3xl mb-1">{emoji}</div>
       <p className="font-medium text-gray-700 leading-tight text-xs">{day.description}</p>
@@ -307,13 +238,14 @@ function WeatherDayCard({ day }) {
         </p>
       )}
       {day.precipitation_mm > 0 && (
-        <p className="text-xs text-blue-500 mt-0.5">💧{day.precipitation_mm.toFixed(1)} mm</p>
+        <p className="text-xs text-blue-500 mt-0.5">💧{t('weather.precip', { mm: fmtNumber(day.precipitation_mm, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })}</p>
       )}
     </div>
   )
 }
 
 function WeatherSection({ data }) {
+  const { t } = useTranslation('results')
   if (!data?.days?.length) return null
   const poor = data.poor_weather_day_count ?? 0
   const isEstimate = (data.source || '').includes('llm-estimate')
@@ -330,15 +262,15 @@ function WeatherSection({ data }) {
   return (
     <div className="p-4 space-y-3">
       {isEstimate && (
-        <p className="text-xs text-gray-500 italic">Historical climate estimate — actual conditions may vary</p>
+        <p className="text-xs text-gray-500 italic">{t('weather.estimate')}</p>
       )}
       {multiCity ? (
         groups.map((g, gi) => (
           <div key={`${g.city}-${gi}`} className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">📍 {g.city || 'En route'}</span>
+              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">📍 {g.city || t('weather.enRoute')}</span>
               <span className="text-[11px] text-gray-400">
-                {g.days.length} day{g.days.length !== 1 ? 's' : ''}
+                {t('weather.days', { count: g.days.length })}
               </span>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-1">
@@ -354,7 +286,7 @@ function WeatherSection({ data }) {
       {poor > 0 && (
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-700">
           <AlertTriangle size={14} />
-          <span>{poor} day{poor !== 1 ? 's' : ''} with poor weather — outdoor activities may be affected</span>
+          <span>{t('weather.poorDays', { count: poor })}</span>
         </div>
       )}
     </div>
@@ -363,22 +295,26 @@ function WeatherSection({ data }) {
 
 const LONG_LAYOVER_HOURS = 5
 
+// "2h 30m"
+const durationLabel = (t, mins) => t('flights.duration', { h: Math.floor(mins / 60), min: mins % 60 })
+
 function FlightLeg({ leg, direction, onLayover }) {
+  const { t } = useTranslation('results')
   if (!leg) return null
-  const fmtDur = leg.duration_minutes ? `${Math.floor(leg.duration_minutes/60)}h ${leg.duration_minutes%60}m` : null
+  const fmtDur = leg.duration_minutes ? durationLabel(t, leg.duration_minutes) : null
   const layovers = (leg.layovers || []).filter(lv => lv && (lv.city || lv.airport))
   return (
     <div className="text-xs space-y-1">
       <div className="flex items-center gap-2">
         <span className={`shrink-0 px-1.5 py-0.5 rounded font-semibold ${direction === 'outbound' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'}`}>
-          {direction === 'outbound' ? 'Depart' : 'Return'}
+          {direction === 'outbound' ? t('flights.depart') : t('flights.return')}
         </span>
         <div className="flex-1 min-w-0">
           <span className="font-medium text-gray-900">{leg.airline || '—'}</span>
           {leg.flight_number && <span className="text-gray-400 ml-1">{leg.flight_number}</span>}
         </div>
         <span className={`shrink-0 px-1.5 py-0.5 rounded-full font-medium ${leg.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-          {leg.stops === 0 ? 'Direct' : `${leg.stops} stop${leg.stops > 1 ? 's' : ''}`}
+          {leg.stops === 0 ? t('flights.direct') : t('flights.stops', { count: leg.stops })}
         </span>
       </div>
       <div className="flex items-center gap-2 text-gray-500 pl-1 flex-wrap">
@@ -395,13 +331,13 @@ function FlightLeg({ leg, direction, onLayover }) {
             return (
               <span key={i} className="inline-flex items-center gap-1">
                 <span className={`px-1.5 py-0.5 rounded-full border ${isLong ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                  🛬 {lv.duration_hours ? `${lv.duration_hours}h` : 'Stop'} in {label}
+                  🛬 {lv.duration_hours ? t('flights.layoverIn', { hours: lv.duration_hours, place: label }) : t('flights.stopIn', { place: label })}
                 </span>
                 {isLong && onLayover && (
-                  <button type="button"
+                  <button type="button" data-tid="results.flight.layover"
                     onClick={e => { e.stopPropagation(); onLayover(lv) }}
                     className="px-1.5 py-0.5 rounded-full bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors">
-                    ✨ Make the most of it
+                    ✨ {t('flights.makeMostOfIt')}
                   </button>
                 )}
               </span>
@@ -441,11 +377,12 @@ function OverBudgetTag({ children }) {
 }
 
 function HiddenByBudgetRow({ count, onShowAll }) {
+  const { t } = useTranslation('results')
   if (!count) return null
   return (
-    <button type="button" onClick={onShowAll}
+    <button type="button" data-tid="results.budget.show-all" onClick={onShowAll}
       className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
-      {count} hidden — show all
+      {t('budget.hiddenShowAll', { count })}
     </button>
   )
 }
@@ -464,27 +401,28 @@ function budgetView(items, budget, keyOf, isSelected) {
 }
 
 function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, departureDate, onLayover, budget = null }) {
+  const { t } = useTranslation('results')
   const chosen = selections.flights || []
   const chosenTotal = chosen.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0)
   return (
     <div className="p-4 space-y-5">
       {pricingData && <PricingAdvisorBanner data={pricingData} departureDate={departureDate} />}
       <div className="flex items-center justify-between bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-sm">
-        <span className="text-sky-800 font-medium">✈️ Multi-city trip — pick one flight per leg ({chosen.length}/{legs.length} selected)</span>
-        {chosenTotal > 0 && <span className="text-sky-700 font-bold">${chosenTotal.toLocaleString()} total</span>}
+        <span className="text-sky-800 font-medium">✈️ {t('flights.multiCity', { chosen: chosen.length, total: legs.length })}</span>
+        {chosenTotal > 0 && <span className="text-sky-700 font-bold">{t('total', { amount: `$${fmtNumber(chosenTotal)}` })}</span>}
       </div>
       {legs.map((leg, li) => {
-        const legDate = leg.date ? new Date(`${leg.date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null
+        const legDate = leg.date ? fmtDate(new Date(`${leg.date}T00:00:00`), { month: 'short', day: 'numeric' }) : null
         return (
           <div key={li}>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 rounded-full bg-sky-600 text-white text-xs font-bold">Leg {(leg.leg_index ?? li) + 1}</span>
+              <span className="px-2 py-0.5 rounded-full bg-sky-600 text-white text-xs font-bold">{t('flights.leg', { n: (leg.leg_index ?? li) + 1 })}</span>
               <span className="text-sm font-semibold text-gray-800">{cityName(leg.from)} → {cityName(leg.to)}</span>
               {legDate && <span className="text-xs text-gray-400">· {legDate}</span>}
             </div>
             {!(leg.results?.length) ? (
               <div className="border border-dashed border-gray-300 rounded-xl px-4 py-3 text-xs text-gray-500">
-                No flights found for this leg — check trains/buses in Getting Around
+                {t('flights.noLegFlights')}
               </div>
             ) : (() => {
               const { shown, hidden } = budgetView(leg.results, budget, flightKey, f => chosen.some(x => sameFlight(x, f)))
@@ -496,30 +434,30 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, depa
                     <div key={i}
                       onClick={() => onSelect('flights', f)}
                       className={`border rounded-xl p-3 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} group/budget`}>
-                      {over && <div className="mb-2"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}
+                      {over && <div className="mb-2"><OverBudgetTag>{t('budget.overFlight')}</OverBudgetTag></div>}
                       <div className={dim ? OVER_BUDGET_DIM : undefined}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <FlightLeg leg={f.outbound} direction="outbound" onLayover={onLayover} />
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-base font-bold text-teal-700">{f.price_usd ? `$${Number(f.price_usd).toLocaleString()}` : '—'}</p>
-                            <p className="text-[10px] text-gray-400">per person</p>
+                            <p className="text-base font-bold text-teal-700">{f.price_usd ? `$${fmtNumber(Number(f.price_usd))}` : '—'}</p>
+                            <p className="text-[10px] text-gray-400">{t('flights.perPerson')}</p>
                           </div>
                         </div>
                         <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
                           <div className="flex flex-wrap items-center gap-2">
                             {f.booking_url && (
-                              <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                              <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.flight.book"
                                 className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
-                                <ExternalLink size={11} /> Book
+                                <ExternalLink size={11} /> {t('flights.book')}
                               </a>
                             )}
                             {f.source && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g, ' ')}</span>}
                           </div>
-                          <button type="button" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
+                          <button type="button" data-tid="results.flight.add" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
-                            {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                            {isSelected ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                           </button>
                         </div>
                       </div>
@@ -559,7 +497,8 @@ export function FlightsSection({ data, selections, onSelect, pricingData, depart
 }
 
 function FlightResults({ data, selections, onSelect, onLayover, budget = null, hasHeader }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No flights found — try adjusting your dates or clearing filters</div>
+  const { t } = useTranslation('results')
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('flights.none')}</div>
   const selected = selections.flight
 
   // Detect format: new round-trip (has outbound/return objects) vs legacy flat
@@ -576,13 +515,13 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
             <tr>
               <th className="px-3 py-3 w-8"></th>
-              <th className="px-4 py-3 text-left">Airline</th>
-              <th className="px-4 py-3 text-right">Price</th>
-              <th className="px-4 py-3 text-center">Stops</th>
-              <th className="px-4 py-3 text-center">Duration</th>
-              <th className="px-4 py-3 text-center">Depart / Arrive</th>
-              <th className="px-4 py-3 text-center">Source</th>
-              <th className="px-4 py-3 text-center">Book</th>
+              <th className="px-4 py-3 text-left">{t('flights.col.airline')}</th>
+              <th className="px-4 py-3 text-right">{t('flights.col.price')}</th>
+              <th className="px-4 py-3 text-center">{t('flights.col.stops')}</th>
+              <th className="px-4 py-3 text-center">{t('flights.col.duration')}</th>
+              <th className="px-4 py-3 text-center">{t('flights.col.departArrive')}</th>
+              <th className="px-4 py-3 text-center">{t('flights.col.source')}</th>
+              <th className="px-4 py-3 text-center">{t('flights.col.book')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -598,17 +537,17 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
                     </div>
                   </td>
                   <td className={`px-4 py-3 font-medium${dimCell}`}>{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}</td>
-                  <td className="px-4 py-3 text-right font-bold text-teal-700"><span className={dimCell.trim() || undefined}>{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</span>{over && <div className="font-normal"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}</td>
+                  <td className="px-4 py-3 text-right font-bold text-teal-700"><span className={dimCell.trim() || undefined}>{f.price_usd ? `$${fmtNumber(f.price_usd)}` : '—'}</span>{over && <div className="font-normal"><OverBudgetTag>{t('budget.overFlight')}</OverBudgetTag></div>}</td>
                   <td className={`px-4 py-3 text-center${dimCell}`}>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${f.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {f.stops === 0 ? 'Non-stop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`}
+                      {f.stops === 0 ? t('flights.nonStop') : t('flights.stops', { count: f.stops })}
                     </span>
                   </td>
-                  <td className={`px-4 py-3 text-center text-gray-600${dimCell}`}>{f.duration_minutes ? `${Math.floor(f.duration_minutes/60)}h ${f.duration_minutes%60}m` : '—'}</td>
+                  <td className={`px-4 py-3 text-center text-gray-600${dimCell}`}>{f.duration_minutes ? durationLabel(t, f.duration_minutes) : '—'}</td>
                   <td className={`px-4 py-3 text-center text-gray-500 text-xs${dimCell}`}>{f.departure_time || '—'} → {f.arrival_time || '—'}</td>
                   <td className={`px-4 py-3 text-center${dimCell}`}>{f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}</td>
                   <td className={`px-4 py-3 text-center${dimCell}`}>
-                    {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-teal-500 hover:text-teal-700"><ExternalLink size={13} /></a>}
+                    {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.flight.book-link" className="text-teal-500 hover:text-teal-700"><ExternalLink size={13} /></a>}
                   </td>
                 </tr>
               )
@@ -634,7 +573,7 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
             onClick={() => onSelect('flight', isSelected ? null : f)}
             className={`border rounded-xl p-4 cursor-pointer transition-all ${isSelected ? 'border-teal-400 ring-2 ring-teal-300 bg-teal-50' : 'border-gray-200 hover:shadow-md'} group/budget`}
           >
-            {over && <div className="mb-2"><OverBudgetTag>Over your flight budget</OverBudgetTag></div>}
+            {over && <div className="mb-2"><OverBudgetTag>{t('budget.overFlight')}</OverBudgetTag></div>}
             <div className={dim ? OVER_BUDGET_DIM : undefined}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -642,13 +581,13 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
                     {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isOneWay ? 'bg-gray-100 text-gray-600' : 'bg-sky-100 text-sky-700'}`}>
-                    {isOneWay ? 'One-way' : 'Round-trip'}
+                    {isOneWay ? t('flights.oneWay') : t('flights.roundTrip')}
                   </span>
                   {f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</p>
-                  <p className="text-xs text-gray-400">{isOneWay ? 'per person' : 'round-trip / person'}</p>
+                  <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${fmtNumber(f.price_usd)}` : '—'}</p>
+                  <p className="text-xs text-gray-400">{isOneWay ? t('flights.perPerson') : t('flights.roundTripPerPerson')}</p>
                 </div>
               </div>
 
@@ -666,11 +605,11 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
               {/* Booking link */}
               {f.booking_url && (
                 <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-                  <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                  <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.flight.book-this"
                     className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
-                    <ExternalLink size={11} /> Book this flight
+                    <ExternalLink size={11} /> {t('flights.bookThis')}
                   </a>
-                  {isSelected && <span className="flex items-center gap-1 text-xs font-semibold text-teal-700"><Check size={12} /> Added to Plan</span>}
+                  {isSelected && <span className="flex items-center gap-1 text-xs font-semibold text-teal-700"><Check size={12} /> {t('plan.addedToPlan')}</span>}
                 </div>
               )}
             </div>
@@ -685,6 +624,7 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
 // ─── Flight Filter Modal ─────────────────────────────────────────────────────
 
 function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading }) {
+  const { t } = useTranslation('results')
   const [stops, setStops] = useState(null)
   const [maxPrice, setMaxPrice] = useState(null)
   const [depEarliest, setDepEarliest] = useState(0)
@@ -727,10 +667,10 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
   const activeCount = (stops !== null ? 1 : 0) + (maxPrice !== null ? 1 : 0) + (depEarliest > 0 || depLatest < 24 ? 1 : 0) + (arrEarliest > 0 || arrLatest < 24 ? 1 : 0)
 
   const stopsOptions = [
-    { value: null, label: 'Any' },
-    { value: 0, label: 'Non-stop' },
-    { value: 1, label: '1 Stop' },
-    { value: 2, label: '2 Stops' },
+    { value: null, label: t('filter.any') },
+    { value: 0, label: t('flights.nonStop') },
+    { value: 1, label: t('flights.stopsBtn', { count: 1 }) },
+    { value: 2, label: t('flights.stopsBtn', { count: 2 }) },
   ]
 
   const sliderThumb = '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sky-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white'
@@ -741,18 +681,18 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <SlidersHorizontal size={18} className="text-sky-500" /> Flight Filters
+            <SlidersHorizontal size={18} className="text-sky-500" /> {t('flights.filterTitle')}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} data-tid="results.flight-filter.close" aria-label={t('common.close')} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-6 max-h-[65vh] overflow-y-auto">
           {/* Stops */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Stops</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('flights.numStops')}</label>
             <div className="grid grid-cols-4 gap-2">
               {stopsOptions.map(opt => (
-                <button key={String(opt.value)} type="button" onClick={() => setStops(opt.value)}
+                <button key={String(opt.value)} type="button" data-tid="results.flight-filter.stops" onClick={() => setStops(opt.value)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${stops === opt.value ? 'bg-sky-500 border-sky-500 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-sky-300 hover:text-sky-600'}`}>
                   {opt.label}
                 </button>
@@ -763,11 +703,11 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
           {/* Max Price */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-gray-700">Max Price (per person)</label>
-              <span className="text-sm font-bold text-sky-600">{maxPrice !== null ? `$${effectiveMaxPrice.toLocaleString()}` : 'Any'}</span>
+              <label className="text-sm font-semibold text-gray-700">{t('flights.maxPrice')}</label>
+              <span className="text-sm font-bold text-sky-600">{maxPrice !== null ? `$${fmtNumber(effectiveMaxPrice)}` : t('filter.any')}</span>
             </div>
             <input
-              type="range"
+              type="range" data-tid="results.flight-filter.max-price"
               min={priceFloor} max={priceCeil} step={50}
               value={effectiveMaxPrice}
               onChange={e => { const v = Number(e.target.value); setMaxPrice(v >= priceCeil ? null : v) }}
@@ -775,30 +715,30 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>${priceFloor}</span>
-              <span>${priceCeil.toLocaleString()}</span>
+              <span>${fmtNumber(priceCeil)}</span>
             </div>
           </div>
 
           {/* Departure Time */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Departure Time</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('flights.departureTime')}</label>
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">Earliest</span>
+                  <span className="text-xs text-gray-500">{t('filter.earliest')}</span>
                   <span className="text-xs font-semibold text-sky-600">{fmtHour(depEarliest)}</span>
                 </div>
-                <input type="range" min={0} max={23} step={1} value={depEarliest}
+                <input type="range" data-tid="results.flight-filter.dep-earliest" min={0} max={23} step={1} value={depEarliest}
                   onChange={e => { const v = Number(e.target.value); setDepEarliest(Math.min(v, depLatest - 1)) }}
                   className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-sky-500 ${sliderThumb}`}
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">Latest</span>
+                  <span className="text-xs text-gray-500">{t('filter.latest')}</span>
                   <span className="text-xs font-semibold text-sky-600">{fmtHour(depLatest)}</span>
                 </div>
-                <input type="range" min={1} max={24} step={1} value={depLatest}
+                <input type="range" data-tid="results.flight-filter.dep-latest" min={1} max={24} step={1} value={depLatest}
                   onChange={e => { const v = Number(e.target.value); setDepLatest(Math.max(v, depEarliest + 1)) }}
                   className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-sky-500 ${sliderThumb}`}
                 />
@@ -811,24 +751,24 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
 
           {/* Arrival Time */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Arrival Time</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('flights.arrivalTime')}</label>
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">Earliest</span>
+                  <span className="text-xs text-gray-500">{t('filter.earliest')}</span>
                   <span className="text-xs font-semibold text-sky-600">{fmtHour(arrEarliest)}</span>
                 </div>
-                <input type="range" min={0} max={23} step={1} value={arrEarliest}
+                <input type="range" data-tid="results.flight-filter.arr-earliest" min={0} max={23} step={1} value={arrEarliest}
                   onChange={e => { const v = Number(e.target.value); setArrEarliest(Math.min(v, arrLatest - 1)) }}
                   className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-sky-500 ${sliderThumb}`}
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">Latest</span>
+                  <span className="text-xs text-gray-500">{t('filter.latest')}</span>
                   <span className="text-xs font-semibold text-sky-600">{fmtHour(arrLatest)}</span>
                 </div>
-                <input type="range" min={1} max={24} step={1} value={arrLatest}
+                <input type="range" data-tid="results.flight-filter.arr-latest" min={1} max={24} step={1} value={arrLatest}
                   onChange={e => { const v = Number(e.target.value); setArrLatest(Math.max(v, arrEarliest + 1)) }}
                   className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-sky-500 ${sliderThumb}`}
                 />
@@ -842,13 +782,13 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-          <button onClick={handleReset} disabled={!hasFilters}
+          <button onClick={handleReset} disabled={!hasFilters} data-tid="results.filter.clear"
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Clear All
+            {t('filter.clearAll')}
           </button>
-          <button onClick={handleApply} disabled={isLoading}
+          <button onClick={handleApply} disabled={isLoading} data-tid="results.filter.apply"
             className="flex items-center gap-2 px-5 py-2.5 bg-sky-500 text-white text-sm font-semibold rounded-xl hover:bg-sky-600 disabled:opacity-60 transition-all shadow-md">
-            {isLoading ? <><Loader2 size={14} className="animate-spin" /> Searching...</> : <><SlidersHorizontal size={14} /> Apply Filters{activeCount > 0 ? ` (${activeCount})` : ''}</>}
+            {isLoading ? <><Loader2 size={14} className="animate-spin" /> {t('filter.searching')}</> : <><SlidersHorizontal size={14} /> {t('filter.apply')}{activeCount > 0 ? ` (${activeCount})` : ''}</>}
           </button>
         </div>
       </div>
@@ -857,7 +797,8 @@ function FlightFilterModal({ isOpen, onClose, onApply, currentResults, isLoading
 }
 
 export function HotelsSection({ data, selections, onSelect, budget = null, searchData = null }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No hotels found — try expanding your budget or clearing filters</div>
+  const { t } = useTranslation('results')
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('hotels.none')}</div>
   const selected = selections.hotel
   const isHotelSelected = (h) => !!selected && selected.name === h.name
   const { shown, hidden } = budgetView(data.results, budget, h => h.name, isHotelSelected)
@@ -869,7 +810,7 @@ export function HotelsSection({ data, selections, onSelect, budget = null, searc
           <div key={i}
             onClick={() => onSelect('hotel', isSelected ? null : h)}
             className={`border rounded-xl p-4 transition-all cursor-pointer ${isSelected ? 'border-purple-400 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-200 hover:shadow-md'} group/budget`}>
-            {over && <div className="mb-2"><OverBudgetTag>Over your stay budget</OverBudgetTag></div>}
+            {over && <div className="mb-2"><OverBudgetTag>{t('budget.overStay')}</OverBudgetTag></div>}
             <div className={dim ? OVER_BUDGET_DIM : undefined}>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0 mr-2">
@@ -880,8 +821,8 @@ export function HotelsSection({ data, selections, onSelect, budget = null, searc
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-purple-700">${h.price_per_night_usd?.toLocaleString()}<span className="text-xs font-normal text-gray-500">/night</span></p>
-                  {h.total_price_usd && <p className="text-xs text-gray-400">${h.total_price_usd.toLocaleString()} total</p>}
+                  <p className="font-bold text-purple-700">${fmtNumber(h.price_per_night_usd)}<span className="text-xs font-normal text-gray-500">{t('hotels.perNight')}</span></p>
+                  {h.total_price_usd && <p className="text-xs text-gray-400">{t('total', { amount: `$${fmtNumber(h.total_price_usd)}` })}</p>}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -896,14 +837,14 @@ export function HotelsSection({ data, selections, onSelect, budget = null, searc
               )}
               <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                  {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> View &amp; Book</a>}
+                  {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.hotel.book" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"><ExternalLink size={11} /> {t('hotels.viewBook')}</a>}
                   {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
                   <FoundOnlineBadge item={h} />
                   <WatchHotelButton hotel={h} searchData={searchData} source="results" />
                 </div>
-                <button type="button" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
+                <button type="button" data-tid="results.hotel.add" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
-                  {isSelected ? <><Check size={11}/> Added to Plan</> : <><Plus size={11}/> Add to Plan</>}
+                  {isSelected ? <><Check size={11}/> {t('plan.addedToPlan')}</> : <><Plus size={11}/> {t('plan.addToPlan')}</>}
                 </button>
               </div>
             </div>
@@ -918,6 +859,7 @@ export function HotelsSection({ data, selections, onSelect, budget = null, searc
 // ─── Hotel Filter Modal ──────────────────────────────────────────────────────
 
 function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading }) {
+  const { t } = useTranslation('results')
   const [numBeds, setNumBeds] = useState(null)
   const [maxPricePerNight, setMaxPricePerNight] = useState(null)
   const [wifiQuality, setWifiQuality] = useState(null)
@@ -954,18 +896,18 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
   const activeCount = (numBeds !== null ? 1 : 0) + (maxPricePerNight !== null ? 1 : 0) + (wifiQuality !== null ? 1 : 0) + (maxDistance !== null ? 1 : 0) + (privateWashroom ? 1 : 0)
 
   const bedOptions = [
-    { value: null, label: 'Any' },
-    { value: 1, label: '1 Bed' },
-    { value: 2, label: '2 Beds' },
-    { value: 3, label: '3 Beds' },
+    { value: null, label: t('filter.any') },
+    { value: 1, label: t('hotels.beds', { count: 1 }) },
+    { value: 2, label: t('hotels.beds', { count: 2 }) },
+    { value: 3, label: t('hotels.beds', { count: 3 }) },
     { value: 4, label: '4+' },
   ]
 
   const wifiOptions = [
-    { value: null, label: 'Any' },
-    { value: 'basic', label: 'Basic' },
-    { value: 'good', label: 'Good' },
-    { value: 'excellent', label: 'Excellent' },
+    { value: null, label: t('filter.any') },
+    { value: 'basic', label: t('hotels.wifi.basic') },
+    { value: 'good', label: t('hotels.wifi.good') },
+    { value: 'excellent', label: t('hotels.wifi.excellent') },
   ]
 
   const sliderThumb = '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white'
@@ -976,18 +918,18 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <SlidersHorizontal size={18} className="text-violet-500" /> Hotel Filters
+            <SlidersHorizontal size={18} className="text-violet-500" /> {t('hotels.filterTitle')}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} data-tid="results.hotel-filter.close" aria-label={t('common.close')} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-6 max-h-[65vh] overflow-y-auto">
           {/* Number of Beds */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Beds</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('hotels.numBeds')}</label>
             <div className="grid grid-cols-5 gap-2">
               {bedOptions.map(opt => (
-                <button key={String(opt.value)} type="button" onClick={() => setNumBeds(opt.value)}
+                <button key={String(opt.value)} type="button" data-tid="results.hotel-filter.beds" onClick={() => setNumBeds(opt.value)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${numBeds === opt.value ? 'bg-violet-500 border-violet-500 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600'}`}>
                   {opt.label}
                 </button>
@@ -998,11 +940,11 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
           {/* Max Price per Night */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-gray-700">Max Cost per Night</label>
-              <span className="text-sm font-bold text-violet-600">{maxPricePerNight !== null ? `$${effectiveMaxPrice.toLocaleString()}` : 'Any'}</span>
+              <label className="text-sm font-semibold text-gray-700">{t('hotels.maxCost')}</label>
+              <span className="text-sm font-bold text-violet-600">{maxPricePerNight !== null ? `$${fmtNumber(effectiveMaxPrice)}` : t('filter.any')}</span>
             </div>
             <input
-              type="range"
+              type="range" data-tid="results.hotel-filter.max-price"
               min={priceFloor} max={priceCeil} step={10}
               value={effectiveMaxPrice}
               onChange={e => { const v = Number(e.target.value); setMaxPricePerNight(v >= priceCeil ? null : v) }}
@@ -1010,16 +952,16 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>${priceFloor}</span>
-              <span>${priceCeil.toLocaleString()}</span>
+              <span>${fmtNumber(priceCeil)}</span>
             </div>
           </div>
 
           {/* WiFi Quality */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Wifi size={14} /> WiFi Quality</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Wifi size={14} /> {t('hotels.wifiQuality')}</label>
             <div className="grid grid-cols-4 gap-2">
               {wifiOptions.map(opt => (
-                <button key={String(opt.value)} type="button" onClick={() => setWifiQuality(opt.value)}
+                <button key={String(opt.value)} type="button" data-tid="results.hotel-filter.wifi" onClick={() => setWifiQuality(opt.value)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${wifiQuality === opt.value ? 'bg-violet-500 border-violet-500 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600'}`}>
                   {opt.label}
                 </button>
@@ -1030,46 +972,46 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
           {/* Distance from City Center */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><MapPin size={14} /> Distance from Center</label>
-              <span className="text-sm font-bold text-violet-600">{maxDistance !== null ? `${effectiveMaxDist} km` : 'Any'}</span>
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><MapPin size={14} /> {t('hotels.distance')}</label>
+              <span className="text-sm font-bold text-violet-600">{maxDistance !== null ? t('hotels.km', { km: effectiveMaxDist }) : t('filter.any')}</span>
             </div>
             <input
-              type="range"
+              type="range" data-tid="results.hotel-filter.distance"
               min={0.5} max={distanceCeil} step={0.5}
               value={effectiveMaxDist}
               onChange={e => setMaxDistance(Number(e.target.value))}
               className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-violet-500 ${sliderThumb}`}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>0.5 km</span>
-              <span>{distanceCeil} km</span>
+              <span>{t('hotels.km', { km: 0.5 })}</span>
+              <span>{t('hotels.km', { km: distanceCeil })}</span>
             </div>
           </div>
 
           {/* Private Washroom */}
           <div>
-            <label className="flex items-center gap-3 cursor-pointer group" onClick={() => setPrivateWashroom(v => !v)}>
+            <label className="flex items-center gap-3 cursor-pointer group" data-tid="results.hotel-filter.washroom" onClick={() => setPrivateWashroom(v => !v)}>
               <div className={`w-10 h-6 rounded-full transition-all relative ${privateWashroom ? 'bg-violet-500' : 'bg-gray-300'}`}>
                 <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all ${privateWashroom ? 'left-[18px]' : 'left-0.5'}`} />
               </div>
               <div className="flex items-center gap-1.5">
                 <Bath size={14} className={privateWashroom ? 'text-violet-600' : 'text-gray-400'} />
-                <span className="text-sm font-semibold text-gray-700">Private Washroom</span>
+                <span className="text-sm font-semibold text-gray-700">{t('hotels.privateWashroom')}</span>
               </div>
-              {privateWashroom && <span className="text-xs text-violet-500 font-medium ml-auto">Required</span>}
+              {privateWashroom && <span className="text-xs text-violet-500 font-medium ml-auto">{t('hotels.required')}</span>}
             </label>
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-          <button onClick={handleReset} disabled={!hasFilters}
+          <button onClick={handleReset} disabled={!hasFilters} data-tid="results.filter.clear"
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Clear All
+            {t('filter.clearAll')}
           </button>
-          <button onClick={handleApply} disabled={isLoading}
+          <button onClick={handleApply} disabled={isLoading} data-tid="results.filter.apply"
             className="flex items-center gap-2 px-5 py-2.5 bg-violet-500 text-white text-sm font-semibold rounded-xl hover:bg-violet-600 disabled:opacity-60 transition-all shadow-md">
-            {isLoading ? <><Loader2 size={14} className="animate-spin" /> Searching...</> : <><SlidersHorizontal size={14} /> Apply Filters{activeCount > 0 ? ` (${activeCount})` : ''}</>}
+            {isLoading ? <><Loader2 size={14} className="animate-spin" /> {t('filter.searching')}</> : <><SlidersHorizontal size={14} /> {t('filter.apply')}{activeCount > 0 ? ` (${activeCount})` : ''}</>}
           </button>
         </div>
       </div>
@@ -1078,7 +1020,8 @@ function HotelFilterModal({ isOpen, onClose, onApply, currentResults, isLoading 
 }
 
 export function ActivitiesSection({ data, selections, onSelect, weatherData, budget = null }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No activities found — try different interests or adjusting dates</div>
+  const { t } = useTranslation('results')
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('activities.none')}</div>
   const catColors = { food:'bg-orange-100 text-orange-700',history:'bg-amber-100 text-amber-700',adventure:'bg-red-100 text-red-700',culture:'bg-purple-100 text-purple-700',nature:'bg-green-100 text-green-700',shopping:'bg-pink-100 text-pink-700',nightlife:'bg-indigo-100 text-indigo-700',wellness:'bg-teal-100 text-teal-700',art:'bg-violet-100 text-violet-700',family:'bg-blue-100 text-blue-700',general:'bg-gray-100 text-gray-700' }
   const poorDays = weatherData?.poor_weather_day_count ?? 0
   const weatherLoaded = !!weatherData?.days?.length
@@ -1097,33 +1040,33 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
                 {a.from_link && <FromLinkChip quote={a.link_quote} note={a.verification_note} />}
               </span>
               <div className="flex items-center gap-2">
-                {a.similarity_score && !a.from_link && <span className="text-xs text-gray-400">{Math.round(a.similarity_score*100)}% match</span>}
-                <button type="button" onClick={e => { e.stopPropagation(); onSelect('activities', a) }}
+                {a.similarity_score && !a.from_link && <span className="text-xs text-gray-400">{t('activities.match', { percent: Math.round(a.similarity_score*100) })}</span>}
+                <button type="button" data-tid="results.activity.add" onClick={e => { e.stopPropagation(); onSelect('activities', a) }}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'}`}>
-                  {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                  {isSelected ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                 </button>
               </div>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">{a.name}</h3>
             <p className="text-sm text-gray-600 mb-2 line-clamp-2">{a.description}</p>
             <div className="flex items-center gap-3 text-xs text-gray-500">
-              {a.duration_hours && <span className="flex items-center gap-1"><Clock size={10} />{a.duration_hours}h</span>}
+              {a.duration_hours && <span className="flex items-center gap-1"><Clock size={10} />{t('activities.hours', { h: a.duration_hours })}</span>}
               {a.price_usd != null && <span className="flex items-center gap-1"><DollarSign size={10} />${a.price_usd}</span>}
               {a.location && <span className="flex items-center gap-1"><MapPin size={10} />{a.location}</span>}
-              {a.rating && <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{a.rating}{a.review_count ? ` (${a.review_count.toLocaleString()})` : ''}</span>}
+              {a.rating && <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{a.rating}{a.review_count ? ` (${fmtNumber(a.review_count)})` : ''}</span>}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {a.city && <CityChip city={a.city} />}
-              {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> Book Now</a>}
+              {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.activity.book" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> {t('activities.bookNow')}</a>}
               <WatchActivityButton activity={a} source="results_activity" />
               {a.source && !a.from_link && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
-              {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">Fits your budget</span>}
-              {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
-              {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
-              {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
-              {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ Check weather</span>}
-              {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ Good weather</span>}
+              {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">{t('activities.fitsBudget')}</span>}
+              {a.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 {t('tags.hiddenGem')}</span>}
+              {a.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 {t('tags.family')}</span>}
+              {a.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ {t('tags.accessible')}</span>}
+              {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ {t('tags.checkWeather')}</span>}
+              {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ {t('tags.goodWeather')}</span>}
             </div>
           </div>
         )
@@ -1133,7 +1076,8 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
 }
 
 export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) {
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No places found</div>
+  const { t } = useTranslation('results')
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('places.none')}</div>
   const catColors = { Landmark:'bg-lime-100 text-lime-700', 'Temple/Mosque/Church':'bg-violet-100 text-violet-700', Museum:'bg-sky-100 text-sky-700', Viewpoint:'bg-cyan-100 text-cyan-700', 'Park/Garden':'bg-green-100 text-green-700', Market:'bg-orange-100 text-orange-700', 'Palace/Castle':'bg-amber-100 text-amber-700', 'Natural Wonder':'bg-teal-100 text-teal-700', 'Historic District':'bg-rose-100 text-rose-700', Monument:'bg-gray-100 text-gray-700' }
   const poorDays = weatherData?.poor_weather_day_count ?? 0
   const weatherLoaded = !!weatherData?.days?.length
@@ -1148,19 +1092,19 @@ export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) 
           >
             <div className="flex items-start justify-between mb-2">
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[place.category] || catColors.Landmark}`}>
-                {place.category || 'Landmark'}
+                {place.category || t('places.landmark')}
               </span>
               <div className="flex items-center gap-2">
                 {place.rating != null && (
                   <span className="text-xs text-amber-600 font-semibold flex items-center gap-0.5">
                     <Star size={10} className="fill-amber-400 text-amber-400" />
                     {place.rating.toFixed(1)}
-                    {place.review_count ? <span className="text-gray-400 font-normal ml-0.5">({place.review_count.toLocaleString()})</span> : null}
+                    {place.review_count ? <span className="text-gray-400 font-normal ml-0.5">({fmtNumber(place.review_count)})</span> : null}
                   </span>
                 )}
-                <button type="button" onClick={e => { e.stopPropagation(); onSelect('places_to_see', place) }}
+                <button type="button" data-tid="results.place.add" onClick={e => { e.stopPropagation(); onSelect('places_to_see', place) }}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-lime-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-lime-100 hover:text-lime-700'}`}>
-                  {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                  {isSelected ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                 </button>
               </div>
             </div>
@@ -1172,10 +1116,10 @@ export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) 
             )}
             <p className="text-sm text-gray-600 mb-2 line-clamp-2">{place.description}</p>
             <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-2">
-              {place.visit_duration_hours && <span className="flex items-center gap-1"><Clock size={10} />~{place.visit_duration_hours}h</span>}
+              {place.visit_duration_hours && <span className="flex items-center gap-1"><Clock size={10} />{t('places.approxHours', { h: place.visit_duration_hours })}</span>}
               {place.best_time_to_visit && <span className="flex items-center gap-1"><Info size={10} />{place.best_time_to_visit}</span>}
               {place.admission_fee_usd === 0
-                ? <span className="text-green-600 font-medium">Free entry</span>
+                ? <span className="text-green-600 font-medium">{t('places.freeEntry')}</span>
                 : place.admission_fee_usd
                 ? <span className="flex items-center gap-1"><DollarSign size={10} />~${place.admission_fee_usd}</span>
                 : null}
@@ -1191,22 +1135,22 @@ export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) 
               {place.city && <CityChip city={place.city} />}
               {place.info_url && (
                 <a href={place.info_url} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()} data-tid="results.place.details"
                   className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
-                  <ExternalLink size={10} /> View details
+                  <ExternalLink size={10} /> {t('places.viewDetails')}
                 </a>
               )}
               <FoundOnlineBadge item={place} />
-              {place.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 Hidden gem</span>}
-              {place.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 Family</span>}
-              {place.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ Accessible</span>}
+              {place.hidden_gem && <span className="text-xs bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200 rounded-full px-2 py-0.5">💎 {t('tags.hiddenGem')}</span>}
+              {place.family_friendly && <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">👨‍👩‍👧 {t('tags.family')}</span>}
+              {place.accessibility_features?.length > 0 && <span className="text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-full px-2 py-0.5">♿ {t('tags.accessible')}</span>}
               {(() => {
                 const cat = (place.category || '').toLowerCase()
                 const isOutdoor = ['viewpoint', 'park/garden', 'natural wonder', 'market'].some(c => cat.includes(c))
                 return (
                   <>
-                    {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ Check weather</span>}
-                    {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ Good weather</span>}
+                    {isOutdoor && poorDays > 0 && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">⚠️ {t('tags.checkWeather')}</span>}
+                    {isOutdoor && poorDays === 0 && weatherLoaded && <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5">☀️ {t('tags.goodWeather')}</span>}
                   </>
                 )
               })()}
@@ -1220,20 +1164,10 @@ export function PlacesToSeeSection({ data, selections, onSelect, weatherData }) 
 
 // ─── Activity Filter Modal ───────────────────────────────────────────────────
 
-const ACTIVITY_INTERESTS = [
-  { id: 'food',      label: '🍜 Food' },
-  { id: 'history',   label: '🏛️ History' },
-  { id: 'adventure', label: '🧗 Adventure' },
-  { id: 'culture',   label: '🎭 Culture' },
-  { id: 'nature',    label: '🌿 Nature' },
-  { id: 'shopping',  label: '🛍️ Shopping' },
-  { id: 'nightlife', label: '🌙 Nightlife' },
-  { id: 'wellness',  label: '🧘 Wellness' },
-  { id: 'art',       label: '🎨 Art' },
-  { id: 'family',    label: '👨‍👩‍👧 Family' },
-]
+const ACTIVITY_INTERESTS = INTEREST_IDS.map(id => ({ id }))
 
 function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoading, searchData }) {
+  const { t } = useTranslation('results')
   const [selectedInterests, setSelectedInterests] = useState([])
   const [maxPrice, setMaxPrice] = useState(null)
   const [availFrom, setAvailFrom] = useState(searchData?.departure_date || '')
@@ -1276,7 +1210,7 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
   const sliderThumb = '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white'
 
   const ratingOptions = [
-    { value: null, label: 'Any' },
+    { value: null, label: t('filter.any') },
     { value: 3, label: '3+' },
     { value: 3.5, label: '3.5+' },
     { value: 4, label: '4+' },
@@ -1291,20 +1225,20 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <SlidersHorizontal size={18} className="text-emerald-500" /> Activity Filters
+            <SlidersHorizontal size={18} className="text-emerald-500" /> {t('activities.filterTitle')}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} data-tid="results.activity-filter.close" aria-label={t('common.close')} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-6 max-h-[65vh] overflow-y-auto">
           {/* Interests */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Interests</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('activities.interests')}</label>
             <div className="flex flex-wrap gap-2">
-              {ACTIVITY_INTERESTS.map(({ id, label }) => (
-                <button key={id} type="button" onClick={() => toggleInterest(id)}
+              {ACTIVITY_INTERESTS.map(({ id }) => (
+                <button key={id} type="button" data-tid="results.activity-filter.interest" onClick={() => toggleInterest(id)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${selectedInterests.includes(id) ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'}`}>
-                  {label}
+                  {t(`interests.${id}`)}
                 </button>
               ))}
             </div>
@@ -1313,11 +1247,11 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
           {/* Max Price */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-gray-700">Max Cost (per person)</label>
-              <span className="text-sm font-bold text-emerald-600">{maxPrice !== null ? `$${effectiveMaxPrice.toLocaleString()}` : 'Any'}</span>
+              <label className="text-sm font-semibold text-gray-700">{t('activities.maxCost')}</label>
+              <span className="text-sm font-bold text-emerald-600">{maxPrice !== null ? `$${fmtNumber(effectiveMaxPrice)}` : t('filter.any')}</span>
             </div>
             <input
-              type="range"
+              type="range" data-tid="results.activity-filter.max-price"
               min={priceFloor} max={priceCeil} step={5}
               value={effectiveMaxPrice}
               onChange={e => { const v = Number(e.target.value); setMaxPrice(v >= priceCeil ? null : v) }}
@@ -1325,23 +1259,23 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>$0</span>
-              <span>${priceCeil.toLocaleString()}</span>
+              <span>${fmtNumber(priceCeil)}</span>
             </div>
           </div>
 
           {/* Availability Dates */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Calendar size={14} /> Availability Dates</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Calendar size={14} /> {t('activities.availability')}</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">From</label>
-                <input type="date" value={availFrom || defaultFrom}
+                <label className="block text-xs text-gray-500 mb-1">{t('filter.from')}</label>
+                <input type="date" data-tid="results.activity-filter.from" value={availFrom || defaultFrom}
                   onChange={e => setAvailFrom(e.target.value)}
                   className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">To</label>
-                <input type="date" value={availTo || defaultTo} min={availFrom || defaultFrom}
+                <label className="block text-xs text-gray-500 mb-1">{t('filter.to')}</label>
+                <input type="date" data-tid="results.activity-filter.to" value={availTo || defaultTo} min={availFrom || defaultFrom}
                   onChange={e => setAvailTo(e.target.value)}
                   className={inputClass} />
               </div>
@@ -1350,10 +1284,10 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
 
           {/* Star Rating */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Star size={14} className="text-yellow-400 fill-yellow-400" /> Minimum Rating</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><Star size={14} className="text-yellow-400 fill-yellow-400" /> {t('activities.minRating')}</label>
             <div className="grid grid-cols-5 gap-2">
               {ratingOptions.map(opt => (
-                <button key={String(opt.value)} type="button" onClick={() => setMinRating(opt.value)}
+                <button key={String(opt.value)} type="button" data-tid="results.activity-filter.rating" onClick={() => setMinRating(opt.value)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${minRating === opt.value ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'}`}>
                   {opt.label}
                 </button>
@@ -1364,13 +1298,13 @@ function ActivityFilterModal({ isOpen, onClose, onApply, currentResults, isLoadi
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-          <button onClick={handleReset} disabled={!hasFilters}
+          <button onClick={handleReset} disabled={!hasFilters} data-tid="results.filter.clear"
             className={`text-sm font-medium transition-colors ${hasFilters ? 'text-gray-600 hover:text-red-600' : 'text-gray-300 cursor-default'}`}>
-            Clear All
+            {t('filter.clearAll')}
           </button>
-          <button onClick={handleApply} disabled={isLoading}
+          <button onClick={handleApply} disabled={isLoading} data-tid="results.filter.apply"
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 disabled:opacity-60 transition-all shadow-md">
-            {isLoading ? <><Loader2 size={14} className="animate-spin" /> Searching...</> : <><SlidersHorizontal size={14} /> Apply Filters{activeCount > 0 ? ` (${activeCount})` : ''}</>}
+            {isLoading ? <><Loader2 size={14} className="animate-spin" /> {t('filter.searching')}</> : <><SlidersHorizontal size={14} /> {t('filter.apply')}{activeCount > 0 ? ` (${activeCount})` : ''}</>}
           </button>
         </div>
       </div>
@@ -1393,9 +1327,9 @@ function formatEventDates(start, end) {
   if (!start) return null
   const opts = { month: 'short', day: 'numeric' }
   try {
-    const s = new Date(`${start}T00:00:00`).toLocaleDateString(undefined, opts)
+    const s = fmtDate(new Date(`${start}T00:00:00`), opts)
     if (!end || end === start) return s
-    const e = new Date(`${end}T00:00:00`).toLocaleDateString(undefined, opts)
+    const e = fmtDate(new Date(`${end}T00:00:00`), opts)
     return `${s} – ${e}`
   } catch {
     return start
@@ -1403,8 +1337,9 @@ function formatEventDates(start, end) {
 }
 
 function EventsSection({ data, selections, onSelect }) {
-  if (data?.error) return <div className="p-4 text-sm text-gray-500">Couldn't check local events this time — the rest of your plan is unaffected.</div>
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">No notable events found during your dates.</div>
+  const { t } = useTranslation('results')
+  if (data?.error) return <div className="p-4 text-sm text-gray-500">{t('events.error')}</div>
+  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('events.none')}</div>
   const highlights = data.results.filter(e => e.impact !== 'consider')
   const disruptions = data.results.filter(e => e.impact === 'consider')
   const isSelected = (ev) => (selections?.events || []).some(e => e.name === ev.name)
@@ -1425,13 +1360,13 @@ function EventsSection({ data, selections, onSelect }) {
                   {dates && (
                     <span className="text-xs font-semibold text-fuchsia-600 flex items-center gap-1">
                       <Calendar size={10} />{dates}
-                      {ev.date_certainty === 'typical_season' && <span className="text-gray-400 font-normal" title="Typical season — exact dates may vary">~</span>}
+                      {ev.date_certainty === 'typical_season' && <span className="text-gray-400 font-normal" title={t('events.typicalSeason')}>~</span>}
                     </span>
                   )}
                   {onSelect && (
-                    <button type="button" onClick={e => { e.stopPropagation(); onSelect('events', ev) }}
+                    <button type="button" data-tid="results.event.add" onClick={e => { e.stopPropagation(); onSelect('events', ev) }}
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${added ? 'bg-fuchsia-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-fuchsia-100 hover:text-fuchsia-700'}`}>
-                      {added ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                      {added ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                     </button>
                   )}
                 </div>
@@ -1452,7 +1387,7 @@ function EventsSection({ data, selections, onSelect }) {
       </div>
       {disruptions.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Plan around these</p>
+          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">{t('events.planAround')}</p>
           {disruptions.map((ev, i) => (
             <div key={i} className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
               <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
@@ -1472,10 +1407,11 @@ function EventsSection({ data, selections, onSelect }) {
 }
 
 function VisaSection({ data }) {
+  const { t } = useTranslation('results')
   const req = data?.requirement
   const vacc = data?.vaccinations
   const customs = data?.customs
-  if (!req && !vacc && !customs) return <div className="p-4 text-sm text-gray-500">Visa info unavailable — check your government's official travel portal</div>
+  if (!req && !vacc && !customs) return <div className="p-4 text-sm text-gray-500">{t('visa.unavailable')}</div>
   const typeColors = { 'visa-free':'bg-green-100 text-green-800 border-green-200','visa-on-arrival':'bg-blue-100 text-blue-800 border-blue-200','e-visa':'bg-yellow-100 text-yellow-800 border-yellow-200','visa-required':'bg-red-100 text-red-800 border-red-200' }
   return (
     <div className="p-4 space-y-5">
@@ -1485,48 +1421,48 @@ function VisaSection({ data }) {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${typeColors[req.visa_type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>{req.visa_type?.replace(/-/g,' ').toUpperCase() || 'UNKNOWN'}</span>
-            {req.confidence && <span className="text-xs text-gray-500">Confidence: {req.confidence}</span>}
+            {req.confidence && <span className="text-xs text-gray-500">{t('visa.confidence', { level: req.confidence })}</span>}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {req.max_stay_days && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">Max Stay</p><p className="font-semibold">{req.max_stay_days} days</p></div>}
-            {req.processing_time && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">Processing</p><p className="font-semibold text-sm">{req.processing_time}</p></div>}
-            {req.fee_usd != null && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">Fee</p><p className="font-semibold">{req.fee_usd === 0 ? 'Free' : `$${req.fee_usd}`}</p></div>}
+            {req.max_stay_days && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">{t('visa.maxStay')}</p><p className="font-semibold">{t('visa.days', { count: req.max_stay_days })}</p></div>}
+            {req.processing_time && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">{t('visa.processing')}</p><p className="font-semibold text-sm">{req.processing_time}</p></div>}
+            {req.fee_usd != null && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-500 mb-1">{t('visa.fee')}</p><p className="font-semibold">{req.fee_usd === 0 ? t('visa.free') : `$${req.fee_usd}`}</p></div>}
           </div>
           {req.requirements?.length > 0 && <ul className="space-y-1">{req.requirements.map((r,i) => <li key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={13} className="text-green-500 mt-0.5 shrink-0" />{r}</li>)}</ul>}
           {req.notes && <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800"><Info size={13} className="inline mr-1.5" />{req.notes}</div>}
-          {req.official_url && <a href={req.official_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-800 font-medium"><ExternalLink size={13} /> Official Source</a>}
+          {req.official_url && <a href={req.official_url} target="_blank" rel="noopener noreferrer" data-tid="results.visa.official" className="flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-800 font-medium"><ExternalLink size={13} /> {t('visa.officialSource')}</a>}
         </div>
       )}
 
       {/* Vaccinations */}
       {vacc && (
         <div className="border-t border-gray-200 pt-4 space-y-3">
-          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5"><AlertTriangle size={14} className="text-amber-500" /> Vaccination & Health</h3>
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5"><AlertTriangle size={14} className="text-amber-500" /> {t('visa.vaccination')}</h3>
           {vacc.required?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">Required</p>
+              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">{t('visa.required')}</p>
               <ul className="space-y-1">{vacc.required.map((v,i) => <li key={i} className="flex items-start gap-2 text-sm text-gray-700"><AlertCircle size={12} className="text-red-500 mt-0.5 shrink-0" />{v}</li>)}</ul>
             </div>
           )}
           {vacc.recommended?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Recommended</p>
+              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">{t('visa.recommended')}</p>
               <ul className="space-y-1">{vacc.recommended.map((v,i) => <li key={i} className="flex items-start gap-2 text-sm text-gray-700"><CheckCircle2 size={12} className="text-amber-500 mt-0.5 shrink-0" />{v}</li>)}</ul>
             </div>
           )}
           {vacc.covid_status && <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 text-sm text-green-800"><Info size={12} className="inline mr-1" />{vacc.covid_status}</div>}
           {vacc.notes && <p className="text-xs text-gray-500">{vacc.notes}</p>}
-          {vacc.source_url && <a href={vacc.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium"><ExternalLink size={10} /> Health Source</a>}
+          {vacc.source_url && <a href={vacc.source_url} target="_blank" rel="noopener noreferrer" data-tid="results.visa.health-source" className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium"><ExternalLink size={10} /> {t('visa.healthSource')}</a>}
         </div>
       )}
 
       {/* Customs */}
       {customs && (
         <div className="border-t border-gray-200 pt-4 space-y-3">
-          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5"><Shield size={14} className="text-orange-500" /> Customs & Import Regulations</h3>
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5"><Shield size={14} className="text-orange-500" /> {t('visa.customs')}</h3>
           {customs.duty_free_allowances && (
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Duty-Free Allowances</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">{t('visa.dutyFree')}</p>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(customs.duty_free_allowances).map(([k,v]) => (
                   <div key={k} className="bg-gray-50 rounded-lg p-2.5">
@@ -1539,18 +1475,18 @@ function VisaSection({ data }) {
           )}
           {customs.prohibited_items?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">Prohibited Items</p>
+              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">{t('visa.prohibited')}</p>
               <div className="flex flex-wrap gap-1.5">{customs.prohibited_items.map((item,i) => <span key={i} className="px-2 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-700">{item}</span>)}</div>
             </div>
           )}
           {customs.declaration_required?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Must Declare</p>
+              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">{t('visa.mustDeclare')}</p>
               <ul className="space-y-1">{customs.declaration_required.map((d,i) => <li key={i} className="flex items-start gap-2 text-sm text-gray-600"><AlertTriangle size={12} className="text-amber-500 mt-0.5 shrink-0" />{d}</li>)}</ul>
             </div>
           )}
           {customs.notes && <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-sm text-amber-800"><Info size={12} className="inline mr-1" />{customs.notes}</div>}
-          {customs.source_url && <a href={customs.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium"><ExternalLink size={10} /> Customs Source</a>}
+          {customs.source_url && <a href={customs.source_url} target="_blank" rel="noopener noreferrer" data-tid="results.visa.customs-source" className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium"><ExternalLink size={10} /> {t('visa.customsSource')}</a>}
         </div>
       )}
     </div>
@@ -1558,7 +1494,8 @@ function VisaSection({ data }) {
 }
 
 function SimSection({ data, selections, onSelect }) {
-  if (!data?.plans?.length) return <div className="p-4 text-sm text-gray-500">No SIM plans found — check local carriers on arrival</div>
+  const { t } = useTranslation('results')
+  if (!data?.plans?.length) return <div className="p-4 text-sm text-gray-500">{t('sim.none')}</div>
   const selected = selections.sim
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -1575,8 +1512,8 @@ function SimSection({ data, selections, onSelect }) {
               {p.city && <CityChip city={p.city} />}
             </div>
             <div className="space-y-1 text-xs text-gray-600 mb-3">
-              {p.data_gb ? <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{p.data_gb}GB data</div> : <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />Unlimited data</div>}
-              {p.validity_days && <div className="flex items-center gap-1.5"><Clock size={10} className="text-pink-400" />{p.validity_days} days validity</div>}
+              {p.data_gb ? <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{t('sim.dataGb', { gb: p.data_gb })}</div> : <div className="flex items-center gap-1.5"><Zap size={10} className="text-pink-400" />{t('sim.unlimited')}</div>}
+              {p.validity_days && <div className="flex items-center gap-1.5"><Clock size={10} className="text-pink-400" />{t('sim.validity', { count: p.validity_days })}</div>}
               {p.network_quality && (
                 <div className="flex items-center gap-1.5"><Wifi size={10} className="text-pink-400" />{p.network_quality.speed}{p.network_quality.coverage_rating && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{p.network_quality.coverage_rating}</span>}</div>
               )}
@@ -1584,11 +1521,11 @@ function SimSection({ data, selections, onSelect }) {
             </div>
             <div className="flex items-center justify-between">
               {p.url
-                ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium"><ExternalLink size={10} /> Get Plan</a>
+                ? <a href={p.url} target="_blank" rel="noopener noreferrer" data-tid="results.sim.get" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium"><ExternalLink size={10} /> {t('sim.getPlan')}</a>
                 : <span />}
-              <button type="button" onClick={() => onSelect('sim', isSelected ? null : p)}
+              <button type="button" data-tid="results.sim.add" onClick={() => onSelect('sim', isSelected ? null : p)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-700'}`}>
-                {isSelected ? <><Check size={11}/> Added to Plan</> : <><Plus size={11}/> Add to Plan</>}
+                {isSelected ? <><Check size={11}/> {t('plan.addedToPlan')}</> : <><Plus size={11}/> {t('plan.addToPlan')}</>}
               </button>
             </div>
           </div>
@@ -1599,25 +1536,26 @@ function SimSection({ data, selections, onSelect }) {
 }
 
 function TipsSection({ data, selections, onSelect }) {
-  if (!data?.tips?.length) return <div className="p-4 text-sm text-gray-500">No travel tips available yet</div>
+  const { t } = useTranslation('results')
+  if (!data?.tips?.length) return <div className="p-4 text-sm text-gray-500">{t('tips.none')}</div>
   const sc = { danger:{ icon:AlertCircle, bg:'bg-red-50', border:'border-red-200', text:'text-red-800', ic:'text-red-500', badge:'bg-red-100 text-red-700' }, warning:{ icon:AlertTriangle, bg:'bg-yellow-50', border:'border-yellow-200', text:'text-yellow-800', ic:'text-yellow-500', badge:'bg-yellow-100 text-yellow-700' }, info:{ icon:Info, bg:'bg-blue-50', border:'border-blue-200', text:'text-blue-800', ic:'text-blue-400', badge:'bg-blue-100 text-blue-700' } }
   const selectedTips = selections?.tips || []
   return (
     <div className="p-4 space-y-2">
-      {data.tips.map((tip, i) => { const c = sc[tip.severity] || sc.info; const SI = c.icon; const isSelected = selectedTips.some(t => t.title === tip.title); return (
+      {data.tips.map((tip, i) => { const c = sc[tip.severity] || sc.info; const SI = c.icon; const isSelected = selectedTips.some(x => x.title === tip.title); return (
         <div key={i} className={`flex gap-3 p-3 rounded-lg border ${isSelected ? 'border-amber-400 ring-1 ring-amber-300' : ''} ${c.bg} ${c.border}`}>
           <SI size={15} className={`shrink-0 mt-0.5 ${c.ic}`} />
           <div className="flex-1"><div className="flex items-center gap-2 mb-0.5"><span className="text-sm font-semibold text-gray-900">{tip.title}</span><span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${c.badge}`}>{tip.category}</span>{tip.city && <CityChip city={tip.city} />}</div><p className={`text-sm ${c.text}`}>{tip.body}</p>
           <div className="flex items-center gap-3 mt-1.5">
             {tip.source_url && (
-              <a href={tip.source_url} target="_blank" rel="noopener noreferrer"
+              <a href={tip.source_url} target="_blank" rel="noopener noreferrer" data-tid="results.tip.source"
                  className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium">
-                <ExternalLink size={10} /> Source
+                <ExternalLink size={10} /> {t('tips.source')}
               </a>
             )}
-            <button type="button" onClick={() => onSelect('tips', tip)}
+            <button type="button" data-tid="results.tip.add" onClick={() => onSelect('tips', tip)}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-amber-500 text-white' : 'bg-white/70 text-gray-500 hover:bg-amber-100 hover:text-amber-700 border border-gray-200'}`}>
-              {isSelected ? <><Check size={10}/> In Plan</> : <><Plus size={10}/> Add to Plan</>}
+              {isSelected ? <><Check size={10}/> {t('plan.inPlan')}</> : <><Plus size={10}/> {t('plan.addToPlan')}</>}
             </button>
           </div>
           </div>
@@ -1628,7 +1566,8 @@ function TipsSection({ data, selections, onSelect }) {
 }
 
 function GettingAroundSection({ data, selections, onSelect }) {
-  if (!data?.options?.length) return <div className="p-4 text-sm text-gray-500">No transport info available — check local transit apps on arrival</div>
+  const { t } = useTranslation('results')
+  if (!data?.options?.length) return <div className="p-4 text-sm text-gray-500">{t('transport.none')}</div>
   const scopeColors = { intra_city: 'bg-cyan-100 text-cyan-700', inter_city: 'bg-indigo-100 text-indigo-700' }
   const typeIcons = {
     metro: 'MRT',
@@ -1672,19 +1611,19 @@ function GettingAroundSection({ data, selections, onSelect }) {
                     {opt.city && <span className="ml-1"><CityChip city={opt.city} /></span>}
                   </div>
                 </div>
-                <button type="button" onClick={() => onSelect('getting_around', opt)}
+                <button type="button" data-tid="results.transport.add" onClick={() => onSelect('getting_around', opt)}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-cyan-100 hover:text-cyan-700'}`}>
-                  {isSelected ? <><Check size={11}/> Added</> : <><Plus size={11}/> Add</>}
+                  {isSelected ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                 </button>
               </div>
               {opt.description && <p className="text-sm text-gray-600 mb-2">{opt.description}</p>}
-              {opt.coverage && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">Coverage:</span> {opt.coverage}</p>}
-              {opt.price_info && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">Price:</span> {opt.price_info}</p>}
-              {opt.operating_hours && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">Hours:</span> {opt.operating_hours}</p>}
-              {opt.tourist_pass && <p className="text-sm text-cyan-600 mb-1"><span className="font-medium">Tourist Pass:</span> {opt.tourist_pass}</p>}
+              {opt.coverage && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">{t('transport.coverage')}</span> {opt.coverage}</p>}
+              {opt.price_info && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">{t('transport.price')}</span> {opt.price_info}</p>}
+              {opt.operating_hours && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">{t('transport.hours')}</span> {opt.operating_hours}</p>}
+              {opt.tourist_pass && <p className="text-sm text-cyan-600 mb-1"><span className="font-medium">{t('transport.touristPass')}</span> {opt.tourist_pass}</p>}
               {opt.tips && <p className="text-sm text-gray-500 italic mt-1">{opt.tips}</p>}
               {opt.booking_url && (
-                <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-2"><ExternalLink size={10} /> More Info</a>
+                <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" data-tid="results.transport.more-info" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-2"><ExternalLink size={10} /> {t('transport.moreInfo')}</a>
               )}
             </div>
             )
@@ -1696,15 +1635,16 @@ function GettingAroundSection({ data, selections, onSelect }) {
 
   return (
     <div className="p-4 space-y-5">
-      {renderGroup('In the City', intraCity)}
-      {renderGroup('Between Cities', interCity)}
-      {renderGroup('Other', other)}
+      {renderGroup(t('transport.inCity'), intraCity)}
+      {renderGroup(t('transport.betweenCities'), interCity)}
+      {renderGroup(t('transport.other'), other)}
     </div>
   )
 }
 
 function ForexSection({ data }) {
-  if (!data || data.error) return <div className="p-4 text-sm text-gray-500">Currency info unavailable — check xe.com for live rates</div>
+  const { t } = useTranslation('results')
+  if (!data || data.error) return <div className="p-4 text-sm text-gray-500">{t('forex.unavailable')}</div>
   const ratingColors = { excellent: 'bg-emerald-100 text-emerald-700', good: 'bg-blue-100 text-blue-700', fair: 'bg-yellow-100 text-yellow-700', poor: 'bg-red-100 text-red-700' }
   const locTypeIcons = { atm: '🏧', bank: '🏦', exchange_bureau: '💱', hotel: '🏨', airport: '✈️', online: '🌐' }
   const isHome = (rate) => rate.from_currency !== 'USD' && rate.from_currency !== 'EUR'
@@ -1721,11 +1661,11 @@ function ForexSection({ data }) {
             <div className={`grid grid-cols-1 ${data.exchange_rates.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3 mt-3`}>
               {data.exchange_rates.map((rate, i) => (
                 <div key={i} className={`rounded-lg p-3 border ${isHome(rate) ? 'bg-amber-50 border-amber-200 ring-1 ring-amber-300' : 'bg-white border-emerald-100'}`}>
-                  {isHome(rate) && <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide">Your Currency</span>}
+                  {isHome(rate) && <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide">{t('forex.yourCurrency')}</span>}
                   <div className="flex items-baseline gap-2">
                     {rate.rate != null
                       ? <span className={`text-lg font-bold ${isHome(rate) ? 'text-amber-700' : 'text-emerald-700'}`}>{rate.rate}</span>
-                      : <span className="flex items-center gap-1 text-sm text-gray-400"><Clock size={12} /> Live rate loading…</span>
+                      : <span className="flex items-center gap-1 text-sm text-gray-400"><Clock size={12} /> {t('forex.rateLoading')}</span>
                     }
                     <span className="text-sm text-gray-500">{rate.description}</span>
                   </div>
@@ -1740,7 +1680,7 @@ function ForexSection({ data }) {
       {/* Exchange Locations */}
       {data?.exchange_locations?.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">Where to Exchange</h3>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">{t('forex.whereToExchange')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {data.exchange_locations.map((loc, i) => (
               <div key={i} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
@@ -1754,7 +1694,7 @@ function ForexSection({ data }) {
                   </div>
                 </div>
                 {loc.description && <p className="text-sm text-gray-600 mb-2">{loc.description}</p>}
-                {loc.fees && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">Fees:</span> {loc.fees}</p>}
+                {loc.fees && <p className="text-sm text-gray-500 mb-1"><span className="font-medium">{t('forex.fees')}</span> {loc.fees}</p>}
                 {loc.tip && <p className="text-sm text-emerald-600 italic">{loc.tip}</p>}
               </div>
             ))}
@@ -1766,31 +1706,31 @@ function ForexSection({ data }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data?.card_acceptance && (
           <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-sky-800 mb-2">Card Acceptance</h3>
+            <h3 className="text-sm font-bold text-sky-800 mb-2">{t('forex.cardAcceptance')}</h3>
             <div className="space-y-1.5 text-sm">
-              {data.card_acceptance.visa_mastercard && <p><span className="font-medium text-gray-700">Visa/MC:</span> {data.card_acceptance.visa_mastercard}</p>}
-              {data.card_acceptance.amex && <p><span className="font-medium text-gray-700">Amex:</span> {data.card_acceptance.amex}</p>}
-              {data.card_acceptance.contactless && <p><span className="font-medium text-gray-700">Contactless:</span> {data.card_acceptance.contactless}</p>}
-              {data.card_acceptance.digital_wallets && <p><span className="font-medium text-gray-700">Digital:</span> {data.card_acceptance.digital_wallets}</p>}
-              {data.card_acceptance.surcharges && <p className="text-amber-600"><span className="font-medium">Surcharges:</span> {data.card_acceptance.surcharges}</p>}
+              {data.card_acceptance.visa_mastercard && <p><span className="font-medium text-gray-700">{t('forex.visaMc')}</span> {data.card_acceptance.visa_mastercard}</p>}
+              {data.card_acceptance.amex && <p><span className="font-medium text-gray-700">{t('forex.amex')}</span> {data.card_acceptance.amex}</p>}
+              {data.card_acceptance.contactless && <p><span className="font-medium text-gray-700">{t('forex.contactless')}</span> {data.card_acceptance.contactless}</p>}
+              {data.card_acceptance.digital_wallets && <p><span className="font-medium text-gray-700">{t('forex.digital')}</span> {data.card_acceptance.digital_wallets}</p>}
+              {data.card_acceptance.surcharges && <p className="text-amber-600"><span className="font-medium">{t('forex.surcharges')}</span> {data.card_acceptance.surcharges}</p>}
             </div>
           </div>
         )}
 
         {data?.cash_advice && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-amber-800 mb-2">Cash Advice</h3>
+            <h3 className="text-sm font-bold text-amber-800 mb-2">{t('forex.cashAdvice')}</h3>
             {data.cash_advice.cash_dependency && (
               <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${
                 data.cash_advice.cash_dependency === 'high' ? 'bg-red-100 text-red-700' :
                 data.cash_advice.cash_dependency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-green-100 text-green-700'
-              }`}>Cash dependency: {data.cash_advice.cash_dependency}</span>
+              }`}>{t('forex.cashDependency', { level: data.cash_advice.cash_dependency })}</span>
             )}
             <div className="space-y-1.5 text-sm">
               {data.cash_advice.recommendation && <p>{data.cash_advice.recommendation}</p>}
-              {data.cash_advice.denominations && <p><span className="font-medium text-gray-700">Denominations:</span> {data.cash_advice.denominations}</p>}
-              {data.cash_advice.bring_usd_eur && <p><span className="font-medium text-gray-700">Bring USD/EUR?</span> {data.cash_advice.bring_usd_eur}</p>}
+              {data.cash_advice.denominations && <p><span className="font-medium text-gray-700">{t('forex.denominations')}</span> {data.cash_advice.denominations}</p>}
+              {data.cash_advice.bring_usd_eur && <p><span className="font-medium text-gray-700">{t('forex.bringUsdEur')}</span> {data.cash_advice.bring_usd_eur}</p>}
             </div>
           </div>
         )}
@@ -1799,12 +1739,12 @@ function ForexSection({ data }) {
       {/* ATM Info */}
       {data?.atm_info && (
         <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
-          <h3 className="text-sm font-bold text-violet-800 mb-2">ATM Information</h3>
+          <h3 className="text-sm font-bold text-violet-800 mb-2">{t('forex.atmInfo')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-            {data.atm_info.availability && <p><span className="font-medium text-gray-700">Availability:</span> {data.atm_info.availability}</p>}
-            {data.atm_info.networks && <p><span className="font-medium text-gray-700">Networks:</span> {data.atm_info.networks}</p>}
-            {data.atm_info.withdrawal_limit && <p><span className="font-medium text-gray-700">Limit:</span> {data.atm_info.withdrawal_limit}</p>}
-            {data.atm_info.fees && <p><span className="font-medium text-gray-700">Fees:</span> {data.atm_info.fees}</p>}
+            {data.atm_info.availability && <p><span className="font-medium text-gray-700">{t('forex.availability')}</span> {data.atm_info.availability}</p>}
+            {data.atm_info.networks && <p><span className="font-medium text-gray-700">{t('forex.networks')}</span> {data.atm_info.networks}</p>}
+            {data.atm_info.withdrawal_limit && <p><span className="font-medium text-gray-700">{t('forex.limit')}</span> {data.atm_info.withdrawal_limit}</p>}
+            {data.atm_info.fees && <p><span className="font-medium text-gray-700">{t('forex.fees')}</span> {data.atm_info.fees}</p>}
             {data.atm_info.best_option && <p className="text-emerald-700 font-medium col-span-2">{data.atm_info.best_option}</p>}
           </div>
         </div>
@@ -1813,7 +1753,7 @@ function ForexSection({ data }) {
       {/* Tipping */}
       {data?.tipping && (
         <div className={`rounded-xl p-3 border text-sm ${data.tipping.expected ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-          <span className="font-semibold">{data.tipping.expected ? '💵 Tipping expected' : '✅ Tipping not expected'}</span>
+          <span className="font-semibold">{data.tipping.expected ? `💵 ${t('forex.tippingExpected')}` : `✅ ${t('forex.tippingNotExpected')}`}</span>
           {data.tipping.description && <span className="text-gray-600"> — {data.tipping.description}</span>}
         </div>
       )}
@@ -1821,7 +1761,7 @@ function ForexSection({ data }) {
       {/* Money Tips */}
       {data?.money_tips?.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Money Tips</h3>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">{t('forex.moneyTips')}</h3>
           <div className="space-y-2">
             {data.money_tips.map((tip, i) => (
               <div key={i} className="flex gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50">
@@ -1840,9 +1780,9 @@ function ForexSection({ data }) {
       {data?.source_urls?.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-2">
           {data.source_urls.map((url, i) => (
-            <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer" data-tid="results.forex.source"
                className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium">
-              <ExternalLink size={10} /> Source {i + 1}
+              <ExternalLink size={10} /> {t('forex.sourceN', { n: i + 1 })}
             </a>
           ))}
         </div>
@@ -1854,6 +1794,7 @@ function ForexSection({ data }) {
 // ─── Confidence Banner ────────────────────────────────────────────────────────
 
 function ConfidenceBanner({ data }) {
+  const { t } = useTranslation('results')
   const [expanded, setExpanded] = useState(false)
   if (!data) return null
 
@@ -1874,7 +1815,7 @@ function ConfidenceBanner({ data }) {
             <span className={`text-lg font-bold ${c.score}`}>{data.total}</span>
           </div>
           <div>
-            <p className={`text-sm font-semibold ${c.text}`}>Travel Ease Score</p>
+            <p className={`text-sm font-semibold ${c.text}`}>{t('confidence.title')}</p>
             <p className="text-xs text-gray-500">{data.destination}</p>
           </div>
         </div>
@@ -1887,8 +1828,8 @@ function ConfidenceBanner({ data }) {
             </div>
           ))}
         </div>
-        <button onClick={() => setExpanded(e => !e)} className="text-xs text-gray-500 hover:text-gray-700 whitespace-nowrap shrink-0">
-          {expanded ? 'Less ▲' : 'Details ▼'}
+        <button onClick={() => setExpanded(e => !e)} data-tid="results.confidence.toggle" className="text-xs text-gray-500 hover:text-gray-700 whitespace-nowrap shrink-0">
+          {expanded ? t('toggle.less') : t('toggle.details')}
         </button>
       </div>
 
@@ -1914,6 +1855,7 @@ function ConfidenceBanner({ data }) {
 // ─── Pricing Advisor ──────────────────────────────────────────────────────────
 
 function PricingSparkline({ trendData, daysUntilDeparture }) {
+  const { t } = useTranslation('results')
   if (!trendData?.length) return null
   const sorted = [...trendData].sort((a, b) => b.days_before - a.days_before)
   const W = 180, H = 44, PAD = 6
@@ -1936,13 +1878,14 @@ function PricingSparkline({ trendData, daysUntilDeparture }) {
       <path d={pathD} fill="none" stroke="rgb(var(--c-sky-500))" strokeWidth="1.5" strokeLinecap="round" />
       <circle cx={nowX} cy={nowY} r="5" fill="rgb(var(--c-sky-500))" opacity="0.25" />
       <circle cx={nowX} cy={nowY} r="3" fill="rgb(var(--c-sky-500))" />
-      <text x={nowX} y={H + 13} textAnchor="middle" fontSize="8" fill="rgb(var(--c-slate-400))">Now</text>
-      <text x={PAD} y={H + 13} textAnchor="start" fontSize="8" fill="rgb(var(--c-slate-400))">90d</text>
+      <text x={nowX} y={H + 13} textAnchor="middle" fontSize="8" fill="rgb(var(--c-slate-400))">{t('pricing.now')}</text>
+      <text x={PAD} y={H + 13} textAnchor="start" fontSize="8" fill="rgb(var(--c-slate-400))">{t('pricing.days90')}</text>
     </svg>
   )
 }
 
 function PricingAdvisorBanner({ data, departureDate }) {
+  const { t } = useTranslation('results')
   const [expanded, setExpanded] = useState(false)
   if (!data?.trend_data?.length) return null
 
@@ -1973,31 +1916,33 @@ function PricingAdvisorBanner({ data, departureDate }) {
               {data.price_status_label}
             </span>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${recColors}`}>
-              {data.recommendation === 'book_now' ? '✓ Book now' : '⏳ Consider waiting'}
+              {data.recommendation === 'book_now' ? `✓ ${t('pricing.bookNow')}` : `⏳ ${t('pricing.considerWaiting')}`}
             </span>
-            <span className="text-xs text-gray-400">{data.confidence} confidence</span>
+            <span className="text-xs text-gray-400">{t('pricing.confidence', { level: data.confidence })}</span>
           </div>
           {expanded && (
             <>
               <p className="text-xs text-gray-700 mb-1">{data.recommendation_detail}</p>
               {data.optimal_booking_window && (
-                <p className="text-xs text-gray-500">Best window: {data.optimal_booking_window}</p>
+                <p className="text-xs text-gray-500">{t('pricing.bestWindow', { window: data.optimal_booking_window })}</p>
               )}
             </>
           )}
-          <button onClick={() => setExpanded(e => !e)} className="text-xs text-gray-400 hover:text-gray-600 mt-1">
-            {expanded ? 'Less ▲' : 'Why? ▼'}
+          <button onClick={() => setExpanded(e => !e)} data-tid="results.pricing.toggle" className="text-xs text-gray-400 hover:text-gray-600 mt-1">
+            {expanded ? t('toggle.less') : t('toggle.why')}
           </button>
         </div>
       </div>
       <p className="text-xs text-gray-400 mt-2 border-t border-gray-200 pt-2">
-        📊 Historical pattern estimate — not live market data. {data.disclaimer}
+        📊 {t('pricing.estimate', { disclaimer: data.disclaimer || '' })}
       </p>
     </div>
   )
 }
 
 // ─── Emergency Card Section ───────────────────────────────────────────────────
+
+const tr = (key, opts) => i18n.t(`results:${key}`, opts)
 
 function emergencyCardBodyHtml(card) {
   const numbers = card?.emergency_numbers || {}
@@ -2019,18 +1964,18 @@ function emergencyCardBodyHtml(card) {
     </tr>`).join('')
 
   return `
-    <h2>Emergency Numbers</h2>
+    <h2>${tr('emergency.numbers')}</h2>
     <div class="nums">
-      <div class="num-box"><strong>${numbers.police || '—'}</strong>Police</div>
-      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>Ambulance</div>
-      <div class="num-box"><strong>${numbers.fire || '—'}</strong>Fire</div>
-      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>Tourist Police</div>
+      <div class="num-box"><strong>${numbers.police || '—'}</strong>${tr('emergency.police')}</div>
+      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>${tr('emergency.ambulance')}</div>
+      <div class="num-box"><strong>${numbers.fire || '—'}</strong>${tr('emergency.fire')}</div>
+      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>${tr('emergency.touristPolice')}</div>
     </div>
-    ${embassy ? `<h2>Embassy</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | After hours: ${embassy.emergency_after_hours || '—'}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
+    ${embassy ? `<h2>${tr('emergency.embassy')}</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | ${tr('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
     ${!embassy && card?.home_country_note ? `<p><em>${card.home_country_note}</em></p>` : ''}
-    ${hospitals.length ? `<h2>Hospitals</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
-    ${phrases.length ? `<h2>Essential Phrases</h2><table><tr><th>English</th><th>Local</th><th>Phonetic</th></tr>${phrasesHtml}</table>` : ''}
-    ${laws.length ? `<h2>Laws to Know</h2>${lawsHtml}` : ''}`
+    ${hospitals.length ? `<h2>${tr('emergency.hospitals')}</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
+    ${phrases.length ? `<h2>${tr('emergency.phrases')}</h2><table><tr><th>${tr('emergency.english')}</th><th>${tr('emergency.local')}</th><th>${tr('emergency.phonetic')}</th></tr>${phrasesHtml}</table>` : ''}
+    ${laws.length ? `<h2>${tr('emergency.laws')}</h2>${lawsHtml}` : ''}`
 }
 
 function printEmergencyCard(data, destination) {
@@ -2046,7 +1991,7 @@ function printEmergencyCard(data, destination) {
     ? cities.map(c => `<div class="city-card"><h1 style="margin-top:18px">📍 ${c.city}</h1>${emergencyCardBodyHtml(c)}</div>`).join('<hr style="margin:16px 0;border:none;border-top:2px solid #ddd"/>')
     : emergencyCardBodyHtml(data)
 
-  win.document.write(`<!DOCTYPE html><html><head><title>Emergency Card — ${title}</title>
+  win.document.write(`<!DOCTYPE html><html><head><title>${tr('emergency.cardTitle', { title })}</title>
     <style>
       body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;font-size:13px;color:#111}
       h1{font-size:17px;margin-bottom:4px} h2{font-size:13px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
@@ -2059,16 +2004,17 @@ function printEmergencyCard(data, destination) {
       .disclaimer{font-size:10px;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
       @media print{button{display:none}}
     </style></head><body>
-    <h1>🚨 Emergency Card — ${title}</h1>
-    <p style="font-size:11px;color:#666;">Verify all details before travel — information may be outdated.</p>
+    <h1>🚨 ${tr('emergency.cardTitle', { title })}</h1>
+    <p style="font-size:11px;color:#666;">${tr('emergency.verify')}</p>
     ${bodyHtml}
-    <div class="disclaimer">Information provided for general guidance only. Always verify current details with official sources. Embassy hours and hospital services may change.</div>
-    <br/><button onclick="window.print()">🖨️ Print this card</button>
+    <div class="disclaimer">${tr('emergency.disclaimer')}</div>
+    <br/><button onclick="window.print()">🖨️ ${tr('emergency.printThis')}</button>
     </body></html>`)
   win.document.close()
 }
 
 function EmergencyCityCard({ card }) {
+  const { t } = useTranslation('results')
   const numbers = card.emergency_numbers || {}
   const phrases = card.local_phrases || []
   const laws = card.local_laws || []
@@ -2076,10 +2022,10 @@ function EmergencyCityCard({ card }) {
   const embassy = card.embassy
 
   const numButtons = [
-    { label: 'Police', value: numbers.police, color: 'bg-blue-100 text-blue-800' },
-    { label: 'Ambulance', value: numbers.ambulance, color: 'bg-red-100 text-red-800' },
-    { label: 'Fire', value: numbers.fire, color: 'bg-orange-100 text-orange-800' },
-    { label: 'Tourist Police', value: numbers.tourist_police, color: 'bg-purple-100 text-purple-800' },
+    { label: t('emergency.police'), value: numbers.police, color: 'bg-blue-100 text-blue-800' },
+    { label: t('emergency.ambulance'), value: numbers.ambulance, color: 'bg-red-100 text-red-800' },
+    { label: t('emergency.fire'), value: numbers.fire, color: 'bg-orange-100 text-orange-800' },
+    { label: t('emergency.touristPolice'), value: numbers.tourist_police, color: 'bg-purple-100 text-purple-800' },
   ]
 
   return (
@@ -2099,9 +2045,9 @@ function EmergencyCityCard({ card }) {
         <div className="bg-white border border-gray-200 rounded-lg p-3">
           <p className="text-sm font-semibold text-gray-800 mb-1">🏛️ {embassy.name}</p>
           <p className="text-xs text-gray-600">{embassy.address}</p>
-          <p className="text-xs text-gray-600 mt-1">📞 {embassy.phone} · After hours: {embassy.emergency_after_hours || '—'}</p>
+          <p className="text-xs text-gray-600 mt-1">📞 {embassy.phone} · {t('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}</p>
           <p className="text-xs text-gray-500 mt-0.5">{embassy.hours}</p>
-          {embassy.website && <a href={embassy.website} target="_blank" rel="noopener noreferrer"
+          {embassy.website && <a href={embassy.website} target="_blank" rel="noopener noreferrer" data-tid="results.emergency.embassy-site"
             className="text-xs text-teal-600 hover:underline mt-0.5 block">🌐 {embassy.website}</a>}
         </div>
       )}
@@ -2112,7 +2058,7 @@ function EmergencyCityCard({ card }) {
       {/* Hospitals */}
       {hospitals.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">🏥 Hospitals</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">🏥 {t('emergency.hospitals')}</p>
           <div className="space-y-2">
             {hospitals.map((h, i) => (
               <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
@@ -2128,14 +2074,14 @@ function EmergencyCityCard({ card }) {
       {/* Phrases */}
       {phrases.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">💬 Essential Phrases</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">💬 {t('emergency.phrases')}</p>
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="w-full text-xs">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">English</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Local</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Phonetic</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('emergency.english')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('emergency.local')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('emergency.phonetic')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -2155,7 +2101,7 @@ function EmergencyCityCard({ card }) {
       {/* Local laws */}
       {laws.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">⚖️ Laws to Know</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">⚖️ {t('emergency.laws')}</p>
           <div className="space-y-2">
             {laws.map((l, i) => (
               <div key={i} className={`rounded-lg px-3 py-2 border ${
@@ -2177,8 +2123,9 @@ function EmergencyCityCard({ card }) {
 }
 
 function EmergencyCardSection({ data, status }) {
+  const { t } = useTranslation('sections')
   if (!data?.emergency_numbers && !data?.cities && status === 'waiting') return null
-  if (!data) return <div className="p-4 text-sm text-gray-500">Emergency information unavailable</div>
+  if (!data) return <div className="p-4 text-sm text-gray-500">{t('emergency.unavailable')}</div>
 
   // Multi-city trips carry a per-stop `cities` array; single-city stays flat.
   const cities = Array.isArray(data.cities) && data.cities.length ? data.cities : null
@@ -2190,16 +2137,16 @@ function EmergencyCardSection({ data, status }) {
       <VerificationConflictBanner verification={data.verification} />
       {/* Subtitle / print row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs text-gray-500">{isEnhancing ? 'Loading embassy details...' : 'Printable offline reference'}</p>
-        <button onClick={() => printEmergencyCard(data, destination)}
+        <p className="text-xs text-gray-500">{isEnhancing ? t('emergency.loadingEmbassy') : t('emergency.printableOffline')}</p>
+        <button data-tid="emergency.print" onClick={() => printEmergencyCard(data, destination)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-          🖨️ Print Card
+          🖨️ {t('emergency.printCard')}
         </button>
       </div>
 
       {/* Disclaimer */}
       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        ⚠️ Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.
+        ⚠️ {t('emergency.disclaimer')}
       </p>
 
       {cities ? (
@@ -2219,6 +2166,7 @@ function EmergencyCardSection({ data, status }) {
 // ─── Packing List Section ─────────────────────────────────────────────────────
 
 function PackingListSection({ data, status, selections, onSavePacking }) {
+  const { t } = useTranslation('sections')
   const lsKey = 'packing_checked'
   const isSavedToPlan = !!selections?.packing_list
 
@@ -2235,7 +2183,7 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
   const [customInputs, setCustomInputs] = useState({})
 
   if (!data?.categories?.length) return (
-    <div className="p-4 text-sm text-gray-500">Packing list unavailable — try re-running the search.</div>
+    <div className="p-4 text-sm text-gray-500">{t('packing.unavailable')}</div>
   )
 
   const buildPlanState = (checked, custom) => ({
@@ -2279,22 +2227,24 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
         </p>
       )}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">{checkedCount}/{totalItems} items packed</p>
+        <p className="text-xs text-gray-500">{t('packing.itemsPacked', { checked: checkedCount, total: totalItems })}</p>
         {isSavedToPlan ? (
           <button
             type="button"
+            data-tid="packing.remove"
             onClick={() => onSavePacking(null)}
             className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
           >
-            <Check size={11} /> Saved to Plan · Remove
+            <Check size={11} /> {t('packing.savedRemove')}
           </button>
         ) : (
           <button
             type="button"
+            data-tid="packing.save"
             onClick={() => onSavePacking(buildPlanState(checkedItems, customItems))}
             className="flex items-center gap-1 text-xs text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full hover:bg-teal-100 transition-colors"
           >
-            <Bookmark size={11} /> Save to Plan
+            <Bookmark size={11} /> {t('packing.save')}
           </button>
         )}
       </div>
@@ -2314,7 +2264,7 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
                 const isChecked = checkedItems[key]
                 return (
                   <label key={idx} className="flex items-start gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={!!isChecked} onChange={() => toggleItem(cat.name, item.item)}
+                    <input type="checkbox" data-tid="packing.item" checked={!!isChecked} onChange={() => toggleItem(cat.name, item.item)}
                       className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-400 shrink-0" />
                     <div className={`flex-1 min-w-0 ${isChecked ? 'opacity-50 line-through' : ''}`}>
                       <span className={`text-sm text-gray-700 ${item.essential ? 'font-medium' : ''}`}>{item.item}</span>
@@ -2326,17 +2276,17 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
               })}
             </div>
             <div className="flex gap-1.5 mt-2">
-              <input type="text" value={customInputs[cat.name] || ''} placeholder="Add item..."
+              <input type="text" data-tid="packing.add-input" value={customInputs[cat.name] || ''} placeholder={t('packing.addItem')}
                 onChange={e => setCustomInputs(p => ({ ...p, [cat.name]: e.target.value }))}
                 onKeyDown={e => e.key === 'Enter' && addCustomItem(cat.name)}
                 className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400" />
-              <button type="button" onClick={() => addCustomItem(cat.name)}
+              <button type="button" data-tid="packing.add" onClick={() => addCustomItem(cat.name)}
                 className="text-xs px-2 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded hover:bg-teal-100 transition-colors">+</button>
             </div>
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-400">* = essential items</p>
+      <p className="text-xs text-gray-400">{t('packing.essentialLegend')}</p>
     </div>
   )
 }
@@ -2344,17 +2294,18 @@ function PackingListSection({ data, status, selections, onSavePacking }) {
 // Build a client-side fallback itinerary from activities + hotels data
 export function buildClientItinerary(activities, hotels, searchData) {
   if (!searchData) return null
+  const tc = (k, o) => i18n.t(`sections:clientItinerary.${k}`, o)
   const dep = new Date(searchData.departure_date)
   const ret = searchData.return_date ? new Date(searchData.return_date) : null
   const nights = ret ? Math.round((ret - dep) / 86400000) : 7
   const actList = (activities?.results || []).filter(a => !a.error)
-  const hotelName = hotels?.results?.[0]?.name || 'your hotel'
-  const dest = searchData.destination || 'your destination'
+  const hotelName = hotels?.results?.[0]?.name || tc('yourHotel')
+  const dest = searchData.destination || tc('yourDestination')
 
   const themes = [
-    'Arrival & First Impressions',
-    ...Array.from({ length: Math.max(0, nights - 1) }, (_, i) => `Day ${i + 2} — Exploration`),
-    'Departure Day',
+    tc('themeArrival'),
+    ...Array.from({ length: Math.max(0, nights - 1) }, (_, i) => tc('themeDay', { n: i + 2 })),
+    tc('themeDeparture'),
   ]
 
   const days = []
@@ -2370,23 +2321,23 @@ export function buildClientItinerary(activities, hotels, searchData) {
     let slots = []
     if (isFirst) {
       slots = [
-        { time_of_day: 'morning',   activity: `Arrive at ${dest}, transfer to ${hotelName}`, location: dest, duration_hours: 3, notes: 'Pick up local transport card at the airport', estimated_cost_usd: 30 },
-        { time_of_day: 'afternoon', activity: `Check in to ${hotelName}, freshen up and explore the area`, location: dest, duration_hours: 3, notes: 'Rest after the journey', estimated_cost_usd: 20 },
-        { time_of_day: 'evening',   activity: 'Welcome dinner at a local restaurant', location: dest, duration_hours: 2, notes: 'Ask hotel staff for recommendations', estimated_cost_usd: 40 },
+        { time_of_day: 'morning',   activity: tc('arrive', { dest, hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('arriveNote'), estimated_cost_usd: 30 },
+        { time_of_day: 'afternoon', activity: tc('checkIn', { hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('checkInNote'), estimated_cost_usd: 20 },
+        { time_of_day: 'evening',   activity: tc('welcomeDinner'), location: dest, duration_hours: 2, notes: tc('welcomeNote'), estimated_cost_usd: 40 },
       ]
     } else if (isLast) {
       slots = [
-        { time_of_day: 'morning',   activity: 'Final breakfast and last-minute shopping', location: dest, duration_hours: 2, notes: 'Pack the evening before', estimated_cost_usd: 25 },
-        { time_of_day: 'afternoon', activity: `Check out of ${hotelName} and head to airport`, location: dest, duration_hours: 3, notes: 'Allow extra time for check-in', estimated_cost_usd: 25 },
-        { time_of_day: 'evening',   activity: 'Departure flight', location: 'Airport', duration_hours: 3, notes: 'Safe travels!', estimated_cost_usd: 0 },
+        { time_of_day: 'morning',   activity: tc('finalBreakfast'), location: dest, duration_hours: 2, notes: tc('finalNote'), estimated_cost_usd: 25 },
+        { time_of_day: 'afternoon', activity: tc('checkOut', { hotel: hotelName }), location: dest, duration_hours: 3, notes: tc('checkOutNote'), estimated_cost_usd: 25 },
+        { time_of_day: 'evening',   activity: tc('departureFlight'), location: tc('airport'), duration_hours: 3, notes: tc('safeTravels'), estimated_cost_usd: 0 },
       ]
     } else {
       slots = ['morning', 'afternoon', 'evening'].map(tod => {
         if (actIdx < actList.length) {
           const a = actList[actIdx++]
-          return { time_of_day: tod, activity: a.name || 'Local exploration', location: a.location || dest, duration_hours: a.duration_hours || 2, notes: a.description || '', estimated_cost_usd: Number(a.price_usd) || 25 }
+          return { time_of_day: tod, activity: a.name || tc('localExploration'), location: a.location || dest, duration_hours: a.duration_hours || 2, notes: a.description || '', estimated_cost_usd: Number(a.price_usd) || 25 }
         }
-        return { time_of_day: tod, activity: `Free time — explore ${dest}`, location: dest, duration_hours: 3, notes: 'Great for spontaneous discoveries', estimated_cost_usd: 30 }
+        return { time_of_day: tod, activity: tc('freeTime', { dest }), location: dest, duration_hours: 3, notes: tc('freeNote'), estimated_cost_usd: 30 }
       })
     }
 
@@ -2405,15 +2356,15 @@ export function buildClientItinerary(activities, hotels, searchData) {
 // ─── Trip Stress-Test (Trip Health Check) ────────────────────────────────────
 
 const STRESS_OVERALL_STYLES = {
-  green: { ring: 'text-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Looking solid' },
-  amber: { ring: 'text-amber-500',   chip: 'bg-amber-50 text-amber-700 border-amber-200',       label: 'Needs attention' },
-  red:   { ring: 'text-red-500',     chip: 'bg-red-50 text-red-700 border-red-200',             label: 'At risk' },
+  green: { ring: 'text-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  amber: { ring: 'text-amber-500',   chip: 'bg-amber-50 text-amber-700 border-amber-200' },
+  red:   { ring: 'text-red-500',     chip: 'bg-red-50 text-red-700 border-red-200' },
 }
 
 const STRESS_SEVERITY_STYLES = {
-  high:   { chip: 'bg-red-50 text-red-700 border-red-200',          icon: AlertCircle,   label: 'High' },
-  medium: { chip: 'bg-amber-50 text-amber-700 border-amber-200',    icon: AlertTriangle, label: 'Medium' },
-  low:    { chip: 'bg-sky-50 text-sky-700 border-sky-200',          icon: Info,          label: 'Low' },
+  high:   { chip: 'bg-red-50 text-red-700 border-red-200',          icon: AlertCircle },
+  medium: { chip: 'bg-amber-50 text-amber-700 border-amber-200',    icon: AlertTriangle },
+  low:    { chip: 'bg-sky-50 text-sky-700 border-sky-200',          icon: Info },
 }
 
 const STRESS_CATEGORY_EMOJI = { pacing: '🏃', timing: '⏰', visa: '🛂', weather: '🌧️', budget: '💸', logistics: '🧭' }
@@ -2438,12 +2389,13 @@ function StressScoreRing({ score, overall }) {
 // `recheck` ({ data, stale }) is a re-run against the edited itinerary; it
 // only applies while the layout differs from the original.
 export function StressTestSection({ data: original, layoutMoved = false, recheck = null, rechecking = false, recheckError = null, onRecheck }) {
+  const { t } = useTranslation('sections')
   const rechecked = layoutMoved && recheck?.data ? recheck : null
   const data = rechecked ? rechecked.data : original
   // A rendered section with no data means the stream finished without a
   // stress-test result — say so instead of showing an empty card.
   if (!data || data.error) return (
-    <div className="p-4 text-sm text-gray-500">Health check unavailable for this plan — try re-running the search.</div>
+    <div className="p-4 text-sm text-gray-500">{t('stress.unavailable')}</div>
   )
 
   const overall = ['green', 'amber', 'red'].includes(data.overall) ? data.overall : 'amber'
@@ -2458,22 +2410,22 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
       <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/60">
         <StressScoreRing score={data.score} overall={overall} />
         <div className="min-w-0">
-          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{style.label}</span>
+          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${style.chip}`}>{t(`stress.overall.${overall}`)}</span>
           {data.summary && <p className="text-sm text-slate-700 mt-1.5">{data.summary}</p>}
-          <p className="text-[11px] text-gray-400 mt-1">Adversarial review of your itinerary, flights, visa timeline, weather and budget.</p>
+          <p className="text-[11px] text-gray-400 mt-1">{t('stress.blurb')}</p>
           {layoutMoved && (rechecked ? (
             rechecked.stale
-              ? <p className="text-[11px] text-amber-600 mt-1">Your plan changed since this check — re-check again</p>
-              : <p className="text-[11px] text-teal-700 mt-1">Checked against your edited itinerary</p>
+              ? <p className="text-[11px] text-amber-600 mt-1">{t('stress.staleNote')}</p>
+              : <p className="text-[11px] text-teal-700 mt-1">{t('stress.checkedEdited')}</p>
           ) : (
-            <p className="text-[11px] text-amber-600 mt-1">Checked against the original itinerary — your moves aren't re-checked.</p>
+            <p className="text-[11px] text-amber-600 mt-1">{t('stress.checkedOriginal')}</p>
           ))}
           {layoutMoved && (!rechecked || rechecked.stale) && (
-            <button type="button" onClick={onRecheck} disabled={rechecking}
+            <button type="button" data-tid="stress.recheck" onClick={onRecheck} disabled={rechecking}
               className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-default">
               {rechecking
-                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />Re-checking…</>
-                : <><RefreshCw size={12} aria-hidden="true" />Re-check my edited plan</>}
+                ? <><Loader2 size={12} className="animate-spin" aria-hidden="true" />{t('stress.rechecking')}</>
+                : <><RefreshCw size={12} aria-hidden="true" />{t('stress.recheck')}</>}
             </button>
           )}
           {layoutMoved && recheckError && <p role="alert" className="text-[11px] text-rose-600 mt-1">{recheckError}</p>}
@@ -2481,7 +2433,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
       </div>
 
       {findings.length === 0 ? (
-        <p className="text-sm text-gray-500">No issues found — this plan held up under scrutiny.</p>
+        <p className="text-sm text-gray-500">{t('stress.none')}</p>
       ) : (
         <ul className="space-y-3">
           {findings.map((f, i) => {
@@ -2491,15 +2443,15 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
               <li key={i} className="border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${sev.chip}`}>
-                    <SevIcon size={11} /> {sev.label}
+                    <SevIcon size={11} /> {t(`stress.severity.${STRESS_SEVERITY_STYLES[f?.severity] ? f.severity : 'low'}`)}
                   </span>
                   {f?.category && (
                     <span className="text-[11px] text-gray-500 font-medium">
-                      {STRESS_CATEGORY_EMOJI[f.category] || '🔎'} {f.category}
+                      {STRESS_CATEGORY_EMOJI[f.category] || '🔎'} {t(`stress.category.${f.category}`, { defaultValue: f.category })}
                     </span>
                   )}
                   {(f?.day_number || f?.day_number === 0) && (
-                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">Day {f.day_number}</span>
+                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{t('stress.day', { n: f.day_number })}</span>
                   )}
                 </div>
                 <p className="text-sm text-slate-800 mt-1.5">{f?.issue}</p>
@@ -2516,6 +2468,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
 }
 
 export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+  const { t } = useTranslation('sections')
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -2557,7 +2510,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   const save = async () => {
-    if (!token) { setSaveMsg('Please log in to save plans'); return }
+    if (!token) { setSaveMsg('loginToSave'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -2573,11 +2526,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         body,
       })
       if (res.ok) {
-        setSaveMsg(isUpdate ? 'Plan updated!' : 'Plan saved!')
+        setSaveMsg(isUpdate ? 'updated' : 'saved')
         track('plan_saved', 'results', { is_update: isUpdate })
         loadPlans(); setTimeout(() => setSaveMsg(''), 3000)
-      } else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      } else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -2609,7 +2562,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   const saveAndClear = async () => {
-    if (!token) { setSaveMsg('Please log in to save plans'); return }
+    if (!token) { setSaveMsg('loginToSave'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -2621,14 +2574,14 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         : JSON.stringify({ name: planName, search_data: searchData, selections: sel })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
-        setSaveMsg(isUpdate ? 'Plan sent back!' : 'Plan saved!')
+        setSaveMsg(isUpdate ? 'sentBack' : 'saved')
         loadPlans()
         onClearLoadedPlan()
         onClearSelections()
-        onPlanNameChange('My Trip Plan')
+        onPlanNameChange(t('drawer.defaultPlanName'))
         setTimeout(() => setSaveMsg(''), 3000)
-      } else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      } else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -2649,24 +2602,24 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bookmark size={18} />
-              <h2 className="font-semibold">My Plan</h2>
+              <h2 className="font-semibold">{t('drawer.title')}</h2>
               {selectedCount > 0 && <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedCount}</span>}
-              {loadedPlanId && <span className="bg-amber-200 text-amber-900 text-[10px] font-medium px-1.5 py-0.5 rounded">Editing saved plan</span>}
+              {loadedPlanId && <span className="bg-amber-200 text-amber-900 text-[10px] font-medium px-1.5 py-0.5 rounded">{t('drawer.editingSaved')}</span>}
             </div>
             <div className="flex items-center gap-3">
               {estimatedCost > 0 && (
                 <div className="text-right">
-                  <p className="font-bold text-sm">${estimatedCost.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                  <p className="font-bold text-sm">${fmtNumber(estimatedCost, { maximumFractionDigits: 0 })}</p>
                 </div>
               )}
-              <button onClick={onClose} className="text-white/80 hover:text-white"><X size={18} /></button>
+              <button data-tid="drawer.close" onClick={onClose} className="text-white/80 hover:text-white"><X size={18} /></button>
             </div>
           </div>
           {budget && (
             <div className={`mt-1.5 text-xs font-medium px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 ${budget.status === 'under' ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
               <DollarSign size={11} />
               {budget.label}
-              {searchData?.budget_usd && <span className="text-white/50 ml-1">(budget: ${searchData.budget_usd.toLocaleString()})</span>}
+              {searchData?.budget_usd && <span className="text-white/50 ml-1">{t('drawer.budgetOf', { amount: `$${fmtNumber(searchData.budget_usd)}` })}</span>}
             </div>
           )}
           {searchData?.import_source && (
@@ -2682,13 +2635,13 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             className={selectedCount > 0 ? 'cursor-grab active:cursor-grabbing' : ''}
           >
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Plan Name {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">· drag to send to saved</span>}
+              {t('drawer.planName')} {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">{t('drawer.dragToSend')}</span>}
             </label>
-            <input type="text" value={planName} onChange={e => onPlanNameChange(e.target.value)}
+            <input type="text" data-tid="drawer.plan-name" placeholder={t('drawer.defaultPlanName')} value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
             {selectedCount > 0 && (
               <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                <Info size={10} /> Tip: drag the plan name down to "Saved Plans" to archive it
+                <Info size={10} /> {t('drawer.dragTip')}
               </p>
             )}
           </div>
@@ -2701,23 +2654,23 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide"><Plane size={11}/> Flight</div>
-                <button onClick={() => onRemoveSelection('flight')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide"><Plane size={11}/> {t('drawer.flight')}</div>
+                <button data-tid="drawer.remove.flight" onClick={() => onRemoveSelection('flight')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               {selections.flight.outbound ? (
                 <>
-                  <p className="text-xs text-gray-500 mb-0.5">Outbound: <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
-                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">Return: <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
-                  <p className="text-xs font-semibold text-sky-700 mt-1">${selections.flight.price_usd?.toLocaleString()} {selections.flight.trip_type === 'round_trip' ? 'round-trip' : 'one-way'}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('drawer.outbound')} <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
+                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">{t('drawer.return')} <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
+                  <p className="text-xs font-semibold text-sky-700 mt-1">{t(selections.flight.trip_type === 'round_trip' ? 'drawer.priceRound' : 'drawer.priceOneWay', { price: `$${fmtNumber(selections.flight.price_usd ?? 0)}` })}</p>
                 </>
               ) : (
                 <>
                   <p className="text-sm font-medium">{selections.flight.airline}{selections.flight.flight_number && <span className="text-xs text-gray-400 ml-1">{selections.flight.flight_number}</span>}</p>
-                  <p className="text-xs text-gray-500">{selections.flight.origin} → {selections.flight.destination} · ${selections.flight.price_usd?.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{selections.flight.origin} → {selections.flight.destination} · ${fmtNumber(selections.flight.price_usd ?? 0)}</p>
                 </>
               )}
               {selections.flight.booking_url && (
-                <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> Book this flight</a>
+                <a data-tid="drawer.book-flight" href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.bookFlight')}</a>
               )}
               <div className="mt-1.5">
                 <WatchFareButton variant="inline" trip={tripFromSearch(searchData)} source="my_plan"
@@ -2729,23 +2682,23 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected multi-city flights (one per leg) */}
           {(selections.flights || []).length > 0 && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide mb-1.5"><Plane size={11}/> Flights ({selections.flights.length} leg{selections.flights.length > 1 ? 's' : ''})</div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase tracking-wide mb-1.5"><Plane size={11}/> {t('drawer.flightsLegs', { count: selections.flights.length })}</div>
               <div className="space-y-2">
                 {selections.flights.map((f, i) => (
                   <div key={i} className="flex items-start justify-between gap-2 border-t border-sky-100 pt-1.5 first:border-t-0 first:pt-0">
                     <div className="min-w-0">
                       <p className="text-xs text-gray-500">
-                        <span className="font-semibold text-sky-700">Leg {(f.leg_index ?? i) + 1}:</span>{' '}
+                        <span className="font-semibold text-sky-700">{t('drawer.leg', { n: (f.leg_index ?? i) + 1 })}</span>{' '}
                         <span className="font-medium text-gray-700">{f.outbound?.airline || f.airline}</span>
                         {(f.outbound?.flight_number || f.flight_number) && <span className="text-gray-400 ml-1">{f.outbound?.flight_number || f.flight_number}</span>}
                       </p>
-                      <p className="text-[11px] text-gray-500">{(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {(f.leg_to || f.outbound?.destination || '').split(',')[0]}{f.leg_date ? ` · ${f.leg_date}` : ''} · <span className="font-semibold text-sky-700">${Number(f.price_usd || 0).toLocaleString()}</span></p>
+                      <p className="text-[11px] text-gray-500">{(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {(f.leg_to || f.outbound?.destination || '').split(',')[0]}{f.leg_date ? ` · ${f.leg_date}` : ''} · <span className="font-semibold text-sky-700">${fmtNumber(Number(f.price_usd || 0))}</span></p>
                     </div>
-                    <button onClick={() => onRemoveSelection('flights', f)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={13}/></button>
+                    <button data-tid="drawer.remove.flights" onClick={() => onRemoveSelection('flights', f)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={13}/></button>
                   </div>
                 ))}
               </div>
-              <p className="text-xs font-semibold text-sky-700 mt-2">${selections.flights.reduce((t, f) => t + (Number(f.price_usd) || 0), 0).toLocaleString()} total flights</p>
+              <p className="text-xs font-semibold text-sky-700 mt-2">{t('drawer.totalFlights', { amount: `$${fmtNumber(selections.flights.reduce((sum, f) => sum + (Number(f.price_usd) || 0), 0))}` })}</p>
             </div>
           )}
 
@@ -2753,17 +2706,17 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.hotel && (
             <div className="border border-purple-200 bg-purple-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 uppercase tracking-wide"><Hotel size={11}/> Hotel</div>
-                <button onClick={() => onRemoveSelection('hotel')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 uppercase tracking-wide"><Hotel size={11}/> {t('drawer.hotel')}</div>
+                <button data-tid="drawer.remove.hotel" onClick={() => onRemoveSelection('hotel')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               <p className="text-sm font-medium">{selections.hotel.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
                 {selections.hotel.star_rating > 0 && <div className="flex">{[...Array(Math.round(selections.hotel.star_rating))].map((_, j) => <Star key={j} size={9} className="text-yellow-400 fill-yellow-400" />)}</div>}
                 {selections.hotel.review_score && <span className="text-xs text-gray-400">{selections.hotel.review_score}/10</span>}
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{selections.hotel.location} · ${selections.hotel.price_per_night_usd?.toLocaleString()}/night{selections.hotel.total_price_usd ? ` · $${selections.hotel.total_price_usd.toLocaleString()} total` : ''}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{t(selections.hotel.total_price_usd ? 'drawer.hotelLineTotal' : 'drawer.hotelLine', { location: selections.hotel.location || '', price: `$${fmtNumber(selections.hotel.price_per_night_usd ?? 0)}`, total: `$${fmtNumber(selections.hotel.total_price_usd ?? 0)}` })}</p>
               {selections.hotel.booking_url && (
-                <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> View & Book</a>
+                <a data-tid="drawer.book-hotel" href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.viewBook')}</a>
               )}
               <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchData} source="my_plan" /></div>
             </div>
@@ -2772,7 +2725,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected activities */}
           {selections.activities.length > 0 && (
             <div className="border border-green-200 bg-green-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapPin size={11}/> Activities ({selections.activities.length})</div>
+              <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapPin size={11}/> {t('drawer.activities', { count: selections.activities.length })}</div>
               <div className="space-y-2">
                 {selections.activities.map((a, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-green-100 last:border-0 pb-1.5 last:pb-0">
@@ -2780,15 +2733,15 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       <p className="text-xs font-medium text-gray-800">{a.name}</p>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                         {a.price_usd != null && <span>${a.price_usd}</span>}
-                        {a.duration_hours && <span>{a.duration_hours}h</span>}
+                        {a.duration_hours && <span>{t('drawer.hoursShort', { h: a.duration_hours })}</span>}
                         {a.location && <span className="truncate">{a.location}</span>}
                       </div>
                       {a.booking_url && (
-                        <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> Book</a>
+                        <a data-tid="drawer.book-activity" href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.book')}</a>
                       )}
                       <div className="mt-0.5"><WatchActivityButton activity={a} source="my_plan" /></div>
                     </div>
-                    <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.activities" onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2798,7 +2751,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected places */}
           {(selections.places_to_see?.length > 0) && (
             <div className="border border-lime-200 bg-lime-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapIcon size={11}/> Places to See ({selections.places_to_see.length})</div>
+              <div className="text-xs font-semibold text-lime-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><MapIcon size={11}/> {t('drawer.places', { count: selections.places_to_see.length })}</div>
               <div className="space-y-2">
                 {selections.places_to_see.map((place, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-lime-100 last:border-0 pb-1.5 last:pb-0">
@@ -2807,13 +2760,13 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                         {place.category && <span>{place.category}</span>}
                         {place.neighbourhood && <span className="truncate">{place.neighbourhood}</span>}
-                        {place.admission_fee_usd === 0 && <span className="text-green-600">Free</span>}
+                        {place.admission_fee_usd === 0 && <span className="text-green-600">{t('drawer.free')}</span>}
                       </div>
                       {place.info_url && (
-                        <a href={place.info_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-800 font-medium mt-0.5"><ExternalLink size={9} /> Details</a>
+                        <a data-tid="drawer.place-details" href={place.info_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.details')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('places_to_see', place)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.places_to_see" onClick={() => onRemoveSelection('places_to_see', place)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2823,11 +2776,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected walking tours */}
           {(selections.walking_tours?.length > 0) && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> Walking tours ({selections.walking_tours.length})</div>
+              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Footprints size={11}/> {t('drawer.walkingTours', { count: selections.walking_tours.length })}</div>
               <div className="space-y-2">
                 {selections.walking_tours.map((tour, i) => (
                   <WalkingTourPlanRow key={tour.url || i} tour={tour}
-                    onRemove={t => onRemoveSelection('walking_tours', t)} />
+                    onRemove={wt => onRemoveSelection('walking_tours', wt)} />
                 ))}
               </div>
             </div>
@@ -2837,18 +2790,18 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {selections.sim && (
             <div className="border border-pink-200 bg-pink-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-pink-700 uppercase tracking-wide"><Smartphone size={11}/> SIM</div>
-                <button onClick={() => onRemoveSelection('sim')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-pink-700 uppercase tracking-wide"><Smartphone size={11}/> {t('drawer.sim')}</div>
+                <button data-tid="drawer.remove.sim" onClick={() => onRemoveSelection('sim')} className="text-gray-400 hover:text-red-500"><X size={13}/></button>
               </div>
               <p className="text-sm font-medium">{selections.sim.provider}</p>
               <p className="text-xs text-gray-500">{selections.sim.plan_name} · ${selections.sim.price_usd}</p>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                {selections.sim.data_gb && <span>{selections.sim.data_gb}GB</span>}
-                {selections.sim.validity_days && <span>{selections.sim.validity_days} days</span>}
+                {selections.sim.data_gb && <span>{t('drawer.simGb', { n: selections.sim.data_gb })}</span>}
+                {selections.sim.validity_days && <span>{t('drawer.simDays', { count: selections.sim.validity_days })}</span>}
                 {selections.sim.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={9}/>{selections.sim.network_quality.speed}</span>}
               </div>
               {selections.sim.url && (
-                <a href={selections.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1.5"><ExternalLink size={10} /> Get Plan</a>
+                <a data-tid="drawer.sim-link" href={selections.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.getPlan')}</a>
               )}
             </div>
           )}
@@ -2856,7 +2809,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected transport */}
           {selections.getting_around?.length > 0 && (
             <div className="border border-cyan-200 bg-cyan-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-cyan-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Bus size={11}/> Getting Around ({selections.getting_around.length})</div>
+              <div className="text-xs font-semibold text-cyan-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Bus size={11}/> {t('drawer.gettingAround', { count: selections.getting_around.length })}</div>
               <div className="space-y-2">
                 {selections.getting_around.map((opt, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-cyan-100 last:border-0 pb-1.5 last:pb-0">
@@ -2868,10 +2821,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       </div>
                       {opt.price_info && <p className="text-xs text-gray-500 mt-0.5">{opt.price_info}</p>}
                       {opt.booking_url && (
-                        <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={9} /> More Info</a>
+                        <a data-tid="drawer.transport-info" href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.moreInfo')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('getting_around', opt)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.getting_around" onClick={() => onRemoveSelection('getting_around', opt)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2881,21 +2834,21 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected tips */}
           {selections.tips?.length > 0 && (
             <div className="border border-amber-200 bg-amber-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Lightbulb size={11}/> Tips ({selections.tips.length})</div>
+              <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Lightbulb size={11}/> {t('drawer.tips', { count: selections.tips.length })}</div>
               <div className="space-y-2">
-                {selections.tips.map((t, i) => (
+                {selections.tips.map((tip, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-amber-100 last:border-0 pb-1.5 last:pb-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium text-gray-800">{t.title}</p>
-                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t.severity}</span>}
+                        <p className="text-xs font-medium text-gray-800">{tip.title}</p>
+                        {tip.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${tip.severity === 'danger' ? 'bg-red-100 text-red-700' : tip.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t(`drawer.severity.${tip.severity}`, { defaultValue: tip.severity })}</span>}
                       </div>
-                      {t.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.body}</p>}
-                      {t.source_url && (
-                        <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={9} /> Source</a>
+                      {tip.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{tip.body}</p>}
+                      {tip.source_url && (
+                        <a data-tid="drawer.tip-source" href={tip.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.source')}</a>
                       )}
                     </div>
-                    <button onClick={() => onRemoveSelection('tips', t)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.tips" onClick={() => onRemoveSelection('tips', tip)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2905,7 +2858,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Selected events */}
           {selections.events?.length > 0 && (
             <div className="border border-fuchsia-200 bg-fuchsia-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PartyPopper size={11}/> Events ({selections.events.length})</div>
+              <div className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PartyPopper size={11}/> {t('drawer.events', { count: selections.events.length })}</div>
               <div className="space-y-2">
                 {selections.events.map((ev, i) => (
                   <div key={i} className="flex items-start justify-between border-b border-fuchsia-100 last:border-0 pb-1.5 last:pb-0">
@@ -2918,7 +2871,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       </div>
                       {ev.location && <p className="text-xs text-gray-500 mt-0.5">{ev.location}</p>}
                     </div>
-                    <button onClick={() => onRemoveSelection('events', ev)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                    <button data-tid="drawer.remove.events" onClick={() => onRemoveSelection('events', ev)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2928,7 +2881,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Itinerary notes */}
           {Object.entries(selections.itinerary_notes).filter(([,v]) => v).length > 0 && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PenLine size={11}/> Notes</div>
+              <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><PenLine size={11}/> {t('drawer.notes')}</div>
               <div className="space-y-1.5">
                 {Object.entries(selections.itinerary_notes).filter(([,v]) => v).map(([k, v]) => (
                   <div key={k}><p className="text-xs text-teal-600 font-medium capitalize">{k.replace('-', ' – ')}</p><p className="text-xs text-gray-700">{v}</p></div>
@@ -2941,16 +2894,16 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {(selections.itinerary_slots?.length > 0) && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
               <div className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                <Calendar size={11}/> Itinerary ({selections.itinerary_slots.length} slots)
+                <Calendar size={11}/> {t('drawer.itinerarySlots', { count: selections.itinerary_slots.length })}
               </div>
               <div className="space-y-1.5">
                 {selections.itinerary_slots.map((slot, i) => (
                   <div key={i} className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-xs font-medium text-gray-800 truncate">{slot.activity}</p>
-                      <p className="text-xs text-teal-500">{timeRange(slot) ? slotWhen(slot) : `Day ${slot.day_number} · ${slot.time_of_day}`}</p>
+                      <p className="text-xs text-teal-500">{timeRange(slot) ? slotWhen(slot) : t('drawer.daySlot', { day: slot.day_number, tod: t(`drawer.tod.${slot.time_of_day}`, { defaultValue: slot.time_of_day }) })}</p>
                     </div>
-                    <button onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12}/></button>
+                    <button data-tid="drawer.remove.itinerary_slots" onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12}/></button>
                   </div>
                 ))}
               </div>
@@ -2961,9 +2914,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             <div className="border border-teal-200 bg-teal-50/60 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-teal-800 flex items-center gap-1.5">
-                  <ShoppingBag size={14} /> Packing List
+                  <ShoppingBag size={14} /> {t('packing.title')}
                 </span>
                 <button
+                  data-tid="drawer.remove.packing_list"
                   onClick={() => onRemoveSelection('packing_list')}
                   className="text-teal-400 hover:text-red-500 transition-colors"
                 >
@@ -2971,7 +2925,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                 </button>
               </div>
               <div className="flex items-center justify-between text-xs text-teal-700 mb-1.5">
-                <span>{selections.packing_list.checked_count ?? 0}/{selections.packing_list.total_items ?? 0} items packed</span>
+                <span>{t('packing.itemsPacked', { checked: selections.packing_list.checked_count ?? 0, total: selections.packing_list.total_items ?? 0 })}</span>
                 <span className="text-teal-500">{Math.round(((selections.packing_list.checked_count ?? 0) / Math.max(1, selections.packing_list.total_items ?? 1)) * 100)}%</span>
               </div>
               <div className="h-1.5 bg-teal-200 rounded-full overflow-hidden mb-2">
@@ -3005,10 +2959,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             >
               <Bookmark size={32} className={`mx-auto mb-2 ${isDragOver ? 'text-teal-400 opacity-80' : 'opacity-30'}`} />
               {isDragOver
-                ? <p className="text-sm text-teal-600 font-medium">Drop to load this plan</p>
+                ? <p className="text-sm text-teal-600 font-medium">{t('drawer.dropLoad')}</p>
                 : <>
-                    <p className="text-sm">Select flights, hotels &amp; activities<br/>to build your plan</p>
-                    <p className="text-xs mt-2 text-gray-300">or drag a saved plan here</p>
+                    <p className="text-sm">{t('drawer.selectLine1')}<br/>{t('drawer.selectLine2')}</p>
+                    <p className="text-xs mt-2 text-gray-300">{t('drawer.orDrag')}</p>
                   </>
               }
             </div>
@@ -3017,24 +2971,24 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           {/* Save buttons */}
           <div className="flex gap-2">
             {loadedPlanId && (
-              <button onClick={() => { onClearLoadedPlan(); onPlanNameChange('My Trip Plan') }}
+              <button data-tid="drawer.new" onClick={() => { onClearLoadedPlan(); onPlanNameChange(t('drawer.defaultPlanName')) }}
                 className="px-3 py-2.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition-all shrink-0">
-                New
+                {t('drawer.new')}
               </button>
             )}
-            <button onClick={save} disabled={saving || selectedCount === 0}
+            <button data-tid="drawer.save" onClick={save} disabled={saving || selectedCount === 0}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 text-sm transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Saving…' : loadedPlanId ? 'Update Plan' : 'Save Plan'}
+              {saving ? t('drawer.saving') : loadedPlanId ? t('drawer.update') : t('drawer.savePlan')}
             </button>
           </div>
           {selectedCount > 0 && (
-            <button onClick={saveAndClear} disabled={saving}
+            <button data-tid="drawer.archive" onClick={saveAndClear} disabled={saving}
               className="w-full flex items-center justify-center gap-2 py-2 border border-slate-300 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50">
-              <Bookmark size={12} /> Archive Plan
+              <Bookmark size={12} /> {t('drawer.archive')}
             </button>
           )}
-          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{saveMsg}</p>}
+          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg === 'failed' ? 'text-red-600' : 'text-green-600'}`}>{t(`drawer.msg.${saveMsg}`)}</p>}
 
           {/* Saved plans — drop zone for current plan */}
           <div
@@ -3051,11 +3005,11 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             }}
           >
             <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 px-2 py-1.5 rounded-lg transition-all ${isDragOverSaved ? 'bg-teal-100 text-teal-700 border-2 border-dashed border-teal-400' : 'text-gray-500'}`}>
-              {isDragOverSaved ? '↓ Drop here to save plan' : 'Saved Plans'}
+              {isDragOverSaved ? t('drawer.dropHere') : t('drawer.savedPlans')}
             </h3>
-            {loadingPlans && <div className="text-xs text-gray-400 text-center py-2">Loading…</div>}
+            {loadingPlans && <div className="text-xs text-gray-400 text-center py-2">{t('drawer.loading')}</div>}
             {savedPlans.length === 0 && !loadingPlans && !isDragOverSaved && (
-              <p className="text-xs text-gray-300 text-center py-2">No saved plans yet</p>
+              <p className="text-xs text-gray-300 text-center py-2">{t('drawer.noSaved')}</p>
             )}
             <div className="space-y-2">
               {savedPlans.map(plan => {
@@ -3071,12 +3025,12 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate flex items-center gap-1">
-                          {plan.search_data?.import_source && <Link2 size={12} className="shrink-0 text-amber-600" aria-label="Planned from a link" />}
+                          {plan.search_data?.import_source && <Link2 size={12} className="shrink-0 text-amber-600" aria-label={t('drawer.fromLink')} />}
                           <span className="truncate">{plan.name}</span>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-gray-400">{plan.created_at?.slice(0,10)}</p>
-                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${planCost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
+                          <p className="text-xs text-gray-400">{plan.created_at ? fmtDate(plan.created_at.slice(0, 10), { dateStyle: 'medium', timeZone: 'UTC' }) : ''}</p>
+                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${fmtNumber(planCost, { maximumFractionDigits: 0 })}</span>}
                           {planBudget && (
                             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${planBudget.status === 'under' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                               {planBudget.label}
@@ -3084,32 +3038,32 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                           )}
                         </div>
                       </div>
-                      <button onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id}
+                      <button data-tid="drawer.delete-plan" onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id}
                         className="ml-2 text-gray-400 hover:text-red-500 transition-colors shrink-0">
                         {deletingId === plan.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                       </button>
                     </div>
                     <div className="flex gap-1.5 mt-1.5">
-                      <button onClick={() => onLoadPlan(plan)}
+                      <button data-tid="drawer.load-plan" onClick={() => onLoadPlan(plan)}
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
-                        {isLoaded ? <><Check size={11} /> Loaded</> : <><RefreshCw size={11} /> Load</>}
+                        {isLoaded ? <><Check size={11} /> {t('drawer.loaded')}</> : <><RefreshCw size={11} /> {t('drawer.load')}</>}
                       </button>
-                      <WatchFareButton variant="card" label="Watch" trip={tripFromPlan(plan)} source="saved_plan" />
-                      <button onClick={() => onViewPlan(plan)}
+                      <WatchFareButton variant="card" label={t('drawer.watch')} trip={tripFromPlan(plan)} source="saved_plan" />
+                      <button data-tid="drawer.view-plan" onClick={() => onViewPlan(plan)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
-                        <Eye size={11} /> View
+                        <Eye size={11} /> {t('drawer.view')}
                       </button>
-                      <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
-                        title="Copy a public share link — no login needed to view"
+                      <button data-tid="drawer.share-plan" onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
+                        title={t('drawer.shareTitle')}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
-                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
+                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} {t('drawer.share')}
                       </button>
                     </div>
                     <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
-                        ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
-                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 Link copied: {shareMsg.url}</p>
+                        ? <p className="text-[11px] text-red-500 mt-1">{t('drawer.shareError')}</p>
+                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 {t('drawer.linkCopied', { url: shareMsg.url })}</p>
                     )}
                   </div>
                 )
@@ -3122,9 +3076,13 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   )
 }
 
+// Date-only ISO string -> localized day, pinned to UTC so it never shifts
+const fmtDay = (d) => (d ? fmtDate(`${String(d).slice(0, 10)}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' }) : '')
+
 // ─── Search Panel ─────────────────────────────────────────────────────────────
 
 function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
+  const { t } = useTranslation('sections')
   const today = new Date().toISOString().split('T')[0]
   const [form, setForm] = useState({
     ...searchData,
@@ -3150,12 +3108,12 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
   return (
     <div className="bg-white border-b border-gray-200">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm min-w-0">
+      <button data-tid="searchPanel.toggle" onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm min-w-0">
         <div className="flex items-center gap-2 text-gray-700 font-medium min-w-0 flex-1">
           <RefreshCw size={14} className="text-teal-500 shrink-0" />
-          <span className="shrink-0">Search Criteria</span>
+          <span className="shrink-0">{t('searchPanel.title')}</span>
           <span className="text-gray-400 font-normal text-xs truncate hidden sm:inline">
-            {searchData.origin} → {searchData.destination} · {searchData.departure_date} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}
+            {searchData.origin} → {searchData.destination} · {fmtDay(searchData.departure_date)} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}
           </span>
         </div>
         {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
@@ -3164,43 +3122,43 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
       {isOpen && (
         <form onSubmit={handleSubmit} className="px-4 pb-4 space-y-3 border-t border-gray-100">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3">
-            <AirportSearch label="From" value={form.origin} onChange={v=>setForm(f=>({...f,origin:v}))} placeholder="Origin…" required />
-            <AirportSearch label="To" value={form.destination} onChange={v=>setForm(f=>({...f,destination:v}))} placeholder="Destination…" required />
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Departure</label><input type="date" value={form.departure_date} min={today} onChange={e=>setForm(f=>({...f,departure_date:e.target.value}))} className={inputClass} /></div>
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Return</label><input type="date" value={form.return_date} min={form.departure_date} onChange={e=>setForm(f=>({...f,return_date:e.target.value}))} className={inputClass} /></div>
+            <AirportSearch label={t('searchPanel.from')} value={form.origin} onChange={v=>setForm(f=>({...f,origin:v}))} placeholder={t('searchPanel.originPh')} required />
+            <AirportSearch label={t('searchPanel.to')} value={form.destination} onChange={v=>setForm(f=>({...f,destination:v}))} placeholder={t('searchPanel.destPh')} required />
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.departure')}</label><input type="date" data-tid="searchPanel.departure" value={form.departure_date} min={today} onChange={e=>setForm(f=>({...f,departure_date:e.target.value}))} className={inputClass} /></div>
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.return')}</label><input type="date" data-tid="searchPanel.return" value={form.return_date} min={form.departure_date} onChange={e=>setForm(f=>({...f,return_date:e.target.value}))} className={inputClass} /></div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <NationalitySearch
-                label="Nationality"
+                label={t('searchPanel.nationality')}
                 value={form.nationality}
                 onChange={v => setForm(f => ({ ...f, nationality: v }))}
-                placeholder="American, Indian…"
+                placeholder={t('searchPanel.nationalityPh')}
               />
             </div>
-            <div><label className="block text-xs font-medium text-gray-600 mb-1">Budget (USD)</label><input type="number" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder="Optional" className={inputClass} /></div>
+            <div><label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.budget')}</label><input type="number" data-tid="searchPanel.budget" value={form.budget_usd} onChange={e=>setForm(f=>({...f,budget_usd:e.target.value}))} placeholder={t('searchPanel.optional')} className={inputClass} /></div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Travelers</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.travelers')}</label>
               <TravelerPanel form={form} setForm={setForm} />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TagInput label="Residence Permits" value={form.residence_permits} onChange={v=>setForm(f=>({...f,residence_permits:v}))} placeholder="Schengen, UK…" />
-            <TagInput label="Existing Visas" value={form.existing_visas} onChange={v=>setForm(f=>({...f,existing_visas:v}))} placeholder="US, Japan…" />
+            <TagInput label={t('searchPanel.permits')} value={form.residence_permits} onChange={v=>setForm(f=>({...f,residence_permits:v}))} placeholder={t('searchPanel.permitsPh')} />
+            <TagInput label={t('searchPanel.visas')} value={form.existing_visas} onChange={v=>setForm(f=>({...f,existing_visas:v}))} placeholder={t('searchPanel.visasPh')} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Interests</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('searchPanel.interests')}</label>
             <div className="flex flex-wrap gap-1.5">
               {INTEREST_LIST.map(id => (
-                <button key={id} type="button" onClick={()=>toggle(id)}
+                <button key={id} type="button" data-tid={`searchPanel.interest.${id}`} onClick={()=>toggle(id)}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${form.interests.includes(id)?'bg-teal-600 border-teal-600 text-white':'bg-white border-gray-200 text-gray-600 hover:border-teal-300'}`}>
                   {INTEREST_LABELS[id] || id}
                 </button>
               ))}
             </div>
           </div>
-          <button type="submit" className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors">
-            <RefreshCw size={14} /> Update Search
+          <button type="submit" data-tid="searchPanel.update" className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors">
+            <RefreshCw size={14} /> {t('searchPanel.update')}
           </button>
         </form>
       )}
@@ -3210,9 +3168,8 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
 
 // ─── Layover Optimizer ──────────────────────────────────────────────────────
 
-const FILTER_ERROR_FALLBACK = "Couldn't apply filters — try again"
-
 function LayoverModal({ info, onClose }) {
+  const { t } = useTranslation('sections')
   if (!info) return null
   const { city, airport, duration_hours, status, data, message } = info
   const label = city || airport
@@ -3221,18 +3178,18 @@ function LayoverModal({ info, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-white">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            ✈️ {duration_hours}h layover in {label}
+            ✈️ {t('layover.title', { hours: duration_hours, place: label })}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+          <button data-tid="layover.close" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
         </div>
         <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
           {status === 'loading' && (
             <div className="flex items-center gap-3 text-gray-500 text-sm py-6 justify-center">
-              <Loader2 size={18} className="animate-spin text-teal-500" /> Planning your layover…
+              <Loader2 size={18} className="animate-spin text-teal-500" /> {t('layover.planning')}
             </div>
           )}
           {status === 'error' && (
-            <p className="text-sm text-red-600">{message || "Couldn't plan this layover right now — please try again."}</p>
+            <p className="text-sm text-red-600">{message || t('layover.error')}</p>
           )}
           {status === 'done' && data && (
             <>
@@ -3240,11 +3197,11 @@ function LayoverModal({ info, onClose }) {
                 <span className="text-lg">{data.feasible_to_exit ? '🏙️' : '🛋️'}</span>
                 <div>
                   <p className={`text-sm font-semibold ${data.feasible_to_exit ? 'text-green-800' : 'text-amber-800'}`}>
-                    {data.feasible_to_exit ? 'You can leave the airport' : 'Better to stay airside'}
+                    {data.feasible_to_exit ? t('layover.canLeave') : t('layover.stayAirside')}
                   </p>
                   {data.verdict_summary && <p className="text-xs text-gray-600 mt-0.5">{data.verdict_summary}</p>}
                   {data.feasible_to_exit && data.usable_city_hours > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">~{data.usable_city_hours}h usable in the city after buffers</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('layover.usableHours', { hours: data.usable_city_hours })}</p>
                   )}
                 </div>
               </div>
@@ -3253,7 +3210,7 @@ function LayoverModal({ info, onClose }) {
                 <div className="flex items-start gap-2 text-sm">
                   <Shield size={14} className={`mt-0.5 shrink-0 ${data.transit_visa.required ? 'text-amber-500' : 'text-green-500'}`} />
                   <p className="text-gray-700">
-                    <span className="font-semibold">{data.transit_visa.required ? 'Transit visa required. ' : 'No transit visa needed. '}</span>
+                    <span className="font-semibold">{data.transit_visa.required ? t('layover.visaRequired') : t('layover.visaNotNeeded')}{' '}</span>
                     {data.transit_visa.notes}
                   </p>
                 </div>
@@ -3261,7 +3218,7 @@ function LayoverModal({ info, onClose }) {
 
               {(data.plan || []).length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your mini-plan</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('layover.miniPlan')}</p>
                   <div className="space-y-2">
                     {data.plan.map((step, i) => (
                       <div key={i} className="flex items-start gap-2.5 border border-gray-100 rounded-lg p-2.5">
@@ -3280,7 +3237,7 @@ function LayoverModal({ info, onClose }) {
                 </div>
               )}
               {data.airside_alternative && (
-                <p className="text-xs text-gray-500"><span className="font-semibold">Rather stay in?</span> {data.airside_alternative}</p>
+                <p className="text-xs text-gray-500"><span className="font-semibold">{t('layover.stayIn')}</span> {data.airside_alternative}</p>
               )}
               {(data.notes || []).length > 0 && (
                 <ul className="text-xs text-gray-500 space-y-1 list-disc pl-4">
@@ -3298,6 +3255,7 @@ function LayoverModal({ info, onClose }) {
 // ─── Trip Remix ───────────────────────────────────────────────────────────────
 
 function RemixBar({ searchData, onRemix }) {
+  const { t } = useTranslation('sections')
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -3305,8 +3263,8 @@ function RemixBar({ searchData, onRemix }) {
           <Wand2 size={14} className="text-white" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-gray-800">Remix this trip</h3>
-          <p className="text-xs text-gray-500">One click to see a what-if version — we'll re-plan everything and show you what changed</p>
+          <h3 className="text-sm font-bold text-gray-800">{t('remix.title')}</h3>
+          <p className="text-xs text-gray-500">{t('remix.blurb')}</p>
         </div>
       </div>
       <div className="flex gap-2 flex-wrap">
@@ -3315,9 +3273,10 @@ function RemixBar({ searchData, onRemix }) {
           return (
             <button
               key={preset.id}
+              data-tid={`remix.preset.${preset.id}`}
               onClick={() => onRemix(preset)}
               disabled={disabled}
-              title={disabled ? 'Not applicable to this search' : preset.description}
+              title={disabled ? t('remix.notApplicable') : preset.description}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 disabled
                   ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
@@ -3334,6 +3293,7 @@ function RemixBar({ searchData, onRemix }) {
 }
 
 function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
+  const { t } = useTranslation('sections')
   const rows = diffMetrics(remixInfo.before, snapshotMetrics(results))
   return (
     <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
@@ -3341,10 +3301,10 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
         <div className="flex items-center gap-2">
           <Wand2 size={15} className="text-violet-600 shrink-0" />
           <p className="text-sm font-semibold text-violet-900">
-            Remixed: {remixInfo.label} — here's what changed vs your original plan
+            {t('remix.banner', { label: remixInfo.label })}
           </p>
         </div>
-        <button onClick={onDismiss} title="Dismiss comparison" className="text-violet-400 hover:text-violet-700 shrink-0">
+        <button data-tid="remix.dismiss" onClick={onDismiss} title={t('remix.dismiss')} className="text-violet-400 hover:text-violet-700 shrink-0">
           <X size={15} />
         </button>
       </div>
@@ -3367,7 +3327,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-violet-700">Not enough comparable data between the two runs — browse the new results below.</p>
+        <p className="mt-2 text-xs text-violet-700">{t('remix.notEnough')}</p>
       )}
     </div>
   )
@@ -3376,6 +3336,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
 // ─── Main ResultsPage ─────────────────────────────────────────────────────────
 
 export default function ResultsPage() {
+  const { t } = useTranslation('sections')
   const { user, token, logout } = useAuth()
   const { pendingSearchData, clearPendingSearch, showResults, clearSearchResults } = useSearchData()
 
@@ -3389,7 +3350,7 @@ export default function ResultsPage() {
   const [isPlanOpen, setIsPlanOpen] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
   const toggleSection = (agent) => setCollapsedSections(prev => ({ ...prev, [agent]: !prev[agent] }))
-  const [planName,   setPlanName]   = useState('My Trip Plan')
+  const [planName,   setPlanName]   = useState(() => i18n.t('sections:drawer.defaultPlanName'))
   const [selections, setSelections] = useState({
     flight: null, flights: [], hotel: null, activities: [], places_to_see: [], walking_tours: [], sim: null, tips: [], getting_around: [], events: [],
     itinerary_notes: {}, itinerary_edits: {}, itinerary_slots: [], itinerary_layout: null,
@@ -3797,7 +3758,7 @@ export default function ResultsPage() {
         searchData,
         onEvent,
         finalize,
-        (err) => setError(err.message || 'Search error'),
+        (err) => setError(err.message || t('page.searchError')),
         token,
         () => {
           // Stream severed before the server finished (instance rollout,
@@ -3807,7 +3768,7 @@ export default function ResultsPage() {
           if (interrupts <= 1) {
             startStream()
           } else {
-            setStreamWarning('The connection was interrupted — some sections may be incomplete. Re-run the search to fill them in.')
+            setStreamWarning(t('page.interrupted'))
             finalize()
           }
         },
@@ -3924,7 +3885,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, flights: 'done' }))
     } catch (err) {
       setActiveFlightFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, flights: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, flights: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, flights: 'done' }))
     } finally {
       setIsFlightFilterLoading(false)
@@ -3946,7 +3907,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } catch (err) {
       setActiveHotelFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, hotels: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, hotels: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, hotels: 'done' }))
     } finally {
       setIsHotelFilterLoading(false)
@@ -3968,7 +3929,7 @@ export default function ResultsPage() {
       setStatuses(s => ({ ...s, activities: 'done' }))
     } catch (err) {
       setActiveActivityFilterCount(prevFilterCount)  // results on screen are still the old ones
-      setFilterErrors(e => ({ ...e, activities: axiosErrorDetail(err).detail || FILTER_ERROR_FALLBACK }))
+      setFilterErrors(e => ({ ...e, activities: axiosErrorDetail(err).detail || t('page.filterError') }))
       setStatuses(s => ({ ...s, activities: 'done' }))
     } finally {
       setIsActivityFilterLoading(false)
@@ -4016,7 +3977,7 @@ export default function ResultsPage() {
       forex:          () => <ForexSection data={data} />,
       itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
         {...(loadedPlanId ? {
-          editingDisabledReason: 'Editing is off while a saved plan is open. Click New in My Plan to edit this itinerary.',
+          editingDisabledReason: t('page.editingOff'),
         } : {
           onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
           onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
@@ -4033,8 +3994,9 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeFlightFilterCount > 0 && (
             <button
+              data-tid="page.clear-flight-filters"
               onClick={e => { e.stopPropagation(); handleApplyFlightFilters({}) }}
-              title="Clear flight filters"
+              title={t('page.clearFlightFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
@@ -4042,19 +4004,19 @@ export default function ResultsPage() {
           <WatchFareButton variant="header" trip={tripFromSearch(searchData)} source="flights_header"
             price={cheapestFlightPrice(data)} insights={data?.price_insights} />
           {canShowFareCalendar && (
-            <button onClick={e => {
+            <button data-tid="page.fare-calendar" onClick={e => {
               e.stopPropagation()
               if (!isFareCalendarOpen) setCollapsedSections(prev => ({ ...prev, flights: false }))
               setIsFareCalendarOpen(v => !v)
             }}
               aria-pressed={isFareCalendarOpen}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm transition-all border border-white/20 ${isFareCalendarOpen ? 'bg-white/40' : 'bg-white/20 hover:bg-white/30'}`}>
-              <CalendarDays size={12} /><span>Fare calendar</span>
+              <CalendarDays size={12} /><span>{t('page.fareCalendar')}</span>
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
+          <button data-tid="page.flight-filters" onClick={e => { e.stopPropagation(); setIsFlightFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeFlightFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-sky-600 text-[10px] font-bold">{activeFlightFilterCount}</span>}
           </button>
         </div>
@@ -4063,15 +4025,16 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeHotelFilterCount > 0 && (
             <button
+              data-tid="page.clear-hotel-filters"
               onClick={e => { e.stopPropagation(); handleApplyHotelFilters({}) }}
-              title="Clear hotel filters"
+              title={t('page.clearHotelFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
+          <button data-tid="page.hotel-filters" onClick={e => { e.stopPropagation(); setIsHotelFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeHotelFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-violet-600 text-[10px] font-bold">{activeHotelFilterCount}</span>}
           </button>
         </div>
@@ -4080,15 +4043,16 @@ export default function ResultsPage() {
         <div className="flex items-center gap-1">
           {activeActivityFilterCount > 0 && (
             <button
+              data-tid="page.clear-activity-filters"
               onClick={e => { e.stopPropagation(); handleApplyActivityFilters({}) }}
-              title="Clear activity filters"
+              title={t('page.clearActivityFilters')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 text-white text-xs font-bold leading-none">
               ×
             </button>
           )}
-          <button onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
+          <button data-tid="page.activity-filters" onClick={e => { e.stopPropagation(); setIsActivityFilterOpen(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all border border-white/20">
-            <SlidersHorizontal size={12} /><span>Filters</span>
+            <SlidersHorizontal size={12} /><span>{t('page.filters')}</span>
             {activeActivityFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-emerald-600 text-[10px] font-bold">{activeActivityFilterCount}</span>}
           </button>
         </div>
@@ -4103,7 +4067,7 @@ export default function ResultsPage() {
             {filterErrors[agent] && (
               <p role="alert" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{filterErrors[agent]}</p>
             )}
-            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">No results</div>}
+            {status === 'loading' ? <Skeleton agent={agent} /> : data ? renderers[agent]() : <div className="p-4 text-sm text-gray-500">{t('page.noResults')}</div>}
           </div>
         )}
       </div>
@@ -4113,7 +4077,7 @@ export default function ResultsPage() {
   const completionBanner = isDone && (
     <div className="flex items-center justify-center gap-2 py-3 px-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium">
       <CheckCircle2 size={16} className="text-green-600 shrink-0" />
-      Your travel plan is ready — select items below to build your trip
+      {t('page.ready')}
     </div>
   )
 
@@ -4126,25 +4090,25 @@ export default function ResultsPage() {
         <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <button onClick={() => {
+              <button data-tid="page.new-search" onClick={() => {
                 if (!isDone && completedCount > 0) {
-                  if (!window.confirm('Leave this page? Your search results will be lost.')) return
+                  if (!window.confirm(t('page.leaveConfirm'))) return
                 }
                 clearSearchResults()
               }} className="flex items-center gap-1 sm:gap-1.5 text-slate-200 hover:text-white text-xs sm:text-sm shrink-0">
-                <ArrowLeft size={14}/><span className="hidden xs:inline">New Search</span><span className="xs:hidden">Back</span>
+                <ArrowLeft size={14}/><span className="hidden xs:inline">{t('page.newSearch')}</span><span className="xs:hidden">{t('page.back')}</span>
               </button>
               <div className="text-center min-w-0 flex-1">
                 <p className="font-semibold text-xs sm:text-sm truncate">
                   {searchData.origin} → {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}
                 </p>
-                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{searchData.departure_date}{searchData.return_date ? ` – ${searchData.return_date}` : ''} · {searchData.num_travelers} traveler{searchData.num_travelers>1?'s':''}</p>
+                <p className="text-slate-300 text-[10px] sm:text-xs hidden sm:block">{fmtDay(searchData.departure_date)}{searchData.return_date ? ` – ${fmtDay(searchData.return_date)}` : ''} · {t('searchPanel.travelersCount', { count: searchData.num_travelers })}</p>
                 {searchData.budget_usd > 0 && (
-                  <p className="text-slate-300 text-[10px] hidden md:block">Budget: ${searchData.budget_usd.toLocaleString()}</p>
+                  <p className="text-slate-300 text-[10px] hidden md:block">{t('page.budget', { amount: `$${fmtNumber(searchData.budget_usd)}` })}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> Done</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
+                {isDone ? <span className="flex items-center gap-1 text-green-300 text-xs sm:text-sm"><CheckCircle2 size={13}/><span className="hidden sm:inline"> {t('page.done')}</span></span> : <span className="text-blue-200 text-xs sm:text-sm">{completedCount}/{AGENT_ORDER.length}</span>}
               </div>
             </div>
           </div>
@@ -4193,11 +4157,11 @@ export default function ResultsPage() {
               <Globe size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Planning your trip to {searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination}</h2>
+              <h2 className="text-lg font-bold text-gray-800">{t('page.planning', { dest: searchData.destinations?.length > 1 ? searchData.destinations.join(' → ') : searchData.destination })}</h2>
               <p className="text-sm text-gray-500">
-                {completedCount === 0 ? "Getting everything ready for you..."
-                 : completedCount < 4 ? `Found ${completedCount} results so far — more coming!`
-                 : `Almost there! ${completedCount} of ${AGENT_ORDER.length} sections ready.`}
+                {completedCount === 0 ? t('page.gettingReady')
+                 : completedCount < 4 ? t('page.foundSoFar', { count: completedCount })
+                 : t('page.almostThere', { done: completedCount, total: AGENT_ORDER.length })}
               </p>
             </div>
           </div>
@@ -4254,7 +4218,7 @@ export default function ResultsPage() {
               onApply={handleApplyPackage}
               onUndo={handleUndoPackage}
               canUndo={!!packageUndo}
-              disabledReason={loadedPlanSearchData ? 'A saved plan is open. Click New in My Plan to add a package.' : null}
+              disabledReason={loadedPlanSearchData ? t('page.packageDisabled') : null}
             />
           </div>
         )}
@@ -4279,20 +4243,22 @@ export default function ResultsPage() {
         {results.itinerary?.days?.length > 0 && (
           <div className="flex gap-1 p-1 bg-white rounded-lg border border-gray-200 shadow-sm max-w-fit mb-4">
             <button
+              data-tid="page.view-cards"
               onClick={() => setView('cards')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 view === 'cards' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <LayoutList size={14} /> Cards
+              <LayoutList size={14} /> {t('page.cards')}
             </button>
             <button
+              data-tid="page.view-timeline"
               onClick={() => setView('timeline')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 view === 'timeline' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <CalendarDays size={14} /> Timeline
+              <CalendarDays size={14} /> {t('page.timeline')}
             </button>
           </div>
         )}
@@ -4312,15 +4278,15 @@ export default function ResultsPage() {
       </div>
 
       {/* Floating plan button */}
-      <button onClick={() => setIsPlanOpen(true)}
+      <button data-tid="page.my-plan" onClick={() => setIsPlanOpen(true)}
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-teal-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl hover:bg-teal-700 transition-all">
         <Bookmark size={16} />
-        <span className="text-sm">My Plan</span>
+        <span className="text-sm">{t('drawer.title')}</span>
         {selectedCount > 0 && (
           <span className="bg-white text-teal-700 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{selectedCount}</span>
         )}
         {computePlanCost(selections, loadedPlanSearchData || searchData) > 0 && (
-          <span className="text-teal-100 text-xs font-medium">${computePlanCost(selections, loadedPlanSearchData || searchData).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+          <span className="text-teal-100 text-xs font-medium">${fmtNumber(computePlanCost(selections, loadedPlanSearchData || searchData), { maximumFractionDigits: 0 })}</span>
         )}
       </button>
 
