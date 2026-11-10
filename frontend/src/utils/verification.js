@@ -1,7 +1,7 @@
 // Helpers for the source-verification labels on search results.
+import i18n from '../i18n'
 
 const EVIDENCE_KEYS = ['link_verified', 'link_checked']
-const GAVE_UP_SUMMARY = 'Link checks did not finish — verify before booking.'
 
 // The stream ended (or the client gave up) while some sections were still
 // awaiting URL enrichment: resolve their chip instead of spinning forever.
@@ -13,7 +13,7 @@ export function clearPendingVerification(results) {
   for (const [key, section] of Object.entries(results)) {
     const v = section && typeof section === 'object' ? section.verification : null
     if (v?.pending === true) {
-      next[key] = { ...section, verification: { ...v, pending: false, summary: GAVE_UP_SUMMARY } }
+      next[key] = { ...section, verification: { ...v, pending: false, summary: i18n.t('misc:verification.gaveUp') } }
       changed = true
     }
   }
