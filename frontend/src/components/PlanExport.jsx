@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CalendarPlus, Printer } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { buildPlanIcs, planFileName, planItineraryDays } from '../utils/planExport'
 import { buildPlanPrintHtml } from '../utils/planPrint'
 import { countSelections } from '../utils/planHelpers'
@@ -21,6 +22,7 @@ function downloadFile(contents, type, fileName) {
 
 /** "Add to calendar" (.ics) and "Print / PDF" buttons for the current plan. */
 export default function PlanExport({ planName, planId = null, searchData, selections, itinerary = null, source, className = '' }) {
+  const { t } = useTranslation('plan')
   const [message, setMessage] = useState(null)
   const hasItinerary = planItineraryDays(selections, itinerary).length > 0
   if (!countSelections(selections) && !hasItinerary) return null
@@ -42,7 +44,7 @@ export default function PlanExport({ planName, planId = null, searchData, select
       tab.opener = null
       setMessage(null)
     } else {
-      setMessage('Your browser blocked the new tab — allow pop-ups for this site and try again.')
+      setMessage('popupBlocked')
     }
     setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS)
     track('plan_export', source, { format: 'print' })
@@ -53,16 +55,16 @@ export default function PlanExport({ planName, planId = null, searchData, select
   return (
     <div className={className}>
       <div className="flex gap-2">
-        <button type="button" onClick={exportCalendar} className={buttonClass}
-          title="Download an .ics file for Google Calendar, Apple Calendar or Outlook">
-          <CalendarPlus size={13} /> Add to calendar
+        <button type="button" onClick={exportCalendar} className={buttonClass} data-tid="plan.export-calendar"
+          title={t('export.calendarTitle')}>
+          <CalendarPlus size={13} /> {t('export.calendar')}
         </button>
-        <button type="button" onClick={openPrintView} className={buttonClass}
-          title="Open a printable version you can print or save as a PDF">
-          <Printer size={13} /> Print / PDF
+        <button type="button" onClick={openPrintView} className={buttonClass} data-tid="plan.export-print"
+          title={t('export.printTitle')}>
+          <Printer size={13} /> {t('export.print')}
         </button>
       </div>
-      {message && <p role="status" className="mt-1.5 text-[11px] text-amber-700">{message}</p>}
+      {message && <p role="status" className="mt-1.5 text-[11px] text-amber-700">{t(`export.${message}`)}</p>}
     </div>
   )
 }
