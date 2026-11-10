@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -114,6 +115,11 @@ class TravelSearchRequest(BaseModel):
         description="Optional nights per city, aligned with `destinations`. "
         "None entries (and any leftover days) are split automatically. "
         "Ignored for single-city trips.",
+    )
+    locale: Literal["en", "es", "de", "fr", "hi", "zh", "bn"] | None = Field(
+        None,
+        description="UI language; AI-written text is returned in it. "
+        "Absent or 'en' = English.",
     )
     pace: str = Field(
         "balanced",
@@ -417,6 +423,7 @@ class DiscoveryRequest(BaseModel):
     return_date: date | None = Field(None, description="Return date")
     nationality: str = Field(..., description="Traveler nationality")
     interests: list[str] = Field(default_factory=list)
+    locale: Literal["en", "es", "de", "fr", "hi", "zh", "bn"] | None = None
     adults: int = Field(default=1, ge=1)
     children: int = Field(default=0, ge=0)
     seniors: int = Field(default=0, ge=0)

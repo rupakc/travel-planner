@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 
@@ -7,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from ...agents.orchestrator import TravelOrchestrator
 from ...core.auth import get_optional_user
-from ...core.cache import get_cache
+from ...core.cache import get_cache, request_digest
 from ...core.config import settings
 from ...core.sse import guarded_stream
 from ...db.taste_db import derive_taste_context
@@ -52,12 +51,7 @@ async def search(
 ):
     """Stream travel planning results; cache full event sequence for 30 min."""
     _apply_taste_context(request, user)
-    cache_key = (
-        "search:"
-        + hashlib.md5(
-            request.model_dump_json().encode(), usedforsecurity=False
-        ).hexdigest()
-    )
+    cache_key = "search:" + request_digest(request)
     cache = get_cache()
 
     async def generate():

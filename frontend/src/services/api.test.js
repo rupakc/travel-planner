@@ -48,3 +48,24 @@ describe('getSerpapiConfigured', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('localeField', () => {
+  afterEach(() => vi.resetModules())
+
+  const withLanguage = async (lng) => {
+    vi.resetModules()
+    const { default: i18n } = await import('../i18n')
+    await i18n.changeLanguage(lng)
+    return (await import('./api')).localeField()
+  }
+
+  it('sends the base code of a supported language', async () => {
+    expect(await withLanguage('de')).toEqual({ locale: 'de' })
+    expect(await withLanguage('zh-CN')).toEqual({ locale: 'zh' })
+  })
+
+  it('sends English too, and English for an unsupported language (i18n falls back)', async () => {
+    expect(await withLanguage('en')).toEqual({ locale: 'en' })
+    expect(await withLanguage('ja')).toEqual({ locale: 'en' })
+  })
+})

@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -28,6 +29,7 @@ class ChatRequest(BaseModel):
     selections: dict = {}
     search_results: dict = {}
     session_context: dict = {}
+    locale: Literal["en", "es", "de", "fr", "hi", "zh", "bn"] | None = None
 
 
 @router.post("/chat")
@@ -61,6 +63,7 @@ async def chat(
                 session_context=request.session_context,
                 taste_context=taste,
                 rate_limit_key=caller_key(http_request, user),
+                locale=request.locale,
             ):
                 yield f"data: {chunk}\n\n"
         except Exception as e:

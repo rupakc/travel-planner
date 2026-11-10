@@ -2,7 +2,7 @@ import json
 from datetime import date
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -24,7 +24,7 @@ class StressTestAgent(BaseAgent):
             return {"error": "No itinerary available to stress-test"}
 
         prompt = self.build_prompt(request, itinerary, flights, visa, weather)
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))
 
     # ------------------------------------------------------------------
     @staticmethod

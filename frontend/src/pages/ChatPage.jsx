@@ -27,6 +27,7 @@ import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
+import { localeField } from '../services/api'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
 import { stripLinkEvidence } from '../utils/verification'
@@ -91,7 +92,7 @@ function streamChat(messages, onEvent, onDone, onError, token, selections, searc
   worker.postMessage({
     url: '/api/chat',
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ messages, selections: selections || {}, search_results: searchResults || {}, session_context: sessionContext || {} }),
+    body: JSON.stringify({ messages, selections: selections || {}, search_results: searchResults || {}, session_context: sessionContext || {}, ...localeField() }),
   })
 
   return () => worker.terminate()

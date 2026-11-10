@@ -4,7 +4,7 @@ import httpx
 
 from ..schemas.request import TravelSearchRequest
 from ..utils.geo import CITY_COORDS
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 _METEO_URL = "https://api.open-meteo.com/v1/forecast"
@@ -144,7 +144,7 @@ class WeatherAgent(BaseAgent):
             f"below (historical seasonal averages, specific per day):\n{ranges}\n"
             'Every day object MUST include a "city" field naming its city.'
         )
-        result = await self.execute(prompt)
+        result = await self.execute(prompt, **locale_kw(request))
         if "error" in result:
             return []
         days = self._flatten_days(result, stays)
@@ -249,7 +249,7 @@ class WeatherAgent(BaseAgent):
             "Produce day-by-day climate estimates for the trip period. "
             "Use historical seasonal averages. Be specific per day."
         )
-        result = await self.execute(prompt)
+        result = await self.execute(prompt, **locale_kw(request))
         if "error" not in result:
             # Only real Open-Meteo data may carry "open-meteo" — never trust
             # a provenance the model wrote itself.
