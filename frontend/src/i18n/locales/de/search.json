@@ -52,7 +52,7 @@
   "hero": {
     "badge": "KI-gestützte Reiseplanung",
     "title": "Plane deine perfekte Reise",
-    "subtitle": "Flüge, Hotels, Aktivitäten, Visum, SIM & Reiseplan – alles an einem Ort.",
+    "subtitle": "Flüge, Hotels, Aktivitäten, Visum, SIM & Reiseverlauf – alles an einem Ort.",
     "tour": "Neu hier? Kurze Tour starten",
     "importLead": "Eine tolle Reise im Netz gesehen?",
     "importLink": "Link einfügen"
@@ -103,8 +103,8 @@
     "thatScreenshot": "diesen Screenshot",
     "thatScreenshotCap": "Dieser Screenshot",
     "tooMany": "Maximal {{max}} Screenshots auf einmal – wir haben die ersten {{kept}} behalten.",
-    "tooBig": "{{name}} ist auch nach dem Verkleinern noch zu groß. Schneide es zu und versuche es erneut.",
-    "unreadable": "{{name}} konnte nicht gelesen werden – speichere es erneut als PNG oder JPEG.",
+    "tooBig": "{{name}} ist auch nach dem Verkleinern noch zu groß. Beschneide das Bild und versuche es erneut.",
+    "unreadable": "{{name}} konnte nicht gelesen werden – speichere die Datei erneut als PNG oder JPEG.",
     "actions": {
       "text": "Text einfügen",
       "images": "Screenshot ablegen",
@@ -138,8 +138,8 @@
       "notImage": "{{name}} ist kein Bild, das wir lesen können. Nutze PNG, JPEG oder WebP.",
       "thatFile": "Diese Datei",
       "thatImage": "Dieses Bild",
-      "tooBigSource": "{{name}} ist zu groß, um hier gelesen zu werden (über 40 MB). Schneide es zu oder speichere es kleiner.",
-      "over5": "{{name}} ist größer als 5 MB. Schneide es zu oder speichere es als kleineres PNG oder JPEG."
+      "tooBigSource": "{{name}} ist zu groß, um hier gelesen zu werden (über 40 MB). Beschneide das Bild oder speichere es kleiner.",
+      "over5": "{{name}} ist größer als 5 MB. Beschneide das Bild oder speichere es als kleineres PNG oder JPEG."
     }
   },
   "form": {
@@ -148,12 +148,12 @@
     "flyingFrom": "Abflug von",
     "departure": "Hinflug",
     "return": "Rückflug",
-    "nationality": "Nationalität",
+    "nationality": "Staatsangehörigkeit",
     "budget": "Budget (USD)",
     "budgetOptional": "Budget (USD, optional)",
     "travelers": "Reisende",
     "cityOrAirport": "Stadt oder Flughafen…",
-    "nationalityPlaceholder": "Amerikanisch, indisch…",
+    "nationalityPlaceholder": "Deutsch, Indisch…",
     "optional": "Optional",
     "totalBudget": "Gesamtbudget der Reise",
     "permits": "🏠 Aufenthaltstitel (falls vorhanden)",
@@ -229,7 +229,7 @@
     "clear": "Leeren"
   },
   "nationality": {
-    "placeholder": "Nationalität suchen…",
+    "placeholder": "Staatsangehörigkeit suchen…",
     "clear": "Leeren"
   },
   "tags": {
@@ -237,12 +237,12 @@
     "hint": "Zum Hinzufügen Enter oder Komma drücken"
   },
   "travelers": {
-    "total_one": "{{count}} Reisende(r)",
+    "total_one": "{{count}} Reisender",
     "total_other": "{{count}} Reisende",
     "adults": "Erwachsene",
     "seniors": "Senioren",
     "children": "Kinder",
-    "infants": "Kleinkinder",
+    "infants": "Babys",
     "fewer": "Weniger: {{group}}",
     "more": "Mehr: {{group}}",
     "accessibility": "Barrierefreiheit",
@@ -300,7 +300,7 @@
     "leaveOut": "Weglassen",
     "tooManyStops": "{{city}} ist kein Stopp dieser Reise, und eine Reise hat höchstens 3 – füge es stattdessen einem davon hinzu.",
     "missingOrigin": "Gib an, von wo du abfliegst.",
-    "missingNationality": "Gib deine Nationalität an – sie bestimmt die Visa-Infos.",
+    "missingNationality": "Gib deine Staatsangehörigkeit an – sie bestimmt die Visa-Infos.",
     "route": "Deine Route",
     "oneLess": "Eine Nacht weniger in {{city}}",
     "oneMore": "Eine Nacht mehr in {{city}}",

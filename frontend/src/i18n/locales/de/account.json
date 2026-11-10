@@ -122,8 +122,8 @@
       "creating": "Wird angelegt…",
       "createFailed": "Nutzer konnte nicht angelegt werden",
       "resetOwnHint": "Wenn du dein eigenes Passwort zurücksetzt, musst du beim nächsten Seitenaufruf ein neues festlegen",
-      "resetOwn": "Eigenes PW zurücksetzen",
-      "reset": "PW zurücksetzen",
+      "resetOwn": "Eigenes Passwort zurücksetzen",
+      "reset": "Passwort zurücksetzen",
       "deactivate": "Deaktivieren",
       "reactivate": "Reaktivieren"
     },
@@ -177,7 +177,7 @@
         "search": "Suche",
         "results": "Ergebnisse",
         "chat": "Chat",
-        "preferences": "Vorlieben",
+        "preferences": "Einstellungen",
         "admin": "Admin"
       },
       "categories": {
