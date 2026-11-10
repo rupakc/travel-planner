@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { fmtDate as fmtLocaleDate, fmtNumber } from '../i18n/format'
 import {
   Send, Square, Plane, User, Trash2, Hotel, MapPin, Shield,
   Smartphone, Lightbulb, Calendar, CheckCircle2, Loader2, Clock,
@@ -38,17 +40,18 @@ L.Icon.Default.mergeOptions({ iconUrl: markerIconUrl, iconRetinaUrl: markerIcon2
 // ─── Agent config (reused from ResultsPage) ─────────────────────────────────
 
 const AGENT_CONFIG = {
-  flights:        { label: 'Flights',        icon: Plane,      color: 'sky'     },
-  hotels:         { label: 'Hotels',         icon: Hotel,      color: 'violet'  },
-  activities:     { label: 'Activities',     icon: MapPin,     color: 'emerald' },
-  visa:           { label: 'Visa',           icon: Shield,     color: 'orange'  },
-  sim:            { label: 'SIM Cards',      icon: Smartphone, color: 'rose'    },
-  tips:           { label: 'Travel Tips',    icon: Lightbulb,  color: 'amber'   },
-  getting_around: { label: 'Getting Around', icon: Bus,        color: 'cyan'    },
-  forex:          { label: 'Currency & Forex', icon: DollarSign, color: 'emerald' },
-  itinerary:      { label: 'Itinerary',      icon: Calendar,   color: 'teal'    },
+  flights:        { icon: Plane,      color: 'sky'     },
+  hotels:         { icon: Hotel,      color: 'violet'  },
+  activities:     { icon: MapPin,     color: 'emerald' },
+  visa:           { icon: Shield,     color: 'orange'  },
+  sim:            { icon: Smartphone, color: 'rose'    },
+  tips:           { icon: Lightbulb,  color: 'amber'   },
+  getting_around: { icon: Bus,        color: 'cyan'    },
+  forex:          { icon: DollarSign, color: 'emerald' },
+  itinerary:      { icon: Calendar,   color: 'teal'    },
 }
 
+// Section labels live in the chat catalogue: t(`agent.${section}`)
 const CHAT_COLORS = {
   sky:     { bg: 'bg-sky-50',     border: 'border-sky-100',     text: 'text-sky-800' },
   violet:  { bg: 'bg-violet-50',  border: 'border-violet-100',  text: 'text-violet-800' },
@@ -97,7 +100,8 @@ function streamChat(messages, onEvent, onDone, onError, token, selections, searc
 // ─── Section renderers (compact for chat) ────────────────────────────────────
 
 function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
-  if (!data?.results?.length) return <p className="text-xs text-gray-500">No flights found</p>
+  const { t } = useTranslation('chat')
+  if (!data?.results?.length) return <p className="text-xs text-gray-500">{t('flights.none')}</p>
   const LIMIT = 5
   const selected = selections.flight
   const items = data.results
@@ -107,33 +111,33 @@ function ChatFlightsSection({ data, selections, onSelect, isExpanded, onToggleEx
     <div className="space-y-2">
       {data.knowledge_estimate && (
         <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2 flex items-center gap-1">
-          <AlertTriangle size={10} /> Prices are estimates — verify with booking sites before booking
+          <AlertTriangle size={10} /> {t('estimates.warning')}
         </p>
       )}
       {visible.map((f, i) => {
         const isSelected = selected?.price_usd === f.price_usd && selected?.outbound?.airline === f.outbound?.airline
         return (
-          <div key={i} onClick={() => onSelect('flight', isSelected ? null : f)}
+          <div key={i} onClick={() => onSelect('flight', isSelected ? null : f)} data-tid="chat.flight-select"
             className={`border rounded-lg p-2.5 cursor-pointer text-xs transition-all ${isSelected ? 'border-sky-400 bg-sky-50 ring-1 ring-sky-300' : 'border-gray-200 hover:shadow-sm'}`}>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-900">{f.outbound?.airline || f.airline || '—'}{f.outbound?.flight_number ? ` ${f.outbound.flight_number}` : ''}</span>
-              <span className="font-bold text-sky-700">{f.price_usd ? `$${f.price_usd.toLocaleString()}` : '—'}</span>
+              <span className="font-bold text-sky-700">{f.price_usd ? `$${fmtNumber(f.price_usd)}` : '—'}</span>
             </div>
-            {f.outbound && <p className="text-gray-500">{f.outbound.origin} → {f.outbound.destination}{f.return ? ` (round-trip)` : ''}</p>}
+            {f.outbound && <p className="text-gray-500">{f.outbound.origin} → {f.outbound.destination}{f.return ? ` ${t('flights.roundTripNote')}` : ''}</p>}
             <div className="flex items-center gap-2 mt-1">
-              {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-sky-600 hover:text-sky-800 font-medium flex items-center gap-0.5"><ExternalLink size={9} /> Book</a>}
+              {f.booking_url && <a href={f.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" onClick={e => e.stopPropagation()} className="text-sky-600 hover:text-sky-800 font-medium flex items-center gap-0.5"><ExternalLink size={9} /> {t('action.book')}</a>}
               {isSelected && <span className="text-sky-700 font-semibold flex items-center gap-0.5"><Check size={9} /> In Plan</span>}
             </div>
           </div>
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-sky-600 hover:text-sky-800 font-medium py-1.5 border border-dashed border-sky-200 rounded-lg hover:bg-sky-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-sky-600 hover:text-sky-800 font-medium py-1.5 border border-dashed border-sky-200 rounded-lg hover:bg-sky-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
@@ -149,7 +153,8 @@ export function withSearchContext(messages, idx, params) {
 }
 
 export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onToggleExpand, searchContext = null }) {
-  if (!data?.results?.length) return <p className="text-xs text-gray-500">No hotels found</p>
+  const { t } = useTranslation('chat')
+  if (!data?.results?.length) return <p className="text-xs text-gray-500">{t('hotels.none')}</p>
   const LIMIT = 5
   const selected = selections.hotel
   const items = data.results
@@ -159,7 +164,7 @@ export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onTo
     <div className="space-y-2">
       {data.knowledge_estimate && (
         <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2 flex items-center gap-1">
-          <AlertTriangle size={10} /> Prices are estimates — verify with booking sites before booking
+          <AlertTriangle size={10} /> {t('estimates.warning')}
         </p>
       )}
       {visible.map((h, i) => {
@@ -172,15 +177,15 @@ export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onTo
                 <p className="text-gray-500">{h.location}</p>
                 <div className="flex flex-wrap items-center gap-1 mt-0.5">
                   {h.star_rating > 0 && <div className="flex">{[...Array(Math.round(h.star_rating))].map((_, j) => <Star key={j} size={8} className="text-yellow-400 fill-yellow-400" />)}</div>}
-                  {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5 ml-1"><ExternalLink size={9} /> Book</a>}
+                  {h.booking_url && <a href={h.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5 ml-1"><ExternalLink size={9} /> {t('action.book')}</a>}
                   <span className="ml-1"><WatchHotelButton hotel={h} searchData={searchContext} variant="compact" source="chat" /></span>
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-bold text-violet-700">${h.price_per_night_usd?.toLocaleString()}<span className="font-normal text-gray-400">/n</span></p>
-                <button onClick={() => onSelect('hotel', isSelected ? null : h)}
+                <p className="font-bold text-violet-700">${fmtNumber(h.price_per_night_usd)}<span className="font-normal text-gray-400">{t('hotels.perNightShort')}</span></p>
+                <button onClick={() => onSelect('hotel', isSelected ? null : h)} data-tid="chat.hotel-select"
                   className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSelected ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-violet-100'}`}>
-                  {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+                  {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
                 </button>
               </div>
             </div>
@@ -188,19 +193,20 @@ export function ChatHotelsSection({ data, selections, onSelect, isExpanded, onTo
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-violet-600 hover:text-violet-800 font-medium py-1.5 border border-dashed border-violet-200 rounded-lg hover:bg-violet-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-violet-600 hover:text-violet-800 font-medium py-1.5 border border-dashed border-violet-200 rounded-lg hover:bg-violet-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
 }
 
 function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
-  if (!data?.results?.length) return <p className="text-xs text-gray-500">No activities found</p>
+  const { t } = useTranslation('chat')
+  if (!data?.results?.length) return <p className="text-xs text-gray-500">{t('activities.none')}</p>
   const LIMIT = 8
   const items = data.results
   const visible = isExpanded ? items : items.slice(0, LIMIT)
@@ -215,32 +221,33 @@ function ChatActivitiesSection({ data, selections, onSelect, isExpanded, onToggl
               <p className="font-medium text-gray-900 truncate">{a.name}</p>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-500">
                 {a.price_usd != null && <span>${a.price_usd}</span>}
-                {a.duration_hours && <span>{a.duration_hours}h</span>}
-                {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> Book</a>}
+                {a.duration_hours && <span>{t('units.hoursShort', { value: a.duration_hours })}</span>}
+                {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" onClick={e => e.stopPropagation()} className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> {t('action.book')}</a>}
                 <WatchActivityButton activity={a} variant="compact" source="chat_activity" />
               </div>
             </div>
-            <button onClick={() => onSelect('activities', a)}
+            <button onClick={() => onSelect('activities', a)} data-tid="chat.activity-select"
               className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-emerald-100'}`}>
-              {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+              {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
             </button>
           </div>
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-emerald-600 hover:text-emerald-800 font-medium py-1.5 border border-dashed border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-emerald-600 hover:text-emerald-800 font-medium py-1.5 border border-dashed border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
 }
 
 function ChatSimSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
-  if (!data?.plans?.length) return <p className="text-xs text-gray-500">No SIM plans found</p>
+  const { t } = useTranslation('chat')
+  if (!data?.plans?.length) return <p className="text-xs text-gray-500">{t('sim.none')}</p>
   const LIMIT = 5
   const selected = selections.sim
   const items = data.plans
@@ -257,51 +264,53 @@ function ChatSimSection({ data, selections, onSelect, isExpanded, onToggleExpand
               <div className="flex items-center gap-2 text-gray-500">
                 <span className="font-bold text-rose-700">${p.price_usd}</span>
                 {p.data_gb && <span>{p.data_gb}GB</span>}
-                {p.validity_days && <span>{p.validity_days}d</span>}
+                {p.validity_days && <span>{t('units.daysShort', { value: p.validity_days })}</span>}
                 {p.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={8}/>{p.network_quality.speed}</span>}
-                {p.network_quality?.coverage_rating && <span className={`px-1 py-0.5 rounded-full text-[9px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{p.network_quality.coverage_rating}</span>}
-                {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> Get</a>}
+                {p.network_quality?.coverage_rating && <span className={`px-1 py-0.5 rounded-full text-[9px] font-medium ${p.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : p.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : p.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{t(`enum.${p.network_quality.coverage_rating}`, { defaultValue: p.network_quality.coverage_rating })}</span>}
+                {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-get" className="text-rose-600 hover:text-rose-800 font-medium flex items-center gap-0.5"><ExternalLink size={8} /> {t('action.get')}</a>}
               </div>
             </div>
-            <button onClick={() => onSelect('sim', isSelected ? null : p)}
+            <button onClick={() => onSelect('sim', isSelected ? null : p)} data-tid="chat.sim-select"
               className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-rose-100'}`}>
-              {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+              {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
             </button>
           </div>
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-rose-600 hover:text-rose-800 font-medium py-1.5 border border-dashed border-rose-200 rounded-lg hover:bg-rose-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-rose-600 hover:text-rose-800 font-medium py-1.5 border border-dashed border-rose-200 rounded-lg hover:bg-rose-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
 }
 
 function ChatVisaSection({ data }) {
+  const { t } = useTranslation('chat')
   const req = data?.requirement
-  if (!req) return <p className="text-xs text-gray-500">No visa info available</p>
+  if (!req) return <p className="text-xs text-gray-500">{t('visa.none')}</p>
   const typeColors = { 'visa-free':'bg-green-100 text-green-800','visa-on-arrival':'bg-blue-100 text-blue-800','e-visa':'bg-yellow-100 text-yellow-800','visa-required':'bg-red-100 text-red-800' }
   return (
     <div className="text-xs space-y-1.5">
-      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${typeColors[req.visa_type] || 'bg-gray-100 text-gray-700'}`}>{req.visa_type?.replace(/-/g, ' ').toUpperCase()}</span>
+      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${typeColors[req.visa_type] || 'bg-gray-100 text-gray-700'}`}>{req.visa_type && t(`visa.type.${req.visa_type}`, { defaultValue: req.visa_type.replace(/-/g, ' ') }).toUpperCase()}</span>
       <div className="flex gap-3 text-gray-600">
-        {req.max_stay_days && <span>Max stay: {req.max_stay_days}d</span>}
-        {req.fee_usd != null && <span>Fee: {req.fee_usd === 0 ? 'Free' : `$${req.fee_usd}`}</span>}
+        {req.max_stay_days && <span>{t('visa.maxStay', { days: req.max_stay_days })}</span>}
+        {req.fee_usd != null && <span>{t('visa.fee', { fee: req.fee_usd === 0 ? t('visa.free') : `$${req.fee_usd}` })}</span>}
         {req.processing_time && <span>{req.processing_time}</span>}
       </div>
       {req.requirements?.length > 0 && <ul className="list-disc list-inside text-gray-600 space-y-0.5">{req.requirements.slice(0, 5).map((r, i) => <li key={i}>{r}</li>)}</ul>}
-      {req.official_url && <a href={req.official_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-orange-600 hover:text-orange-800 font-medium"><ExternalLink size={9} /> Official Source</a>}
+      {req.official_url && <a href={req.official_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-officialSource" className="flex items-center gap-1 text-orange-600 hover:text-orange-800 font-medium"><ExternalLink size={9} /> {t('action.officialSource')}</a>}
     </div>
   )
 }
 
 function ChatTipsSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
-  if (!data?.tips?.length) return <p className="text-xs text-gray-500">No tips available</p>
+  const { t } = useTranslation('chat')
+  if (!data?.tips?.length) return <p className="text-xs text-gray-500">{t('tips.none')}</p>
   const LIMIT = 8
   const sc = { danger: 'bg-red-50 border-red-200 text-red-800', warning: 'bg-yellow-50 border-yellow-200 text-yellow-800', info: 'bg-blue-50 border-blue-200 text-blue-800' }
   const selectedTips = selections.tips || []
@@ -317,29 +326,30 @@ function ChatTipsSection({ data, selections, onSelect, isExpanded, onToggleExpan
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900">{tip.title}</p>
               <p className="mt-0.5">{tip.body?.slice(0, 120)}{tip.body?.length > 120 ? '...' : ''}</p>
-              {tip.source_url && <a href={tip.source_url} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 font-medium flex items-center gap-0.5 mt-1"><ExternalLink size={8} /> Source</a>}
+              {tip.source_url && <a href={tip.source_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-source" className="text-teal-600 hover:text-teal-800 font-medium flex items-center gap-0.5 mt-1"><ExternalLink size={8} /> {t('action.source')}</a>}
             </div>
-            <button onClick={() => onSelect('tips', tip)}
+            <button onClick={() => onSelect('tips', tip)} data-tid="chat.tip-select"
               className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-amber-100'}`}>
-              {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+              {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
             </button>
           </div>
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-amber-600 hover:text-amber-800 font-medium py-1.5 border border-dashed border-amber-200 rounded-lg hover:bg-amber-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-amber-600 hover:text-amber-800 font-medium py-1.5 border border-dashed border-amber-200 rounded-lg hover:bg-amber-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
 }
 
 function ChatGettingAroundSection({ data, selections, onSelect, isExpanded, onToggleExpand }) {
-  if (!data?.options?.length) return <p className="text-xs text-gray-500">No transport info available</p>
+  const { t } = useTranslation('chat')
+  if (!data?.options?.length) return <p className="text-xs text-gray-500">{t('transport.none')}</p>
   const LIMIT = 8
   const selectedTransport = selections?.getting_around || []
   const items = data.options
@@ -356,31 +366,32 @@ function ChatGettingAroundSection({ data, selections, onSelect, isExpanded, onTo
               <span className="font-medium text-gray-900">{opt.name}</span>
               <span className={`px-1 py-0.5 rounded text-[10px] font-medium shrink-0 ${opt.scope === 'intra_city' ? 'bg-cyan-100 text-cyan-700' : 'bg-indigo-100 text-indigo-700'}`}>{opt.type?.replace(/_/g, ' ')}</span>
             </div>
-            <button type="button" onClick={() => onSelect('getting_around', opt)}
+            <button type="button" onClick={() => onSelect('getting_around', opt)} data-tid="chat.transport-select"
               className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all shrink-0 ${isSelected ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-cyan-100 hover:text-cyan-700'}`}>
-              {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+              {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
             </button>
           </div>
           {opt.price_info && <p className="text-gray-500 mt-0.5">{opt.price_info}</p>}
           {opt.tips && <p className="text-gray-400 italic mt-0.5">{opt.tips.slice(0, 100)}{opt.tips.length > 100 ? '...' : ''}</p>}
-          {opt.booking_url && <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:text-cyan-800 font-medium flex items-center gap-0.5 mt-0.5"><ExternalLink size={8} /> Info</a>}
+          {opt.booking_url && <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-info" className="text-cyan-600 hover:text-cyan-800 font-medium flex items-center gap-0.5 mt-0.5"><ExternalLink size={8} /> {t('action.info')}</a>}
         </div>
         )
       })}
       {!isExpanded && hidden > 0 && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-cyan-600 hover:text-cyan-800 font-medium py-1.5 border border-dashed border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all">
-          Show {hidden} more →
+        <button onClick={onToggleExpand} data-tid="chat.list-more" className="w-full text-xs text-cyan-600 hover:text-cyan-800 font-medium py-1.5 border border-dashed border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all">
+          {t('list.showMore', { n: hidden })}
         </button>
       )}
       {isExpanded && items.length > LIMIT && (
-        <button onClick={onToggleExpand} className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">Show less</button>
+        <button onClick={onToggleExpand} data-tid="chat.list-less" className="w-full text-xs text-gray-400 hover:text-gray-600 font-medium py-1">{t('list.showLess')}</button>
       )}
     </div>
   )
 }
 
 function ChatForexSection({ data }) {
-  if (!data || data.error || (!data?.local_currency && !data?.exchange_rates?.length)) return <p className="text-xs text-gray-500">No forex info available</p>
+  const { t } = useTranslation('chat')
+  if (!data || data.error || (!data?.local_currency && !data?.exchange_rates?.length)) return <p className="text-xs text-gray-500">{t('forex.none')}</p>
   const isHome = (rate) => rate.from_currency !== 'USD' && rate.from_currency !== 'EUR'
   return (
     <div className="space-y-2">
@@ -391,10 +402,10 @@ function ChatForexSection({ data }) {
           </p>
           {data.exchange_rates?.map((rate, i) => (
             <div key={i} className={`flex items-baseline gap-2 mt-1 ${isHome(rate) ? 'bg-amber-50 rounded px-1 py-0.5' : ''}`}>
-              {isHome(rate) && <span className="text-[9px] font-semibold text-amber-600">YOUR</span>}
+              {isHome(rate) && <span className="text-[9px] font-semibold text-amber-600">{t('forex.your')}</span>}
               {rate.rate != null
                 ? <span className={`text-sm font-bold ${isHome(rate) ? 'text-amber-700' : 'text-emerald-700'}`}>{rate.rate}</span>
-                : <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Loader2 size={9} className="animate-spin" /> Loading...</span>
+                : <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Loader2 size={9} className="animate-spin" /> {t('forex.loading')}</span>
               }
               <span className="text-[11px] text-gray-500">{rate.description}</span>
             </div>
@@ -410,10 +421,10 @@ function ChatForexSection({ data }) {
                 {loc.rating && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${
                   loc.rating === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
                   loc.rating === 'good' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                }`}>{loc.rating}</span>}
+                }`}>{t(`enum.${loc.rating}`, { defaultValue: loc.rating })}</span>}
               </div>
               {loc.description && <p className="text-gray-500 mt-0.5">{loc.description.slice(0, 120)}{loc.description.length > 120 ? '...' : ''}</p>}
-              {loc.fees && <p className="text-gray-400 mt-0.5">Fees: {loc.fees}</p>}
+              {loc.fees && <p className="text-gray-400 mt-0.5">{t('forex.fees', { fees: loc.fees })}</p>}
             </div>
           ))}
         </div>
@@ -421,23 +432,23 @@ function ChatForexSection({ data }) {
       <div className="grid grid-cols-2 gap-2">
         {data.card_acceptance && (
           <div className="bg-sky-50 border border-sky-100 rounded-lg p-2 text-xs">
-            <p className="font-semibold text-sky-800 mb-1">Cards</p>
+            <p className="font-semibold text-sky-800 mb-1">{t('forex.cards')}</p>
             {data.card_acceptance.visa_mastercard && <p className="text-gray-600">{data.card_acceptance.visa_mastercard.slice(0, 80)}</p>}
           </div>
         )}
         {data.cash_advice && (
           <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 text-xs">
-            <p className="font-semibold text-amber-800 mb-1">Cash</p>
+            <p className="font-semibold text-amber-800 mb-1">{t('forex.cash')}</p>
             {data.cash_advice.cash_dependency && <span className={`inline-block px-1 py-0.5 rounded text-[10px] font-medium ${
               data.cash_advice.cash_dependency === 'high' ? 'bg-red-100 text-red-700' :
               data.cash_advice.cash_dependency === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-            }`}>{data.cash_advice.cash_dependency} dependency</span>}
+            }`}>{t('forex.dependency', { level: t(`enum.${data.cash_advice.cash_dependency}`, { defaultValue: data.cash_advice.cash_dependency }) })}</span>}
           </div>
         )}
       </div>
       {data.tipping && (
         <p className={`text-xs rounded-lg p-2 border ${data.tipping.expected ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-          <span className="font-semibold">{data.tipping.expected ? 'Tipping expected' : 'Tipping not expected'}</span>
+          <span className="font-semibold">{data.tipping.expected ? t('forex.tippingExpected') : t('forex.tippingNotExpected')}</span>
           {data.tipping.description && <span className="text-gray-600"> — {data.tipping.description.slice(0, 100)}</span>}
         </p>
       )}
@@ -446,7 +457,8 @@ function ChatForexSection({ data }) {
 }
 
 function ChatItinerarySection({ data, selections, onSelect }) {
-  if (!data?.days?.length) return <p className="text-xs text-gray-500">No itinerary available</p>
+  const { t } = useTranslation('chat')
+  if (!data?.days?.length) return <p className="text-xs text-gray-500">{t('itinerary.none')}</p>
   const selectedSlots = selections?.itinerary_slots || []
   return (
     <div className="space-y-2">
@@ -454,7 +466,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
         <div key={day.day_number} className="border border-gray-200 rounded-lg overflow-hidden">
           <div className={`${day.city ? 'bg-indigo-700' : 'bg-teal-600'} text-white px-3 py-1.5 text-xs font-semibold flex justify-between`}>
             <span>
-              Day {day.day_number}{day.date && ` — ${day.date}`}
+              {t('itinerary.day', { n: day.day_number })}{day.date && ` — ${day.date}`}
               {day.city && (
                 <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
                   {day.city}
@@ -470,15 +482,15 @@ function ChatItinerarySection({ data, selections, onSelect }) {
               const slotObj = { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity: slot.activity, location: slot.location || '', estimated_cost_usd: slot.estimated_cost_usd }
               return (
                 <div key={j} className="px-3 py-1.5 text-xs flex items-center gap-2">
-                  <span className="text-gray-400 capitalize w-16 shrink-0">{slot.time_of_day}</span>
+                  <span className="text-gray-400 capitalize w-16 shrink-0">{t(`itinerary.timeOfDay.${slot.time_of_day}`, { defaultValue: slot.time_of_day })}</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900">{slot.activity}</p>
                     {slot.location && <p className="text-gray-500">{slot.location}</p>}
                   </div>
                   {slot.estimated_cost_usd != null && <span className="text-gray-400 shrink-0">${slot.estimated_cost_usd}</span>}
-                  <button onClick={() => onSelect('itinerary_slots', slotObj)}
+                  <button onClick={() => onSelect('itinerary_slots', slotObj)} data-tid="chat.slot-select"
                     className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100'}`}>
-                    {isSelected ? <><Check size={8}/> Added</> : <><Plus size={8}/> Add</>}
+                    {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
                   </button>
                 </div>
               )
@@ -494,6 +506,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
 // ─── Section wrapper with collapsible header ─────────────────────────────────
 
 function ChatSection({ section, data, status, selections, onSelect, searchContext = null }) {
+  const { t } = useTranslation('chat')
   const [open, setOpen] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
   const cfg = AGENT_CONFIG[section]
@@ -516,10 +529,10 @@ function ChatSection({ section, data, status, selections, onSelect, searchContex
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden mb-2">
-      <button onClick={() => setOpen(v => !v)}
+      <button onClick={() => setOpen(v => !v)} data-tid="chat.section-toggle"
         className={`flex items-center gap-2 px-3 py-2 w-full text-left bg-gray-50 border-b border-gray-200 text-slate-700 hover:bg-gray-100 font-semibold text-xs`}>
         <Icon size={13} className={cc.text} />
-        <span className="flex-1">{cfg.label}</span>
+        <span className="flex-1">{t(`agent.${section}`)}</span>
         {status === 'generating' && <Loader2 size={10} className="animate-spin text-teal-500" />}
         {status === 'enhancing' && <Loader2 size={10} className="animate-spin text-amber-500" />}
         {status === 'done' && <CheckCircle2 size={10} className="text-green-600" />}
@@ -530,7 +543,7 @@ function ChatSection({ section, data, status, selections, onSelect, searchContex
           {data ? (renderers[section] ? renderers[section]() : <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>) : (
             <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
               <Loader2 size={13} className="animate-spin shrink-0" />
-              <span>Building your itinerary…</span>
+              <span>{t('section.building')}</span>
             </div>
           )}
         </div>
@@ -542,6 +555,7 @@ function ChatSection({ section, data, status, selections, onSelect, searchContex
 // ─── Planning message with streamed sections ─────────────────────────────────
 
 function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itineraryGenerating, searchContext = null }) {
+  const { t } = useTranslation('chat')
   const sectionOrder = ['flights', 'hotels', 'activities', 'visa', 'sim', 'tips', 'getting_around', 'forex', 'itinerary']
   // Include itinerary immediately once the backend signals it has started generating
   const arrived = sectionOrder.filter(s => sections[s] || (s === 'itinerary' && itineraryGenerating))
@@ -569,7 +583,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
         return (
           <div key={section} className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400">
             <span className="w-3 h-3 border-2 border-teal-300 border-t-transparent rounded-full animate-spin" />
-            Searching {cfg?.label?.toLowerCase() || section.replace(/_/g, ' ')}…
+            {t('section.searching', { what: (cfg ? t(`agent.${section}`) : section.replace(/_/g, ' ')).toLowerCase() })}
           </div>
         )
       })}
@@ -580,6 +594,7 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
 // ─── My Plan Drawer (compact version for chat) ──────────────────────────────
 
 export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+  const { t } = useTranslation('chat')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -607,7 +622,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
 
   const save = async () => {
-    if (!token) { setSaveMsg('Please log in'); return }
+    if (!token) { setSaveMsg('login'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -618,9 +633,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         ? JSON.stringify({ name: planName, selections: saved })
         : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
-      if (res.ok) { setSaveMsg(isUpdate ? 'Plan updated!' : 'Saved!'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
-      else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      if (res.ok) { setSaveMsg(isUpdate ? 'updated' : 'saved'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
+      else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -651,7 +666,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   }
 
   const saveAndClear = async () => {
-    if (!token) { setSaveMsg('Please log in'); return }
+    if (!token) { setSaveMsg('login'); return }
     setSaving(true); setSaveMsg('')
     try {
       const isUpdate = !!loadedPlanId
@@ -663,14 +678,14 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
-        setSaveMsg(isUpdate ? 'Plan sent back!' : 'Plan saved!')
+        setSaveMsg(isUpdate ? 'sentBack' : 'planSaved')
         loadPlans()
         onClearLoadedPlan()
         onClearSelections()
-        onPlanNameChange('My Trip Plan')
+        onPlanNameChange(t('plan.defaultName'))
         setTimeout(() => setSaveMsg(''), 3000)
-      } else setSaveMsg('Save failed')
-    } catch { setSaveMsg('Save failed') }
+      } else setSaveMsg('failed')
+    } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
   }
 
@@ -687,13 +702,13 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bookmark size={18} />
-              <h2 className="font-semibold">My Plan</h2>
+              <h2 className="font-semibold">{t('drawer.title')}</h2>
               {selectedCount > 0 && <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedCount}</span>}
-              {loadedPlanId && <span className="bg-amber-400/30 text-amber-100 text-[10px] font-medium px-1.5 py-0.5 rounded">Editing saved plan</span>}
+              {loadedPlanId && <span className="bg-amber-400/30 text-amber-100 text-[10px] font-medium px-1.5 py-0.5 rounded">{t('drawer.editingSaved')}</span>}
             </div>
             <div className="flex items-center gap-3">
-              {estimatedCost > 0 && <p className="font-bold text-sm">${estimatedCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>}
-              <button onClick={onClose} className="text-white/80 hover:text-white"><X size={18} /></button>
+              {estimatedCost > 0 && <p className="font-bold text-sm">${fmtNumber(estimatedCost, { maximumFractionDigits: 0 })}</p>}
+              <button onClick={onClose} data-tid="chat.drawer-close" aria-label={t('action.close')} className="text-white/80 hover:text-white"><X size={18} /></button>
             </div>
           </div>
           {budget && (
@@ -711,9 +726,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
             className={selectedCount > 0 ? 'cursor-grab active:cursor-grabbing' : ''}
           >
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Plan Name {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">· drag to send to saved</span>}
+              {t('drawer.planName')} {selectedCount > 0 && <span className="text-gray-300 font-normal normal-case">{t('drawer.dragToSaved')}</span>}
             </label>
-            <input type="text" value={planName} onChange={e => onPlanNameChange(e.target.value)}
+            <input type="text" data-tid="chat.plan-name" value={planName} onChange={e => onPlanNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
           </div>
 
@@ -724,22 +739,22 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           {selections.flight && (
             <div className="border border-sky-200 bg-sky-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase"><Plane size={11} /> Flight</div>
-                <button onClick={() => onRemoveSelection('flight')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 uppercase"><Plane size={11} /> {t('drawer.flight')}</div>
+                <button onClick={() => onRemoveSelection('flight')} data-tid="chat.remove-flight" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
               </div>
               {selections.flight.outbound ? (
                 <>
-                  <p className="text-xs text-gray-500 mb-0.5">Outbound: <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
-                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">Return: <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
-                  <p className="text-xs font-semibold text-sky-700 mt-1">${selections.flight.price_usd?.toLocaleString()} {selections.flight.trip_type === 'round_trip' ? 'round-trip' : 'one-way'}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('drawer.outbound')} <span className="font-medium text-gray-700">{selections.flight.outbound.airline}</span>{selections.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{selections.flight.outbound.flight_number}</span>} · {selections.flight.outbound.origin} → {selections.flight.outbound.destination}</p>
+                  {selections.flight.return && <p className="text-xs text-gray-500 mb-0.5">{t('drawer.return')} <span className="font-medium text-gray-700">{selections.flight.return.airline}</span>{selections.flight.return.flight_number && <span className="text-gray-400 ml-1">{selections.flight.return.flight_number}</span>} · {selections.flight.return.origin} → {selections.flight.return.destination}</p>}
+                  <p className="text-xs font-semibold text-sky-700 mt-1">${fmtNumber(selections.flight.price_usd)} {selections.flight.trip_type === 'round_trip' ? t('drawer.roundTrip') : t('drawer.oneWay')}</p>
                 </>
               ) : (
                 <>
                   <p className="text-sm font-medium">{selections.flight.outbound?.airline || selections.flight.airline}</p>
-                  <p className="text-xs text-gray-500">${selections.flight.price_usd?.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">${fmtNumber(selections.flight.price_usd)}</p>
                 </>
               )}
-              {selections.flight.booking_url && <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> Book</a>}
+              {selections.flight.booking_url && <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('action.book')}</a>}
               <div className="mt-1.5">
                 <WatchFareButton variant="inline" trip={tripFromSearch(searchContext)} source="chat_plan" />
               </div>
@@ -749,31 +764,33 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           {selections.hotel && (
             <div className="border border-violet-200 bg-violet-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-700 uppercase"><Hotel size={11} /> Hotel</div>
-                <button onClick={() => onRemoveSelection('hotel')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-700 uppercase"><Hotel size={11} /> {t('drawer.hotel')}</div>
+                <button onClick={() => onRemoveSelection('hotel')} data-tid="chat.remove-hotel" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
               </div>
               <p className="text-sm font-medium">{selections.hotel.name}</p>
-              <p className="text-xs text-gray-500">${selections.hotel.price_per_night_usd?.toLocaleString()}/night{selections.hotel.total_price_usd ? ` · $${selections.hotel.total_price_usd.toLocaleString()} total` : ''}</p>
-              {selections.hotel.booking_url && <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium mt-1"><ExternalLink size={10} /> Book</a>}
+              <p className="text-xs text-gray-500">{selections.hotel.total_price_usd
+                ? t('drawer.hotelLineTotal', { price: `$${fmtNumber(selections.hotel.price_per_night_usd)}`, total: `$${fmtNumber(selections.hotel.total_price_usd)}` })
+                : t('drawer.hotelLine', { price: `$${fmtNumber(selections.hotel.price_per_night_usd)}` })}</p>
+              {selections.hotel.booking_url && <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium mt-1"><ExternalLink size={10} /> {t('action.book')}</a>}
               <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchContext} source="chat_plan" /></div>
             </div>
           )}
 
           {selections.activities.length > 0 && (
             <div className="border border-emerald-200 bg-emerald-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-emerald-700 uppercase mb-2"><MapPin size={11} className="inline" /> Activities ({selections.activities.length})</div>
+              <div className="text-xs font-semibold text-emerald-700 uppercase mb-2"><MapPin size={11} className="inline" /> {t('drawer.activitiesCount', { n: selections.activities.length })}</div>
               {selections.activities.map((a, i) => (
                 <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-emerald-100 last:border-0">
                   <div className="flex-1 min-w-0 mr-2">
                     <p className="font-medium text-gray-800 truncate">{a.name}</p>
                     <div className="flex items-center gap-2 text-gray-500">
                       {a.price_usd != null && <span>${a.price_usd}</span>}
-                      {a.duration_hours && <span>{a.duration_hours}h</span>}
+                      {a.duration_hours && <span>{t('units.hoursShort', { value: a.duration_hours })}</span>}
                     </div>
-                    {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 text-[10px]"><ExternalLink size={8} className="inline" /> Book</a>}
+                    {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="text-emerald-600 text-[10px]"><ExternalLink size={8} className="inline" /> {t('action.book')}</a>}
                     <div><WatchActivityButton activity={a} variant="compact" source="chat_plan" /></div>
                   </div>
-                  <button onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
+                  <button onClick={() => onRemoveSelection('activities', a)} data-tid="chat.remove-activity" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
               ))}
             </div>
@@ -782,18 +799,18 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           {selections.sim && (
             <div className="border border-rose-200 bg-rose-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 uppercase"><Smartphone size={11} /> SIM</div>
-                <button onClick={() => onRemoveSelection('sim')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 uppercase"><Smartphone size={11} /> {t('drawer.sim')}</div>
+                <button onClick={() => onRemoveSelection('sim')} data-tid="chat.remove-sim" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500"><X size={13} /></button>
               </div>
               <p className="text-sm font-medium">{selections.sim.provider}</p>
               <p className="text-xs text-gray-500">{selections.sim.plan_name} · ${selections.sim.price_usd}</p>
-              {selections.sim.url && <a href={selections.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium mt-1"><ExternalLink size={10} /> Get</a>}
+              {selections.sim.url && <a href={selections.sim.url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-get" className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium mt-1"><ExternalLink size={10} /> {t('action.get')}</a>}
             </div>
           )}
 
           {selections.getting_around?.length > 0 && (
             <div className="border border-cyan-200 bg-cyan-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-cyan-700 uppercase mb-2"><Bus size={11} className="inline" /> Getting Around ({selections.getting_around.length})</div>
+              <div className="text-xs font-semibold text-cyan-700 uppercase mb-2"><Bus size={11} className="inline" /> {t('drawer.gettingAroundCount', { n: selections.getting_around.length })}</div>
               {selections.getting_around.map((opt, i) => (
                 <div key={i} className="flex items-start justify-between text-xs py-1 border-b border-cyan-100 last:border-0">
                   <div className="flex-1 min-w-0 mr-2">
@@ -802,9 +819,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                       {opt.type && <span className="capitalize">{opt.type.replace(/_/g, ' ')}</span>}
                       {opt.scope && <span className="capitalize">{opt.scope.replace(/_/g, ' ')}</span>}
                     </div>
-                    {opt.booking_url && <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="text-cyan-600 text-[10px]"><ExternalLink size={8} className="inline" /> Info</a>}
+                    {opt.booking_url && <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-info" className="text-cyan-600 text-[10px]"><ExternalLink size={8} className="inline" /> {t('action.info')}</a>}
                   </div>
-                  <button onClick={() => onRemoveSelection('getting_around', opt)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
+                  <button onClick={() => onRemoveSelection('getting_around', opt)} data-tid="chat.remove-transport" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
               ))}
             </div>
@@ -812,11 +829,11 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           {selections.tips?.length > 0 && (
             <div className="border border-amber-200 bg-amber-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-amber-700 uppercase mb-2"><Lightbulb size={11} className="inline" /> Tips ({selections.tips.length})</div>
-              {selections.tips.map((t, i) => (
+              <div className="text-xs font-semibold text-amber-700 uppercase mb-2"><Lightbulb size={11} className="inline" /> {t('drawer.tipsCount', { n: selections.tips.length })}</div>
+              {selections.tips.map((tip, i) => (
                 <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-amber-100 last:border-0">
-                  <p className="font-medium text-gray-800 truncate flex-1 mr-2">{t.title}</p>
-                  <button onClick={() => onRemoveSelection('tips', t)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
+                  <p className="font-medium text-gray-800 truncate flex-1 mr-2">{tip.title}</p>
+                  <button onClick={() => onRemoveSelection('tips', tip)} data-tid="chat.remove-tip" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
               ))}
             </div>
@@ -824,14 +841,14 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           {selections.itinerary_slots?.length > 0 && (
             <div className="border border-teal-200 bg-teal-50 rounded-xl p-3">
-              <div className="text-xs font-semibold text-teal-700 uppercase mb-2 flex items-center gap-1.5"><Calendar size={11} /> Itinerary ({selections.itinerary_slots.length} slots)</div>
+              <div className="text-xs font-semibold text-teal-700 uppercase mb-2 flex items-center gap-1.5"><Calendar size={11} /> {t('drawer.itinerarySlots', { count: selections.itinerary_slots.length })}</div>
               {selections.itinerary_slots.map((slot, i) => (
                 <div key={i} className="flex items-start justify-between text-xs py-1 border-b border-teal-100 last:border-0">
                   <div className="flex-1 min-w-0 mr-2">
                     <p className="font-medium text-gray-800 truncate">{slot.activity}</p>
-                    <p className="text-teal-500">Day {slot.day_number} · {slot.time_of_day}</p>
+                    <p className="text-teal-500">{t('drawer.slotLine', { day: slot.day_number, time: t(`itinerary.timeOfDay.${slot.time_of_day}`, { defaultValue: slot.time_of_day }) })}</p>
                   </div>
-                  <button onClick={() => onRemoveSelection('itinerary_slots', slot)} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
+                  <button onClick={() => onRemoveSelection('itinerary_slots', slot)} data-tid="chat.remove-slot" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>
               ))}
             </div>
@@ -852,10 +869,10 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
             >
               <Bookmark size={32} className={`mx-auto mb-2 ${isDragOver ? 'text-teal-400 opacity-80' : 'opacity-30'}`} />
               {isDragOver
-                ? <p className="text-sm text-teal-600 font-medium">Drop to load this plan</p>
+                ? <p className="text-sm text-teal-600 font-medium">{t('drawer.dropToLoad')}</p>
                 : <>
-                    <p className="text-sm">Select items from search results<br />to build your plan</p>
-                    <p className="text-xs mt-2 text-gray-300">or drag a saved plan here</p>
+                    <p className="text-sm whitespace-pre-line">{t('drawer.selectItems')}</p>
+                    <p className="text-xs mt-2 text-gray-300">{t('drawer.dragSavedHere')}</p>
                   </>
               }
             </div>
@@ -863,24 +880,24 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           <div className="flex gap-2">
             {loadedPlanId && (
-              <button onClick={() => { onClearLoadedPlan(); onPlanNameChange('My Trip Plan') }}
+              <button onClick={() => { onClearLoadedPlan(); onPlanNameChange(t('plan.defaultName')) }} data-tid="chat.plan-new"
                 className="px-3 py-2.5 border border-gray-300 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition-all shrink-0">
-                New
+                {t('drawer.new')}
               </button>
             )}
-            <button onClick={save} disabled={saving || selectedCount === 0}
+            <button onClick={save} data-tid="chat.plan-save" disabled={saving || selectedCount === 0}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 text-sm transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Saving…' : loadedPlanId ? 'Update Plan' : 'Save Plan'}
+              {saving ? t('drawer.saving') : loadedPlanId ? t('drawer.update') : t('drawer.save')}
             </button>
           </div>
           {selectedCount > 0 && (
-            <button onClick={saveAndClear} disabled={saving}
+            <button onClick={saveAndClear} data-tid="chat.plan-save-send" disabled={saving}
               className="w-full flex items-center justify-center gap-2 py-2 border border-slate-300 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50">
-              <Bookmark size={12} /> Save &amp; Send to Saved Plans
+              <Bookmark size={12} /> {t('drawer.saveSend')}
             </button>
           )}
-          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{saveMsg}</p>}
+          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg === 'failed' ? 'text-red-600' : 'text-green-600'}`}>{t(`drawer.msg.${saveMsg}`)}</p>}
 
           {/* Saved plans — drop zone for current plan */}
           <div
@@ -897,11 +914,11 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
             }}
           >
             <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 px-2 py-1.5 rounded-lg transition-all ${isDragOverSaved ? 'bg-teal-100 text-teal-700 border-2 border-dashed border-teal-400' : 'text-gray-500'}`}>
-              {isDragOverSaved ? '↓ Drop here to save plan' : 'Saved Plans'}
+              {isDragOverSaved ? t('drawer.dropToSave') : t('drawer.savedPlans')}
             </h3>
-            {loadingPlans && <p className="text-xs text-gray-400 text-center py-2">Loading…</p>}
+            {loadingPlans && <p className="text-xs text-gray-400 text-center py-2">{t('drawer.loading')}</p>}
             {savedPlans.length === 0 && !loadingPlans && !isDragOverSaved && (
-              <p className="text-xs text-gray-300 text-center py-2">No saved plans yet</p>
+              <p className="text-xs text-gray-300 text-center py-2">{t('drawer.noSaved')}</p>
             )}
             <div className="space-y-2">
               {savedPlans.map(plan => {
@@ -919,7 +936,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                         <p className="text-sm font-medium text-gray-800 truncate">{plan.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-gray-400">{plan.created_at?.slice(0, 10)}</p>
-                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${planCost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
+                          {planCost > 0 && <span className="text-xs font-medium text-teal-600">${fmtNumber(planCost, { maximumFractionDigits: 0 })}</span>}
                           {planBudget && (
                             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${planBudget.status === 'under' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                               {planBudget.label}
@@ -927,32 +944,32 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                           )}
                         </div>
                       </div>
-                      <button onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id}
+                      <button onClick={() => deletePlan(plan.id)} disabled={deletingId === plan.id} data-tid="chat.plan-delete" aria-label={t('drawer.deletePlan')}
                         className="ml-2 text-gray-400 hover:text-red-500 transition-colors shrink-0">
                         {deletingId === plan.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                       </button>
                     </div>
                     <div className="flex gap-1.5 mt-1.5">
-                      <button onClick={() => onLoadPlan(plan)}
+                      <button onClick={() => onLoadPlan(plan)} data-tid="chat.plan-load"
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
-                        {isLoaded ? <><Check size={11} /> Loaded</> : <><RefreshCw size={11} /> Load</>}
+                        {isLoaded ? <><Check size={11} /> {t('drawer.loaded')}</> : <><RefreshCw size={11} /> {t('drawer.load')}</>}
                       </button>
-                      <WatchFareButton variant="card" label="Watch" trip={tripFromPlan(plan)} source="saved_plan" />
-                      <button onClick={() => setViewingPlan(plan)}
+                      <WatchFareButton variant="card" label={t('drawer.watch')} trip={tripFromPlan(plan)} source="saved_plan" />
+                      <button onClick={() => setViewingPlan(plan)} data-tid="chat.plan-view"
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
-                        <Eye size={11} /> View
+                        <Eye size={11} /> {t('drawer.view')}
                       </button>
-                      <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id}
-                        title="Copy a public share link — no login needed to view"
+                      <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id} data-tid="chat.plan-share"
+                        title={t('drawer.shareTitle')}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
-                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} Share
+                        {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} {t('drawer.share')}
                       </button>
                     </div>
                     <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
-                        ? <p className="text-[11px] text-red-500 mt-1">Couldn't create share link</p>
-                        : <p className="text-[11px] text-violet-600 mt-1 break-all">🔗 Link copied: {shareMsg.url}</p>
+                        ? <p className="text-[11px] text-red-500 mt-1">{t('drawer.shareFailed')}</p>
+                        : <p className="text-[11px] text-violet-600 mt-1 break-all">{t('drawer.linkCopied', { url: shareMsg.url })}</p>
                     )}
                   </div>
                 )
@@ -977,12 +994,8 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
 // ─── Suggestions ─────────────────────────────────────────────────────────────
 
-const SUGGESTIONS = [
-  "Plan a 5-day trip to Tokyo on a $2000 budget",
-  "What do I need for a visa to Thailand as a US citizen?",
-  "Find me cheap flights from NYC to Paris in June",
-  "Suggest a romantic getaway in Europe for a week",
-]
+// Starter prompts: text comes from the chat catalogue (suggestion.<n>)
+const SUGGESTIONS = [1, 2, 3, 4]
 
 // ─── Suggestion chips after planning ────────────────────────────────────────
 
@@ -991,7 +1004,7 @@ function SuggestionsBar({ chips, onSelect }) {
   return (
     <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
       {chips.map((chip, i) => (
-        <button key={i} onClick={() => onSelect(chip)}
+        <button key={i} onClick={() => onSelect(chip)} data-tid="chat.suggestion-chip"
           className="px-3 py-1 text-xs font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-full hover:bg-teal-100 hover:border-teal-300 transition-all active:scale-95">
           {chip}
         </button>
@@ -1026,7 +1039,7 @@ function FollowUpChips({ chips, onSelect }) {
   return (
     <div className="flex flex-wrap gap-1.5 mt-2">
       {chips.map((chip, i) => (
-        <button key={i} onClick={() => onSelect(chip)}
+        <button key={i} onClick={() => onSelect(chip)} data-tid="chat.followup-chip"
           className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full hover:bg-indigo-100 hover:border-indigo-400 transition-all active:scale-95 text-left">
           {chip}
         </button>
@@ -1038,6 +1051,7 @@ function FollowUpChips({ chips, onSelect }) {
 // ─── Real-time budget tracker ────────────────────────────────────────────────
 
 function BudgetTracker({ selections, searchContext }) {
+  const { t } = useTranslation('chat')
   const budget = searchContext?.budget_usd
   if (!budget || budget <= 0) return null
   const cost = computePlanCost(selections, searchContext)
@@ -1049,10 +1063,10 @@ function BudgetTracker({ selections, searchContext }) {
   return (
     <div className="mb-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
       <div className="flex items-center justify-between text-xs mb-1.5">
-        <span className="text-gray-500 font-medium">Plan Cost</span>
+        <span className="text-gray-500 font-medium">{t('budget.planCost')}</span>
         <span className={`font-bold ${textColor}`}>
-          ${cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-          <span className="text-gray-400 font-normal">{' / '}${budget.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          ${fmtNumber(cost, { maximumFractionDigits: 0 })}
+          <span className="text-gray-400 font-normal">{' / '}${fmtNumber(budget, { maximumFractionDigits: 0 })}</span>
         </span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
@@ -1068,6 +1082,7 @@ function BudgetTracker({ selections, searchContext }) {
 // ─── Message actions (copy + retry) ─────────────────────────────────────────
 
 function MessageActions({ content, onRetry, isError }) {
+  const { t } = useTranslation('chat')
   const [copied, setCopied] = useState(false)
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content)
@@ -1076,15 +1091,15 @@ function MessageActions({ content, onRetry, isError }) {
   }
   return (
     <div className="flex gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-      <button onClick={handleCopy}
+      <button onClick={handleCopy} data-tid="chat.copy"
         className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">
         {copied ? <Check size={10} /> : <Copy size={10} />}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? t('action.copied') : t('action.copy')}
       </button>
       {isError && onRetry && (
-        <button onClick={onRetry}
+        <button onClick={onRetry} data-tid="chat.retry"
           className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50">
-          <RefreshCw size={10} /> Retry
+          <RefreshCw size={10} /> {t('action.retry')}
         </button>
       )}
     </div>
@@ -1094,12 +1109,13 @@ function MessageActions({ content, onRetry, isError }) {
 // ─── Main ChatPage ───────────────────────────────────────────────────────────
 
 export default function ChatPage() {
+  const { t } = useTranslation('chat')
   const { user, token } = useAuth()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [isPlanOpen, setIsPlanOpen] = useState(false)
-  const [planName, setPlanName] = useState('My Trip Plan')
+  const [planName, setPlanName] = useState(() => t('plan.defaultName'))
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer —
   // needed to date its hotel stay and price hotel nights
@@ -1421,7 +1437,7 @@ export default function ChatPage() {
             const hasContent = cur.content && cur.content.trim()
             updated[assistantIdx] = {
               ...cur,
-              content: hasContent ? cur.content : 'Sorry — something went wrong while answering that. Please try again.',
+              content: hasContent ? cur.content : t('error.generic'),
               streaming: false,
               error: true,
             }
@@ -1455,7 +1471,7 @@ export default function ChatPage() {
             const isEmpty = !(cur.content && cur.content.trim()) && !structuredReceived && !planActionsReceived && !errorReceived
             updated[assistantIdx] = {
               ...cur,
-              content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
+              content: isEmpty ? t('error.noResponse') : cur.content,
               streaming: false,
               error: cur.error || isEmpty,
             }
@@ -1476,7 +1492,7 @@ export default function ChatPage() {
             const isEmpty = !(cur.content && cur.content.trim()) && !structuredReceived && !planActionsReceived && !errorReceived
             updated[assistantIdx] = {
               ...cur,
-              content: isEmpty ? "Sorry — I didn't get a response there. Please try asking again." : cur.content,
+              content: isEmpty ? t('error.noResponse') : cur.content,
               streaming: false,
               error: cur.error || isEmpty,
             }
@@ -1490,7 +1506,7 @@ export default function ChatPage() {
       (error) => {
         setMessages(prev => {
           const updated = [...prev]
-          updated[assistantIdx] = { role: 'assistant', content: `Sorry, something went wrong: ${error.message}`, error: true }
+          updated[assistantIdx] = { role: 'assistant', content: t('error.withMessage', { message: error.message }), error: true }
           return updated
         })
         setIsStreaming(false)
@@ -1503,7 +1519,7 @@ export default function ChatPage() {
       sessionContext,
     )
     stopRef.current = cleanup
-  }, [messages, isStreaming, token, sessionContext])
+  }, [messages, isStreaming, token, sessionContext, t])
 
   const handleStop = () => {
     if (stopRef.current) {
@@ -1539,15 +1555,15 @@ export default function ChatPage() {
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-5 shadow-lg">
               <Plane className="text-white" size={28} />
             </div>
-            <h2 className="font-display text-2xl font-bold text-slate-800 mb-2">Travel Planner Chat</h2>
+            <h2 className="font-display text-2xl font-bold text-slate-800 mb-2">{t('page.title')}</h2>
             <p className="text-slate-500 mb-8 text-center max-w-md">
-              Chat with your AI travel assistant. Ask for a full trip plan and results will stream in real-time with interactive cards.
+              {t('page.intro')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
-              {SUGGESTIONS.map((s, i) => (
-                <button key={i} onClick={() => sendMessage(s)}
+              {SUGGESTIONS.map((n) => (
+                <button key={n} onClick={() => sendMessage(t(`suggestion.${n}`))} data-tid={`chat.starter-${n}`}
                   className="text-left px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:bg-teal-50/80 hover:-translate-y-0.5 transition-all duration-150 shadow-sm hover:shadow-md">
-                  {s}
+                  {t(`suggestion.${n}`)}
                 </button>
               ))}
             </div>
@@ -1585,9 +1601,9 @@ export default function ChatPage() {
                             <SuggestionsBar chips={msg.suggestions} onSelect={(chip) => sendMessage(chip)} />
                           )}
                           {msg.importLink && (
-                            <button type="button" onClick={() => { track('import_from_chat', 'chat', {}); navigate(chatImportLink(msg.importLink)) }}
+                            <button type="button" data-tid="chat.import-link" onClick={() => { track('import_from_chat', 'chat', {}); navigate(chatImportLink(msg.importLink)) }}
                               className="self-start inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600">
-                              <Link2 size={15} /> Plan a trip from this link
+                              <Link2 size={15} /> {t('page.planFromLink')}
                             </button>
                           )}
                         </div>
@@ -1607,39 +1623,39 @@ export default function ChatPage() {
           <BudgetTracker selections={selections} searchContext={planTrip} />
           {messages.length > 0 && !isStreaming && (
             <div className="flex justify-end mb-2">
-              <button onClick={clearChat} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500"><Trash2 size={12} /> Clear chat</button>
+              <button onClick={clearChat} data-tid="chat.clear" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500"><Trash2 size={12} /> {t('page.clear')}</button>
             </div>
           )}
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="Ask about your next trip..." rows={1} disabled={isStreaming}
+                placeholder={t('page.placeholder')} data-tid="chat.input" rows={1} disabled={isStreaming}
                 className="w-full resize-none px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm bg-white max-h-36 overflow-y-auto"
                 style={{ minHeight: '48px' }}
                 onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 144) + 'px' }} />
             </div>
             {isStreaming ? (
-              <button onClick={handleStop} className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-sm" title="Stop">
+              <button onClick={handleStop} data-tid="chat.stop" className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-sm" title={t('page.stop')} aria-label={t('page.stop')}>
                 <Square size={16} fill="white" />
               </button>
             ) : (
-              <button onClick={() => sendMessage(input)} disabled={!input.trim()}
-                className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white shadow-sm" title="Send">
+              <button onClick={() => sendMessage(input)} data-tid="chat.send" disabled={!input.trim()}
+                className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white shadow-sm" title={t('page.send')} aria-label={t('page.send')}>
                 <Send size={16} />
               </button>
             )}
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 text-center">AI-powered travel assistant. Verify important details with official sources.</p>
+          <p className="text-[11px] text-slate-400 mt-2 text-center">{t('page.disclaimer')}</p>
         </div>
       </div>
 
       {/* My Plan floating button */}
       {(() => { const cost = computePlanCost(selections, planTrip); return (
-      <button onClick={() => setIsPlanOpen(true)}
+      <button onClick={() => setIsPlanOpen(true)} data-tid="chat.open-plan"
         className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-700 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
         <Bookmark size={14} />
-        <span className="text-xs">My Plan</span>
-        {cost > 0 && <span className="text-[10px] font-bold opacity-80">${cost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>}
+        <span className="text-xs">{t('drawer.title')}</span>
+        {cost > 0 && <span className="text-[10px] font-bold opacity-80">${fmtNumber(cost, { maximumFractionDigits: 0 })}</span>}
         {selectedCount > 0 && <span className="bg-white text-teal-700 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{selectedCount}</span>}
       </button>
       )})()}
@@ -1720,7 +1736,7 @@ function fmtDate(d) {
   if (!d) return ''
   try {
     const [y, m, day] = d.split('-').map(Number)
-    return new Date(y, m - 1, day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    return fmtLocaleDate(new Date(y, m - 1, day), { weekday: 'short', month: 'short', day: 'numeric' })
   } catch { return d }
 }
 
@@ -1766,6 +1782,7 @@ function DayCardSkeleton() {
 }
 
 function TripPlanView({ tripMap, itinerary, generating }) {
+  const { t } = useTranslation('chat')
   const [allOpen, setAllOpen] = useState(true)
   const days = itinerary?.days || []
   const summary = itinerary?.trip_summary
@@ -1848,7 +1865,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
             {/* Origin departure pin (decorative only — not included in bounds) */}
             {originPoint && (
               <Marker position={originPoint} icon={makeOriginIcon()}>
-                <Popup><strong>{tripMap?.origin || 'Origin'}</strong><br/><span style={{color:'#64748b',fontSize:'11px'}}>Departure city</span></Popup>
+                <Popup><strong>{tripMap?.origin || t('trip.origin')}</strong><br/><span style={{color:'#64748b',fontSize:'11px'}}>{t('trip.departureCity')}</span></Popup>
               </Marker>
             )}
 
@@ -1857,7 +1874,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
               <Marker key={`city-${i}`} position={[c.lat, c.lng]} icon={makeNumberedIcon(i + 1, PALETTE_HEX[i % PALETTE_HEX.length])}>
                 <Popup>
                   <strong>{c.city}</strong>
-                  {c.nights && <><br/><span style={{color:'#64748b',fontSize:'11px'}}>{c.nights} nights</span></>}
+                  {c.nights && <><br/><span style={{color:'#64748b',fontSize:'11px'}}>{t('trip.nights', { count: Number(c.nights) })}</span></>}
                 </Popup>
               </Marker>
             ))}
@@ -1879,7 +1896,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
           {generating && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-[999]">
               <div className="flex items-center gap-2 bg-white/90 border border-gray-200 rounded-full px-3 py-1.5 shadow text-xs text-teal-700 font-medium">
-                <Loader2 size={12} className="animate-spin" /> Plotting your journey…
+                <Loader2 size={12} className="animate-spin" /> {t('trip.plotting')}
               </div>
             </div>
           )}
@@ -1896,15 +1913,15 @@ function TripPlanView({ tripMap, itinerary, generating }) {
             <p className="text-slate-400 text-xs mt-1">
               {tripMap?.departure_date && fmtDate(tripMap.departure_date)}
               {tripMap?.return_date && ` – ${fmtDate(tripMap.return_date)}`}
-              {summary?.total_nights > 0 && ` · ${summary.total_nights} nights`}
-              {numDays > 0 && ` · ${nonTravelDays} full days`}
-              {tripMap?.num_travelers > 1 && ` · ${tripMap.num_travelers} travelers`}
+              {summary?.total_nights > 0 && ` · ${t('trip.nights', { count: summary.total_nights })}`}
+              {numDays > 0 && ` · ${t('trip.fullDays', { count: nonTravelDays })}`}
+              {tripMap?.num_travelers > 1 && ` · ${t('trip.travelers', { count: tripMap.num_travelers })}`}
             </p>
           </div>
           {summary?.total_cost_usd > 0 && (
             <div className="text-right shrink-0">
-              <p className="font-extrabold text-teal-300 text-xl">${summary.total_cost_usd.toLocaleString()}</p>
-              <p className="text-slate-400 text-[10px] mt-0.5">est. per person</p>
+              <p className="font-extrabold text-teal-300 text-xl">${fmtNumber(summary.total_cost_usd)}</p>
+              <p className="text-slate-400 text-[10px] mt-0.5">{t('trip.estPerPerson')}</p>
             </div>
           )}
         </div>
@@ -1926,7 +1943,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
       {/* ── Intercity transport ──────────────────────────────────────────── */}
       {intercity.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-0.5">Getting there</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-0.5">{t('trip.gettingThere')}</p>
           <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
             {intercity.map((leg, i) => (
               <div key={i} className="shrink-0 bg-white border border-gray-200 rounded-xl p-3.5 min-w-[190px] shadow-sm">
@@ -1951,7 +1968,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
       {hasError && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
           <AlertCircle size={14} className="shrink-0" />
-          <span>Could not build itinerary — please try again.</span>
+          <span>{t('trip.buildFailed')}</span>
         </div>
       )}
 
@@ -1962,13 +1979,14 @@ function TripPlanView({ tripMap, itinerary, generating }) {
       {days.length > 0 && (
         <div className="flex items-center justify-between px-0.5">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            {numDays}-day itinerary
+            {t('trip.daysItinerary', { n: numDays })}
           </p>
           <button
             onClick={() => setAllOpen(v => !v)}
+            data-tid="chat.days-toggle"
             className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-1"
           >
-            {allOpen ? <><ChevronUp size={10} /> Collapse all</> : <><ChevronDown size={10} /> Expand all</>}
+            {allOpen ? <><ChevronUp size={10} /> {t('trip.collapseAll')}</> : <><ChevronDown size={10} /> {t('trip.expandAll')}</>}
           </button>
         </div>
       )}
@@ -2003,6 +2021,7 @@ const MORE_PLACE_ICONS = {
 }
 
 function DayCard({ day, palette, isTravel, forceOpen }) {
+  const { t } = useTranslation('chat')
   const [open, setOpen] = useState(true)
   useEffect(() => { setOpen(forceOpen) }, [forceOpen])
 
@@ -2014,13 +2033,14 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
       {/* Header */}
       <button
         onClick={() => setOpen(v => !v)}
+        data-tid="chat.day-toggle"
         className={`w-full flex items-center gap-3 px-4 py-3 text-left ${isTravel ? 'bg-amber-50' : palette.bg} hover:brightness-[0.96] transition-all`}
       >
         <div className="flex-1 flex items-center gap-2 flex-wrap min-w-0">
-          <span className="text-sm font-black text-gray-800 shrink-0">Day {day.day_number}</span>
+          <span className="text-sm font-black text-gray-800 shrink-0">{t('itinerary.day', { n: day.day_number })}</span>
           {day.date && <span className="text-xs text-gray-400 shrink-0">{fmtDate(day.date)}</span>}
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${isTravel ? 'bg-amber-100 text-amber-700' : palette.badge}`}>
-            {isTravel ? '✈️ Travel' : `${day.city}${day.country && !isTravel ? `, ${day.country}` : ''}`}
+            {isTravel ? t('trip.travelDay') : `${day.city}${day.country && !isTravel ? `, ${day.country}` : ''}`}
           </span>
           {day.theme && (
             <span className="text-xs text-gray-400 italic truncate hidden sm:inline">{day.theme}</span>
@@ -2069,7 +2089,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
                 {day.hotel.price_per_night_usd > 0 && (
                   <div className="text-right shrink-0">
                     <p className="text-base font-extrabold text-violet-700">${day.hotel.price_per_night_usd}</p>
-                    <p className="text-[10px] text-violet-400">/night</p>
+                    <p className="text-[10px] text-violet-400">{t('trip.perNight')}</p>
                   </div>
                 )}
               </div>
@@ -2105,7 +2125,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
           {/* Must See */}
           {day.places_to_see?.length > 0 && (
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Must See</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('trip.mustSee')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {day.places_to_see.map((p, i) => (
                   <div key={i} title={p.why || p.name}
@@ -2113,7 +2133,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
                     <span className="text-sm">{MORE_PLACE_ICONS[p.category?.toLowerCase()] || MORE_PLACE_ICONS.default}</span>
                     <span className="text-xs font-semibold text-gray-700">{p.name}</span>
                     {p.entry_usd === 0
-                      ? <span className="text-[10px] text-green-600 font-bold">Free</span>
+                      ? <span className="text-[10px] text-green-600 font-bold">{t('visa.free')}</span>
                       : p.entry_usd > 0
                         ? <span className="text-[10px] text-teal-600 font-semibold">${p.entry_usd}</span>
                         : null}
@@ -2126,7 +2146,7 @@ function DayCard({ day, palette, isTravel, forceOpen }) {
           {/* Dining */}
           {day.dining?.length > 0 && (
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dining</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('trip.dining')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {day.dining.map((r, i) => (
                   <div key={i} className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-xl px-2.5 py-1.5 hover:bg-orange-100 transition-colors cursor-default">
@@ -2158,6 +2178,7 @@ function MessageTrip({ message, children }) {
 }
 
 export function ChatBubble({ message, userName, selections, onSelect, onRetry }) {
+  const { t } = useTranslation('chat')
   const isUser = message.role === 'user'
   const isError = message.error
   const hasSections = message.planning || message.tripMap || Object.keys(message.sections || {}).length > 0
@@ -2201,7 +2222,7 @@ export function ChatBubble({ message, userName, selections, onSelect, onRetry })
             )}
             {!message.tripMap && message.planning && !message.planningDone && Object.keys(message.sections || {}).length === 0 && (
               <div className="flex items-center gap-2 text-sm text-teal-700 mb-2">
-                <Loader2 size={14} className="animate-spin" /> Planning your trip...
+                <Loader2 size={14} className="animate-spin" /> {t('bubble.planning')}
               </div>
             )}
             {message.content && <div className="mt-3"><MarkdownContent text={message.content} /></div>}
