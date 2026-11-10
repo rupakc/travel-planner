@@ -181,6 +181,34 @@ SPA reads plans exactly as today and ignores the new columns.
   - Web: the Web Share API with files where supported; otherwise X/Facebook/WhatsApp/LinkedIn intents,
     copy link and download image.
 
+## 5a. Gamification across the whole journey (owner, 2026-11-10)
+
+Gamification isn't only the Play tab: every phase of a trip and every main feature earns and shows progress.
+One engine powers it, built in Phase 1 next to accounts, so each later phase only adds *hooks*:
+- **Engine**: an append-only XP ledger (idempotency key per award), a rules table (event → points, daily cap per
+  rule), badges with progress (`3/5 countries in Asia`), levels, streaks with a weekly "streak freeze", and
+  seasonal challenges. Awards are computed server-side from events the server already sees (plan saved,
+  watch created, quiz answered), never from client claims, so they can't be faked through telemetry.
+- **Where it shows (same on all clients)**:
+
+| Moment | Gamified touch |
+|---|---|
+| Onboarding | The traveller-type result is the first badge; finishing setup gives starter XP and unlocks the scratch map. |
+| Dreaming | Saving ideas from the feed and remixing them; a "bucket list" goal ("visit 30 countries") with a progress ring. |
+| Planning | A **plan completeness meter** (flights, stay, days filled, visa checked, packing); stress-test fixes earn "Smart planner" progress. |
+| Ready | The prep checklist is a quest: each ticked item fills a "Trip ready" bar, and at 100 % a badge appears with a confetti moment (reduced motion respected). |
+| Price alerts | A "Deal hunter" track: XP for each real drop caught, a savings milestones badge ($50/$200/$1,000 saved), and a target-hit celebration. Estimates never award points. |
+| On the road | Daily check-in streak during the trip, "local explorer" for places visited from Near me, a passport-stamp animation on arriving in a new country. |
+| Memories | Finishing the recap gives XP plus a scratch-map reveal of new countries and region badges (continents, UNESCO sites seen, cuisines tried from ratings). |
+| Social | XP when others *save/remix* your idea (not for likes), helpful-comment badges chosen by the idea's author, friend leaderboards. |
+| Play | The daily quiz, topic packs, a head-to-head quiz with friends (asynchronous) and weekly challenges tied to destinations in the user's upcoming trips ("Know before you go: Japan"). |
+
+- **Guardrails**: no points for raw volume (posts, likes, searches); daily caps per rule; streaks are never
+  punishing (a freeze, no loss messaging); every game element can be hidden in Settings ("Hide Play &
+  points"); points never gate core features.
+- **Telemetry** measures whether each touch helps (retention, plan completion, alert engagement), so point
+  values can be tuned. Values are config, not code.
+
 ## 6. Price alerts that delight
 
 Keep every honesty rule. Add:
@@ -270,15 +298,16 @@ Keep every honesty rule. Add:
 | # | Phase | Ships | Depends on |
 |---|---|---|---|
 | 0 | **Foundations** | Design tokens + light/dark on web, i18n framework + the 7 catalogues for existing web UI, telemetry pipeline (backend + web SDK), parity matrix | — |
-| 1 | **Accounts** | Sign-up/verify/reset, OAuth (config-gated), sessions, account area, delete/export, daily AI quotas | 0 |
+| 1 | **Accounts + game engine** | Sign-up/verify/reset, OAuth (config-gated; the owner sends provider credentials after the build), sessions, account area, delete/export, daily AI quotas, the XP/badge/streak engine and its first hooks (onboarding, email verified) | 0 |
 | 2 | **Journey redesign (web)** | Trips hub, phases, prep checklist, Today, offline pack, expenses, recap, shared onboarding | 0, 1 |
 | 3 | **Price alerts 2.0** | Price story, drop moment, savings, one-tap watch, digest | 2 |
 | 4 | **Sharing** | Share cards, public OG pages, share flows | 2 |
-| 5 | **Social + gamification** | Profiles, ideas feed, moderation, quizzes, XP, badges, leaderboards | 1, 4 |
+| 5 | **Social + Play** | Profiles, ideas feed, moderation, quizzes, head-to-head, leaderboards, challenges | 1, 4 |
 | 6 | **Notifications** | Server categories/quiet hours/caps, trip-phase pushes, APNs | 1, 2 |
 | 7 | **iOS app** | Full parity, starting once Phase 1's API is stable; tracks web phases from then on | 1 |
 | 8 | **Android parity** | All new features + tokens + i18n + onboarding + telemetry | each phase |
 
+Each phase from 2 onwards includes its gamified touches from §5a; they belong to its "done", not to Phase 5.
 Phases 7 and 8 run in parallel with 2–6 once the API for a phase is merged. Each phase follows the same loop:
 plan → parallel implementation agents in worktrees → tests → three independent review passes → fix → PR → merge
 (green CI deploys).
