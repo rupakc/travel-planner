@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { placeTooltip } from '../utils/tour'
 
 const SPOTLIGHT_PADDING = 6
@@ -20,6 +21,7 @@ const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion:
  * Steps whose element isn't on screen when the tour opens are skipped.
  */
 export default function OnboardingTour({ open, steps, onClose }) {
+  const { t } = useTranslation('misc')
   const [shown, setShown] = useState(null)
   const [index, setIndex] = useState(0)
   const [layout, setLayout] = useState({ spot: null, pos: null })
@@ -144,28 +146,28 @@ export default function OnboardingTour({ open, steps, onClose }) {
         <div className="flex items-start justify-between gap-3">
           <h2 id={titleId} className="font-semibold text-gray-900">{step.title}</h2>
           {shown.length > 1 && (
-            <span className="shrink-0 text-[11px] font-medium text-gray-400 mt-0.5">{index + 1} of {shown.length}</span>
+            <span className="shrink-0 text-[11px] font-medium text-gray-400 mt-0.5">{t('tour.stepOf', { current: index + 1, total: shown.length })}</span>
           )}
         </div>
         <p id={bodyId} className="mt-1.5 text-sm text-gray-600 leading-relaxed">{step.body}</p>
 
         <div className="mt-4 flex items-center gap-2">
           {!isLast && (
-            <button type="button" onClick={onClose}
+            <button type="button" onClick={onClose} data-tid="tour.skip"
               className="mr-auto text-xs font-medium text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded px-1">
-              Skip tour
+              {t('tour.skip')}
             </button>
           )}
           {isLast && <span className="mr-auto" />}
           {index > 0 && (
-            <button type="button" onClick={() => setIndex(index - 1)}
+            <button type="button" onClick={() => setIndex(index - 1)} data-tid="tour.back"
               className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
-              Back
+              {t('tour.back')}
             </button>
           )}
-          <button type="button" ref={primaryRef} onClick={next}
+          <button type="button" ref={primaryRef} onClick={next} data-tid={isLast ? 'tour.start' : 'tour.next'}
             className="px-3.5 py-1.5 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2">
-            {isLast ? 'Get started' : 'Next'}
+            {isLast ? t('tour.start') : t('tour.next')}
           </button>
         </div>
       </div>
