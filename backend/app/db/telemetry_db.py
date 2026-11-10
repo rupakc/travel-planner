@@ -68,6 +68,10 @@ def _telemetry_connection() -> Iterator[sqlite3.Connection]:
     conn = sqlite3.connect(str(telemetry_db_path()))
     try:
         conn.row_factory = sqlite3.Row
+        # Lets prune() hand freed pages back to the disk. SQLite applies it
+        # only to a file with no tables yet, and only before WAL is switched
+        # on, so it must come first; a no-op on existing files.
+        conn.execute("PRAGMA auto_vacuum=INCREMENTAL")
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA busy_timeout=5000")
@@ -305,11 +309,16 @@ def rollup_day(day: str) -> int:
 
 
 def prune(before_ms: int) -> int:
-    """Delete raw events older than ``before_ms``; returns the count."""
+    """Delete raw events older than ``before_ms``, then return the freed
+    pages to the disk (``auto_vacuum=INCREMENTAL``); returns the count."""
     with _telemetry_connection() as conn:
-        return conn.execute(
+        n = conn.execute(
             "DELETE FROM telemetry_events WHERE ts < ?", (before_ms,)
         ).rowcount
+        conn.commit()
+        if n:
+            conn.execute("PRAGMA incremental_vacuum").fetchall()
+        return n
 
 
 def summary(days: int, now: datetime | None = None) -> dict:

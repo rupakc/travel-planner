@@ -88,3 +88,19 @@ def test_telemetry_db_is_separate_file():
         }
     assert "telemetry_events" not in names
     assert {"telemetry_daily", "telemetry_rollups"} <= names
+
+
+def test_new_file_uses_incremental_auto_vacuum():
+    with sqlite3.connect(str(telemetry_db.telemetry_db_path())) as conn:
+        assert conn.execute("PRAGMA auto_vacuum").fetchone()[0] == 2  # INCREMENTAL
+
+
+def test_prune_gives_free_pages_back():
+    pad = "x" * 2000
+    telemetry_db.insert_events(
+        [{**_row(1000 + i), "props": f'{{"p":"{pad}"}}'} for i in range(500)]
+    )
+    path = str(telemetry_db.telemetry_db_path())
+    assert telemetry_db.prune(10**9) == 500
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("PRAGMA freelist_count").fetchone()[0] == 0

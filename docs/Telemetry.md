@@ -132,7 +132,7 @@ These apply to every client; the web implementation is `frontend/src/telemetry/`
 
 Ingestion has a global disk guard on top of the per-caller rate limit (`RATE_LIMIT_TELEMETRY`, 60 batches per 10 minutes). While `telemetry.db` plus its WAL is over `TELEMETRY_MAX_DB_MB` (default 1024), or the current UTC day already holds `TELEMETRY_MAX_EVENTS_PER_DAY` stored events (default 200000), `POST /api/telemetry` still answers `204` but drops the batch, and logs one warning per hour at most. The file size and the day's count are re-read about once a minute and counted in memory in between, so the check costs nothing per request.
 
-An hourly lifespan task (`backend/app/telemetry/maintenance.py`) rolls up every finished UTC day, re-rolls the trailing 7 days (late events from offline clients) and prunes raw events past retention. `telemetry_daily_totals` rows with `platform = '*'` hold exact distinct users and sessions across all events and platforms.
+An hourly lifespan task (`backend/app/telemetry/maintenance.py`) rolls up every finished UTC day, re-rolls the trailing 7 days (late events from offline clients) and prunes raw events past retention. New `telemetry.db` files are created with `auto_vacuum=INCREMENTAL` and each prune runs `PRAGMA incremental_vacuum`, so the file shrinks back after a burst (a file created before this keeps its size until a manual `VACUUM`). `telemetry_daily_totals` rows with `platform = '*'` hold exact distinct users and sessions across all events and platforms.
 
 ## Reading it
 
