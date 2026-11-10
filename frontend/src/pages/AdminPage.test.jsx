@@ -38,6 +38,13 @@ describe('AdminPage analytics tab', () => {
     expect(container.querySelector('[data-tid="admin.telemetry-users-today"]')).not.toBeNull()
   })
 
+  it('keeps the tab absent until the probe settles', async () => {
+    getTelemetrySummary.mockReturnValue(new Promise(() => {}))
+    await act(async () => root.render(<AdminPage />))
+    await flush()
+    expect(tab()).toBeNull()
+  })
+
   it('hides the tab on a 404 from an older backend', async () => {
     getTelemetrySummary.mockRejectedValue({ response: { status: 404 } })
     await act(async () => root.render(<AdminPage />))

@@ -50,6 +50,16 @@ describe('TelemetrySummary', () => {
     expect(container.querySelector('[data-tid="admin.telemetry-users-7d"]').textContent).toContain('17')
   })
 
+  it('uses users_7d when present and labels the summed fallback as user-days', () => {
+    render(<TelemetrySummary summary={{ ...summary, users_7d: 9 }} />)
+    let tile = container.querySelector('[data-tid="admin.telemetry-users-7d"]')
+    expect(tile.textContent).toContain('9')
+    expect(tile.textContent).not.toContain('User-days')
+    render(<TelemetrySummary summary={summary} />)
+    tile = container.querySelector('[data-tid="admin.telemetry-users-7d"]')
+    expect(tile.textContent).toContain('User-days (7 days)')
+  })
+
   it('renders an accessible chart and both tables', () => {
     render(<TelemetrySummary summary={summary} />)
     const svg = container.querySelector('svg[role="img"]')

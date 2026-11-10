@@ -200,6 +200,13 @@ def summary(days: int, now: datetime | None = None) -> dict:
             "WHERE day >= ? AND day < ? GROUP BY event",
             (first.isoformat(), today.isoformat()),
         ).fetchall()
+    week_start = today - timedelta(days=6)
+    week_ms = int(
+        datetime(
+            week_start.year, week_start.month, week_start.day, tzinfo=UTC
+        ).timestamp()
+        * 1000
+    )
     with _telemetry_connection() as conn:
         live = conn.execute(
             "SELECT COUNT(*) AS events, "
@@ -213,6 +220,11 @@ def summary(days: int, now: datetime | None = None) -> dict:
             "WHERE ts >= ? GROUP BY event",
             (today_ms,),
         ).fetchall()
+        users_7d = conn.execute(
+            "SELECT COUNT(DISTINCT coalesce(user_id, anon_id)) AS n "
+            "FROM telemetry_events WHERE ts >= ?",
+            (week_ms,),
+        ).fetchone()["n"]
         screens = conn.execute(
             "SELECT json_extract(props, '$.route') AS route, COUNT(*) AS views "
             "FROM telemetry_events WHERE event = 'screen_view' AND ts >= ? "
@@ -246,4 +258,7 @@ def summary(days: int, now: datetime | None = None) -> dict:
         "days": out_days,
         "top_events": [{"event": e, "events": n} for e, n in ranked],
         "top_screens": [{"route": r["route"], "views": r["views"]} for r in screens],
+        # Distinct users over the trailing 7 UTC days (today included), from raw
+        # events. Additive: the previous SPA ignores it.
+        "users_7d": users_7d,
     }

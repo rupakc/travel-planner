@@ -13,7 +13,7 @@ export default function AdminPage() {
   const { t: tt } = useTranslation('adminTelemetry')
   const [tab, setTab] = useState('Users')
   // Probed once on mount: a 404 means an older backend, so the tab is hidden.
-  const [analytics, setAnalytics] = useState({ summary: null, error: null, hidden: false })
+  const [analytics, setAnalytics] = useState({ summary: null, error: null, hidden: true })
 
   useEffect(() => {
     let live = true

@@ -106,13 +106,16 @@ export default function TelemetrySummary({ summary, error }) {
 
   const days = fillDays(summary.days)
   const today = days[days.length - 1]
-  const week = days.slice(-7).reduce((s, d) => s + d.users, 0)
+  // users_7d is a true distinct count; an older backend omits it, so fall back
+  // to the sum of daily users, labelled as user-days.
+  const distinct = Number.isFinite(summary.users_7d)
+  const week = distinct ? summary.users_7d : days.slice(-7).reduce((s, d) => s + d.users, 0)
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Tile tid="admin.telemetry-users-today" label={t('usersToday')} value={today.users} />
         <Tile tid="admin.telemetry-sessions-today" label={t('sessionsToday')} value={today.sessions} />
-        <Tile tid="admin.telemetry-users-7d" label={t('users7d')} value={week} />
+        <Tile tid="admin.telemetry-users-7d" label={t(distinct ? 'users7d' : 'userDays7')} value={week} />
       </div>
       <div className="p-4 bg-white border border-gray-200 rounded-xl">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('chartTitle')}</h3>
