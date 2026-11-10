@@ -95,11 +95,13 @@ async def lifespan(app: FastAPI):
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.price_watch_db import create_price_watch_tables
+    from .db.telemetry_db import create_telemetry_tables
 
     create_fare_watch_tables()
     create_price_watch_tables()
     create_notifications_table()
     create_devices_table()
+    create_telemetry_tables()
     price_watch.register_builtin_sources()
     from .core import llm
 
