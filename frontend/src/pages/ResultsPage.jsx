@@ -26,6 +26,7 @@ import BestValuePackage from '../components/BestValuePackage'
 import BudgetPlanner from '../components/BudgetPlanner'
 import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flightKey } from '../utils/budgetPlanner'
 import { safeUrl } from '../utils/planPrint'
+import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
@@ -1942,74 +1943,10 @@ function PricingAdvisorBanner({ data, departureDate }) {
 
 // ─── Emergency Card Section ───────────────────────────────────────────────────
 
-const tr = (key, opts) => i18n.t(`results:${key}`, opts)
-
-function emergencyCardBodyHtml(card) {
-  const numbers = card?.emergency_numbers || {}
-  const phrases = card?.local_phrases || []
-  const laws = card?.local_laws || []
-  const hospitals = card?.hospitals || []
-  const embassy = card?.embassy
-
-  const lawsHtml = laws.map(l => `
-    <div style="margin:4px 0;padding:6px 8px;border-radius:4px;background:${l.severity === 'critical' ? '#fee2e2' : '#fef3c7'};">
-      <strong>${l.law}</strong>: ${l.detail}
-    </div>`).join('')
-
-  const phrasesHtml = phrases.map(p => `
-    <tr>
-      <td style="padding:4px 6px;border:1px solid #ddd;">${p.english}</td>
-      <td style="padding:4px 6px;border:1px solid #ddd;">${p.local}</td>
-      <td style="padding:4px 6px;border:1px solid #ddd;color:#555;">${p.phonetic}</td>
-    </tr>`).join('')
-
-  return `
-    <h2>${tr('emergency.numbers')}</h2>
-    <div class="nums">
-      <div class="num-box"><strong>${numbers.police || '—'}</strong>${tr('emergency.police')}</div>
-      <div class="num-box"><strong>${numbers.ambulance || '—'}</strong>${tr('emergency.ambulance')}</div>
-      <div class="num-box"><strong>${numbers.fire || '—'}</strong>${tr('emergency.fire')}</div>
-      <div class="num-box"><strong>${numbers.tourist_police || '—'}</strong>${tr('emergency.touristPolice')}</div>
-    </div>
-    ${embassy ? `<h2>${tr('emergency.embassy')}</h2><p><strong>${embassy.name}</strong><br/>${embassy.address}<br/>📞 ${embassy.phone} | ${tr('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}<br/>🌐 <a href="${embassy.website}">${embassy.website}</a> | ${embassy.hours}</p>` : ''}
-    ${!embassy && card?.home_country_note ? `<p><em>${card.home_country_note}</em></p>` : ''}
-    ${hospitals.length ? `<h2>${tr('emergency.hospitals')}</h2>${hospitals.map(h => `<p><strong>${h.name}</strong> — 📞 ${h.phone}<br/>${h.address}<br/><em>${h.notes || ''}</em></p>`).join('')}` : ''}
-    ${phrases.length ? `<h2>${tr('emergency.phrases')}</h2><table><tr><th>${tr('emergency.english')}</th><th>${tr('emergency.local')}</th><th>${tr('emergency.phonetic')}</th></tr>${phrasesHtml}</table>` : ''}
-    ${laws.length ? `<h2>${tr('emergency.laws')}</h2>${lawsHtml}` : ''}`
-}
-
 function printEmergencyCard(data, destination) {
-  const cities = Array.isArray(data?.cities) ? data.cities : null
-  const title = cities
-    ? cities.map(c => (c.city || '').split(',')[0].trim()).filter(Boolean).join(' → ')
-    : destination
-
   const win = window.open('', '_blank', 'width=820,height=700')
   if (!win) return
-
-  const bodyHtml = cities
-    ? cities.map(c => `<div class="city-card"><h1 style="margin-top:18px">📍 ${c.city}</h1>${emergencyCardBodyHtml(c)}</div>`).join('<hr style="margin:16px 0;border:none;border-top:2px solid #ddd"/>')
-    : emergencyCardBodyHtml(data)
-
-  win.document.write(`<!DOCTYPE html><html><head><title>${tr('emergency.cardTitle', { title })}</title>
-    <style>
-      body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;font-size:13px;color:#111}
-      h1{font-size:17px;margin-bottom:4px} h2{font-size:13px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
-      .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
-      .num-box{background:#fee2e2;border-radius:6px;padding:8px;text-align:center}
-      .num-box strong{display:block;font-size:18px;color:#991b1b}
-      table{width:100%;border-collapse:collapse}
-      td,th{border:1px solid #ddd;padding:4px 6px;font-size:12px}
-      th{background:#f3f4f6;font-weight:600}
-      .disclaimer{font-size:10px;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
-      @media print{button{display:none}}
-    </style></head><body>
-    <h1>🚨 ${tr('emergency.cardTitle', { title })}</h1>
-    <p style="font-size:11px;color:#666;">${tr('emergency.verify')}</p>
-    ${bodyHtml}
-    <div class="disclaimer">${tr('emergency.disclaimer')}</div>
-    <br/><button onclick="window.print()">🖨️ ${tr('emergency.printThis')}</button>
-    </body></html>`)
+  win.document.write(buildEmergencyCardHtml({ data, destination }))
   win.document.close()
 }
 
