@@ -11,7 +11,7 @@
     "share": "Compartir",
     "shareTitle": "Copia un enlace público: cualquiera puede ver esta tarjeta del viaje, sin iniciar sesión",
     "save": "Guardar cambios",
-    "confirmDelete": "¿Eliminar \"{{name}}\"?",
+    "confirmDelete": "¿Eliminar «{{name}}»?",
     "msg": {
       "saved": "Guardado ✓",
       "saveFailed": "No se pudo guardar",
@@ -57,7 +57,7 @@
       "days_one": "{{count}} día",
       "days_many": "{{count}} días",
       "days_other": "{{count}} días",
-      "getPlan": "Obtener plan"
+      "getPlan": "Contratar plan"
     },
     "moreInfo": "Más info",
     "source": "Fuente",
@@ -138,7 +138,7 @@
     "add": "Añadir todo a Mi plan",
     "added": "Añadido a Mi plan",
     "undo": "Deshacer",
-    "replaces": "Sustituye tu {{items}} actual.",
+    "replaces": "Sustituye lo que ya tienes en Mi plan: {{items}}.",
     "listAnd": "{{head}} y {{last}}",
     "listSep": ", ",
     "free": "Gratis",
@@ -159,7 +159,7 @@
       "bestReviewed": "La mejor valorada de su categoría",
       "typicalPrice": "{{price}} · igual o por debajo del precio habitual aquí",
       "matches": "{{base}} · encaja con tus intereses",
-      "freeTour": "Visita a pie gratuita",
+      "freeTour": "Tour a pie gratuito",
       "freeEntry": "Entrada gratuita",
       "coversTrip": "Cubre tu viaje de {{days}} días",
       "cheapestPlan": "Plan más barato",
@@ -176,7 +176,7 @@
     "travelers_other": "{{count}} viajeros",
     "book": "Reservar",
     "viewTour": "Ver tour",
-    "getPlan": "Obtener plan",
+    "getPlan": "Contratar plan",
     "hotelTotal": "{{price}} en total",
     "fromLink": "De tu enlace",
     "alsoFromLink": "También de tu enlace: {{names}}",
@@ -195,7 +195,7 @@
   },
   "ics": {
     "dayTheme": "Día {{n}}: {{theme}}",
-    "fromLinkQuote": "De tu enlace: “{{quote}}”",
+    "fromLinkQuote": "De tu enlace: «{{quote}}»",
     "estCost": "Coste est.: {{amount}}",
     "arrives": "Llega a las {{time}} (hora local)",
     "booking": "Reserva: {{url}}",

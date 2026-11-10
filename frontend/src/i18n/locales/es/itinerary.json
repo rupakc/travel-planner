@@ -101,7 +101,7 @@
     "dayLineCity": "Día {{day}} · {{city}} · {{time}}"
   },
   "tours": {
-    "topPick": "Top",
+    "topPick": "Destacado",
     "add": "Añadir",
     "added": "Añadido",
     "addAria": "Añadir {{name}}",

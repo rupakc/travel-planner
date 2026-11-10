@@ -298,7 +298,7 @@
     "above": "Hoy está por encima de lo habitual ({{low}}–{{high}})"
   },
   "body": {
-    "tracking": "Siguiendo <strong>{{title}}</strong>",
+    "tracking": "Vigilando <strong>{{title}}</strong>",
     "shownNow": "Precio mostrado ahora",
     "lookupLater": "Buscaremos el precio en directo cuando empieces a vigilar."
   },
@@ -321,7 +321,7 @@
     "closest": "Es el anuncio más parecido que encontramos para «{{name}}». Comprueba que sea el que quieres.",
     "priceSource": "Precio tal como aparece en los resultados de Google para {{provider}}: el precio «desde» más bajo del anuncio; tu fecha y opciones pueden costar más.",
     "currencyNote": "Los precios están en {{currency}}, tal como los muestra el anuncio.",
-    "seeOn": "Verlo en {{provider}}",
+    "seeOn": "Ver en {{provider}}",
     "forName": "para «{{name}}»",
     "currencyChanged": "El anuncio ahora muestra precios en {{seen}}; solo comparamos {{currency}} con {{currency}}.",
     "cardSource": "Precio tal como aparece en los resultados de Google para {{provider}}.",
@@ -336,7 +336,7 @@
     "yourStay": "tu estancia",
     "find": "Encontraremos <strong>{{name}}</strong> en Google Hotels y vigilaremos su precio en directo para {{stay}}.",
     "findCity": "Encontraremos <strong>{{name}}</strong> en Google Hotels en {{city}} y vigilaremos su precio en directo para {{stay}}.",
-    "tracking": "Siguiendo: <strong>{{title}}</strong> en Google Hotels",
+    "tracking": "Vigilando: <strong>{{title}}</strong> en Google Hotels",
     "priceNights_one": "{{price}} por {{count}} noche",
     "priceNights_other": "{{price}} por {{count}} noches",
     "calledIt": "Tu plan lo llama «{{requested}}»; Google Hotels lo lista como «{{title}}».",
@@ -413,22 +413,22 @@
       "estimate": "Estimación",
       "estimateTitle": "Una estimación de IA de tu búsqueda, que no cambia. Las estimaciones nunca activan alertas.",
       "unavailable": "No disponible",
-      "unavailableTitle": "No disponible en la última comprobación: se muestra el último precio en vivo que vimos.",
+      "unavailableTitle": "No disponible en la última comprobación: se muestra el último precio en directo que vimos.",
       "notChecked": "Sin comprobar",
-      "notCheckedTitle": "La última comprobación de esta parte falló: se muestra el último precio en vivo que vimos.",
+      "notCheckedTitle": "La última comprobación de esta parte falló: se muestra el último precio en directo que vimos.",
       "stale": "En directo · comprobación anterior",
       "staleTitle": "Comprobado en una ronda anterior (volvemos a comprobar hasta 5 actividades cada vez).",
       "live": "En directo",
-      "liveTitle": "Precio en vivo de la última comprobación."
+      "liveTitle": "Precio en directo de la última comprobación."
     },
     "lastCheck": "Última comprobación: {{moves}}.",
-    "noMove": "Última comprobación: ningún precio en vivo cambió.",
-    "couldntPrice": "No pudimos obtener el precio de {{list}}; mantenemos el último precio en vivo.",
+    "noMove": "Última comprobación: ningún precio en directo cambió.",
+    "couldntPrice": "No pudimos obtener el precio de {{list}}; mantenemos el último precio en directo.",
     "reason": {
-      "flight": "los vuelos son la tarifa en vivo más barata en tus fechas, no el vuelo que elegiste",
-      "hotel": "el hotel tiene su precio en vivo de Google Hotels",
+      "flight": "los vuelos son la tarifa en directo más barata en tus fechas, no el vuelo que elegiste",
+      "hotel": "el hotel tiene su precio en directo de Google Hotels",
       "activityPer": "las actividades se cuentan por persona × {{n}}",
-      "activityLive": "las actividades usan sus precios «desde» en vivo"
+      "activityLive": "las actividades usan sus precios «desde» en directo"
     }
   },
   "time": {
@@ -457,7 +457,7 @@
   "status": {
     "pending": "Obteniendo el precio de hoy",
     "watching": "Vigilando",
-    "dropped": "Precio a la baja",
+    "dropped": "Ha bajado el precio",
     "paused": "En pausa",
     "expired": "Finalizado",
     "problem": "No se puede comprobar ahora"
@@ -482,10 +482,10 @@
   "checksPrice": {
     "checked": "Comprobado ahora mismo.",
     "unavailable": "No está disponible para tus fechas ahora mismo. Seguiremos comprobándolo.",
-    "failed": "Los precios en vivo no respondieron. Lo intentaremos de nuevo en menos de una hora.",
+    "failed": "Los precios en directo no respondieron. Lo intentaremos de nuevo en menos de una hora.",
     "errored": "Las comprobaciones están en pausa tras tres intentos seguidos. Pulsa Reintentar cuando quieras.",
-    "expired": "Esta vigilancia ha terminado, así que hemos dejado de comprobarla.",
-    "postponed": "Los precios en vivo están saturados ahora mismo: volveremos a comprobar mañana.",
+    "expired": "Este seguimiento ha terminado, así que hemos dejado de comprobarlo.",
+    "postponed": "Los precios en directo están saturados ahora mismo: volveremos a comprobar mañana.",
     "default": "No se comprobó nada: este precio no se está vigilando ahora mismo."
   }
 }
