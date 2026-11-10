@@ -51,19 +51,27 @@ describe('ThemeProvider', () => {
     vi.restoreAllMocks()
   })
 
-  it('defaults to system and follows a light OS', () => {
-    mockMatchMedia(false)
+  it('defaults to light, even on a dark OS', () => {
+    const mm = mockMatchMedia(true)
     render()
-    expect(theme.theme).toBe('system')
+    expect(theme.theme).toBe('light')
     expect(theme.resolved).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
     expect(document.documentElement.style.colorScheme).toBe('light')
     expect(meta.content).toBe('#ffffff')
+    // OS changes do not affect the default
+    act(() => mm.set(false))
+    act(() => mm.set(true))
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 
-  it('system follows the OS setting live', () => {
+  it('system, once chosen, follows the OS setting live', () => {
     const mm = mockMatchMedia(false)
     render()
+    act(() => theme.setTheme('system'))
+    expect(theme.theme).toBe('system')
+    expect(theme.resolved).toBe('light')
+    expect(localStorage.getItem(THEME_KEY)).toBe('system')
     act(() => mm.set(true))
     expect(theme.resolved).toBe('dark')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
@@ -91,6 +99,15 @@ describe('ThemeProvider', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 
+  it("restores a saved 'system' choice on a dark OS", () => {
+    mockMatchMedia(true)
+    localStorage.setItem(THEME_KEY, 'system')
+    render()
+    expect(theme.theme).toBe('system')
+    expect(theme.resolved).toBe('dark')
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+  })
+
   it('restores a saved choice', () => {
     mockMatchMedia(false)
     localStorage.setItem(THEME_KEY, 'dark')
@@ -103,7 +120,7 @@ describe('ThemeProvider', () => {
     mockMatchMedia(false)
     render()
     act(() => theme.setTheme('sepia'))
-    expect(theme.theme).toBe('system')
+    expect(theme.theme).toBe('light')
   })
 
   it('works in memory when localStorage throws (Safari private mode)', () => {
@@ -111,7 +128,7 @@ describe('ThemeProvider', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('SecurityError') })
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError') })
     render()
-    expect(theme.theme).toBe('system')
+    expect(theme.theme).toBe('light')
     act(() => theme.setTheme('dark'))
     expect(theme.theme).toBe('dark')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
@@ -128,7 +145,7 @@ describe('themeStorage', () => {
   it('swallows storage errors', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('x') })
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('x') })
-    expect(readTheme()).toBe('system')
+    expect(readTheme()).toBe('light')
     expect(() => writeTheme('dark')).not.toThrow()
     vi.restoreAllMocks()
   })

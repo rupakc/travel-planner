@@ -2,7 +2,7 @@
 // Safari private mode and blocked site data throw, and the app must still work.
 export const THEME_KEY = 'tp_theme'
 export const THEMES = ['system', 'light', 'dark']
-export const DEFAULT_THEME = 'system'
+export const DEFAULT_THEME = 'light'
 
 export const isTheme = (t) => THEMES.includes(t)
 

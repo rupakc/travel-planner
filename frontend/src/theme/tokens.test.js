@@ -90,7 +90,8 @@ describe('design tokens', () => {
 
   it('white text on teal-600 in light mode is the unchanged Tailwind pair (AA for large text/UI only)', () => {
     // Tailwind's #0d9488 with white is 3.74:1. Light mode must stay identical to
-    // today, so this pair cannot reach 4.5 without changing the look (see task-4 report).
+    // today in Phase 0, so this pair cannot reach 4.5 without changing the look.
+    // Accepted for Phase 0; the Phase 2 redesign moves primary buttons to teal-700 (5.47:1).
     expect(contrast(color('palette', 'white'), color('palette', 'teal', '600'))).toBeGreaterThanOrEqual(3)
   })
 
