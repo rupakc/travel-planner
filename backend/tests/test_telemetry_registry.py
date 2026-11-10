@@ -51,6 +51,17 @@ def test_type_checks():
     }
 
 
+def test_huge_integers_are_dropped_not_fatal():
+    huge = 10**400
+    assert clean_event({"event": "screen_time", "props": {"ms": huge}})["props"] == {}
+    assert clean_event({"event": "perf", "props": {"value": huge}})["props"] == {}
+    inf = float("inf")
+    assert clean_event({"event": "perf", "props": {"value": inf}})["props"] == {}
+    for bad_ts in (huge, -huge):
+        out = clean_event({"event": "app_open", "ts": bad_ts})
+        assert abs(out["ts"] - int(time.time() * 1000)) < 5000
+
+
 def test_ts_window():
     now = int(time.time() * 1000)
     assert clean_event({"event": "app_open", "ts": now - 1000})["ts"] == now - 1000

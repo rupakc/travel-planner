@@ -62,17 +62,26 @@ def _valid_id(v) -> bool:
     return isinstance(v, str) and _ID_RE.fullmatch(v) is not None
 
 
+_MAX_INT = 2**53
+
+
+def _safe_number(v) -> bool:
+    """A finite int/float within +-2**53 (checked before any float conversion,
+    so a huge JSON integer is dropped instead of raising OverflowError)."""
+    if isinstance(v, bool):
+        return False
+    if isinstance(v, int):
+        return -_MAX_INT <= v <= _MAX_INT
+    return isinstance(v, float) and math.isfinite(v)
+
+
 def _valid(value, typ: str) -> bool:
     if typ == "id":
         return _valid_id(value)
     if typ == "int":
-        return isinstance(value, int) and not isinstance(value, bool)
+        return isinstance(value, int) and _safe_number(value)
     if typ == "float":
-        return (
-            isinstance(value, int | float)
-            and not isinstance(value, bool)
-            and math.isfinite(value)
-        )
+        return _safe_number(value)
     if typ == "bool":
         return isinstance(value, bool)
     if typ.startswith("enum:"):
@@ -97,12 +106,7 @@ def clean_event(raw: dict) -> dict | None:
                 props[key] = raw_props[key]
     now = int(time.time() * 1000)
     ts = raw.get("ts")
-    if (
-        not isinstance(ts, int | float)
-        or isinstance(ts, bool)
-        or not math.isfinite(ts)
-        or abs(ts - now) > _MAX_SKEW_MS
-    ):
+    if not _safe_number(ts) or abs(ts - now) > _MAX_SKEW_MS:
         ts = now
     return {"event": name, "ts": int(ts), "props": props}
 
