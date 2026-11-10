@@ -140,7 +140,10 @@ SPA reads plans exactly as today and ignores the new columns.
   Web uses a redirect; mobile uses `ASWebAuthenticationSession` / Custom Tabs with a callback to the app's
   universal link. Email-verified provider identities link to an existing account with the same verified email;
   anything else creates a new account. One user can have several identities (new `user_identities` table).
-  `GET /api/auth/providers` lists the configured providers, so clients show only working buttons.
+  `GET /api/auth/providers` lists every provider with `configured: true|false`. **Owner, 2026-11-10: the
+  sign-in buttons (Google, Facebook, GitHub, Apple) are always visible.** Tapping one that isn't configured yet
+  shows a friendly inline note ("Google sign-in is coming soon, use email for now"), never an error page.
+  A provider starts working as soon as its credentials are set, with no client update.
 - **Account area**: avatar (provider photo, an uploaded image resized to 256 px WebP and stored on disk under
   2 MB, or generated initials), display name, handle; language, theme (system/light/dark), currency, units,
   home-tab sections and feature toggles (e.g. hide Play, hide community), notification categories + quiet hours,
