@@ -1,6 +1,6 @@
 {
   "interests": {
-    "food": "🍜 Comida",
+    "food": "🍜 Gastronomía",
     "history": "🏛️ Historia",
     "adventure": "🧗 Aventura",
     "culture": "🎭 Cultura",
@@ -12,7 +12,7 @@
     "family": "👨‍👩‍👧 Familia"
   },
   "interestNames": {
-    "food": "comida",
+    "food": "gastronomía",
     "history": "historia",
     "adventure": "aventura",
     "culture": "cultura",
@@ -53,12 +53,12 @@
     "badge": "Planificación de viajes con IA",
     "title": "Planifica tu viaje perfecto",
     "subtitle": "Vuelos, hoteles, actividades, visado, SIM e itinerario, todo en un solo lugar.",
-    "tour": "¿Eres nuevo? Haz un recorrido rápido",
+    "tour": "¿Primera vez por aquí? Haz un recorrido rápido",
     "importLead": "¿Viste un gran viaje en internet?",
     "importLink": "Pega el enlace"
   },
   "drop": {
-    "title": "Suéltala para planear un viaje",
+    "title": "Suéltala para planificar un viaje",
     "body": "Encontraremos cada lugar de tu captura"
   },
   "modes": {
@@ -149,7 +149,7 @@
     "to": "Destino",
     "flyingFrom": "Volando desde",
     "departure": "Salida",
-    "return": "Regreso",
+    "return": "Vuelta",
     "nationality": "Nacionalidad",
     "budget": "Presupuesto (USD)",
     "budgetOptional": "Presupuesto (USD, opcional)",
@@ -199,7 +199,7 @@
     "balanced": "⚖️ Mezcla equilibrada",
     "aria": "Dial de descubrimiento: de clásicos a joyas ocultas",
     "iconic": "Imprescindibles",
-    "offBeaten": "Fuera de lo común"
+    "offBeaten": "Fuera de los circuitos"
   },
   "discover": {
     "finding": "Buscando destinos…",
@@ -209,7 +209,7 @@
     "failed": "La búsqueda falló, inténtalo de nuevo",
     "visaFree": "✓ Sin visado",
     "visaOnArrival": "Visado a la llegada",
-    "eVisa": "e-Visado",
+    "eVisa": "Visado electrónico",
     "visaRequired": "Visado necesario",
     "visaVerify": "Verificar visado",
     "costRange": "~{{low}}–{{high}} US$",
@@ -217,7 +217,7 @@
     "planThisTrip": "Planificar este viaje →"
   },
   "compare": {
-    "intro": "Compara dos o tres destinos lado a lado (costo, vuelos, hoteles, clima y visado) antes de comprometerte con un plan completo.",
+    "intro": "Compara dos o tres destinos lado a lado (coste, vuelos, hoteles, clima y visado) antes de comprometerte con un plan completo.",
     "destination": "Destino {{n}}",
     "removeDestination": "Quitar este destino",
     "removeDestinationN": "Quitar el destino {{n}}",

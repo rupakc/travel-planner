@@ -131,7 +131,7 @@
   "packing": {
     "addItem": "Añadir artículo...",
     "essentialLegend": "* = imprescindibles",
-    "itemsPacked": "{{checked}}/{{total}} artículos empacados",
+    "itemsPacked": "{{checked}}/{{total}} artículos preparados",
     "save": "Guardar en el plan",
     "savedRemove": "Guardado en el plan · Quitar",
     "title": "Lista de equipaje",
@@ -220,7 +220,7 @@
     "travelersCount_one": "{{count}} viajero",
     "travelersCount_other": "{{count}} viajeros",
     "update": "Actualizar búsqueda",
-    "visas": "Visados que ya tienes",
+    "visas": "Visados vigentes",
     "visasPh": "EE. UU., Japón…"
   },
   "stress": {

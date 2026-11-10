@@ -21,12 +21,12 @@
       "badge": "Lugares"
     },
     "walking_tours": {
-      "label": "Free tours a pie",
+      "label": "Tours gratuitos a pie",
       "badge": "Tours a pie"
     },
     "events": {
-      "label": "Qué hay",
-      "badge": "Qué hay"
+      "label": "Agenda local",
+      "badge": "Agenda"
     },
     "visa": {
       "label": "Visado",
@@ -255,7 +255,7 @@
     "beds_one": "{{count}} cama",
     "beds_other": "{{count}} camas",
     "beds_many": "{{count}} camas",
-    "maxCost": "Costo máx. por noche",
+    "maxCost": "Coste máx. por noche",
     "wifiQuality": "Calidad del WiFi",
     "wifi": {
       "basic": "Básica",
@@ -275,7 +275,7 @@
     "fitsBudget": "Se ajusta a tu presupuesto",
     "filterTitle": "Filtros de actividades",
     "interests": "Intereses",
-    "maxCost": "Costo máx. (por persona)",
+    "maxCost": "Coste máx. (por persona)",
     "availability": "Fechas de disponibilidad",
     "minRating": "Valoración mínima"
   },
@@ -307,7 +307,7 @@
     "days_other": "{{count}} días",
     "days_many": "{{count}} días",
     "processing": "Tramitación",
-    "fee": "Tarifa",
+    "fee": "Tasa",
     "free": "Gratis",
     "officialSource": "Fuente oficial",
     "vaccination": "Vacunas y salud",
@@ -327,7 +327,7 @@
     "validity_one": "Validez: {{count}} día",
     "validity_other": "Validez: {{count}} días",
     "validity_many": "Validez: {{count}} días",
-    "getPlan": "Obtener plan"
+    "getPlan": "Contratar plan"
   },
   "tips": {
     "none": "Aún no hay consejos de viaje",
@@ -345,9 +345,9 @@
     "moreInfo": "Más info"
   },
   "forex": {
-    "unavailable": "Información de divisas no disponible: consulta xe.com para ver los tipos en vivo",
+    "unavailable": "Información de divisas no disponible: consulta xe.com para ver los tipos en directo",
     "yourCurrency": "Tu moneda",
-    "rateLoading": "Cargando tipo de cambio en vivo…",
+    "rateLoading": "Cargando tipo de cambio en directo…",
     "whereToExchange": "Dónde cambiar dinero",
     "fees": "Comisiones:",
     "cardAcceptance": "Aceptación de tarjetas",
@@ -379,7 +379,7 @@
     "considerWaiting": "Considera esperar",
     "confidence": "confianza {{level}}",
     "bestWindow": "Mejor momento: {{window}}",
-    "estimate": "Estimación basada en patrones históricos, no datos de mercado en vivo. {{disclaimer}}"
+    "estimate": "Estimación basada en patrones históricos, no datos de mercado en directo. {{disclaimer}}"
   },
   "emergency": {
     "numbers": "Números de emergencia",

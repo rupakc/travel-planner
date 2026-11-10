@@ -66,7 +66,7 @@
       }
     },
     "interest": {
-      "food": "Comida",
+      "food": "Gastronomía",
       "history": "Historia",
       "adventure": "Aventura",
       "culture": "Cultura",
@@ -89,7 +89,7 @@
       "section": "Documentos",
       "permits": "Permisos de residencia",
       "permitsPlaceholder": "Schengen, Reino Unido, EAU…",
-      "visas": "Visados existentes",
+      "visas": "Visados vigentes",
       "visasPlaceholder": "EE. UU., Japón, Canadá…"
     },
     "style": {
@@ -101,14 +101,14 @@
     "save": "Guardar preferencias",
     "saving": "Guardando…",
     "saved": "¡Preferencias guardadas!",
-    "errorWithDetail": "Error: {{detail}}",
+    "errorWithDetail": "Se produjo un error: {{detail}}",
     "saveFailed": "No se pudo guardar"
   },
   "admin": {
     "title": "Panel de administración",
     "tabs": {
       "users": "Usuarios",
-      "feedback": "Comentarios"
+      "feedback": "Opiniones"
     },
     "users": {
       "count_one": "{{count}} usuario",
@@ -174,11 +174,11 @@
       "all": "Todas",
       "any": "Cualquiera",
       "export": "Exportar CSV",
-      "empty": "Aún no hay comentarios.",
+      "empty": "Aún no hay opiniones.",
       "pages": {
         "search": "búsqueda",
         "results": "resultados",
-        "chat": "chat",
+        "chat": "Chat",
         "preferences": "preferencias",
         "admin": "admin"
       },
