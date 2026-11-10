@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { haversineKm } from '../utils/geo'
@@ -66,8 +67,10 @@ function makeNumberedIcon(num, color = 'rgb(var(--c-teal-600))', fromLink = fals
 const CITY_COLORS = ['teal-600', 'indigo-500', 'amber-500', 'red-500', 'violet-500'].map((c) => `rgb(var(--c-${c}))`)
 
 export default function TripMap({ days }) {
+  const { t } = useTranslation('itinerary')
   if (!days?.length) return null
 
+  const tod = (v) => t(`time.${v}`, { defaultValue: v })
   const cityList = [...new Set(days.map(d => d.city).filter(Boolean))]
   const cityColor = Object.fromEntries(
     cityList.map((c, i) => [c, CITY_COLORS[i % CITY_COLORS.length]])
@@ -131,9 +134,11 @@ export default function TripMap({ days }) {
                   {stop.location && (
                     <p style={{ color: 'rgb(var(--c-gray-500))', margin: '2px 0 0' }}>{stop.location}</p>
                   )}
-                  {stop.fromLink && <p style={{ color: 'rgb(var(--c-amber-700))', margin: '2px 0 0', fontWeight: 600 }}>From your link</p>}
+                  {stop.fromLink && <p style={{ color: 'rgb(var(--c-amber-700))', margin: '2px 0 0', fontWeight: 600 }}>{t('map.fromLink')}</p>}
                   <p style={{ color: 'rgb(var(--c-teal-600))', margin: '2px 0 0' }}>
-                    Day {stop.day}{stop.city ? ` · ${stop.city}` : ''} · {stop.time}
+                    {stop.city
+                      ? t('map.dayLineCity', { day: stop.day, city: stop.city, time: tod(stop.time) })
+                      : t('map.dayLine', { day: stop.day, time: tod(stop.time) })}
                   </p>
                 </div>
               </Popup>

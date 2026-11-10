@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { fmtDate, fmtNumber } from '../i18n/format'
 import { scheduleDays, timeRange } from '../utils/schedule'
+
+const usd = (n) => fmtNumber(n, { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
 const TIME_COLS = [
   { key: 'morning',   label: 'Morning',   icon: '🌅', border: 'border-sky-400',    bg: 'bg-sky-50',    text: 'text-sky-700',    dot: 'bg-sky-400' },
@@ -40,6 +44,7 @@ function normalizeTimeOfDay(str) {
 }
 
 function ActivityCard({ slot, col }) {
+  const { t } = useTranslation('itinerary')
   const [expanded, setExpanded] = useState(false)
   const hasDetails = slot.notes || slot.duration_hours || slot.estimated_cost_usd != null
   const range = timeRange(slot)
@@ -60,18 +65,18 @@ function ActivityCard({ slot, col }) {
       )}
       {!expanded && (slot.duration_hours || slot.estimated_cost_usd != null) && (
         <p className="text-xs text-gray-400 mt-1">
-          {slot.duration_hours ? `⏱ ${slot.duration_hours}h` : ''}
+          {slot.duration_hours ? `⏱ ${t('timeline.durationShort', { hours: slot.duration_hours })}` : ''}
           {slot.duration_hours && slot.estimated_cost_usd != null ? ' · ' : ''}
-          {slot.estimated_cost_usd != null ? `$${slot.estimated_cost_usd}` : ''}
+          {slot.estimated_cost_usd != null ? usd(slot.estimated_cost_usd) : ''}
         </p>
       )}
       {expanded && (
         <div className="mt-1.5 pt-1.5 border-t border-current/10 space-y-0.5">
           {slot.duration_hours && (
-            <p className="text-xs text-gray-600">⏱ {slot.duration_hours} hour{slot.duration_hours !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-600">⏱ {t('timeline.durationLong', { count: slot.duration_hours })}</p>
           )}
           {slot.estimated_cost_usd != null && (
-            <p className="text-xs text-gray-600">💰 ${slot.estimated_cost_usd} est.</p>
+            <p className="text-xs text-gray-600">💰 {t('cost.est', { cost: usd(slot.estimated_cost_usd) })}</p>
           )}
           {slot.notes && (
             <p className="text-xs text-gray-500 italic">{slot.notes}</p>
@@ -79,7 +84,7 @@ function ActivityCard({ slot, col }) {
         </div>
       )}
       {hasDetails && (
-        <p className={`text-[11px] ${col.text} opacity-50 mt-1`}>{expanded ? '▲ less' : '▼ more'}</p>
+        <p className={`text-[11px] ${col.text} opacity-50 mt-1`}>{expanded ? t('timeline.less') : t('timeline.more')}</p>
       )}
     </div>
   )
@@ -94,6 +99,7 @@ function EmptySlot() {
 }
 
 function DayCard({ dayData, weatherDay }) {
+  const { t } = useTranslation('itinerary')
   const [collapsed, setCollapsed] = useState(false)
   const wCode = weatherDay?.weather_code
   const gradient = getWeatherGradient(wCode)
@@ -107,7 +113,7 @@ function DayCard({ dayData, weatherDay }) {
     return m
   }, [dayData.slots])
 
-  const dateLabel = new Date(dayData.date + 'T12:00:00').toLocaleDateString('en-US', {
+  const dateLabel = fmtDate(dayData.date + 'T12:00:00', {
     weekday: 'long', month: 'short', day: 'numeric',
   })
 
@@ -116,6 +122,7 @@ function DayCard({ dayData, weatherDay }) {
       {/* Day header */}
       <button
         type="button"
+        data-tid="timeline.day-toggle"
         onClick={() => setCollapsed(c => !c)}
         className={`w-full bg-gradient-to-r ${gradient} text-white px-4 py-3 flex items-center justify-between gap-2 hover:brightness-95 transition-all`}
       >
@@ -150,7 +157,7 @@ function DayCard({ dayData, weatherDay }) {
           <div className="grid grid-cols-3 border-b border-gray-100">
             {TIME_COLS.map(col => (
               <div key={col.key} className="px-2 py-1.5 text-center">
-                <span className="text-sm font-medium text-gray-500">{col.icon} {col.label}</span>
+                <span className="text-sm font-medium text-gray-500">{col.icon} {t(`time.${col.key}`)}</span>
               </div>
             ))}
           </div>
@@ -170,8 +177,8 @@ function DayCard({ dayData, weatherDay }) {
           {dayData.daily_estimated_cost_usd != null && (
             <div className="px-3 pb-3">
               <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                <span>Est. daily spend</span>
-                <span className="font-medium text-gray-600">${dayData.daily_estimated_cost_usd}</span>
+                <span>{t('timeline.dailySpend')}</span>
+                <span className="font-medium text-gray-600">{usd(dayData.daily_estimated_cost_usd)}</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
