@@ -8,6 +8,10 @@ import NationalitySearch from '../components/ui/NationalitySearch'
 import TravelerPanel from '../components/ui/TravelerPanel'
 import { track } from '../utils/analytics'
 import TagInput from '../components/ui/TagInput'
+import ThemeToggle from '../components/ui/ThemeToggle'
+import LanguagePicker from '../components/ui/LanguagePicker'
+import { PrivacySwitch } from '../components/ConsentPrompt'
+import { useTheme } from '../theme/ThemeContext'
 import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Heart, MapPin, Sparkles, Trash2 } from 'lucide-react'
 
 function TasteProfileCard({ token }) {
@@ -103,6 +107,9 @@ const INTERESTS = [
 
 export default function PreferencesPage() {
   const { t } = useTranslation('account')
+  const { t: tp } = useTranslation('privacy')
+  const { t: tc } = useTranslation('common')
+  const { theme } = useTheme()
   const { token, refreshPreferences, user, setUserEmail } = useAuth()
   const { caps } = useAlerts()
   const [prefs, setPrefs] = useState(null)
@@ -262,6 +269,28 @@ export default function PreferencesPage() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* Appearance: applied immediately, not part of Save */}
+        <div className="px-6 md:px-8 py-6 space-y-4">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{tp('section.appearance')}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-medium text-gray-700">{tp('section.theme')}</span>
+            <span className="flex items-center gap-1 text-sm text-slate-600">
+              <ThemeToggle />
+              {tc(`theme.${theme}`, { defaultValue: '' })}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-medium text-gray-700">{tp('section.language')}</span>
+            <LanguagePicker />
+          </div>
+        </div>
+
+        {/* Privacy */}
+        <div className="px-6 md:px-8 py-6 space-y-4">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{tp('section.privacy')}</p>
+          <PrivacySwitch />
         </div>
       </div>
     </div>

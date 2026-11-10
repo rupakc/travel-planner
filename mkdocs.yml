@@ -34,6 +34,7 @@ nav:
       - Chat Assistant: Chat-Assistant.md
       - Personalization: Personalization.md
       - Sharing and Plans: Sharing-and-Plans.md
+      - Privacy: Privacy.md
   - Internals:
       - Architecture: Architecture.md
       - Agent System: Agent-System.md

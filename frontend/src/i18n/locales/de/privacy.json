@@ -1,0 +1,19 @@
+{
+  "prompt": {
+    "title": "Hilf mit, Voyager zu verbessern",
+    "body": "Wir erfassen anonyme Nutzungsdaten (Ansichten, Tipper, Zeiten), um Fehler zu beheben und die App zu verbessern. Nie, was du eingibst.",
+    "allow": "Erlauben",
+    "deny": "Nein danke"
+  },
+  "switch": {
+    "label": "Hilf mit, Voyager zu verbessern",
+    "hint": "Teile anonyme Nutzungsdaten. Nie, was du eingibst, deinen Standort oder deine E-Mail."
+  },
+  "policy": "Datenschutzerklärung",
+  "section": {
+    "appearance": "Darstellung",
+    "theme": "Design",
+    "language": "Sprache",
+    "privacy": "Datenschutz"
+  }
+}

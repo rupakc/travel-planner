@@ -1,0 +1,19 @@
+{
+  "prompt": {
+    "title": "Help improve Voyager",
+    "body": "We collect anonymous usage data (screens, taps, timings) to fix bugs and improve the app. Never what you type.",
+    "allow": "Allow",
+    "deny": "No thanks"
+  },
+  "switch": {
+    "label": "Help improve Voyager",
+    "hint": "Share anonymous usage data. Never what you type, your location or your email."
+  },
+  "policy": "Privacy policy",
+  "section": {
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "language": "Language",
+    "privacy": "Privacy"
+  }
+}
