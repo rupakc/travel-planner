@@ -55,3 +55,15 @@ describe('translated util copy', () => {
     expect(getBudgetStatus(1200, 1000).label).toMatch(/200.*über dem Budget/)
   })
 })
+
+describe('amounts per locale', () => {
+  it('formats util amounts the German way in de', async () => {
+    const { formatPrice } = await import('./priceWatch')
+    const { fmtUsd } = await import('./compare')
+    expect(formatPrice(1234, 'USD')).toBe('$1,234')
+    expect(fmtUsd(1234)).toBe('$1,234')
+    await i18n.changeLanguage('de')
+    expect(formatPrice(1234, 'USD')).toMatch(/^1\.234\s\$$/)
+    expect(fmtUsd(1234)).toMatch(/^1\.234\s\$$/)
+  })
+})

@@ -3567,11 +3567,13 @@ export default function ResultsPage() {
   const flightBudget = budgetCards ? { over: budgetFit.flights.over, hideOver: budgetShowOnlyFits, onShowAll: showAllBudget } : null
   const activityBudget = budgetCards ? { picked: budgetFit.activities.picked } : null
 
+  // The package's reasons are translated text: rebuild them when the language changes
+  const uiLanguage = i18n.language
   const bestValue = useMemo(
     () => (isDone
       ? buildBestValuePackage(results, searchData, budgetTouched && budgetFit ? { caps: capsFromFit(budgetFit) } : undefined)
       : null),
-    [isDone, results, searchData, budgetTouched, budgetFit],
+    [isDone, results, searchData, budgetTouched, budgetFit, uiLanguage],
   )
   const handleApplyPackage = () => {
     if (!bestValue) return
