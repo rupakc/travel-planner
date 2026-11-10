@@ -28,3 +28,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ThemeProvider>
   </React.StrictMode>,
 )
+
+// Telemetry starts after the first render, in idle time, from its own chunk;
+// a failure to load or start it is ignored.
+const startTelemetry = () => {
+  import('./telemetry/client')
+    .then((m) => m.initTelemetry({ appVersion: import.meta.env.VITE_APP_VERSION || '0.0.0' }))
+    .catch(() => {})
+}
+try {
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(startTelemetry, { timeout: 5000 })
+  else setTimeout(startTelemetry, 1)
+} catch { /* never block the app over telemetry */ }

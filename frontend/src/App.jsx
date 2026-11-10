@@ -96,7 +96,24 @@ function Layout() {
   )
 }
 
+// Telemetry is resolved at call time and never awaited (its own chunk, loaded
+// in idle time): it can't delay navigation, and a failing SDK is ignored.
+const telemetry = (fn) => {
+  import('./telemetry/client').then(fn).catch(() => {})
+}
+
 export default function App() {
+  const location = useLocation()
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    telemetry((m) => m.screenView(location.pathname))
+  }, [location.pathname])
+
+  useEffect(() => {
+    telemetry((m) => m.setUserPresent(isAuthenticated))
+  }, [isAuthenticated])
+
   return (
     <Routes>
       <Route path="/login"           element={<LoginPage />} />
