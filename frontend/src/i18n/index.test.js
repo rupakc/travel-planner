@@ -1,0 +1,55 @@
+// @vitest-environment jsdom
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import i18n, { detectLanguage, setLanguage, NAMESPACES } from './index'
+
+const setNavigatorLanguages = (langs) =>
+  vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(langs)
+
+afterEach(async () => {
+  vi.restoreAllMocks()
+  try { localStorage.clear() } catch { /* ignore */ }
+  await i18n.changeLanguage('en')
+})
+
+describe('detectLanguage', () => {
+  it('prefers tp_lang, then navigator.languages, then en', () => {
+    setNavigatorLanguages(['zh-TW', 'en-US'])
+    expect(detectLanguage()).toBe('zh')
+    localStorage.setItem('tp_lang', 'bn')
+    expect(detectLanguage()).toBe('bn')
+    localStorage.setItem('tp_lang', 'xx')
+    setNavigatorLanguages(['pt-BR', 'ja'])
+    expect(detectLanguage()).toBe('en')
+  })
+
+  it('survives storage that throws (private mode)', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied') })
+    setNavigatorLanguages(['fr-CA'])
+    expect(detectLanguage()).toBe('fr')
+  })
+})
+
+describe('setLanguage', () => {
+  it('persists, sets <html lang> and loads the script font once', async () => {
+    await setLanguage('hi')
+    expect(i18n.language).toBe('hi')
+    expect(localStorage.getItem('tp_lang')).toBe('hi')
+    expect(document.documentElement.lang).toBe('hi-IN')
+    await setLanguage('en')
+    await setLanguage('hi')
+    const links = [...document.head.querySelectorAll('link[href*="fonts.googleapis.com"]')]
+    expect(links).toHaveLength(1)
+    expect(links[0].href).toContain('Noto+Sans+Devanagari')
+    expect(i18n.t('common:nav.search')).toBe('खोजें')
+  })
+
+  it('ignores unsupported codes', async () => {
+    await setLanguage('xx')
+    expect(i18n.language).toBe('en')
+  })
+
+  it('bundles every en namespace', () => {
+    expect(NAMESPACES).toContain('common')
+    expect(i18n.hasResourceBundle('en', 'common')).toBe(true)
+  })
+})
