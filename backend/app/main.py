@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import tempfile
 from contextlib import asynccontextmanager
@@ -65,6 +66,7 @@ from .services.serp_flights import close_client as _close_serp_client
 from .telemetry.maintenance import telemetry_maintenance
 
 configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -94,17 +96,24 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db import telemetry_db
     from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.price_watch_db import create_price_watch_tables
-    from .db.telemetry_db import create_telemetry_tables
 
     create_fare_watch_tables()
     create_price_watch_tables()
     create_notifications_table()
     create_devices_table()
-    create_telemetry_tables()
+    # telemetry.db is disposable (not backed up): if it can't be opened, log
+    # and run with telemetry off rather than refuse to start
+    try:
+        telemetry_db.create_telemetry_tables()
+        telemetry_db.set_available(True)
+    except Exception:
+        logger.exception("telemetry store unavailable; telemetry disabled")
+        telemetry_db.set_available(False)
     price_watch.register_builtin_sources()
     from .core import llm
 
@@ -114,7 +123,11 @@ async def lifespan(app: FastAPI):
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
-    telemetry_task = asyncio.create_task(telemetry_maintenance())
+    telemetry_task = (
+        asyncio.create_task(telemetry_maintenance())
+        if telemetry_db.store_available()
+        else None
+    )
     if vm_mode:
         backup_task = vm_backup.start(
             _settings.backup_bucket,
@@ -129,11 +142,12 @@ async def lifespan(app: FastAPI):
             )
         )
     yield
-    telemetry_task.cancel()
-    try:
-        await telemetry_task
-    except asyncio.CancelledError:
-        pass
+    if telemetry_task is not None:
+        telemetry_task.cancel()
+        try:
+            await telemetry_task
+        except asyncio.CancelledError:
+            pass
     await fare_watch.stop_scheduler(fare_watch_task)
     await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled

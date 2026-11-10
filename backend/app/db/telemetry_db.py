@@ -28,6 +28,27 @@ _COLUMNS = (
 )
 
 
+# False when the tables could not be created at startup (corrupt or
+# unwritable telemetry.db): telemetry then runs as if TELEMETRY_ENABLED=false.
+_available = True
+
+
+def set_available(value: bool) -> None:
+    global _available
+    _available = value
+
+
+def store_available() -> bool:
+    return _available
+
+
+def telemetry_active() -> bool:
+    """Telemetry is on: enabled in settings and its store opened at startup."""
+    from ..core.config import settings
+
+    return settings.telemetry_enabled and _available
+
+
 def telemetry_db_path() -> Path:
     from ..core.config import settings
 
@@ -147,8 +168,7 @@ def rollup_day(day: str) -> int:
         if allp["events"]:
             totals.append(("*", allp["users"], allp["sessions"], allp["events"]))
     new_daily = sorted(
-        (r["event"], r["platform"], r["events"], r["users"], r["sessions"])
-        for r in agg
+        (r["event"], r["platform"], r["events"], r["users"], r["sessions"]) for r in agg
     )
     new_totals = sorted(totals)
     with get_connection() as conn:

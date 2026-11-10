@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import sqlite3
 import time
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -174,6 +175,32 @@ def test_disabled_404(client, monkeypatch):
     monkeypatch.setattr(settings, "telemetry_enabled", False)
     assert client.post("/api/telemetry", json=_body()).status_code == 404
     assert _rows() == []
+
+
+def test_unusable_telemetry_db_never_blocks_startup(monkeypatch, caplog):
+    # telemetry.db is disposable: if it can't be opened, the app still starts
+    # with telemetry off (ingest 404, /api/config reports it off).
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    def boom():
+        raise sqlite3.DatabaseError("file is not a database")
+
+    monkeypatch.setattr(telemetry_db, "create_telemetry_tables", boom)
+    try:
+        with TestClient(app) as c:
+            assert c.get("/health").status_code == 200
+            assert c.post("/api/telemetry", json=_body()).status_code == 404
+            cfg = c.get("/api/config").json()
+            assert cfg["telemetry"]["enabled"] is False
+            assert cfg["features"]["telemetry"] is False
+        assert any(
+            r.levelname == "ERROR" and "telemetry" in r.getMessage().lower()
+            for r in caplog.records
+        )
+    finally:
+        telemetry_db.set_available(True)
 
 
 def test_not_behind_ai_access(client, monkeypatch):

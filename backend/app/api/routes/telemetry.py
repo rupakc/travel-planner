@@ -13,7 +13,6 @@ import zlib
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from ...core.auth import get_optional_user
-from ...core.config import settings
 from ...db import telemetry_db
 from ...telemetry.registry import clean_client, clean_event, valid_id
 
@@ -61,7 +60,7 @@ async def _read_body(request: Request) -> bytes:
 async def ingest_telemetry(
     request: Request, user: dict | None = Depends(get_optional_user)
 ) -> Response:
-    if not settings.telemetry_enabled:
+    if not telemetry_db.telemetry_active():
         raise HTTPException(status_code=404, detail="Not found")
     body = await _read_body(request)
     try:
