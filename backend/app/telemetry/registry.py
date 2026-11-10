@@ -13,7 +13,8 @@ import uuid
 PROP_TYPES = {"id", "int", "float", "bool"}  # plus "enum:a|b|c"
 
 _ID_RE = re.compile(r"^[A-Za-z0-9_.:/-]{1,64}$")
-_MAX_SKEW_MS = 7 * 24 * 60 * 60 * 1000
+MAX_SKEW_DAYS = 7  # how far a client `ts` may differ from server time
+_MAX_SKEW_MS = MAX_SKEW_DAYS * 24 * 60 * 60 * 1000
 _PLATFORMS = {"web", "android", "ios"}
 
 

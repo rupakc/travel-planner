@@ -22,3 +22,14 @@ Final: backend suite 5644 passed, 1 skipped, 1 xfailed; `ruff check backend/` cl
 - Rolled-up day `users`/`sessions` in the summary are the max per-event distinct count (lower bound), since the rollup stores distinct counts per event. Documented. Today's numbers are exact.
 - `top_screens` is read from raw events (screen_view `route`), bounded by 90-day retention.
 - Tests share the session `client` data dir, so telemetry tables are cleared per test instead of redirecting `data_dir`.
+
+## Fix round 1
+
+Changes:
+- New main-DB table `telemetry_daily_totals(day, platform, users, sessions, events, PK(day, platform))`. `rollup_day` replaces that day's rows: one per platform plus `*` (distinct `coalesce(user_id, anon_id)` / `session_id` across all events). `summary()` reads users/sessions/events from the `*` rows (no more MAX across events). Backup picks the table up automatically (everything outside PLACE_TABLES).
+- `maintain_once` now always re-rolls the trailing window yesterday-6..yesterday, derived from the new `registry.MAX_SKEW_DAYS` (the skew constant is now built from it), plus any catch-up days.
+- docs/API-Reference.md summary semantics updated.
+
+Tests: `test_summary_users_sum_across_platforms_and_events` (3 web + 2 android disjoint users/events -> 5; per-platform rows web 3, android 2, * 5), `test_maintenance_rerolls_late_events_for_rolled_up_day`, and the existing rollup test now expects the 7-day window. Note: these were written alongside the fix, so no separate RED run was captured.
+
+Commands: `pytest -q tests/test_telemetry_api.py tests/test_telemetry_db.py tests/test_telemetry_registry.py tests/test_client_config.py` -> 39 passed, 1 xfailed; full backend suite -> 5646 passed, 1 skipped, 1 xfailed; `ruff check .` and `ruff format --check .` clean.

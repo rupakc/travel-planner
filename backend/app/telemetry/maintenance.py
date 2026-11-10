@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from ..core.config import settings
 from ..db import telemetry_db
 from ..db.database import get_connection
+from .registry import MAX_SKEW_DAYS
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,9 @@ def maintain_once(now: datetime | None = None) -> None:
             start = datetime.fromisoformat(last).date() + timedelta(days=1)
         else:
             start = yesterday - timedelta(days=_FIRST_RUN_DAYS - 1)
+        # Clients may send events up to MAX_SKEW_DAYS old (offline mobile), so
+        # re-roll that trailing window too (rollup_day is idempotent).
+        start = min(start, yesterday - timedelta(days=MAX_SKEW_DAYS - 1))
         start = max(start, yesterday - timedelta(days=_MAX_CATCHUP_DAYS))
         day = start
         while day <= yesterday:

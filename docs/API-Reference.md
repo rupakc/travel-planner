@@ -465,7 +465,7 @@ Public, `Cache-Control: max-age=300`. Returns `{"public_base_url", "telemetry": 
 
 ### GET /api/admin/telemetry/summary?days=30
 
-Admin only. Returns `{"days": [{day, users, sessions, events}], "top_events": [{event, events}], "top_screens": [{route, views}]}` from the daily rollups plus today's live numbers. For rolled-up days `users`/`sessions` are the largest per-event distinct count (a lower bound).
+Admin only. Returns `{"days": [{day, users, sessions, events}], "top_events": [{event, events}], "top_screens": [{route, views}]}` from the daily rollups plus today's live numbers. `users` (signed-in user, else anonymous id) and `sessions` are exact distinct counts across all events and platforms, read from `telemetry_daily_totals`. Rolled-up days are re-rolled for the trailing 7 days, so late events from offline clients are included.
 
 ---
 

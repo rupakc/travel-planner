@@ -86,6 +86,14 @@ def create_telemetry_tables() -> None:
                 sessions  INTEGER NOT NULL,
                 PRIMARY KEY (day, event, platform)
             );
+            CREATE TABLE IF NOT EXISTS telemetry_daily_totals (
+                day       TEXT    NOT NULL,
+                platform  TEXT    NOT NULL,  -- '*' = all platforms
+                users     INTEGER NOT NULL,
+                sessions  INTEGER NOT NULL,
+                events    INTEGER NOT NULL,
+                PRIMARY KEY (day, platform)
+            );
             CREATE TABLE IF NOT EXISTS telemetry_rollups (
                 day      TEXT PRIMARY KEY,
                 done_at  TEXT NOT NULL
@@ -121,8 +129,29 @@ def rollup_day(day: str) -> int:
             "GROUP BY event, platform",
             (start_ms, end_ms),
         ).fetchall()
+        _tot = "COUNT(DISTINCT coalesce(user_id, anon_id)) AS users, COUNT(DISTINCT session_id) AS sessions, COUNT(*) AS events"
+        totals = [
+            (r["platform"], r["users"], r["sessions"], r["events"])
+            for r in tconn.execute(
+                f"SELECT platform, {_tot} FROM telemetry_events "  # nosec B608
+                "WHERE ts >= ? AND ts < ? GROUP BY platform",
+                (start_ms, end_ms),
+            )
+        ]
+        allp = tconn.execute(
+            f"SELECT {_tot} FROM telemetry_events WHERE ts >= ? AND ts < ?",  # nosec B608
+            (start_ms, end_ms),
+        ).fetchone()
+        if allp["events"]:
+            totals.append(("*", allp["users"], allp["sessions"], allp["events"]))
     with get_connection() as conn:
         conn.execute("DELETE FROM telemetry_daily WHERE day = ?", (day,))
+        conn.execute("DELETE FROM telemetry_daily_totals WHERE day = ?", (day,))
+        conn.executemany(
+            "INSERT INTO telemetry_daily_totals "
+            "(day, platform, users, sessions, events) VALUES (?, ?, ?, ?, ?)",
+            [(day, *t) for t in totals],
+        )
         conn.executemany(
             "INSERT INTO telemetry_daily (day, event, platform, events, users, sessions) "
             "VALUES (?, ?, ?, ?, ?, ?)",
@@ -149,11 +178,8 @@ def prune(before_ms: int) -> int:
 def summary(days: int, now: datetime | None = None) -> dict:
     """Admin overview: per-day users/sessions/events for the last ``days`` UTC
     days (rolled-up days from ``telemetry_daily``, today live from raw events),
-    top events and top screens.
-
-    A rolled-up day's ``users``/``sessions`` are the largest per-event count
-    (the rollup keeps distinct counts per event, which cannot be added up), so
-    they are a lower bound; today's are exact."""
+    top events and top screens. Users and sessions are exact distinct counts
+    across all events and platforms (``telemetry_daily_totals`` rows ``'*'``)."""
     now = now or datetime.now(UTC)
     today = now.date()
     first = today - timedelta(days=days - 1)
@@ -165,9 +191,8 @@ def summary(days: int, now: datetime | None = None) -> dict:
     )
     with get_connection() as conn:
         daily = conn.execute(
-            "SELECT day, MAX(users) AS users, MAX(sessions) AS sessions, "
-            "SUM(events) AS events FROM telemetry_daily "
-            "WHERE day >= ? AND day < ? GROUP BY day ORDER BY day",
+            "SELECT day, users, sessions, events FROM telemetry_daily_totals "
+            "WHERE platform = '*' AND day >= ? AND day < ? ORDER BY day",
             (first.isoformat(), today.isoformat()),
         ).fetchall()
         top_events = conn.execute(

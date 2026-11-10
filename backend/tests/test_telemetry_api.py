@@ -226,9 +226,36 @@ def test_maintenance_rolls_up_missed_days_and_prunes():
     with get_connection() as conn:
         days = {r[0] for r in conn.execute("SELECT day FROM telemetry_rollups")}
         daily = {r[0] for r in conn.execute("SELECT day FROM telemetry_daily")}
-    assert days == {"2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09"}
-    assert daily == {"2026-11-07", "2026-11-09"}  # the gap days that had events
+    # the trailing 7 complete days (11-03 .. 11-09) are (re-)rolled
+    assert days == {f"2026-11-{d:02d}" for d in range(3, 10)}
+    assert daily == {"2026-11-07", "2026-11-09"}  # the days that had events
     assert len(_rows()) == 3  # the 100-day-old row pruned
+
+
+def test_maintenance_rerolls_late_events_for_rolled_up_day():
+    now = datetime(2026, 11, 10, 3, tzinfo=UTC)
+    two_days_ago = now - timedelta(days=2)  # 2026-11-08
+    telemetry_db.insert_events([_row(_ms(two_days_ago), anon="a", session="s1")])
+    maintenance.maintain_once(now)
+    with get_connection() as conn:
+        n = conn.execute(
+            "SELECT events FROM telemetry_daily_totals "
+            "WHERE day = '2026-11-08' AND platform = '*'"
+        ).fetchone()[0]
+    assert n == 1
+    # an offline client delivers a late event for the already-rolled-up day
+    telemetry_db.insert_events([_row(_ms(two_days_ago), anon="b", session="s2")])
+    maintenance.maintain_once(now)
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT users, sessions, events FROM telemetry_daily_totals "
+            "WHERE day = '2026-11-08' AND platform = '*'"
+        ).fetchone()
+        ev = conn.execute(
+            "SELECT events FROM telemetry_daily WHERE day = '2026-11-08'"
+        ).fetchone()[0]
+    assert tuple(row) == (2, 2, 2)
+    assert ev == 2
 
 
 def test_maintenance_never_raises(monkeypatch):
@@ -271,6 +298,33 @@ def test_summary_counts(client, admin_headers):
     top = {e["event"]: e["events"] for e in body["top_events"]}
     assert top == {"app_open": 2, "screen_view": 2}
     assert body["top_screens"][0] == {"route": "/x", "views": 2}
+
+
+def test_summary_users_sum_across_platforms_and_events(client, admin_headers):
+    yday = datetime.now(UTC) - timedelta(days=1)
+    ts = _ms(yday)
+    rows = []
+    for i in range(3):  # 3 web users firing app_open
+        rows.append(_row(ts, "app_open", f"w{i}", f"ws{i}"))
+    for i in range(2):  # 2 android users firing a different event
+        rows.append(
+            _row(ts, "screen_view", f"m{i}", f"ms{i}")
+            | {"platform": "android", "props": '{"route": "/x"}'}
+        )
+    telemetry_db.insert_events(rows)
+    telemetry_db.rollup_day(yday.strftime("%Y-%m-%d"))
+    body = client.get("/api/admin/telemetry/summary", headers=admin_headers).json()
+    y = {d["day"]: d for d in body["days"]}[yday.strftime("%Y-%m-%d")]
+    assert (y["users"], y["sessions"], y["events"]) == (5, 5, 5)
+    with get_connection() as conn:
+        per = {
+            r[0]: r[1]
+            for r in conn.execute(
+                "SELECT platform, users FROM telemetry_daily_totals WHERE day = ?",
+                (yday.strftime("%Y-%m-%d"),),
+            )
+        }
+    assert per == {"web": 3, "android": 2, "*": 5}
 
 
 def test_summary_days_validated(client, admin_headers):
