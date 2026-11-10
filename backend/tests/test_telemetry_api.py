@@ -327,6 +327,20 @@ def test_summary_users_sum_across_platforms_and_events(client, admin_headers):
     assert per == {"web": 3, "android": 2, "*": 5}
 
 
+def test_summary_users_7d_is_distinct_across_days(client, admin_headers):
+    now = datetime.now(UTC)
+    telemetry_db.insert_events(
+        [
+            _row(_ms(now - timedelta(days=1)), "app_open", "a", "s1"),
+            _row(_ms(now - timedelta(days=3)), "app_open", "a", "s2"),
+            _row(_ms(now - timedelta(days=2)), "app_open", "b", "s3"),
+            _row(_ms(now - timedelta(days=20)), "app_open", "c", "s4"),
+        ]
+    )
+    body = client.get("/api/admin/telemetry/summary", headers=admin_headers).json()
+    assert body["users_7d"] == 2
+
+
 def test_summary_days_validated(client, admin_headers):
     r = client.get("/api/admin/telemetry/summary?days=0", headers=admin_headers)
     assert r.status_code == 422

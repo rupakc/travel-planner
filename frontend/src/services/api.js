@@ -275,6 +275,11 @@ export async function updateAccountEmail(email, token) {
   return (await api.put('/auth/email', { email }, authHeaders(token))).data
 }
 
+/** Admin analytics: daily users/sessions/events, top events and screens (days 1-90). */
+export async function getTelemetrySummary(days = 30, token) {
+  return (await api.get('/admin/telemetry/summary', { ...authHeaders(token), params: { days } })).data
+}
+
 // ── Near me (v2) and "Search the web now" ───────────────────────────────────
 // Both answers are live, grounded results for the signed-in user only: callers
 // keep them in component state and never write them to storage or caches.
