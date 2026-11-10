@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Chat du planificateur de voyage",
-    "intro": "Discutez avec votre assistant de voyage IA. Demandez un plan de voyage complet : les résultats arrivent en direct sous forme de cartes interactives.",
+    "intro": "Discutez avec votre assistant de voyage IA. Demandez un plan de voyage complet : les résultats arrivent en direct sous forme de cartes interactives.",
     "placeholder": "Posez une question sur votre prochain voyage...",
     "disclaimer": "Assistant de voyage IA. Vérifiez les informations importantes auprès de sources officielles.",
     "clear": "Effacer le chat",
@@ -10,15 +10,15 @@
     "planFromLink": "Planifier un voyage à partir de ce lien"
   },
   "suggestion": {
-    "1": "Planifie un voyage de 5 jours à Tokyo avec un budget de 2 000 $",
-    "2": "De quoi ai-je besoin pour un visa en Thaïlande en tant que citoyen américain ?",
-    "3": "Trouve-moi des vols pas chers de New York à Paris en juin",
-    "4": "Propose une escapade romantique en Europe pour une semaine"
+    "1": "Planifiez un voyage de 5 jours à Tokyo avec un budget de 2 000 $",
+    "2": "De quoi ai-je besoin pour un visa en Thaïlande en tant que citoyen américain ?",
+    "3": "Trouvez-moi des vols pas chers de New York à Paris en juin",
+    "4": "Proposez-moi une escapade romantique en Europe pour une semaine"
   },
   "error": {
     "generic": "Désolé, une erreur s’est produite lors de la réponse. Veuillez réessayer.",
     "noResponse": "Désolé, je n’ai pas reçu de réponse. Veuillez reposer votre question.",
-    "withMessage": "Désolé, une erreur s’est produite : {{message}}"
+    "withMessage": "Désolé, une erreur s’est produite : {{message}}"
   },
   "bubble": {
     "planning": "Planification de votre voyage..."
@@ -67,10 +67,10 @@
   },
   "section": {
     "building": "Création de votre itinéraire…",
-    "searching": "Recherche : {{what}}…"
+    "searching": "Recherche : {{what}}…"
   },
   "estimates": {
-    "warning": "Les prix sont des estimations : vérifiez sur les sites de réservation avant de réserver"
+    "warning": "Les prix sont des estimations : vérifiez sur les sites de réservation avant de réserver"
   },
   "flights": {
     "none": "Aucun vol trouvé",
@@ -94,8 +94,8 @@
   },
   "visa": {
     "none": "Aucune information de visa",
-    "maxStay": "Séjour max. : {{days}} j",
-    "fee": "Frais : {{fee}}",
+    "maxStay": "Séjour max. : {{days}} j",
+    "fee": "Frais : {{fee}}",
     "free": "Gratuit",
     "type": {
       "visa-free": "sans visa",
@@ -108,7 +108,7 @@
     "none": "Aucune information de change",
     "your": "VOTRE",
     "loading": "Chargement...",
-    "fees": "Frais : {{fees}}",
+    "fees": "Frais : {{fees}}",
     "cards": "Cartes",
     "cash": "Espèces",
     "dependency": "dépendance {{level}}",
@@ -138,8 +138,8 @@
     "flight": "Vol",
     "hotel": "Hôtel",
     "sim": "SIM",
-    "outbound": "Aller :",
-    "return": "Retour :",
+    "outbound": "Aller :",
+    "return": "Retour :",
     "roundTrip": "aller-retour",
     "oneWay": "aller simple",
     "hotelLine": "{{price}}/nuit",
@@ -158,7 +158,7 @@
     "saving": "Enregistrement…",
     "update": "Mettre à jour le plan",
     "save": "Enregistrer le plan",
-    "saveSend": "Enregistrer et envoyer aux plans enregistrés",
+    "saveSend": "Enregistrer et envoyer",
     "savedPlans": "Plans enregistrés",
     "dropToSave": "↓ Déposez ici pour enregistrer le plan",
     "loading": "Chargement…",
@@ -166,19 +166,19 @@
     "deletePlan": "Supprimer le plan",
     "loaded": "Chargé",
     "load": "Charger",
-    "watch": "Alerte prix",
+    "watch": "Surveiller",
     "view": "Voir",
     "share": "Partager",
     "shareTitle": "Copier un lien public — aucune connexion requise pour le voir",
     "shareFailed": "Impossible de créer le lien",
-    "linkCopied": "🔗 Lien copié : {{url}}",
+    "linkCopied": "🔗 Lien copié : {{url}}",
     "msg": {
       "login": "Veuillez vous connecter",
-      "updated": "Plan mis à jour !",
-      "saved": "Enregistré !",
+      "updated": "Plan mis à jour !",
+      "saved": "Enregistré !",
       "failed": "Échec de l’enregistrement",
-      "sentBack": "Plan renvoyé !",
-      "planSaved": "Plan enregistré !"
+      "sentBack": "Plan renvoyé !",
+      "planSaved": "Plan enregistré !"
     }
   },
   "trip": {

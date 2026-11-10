@@ -2,7 +2,7 @@
   "nav": {
     "search": "Rechercher",
     "chat": "Chat",
-    "nearby": "À proximité",
+    "nearby": "Près de moi",
     "alerts": "Alertes",
     "preferences": "Préférences",
     "admin": "Admin",
@@ -22,13 +22,13 @@
   },
   "theme": {
     "label": "Thème",
-    "current": "Thème : {{mode}}",
+    "current": "Thème : {{mode}}",
     "system": "Système",
     "light": "Clair",
     "dark": "Sombre"
   },
   "footer": {
-    "attribution": "Données de lieux © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Données d’aéroports : <ourairports>OurAirports</ourairports>"
+    "attribution": "Données de lieux © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Données d’aéroports : <ourairports>OurAirports</ourairports>"
   },
   "enum": {
     "level": {
