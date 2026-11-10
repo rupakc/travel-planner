@@ -37,4 +37,29 @@ describe('buildEmergencyCardHtml', () => {
     expect(telHref('+1 555-0100')).toBe('tel:+1 555-0100')
     expect(telHref('javascript:alert(1)')).toBeNull()
   })
+
+  it.each([
+    ['  JaVaScRiPt:alert(1)', 'JaVaScRiPt:alert(1)'],
+    ['data:text/html,<script>alert(1)</script>', 'data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;'],
+    ['vbscript:msgbox(1)', 'vbscript:msgbox(1)'],
+  ])('does not link website %j and shows it escaped', (website, shown) => {
+    const html = buildEmergencyCardHtml({ data: { embassy: { name: 'E', website } }, destination: 'X' })
+    expect(html).not.toMatch(/href="\s*(javascript|data:|vbscript)/i)
+    expect(html).not.toContain('<script>alert(1)')
+    expect(html).toContain(shown)
+  })
+
+  it('does not put a breakout phone into a tel: href', () => {
+    const phone = '+1" onclick="alert(1)'
+    const html = buildEmergencyCardHtml({ data: { embassy: { name: 'E', phone }, hospitals: [{ name: 'H', phone }] }, destination: 'X' })
+    expect(html).not.toContain('tel:')
+    expect(html).not.toMatch(/"\s*onclick="/)
+    expect(html).toContain('+1&quot; onclick=&quot;alert(1)')
+  })
+
+  it('escapes text injection in a single (non multi-city) card', () => {
+    const html = buildEmergencyCardHtml({ data: { embassy: { name: XSS } }, destination: 'X' })
+    expect(html).not.toContain('<script>alert(1)')
+    expect(html).toContain('<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>')
+  })
 })
