@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { fmtNumber } from '../i18n/format'
+import { fmtDate, fmtNumber } from '../i18n/format'
 import {
   DollarSign, Check, MapPin, PenLine, MessageSquare, Plus,
   GripVertical, ArrowRightLeft, Undo2, RotateCcw,
@@ -11,7 +11,7 @@ import FromLinkChip from './FromLinkChip'
 import {
   TIMES, slotKey, slotRanks, arrangeItinerary, moveTargets, restoreSlot, layoutChangeCount,
 } from '../utils/itineraryLayout'
-import { listedInScheduleOrder, pickedTimes, scheduleDays, timeRange } from '../utils/schedule'
+import { listedInScheduleOrder, pickedTimes, scheduleDays, timeRange, transitLabel } from '../utils/schedule'
 
 // Custom MIME so the drawer (which treats application/json as a plan) never
 // mistakes an itinerary drag for a plan drop.
@@ -189,14 +189,6 @@ export default function ItinerarySection({
   const timeLabel = (tod) => t(`time.${tod}`, { defaultValue: tod.charAt(0).toUpperCase() + tod.slice(1) })
   const positionLabel = (dayNumber, tod) => t('position', { day: dayNumber, time: timeLabel(tod) })
   const swapSuffix = (key, other) => (other ? t(key, { name: activityName(other.key, other.activity) }) : '')
-  const transitText = (tr) => {
-    if (!tr) return ''
-    if (tr.mode !== 'walk') return `🚇 ${t('transit.transit', { minutes: tr.minutes })}`
-    // km is rounded to 0.1, so anything shorter reads "0 km": leave it out
-    return tr.km >= 0.1
-      ? `🚶 ${t('transit.walkKm', { minutes: tr.minutes, km: tr.km })}`
-      : `🚶 ${t('transit.walk', { minutes: tr.minutes })}`
-  }
   const moveButtons = useRef({})
   const undoButton = useRef(null)
   const sectionRef = useRef(null)
@@ -343,7 +335,7 @@ export default function ItinerarySection({
           <div className={`flex items-center justify-between px-4 py-3 text-white ${day.city ? 'bg-gradient-to-r from-indigo-700 to-indigo-800' : 'bg-gradient-to-r from-teal-600 to-teal-700'}`}>
             <div>
               <span className="font-bold">{t('day.heading', { day: day.day_number })}</span>
-              {day.date && <span className="ml-2 text-teal-200 text-sm">{day.date}</span>}
+              {day.date && <span className="ml-2 text-teal-200 text-sm">{fmtDate(day.date + 'T12:00:00', { year: 'numeric', month: 'short', day: 'numeric' })}</span>}
               {day.city && (
                 <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-medium">
                   {day.city}
@@ -436,7 +428,7 @@ export default function ItinerarySection({
               } : null
 
               const range = timeRange(slot)
-              const transit = outOfOrderDays.has(day.day_number) ? '' : transitText(slot.transit_from_prev)
+              const transit = outOfOrderDays.has(day.day_number) ? '' : transitLabel(slot.transit_from_prev)
 
               return (
                 <Fragment key={key}>

@@ -1,5 +1,6 @@
 import { TIMES, slotRanks } from './itineraryLayout'
 import { haversineKm } from './geo'
+import i18n from '../i18n'
 
 // Estimated clock times for an arranged itinerary (see arrangeItinerary).
 // Re-run after every edit: times are derived from each slot's position, its
@@ -135,9 +136,12 @@ export function timeRange(slot) {
 /** "🚶 12 min walk · 0.9 km" ("🚶 5 min walk" under 100 m) / "🚇 ~25 min by transit", or "" when travel is unknown. */
 export function transitLabel(transit) {
   if (!transit) return ''
-  if (transit.mode !== 'walk') return `🚇 ~${transit.minutes} min by transit`
+  const t = (key, opts) => i18n.t(`itinerary:transit.${key}`, opts)
+  if (transit.mode !== 'walk') return `🚇 ${t('transit', { minutes: transit.minutes })}`
   // km is rounded to 0.1, so anything shorter reads "0 km": leave it out
-  return transit.km >= 0.1 ? `🚶 ${transit.minutes} min walk · ${transit.km} km` : `🚶 ${transit.minutes} min walk`
+  return transit.km >= 0.1
+    ? `🚶 ${t('walkKm', { minutes: transit.minutes, km: transit.km })}`
+    : `🚶 ${t('walk', { minutes: transit.minutes })}`
 }
 
 const PICKED_FIELDS = ['start_time', 'end_time', 'start_day_offset', 'end_day_offset', 'duration_hours']

@@ -6,3 +6,9 @@
 - Left untranslated: day.date (ISO string from backend, shown raw), data names, provider names, emoji.
 - Tests: vitest 83 files / 1161 tests pass unchanged; eslint clean.
 - Concern: time-of-day labels now come from the catalog (capitalised), including the map popup (was lowercase "morning"); unknown values fall back to raw.
+
+## Fix round 1
+- de `time.afternoon` "Mittags" -> "Nachmittags".
+- ItinerarySection day date now `fmtDate(day.date + 'T12:00:00', {year:'numeric', month:'short', day:'numeric'})` (English shows e.g. "May 1, 2026" instead of ISO; no existing test asserted the raw string).
+- `utils/schedule.js` `transitLabel` now builds text via `i18n.t('itinerary:transit.*')` at call time; ItinerarySection's local `transitText` removed and it imports `transitLabel` again (one copy).
+- Commands: `NODE_OPTIONS=--experimental-require-module npx vitest run` -> 83 files passed, 1161 tests passed; `npx eslint src/ --max-warnings 0` -> no output (clean).

@@ -1,7 +1,7 @@
 {
   "time": {
     "morning": "Morgens",
-    "afternoon": "Mittags",
+    "afternoon": "Nachmittags",
     "evening": "Abends"
   },
   "position": "Tag {{day}} · {{time}}",
