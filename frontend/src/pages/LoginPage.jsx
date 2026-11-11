@@ -15,11 +15,15 @@ export default function LoginPage() {
   const { t: tAuth } = useTranslation('auth')
   const { t: tSignup } = useTranslation('signup')
   const { t: tAll } = useTranslation()
+  const { t: tOauth, i18n } = useTranslation('oauth')
   const { config } = useClientConfig()
   const { login } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   const from       = returnPathFrom(location)  // same-origin only
+  // Set by the OAuth callback pages; a translation by notice_code wins over the carried text.
+  const noticeKey = location.state?.notice_code?.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const notice = (noticeKey && i18n.exists(`oauth:${noticeKey}`) ? tOauth(noticeKey) : '') || location.state?.notice || ''
 
   const [form, setForm]     = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)
@@ -83,6 +87,12 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('login.title')}</h2>
+
+          {notice && (
+            <div role="status" data-tid="login.notice" className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm text-sky-800 dark:bg-sky-950 dark:border-sky-900 dark:text-sky-200">
+              {notice}
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

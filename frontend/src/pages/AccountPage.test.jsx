@@ -21,6 +21,7 @@ vi.mock('../components/game/GameSection', () => ({ default: () => { throw new Er
 
 import { initI18n } from '../i18n/index'
 import { getAccount } from '../services/accountApi'
+import { MemoryRouter } from 'react-router-dom'
 import AccountPage from './AccountPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -37,7 +38,7 @@ const tid = (id) => container.querySelector(`[data-tid="${id}"]`)
 describe('AccountPage', () => {
   it('keeps the previous account on a non-404 reload error, clears it on 404', async () => {
     getAccount.mockResolvedValueOnce({ id: 'u1' })
-    await act(async () => root.render(<AccountPage />))
+    await act(async () => root.render(<MemoryRouter><AccountPage /></MemoryRouter>))
     expect(tid('state').textContent).toBe('u1')
     getAccount.mockRejectedValueOnce({ status: 500 })
     await act(async () => { tid('reload').click() })
@@ -49,8 +50,23 @@ describe('AccountPage', () => {
 
   it('shows a notice for a section that throws, without losing the others', async () => {
     getAccount.mockResolvedValue({ id: 'u1' })
-    await act(async () => root.render(<AccountPage />))
+    await act(async () => root.render(<MemoryRouter><AccountPage /></MemoryRouter>))
     expect(tid('account.sectionFailed')).not.toBeNull()
     expect(tid('state')).not.toBeNull()
+  })
+
+  it('shows the toast carried in router state', async () => {
+    getAccount.mockResolvedValue({ id: 'u1' })
+    await act(async () => root.render(
+      <MemoryRouter initialEntries={[{ pathname: '/account', state: { toast: 'Account connected.' } }]}><AccountPage /></MemoryRouter>,
+    ))
+    expect(tid('account.toast').textContent).toBe('Account connected.')
+    expect(tid('account.toast').getAttribute('role')).toBe('status')
+  })
+
+  it('shows no toast without router state', async () => {
+    getAccount.mockResolvedValue({ id: 'u1' })
+    await act(async () => root.render(<MemoryRouter><AccountPage /></MemoryRouter>))
+    expect(tid('account.toast')).toBeNull()
   })
 })
