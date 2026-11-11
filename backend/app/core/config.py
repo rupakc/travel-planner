@@ -178,6 +178,13 @@ class Settings(BaseSettings):
     ai_daily_quota_light_ai: int = 200
     ai_daily_quota_import: int = 20
     game_enabled: bool = True
+    journey_ui_enabled: bool = False
+    offline_pack_enabled: bool = True
+    ready_window_days: int = 14
+    trip_max_expenses: int = 2000
+    trip_max_journal: int = 500
+    trip_max_places: int = 1000
+    trip_snapshot_max_bytes: int = 262144
     game_rules_path: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
