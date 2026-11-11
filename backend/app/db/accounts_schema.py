@@ -4,6 +4,7 @@ quota and game tables. Idempotent and purely additive (safe on production)."""
 import logging
 from datetime import datetime, timedelta
 
+from ..core.config import settings
 from .database import get_connection
 
 logger = logging.getLogger(__name__)
@@ -170,8 +171,6 @@ def create_account_tables() -> None:
 
 def purge_expired(now: datetime) -> dict[str, int]:
     """Delete stale rows; returns the number removed per table."""
-    from ..core.config import settings
-
     days = int(getattr(settings, "pending_purge_days", 7))
     iso = lambda dt: dt.isoformat()  # noqa: E731
     out: dict[str, int] = {}

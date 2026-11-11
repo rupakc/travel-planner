@@ -284,8 +284,6 @@ def _holder_blocks(conn: sqlite3.Connection, name: str, now: datetime) -> bool:
     holder whose newest token has expired is released (deleted). A pending
     holder with no token yet expires ``account_token_ttl_minutes`` after it
     was created."""
-    from ..core.config import settings
-
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
     ttl = int(getattr(settings, "account_token_ttl_minutes", 30))
