@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
     rate_limit_import: int = 20  # /import/extract (plan from a link)
-    rate_limit_telemetry: int = 60  # POST /telemetry (batches, not events)
+    rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
     # /auth/login: attempts per client IP; failed attempts per (username, IP),
     # so others can't lock a user out; and a high per-username ceiling across
     # all IPs as a backstop against distributed guessing

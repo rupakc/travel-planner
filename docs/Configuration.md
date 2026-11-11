@@ -111,7 +111,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_COMPARE` | `30` | `/api/compare/destination` |
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
-| `RATE_LIMIT_TELEMETRY` | `60` | `POST /api/telemetry` (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`). The total across callers is bounded by `TELEMETRY_MAX_DB_MB` and `TELEMETRY_MAX_EVENTS_PER_DAY`. |
+| `RATE_LIMIT_TELEMETRY` | `120` | `POST /api/telemetry` (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`). The total across callers is bounded by `TELEMETRY_MAX_DB_MB` and `TELEMETRY_MAX_EVENTS_PER_DAY`. |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
 | `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |

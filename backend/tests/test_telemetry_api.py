@@ -283,7 +283,7 @@ def test_guard_defaults():
 
 
 def test_rate_limit_bucket_resolves_to_setting():
-    assert _bucket_limit("telemetry") == settings.rate_limit_telemetry == 60
+    assert _bucket_limit("telemetry") == settings.rate_limit_telemetry == 120
 
 
 # --- maintenance -----------------------------------------------------------
