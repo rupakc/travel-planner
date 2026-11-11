@@ -7,7 +7,8 @@ import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 const exchangeOAuthCode = vi.fn()
 vi.mock('../services/authApi', () => ({ exchangeOAuthCode: (...a) => exchangeOAuthCode(...a) }))
 const applySession = vi.fn()
-vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ applySession }) }))
+const authState = { token: null }
+vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ applySession, token: authState.token }) }))
 vi.mock('../telemetry/client', () => ({ emit: vi.fn() }))
 const announceGame = vi.fn()
 vi.mock('../game/announce', () => ({ announceGame: (...a) => announceGame(...a) }))
@@ -29,12 +30,40 @@ const mount = async (url) => act(async () => root.render(
 beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container)
   root = createRoot(container)
-  exchangeOAuthCode.mockReset(); applySession.mockReset(); announceGame.mockReset()
+  exchangeOAuthCode.mockReset(); applySession.mockReset(); announceGame.mockReset(); authState.token = null; sessionStorage.clear()
   vi.spyOn(window.history, 'replaceState')
 })
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks() })
 
 describe('OAuthCallbackPage', () => {
+  it('a signed-in user whose link was refused returns to /account with an error toast', async () => {
+    authState.token = 'tok'
+    await mount('/auth/callback?error=identity_in_use')
+    expect(seen.pathname).toBe('/account')
+    expect(seen.state).toEqual({ toast: 'That account is already linked to another user.', toast_tone: 'error' })
+  })
+
+  it('a cancelled link also returns to /account', async () => {
+    authState.token = 'tok'
+    await mount('/auth/callback?error=cancelled')
+    expect(seen.pathname).toBe('/account')
+    expect(seen.state.toast_tone).toBe('error')
+  })
+
+  it('a 409 from the exchange during a link returns to /account', async () => {
+    authState.token = 'tok'
+    exchangeOAuthCode.mockRejectedValue({ status: 409, code: 'identity_in_use', detail: 'x' })
+    await mount('/auth/callback?code=abc')
+    expect(seen.pathname).toBe('/account')
+    expect(seen.state.toast).toBe('That account is already linked to another user.')
+  })
+
+  it('clears the started-method marker once read', async () => {
+    sessionStorage.setItem('tp_oauth_method', 'github')
+    await mount('/auth/callback?error=cancelled')
+    expect(sessionStorage.getItem('tp_oauth_method')).toBeNull()
+  })
+
   it('maps email_in_use_unverified to the sign-in-then-connect note', async () => {
     await mount('/auth/callback?error=email_in_use_unverified')
     expect(seen.pathname).toBe('/login')

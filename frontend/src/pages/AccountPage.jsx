@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAccount } from '../services/accountApi'
 import ProfileSection from '../components/account/ProfileSection'
@@ -30,7 +30,17 @@ class SectionBoundary extends Component {
 export default function AccountPage() {
   const { token } = useAuth()
   const { t } = useTranslation('profile')
-  const toast = useLocation().state?.toast  // set by the OAuth callback after linking
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Set by the OAuth callback after a link attempt: {toast, toast_tone?: 'error'}.
+  // Kept in component state and cleared from history, so a reload doesn't replay it.
+  const [notice] = useState(() => {
+    const text = location.state?.toast
+    return typeof text === 'string' && text ? { text, error: location.state?.toast_tone === 'error' } : null
+  })
+  useEffect(() => {
+    if (location.state?.toast) navigate(location.pathname, { replace: true, state: null })
+  }, []) // once, on arrival
   const [account, setAccount] = useState(null) // null: loading, or the API is unavailable (404)
 
   const load = useCallback(async () => {
@@ -47,8 +57,11 @@ export default function AccountPage() {
   const props = { account, reload: load }
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6" data-tid="account.page">
-      {toast && (
-        <p role="status" data-tid="account.toast" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">{toast}</p>
+      {notice && !notice.error && (
+        <p role="status" data-tid="account.toast" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice.text}</p>
+      )}
+      {notice?.error && (
+        <p role="alert" data-tid="account.toast.error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{notice.text}</p>
       )}
       <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('page.title')}</h1>
       {[ProfileSection, SettingsSection, SecuritySection, QuotaSection, GameSection, DataSection].map((Section, i) => (

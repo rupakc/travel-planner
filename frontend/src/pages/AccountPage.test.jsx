@@ -21,7 +21,7 @@ vi.mock('../components/game/GameSection', () => ({ default: () => { throw new Er
 
 import { initI18n } from '../i18n/index'
 import { getAccount } from '../services/accountApi'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import AccountPage from './AccountPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -62,6 +62,21 @@ describe('AccountPage', () => {
     ))
     expect(tid('account.toast').textContent).toBe('Account connected.')
     expect(tid('account.toast').getAttribute('role')).toBe('status')
+  })
+
+  it('shows an error toast for a failed link and clears the router state', async () => {
+    getAccount.mockResolvedValue({ id: 'u1' })
+    let loc
+    function Where() { loc = useLocation(); return null }
+    await act(async () => root.render(
+      <MemoryRouter initialEntries={[{ pathname: '/account', state: { toast: 'That account is already linked to another user.', toast_tone: 'error' } }]}>
+        <Where /><AccountPage />
+      </MemoryRouter>,
+    ))
+    expect(tid('account.toast')).toBeNull()
+    expect(tid('account.toast.error').textContent).toBe('That account is already linked to another user.')
+    expect(tid('account.toast.error').getAttribute('role')).toBe('alert')
+    expect(loc.state).toBeNull() // a reload won't replay it
   })
 
   it('shows no toast without router state', async () => {

@@ -10,8 +10,13 @@ import { emit } from '../telemetry/client'
 
 const METHOD_KEY = 'tp_oauth_method'
 
-function startedMethod() {
-  try { return sessionStorage.getItem(METHOD_KEY) || undefined } catch { return undefined }
+// Read once and cleared, so a later callback is never attributed to an old start.
+function takeStartedMethod() {
+  try {
+    const method = sessionStorage.getItem(METHOD_KEY) || undefined
+    sessionStorage.removeItem(METHOD_KEY)
+    return method
+  } catch { return undefined }
 }
 
 // Re-validates the server's return_to: same-origin paths only, else home.
@@ -23,7 +28,7 @@ const safePath = (raw) =>
 // exchange; a needs_username result travels in router state, never the URL.
 export default function OAuthCallbackPage() {
   const { t } = useTranslation(['oauth', 'errors'])
-  const { applySession } = useAuth()
+  const { applySession, token } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const started = useRef(false)
@@ -34,9 +39,19 @@ export default function OAuthCallbackPage() {
     const q = new URLSearchParams(location.search)
     const error = q.get('error')
     const code = q.get('code')
-    const method = startedMethod()
+    const method = takeStartedMethod()
+    // Signed in already: this was a "Connect" (link) attempt from Account ›
+    // Security. A refusal or cancel goes back there with an error toast, not
+    // to the sign-in form.
+    const linking = !!token
     const toLogin = (notice, errCode) => {
-      emit('auth_result', { method, mode: 'signin', result: errCode === 'cancelled' ? 'cancelled' : 'error', code: errCode })
+      const result = errCode === 'cancelled' ? 'cancelled' : 'error'
+      if (linking) {
+        emit('auth_result', { method, mode: 'link', result, code: errCode })
+        navigate('/account', { replace: true, state: { toast: notice, toast_tone: 'error' } })
+        return
+      }
+      emit('auth_result', { method, mode: 'signin', result, code: errCode })
       navigate('/login', { replace: true, state: { notice, notice_code: errCode } })
     }
 
