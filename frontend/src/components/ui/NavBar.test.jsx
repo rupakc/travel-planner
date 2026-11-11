@@ -102,6 +102,10 @@ describe('NavBar', () => {
     const tids = [...container.querySelectorAll('[data-tid]')].map(e => e.getAttribute('data-tid'))
     expect(tids).toEqual(expect.arrayContaining([
       'nav.search', 'nav.chat', 'nav.nearby', 'nav.alerts', 'nav.preferences', 'nav.admin',
-      'nav.menu', 'nav.language', 'nav.theme', 'nav.signOut']))
+      'nav.menu', 'nav.language', 'nav.theme', 'account.menu']))
+    // Sign out now lives in the account menu, reachable once it is open.
+    expect(container.querySelector('[data-tid="nav.signOut"]')).toBeNull()
+    act(() => container.querySelector('[data-tid="account.menu"]').click())
+    expect(container.querySelector('[data-tid="nav.signOut"]')).not.toBeNull()
   })
 })

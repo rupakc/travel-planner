@@ -1,0 +1,34 @@
+{
+  "page": {
+    "title": "Cuenta",
+    "sectionFailed": "No se pudo cargar esta sección."
+  },
+  "title": "Perfil",
+  "avatar": {
+    "change": "Cambiar foto",
+    "remove": "Quitar foto",
+    "tooBig": "Esa imagen es demasiado grande (máximo 2 MB).",
+    "badType": "Usa una imagen JPEG, PNG, WebP o GIF."
+  },
+  "name": {
+    "label": "Nombre visible",
+    "edit": "Editar nombre",
+    "save": "Guardar nombre",
+    "cancel": "Cancelar",
+    "required": "Introduce un nombre."
+  },
+  "username": {
+    "label": "Nombre de usuario"
+  },
+  "email": {
+    "label": "Correo electrónico",
+    "verified": "Verificado",
+    "unverified": "Sin verificar"
+  },
+  "menu": {
+    "button": "Menú de la cuenta",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "signOut": "Cerrar sesión"
+  }
+}

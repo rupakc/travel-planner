@@ -1,0 +1,34 @@
+{
+  "page": {
+    "title": "Konto",
+    "sectionFailed": "Dieser Bereich konnte nicht geladen werden."
+  },
+  "title": "Profil",
+  "avatar": {
+    "change": "Foto ändern",
+    "remove": "Foto entfernen",
+    "tooBig": "Das Bild ist zu groß (maximal 2 MB).",
+    "badType": "Bitte ein JPEG-, PNG-, WebP- oder GIF-Bild verwenden."
+  },
+  "name": {
+    "label": "Anzeigename",
+    "edit": "Namen bearbeiten",
+    "save": "Namen speichern",
+    "cancel": "Abbrechen",
+    "required": "Bitte einen Namen eingeben."
+  },
+  "username": {
+    "label": "Benutzername"
+  },
+  "email": {
+    "label": "E-Mail",
+    "verified": "Bestätigt",
+    "unverified": "Nicht bestätigt"
+  },
+  "menu": {
+    "button": "Kontomenü",
+    "account": "Konto",
+    "preferences": "Einstellungen",
+    "signOut": "Abmelden"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "page": {
+    "title": "Account",
+    "sectionFailed": "This section couldn't load."
+  },
+  "title": "Profile",
+  "avatar": {
+    "change": "Change photo",
+    "remove": "Remove photo",
+    "tooBig": "That image is too large (2 MB maximum).",
+    "badType": "Please use a JPEG, PNG, WebP or GIF image."
+  },
+  "name": {
+    "label": "Display name",
+    "edit": "Edit name",
+    "save": "Save name",
+    "cancel": "Cancel",
+    "required": "Please enter a name."
+  },
+  "username": {
+    "label": "Username"
+  },
+  "email": {
+    "label": "Email",
+    "verified": "Verified",
+    "unverified": "Not verified"
+  },
+  "menu": {
+    "button": "Account menu",
+    "account": "Account",
+    "preferences": "Preferences",
+    "signOut": "Sign out"
+  }
+}

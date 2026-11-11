@@ -1,0 +1,34 @@
+{
+  "page": {
+    "title": "खाता",
+    "sectionFailed": "यह अनुभाग लोड नहीं हो सका।"
+  },
+  "title": "प्रोफ़ाइल",
+  "avatar": {
+    "change": "फ़ोटो बदलें",
+    "remove": "फ़ोटो हटाएँ",
+    "tooBig": "यह छवि बहुत बड़ी है (अधिकतम 2 MB)।",
+    "badType": "कृपया JPEG, PNG, WebP या GIF छवि चुनें।"
+  },
+  "name": {
+    "label": "प्रदर्शित नाम",
+    "edit": "नाम बदलें",
+    "save": "नाम सहेजें",
+    "cancel": "रद्द करें",
+    "required": "कृपया एक नाम दर्ज करें।"
+  },
+  "username": {
+    "label": "उपयोगकर्ता नाम"
+  },
+  "email": {
+    "label": "ईमेल",
+    "verified": "सत्यापित",
+    "unverified": "असत्यापित"
+  },
+  "menu": {
+    "button": "खाता मेनू",
+    "account": "खाता",
+    "preferences": "प्राथमिकताएँ",
+    "signOut": "साइन आउट"
+  }
+}
