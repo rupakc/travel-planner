@@ -1,5 +1,6 @@
 """GET /account/export and DELETE /account (export my data, delete my account)."""
 
+import asyncio
 import json
 from datetime import UTC, datetime
 
@@ -26,7 +27,7 @@ def _last_admin() -> ApiError:
 
 
 @router.get("/account/export", dependencies=[Depends(rate_limit("account"))])
-async def export_account(user: dict = Depends(get_current_user)):
+def export_account(user: dict = Depends(get_current_user)):
     data = account_data.export_user(user)
     day = datetime.now(UTC).date().isoformat()
     filename = f"voyager-export-{user['username']}-{day}.json"
@@ -47,12 +48,7 @@ class DeleteAccountBody(BaseModel):
     confirm_username: str | None = Field(default=None, max_length=256)
 
 
-@router.delete(
-    "/account", status_code=204, dependencies=[Depends(rate_limit("account"))]
-)
-async def delete_account(
-    body: DeleteAccountBody, user: dict = Depends(get_current_user)
-):
+def _check_delete(body: DeleteAccountBody, user: dict) -> None:
     if user_payload(user)["has_password"]:
         if not body.password or not users_db.authenticate_user(
             user["username"], body.password
@@ -62,6 +58,16 @@ async def delete_account(
         raise ApiError(400, "confirmation_mismatch", "Type your username to confirm.")
     if user.get("is_admin") and users_db.count_active_admins() <= 1:
         raise _last_admin()
+
+
+@router.delete(
+    "/account", status_code=204, dependencies=[Depends(rate_limit("account"))]
+)
+async def delete_account(
+    body: DeleteAccountBody, user: dict = Depends(get_current_user)
+):
+    # bcrypt and SQLite run in a worker thread: never block the event loop
+    await asyncio.to_thread(_check_delete, body, user)
     try:
         await account_data.delete_user(user)
     except account_data.LastAdminError:

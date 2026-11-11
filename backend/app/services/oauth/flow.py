@@ -282,7 +282,11 @@ def create_oauth_user(
 ) -> dict:
     """Insert the user, its identity and (with ``invite_code``) the invite use
     in one ``BEGIN IMMEDIATE`` transaction: any failure rolls all of it back.
-    Raises UsernameTaken / EmailTaken / InviteInvalid / IdentityTaken."""
+    Raises UsernameTaken / EmailTaken / InviteInvalid / IdentityTaken.
+
+    ``users.email`` is set only for a verified + trusted provider email; any
+    other provider email stays on the identity row (and in the verify token
+    ``complete`` sends)."""
     email = pending.get("email")
     trusted = _trusted(pending)
     uid = str(uuid.uuid4())
@@ -318,13 +322,16 @@ def create_oauth_user(
         ).fetchone():
             raise IdentityTaken
         verified = bool(email and trusted)
+        # an untrusted claim is never the account's email: it travels only in
+        # the verify token and is set when that link is redeemed
+        stored_email = email if verified else None
         conn.execute(
             """INSERT INTO users
                (id, username, email, password_hash, is_admin, is_first_login, is_active,
                 created_at, updated_at, signup_method, account_status, email_verified,
                 verified_at, display_name, locale, invite_id)
                VALUES (?, ?, ?, '!', 0, 0, 1, ?, ?, 'oauth', 'active', ?, ?, ?, ?, ?)""",
-            (uid, username, email, ts, ts, int(verified), ts if verified else None,
+            (uid, username, stored_email, ts, ts, int(verified), ts if verified else None,
              display_name, locale, invite_id),
         )  # fmt: skip
         conn.execute(

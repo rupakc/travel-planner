@@ -176,6 +176,10 @@ def _clean_signup(req: SignupRequest) -> tuple[str, str, str | None]:
     "/auth/signup", status_code=202, dependencies=[Depends(_limited("signup"))]
 )
 def signup(req: SignupRequest, background: BackgroundTasks):
+    if not settings.signup_enabled:  # operator opt-in (SIGNUP_ENABLED)
+        raise ApiError(
+            503, "email_unavailable", "Email can't be sent right now. Try again later."
+        )
     _require_email()
     username, email, display = _clean_signup(req)
     locale = _locale(req.locale)
@@ -282,7 +286,11 @@ def verify_email(req: VerifyRequest):
         if user["is_active"]:
             session = issue_session(user, req.client, req.device_name)
     else:
-        if not users_db.mark_email_verified(user["id"], res["email"]):
+        # an OAuth sign-up with an untrusted provider email has no email until
+        # this link proves it (and only if nobody else holds it by now)
+        if not users_db.mark_email_verified(
+            user["id"], res["email"]
+        ) and not users_db.claim_verified_email(user["id"], res["email"]):
             raise ApiError(409, "email_changed", "This link was for another email.")
         game = hooks.on_email_verified(user["id"])
     return {"status": "verified", "session": session, "game": game}
@@ -300,7 +308,13 @@ def password_reset_request(req: EmailRequest, background: BackgroundTasks):
     _require_email()
     email = req.email.strip().lower()
     user = users_db.get_user_by_email(email) if email else None
-    if user and user["is_active"]:
+    # Only to a proven address (or a pending sign-up, which reset activates):
+    # an active account's unverified email may be someone else's claim.
+    if (
+        user
+        and user["is_active"]
+        and (user.get("email_verified") or user.get("account_status") == "pending")
+    ):
         token = tokens.issue_token(user["id"], "reset_password", email, now=_now())
         _send(
             background,
@@ -342,13 +356,11 @@ def password_reset_confirm(req: ResetConfirm):
     users_db.change_password(user["username"], req.new_password)
     users_db.bump_token_version(user["id"])
     revoke_all(user["id"])
-    # The email is proven: a pending account becomes active and verified.
+    # The email is proven: a pending account becomes active and verified. An
+    # active account's unverified email is never marked verified by a reset.
     if user.get("account_status") == "pending":
         users_db.activate_user(user["id"], res["email"])
         hooks.on_email_verified(user["id"])
-    elif not user.get("email_verified"):
-        if users_db.mark_email_verified(user["id"], res["email"]):
-            hooks.on_email_verified(user["id"])
     user = users_db.get_user_by_id(user["id"])
     return {
         "status": "password_reset",
@@ -363,6 +375,28 @@ class LocaleBody(BaseModel):
     locale: str | None = Field(None, max_length=16)
 
 
+def _pending_address(user: dict) -> str:
+    """For an account with no email (an OAuth sign-up whose provider email was
+    untrusted): the address still waiting to be confirmed, from the newest
+    unused verify token, else the newest identity email (tokens are purged).
+    "" when there is none, or another account holds it by now."""
+    from ...db.database import get_connection
+
+    email = tokens.latest_unused_email(user["id"], "verify_email")
+    if not email:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT email FROM user_identities WHERE user_id = ?"
+                " AND email IS NOT NULL ORDER BY created_at DESC, id DESC LIMIT 1",
+                (user["id"],),
+            ).fetchone()
+        email = row["email"] if row else None
+    email = (email or "").strip().lower()
+    if email and users_db.get_user_by_email(email):
+        return ""
+    return email
+
+
 @router.post(
     "/account/email/verify",
     status_code=202,
@@ -373,7 +407,7 @@ def account_email_verify(
     body: LocaleBody | None = None,
     user: dict = Depends(get_current_user),
 ):
-    email = (user.get("email") or "").strip().lower()
+    email = (user.get("email") or "").strip().lower() or _pending_address(user)
     if not email:
         raise ApiError(422, "no_email", "Add an email address first.")
     if user.get("email_verified"):

@@ -255,6 +255,26 @@ def test_email_unavailable(client, monkeypatch):
     assert calls == []
 
 
+def test_signup_needs_operator_opt_in(client, sent, monkeypatch):
+    """SMTP alone (set for fare alerts) never opens public sign-up: without
+    SIGNUP_ENABLED it answers 503 email_unavailable and /config hides it,
+    while password reset keeps working."""
+    monkeypatch.setattr(settings, "signup_enabled", False)
+    monkeypatch.setattr(settings, "smtp_host", "smtp.example")
+    r = _signup(client)
+    assert r.status_code == 503 and r.json()["error_code"] == "email_unavailable"
+    auth = client.get("/api/config").json()["auth"]
+    assert auth["signup_available"] is False
+    assert auth["password_reset_available"] is True
+    assert sent == []
+    r = client.post("/api/auth/password-reset/request", json={"email": _email()})
+    assert r.status_code == 202
+
+    monkeypatch.setattr(settings, "signup_enabled", True)
+    assert client.get("/api/config").json()["auth"]["signup_available"] is True
+    assert _signup(client).status_code == 202
+
+
 def test_signup_rate_limited(client, sent, monkeypatch):
     from app.core import rate_limit
 
@@ -287,6 +307,7 @@ def test_email_address_limit_is_silent(client, sent, monkeypatch):
 def test_reset_revokes_other_sessions(client, sent):
     email = _email()
     u = users_db.create_user(_name(), PW, email=email, is_first_login=False)
+    users_db.mark_email_verified(u["id"], email)  # resets go to proven addresses
     old = client.post(
         "/api/auth/login", json={"username": u["username"], "password": PW}
     )
@@ -336,6 +357,38 @@ def test_reset_on_pending_account_activates_it(client, sent):
     user = users_db.get_user_by_email(email)
     assert user["account_status"] == "active" and user["email_verified"] is True
     assert r.json()["session"]["user"]["account_verified"] is True
+
+
+def test_reset_request_skips_an_unverified_email_on_an_active_account(client, sent):
+    """An attacker sets the victim's address on their own account (PUT
+    /auth/email, unverified). The victim's reset request sends nothing (same
+    202), so no reset can prove that address into the attacker's account."""
+    victim = _email()
+    attacker, tok = _active_with_token(client, _email())
+    users_db.mark_email_verified(attacker["id"], attacker["email"])
+    r = client.put("/api/auth/email", json={"email": victim}, headers=_auth(tok))
+    assert r.status_code == 200 and r.json()["email_verified"] is False
+    sent.clear()
+    r = client.post("/api/auth/password-reset/request", json={"email": victim})
+    assert r.status_code == 202 and r.json() == {"status": "reset_sent"}
+    assert sent == []
+    assert users_db.get_user_by_id(attacker["id"])["email_verified"] is False
+
+
+def test_reset_confirm_never_verifies_an_active_accounts_unverified_email(client, sent):
+    """Even a reset token issued for an active account's unverified address
+    (for example before this rule) only resets the password."""
+    from app.db import account_tokens_db
+
+    email = _email()
+    u = users_db.create_user(_name(), PW, email=email, is_first_login=False)
+    token = account_tokens_db.issue_token(u["id"], "reset_password", email)
+    r = client.post(
+        "/api/auth/password-reset/confirm",
+        json={"token": token, "new_password": NEW_PW},
+    )
+    assert r.status_code == 200
+    assert users_db.get_user_by_id(u["id"])["email_verified"] is False
 
 
 def test_reset_request_unknown_email_sends_nothing(client, sent):
@@ -454,7 +507,8 @@ def test_account_email_verify_unavailable(client, sent, monkeypatch):
 
 def test_reset_token_expired(client, sent, clock):
     email = _email()
-    users_db.create_user(_name(), PW, email=email, is_first_login=False)
+    u = users_db.create_user(_name(), PW, email=email, is_first_login=False)
+    users_db.mark_email_verified(u["id"], email)
     client.post("/api/auth/password-reset/request", json={"email": email})
     clock.advance(31 * 60)
     r = client.post(

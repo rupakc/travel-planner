@@ -40,7 +40,7 @@ def _identities(user_id: str) -> list[dict]:
 
 
 @router.get("/account")
-async def get_account(user: dict = Depends(get_current_user)):
+def get_account(user: dict = Depends(get_current_user)):
     return {
         "user": user_payload(user),
         "identities": _identities(user["id"]),
@@ -54,18 +54,18 @@ class ProfilePatch(BaseModel):
 
 
 @router.patch("/account", dependencies=[Depends(rate_limit("account"))])
-async def patch_account(body: ProfilePatch, user: dict = Depends(get_current_user)):
+def patch_account(body: ProfilePatch, user: dict = Depends(get_current_user)):
     users_db.set_display_name(user["id"], _display_name(body.display_name))
     return {"user": user_payload(users_db.get_user_by_id(user["id"]))}
 
 
 @router.get("/account/settings")
-async def get_account_settings(user: dict = Depends(get_current_user)):
+def get_account_settings(user: dict = Depends(get_current_user)):
     return sdb.get_settings(user["id"])
 
 
 @router.patch("/account/settings", dependencies=[Depends(rate_limit("account"))])
-async def patch_account_settings(
+def patch_account_settings(
     body: sdb.SettingsPatch, user: dict = Depends(get_current_user)
 ):
     return sdb.patch_settings(user["id"], body.model_dump(exclude_unset=True))
@@ -81,7 +81,7 @@ class OnboardingBody(BaseModel):
 
 
 @router.put("/account/onboarding", dependencies=[Depends(rate_limit("account"))])
-async def put_account_onboarding(
+def put_account_onboarding(
     body: OnboardingBody, user: dict = Depends(get_current_user)
 ):
     onboarding, award = sdb.put_onboarding(
@@ -96,7 +96,7 @@ async def put_account_onboarding(
     status_code=204,
     dependencies=[Depends(rate_limit("account"))],
 )
-async def unlink_identity(provider: str, user: dict = Depends(get_current_user)):
+def unlink_identity(provider: str, user: dict = Depends(get_current_user)):
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT id, provider FROM user_identities WHERE user_id = ?", (user["id"],)

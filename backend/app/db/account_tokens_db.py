@@ -99,3 +99,14 @@ def redeem_token(token: str, purpose: Purpose, now: datetime) -> dict | TokenErr
             (_iso(now), _hash(token), purpose),
         )
     return found if cur.rowcount == 1 else TokenError("used")
+
+
+def latest_unused_email(user_id: str, purpose: Purpose) -> str | None:
+    """The address of the user's newest unused token of ``purpose``, if any."""
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT email FROM account_tokens WHERE user_id = ? AND purpose = ?"
+            " AND used_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1",
+            (user_id, purpose),
+        ).fetchone()
+    return row["email"] if row else None

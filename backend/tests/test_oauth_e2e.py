@@ -423,8 +423,10 @@ def test_facebook_web_flow_untrusted_email(c, facebook, side_effects):
     assert body["email"] == email and body["display_name"] == "Fran Bee"
     out = _complete(c, body)
     me = _me(c, out["session"])
-    # FACEBOOK_EMAIL_TRUSTED=false: the address must be verified by mail
-    assert me["email"] == email and me["email_verified"] is False
+    # FACEBOOK_EMAIL_TRUSTED=false: the address must be verified by mail, and
+    # is not the account's email until then (it stays on the identity)
+    assert me["email"] is None and me["email_verified"] is False
+    assert _identity("facebook", fid)["email"] == email
     assert side_effects["mail"] == [{"kind": "verify", "to": email}]
     assert side_effects["photos"] == []  # silhouettes are not imported
     assert _identity("facebook", fid)["user_id"] == me["id"]

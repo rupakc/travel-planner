@@ -96,12 +96,13 @@ Fare- and price-watch alerts can also be pushed to the Android app's registered 
 | `ADMIN_PASSWORD` | `""` | Password for the seeded admin. Empty means no admin is created. Used only when that user does not exist yet; the seeded admin is not forced to change it. |
 | `ADMIN_EMAIL` | `""` | Optional email for the seeded admin. |
 
-Anyone can create an account with `POST /api/auth/signup` (a verification email is sent first) unless `SIGNUP_MODE=invite`; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: [Accounts API](Accounts-API.md).
+With `SIGNUP_ENABLED=true` and email delivery available, anyone can create an account with `POST /api/auth/signup` (a verification email is sent first) unless `SIGNUP_MODE=invite`; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: [Accounts API](Accounts-API.md).
 
 ### Sign-up, sessions and email links
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `SIGNUP_ENABLED` | `false` | Operator opt-in for native (password) sign-up. While false, `POST /api/auth/signup` answers `503 email_unavailable` and `GET /api/config` reports `signup_available: false`, even when SMTP is set for fare alerts. OAuth sign-up and password reset are not affected. |
 | `SIGNUP_MODE` | `open` | `open`, or `invite` (sign-up and OAuth sign-up need an invite code from `POST /api/admin/invites`). |
 | `EMAIL_LOG_LINKS` | `false` | Dev only: with `SMTP_HOST` unset, log verification and reset links instead of sending them (also on when the base URL host is `localhost`). |
 | `ACCOUNT_TOKEN_TTL_MINUTES` | `30` | Lifetime of verify-email and password-reset tokens (single use). |

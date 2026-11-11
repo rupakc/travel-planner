@@ -101,7 +101,10 @@ def test_invalid_override_falls_back(tmp_path):
 def test_hooks_award_and_swallow_errors(uid, monkeypatch):
     assert hooks.on_email_verified(uid)["xp"] == 50
     monkeypatch.setattr(engine, "award", lambda *a, **k: 1 / 0)
-    assert hooks.on_onboarding_complete(uid) is None
+    # a failed award is the empty delta (None means "game disabled")
+    assert hooks.on_onboarding_complete(uid) == {
+        "xp": 50, "awards": [], "badges": [], "level_up": None
+    }  # fmt: skip
     monkeypatch.setattr(settings, "game_enabled", False)
     assert hooks.on_email_verified(uid) is None
 

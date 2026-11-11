@@ -112,6 +112,10 @@ def _email():
     return f"j{uuid.uuid4().hex[:10]}@example.com"
 
 
+def _name():
+    return f"n_{uuid.uuid4().hex[:8]}"
+
+
 @pytest.fixture(autouse=True)
 def providers(client, monkeypatch):
     monkeypatch.setattr("app.db.users_db._hash", lambda pw: "unused")
@@ -520,16 +524,95 @@ def test_untrusted_email_never_links(c, providers, sent):
         },
     ).json()
     user = out["session"]["user"]
-    assert user["email"] == email2
+    # the untrusted claim is not the account's email until its link is redeemed
+    assert user["email"] is None
     assert user["email_verified"] is False and user["account_verified"] is False
     assert [s["kind"] for s in sent] == ["verify"]
     assert sent[0]["to"] == email2
     assert sent[0]["link"].startswith(public_url("/verify?token="))
-    # the link works with the native verify route (Task 27's tokens)
+    # the link works with the native verify route (Task 27's tokens) and only
+    # then sets the address on the account
     token = parse_qs(urlparse(sent[0]["link"]).query)["token"][0]
     r = c.post("/api/auth/verify-email", json={"token": token})
     assert r.status_code == 200, r.text
-    assert users_db.get_user_by_id(user["id"])["email_verified"] is True
+    after = users_db.get_user_by_id(user["id"])
+    assert after["email"] == email2 and after["email_verified"] is True
+    assert after["verified_at"]
+
+
+def _untrusted_signup(c, email):
+    body = c.post(
+        "/api/auth/oauth/exchange", json={"code": _web_code(c, "facebook")}
+    ).json()
+    assert body["status"] == "needs_username" and body["email"] == email
+    out = c.post(
+        "/api/auth/oauth/complete",
+        json={
+            "signup_token": body["signup_token"],
+            "username": f"f_{uuid.uuid4().hex[:8]}",
+        },
+    )
+    assert out.status_code == 201, out.text
+    return out.json()["session"]["user"]
+
+
+def test_untrusted_email_cannot_be_reset_or_linked_before_verify(c, providers, sent):
+    """I-1: a Facebook account claiming the victim's address squats nothing.
+    A reset for that address reaches no account, the victim's Google sign-in
+    makes a new account (no auto-link), and the attacker's verify link then
+    fails with email_changed."""
+    victim = _email()
+    providers["facebook"].profile = _profile(victim, trusted=False)
+    attacker = _untrusted_signup(c, victim)
+    verify_link = sent[-1]["link"]
+    assert users_db.get_user_by_email(victim) is None
+
+    r = c.post("/api/auth/password-reset/request", json={"email": victim})
+    assert r.status_code == 202
+    assert [s["kind"] for s in sent] == ["verify"]  # no reset mail
+
+    providers["google"].profile = _profile(victim)
+    body = c.post("/api/auth/oauth/exchange", json={"code": _web_code(c)}).json()
+    assert body["status"] == "needs_username"
+    out = c.post(
+        "/api/auth/oauth/complete",
+        json={"signup_token": body["signup_token"], "username": _name()},
+    ).json()
+    owner = out["session"]["user"]
+    assert owner["id"] != attacker["id"]
+    assert owner["email"] == victim and owner["email_verified"] is True
+
+    token = parse_qs(urlparse(verify_link).query)["token"][0]
+    r = c.post("/api/auth/verify-email", json={"token": token})
+    assert r.status_code == 409 and r.json()["error_code"] == "email_changed"
+    assert users_db.get_user_by_id(attacker["id"])["email"] is None
+    assert users_db.get_user_by_email(victim)["id"] == owner["id"]
+
+
+def test_untrusted_email_leaves_native_signup_open(c, providers, sent):
+    victim = _email()
+    providers["facebook"].profile = _profile(victim, trusted=False)
+    _untrusted_signup(c, victim)
+    r = c.post(
+        "/api/auth/signup",
+        json={"username": _name(), "email": victim, "password": "Plenty-long-pw-42"},
+    )
+    assert r.status_code == 202
+    assert [s["kind"] for s in sent] == ["verify", "verify"]  # not "already registered"
+    assert users_db.get_user_by_email(victim)["account_status"] == "pending"
+
+
+def test_untrusted_verify_mail_needs_email_delivery(c, providers, sent, monkeypatch):
+    monkeypatch.setattr(settings, "smtp_host", "")
+    monkeypatch.setattr("app.services.account_email.dev_links_enabled", lambda: False)
+    providers["facebook"].profile = _profile(_email(), trusted=False)
+    user = _untrusted_signup(c, providers["facebook"].profile.email)
+    assert sent == []
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT 1 FROM account_tokens WHERE user_id = ?", (user["id"],)
+        ).fetchall()
+    assert rows == []
 
 
 def test_unverified_existing_email_is_refused(c, providers):
@@ -1053,3 +1136,99 @@ def test_https_cookie_attributes(c, providers, monkeypatch):
         low = cookie.lower()
         assert "samesite=none" in low and "secure" in low and "httponly" in low
         assert "path=/api/auth/oauth" in low
+
+
+# ── I-2: SQLite never runs on the event loop ─────────────────────────────────
+
+
+def test_oauth_db_work_runs_off_the_loop(c, providers, sent, monkeypatch):
+    import asyncio
+
+    calls = []
+
+    def spy(owner, name):
+        real = getattr(owner, name)
+
+        def wrapper(*args, **kwargs):
+            try:
+                asyncio.get_running_loop()
+                on_loop = True
+            except RuntimeError:
+                on_loop = False
+            calls.append((name, on_loop))
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr(owner, name, wrapper)
+
+    for name in ("resolve_identity", "create_oauth_user", "precheck_link"):
+        spy(flow, name)
+    for name in ("take_ticket", "put_ticket"):
+        spy(oauth_db, name)
+
+    # callback (async: awaits the provider) + complete
+    providers["google"].profile = _profile(_email())
+    body = c.post("/api/auth/oauth/exchange", json={"code": _web_code(c)}).json()
+    r = c.post(
+        "/api/auth/oauth/complete",
+        json={"signup_token": body["signup_token"], "username": _name()},
+    )
+    assert r.status_code == 201, r.text
+    # native id-token (async: awaits the token check)
+    providers["google"].profile = _profile(_email())
+    r = c.post(
+        "/api/auth/oauth/google/id-token", json={"id_token": "good", "client": "ios"}
+    )
+    assert r.status_code == 200 and r.json()["status"] == "needs_username"
+
+    names = {n for n, _ in calls}
+    assert {
+        "resolve_identity",
+        "create_oauth_user",
+        "take_ticket",
+        "put_ticket",
+    } <= names
+    assert [c for c in calls if c[1]] == []
+
+
+def test_account_email_verify_reissues_to_the_pending_untrusted_address(
+    c, providers, sent
+):
+    """An OAuth account with no email yet (untrusted provider address) can ask
+    for a new link: it goes to the pending address; 422 no_email only when
+    there is none. The pending address survives the token purge (it is also
+    on the identity row)."""
+    claimed = _email()
+    providers["facebook"].profile = _profile(claimed, trusted=False)
+    user = _untrusted_signup(c, claimed)
+    first = sent[-1]["link"]
+    h = _auth(user)
+    r = c.post("/api/account/email/verify", json={}, headers=h)
+    assert r.status_code == 202, r.text
+    assert r.json() == {"status": "verification_sent", "email": claimed,
+                        "expires_in": 1800}  # fmt: skip
+    assert sent[-1]["to"] == claimed and sent[-1]["link"] != first
+    # the old link is replaced; the new one claims the address
+    old = parse_qs(urlparse(first).query)["token"][0]
+    assert c.post("/api/auth/verify-email", json={"token": old}).status_code == 400
+
+    # tokens purged: the identity's address is still the pending one
+    with get_connection() as conn:
+        conn.execute("DELETE FROM account_tokens WHERE user_id = ?", (user["id"],))
+    r = c.post("/api/account/email/verify", json={}, headers=h)
+    assert r.status_code == 202 and r.json()["email"] == claimed
+    token = parse_qs(urlparse(sent[-1]["link"]).query)["token"][0]
+    assert c.post("/api/auth/verify-email", json={"token": token}).status_code == 200
+    assert users_db.get_user_by_id(user["id"])["email"] == claimed
+
+
+def test_account_email_verify_without_any_address_is_no_email(c, providers, sent):
+    providers["github"].profile = _profile(None)
+    body = c.post(
+        "/api/auth/oauth/exchange", json={"code": _web_code(c, "github")}
+    ).json()
+    user = c.post(
+        "/api/auth/oauth/complete",
+        json={"signup_token": body["signup_token"], "username": _name()},
+    ).json()["session"]["user"]
+    r = c.post("/api/account/email/verify", json={}, headers=_auth(user))
+    assert r.status_code == 422 and r.json()["error_code"] == "no_email"
