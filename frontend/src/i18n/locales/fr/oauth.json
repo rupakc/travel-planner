@@ -1,0 +1,16 @@
+{
+  "working": "Connexion en cours…",
+  "linked": "Compte connecté.",
+  "startAgain": "Veuillez recommencer.",
+  "emailInUseUnverified": "Connectez-vous avec votre mot de passe, puis associez ce fournisseur depuis les paramètres de votre compte.",
+  "username": {
+    "title": "Choisissez votre nom d’utilisateur",
+    "intro": "Choisissez un nom d’utilisateur pour terminer la création de votre compte.",
+    "username": "Nom d’utilisateur",
+    "displayName": "Nom affiché",
+    "invite": "Code d’invitation",
+    "submit": "Créer le compte",
+    "submitting": "Création…",
+    "signedAs": "Connecté en tant que {{email}}"
+  }
+}

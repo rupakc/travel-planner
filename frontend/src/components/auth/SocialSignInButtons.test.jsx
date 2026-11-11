@@ -2,9 +2,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { MemoryRouter } from 'react-router-dom'
 
 const getAuthProviders = vi.fn()
 vi.mock('../../services/api', () => ({ getAuthProviders: (...a) => getAuthProviders(...a) }))
+const emit = vi.fn()
+vi.mock('../../telemetry/client', () => ({ emit: (...a) => emit(...a) }))
 const navigateTo = vi.fn()
 vi.mock('./navigate', () => ({ navigateTo: (...a) => navigateTo(...a) }))
 
@@ -13,7 +16,9 @@ import SocialSignInButtons from './SocialSignInButtons'
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let container, root
-const render = async (props = {}) => act(async () => root.render(<SocialSignInButtons {...props} />))
+let entry = '/login'
+const render = async (props = {}) => act(async () => root.render(
+  <MemoryRouter initialEntries={[entry]}><SocialSignInButtons {...props} /></MemoryRouter>))
 const click = async (el) => act(async () => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
 const btn = (id) => container.querySelector(`[data-tid="auth.provider.${id}"]`)
 
@@ -21,7 +26,7 @@ beforeEach(() => {
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)
-  getAuthProviders.mockReset(); navigateTo.mockReset()
+  getAuthProviders.mockReset(); navigateTo.mockReset(); emit.mockReset(); entry = '/login'
 })
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
@@ -50,7 +55,7 @@ describe('SocialSignInButtons', () => {
     getAuthProviders.mockResolvedValue([{ id: 'github', configured: true, start_url: '/api/auth/github/start' }])
     await render()
     await click(btn('github'))
-    expect(navigateTo).toHaveBeenCalledWith('/api/auth/github/start')
+    expect(navigateTo).toHaveBeenCalledWith('/api/auth/github/start?client=web&return_to=%2F')
   })
 
   it('treats an off-site start_url as not configured', async () => {
@@ -79,7 +84,7 @@ describe('SocialSignInButtons', () => {
     getAuthProviders.mockResolvedValue([{ id: 'google', configured: true, start_url: '/api/auth/google/start?x=1' }])
     await render()
     await click(btn('google'))
-    expect(navigateTo).toHaveBeenCalledWith('/api/auth/google/start?x=1')
+    expect(navigateTo).toHaveBeenCalledWith('/api/auth/google/start?x=1&client=web&return_to=%2F')
   })
 
   it('fetches providers once and renders the same buttons in signup mode', async () => {
@@ -87,6 +92,34 @@ describe('SocialSignInButtons', () => {
     await render({ mode: 'signup' })
     expect(getAuthProviders).toHaveBeenCalledTimes(1)
     expect(container.querySelectorAll('button').length).toBe(4)
+  })
+})
+
+describe('SocialSignInButtons start URL and telemetry', () => {
+  it('adds client=web and the validated return path, and emits auth_start', async () => {
+    entry = '/login?next=%2Fchat'
+    getAuthProviders.mockResolvedValue([{ id: 'github', configured: true, start_url: '/api/auth/oauth/github/start' }])
+    await render({ mode: 'signup' })
+    await click(btn('github'))
+    expect(navigateTo).toHaveBeenCalledWith('/api/auth/oauth/github/start?client=web&return_to=%2Fchat')
+    expect(emit).toHaveBeenCalledWith('auth_start', { method: 'github', mode: 'signup' })
+  })
+
+  it('never passes a foreign return path', async () => {
+    entry = '/login?next=%2F%2Fevil.com'
+    getAuthProviders.mockResolvedValue([{ id: 'github', configured: true, start_url: '/api/auth/oauth/github/start' }])
+    await render()
+    await click(btn('github'))
+    expect(navigateTo.mock.calls[0][0]).toContain('return_to=%2F')
+    expect(navigateTo.mock.calls[0][0]).not.toContain('evil')
+  })
+
+  it('emits auth_result coming_soon when the note shows', async () => {
+    getAuthProviders.mockResolvedValue([])
+    await render()
+    await click(btn('apple'))
+    expect(emit).toHaveBeenCalledWith('auth_result', { method: 'apple', mode: 'signin', result: 'coming_soon' })
+    expect(emit).not.toHaveBeenCalledWith('auth_start', expect.anything())
   })
 })
 

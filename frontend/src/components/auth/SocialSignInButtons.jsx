@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Info } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { getAuthProviders } from '../../services/api'
 import { navigateTo } from './navigate'
+import { returnPathFrom } from '../../utils/returnPath'
+import { emit } from '../../telemetry/client'
 import { AppleIcon, GoogleIcon, FacebookIcon, GitHubIcon } from './providerIcons'
 
 // Brand names are not translated. Button colours follow each provider's
@@ -37,7 +40,17 @@ function safeStart(url) {
   }
 }
 
+// The start URL gets the client type and where to come back to (re-validated
+// as a same-origin path by returnPathFrom).
+function withStartParams(start, location) {
+  const u = new URL(start, window.location.origin)
+  u.searchParams.set('client', 'web')
+  u.searchParams.set('return_to', returnPathFrom(location))
+  return u.pathname + u.search
+}
+
 export default function SocialSignInButtons({ mode = 'signin' }) {
+  const location = useLocation()
   const { t } = useTranslation('auth')
   const [providers, setProviders] = useState({})
   const [soon, setSoon] = useState(null)
@@ -56,7 +69,14 @@ export default function SocialSignInButtons({ mode = 'signin' }) {
   const choose = (p) => {
     const info = providers[p.id]
     const start = info?.configured ? safeStart(info.start_url) : null
-    if (start) { setSoon(null); navigateTo(start); return }
+    if (start) {
+      setSoon(null)
+      emit('auth_start', { method: p.id, mode })
+      try { sessionStorage.setItem('tp_oauth_method', p.id) } catch { /* private mode */ }
+      navigateTo(withStartParams(start, location))
+      return
+    }
+    emit('auth_result', { method: p.id, mode, result: 'coming_soon' })
     setSoon(p.name)
   }
 

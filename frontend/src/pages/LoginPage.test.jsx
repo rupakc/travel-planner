@@ -109,3 +109,25 @@ describe('account links on the login page', () => {
     expect(tid('login.resent')).not.toBeNull()
   })
 })
+
+describe('OAuth notice', () => {
+  const tid = (id) => container.querySelector(`[data-tid="${id}"]`)
+  const renderState = async (state) => act(async () => root.render(
+    <MemoryRouter initialEntries={[{ pathname: '/login', state }]}>
+      <Routes><Route path="/login" element={<LoginPage />} /></Routes>
+    </MemoryRouter>,
+  ))
+  it('shows the carried notice', async () => {
+    await renderState({ notice: 'Something went wrong.' })
+    expect(tid('login.notice').textContent).toBe('Something went wrong.')
+    expect(tid('login.notice').getAttribute('role')).toBe('status')
+  })
+  it('prefers the translation for notice_code', async () => {
+    await renderState({ notice: 'stale text', notice_code: 'email_in_use_unverified' })
+    expect(tid('login.notice').textContent).toMatch(/connect this provider/)
+  })
+  it('shows no notice by default', async () => {
+    await renderState(undefined)
+    expect(tid('login.notice')).toBeNull()
+  })
+})
