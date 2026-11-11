@@ -157,3 +157,18 @@ def test_app_env_example_names_only_bootstrapped_secrets():
     arr = script.split("SECRETS=(", 1)[1].split(")", 1)[0].split()
     assert ids == set(arr)
     assert set(OAUTH_SECRETS) <= ids
+
+
+def test_app_env_example_names_are_settings_fields():
+    import re
+    import sys
+
+    sys.path.insert(0, str(ROOT / "backend"))
+    from app.core.config import Settings
+
+    fields = {f.upper() for f in Settings.model_fields}
+    text = (ROOT / "deploy" / "gcp" / "app.env.example").read_text()
+    names = set(re.findall(r"^#?\s*([A-Z][A-Z0-9_]+)=", text, re.M))
+    # Read by the container or the VM kit, not by Settings
+    names -= {"SECRET_MANAGER_SECRETS", "FCM_PROJECT_ID"}
+    assert names <= fields, sorted(names - fields)
