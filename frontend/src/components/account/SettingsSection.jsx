@@ -19,11 +19,11 @@ function deviceZone() {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null } catch { return null }
 }
 
-const FIELD = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
+const FIELD = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800'
 
 function Select({ id, label, value, onChange, options, tid }) {
   return (
-    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+    <label className="block text-sm font-medium text-slate-700">
       {label}
       <select id={id} data-tid={tid} value={value} onChange={(e) => onChange(e.target.value)} className={FIELD}>
         {options.map(([v, text]) => <option key={v} value={v}>{text}</option>)}
@@ -36,12 +36,12 @@ function Switch({ id, tid, label, hint, on, onChange }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p id={id} className="text-sm font-semibold text-slate-800 dark:text-slate-100">{label}</p>
+        <p id={id} className="text-sm font-semibold text-slate-800">{label}</p>
         <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
       </div>
       <button type="button" role="switch" aria-checked={on} aria-labelledby={id} data-tid={tid}
         onClick={() => onChange(!on)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${on ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'}`}>
+        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${on ? 'bg-teal-600' : 'bg-slate-300'}`}>
         <span aria-hidden="true"
           className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[#ffffff] shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
       </button>
@@ -66,8 +66,8 @@ export default function SettingsSection({ account }) {
 
   return (
     <section data-tid="settings.section" aria-labelledby="settings-title"
-      className="mx-auto mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <h2 id="settings-title" className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('title')}</h2>
+      className="mx-auto mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 id="settings-title" className="text-lg font-semibold text-slate-800">{t('title')}</h2>
       <p className="mt-0.5 text-sm text-slate-500">{t('hint')}</p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -86,7 +86,7 @@ export default function SettingsSection({ account }) {
             onChange={(v) => update({ timezone: v })} options={zoneOptions.map((z) => [z, z])} />
           {device && device !== settings.timezone && (
             <button type="button" data-tid="settings.timezone.device" onClick={() => update({ timezone: device })}
-              className="mt-1 text-xs font-medium text-teal-700 underline dark:text-teal-400">
+              className="mt-1 text-xs font-medium text-teal-700 underline">
               {t('timezone.useDevice', { zone: device })}
             </button>
           )}

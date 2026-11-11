@@ -19,9 +19,9 @@ const PROVIDERS = [
 ]
 
 const btn = 'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:opacity-50'
-const btnPlain = `${btn} border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700`
+const btnPlain = `${btn} border-slate-300 text-slate-700 hover:bg-slate-50`
 const btnPrimary = `${btn} border-teal-600 bg-teal-600 text-white hover:bg-teal-700`
-const input = 'w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-400'
+const input = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400'
 
 export default function SecuritySection({ account, reload }) {
   const { t } = useTranslation(['security', 'errors'])
@@ -138,26 +138,26 @@ export default function SecuritySection({ account, reload }) {
   }
 
   const msgCls = (kind) => (kind === 'error'
-    ? 'text-red-700 dark:text-red-400'
-    : 'text-slate-700 dark:text-slate-300')
+    ? 'text-red-700'
+    : 'text-slate-700')
 
   return (
     <section data-tid="security.section" aria-labelledby="security-title"
-      className="bg-white dark:bg-slate-800 rounded-2xl shadow p-6 space-y-6">
-      <h2 id="security-title" className="text-lg font-bold text-slate-800 dark:text-slate-100">
+      className="bg-white rounded-2xl shadow p-6 space-y-6">
+      <h2 id="security-title" className="text-lg font-bold text-slate-800">
         {t('security:title')}
       </h2>
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('security:providers.title')}</h3>
-        <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+        <h3 className="text-sm font-semibold text-slate-800 mb-2">{t('security:providers.title')}</h3>
+        <ul className="divide-y divide-slate-200">
           {PROVIDERS.map((p) => {
             const identity = linked[p.id]
             return (
               <li key={p.id} data-tid={`security.provider.${p.id}`} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{p.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                  <p className="text-sm font-medium text-slate-800">{p.name}</p>
+                  <p className="text-xs text-slate-600 truncate">
                     {identity
                       ? (identity.email
                         ? t('security:providers.connectedAs', { email: identity.email })
@@ -189,8 +189,8 @@ export default function SecuritySection({ account, reload }) {
 
       {user.email && user.email_verified === false && (
         <div data-tid="security.email">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">{t('security:email.title')}</h3>
-          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{t('security:email.unverified', { email: user.email })}</p>
+          <h3 className="text-sm font-semibold text-slate-800 mb-1">{t('security:email.title')}</h3>
+          <p className="text-sm text-slate-700 mb-2">{t('security:email.unverified', { email: user.email })}</p>
           <button type="button" className={btnPlain} disabled={busy === 'verify'}
             data-tid="security.verify-email" onClick={sendVerify}>
             {t('security:email.verify')}
@@ -202,18 +202,18 @@ export default function SecuritySection({ account, reload }) {
       )}
 
       <form onSubmit={submitPassword} data-tid="security.password-form" className="space-y-3">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-slate-800">
           {hasPassword ? t('security:password.changeTitle') : t('security:password.setTitle')}
         </h3>
         {hasPassword && (
-          <label className="block text-sm text-slate-700 dark:text-slate-300">
+          <label className="block text-sm text-slate-700">
             {t('security:password.current')}
             <input type="password" autoComplete="current-password" className={`${input} mt-1`}
               data-tid="security.current-password" value={pw.current}
               onChange={(e) => setPw((s) => ({ ...s, current: e.target.value }))} />
           </label>
         )}
-        <label className="block text-sm text-slate-700 dark:text-slate-300">
+        <label className="block text-sm text-slate-700">
           {t('security:password.new')}
           <input type="password" autoComplete="new-password" className={`${input} mt-1`}
             data-tid="security.new-password" value={pw.next}
@@ -231,11 +231,11 @@ export default function SecuritySection({ account, reload }) {
       </form>
 
       <div data-tid="security.sessions">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">{t('security:sessions.title')}</h3>
-        <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{t('security:sessions.body')}</p>
+        <h3 className="text-sm font-semibold text-slate-800 mb-1">{t('security:sessions.title')}</h3>
+        <p className="text-sm text-slate-700 mb-2">{t('security:sessions.body')}</p>
         {confirmAll ? (
           <div role="alertdialog" aria-label={t('security:sessions.confirm')} className="space-y-2">
-            <p className="text-sm text-slate-800 dark:text-slate-100">{t('security:sessions.confirm')}</p>
+            <p className="text-sm text-slate-800">{t('security:sessions.confirm')}</p>
             <div className="flex gap-2">
               <button type="button" className={`${btn} border-red-600 bg-red-600 text-white hover:bg-red-700`}
                 disabled={busy === 'all'} data-tid="security.logout-all-confirm" onClick={signOutEverywhere}>
@@ -254,7 +254,7 @@ export default function SecuritySection({ account, reload }) {
           </button>
         )}
         <div aria-live="polite">
-          {allErr && <p data-tid="security.logout-all-msg" className="mt-2 text-sm text-red-700 dark:text-red-400">{allErr}</p>}
+          {allErr && <p data-tid="security.logout-all-msg" className="mt-2 text-sm text-red-700">{allErr}</p>}
         </div>
       </div>
     </section>

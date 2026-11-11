@@ -51,22 +51,22 @@ export default function GameSection({ account = null }) {
 
   return (
     <section
-      className="rounded-2xl bg-white p-6 shadow dark:bg-slate-800"
+      className="rounded-2xl bg-white p-6 shadow"
       aria-labelledby="game-title"
       data-tid="game.section"
     >
-      <h2 id="game-title" className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">
+      <h2 id="game-title" className="mb-4 text-lg font-semibold text-slate-800">
         {t('section.title')}
       </h2>
 
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="text-2xl font-bold text-teal-700 dark:text-teal-300" data-tid="game.level">
+        <span className="text-2xl font-bold text-teal-700" data-tid="game.level">
           {t('section.level', { level: me.level })}
         </span>
-        <span className="text-sm text-slate-500 dark:text-slate-400">
+        <span className="text-sm text-slate-500">
           {t(`levels.${me.level}`, { defaultValue: '' })}
         </span>
-        <span className="ml-auto text-sm font-medium text-slate-700 dark:text-slate-200" data-tid="game.xp">
+        <span className="ml-auto text-sm font-medium text-slate-700" data-tid="game.xp">
           {t('section.xp', { xp: me.xp })}
         </span>
       </div>
@@ -78,11 +78,11 @@ export default function GameSection({ account = null }) {
         aria-valuenow={pct}
         aria-label={t('section.progressLabel')}
         data-tid="game.progress"
-        className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+        className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200"
       >
-        <div className="h-full rounded-full bg-teal-600 dark:bg-teal-400" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-teal-600" style={{ width: `${pct}%` }} />
       </div>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mt-1 text-xs text-slate-500">
         {maxed
           ? t('section.maxLevel')
           : t('section.toNext', { remaining: Math.max(0, me.next_level_xp - me.xp), next: me.level + 1 })}
@@ -90,7 +90,7 @@ export default function GameSection({ account = null }) {
 
       {badges.length > 0 && (
         <>
-          <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700 dark:text-slate-200">{t('section.badges')}</h3>
+          <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">{t('section.badges')}</h3>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-tid="game.badges">
             {badges.map((b) => {
               const Icon = badgeIcon(b.icon)
@@ -101,21 +101,21 @@ export default function GameSection({ account = null }) {
                   data-earned={b.earned ? 'true' : 'false'}
                   className={`flex items-start gap-2 rounded-xl border p-3 ${
                     b.earned
-                      ? 'border-teal-200 bg-teal-50/60 dark:border-teal-800 dark:bg-teal-900/20'
-                      : 'border-slate-200 opacity-60 grayscale dark:border-slate-700'
+                      ? 'border-teal-200 bg-teal-50/60'
+                      : 'border-slate-200 opacity-60 grayscale'
                   }`}
                 >
-                  <span className={`mt-0.5 rounded-full p-1.5 ${b.earned ? TIER_CLASS[b.tier] || TIER_CLASS.bronze : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-400'}`}>
+                  <span className={`mt-0.5 rounded-full p-1.5 ${b.earned ? TIER_CLASS[b.tier] || TIER_CLASS.bronze : 'bg-slate-100 text-slate-400'}`}>
                     <Icon size={16} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 text-sm">
-                    <span className="block font-medium text-slate-800 dark:text-slate-100">
+                    <span className="block font-medium text-slate-800">
                       {t(`badges.${b.id}.name`, { defaultValue: b.id })}
                     </span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    <span className="block text-xs text-slate-500">
                       {t(`badges.${b.id}.desc`, { defaultValue: '' })}
                     </span>
-                    <span className="mt-0.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <span className="mt-0.5 block text-xs font-medium text-slate-600">
                       {b.earned ? t('section.earned') : t('section.badgeProgress', { progress: b.progress, target: b.target })}
                     </span>
                   </span>
@@ -126,18 +126,18 @@ export default function GameSection({ account = null }) {
         </>
       )}
 
-      <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700 dark:text-slate-200">{t('section.recent')}</h3>
+      <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">{t('section.recent')}</h3>
       {me.recent?.length ? (
-        <ul className="divide-y divide-slate-100 text-sm dark:divide-slate-700" data-tid="game.recent">
+        <ul className="divide-y divide-slate-100 text-sm" data-tid="game.recent">
           {me.recent.map((r, i) => (
-            <li key={`${r.rule}-${r.created_at}-${i}`} className="flex justify-between py-1.5 text-slate-700 dark:text-slate-200">
+            <li key={`${r.rule}-${r.created_at}-${i}`} className="flex justify-between py-1.5 text-slate-700">
               <span>{t(`rules.${r.rule}`, { defaultValue: r.rule })}</span>
-              <span className="font-medium text-teal-700 dark:text-teal-300">{t('section.points', { points: r.points })}</span>
+              <span className="font-medium text-teal-700">{t('section.points', { points: r.points })}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t('section.recentEmpty')}</p>
+        <p className="text-sm text-slate-500">{t('section.recentEmpty')}</p>
       )}
     </section>
   )

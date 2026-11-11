@@ -117,15 +117,15 @@ export default function GameCelebration() {
       {items.map((it) => {
         if (it.kind === 'award') {
           return (
-            <div key={it.id} data-tid="game.toast.award" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white shadow-lg dark:bg-slate-100 dark:text-slate-900">
-              <Zap size={14} aria-hidden="true" className="text-amber-400 dark:text-amber-600" />
+            <div key={it.id} data-tid="game.toast.award" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white shadow-lg">
+              <Zap size={14} aria-hidden="true" className="text-amber-400" />
               {t('toast.xp', { points: it.points, rule: t(`rules.${it.rule}`, { defaultValue: it.rule }) })}
             </div>
           )
         }
         if (it.kind === 'level') {
           return (
-            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-lg dark:bg-teal-400 dark:text-slate-900">
+            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-lg">
               <Sparkles size={14} aria-hidden="true" />
               {t('toast.level', { to: it.to })}
             </div>
@@ -133,15 +133,15 @@ export default function GameCelebration() {
         }
         const Icon = badgeIcon(it.icon)
         return (
-          <div key={it.id} data-tid="game.toast.badge" className="game-pop pointer-events-none relative flex items-center gap-3 rounded-xl border border-teal-200 bg-white px-4 py-3 shadow-lg dark:border-teal-800 dark:bg-slate-800">
+          <div key={it.id} data-tid="game.toast.badge" className="game-pop pointer-events-none relative flex items-center gap-3 rounded-xl border border-teal-200 bg-white px-4 py-3 shadow-lg">
             {!reducedMotion() && <Confetti />}
             <span className={`rounded-full p-2 ${TIER_CLASS[it.tier] || TIER_CLASS.bronze}`}>
               <Icon size={20} aria-hidden="true" />
             </span>
             <span className="text-sm">
-              <span className="block text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-300">{t('toast.badge')}</span>
-              <span className="block font-semibold text-slate-800 dark:text-slate-100">{t(`badges.${it.badge}.name`, { defaultValue: it.badge })}</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">{t(`badges.${it.badge}.desc`, { defaultValue: '' })}</span>
+              <span className="block text-xs font-medium uppercase tracking-wide text-teal-700">{t('toast.badge')}</span>
+              <span className="block font-semibold text-slate-800">{t(`badges.${it.badge}.name`, { defaultValue: it.badge })}</span>
+              <span className="block text-xs text-slate-500">{t(`badges.${it.badge}.desc`, { defaultValue: '' })}</span>
             </span>
           </div>
         )

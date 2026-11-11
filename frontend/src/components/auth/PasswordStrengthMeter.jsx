@@ -14,10 +14,10 @@ export default function PasswordStrengthMeter({ password, username, email }) {
       <div className="flex gap-1" aria-hidden="true">
         {[0, 1, 2, 3].map((i) => (
           <span key={i}
-            className={`h-1.5 flex-1 rounded-full ${i < Math.max(score, 1) ? BAR[score] : 'bg-gray-200 dark:bg-gray-700'}`} />
+            className={`h-1.5 flex-1 rounded-full ${i < Math.max(score, 1) ? BAR[score] : 'bg-gray-200'}`} />
         ))}
       </div>
-      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+      <p className="mt-1 text-xs text-gray-600">
         {t('strength.label', { level: t(`strength.level.${score}`) })}
         {hints.slice(0, 2).map((h) => ` · ${t(`strength.hint.${h}`)}`)}
       </p>

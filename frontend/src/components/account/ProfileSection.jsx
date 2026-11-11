@@ -68,11 +68,11 @@ export default function ProfileSection({ account = null, reload }) {
     } catch (err) { fail(err) } finally { setBusy(false) }
   }
 
-  const btn = 'text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50'
+  const btn = 'text-sm px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50'
 
   return (
-    <section data-tid="profile.section" className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
-      <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">{t('title')}</h2>
+    <section data-tid="profile.section" className="rounded-xl border border-slate-200 bg-white p-5">
+      <h2 className="mb-4 text-lg font-semibold text-slate-800">{t('title')}</h2>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="flex flex-col items-center gap-2">
           <Avatar user={user} size={80} />
@@ -92,7 +92,7 @@ export default function ProfileSection({ account = null, reload }) {
         </div>
         <dl className="min-w-0 flex-1 space-y-3 text-sm">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('name.label')}</dt>
+            <dt className="text-xs uppercase tracking-wide text-slate-500">{t('name.label')}</dt>
             <dd className="mt-1">
               {editing ? (
                 <form onSubmit={saveName} className="flex flex-wrap items-center gap-2">
@@ -103,16 +103,16 @@ export default function ProfileSection({ account = null, reload }) {
                     autoFocus
                     aria-label={t('name.label')}
                     data-tid="profile.nameInput"
-                    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5"
                   />
                   <button type="submit" className={btn} disabled={busy} data-tid="profile.nameSave" aria-label={t('name.save')} title={t('name.save')}><Check size={14} /></button>
                   <button type="button" className={btn} disabled={busy} onClick={() => { setEditing(false); setError('') }} data-tid="profile.nameCancel" aria-label={t('name.cancel')} title={t('name.cancel')}><X size={14} /></button>
                 </form>
               ) : (
-                <span className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                <span className="flex items-center gap-2 text-slate-800">
                   <span className="truncate font-medium" data-tid="profile.name">{user.display_name || user.username}</span>
                   {canEdit && (
-                    <button type="button" onClick={startEdit} data-tid="profile.nameEdit" aria-label={t('name.edit')} title={t('name.edit')} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                    <button type="button" onClick={startEdit} data-tid="profile.nameEdit" aria-label={t('name.edit')} title={t('name.edit')} className="text-slate-400 hover:text-slate-700">
                       <Pencil size={14} />
                     </button>
                   )}
@@ -121,20 +121,20 @@ export default function ProfileSection({ account = null, reload }) {
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('username.label')}</dt>
-            <dd className="mt-1 text-slate-800 dark:text-slate-100" data-tid="profile.username">@{user.username}</dd>
+            <dt className="text-xs uppercase tracking-wide text-slate-500">{t('username.label')}</dt>
+            <dd className="mt-1 text-slate-800" data-tid="profile.username">@{user.username}</dd>
           </div>
           {user.email && (
             <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('email.label')}</dt>
-              <dd className="mt-1 flex flex-wrap items-center gap-2 text-slate-800 dark:text-slate-100">
+              <dt className="text-xs uppercase tracking-wide text-slate-500">{t('email.label')}</dt>
+              <dd className="mt-1 flex flex-wrap items-center gap-2 text-slate-800">
                 <span className="break-all" data-tid="profile.email">{user.email}</span>
                 {user.email_verified ? (
-                  <span data-tid="profile.emailVerified" className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                  <span data-tid="profile.emailVerified" className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
                     <BadgeCheck size={12} />{t('email.verified')}
                   </span>
                 ) : (
-                  <span data-tid="profile.emailUnverified" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                  <span data-tid="profile.emailUnverified" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
                     <MailWarning size={12} />{t('email.unverified')}
                   </span>
                 )}
@@ -143,7 +143,7 @@ export default function ProfileSection({ account = null, reload }) {
           )}
         </dl>
       </div>
-      {error && <p role="alert" data-tid="profile.error" className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" data-tid="profile.error" className="mt-3 text-sm text-red-600">{error}</p>}
     </section>
   )
 }

@@ -31,15 +31,15 @@ export default function GameNavChip() {
     <Link
       to="/account"
       data-tid="game.navChip"
-      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-teal-50 px-1.5 py-0.5 text-xs font-semibold text-teal-700 hover:bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-teal-900/60"
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-teal-50 px-1.5 py-0.5 text-xs font-semibold text-teal-700 hover:bg-teal-100"
       aria-label={label}
       title={label}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className="-rotate-90">
-        <circle cx="12" cy="12" r={R} fill="none" strokeWidth="3" className="stroke-teal-200 dark:stroke-teal-900" />
+        <circle cx="12" cy="12" r={R} fill="none" strokeWidth="3" className="stroke-teal-200" />
         <circle
           cx="12" cy="12" r={R} fill="none" strokeWidth="3" strokeLinecap="round"
-          className="stroke-teal-600 dark:stroke-teal-400"
+          className="stroke-teal-600"
           strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
           data-tid="game.navChip.ring"
         />

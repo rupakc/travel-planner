@@ -15,7 +15,7 @@ import DataSection from '../components/account/DataSection'
 function SectionFailed() {
   const { t } = useTranslation('profile')
   return (
-    <p role="status" data-tid="account.sectionFailed" className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+    <p role="status" data-tid="account.sectionFailed" className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
       {t('page.sectionFailed')}
     </p>
   )
@@ -68,7 +68,7 @@ export default function AccountPage() {
       {notice?.error && (
         <p role="alert" data-tid="account.toast.error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{notice.text}</p>
       )}
-      <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('page.title')}</h1>
+      <h1 className="text-2xl font-bold text-slate-800">{t('page.title')}</h1>
       {[ProfileSection, SettingsSection, SecuritySection, QuotaSection, GameSection, DataSection].map((Section, i) => (
         <SectionBoundary key={i}><Section {...props} /></SectionBoundary>
       ))}

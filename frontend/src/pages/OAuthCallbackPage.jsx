@@ -85,7 +85,7 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <p role="status" data-tid="oauth.working" className="text-sm text-slate-600 dark:text-slate-300">
+      <p role="status" data-tid="oauth.working" className="text-sm text-slate-600">
         {t('oauth:working')}
       </p>
     </div>

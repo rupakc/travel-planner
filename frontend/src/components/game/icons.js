@@ -13,7 +13,7 @@ const ICONS = {
 export const badgeIcon = (name) => ICONS[name] || Award
 
 export const TIER_CLASS = {
-  bronze: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  silver: 'bg-slate-200 text-slate-600 dark:bg-slate-600/50 dark:text-slate-200',
-  gold: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-300',
+  bronze: 'bg-amber-100 text-amber-700',
+  silver: 'bg-slate-200 text-slate-600',
+  gold: 'bg-yellow-100 text-yellow-600',
 }
