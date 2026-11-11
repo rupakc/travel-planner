@@ -4,8 +4,8 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const calls = []
-const state = { journey: true, online: true, stored: { pack: null, savedAt: null, loading: false } }
-vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 7 } }) }))
+const state = { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, online: true, stored: { pack: null, savedAt: null, loading: false } }
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: state.user }) }))
 vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: state.journey }) }))
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => state.online }))
 vi.mock('../../offline/useOfflinePack', () => ({ useOfflinePack: () => state.stored }))
@@ -14,12 +14,12 @@ vi.mock('../../services/tripsApi', () => ({
   getOfflinePack: vi.fn(async () => { calls.push('fetch'); return PACK }),
 }))
 vi.mock('../../offline/packStore', () => ({
-  savePack: vi.fn(async () => { calls.push('save') }),
+  savePack: vi.fn(async () => { calls.push('save'); if (state.saveErr) throw state.saveErr }),
   deletePack: vi.fn(async () => { calls.push('delete') }),
 }))
 vi.mock('../../offline/registerSW', () => ({
-  ensureServiceWorker: vi.fn(async () => { calls.push('sw'); return state.reg }),
-  precacheShell: vi.fn(async () => { calls.push('precache'); return { ok: true, kb: 10 } }),
+  ensureServiceWorker: vi.fn(async () => { calls.push('sw'); if (state.swThrow) throw new Error('sw'); return state.reg }),
+  precacheShell: vi.fn(async () => { calls.push('precache'); return state.shell }),
 }))
 
 import OfflinePack from './OfflinePack'
@@ -44,7 +44,7 @@ const render = () => act(async () => root.render(<OfflinePack trip={{ id: 12 }} 
 beforeEach(() => {
   vi.clearAllMocks()
   calls.length = 0
-  Object.assign(state, { journey: true, online: true, reg: {}, stored: { pack: null, savedAt: null, loading: false } })
+  Object.assign(state, { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, user: { id: 7 }, online: true, reg: {}, stored: { pack: null, savedAt: null, loading: false } })
   Object.defineProperty(navigator, 'storage', {
     configurable: true,
     value: { persist: vi.fn(async () => { calls.push('persist'); return true }) },
@@ -128,5 +128,71 @@ describe('OfflinePack', () => {
     expect(deletePack).toHaveBeenCalledWith('7', 12)
     expect(tid('offlinePack.save')).not.toBeNull()
     expect(tid('offlinePack.emergency')).toBeNull()
+  })
+
+  it('Refresh fetches and saves again', async () => {
+    state.stored = { pack: PACK, savedAt: '2027-03-01T10:00:00Z', loading: false }
+    await render()
+    await click(tid('offlinePack.refresh'))
+    expect(calls).toEqual(['fetch', 'save', 'sw', 'precache', 'persist'])
+    expect(emit).toHaveBeenCalledWith('offline_pack', expect.objectContaining({ action: 'refresh', result: 'ok' }))
+  })
+
+  it('a storage error shows the quota message and saves nothing', async () => {
+    state.saveErr = Object.assign(new Error('full'), { name: 'QuotaExceededError' })
+    await render()
+    await click(tid('offlinePack.save'))
+    expect(tid('offlinePack.error').textContent).toMatch(/Not enough storage/)
+    expect(tid('offlinePack.status')).toBeNull()
+    expect(emit).toHaveBeenCalledWith('offline_pack', expect.objectContaining({ result: 'quota' }))
+  })
+
+  it('a generic save error shows the retry message', async () => {
+    state.saveErr = new Error('boom')
+    await render()
+    await click(tid('offlinePack.save'))
+    expect(tid('offlinePack.error').textContent).toMatch(/Could not save/)
+    expect(emit).toHaveBeenCalledWith('offline_pack', expect.objectContaining({ result: 'error' }))
+  })
+
+  it('precacheShell not ok keeps the data and shows the tab note', async () => {
+    state.shell = { ok: false, kb: 0 }
+    await render()
+    await click(tid('offlinePack.save'))
+    expect(tid('offlinePack.tabnote')).not.toBeNull()
+    expect(tid('offlinePack.status').textContent).toMatch(/Saved/)
+    expect(emit).toHaveBeenCalledWith('offline_pack', expect.objectContaining({ result: 'unsupported' }))
+  })
+
+  it('a service worker failure after the data is saved still shows the pack with the tab note', async () => {
+    state.swThrow = true
+    await render()
+    await click(tid('offlinePack.save'))
+    expect(savePack).toHaveBeenCalled()
+    expect(tid('offlinePack.error')).toBeNull()
+    expect(tid('offlinePack.status').textContent).toMatch(/Saved/)
+    expect(tid('offlinePack.tabnote')).not.toBeNull()
+  })
+
+  it('Remove emits a remove event', async () => {
+    state.stored = { pack: PACK, savedAt: null, loading: false }
+    await render()
+    await click(tid('offlinePack.remove'))
+    expect(emit).toHaveBeenCalledWith('offline_pack', { action: 'remove', result: 'ok', kb: 0 })
+  })
+
+  it('without a user id Save is disabled and nothing is saved', async () => {
+    state.user = null
+    await render()
+    expect(tid('offlinePack.save').disabled).toBe(true)
+    expect(savePack).not.toHaveBeenCalled()
+  })
+
+  it('labels the rate with its date and source, and tags local text with its language', async () => {
+    state.stored = { pack: PACK, savedAt: null, loading: false }
+    await render()
+    expect(tid('offlinePack.currency').textContent).toMatch(/Rate from .*\(saved with your trip\), approximate/)
+    expect(tid('offlinePack.currency').textContent).toMatch(/2027/)
+    expect([...container.querySelectorAll('[lang="pt"]')].map((e) => e.textContent).join(' ')).toContain('Socorro!')
   })
 })

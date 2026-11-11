@@ -21,3 +21,14 @@ export function convert(amount, rate, direction) {
   if (!Number.isFinite(a) || !Number.isFinite(r) || r <= 0) return NaN
   return direction === 'toHome' ? a / r : a * r
 }
+
+/** Parses typed input. One decimal comma is accepted only when nothing else
+ * separates digits and it is not a 3-digit group ("1,000" is ambiguous, so
+ * invalid). -> number, or NaN. */
+export function parseAmount(text) {
+  const s = String(text ?? '').trim()
+  if (!s) return NaN
+  if (/^\d*\.?\d+$|^\d+\.$/.test(s)) return Number(s)
+  if (/^\d+,\d{1,2}$|^\d+,\d{4,}$/.test(s)) return Number(s.replace(',', '.'))
+  return NaN
+}

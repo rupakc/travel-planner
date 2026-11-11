@@ -22,7 +22,10 @@
     "noRate": "No se guardó ningún tipo de cambio para {{local}}, así que no hay conversor. Consulta el cambio antes de viajar.",
     "amountLabel": "Importe en {{currency}}",
     "swap": "Invertir dirección",
-    "rateFrom": "Tipo de cambio del {{date}}, aproximado"
+    "rateFrom": "Tipo de cambio del {{date}} ({{source}}), aproximado",
+    "sources": {
+      "snapshot": "guardado con tu viaje"
+    }
   },
   "phrases": {
     "title": "Frases en {{language}}",

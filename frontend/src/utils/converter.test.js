@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { convert, roundFor } from './converter'
+import { convert, roundFor, parseAmount } from './converter'
 
 describe('converter', () => {
   it('converts both ways', () => {
@@ -15,5 +15,13 @@ describe('converter', () => {
     expect(convert('x', 1, 'toLocal')).toBeNaN()
     expect(convert(5, 0, 'toHome')).toBeNaN()
     expect(convert(5, null, 'toLocal')).toBeNaN()
+  })
+  it('parses amounts without turning 1,000 into 1', () => {
+    expect(parseAmount('12.5')).toBe(12.5)
+    expect(parseAmount('12,5')).toBe(12.5)
+    expect(parseAmount('1,000')).toBeNaN()
+    expect(parseAmount('1,000.50')).toBeNaN()
+    expect(parseAmount('abc')).toBeNaN()
+    expect(parseAmount('')).toBeNaN()
   })
 })

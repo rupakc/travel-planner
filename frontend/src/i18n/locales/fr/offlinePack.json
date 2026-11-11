@@ -22,7 +22,10 @@
     "noRate": "Aucun taux de change n'a été enregistré pour {{local}}, il n'y a donc pas de convertisseur. Vérifiez un taux avant de partir.",
     "amountLabel": "Montant en {{currency}}",
     "swap": "Inverser le sens",
-    "rateFrom": "Taux du {{date}}, approximatif"
+    "rateFrom": "Taux du {{date}} ({{source}}), approximatif",
+    "sources": {
+      "snapshot": "enregistré avec votre voyage"
+    }
   },
   "phrases": {
     "title": "Phrases en {{language}}",

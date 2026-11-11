@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { convert, roundFor } from '../../utils/converter'
+import { convert, roundFor, parseAmount, exponentFor } from '../../utils/converter'
 import { fmtDate, fmtNumber } from '../../i18n/format'
+
+const sameYear = (iso) => new Date(iso).getFullYear() === new Date().getFullYear()
 
 // Offline converter. Honest labelling: the rate's date, and "approximate".
 export default function CurrencyConverter({ currency }) {
@@ -9,7 +11,7 @@ export default function CurrencyConverter({ currency }) {
   const [amount, setAmount] = useState('')
   const [direction, setDirection] = useState('toLocal')
   if (!currency) return null
-  const { local, home, rate, as_of: asOf } = currency
+  const { local, home, rate, as_of: asOf, source } = currency
   if (rate == null) {
     return (
       <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
@@ -20,9 +22,8 @@ export default function CurrencyConverter({ currency }) {
   }
   const from = direction === 'toLocal' ? home : local
   const to = direction === 'toLocal' ? local : home
-  const raw = amount === '' ? NaN : convert(amount.replace(',', '.'), rate, direction)
+  const raw = amount === '' ? NaN : convert(parseAmount(amount), rate, direction)
   const out = Number.isFinite(raw) ? roundFor(to, raw) : null
-  const digits = to && roundFor(to, 1.23456) === 1 ? 0 : undefined
   return (
     <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('currency.title')}</h3>
@@ -46,11 +47,14 @@ export default function CurrencyConverter({ currency }) {
           ⇄
         </button>
         <span data-tid="offlinePack.currency.result" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          {out == null ? '—' : fmtNumber(out, digits === 0 ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 0, maximumFractionDigits: 3 })} {to}
+          {out == null ? '—' : fmtNumber(out, { minimumFractionDigits: 0, maximumFractionDigits: exponentFor(to) })} {to}
         </span>
       </div>
       <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-        {t('currency.rateFrom', { date: fmtDate(asOf, { day: 'numeric', month: 'short' }) })}
+        {t('currency.rateFrom', {
+          date: fmtDate(asOf, sameYear(asOf) ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' }),
+          source: t(`currency.sources.${source}`, { defaultValue: source || '' }),
+        })}
       </p>
     </section>
   )

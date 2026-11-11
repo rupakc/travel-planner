@@ -22,7 +22,10 @@
     "noRate": "没有保存 {{local}} 的汇率，因此没有换算器。出发前请查询汇率。",
     "amountLabel": "{{currency}} 金额",
     "swap": "切换方向",
-    "rateFrom": "{{date}} 的汇率，仅供参考"
+    "rateFrom": "{{date}} 的汇率（{{source}}），仅供参考",
+    "sources": {
+      "snapshot": "随行程保存"
+    }
   },
   "phrases": {
     "title": "{{language}}常用语",

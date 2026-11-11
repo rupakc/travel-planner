@@ -25,7 +25,7 @@ export default function PhraseList({ phrases }) {
           <li key={p.id} className="py-2 flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs text-gray-600 dark:text-gray-400">{t(`phrases.ids.${p.id}`, { defaultValue: p.id })}</p>
-              <p className="text-lg text-gray-900 dark:text-gray-100 break-words">{p.text}</p>
+              <p lang={phrases.language} className="text-lg text-gray-900 dark:text-gray-100 break-words">{p.text}</p>
               {p.romanized && <p className="text-sm italic text-gray-600 dark:text-gray-400">{p.romanized}</p>}
             </div>
             <button
@@ -47,7 +47,7 @@ export default function PhraseList({ phrases }) {
           data-tid="offlinePack.phrase.full"
           className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-white dark:bg-gray-950 p-6 text-center"
         >
-          <p className="text-4xl sm:text-6xl font-bold text-gray-900 dark:text-gray-100 break-words max-w-full">{shown.text}</p>
+          <p lang={phrases.language} className="text-4xl sm:text-6xl font-bold text-gray-900 dark:text-gray-100 break-words max-w-full">{shown.text}</p>
           {shown.romanized && <p className="text-xl sm:text-2xl italic text-gray-700 dark:text-gray-300">{shown.romanized}</p>}
           <button
             ref={closeRef}

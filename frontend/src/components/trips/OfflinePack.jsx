@@ -23,7 +23,8 @@ export default function OfflinePack({ trip, token }) {
   const { enabled } = useJourney()
   const { user } = useAuth()
   const online = useOnline()
-  const userId = String(user?.id ?? user?.username ?? '')
+  const rawId = user?.id ?? user?.username
+  const userId = rawId == null || rawId === '' ? null : String(rawId)
   const stored = useOfflinePack(userId, trip?.id)
   const [local, setLocal] = useState(null) // {pack, savedAt, kb, worker} after a save here
   const [removed, setRemoved] = useState(false)
@@ -31,7 +32,7 @@ export default function OfflinePack({ trip, token }) {
   const [error, setError] = useState(null)
 
   const pack = removed ? null : (local?.pack ?? stored.pack)
-  const savedAt = removed ? null : (local?.savedAt ?? stored.savedAt)
+  const savedAt = removed ? null : (local?.savedAt ?? stored.savedAt ?? stored.pack?.saved_at)
   const kb = local?.kb ?? (pack ? sizeKb(pack) : 0)
 
   const save = useCallback(async (action) => {
@@ -40,16 +41,19 @@ export default function OfflinePack({ trip, token }) {
     let result = 'error'
     let savedKb = 0
     try {
+      if (!userId) throw new Error('no_user')
       const fresh = await getOfflinePack(token, trip.id)
       await savePack(userId, fresh)
-      const reg = await ensureServiceWorker()
-      let worker = false
-      if (reg) {
-        const shell = await precacheShell()
-        worker = !!shell?.ok
-      }
-      try { await navigator.storage?.persist?.() } catch { /* best effort */ }
       savedKb = sizeKb(fresh)
+      let worker = false
+      try {
+        const reg = await ensureServiceWorker()
+        if (reg) {
+          const shell = await precacheShell()
+          worker = !!shell?.ok
+        }
+        await navigator.storage?.persist?.()
+      } catch { /* the data is saved; only the offline shell failed */ }
       setLocal({ pack: fresh, savedAt: new Date().toISOString(), kb: savedKb, worker })
       setRemoved(false)
       result = worker ? 'ok' : 'unsupported'
@@ -65,7 +69,7 @@ export default function OfflinePack({ trip, token }) {
   const remove = async () => {
     setBusy(true)
     try {
-      await deletePack(userId, trip.id)
+      if (userId) await deletePack(userId, trip.id)
       setLocal(null)
       setRemoved(true)
       safe({ action: 'remove', result: 'ok', kb: 0 })
@@ -102,13 +106,13 @@ export default function OfflinePack({ trip, token }) {
         <div className="mt-3 flex flex-wrap gap-2">
           {pack ? (
             <>
-              <button type="button" data-tid="offlinePack.refresh" disabled={busy || !online} onClick={() => save('refresh')}
+              <button type="button" data-tid="offlinePack.refresh" disabled={busy || !online || !userId} onClick={() => save('refresh')}
                 className={`${btn} bg-teal-700 hover:bg-teal-800 text-white`}>{t('refresh')}</button>
               <button type="button" data-tid="offlinePack.remove" disabled={busy} onClick={remove}
                 className={`${btn} border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200`}>{t('remove')}</button>
             </>
           ) : (
-            <button type="button" data-tid="offlinePack.save" disabled={busy || !online} onClick={() => save('save')}
+            <button type="button" data-tid="offlinePack.save" disabled={busy || !online || !userId} onClick={() => save('save')}
               className={`${btn} bg-teal-700 hover:bg-teal-800 text-white`}>{busy ? t('saving') : t('save')}</button>
           )}
         </div>
@@ -116,7 +120,7 @@ export default function OfflinePack({ trip, token }) {
       {pack && (
         <>
           <EmergencyNumbers emergency={pack.emergency} />
-          <AddressCard card={pack.address_card} />
+          <AddressCard card={pack.address_card} language={pack.phrases?.language} />
           <PhraseList phrases={pack.phrases} />
           <CurrencyConverter currency={pack.currency} />
         </>

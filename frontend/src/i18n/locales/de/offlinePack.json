@@ -22,7 +22,10 @@
     "noRate": "Für {{local}} wurde kein Wechselkurs gespeichert, daher gibt es keinen Rechner. Prüfe den Kurs vor der Reise.",
     "amountLabel": "Betrag in {{currency}}",
     "swap": "Richtung wechseln",
-    "rateFrom": "Kurs vom {{date}}, ungefähr"
+    "rateFrom": "Kurs vom {{date}} ({{source}}), ungefähr",
+    "sources": {
+      "snapshot": "mit deiner Reise gespeichert"
+    }
   },
   "phrases": {
     "title": "Sätze auf {{language}}",

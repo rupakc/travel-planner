@@ -22,7 +22,10 @@
     "noRate": "No exchange rate was saved for {{local}}, so there is no converter. Check a rate before you travel.",
     "amountLabel": "Amount in {{currency}}",
     "swap": "Swap direction",
-    "rateFrom": "Rate from {{date}}, approximate"
+    "rateFrom": "Rate from {{date}} ({{source}}), approximate",
+    "sources": {
+      "snapshot": "saved with your trip"
+    }
   },
   "phrases": {
     "title": "Phrases in {{language}}",
