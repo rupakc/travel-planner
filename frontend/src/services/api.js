@@ -1,12 +1,14 @@
 import axios from 'axios'
+import { watchAxios, isSessionRevoked, reportSessionRevoked } from './sessionRevoked'
+import { errorCodeText } from '../utils/httpError'
 import { cityForCode } from '../utils/cityNames'
 import i18n from '../i18n'
 import { isSupportedLanguage } from '../i18n/languages'
 
-const api = axios.create({
+const api = watchAxios(axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
-})
+}))
 
 /**
  * `{ locale }` for AI-calling requests: the UI language's base code (zh-CN ->
@@ -16,6 +18,17 @@ const api = axios.create({
 export function localeField() {
   const base = String(i18n.language || '').split('-')[0].toLowerCase()
   return isSupportedLanguage(base) ? { locale: base } : {}
+}
+
+/**
+ * The Error for an SSE worker's `__error` message ({message, code, status}):
+ * the translated `error_code` when there is one (email_unverified,
+ * ai_daily_quota, …), else the server's detail. A 401 session_revoked is
+ * reported with the token the stream was opened with.
+ */
+export function workerError(data, token = null) {
+  if (isSessionRevoked(data?.status, { error_code: data?.code })) reportSessionRevoked(token)
+  return new Error(errorCodeText(data?.code) || data?.message || 'Request failed')
 }
 
 /**
@@ -32,7 +45,7 @@ export function streamSearch(searchData, onResult, onDone, onError, token = null
 
   worker.onmessage = ({ data }) => {
     if (data.type === '__error') {
-      onError(new Error(data.message))
+      onError(workerError(data, token))
       worker.terminate()
     } else if (data.type === '__interrupted') {
       // Stream severed before the server's `done` event — let the caller

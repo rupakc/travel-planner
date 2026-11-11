@@ -19,6 +19,7 @@ import useFirstRunTour from '../hooks/useFirstRunTour'
 import { discoverDestinations, compareDestination, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
 import CompareTable from '../components/CompareTable'
 import { buildCompareRequests, compareErrorReason, apiReturnDate } from '../utils/compare'
+import { axiosErrorDetail } from '../utils/httpError'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
 import { fmtNumber } from '../i18n/format'
 
@@ -451,7 +452,7 @@ export default function SearchPage() {
       })
       setDestinations(result.destinations || [])
     } catch (err) {
-      setDiscoverError(err.response?.data?.detail || t('discover.failed'))
+      setDiscoverError(axiosErrorDetail(err).detail || t('discover.failed'))
     } finally {
       setDiscovering(false)
     }
