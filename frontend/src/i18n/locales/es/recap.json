@@ -1,0 +1,55 @@
+{
+  "loading": "Cargando tu resumen…",
+  "failed": "No pudimos cargar tu resumen ahora.",
+  "retry": "Reintentar",
+  "notReady": "Tu resumen aparece después del {{date}}",
+  "finish": "Terminar resumen",
+  "finishFailed": "No pudimos terminar el resumen. Inténtalo de nuevo.",
+  "completed": "Resumen terminado",
+  "stats": {
+    "days": "Días",
+    "places": "Lugares visitados",
+    "distance": "Distancia",
+    "km": "{{km}} km",
+    "countries": "Países",
+    "journal": "Entradas del diario",
+    "stars": "Estrellas promedio"
+  },
+  "map": {
+    "route": "Tu ruta",
+    "planned": "Ruta planificada"
+  },
+  "spend": {
+    "title": "Gasto frente al presupuesto",
+    "spent": "Gastado (estimado)",
+    "budget": "Presupuesto",
+    "planned": "Coste planificado (estimado)",
+    "estimateNote": "Estimaciones: los importes se convierten con tipos aproximados del día en que registraste cada gasto.",
+    "unconverted": "No incluido, sin tipo de cambio para: {{currencies}}"
+  },
+  "reveal": {
+    "title_one": "¡Nuevo país sellado!",
+    "title_other": "¡{{count}} países nuevos sellados!",
+    "close": "Cerrar",
+    "title_many": "¡{{count}} países nuevos sellados!"
+  },
+  "share": {
+    "cta": "Compartir",
+    "days_one": "{{count}} día en {{city}}",
+    "days_other": "{{count}} días en {{city}}",
+    "places_one": "{{count}} lugar",
+    "places_other": "{{count}} lugares",
+    "copied": "Enlace copiado",
+    "failed": "No pudimos compartir ahora.",
+    "days_many": "{{count}} días en {{city}}",
+    "places_many": "{{count}} lugares"
+  },
+  "whereNext": {
+    "title": "¿Y ahora adónde?",
+    "cta": "Sugiéreme mi próximo viaje",
+    "loading": "Buscando…",
+    "retry": "Inténtalo de nuevo",
+    "failed": "No pudimos cargar sugerencias ahora.",
+    "none": "Sin sugerencias nuevas esta vez."
+  }
+}

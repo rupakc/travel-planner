@@ -1,0 +1,52 @@
+{
+  "loading": "Dein Rückblick wird geladen…",
+  "failed": "Dein Rückblick konnte gerade nicht geladen werden.",
+  "retry": "Erneut versuchen",
+  "notReady": "Dein Rückblick erscheint nach dem {{date}}",
+  "finish": "Rückblick abschließen",
+  "finishFailed": "Der Rückblick konnte nicht abgeschlossen werden. Versuch es noch einmal.",
+  "completed": "Rückblick abgeschlossen",
+  "stats": {
+    "days": "Tage",
+    "places": "Besuchte Orte",
+    "distance": "Strecke",
+    "km": "{{km}} km",
+    "countries": "Länder",
+    "journal": "Tagebucheinträge",
+    "stars": "Ø Sterne"
+  },
+  "map": {
+    "route": "Deine Route",
+    "planned": "Geplante Route"
+  },
+  "spend": {
+    "title": "Ausgaben und Budget",
+    "spent": "Ausgegeben (geschätzt)",
+    "budget": "Budget",
+    "planned": "Geplante Kosten (geschätzt)",
+    "estimateNote": "Schätzungen: Beträge werden mit ungefähren Kursen vom Tag der Erfassung umgerechnet.",
+    "unconverted": "Nicht eingerechnet, kein Kurs für: {{currencies}}"
+  },
+  "reveal": {
+    "title_one": "Neues Land gestempelt!",
+    "title_other": "{{count}} neue Länder gestempelt!",
+    "close": "Schließen"
+  },
+  "share": {
+    "cta": "Teilen",
+    "days_one": "{{count}} Tag in {{city}}",
+    "days_other": "{{count}} Tage in {{city}}",
+    "places_one": "{{count}} Ort",
+    "places_other": "{{count}} Orte",
+    "copied": "Link kopiert",
+    "failed": "Teilen ist gerade nicht möglich."
+  },
+  "whereNext": {
+    "title": "Wohin als Nächstes?",
+    "cta": "Schlag mir meine nächste Reise vor",
+    "loading": "Suche läuft…",
+    "retry": "Erneut versuchen",
+    "failed": "Vorschläge konnten gerade nicht geladen werden.",
+    "none": "Diesmal keine neuen Vorschläge."
+  }
+}
