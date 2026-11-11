@@ -185,3 +185,11 @@ async def test_api_errors_are_provider_error(failing):
     with pytest.raises(OAuthError) as ei:
         await run_exchange()
     assert ei.value.code == "provider_error"
+
+
+async def test_generic_callers_get_protocol_defaults():
+    provider = registry.get_provider("github")
+    with pytest.raises(OAuthError) as ei:
+        await provider.verify_id_token("x", nonce=None)
+    assert ei.value.code == "bad_request"
+    assert await provider.revoke("secret") is None
