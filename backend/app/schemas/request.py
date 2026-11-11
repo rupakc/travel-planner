@@ -72,6 +72,34 @@ class ImportSource(BaseModel):
         return v
 
 
+def allocate_city_days(
+    n: int, total_days: int, destination_nights: list[int | None] | None
+) -> list[int]:
+    """Days per city, honouring explicit destination_nights when they fit."""
+    requested: list[int | None] = [None] * n
+    if destination_nights:
+        for i, nights in enumerate(destination_nights[:n]):
+            if isinstance(nights, int) and nights > 0:
+                requested[i] = nights
+
+    fixed = sum(d for d in requested if d)
+    free_slots = sum(1 for d in requested if d is None)
+    remaining = total_days - fixed
+    # Requested nights must leave at least one day for every open city
+    # (and not exceed the trip when everything is pinned).
+    if any(requested) and remaining >= free_slots and (free_slots or remaining == 0):
+        if not free_slots:
+            return [d for d in requested if d]
+        bounds = [round(i * remaining / free_slots) for i in range(free_slots + 1)]
+        free_days = [bounds[i + 1] - bounds[i] for i in range(free_slots)]
+        it = iter(free_days)
+        return [d if d is not None else next(it) for d in requested]
+
+    # Fully proportional fallback — exact date coverage for any split
+    bounds = [round(i * total_days / n) for i in range(n + 1)]
+    return [bounds[i + 1] - bounds[i] for i in range(n)]
+
+
 class TravelSearchRequest(BaseModel):
     origin: str = Field(..., description="Origin airport or city code (e.g. NYC, LHR)")
     destination: str = Field(
@@ -246,32 +274,7 @@ class TravelSearchRequest(BaseModel):
 
     def _allocate_days(self, n: int, total_days: int) -> list[int]:
         """Days per city, honouring explicit destination_nights when they fit."""
-        requested: list[int | None] = [None] * n
-        if self.destination_nights:
-            for i, nights in enumerate(self.destination_nights[:n]):
-                if isinstance(nights, int) and nights > 0:
-                    requested[i] = nights
-
-        fixed = sum(d for d in requested if d)
-        free_slots = sum(1 for d in requested if d is None)
-        remaining = total_days - fixed
-        # Requested nights must leave at least one day for every open city
-        # (and not exceed the trip when everything is pinned).
-        if (
-            any(requested)
-            and remaining >= free_slots
-            and (free_slots or remaining == 0)
-        ):
-            if not free_slots:
-                return [d for d in requested if d]
-            bounds = [round(i * remaining / free_slots) for i in range(free_slots + 1)]
-            free_days = [bounds[i + 1] - bounds[i] for i in range(free_slots)]
-            it = iter(free_days)
-            return [d if d is not None else next(it) for d in requested]
-
-        # Fully proportional fallback — exact date coverage for any split
-        bounds = [round(i * total_days / n) for i in range(n + 1)]
-        return [bounds[i + 1] - bounds[i] for i in range(n)]
+        return allocate_city_days(n, total_days, self.destination_nights)
 
     @property
     def flight_legs(self) -> list[dict] | None:
