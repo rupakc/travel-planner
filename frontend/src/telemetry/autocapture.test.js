@@ -8,6 +8,8 @@ describe('routeTemplate', () => {
     expect(routeTemplate('/share/abc123')).toBe('/share/:token')
     expect(routeTemplate('/share/abc123/')).toBe('/share/:token')
     expect(routeTemplate('/plans/42')).toBe('/plans/:id')
+    expect(routeTemplate('/verify')).toBe('/verify')
+    expect(routeTemplate('/account')).toBe('/account')
   })
 
   it('passes known static routes through', () => {
