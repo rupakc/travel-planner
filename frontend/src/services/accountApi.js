@@ -29,6 +29,11 @@ export async function exportAccount(token) {
   try {
     return (await http.get('/account/export', { ...bearer(token), responseType: 'blob' })).data
   } catch (err) {
+    // A blob response type leaves the error body as a Blob: decode it first.
+    const data = err?.response?.data
+    if (typeof Blob !== 'undefined' && data instanceof Blob) {
+      try { err.response.data = JSON.parse(await data.text()) } catch { err.response.data = {} }
+    }
     throw toApiError(err)
   }
 }

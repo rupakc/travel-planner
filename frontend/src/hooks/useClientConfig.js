@@ -16,7 +16,6 @@ export function loadClientConfig() {
   return pending
 }
 
-
 export function useClientConfig() {
   const [state, setState] = useState(() => ({ config: cached || {}, loaded: !!cached }))
   useEffect(() => {

@@ -4,7 +4,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const http = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }))
 vi.mock('axios', () => ({ default: { create: () => http } }))
 
-import { signup, verifyEmail, exchangeOAuthCode, changePasswordV2 } from './authApi'
+import {
+  signup, verifyEmail, exchangeOAuthCode, changePasswordV2, resendVerification, confirmPasswordReset,
+  requestPasswordReset, completeOAuthSignup, getLinkStartUrl, logoutAll,
+} from './authApi'
 
 beforeEach(() => { http.post.mockReset() })
 
@@ -29,5 +32,24 @@ describe('authApi', () => {
     await changePasswordV2('tok', 'a', 'b')
     expect(http.post.mock.calls[0][1]).toMatchObject({ current_password: 'a', new_password: 'b' })
     expect(http.post.mock.calls[0][2].headers.Authorization).toBe('Bearer tok')
+  })
+  it('maps the remaining calls', async () => {
+    http.post.mockResolvedValue({ data: { ok: 1 } })
+    await resendVerification('a@b.c')
+    expect(http.post.mock.calls.at(-1).slice(0, 2)).toEqual(['/auth/verify-email/resend', expect.objectContaining({ email: 'a@b.c', client: 'web' })])
+    await requestPasswordReset('a@b.c')
+    expect(http.post.mock.calls.at(-1)[0]).toBe('/auth/password-reset/request')
+    await confirmPasswordReset('tk', 'newpw')
+    expect(http.post.mock.calls.at(-1).slice(0, 2)).toEqual(['/auth/password-reset/confirm', expect.objectContaining({ token: 'tk', new_password: 'newpw' })])
+    await completeOAuthSignup({ signup_token: 's', username: 'u' })
+    expect(http.post.mock.calls.at(-1).slice(0, 2)).toEqual(['/auth/oauth/complete', expect.objectContaining({ signup_token: 's', username: 'u', client: 'web' })])
+    await getLinkStartUrl('tok', 'github')
+    const [p, b, c] = http.post.mock.calls.at(-1)
+    expect(p).toBe('/auth/oauth/link-ticket')
+    expect(b).toMatchObject({ provider: 'github' })
+    expect(c.headers.Authorization).toBe('Bearer tok')
+    await logoutAll('tok')
+    expect(http.post.mock.calls.at(-1)[0]).toBe('/auth/logout-all')
+    expect(http.post.mock.calls.at(-1)[2].headers.Authorization).toBe('Bearer tok')
   })
 })
