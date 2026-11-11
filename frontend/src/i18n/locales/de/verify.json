@@ -1,0 +1,29 @@
+{
+  "check": {
+    "title": "Prüfe dein Postfach",
+    "sent": "Wir haben einen Link an {{email}} gesendet. Er ist 30 Minuten gültig.",
+    "sentNoEmail": "Wir haben dir einen Link gesendet. Er ist 30 Minuten gültig.",
+    "mailHint": "Öffne deine Mail-App und tippe auf den Link. Sieh im Spam-Ordner nach, falls du ihn nicht findest.",
+    "resend": "E-Mail erneut senden",
+    "resendIn": "Erneut senden in {{seconds}} s",
+    "resent": "Gesendet. Prüfe dein Postfach.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "email": {
+    "label": "E-Mail-Adresse",
+    "placeholder": "du@beispiel.de"
+  },
+  "verify": {
+    "working": "E-Mail wird bestätigt…",
+    "confirmed": "E-Mail bestätigt",
+    "toAccount": "Zu deinem Konto",
+    "used": "Deine E-Mail ist bereits bestätigt. Melde dich an, um fortzufahren.",
+    "signIn": "Anmelden",
+    "expired": "Dieser Link ist abgelaufen. Gib deine E-Mail ein und wir senden einen neuen.",
+    "emailChanged": "Deine E-Mail-Adresse hat sich seit dem Versand dieses Links geändert. Gib deine E-Mail ein und wir senden einen neuen Link.",
+    "resend": "Neuen Link senden",
+    "resent": "Falls diese Adresse bestätigt werden muss, ist ein neuer Link unterwegs.",
+    "invalid": "Dieser Link ist ungültig.",
+    "toSignup": "Konto erstellen"
+  }
+}

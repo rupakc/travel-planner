@@ -1,0 +1,29 @@
+{
+  "check": {
+    "title": "Check your email",
+    "sent": "We sent a link to {{email}}. It works for 30 minutes.",
+    "sentNoEmail": "We sent you a link. It works for 30 minutes.",
+    "mailHint": "Open your mail app and tap the link. Check your spam folder if you don't see it.",
+    "resend": "Resend email",
+    "resendIn": "Resend in {{seconds}}s",
+    "resent": "Sent. Check your inbox.",
+    "backToLogin": "Back to sign in"
+  },
+  "email": {
+    "label": "Email address",
+    "placeholder": "you@example.com"
+  },
+  "verify": {
+    "working": "Confirming your email…",
+    "confirmed": "Email confirmed",
+    "toAccount": "Go to your account",
+    "used": "Your email is already confirmed. Sign in to continue.",
+    "signIn": "Sign in",
+    "expired": "This link has expired. Enter your email and we will send a new one.",
+    "emailChanged": "Your email address changed since this link was sent. Enter your email and we will send a new link.",
+    "resend": "Send a new link",
+    "resent": "If that address needs confirming, a new link is on its way.",
+    "invalid": "That link is not valid.",
+    "toSignup": "Create an account"
+  }
+}
