@@ -12,8 +12,11 @@ const hasSequence = (s) => {
   return false
 }
 
-// The server's minimum (/config min_password_length).
-const MIN_LENGTH = 10
+// The server's minimum (core/passwords MIN_PASSWORD_LENGTH_V2, /config
+// auth.min_password_length) for sign-up, reset, change-password and admin-set
+// passwords. Older backends accepted 8, so 10 is safe against both.
+export const MIN_PASSWORD_LENGTH = 10
+const MIN_LENGTH = MIN_PASSWORD_LENGTH
 
 const identityParts = ({ username, email } = {}) => {
   const parts = [username, typeof email === 'string' ? email.split('@')[0] : '']

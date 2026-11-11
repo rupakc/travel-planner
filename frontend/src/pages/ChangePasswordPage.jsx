@@ -4,6 +4,8 @@ import { Lock } from 'lucide-react'
 import { useTranslation, Trans } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import AttributionFooter from '../components/ui/AttributionFooter'
+import { MIN_PASSWORD_LENGTH } from '../utils/passwordStrength'
+import { responseErrorMessage } from '../utils/httpError'
 
 export default function ChangePasswordPage() {
   const { t } = useTranslation('account')
@@ -17,7 +19,7 @@ export default function ChangePasswordPage() {
     e.preventDefault()
     setError('')
     if (form.next !== form.confirm) { setError(t('changePassword.mismatch')); return }
-    if (form.next.length < 8) { setError(t('changePassword.tooShort')); return }
+    if (form.next.length < MIN_PASSWORD_LENGTH) { setError(t('changePassword.tooShort')); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/change-password', {
@@ -26,8 +28,8 @@ export default function ChangePasswordPage() {
         body: JSON.stringify({ current_password: form.current, new_password: form.next }),
       })
       if (!res.ok) {
-        const err = await res.json()
-        setError(err.detail || t('changePassword.failed'))
+        // error_code first (password_too_short, password_common, …), then detail.
+        setError(await responseErrorMessage(res, t('changePassword.failed')))
         return
       }
       const data = await res.json()
@@ -81,6 +83,7 @@ export default function ChangePasswordPage() {
               onChange={e => setForm(f => ({ ...f, next: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               placeholder={t('changePassword.newPlaceholder')}
+              minLength={MIN_PASSWORD_LENGTH}
               required
             />
           </div>
