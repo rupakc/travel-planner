@@ -18,3 +18,5 @@ google-genai==2.34.0
 Pillow==13.0.0
 # multipart/form-data uploads (avatar upload)
 python-multipart==0.0.32
+# Fernet secrets box (Apple refresh token) + RS256/ES256 JWT verification (PyJWT crypto)
+cryptography>=44,<47
