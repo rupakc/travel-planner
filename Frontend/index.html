@@ -14,7 +14,7 @@
         <link rel="prev" href="../Place-and-Airport-Data/">
       
       
-        <link rel="next" href="../API-Reference/">
+        <link rel="next" href="../Theming/">
       
       
         
@@ -685,6 +685,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1003,6 +1059,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../API-Reference/" class="md-nav__link">
         
   
@@ -1255,7 +1395,7 @@
 <hr />
 <h2 id="project-structure">Project structure</h2>
 <pre><code>frontend/src/
-├── main.jsx                  QueryClientProvider, BrowserRouter, AuthProvider
+├── main.jsx                  QueryClientProvider, BrowserRouter, ThemeProvider, AuthProvider, i18n and telemetry start-up
 ├── App.jsx                   routes, auth guards, always-mounted tabs, footer
 ├── index.css                 Tailwind directives
 ├── pages/
@@ -1265,7 +1405,7 @@
 │   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
 │   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
 │   ├── NearbyPage.jsx        Near me: places around the user's location
-│   ├── AdminPage.jsx         users and feedback (admins only)
+│   ├── AdminPage.jsx         users, feedback and Analytics tab (admins only)
 │   ├── LoginPage.jsx
 │   ├── ChangePasswordPage.jsx
 │   └── SharePage.jsx         public read-only shared plan, PNG download
@@ -1273,17 +1413,22 @@
 │   ├── BestValuePackage, BudgetPlanner, CompareTable, CostBreakdown,
 │   │   FareCalendarStrip (+ PriceInsightsChip), FeedbackWidget, ItinerarySection,
 │   │   OnboardingTour, PlanExport, PlanViewModal, RecentSearches, TimelineView,
-│   │   TripMap, VerificationBadge, WalkingToursSection
+│   │   TripMap, VerificationBadge, WalkingToursSection, ConsentPrompt
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
 │   │                         NotificationBell, AlertToast, AlertEmailField,
 │   │                         LiveCheck (&quot;Search the web now&quot;), cards/
+│   ├── admin/                TelemetrySummary (Analytics tab)
+│   ├── auth/                 SocialSignInButtons (Apple, Google, Facebook, GitHub)
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
-│                             TravelerPanel, AttributionFooter
+│                             TravelerPanel, AttributionFooter, LanguagePicker, ThemeToggle
 ├── context/
 │   ├── AuthContext.jsx       token, user, preferences and two-way sync
 │   ├── AlertsContext.jsx     unread count polling, toasts, watch lookups
 │   └── SearchDataContext.jsx search form and results state
 ├── hooks/useFirstRunTour.js  when to show the onboarding tour
+├── i18n/                     i18next set-up, locales/&lt;lang&gt;/&lt;ns&gt;.json, format.js (see Internationalization)
+├── telemetry/                web SDK: client, consent, autocapture, perf, routes (see Telemetry)
+├── theme/                    ThemeContext, themeStorage, generated tokens.css (see Theming)
 ├── services/api.js           axios client and API helpers
 ├── utils/                    pure helpers (see below)
 └── workers/
@@ -1355,7 +1500,7 @@
 </tr>
 </tbody>
 </table>
-<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event.</p>
+<p>Search/Results and Chat are <strong>always mounted</strong> and hidden with CSS, so navigating away never loses streaming results, a half-typed message or a response in progress. Preferences, Near me, Alerts and Admin mount on each visit (Near me's live results are dropped when you leave it). <code>SearchDataProvider</code> sits inside the signed-in <code>Layout</code>, so logging out discards all search state. A user flagged <code>requires_password_change</code> is redirected to <code>/change-password</code>. <code>AttributionFooter</code> renders the GeoNames and OurAirports credit under every page. Each route change sends a page-view analytics event, and the telemetry SDK records a screen view. <code>LoginPage</code> shows <code>SocialSignInButtons</code>, which ask <code>GET /api/auth/providers</code> (the endpoint does not exist yet): a <code>404</code>, an empty list or an unconfigured provider shows "coming soon" (OAuth itself arrives in Phase 1). <code>ConsentPrompt</code> shows the one-time telemetry choice where consent is required.</p>
 <hr />
 <h2 id="state">State</h2>
 <ul>

@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../Frontend/">
+        <link rel="prev" href="../Telemetry/">
       
       
         <link rel="next" href="../Testing-and-CI/">
@@ -685,6 +685,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -848,6 +904,90 @@
     
   
     Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
   
 
     
@@ -1260,6 +1400,39 @@
     <span class="md-ellipsis">
       
         POST /api/analytics/events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apitelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/telemetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apiconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apiadmintelemetrysummarydays30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/admin/telemetry/summary?days=30
       
     </span>
   </a>
@@ -2154,6 +2327,24 @@
 </tr>
 <tr>
 <td>POST</td>
+<td><code>/api/telemetry</code></td>
+<td>optional</td>
+<td>Batch of up to 100 product-telemetry events; <code>204</code>, <code>404</code> when disabled</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/config</code></td>
+<td>public</td>
+<td>Client config: <code>public_base_url</code>, telemetry settings, feature flags</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/admin/telemetry/summary</code></td>
+<td>admin</td>
+<td>Daily users/sessions/events, top events and screens (<code>days</code> 1–90)</td>
+</tr>
+<tr>
+<td>POST</td>
 <td><code>/api/search</code></td>
 <td>optional</td>
 <td>SSE streaming search (all agents)</td>
@@ -2496,9 +2687,11 @@
   &quot;destinations&quot;: null,
   &quot;destination_nights&quot;: null,
   &quot;pace&quot;: &quot;balanced&quot;,
-  &quot;serendipity&quot;: 0.5
+  &quot;serendipity&quot;: 0.5,
+  &quot;locale&quot;: &quot;de&quot;
 }
 </code></pre>
+<p><code>locale</code> is optional: one of <code>en</code>, <code>es</code>, <code>de</code>, <code>fr</code>, <code>hi</code>, <code>zh</code>, <code>bn</code> (anything else is a <code>422</code>). When it is not English, every model call for the request is told to write its human-readable text in that language (JSON keys, enum values, codes, URLs, prices, currency codes, dates and place names stay as in English), and the response cache keeps a separate entry per language. Absent or <code>en</code> behaves exactly as before. The static Phase 0 data (visa, SIM, tips, getting around, forex, emergency card) stays English until the AI result replaces it. The same field is accepted by <code>POST /api/chat</code>, <code>/api/discover</code>, <code>/api/compare/destination</code> and the single-agent and <code>/filtered</code> routes. The web app sends the UI language.</p>
 <p>Two optional fields carry a trip imported with <code>POST /api/import/extract</code>:</p>
 <ul>
 <li><code>must_include</code> (at most 25): places the plan must contain, each <code>{name, kind, city, town?, lat?, lng?, note?, quote?, verified}</code>. <code>city</code> is the trip stop the place belongs to, and <code>town</code> is its own town when that differs (a day trip). They lead the <code>activities</code> results as <code>source: "your_link"</code>, <code>from_link: true</code> items, folding in the agent's own copy of the same place, and they stay even when the activities agent fails. Each item's <code>verification_note</code> is "Located on Google Maps" or "From your link — not independently checked". After the itinerary (AI or template) is built, a deterministic check marks the slots that name each place (<code>from_link</code>, <code>link_place</code>, <code>link_places</code>, <code>link_quote</code>, <code>link_note</code>). A slot counts only if the place's name appears in its activity or location text as one contiguous, ordered phrase. The match ignores accents and filler words ("the", "de"), treats hyphens, spaces and apostrophes alike, and drops a possessive "'s". Run-together spellings count only on whole tokens ("Senso-ji" ~ "Sensoji", "Time Out" ~ "TimeOut"). So "Tokyo Tower" is not "Tokyo Skytree … tallest tower", and "Ark Hills" is not "Park Hills". On multi-city trips, the slot must also be on a day in the place's own city. Travel slots may <em>name</em> a place through their activity text ("Train to Sintra for Pena Palace", "Hop on Tram 28"), but are never replaced. Arrival, departure and hotel slots never stand for a place. Missing places go into the most replaceable slot on a day in the right city: free time first, food at lunch or dinner, and never a logistics slot on any day. Logistics means arrivals, departures, check-in/out, flights, trains, Shinkansen, buses, ferries, drives, transfers, "→", "to <stop>", two of the trip's stops joined by "–", "⇒" or "to", or a transport category. Each stop's travel-in day is skipped when that city has another day. A place of kind <code>transport</code> is never put into a slot: unmatched, it becomes a note on one of its city's days. A replaced slot drops the old activity's cost, booking link and times, and that cost is taken off the day's and the trip's totals. When every such slot already holds a link place, the place goes into the day's <code>link_extras</code>. The itinerary also carries <code>link_coverage: {total, scheduled, extras, missing}</code>.</li>
@@ -2733,9 +2926,11 @@
   &quot;messages&quot;: [{ &quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Plan a 5-day trip to Bangkok for two people&quot; }],
   &quot;selections&quot;: {},
   &quot;search_results&quot;: {},
-  &quot;session_context&quot;: {}
+  &quot;session_context&quot;: {},
+  &quot;locale&quot;: &quot;de&quot;
 }
 </code></pre>
+<p><code>locale</code> is optional (see <a href="#post-apisearch">POST /api/search</a>): replies, narrative, suggestion chips and the itinerary text come back in that language.</p>
 <p>Event types: <code>delta</code> (text), <code>done</code>, <code>error</code>, <code>suggestions</code>, <code>session_context_update</code>, <code>plan_action</code>, <code>planning_start</code>, <code>trip_map</code>, <code>itinerary_generating</code>, <code>comprehensive_itinerary</code>, <code>planning_done</code>, <code>agent_status</code> and <code>section_result</code>. A planning request streams <code>planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done</code>; <code>section_result</code> appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback <code>delta</code>, <code>error</code> and <code>done</code>. When the monthly AI spend cap has tripped, the reply is a <code>delta</code> "AI limit reached for this month — try again on the 1st." and <code>done</code> (no <code>error</code>). See <a href="../Chat-Assistant/">Chat Assistant</a>.</p>
 <hr />
 <h2 id="plans-and-sharing">Plans and sharing</h2>
@@ -2776,6 +2971,12 @@
 <p><code>rating</code> is 1–5; <code>category</code> is <code>bug</code>, <code>feature_request</code>, <code>general</code> or <code>praise</code>; <code>message</code> (optional) is at most 500 characters; <code>metadata</code> is an optional object. Returns <code>201</code>. Admins read feedback with <code>GET /api/admin/feedback?page=&amp;category=&amp;min_rating=</code>.</p>
 <h3 id="post-apianalyticsevents">POST /api/analytics/events</h3>
 <p>Up to 50 batched UI events per call, written to the log as JSON. Returns <code>204</code>.</p>
+<h3 id="post-apitelemetry">POST /api/telemetry</h3>
+<p>Body <code>{"client": {anon_id, session_id, platform, app_version, locale}, "events": [{event, ts, screen, props}]}</code>. Auth is optional (a signed-in caller's user id is stored). Each event and prop is checked against a closed registry; unknown events, unknown props and values that are not short tokens, numbers, booleans or listed enums are dropped silently, so a well-formed batch always returns <code>204</code>. <code>422</code> for a malformed envelope or more than 100 events; <code>413</code> when the body exceeds 64 KB (or 256 KB once gunzipped; <code>Content-Encoding: gzip</code> is accepted); <code>404</code> when <code>TELEMETRY_ENABLED=false</code>. Own rate bucket <code>telemetry</code> (600 per 10 minutes); never behind <code>ALLOW_ANONYMOUS_AI</code>.</p>
+<h3 id="get-apiconfig">GET /api/config</h3>
+<p>Public, <code>Cache-Control: max-age=300</code>. Returns <code>{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry"}}</code>. Clients treat a <code>404</code> as "telemetry off".</p>
+<h3 id="get-apiadmintelemetrysummarydays30">GET /api/admin/telemetry/summary?days=30</h3>
+<p>Admin only. Returns <code>{"days": [{day, users, sessions, events}], "top_events": [{event, events}], "top_screens": [{route, views}], "users_7d"}</code> from the daily rollups plus today's live numbers. <code>users</code> (signed-in user, else anonymous id) and <code>sessions</code> are exact distinct counts across all events and platforms, read from <code>telemetry_daily_totals</code>. <code>users_7d</code> is the distinct users over the trailing 7 UTC days, today included, counted from raw events. Rolled-up days are re-rolled for the trailing 7 days, so late events from offline clients are included.</p>
 <hr />
 <h2 id="single-agent-and-helper-endpoints">Single-agent and helper endpoints</h2>
 <p>Each takes the <code>TravelSearchRequest</code> body of <code>/api/search</code> unless noted. <strong>Auth:</strong> optional (except the fare calendar). Bucket: light_ai.</p>

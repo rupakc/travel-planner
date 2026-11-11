@@ -1,0 +1,1876 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+        <link rel="prev" href="../Internationalization/">
+      
+      
+        <link rel="next" href="../API-Reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Telemetry - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#telemetry" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Telemetry
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Envelope
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Envelope">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prop-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prop types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle-and-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle and navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-and-chat-funnel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search and chat funnel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#engagement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engagement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settings-consent-performance-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings, consent, performance, errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#client-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-and-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage and retention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-an-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding an event
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="telemetry">Telemetry</h1>
+<p>Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web today; Android and iOS later). What users are told is in <a href="../Privacy/">Privacy</a>; this page is the developer contract. The closed schema lives in <code>backend/app/telemetry/registry.py</code> (<code>EVENTS</code>), and a test fails if an event there is missing from this page.</p>
+<p>It is separate from <code>POST /api/analytics/events</code> (signed-in only, writes log lines, endpoint unchanged), but the web client sends to that endpoint only while <code>telemetryAllowed()</code>, so one switch covers both.</p>
+<h2 id="envelope">Envelope</h2>
+<p><code>POST /api/telemetry</code>, JSON, optionally gzipped (<code>Content-Encoding: gzip</code>), auth optional:</p>
+<pre><code class="language-json">{
+  &quot;client&quot;: {
+    &quot;anon_id&quot;: &quot;7f9c2b0e-3c1d-4b8a-9f10-5a2d7e6c4b11&quot;,
+    &quot;session_id&quot;: &quot;1d4a6c52-8e07-4f3b-a2c9-0b6e5d7f8a90&quot;,
+    &quot;platform&quot;: &quot;web&quot;,
+    &quot;app_version&quot;: &quot;1.0.0&quot;,
+    &quot;locale&quot;: &quot;de&quot;
+  },
+  &quot;events&quot;: [
+    {&quot;event&quot;: &quot;screen_view&quot;, &quot;ts&quot;: 1767225600000, &quot;screen&quot;: &quot;/chat&quot;, &quot;props&quot;: {&quot;route&quot;: &quot;/chat&quot;}}
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client.anon_id</code>, <code>client.session_id</code></td>
+<td>UUIDs. One session per batch.</td>
+</tr>
+<tr>
+<td><code>client.platform</code></td>
+<td><code>web</code>, <code>android</code> or <code>ios</code>.</td>
+</tr>
+<tr>
+<td><code>client.app_version</code></td>
+<td>A token (see Prop types).</td>
+</tr>
+<tr>
+<td><code>client.locale</code></td>
+<td>A token of at most 16 characters (the web sends <code>&lt;html lang&gt;</code>, e.g. <code>de</code> or <code>zh-CN</code>).</td>
+</tr>
+<tr>
+<td><code>events[].event</code></td>
+<td>A name from the tables below. Unknown names are dropped.</td>
+</tr>
+<tr>
+<td><code>events[].ts</code></td>
+<td>Milliseconds since the epoch. A missing value, or one more than 7 days from server time, is replaced by the server time.</td>
+</tr>
+<tr>
+<td><code>events[].screen</code></td>
+<td>Optional route template (a token). Dropped when it is not one.</td>
+</tr>
+<tr>
+<td><code>events[].props</code></td>
+<td>Only the props listed for that event, each passing its type check. Anything else is dropped.</td>
+</tr>
+</tbody>
+</table>
+<p>A bad <code>client</code> block, a body that is not an object or more than 100 events is <code>422</code>. Individual bad events and props are dropped silently, so a well-formed batch always answers <code>204</code>. A body over 64 KB (256 KB once gunzipped) is <code>413</code>. <code>404</code> means telemetry is disabled on the server. The server adds <code>received_at</code> and, for a signed-in caller, <code>user_id</code>; no IP address and no user agent are stored. Details: <a href="../API-Reference/#post-apitelemetry">API Reference</a>.</p>
+<h3 id="prop-types">Prop types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Accepts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token (<code>id</code>)</td>
+<td>A string of 1-64 characters from <code>A-Z a-z 0-9 _ . : / -</code> (no spaces and no <code>@</code>, so free text and e-mail addresses cannot pass)</td>
+</tr>
+<tr>
+<td><code>int</code></td>
+<td>An integer within ±2^53 (not a boolean)</td>
+</tr>
+<tr>
+<td><code>float</code></td>
+<td>A finite number within ±2^53</td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td><code>true</code> or <code>false</code></td>
+</tr>
+<tr>
+<td>enum</td>
+<td>One of the listed values</td>
+</tr>
+</tbody>
+</table>
+<h2 id="events">Events</h2>
+<p>The Web column says whether the web app emits the event today. Events marked "not yet" are accepted by the server so Android, iOS and later web phases can send them without a backend change.</p>
+<h3 id="lifecycle-and-navigation">Lifecycle and navigation</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app_open</code></td>
+<td>none</td>
+<td>yes</td>
+<td>Collection started (page load, or consent granted later).</td>
+</tr>
+<tr>
+<td><code>app_background</code></td>
+<td>none</td>
+<td>yes</td>
+<td>Page hidden; the queue is flushed.</td>
+</tr>
+<tr>
+<td><code>session_start</code></td>
+<td>none</td>
+<td>yes</td>
+<td>First event after 30 minutes idle.</td>
+</tr>
+<tr>
+<td><code>screen_view</code></td>
+<td><code>route</code> (token), <code>referrer_route</code> (token)</td>
+<td>yes</td>
+<td>Route changed; <code>referrer_route</code> is the previous route.</td>
+</tr>
+<tr>
+<td><code>screen_time</code></td>
+<td><code>route</code> (token), <code>ms</code> (int)</td>
+<td>yes</td>
+<td>Time on the previous route, sent when leaving it or hiding the page.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interaction">Interaction</h3>
+<p>Auto-captured by one delegated listener (<code>frontend/src/telemetry/autocapture.js</code>); input values and text content are never read.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ui_tap</code></td>
+<td><code>tid</code> (token), <code>route</code> (token)</td>
+<td>yes</td>
+<td>Click on a button, link or other interactive element.</td>
+</tr>
+<tr>
+<td><code>ui_toggle</code></td>
+<td><code>tid</code>, <code>route</code>, <code>on</code> (bool)</td>
+<td>yes</td>
+<td>Checkbox, radio or switch changed.</td>
+</tr>
+<tr>
+<td><code>ui_change</code></td>
+<td><code>tid</code>, <code>route</code></td>
+<td>yes</td>
+<td>Text input, select or textarea changed (never to what).</td>
+</tr>
+<tr>
+<td><code>ui_submit</code></td>
+<td><code>tid</code>, <code>route</code></td>
+<td>yes</td>
+<td>Form submitted.</td>
+</tr>
+</tbody>
+</table>
+<p><code>tid</code> is the closest <code>data-tid</code>; otherwise <code>id:&lt;id&gt;</code> when the element has a static-looking id (no digits, no 8+ character hex segment); otherwise <code>auto:&lt;tag&gt;</code>. It is never the visible text.</p>
+<h3 id="search-and-chat-funnel">Search and chat funnel</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>search_submit</code></td>
+<td><code>mode</code> (<code>search</code>, <code>chat</code>, <code>compare</code>, <code>link</code>, <code>discover</code>), <code>travelers</code> (int), <code>nights</code> (int), <code>multi_city</code> (bool)</td>
+<td>not yet</td>
+<td>A search or plan was started.</td>
+</tr>
+<tr>
+<td><code>search_first_section</code></td>
+<td><code>ms</code> (int)</td>
+<td>not yet</td>
+<td>Time to the first streamed section.</td>
+</tr>
+<tr>
+<td><code>search_complete</code></td>
+<td><code>ms</code> (int), <code>sections</code> (int), <code>errors</code> (int)</td>
+<td>not yet</td>
+<td>Stream finished.</td>
+</tr>
+<tr>
+<td><code>search_abandon</code></td>
+<td><code>ms</code> (int), <code>sections</code> (int)</td>
+<td>not yet</td>
+<td>User left before it finished.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="engagement">Engagement</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>section_expand</code></td>
+<td><code>section</code> (token)</td>
+<td>not yet</td>
+<td>A result section was opened.</td>
+</tr>
+<tr>
+<td><code>plan_select</code></td>
+<td><code>section</code> (token)</td>
+<td>not yet</td>
+<td>An item was added to My Plan.</td>
+</tr>
+<tr>
+<td><code>link_out</code></td>
+<td><code>section</code> (token), <code>domain</code> (token)</td>
+<td>not yet</td>
+<td>A provider link was opened.</td>
+</tr>
+<tr>
+<td><code>share</code></td>
+<td><code>target</code> (token), <code>object</code> (token)</td>
+<td>not yet</td>
+<td>Something was shared.</td>
+</tr>
+<tr>
+<td><code>alert_event</code></td>
+<td><code>action</code> (token), <code>kind</code> (token)</td>
+<td>not yet</td>
+<td>A fare or price alert action.</td>
+</tr>
+<tr>
+<td><code>onboarding_step</code></td>
+<td><code>step</code> (int), <code>action</code> (<code>view</code>, <code>next</code>, <code>skip</code>, <code>done</code>)</td>
+<td>not yet</td>
+<td>Onboarding progress.</td>
+</tr>
+<tr>
+<td><code>feature_used</code></td>
+<td><code>feature</code> (token), <code>page</code> (token)</td>
+<td>yes</td>
+<td>Mirror of every <code>track(feature, page)</code> call in <code>utils/analytics.js</code>; the metadata is not sent.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="settings-consent-performance-errors">Settings, consent, performance, errors</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>theme_change</code></td>
+<td><code>theme</code> (<code>system</code>, <code>light</code>, <code>dark</code>)</td>
+<td>yes</td>
+<td>Theme chosen.</td>
+</tr>
+<tr>
+<td><code>language_change</code></td>
+<td><code>lang</code> (<code>en</code>, <code>es</code>, <code>de</code>, <code>fr</code>, <code>hi</code>, <code>zh</code>, <code>bn</code>)</td>
+<td>yes</td>
+<td>Language chosen.</td>
+</tr>
+<tr>
+<td><code>consent</code></td>
+<td><code>choice</code> (<code>granted</code>, <code>denied</code>)</td>
+<td>grant only</td>
+<td>The web sends only a grant. A denial is kept on the device and nothing is sent.</td>
+</tr>
+<tr>
+<td><code>perf</code></td>
+<td><code>metric</code> (<code>ttfb</code>, <code>fcp</code>, <code>lcp</code>, <code>inp</code>, <code>cls</code>, <code>long_task</code>, <code>cold_start</code>), <code>value</code> (float), <code>route</code> (token)</td>
+<td>yes, except <code>cold_start</code></td>
+<td>Web metrics from the browser timing APIs; <code>lcp</code>, <code>inp</code>, <code>cls</code> and <code>long_task</code> (a count) are sent when the page is hidden. <code>cold_start</code> is for the mobile apps.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>kind</code> (<code>js</code>, <code>promise</code>, <code>api</code>), <code>source</code> (token), <code>status</code> (int)</td>
+<td><code>js</code> and <code>promise</code></td>
+<td><code>source</code> is a script basename and line (<code>app.js:42</code>) or <code>unknown</code>, never the message. At most 20 per page load. <code>api</code> is not emitted yet.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="client-rules">Client rules</h2>
+<p>These apply to every client; the web implementation is <code>frontend/src/telemetry/</code>.</p>
+<ul>
+<li>Telemetry never blocks, slows or breaks the UI. Every entry point swallows its own errors and nothing on a user path awaits it.</li>
+<li>Fetch <code>GET /api/config</code> once at start. A <code>404</code>, an error or <code>telemetry.enabled: false</code> turns telemetry off for the session, with no retries. This is how a client tolerates an older or self-hosted backend.</li>
+<li>Events queue in memory and are sent every <code>telemetry.flush_interval_s</code> (15) or at <code>telemetry.max_batch</code> (50) events, clamped to the server limit of 100. The web client sends in idle time.</li>
+<li>When the page is hidden the rest is sent with <code>fetch(keepalive)</code> plus the bearer token when signed in, otherwise <code>navigator.sendBeacon</code> (which cannot carry headers, so those events are anonymous).</li>
+<li>The queue is capped at 500 events. It is persisted to <code>localStorage</code> (<code>tp_tq</code>) only when the page is hidden or a send fails, and claimed at the next start; stored events older than 7 days are discarded.</li>
+<li>Three failures in a row back off exponentially; a <code>429</code> honours <code>Retry-After</code>. A <code>4xx</code> other than 408 and 429 drops that batch (it would fail forever).</li>
+<li><code>anon_id</code> is a persistent random UUID (<code>tp_anon</code>). The session ID lives in <code>sessionStorage</code> and rolls over after 30 minutes idle.</li>
+<li>Routes are templates (<code>/share/:token</code>, <code>/plans/:id</code>, <code>/alerts/:id</code>, <code>/other</code>), never raw URLs, so tokens and ids never leave the browser.</li>
+<li>Props are filtered client-side with the same token, number and boolean rules, so free text never leaves even if a caller passes it by mistake.</li>
+<li>Without consent nothing is queued or sent (below).</li>
+</ul>
+<h2 id="consent">Consent</h2>
+<p><code>consentRequired()</code> is true for devices in an EU, EEA, UK or Switzerland time zone (every <code>Europe/*</code> zone except Istanbul, Moscow, Minsk and Kiev/Kyiv, plus Reykjavik, Canary, Madeira, Azores and Faroe). Those devices send nothing until the user chooses in the one-time prompt (<code>ConsentPrompt</code>). Elsewhere telemetry is on and can be switched off in Preferences, Privacy (<code>PrivacySwitch</code>). Any visitor, signed in or not, can reopen the prompt from the <strong>Privacy choices</strong> button in the footer of every page (<code>data-tid="privacy.choices"</code>, <code>openPrivacyChoices()</code>); it then marks the choice in force with <code>aria-pressed</code> and has a close button. The choice is stored in <code>localStorage</code> as <code>tp_consent</code> (<code>granted</code> or <code>denied</code>). A denial clears the queue and stops the collectors; a later grant starts them. The wording users see is in <a href="../Privacy/">Privacy</a>.</p>
+<h2 id="storage-and-retention">Storage and retention</h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>Kept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw events (<code>telemetry_events</code>)</td>
+<td><code>$DATA_DIR/telemetry.db</code>, its own SQLite file in WAL mode so ingestion never contends with user data</td>
+<td><code>TELEMETRY_RETENTION_DAYS</code> (default 90); not backed up</td>
+</tr>
+<tr>
+<td>Daily rollups (<code>telemetry_daily</code>, <code>telemetry_daily_totals</code>, <code>telemetry_rollups</code>)</td>
+<td><code>airports.db</code></td>
+<td>Indefinitely; backed up with the user tables</td>
+</tr>
+</tbody>
+</table>
+<p>Ingestion has a global disk guard on top of the per-caller rate limit (<code>RATE_LIMIT_TELEMETRY</code>, 120 batches per 10 minutes). While <code>telemetry.db</code> plus its WAL is over <code>TELEMETRY_MAX_DB_MB</code> (default 1024), or the current UTC day already holds <code>TELEMETRY_MAX_EVENTS_PER_DAY</code> stored events (default 200000), <code>POST /api/telemetry</code> still answers <code>204</code> but drops the batch, and logs one warning per hour at most. The file size and the day's count are re-read about once a minute and counted in memory in between, so the check costs nothing per request.</p>
+<p>An hourly lifespan task (<code>backend/app/telemetry/maintenance.py</code>) rolls up every finished UTC day, re-rolls the trailing 7 days (late events from offline clients) and prunes raw events past retention. New <code>telemetry.db</code> files are created with <code>auto_vacuum=INCREMENTAL</code> and each prune runs <code>PRAGMA incremental_vacuum</code>, so the file shrinks back after a burst (a file created before this keeps its size until a manual <code>VACUUM</code>). <code>telemetry_daily_totals</code> rows with <code>platform = '*'</code> hold exact distinct users and sessions across all events and platforms.</p>
+<h2 id="reading-it">Reading it</h2>
+<p><code>GET /api/admin/telemetry/summary?days=30</code> (admin) returns daily users, sessions and events, top events, top screens and <code>users_7d</code>, the distinct users over the last 7 UTC days. The web admin page shows it as the Analytics tab, hidden when the endpoint answers <code>404</code>. Settings: <code>TELEMETRY_ENABLED</code>, <code>TELEMETRY_RETENTION_DAYS</code>, <code>TELEMETRY_MAX_DB_MB</code>, <code>TELEMETRY_MAX_EVENTS_PER_DAY</code>, <code>RATE_LIMIT_TELEMETRY</code> (see <a href="../Configuration/">Configuration</a>).</p>
+<h2 id="adding-an-event">Adding an event</h2>
+<ol>
+<li>Add it to <code>EVENTS</code> in <code>backend/app/telemetry/registry.py</code> with typed props. Ship the backend first: an event the deployed backend does not know is dropped silently.</li>
+<li>Add a row here (the registry test enforces that the name appears on this page).</li>
+<li>Add it to the event table in <a href="../Privacy/">Privacy</a>.</li>
+<li>Update the clients.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

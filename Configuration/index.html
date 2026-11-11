@@ -869,6 +869,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1027,6 +1083,90 @@
     
   
     Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
   
 
     
@@ -1410,6 +1550,31 @@
 <td>Directory of the single SQLite file <code>airports.db</code>, which holds every table (users, plans, preferences, place data and so on). Created automatically.</td>
 </tr>
 <tr>
+<td><code>TELEMETRY_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Product telemetry. <code>false</code> makes <code>POST /api/telemetry</code> answer <code>404</code> (clients then switch themselves off) and <code>GET /api/config</code> report it disabled. Raw events live in <code>$DATA_DIR/telemetry.db</code> (not backed up); daily aggregates in the <code>telemetry_daily</code> table of <code>airports.db</code>.</td>
+</tr>
+<tr>
+<td><code>TELEMETRY_RETENTION_DAYS</code></td>
+<td><code>90</code></td>
+<td>Raw telemetry events older than this are pruned by the hourly maintenance loop, which also rolls up each finished UTC day.</td>
+</tr>
+<tr>
+<td><code>TELEMETRY_MAX_DB_MB</code></td>
+<td><code>1024</code></td>
+<td>Global disk guard: while <code>telemetry.db</code> plus its WAL is larger than this, <code>POST /api/telemetry</code> still answers <code>204</code> but drops the batch (one warning per hour in the log). The size is re-read about once a minute.</td>
+</tr>
+<tr>
+<td><code>TELEMETRY_MAX_EVENTS_PER_DAY</code></td>
+<td><code>200000</code></td>
+<td>Global daily cap: once this many events have been stored in the current UTC day (all callers together), further batches are dropped the same way until midnight UTC.</td>
+</tr>
+<tr>
+<td><code>PUBLIC_BASE_URL</code></td>
+<td><code>""</code></td>
+<td>Absolute origin returned by <code>GET /api/config</code> (for share links). Empty: the request's own base URL.</td>
+</tr>
+<tr>
 <td><code>BACKUP_BUCKET</code></td>
 <td><code>""</code></td>
 <td>Google Cloud Storage bucket for SQLite backups. Empty disables backup and restore. Uses Application Default Credentials.</td>
@@ -1633,6 +1798,11 @@
 <td><code>RATE_LIMIT_IMPORT</code></td>
 <td><code>20</code></td>
 <td><code>/api/import/extract</code> (plan from a link, text or screenshots)</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_TELEMETRY</code></td>
+<td><code>120</code></td>
+<td><code>POST /api/telemetry</code> (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind <code>ALLOW_ANONYMOUS_AI</code>). The total across callers is bounded by <code>TELEMETRY_MAX_DB_MB</code> and <code>TELEMETRY_MAX_EVENTS_PER_DAY</code>.</td>
 </tr>
 <tr>
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>

@@ -679,6 +679,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -837,6 +893,90 @@
     
   
     Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
   
 
     
@@ -1375,7 +1515,7 @@ in parallel worktrees once Task 7 is merged.</p>
 - Modify: <code>backend/app/schemas/request.py</code> (optional <code>locale: Literal['en','es','de','fr','hi','zh','bn'] | None = None</code> on <code>TravelSearchRequest</code> and the chat request model), <code>backend/app/agents/base_agent.py</code> (system-prompt suffix), the search cache key builder (include <code>locale</code>), <code>frontend/src/services/api.js</code> (send <code>locale: i18n.language</code> on search/chat)
 - Test: <code>backend/tests/test_locale_prompt.py</code></p>
 <p><strong>Interfaces:</strong>
-- Produces: <code>language_instruction(locale: str | None) -&gt; str</code> in <code>base_agent.py</code>. It returns <code>""</code> for <code>None</code>/<code>en</code>; otherwise exactly: <code>"Write every human-readable text value in {Language name in English}. Keep JSON keys, enum values, codes, URLs, prices, currency codes, dates and proper names of places exactly as you would in English output."</code>. An older SPA sends no <code>locale</code> and gets English, unchanged.</p>
+- Produces: <code>language_instruction(locale: str | None) -&gt; str</code> in <code>base_agent.py</code>. It returns <code>""</code> for <code>None</code>/<code>en</code>; otherwise exactly: <code>"Write every human-readable text value in {Language name in English}. Keep JSON keys, enum values, codes, URLs, prices, currency codes, dates and names of places, venues, hotels, restaurants, tours, events and airlines exactly as you would in English output."</code> (amended by the final review: enrichment, verification and price lookups key on those names). An older SPA sends no <code>locale</code> and gets English, unchanged.</p>
 <ul>
 <li>[ ] <strong>Step 1: Write failing tests</strong>: the instruction is absent for <code>None</code>/<code>en</code> and present for <code>de</code>; two searches differing only in <code>locale</code> don't share a cache entry; an unknown locale → 422.</li>
 <li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> the backend suite → PASS.</li>

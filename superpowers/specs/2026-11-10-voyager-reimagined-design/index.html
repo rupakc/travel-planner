@@ -679,6 +679,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -837,6 +893,90 @@
     
   
     Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
   
 
     
@@ -1421,8 +1561,9 @@ One engine powers it, built in Phase 1 next to accounts, so each later phase onl
   Light is the default: warm off-white, an ocean-teal primary, a sunset-coral accent.
   The dark theme is designed rather than inverted. Motion is short and purposeful, and <code>prefers-reduced-motion</code>
   is respected. Final visual direction is set in the design phase with mockups before building.</li>
-<li><strong>i18n [call]</strong>: a canonical catalogue <code>i18n/&lt;locale&gt;.json</code> (ICU MessageFormat for plurals). Generators emit
-  Android <code>strings.xml</code> and iOS <code>.xcstrings</code>, and CI fails on missing keys. Dates/numbers/currency are formatted
+<li><strong>i18n [call]</strong>: the web catalogue is <code>frontend/src/i18n/locales/&lt;lang&gt;/&lt;namespace&gt;.json</code> (i18next, JSON v4 plural
+  suffixes such as <code>_one</code>/<code>_other</code>). Generators emit
+  Android <code>strings.xml</code> and iOS <code>.xcstrings</code> from it, and CI fails on missing keys (on web, the catalogue parity test). Dates/numbers/currency are formatted
   per locale. Noto Sans Devanagari/Bengali/SC fallbacks are loaded only when needed. AI outputs come back in
   the user's language (a language instruction in agent prompts). Static tables keep English content, with UI
   chrome translated. Translations are machine-drafted, then reviewed by a second model for meaning; <strong>native

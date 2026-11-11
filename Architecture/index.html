@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../Sharing-and-Plans/">
+        <link rel="prev" href="../Feature-Parity/">
       
       
         <link rel="next" href="../Agent-System/">
@@ -685,6 +685,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1153,6 +1209,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../API-Reference/" class="md-nav__link">
         
   
@@ -1424,7 +1564,7 @@ FastAPI backend (uvicorn, one process)
   ├── watch scheduler (background task) ── fare + price watch re-checks (SerpAPI), alert emails (SMTP),
   │                                         alert pushes to registered phones (FCM, optional)
   ├── TTLCache (in memory, 30 min)
-  └── SQLite: $DATA_DIR/airports.db (22 tables) ── optional GCS backup every 60 s
+  └── SQLite: $DATA_DIR/airports.db (25 tables) + telemetry.db ── optional GCS backup every 60 s
             │
             ▼
 External: Gemini on Vertex AI (3.5 Flash-Lite, 3.8 Flash; or Anthropic as a fallback),
@@ -1522,7 +1662,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <p><strong>Evaluation.</strong> <code>backend/scripts/llm_eval.py</code> is a manual tool (never run in CI) that sends the six saved searches in <code>backend/tests/fixtures/llm_eval/requests.json</code> (single city, multi-city, family, budget, accessibility, long trip) through the real search pipeline on a chosen provider and model, stores the final sections, per-call usage, latency and estimated cost, and in <code>compare</code> mode writes a Markdown report per section (validity, item counts, fields the baseline always had, verification levels, cost per search).</p>
 <hr />
 <h2 id="persistence">Persistence</h2>
-<p>There is one SQLite file, <code>$DATA_DIR/airports.db</code> (<code>backend/app/db/database.py</code>), opened in WAL mode with <code>synchronous=NORMAL</code> and a 5 s busy timeout. Despite its name it holds every table:</p>
+<p>There is one main SQLite file, <code>$DATA_DIR/airports.db</code> (<code>backend/app/db/database.py</code>), opened in WAL mode with <code>synchronous=NORMAL</code> and a 5 s busy timeout. Despite its name it holds every application table (25). The one exception is raw telemetry, <code>telemetry_events</code> in a separate <code>$DATA_DIR/telemetry.db</code> so event ingestion never contends with user data (see <a href="../Telemetry/">Telemetry</a>); it is pruned after 90 days and not backed up.</p>
 <table>
 <thead>
 <tr>
@@ -1602,6 +1742,18 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <tr>
 <td><code>price_watch_history</code></td>
 <td>Each look: total price (null when unavailable), trip breakdown and raw observed details as JSON (up to 120 rows per watch)</td>
+</tr>
+<tr>
+<td><code>telemetry_daily</code></td>
+<td>Telemetry rollups: events, users and sessions per day, event and platform</td>
+</tr>
+<tr>
+<td><code>telemetry_daily_totals</code></td>
+<td>Exact distinct users, sessions and events per day and platform (<code>*</code> = all)</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups</code></td>
+<td>UTC days already rolled up</td>
 </tr>
 <tr>
 <td><code>notifications</code></td>
