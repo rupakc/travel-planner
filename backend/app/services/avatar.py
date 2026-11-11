@@ -5,13 +5,14 @@ import asyncio
 import io
 import logging
 import os
+import threading
 import uuid
 import warnings
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import httpx
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 
 from ..core.config import settings
 from ..core.errors import ApiError
@@ -20,10 +21,28 @@ from ..db import users_db
 
 logger = logging.getLogger(__name__)
 
+# Pillow's own bomb guard at open (a warning, promoted to an error below)
 Image.MAX_IMAGE_PIXELS = 40_000_000
 
 MAX_BYTES = 2 * 1024 * 1024
 SIZE = 256
+# Most pixels we ever decode (after JPEG's draft scaling): 16 MP is 64 MB as
+# RGBA, plenty for a 256 px avatar and safe on the 1 GB VM.
+MAX_PIXELS = 16_000_000
+# One decode at a time across uploads and provider imports. Acquired inside
+# the worker thread (process_upload runs via asyncio.to_thread), so the event
+# loop never waits on it.
+_DECODE_SLOT = threading.BoundedSemaphore(1)
+_REDUCE_MODES = {"L", "LA", "RGB", "RGBA"}
+_ORIENT = {
+    2: Image.Transpose.FLIP_LEFT_RIGHT,
+    3: Image.Transpose.ROTATE_180,
+    4: Image.Transpose.FLIP_TOP_BOTTOM,
+    5: Image.Transpose.TRANSPOSE,
+    6: Image.Transpose.ROTATE_270,
+    7: Image.Transpose.TRANSVERSE,
+    8: Image.Transpose.ROTATE_90,
+}
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
 PROVIDER_HOSTS = {
@@ -56,19 +75,43 @@ def process_upload(data: bytes, content_type: str) -> bytes:
     if len(data) > MAX_BYTES:
         raise _too_large()
     ctype = (content_type or "").split(";")[0].strip().lower()
-    bad_type = ApiError(415, "avatar_type", "Use a JPEG, PNG, WebP or GIF image.")
     if ctype not in ALLOWED_TYPES:
-        raise bad_type
+        raise _bad_type()
+    with _DECODE_SLOT:
+        return _decode(data)
+
+
+def _bad_type() -> ApiError:
+    return ApiError(415, "avatar_type", "Use a JPEG, PNG, WebP or GIF image.")
+
+
+def _decode(data: bytes) -> bytes:
+    """Decode to a 256 px WebP without ever holding a large full-size copy:
+    JPEG decodes at reduced scale (draft), the size is checked from the
+    header before any pixel is decoded, and the image is shrunk (reduce)
+    before the orientation fix, colour conversion and crop."""
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
             img = Image.open(io.BytesIO(data))
             if img.format not in ALLOWED_FORMATS:
-                raise bad_type
+                raise _bad_type()
             img.seek(0)
-            img = ImageOps.exif_transpose(img)
-            img.load()
+            if img.format == "JPEG":
+                img.draft(img.mode, (SIZE * 2, SIZE * 2))
+            if img.width * img.height > MAX_PIXELS:
+                raise _unreadable()
             has_alpha = img.mode in ("RGBA", "LA") or "transparency" in img.info
+            img.load()
+            # read after load: PNG keeps its eXIf chunk after the pixel data
+            orientation = img.getexif().get(0x0112)
+            if img.mode not in _REDUCE_MODES:
+                img = img.convert("RGBA" if has_alpha else "RGB")
+            factor = min(img.size) // (SIZE * 2)
+            if factor > 1:
+                img = img.reduce(factor)
+            if orientation in _ORIENT:
+                img = img.transpose(_ORIENT[orientation])
             img = img.convert("RGBA" if has_alpha else "RGB")
             side = min(img.size)
             left, top = (img.width - side) // 2, (img.height - side) // 2
@@ -81,7 +124,7 @@ def process_upload(data: bytes, content_type: str) -> bytes:
     except ApiError:
         raise
     except UnidentifiedImageError:
-        raise bad_type
+        raise _bad_type()
     except (Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise _unreadable()
     except Exception:  # truncated, corrupt, anything Pillow chokes on

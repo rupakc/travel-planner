@@ -91,6 +91,91 @@ def test_decompression_bomb_is_422():
     assert (e.value.status, e.value.code) == (422, "avatar_unreadable")
 
 
+def _big_png(w, h):
+    """A real, fully decodable RGBA PNG of w×h that compresses to a few KB."""
+    buf = io.BytesIO()
+    Image.new("RGBA", (w, h), (0, 0, 0, 0)).save(buf, "PNG", optimize=False)
+    return buf.getvalue()
+
+
+def test_large_dimension_small_png_is_422_before_decode(monkeypatch):
+    """I-3: a 4500×4500 PNG (20 MP, a few KB) is refused from its header,
+    before Pillow allocates the full-size bitmap."""
+    from PIL import ImageFile
+
+    data = _big_png(4500, 4500)
+    assert len(data) < 200_000
+    loads = []
+    real_load = ImageFile.ImageFile.load
+    monkeypatch.setattr(
+        ImageFile.ImageFile,
+        "load",
+        lambda self: loads.append(self.size) or real_load(self),
+    )
+    with pytest.raises(av.ApiError) as e:
+        av.process_upload(data, "image/png")
+    assert (e.value.status, e.value.code) == (422, "avatar_unreadable")
+    assert loads == []
+    assert av.MAX_PIXELS <= 16_000_000
+
+
+def test_route_large_dimension_png_is_422(client):
+    _, h = _user()
+    r = _put(client, h, _big_png(5000, 4000), "image/png")
+    assert r.status_code == 422 and r.json()["error_code"] == "avatar_unreadable"
+
+
+def test_large_jpeg_is_drafted_down_and_accepted(monkeypatch):
+    """A 24 MP camera photo is fine: JPEG decodes at 1/8 scale (draft), so
+    the pixel cap applies to what is actually decoded."""
+    data = _img("JPEG", (6000, 4000), quality=30)
+    assert len(data) < av.MAX_BYTES
+    sizes = []
+    real_load = Image.Image.load
+
+    def spy(self):
+        sizes.append(self.size)
+        return real_load(self)
+
+    monkeypatch.setattr(Image.Image, "load", spy)
+    out = av.process_upload(data, "image/jpeg")
+    assert Image.open(io.BytesIO(out)).size == (256, 256)
+    assert sizes and max(w * h for w, h in sizes) <= 1500 * 1000  # not 24 MP
+
+
+def test_exif_orientation_still_applied():
+    exif = Image.Exif()
+    exif[0x0112] = 6  # rotate 90° clockwise to display
+    img = Image.new("RGB", (1200, 600), (0, 0, 255))
+    img.paste((255, 0, 0), (0, 0, 600, 600))  # left half red
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", exif=exif.tobytes())
+    out = Image.open(io.BytesIO(av.process_upload(buf.getvalue(), "image/jpeg")))
+    # displayed upright the image is 600×1200 with red on top: the centre
+    # square straddles it, so the top row is red and the bottom row blue
+    r, g, b = out.convert("RGB").getpixel((128, 5))
+    assert r > 200 and b < 60
+    r, g, b = out.convert("RGB").getpixel((128, 250))
+    assert b > 200 and r < 60
+
+
+def test_one_decode_at_a_time(monkeypatch):
+    """Decodes are serialised by a module-level lock (held in the worker
+    thread, so the event loop never waits on it)."""
+    seen = []
+    real_open = Image.open
+
+    def spy(*a, **k):
+        seen.append(av._DECODE_SLOT.acquire(blocking=False))
+        return real_open(*a, **k)
+
+    monkeypatch.setattr(av.Image, "open", spy)
+    av.process_upload(_img("PNG", (300, 300)), "image/png")
+    assert seen == [False]  # already held by this decode
+    assert av._DECODE_SLOT.acquire(blocking=False)  # released afterwards
+    av._DECODE_SLOT.release()
+
+
 def test_truncated_image_is_422():
     with pytest.raises(av.ApiError) as e:
         av.process_upload(_img("PNG")[:200], "image/png")
