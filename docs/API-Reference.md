@@ -145,7 +145,7 @@ Returns `{ "username", "is_admin", "requires_password_change", "email" }`.
 
 `{"email": "me@example.com"}` sets the account email (trimmed, lower-cased; not verified, so the route is rate-limited in the light_ai bucket); `""` clears it and turns email off on all the user's fare watches. Returns `{"email": ...}`. `422` for an address that isn't `local@domain.tld`; `409` when another account uses it. Set from the Preferences page.
 
-There is no registration endpoint. Admins create users:
+Self-registration is `POST /api/auth/signup` (see [Accounts API](Accounts-API.md)). Admins can also create users:
 
 ### POST /api/admin/users
 

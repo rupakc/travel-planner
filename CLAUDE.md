@@ -213,7 +213,7 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 | `POST /api/flights/fare-calendar` | Cheapest live fare for departure ±3 days (same trip length); auth, single-city, needs `SERPAPI_KEY` (503 otherwise) |
 | `POST /api/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours` | Single specialist agents |
 | `POST /api/layover`, `POST /api/stress-test` | Layover mini-plan; itinerary audit (Re-check) |
-| `POST /api/auth/login`, `POST /api/auth/change-password`, `GET /api/auth/me` | Auth (no registration) |
+| `POST /api/auth/login`, `POST /api/auth/change-password`, `GET /api/auth/me` | Auth; sign-up, verify, reset, OAuth, sessions, account, game: `docs/Accounts-API.md` |
 | `/api/admin/users*`, `GET /api/admin/feedback` | Admin: create/deactivate/reactivate/reset users; feedback |
 | `POST /api/feedback`, `POST /api/analytics/events` | Feedback widget; batched UI events |
 | `GET/PUT /api/preferences`, `GET/DELETE /api/taste-profile` | Preferences; Taste Graph |
