@@ -114,3 +114,38 @@ def test_passwordless_account():
     u = users_db.create_user(n, None, password_hash="!")
     assert u["password_hash"] == "!"
     assert users_db.authenticate_user(n, "anything") is None
+
+
+def test_pending_without_token_holds_name_until_ttl():
+    n = _name()
+    u = _pending(n, f"{n}@x.io")
+    now = datetime.now(UTC)
+    assert not users_db.username_available(n, now)
+    assert not users_db.username_available(n, now.replace(tzinfo=None))  # naive = UTC
+    assert users_db.username_available(n, now + timedelta(minutes=31))
+    assert users_db.get_user_by_id(u["id"]) is None
+
+
+def test_create_user_refuses_case_variant_username():
+    n = _name()
+    users_db.create_user(n, "pw")
+    with pytest.raises(users_db.UsernameTakenError):
+        users_db.create_user(n.upper(), "pw")
+    with pytest.raises(ValueError):
+        users_db.create_user(_name())
+    m = _name()
+    users_db.create_user(m, "pw", email=f"{m}@x.io")
+    users_db.set_email(m, f"{m.upper()}@X.IO")
+    assert users_db.get_user_by_username(m)["email"] == f"{m}@x.io"
+
+
+def test_delete_user_row_removes_tokens():
+    n = _name()
+    u = _pending(n, f"{n}@x.io")
+    _add_token(u["id"], datetime.now(UTC) + timedelta(hours=1))
+    users_db.delete_user_row(u["id"])
+    with get_connection() as c:
+        left = c.execute(
+            "SELECT COUNT(*) FROM account_tokens WHERE user_id = ?", (u["id"],)
+        ).fetchone()[0]
+    assert left == 0

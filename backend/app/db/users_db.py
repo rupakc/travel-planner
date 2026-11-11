@@ -3,7 +3,7 @@
 import logging
 import sqlite3
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 
@@ -107,10 +107,16 @@ def create_user(
     if isinstance(email, str):
         email = email.strip().lower() or None
     if password_hash is None:
+        if password is None:
+            raise ValueError("create_user needs a password or a password_hash")
         password_hash = _hash(password)
     uid = str(uuid.uuid4())
     now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
+        if conn.execute(
+            "SELECT 1 FROM users WHERE lower(username) = ?", (username.lower(),)
+        ).fetchone():
+            raise UsernameTakenError(username)
         conn.execute(
             """INSERT INTO users
                (id, username, email, password_hash, is_admin, is_first_login, is_active,
@@ -154,13 +160,16 @@ class EmailInUseError(Exception):
     """Another account already uses this email address."""
 
 
-class UsernameTakenError(Exception):
-    """Another account already holds this username."""
+class UsernameTakenError(sqlite3.IntegrityError):
+    """Another account already holds this username (an IntegrityError so the
+    admin route's existing 409 handling covers it)."""
 
 
 def set_email(username: str, email: str | None) -> None:
     """Set (or clear with None) a user's email; raises EmailInUseError."""
     now = datetime.now(UTC).isoformat()
+    if isinstance(email, str):
+        email = email.strip().lower() or None
     try:
         with get_connection() as conn:
             conn.execute(
@@ -272,9 +281,16 @@ def _delete_user_rows(conn: sqlite3.Connection, user_id: str) -> None:
 
 def _holder_blocks(conn: sqlite3.Connection, name: str, now: datetime) -> bool:
     """True when a live account holds ``name`` (case-insensitive). A pending
-    holder whose newest token has expired is released (deleted)."""
+    holder whose newest token has expired is released (deleted). A pending
+    holder with no token yet expires ``account_token_ttl_minutes`` after it
+    was created."""
+    from ..core.config import settings
+
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
+    ttl = int(getattr(settings, "account_token_ttl_minutes", 30))
     for row in conn.execute(
-        "SELECT id, account_status FROM users WHERE lower(username) = ?",
+        "SELECT id, account_status, created_at FROM users WHERE lower(username) = ?",
         (name.strip().lower(),),
     ).fetchall():
         if row["account_status"] != "pending":
@@ -283,7 +299,13 @@ def _holder_blocks(conn: sqlite3.Connection, name: str, now: datetime) -> bool:
             "SELECT MAX(expires_at) AS m FROM account_tokens WHERE user_id = ?",
             (row["id"],),
         ).fetchone()["m"]
-        if newest and datetime.fromisoformat(newest) > now:
+        if newest:
+            expiry = datetime.fromisoformat(newest)
+        else:
+            expiry = datetime.fromisoformat(row["created_at"]) + timedelta(minutes=ttl)
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=UTC)
+        if expiry > now:
             return True
         _delete_user_rows(conn, row["id"])
     return False
@@ -408,4 +430,4 @@ def count_active_admins() -> int:
 
 def delete_user_row(user_id: str) -> None:
     with get_connection() as conn:
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        _delete_user_rows(conn, user_id)
