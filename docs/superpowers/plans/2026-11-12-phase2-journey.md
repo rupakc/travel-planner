@@ -1285,3 +1285,13 @@ Merge cadence: a PR per task, or one per wave. Each PR is green and deployable o
 - Region badges for UNESCO sites seen and cuisines tried, which need data we don't have.
 - Local-script hotel addresses (shown only when a source provides them).
 - Android and iOS clients of this contract: Phases 8 and 7.
+
+## Owner-question rulings (main controller, 2026-11-12)
+
+The owner delegated these decisions. They bind the tasks.
+
+1. **Onboarding for existing users:** existing users see the new onboarding once. It can be skipped, and a skip counts as seen.
+2. **Home route:** `/` shows the Trips hub to a signed-in user who has at least one trip. Everyone else, including signed-out visitors, keeps the Search page. Both remain reachable from the tabs.
+3. **Rollout:** the final task switches the journey on for everyone. The product is already in a limited test with selected users.
+4. **Native review:** a native-speaker review of the hi, bn and zh UI text and of the phrase list goes on the follow-ups list for the owner. Ship the model-reviewed text.
+5. **Hotel address:** show the hotel name plus a "take me to" phrase in the local language. A local-script address is deferred until the data exists.
