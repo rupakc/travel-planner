@@ -63,8 +63,9 @@ export default function TripsPage() {
 
   const onCreated = (trip) => {
     setCreating(false)
+    if (!data) { load(); return } // first load failed: fetch the real list
     setFailed(false)
-    setData((d) => ({ ...(d ?? { pinned_id: null }), trips: [trip, ...(d?.trips ?? [])] }))
+    setData((d) => ({ ...d, trips: [trip, ...d.trips] }))
   }
 
   const trips = data?.trips ?? []

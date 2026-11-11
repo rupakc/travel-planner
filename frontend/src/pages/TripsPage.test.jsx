@@ -131,6 +131,9 @@ describe('TripsPage', () => {
     await act(async () => { tid('trips-create-dialog').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
     await flush()
     expect(tid('trips-retry')).toBeNull()
+    expect(api.listTrips).toHaveBeenCalledTimes(2)
+    expect(tid('trips-group-dreaming').textContent).toContain('Dream Peru')
+    expect(tid('trips-next-panel')).toBeTruthy()
   })
 
   it('shows the empty state', async () => {
