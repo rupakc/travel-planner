@@ -67,10 +67,10 @@ describe('SettingsSync', () => {
     api.getSettings.mockResolvedValue({ ...SERVER, language: 'de' })
     await mount()
     await act(async () => {})
-    for (let i = 0; i < 20 && i18n.resolvedLanguage !== 'de'; i += 1) {
+    await vi.waitFor(async () => {
       await act(async () => { await new Promise((r) => setImmediate(r)) })
-    }
-    expect(i18n.resolvedLanguage).toBe('de')
+      expect(i18n.resolvedLanguage).toBe('de')
+    }, { timeout: 5000 })
     await act(async () => { vi.advanceTimersByTime(2000) })
     expect(api.patchSettings).not.toHaveBeenCalled()
   })
