@@ -67,7 +67,7 @@
     "planning": {
       "title": "Comment planifiez-vous ?",
       "options": {
-        "ahead_deals": "Réserver longtemps à l'avance et chasser les bons plans",
+        "ahead_deals": "Réserver tôt, chasser les bons plans",
         "loose": "Planifier sans trop de contraintes",
         "spontaneous": "Spontané, à la dernière minute"
       }
@@ -114,7 +114,7 @@
       "description": "Plages, bien-être et journées tranquilles."
     },
     "ACCESSIBLE": {
-      "name": "Voyageur aux besoins d'accessibilité",
+      "name": "Voyage accessible",
       "description": "Des programmes qui tiennent compte de vos besoins d'accessibilité."
     }
   },

@@ -7,7 +7,7 @@
     "resend": "Reenviar correo",
     "resendIn": "Reenviar en {{seconds}} s",
     "resent": "Enviado. Revisa tu bandeja de entrada.",
-    "backToLogin": "Volver a iniciar sesión"
+    "backToLogin": "Volver a acceder"
   },
   "email": {
     "label": "Correo electrónico",

@@ -25,7 +25,7 @@
     "hint": "Adresse du serveur Voyager, par exemple http://127.0.0.1:8001",
     "invalid": "Saisissez une adresse http ou https valide.",
     "save": "Enregistrer",
-    "reset": "Rétablir la valeur par défaut"
+    "reset": "Valeur par défaut"
   },
   "reminders": {
     "t7Title": "{{destination}} dans une semaine",

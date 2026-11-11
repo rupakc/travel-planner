@@ -4,7 +4,7 @@
   "export": {
     "button": "Télécharger mes données",
     "working": "Préparation…",
-    "hint": "Un fichier JSON avec votre profil, vos réglages, plans, recherches, alertes et progression de jeu.",
+    "hint": "Un fichier JSON avec votre profil, vos paramètres, plans, recherches, alertes et progression de jeu.",
     "error": "Impossible de préparer votre export. Veuillez réessayer."
   },
   "delete": {
@@ -18,7 +18,7 @@
     "confirm": "Supprimer mon compte",
     "working": "Suppression…",
     "deletedNotice": "Votre compte a été supprimé.",
-    "item1": "Votre profil, vos réglages et votre avatar",
+    "item1": "Votre profil, vos paramètres et votre avatar",
     "item2": "Vos plans, recherches et préférences enregistrés",
     "item3": "Vos alertes de tarifs et de prix, notifications et appareils",
     "item4": "Vos retours, votre progression de jeu et vos données d'usage"
