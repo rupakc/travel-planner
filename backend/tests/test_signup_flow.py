@@ -388,3 +388,77 @@ def test_verify_after_email_change(client, sent):
     users_db.set_email(u["username"], _email())
     r = client.post("/api/auth/verify-email", json={"token": token})
     assert r.status_code == 409 and r.json()["error_code"] == "email_changed"
+
+
+# ── fix round 1 ──────────────────────────────────────────────────────────────
+
+
+def test_resubmit_pending_signup_replaces_it(client, sent):
+    name, email = _name(), _email()
+    assert _signup(client, name, email).status_code == 202
+    first = users_db.get_user_by_email(email)
+    r = _signup(client, name, email)
+    assert r.status_code == 202, r.text
+    second = users_db.get_user_by_email(email)
+    assert second["id"] != first["id"] and second["username"] == name
+    assert [s["kind"] for s in sent] == ["verify", "verify"]
+    r = client.post("/api/auth/verify-email", json={"token": _token(sent[0]["link"])})
+    assert r.status_code == 400  # the replaced row's link is gone
+    r = client.post("/api/auth/verify-email", json={"token": _token(sent[1]["link"])})
+    assert r.status_code == 200
+
+
+def test_pending_username_with_other_email_is_taken(client, sent):
+    name = _name()
+    assert _signup(client, name).status_code == 202
+    r = _signup(client, name)  # another email
+    assert r.status_code == 409 and r.json()["error_code"] == "username_taken"
+
+
+def test_signup_race_loser_hits_db_guard(client, sent, monkeypatch):
+    name = _name()
+    assert _signup(client, name).status_code == 202
+    monkeypatch.setattr(users_db, "username_available", lambda *a: True)
+    r = _signup(client, name)
+    assert r.status_code == 409 and r.json()["error_code"] == "username_taken"
+
+
+def test_put_email_respects_address_limit(client, sent, monkeypatch):
+    from app.core import rate_limit
+
+    u = users_db.create_user(_name(), PW, is_first_login=False)
+    tok = client.post(
+        "/api/auth/login", json={"username": u["username"], "password": PW}
+    ).json()["access_token"]
+    monkeypatch.setattr(settings, "rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "rate_limit_email_address", 3)
+    monkeypatch.setattr(settings, "rate_limit_light_ai", 100)
+    monkeypatch.setattr(rate_limit, "limiter", rate_limit.SlidingWindowLimiter())
+    victim, own = _email(), _email()
+    for _ in range(5):
+        for addr in (victim, own):
+            r = client.put("/api/auth/email", json={"email": addr}, headers=_auth(tok))
+            assert r.status_code == 200
+            assert r.json()["verification_sent"] is True
+    assert sum(s["to"] == victim for s in sent) == 3
+    assert all(s["kind"] == "verify" for s in sent)
+
+
+def test_account_email_verify_unavailable(client, sent, monkeypatch):
+    _, tok = _active_with_token(client, _email())
+    monkeypatch.setattr(settings, "email_log_links", False)
+    monkeypatch.setattr(settings, "public_base_url", "https://voyager.example")
+    r = client.post("/api/account/email/verify", json={}, headers=_auth(tok))
+    assert r.status_code == 503 and r.json()["error_code"] == "email_unavailable"
+
+
+def test_reset_token_expired(client, sent, clock):
+    email = _email()
+    users_db.create_user(_name(), PW, email=email, is_first_login=False)
+    client.post("/api/auth/password-reset/request", json={"email": email})
+    clock.advance(31 * 60)
+    r = client.post(
+        "/api/auth/password-reset/confirm",
+        json={"token": _token(sent[-1]["link"]), "new_password": NEW_PW},
+    )
+    assert r.status_code == 410 and r.json()["error_code"] == "token_expired"

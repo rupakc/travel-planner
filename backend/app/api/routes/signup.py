@@ -85,6 +85,17 @@ def _locale(value: str | None) -> str | None:
     return v if v in _LOCALES else None
 
 
+def address_allowed(to: str, kind: str) -> bool:
+    """Take one ``email_address`` token for this address (keyed by its
+    SHA-256). False when over the limit: the caller skips the send silently.
+    Every account email passes through here."""
+    key = hashlib.sha256(to.strip().lower().encode()).hexdigest()
+    if try_consume("email_address", key) is not None:
+        logger.info("account_email.address_limited kind=%s", kind)
+        return False
+    return True
+
+
 def _send(
     background: BackgroundTasks,
     kind: str,
@@ -95,9 +106,7 @@ def _send(
     username: str,
 ) -> None:
     """Queue an account email unless this address hit its (silent) limit."""
-    key = hashlib.sha256(to.strip().lower().encode()).hexdigest()
-    if try_consume("email_address", key) is not None:
-        logger.info("account_email.address_limited kind=%s", kind)
+    if not address_allowed(to, kind):
         return
     background.add_task(
         account_email.send_account_email,
@@ -179,7 +188,15 @@ def signup(req: SignupRequest, background: BackgroundTasks):
         if invites_db.check_invite(code) is None:
             raise ApiError(403, "invite_invalid", "That invite code is not valid.")
 
-    if not users_db.username_available(username, _now()):
+    owner = users_db.get_user_by_email(email)
+    # Re-submitting one's own pending sign-up (same username + email) is not
+    # "taken": create_pending_user replaces that pending row.
+    resubmit = (
+        owner is not None
+        and owner.get("account_status") == "pending"
+        and owner["username"].lower() == username
+    )
+    if not resubmit and not users_db.username_available(username, _now()):
         raise ApiError(409, "username_taken", "That username is taken.")
 
     def already_registered(owner: dict | None) -> dict:
@@ -194,7 +211,6 @@ def signup(req: SignupRequest, background: BackgroundTasks):
             )
         return accepted
 
-    owner = users_db.get_user_by_email(email)
     if owner and owner.get("account_status") != "pending":
         users_db._hash(req.password)  # same bcrypt cost as a real sign-up
         return already_registered(owner)

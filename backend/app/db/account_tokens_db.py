@@ -87,17 +87,15 @@ def peek_token(token: str, purpose: Purpose, now: datetime) -> dict | TokenError
 
 def redeem_token(token: str, purpose: Purpose, now: datetime) -> dict | TokenError:
     """Use a token up: ``{"user_id", "email", "purpose"}`` or a TokenError
-    (``invalid`` / ``expired`` / ``used``). Exactly one concurrent redeem wins."""
+    (``invalid`` / ``expired`` / ``used``). Exactly one concurrent redeem wins;
+    an unknown token never takes the write lock."""
+    found = peek_token(token, purpose, now)
+    if isinstance(found, TokenError):
+        return found
     with get_connection() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        row = conn.execute(
-            "SELECT * FROM account_tokens WHERE token_hash = ? AND purpose = ?",
-            (_hash(token or ""), purpose),
-        ).fetchone()
-        err = _check(row, now)
-        if err:
-            return err
-        conn.execute(
-            "UPDATE account_tokens SET used_at = ? WHERE id = ?", (_iso(now), row["id"])
+        cur = conn.execute(
+            "UPDATE account_tokens SET used_at = ? WHERE token_hash = ?"
+            " AND purpose = ? AND used_at IS NULL",
+            (_iso(now), _hash(token), purpose),
         )
-    return _result(row)
+    return found if cur.rowcount == 1 else TokenError("used")
