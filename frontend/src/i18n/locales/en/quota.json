@@ -1,0 +1,21 @@
+{
+  "title": "Daily AI allowance",
+  "intro": "How much of today's AI planning you have used.",
+  "buckets": {
+    "search": "Search",
+    "chat": "Chat",
+    "compare": "Compare",
+    "discover": "Discover",
+    "light_ai": "Quick lookups",
+    "import": "Link import"
+  },
+  "usedOf": "{{used}} / {{limit}}",
+  "unlimited": "No daily limit",
+  "resetsAt": "Resets at {{time}}",
+  "banner": {
+    "text": "Confirm your email to use the AI planner",
+    "send": "Send link",
+    "sent": "Link sent. Check your inbox.",
+    "dismiss": "Dismiss"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "每日 AI 额度",
+  "intro": "您今天已使用的 AI 规划额度。",
+  "buckets": {
+    "search": "搜索",
+    "chat": "聊天",
+    "compare": "对比",
+    "discover": "发现",
+    "light_ai": "快速查询",
+    "import": "链接导入"
+  },
+  "usedOf": "{{used}} / {{limit}}",
+  "unlimited": "无每日限制",
+  "resetsAt": "将于 {{time}} 重置",
+  "banner": {
+    "text": "请确认您的邮箱以使用 AI 规划器",
+    "send": "发送链接",
+    "sent": "链接已发送，请查看收件箱。",
+    "dismiss": "关闭"
+  }
+}
