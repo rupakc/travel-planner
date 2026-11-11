@@ -120,6 +120,9 @@ describe('SecuritySection', () => {
     await act(async () => { tid('security.password-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
     expect(changePasswordV2).toHaveBeenCalledWith('tok', '', 'a-long-passphrase-1')
     expect(auth.updateTokenAfterPasswordChange).toHaveBeenCalledWith('new')
+    // The refresh comes from the token change (AccountPage reloads with the new
+    // token); an immediate reload() would use the revoked one.
+    expect(reload).not.toHaveBeenCalled()
   })
 
   it('Sign out everywhere confirms, logs out locally and goes to /login', async () => {
@@ -131,5 +134,20 @@ describe('SecuritySection', () => {
     expect(logoutAll).toHaveBeenCalledWith('tok')
     expect(auth.logout).toHaveBeenCalled()
     expect(tid('login-page')).not.toBeNull()
+  })
+})
+
+describe('SecuritySection password refresh', () => {
+  it('reloads only when no new token came back', async () => {
+    changePasswordV2.mockResolvedValue({})
+    await render(account({ user: { has_password: false } }))
+    const input = tid('security.new-password')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'a-long-passphrase-1')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () => { tid('security.password-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
+    expect(auth.updateTokenAfterPasswordChange).not.toHaveBeenCalled()
+    expect(reload).toHaveBeenCalledTimes(1)
   })
 })

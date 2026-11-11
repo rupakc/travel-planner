@@ -7,6 +7,7 @@ import { getLinkStartUrl, logoutAll, changePasswordV2 } from '../../services/aut
 import { unlinkIdentity, requestEmailVerification } from '../../services/accountApi'
 import { errorText } from '../../services/apiError'
 import { navigateTo } from '../auth/navigate'
+import { safeAuthStart } from '../../utils/navigate'
 import PasswordStrengthMeter from '../auth/PasswordStrengthMeter'
 
 // Provider order follows the contract. Brand names are not translated.
@@ -16,19 +17,6 @@ const PROVIDERS = [
   { id: 'facebook', name: 'Facebook' },
   { id: 'github', name: 'GitHub' },
 ]
-
-// Only a same-origin OAuth path is ever navigated to (dot segments and
-// backslashes are rejected, the parsed path is what gets checked).
-function safeStart(url) {
-  if (typeof url !== 'string' || url.includes('..') || url.includes('\\')) return null
-  try {
-    const u = new URL(url, window.location.origin)
-    if (u.origin !== window.location.origin || !u.pathname.startsWith('/api/auth/')) return null
-    return u.pathname + u.search
-  } catch {
-    return null
-  }
-}
 
 const btn = 'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:opacity-50'
 const btnPlain = `${btn} border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700`
@@ -74,7 +62,7 @@ export default function SecuritySection({ account, reload }) {
     setBusy(p.id)
     try {
       const res = await getLinkStartUrl(token, p.id)
-      const start = safeStart(res?.start_url)
+      const start = safeAuthStart(res?.start_url)
       if (!start) {
         setProviderMsg({ kind: 'error', text: t('errors:provider_unavailable') })
       } else {
@@ -123,10 +111,12 @@ export default function SecuritySection({ account, reload }) {
     setBusy('password')
     try {
       const res = await changePasswordV2(token, hasPassword ? pw.current : '', pw.next)
+      // The new token re-triggers AccountPage's load (it depends on the token);
+      // calling reload now would still use the old, revoked token and 401.
       if (res?.access_token) updateTokenAfterPasswordChange(res.access_token)
+      else await reload?.()
       setPw({ current: '', next: '' })
       setPwMsg({ kind: 'ok', text: hasPassword ? t('security:password.changed') : t('security:password.set') })
-      await reload?.()
     } catch (err) {
       setPwMsg({ kind: 'error', text: errorText(t, err) })
     } finally {
