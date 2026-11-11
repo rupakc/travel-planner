@@ -12,6 +12,9 @@ const hasSequence = (s) => {
   return false
 }
 
+// The server's minimum (/config min_password_length).
+const MIN_LENGTH = 10
+
 const identityParts = ({ username, email } = {}) => {
   const parts = [username, typeof email === 'string' ? email.split('@')[0] : '']
   return parts.map((p) => String(p || '').toLowerCase()).filter((p) => p.length >= 3)
@@ -23,12 +26,12 @@ export function passwordStrength(pw, { username, email } = {}) {
   const hints = []
   const len = [...password].length
 
-  let score = len < 8 ? 0 : len < 12 ? 1 : len < 16 ? 2 : 3
-  if (len < 8) hints.push('tooShort')
+  let score = len < MIN_LENGTH ? 0 : len < 12 ? 1 : len < 16 ? 2 : 3
+  if (len < MIN_LENGTH) hints.push('tooShort')
   else if (len < 16) hints.push('longer')
 
   const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^a-zA-Z0-9]/].filter((re) => re.test(password)).length
-  if (len >= 8 && (classes >= 3 || len >= 20)) score += 1
+  if (len >= MIN_LENGTH && (classes >= 3 || len >= 20)) score += 1
   if (classes < 3 && len < 20) hints.push('variety')
 
   const distinct = new Set(password).size

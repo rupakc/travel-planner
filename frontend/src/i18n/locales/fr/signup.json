@@ -12,7 +12,7 @@
   },
   "password": {
     "label": "Mot de passe",
-    "placeholder": "Au moins 8 caractères",
+    "placeholder": "Au moins 10 caractères",
     "show": "Afficher le mot de passe",
     "hide": "Masquer le mot de passe"
   },
@@ -38,7 +38,7 @@
       "4": "forte"
     },
     "hint": {
-      "tooShort": "utilisez au moins 8 caractères",
+      "tooShort": "utilisez au moins 10 caractères",
       "longer": "plus long, c'est plus sûr",
       "variety": "mélangez lettres, chiffres et symboles",
       "repeats": "évitez les caractères répétés",

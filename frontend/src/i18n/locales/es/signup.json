@@ -12,7 +12,7 @@
   },
   "password": {
     "label": "Contraseña",
-    "placeholder": "Al menos 8 caracteres",
+    "placeholder": "Al menos 10 caracteres",
     "show": "Mostrar contraseña",
     "hide": "Ocultar contraseña"
   },
@@ -38,7 +38,7 @@
       "4": "fuerte"
     },
     "hint": {
-      "tooShort": "usa al menos 8 caracteres",
+      "tooShort": "usa al menos 10 caracteres",
       "longer": "cuanto más larga, más segura",
       "variety": "mezcla letras, números y símbolos",
       "repeats": "evita caracteres repetidos",
