@@ -7,6 +7,7 @@ short-lived ``state`` / handoff ``code`` / link ticket; nothing secret is logged
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import hmac
 import logging
@@ -292,7 +293,10 @@ async def _callback(p: str, request: Request) -> RedirectResponse:
     web_final = _web_final()
     if p not in registry.PROVIDER_ORDER:
         return _redirect(web_final, error="bad_request")
-    state = oauth_db.take_ticket("state", params.get("state") or "", _now())
+    # every SQLite step runs in a worker thread: never block the event loop
+    state = await asyncio.to_thread(
+        oauth_db.take_ticket, "state", params.get("state") or "", _now()
+    )
     if not state or state["provider"] != p:
         return _redirect(web_final, error="state_invalid")
     data = state["data"]
@@ -323,9 +327,14 @@ async def _callback(p: str, request: Request) -> RedirectResponse:
     try:
         if link_user_id:
             # pre-check only: the attach waits for the exchange's proof
-            result = flow.precheck_link(profile, p, link_user_id) or "link"
+            result = (
+                await asyncio.to_thread(flow.precheck_link, profile, p, link_user_id)
+                or "link"
+            )
         else:
-            result = flow.resolve_identity(profile, p, link_user_id=None, secret=secret)
+            result = await asyncio.to_thread(
+                flow.resolve_identity, profile, p, link_user_id=None, secret=secret
+            )
     except Exception:
         logger.exception("oauth.resolve_failed provider=%s", p)
         return _redirect(final, error="provider_error")
@@ -349,7 +358,8 @@ async def _callback(p: str, request: Request) -> RedirectResponse:
     else:
         handoff["result"] = "linked" if isinstance(result, flow.Linked) else "signed_in"
         user_id = result.user["id"]
-    code = oauth_db.put_ticket(
+    code = await asyncio.to_thread(
+        oauth_db.put_ticket,
         "handoff",
         ttl_s=HANDOFF_TTL_S,
         provider=p,
@@ -496,7 +506,7 @@ def _provider_display_name(raw: str | None) -> str | None:
 
 
 @router.post("/auth/oauth/complete", status_code=201, dependencies=_oauth_limit)
-async def complete(req: CompleteRequest, background: BackgroundTasks):
+def complete(req: CompleteRequest, background: BackgroundTasks):
     now = _now()
     if not oauth_db.peek_ticket("signup", req.signup_token, now):
         raise _signup_token_invalid()
@@ -657,6 +667,11 @@ async def id_token(p: str, req: IdTokenRequest):
         ) from None
     if req.display_name and not profile.display_name:
         profile = dataclasses.replace(profile, display_name=req.display_name)
+    # SQLite (and BEGIN IMMEDIATE) runs in a worker thread, off the event loop
+    return await asyncio.to_thread(_id_token_result, p, profile, secret, req)
+
+
+def _id_token_result(p: str, profile, secret: str | None, req: IdTokenRequest):
     try:
         result = flow.resolve_identity(profile, p, link_user_id=None, secret=secret)
         if isinstance(result, flow.NeedsUsername):

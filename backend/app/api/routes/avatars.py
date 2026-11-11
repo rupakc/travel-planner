@@ -25,7 +25,7 @@ async def upload_avatar(
 
 
 @router.delete("/account/avatar", dependencies=[Depends(rate_limit("account"))])
-async def delete_avatar(user: dict = Depends(get_current_user)):
+def delete_avatar(user: dict = Depends(get_current_user)):
     svc.remove_avatar(user["id"])
     return {"avatar_url": None}
 

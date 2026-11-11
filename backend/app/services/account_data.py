@@ -262,23 +262,34 @@ async def _revoke_all(secrets: list[tuple[str, str]]) -> None:
         await _revoke(provider_id, sealed)
 
 
-async def delete_user(user: dict) -> None:
-    """Delete the account and everything the export lists, the user's raw
-    telemetry and avatar file, and revoke stored provider tokens (Apple).
-
-    The DB rows go first, in one transaction, so a failure leaves the account
-    whole. After the commit nothing can fail the request: the local steps
-    (telemetry rows, avatar file) run at once with no await in between, each
-    caught and logged, then the network revocations run in a task shielded
-    from the request's cancellation (a client disconnect lets them finish)."""
+def _delete_local(user: dict) -> list[tuple[str, str]]:
+    """The blocking part of a deletion (DB transaction, telemetry rows, avatar
+    file); runs in a worker thread. Returns the provider secrets to revoke."""
     uid = user["id"]
     secrets = delete_rows(user)
     _step("telemetry delete", telemetry_db.delete_user_events, uid)
     _step("avatar removal", remove_avatar, uid)
     logger.info("account_delete: account deleted")
-    if not secrets:
-        return
-    task = asyncio.create_task(_revoke_all(secrets))
+    return secrets
+
+
+async def _delete_and_revoke(user: dict) -> None:
+    secrets = await asyncio.to_thread(_delete_local, user)
+    if secrets:
+        await _revoke_all(secrets)
+
+
+async def delete_user(user: dict) -> None:
+    """Delete the account and everything the export lists, the user's raw
+    telemetry and avatar file, and revoke stored provider tokens (Apple).
+
+    The DB rows go first, in one transaction, so a failure leaves the account
+    whole. The blocking local work (rows, telemetry, avatar file) runs in a
+    worker thread, off the event loop, each post-commit step caught and
+    logged; then the network revocations. The whole sequence is one task
+    shielded from the request's cancellation (a client disconnect lets it
+    finish)."""
+    task = asyncio.create_task(_delete_and_revoke(user))
     _pending.add(task)
     task.add_done_callback(_pending.discard)
     await asyncio.shield(task)

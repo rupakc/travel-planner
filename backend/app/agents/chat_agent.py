@@ -605,7 +605,8 @@ class ChatAgent:
         # A rebuilt itinerary is a full plan: charge it before any specialist
         # runs, so an over-limit refinement does no partial work.
         if self._refinement_needs_itinerary:
-            refusal = self._full_plan_refusal()
+            # SQLite (daily quota) runs in a worker thread, off the event loop
+            refusal = await asyncio.to_thread(self._full_plan_refusal)
             if refusal:
                 for chunk in refusal:
                     yield chunk
@@ -1686,7 +1687,7 @@ class ChatAgent:
 
         # Every full plan passes here: it costs as much as a search, so it
         # draws on the caller's search bucket too.
-        refusal = None if charged else self._full_plan_refusal()
+        refusal = None if charged else await asyncio.to_thread(self._full_plan_refusal)
         if refusal:
             for chunk in refusal:
                 yield chunk

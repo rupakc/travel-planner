@@ -1136,3 +1136,55 @@ def test_https_cookie_attributes(c, providers, monkeypatch):
         low = cookie.lower()
         assert "samesite=none" in low and "secure" in low and "httponly" in low
         assert "path=/api/auth/oauth" in low
+
+
+# ── I-2: SQLite never runs on the event loop ─────────────────────────────────
+
+
+def test_oauth_db_work_runs_off_the_loop(c, providers, sent, monkeypatch):
+    import asyncio
+
+    calls = []
+
+    def spy(owner, name):
+        real = getattr(owner, name)
+
+        def wrapper(*args, **kwargs):
+            try:
+                asyncio.get_running_loop()
+                on_loop = True
+            except RuntimeError:
+                on_loop = False
+            calls.append((name, on_loop))
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr(owner, name, wrapper)
+
+    for name in ("resolve_identity", "create_oauth_user", "precheck_link"):
+        spy(flow, name)
+    for name in ("take_ticket", "put_ticket"):
+        spy(oauth_db, name)
+
+    # callback (async: awaits the provider) + complete
+    providers["google"].profile = _profile(_email())
+    body = c.post("/api/auth/oauth/exchange", json={"code": _web_code(c)}).json()
+    r = c.post(
+        "/api/auth/oauth/complete",
+        json={"signup_token": body["signup_token"], "username": _name()},
+    )
+    assert r.status_code == 201, r.text
+    # native id-token (async: awaits the token check)
+    providers["google"].profile = _profile(_email())
+    r = c.post(
+        "/api/auth/oauth/google/id-token", json={"id_token": "good", "client": "ios"}
+    )
+    assert r.status_code == 200 and r.json()["status"] == "needs_username"
+
+    names = {n for n, _ in calls}
+    assert {
+        "resolve_identity",
+        "create_oauth_user",
+        "take_ticket",
+        "put_ticket",
+    } <= names
+    assert [c for c in calls if c[1]] == []
