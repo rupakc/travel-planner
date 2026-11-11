@@ -9,8 +9,6 @@ native account with the same email is deleted, never linked.
 from __future__ import annotations
 
 import dataclasses
-import hashlib
-import importlib
 import logging
 import re
 import secrets
@@ -18,10 +16,9 @@ import sqlite3
 import unicodedata
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
-from ...core.config import settings
-from ...db import invites_db, oauth_db, users_db
+from ...db import account_tokens_db, invites_db, oauth_db, users_db
 from ...db.database import get_connection
 from ...db.reserved_usernames import RESERVED_USERNAMES
 from .base import ProviderProfile
@@ -344,32 +341,5 @@ def create_oauth_user(
 
 
 def issue_verify_token(user_id: str, email: str) -> str:
-    """A verify-email token (Task 27's issue_token when present)."""
-    try:
-        tokens_db = importlib.import_module("app.db.account_tokens_db")
-    except ImportError:
-        tokens_db = None
-    if tokens_db is not None and hasattr(tokens_db, "issue_token"):
-        return tokens_db.issue_token(user_id, "verify_email", email)
-    token = secrets.token_urlsafe(32)
-    now = _now()
-    ttl = timedelta(minutes=int(settings.account_token_ttl_minutes))
-    with get_connection() as conn:
-        conn.execute(
-            """UPDATE account_tokens SET used_at = ? WHERE user_id = ?
-               AND purpose = 'verify_email' AND used_at IS NULL""",
-            (now.isoformat(), user_id),
-        )
-        conn.execute(
-            """INSERT INTO account_tokens
-               (user_id, purpose, token_hash, email, created_at, expires_at)
-               VALUES (?, 'verify_email', ?, ?, ?, ?)""",
-            (
-                user_id,
-                hashlib.sha256(token.encode()).hexdigest(),
-                email,
-                now.isoformat(),
-                (now + ttl).isoformat(),
-            ),
-        )
-    return token
+    """A verify-email token (Task 27's account tokens)."""
+    return account_tokens_db.issue_token(user_id, "verify_email", email)

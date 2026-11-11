@@ -525,6 +525,11 @@ def test_untrusted_email_never_links(c, providers, sent):
     assert [s["kind"] for s in sent] == ["verify"]
     assert sent[0]["to"] == email2
     assert sent[0]["link"].startswith(public_url("/verify?token="))
+    # the link works with the native verify route (Task 27's tokens)
+    token = parse_qs(urlparse(sent[0]["link"]).query)["token"][0]
+    r = c.post("/api/auth/verify-email", json={"token": token})
+    assert r.status_code == 200, r.text
+    assert users_db.get_user_by_id(user["id"])["email_verified"] is True
 
 
 def test_unverified_existing_email_is_refused(c, providers):
