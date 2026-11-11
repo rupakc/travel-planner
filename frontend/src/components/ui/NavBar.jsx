@@ -8,7 +8,7 @@ import LanguagePicker from './LanguagePicker'
 import ThemeToggle from './ThemeToggle'
 import GameNavChip from '../game/GameNavChip'
 import AccountMenu from '../account/AccountMenu'
-import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
+import { Search, MessageCircle, Settings, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
 
 // `key` names the label (`common:nav.<key>`) and the telemetry id; `tour`
 // is the stable onboarding-tour anchor, independent of the UI language.
@@ -22,7 +22,7 @@ const BASE_TABS = [
 const ADMIN_TAB = { path: '/admin', key: 'admin', tour: 'admin', icon: ShieldCheck }
 
 export default function NavBar() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, isAdmin } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -99,19 +99,7 @@ export default function NavBar() {
               <GameNavChip />
               <AccountMenu />
               <NotificationBell />
-              <User size={14} />
-              <span className="font-medium hidden sm:inline max-w-[8rem] lg:max-w-[12rem] truncate" title={user.username}>{user.username}</span>
               {isAdmin && <span className="hidden sm:inline px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">{t('nav.adminBadge')}</span>}
-              <button
-                type="button"
-                onClick={logout}
-                data-tid="nav.signOut"
-                className="ml-1 text-slate-400 hover:text-slate-700 transition-colors"
-                title={t('nav.signOut')}
-                aria-label={t('nav.signOut')}
-              >
-                <LogOut size={14} />
-              </button>
             </div>
           )}
         </div>

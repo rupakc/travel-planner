@@ -28,7 +28,7 @@ describe('AccountMenu', () => {
     act(() => tid('account.menu').click())
     expect(tid('account.menu.account').textContent).toBe('Account')
     expect(tid('account.menu.preferences').textContent).toBe('Preferences')
-    act(() => tid('account.menu.signOut').click())
+    act(() => tid('nav.signOut').click())
     expect(logout).toHaveBeenCalled()
     expect(container.querySelector('[role="menu"]')).toBeNull()
   })

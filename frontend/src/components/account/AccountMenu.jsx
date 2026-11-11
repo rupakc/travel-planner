@@ -46,7 +46,7 @@ export default function AccountMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-48 z-50 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+          className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] z-50 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
         >
           <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
             <div className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{user.display_name || user.username}</div>
@@ -58,7 +58,7 @@ export default function AccountMenu() {
           <button type="button" role="menuitem" data-tid="account.menu.preferences" className={item} onClick={() => go('/preferences')}>
             <Settings size={14} />{t('menu.preferences')}
           </button>
-          <button type="button" role="menuitem" data-tid="account.menu.signOut" className={item} onClick={() => { setOpen(false); logout() }}>
+          <button type="button" role="menuitem" data-tid="nav.signOut" className={item} onClick={() => { setOpen(false); logout() }}>
             <LogOut size={14} />{t('menu.signOut')}
           </button>
         </div>
