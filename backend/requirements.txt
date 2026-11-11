@@ -16,3 +16,5 @@ anthropic>=0.40.0,<1.0.0
 google-genai==2.34.0
 # Converts GIF screenshots to PNG for Gemini (link import)
 Pillow==13.0.0
+# multipart/form-data uploads (avatar upload)
+python-multipart==0.0.32
