@@ -1,0 +1,55 @@
+{
+  "page": {
+    "title": "Jouer"
+  },
+  "countries": {
+    "title": "Pays visités",
+    "empty": "Faites un check-in pendant un voyage ou terminez un récap pour ajouter votre premier pays.",
+    "count_one": "{{count}} pays visité",
+    "count_other": "{{count}} pays visités",
+    "countOfGoal_one": "{{count}} pays visité sur {{goal}}",
+    "countOfGoal_other": "{{count}} pays visités sur {{goal}}",
+    "count_many": "{{count}} pays visités",
+    "countOfGoal_many": "{{count}} pays visités sur {{goal}}"
+  },
+  "continents": {
+    "title_one": "Continents ({{count}})",
+    "title_other": "Continents ({{count}})",
+    "AF": "Afrique",
+    "AN": "Antarctique",
+    "AS": "Asie",
+    "EU": "Europe",
+    "NA": "Amérique du Nord",
+    "OC": "Océanie",
+    "SA": "Amérique du Sud",
+    "title_many": "Continents ({{count}})"
+  },
+  "goal": {
+    "title": "Objectif de votre liste de voyages",
+    "hint": "Combien de pays souhaitez-vous voir ? Choisissez un nombre de {{min}} à {{max}}.",
+    "label": "Pays à voir",
+    "save": "Enregistrer l'objectif",
+    "invalid": "Saisissez un nombre entier de {{min}} à {{max}}.",
+    "saved": "Objectif enregistré.",
+    "error": "Impossible d'enregistrer votre objectif. Réessayez."
+  },
+  "streak": {
+    "title": "Série de check-in de voyage",
+    "current_one": "{{count}} jour d'affilée",
+    "current_other": "{{count}} jours d'affilée",
+    "longest_one": "Record : {{count}} jour",
+    "longest_other": "Record : {{count}} jours",
+    "current_many": "{{count}} jours d'affilée",
+    "longest_many": "Record : {{count}} jours"
+  },
+  "hidden": {
+    "note": "Le jeu est masqué. Vous pouvez le réactiver dans vos réglages.",
+    "link": "Ouvrir les réglages"
+  },
+  "you": {
+    "more": "Plus",
+    "preferences": "Préférences",
+    "alerts": "Alertes",
+    "tour": "Faites-moi visiter"
+  }
+}
