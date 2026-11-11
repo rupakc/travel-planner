@@ -192,6 +192,8 @@ export default function SearchPage() {
       && !importLinkFromQuery(location.search),
     eligible: recentLoaded && recentSearches.length === 0,
     delayMs: TOUR_START_DELAY_MS,
+    token,
+    stepsCount: tourSteps.length,
   })
 
   // Pre-fill from saved preferences

@@ -3,7 +3,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import useFirstRunTour from './useFirstRunTour'
+import { putOnboarding } from '../services/accountApi'
+import { announceGame } from '../game/announce'
 import { markTourDone, isTourDone } from '../utils/tour'
+
+vi.mock('../services/accountApi', () => ({ putOnboarding: vi.fn() }))
+vi.mock('../game/announce', () => ({ announceGame: vi.fn() }))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -20,6 +25,8 @@ describe('useFirstRunTour', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     localStorage.clear()
+    vi.clearAllMocks()
+    putOnboarding.mockResolvedValue({ game: { awards: [{ xp: 50 }] } })
     container = document.createElement('div')
     root = createRoot(container)
   })
@@ -82,5 +89,41 @@ describe('useFirstRunTour', () => {
     render({ username: undefined })
     wait(600)
     expect(tour.open).toBe(false)
+  })
+
+  describe('onboarding completion', () => {
+    const open = () => { render({ token: 't', stepsCount: 3 }); wait(600) }
+    const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve() })
+
+    it('finishing reports onboarding once and announces the game delta', async () => {
+      open()
+      act(() => tour.close({ done: true }))
+      await flush()
+      expect(putOnboarding).toHaveBeenCalledTimes(1)
+      expect(putOnboarding).toHaveBeenCalledWith('t', { step: 3, done: true })
+      expect(announceGame).toHaveBeenCalledWith({ awards: [{ xp: 50 }] })
+    })
+
+    it('skipping does not report', () => {
+      open()
+      act(() => tour.close({ done: false }))
+      act(() => tour.close())
+      expect(putOnboarding).not.toHaveBeenCalled()
+    })
+
+    it('does not report without a token', () => {
+      render({ stepsCount: 3 }); wait(600)
+      act(() => tour.close({ done: true }))
+      expect(putOnboarding).not.toHaveBeenCalled()
+    })
+
+    it('swallows a rejected call', async () => {
+      putOnboarding.mockRejectedValue({ status: 404 })
+      open()
+      act(() => tour.close({ done: true }))
+      await flush()
+      expect(isTourDone('ana')).toBe(true)
+      expect(announceGame).not.toHaveBeenCalled()
+    })
   })
 })

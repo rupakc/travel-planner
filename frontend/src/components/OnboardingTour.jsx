@@ -92,7 +92,7 @@ export default function OnboardingTour({ open, steps, onClose }) {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onCloseRef.current()
+        onCloseRef.current({ done: false })
       } else if (e.key === 'Tab') {
         const focusable = [...(cardRef.current?.querySelectorAll('button') || [])]
         if (!focusable.length) return
@@ -117,7 +117,7 @@ export default function OnboardingTour({ open, steps, onClose }) {
   if (!open || !step) return null
 
   const isLast = index === shown.length - 1
-  const next = () => (isLast ? onClose() : setIndex(index + 1))
+  const next = () => (isLast ? onClose({ done: true }) : setIndex(index + 1))
 
   const { spot, pos } = layout
   const showSpot = step.target && spot
@@ -153,7 +153,7 @@ export default function OnboardingTour({ open, steps, onClose }) {
 
         <div className="mt-4 flex items-center gap-2">
           {!isLast && (
-            <button type="button" onClick={onClose} data-tid="tour.skip"
+            <button type="button" onClick={() => onClose({ done: false })} data-tid="tour.skip"
               className="mr-auto text-xs font-medium text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded px-1">
               {t('tour.skip')}
             </button>
