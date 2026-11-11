@@ -6,6 +6,8 @@ import { useAlerts } from '../../context/AlertsContext'
 import NotificationBell from '../alerts/NotificationBell'
 import LanguagePicker from './LanguagePicker'
 import ThemeToggle from './ThemeToggle'
+import GameNavChip from '../game/GameNavChip'
+import AccountMenu from '../account/AccountMenu'
 import { Search, MessageCircle, Settings, User, LogOut, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
 
 // `key` names the label (`common:nav.<key>`) and the telemetry id; `tour`
@@ -94,6 +96,8 @@ export default function NavBar() {
 
           {user && (
             <div className="flex min-w-0 items-center gap-2 text-slate-600 text-sm">
+              <GameNavChip />
+              <AccountMenu />
               <NotificationBell />
               <User size={14} />
               <span className="font-medium hidden sm:inline max-w-[8rem] lg:max-w-[12rem] truncate" title={user.username}>{user.username}</span>

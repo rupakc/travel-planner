@@ -21,6 +21,17 @@ import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
 import AttributionFooter   from './components/ui/AttributionFooter'
 import ConsentPrompt       from './components/ConsentPrompt'
+import SignupPage          from './pages/SignupPage'
+import VerifyEmailPage     from './pages/VerifyEmailPage'
+import CheckEmailPage      from './pages/CheckEmailPage'
+import ForgotPasswordPage  from './pages/ForgotPasswordPage'
+import ResetPasswordPage   from './pages/ResetPasswordPage'
+import OAuthCallbackPage   from './pages/OAuthCallbackPage'
+import ChooseUsernamePage  from './pages/ChooseUsernamePage'
+import AccountPage         from './pages/AccountPage'
+import SettingsSync        from './components/account/SettingsSync'
+import VerifyBanner        from './components/account/VerifyBanner'
+import GameCelebration     from './components/game/GameCelebration'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -56,8 +67,8 @@ function SearchTab() {
   )
 }
 
-const PATH_LABEL = { '/': 'search', '/chat': 'chat', '/nearby': 'nearby', '/preferences': 'preferences', '/alerts': 'alerts', '/admin': 'admin' }
-const KNOWN_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts', '/admin'])
+const PATH_LABEL = { '/': 'search', '/chat': 'chat', '/nearby': 'nearby', '/preferences': 'preferences', '/alerts': 'alerts', '/admin': 'admin', '/account': 'account' }
+const KNOWN_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/account'])
 
 function Layout() {
   const location = useLocation()
@@ -79,7 +90,9 @@ function Layout() {
     <SearchDataProvider>
      <AlertsProvider onOpenLink={openAlert}>
       <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100">
+        <SettingsSync />
         <NavBar />
+        <VerifyBanner />
         <FeedbackWidget />
         {/* SearchTab and ChatPage are always in the DOM — navigating away never unmounts them */}
         <div style={{ display: path === '/' ? 'block' : 'none' }}><SearchTab /></div>
@@ -88,9 +101,11 @@ function Layout() {
         {path === '/alerts'      && <AlertsPage />}
         {/* Near me unmounts when left: its live results are never kept */}
         {path === '/nearby'      && <NearbyPage />}
+        {path === '/account'     && <AccountPage />}
         {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
         <AttributionFooter />
         <AlertToast />
+        <GameCelebration />
       </div>
      </AlertsProvider>
     </SearchDataProvider>
@@ -121,6 +136,13 @@ export default function App() {
     <>
     <Routes>
       <Route path="/login"           element={<LoginPage />} />
+      <Route path="/signup"          element={<SignupPage />} />
+      <Route path="/check-email"     element={<CheckEmailPage />} />
+      <Route path="/verify"          element={<VerifyEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password"  element={<ResetPasswordPage />} />
+      <Route path="/auth/callback"   element={<OAuthCallbackPage />} />
+      <Route path="/auth/username"   element={<ChooseUsernamePage />} />
       {/* Public share link — works without login */}
       <Route path="/share/:token"    element={<SharePage />} />
       <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
