@@ -121,7 +121,7 @@ SERPAPI_KEY=...                    # live Google Flights, fare calendar, price i
 SERPER_KEY=...                     # Places to See data and better activity/place links
 ```
 
-There is no self-registration. Sign in as the admin, then create users on the Admin page. All settings, including `DATA_DIR`, `CORS_ORIGINS`, `AGENT_MAX_CONCURRENCY`, `RATE_LIMIT_*` and `CACHE_*`, are covered in [Configuration](docs/Configuration.md).
+Anyone can sign up from the sign-in page (email verification needs `SMTP_*`; `SIGNUP_MODE=invite` restricts it), and the admin can also create users on the Admin page. Sign in as the admin first. All settings, including `DATA_DIR`, `CORS_ORIGINS`, `AGENT_MAX_CONCURRENCY`, `RATE_LIMIT_*` and `CACHE_*`, are covered in [Configuration](docs/Configuration.md).
 
 ### 2. Run
 

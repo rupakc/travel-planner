@@ -233,7 +233,7 @@ One process-wide `cachetools.TTLCache` (`backend/app/core/cache.py`, size `CACHE
 
 ## Authentication and access
 
-- `POST /api/auth/login` returns an HS256 JWT valid for 24 h (`backend/app/core/auth.py`). Passwords are bcrypt-hashed. There is no registration endpoint; admins create users.
+- `POST /api/auth/login` returns an HS256 JWT valid for 24 h (`backend/app/core/auth.py`). Passwords are bcrypt-hashed. Users sign up with email verification (`/api/auth/signup`, see [Accounts API](Accounts-API.md)) or are created by an admin.
 - Most routes require a valid token (`get_current_user`). Admin routes also require `is_admin`.
 - `/api/search`, `/api/search/sync`, `/api/discover` and every single-agent ("light_ai") route accept **anonymous** calls, unless `ALLOW_ANONYMOUS_AI=false` (production): then every AI router answers `401` to anonymous callers (`require_ai_access`). They use `get_optional_user`: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except `/share/:token`.
 

@@ -8,8 +8,14 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
-| Sign in with username and password, change password (no self-registration) | ✅ | ✅ | ⏳ Phase 7 |
-| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons shown, "coming soon" until the backend has providers; ⏳ Phase 1 for sign-in itself | ⏳ Phase 8 | ⏳ Phase 7 |
+| Sign in with username and password, change password | ✅ | ✅ | ⏳ Phase 7 |
+| Create an account, verify email, reset password | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Sessions: sign out everywhere, refresh tokens on mobile | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Account area: profile, avatar, settings, linked sign-in methods | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Export my data and delete my account | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Daily AI allowance and verified-email requirement | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| XP, badges, levels and streaks (can be hidden) | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then | ⏳ Phase 8 | ⏳ Phase 7 |
 | Admin: users and feedback | ✅ | — (README lists traveller-facing flows only) | ⏳ Phase 7 |
 | Admin: Analytics tab (telemetry summary) | ✅ | — | ⏳ Phase 7 |
 | Preferences, two-way bound to the search form; Taste Graph | ✅ | ? (Settings and per-feature visibility are device-local per the README) | ⏳ Phase 7 |

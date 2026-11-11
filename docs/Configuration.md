@@ -96,7 +96,52 @@ Fare- and price-watch alerts can also be pushed to the Android app's registered 
 | `ADMIN_PASSWORD` | `""` | Password for the seeded admin. Empty means no admin is created. Used only when that user does not exist yet; the seeded admin is not forced to change it. |
 | `ADMIN_EMAIL` | `""` | Optional email for the seeded admin. |
 
-There is no self-registration: the admin creates every other user from the Admin page.
+Anyone can create an account with `POST /api/auth/signup` (a verification email is sent first) unless `SIGNUP_MODE=invite`; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: [Accounts API](Accounts-API.md).
+
+### Sign-up, sessions and email links
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SIGNUP_MODE` | `open` | `open`, or `invite` (sign-up and OAuth sign-up need an invite code from `POST /api/admin/invites`). |
+| `EMAIL_LOG_LINKS` | `false` | Dev only: with `SMTP_HOST` unset, log verification and reset links instead of sending them (also on when the base URL host is `localhost`). |
+| `ACCOUNT_TOKEN_TTL_MINUTES` | `30` | Lifetime of verify-email and password-reset tokens (single use). |
+| `PENDING_PURGE_DAYS` | `7` | An unverified (pending) account is deleted after this many days; the hourly maintenance task also purges expired tokens. |
+| `REFRESH_TOKEN_DAYS` | `60` | Mobile refresh-token lifetime (rotated on use). |
+| `REFRESH_FAMILY_MAX_DAYS` | `365` | Absolute lifetime of a refresh-token family from sign-in. |
+| `MOBILE_ACCESS_TOKEN_MINUTES` | `60` | Access-token lifetime for `client` ios/android (web stays 24 h). |
+| `PUBLIC_BASE_URL` / `APP_BASE_URL` | see above | Every absolute URL (email links, OAuth `redirect_uri`, avatar URLs) is `PUBLIC_BASE_URL`, else `APP_BASE_URL`, without a trailing `/`. |
+
+### Sign-in providers (all optional)
+
+A provider is on only when **all** its credentials are non-empty; otherwise its button shows "coming soon". Secrets go in Secret Manager in production. Setup per provider: [Deployment on GCP](Deployment-GCP.md#sign-in-providers-and-email).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `""` | Google web OAuth client. |
+| `GOOGLE_NATIVE_CLIENT_IDS` | `[]` | JSON list of the iOS/Android client IDs accepted by `POST /api/auth/oauth/google/id-token`. |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `""` | GitHub OAuth app. |
+| `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` | `""` | Meta app with Facebook Login. |
+| `FACEBOOK_GRAPH_VERSION` | `v24.0` | Graph API version used for the profile call. |
+| `FACEBOOK_EMAIL_TRUSTED` | `false` | Treat Facebook's email as verified. Off by default, so a Facebook email never auto-links to an existing account. |
+| `APPLE_SERVICES_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | `""` | Sign in with Apple: Services ID, team, key ID and the `.p8` key contents. |
+| `APPLE_NATIVE_CLIENT_IDS` | `[]` | JSON list of iOS bundle IDs accepted by `POST /api/auth/oauth/apple/id-token`. |
+| `OAUTH_MOBILE_REDIRECTS` | `["voyager://auth/callback"]` | Exact-match allow-list of mobile `redirect_uri` values (`<base>/auth/callback` is always allowed). |
+
+### Daily AI quota and game
+
+A signed-in user who has not verified their email cannot use AI routes (`403 email_unverified`). Verified users also have a per-UTC-day allowance per bucket on top of the 10-minute windows; `0` means unlimited, and admins are exempt.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `AI_DAILY_QUOTA_ENABLED` | `true` | Master switch for the daily quota. |
+| `AI_DAILY_QUOTA_SEARCH` | `20` | Per day: `/api/search`, `/api/search/sync` and chat full plans. |
+| `AI_DAILY_QUOTA_CHAT` | `100` | Per day: `/api/chat`. |
+| `AI_DAILY_QUOTA_COMPARE` | `40` | Per day: `/api/compare/destination`. |
+| `AI_DAILY_QUOTA_DISCOVER` | `20` | Per day: `/api/discover`. |
+| `AI_DAILY_QUOTA_LIGHT_AI` | `200` | Per day: the light-AI routes. |
+| `AI_DAILY_QUOTA_IMPORT` | `20` | Per day: `/api/import/extract`. |
+| `GAME_ENABLED` | `true` | XP, badges, levels and streaks (`GET /api/game/*` answer 404 when off). |
+| `GAME_RULES_PATH` | `""` | Alternative rules file; empty uses `backend/app/game/rules.json`. |
 
 ## Rate limits
 
@@ -116,6 +161,12 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
 | `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |
 | `RATE_LIMIT_LOGIN_FAILURES_GLOBAL` | `200` | Failed logins per username from all IPs together: a backstop against distributed guessing |
+| `RATE_LIMIT_AUTH_EMAIL` | `10` | Verify-email and password-reset requests per client IP |
+| `RATE_LIMIT_EMAIL_ADDRESS` | `3` | Emails sent to one address per window (verify, reset, resend), so nobody can be mail-bombed |
+| `RATE_LIMIT_SIGNUP` | `5` | `/api/auth/signup` per client IP |
+| `RATE_LIMIT_OAUTH` | `30` | `/api/auth/oauth/*` per client IP |
+| `RATE_LIMIT_REFRESH` | `60` | `/api/auth/refresh` per client IP |
+| `RATE_LIMIT_ACCOUNT` | `30` | Account writes: profile, settings, onboarding, avatar, delete |
 
 Counters live in process memory: they reset on restart and are not shared between processes or instances, so a multi-instance deployment would need a shared store. Anonymous callers are keyed by the connecting address; behind a reverse proxy all anonymous traffic shares one key unless the proxy address is replaced (for example with uvicorn `--proxy-headers`).
 

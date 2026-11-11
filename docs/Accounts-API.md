@@ -246,6 +246,16 @@ POST /api/auth/logout
 
 This revokes that refresh token's family. Clear local tokens regardless of the response. `POST /auth/logout-all` (authenticated) revokes every device.
 
+## Contract notes
+
+Clarifications of behaviour the frozen contract left implicit. None changes a request or response shape.
+
+- **Off-site `return_to`.** On `GET /auth/oauth/<p>/start`, a `return_to` that is not a same-origin path (an absolute URL, a `//host` form, or anything not starting with a single `/`) is refused like any other bad start parameter: `302` to `<final>?error=bad_request`. It is never followed.
+- **Apple native secret.** For Apple the server stores the refresh token it needs to revoke on account deletion as `"<client_id>|<refresh_token>"`, Fernet-encrypted (see Global constraints). This is internal storage: no request or response field changes.
+- **Unverified or untrusted provider email.** A provider email that is unverified, or verified but not trusted (Facebook, unless `FACEBOOK_EMAIL_TRUSTED=true`), never deletes and never links to an existing account. If it matches an existing account that has no verified email (for example an admin-created one), the callback answers `email_in_use_unverified`. Only a pending native account is replaced, and only by a trusted, verified provider email.
+- **Password reset verifies the address.** A successful `POST /auth/password-reset/confirm` on an account whose email was unverified marks that email verified, because the link proved control of the mailbox.
+
 ## Changelog
 
 - 2026-11-11 — v1 published
+- 2026-11-11 — added the "Contract notes" section (clarifications only)

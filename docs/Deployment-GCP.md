@@ -296,6 +296,29 @@ The site starts on `<a-b-c-d>.sslip.io`. The certificates live in the persistent
 3. On the VM: `sudo google_metadata_script_runner startup`. This rewrites `site.env` and `app.env`'s URLs; restart Caddy in a quiet moment.
 4. Update the Android `PROD_BASE_URL` and the uptime check's host.
 
+### Moving to a custom domain
+
+Everything absolute comes from `PUBLIC_BASE_URL` (else `APP_BASE_URL`), so the move is configuration only:
+
+1. DNS: an A record to the static IP, no AAAA (as above).
+2. Set `voyager-site-host` (step 2 above) and run the startup script on the VM: it rewrites `SITE_HOST` for Caddy and `APP_BASE_URL`/`CORS_ORIGINS` in `app.env`. If you set `PUBLIC_BASE_URL` in `app.env`, change it too. Restart the app.
+3. Provider consoles: add the new redirect URI `https://<domain>/api/auth/oauth/<p>/callback` for every provider (keep the old one until the old host is retired), and update Apple's domain and return URL. Email links follow the new base automatically.
+4. Mobile deep links (Phases 7 and 8): the iOS `apple-app-site-association` and Android `assetlinks.json` files are served from the new domain's `/.well-known/`. Universal and app links only work on a domain you own.
+5. Keep the old `<ip>.sslip.io` host answering with a redirect to the new domain for a while so old emails, shares and bookmarks still work. Pending verify and reset links issued before the move point at the old host; they expire in 30 minutes.
+
+**Known limitation: Google does not accept `sslip.io`.** Google OAuth rejects redirect URIs on public-suffix domains such as `sslip.io`, so Google sign-in becomes available only after the move to a custom domain. GitHub, Facebook, Apple (needs a verified domain) and email sign-in are unaffected. Until then the Google button shows "coming soon".
+
+## Sign-in providers and email
+
+Providers are config-gated: add the credentials, restart the app, and the provider turns on with no client update. The redirect (callback) URI to register in each provider's console is `<PUBLIC_BASE_URL>/api/auth/oauth/<p>/callback`, where `<p>` is `google`, `github`, `facebook` or `apple`, for example `https://34-23-1-2.sslip.io/api/auth/oauth/github/callback`. Client IDs go in `/opt/voyager/app.env` (uncomment the lines in `app.env.example`); secrets go in Secret Manager (`google-client-secret`, `github-client-secret`, `facebook-app-secret`, `apple-private-key`, created empty by the bootstrap) with the same `printf`/`read -s` pattern as section 3.
+
+- **GitHub**: Settings → Developer settings → OAuth Apps → New. Callback URL as above. Set `GITHUB_CLIENT_ID` and `github-client-secret`.
+- **Facebook**: developers.facebook.com → create an app with Facebook Login, add the callback under Valid OAuth Redirect URIs. Set `FACEBOOK_APP_ID` and `facebook-app-secret`. Facebook's email is untrusted unless `FACEBOOK_EMAIL_TRUSTED=true`.
+- **Google**: Google Cloud console → APIs & Services → Credentials → OAuth client ID (Web). Needs a custom domain (see the limitation above). Add the iOS and Android client IDs to `GOOGLE_NATIVE_CLIENT_IDS` for the native apps.
+- **Apple**: in the Apple developer account create an App ID with Sign in with Apple, then a **Services ID** (this is `APPLE_SERVICES_ID`; enable Sign in with Apple, set the verified domain and the callback URL above, which Apple calls with a form POST). Create a **Key** with Sign in with Apple enabled: its Key ID is `APPLE_KEY_ID`, the downloaded `.p8` contents go in the `apple-private-key` secret, and your Team ID is `APPLE_TEAM_ID`. Add the app bundle IDs to `APPLE_NATIVE_CLIENT_IDS`.
+- **SMTP**: sign-up verification and password reset need working email. Set the app's `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USERNAME`, `SMTP_FROM` in `app.env` and the `smtp-password` secret (section 3). Without SMTP, `GET /api/config` reports `signup_available: false` and the sign-up and reset forms are hidden.
+- **`SIGNUP_MODE`**: `open` (default) or `invite`. In invite mode, create codes with `POST /api/admin/invites` (admin only); each code has a use limit and an expiry.
+
 ## 10. Cost watch
 
 - **Budgets** (pre-tax, in INR): "Voyager total (alerts)" at ₹2,300 sends email at 50/90/100 % and on forecast; "Voyager Gemini spend cap" at ₹1,800 pauses Gemini when reached. Billing data can lag a day; the on-box governor doesn't.
