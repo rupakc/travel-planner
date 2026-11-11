@@ -11,8 +11,8 @@
   "currency": "Moneda",
   "units": {
     "label": "Unidades",
-    "metric": "Métricas",
-    "imperial": "Imperiales"
+    "metric": "Métrico",
+    "imperial": "Imperial"
   },
   "timezone": {
     "label": "Zona horaria",

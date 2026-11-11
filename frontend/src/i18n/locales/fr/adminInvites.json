@@ -3,7 +3,7 @@
   "newInvite": "Nouveau code d'invitation",
   "maxUses": "Utilisations max.",
   "expiryDays": "Expire dans (jours)",
-  "note": "Note (facultatif)",
+  "note": "Note (facultative)",
   "create": "Créer le code",
   "creating": "Création…",
   "shownOnce": "Copiez ce code maintenant. Il n'est affiché qu'une seule fois et ne pourra pas être récupéré ensuite.",

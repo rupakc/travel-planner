@@ -17,7 +17,7 @@
     "submit": "Changer le mot de passe",
     "saving": "Enregistrement…",
     "done": "Mot de passe modifié : les autres appareils ont été déconnectés",
-    "missingToken": "Ce lien n'a pas de jeton.",
+    "missingToken": "Le jeton est absent de ce lien de réinitialisation.",
     "requestNew": "Demander un nouveau lien",
     "continue": "Continuer"
   }

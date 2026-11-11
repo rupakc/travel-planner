@@ -86,7 +86,7 @@
   },
   "types": {
     "BUDGET_BACKPACKER": {
-      "name": "Mochilero con presupuesto ajustado",
+      "name": "Mochilero económico",
       "description": "Aprovechando cada céntimo: hostales, comida callejera, free tours a pie y alertas de ofertas."
     },
     "FAMILY": {

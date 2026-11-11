@@ -14,7 +14,7 @@
     "earned": "Obtenu",
     "badgeProgress": "{{progress}}/{{target}}",
     "recent": "Récompenses récentes",
-    "recentEmpty": "Rien pour l’instant. Terminez une étape pour gagner vos premiers XP.",
+    "recentEmpty": "Rien pour l'instant. Terminez une étape pour gagner vos premiers XP.",
     "points": "+{{points}} XP"
   },
   "toast": {
@@ -23,7 +23,7 @@
     "badge": "Badge obtenu"
   },
   "levels": {
-    "1": "Marcheur",
+    "1": "Flâneur",
     "2": "Touriste",
     "3": "Explorateur",
     "4": "Voyageur",

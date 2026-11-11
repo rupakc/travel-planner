@@ -25,7 +25,7 @@
     "hint": "Dirección del servidor de Voyager, por ejemplo http://127.0.0.1:8001",
     "invalid": "Introduce una dirección http o https válida.",
     "save": "Guardar",
-    "reset": "Restablecer valor predeterminado"
+    "reset": "Valor predeterminado"
   },
   "reminders": {
     "t7Title": "{{destination}} está a una semana",
