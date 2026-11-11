@@ -160,3 +160,14 @@ async def test_network_error_is_provider_error():
     with pytest.raises(OAuthError) as e:
         await _exchange()
     assert e.value.code == "provider_error"
+
+
+async def test_unsupported_methods_via_registry():
+    from app.services.oauth.registry import get_provider
+
+    provider = get_provider("facebook")
+    assert provider is PROVIDER
+    with pytest.raises(OAuthError) as e:
+        await provider.verify_id_token("tok", nonce=None)
+    assert e.value.code == "bad_request"
+    assert await provider.revoke("secret") is None

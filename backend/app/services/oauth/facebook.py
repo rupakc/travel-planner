@@ -11,6 +11,7 @@ import httpx
 from app.core.config import settings
 from app.services.oauth.base import (
     OAuthError,
+    OAuthProvider,
     ProviderProfile,
     http_client,
 )
@@ -22,7 +23,7 @@ def _ver() -> str:
     return settings.facebook_graph_version
 
 
-class FacebookProvider:
+class FacebookProvider(OAuthProvider):
     id = "facebook"
     uses_pkce = True
     callback_methods = ("GET",)
