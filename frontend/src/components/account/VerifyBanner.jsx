@@ -35,7 +35,7 @@ export default function VerifyBanner() {
       await requestEmailVerification(token)
       setState({ phase: 'sent', error: '' })
     } catch (err) {
-      setState({ phase: 'error', error: errorText(t, err) })
+      setState({ phase: 'error', error: errorText(t, err), noEmail: err?.code === 'no_email' })
     }
   }
 
@@ -47,8 +47,9 @@ export default function VerifyBanner() {
       <span data-tid="verify-banner.text">
         {state.phase === 'sent' ? t('banner.sent') : t('banner.text')}
       </span>
-      {/* No address yet (email: null): nothing to send a link to. */}
-      {state.phase !== 'sent' && user.email !== null && (
+      {/* Hidden after 422 no_email (nothing pending to send to); with email: null
+          the server re-sends to the pending address, so the button stays. */}
+      {state.phase !== 'sent' && !state.noEmail && (
         <button
           type="button" data-tid="verify-banner.send" onClick={send} disabled={state.phase === 'sending'}
           className="font-semibold underline disabled:opacity-60"

@@ -28,6 +28,7 @@ import SecuritySection from './SecuritySection'
 import DataSection from './DataSection'
 import AccountMenu from './AccountMenu'
 import VerifyBanner from './VerifyBanner'
+import { requestEmailVerification } from '../../services/accountApi'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let container, root
@@ -62,9 +63,20 @@ describe('email: null', () => {
     expect(tid('profile.email')).toBeNull()
   })
 
-  it('the verify banner offers no "send link" without an address', async () => {
+  it('the verify banner keeps "Send link" (the server re-sends to the pending address)', async () => {
+    requestEmailVerification.mockResolvedValueOnce({ status: 'verification_sent', email: 'j@x.io', expires_in: 1800 })
     await act(async () => root.render(<VerifyBanner />))
-    expect(tid('verify-banner')).not.toBeNull()
+    expect(tid('verify-banner.send')).not.toBeNull()
+    await act(async () => tid('verify-banner.send').click())
+    expect(requestEmailVerification).toHaveBeenCalledWith('tok')
+    expect(tid('verify-banner.text').textContent).toMatch(/sent|link/i)
+  })
+
+  it('on 422 no_email it shows the errors text and hides the button', async () => {
+    requestEmailVerification.mockRejectedValueOnce({ status: 422, code: 'no_email', detail: 'x' })
+    await act(async () => root.render(<VerifyBanner />))
+    await act(async () => tid('verify-banner.send').click())
+    expect(tid('verify-banner.error').textContent).toBe('Your account has no email address.')
     expect(tid('verify-banner.send')).toBeNull()
   })
 })
