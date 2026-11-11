@@ -94,3 +94,32 @@ def test_settings_defaults():
     assert settings.trip_max_journal == 500
     assert settings.trip_max_places == 1000
     assert settings.trip_snapshot_max_bytes == 262144
+
+
+def test_lifespan_creates_trip_tables_on_fresh_db(monkeypatch, tmp_path):
+    """Startup alone (own empty DB, not the session fixture's) creates them."""
+    import sqlite3
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path))
+    with TestClient(app):
+        pass
+    conn = sqlite3.connect(str(tmp_path / "airports.db"))
+    try:
+        tables = {
+            r[0]
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(plans)")}
+    finally:
+        conn.close()
+    assert {
+        "trip_expenses",
+        "trip_journal",
+        "trip_checkins",
+        "user_countries",
+    } <= tables
+    assert {"title", "phase", "start_date", "end_date", "recap_completed_at"} <= cols

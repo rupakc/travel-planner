@@ -111,10 +111,12 @@ async def lifespan(app: FastAPI):
     from .db.accounts_schema import create_account_tables
     from .db.feedback_db import create_feedback_table
     from .db.taste_db import create_taste_table
+    from .db.trips_schema import create_trip_tables
     from .db.users_db import create_users_table, seed_admin
 
     create_users_table()
     create_account_tables()
+    create_trip_tables()  # ALTERs plans: after create_plans_table()
     seed_admin()
     create_feedback_table()
     create_taste_table()
