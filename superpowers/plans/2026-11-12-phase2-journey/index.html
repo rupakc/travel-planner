@@ -1,0 +1,2871 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Phase 2 — Journey redesign (web) Implementation Plan - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-2-journey-redesign-web-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 2 — Journey redesign (web) Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-2-journey-redesign-web-implementation-plan">Phase 2 — Journey redesign (web) Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Turn the web app from "a search that produces a plan" into a companion for the whole trip. It gets a Trips hub with every saved plan as a trip in its phase (Dreaming → Planning → Ready → On the road → Memories), a phase-aware trip screen (prep checklist, Today, offline pack, expenses, journal and ratings, recap), the journey tabs (Trips / Explore / Alerts / Play / You), the shared 5-step onboarding, and the Phase 2 gamified touches of spec §5a. Every existing saved plan becomes a trip with no data loss.</p>
+<p><strong>Architecture:</strong> A trip is a saved plan. <code>plans</code> gains nullable <code>title</code>, <code>phase</code> (a manual override), <code>start_date</code>, <code>end_date</code> and <code>recap_completed_at</code>, and seven new tables hang off it (<code>trip_expenses</code>, <code>trip_journal</code>, <code>trip_ratings</code>, <code>trip_prep</code>, <code>trip_snapshots</code>, <code>trip_checkins</code>, <code>user_countries</code>). One wave-0 task freezes the schema and another freezes every backend seam: settings, router stubs, the ownership helper, game hooks and the prep/money/phrases stubs. A third freezes every frontend seam: the API module, the journey flag, routes, nav, stubs and the shared <code>journey</code> namespace. The Trips API is published in <code>docs/Trips-API.md</code> at the end of wave 0 for the iOS and Android apps. The phase is computed server-side from the dates by one pure function, mirrored in JS and pinned by shared golden cases. The offline pack is a small hand-written service worker plus IndexedDB, so it needs no new dependency and no CSP or Caddy change. The new UI stays hidden behind <code>features.journey</code> until the last task switches it on.</p>
+<p><strong>Tech Stack:</strong> FastAPI + SQLite (stdlib <code>sqlite3</code>, JSON1), pydantic v2; React 18 + react-router 6, i18next, Leaflet (existing), IndexedDB and Service Worker APIs (no new npm or pip dependency), vitest, pytest.</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-11-10-voyager-reimagined-design.md</code>: §3 journey tabs and phases, §3a trip data model, §5a gamification, §9 onboarding, §11 Phase 2 row. Style model: <code>docs/superpowers/plans/2026-11-11-phase1-accounts-game.md</code>. Folded-in follow-ups: <code>docs/superpowers/plans/2026-11-11-phase0-followups.md</code> and <code>2026-11-11-phase1-followups.md</code> (Tasks 29–34).</p>
+<h2 id="global-constraints">Global Constraints</h2>
+<ul>
+<li><strong>Two-way compatibility (CLAUDE.md).</strong> The new backend keeps serving the previous SPA and the Android app in the field. <code>GET/POST /api/plans</code>, <code>GET/PUT/DELETE /api/plans/{id}</code>, the share routes and <code>GET /api/share/{token}</code> keep every request field and response key. New plan columns appear as extra keys, which old clients ignore. The new SPA works against the previous backend: when <code>/api/config</code> has no <code>features.trips</code>, the journey UI, the service worker and every trips call stay off, and the app is exactly today's.</li>
+<li><strong>Ship-alone merges.</strong> The journey UI renders only when <code>features.journey</code> is true (<code>JOURNEY_UI_ENABLED</code>, default <code>false</code> until Task 42). It can also be turned on for one browser with <code>localStorage.tp_journey = "1"</code>, but only when <code>features.trips</code> is true. While the flag is off, <code>/</code>, <code>/chat</code>, <code>/nearby</code>, <code>/alerts</code>, <code>/preferences</code>, <code>/account</code> and <code>/admin</code> render as today.</li>
+<li><strong>Contract freeze.</strong> The "API contract" section below is frozen when wave 0 merges. Changing it later needs a contract-change note in the PR and an update to <code>docs/Trips-API.md</code> in the same PR.</li>
+<li><strong>Additive schema only.</strong> <code>ALTER TABLE … ADD COLUMN</code> and <code>CREATE TABLE IF NOT EXISTS</code>, nothing renamed or dropped. The date backfill of existing plans runs exactly once (marker <code>meta.trips_backfill_v1</code>).</li>
+<li><strong>Existing plans migrate.</strong> Every row in <code>plans</code> is a trip. Its dates are its columns, else <code>search_data.departure_date</code>/<code>return_date</code>. <code>DELETE /api/plans/{id}</code> (old SPA) also deletes the trip's child rows.</li>
+<li><strong>Honesty rules stay.</strong> Rates and prices in the pack, expenses and recap are labelled with their date and source ("rate from 12 Nov, approximate"). An estimate never awards points. The static-first data stays: the pack uses static emergency numbers when no AI snapshot exists, labelled <code>source: "static"</code>.</li>
+<li><strong>Game guardrails (§5a).</strong> Awards come only from server-observed events (plan saved, prep complete, check-in, place visited, recap completed, traveller type set, stress-test score improved), never from telemetry or client claims. Each award has an idempotency key and a daily cap. There are no points for volume, <code>hide_game</code> hides every game element, and the game never gates a feature. Point values live in <code>backend/app/game/rules.json</code>.</li>
+<li><strong>i18n.</strong> Every new user-visible string is in all 7 languages (<code>en es de fr hi zh bn</code>). Each frontend task owns <strong>one namespace</strong>, named in the task. The only edits to existing namespaces are the ones named in a task: <code>errors</code> (Task 4), <code>game</code> (Task 15), <code>onboarding</code> (Task 26, which adds keys and never renames any, because the mobile apps read them), and <code>chat.title</code> (Task 31). Use informal es/de and <code>vous</code> in fr. Never translate "Voyager". Dates, numbers and currency go through <code>i18n/format.js</code>.</li>
+<li><strong>Telemetry.</strong> Phase 2 events are added once to the closed registry (Task 3). Props are enums, ints and bools only: never an amount, a journal text, a place name or a trip title.</li>
+<li><strong>Offline storage is per user.</strong> IndexedDB records are keyed <code>"&lt;user_id&gt;:&lt;trip_id&gt;"</code>. Sign-out (and <code>session_revoked</code>) deletes that user's packs and outbox. The service worker never caches <code>/api/*</code>.</li>
+<li><strong>CSP and deploy.</strong> Production CSP stays <code>script-src 'self'; worker-src 'self' blob:</code>. The service worker is <code>/sw.js</code> from <code>frontend/public/</code>, served by the existing <code>no-cache</code> SPA handle. No Caddyfile change, so a deploy never recreates Caddy.</li>
+<li><strong>Accessibility.</strong> Every interactive element gets a <code>data-tid</code>. Animations (confetti, passport stamp, reveal) are CSS-only, and <code>prefers-reduced-motion: reduce</code> turns them off. Tap targets are at least 44 px on phones.</li>
+<li><strong>New primary buttons use <code>bg-teal-700 hover:bg-teal-800 text-white</code></strong> (5.47:1). Task 38 sweeps the old <code>bg-teal-600</code> buttons.</li>
+<li>Python 3.12, <code>ruff check backend/</code> clean; <code>cd frontend &amp;&amp; npx eslint src/ --max-warnings 0</code>; <code>mkdocs build --strict</code>; <code>cd backend &amp;&amp; python3 -m pytest -q</code>, <code>cd frontend &amp;&amp; npm test</code> and <code>python3 -m pytest -q deploy/gcp/tests</code> keep passing.</li>
+</ul>
+<h2 id="review-focus">Review Focus</h2>
+<ol>
+<li><strong>Opening the app offline.</strong> In airplane mode, a reload of <code>/trips/12/offline</code> must show the saved pack, not the login page. Today <code>AuthContext</code> drops the token on any <code>/auth/me</code> failure, a network error included. Expected: a network error keeps the token and the cached user and marks the app offline. A real <code>401</code> still signs out. The service worker serves the cached shell. Tests in Task 21 (<code>keeps the session when /auth/me fails offline</code>, <code>navigation falls back to the cached shell</code>).</li>
+<li><strong>Day boundaries across time zones.</strong> A traveller in Tokyo opens Today at 07:00 on day 1 while UTC is still the day before. They expect "Day 1", a working check-in and the trip in <em>On the road</em>. The client sends its local date (<code>today=</code>), and the server accepts it within ±1 day of the UTC date. Tests in Task 6 (golden case <code>tokyo_morning_day1</code>) and Task 14 (<code>test_checkin_accepts_client_day_ahead_of_utc</code>).</li>
+<li><strong>Mixed versions and legacy plans.</strong> The old SPA on the new backend must list, load, update and delete plans as before, including a Dreaming trip created by the new SPA (minimal <code>search_data</code>, empty <code>selections</code>). The new SPA on the old backend shows no journey UI and registers no service worker. Tests in Task 7 (<code>test_get_plans_keeps_legacy_keys</code>, <code>test_dreaming_trip_loads_in_old_drawer_shape</code>, <code>test_delete_plan_cascades</code>) and Task 4 (<code>old backend keeps the classic shell</code>).</li>
+<li><strong>Offline writes sent twice.</strong> An expense or journal entry added offline is retried after reconnecting, possibly from two tabs. Exactly one row must result. Every write carries a <code>client_id</code> with <code>UNIQUE(plan_id, client_id)</code>, and a repeat answers <code>200</code> with the existing row. The outbox flush is single-flight. Tests in Task 9 (<code>test_same_client_id_twice_one_row</code>), Task 10 (journal equivalent) and Task 21 (<code>concurrent flushes send each item once</code>).</li>
+<li><strong>Odd dates and partial data.</strong> Odd inputs must degrade to a sensible state with no crash: a plan with no dates, a <code>return_date</code> before <code>departure_date</code>, a multi-city plan with <code>destination_nights</code>, an itinerary whose slots lack coordinates, <code>selections</code> missing keys, or a trip of more than 365 days. Expected states: Dreaming, a single-day trip, the right city for each day, a recap with a <code>null</code> distance, and <code>422 trip_dates_invalid</code> on edits. Tests in Task 6 (golden cases), Task 13 (<code>test_no_coordinates_distance_null</code>) and Task 20 (<code>renders without itinerary</code>).</li>
+</ol>
+<hr />
+<h2 id="api-contract-frozen-at-the-end-of-wave-0">API contract (frozen at the end of wave 0)</h2>
+<p>All paths are under <code>/api</code>, with JSON in and out. Every route needs <code>Authorization: Bearer &lt;access_token&gt;</code> and acts only on the caller's own trips: anybody else's trip answers <code>404 trip_not_found</code>. Errors use the Phase 1 envelope <code>{"detail", "error_code", …}</code>, malformed bodies keep FastAPI's <code>422 {"detail": [...]}</code>, and timestamps are ISO 8601 UTC with <code>Z</code>. Days are <code>YYYY-MM-DD</code>.</p>
+<p><strong><code>today</code></strong>: every <code>GET</code> below and the check-in accept an optional client local date. The server uses it when it is within ±1 day of the server's UTC date, and otherwise uses the UTC date. Clients send the device's local date.</p>
+<h3 id="discovery-additive">Discovery (additive)</h3>
+<p><code>GET /config</code> gains <code>features.trips: true</code> (the trips API exists), <code>features.journey: bool</code> (<code>JOURNEY_UI_ENABLED</code>) and <code>features.offline_pack: bool</code> (<code>OFFLINE_PACK_ENABLED</code>, default <code>true</code>). When <code>offline_pack</code> is false, clients unregister the service worker and delete every offline cache and pack.</p>
+<h3 id="phases">Phases</h3>
+<p><code>phase</code> ∈ <code>dreaming | planning | ready | on_the_road | memories</code>. The effective phase, for start <code>s</code>, end <code>e</code> (<code>e</code> = <code>s</code> when missing), override <code>o</code>, today <code>t</code>, prep complete <code>p</code> and <code>READY_WINDOW_DAYS</code> = 14:</p>
+<ol>
+<li><code>o</code> set → <code>o</code>.</li>
+<li><code>s</code> missing → <code>dreaming</code>.</li>
+<li><code>t &gt; e</code> → <code>memories</code>.</li>
+<li><code>s ≤ t ≤ e</code> → <code>on_the_road</code>.</li>
+<li><code>p</code> or <code>(s − t) ≤ 14</code> days → <code>ready</code>.</li>
+<li>otherwise → <code>planning</code>.</li>
+</ol>
+<p><code>day_index</code> = <code>(t − s) + 1</code> while on the road, else <code>null</code>. <code>days_to_start</code> = <code>s − t</code> when <code>t &lt; s</code>, else <code>null</code>. Golden cases live in <code>backend/tests/fixtures/journey/trip_phase_cases.json</code>, and every client must pass them.</p>
+<h3 id="shared-objects">Shared objects</h3>
+<p><code>Trip</code>:</p>
+<pre><code class="language-json">{&quot;id&quot;: 12, &quot;title&quot;: &quot;Lisbon in spring&quot;, &quot;destination&quot;: &quot;Lisbon&quot;, &quot;destinations&quot;: [&quot;Lisbon&quot;, &quot;Porto&quot;],
+ &quot;origin&quot;: &quot;NYC&quot;, &quot;start_date&quot;: &quot;2027-04-01&quot;, &quot;end_date&quot;: &quot;2027-04-08&quot;, &quot;nights&quot;: 7,
+ &quot;phase&quot;: &quot;planning&quot;, &quot;phase_source&quot;: &quot;auto&quot;, &quot;days_to_start&quot;: 140, &quot;day_index&quot;: null,
+ &quot;num_travelers&quot;: 2, &quot;budget_usd&quot;: 3000, &quot;countries&quot;: [&quot;PT&quot;],
+ &quot;prep&quot;: {&quot;done&quot;: 3, &quot;total&quot;: 9, &quot;percent&quot;: 33, &quot;complete&quot;: false},
+ &quot;has_itinerary&quot;: true, &quot;recap_completed_at&quot;: null, &quot;created_at&quot;: &quot;…Z&quot;, &quot;updated_at&quot;: &quot;…Z&quot;}
+</code></pre>
+<ul>
+<li><code>title</code> is <code>plans.title</code>, falling back to <code>plans.name</code>.</li>
+<li><code>destinations</code> is <code>search_data.destinations</code>, else <code>[destination]</code>, else <code>[]</code>.</li>
+<li><code>phase_source</code> is <code>auto|manual</code>. <code>nights</code> = <code>end − start</code> in days, or <code>null</code>.</li>
+<li><code>countries</code> holds ISO alpha-2 codes, resolved locally (no network).</li>
+<li><code>prep</code> comes from the prep rules below. For a Dreaming trip it is <code>{"done": 0, "total": 0, "percent": 0, "complete": false}</code>.</li>
+</ul>
+<p><code>GameDelta</code>: exactly as in <code>docs/Accounts-API.md</code>. It is <code>null</code> when the game is disabled.</p>
+<p><code>Place key</code>: <code>&lt;kind&gt;:&lt;slug&gt;</code>. <code>kind</code> ∈ <code>activity|place|food|hotel|event|tour|nearby|other</code>. <code>slug</code> = the name NFKD-normalised, combining marks removed, lower-cased, every run of non-<code>[a-z0-9]</code> replaced by <code>-</code>, trimmed of <code>-</code>, and cut to 60 characters (<code>"" → "x"</code>). The server accepts <code>^[a-z]+:[a-z0-9-]{1,60}$</code>. The vectors are in <code>backend/tests/fixtures/journey/place_key_cases.json</code> (for example <code>["activity", "Pastéis de Belém!"] → "activity:pasteis-de-belem"</code>).</p>
+<h3 id="trips">Trips</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"trips": [Trip], "pinned_id": 12 \| null, "today": "2026-11-12"}</code>. Sorted by phase (on_the_road, ready, planning, dreaming, memories), then <code>start_date</code> (memories: newest first), then <code>updated_at</code> desc. At most 200</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>POST /trips</code></td>
+<td><code>{"title": 1..80, "destination"?: ≤120, "start_date"?, "end_date"?}</code></td>
+<td><code>201 Trip</code>. Creates a <code>plans</code> row: <code>name = title</code>, <code>search_data = {"destination": d}</code> (or <code>{}</code>), <code>selections = {}</code></td>
+<td><code>422 trip_dates_invalid</code>, <code>422 trip_title_invalid</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}</code></td>
+<td>query <code>today?</code></td>
+<td><code>Trip</code></td>
+<td><code>404 trip_not_found</code></td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}</code></td>
+<td>any subset of <code>{"title", "start_date", "end_date", "phase"}</code>. A <code>null</code> date clears it, and <code>"phase": null</code> clears the override</td>
+<td><code>Trip</code></td>
+<td><code>422 trip_dates_invalid</code> (end &lt; start, span &gt; 365 days, or a year outside 2000–2100), <code>422 trip_phase_invalid</code>, <code>422 trip_title_invalid</code>, <code>404</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}</code></td>
+<td>—</td>
+<td><code>204</code>. Deletes the plan and every child row (the same as <code>DELETE /plans/{id}</code>)</td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/stats</code></td>
+<td>—</td>
+<td><code>{"countries": [{"code": "PT", "name": "Portugal", "first_trip_id": 12, "visited_at": "…Z", "source": "checkin"\|"recap"}], "continents": ["EU"], "bucket_goal": 30 \| null, "trips_by_phase": {"dreaming": 1, …}}</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><code>pinned_id</code> is the on-the-road trip with the earliest start, else the trip with the smallest <code>days_to_start</code>, else the memories trip with an <code>end_date</code> in the last 14 days and no <code>recap_completed_at</code>, else <code>null</code>. The <code>POST /plans</code> handler stores <code>start_date</code>/<code>end_date</code> from <code>search_data</code>, so plans saved by any client become dated trips.</p>
+<h3 id="prep-checklist">Prep checklist</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/prep</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"items": [PrepItem], "done", "total", "percent", "complete"}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/prep/{item_id}</code></td>
+<td><code>{"done": bool}</code></td>
+<td>the same object plus <code>"item": PrepItem, "game": GameDelta \| null</code></td>
+<td><code>404 prep_item_unknown</code>, <code>409 prep_item_auto</code> (<code>offline_pack</code>), <code>409 prep_item_na</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>PrepItem</code>: <code>{"id", "status": "todo"|"done"|"na", "auto": bool, "due": "YYYY-MM-DD"|null, "overdue": bool, "facts": {…}}</code>. <code>total</code> counts the items that are not <code>na</code>, <code>percent</code> = <code>floor(100 × done / total)</code> (0 when <code>total</code> is 0), and <code>complete</code> = <code>total &gt; 0 and done == total</code>. Items, in order, with <code>due</code> relative to the start (<code>null</code> without a start):</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th><code>na</code> when</th>
+<th>due</th>
+<th>facts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>visa</code></td>
+<td>the visa row says <code>visa-free</code></td>
+<td>start − (visa lead days, or 21)</td>
+<td><code>visa_type</code>, <code>max_stay_days</code>, <code>processing_time</code>, <code>official_url</code>, <code>source</code> (<code>ai</code> from the snapshot, else <code>static</code>, else <code>null</code>)</td>
+</tr>
+<tr>
+<td><code>passport</code></td>
+<td>—</td>
+<td>start − 30</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>bookings</code></td>
+<td>—</td>
+<td>start − 30</td>
+<td><code>flight: bool</code>, <code>hotel: bool</code> (selected in the plan)</td>
+</tr>
+<tr>
+<td><code>insurance</code></td>
+<td>—</td>
+<td>start − 14</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>documents</code></td>
+<td>—</td>
+<td>start − 7</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>stress_test</code></td>
+<td>no itinerary</td>
+<td>start − 7</td>
+<td><code>score: int \| null</code> (the last score, Task 37)</td>
+</tr>
+<tr>
+<td><code>sim</code></td>
+<td>—</td>
+<td>start − 3</td>
+<td><code>plan_name \| null</code></td>
+</tr>
+<tr>
+<td><code>money</code></td>
+<td>—</td>
+<td>start − 3</td>
+<td><code>currency \| null</code> (the local currency code)</td>
+</tr>
+<tr>
+<td><code>packing</code></td>
+<td>—</td>
+<td>start − 1</td>
+<td><code>items: int</code></td>
+</tr>
+<tr>
+<td><code>emergency_card</code></td>
+<td>—</td>
+<td>start − 1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>checkin</code></td>
+<td>no flight selected</td>
+<td>start − 1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>offline_pack</code> (auto)</td>
+<td>—</td>
+<td>start − 1</td>
+<td><code>saved_at \| null</code></td>
+</tr>
+</tbody>
+</table>
+<p>Visa lead days: none for visa-free. Otherwise take the largest number in <code>processing_time</code>: weeks × 7, business days × 1.4 rounded up, days as is. Add 7 days of buffer. When there is no number, use 21. When <code>complete</code> first becomes true, the trip's <code>trip_ready</code> award is made (once per trip).</p>
+<h3 id="snapshot-and-offline-pack">Snapshot and offline pack</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PUT /trips/{id}/snapshot</code></td>
+<td><code>{"emergency_card"?, "forex"?, "visa"?, "packing_list"?, "weather"?}</code>: each an object or <code>null</code>; other keys ignored</td>
+<td><code>204</code>. Stores the merged object with <code>as_of</code> = server time</td>
+<td><code>413 snapshot_too_large</code> (&gt; 262144 bytes as JSON), <code>422 snapshot_invalid</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/offline-pack</code></td>
+<td>query <code>today?</code></td>
+<td><code>OfflinePack</code> with <code>Cache-Control: no-store</code>. Marks prep <code>offline_pack</code> done (Task 37)</td>
+<td><code>404</code></td>
+</tr>
+</tbody>
+</table>
+<p>Clients send the snapshot after every plan save or update made while the results are on screen. Values are the section results as streamed, without <code>verification</code>.</p>
+<p><code>OfflinePack</code>:</p>
+<pre><code class="language-json">{&quot;version&quot;: 1, &quot;trip_id&quot;: 12, &quot;generated_at&quot;: &quot;…Z&quot;, &quot;title&quot;: &quot;…&quot;, &quot;start_date&quot;: &quot;…&quot;, &quot;end_date&quot;: &quot;…&quot;,
+ &quot;destinations&quot;: [{&quot;city&quot;: &quot;Lisbon&quot;, &quot;country_code&quot;: &quot;PT&quot;, &quot;country_name&quot;: &quot;Portugal&quot;}],
+ &quot;emergency&quot;: {&quot;source&quot;: &quot;ai&quot;|&quot;static&quot;|null, &quot;as_of&quot;: &quot;…Z&quot;|null,
+   &quot;cities&quot;: [{&quot;city&quot;: &quot;Lisbon&quot;, &quot;emergency_numbers&quot;: {…}, &quot;embassy&quot;: {…}|null, &quot;hospitals&quot;: [], &quot;local_phrases&quot;: []}]},
+ &quot;phrases&quot;: {&quot;language&quot;: &quot;pt&quot;, &quot;language_name&quot;: &quot;Português&quot;, &quot;items&quot;: [{&quot;id&quot;: &quot;help&quot;, &quot;text&quot;: &quot;Socorro!&quot;, &quot;romanized&quot;: null}]} | null,
+ &quot;address_card&quot;: {&quot;hotel_name&quot;: &quot;…&quot;, &quot;area&quot;: &quot;…&quot;|null, &quot;city&quot;: &quot;Lisbon&quot;,
+   &quot;take_me_to&quot;: {&quot;text&quot;: &quot;…&quot;, &quot;romanized&quot;: null}|null} | null,
+ &quot;currency&quot;: {&quot;local&quot;: &quot;EUR&quot;, &quot;home&quot;: &quot;USD&quot;, &quot;rate&quot;: 0.92, &quot;as_of&quot;: &quot;…Z&quot;, &quot;source&quot;: &quot;snapshot&quot;} | {&quot;local&quot;: &quot;EUR&quot;, &quot;home&quot;: &quot;USD&quot;, &quot;rate&quot;: null, &quot;as_of&quot;: null, &quot;source&quot;: null} | null,
+ &quot;selections&quot;: {&quot;itinerary&quot;, &quot;itinerary_layout&quot;, &quot;itinerary_edits&quot;, &quot;itinerary_notes&quot;, &quot;itinerary_slots&quot;, &quot;hotel&quot;, &quot;flight&quot;, &quot;sim&quot;, &quot;packing_list&quot;},
+ &quot;checkins&quot;: [&quot;2027-04-01&quot;]}
+</code></pre>
+<ul>
+<li><code>rate</code> is local units per 1 home unit.</li>
+<li><code>home</code> is <code>USD</code> unless the snapshot's forex has a rate from the traveller's home currency.</li>
+<li><code>phrase</code> ids: <code>help</code>, <code>call_police</code>, <code>need_doctor</code>, <code>take_me_to</code>, <code>thank_you</code>, <code>how_much</code>, <code>where_toilet</code>, <code>dont_understand</code>.</li>
+<li><code>phrases</code> is <code>null</code> for English-speaking countries.</li>
+</ul>
+<h3 id="expenses">Expenses</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/expenses</code></td>
+<td>—</td>
+<td><code>{"expenses": [Expense], "totals": {"by_currency": {"EUR": "123.40"}, "usd_estimate": "140.20" \| null, "by_category_usd": {"food": "40.00"}, "unconverted": ["GBP"]}, "rate": {"local": "EUR", "usd_to_local": 0.92, "as_of": "…Z"} \| null}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/expenses</code></td>
+<td><code>{"client_id": uuid, "amount": "12.50", "currency": "EUR", "category", "note"?: ≤140, "spent_on": day}</code></td>
+<td><code>201 Expense</code>, or <code>200 Expense</code> (the existing row) when <code>client_id</code> was already used on this trip</td>
+<td><code>422 amount_invalid</code>, <code>422 currency_invalid</code>, <code>422 category_invalid</code>, <code>422 note_too_long</code>, <code>409 expense_limit</code> (2000 per trip)</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}/expenses/{eid}</code></td>
+<td>a subset of <code>amount</code>, <code>currency</code>, <code>category</code>, <code>note</code>, <code>spent_on</code></td>
+<td><code>Expense</code></td>
+<td>the above, <code>404 expense_not_found</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/expenses/{eid}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 expense_not_found</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>Expense</code>: <code>{"id", "client_id", "amount": "12.50", "currency": "EUR", "category", "note", "spent_on", "created_at", "updated_at"}</code>. <code>category</code> ∈ <code>flights|lodging|food|transport|activities|shopping|fees|other</code>. Amounts are decimal strings stored as integer minor units, with the currency's exponent: 0 for <code>JPY KRW VND CLP ISK UGX XAF XOF</code>, 3 for <code>BHD KWD OMR JOD TND</code>, else 2. The rules are <code>0 &lt; amount ≤ 1,000,000</code> and no more decimals than the exponent allows. USD estimates use only USD rows and rows in the snapshot's local currency (<code>amount / usd_to_local</code>). Every other currency is listed in <code>unconverted</code>.</p>
+<h3 id="journal-and-places-ratings-visits">Journal and places (ratings, visits)</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/journal</code></td>
+<td>—</td>
+<td><code>{"entries": [Entry]}</code>, sorted by <code>day</code> (nulls last), then <code>created_at</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/journal</code></td>
+<td><code>{"client_id": uuid, "body": 1..4000, "day"?, "mood"?: "great"\|"good"\|"ok"\|"tough"}</code></td>
+<td><code>201 Entry</code>, or <code>200</code> on a repeated <code>client_id</code></td>
+<td><code>422 journal_empty</code>, <code>422 journal_too_long</code>, <code>422 mood_invalid</code>, <code>409 journal_limit</code> (500)</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}/journal/{eid}</code></td>
+<td>a subset of <code>body</code>, <code>day</code>, <code>mood</code></td>
+<td><code>Entry</code></td>
+<td>the above, <code>404 entry_not_found</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/journal/{eid}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 entry_not_found</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/places</code></td>
+<td>—</td>
+<td><code>{"places": [TripPlace]}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/places/{place_key}</code></td>
+<td><code>{"name": 1..120, "kind", "visited"?: bool, "stars"?: 1..5 \| null, "note"?: ≤500, "day"?, "lat"?, "lng"?}</code> (upsert; omitted fields are kept)</td>
+<td><code>{"place": TripPlace, "game": GameDelta \| null}</code>. <code>game</code> is set when <code>visited</code> first becomes true</td>
+<td><code>422 place_key_invalid</code>, <code>422 stars_invalid</code>, <code>422 note_too_long</code>, <code>409 places_limit</code> (1000)</td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/places/{place_key}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 place_not_found</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>Entry</code>: <code>{"id", "client_id", "day", "body", "mood", "created_at", "updated_at"}</code>. <code>TripPlace</code>: <code>{"place_key", "name", "kind", "visited", "stars", "note", "day", "lat", "lng", "visited_at", "updated_at"}</code>.</p>
+<h3 id="today">Today</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /trips/{id}/checkin</code></td>
+<td><code>{"day": "YYYY-MM-DD"}</code></td>
+<td><code>200 {"day", "day_index", "city", "country_code", "new_country": bool, "streak": {"current", "longest", "last_day", "freezes"} \| null, "game": GameDelta \| null}</code>. A second call for the same day returns the same data with an empty delta</td>
+<td><code>409 checkin_out_of_trip</code> (day outside <code>[start, end]</code>), <code>422 checkin_day_invalid</code> (more than 1 day from the server's UTC date)</td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/checkins</code></td>
+<td>—</td>
+<td><code>{"days": ["2027-04-01"], "streak": … \| null}</code></td>
+<td><code>404</code></td>
+</tr>
+</tbody>
+</table>
+<p>The city for day <em>n</em> follows the multi-city allocation of <code>TravelSearchRequest.city_stays</code> (<code>destination_nights</code> honoured), else <code>destination</code>.</p>
+<h3 id="recap">Recap</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/recap</code></td>
+<td>query <code>today?</code></td>
+<td><code>Recap</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/recap/complete</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"completed_at", "new_countries": ["PT"], "game": GameDelta \| null}</code>. Idempotent: a repeat returns the first <code>completed_at</code>, <code>new_countries: []</code> and an empty delta</td>
+<td><code>409 recap_not_ready</code> (today ≤ end date, or no dates)</td>
+</tr>
+</tbody>
+</table>
+<p><code>Recap</code>:</p>
+<pre><code class="language-json">{&quot;trip_id&quot;: 12, &quot;title&quot;: &quot;…&quot;, &quot;start_date&quot;: &quot;…&quot;, &quot;end_date&quot;: &quot;…&quot;, &quot;days&quot;: 8, &quot;nights&quot;: 7, &quot;planned_days&quot;: 7,
+ &quot;places&quot;: [TripPlace], &quot;visited_count&quot;: 9, &quot;rated_count&quot;: 7, &quot;avg_stars&quot;: 4.3,
+ &quot;route&quot;: [[38.70, -9.14]], &quot;distance_km&quot;: 41.2,
+ &quot;countries&quot;: [{&quot;code&quot;: &quot;PT&quot;, &quot;name&quot;: &quot;Portugal&quot;, &quot;new&quot;: true}], &quot;continents&quot;: [&quot;EU&quot;],
+ &quot;spend&quot;: {&quot;budget_usd&quot;: 3000, &quot;plan_cost_usd&quot;: null, &quot;spent_usd&quot;: &quot;2140.50&quot;, &quot;by_category_usd&quot;: {…}, &quot;unconverted&quot;: [&quot;GBP&quot;]},
+ &quot;journal_count&quot;: 5, &quot;checkin_days&quot;: 6, &quot;completed_at&quot;: null, &quot;can_complete&quot;: true}
+</code></pre>
+<ul>
+<li><code>route</code> holds the visited places with coordinates, ordered by <code>day</code> then <code>visited_at</code> (at most 500 points).</li>
+<li><code>distance_km</code> is the haversine sum along <code>route</code>, to one decimal, or <code>null</code> with fewer than two points. Clients that have the itinerary may draw the <em>planned</em> route when <code>route</code> is empty.</li>
+<li><code>new</code> means the country was added to <code>user_countries</code> by this trip.</li>
+<li><code>plan_cost_usd</code> is <code>null</code> on the server (clients compute it with <code>computePlanCost</code>).</li>
+</ul>
+<h3 id="game-additive-rules-and-badges">Game (additive rules and badges)</h3>
+<p>These are new rule ids in <code>GET /game/catalog</code>. Clients translate them as <code>game:rules.&lt;id&gt;</code> and <code>game:badges.&lt;id&gt;.name|desc</code>.</p>
+<table>
+<thead>
+<tr>
+<th>rule</th>
+<th>points</th>
+<th>daily cap</th>
+<th>idempotency key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>traveller_type</code></td>
+<td>25</td>
+<td>1</td>
+<td>once per user</td>
+</tr>
+<tr>
+<td><code>plan_saved</code></td>
+<td>10</td>
+<td>3</td>
+<td><code>plan_saved:&lt;plan_id&gt;</code></td>
+</tr>
+<tr>
+<td><code>trip_ready</code></td>
+<td>50</td>
+<td>2</td>
+<td><code>trip_ready:&lt;plan_id&gt;</code></td>
+</tr>
+<tr>
+<td><code>smart_planner</code></td>
+<td>15</td>
+<td>3</td>
+<td><code>smart_planner:&lt;plan_id&gt;:&lt;score&gt;</code></td>
+</tr>
+<tr>
+<td><code>trip_checkin</code></td>
+<td>10</td>
+<td>1</td>
+<td><code>trip_checkin:&lt;plan_id&gt;:&lt;day&gt;</code></td>
+</tr>
+<tr>
+<td><code>place_visited</code></td>
+<td>5</td>
+<td>10</td>
+<td><code>place_visited:&lt;plan_id&gt;:&lt;place_key&gt;</code></td>
+</tr>
+<tr>
+<td><code>country_visited</code></td>
+<td>25</td>
+<td>5</td>
+<td><code>country_visited:&lt;user_id&gt;:&lt;code&gt;</code></td>
+</tr>
+<tr>
+<td><code>continent_visited</code></td>
+<td>50</td>
+<td>3</td>
+<td><code>continent_visited:&lt;user_id&gt;:&lt;continent&gt;</code></td>
+</tr>
+<tr>
+<td><code>recap_complete</code></td>
+<td>100</td>
+<td>2</td>
+<td><code>recap_complete:&lt;plan_id&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>Badges (<code>id</code> (rule, target, tier, icon)):
+- <code>traveller</code> (traveller_type, 1, bronze, compass)
+- <code>first_trip</code> (plan_saved, 1, bronze, map)
+- <code>trip_ready</code> (trip_ready, 1, bronze, circle-check) and <code>ready_regular</code> (trip_ready, 5, silver, badge-check)
+- <code>smart_planner</code> (smart_planner, 3, bronze, brain)
+- <code>on_the_road</code> (trip_checkin, 3, bronze, calendar-check) and <code>road_warrior</code> (trip_checkin, 14, silver, calendar-range)
+- <code>local_explorer</code> (place_visited, 10, bronze, map-pin) and <code>local_legend</code> (place_visited, 50, silver, map-pinned)
+- <code>countries_3</code> (country_visited, 3, bronze, stamp), <code>countries_10</code> (country_visited, 10, silver, globe) and <code>countries_30</code> (country_visited, 30, gold, earth)
+- <code>continents_3</code> (continent_visited, 3, silver, earth) and <code>continents_6</code> (continent_visited, 6, gold, globe-2)
+- <code>storyteller</code> (recap_complete, 1, bronze, book-open) and <code>memory_keeper</code> (recap_complete, 5, silver, library)</p>
+<p>New streak kind <code>trip_checkin</code> (<code>freeze_per_week: 1</code>). <code>Settings</code> gains <code>bucket_list_goal: int 1..250 | null</code> (default <code>null</code>). <code>PUT /account/onboarding</code> with <code>traveller_type</code> awards <code>traveller_type</code> once.</p>
+<h3 id="stress-test-additive">Stress test (additive)</h3>
+<p><code>POST /stress-test</code> accepts an optional <code>plan_id</code>. When the caller is signed in and owns the plan, the server stores the returned score as the prep <code>stress_test</code> fact and marks that item done. When the score is higher than the previous one, it awards <code>smart_planner</code>. The response is unchanged.</p>
+<hr />
+<h2 id="shared-file-hotspots-and-how-conflicts-are-avoided">Shared-file hotspots and how conflicts are avoided</h2>
+<table>
+<thead>
+<tr>
+<th>Hotspot</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backend/app/main.py</code>, <code>backend/app/core/config.py</code>, <code>backend/app/api/routes/client_config.py</code></td>
+<td>Only Task 1. It registers every Phase 2 router (stub modules) and adds every setting.</td>
+</tr>
+<tr>
+<td><code>backend/app/db/trips_schema.py</code>, <code>trip_children.py</code>, <code>user_countries_db.py</code>, <code>trip_snapshot_db.py</code></td>
+<td>Only Task 2.</td>
+</tr>
+<tr>
+<td><code>backend/app/db/plans_db.py</code>, <code>backend/app/api/routes/plans.py</code>, <code>backend/app/services/account_data.py</code></td>
+<td>Only Task 7.</td>
+</tr>
+<tr>
+<td><code>backend/app/schemas/request.py</code></td>
+<td>Only Task 6 (extracts <code>allocate_city_days</code>).</td>
+</tr>
+<tr>
+<td><code>backend/app/game/rules.json</code>, <code>game/trip_hooks.py</code> (bodies), <code>api/routes/account.py</code>, <code>db/user_settings_db.py</code>, <code>frontend/src/i18n/locales/*/game.json</code></td>
+<td>Only Task 15. Task 1 creates <code>trip_hooks.py</code> as stubs.</td>
+</tr>
+<tr>
+<td><code>backend/app/services/trip_prep.py</code>, <code>trip_money.py</code>, <code>phrases.py</code></td>
+<td>Task 1 creates stubs with the final signatures; Tasks 8, 9 and 12 fill them in.</td>
+</tr>
+<tr>
+<td><code>backend/app/api/routes/stress_test.py</code></td>
+<td>Only Task 37.</td>
+</tr>
+<tr>
+<td><code>backend/app/telemetry/registry.py</code>, <code>docs/Telemetry.md</code></td>
+<td>Only Task 3.</td>
+</tr>
+<tr>
+<td><code>frontend/src/App.jsx</code>, <code>components/ui/NavBar.jsx</code>, <code>context/SearchDataContext.jsx</code>, <code>telemetry/routes.js</code>, <code>services/tripsApi.js</code></td>
+<td>Only Task 4. It adds every route, stub page and stub component, and each later task overwrites only its own stub.</td>
+</tr>
+<tr>
+<td><code>frontend/src/context/AuthContext.jsx</code>, <code>frontend/vite.config.js</code>, <code>frontend/public/sw.js</code></td>
+<td>Only Task 21.</td>
+</tr>
+<tr>
+<td><code>frontend/src/pages/ResultsPage.jsx</code></td>
+<td>Only Task 34. <code>ChatPage.jsx</code>: only Task 35. <code>NearbyPage.jsx</code>: only Task 36. <code>SearchPage.jsx</code>: only Task 29. <code>PlanViewModal.jsx</code>: only Task 17.</td>
+</tr>
+<tr>
+<td><code>frontend/index.html</code>, <code>pages/LoginPage.jsx</code>, <code>pages/SignupPage.jsx</code></td>
+<td>Only Task 31. <code>FeedbackWidget.jsx</code>, <code>account/AccountMenu.jsx</code>: only Task 32. <code>frontend/design/tokens.json</code>, <code>theme/tokens.*</code>, <code>ui/AttributionFooter.jsx</code>: only Task 30. <code>i18n/index.js</code>, <code>test/setup.js</code>: only Task 33.</td>
+</tr>
+<tr>
+<td>The <code>bg-teal-600</code> sweep across existing files</td>
+<td>Only Task 38, in wave 3, after every other UI task has merged.</td>
+</tr>
+<tr>
+<td>Docs (<code>CLAUDE.md</code>, <code>Configuration.md</code>, <code>API-Reference.md</code>, <code>Deployment-GCP.md</code>, <code>Privacy.md</code>, <code>Feature-Parity.md</code>, <code>Frontend.md</code>, <code>Internationalization.md</code>, <code>Theming.md</code>, <code>Changelog.md</code>)</td>
+<td>Only Task 39. Task 5 creates <code>docs/Trips-API.md</code> and is the only Phase 2 edit to <code>mkdocs.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="wave-0-seams-and-contract">Wave 0 — seams and contract</h2>
+<h3 id="task-1-backend-seams-settings-router-stubs-ownership-hooks-service-stubs-config-flags">Task 1: Backend seams (settings, router stubs, ownership, hooks, service stubs, config flags)</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/api/routes/{trips,trip_prep,trip_money,trip_journal,trip_offline,trip_today,trip_recap}.py</code> (each <code>router = APIRouter()</code>), <code>backend/app/core/trip_access.py</code>, <code>backend/app/game/trip_hooks.py</code>, <code>backend/app/services/trip_prep.py</code>, <code>backend/app/services/trip_money.py</code>, <code>backend/app/services/phrases.py</code>
+- Modify: <code>backend/app/core/config.py</code>, <code>backend/app/main.py</code>, <code>backend/app/api/routes/client_config.py</code>
+- Test: <code>backend/tests/test_phase2_seams.py</code>, <code>backend/tests/test_client_config.py</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 2 <code>create_trip_tables()</code> (wired in Step 4).
+- Produces:
+  - Settings: <code>journey_ui_enabled: bool = False</code>, <code>offline_pack_enabled: bool = True</code>, <code>ready_window_days: int = 14</code>, <code>trip_max_expenses: int = 2000</code>, <code>trip_max_journal: int = 500</code>, <code>trip_max_places: int = 1000</code>, <code>trip_snapshot_max_bytes: int = 262144</code>.
+  - <code>owned_trip(plan_id: int, user: dict) -&gt; dict</code>: the <code>plans_db.get_plan</code> dict when <code>plan["username"] == user["username"]</code>, else it raises <code>ApiError(404, "trip_not_found", "Trip not found")</code>.
+  - <code>trip_hooks</code> (stubs that return <code>None</code>, or <code>(None, None)</code>): <code>on_plan_saved(user_id: str, plan_id: int) -&gt; dict | None</code>, <code>on_trip_ready(user_id, plan_id) -&gt; dict | None</code>, <code>on_smart_planner(user_id, plan_id, score: int) -&gt; dict | None</code>, <code>on_place_visited(user_id, plan_id, place_key: str) -&gt; dict | None</code>, <code>on_trip_checkin(user_id, plan_id, day: date, new_countries: list[str]) -&gt; tuple[dict | None, dict | None]</code> (game, streak), <code>on_recap_complete(user_id, plan_id, new_countries: list[str]) -&gt; dict | None</code>, <code>on_traveller_type(user_id, traveller_type: str) -&gt; dict | None</code>.
+  - Service stubs: <code>trip_prep.prep_summary(plan: dict, today: date) -&gt; dict</code> returns <code>{"done": 0, "total": 0, "percent": 0, "complete": False}</code>; <code>trip_money.spend_summary(plan: dict) -&gt; dict</code> returns <code>{"spent_usd": None, "by_category_usd": {}, "unconverted": [], "by_currency": {}}</code>; <code>phrases.phrases_for_country(code: str) -&gt; dict | None</code> returns <code>None</code>.
+  - <code>/config</code>: <code>features.trips: True</code>, <code>features.journey: settings.journey_ui_enabled</code>, <code>features.offline_pack: settings.offline_pack_enabled</code>.
+  - <code>main.py</code> includes the seven routers with <code>prefix="/api"</code> and tag <code>trips</code>, and calls <code>create_trip_tables()</code> right after <code>create_account_tables()</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_stub_routers_importable</code>: each module exposes <code>router</code>, and <code>GET /api/trips</code> answers 404 or 405 with no import error.</li>
+<li><code>test_owned_trip_404_for_other_user</code>.</li>
+<li><code>test_hooks_stubs_return_none</code>.</li>
+<li><code>test_config_features_trips</code>: <code>features.trips is True</code> and <code>features.journey is False</code> by default; with <code>JOURNEY_UI_ENABLED=true</code> → <code>True</code>; <code>OFFLINE_PACK_ENABLED=false</code> → <code>features.offline_pack is False</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd backend &amp;&amp; python3 -m pytest -q tests/test_phase2_seams.py tests/test_client_config.py</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement</strong> everything except the lifespan call.</li>
+<li>[ ] <strong>Step 4: Rebase on Task 2</strong>, add <code>create_trip_tables()</code> to the lifespan, and run the whole backend suite and <code>ruff check backend/</code> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): phase 2 backend seams — settings, router stubs, hooks, config flags</code></li>
+</ul>
+<h3 id="task-2-schema-one-time-migration-and-shared-row-helpers">Task 2: Schema, one-time migration and shared row helpers</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trips_schema.py</code>, <code>backend/app/db/trip_children.py</code>, <code>backend/app/db/user_countries_db.py</code>, <code>backend/app/db/trip_snapshot_db.py</code>
+- Test: <code>backend/tests/test_trips_schema.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>create_trip_tables() -&gt; None</code>. It is idempotent.
+    - It adds the <code>plans</code> columns that are missing: <code>title TEXT</code>, <code>phase TEXT</code>, <code>start_date TEXT</code>, <code>end_date TEXT</code> and <code>recap_completed_at TEXT</code>.
+    - It creates these tables:
+      - <code>trip_expenses(id INTEGER PK AUTOINCREMENT, plan_id INTEGER NOT NULL, client_id TEXT NOT NULL, amount_minor INTEGER NOT NULL, currency TEXT NOT NULL, category TEXT NOT NULL, note TEXT, spent_on TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(plan_id, client_id))</code>
+      - <code>trip_journal(id INTEGER PK AUTOINCREMENT, plan_id INTEGER NOT NULL, client_id TEXT NOT NULL, day TEXT, body TEXT NOT NULL, mood TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(plan_id, client_id))</code>
+      - <code>trip_ratings(plan_id INTEGER NOT NULL, place_key TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, visited INTEGER NOT NULL DEFAULT 0, stars INTEGER, note TEXT, day TEXT, lat REAL, lng REAL, visited_at TEXT, updated_at TEXT NOT NULL, PRIMARY KEY(plan_id, place_key))</code>
+      - <code>trip_prep(plan_id INTEGER NOT NULL, item_id TEXT NOT NULL, done_at TEXT, meta TEXT, updated_at TEXT NOT NULL, PRIMARY KEY(plan_id, item_id))</code>
+      - <code>trip_snapshots(plan_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL)</code>
+      - <code>trip_checkins(plan_id INTEGER NOT NULL, day TEXT NOT NULL, city TEXT, country_code TEXT, created_at TEXT NOT NULL, PRIMARY KEY(plan_id, day))</code>
+      - <code>user_countries(user_id TEXT NOT NULL, country_code TEXT NOT NULL, first_plan_id INTEGER, source TEXT NOT NULL, visited_at TEXT NOT NULL, PRIMARY KEY(user_id, country_code))</code>
+    - It adds an index on <code>plan_id</code> for <code>trip_expenses</code> and <code>trip_journal</code>.
+    - Backfill: when <code>meta</code> has no <code>trips_backfill_v1</code>, it sets <code>start_date</code>/<code>end_date</code> from <code>json_extract(search_data, '$.departure_date' | '$.return_date')</code>, but only where the column is NULL, <code>json_valid(search_data)</code>, and the value matches <code>YYYY-MM-DD</code>. It then writes the marker. All of this runs in one transaction.
+  - <code>TRIP_CHILD_TABLES: tuple[str, ...]</code> (the six <code>plan_id</code> tables) and <code>delete_trip_children(conn, plan_id: int) -&gt; None</code>.
+  - <code>add_countries(user_id: str, codes: list[str], plan_id: int, source: Literal["checkin","recap"]) -&gt; list[str]</code>, which returns the newly added codes (<code>INSERT OR IGNORE</code>); <code>list_countries(user_id: str) -&gt; list[dict]</code>.
+  - <code>get_snapshot(plan_id: int) -&gt; dict | None</code> (with <code>as_of</code>); <code>put_snapshot(plan_id: int, data: dict) -&gt; str</code>, which merges into the stored object, so a key sent as <code>null</code> clears it, and returns <code>as_of</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_create_twice_is_idempotent</code>.</li>
+<li><code>test_backfill_sets_dates_from_search_data</code>.</li>
+<li><code>test_backfill_runs_once</code>: clear a trip's dates, call <code>create_trip_tables()</code> again, and the dates stay <code>NULL</code>.</li>
+<li><code>test_bad_search_data_is_skipped</code> (<code>"not json"</code>, a missing date, <code>"2026-13-99x"</code>).</li>
+<li><code>test_get_plan_has_new_keys</code> (<code>plans_db.get_plan</code> returns <code>title</code>, <code>phase</code>, <code>start_date</code>, <code>end_date</code> and <code>recap_completed_at</code>).</li>
+<li><code>test_delete_children_removes_all_six</code>.</li>
+<li><code>test_add_countries_returns_only_new</code>.</li>
+<li><code>test_snapshot_merge_and_clear</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd backend &amp;&amp; python3 -m pytest -q tests/test_trips_schema.py</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): additive trip schema with one-time date backfill</code></li>
+</ul>
+<h3 id="task-3-telemetry-events-for-phase-2">Task 3: Telemetry events for Phase 2</h3>
+<p><strong>Files:</strong>
+- Modify: <code>backend/app/telemetry/registry.py</code>, <code>docs/Telemetry.md</code> (a new "Journey" table with one row per event)
+- Test: <code>backend/tests/test_telemetry_registry.py</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Produces these registry entries:
+  - <code>trip_view{surface: enum:&lt;hub|overview|prep|today|money|journal|recap|offline&gt;, phase: enum:&lt;dreaming|planning|ready|on_the_road|memories|none&gt;}</code>
+  - <code>trip_action{action: enum:&lt;create|rename|dates|phase_override|phase_clear|delete|open_planner|plan_it|share_status&gt;}</code>
+  - <code>prep_toggle{item: enum:&lt;visa|passport|bookings|insurance|documents|stress_test|sim|money|packing|emergency_card|checkin|offline_pack&gt;, done: bool}</code>
+  - <code>prep_complete{items: int}</code>
+  - <code>today_action{action: enum:&lt;checkin|next_up|directions|visited|status_share|nearby&gt;}</code>
+  - <code>offline_pack{action: enum:&lt;save|refresh|open|remove&gt;, result: enum:&lt;ok|error|unsupported|quota&gt;, kb: int}</code>
+  - <code>outbox_flush{sent: int, failed: int, dropped: int}</code>
+  - <code>expense_action{action: enum:&lt;add|edit|delete&gt;, category: enum:&lt;flights|lodging|food|transport|activities|shopping|fees|other&gt;, queued: bool}</code>
+  - <code>journal_action{action: enum:&lt;add|edit|delete&gt;, queued: bool}</code>
+  - <code>place_action{action: enum:&lt;visited|unvisited|rate|unrate&gt;, kind: enum:&lt;activity|place|food|hotel|event|tour|nearby|other&gt;, stars: int}</code>
+  - <code>recap_action{action: enum:&lt;view|complete|share|where_next&gt;}</code>
+  - <code>completeness_view{surface: enum:&lt;drawer|trip&gt;, percent: int}</code>
+  - <code>onboarding_result{type: enum:&lt;budget_backpacker|family|luxury|adventure|culture_foodie|business|relaxation|accessible&gt;, secondary: int}</code>
+  - <code>journey_shell{enabled: bool, source: enum:&lt;config|override|off&gt;}</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: <code>clean_event</code> drops an unknown prop on <code>expense_action</code> (e.g. <code>amount</code>); every new event is in <code>EVENTS</code>; <code>test_every_event_documented</code> passes.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(telemetry): phase 2 journey events</code></li>
+</ul>
+<h3 id="task-4-frontend-seams-trips-api-journey-flag-routes-nav-stubs-shared-namespace">Task 4: Frontend seams (trips API, journey flag, routes, nav, stubs, shared namespace)</h3>
+<p><strong>Files:</strong>
+- Create:
+  - <code>frontend/src/services/tripsApi.js</code>, <code>frontend/src/hooks/useJourney.js</code>, <code>frontend/src/journey/paths.js</code>, <code>frontend/src/utils/placeKey.js</code>
+  - <code>frontend/src/components/ui/BottomTabs.jsx</code>
+  - <code>frontend/src/i18n/locales/&lt;lang&gt;/journey.json</code> (7 files)
+- Create, as stubs that render <code>null</code>, one per later task:
+  - pages: <code>pages/TripsPage.jsx</code> (T16), <code>pages/TripPage.jsx</code> (T17), <code>pages/PlayPage.jsx</code> and <code>pages/YouPage.jsx</code> (T28), <code>pages/OnboardingPage.jsx</code> (T26)
+  - in <code>components/trips/</code>: <code>TripOverview.jsx</code> (T17), <code>CompletenessMeter.jsx</code> (T18), <code>PrepChecklist.jsx</code> (T19), <code>TodayView.jsx</code> (T20), <code>OfflinePack.jsx</code> (T22), <code>ExpenseLog.jsx</code> (T23), <code>Journal.jsx</code> (T24), <code>Recap.jsx</code> (T25), <code>JourneyTour.jsx</code> (T27)
+  - <code>components/onboarding/OnboardingGate.jsx</code> (T26), <code>components/offline/OfflineBanner.jsx</code> (T21), <code>components/I18nRouteGate.jsx</code> (T33; the stub renders <code>children</code>)
+- Modify:
+  - <code>frontend/src/App.jsx</code>: <code>/onboarding</code> is a full-screen route inside <code>RequireAuth</code>. When the journey is on, Layout routes <code>/</code> → TripsPage, <code>/explore</code> → the always-mounted SearchTab (shown while <code>path === '/explore'</code>), <code>/trips/:id</code> and <code>/trips/:id/:tab</code> → TripPage, <code>/play</code> and <code>/you</code>. It mounts <code>&lt;OnboardingGate/&gt;</code>, <code>&lt;OfflineBanner/&gt;</code> and wraps the routed content in <code>&lt;I18nRouteGate pathname&gt;</code>. <code>KNOWN_PATHS</code> becomes a matcher that accepts <code>/trips/&lt;digits&gt;(/&lt;tab&gt;)?</code>.
+  - <code>frontend/src/components/ui/NavBar.jsx</code>: when the journey is on, the tabs are Trips <code>/</code>, Explore <code>/explore</code>, Alerts <code>/alerts</code>, Play <code>/play</code> (hidden when <code>hide_game</code>) and You <code>/you</code>, plus Admin for admins, with <code>data-tour="nav-&lt;tab&gt;"</code>. Inactive tab text is <code>text-slate-500</code>. On phones (&lt; 640 px) <code>&lt;BottomTabs/&gt;</code> replaces the hamburger.
+  - <code>frontend/src/context/SearchDataContext.jsx</code>: <code>pendingPlan</code>, <code>setPendingPlan(plan)</code> and <code>clearPendingPlan()</code>.
+  - <code>frontend/src/telemetry/routes.js</code>: static <code>/explore</code>, <code>/play</code>, <code>/you</code>, <code>/onboarding</code>; dynamic <code>/trips/:id</code> and <code>/trips/:id/:tab</code>.
+  - <code>frontend/src/i18n/locales/&lt;lang&gt;/errors.json</code>: every Phase 2 <code>error_code</code> in the contract.
+- Test: <code>frontend/src/services/tripsApi.test.js</code>, <code>frontend/src/hooks/useJourney.test.js</code>, <code>frontend/src/utils/placeKey.test.js</code>, <code>frontend/src/App.journey.test.jsx</code>, <code>frontend/src/components/ui/NavBar.test.jsx</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: the API contract; Phase 1 <code>toApiError</code>, <code>useClientConfig</code>, <code>useAccountSettings</code>.
+- Produces:
+  - <code>tripsApi.js</code>. Every function takes <code>token</code> first, resolves with <code>data</code> and rejects with <code>toApiError(...)</code>. A network failure rejects with <code>code: 'network'</code>. Every GET sends <code>today=localToday()</code>.
+    - <code>listTrips</code>, <code>getTrip(id)</code>, <code>createTrip(body)</code>, <code>patchTrip(id, changes)</code>, <code>deleteTrip(id)</code>, <code>getTripStats</code>
+    - <code>getPrep(id)</code>, <code>setPrepItem(id, itemId, done)</code>, <code>putSnapshot(id, snapshot)</code>, <code>getOfflinePack(id)</code>
+    - <code>listExpenses(id)</code>, <code>addExpense(id, body)</code>, <code>updateExpense(id, eid, changes)</code>, <code>deleteExpense(id, eid)</code>
+    - <code>listJournal(id)</code>, <code>addJournal(id, body)</code>, <code>updateJournal(id, eid, changes)</code>, <code>deleteJournal(id, eid)</code>
+    - <code>listPlaces(id)</code>, <code>putPlace(id, placeKey, body)</code>, <code>deletePlace(id, placeKey)</code>
+    - <code>checkIn(id, day)</code>, <code>listCheckins(id)</code>, <code>getRecap(id)</code>, <code>completeRecap(id)</code>
+  - <code>useJourney() -&gt; {enabled: boolean, tripsApi: boolean, offlinePack: boolean, loaded: boolean}</code>. <code>enabled</code> = <code>tripsApi &amp;&amp; (features.journey || localStorage.tp_journey === '1') &amp;&amp; localStorage.tp_journey !== '0'</code>. It emits <code>journey_shell</code> once per page load.
+  - <code>tripPath(id, tab?) -&gt; string</code>; <code>TRIP_TABS = ['overview','prep','today','money','journal','recap','offline']</code>.
+  - <code>placeKey(kind: string, name: string) -&gt; string</code>, per the contract slug rule.
+  - The <code>journey</code> namespace:
+    - <code>tabs.{trips,explore,alerts,play,you}</code>
+    - <code>phases.{dreaming,planning,ready,on_the_road,memories}</code>
+    - <code>tripTabs.&lt;tab&gt;</code>
+    - <code>countdown_one</code>/<code>countdown_other</code> ("in {{count}} day(s)")
+    - <code>dayOf</code> ("Day {{day}} of {{count}}"), <code>dayIn</code> ("Day {{day}} in {{city}}")
+    - <code>saved.openTrip</code>, <code>saved.savedToTrips</code>
+    - <code>load.failed</code>, <code>load.retry</code>, <code>offlineCopy</code> ("Saved for offline")</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>useJourney</code>:<ul>
+<li><code>/config</code> without <code>features.trips</code> → <code>enabled false</code> even with <code>tp_journey=1</code> (<strong>old backend keeps the classic shell</strong>);</li>
+<li><code>features.journey true</code> → <code>enabled</code>;</li>
+<li><code>tp_journey=0</code> → off.</li>
+</ul>
+</li>
+<li><code>App.journey.test.jsx</code>:<ul>
+<li>flag off → <code>/</code> renders SearchPage and <code>/trips/3</code> redirects to <code>/</code>;</li>
+<li>flag on → <code>/</code> renders TripsPage, <code>/trips/3/today</code> renders TripPage, <code>/trips/abc</code> redirects to <code>/</code>.</li>
+</ul>
+</li>
+<li><code>placeKey</code>: every case in <code>backend/tests/fixtures/journey/place_key_cases.json</code> (created here, at least 12 cases including accents, CJK → <code>"x"</code> fallback, a 100-character name, and punctuation runs).</li>
+<li><code>tripsApi</code> sends <code>today</code> and maps a 404 with <code>trip_not_found</code>.</li>
+<li><code>routeTemplate('/trips/12/today') === '/trips/:id/:tab'</code>.</li>
+<li>NavBar shows five journey tabs when enabled and hides Play when <code>hide_game</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd frontend &amp;&amp; npm test -- src/services src/hooks src/utils/placeKey src/App.journey src/components/ui</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong> Translate <code>journey</code> and the new <code>errors</code> keys into all 7 languages.</li>
+<li>[ ] <strong>Step 4: Run</strong> <code>npm test</code>, eslint and <code>npm run build</code> → PASS (with the flag off, every existing test is unchanged).</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(journey): frontend seams — trips API, journey flag, routes, nav, stubs</code></li>
+</ul>
+<h3 id="task-5-publish-the-trips-api-contract">Task 5: Publish the Trips API contract</h3>
+<p><strong>Files:</strong>
+- Create: <code>docs/Trips-API.md</code>. It holds the "API contract" section of this plan verbatim, plus a "Client notes" section:
+  - the phase function and the fixture path;
+  - <code>today</code> handling;
+  - offline writes with <code>client_id</code> and an outbox;
+  - the snapshot is sent after plan saves;
+  - the place-key slug with the fixture;
+  - feature detection through <code>features.trips</code> / <code>features.journey</code>;
+  - mobile tab mapping (Trips/Explore/Alerts/Play/You);
+  - the game ids to translate.
+- Modify: <code>mkdocs.yml</code> (nav: Internals → "Trips API", after "Accounts API")
+- [ ] <strong>Step 1:</strong> Write the page. <strong>Step 2:</strong> <code>mkdocs build --strict</code> → PASS.
+- [ ] <strong>Step 3: Commit</strong> <code>docs: frozen Phase 2 trips API contract for mobile clients</code></p>
+<h3 id="task-6-trip-time-and-place-helpers-backend-js-mirror-golden-cases">Task 6: Trip time and place helpers (backend, JS mirror, golden cases)</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/services/trip_phase.py</code>, <code>backend/app/services/trip_geo.py</code>, <code>backend/app/data/continents.json</code> (ISO alpha-2 → <code>AF|AN|AS|EU|NA|OC|SA</code> for every code in <code>countries.csv</code>; the source is noted in <code>backend/app/db/data/README.md</code>), <code>backend/tests/fixtures/journey/trip_phase_cases.json</code>, <code>frontend/src/utils/tripPhase.js</code>
+- Modify: <code>backend/app/schemas/request.py</code> (extract <code>allocate_city_days(n: int, total_days: int, destination_nights: list[int | None] | None) -&gt; list[int]</code> to module level; <code>_allocate_days</code> delegates to it, with no behaviour change), <code>backend/app/db/data/README.md</code>
+- Test: <code>backend/tests/test_trip_phase.py</code>, <code>backend/tests/test_trip_geo.py</code>, <code>frontend/src/utils/tripPhase.test.js</code> (reads the fixture through <code>node:fs</code>)</p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - Python:
+    - <code>trip_dates(plan: dict) -&gt; tuple[date | None, date | None]</code>: the columns, else <code>search_data</code>. An end before the start becomes the start.
+    - <code>effective_phase(start, end, override, today, prep_complete, ready_window_days=14) -&gt; str</code>
+    - <code>days_to_start(start, today) -&gt; int | None</code>, <code>day_index(start, end, today) -&gt; int | None</code>
+    - <code>resolve_today(client_today: str | None, now: datetime | None = None) -&gt; date</code>
+  - <code>trip_geo</code>:
+    - <code>trip_cities(search_data: dict) -&gt; list[str]</code>
+    - <code>city_for_day(search_data: dict, start: date, end: date | None, day_index: int) -&gt; str | None</code> (uses <code>allocate_city_days</code>; past the last stay → the last city)
+    - <code>country_of(place: str) -&gt; str | None</code> (<code>resolve_place</code>, <code>lru_cache(2048)</code>)
+    - <code>trip_countries(search_data: dict) -&gt; list[str]</code> (ordered and unique)
+    - <code>continent_of(code: str) -&gt; str | None</code>
+  - JS: <code>effectivePhase({start, end, override, today, prepComplete, readyWindowDays = 14}) -&gt; string</code>, <code>dayIndex(start, end, today) -&gt; number | null</code>, <code>daysToStart(start, today) -&gt; number | null</code>, <code>localToday(now = new Date()) -&gt; 'YYYY-MM-DD'</code> (local calendar date).
+  - The fixture is a list of <code>{"name", "start", "end", "override", "today", "prep_complete", "phase", "day_index", "days_to_start"}</code> with at least 20 cases. Required names: <code>no_dates_dreaming</code>, <code>end_before_start_single_day</code>, <code>day_before_start_ready_window</code>, <code>fifteen_days_out_planning</code>, <code>prep_complete_far_out_ready</code>, <code>first_day_on_the_road</code>, <code>last_day_on_the_road</code>, <code>day_after_end_memories</code>, <code>override_wins</code>, <code>tokyo_morning_day1</code> (client today one day ahead of UTC), <code>no_end_date</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li>Python and JS both iterate the fixture and assert <code>phase</code>, <code>day_index</code> and <code>days_to_start</code>.</li>
+<li><code>resolve_today("2026-11-13", now=2026-11-12T22:00Z)</code> → 13th; <code>"2026-11-20"</code> → the UTC date; <code>"junk"</code> → the UTC date.</li>
+<li><code>city_for_day</code> for Lisbon/Porto with <code>destination_nights [3, 2]</code> → days 1–3 Lisbon, days 4–5 Porto, day 9 Porto.</li>
+<li><code>country_of("Lisbon") == "PT"</code>, <code>continent_of("PT") == "EU"</code>, and every <code>countries.csv</code> code has a continent.</li>
+<li><code>test_city_stays_unchanged</code> (the existing multi-city tests still pass).</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd backend &amp;&amp; python3 -m pytest -q tests/test_trip_phase.py tests/test_trip_geo.py</code> and <code>cd frontend &amp;&amp; npm test -- src/utils/tripPhase</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> both, plus the whole backend suite → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): phase function, trip geography and shared golden cases</code></li>
+</ul>
+<h2 id="wave-1-backend-modules">Wave 1 — backend modules</h2>
+<h3 id="task-7-trips-core-api-plans-compatibility-account-export-and-delete">Task 7: Trips core API (+ plans compatibility, account export and delete)</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trips_db.py</code>, <code>backend/app/services/trips.py</code>
+- Modify: <code>backend/app/api/routes/trips.py</code>, <code>backend/app/db/plans_db.py</code> (<code>save_plan</code> stores <code>start_date</code>/<code>end_date</code> from <code>search_data</code>; <code>delete_plan</code> calls <code>delete_trip_children</code> in the same connection), <code>backend/app/api/routes/plans.py</code> (after <code>create_plan</code>, calls <code>trip_hooks.on_plan_saved</code>; the response keys are unchanged), <code>backend/app/services/account_data.py</code> (adds <code>user_countries</code> to <code>USER_TABLES</code>; adds the six child tables to <code>CHILD_TABLES</code> with <code>plan_id IN (SELECT id FROM plans WHERE username = (SELECT username FROM users WHERE id = ?))</code>; the export gains <code>"trips": {"&lt;plan_id&gt;": {"expenses", "journal", "places", "prep", "checkins", "snapshot"}}</code> and <code>"countries"</code>)
+- Test: <code>backend/tests/test_trips_api.py</code>, <code>backend/tests/test_plans.py</code> (unchanged, must pass), <code>backend/tests/test_account_data.py</code> (extend: <code>test_every_user_table_is_covered</code> also requires every table with a <code>plan_id</code> column to be in <code>CHILD_TABLES</code>)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 1 <code>owned_trip</code>, <code>prep_summary</code>, hooks; Task 2 helpers; Task 6 <code>trip_dates</code>, <code>effective_phase</code>, <code>resolve_today</code>, <code>trip_countries</code>.
+- Produces: <code>trip_view(plan: dict, *, today: date, prep: dict) -&gt; dict</code> (the contract <code>Trip</code>), <code>pick_pinned(trips: list[dict]) -&gt; int | None</code>, <code>trips_db.set_trip_fields(plan_id: int, **fields) -&gt; None</code>, <code>trips_db.create_trip(username, title, destination, start, end) -&gt; int</code>. The routes follow the contract (Trips table).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_legacy_plan_becomes_trip</code> (a plan saved through <code>POST /plans</code> with dates → <code>GET /trips</code> shows <code>planning</code> with those dates);</li>
+<li><code>test_get_plans_keeps_legacy_keys</code>;</li>
+<li><code>test_dreaming_trip_loads_in_old_drawer_shape</code> (<code>GET /plans</code> returns the created trip with <code>search_data == {"destination": "Kyoto"}</code> and <code>selections == {}</code>);</li>
+<li><code>test_delete_plan_cascades</code> (through <code>DELETE /plans/{id}</code> and through <code>DELETE /trips/{id}</code>);</li>
+<li><code>test_patch_phase_override_and_clear</code>;</li>
+<li><code>test_dates_invalid</code> (end &lt; start, a 366-day span, the year 1999 → <code>422 trip_dates_invalid</code>);</li>
+<li><code>test_other_users_trip_404</code>;</li>
+<li><code>test_pinned_prefers_on_the_road</code>;</li>
+<li><code>test_today_param_shifts_phase</code>;</li>
+<li><code>test_stats_countries_and_goal</code>;</li>
+<li><code>test_plan_saved_hook_called_once_per_plan</code>;</li>
+<li><code>test_account_delete_removes_trip_rows</code>;</li>
+<li><code>test_export_includes_trips</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd backend &amp;&amp; python3 -m pytest -q tests/test_trips_api.py tests/test_account_data.py</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> the backend suite → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): trips API over saved plans</code></li>
+</ul>
+<h3 id="task-8-prep-checklist-api">Task 8: Prep checklist API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trip_prep_db.py</code>
+- Modify: <code>backend/app/services/trip_prep.py</code> (fill it in), <code>backend/app/api/routes/trip_prep.py</code>
+- Test: <code>backend/tests/test_trip_prep.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 2 <code>get_snapshot</code>; <code>static_results.find_visa_row(nationality, destination)</code>, <code>get_static_forex</code> currency resolution (<code>_resolve_dest_currency</code> through a new public wrapper in <code>trip_prep</code>, not by editing <code>static_results.py</code>); Task 6 <code>trip_dates</code>; Task 1 <code>on_trip_ready</code>.
+- Produces:
+  - <code>visa_lead_days(processing_time: str | None, visa_type: str | None) -&gt; int | None</code>
+  - <code>build_items(plan: dict, snapshot: dict | None, state: dict[str, dict], today: date) -&gt; list[dict]</code> (pure)
+  - <code>prep_summary(plan: dict, today: date) -&gt; dict</code>
+  - <code>trip_prep_db.get_state(plan_id) -&gt; dict[str, dict]</code>, <code>set_done(plan_id, item_id, done: bool) -&gt; None</code>, <code>set_meta(plan_id, item_id, meta: dict) -&gt; None</code>, <code>get_meta(plan_id, item_id) -&gt; dict | None</code>
+  - The routes follow the contract (Prep table).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_visa_free_is_na</code>;</li>
+<li><code>test_visa_lead_days</code>: <code>"5-10 business days"</code> → 21; <code>"2 weeks"</code> → 21; <code>"3-4 weeks"</code> → 35; <code>"N/A (visa-free)"</code> with type <code>visa-free</code> → <code>None</code>; <code>"varies"</code> → 21;</li>
+<li><code>test_due_dates_relative_to_start</code>;</li>
+<li><code>test_overdue_flag</code>;</li>
+<li><code>test_checkin_na_without_flight</code>;</li>
+<li><code>test_stress_test_na_without_itinerary</code>;</li>
+<li><code>test_dreaming_trip_has_no_due</code>;</li>
+<li><code>test_offline_pack_put_is_409</code>;</li>
+<li><code>test_complete_awards_once</code> (tick all → <code>game</code> is set; untick and tick again → no second award; the hook is called with the plan id);</li>
+<li><code>test_snapshot_visa_preferred_over_static</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): prep checklist built from plan, static tables and snapshot</code></li>
+</ul>
+<h3 id="task-9-expenses-api">Task 9: Expenses API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trip_expenses_db.py</code>
+- Modify: <code>backend/app/services/trip_money.py</code> (fill it in), <code>backend/app/api/routes/trip_money.py</code>
+- Test: <code>backend/tests/test_trip_money.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 2 <code>get_snapshot</code>; Task 1 <code>owned_trip</code>.
+- Produces:
+  - <code>currency_exponent(code: str) -&gt; int</code>, <code>parse_amount(amount: str, currency: str) -&gt; int</code> (raises <code>ValueError</code>), <code>format_amount(minor: int, currency: str) -&gt; str</code>
+  - <code>usd_rate(snapshot: dict | None) -&gt; dict | None</code> (<code>{"local", "usd_to_local", "as_of"}</code> from <code>forex.exchange_rates</code>, using the entry with <code>from_currency == "USD"</code>, a matching <code>to_currency</code> and a numeric <code>rate &gt; 0</code>)
+  - <code>spend_summary(plan: dict) -&gt; dict</code> (keys as in the stub)
+  - <code>expenses_db.add(plan_id, client_id, …) -&gt; tuple[dict, bool]</code> (row, created), <code>update</code>, <code>delete</code>, <code>list_for(plan_id)</code>
+  - The routes follow the contract.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_same_client_id_twice_one_row</code> (the second POST → 200, same id);</li>
+<li><code>test_jpy_has_no_decimals</code> (<code>"1200"</code> ok, <code>"12.5"</code> → <code>amount_invalid</code>);</li>
+<li><code>test_kwd_three_decimals</code>;</li>
+<li><code>test_amount_zero_or_negative_invalid</code>;</li>
+<li><code>test_currency_must_be_iso</code>;</li>
+<li><code>test_totals_exact_decimal</code> (0.10 + 0.20 EUR → <code>"0.30"</code>);</li>
+<li><code>test_usd_estimate_from_snapshot_rate</code> (92.00 EUR at 0.92 → <code>"100.00"</code>);</li>
+<li><code>test_unknown_currency_listed_unconverted</code>;</li>
+<li><code>test_expense_limit</code> (with the setting at 2 → 409 on the 3rd);</li>
+<li><code>test_other_users_expense_404</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): idempotent expense log with honest USD estimates</code></li>
+</ul>
+<h3 id="task-10-journal-and-places-api">Task 10: Journal and places API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trip_journal_db.py</code> (journal and <code>trip_ratings</code>)
+- Modify: <code>backend/app/api/routes/trip_journal.py</code>
+- Test: <code>backend/tests/test_trip_journal.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 1 <code>owned_trip</code>, <code>on_place_visited</code>.
+- Produces: <code>journal_db.add_entry(plan_id, client_id, body, day, mood) -&gt; tuple[dict, bool]</code>, <code>update_entry</code>, <code>delete_entry</code>, <code>list_entries(plan_id)</code>; <code>upsert_place(plan_id, place_key, fields: dict) -&gt; tuple[dict, bool]</code> (row, newly visited), <code>delete_place</code>, <code>list_places(plan_id)</code>. The routes follow the contract. <code>body</code> is NFC-normalised and stripped, and control characters other than <code>\n</code> are removed.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li>journal: <code>test_same_client_id_twice_one_row</code>; <code>test_body_limits</code> (empty → <code>journal_empty</code>; 4001 characters → <code>journal_too_long</code>; exactly 4000 ok); <code>test_mood_enum</code>; <code>test_sorted_by_day_nulls_last</code>.</li>
+<li>places: <code>test_place_key_format</code> (<code>"Activity:x"</code> → 422 <code>place_key_invalid</code>); <code>test_stars_bounds</code> (0 and 6 → <code>stars_invalid</code>; <code>null</code> clears); <code>test_upsert_keeps_omitted_fields</code>; <code>test_visited_awards_once_per_place</code>.</li>
+<li><code>test_limits</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): journal entries, place ratings and visits</code></li>
+</ul>
+<h3 id="task-11-snapshot-and-offline-pack-api">Task 11: Snapshot and offline pack API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/services/offline_pack.py</code>
+- Modify: <code>backend/app/api/routes/trip_offline.py</code>
+- Test: <code>backend/tests/test_offline_pack.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 2 snapshot helpers; Task 6 <code>trip_cities</code>, <code>country_of</code>, <code>trip_dates</code>; <code>static_results.get_static_emergency_numbers(city)</code>; <code>places_db.country_display_name(code)</code>; Task 1 <code>phrases_for_country</code> (the stub returns <code>None</code> until Task 12); Task 9 <code>usd_rate</code> (rebase if Task 9 has not merged: import inside the function).
+- Produces:
+  - <code>build_pack(plan: dict, snapshot: dict | None, checkins: list[str], today: date) -&gt; dict</code> (the contract <code>OfflinePack</code>).
+  - Emergency data: the snapshot's <code>emergency_card</code> (flat or <code>cities</code>) with <code>source: "ai"</code> and the snapshot <code>as_of</code>. Otherwise the static numbers per city with <code>source: "static"</code>. Otherwise <code>null</code>.
+  - <code>address_card</code>: from <code>selections.hotel</code> (<code>name</code>, <code>location</code> → <code>area</code>) with the destination's <code>take_me_to</code> phrase. <code>null</code> without a hotel.
+  - Routes: <code>PUT /trips/{id}/snapshot</code> (size checked on the canonical <code>json.dumps</code>) and <code>GET /trips/{id}/offline-pack</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_pack_static_without_snapshot</code>;</li>
+<li><code>test_pack_prefers_ai_snapshot_with_as_of</code>;</li>
+<li><code>test_multi_city_has_one_entry_per_city</code>;</li>
+<li><code>test_currency_rate_null_without_snapshot</code>;</li>
+<li><code>test_no_store_header</code>;</li>
+<li><code>test_snapshot_too_large_413</code>;</li>
+<li><code>test_snapshot_non_object_422</code>;</li>
+<li><code>test_snapshot_strips_unknown_keys</code>;</li>
+<li><code>test_pack_has_no_personal_search_fields</code> (no <code>nationality</code>, <code>existing_visas</code>, <code>residence_permits</code> or <code>accessibility_needs</code> anywhere in the pack);</li>
+<li><code>test_other_users_pack_404</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): trip snapshot and offline pack</code></li>
+</ul>
+<h3 id="task-12-travel-phrases-data">Task 12: Travel phrases data</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/data/travel_phrases.json</code>
+- Modify: <code>backend/app/services/phrases.py</code> (fill it in), <code>backend/app/db/data/README.md</code> (provenance: "model-drafted, second-model checked; native review pending")
+- Test: <code>backend/tests/test_phrases.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>travel_phrases.json</code> v1: <code>{"version": 1, "phrase_ids": [the 8 contract ids], "languages": {"&lt;bcp47&gt;": {"name": "&lt;endonym&gt;", "script": "Latn|Cyrl|Arab|…", "phrases": {"&lt;id&gt;": {"text", "romanized": str | null}}}}, "countries": {"&lt;ISO2&gt;": "&lt;bcp47&gt;" | null}}</code>.
+  - Languages: ar bn cs da de el es fi fr he hi hr hu id is it ja km ko ms nl no pl pt ro ru sv sw th tl tr uk vi zh.
+  - Countries: every code in <code>countries.csv</code>. Countries where English is the main language map to <code>null</code>, and countries whose main language is outside the list map to <code>null</code>.
+  - <code>phrases_for_country(code: str) -&gt; dict | None</code>, which returns <code>{"language", "language_name", "items": [{"id", "text", "romanized"}]}</code> in <code>phrase_ids</code> order.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li>every language has all 8 ids with non-empty <code>text</code>;</li>
+<li>every non-<code>Latn</code> script has a non-empty <code>romanized</code>;</li>
+<li>every country maps to a known language or <code>null</code>;</li>
+<li><code>phrases_for_country("JP")["language"] == "ja"</code>; <code>phrases_for_country("GB") is None</code>; <code>phrases_for_country("BR")["language"] == "pt"</code>; <code>phrases_for_country("zz") is None</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL.</li>
+<li>[ ] <strong>Step 3: Draft</strong> the file: one drafting pass, then a second model pass per language that checks meaning and register (polite, short, shown to a stranger). Fix what it flags.</li>
+<li>[ ] <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): offline travel phrases for 34 languages</code></li>
+</ul>
+<h3 id="task-13-recap-api">Task 13: Recap API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/services/trip_recap.py</code>
+- Modify: <code>backend/app/api/routes/trip_recap.py</code>
+- Test: <code>backend/tests/test_trip_recap.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 10 <code>list_places</code> and journal count (rebase if needed: import inside the function); Task 9 <code>spend_summary</code>; Task 2 <code>add_countries</code>, <code>list_countries</code>; Task 6 helpers; Task 1 <code>on_recap_complete</code>.
+- Produces: <code>build_recap(plan: dict, *, places: list[dict], journal_count: int, checkin_days: int, spend: dict, user_country_codes: set[str], today: date) -&gt; dict</code> (pure; <code>new</code> = the trip's countries not in <code>user_country_codes</code>, or those first added by this plan) and <code>haversine_km(a: tuple[float, float], b: tuple[float, float]) -&gt; float</code>. The routes follow the contract. <code>complete</code> sets <code>recap_completed_at</code>, calls <code>add_countries(..., source="recap")</code> and passes the newly added codes to the hook.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_not_ready_before_end</code> (409, and also with no dates);</li>
+<li><code>test_complete_twice_same_completed_at</code>;</li>
+<li><code>test_new_countries_only_first_time</code> (a second trip to PT → <code>new_countries == []</code>);</li>
+<li><code>test_distance_two_points</code> (38.7000,−9.1400 → 38.7090,−9.1400 ≈ 1.0 km ± 0.05);</li>
+<li><code>test_no_coordinates_distance_null</code>;</li>
+<li><code>test_route_capped_500</code>;</li>
+<li><code>test_avg_stars_ignores_null</code>;</li>
+<li><code>test_spend_passthrough</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): trip recap and completion</code></li>
+</ul>
+<h3 id="task-14-check-in-api">Task 14: Check-in API</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/trip_checkins_db.py</code>
+- Modify: <code>backend/app/api/routes/trip_today.py</code>
+- Test: <code>backend/tests/test_trip_checkin.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 6 <code>resolve_today</code>, <code>trip_dates</code>, <code>day_index</code>, <code>city_for_day</code>, <code>country_of</code>; Task 2 <code>add_countries</code>; Task 1 <code>on_trip_checkin</code>.
+- Produces: <code>checkins_db.add(plan_id, day, city, country_code) -&gt; bool</code> (created) and <code>list_days(plan_id) -&gt; list[str]</code>. The routes follow the contract. A repeat check-in reads the stored city and country and calls no hook.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_checkin_out_of_trip_409</code>;</li>
+<li><code>test_checkin_day_too_far_422</code> (2 days from the UTC date);</li>
+<li><code>test_checkin_accepts_client_day_ahead_of_utc</code>;</li>
+<li><code>test_checkin_idempotent</code>;</li>
+<li><code>test_multi_city_day_city</code> (Lisbon 3 / Porto 2 → day 4 is Porto);</li>
+<li><code>test_new_country_once_per_user</code>;</li>
+<li><code>test_hook_receives_new_countries</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(trips): daily trip check-in</code></li>
+</ul>
+<h3 id="task-15-game-rules-and-phase-2-hooks-traveller-type-bucket-goal">Task 15: Game rules and Phase 2 hooks (+ traveller type, bucket goal)</h3>
+<p><strong>Files:</strong>
+- Modify: <code>backend/app/game/rules.json</code> (the contract rules, badges and the <code>trip_checkin</code> streak), <code>backend/app/game/trip_hooks.py</code> (bodies), <code>backend/app/api/routes/account.py</code> (<code>put_account_onboarding</code>: when <code>traveller_type</code> is set, call <code>on_traveller_type</code> and merge its delta into <code>game</code>), <code>backend/app/db/user_settings_db.py</code> (<code>bucket_list_goal</code>), <code>frontend/src/i18n/locales/&lt;lang&gt;/game.json</code> (<code>rules.&lt;id&gt;</code>, <code>badges.&lt;id&gt;.name|desc</code> for every new id, in 7 languages)
+- Test: <code>backend/tests/test_trip_hooks.py</code>, <code>backend/tests/test_game_engine.py</code> (extend), <code>backend/tests/test_account_api.py</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Phase 1 <code>engine.award</code>, <code>engine.touch_streak</code>; Task 6 <code>continent_of</code>; Task 2 <code>list_countries</code>.
+- Produces:
+  - Hook bodies per the contract's idempotency keys. <code>on_trip_checkin</code> awards <code>trip_checkin</code>, <code>touch_streak(user_id, "trip_checkin", day)</code>, one <code>country_visited</code> per new country, and one <code>continent_visited</code> per continent that the new countries add (computed against <code>list_countries</code> before the insert).
+  - <code>merge_deltas(*deltas: dict | None) -&gt; dict | None</code>: summed <code>awards</code>, concatenated <code>badges</code>, the last <code>xp</code>, and a <code>level_up</code> from the first <code>from</code> to the last <code>to</code>.
+  - Every hook catches its own errors, logs them and returns an empty delta, so a game failure never breaks a trip route.
+  - <code>Settings.bucket_list_goal: int | None</code> (<code>ge=1, le=250</code>).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><code>test_rules_file_validates</code>;</li>
+<li><code>test_catalog_lists_new_badges</code>;</li>
+<li><code>test_plan_saved_cap_3_per_day</code>;</li>
+<li><code>test_checkin_awards_country_and_continent_once</code>;</li>
+<li><code>test_streak_kind_trip_checkin</code>;</li>
+<li><code>test_traveller_type_awarded_once_via_onboarding</code>;</li>
+<li><code>test_hook_failure_returns_empty_delta</code>;</li>
+<li><code>test_bucket_goal_bounds</code> (0 → 422, 30 ok, <code>null</code> ok);</li>
+<li><code>test_game_disabled_hooks_return_none</code>;</li>
+<li>the catalogue parity test covers the <code>game</code> additions.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> the backend suite and <code>cd frontend &amp;&amp; npm test -- src/i18n</code> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(game): phase 2 journey rules, badges and hooks</code></li>
+</ul>
+<h2 id="wave-1-frontend-modules-api-mocked">Wave 1 — frontend modules (API mocked)</h2>
+<p>Each UI task: works in light and dark mode at 360 px and 1280 px, adds <code>data-tid</code> on every control, emits its Task 3 events through <code>telemetry/client.emit</code> (fire-and-forget), and renders nothing when <code>useJourney().enabled</code> is false.</p>
+<h3 id="task-16-trips-hub-namespace-trips">Task 16: Trips hub (namespace <code>trips</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{TripCard,NextTripPanel,CreateTripDialog,BucketRing}.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/trips.json</code>
+- Modify: <code>frontend/src/pages/TripsPage.jsx</code>
+- Test: <code>frontend/src/pages/TripsPage.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>listTrips</code>, <code>createTrip</code>, <code>getPrep</code>, <code>getTripStats</code>, <code>tripPath</code>; Phase 1 <code>useAccountSettings</code> (<code>hide_game</code>, <code>bucket_list_goal</code>).
+- Produces:
+  - The pinned trip comes first in <code>NextTripPanel</code>, with a "what now" line per phase: Dreaming "Pick dates" / "Plan it"; Planning "{{percent}} % planned"; Ready "Next: {{item}} by {{date}}" (the first <code>todo</code> item from <code>getPrep</code>); On the road "Day {{day}} in {{city}}" + Open Today; Memories "Relive your trip" + Open recap.
+  - Sections follow phase order.
+  - Empty state: "Plan a trip" (→ <code>/explore</code>) and "Save an idea" (→ <code>CreateTripDialog</code>: title, optional destination).
+  - <code>BucketRing</code> shows <code>countries.length / bucket_goal</code> (hidden when <code>hide_game</code> or without a goal).
+  - Emits <code>trip_view{surface:'hub'}</code> and <code>trip_action{action:'create'}</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - cards grouped in phase order;
+  - the pinned on-the-road trip shows "Day 3 in Lisbon";
+  - creating a Dreaming trip adds a card under Dreaming;
+  - <code>getPrep</code> is called only for the pinned trip;
+  - a network failure shows Retry;
+  - the bucket ring is hidden with <code>hide_game</code>.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): trips hub with phase groups and next-trip panel</code></p>
+<h3 id="task-17-trip-screen-and-overview-namespace-trip">Task 17: Trip screen and overview (namespace <code>trip</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{TripHeader,TripTabs,PhaseMenu,TripDatesDialog}.jsx</code>, <code>frontend/src/journey/tripTabs.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/trip.json</code>
+- Modify: <code>frontend/src/pages/TripPage.jsx</code>, <code>frontend/src/components/trips/TripOverview.jsx</code>, <code>frontend/src/components/PlanViewModal.jsx</code> (a new <code>inline = false</code> prop renders the body without the backdrop, the close button or focus trapping; the existing callers are unchanged)
+- Test: <code>frontend/src/pages/TripPage.test.jsx</code>, <code>frontend/src/journey/tripTabs.test.js</code>, <code>frontend/src/components/PlanViewModal.test.jsx</code> (new: the <code>inline</code> render)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>getTrip</code>, <code>patchTrip</code>, <code>deleteTrip</code>, <code>setPendingPlan</code>, <code>setPendingSearchData</code>, <code>showResults</code>; Task 21 <code>useOfflinePack(userId, tripId)</code> and <code>useOnline()</code> (rebase if they have not merged: guard with optional chaining); the tab components (stubs).
+- Produces:
+  - <code>tabsFor(phase: string) -&gt; {tabs: string[], default: string}</code>:</p>
+<pre><code>| phase | tabs (in order) | default |
+|---|---|---|
+| dreaming | overview | overview |
+| planning | overview, prep, money, offline | overview |
+| ready | prep, overview, offline, money | prep |
+| on_the_road | today, offline, money, journal, overview | today |
+| memories | recap, journal, money, overview | recap |
+
+Any tab in `TRIP_TABS` stays reachable by URL.
+</code></pre>
+<ul>
+<li><code>TripHeader</code>: title (rename inline), dates, countdown or "Day n of N", phase chip with <code>PhaseMenu</code> (override, or "Follow my dates").</li>
+<li><code>TripOverview</code>: <code>&lt;CompletenessMeter surface="trip"&gt;</code> in Planning, then <code>PlanViewModal inline</code>, then "Open in planner" (<code>setPendingPlan(plan)</code>, <code>setPendingSearchData(plan.search_data)</code>, <code>showResults()</code>, then navigate to <code>/explore</code>). A Dreaming trip with no search instead shows "Plan it" (navigate to <code>/explore</code> with <code>state.prefill = {destination}</code>).</li>
+<li>When offline (<code>getTrip</code> rejects with <code>network</code>), the header comes from the pack and only <code>today</code> and <code>offline</code> are enabled.</li>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li>the <code>tabsFor</code> table;</li>
+<li><code>/trips/3</code> in on_the_road opens Today;</li>
+<li>a PhaseMenu override calls <code>patchTrip({phase})</code>, and "Follow my dates" calls <code>{phase: null}</code>;</li>
+<li>"Open in planner" sets the pending plan and search;</li>
+<li>offline with a pack → header from the pack and only the offline/today tabs;</li>
+<li>the <code>PlanViewModal inline</code> render has no dialog role.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(journey): phase-aware trip screen and overview</code></li>
+</ul>
+<h3 id="task-18-plan-completeness-meter-namespace-completeness">Task 18: Plan completeness meter (namespace <code>completeness</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/utils/planCompleteness.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/completeness.json</code>
+- Modify: <code>frontend/src/components/trips/CompletenessMeter.jsx</code>
+- Test: <code>frontend/src/utils/planCompleteness.test.js</code>, <code>frontend/src/components/trips/CompletenessMeter.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Produces: <code>planCompleteness(selections, searchData, {visaChecked}) -&gt; {percent: number, parts: [{id: 'flights'|'stay'|'days'|'visa'|'packing', done: boolean, fraction: number}]}</code>. Each part weighs 20.
+  - flights: <code>selections.flight</code> or <code>selections.flights.length</code>;
+  - stay: <code>selections.hotel</code>;
+  - days: the share of itinerary days with at least 1 slot out of the trip's nights (≥ 1);
+  - visa: the <code>visaChecked</code> flag;
+  - packing: a non-empty <code>selections.packing_list</code>.
+  - <code>percent</code> = <code>round(sum(20 × fraction))</code>.
+- <code>CompletenessMeter({selections, searchData, visaChecked, surface})</code>: a ring with the five parts as a checklist. It emits <code>completeness_view</code> once per mount.
+- [ ] <strong>Step 1: Write failing tests</strong>: empty → 0; everything → 100; 3 of 7 days filled → the days fraction is 3/7; missing <code>selections</code> keys don't throw; hidden with the journey off.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): plan completeness meter</code></p>
+<h3 id="task-19-prep-checklist-ui-namespace-prep">Task 19: Prep checklist UI (namespace <code>prep</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/TripReadyBar.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/prep.json</code> (<code>items.&lt;id&gt;.title|body</code>, facts copy such as "{{visaType}}, apply by {{date}}", overdue, "Saved automatically when you save the offline pack")
+- Modify: <code>frontend/src/components/trips/PrepChecklist.jsx</code>
+- Test: <code>frontend/src/components/trips/PrepChecklist.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>getPrep</code>, <code>setPrepItem</code>; Phase 1 <code>announceGame</code>.
+- Produces:
+  - <code>PrepChecklist({trip, token})</code>: items in contract order; <code>na</code> items in a collapsed "Not needed" group; overdue items in amber; auto items without a checkbox; an optimistic toggle rolled back on error.
+  - <code>TripReadyBar</code>: "Trip ready {{percent}} %". At 100 % it plays a CSS confetti burst (none under reduced motion) and the "Ready to go" state.
+  - A server <code>game</code> delta goes to <code>announceGame</code>. Emits <code>prep_toggle</code> and <code>prep_complete</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - visa <code>na</code> is under "Not needed";
+  - a toggle rolls back on a 500;
+  - reaching complete shows "Ready to go" and calls <code>announceGame</code> with the delta;
+  - reduced motion renders no <code>.confetti</code> element;
+  - <code>offline_pack</code> has no checkbox.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): prep checklist quest with trip-ready bar</code></p>
+<h3 id="task-20-today-view-namespace-today">Task 20: Today view (namespace <code>today</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{NextUpCard,PassportStamp}.jsx</code>, <code>frontend/src/utils/today.js</code>, <code>frontend/src/utils/mapsLinks.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/today.json</code>
+- Modify: <code>frontend/src/components/trips/TodayView.jsx</code>
+- Test: <code>frontend/src/utils/today.test.js</code>, <code>frontend/src/utils/mapsLinks.test.js</code>, <code>frontend/src/components/trips/TodayView.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>arrangeItinerary</code>, <code>scheduleDays</code>, <code>timeRange</code> (existing); Task 4 <code>checkIn</code>, <code>listCheckins</code>, <code>putPlace</code>, <code>placeKey</code>; Task 6 <code>dayIndex</code>, <code>localToday</code>; Task 21 <code>useOfflinePack</code>, <code>useOnline</code>, <code>outbox.enqueue</code>; Phase 1 <code>announceGame</code>.
+- Produces:
+  - <code>todaySlots(arrangedDays, dayIndex) -&gt; slot[]</code>; <code>nextUp(scheduledSlots, now: Date) -&gt; slot | null</code> (the first slot whose derived end is after <code>now</code>).
+  - <code>directionsUrl({lat, lng, name}, {apple: boolean}) -&gt; string</code>: Apple <code>https://maps.apple.com/?daddr=&lt;lat&gt;,&lt;lng&gt;&amp;dirflg=w</code>, Google <code>https://www.google.com/maps/dir/?api=1&amp;destination=&lt;lat&gt;,&lt;lng&gt;&amp;travelmode=walking</code>. Without coordinates, use the name as the <code>q</code>/<code>destination</code> (URL-encoded). <code>apple</code> is true on iOS/iPadOS user agents.
+  - <code>TodayView({trip, token})</code>: day header "Day n in City", a "Check in for today" button (shows the streak afterwards; <code>new_country</code> plays the <code>PassportStamp</code>), <code>NextUpCard</code>, the day's slots with derived times, Directions, and "I went here" (<code>putPlace</code> with visited, which goes through the outbox when offline), a "Share status" button (<code>navigator.share({text: 'Day 3 in Lisbon'})</code>, else copy), and "Near me" (→ <code>/nearby</code>).
+  - Offline, the itinerary comes from the pack. Before or after the trip it shows "Today starts on {{date}}".
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - <code>nextUp</code> at 13:05 picks the afternoon slot;
+  - Google and Apple URLs, and the name-only fallback;
+  - check-in shows the streak and the stamp when <code>new_country</code> (none under reduced motion);
+  - <strong>renders without itinerary</strong>;
+  - offline "I went here" enqueues the request;
+  - day 0 / after the end shows the start-date message.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): Today view with next-up, check-in and directions</code></p>
+<h3 id="task-21-offline-infrastructure-namespace-offline">Task 21: Offline infrastructure (namespace <code>offline</code>)</h3>
+<p><strong>Decision:</strong> a hand-written service worker plus IndexedDB, with no Workbox and no new dependency.
+- <code>/sw.js</code> is same-origin, so <code>script-src 'self'</code> and <code>worker-src 'self'</code> already allow it.
+- The existing Caddy SPA handle serves it with <code>Cache-Control: no-cache</code>.
+- The worker caches only the app shell and the hashed <code>/assets/*</code>. Pack data lives in IndexedDB.
+- Navigations go network-first, so a deploy shows up whenever the user is online.
+- It is registered only when the user saves a pack (never at app start), and <code>features.offline_pack: false</code> unregisters it everywhere.</p>
+<p><strong>Files:</strong>
+- Create: <code>frontend/public/sw.js</code>, <code>frontend/vite/swAssets.js</code>, <code>frontend/src/offline/{registerSW,packStore,outbox,idb}.js</code>, <code>frontend/src/offline/useOfflinePack.js</code>, <code>frontend/src/offline/useOnline.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/offline.json</code>, <code>deploy/gcp/tests/test_caddyfile_spa.py</code>
+- Modify: <code>frontend/vite.config.js</code> (adds <code>swAssetsPlugin({version: appVersion})</code>), <code>frontend/src/context/AuthContext.jsx</code>, <code>frontend/src/components/offline/OfflineBanner.jsx</code>
+- Test: <code>frontend/src/offline/sw.test.js</code> (loads <code>public/sw.js</code> into a <code>node:vm</code> context with fake <code>self</code>, <code>caches</code> and <code>fetch</code>), <code>frontend/src/offline/{packStore,outbox,registerSW}.test.js</code> (<code>fake-indexeddb</code> is <strong>not</strong> added; <code>idb.js</code> falls back to an in-memory map that the tests use), <code>frontend/vite/swAssets.test.js</code>, <code>frontend/src/context/AuthContext.offline.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>swAssetsPlugin({version}) -&gt; VitePlugin</code>. It emits <code>sw-assets.json</code> = <code>{"version", "shell": ["/", "/index.html", "/theme-init.js", "/favicon.svg", "/manifest.webmanifest"], "assets": ["/assets/…"]}</code>. The list holds every emitted <code>.js</code>/<code>.css</code> chunk and every locale chunk, with no <code>.map</code> files and no file over 2 MB.
+  - <code>sw.js</code>:
+    - On the <code>precache</code> message, it fetches <code>/sw-assets.json</code> (<code>no-store</code>), caches every URL into <code>voyager-shell-&lt;version&gt;</code>, deletes the other <code>voyager-shell-*</code> caches and replies <code>{ok, bytes}</code>.
+    - Navigation requests: network first; on failure, the cached <code>/index.html</code>.
+    - <code>/assets/*</code>: cache first, then network.
+    - Everything else, <code>/api/*</code> included, is not intercepted.
+    - The <code>purge</code> message deletes every <code>voyager-*</code> cache.
+  - <code>registerSW.js</code>: <code>ensureServiceWorker() -&gt; Promise&lt;ServiceWorkerRegistration | null&gt;</code> (null when unsupported, not a secure context, or <code>import.meta.env.DEV</code>), <code>precacheShell() -&gt; Promise&lt;{ok: boolean, kb: number}&gt;</code> and <code>disableOffline() -&gt; Promise&lt;void&gt;</code> (purge plus unregister).
+  - <code>packStore.js</code>: <code>savePack(userId, pack)</code>, <code>getPack(userId, tripId)</code>, <code>listPacks(userId)</code>, <code>deletePack(userId, tripId)</code>, <code>clearUser(userId)</code>, <code>storageMode() -&gt; 'idb' | 'memory'</code>.
+  - <code>outbox.js</code>:
+    - <code>enqueue(userId, {method, path, body, key})</code> (a repeated <code>key</code> replaces the entry);
+    - <code>flush(token, userId, fetchImpl = fetch) -&gt; Promise&lt;{sent, failed, dropped}&gt;</code>: single-flight; 2xx and 409 are sent; other 4xx except 408/429 are dropped; 5xx and network errors are kept;
+    - <code>pending(userId) -&gt; Promise&lt;number&gt;</code>;
+    - <code>startAutoFlush(getToken, getUserId) -&gt; stop</code> (on <code>online</code> and every 60 s while items are queued). It emits <code>outbox_flush</code>.
+  - <code>useOnline() -&gt; boolean</code>; <code>useOfflinePack(userId, tripId) -&gt; {pack, savedAt, loading}</code>.
+  - <code>AuthContext</code>:
+    - When <code>/auth/me</code> <em>rejects</em> (a network error), it keeps the token, restores the user from <code>tp_user_cache</code> (<code>{id, username, display_name, is_admin}</code>, written on every successful load) and exposes <code>offline: true</code>. It revalidates on <code>online</code>. HTTP 401/403 behave as today.
+    - <code>logout()</code> and <code>session_revoked</code> call <code>clearUser(user.id)</code> and <code>outbox</code> clearing for that user, and remove <code>tp_user_cache</code>.
+    - When <code>/config</code> says <code>features.offline_pack === false</code>, it calls <code>disableOffline()</code> once.
+  - <code>OfflineBanner</code>: "You're offline. Saved trips still work." Plus "{{count}} changes waiting to sync" from <code>pending</code>.
+  - <code>test_caddyfile_spa.py</code>: the CSP contains <code>script-src 'self'</code> and <code>worker-src 'self' blob:</code>; <code>/sw.js</code> does not match the <code>@asset</code> immutable matcher; the SPA handle sets <code>Cache-Control "no-cache"</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>:</li>
+<li><strong>navigation falls back to the cached shell</strong>; <code>/api/trips</code> is not intercepted; <code>/assets/a.js</code> is served from the cache; <code>precache</code> deletes the old version caches;</li>
+<li>the plugin lists the chunks and skips maps;</li>
+<li><strong>keeps the session when /auth/me fails offline</strong>; a 401 still signs out; logout clears that user's packs and outbox but not another user's;</li>
+<li><strong>concurrent flushes send each item once</strong>; a 5xx is kept, a 400 is dropped, a 409 counts as sent;</li>
+<li><code>offline_pack false</code> → <code>disableOffline</code> is called;</li>
+<li>the Caddyfile test.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd frontend &amp;&amp; npm test -- src/offline vite src/context</code> and <code>python3 -m pytest -q deploy/gcp/tests/test_caddyfile_spa.py</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> both, plus <code>npm run build</code> (<code>dist/sw.js</code> and <code>dist/sw-assets.json</code> exist) → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(offline): service worker shell, IndexedDB packs, outbox and offline-safe session</code></li>
+</ul>
+<h3 id="task-22-offline-pack-ui-namespace-offlinepack">Task 22: Offline pack UI (namespace <code>offlinePack</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{AddressCard,CurrencyConverter,PhraseList,EmergencyNumbers}.jsx</code>, <code>frontend/src/utils/converter.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/offlinePack.json</code>
+- Modify: <code>frontend/src/components/trips/OfflinePack.jsx</code>
+- Test: <code>frontend/src/utils/converter.test.js</code>, <code>frontend/src/components/trips/OfflinePack.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>getOfflinePack</code>; Task 21 <code>savePack</code>, <code>getPack</code>, <code>deletePack</code>, <code>ensureServiceWorker</code>, <code>precacheShell</code>, <code>useOnline</code>.
+- Produces:
+  - <code>convert(amount: number, rate: number, direction: 'toLocal' | 'toHome') -&gt; number</code> and <code>roundFor(currency, value)</code>.
+  - <code>OfflinePack({trip, token})</code>:
+    - Save / Refresh / Remove, with "Saved {{when}}" and the size. The save order is: fetch the pack → <code>savePack</code> → <code>ensureServiceWorker</code> → <code>precacheShell</code> → <code>navigator.storage?.persist?.()</code>.
+    - Without a service worker it still saves the data and says "Works while this tab stays open".
+    - Emergency numbers as large <code>tel:</code> links, with the source label ("From our reference list" or "Checked {{date}}").
+    - <code>PhraseList</code> with romanized text and a full-screen "Show" view.
+    - <code>AddressCard</code> in large type with "Please take me to:" in the local script.
+    - <code>CurrencyConverter</code> with "Rate from {{date}}, approximate". When <code>rate</code> is <code>null</code> it says so, with no converter.
+  - Emits <code>offline_pack</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - convert both ways, and JPY rounding to whole yen;
+  - Save calls the steps in order and shows "Saved";
+  - unsupported service worker → the data is still saved plus the tab note;
+  - offline renders from the store;
+  - <code>rate null</code> → no converter;
+  - Remove deletes it.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): offline pack — emergency, phrases, address card, converter</code></p>
+<h3 id="task-23-expenses-ui-namespace-expenses">Task 23: Expenses UI (namespace <code>expenses</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/ExpenseForm.jsx</code>, <code>frontend/src/utils/money.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/expenses.json</code>
+- Modify: <code>frontend/src/components/trips/ExpenseLog.jsx</code>
+- Test: <code>frontend/src/utils/money.test.js</code>, <code>frontend/src/components/trips/ExpenseLog.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>listExpenses</code>, <code>addExpense</code>, <code>updateExpense</code>, <code>deleteExpense</code>; Task 21 <code>outbox</code>, <code>useOnline</code>.
+- Produces:
+  - <code>currencyExponent(code) -&gt; number</code> (the contract table) and <code>toAmountString(input: string, currency) -&gt; string | null</code> (accepts a locale comma decimal, and returns <code>null</code> when invalid).
+  - <code>ExpenseLog({trip, token})</code>: a quick-add form (amount, currency defaulting to the pack's local currency or USD, category chips, an optional note, the day defaulting to today), a list grouped by day, totals per currency, and a "≈ {{usd}} of {{budget}} budget" bar labelled as an estimate. Edit and delete are supported.
+  - Offline, or on a network error, an entry gets a <code>crypto.randomUUID()</code> <code>client_id</code>, is enqueued, and shows "Waiting to sync".
+  - Emits <code>expense_action</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - <code>"12,50"</code> in de → <code>"12.50"</code>; JPY <code>"12.5"</code> → <code>null</code>;
+  - an add while offline queues one item with a <code>client_id</code> and shows "Waiting to sync";
+  - the budget bar uses <code>usd_estimate</code>;
+  - unconverted currencies are listed.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): offline-friendly expense log</code></p>
+<h3 id="task-24-journal-and-place-ratings-ui-namespace-journal">Task 24: Journal and place ratings UI (namespace <code>journal</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{JournalEntryForm,RatingStars,PlaceRatingsList}.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/journal.json</code>
+- Modify: <code>frontend/src/components/trips/Journal.jsx</code>
+- Test: <code>frontend/src/components/trips/Journal.test.jsx</code>, <code>frontend/src/components/trips/RatingStars.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 journal and places calls, <code>placeKey</code>; Task 21 <code>outbox</code>; <code>arrangeItinerary</code> (for the places to rate).
+- Produces:
+  - <code>Journal({trip, token})</code>: entries by day, a mood picker, and a counter at 4000 characters. Offline writes are queued.
+  - <code>PlaceRatingsList</code>: the itinerary places plus the visited ones, each with <code>RatingStars</code>.
+  - <code>RatingStars({value, onChange})</code>: a radio group with arrow keys, labelled "{{n}} of 5 stars".
+  - Emits <code>journal_action</code> and <code>place_action</code> (no text and no names).
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - the counter blocks at 4001 characters;
+  - an offline add queues the request;
+  - the arrow keys change the rating;
+  - rating a place calls <code>putPlace</code> with the <code>placeKey</code>;
+  - <code>place_action</code> carries no name.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): journal and place ratings</code></p>
+<h3 id="task-25-recap-ui-namespace-recap">Task 25: Recap UI (namespace <code>recap</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/trips/{RecapMap,CountryReveal,RecapStats,WhereNext}.jsx</code>, <code>frontend/src/utils/recapRoute.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/recap.json</code>
+- Modify: <code>frontend/src/components/trips/Recap.jsx</code>
+- Test: <code>frontend/src/utils/recapRoute.test.js</code>, <code>frontend/src/components/trips/Recap.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>getRecap</code>, <code>completeRecap</code>; <code>discoverDestinations</code> (api.js); <code>computePlanCost</code>; <code>arrangeItinerary</code>, <code>scheduleDays</code>; Phase 1 <code>announceGame</code>; existing <code>POST /plans/{id}/share</code>.
+- Produces:
+  - <code>plannedRoute(arrangedDays) -&gt; {points: [lat, lng][], km: number | null}</code>. It is used when <code>recap.route</code> is empty, and labelled "Planned route".
+  - <code>Recap({trip, token})</code>:
+    - stats (days, places, distance, countries, journal entries, average stars);
+    - spend versus budget (<code>spent_usd</code> against <code>budget_usd</code> and the client <code>plan_cost_usd</code>, labelled as estimates; unconverted currencies listed);
+    - <code>RecapMap</code> (Leaflet, lazy-loaded, polyline);
+    - "Finish recap" when <code>can_complete</code> → <code>completeRecap</code> → <code>announceGame</code> + <code>CountryReveal</code> (a stamp per new country; reduced motion → a static list);
+    - "Share" (creates or reuses the share link, then <code>navigator.share({title, text: '7 days in Lisbon · 23 places', url})</code>, else copy);
+    - <code>WhereNext</code>, which calls <code>discoverDestinations</code> only when tapped, with the trip's interests and budget, filters out the current destination and shows the 5 suggestions linking to <code>/explore</code>.
+    - Before the trip ends: "Your recap appears after {{date}}".
+  - Emits <code>recap_action</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - <code>plannedRoute</code> skips slots without coordinates and returns <code>km: null</code> with one point;
+  - Finish → reveal and <code>announceGame</code>; a repeat shows no reveal;
+  - Where next fires no request until tapped;
+  - Share falls back to copy;
+  - the not-ready message.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): trip recap with route, countries and where-next</code></p>
+<h3 id="task-26-shared-onboarding-namespace-onboarding-adds-web-keys-only">Task 26: Shared onboarding (namespace <code>onboarding</code>, adds web keys only)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/onboarding/{QuizStep,TravellerTypeResult,HomePassportStep,NotificationsStep,FirstTripStep,OnboardingProgress}.jsx</code>, <code>frontend/src/utils/travellerQuiz.js</code>, <code>frontend/src/utils/quizPreferences.js</code>
+- Modify: <code>frontend/src/pages/OnboardingPage.jsx</code>, <code>frontend/src/components/onboarding/OnboardingGate.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/onboarding.json</code> (adds <code>web.*</code>: airport and passport labels, "Not you? Change answers", "Saving…", "Continue without syncing", "Your browser blocks notifications", "Allow notifications", resume copy; no existing key changes)
+- Test: <code>frontend/src/utils/travellerQuiz.test.js</code>, <code>frontend/src/utils/quizPreferences.test.js</code>, <code>frontend/src/pages/OnboardingPage.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes:
+  - the question/weight table and the rules in Android <code>docs/Onboarding-and-Traveller-Types.md</code> (<code>rupakc/travel-planner-android</code>; copy the classifier cases from <code>DefaultTravellerClassifierTest</code> and the merge cases from the <code>PreferencesMapping</code> tests);
+  - Phase 1 <code>getAccount</code>, <code>putOnboarding</code>, <code>announceGame</code>;
+  - <code>GET/PUT /api/preferences</code> (existing);
+  - <code>AirportSearch</code>, <code>NationalitySearch</code>.
+- Produces:
+  - <code>QUESTIONS</code> (6, with Android's ids, choice kinds and weights) and <code>classify(answers: Record&lt;string, string[]&gt;) -&gt; {primary: TravellerType, secondary: TravellerType[]}</code>. The rules are tie order, secondary at ≥ 60 %, ACCESSIBLE appended, and CULTURE_FOODIE when nothing scored.
+  - <code>mergeQuizAnswers(prefs, answers) -&gt; prefs</code> (the Android merge rules) and <code>quizPace(answers) -&gt; string | null</code>.
+  - <code>OnboardingPage</code>, in 5 steps with the <code>onboarding:*</code> keys and order:
+    1. welcome;
+    2. how you travel (6 question pages, then the result);
+    3. home airport + passport;
+    4. notifications: <code>Notification.requestPermission()</code> only after "Allow"; skipped when unsupported;
+    5. first trip (→ <code>/explore</code>) or explore (→ <code>/</code>).
+  - Each step sends <code>putOnboarding({step, done: false})</code> fire-and-forget, and the page resumes from <code>onboarding.step</code>. Answers stay in <code>localStorage.tp_quiz_&lt;user_id&gt;</code>.
+  - Finish: <code>PUT /api/preferences</code> (read-modify-write; on failure, Retry or "Continue without syncing"), then <code>putOnboarding({step: 5, done: true, traveller_type: primary.toLowerCase()})</code> → <code>announceGame</code>. Skip: <code>{step, done: true, skipped: true}</code>.
+  - Emits <code>onboarding_step</code> and <code>onboarding_result</code>.
+  - <code>OnboardingGate</code>: when the journey is on, signed in, <code>getAccount().onboarding.done === false</code>, the path is not <code>/onboarding</code> and <code>sessionStorage.tp_onboarding_seen</code> is unset, it navigates to <code>/onboarding</code> once. A 404 or error from <code>/account</code> does nothing.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - every Android classifier case;
+  - the merge cases (the default party is replaced, a custom party is kept, infants have a minimum of 1, <code>num_travelers</code> is clamped to 1–20);
+  - resume at step 3;
+  - Skip sends <code>skipped: true</code>;
+  - the notification permission is requested only after Allow;
+  - the gate redirects once and never on a 404.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate the new keys. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(onboarding): shared 5-step onboarding with traveller type on web</code></p>
+<h3 id="task-27-journey-coach-marks-namespace-coach">Task 27: Journey coach marks (namespace <code>coach</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/i18n/locales/&lt;lang&gt;/coach.json</code>
+- Modify: <code>frontend/src/components/trips/JourneyTour.jsx</code>
+- Test: <code>frontend/src/components/trips/JourneyTour.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: the existing <code>OnboardingTour</code> and <code>useFirstRunTour({username, visible, eligible, delayMs})</code> (no <code>token</code>, so the tour never reports onboarding); the <code>data-tour</code> anchors from Task 4 (<code>nav-trips</code>, <code>nav-explore</code>, <code>nav-alerts</code>, <code>nav-play</code>, <code>nav-you</code>) plus <code>trips-create</code> (Task 16).
+- Produces: <code>JourneyTour({username, visible, onboardingDone})</code>, which opens once after onboarding is done and is replayable from You ("Show me around").
+- [ ] <strong>Step 1: Write failing tests</strong>: it doesn't open before onboarding is done; it opens once; a missing anchor's step is skipped.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): coach marks for the journey tabs</code></p>
+<h3 id="task-28-play-and-you-tabs-namespace-playyou">Task 28: Play and You tabs (namespace <code>playYou</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/play/{CountriesVisited,BucketGoalEditor}.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/playYou.json</code>
+- Modify: <code>frontend/src/pages/PlayPage.jsx</code>, <code>frontend/src/pages/YouPage.jsx</code>
+- Test: <code>frontend/src/pages/PlayPage.test.jsx</code>, <code>frontend/src/pages/YouPage.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Phase 1 <code>GameSection</code>, <code>patchSettings</code>, <code>useAccountSettings</code>; Task 4 <code>getTripStats</code>; the existing <code>AccountPage</code> sections; Task 27 replay.
+- Produces:
+  - <code>PlayPage</code>: <code>GameSection</code>, the trip check-in streak, <code>CountriesVisited</code> (flag emoji from the ISO code, the name via <code>Intl.DisplayNames</code>, continents) and <code>BucketGoalEditor</code> (1–250 → <code>patchSettings({bucket_list_goal})</code>). With <code>hide_game</code> it shows a single note linking to Settings.
+  - <code>YouPage</code>: the <code>AccountPage</code> sections, then links to Preferences, Alerts and "Show me around".
+- [ ] <strong>Step 1: Write failing tests</strong>: countries render with their names; the goal editor saves; <code>hide_game</code> shows only the note; You links to <code>/preferences</code>.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): Play and You tabs</code></p>
+<h3 id="task-29-explore-entry-and-mode-tabs-on-phones-namespace-explore">Task 29: Explore entry and mode tabs on phones (namespace <code>explore</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/i18n/locales/&lt;lang&gt;/explore.json</code>
+- Modify: <code>frontend/src/pages/SearchPage.jsx</code>
+- Test: <code>frontend/src/pages/SearchPage.explore.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>useJourney</code>.
+- Produces:
+  - With the journey on, an "Explore" header and the mode row Search / Surprise me / Compare / From a link / Chat (→ <code>/chat</code>) / Near me (→ <code>/nearby</code>).
+  - <code>location.state.prefill.destination</code> prefills the destination.
+  - The Phase 1 search tour is not started (Task 27 replaces it).
+  - Follow-up fix in both flag states: the mode tabs never wrap. The row is <code>overflow-x-auto whitespace-nowrap snap-x</code> with no <code>flex-wrap</code>, and the active tab is scrolled into view.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - the mode container has <code>overflow-x-auto</code> and no <code>flex-wrap</code> (in <code>de</code> and <code>bn</code>);
+  - with the journey on, the Chat chip navigates to <code>/chat</code>;
+  - the prefill sets the destination;
+  - the search tour stays closed with the journey on.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): Explore entry; mode tabs scroll instead of wrapping</code></p>
+<h3 id="task-30-dark-contrast-of-muted-text-follow-up">Task 30: Dark contrast of muted text (follow-up)</h3>
+<p><strong>Files:</strong>
+- Modify: <code>frontend/design/tokens.json</code> (dark <code>gray-400</code>, <code>slate-400</code> and <code>slate-500</code>), <code>frontend/src/theme/tokens.css</code> (regenerated with <code>node frontend/scripts/build-tokens.mjs</code>), <code>frontend/src/theme/tokens.test.js</code>, <code>frontend/src/components/ui/AttributionFooter.jsx</code> (<code>text-gray-400</code> → <code>text-gray-500</code>)</p>
+<p><strong>Interfaces:</strong>
+- Produces: the dark <code>gray-400</code> and <code>slate-400</code> reach ≥ 4.5:1 on dark <code>white</code> (cards) and <code>gray-50</code> (page). White on <code>teal-700</code> reaches ≥ 4.5 in both modes (this pins Task 38). Light-mode values are unchanged.
+- [ ] <strong>Step 1: Write failing tests</strong>: those three contrast pairs, and <code>the generated CSS equals the committed tokens.css</code>.
+- [ ] <strong>Step 2: Run</strong> <code>cd frontend &amp;&amp; npm test -- src/theme</code> → FAIL.
+- [ ] <strong>Step 3: Implement</strong>, then regenerate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>fix(theme): readable muted text in dark mode</code></p>
+<h3 id="task-31-voyager-naming-and-web-manifest-follow-up">Task 31: "Voyager" naming and web manifest (follow-up)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/public/manifest.webmanifest</code> (<code>name</code> "Voyager", <code>short_name</code> "Voyager", <code>start_url</code> "/", <code>display</code> "standalone", <code>background_color</code>/<code>theme_color</code> from the light tokens, <code>icons</code> <code>[{src: "/favicon.svg", sizes: "any", type: "image/svg+xml"}]</code>)
+- Modify: <code>frontend/index.html</code> (<code>&lt;title&gt;Voyager — plan, travel, remember&lt;/title&gt;</code>, <code>&lt;link rel="manifest" href="/manifest.webmanifest"&gt;</code>), <code>frontend/src/pages/LoginPage.jsx</code> and <code>SignupPage.jsx</code> (the <code>&lt;h1&gt;</code> reads "Voyager"), <code>frontend/src/i18n/locales/&lt;lang&gt;/chat.json</code> (<code>title</code> → "Voyager Chat" in 7 languages)
+- Test: <code>frontend/src/branding.test.js</code></p>
+<p><strong>Interfaces:</strong>
+- Produces: no "Travel Planner" in <code>frontend/src</code> or <code>index.html</code>, except the iCalendar <code>PRODID</code> in <code>utils/planExport.js</code> (kept for calendar stability).
+- [ ] <strong>Step 1: Write failing tests</strong>: a grep-style test over <code>src/**</code> and <code>index.html</code>, with the allow-list; the manifest parses with <code>name === 'Voyager'</code>; the LoginPage heading.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>fix(brand): Voyager everywhere, web manifest</code></p>
+<h3 id="task-32-feedback-pill-in-dark-mode-and-on-phones-follow-up">Task 32: Feedback pill in dark mode and on phones (follow-up)</h3>
+<p><strong>Files:</strong>
+- Modify: <code>frontend/src/components/FeedbackWidget.jsx</code>, <code>frontend/src/components/account/AccountMenu.jsx</code>
+- Test: <code>frontend/src/components/FeedbackWidget.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - The pill is <code>bg-teal-700 hover:bg-teal-800 text-white</code> (dark-safe).
+  - On phones (&lt; 640 px) the floating pill is hidden.
+  - AccountMenu gains a "Feedback" item (reusing the existing <code>misc:feedback.trigger</code> key) that dispatches <code>window</code> event <code>voyager:open-feedback</code>, which <code>FeedbackWidget</code> listens for.
+  - On ≥ 640 px the pill stays bottom-left, with <code>bottom-20</code> when <code>BottomTabs</code> is present.
+- [ ] <strong>Step 1: Write failing tests</strong>: the event opens the panel; the pill has <code>hidden sm:flex</code>; it has no <code>slate-700</code> class.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>fix(ui): feedback pill readable in dark and out of the way on phones</code></p>
+<h3 id="task-33-lazy-english-namespaces-follow-up-performance">Task 33: Lazy English namespaces (follow-up, performance)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/i18n/routeNamespaces.js</code>
+- Modify: <code>frontend/src/i18n/index.js</code>, <code>frontend/src/components/I18nRouteGate.jsx</code>, <code>frontend/src/test/setup.js</code> (calls <code>initI18n({bundleAll: true})</code>, so tests stay synchronous)
+- Test: <code>frontend/src/i18n/routeNamespaces.test.js</code>, <code>frontend/src/components/I18nRouteGate.test.jsx</code>, <code>frontend/src/i18n/index.test.js</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>EAGER_NS = ['common', 'errors', 'auth', 'journey', 'offline', 'misc']</code> stays in the main bundle. Every other <code>en</code> namespace becomes a lazy chunk through the existing <code>lazyBackend</code>.
+  - <code>namespacesFor(pathname) -&gt; string[]</code> (for example <code>/trips/:id/today</code> → <code>['trip', 'today', 'prep', 'completeness', 'offlinePack', 'expenses', 'journal', 'recap', 'game']</code>).
+  - <code>I18nRouteGate({pathname, children})</code> calls <code>i18n.loadNamespaces(namespacesFor(pathname))</code>. It renders a neutral skeleton until they load, and renders anyway after 3 s or on failure.
+  - <code>initI18n({bundleAll})</code> keeps the eager glob for tests.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - every namespace is in <code>EAGER_NS</code> or returned by <code>namespacesFor</code> for at least one known path;
+  - the gate shows the skeleton, then its children;
+  - a rejected chunk still renders its children;
+  - <code>NAMESPACES</code> is unchanged.
+- [ ] <strong>Step 2: Run</strong> → FAIL.
+- [ ] <strong>Step 3: Implement.</strong> Record the entry chunk's gzip size before and after (<code>npm run build</code>) in the PR description.
+- [ ] <strong>Step 4: Run</strong> <code>npm test</code> and <code>npm run build</code> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>perf(i18n): lazy-load English namespaces per route</code></p>
+<h2 id="wave-2-integration">Wave 2 — integration</h2>
+<h3 id="task-34-results-page-integration-dark-top-bar">Task 34: Results page integration (+ dark top bar)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/utils/tripSnapshot.js</code>
+- Modify: <code>frontend/src/pages/ResultsPage.jsx</code>
+- Test: <code>frontend/src/utils/tripSnapshot.test.js</code>, <code>frontend/src/pages/ResultsPage.trips.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>putSnapshot</code>, <code>tripPath</code>, <code>useJourney</code>, <code>pendingPlan</code>, <code>clearPendingPlan</code>, <code>journey:saved.*</code>; Task 18 <code>CompletenessMeter</code>.
+- Produces:
+  - <code>snapshotFromResults(results) -&gt; {emergency_card, forex, visa, packing_list, weather}</code>. Each value is the section's data when it has no <code>error</code>; <code>verification</code> is removed; otherwise <code>null</code>.
+  - <code>MyPlanDrawer</code>:
+    - <code>&lt;CompletenessMeter surface="drawer" visaChecked={visa loaded without error}&gt;</code> under the plan name.
+    - After a successful save or update, <code>putSnapshot</code> runs fire-and-forget, and any rejection is ignored (the old backend 404s).
+    - With the journey on, the save message gains a link "Open trip", to <code>tripPath(id)</code> (the id from the POST response, or <code>loadedPlanId</code>).
+  - <code>ResultsPage</code>: when <code>pendingPlan</code> is set and the current search was started from its <code>search_data</code>, it calls <code>handleLoadPlan(pendingPlan)</code> once, then <code>clearPendingPlan()</code>.
+  - The stress-test re-check payload gains <code>plan_id: loadedPlanId</code> when set (the old backend ignores it).
+  - Follow-up: the top bar and the drawer header use <code>bg-gradient-to-r from-teal-700 to-teal-800</code> instead of <code>from-slate-500 to-slate-600</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>:
+  - <code>snapshotFromResults</code> drops error sections and <code>verification</code>;
+  - a save calls <code>putSnapshot</code> with the new id;
+  - a <code>putSnapshot</code> rejection shows no error;
+  - "Open trip" shows only with the journey on;
+  - a pending plan loads once;
+  - the re-check payload includes <code>plan_id</code>;
+  - the top bar has no <code>slate-500</code> class.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> <code>npm test</code> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): results page saves trips with snapshot and completeness</code></p>
+<h3 id="task-35-chat-page-integration">Task 35: Chat page integration</h3>
+<p><strong>Files:</strong>
+- Modify: <code>frontend/src/pages/ChatPage.jsx</code>
+- Test: <code>frontend/src/pages/ChatPage.trips.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 34 <code>snapshotFromResults</code> (from <code>utils/tripSnapshot.js</code>); Task 4 <code>putSnapshot</code>, <code>tripPath</code>, <code>useJourney</code>; Task 18 <code>CompletenessMeter</code>.
+- Produces: the chat plan drawer's save and update send <code>putSnapshot</code> built from the chat's section results (<code>section_result</code> data), skipped when there are none. They show "Open trip" with the journey on, and the drawer shows <code>CompletenessMeter</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>: a save with section results sends the snapshot; a save without them sends none; "Open trip" appears only with the journey on.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): chat plans save as trips</code></p>
+<h3 id="task-36-near-me-im-here-during-a-trip-namespace-nearbytrip">Task 36: Near me "I'm here" during a trip (namespace <code>nearbyTrip</code>)</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/i18n/locales/&lt;lang&gt;/nearbyTrip.json</code>
+- Modify: <code>frontend/src/pages/NearbyPage.jsx</code>
+- Test: <code>frontend/src/pages/NearbyPage.trip.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 <code>listTrips</code>, <code>putPlace</code>, <code>placeKey</code>; Phase 1 <code>announceGame</code>.
+- Produces: when the pinned trip is <code>on_the_road</code>, each result gets "I'm here" → <code>putPlace(tripId, placeKey('nearby', name), {name, kind: 'nearby', visited: true, lat, lng, day: localToday()})</code> → <code>announceGame</code>, and the button becomes "Visited". Without such a trip, or with the journey off, nothing changes. It emits <code>today_action{action:'visited'}</code>.
+- [ ] <strong>Step 1: Write failing tests</strong>: the button appears only with an on-the-road trip; a tap sends the visit with coordinates; journey off → no <code>listTrips</code> call.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>; translate. <strong>Step 4: Run</strong> → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(journey): mark Near me places visited during a trip</code></p>
+<h3 id="task-37-backend-joins-stress-test-smart-planner-offline-pack-tick">Task 37: Backend joins (stress-test smart planner, offline-pack tick)</h3>
+<p><strong>Files:</strong>
+- Modify: <code>backend/app/api/routes/stress_test.py</code> (an optional <code>plan_id: int | None</code> on <code>StressTestRequest</code>, plus <code>get_optional_user</code>), <code>backend/app/api/routes/trip_offline.py</code> (a successful <code>GET offline-pack</code> → <code>trip_prep_db.set_done(plan_id, "offline_pack", True)</code>, then the <code>trip_ready</code> check through <code>prep_summary</code> and <code>on_trip_ready</code>; the response is unchanged)
+- Test: <code>backend/tests/test_stress_test_plan.py</code>, <code>backend/tests/test_offline_pack.py</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 8 <code>trip_prep_db.get_meta/set_meta/set_done</code>, <code>prep_summary</code>; Task 1 <code>owned_trip</code>, <code>on_smart_planner</code>, <code>on_trip_ready</code>.
+- Produces:
+  - After the agent returns, when <code>plan_id</code> is set and the caller owns the plan, the server reads the score from the result (<code>overall_score</code>, else <code>score</code>, an int from 0 to 100). It stores <code>{"score"}</code> as the <code>stress_test</code> meta, marks the item done, and calls <code>on_smart_planner</code> when the score is higher than the previous one.
+  - Every failure in this block is logged and swallowed, so the response is exactly the agent's.
+- [ ] <strong>Step 1: Write failing tests</strong> (stub the agent):
+  - an improved score calls the hook once, and an equal score doesn't;
+  - another user's <code>plan_id</code> is ignored;
+  - anonymous → no write;
+  - the response body is unchanged;
+  - the pack GET ticks <code>offline_pack</code>, and completing the list through it awards <code>trip_ready</code>.
+- [ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> the backend suite → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(trips): stress-test progress and offline-pack prep tick</code></p>
+<h2 id="wave-3-sweep-docs-review-switch-on">Wave 3 — sweep, docs, review, switch on</h2>
+<h3 id="task-38-primary-buttons-to-teal-700-follow-up-sweep">Task 38: Primary buttons to teal-700 (follow-up sweep)</h3>
+<p><strong>Files:</strong> every file under <code>frontend/src</code> with a <code>bg-teal-600</code> primary button (25 files at the time of writing; <code>grep -rl "bg-teal-600" frontend/src</code>).
+- [ ] <strong>Step 1:</strong> Replace <code>bg-teal-600</code> with <code>bg-teal-700</code> and <code>hover:bg-teal-700</code> with <code>hover:bg-teal-800</code> on elements whose classes also contain <code>text-white</code>. Leave tinted chips, borders and rings alone. A test, <code>frontend/src/theme/primaryButtons.test.js</code>, fails when any <code>.jsx</code> file has <code>bg-teal-600</code> together with <code>text-white</code> in one className.
+- [ ] <strong>Step 2: Run</strong> <code>npm test</code>, eslint and <code>npm run build</code> → PASS. Take before and after screenshots of Search, Results and Account in both themes.
+- [ ] <strong>Step 3: Commit</strong> <code>fix(theme): primary buttons on teal-700 for AA contrast</code></p>
+<h3 id="task-39-docs-and-claudemd-sync">Task 39: Docs and CLAUDE.md sync</h3>
+<p><strong>Files:</strong>
+- Modify:
+  - <code>CLAUDE.md</code>: the table count and list, with the 7 new tables added to whatever the count is when this task runs; the router count and list, with the 7 new trip routers added; the Trips/journey paragraph (phases, prep, offline pack, expenses, journal, recap, flag); the new settings; the project layout (<code>components/trips</code>, <code>offline/</code>, <code>public/sw.js</code>).
+  - <code>docs/Configuration.md</code>: every Task 1 setting.
+  - <code>docs/API-Reference.md</code>: the trips endpoints, linking <code>Trips-API.md</code>.
+  - <code>docs/Deployment-GCP.md</code>: an "Offline pack" section: the service worker is <code>/sw.js</code>; the kill switch is <code>OFFLINE_PACK_ENABLED=false</code>, which unregisters clients on their next load; <code>JOURNEY_UI_ENABLED</code>.
+  - <code>docs/Privacy.md</code>: trip data, expenses and journal stored on the server, ratings and visits, countries visited, offline packs in the browser (cleared on sign-out), no location history.
+  - <code>docs/Feature-Parity.md</code>: journey rows, Web ✅, Android ⏳ 8, iOS ⏳ 7.
+  - <code>docs/Frontend.md</code>: the new pages and folders.
+  - <code>docs/Internationalization.md</code>: the new namespaces; English is lazy per route.
+  - <code>docs/Theming.md</code>: teal-700 primary.
+  - <code>docs/Changelog.md</code>.
+- [ ] <strong>Step 1:</strong> Write. <strong>Step 2:</strong> <code>mkdocs build --strict</code> → PASS. <strong>Step 3: Commit</strong> <code>docs: journey, trips, offline pack</code></p>
+<h3 id="task-40-translation-review">Task 40: Translation review</h3>
+<p><strong>Files:</strong> <code>frontend/src/i18n/locales/{es,de,fr,hi,zh,bn}/{journey,errors,trips,trip,completeness,prep,today,offline,offlinePack,expenses,journal,recap,onboarding,coach,playYou,explore,nearbyTrip,game,chat}.json</code>, <code>backend/app/data/travel_phrases.json</code>
+- [ ] <strong>Step 1:</strong> Run one fresh reviewer per UI language. Each reads <code>en</code> alongside, then fixes meaning, register and length: buttons over 1.6× the English length are shortened, and phase names must fit a chip at 360 px. Run a separate phrases reviewer per script family that checks that every phrase is polite and right for showing to a stranger.
+- [ ] <strong>Step 2:</strong> <code>npm test</code> and <code>python3 -m pytest -q backend/tests/test_phrases.py</code> → PASS. <strong>Step 3: Commit</strong> <code>fix(i18n): phase 2 translation review</code></p>
+<h3 id="task-41-browser-end-to-end-mixed-versions-and-review-passes">Task 41: Browser end-to-end, mixed versions and review passes</h3>
+<ul>
+<li>[ ] <strong>Step 1:</strong> With the <code>verify</code> skill, run locally with <code>tp_journey=1</code> and walk through this list:</li>
+<li>Onboarding → the traveller-type badge.</li>
+<li>Explore search → save the plan → "Open trip" → the trip in Planning with completeness.</li>
+<li>Set the dates to tomorrow → Ready, then prep tick-through → confetti and the <code>trip_ready</code> badge.</li>
+<li>Save the offline pack, then, in Chrome DevTools offline mode, reload <code>/trips/&lt;id&gt;/offline</code> → the pack renders while signed in.</li>
+<li>Log an expense offline → back online → one row.</li>
+<li>Set the dates to cover today → Today → check-in (stamp, streak) → "I went here".</li>
+<li>Set the dates to the past → Recap → Finish (countries reveal, XP).</li>
+<li>Sign out → IndexedDB is empty.</li>
+</ul>
+<p>Take screenshots in light, dark and <code>de</code>/<code>bn</code> at 375 px and 1280 px.
+- [ ] <strong>Step 2:</strong> Mixed versions:
+  - the SPA from <code>origin/main</code> against the new backend: plans list, load, update, delete and share all work, including a Dreaming trip;
+  - the new SPA against the <code>origin/main</code> backend: the classic shell, no <code>/sw.js</code> registration, no console errors.
+- [ ] <strong>Step 3:</strong> Run three review passes on the combined diff: spec compliance (this plan + spec §3/§3a/§5a/§9), correctness and security (<code>/code-review high</code>, focused on the Review Focus list, ownership checks on every trip route, and IndexedDB clearing), and UX/visual (the screenshots). Fix what they find, then re-run every suite.
+- [ ] <strong>Step 4:</strong> Write the deferred minors to <code>docs/superpowers/plans/2026-11-12-phase2-followups.md</code>.</p>
+<h3 id="task-42-switch-on-the-journey-ui">Task 42: Switch on the journey UI</h3>
+<p><strong>Files:</strong>
+- Modify: <code>backend/app/core/config.py</code> (<code>journey_ui_enabled: bool = True</code>), <code>backend/tests/test_client_config.py</code> (the default is now <code>True</code>), <code>docs/Configuration.md</code> (the default), <code>docs/Changelog.md</code>
+- [ ] <strong>Step 1:</strong> Change the default, and update the test to expect <code>features.journey is True</code> by default and <code>False</code> with <code>JOURNEY_UI_ENABLED=false</code>.
+- [ ] <strong>Step 2: Run</strong> the backend suite and <code>mkdocs build --strict</code> → PASS.
+- [ ] <strong>Step 3: Commit</strong> <code>feat(journey): turn on the journey UI by default</code>. The owner can still turn it off with <code>JOURNEY_UI_ENABLED=false</code> in <code>app.env</code>, with no rebuild.</p>
+<h2 id="execution-waves">Execution waves</h2>
+<p>Each wave starts when the previous one has merged to main. Inside a wave every task runs in its own worktree in parallel, because the tasks own disjoint files (see the hotspot table).</p>
+<table>
+<thead>
+<tr>
+<th>Wave</th>
+<th>Tasks (parallel)</th>
+<th>Count</th>
+<th>Gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0 — seams and contract</strong></td>
+<td>1 backend seams · 2 schema + migration · 3 telemetry · 4 frontend seams · 5 contract doc · 6 phase/geo helpers + golden cases</td>
+<td>6</td>
+<td>Task 1's last step rebases on Task 2. When wave 0 merges, the contract is frozen and the iOS/Android teams start against <code>docs/Trips-API.md</code></td>
+</tr>
+<tr>
+<td><strong>1 — modules</strong></td>
+<td>backend: 7 trips core · 8 prep · 9 expenses · 10 journal + places · 11 offline pack · 12 phrases · 13 recap · 14 check-in · 15 game rules + hooks; frontend: 16 hub · 17 trip screen · 18 completeness · 19 prep UI · 20 Today · 21 offline infra · 22 pack UI · 23 expenses UI · 24 journal UI · 25 recap UI · 26 onboarding · 27 coach marks · 28 Play/You · 29 Explore + tabs; follow-ups: 30 dark contrast · 31 naming · 32 feedback pill · 33 lazy English</td>
+<td>27</td>
+<td>Backend tasks need only wave 0, through the stubs. Tasks 11 and 13 import Task 9/10 helpers inside functions, so their merge order doesn't matter. Frontend tasks need only Task 4, with the API mocked. Tasks 17, 20, 22, 23 and 24 import Task 21's offline modules: merge 21 first inside the wave, or guard the imports per the task</td>
+</tr>
+<tr>
+<td><strong>2 — integration</strong></td>
+<td>34 Results · 35 Chat · 36 Near me · 37 backend joins</td>
+<td>4</td>
+<td>34 needs 18; 35 needs 34's <code>tripSnapshot.js</code> (start it once 34's util is pushed, or merge 34 first); 37 needs 8 and 11</td>
+</tr>
+<tr>
+<td><strong>3 — finish</strong></td>
+<td>38 teal sweep → then 39 docs ∥ 40 translation review (one agent per language) → 41 E2E + reviews → 42 switch on</td>
+<td>5 (+6 reviewers)</td>
+<td>38 runs alone first (it touches 25 files). 42 merges only after 41 is green</td>
+</tr>
+</tbody>
+</table>
+<p>Merge cadence: a PR per task, or one per wave. Each PR is green and deployable on its own. The wave 1 backend routes have no UI pointing at them, the UI is invisible until <code>features.journey</code> is on, and the service worker registers only when a user saves a pack, which they can't do until the journey UI is visible. Task 42 is a one-line config change that the owner can revert in <code>app.env</code>.</p>
+<h2 id="deferred-later-phases">Deferred (later phases)</h2>
+<ul>
+<li>Scratch-map <em>visual</em> (country polygons) and the head-to-head quizzes: Phase 5. Phase 2 shows the visited countries as a list in Play.</li>
+<li>Saving or remixing ideas from the community feed (the Dreaming touch): Phase 5.</li>
+<li>Share cards for the recap and status (1080×1920 / 1200×630 images, OG pages): Phase 4. Phase 2 shares a link and text.</li>
+<li>Price-alert gamified touches: Phase 3.</li>
+<li>Push notifications for trip phases (T-30 visa, T-7 packing, morning brief): Phase 6.</li>
+<li>Region badges for UNESCO sites seen and cuisines tried, which need data we don't have.</li>
+<li>Local-script hotel addresses (shown only when a source provides them).</li>
+<li>Android and iOS clients of this contract: Phases 8 and 7.</li>
+</ul>
+<h2 id="owner-question-rulings-main-controller-2026-11-12">Owner-question rulings (main controller, 2026-11-12)</h2>
+<p>The owner delegated these decisions. They bind the tasks.</p>
+<ol>
+<li><strong>Onboarding for existing users:</strong> existing users see the new onboarding once. It can be skipped, and a skip counts as seen.</li>
+<li><strong>Home route:</strong> <code>/</code> shows the Trips hub to a signed-in user who has at least one trip. Everyone else, including signed-out visitors, keeps the Search page. Both remain reachable from the tabs.</li>
+<li><strong>Rollout:</strong> the final task switches the journey on for everyone. The product is already in a limited test with selected users.</li>
+<li><strong>Native review:</strong> a native-speaker review of the hi, bn and zh UI text and of the phrase list goes on the follow-ups list for the owner. Ship the model-reviewed text.</li>
+<li><strong>Hotel address:</strong> show the hotel name plus a "take me to" phrase in the local language. A local-script address is deferred until the data exists.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
