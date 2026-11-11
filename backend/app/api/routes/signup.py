@@ -286,7 +286,11 @@ def verify_email(req: VerifyRequest):
         if user["is_active"]:
             session = issue_session(user, req.client, req.device_name)
     else:
-        if not users_db.mark_email_verified(user["id"], res["email"]):
+        # an OAuth sign-up with an untrusted provider email has no email until
+        # this link proves it (and only if nobody else holds it by now)
+        if not users_db.mark_email_verified(
+            user["id"], res["email"]
+        ) and not users_db.claim_verified_email(user["id"], res["email"]):
             raise ApiError(409, "email_changed", "This link was for another email.")
         game = hooks.on_email_verified(user["id"])
     return {"status": "verified", "session": session, "game": game}

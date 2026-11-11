@@ -551,21 +551,27 @@ async def complete(req: CompleteRequest, background: BackgroundTasks):
         raise _signup_token_invalid() from None
 
     delta = None
-    email = user.get("email")
-    if email and user.get("email_verified"):
+    claimed = pending.get("email")
+    if user.get("email") and user.get("email_verified"):
         delta = hooks.on_email_verified(user["id"])
-    elif email:
-        from ...services.account_email import send_account_email
+    elif claimed:
+        # the unconfirmed provider address is not on the account: its verify
+        # link carries it (account_tokens.email) and sets it when redeemed
+        from ...services import account_email
+        from .signup import address_allowed
 
-        token = flow.issue_verify_token(user["id"], email)
-        background.add_task(
-            send_account_email,
-            "verify",
-            email,
-            link=public_url(f"/verify?token={token}"),
-            locale=user.get("locale"),
-            username=user["username"],
-        )
+        if account_email.email_delivery_available() and address_allowed(
+            claimed, "verify"
+        ):
+            token = flow.issue_verify_token(user["id"], claimed)
+            background.add_task(
+                account_email.send_account_email,
+                "verify",
+                claimed,
+                link=public_url(f"/verify?token={token}"),
+                locale=user.get("locale"),
+                username=user["username"],
+            )
     if pending.get("picture_url"):
         from ...services.avatar import import_provider_photo
 

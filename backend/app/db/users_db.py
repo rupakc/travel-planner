@@ -377,6 +377,30 @@ def mark_email_verified(user_id: str, email: str) -> bool:
     return cur.rowcount > 0
 
 
+def claim_verified_email(user_id: str, email: str) -> bool:
+    """Set a proven ``email`` on an account that has none (an OAuth sign-up
+    whose provider email was untrusted), marked verified. False when the
+    account already has an email or another account holds this one."""
+    email = email.strip().lower()
+    now = _now_iso()
+    try:
+        with get_connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            if conn.execute(
+                "SELECT 1 FROM users WHERE lower(email) = ?", (email,)
+            ).fetchone():
+                return False
+            cur = conn.execute(
+                """UPDATE users SET email = ?, email_verified = 1,
+                       verified_at = COALESCE(verified_at, ?), updated_at = ?
+                   WHERE id = ? AND email IS NULL""",
+                (email, now, now, user_id),
+            )
+    except sqlite3.IntegrityError:
+        return False
+    return cur.rowcount > 0
+
+
 def bump_token_version(user_id: str) -> int:
     with get_connection() as conn:
         conn.execute(
