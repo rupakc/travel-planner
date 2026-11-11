@@ -82,8 +82,8 @@ def test_db_stubs():
 
     assert trip_journal_db.list_entries(1) == []
     assert trip_journal_db.list_places(1) == []
-    assert trip_checkins_db.add(1, "2026-01-01", None, None) is False
-    assert trip_checkins_db.list_days(1) == []
+    # trip_checkins_db is real since Task 14 (see test_trip_checkin.py).
+    assert callable(trip_checkins_db.add) and callable(trip_checkins_db.list_days)
 
 
 def test_settings_defaults():
