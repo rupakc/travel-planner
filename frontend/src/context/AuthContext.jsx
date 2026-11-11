@@ -56,7 +56,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!token) { setLoading(false); return }
-    loadSession(token).finally(() => setLoading(false))
+    // Only the latest attempt ends loading: StrictMode runs this twice, and the
+    // superseded first run must not report "loaded, nobody signed in".
+    const pending = loadSession(token)
+    const mine = epoch.current
+    pending.finally(() => { if (epoch.current === mine) setLoading(false) })
   }, []) // only on mount
 
   // A request answered 401 session_revoked (password reset, "sign out
@@ -77,6 +81,7 @@ export function AuthProvider({ children }) {
     dropStoredToken(current)
     setToken(null)
     setUser(null)
+    setLoading(false)
     setSignOutReason('session_revoked')
   }), [loadSession, setToken])
 
@@ -88,6 +93,7 @@ export function AuthProvider({ children }) {
     writeStoredToken(accessToken)
     setToken(accessToken)
     setUser(session.user)
+    setLoading(false)
     setSignOutReason(null)
     if (!session.user?.requires_password_change) {
       try {
@@ -138,6 +144,7 @@ export function AuthProvider({ children }) {
     writeStoredToken(null)
     setToken(null)
     setUser(null)
+    setLoading(false)
   }
 
   const refreshPreferences = useCallback(() => {

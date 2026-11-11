@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { AuthProvider, useAuth } from './AuthContext'
 
@@ -127,6 +127,28 @@ describe('session_revoked', () => {
     expect(auth.token).toBe('fresh')
     expect(auth.user.username).toBe('bob')
     expect(auth.signOutReason).toBeNull()
+    act(() => root.unmount())
+  })
+  it('under StrictMode a stored valid token stays signed in (the superseded run does not end loading)', async () => {
+    localStorage.setItem('tp_token', 'good')
+    const states = []
+    function Watch() { const a = useAuth(); states.push([a.loading, !!a.user]); return null }
+    // The first (superseded) /auth/me answers at once, the second one later — as on a real network.
+    let meCalls = 0
+    fetch.mockImplementation(async (url) => {
+      if (url !== '/api/auth/me') return { ok: true, status: 200, json: async () => ({}) }
+      meCalls += 1
+      if (meCalls > 1) await new Promise((r) => setTimeout(r, 20))
+      return { ok: true, status: 200, json: async () => ({ username: 'jane' }) }
+    })
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<StrictMode><AuthProvider><Probe /><Watch /></AuthProvider></StrictMode>) })
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    expect(meCalls).toBe(2)
+    expect(auth.user?.username).toBe('jane')
+    expect(auth.loading).toBe(false)
+    // never "loaded and signed out" on the way (RequireAuth would redirect to /login)
+    expect(states.some(([loading, signedIn]) => !loading && !signedIn)).toBe(false)
     act(() => root.unmount())
   })
 })
