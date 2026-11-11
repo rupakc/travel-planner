@@ -115,7 +115,7 @@ describe('DataSection', () => {
     await click(tid('account.data.confirm'))
     expect(auth.logout).toHaveBeenCalledTimes(1)
     expect(where.pathname).toBe('/login')
-    expect(where.state).toEqual({ accountDeleted: true })
+    expect(where.state).toEqual({ notice: 'Your account was deleted.', notice_code: 'account_deleted' })
     expect(emit).toHaveBeenCalledWith('account_action', { action: 'delete' })
   })
 })

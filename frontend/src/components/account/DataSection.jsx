@@ -68,7 +68,7 @@ export default function DataSection({ account }) {
     try {
       await deleteAccount(token, hasPassword ? { password: value } : { confirm_username: value.trim() })
       emit('account_action', { action: 'delete' })
-      navigate('/login', { replace: true, state: { accountDeleted: true } })
+      navigate('/login', { replace: true, state: { notice: t('delete.deletedNotice'), notice_code: 'account_deleted' } })
       logout()
     } catch (err) {
       setDeleteError(errorText(tAll, err))
