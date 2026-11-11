@@ -2,7 +2,7 @@ import asyncio
 import importlib
 
 import pytest
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 from app import main as app_main
@@ -20,13 +20,19 @@ USER_KEYS = {
 
 
 def test_api_error_envelope():
-    @app_main.app.get("/api/_seam_err")
-    def boom():
-        raise ApiError(409, "username_taken", "x", bucket="s")
+    app = FastAPI()
+    app.add_exception_handler(ApiError, app_main._api_error_handler)
 
-    r = TestClient(app_main.app).get("/api/_seam_err")
+    @app.get("/boom")
+    def boom():
+        raise ApiError(
+            409, "username_taken", "x", headers={"Retry-After": "5"}, bucket="s"
+        )
+
+    r = TestClient(app).get("/boom")
     assert r.status_code == 409
     assert r.json() == {"detail": "x", "error_code": "username_taken", "bucket": "s"}
+    assert r.headers["retry-after"] == "5"
 
 
 def test_public_url_prefers_public_base_url(monkeypatch):
@@ -56,6 +62,13 @@ def test_user_payload_shape(monkeypatch, tmp_path):
         user_payload(user)["avatar_url"] == "https://a.example/api/avatars/u1.webp?v=3"
     )
     p2 = user_payload({**user, "password_hash": "h", "signup_method": "password"})
+    assert user_payload({**user, "password_hash": None})["has_password"] is False
+    assert (
+        user_payload({k: v for k, v in user.items() if k != "password_hash"})[
+            "has_password"
+        ]
+        is False
+    )
     assert p2["has_password"] is True and p2["account_verified"] is False
 
 
@@ -107,3 +120,49 @@ def test_account_maintenance_loop_survives_errors():
 
     asyncio.run(run())
     assert len(calls) >= 2
+
+
+def test_phase1_setting_defaults():
+    from app.core.config import Settings
+
+    expected = {
+        "signup_mode": "open", "email_log_links": False,
+        "account_token_ttl_minutes": 30, "pending_purge_days": 7,
+        "refresh_token_days": 60, "refresh_family_max_days": 365,
+        "mobile_access_token_minutes": 60,
+        "google_client_id": "", "google_client_secret": "",
+        "google_native_client_ids": [], "github_client_id": "",
+        "github_client_secret": "", "facebook_app_id": "",
+        "facebook_app_secret": "", "facebook_graph_version": "v24.0",
+        "facebook_email_trusted": False, "apple_services_id": "",
+        "apple_team_id": "", "apple_key_id": "", "apple_private_key": "",
+        "apple_native_client_ids": [],
+        "oauth_mobile_redirects": ["voyager://auth/callback"],
+        "ai_daily_quota_enabled": True, "ai_daily_quota_search": 20,
+        "ai_daily_quota_chat": 100, "ai_daily_quota_compare": 40,
+        "ai_daily_quota_discover": 20, "ai_daily_quota_light_ai": 200,
+        "ai_daily_quota_import": 20, "game_enabled": True, "game_rules_path": "",
+        "rate_limit_auth_email": 10, "rate_limit_email_address": 3,
+        "rate_limit_signup": 5, "rate_limit_oauth": 30,
+        "rate_limit_refresh": 60, "rate_limit_account": 30,
+    }  # fmt: skip
+    for name, default in expected.items():
+        assert Settings.model_fields[name].default == default, name
+
+
+def test_lifespan_starts_and_cancels_maintenance(monkeypatch):
+    started = []
+    cancelled = []
+
+    async def fake(*a, **k):
+        started.append(1)
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            cancelled.append(1)
+            raise
+
+    monkeypatch.setattr(app_main, "account_maintenance", fake)
+    with TestClient(app_main.app):
+        assert started == [1]
+    assert cancelled == [1]

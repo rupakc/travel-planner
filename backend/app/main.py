@@ -73,6 +73,7 @@ from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
 from .services import fare_watch, price_watch, push
+from .services.account_maintenance import account_maintenance
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 from .telemetry.maintenance import telemetry_maintenance
@@ -100,11 +101,13 @@ async def lifespan(app: FastAPI):
     create_plans_table()
     create_preferences_table()
     create_recent_searches_table()
+    from .db.accounts_schema import create_account_tables
     from .db.feedback_db import create_feedback_table
     from .db.taste_db import create_taste_table
     from .db.users_db import create_users_table, seed_admin
 
     create_users_table()
+    create_account_tables()
     seed_admin()
     create_feedback_table()
     create_taste_table()
@@ -140,6 +143,7 @@ async def lifespan(app: FastAPI):
         if telemetry_db.store_available()
         else None
     )
+    account_task = asyncio.create_task(account_maintenance())
     if vm_mode:
         backup_task = vm_backup.start(
             _settings.backup_bucket,
@@ -154,6 +158,11 @@ async def lifespan(app: FastAPI):
             )
         )
     yield
+    account_task.cancel()
+    try:
+        await account_task
+    except asyncio.CancelledError:
+        pass
     if telemetry_task is not None:
         telemetry_task.cancel()
         try:

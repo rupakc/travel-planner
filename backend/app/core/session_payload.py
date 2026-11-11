@@ -27,7 +27,7 @@ def user_payload(user: dict) -> dict:
         "requires_password_change": bool(user.get("requires_password_change")),
         "account_verified": signup_method == "admin"
         or user.get("verified_at") is not None,
-        "has_password": user.get("password_hash") != "!",
+        "has_password": user.get("password_hash") not in (None, "", "!"),
         "signup_method": signup_method,
         "avatar_url": _avatar_url(user),
     }
