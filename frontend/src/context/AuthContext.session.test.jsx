@@ -36,7 +36,7 @@ describe('session_revoked', () => {
     await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
     await act(async () => { await auth.applySession({ access_token: 'tok', user: { username: 'jane' } }) })
     expect(auth.signOutReason).toBeNull()
-    act(() => reportSessionRevoked())
+    act(() => reportSessionRevoked('tok'))
     expect(auth.user).toBeNull()
     expect(auth.token).toBeNull()
     expect(localStorage.getItem('tp_token')).toBeNull()
@@ -62,6 +62,71 @@ describe('session_revoked', () => {
     await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
     expect(localStorage.getItem('tp_token')).toBeNull()
     expect(auth.signOutReason).toBe('session_revoked')
+    act(() => root.unmount())
+  })
+  it('ignores a late answer for an older token', async () => {
+    const { reportSessionRevoked } = await import('../services/sessionRevoked')
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    await act(async () => { await auth.applySession({ access_token: 'new', user: { username: 'jane' } }) })
+    act(() => reportSessionRevoked('old'))
+    expect(auth.token).toBe('new')
+    expect(auth.user.username).toBe('jane')
+    expect(localStorage.getItem('tp_token')).toBe('new')
+    expect(auth.signOutReason).toBeNull()
+    act(() => root.unmount())
+  })
+
+  it('signs out when its own token is revoked even though another tab already cleared storage', async () => {
+    const { reportSessionRevoked } = await import('../services/sessionRevoked')
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    await act(async () => { await auth.applySession({ access_token: 'tokA', user: { username: 'jane' } }) })
+    localStorage.removeItem('tp_token') // tab B ran "sign out everywhere"
+    act(() => reportSessionRevoked('tokA'))
+    expect(auth.user).toBeNull()
+    expect(auth.token).toBeNull()
+    expect(auth.signOutReason).toBe('session_revoked')
+    act(() => root.unmount())
+  })
+
+  it("adopts the fresh token another tab stored, and never deletes it", async () => {
+    const { reportSessionRevoked } = await import('../services/sessionRevoked')
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    await act(async () => { await auth.applySession({ access_token: 'tokA', user: { username: 'jane' } }) })
+    localStorage.setItem('tp_token', 'tokB') // tab B reset the password
+    fetch.mockImplementation(async (url, init) => {
+      if (url === '/api/auth/me' && init.headers.Authorization === 'Bearer tokB') {
+        return { ok: true, status: 200, json: async () => ({ username: 'jane', display_name: 'Jane B' }) }
+      }
+      return { ok: true, status: 200, json: async () => ({}) }
+    })
+    await act(async () => { reportSessionRevoked('tokA') })
+    expect(localStorage.getItem('tp_token')).toBe('tokB')
+    expect(auth.token).toBe('tokB')
+    expect(auth.user.display_name).toBe('Jane B')
+    expect(auth.signOutReason).toBeNull()
+    act(() => root.unmount())
+  })
+
+  it('a stale mount-time /auth/me does not undo a newer session', async () => {
+    localStorage.setItem('tp_token', 'dead')
+    let rejectMe
+    fetch.mockImplementation((url, init) => {
+      if (url === '/api/auth/me' && init.headers.Authorization === 'Bearer dead') {
+        return new Promise((resolve) => { rejectMe = () => resolve({ ok: false, status: 401, json: async () => ({ error_code: 'session_revoked' }) }) })
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) })
+    })
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    await act(async () => { await auth.applySession({ access_token: 'fresh', user: { username: 'bob' } }) })
+    await act(async () => { rejectMe() })
+    expect(localStorage.getItem('tp_token')).toBe('fresh')
+    expect(auth.token).toBe('fresh')
+    expect(auth.user.username).toBe('bob')
+    expect(auth.signOutReason).toBeNull()
     act(() => root.unmount())
   })
 })

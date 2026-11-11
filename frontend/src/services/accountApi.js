@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { watchAxios } from './sessionRevoked'
 import { localeField } from './api'
 import { unwrap, toApiError } from './apiError'
 
-const http = axios.create({ baseURL: '/api', headers: { 'Content-Type': 'application/json' } })
+const http = watchAxios(axios.create({ baseURL: '/api', headers: { 'Content-Type': 'application/json' } }))
 const bearer = (token) => ({ headers: { Authorization: `Bearer ${token}` } })
 
 export const getAccount = (token) => unwrap(http.get('/account', bearer(token)))

@@ -6,10 +6,15 @@ import { AuthProvider } from './context/AuthContext'
 import App from './App.jsx'
 import { ThemeProvider } from './theme/ThemeContext'
 import { initI18n } from './i18n'
+import { watchFetch } from './services/sessionRevoked'
 import './index.css'
 import 'leaflet/dist/leaflet.css'
 
 const queryClient = new QueryClient()
+
+// Every main-thread fetch reports a 401 session_revoked to AuthContext (the
+// axios clients and the SSE workers report on their own).
+watchFetch()
 
 // English is bundled, so the first render is never blank; another language
 // re-renders the tree once its chunk arrives.

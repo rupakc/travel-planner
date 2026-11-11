@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { watchAxios } from './sessionRevoked'
 import { unwrap } from './apiError'
 
-const http = axios.create({ baseURL: '/api', headers: { 'Content-Type': 'application/json' } })
+const http = watchAxios(axios.create({ baseURL: '/api', headers: { 'Content-Type': 'application/json' } }))
 const bearer = (token) => ({ headers: { Authorization: `Bearer ${token}` } })
 
 // A 404 here means the backend has no invites yet: the Invites tab stays hidden.

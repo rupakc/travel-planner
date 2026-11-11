@@ -29,18 +29,11 @@ describe('errorText', () => {
   })
 })
 
-describe('session_revoked', () => {
-  it('notifies onSessionRevoked listeners for a 401 session_revoked only', async () => {
-    const { onSessionRevoked } = await import('./sessionRevoked')
-    let calls = 0
-    const off = onSessionRevoked(() => { calls += 1 })
-    toApiError(axiosErr(401, { detail: 'Signed out', error_code: 'session_revoked' }))
-    expect(calls).toBe(1)
-    toApiError(axiosErr(401, { detail: 'Invalid or expired token' }))
-    toApiError(axiosErr(403, { detail: 'x', error_code: 'session_revoked' }))
-    expect(calls).toBe(1)
-    off()
-    toApiError(axiosErr(401, { detail: 'Signed out', error_code: 'session_revoked' }))
-    expect(calls).toBe(1)
+describe('errorText with the real catalogue', () => {
+  it('falls back to detail for an unknown code instead of showing the code', async () => {
+    const { default: i18n } = await import('../i18n')
+    const t = i18n.getFixedT('en')
+    expect(errorText(t, { code: 'ai_limit_xyz', detail: 'AI limit reached' })).toBe('AI limit reached')
+    expect(errorText(t, { code: 'email_unverified', detail: 'x' })).toBe('Confirm your email to use the AI planner.')
   })
 })
