@@ -2,9 +2,9 @@
 
 > Frozen 2026-11-11. Changes are additive only; each change is listed in a Changelog section at the bottom.
 
-This is the Phase 1 accounts, sessions, account-management, game and admin-invite contract that the web, iOS and Android clients build against. Every path below is relative to the `/api` prefix: `POST /auth/login` means `POST https://<base>/api/auth/login`.
+## API contract (frozen at the end of wave 0)
 
-## Contract
+All paths are under `/api`. JSON in and out. Unless noted, auth means `Authorization: Bearer <access_token>`.
 
 ### Conventions
 
@@ -148,8 +148,6 @@ Clients translate badge and rule names by id: `game:badges.<id>.name` / `.desc`,
 | `DELETE /admin/invites/<id>` | — | `204` (revokes it) | `404` |
 
 `GET /admin/users` rows also gain `signup_method`, `account_status`, `email_verified`, `display_name` (no tokens and no hashes).
-
----
 
 ## Mobile flow
 
