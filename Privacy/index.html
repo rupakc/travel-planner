@@ -1513,6 +1513,50 @@
 <td><code>error</code></td>
 <td><code>kind</code> (js, promise or api), <code>source</code>, <code>status</code></td>
 </tr>
+<tr>
+<td><code>auth_start</code></td>
+<td><code>method</code> (password, apple, google, facebook or github), <code>mode</code> (signin, signup or link)</td>
+</tr>
+<tr>
+<td><code>auth_result</code></td>
+<td><code>method</code>, <code>mode</code>, <code>result</code> (ok, error, cancelled, coming_soon, needs_username or pending), <code>code</code></td>
+</tr>
+<tr>
+<td><code>signup_step</code></td>
+<td><code>step</code> (form, check_email, username or done)</td>
+</tr>
+<tr>
+<td><code>email_verify</code></td>
+<td><code>result</code> (ok, expired, invalid, used, resent or email_changed)</td>
+</tr>
+<tr>
+<td><code>password_reset</code></td>
+<td><code>step</code> (request or confirm), <code>result</code> (ok, error, expired, invalid or used)</td>
+</tr>
+<tr>
+<td><code>account_action</code></td>
+<td><code>action</code> (avatar_upload, avatar_remove, name_change, settings_change, export, delete, link, unlink, signout_all, email_verify_request or change_password)</td>
+</tr>
+<tr>
+<td><code>quota_block</code></td>
+<td><code>bucket</code> (search, chat, compare, discover, light_ai or import), <code>reason</code> (daily_quota or unverified)</td>
+</tr>
+<tr>
+<td><code>game_award</code></td>
+<td><code>rule</code>, <code>points</code></td>
+</tr>
+<tr>
+<td><code>badge_earned</code></td>
+<td><code>badge</code></td>
+</tr>
+<tr>
+<td><code>level_up</code></td>
+<td><code>level</code></td>
+</tr>
+<tr>
+<td><code>game_view</code></td>
+<td><code>surface</code> (account, nav or celebration)</td>
+</tr>
 </tbody>
 </table>
 <p><code>tid</code> is the stable identifier of a button or control (for example <code>nav.search</code>), never its visible text.</p>

@@ -1124,6 +1124,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accounts-and-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounts and game
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#settings-consent-performance-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1722,6 +1733,86 @@
 <td><code>feature</code> (token), <code>page</code> (token)</td>
 <td>yes</td>
 <td>Mirror of every <code>track(feature, page)</code> call in <code>utils/analytics.js</code>; the metadata is not sent.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="accounts-and-game">Accounts and game</h3>
+<p>Emitted by the Phase 1 account and game features; accepted by the server ahead of the clients. <code>code</code> is a short error token, never a message or an e-mail address.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auth_start</code></td>
+<td><code>method</code> (<code>password</code>, <code>apple</code>, <code>google</code>, <code>facebook</code>, <code>github</code>), <code>mode</code> (<code>signin</code>, <code>signup</code>, <code>link</code>)</td>
+<td>not yet</td>
+<td>A sign-in, sign-up or account-link attempt began.</td>
+</tr>
+<tr>
+<td><code>auth_result</code></td>
+<td><code>method</code>, <code>mode</code>, <code>result</code> (<code>ok</code>, <code>error</code>, <code>cancelled</code>, <code>coming_soon</code>, <code>needs_username</code>, <code>pending</code>), <code>code</code> (token)</td>
+<td>not yet</td>
+<td>How the attempt ended; <code>code</code> is the error code.</td>
+</tr>
+<tr>
+<td><code>signup_step</code></td>
+<td><code>step</code> (<code>form</code>, <code>check_email</code>, <code>username</code>, <code>done</code>)</td>
+<td>not yet</td>
+<td>Sign-up progress.</td>
+</tr>
+<tr>
+<td><code>email_verify</code></td>
+<td><code>result</code> (<code>ok</code>, <code>expired</code>, <code>invalid</code>, <code>used</code>, <code>resent</code>, <code>email_changed</code>)</td>
+<td>not yet</td>
+<td>E-mail verification outcome.</td>
+</tr>
+<tr>
+<td><code>password_reset</code></td>
+<td><code>step</code> (<code>request</code>, <code>confirm</code>), <code>result</code> (<code>ok</code>, <code>error</code>, <code>expired</code>, <code>invalid</code>, <code>used</code>)</td>
+<td>not yet</td>
+<td>Password reset progress.</td>
+</tr>
+<tr>
+<td><code>account_action</code></td>
+<td><code>action</code> (<code>avatar_upload</code>, <code>avatar_remove</code>, <code>name_change</code>, <code>settings_change</code>, <code>export</code>, <code>delete</code>, <code>link</code>, <code>unlink</code>, <code>signout_all</code>, <code>email_verify_request</code>, <code>change_password</code>)</td>
+<td>not yet</td>
+<td>An account management action.</td>
+</tr>
+<tr>
+<td><code>quota_block</code></td>
+<td><code>bucket</code> (<code>search</code>, <code>chat</code>, <code>compare</code>, <code>discover</code>, <code>light_ai</code>, <code>import</code>), <code>reason</code> (<code>daily_quota</code>, <code>unverified</code>)</td>
+<td>not yet</td>
+<td>An AI request was refused by the daily quota or because the e-mail is unverified.</td>
+</tr>
+<tr>
+<td><code>game_award</code></td>
+<td><code>rule</code> (token), <code>points</code> (int)</td>
+<td>not yet</td>
+<td>Points were awarded by a rule.</td>
+</tr>
+<tr>
+<td><code>badge_earned</code></td>
+<td><code>badge</code> (token)</td>
+<td>not yet</td>
+<td>A badge was earned.</td>
+</tr>
+<tr>
+<td><code>level_up</code></td>
+<td><code>level</code> (int)</td>
+<td>not yet</td>
+<td>The user reached a new level.</td>
+</tr>
+<tr>
+<td><code>game_view</code></td>
+<td><code>surface</code> (<code>account</code>, <code>nav</code>, <code>celebration</code>)</td>
+<td>not yet</td>
+<td>A game surface was shown.</td>
 </tr>
 </tbody>
 </table>
