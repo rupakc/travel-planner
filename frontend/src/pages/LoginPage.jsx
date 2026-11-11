@@ -81,7 +81,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl shadow-lg mb-4">
             <Plane size={32} className="text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-slate-800 tracking-tight">Travel Planner</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-800 tracking-tight">Voyager</h1>
           <p className="text-slate-500 mt-1">{t('login.tagline')}</p>
         </div>
 
