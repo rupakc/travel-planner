@@ -92,7 +92,7 @@ export default function GameCelebration() {
         emit('level_up', { level: delta.level_up.to })
         push({ kind: 'level', to: delta.level_up.to })
       }
-    })
+    }, { replay: true })
     return off
   }, [hidden, push])
 
