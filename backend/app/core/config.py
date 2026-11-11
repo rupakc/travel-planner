@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -96,6 +97,13 @@ class Settings(BaseSettings):
     rate_limit_login: int = 10
     rate_limit_login_failures: int = 10
     rate_limit_login_failures_global: int = 200
+    # Phase 1 accounts: email-bound buckets and the new auth/account routes
+    rate_limit_auth_email: int = 10
+    rate_limit_email_address: int = 3
+    rate_limit_signup: int = 5
+    rate_limit_oauth: int = 30
+    rate_limit_refresh: int = 60
+    rate_limit_account: int = 30
     # false = every AI route requires sign-in (production); true keeps the
     # anonymous /search, /discover and single-agent routes (local dev)
     allow_anonymous_ai: bool = True
@@ -133,6 +141,41 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = ""
     admin_email: str = ""
+
+    # --- Phase 1: accounts, OAuth, daily AI quota, game ---
+    signup_mode: Literal["open", "invite"] = "open"
+    email_log_links: bool = False  # dev: log verification/reset links
+    account_token_ttl_minutes: int = 30
+    pending_purge_days: int = 7
+    refresh_token_days: int = 60
+    refresh_family_max_days: int = 365
+    mobile_access_token_minutes: int = 60
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_native_client_ids: list[str] = []
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    facebook_app_id: str = ""
+    facebook_app_secret: str = ""
+    facebook_graph_version: str = "v24.0"
+    facebook_email_trusted: bool = False
+    apple_services_id: str = ""
+    apple_team_id: str = ""
+    apple_key_id: str = ""
+    apple_private_key: str = ""
+    apple_native_client_ids: list[str] = []
+    # "<base>/auth/callback" is always allowed in addition
+    oauth_mobile_redirects: list[str] = ["voyager://auth/callback"]
+    # Daily AI quota per signed-in user (0 = unlimited)
+    ai_daily_quota_enabled: bool = True
+    ai_daily_quota_search: int = 20
+    ai_daily_quota_chat: int = 100
+    ai_daily_quota_compare: int = 40
+    ai_daily_quota_discover: int = 20
+    ai_daily_quota_light_ai: int = 200
+    ai_daily_quota_import: int = 20
+    game_enabled: bool = True
+    game_rules_path: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

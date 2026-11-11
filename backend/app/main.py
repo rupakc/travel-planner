@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .api.routes import (
     activities,
@@ -19,10 +20,14 @@ from .api.routes import (
     tips,
     visa,
 )
+from .api.routes.account import router as account_router
+from .api.routes.account_data import router as account_data_router
 from .api.routes.admin import router as admin_router
+from .api.routes.admin_invites import router as admin_invites_router
 from .api.routes.airports import router as airports_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
+from .api.routes.avatars import router as avatars_router
 from .api.routes.chat import router as chat_router
 from .api.routes.client_config import router as client_config_router
 from .api.routes.compare import router as compare_router
@@ -31,23 +36,30 @@ from .api.routes.discover import router as discover_router
 from .api.routes.events import router as events_router
 from .api.routes.fare_watches import router as fare_watches_router
 from .api.routes.feedback import router as feedback_router
+from .api.routes.game import router as game_router
 from .api.routes.layover import router as layover_router
 from .api.routes.link_import import router as link_import_router
 from .api.routes.live_check import router as live_check_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.nearby import router as nearby_router
 from .api.routes.notifications import router as notifications_router
+from .api.routes.oauth import router as oauth_router
 from .api.routes.plans import router as plans_router
 from .api.routes.preferences import router as preferences_router
 from .api.routes.price_watches import router as price_watches_router
+from .api.routes.quota import router as quota_router
 from .api.routes.recent_searches import router as recent_searches_router
+from .api.routes.sessions import router as sessions_router
+from .api.routes.signup import router as signup_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.telemetry import router as telemetry_router
 from .api.routes.walking_tours import router as walking_tours_router
 from .core import sse as _sse
+from .core.ai_quota import daily_quota
 from .core.body_limit import BodySizeLimit
 from .core.config import settings as _settings
+from .core.errors import ApiError
 from .core.logging_config import configure_logging
 from .core.rate_limit import rate_limit, require_ai_access
 from .db import vm_backup
@@ -61,6 +73,7 @@ from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
 from .services import fare_watch, price_watch, push
+from .services.account_maintenance import account_maintenance
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
 from .telemetry.maintenance import telemetry_maintenance
@@ -88,11 +101,13 @@ async def lifespan(app: FastAPI):
     create_plans_table()
     create_preferences_table()
     create_recent_searches_table()
+    from .db.accounts_schema import create_account_tables
     from .db.feedback_db import create_feedback_table
     from .db.taste_db import create_taste_table
     from .db.users_db import create_users_table, seed_admin
 
     create_users_table()
+    create_account_tables()
     seed_admin()
     create_feedback_table()
     create_taste_table()
@@ -128,6 +143,7 @@ async def lifespan(app: FastAPI):
         if telemetry_db.store_available()
         else None
     )
+    account_task = asyncio.create_task(account_maintenance())
     if vm_mode:
         backup_task = vm_backup.start(
             _settings.backup_bucket,
@@ -142,6 +158,11 @@ async def lifespan(app: FastAPI):
             )
         )
     yield
+    account_task.cancel()
+    try:
+        await account_task
+    except asyncio.CancelledError:
+        pass
     if telemetry_task is not None:
         telemetry_task.cancel()
         try:
@@ -191,18 +212,43 @@ app.add_middleware(
 )
 
 
+app.add_middleware(
+    BodySizeLimit,
+    prefix="/api/account/avatar",
+    max_bytes=2 * 1024 * 1024 + 64 * 1024,
+    message="That image is too big — use one under 2 MB.",
+)
+
 app.add_middleware(RequestIdMiddleware)
+
+
+@app.exception_handler(ApiError)
+async def _api_error_handler(request: Request, exc: ApiError) -> JSONResponse:
+    return JSONResponse(exc.body(), status_code=exc.status, headers=exc.headers)
 
 
 def _limited(bucket: str) -> list:
     """Router dependencies for AI routes: sign-in when ALLOW_ANONYMOUS_AI is
     false, then one rate-limit bucket for every route."""
-    return [Depends(require_ai_access), Depends(rate_limit(bucket))]
+    return [
+        Depends(require_ai_access),
+        Depends(rate_limit(bucket)),
+        Depends(daily_quota(bucket)),
+    ]
 
 
 # Every route on the routers marked _limited(...) calls an LLM; see
 # app/core/rate_limit.py and the rate_limit_* settings.
 app.include_router(auth_router, prefix="/api", tags=["auth"])
+app.include_router(signup_router, prefix="/api", tags=["signup"])
+app.include_router(sessions_router, prefix="/api", tags=["sessions"])
+app.include_router(oauth_router, prefix="/api", tags=["oauth"])
+app.include_router(account_router, prefix="/api", tags=["account"])
+app.include_router(avatars_router, prefix="/api", tags=["avatars"])
+app.include_router(account_data_router, prefix="/api", tags=["account_data"])
+app.include_router(game_router, prefix="/api", tags=["game"])
+app.include_router(quota_router, prefix="/api", tags=["quota"])
+app.include_router(admin_invites_router, prefix="/api", tags=["admin_invites"])
 app.include_router(admin_router, prefix="/api", tags=["admin"])
 app.include_router(feedback_router, prefix="/api", tags=["feedback"])
 app.include_router(analytics_router, prefix="/api", tags=["analytics"])
