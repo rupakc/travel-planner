@@ -6,7 +6,8 @@ import re
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from ..core import llm
+from ..core import ai_quota, llm
+from ..core.errors import ApiError
 from ..core.rate_limit import try_consume
 from ..schemas.request import TravelSearchRequest
 from ..utils.geo import lookup_coords
@@ -1828,6 +1829,11 @@ class ChatAgent:
             return None
         wait = try_consume("search", self._rate_limit_key)
         if wait is None:
+            # The window check passed; now the daily allowance (shared with Search).
+            try:
+                self._consume_daily_search()
+            except ApiError as exc:
+                return self._refusal_events(exc.detail)
             return None
         minutes = math.ceil(wait / 60)
         when = "about a minute" if minutes <= 1 else f"about {minutes} minutes"
@@ -1836,6 +1842,24 @@ class ChatAgent:
             f"with the Search page) — try again in {when}, or ask me a quick "
             "question meanwhile."
         )
+        return self._refusal_events(text)
+
+    def _consume_daily_search(self) -> None:
+        """Take one daily ``search`` unit for the caller (key is ``user:<name>``
+        or ``ip:<host>``); raises ApiError when over the allowance."""
+        key = self._rate_limit_key or ""
+        user = None
+        if key.startswith("user:"):
+            from ..db.users_db import get_user_by_username
+
+            user = get_user_by_username(key[len("user:") :])
+            daily_key = f"user:{user['id']}" if user else key
+        else:
+            daily_key = key
+        ai_quota.consume_key("search", daily_key, user)
+
+    @staticmethod
+    def _refusal_events(text: str) -> list[str]:
         return [
             json.dumps({"type": "delta", "text": text}),
             json.dumps({"type": "done"}),

@@ -15,6 +15,8 @@ from fastapi import Depends, HTTPException, Request
 
 from .auth import get_optional_user
 from .config import settings
+from .errors import ApiError
+from .session_payload import user_payload
 
 
 class SlidingWindowLimiter:
@@ -109,6 +111,12 @@ async def require_ai_access(user: dict | None = Depends(get_optional_user)) -> N
             status_code=401,
             detail="Please sign in to use the AI planner.",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    if user and not user_payload(user)["account_verified"]:
+        raise ApiError(
+            403,
+            "email_unverified",
+            "Confirm your email to use the AI planner.",
         )
 
 
