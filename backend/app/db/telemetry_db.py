@@ -147,6 +147,17 @@ def insert_events(rows: list[dict]) -> int:
     return len(rows)
 
 
+def delete_user_events(user_id: str) -> int:
+    """Delete every raw event tagged with ``user_id`` (account deletion);
+    returns the count. No store file yet → nothing to delete."""
+    if not telemetry_db_path().exists():
+        return 0
+    with _telemetry_connection() as conn:
+        return conn.execute(
+            "DELETE FROM telemetry_events WHERE user_id = ?", (user_id,)
+        ).rowcount
+
+
 # --- global disk guard ------------------------------------------------------
 # Per-caller rate limits don't bound the total: before every insert, the batch
 # is dropped (the route still answers 204) once telemetry.db + its WAL exceed
