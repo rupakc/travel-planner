@@ -1,0 +1,191 @@
+{
+  "login": {
+    "tagline": "Plane deine perfekte Reise",
+    "title": "Melde dich bei deinem Konto an",
+    "username": "Benutzername",
+    "usernamePlaceholder": "Benutzernamen eingeben",
+    "password": "Passwort",
+    "passwordPlaceholder": "Passwort eingeben",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung läuft…",
+    "failed": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+  },
+  "changePassword": {
+    "title": "Lege dein Passwort fest",
+    "welcome": "Willkommen, <strong>{{username}}</strong>! Lege ein neues Passwort fest, um fortzufahren.",
+    "temporary": "Temporäres Passwort",
+    "new": "Neues Passwort",
+    "newPlaceholder": "Mindestens 8 Zeichen",
+    "confirm": "Neues Passwort bestätigen",
+    "submit": "Speichern & weiter",
+    "saving": "Speichern…",
+    "mismatch": "Die neuen Passwörter stimmen nicht überein",
+    "tooShort": "Das Passwort muss mindestens 8 Zeichen haben",
+    "failed": "Passwortänderung fehlgeschlagen",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  },
+  "prefs": {
+    "title": "Reisevorlieben",
+    "subtitle": "Lege deine Standardwerte fest, um das Suchformular vorauszufüllen und persönliche Ergebnisse zu erhalten.",
+    "taste": {
+      "title": "Geschmacksprofil",
+      "reset": "Zurücksetzen",
+      "heading": "Das haben wir über deinen Reisegeschmack gelernt",
+      "built_one": "Basiert auf {{count}} Signal aus deinen gespeicherten Plänen.",
+      "built_other": "Basiert auf {{count}} Signalen aus deinen gespeicherten Plänen.",
+      "personalised": "Suchen im angemeldeten Zustand werden automatisch mit diesem Profil personalisiert.",
+      "empty": "Noch nichts gelernt – speichere ein paar Reisepläne und deine künftigen Suchen werden automatisch personalisiert.",
+      "confirmReset": "Dein gelerntes Geschmacksprofil zurücksetzen? Künftige Suchen werden nicht mehr anhand früherer Pläne personalisiert."
+    },
+    "signal": {
+      "activity_category": "Lieblingsaktivitäten",
+      "event_category": "Lieblingsveranstaltungen",
+      "hotel_tier": "Hotelstil",
+      "flight_style": "Flugstil",
+      "interest": "Wiederkehrende Interessen",
+      "destination": "Geplante Reiseziele",
+      "pace": "Reisetempo"
+    },
+    "budget": {
+      "section": "Reisebudget",
+      "category": "Budgetkategorie",
+      "low": {
+        "label": "Günstig",
+        "desc": "Hostels, Streetfood, öffentliche Verkehrsmittel"
+      },
+      "medium": {
+        "label": "Mittelklasse",
+        "desc": "Komfortable Hotels, schöne Restaurants"
+      },
+      "high": {
+        "label": "Luxus",
+        "desc": "Premium-Hotels, gehobene Küche, Privattouren"
+      }
+    },
+    "interest": {
+      "food": "Essen",
+      "history": "Geschichte",
+      "adventure": "Abenteuer",
+      "culture": "Kultur",
+      "nature": "Natur",
+      "shopping": "Shopping",
+      "nightlife": "Nachtleben",
+      "wellness": "Wellness",
+      "art": "Kunst",
+      "family": "Familie"
+    },
+    "identity": {
+      "section": "Identität",
+      "nationality": "Staatsangehörigkeit",
+      "nationalityPlaceholder": "Amerikanisch, Indisch, Britisch…",
+      "residence": "Aktueller Wohnort",
+      "residencePlaceholder": "z. B. München, Deutschland",
+      "residenceHint": "Wird beim Planen als Standard-Abflugort verwendet"
+    },
+    "documents": {
+      "section": "Dokumente",
+      "permits": "Aufenthaltstitel",
+      "permitsPlaceholder": "Schengen, UK, VAE…",
+      "visas": "Vorhandene Visa",
+      "visasPlaceholder": "USA, Japan, Kanada…"
+    },
+    "style": {
+      "section": "Reisestil",
+      "group": "Standard-Reisegruppe",
+      "groupHint": "Erwachsene, Kinder, Senioren, Babys und Barrierefreiheit – füllt jede Suche vor",
+      "interests": "Interessen"
+    },
+    "save": "Vorlieben speichern",
+    "saving": "Speichern…",
+    "saved": "Vorlieben gespeichert!",
+    "errorWithDetail": "Fehler: {{detail}}",
+    "saveFailed": "Speichern fehlgeschlagen"
+  },
+  "admin": {
+    "title": "Admin-Bereich",
+    "tabs": {
+      "users": "Nutzer",
+      "feedback": "Feedback"
+    },
+    "users": {
+      "count_one": "{{count}} Nutzer",
+      "count_other": "{{count}} Nutzer",
+      "create": "+ Nutzer anlegen",
+      "newUser": "Neuer Nutzer",
+      "usernameRequired": "Benutzername *",
+      "emailOptional": "E-Mail (optional)",
+      "tempPasswordRequired": "Temporäres Passwort *",
+      "adminPrivileges": "Admin-Rechte",
+      "createSubmit": "Anlegen",
+      "creating": "Wird angelegt…",
+      "createFailed": "Nutzer konnte nicht angelegt werden",
+      "resetOwnHint": "Wenn du dein eigenes Passwort zurücksetzt, musst du beim nächsten Seitenaufruf ein neues festlegen",
+      "resetOwn": "Eigenes Passwort zurücksetzen",
+      "reset": "Passwort zurücksetzen",
+      "deactivate": "Deaktivieren",
+      "reactivate": "Reaktivieren"
+    },
+    "common": {
+      "cancel": "Abbrechen",
+      "loading": "Wird geladen…",
+      "wentWrong": "Etwas ist schiefgelaufen",
+      "close": "Schließen"
+    },
+    "table": {
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "created": "Erstellt",
+      "role": "Rolle",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "role": {
+      "admin": "Admin",
+      "user": "Nutzer"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "reset": {
+      "title": "Passwort zurücksetzen",
+      "intro": "Du legst ein neues Passwort für <name>{{username}}</name> fest. Es muss bei der nächsten Anmeldung geändert werden.",
+      "selfWarning": "Du setzt dein eigenes Passwort zurück. Beim nächsten Seitenaufruf wirst du zur Seite zum Ändern des Passworts weitergeleitet.",
+      "success": "Passwort für {{username}} zurückgesetzt. Bei der nächsten Anmeldung wird ein neues abgefragt.",
+      "newPassword": "Neues Passwort *",
+      "confirmPassword": "Passwort bestätigen *",
+      "minPlaceholder": "Mind. 8 Zeichen",
+      "repeatPlaceholder": "Neues Passwort wiederholen",
+      "submit": "Passwort zurücksetzen",
+      "submitting": "Wird zurückgesetzt…",
+      "tooShort": "Das Passwort muss mindestens 8 Zeichen haben",
+      "mismatch": "Die Passwörter stimmen nicht überein",
+      "failed": "Passwort konnte nicht zurückgesetzt werden"
+    },
+    "feedback": {
+      "page": "Seite",
+      "category": "Kategorie",
+      "minRating": "Mindestbewertung",
+      "all": "Alle",
+      "any": "Beliebig",
+      "export": "CSV exportieren",
+      "empty": "Noch kein Feedback.",
+      "pages": {
+        "search": "Suche",
+        "results": "Ergebnisse",
+        "chat": "Chat",
+        "preferences": "Einstellungen",
+        "admin": "Admin"
+      },
+      "categories": {
+        "bug": "Fehler",
+        "feature_request": "Funktionswunsch",
+        "general": "Allgemein",
+        "praise": "Lob"
+      }
+    }
+  }
+}

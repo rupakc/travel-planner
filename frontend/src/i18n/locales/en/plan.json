@@ -1,0 +1,203 @@
+{
+  "modal": {
+    "namePlaceholder": "Plan name…",
+    "close": "Close",
+    "empty": "This plan has no saved selections yet.",
+    "trip_one": "{{origin}} → {{destination}} · {{dates}} · {{count}} traveler",
+    "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} travelers",
+    "watchFare": "Watch this fare",
+    "delete": "Delete",
+    "share": "Share",
+    "shareTitle": "Copy a public link — anyone can view this trip card, no login needed",
+    "save": "Save Changes",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "msg": {
+      "saved": "Saved ✓",
+      "saveFailed": "Save failed",
+      "shared": "Share link copied ✓",
+      "shareFailed": "Share failed"
+    },
+    "section": {
+      "flight": "Flight",
+      "flights_one": "Flights ({{count}} leg)",
+      "flights_other": "Flights ({{count}} legs)",
+      "hotel": "Hotel",
+      "activities": "Activities ({{count}})",
+      "sim": "SIM Card",
+      "gettingAround": "Getting Around ({{count}})",
+      "tips": "Tips ({{count}})",
+      "events": "Events ({{count}})",
+      "walkingTours": "Walking Tours ({{count}})",
+      "itinerarySlots": "Itinerary Slots ({{count}})",
+      "fullItinerary_one": "Full Itinerary ({{count}} day)",
+      "fullItinerary_other": "Full Itinerary ({{count}} days)"
+    },
+    "flight": {
+      "outbound": "Outbound:",
+      "return": "Return:",
+      "leg": "Leg {{n}}:",
+      "roundTrip": "{{price}} round-trip",
+      "oneWay": "{{price}} one-way",
+      "bookThis": "Book this flight"
+    },
+    "book": "Book",
+    "hotel": {
+      "perNight": "{{price}}/night",
+      "perNightTotal": "{{price}}/night · {{total}} total",
+      "viewBook": "View & Book"
+    },
+    "activity": {
+      "hours": "{{hours}}h"
+    },
+    "sim": {
+      "data": "{{gb}}GB",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "getPlan": "Get Plan"
+    },
+    "moreInfo": "More Info",
+    "source": "Source",
+    "day": "Day {{n}}",
+    "timeOfDay": {
+      "morning": "morning",
+      "afternoon": "afternoon",
+      "evening": "evening"
+    }
+  },
+  "export": {
+    "calendar": "Add to calendar",
+    "calendarTitle": "Download an .ics file for Google Calendar, Apple Calendar or Outlook",
+    "print": "Print / PDF",
+    "printTitle": "Open a printable version you can print or save as a PDF",
+    "popupBlocked": "Your browser blocked the new tab — allow pop-ups for this site and try again."
+  },
+  "cost": {
+    "heading": "Where the money goes",
+    "cat": {
+      "flights": "Flights",
+      "hotel": "Hotel",
+      "activities": "Activities",
+      "sim": "SIM / eSIM"
+    },
+    "transportNote": "Local transport isn't included — fares vary by trip.",
+    "total": "Total",
+    "budget": "Budget: {{amount}}"
+  },
+  "budget": {
+    "title": "Budget planner",
+    "subtitle": "Split your budget and see which options fit",
+    "total": "Total budget",
+    "perPerson": "per person",
+    "reset": "Reset",
+    "resetDone": "Budget split reset to the suggested shares",
+    "totalSet": "Total budget {{amount}}",
+    "cheaper": "Find cheaper hotels",
+    "findingCheaper": "Finding cheaper hotels…",
+    "else": "Everything else",
+    "elseHint": "food, transport, extras",
+    "onlyFits": "Show only what fits",
+    "cat": {
+      "flights": "Flights",
+      "stay": "Stay",
+      "activities": "Activities"
+    },
+    "noun": {
+      "flights": "flights",
+      "stay": "stay",
+      "activities": "activities"
+    },
+    "announceName": {
+      "flights": "Flight",
+      "stay": "Stay",
+      "activities": "Activities"
+    },
+    "announce": "{{name}} budget {{amount}} — {{detail}}",
+    "valueText": "{{amount}} for {{noun}}",
+    "fit": {
+      "flights_one": "{{fits}} of {{count}} flight fits",
+      "flights_other": "{{fits}} of {{count}} flights fit",
+      "hotels_one": "{{fits}} of {{count}} hotel fits",
+      "hotels_other": "{{fits}} of {{count}} hotels fit",
+      "activities_one": "Fits {{count}} activity ({{spent}})",
+      "activities_other": "Fits {{count}} activities ({{spent}})"
+    }
+  },
+  "best": {
+    "title": "Best-value package",
+    "subtitle": "Our picks for the best price-to-quality balance from your results",
+    "total": "Package total",
+    "myPlanTotal": "My Plan total: {{amount}}",
+    "perPerson": "Flight prices are per person",
+    "add": "Add all to My Plan",
+    "added": "Added to My Plan",
+    "undo": "Undo",
+    "replaces": "Replaces your current {{items}}.",
+    "listAnd": "{{head}} and {{last}}",
+    "listSep": ", ",
+    "free": "Free",
+    "perNight": "{{price}}/night",
+    "flight": "Flight",
+    "simPlan": "SIM plan",
+    "conflict": {
+      "flight": "flight",
+      "hotel": "hotel",
+      "sim": "SIM"
+    },
+    "reason": {
+      "cheapestFare": "Cheapest fare",
+      "fewerStops": "Fewer stops for {{amount}} more than the cheapest fare",
+      "saves": "Saves {{time}} of travel for {{amount}} more than the cheapest fare",
+      "midRange": "Mid-range (3★), best-reviewed in its class",
+      "starsBest": "{{stars}}★, best-reviewed in its class",
+      "bestReviewed": "Best-reviewed in its class",
+      "typicalPrice": "{{price}} · at or below the typical price here",
+      "matches": "{{base}} · matches your interests",
+      "freeTour": "Free walking tour",
+      "freeEntry": "Free entry",
+      "coversTrip": "Covers your {{days}}-day trip",
+      "cheapestPlan": "Cheapest plan",
+      "cheaperStay": "Cheaper stay to fit your budget"
+    }
+  },
+  "print": {
+    "defaultName": "Trip plan",
+    "printButton": "Print / Save as PDF",
+    "footer": "Planned with Voyager. Prices and availability are estimates — confirm before booking.",
+    "inspiredBy": "Inspired by {{source}}",
+    "travelers_one": "{{count}} traveler",
+    "travelers_other": "{{count}} travelers",
+    "book": "Book",
+    "viewTour": "View tour",
+    "getPlan": "Get plan",
+    "hotelTotal": "{{price}} total",
+    "fromLink": "From your link",
+    "alsoFromLink": "Also from your link: {{names}}",
+    "section": {
+      "flights": "Flights",
+      "hotel": "Hotel",
+      "itinerary": "Itinerary",
+      "activities": "Activities",
+      "places": "Places to see",
+      "walkingTours": "Free walking tours",
+      "events": "Events",
+      "sim": "SIM / eSIM",
+      "gettingAround": "Getting around",
+      "tips": "Tips"
+    }
+  },
+  "ics": {
+    "dayTheme": "Day {{n}}: {{theme}}",
+    "fromLinkQuote": "From your link: “{{quote}}”",
+    "estCost": "Est. cost: {{amount}}",
+    "arrives": "Arrives {{time}} local time",
+    "booking": "Booking: {{url}}",
+    "price": "Price: {{price}}",
+    "trip": "Trip"
+  },
+  "util": {
+    "budgetUnder": "{{amount}} under budget",
+    "budgetOver": "{{amount}} over budget",
+    "hours": "{{n}}h",
+    "minutes": "{{n}}m"
+  }
+}

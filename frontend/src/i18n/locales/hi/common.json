@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "search": "खोजें",
+    "chat": "चैट",
+    "nearby": "आस-पास",
+    "alerts": "अलर्ट",
+    "preferences": "प्राथमिकताएँ",
+    "admin": "एडमिन",
+    "menu": "मेनू",
+    "signOut": "साइन आउट करें",
+    "adminBadge": "एडमिन",
+    "home": "Voyager होम",
+    "unread_one": "{{count}} अपठित",
+    "unread_other": "{{count}} अपठित",
+    "alertsUnread_one": "अलर्ट, {{count}} अपठित",
+    "alertsUnread_other": "अलर्ट, {{count}} अपठित"
+  },
+  "language": {
+    "label": "भाषा"
+  },
+  "theme": {
+    "label": "थीम",
+    "current": "थीम: {{mode}}",
+    "system": "सिस्टम",
+    "light": "लाइट",
+    "dark": "डार्क"
+  },
+  "footer": {
+    "attribution": "जगह डेटा © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · हवाई अड्डा डेटा: <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "ज़्यादा",
+      "medium": "मध्यम",
+      "low": "कम"
+    },
+    "coverage": {
+      "excellent": "उत्कृष्ट",
+      "good": "अच्छा",
+      "moderate": "मध्यम",
+      "limited": "सीमित"
+    },
+    "severity": {
+      "info": "जानकारी",
+      "warning": "चेतावनी",
+      "danger": "ख़तरा",
+      "critical": "गंभीर"
+    }
+  }
+}

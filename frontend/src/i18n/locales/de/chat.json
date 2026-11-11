@@ -1,0 +1,204 @@
+{
+  "page": {
+    "title": "Reiseplaner-Chat",
+    "intro": "Chatte mit deinem KI-Reiseassistenten. Frag nach einem kompletten Reiseplan und die Ergebnisse erscheinen live als interaktive Karten.",
+    "placeholder": "Frag nach deiner nächsten Reise...",
+    "disclaimer": "KI-Reiseassistent. Prüfe wichtige Angaben bei offiziellen Stellen.",
+    "clear": "Chat leeren",
+    "stop": "Stopp",
+    "send": "Senden",
+    "planFromLink": "Reise aus diesem Link planen"
+  },
+  "suggestion": {
+    "1": "Plane eine 5-tägige Reise nach Tokio mit 2000 $ Budget",
+    "2": "Was brauche ich für ein Visum nach Thailand als US-Bürger?",
+    "3": "Finde günstige Flüge von New York nach Paris im Juni",
+    "4": "Schlage einen romantischen Kurztrip in Europa für eine Woche vor"
+  },
+  "error": {
+    "generic": "Sorry, bei der Antwort ist etwas schiefgelaufen. Bitte versuche es erneut.",
+    "noResponse": "Sorry, ich habe keine Antwort bekommen. Bitte frag noch einmal.",
+    "withMessage": "Sorry, etwas ist schiefgelaufen: {{message}}"
+  },
+  "bubble": {
+    "planning": "Deine Reise wird geplant..."
+  },
+  "action": {
+    "add": "Hinzufügen",
+    "added": "Hinzugefügt",
+    "inPlan": "Im Plan",
+    "book": "Buchen",
+    "get": "Holen",
+    "info": "Info",
+    "source": "Quelle",
+    "officialSource": "Offizielle Quelle",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "retry": "Wiederholen",
+    "close": "Schließen",
+    "remove": "Entfernen"
+  },
+  "list": {
+    "showMore": "{{n}} weitere anzeigen →",
+    "showLess": "Weniger anzeigen"
+  },
+  "units": {
+    "hoursShort": "{{value}} Std.",
+    "daysShort": "{{value}} T."
+  },
+  "enum": {
+    "excellent": "ausgezeichnet",
+    "good": "gut",
+    "moderate": "mäßig",
+    "high": "hoch",
+    "medium": "mittel",
+    "low": "niedrig"
+  },
+  "agent": {
+    "flights": "Flüge",
+    "hotels": "Hotels",
+    "activities": "Aktivitäten",
+    "visa": "Visum",
+    "sim": "SIM-Karten",
+    "tips": "Reisetipps",
+    "getting_around": "Fortbewegung",
+    "forex": "Währung & Geldwechsel",
+    "itinerary": "Reiseverlauf"
+  },
+  "section": {
+    "building": "Dein Reiseverlauf wird erstellt…",
+    "searching": "Suche nach {{what}}…"
+  },
+  "estimates": {
+    "warning": "Preise sind Schätzungen – vor der Buchung auf den Buchungsseiten prüfen"
+  },
+  "flights": {
+    "none": "Keine Flüge gefunden",
+    "roundTripNote": "(Hin- und Rückflug)"
+  },
+  "hotels": {
+    "none": "Keine Hotels gefunden",
+    "perNightShort": "/Nacht"
+  },
+  "activities": {
+    "none": "Keine Aktivitäten gefunden"
+  },
+  "sim": {
+    "none": "Keine SIM-Tarife gefunden"
+  },
+  "tips": {
+    "none": "Keine Tipps verfügbar"
+  },
+  "transport": {
+    "none": "Keine Transportinfos verfügbar"
+  },
+  "visa": {
+    "none": "Keine Visa-Infos verfügbar",
+    "maxStay": "Max. Aufenthalt: {{days}} T.",
+    "fee": "Gebühr: {{fee}}",
+    "free": "Kostenlos",
+    "type": {
+      "visa-free": "visumfrei",
+      "visa-on-arrival": "Visum bei Ankunft",
+      "e-visa": "E-Visum",
+      "visa-required": "Visum erforderlich"
+    }
+  },
+  "forex": {
+    "none": "Keine Währungsinfos verfügbar",
+    "your": "DEIN",
+    "loading": "Lädt...",
+    "fees": "Gebühren: {{fees}}",
+    "cards": "Karten",
+    "cash": "Bargeld",
+    "dependency": "Bargeldabhängigkeit: {{level}}",
+    "tippingExpected": "Trinkgeld üblich",
+    "tippingNotExpected": "Trinkgeld nicht üblich"
+  },
+  "itinerary": {
+    "none": "Kein Reiseverlauf verfügbar",
+    "day": "Tag {{n}}",
+    "timeOfDay": {
+      "morning": "Vormittag",
+      "afternoon": "Nachmittag",
+      "evening": "Abend"
+    }
+  },
+  "plan": {
+    "defaultName": "Mein Reiseplan"
+  },
+  "budget": {
+    "planCost": "Plankosten"
+  },
+  "drawer": {
+    "title": "Mein Plan",
+    "editingSaved": "Gespeicherten Plan bearbeiten",
+    "planName": "Planname",
+    "dragToSaved": "· zum Speichern hierhin ziehen",
+    "flight": "Flug",
+    "hotel": "Hotel",
+    "sim": "SIM",
+    "outbound": "Hinflug:",
+    "return": "Rückflug:",
+    "roundTrip": "Hin- und Rückflug",
+    "oneWay": "einfach",
+    "hotelLine": "{{price}}/Nacht",
+    "hotelLineTotal": "{{price}}/Nacht · {{total}} gesamt",
+    "activitiesCount": "Aktivitäten ({{n}})",
+    "gettingAroundCount": "Fortbewegung ({{n}})",
+    "tipsCount": "Tipps ({{n}})",
+    "itinerarySlots_one": "Reiseverlauf ({{count}} Programmpunkt)",
+    "itinerarySlots_other": "Reiseverlauf ({{count}} Programmpunkte)",
+    "slotLine": "Tag {{day}} · {{time}}",
+    "dropToLoad": "Zum Laden dieses Plans ablegen",
+    "selectItems": "Wähle Einträge aus den Ergebnissen,\num deinen Plan zu erstellen",
+    "dragSavedHere": "oder ziehe einen gespeicherten Plan hierher",
+    "new": "Neu",
+    "saving": "Speichern…",
+    "update": "Plan aktualisieren",
+    "save": "Plan speichern",
+    "saveSend": "Speichern & zu gespeicherten Plänen",
+    "savedPlans": "Gespeicherte Pläne",
+    "dropToSave": "↓ Hier ablegen zum Speichern",
+    "loading": "Lädt…",
+    "noSaved": "Noch keine gespeicherten Pläne",
+    "deletePlan": "Plan löschen",
+    "loaded": "Geladen",
+    "load": "Laden",
+    "watch": "Preisalarm",
+    "view": "Ansehen",
+    "share": "Teilen",
+    "shareTitle": "Öffentlichen Link kopieren – zum Ansehen ist keine Anmeldung nötig",
+    "shareFailed": "Link konnte nicht erstellt werden",
+    "linkCopied": "🔗 Link kopiert: {{url}}",
+    "msg": {
+      "login": "Bitte anmelden",
+      "updated": "Plan aktualisiert!",
+      "saved": "Gespeichert!",
+      "failed": "Speichern fehlgeschlagen",
+      "sentBack": "Plan zurückgelegt!",
+      "planSaved": "Plan gespeichert!"
+    }
+  },
+  "trip": {
+    "origin": "Start",
+    "departureCity": "Abreisestadt",
+    "plotting": "Deine Route wird eingezeichnet…",
+    "nights_one": "{{count}} Nacht",
+    "nights_other": "{{count}} Nächte",
+    "fullDays_one": "{{count}} ganzer Tag",
+    "fullDays_other": "{{count}} ganze Tage",
+    "travelers_one": "{{count}} Reisender",
+    "travelers_other": "{{count}} Reisende",
+    "estPerPerson": "ca. pro Person",
+    "gettingThere": "Anreise",
+    "buildFailed": "Reiseverlauf konnte nicht erstellt werden – bitte versuche es erneut.",
+    "daysItinerary": "{{n}}-Tage-Reiseverlauf",
+    "collapseAll": "Alle einklappen",
+    "expandAll": "Alle ausklappen",
+    "travelDay": "✈️ Reisetag",
+    "perNight": "/Nacht",
+    "mustSee": "Highlights",
+    "dining": "Essen"
+  }
+}

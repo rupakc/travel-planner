@@ -1,0 +1,29 @@
+// Route templates for telemetry: a pathname becomes the route it matched, so
+// share tokens, plan ids and anything else in the URL never leave the browser.
+
+const STATIC = new Set([
+  '/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/login', '/change-password',
+])
+
+// [pattern, template]: the dynamic routes (and ones the plan reserves).
+const DYNAMIC = [
+  [/^\/share\/[^/]+$/, '/share/:token'],
+  [/^\/plans\/[^/]+$/, '/plans/:id'],
+  [/^\/alerts\/[^/]+$/, '/alerts/:id'],
+]
+
+export function routeTemplate(pathname) {
+  if (typeof pathname !== 'string' || pathname === '') return '/'
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') || '/' : pathname
+  if (STATIC.has(path)) return path
+  for (const [re, template] of DYNAMIC) if (re.test(path)) return template
+  return '/other'
+}
+
+export function currentRoute() {
+  try {
+    return routeTemplate(window.location.pathname)
+  } catch {
+    return '/'
+  }
+}

@@ -11,7 +11,7 @@ from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
 from ..services.places_url_resolver import SerperPlacesResolver, resolve_top_places
 from ..services.serper_places import SerperPlacesClient
-from .base_agent import ToolAgent, strip_link_verified
+from .base_agent import ToolAgent, locale_kw, strip_link_verified
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class PlacesAgent(ToolAgent):
             prompt += f"\n{request.serendipity_context}"
 
         # The model synthesises Serper + internal knowledge → structured JSON
-        result = strip_link_verified(await self.execute(prompt))
+        result = strip_link_verified(await self.execute(prompt, **locale_kw(request)))
         if result.get("error"):
             return result
 

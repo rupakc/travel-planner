@@ -64,6 +64,20 @@ class Settings(BaseSettings):
         ""  # Serper Google Search API key; enables Tier 2 activity URL resolution
     )
 
+    # Product telemetry (POST /api/telemetry): raw events kept in
+    # $DATA_DIR/telemetry.db for this many days; TELEMETRY_ENABLED=false makes
+    # the endpoint 404 (clients then switch themselves off).
+    telemetry_enabled: bool = True
+    telemetry_retention_days: int = 90
+    # Global disk guard (all callers together): past either cap /api/telemetry
+    # still answers 204 but drops the batch. Size = telemetry.db + its WAL;
+    # the daily cap counts rows stored per UTC day.
+    telemetry_max_db_mb: int = 1024
+    telemetry_max_events_per_day: int = 200000
+    # Absolute origin handed to clients by GET /api/config (share links); empty =
+    # the request's own base URL
+    public_base_url: str = ""
+
     # Rate limits on AI endpoints: max requests per caller (signed-in user, or
     # client IP when anonymous) per rolling window. RATE_LIMIT_ENABLED=false
     # turns them off.
@@ -75,6 +89,7 @@ class Settings(BaseSettings):
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
     rate_limit_import: int = 20  # /import/extract (plan from a link)
+    rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
     # /auth/login: attempts per client IP; failed attempts per (username, IP),
     # so others can't lock a user out; and a high per-username ceiling across
     # all IPs as a backstop against distributed guessing

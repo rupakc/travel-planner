@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "search": "Rechercher",
+    "chat": "Chat",
+    "nearby": "Près de moi",
+    "alerts": "Alertes",
+    "preferences": "Préférences",
+    "admin": "Admin",
+    "menu": "Menu",
+    "signOut": "Se déconnecter",
+    "adminBadge": "Admin",
+    "home": "Accueil Voyager",
+    "unread_one": "{{count}} non lue",
+    "unread_many": "{{count}} non lues",
+    "unread_other": "{{count}} non lues",
+    "alertsUnread_one": "Alertes, {{count}} non lue",
+    "alertsUnread_many": "Alertes, {{count}} non lues",
+    "alertsUnread_other": "Alertes, {{count}} non lues"
+  },
+  "language": {
+    "label": "Langue"
+  },
+  "theme": {
+    "label": "Thème",
+    "current": "Thème : {{mode}}",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "footer": {
+    "attribution": "Données de lieux © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Données d’aéroports : <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "élevé",
+      "medium": "moyen",
+      "low": "faible"
+    },
+    "coverage": {
+      "excellent": "excellente",
+      "good": "bonne",
+      "moderate": "moyenne",
+      "limited": "limitée"
+    },
+    "severity": {
+      "info": "info",
+      "warning": "avertissement",
+      "danger": "danger",
+      "critical": "critique"
+    }
+  }
+}

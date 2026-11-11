@@ -1,9 +1,8 @@
 import { Info } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatPrice } from '../../../utils/priceWatch'
 import { estimateCount, liveCount, rowPrice, totalDifference, tripRows } from '../../../utils/tripWatch'
 import TripBadge from '../TripBadge'
-
-const ESTIMATES_NOTE = 'Estimates are fixed and never trigger alerts.'
 
 function Note({ children }) {
   return (
@@ -20,11 +19,12 @@ function Note({ children }) {
  * total being watched.
  */
 export default function TripDialogBody({ preview = {}, watch = null }) {
+  const { t } = useTranslation('alerts')
   if (!watch) {
     const parts = preview.parts || []
     return (
       <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
-        <p className="text-sm font-medium text-slate-700">Your plan, as we’ll count it</p>
+        <p className="text-sm font-medium text-slate-700">{t('trip.yourPlan')}</p>
         {parts.length > 0 && (
           <ul className="mt-1.5 space-y-1 text-xs text-slate-600">
             {parts.map(p => (
@@ -39,9 +39,7 @@ export default function TripDialogBody({ preview = {}, watch = null }) {
           </ul>
         )}
         <Note>
-          When you start, we look up live prices for your flight (the cheapest fare on your dates, not one
-          specific flight), hotel and up to 5 activities, and show the live total. Anything without a live
-          price stays at its estimate. {ESTIMATES_NOTE}
+          {t('trip.lookup')} {t('trip.estimatesNote')}
         </Note>
       </div>
     )
@@ -57,10 +55,10 @@ export default function TripDialogBody({ preview = {}, watch = null }) {
       <div className="-mx-1 overflow-x-auto px-1">
         <table className="w-full min-w-[16rem] text-left text-xs">
           <caption className="mb-1 text-left text-xs font-medium text-slate-600">
-            What we’re watching · {live} live, {estimates} estimate{estimates === 1 ? '' : 's'}
+            {t('trip.caption', { live, count: estimates })}
           </caption>
           <thead className="sr-only">
-            <tr><th scope="col">Part</th><th scope="col">Price</th><th scope="col">Kind</th></tr>
+            <tr><th scope="col">{t('trip.part')}</th><th scope="col">{t('trip.price')}</th><th scope="col">{t('trip.kind')}</th></tr>
           </thead>
           <tbody>
             {rows.map(r => (
@@ -71,7 +69,7 @@ export default function TripDialogBody({ preview = {}, watch = null }) {
                 </th>
                 <td className="py-1 pr-2 text-right tabular-nums">
                   {rowPrice(r)}
-                  {r.in_total === false && <span className="block text-[10px] text-slate-500">not in total</span>}
+                  {r.in_total === false && <span className="block text-[10px] text-slate-500">{t('trip.notInTotal')}</span>}
                 </td>
                 <td className="py-1 text-right"><TripBadge row={r} /></td>
               </tr>
@@ -79,7 +77,7 @@ export default function TripDialogBody({ preview = {}, watch = null }) {
           </tbody>
           <tfoot>
             <tr className="border-t border-emerald-200 font-semibold">
-              <th scope="row" className="pt-1.5 pr-2 text-left">Total</th>
+              <th scope="row" className="pt-1.5 pr-2 text-left">{t('trip.total')}</th>
               <td className="pt-1.5 pr-2 text-right tabular-nums">{formatPrice(total)}</td>
               <td />
             </tr>
@@ -88,11 +86,14 @@ export default function TripDialogBody({ preview = {}, watch = null }) {
       </div>
       {diff && (
         <p data-testid="trip-total-diff" className="mt-2 text-xs text-slate-600">
-          That’s {formatPrice(Math.abs(diff.delta))} {diff.delta < 0 ? 'less' : 'more'} than your My Plan total
-          ({formatPrice(diff.plan)}){diff.reasons.length ? `: ${diff.reasons.join('; ')}.` : '.'}
+          {t(diff.delta < 0 ? 'trip.diffLess' : 'trip.diffMore', {
+            amount: formatPrice(Math.abs(diff.delta)),
+            plan: formatPrice(diff.plan),
+            tail: diff.reasons.length ? `: ${diff.reasons.join('; ')}.` : '.',
+          })}
         </p>
       )}
-      <Note>{ESTIMATES_NOTE} Alerts come only from live prices moving the total by at least $25 or 4 %.</Note>
+      <Note>{t('trip.estimatesNote')} {t('trip.alertsNote')}</Note>
     </div>
   )
 }

@@ -1,0 +1,195 @@
+{
+  "modal": {
+    "namePlaceholder": "计划名称…",
+    "close": "关闭",
+    "empty": "此计划尚无已保存的选择。",
+    "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} 位旅客",
+    "watchFare": "关注此票价",
+    "delete": "删除",
+    "share": "分享",
+    "shareTitle": "复制公开链接——任何人无需登录即可查看此行程卡",
+    "save": "保存更改",
+    "confirmDelete": "删除“{{name}}”？",
+    "msg": {
+      "saved": "已保存 ✓",
+      "saveFailed": "保存失败",
+      "shared": "分享链接已复制 ✓",
+      "shareFailed": "分享失败"
+    },
+    "section": {
+      "flight": "航班",
+      "flights_other": "航班（{{count}} 段）",
+      "hotel": "酒店",
+      "activities": "活动（{{count}}）",
+      "sim": "SIM 卡",
+      "gettingAround": "当地交通（{{count}}）",
+      "tips": "贴士（{{count}}）",
+      "events": "活动日程（{{count}}）",
+      "walkingTours": "步行游览（{{count}}）",
+      "itinerarySlots": "行程时段（{{count}}）",
+      "fullItinerary_other": "完整行程（{{count}} 天）"
+    },
+    "flight": {
+      "outbound": "去程：",
+      "return": "返程：",
+      "leg": "第 {{n}} 段：",
+      "roundTrip": "{{price}} 往返",
+      "oneWay": "{{price}} 单程",
+      "bookThis": "预订此航班"
+    },
+    "book": "预订",
+    "hotel": {
+      "perNight": "{{price}}/晚",
+      "perNightTotal": "{{price}}/晚 · 共 {{total}}",
+      "viewBook": "查看并预订"
+    },
+    "activity": {
+      "hours": "{{hours}} 小时"
+    },
+    "sim": {
+      "data": "{{gb}} GB",
+      "days_other": "{{count}} 天",
+      "getPlan": "获取套餐"
+    },
+    "moreInfo": "更多信息",
+    "source": "来源",
+    "day": "第 {{n}} 天",
+    "timeOfDay": {
+      "morning": "上午",
+      "afternoon": "下午",
+      "evening": "晚上"
+    }
+  },
+  "export": {
+    "calendar": "添加到日历",
+    "calendarTitle": "下载可用于 Google 日历、Apple 日历或 Outlook 的 .ics 文件",
+    "print": "打印 / PDF",
+    "printTitle": "打开可打印版本，可打印或另存为 PDF",
+    "popupBlocked": "浏览器拦截了新标签页——请允许此网站的弹出窗口后重试。"
+  },
+  "cost": {
+    "heading": "钱花在哪里",
+    "cat": {
+      "flights": "航班",
+      "hotel": "酒店",
+      "activities": "活动",
+      "sim": "SIM / eSIM"
+    },
+    "transportNote": "未包含当地交通——费用因行程而异。",
+    "total": "合计",
+    "budget": "预算：{{amount}}"
+  },
+  "budget": {
+    "title": "预算规划",
+    "subtitle": "分配预算，看看哪些选项合适",
+    "total": "总预算",
+    "perPerson": "每人",
+    "reset": "重置",
+    "resetDone": "预算分配已重置为建议比例",
+    "totalSet": "总预算 {{amount}}",
+    "cheaper": "查找更便宜的酒店",
+    "findingCheaper": "正在查找更便宜的酒店…",
+    "else": "其他开销",
+    "elseHint": "餐饮、交通、其他",
+    "onlyFits": "只显示符合预算的",
+    "cat": {
+      "flights": "航班",
+      "stay": "住宿",
+      "activities": "活动"
+    },
+    "noun": {
+      "flights": "航班",
+      "stay": "住宿",
+      "activities": "活动"
+    },
+    "announceName": {
+      "flights": "航班",
+      "stay": "住宿",
+      "activities": "活动"
+    },
+    "announce": "{{name}}预算 {{amount}}——{{detail}}",
+    "valueText": "{{noun}}：{{amount}}",
+    "fit": {
+      "flights_other": "{{count}} 个航班中 {{fits}} 个合适",
+      "hotels_other": "{{count}} 家酒店中 {{fits}} 家合适",
+      "activities_other": "可安排 {{count}} 项活动（{{spent}}）"
+    }
+  },
+  "best": {
+    "title": "超值套餐",
+    "subtitle": "从你的结果中挑选的性价比最佳组合",
+    "total": "套餐总价",
+    "myPlanTotal": "我的计划合计：{{amount}}",
+    "perPerson": "航班价格均为每人价格",
+    "add": "全部加入我的计划",
+    "added": "已加入我的计划",
+    "undo": "撤销",
+    "replaces": "将替换你当前的{{items}}。",
+    "listAnd": "{{head}}和{{last}}",
+    "listSep": "、",
+    "free": "免费",
+    "perNight": "{{price}}/晚",
+    "flight": "航班",
+    "simPlan": "SIM 套餐",
+    "conflict": {
+      "flight": "航班",
+      "hotel": "酒店",
+      "sim": "SIM 卡"
+    },
+    "reason": {
+      "cheapestFare": "最低票价",
+      "fewerStops": "比最低票价多 {{amount}}，但中转更少",
+      "saves": "比最低票价多 {{amount}}，可节省 {{time}} 行程时间",
+      "midRange": "中档（3★），同档次中评价最高",
+      "starsBest": "{{stars}}★，同档次中评价最高",
+      "bestReviewed": "同档次中评价最高",
+      "typicalPrice": "{{price}} · 不高于当地常见价格",
+      "matches": "{{base}} · 符合你的兴趣",
+      "freeTour": "免费步行游览",
+      "freeEntry": "免费入场",
+      "coversTrip": "覆盖你的 {{days}} 天行程",
+      "cheapestPlan": "最便宜的套餐",
+      "cheaperStay": "更便宜的住宿，符合你的预算"
+    }
+  },
+  "print": {
+    "defaultName": "旅行计划",
+    "printButton": "打印 / 另存为 PDF",
+    "footer": "由 Voyager 规划。价格和可用性均为估算——预订前请确认。",
+    "inspiredBy": "灵感来源：{{source}}",
+    "travelers_other": "{{count}} 位旅客",
+    "book": "预订",
+    "viewTour": "查看游览",
+    "getPlan": "获取套餐",
+    "hotelTotal": "共 {{price}}",
+    "fromLink": "来自你的链接",
+    "alsoFromLink": "还有来自你链接的：{{names}}",
+    "section": {
+      "flights": "航班",
+      "hotel": "酒店",
+      "itinerary": "行程安排",
+      "activities": "活动",
+      "places": "景点",
+      "walkingTours": "免费步行游览",
+      "events": "活动日程",
+      "sim": "SIM / eSIM",
+      "gettingAround": "当地交通",
+      "tips": "贴士"
+    }
+  },
+  "ics": {
+    "dayTheme": "第 {{n}} 天：{{theme}}",
+    "fromLinkQuote": "来自你的链接：“{{quote}}”",
+    "estCost": "预计费用：{{amount}}",
+    "arrives": "当地时间 {{time}} 抵达",
+    "booking": "预订：{{url}}",
+    "price": "价格：{{price}}",
+    "trip": "行程"
+  },
+  "util": {
+    "budgetUnder": "低于预算 {{amount}}",
+    "budgetOver": "超出预算 {{amount}}",
+    "hours": "{{n}} 小时",
+    "minutes": "{{n}} 分钟"
+  }
+}

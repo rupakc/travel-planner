@@ -1,0 +1,18 @@
+{
+  "tab": "Analytics",
+  "usersToday": "Users today",
+  "sessionsToday": "Sessions today",
+  "users7d": "Users, last 7 days",
+  "userDays7": "User-days (7 days)",
+  "chartTitle": "Daily users, last 30 days",
+  "chartSummary": "Bar chart of daily users from {{from}} to {{to}}. Peak: {{max}} on {{peak}}.",
+  "topEvents": "Top events",
+  "topScreens": "Top screens",
+  "colEvent": "Event",
+  "colEvents": "Events",
+  "colScreen": "Screen",
+  "colViews": "Views",
+  "empty": "No data yet.",
+  "loading": "Loading analytics…",
+  "error": "Couldn't load analytics. Try again later."
+}

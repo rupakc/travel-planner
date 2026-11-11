@@ -3,9 +3,12 @@
  * price wording, sparkline geometry, target validation and re-planning.
  * Dates are ISO `YYYY-MM-DD` strings read in UTC.
  */
-import { formatUsd } from './fareCalendar'
+import i18n from '../i18n'
+import { intlLocale } from '../i18n/format'
+import { formatUsd, isEnglish, utcDate } from './fareCalendar'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const tt = (key, opts) => i18n.t(`alerts:${key}`, opts)
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const parts = (iso) => String(iso).split('-').map(Number)
 
@@ -57,8 +60,22 @@ export function routeLabel(w) {
   return `${city(w.origin_label, w.origin_code)} → ${city(w.destination_label, w.destination_code)}`
 }
 
+function intlRange(dep, ret) {
+  try {
+    const sameYear = !ret || dep.slice(0, 4) === ret.slice(0, 4)
+    const lng = i18n.resolvedLanguage || i18n.language
+    const fmt = new Intl.DateTimeFormat(intlLocale(lng), {
+      day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }), timeZone: 'UTC',
+    })
+    return ret ? fmt.formatRange(utcDate(dep), utcDate(ret)) : fmt.format(utcDate(dep))
+  } catch {
+    return ret ? `${dep} – ${ret}` : dep
+  }
+}
+
 /** "1–8 Dec", "28 Nov – 5 Dec", "28 Dec 2026 – 4 Jan 2027", "1 Dec". */
 export function formatDateRange(dep, ret) {
+  if (!isEnglish()) return intlRange(dep, ret)
   const [y1, m1, d1] = parts(dep)
   if (!ret) return `${d1} ${MONTHS[m1 - 1]}`
   const [y2, m2, d2] = parts(ret)
@@ -68,25 +85,18 @@ export function formatDateRange(dep, ret) {
 }
 
 export function travellersLabel(n) {
-  return `total for ${n} traveller${n === 1 ? '' : 's'}`
+  return tt('travellersTotal', { count: n })
 }
 
 /** Text for a "watched" entry point: "Watching · $454". */
 export function watchingLabel(w) {
-  if (w.status === 'paused') return 'Watch paused'
-  return isNum(w.last_price) ? `Watching · ${formatUsd(w.last_price)}` : 'Watching'
+  if (w.status === 'paused') return tt('btn.watchPaused')
+  return isNum(w.last_price) ? tt('btn.watchingPrice', { price: formatUsd(w.last_price) }) : tt('btn.watching')
 }
 
 // ── Status + change ──────────────────────────────────────────────────────────
 
-const STATUS = {
-  pending:  { label: 'Getting today’s price', tone: 'sky' },
-  watching: { label: 'Watching', tone: 'sky' },
-  dropped:  { label: 'Price dropped', tone: 'emerald' },
-  paused:   { label: 'Paused', tone: 'slate' },
-  expired:  { label: 'Ended', tone: 'slate' },
-  problem:  { label: 'Can’t check right now', tone: 'amber' },
-}
+const TONES = { pending: 'sky', watching: 'sky', dropped: 'emerald', paused: 'slate', expired: 'slate', problem: 'amber' }
 
 export function watchStatus(w) {
   let key = 'watching'
@@ -95,18 +105,18 @@ export function watchStatus(w) {
   else if (w.status === 'error') key = 'problem'
   else if (!isNum(w.baseline_price)) key = 'pending'
   else if (isNum(w.last_price) && w.last_price < w.baseline_price - 0.5) key = 'dropped'
-  return { key, ...STATUS[key] }
+  return { key, label: tt(`status.${key}`), tone: TONES[key] }
 }
 
 /** Latest price vs the price when watching started. */
 export function priceChange(w) {
   if (!isNum(w.baseline_price) || !isNum(w.last_price)) return null
   const delta = Math.round(w.last_price - w.baseline_price)
-  if (delta === 0) return { delta: 0, direction: 'same', text: 'Same as when you started' }
+  if (delta === 0) return { delta: 0, direction: 'same', text: tt('change.same') }
   const amount = formatUsd(Math.abs(delta))
   return delta < 0
-    ? { delta, direction: 'down', text: `${amount} less than when you started` }
-    : { delta, direction: 'up', text: `${amount} more than when you started` }
+    ? { delta, direction: 'down', text: tt('change.less', { amount }) }
+    : { delta, direction: 'up', text: tt('change.more', { amount }) }
 }
 
 // ── Sparkline ────────────────────────────────────────────────────────────────
@@ -143,23 +153,23 @@ export function sparkGeometry(history, { width, height, pad = 2, target = null }
 export function relativeTime(iso, now = new Date()) {
   if (!iso) return ''
   const secs = (now - new Date(iso)) / 1000
-  if (secs < 60) return 'just now'
+  if (secs < 60) return tt('time.justNow')
   const mins = Math.floor(secs / 60)
-  if (mins < 60) return `${mins} min ago`
+  if (mins < 60) return tt('time.minAgo', { count: mins })
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} h ago`
+  if (hours < 24) return tt('time.hourAgo', { count: hours })
   const days = Math.floor(hours / 24)
-  return days === 1 ? 'yesterday' : `${days} days ago`
+  return days === 1 ? tt('time.yesterday') : tt('time.daysAgo', { count: days })
 }
 
 export function untilTime(iso, now = new Date()) {
   if (!iso) return ''
   const mins = Math.round((new Date(iso) - now) / 60000)
-  if (mins <= 0) return 'soon'
-  if (mins < 60) return `in ${mins} min`
+  if (mins <= 0) return tt('time.soon')
+  if (mins < 60) return tt('time.inMin', { count: mins })
   const hours = Math.round(mins / 60)
-  if (hours < 24) return `in ${hours} h`
-  return `in ${Math.round(hours / 24)} days`
+  if (hours < 24) return tt('time.inHours', { count: hours })
+  return tt('time.inDays', { count: Math.round(hours / 24) })
 }
 
 // ── Target ───────────────────────────────────────────────────────────────────
@@ -177,10 +187,10 @@ export function defaultTarget(insights, price) {
 export function checkTarget(raw, price) {
   const value = Number(String(raw ?? '').replace(/[$,\s]/g, ''))
   if (String(raw ?? '').trim() === '' || !Number.isFinite(value) || value <= 0) {
-    return { error: 'Enter a price in dollars, like 450.', note: null, value: null }
+    return { error: tt('target.errorUsd'), note: null, value: null }
   }
   const note = isNum(price) && value >= price
-    ? `Today’s fare (${formatUsd(price)}) is already under this — we’ll tell you when it drops below today’s price.`
+    ? tt('target.note', { price: formatUsd(price) })
     : null
   return { error: null, note, value }
 }

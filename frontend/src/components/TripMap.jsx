@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { haversineKm } from '../utils/geo'
@@ -50,10 +51,10 @@ function nearestNeighborOrder(stops) {
 }
 
 // Places from the traveller's imported link wear an amber ring
-function makeNumberedIcon(num, color = '#0d9488', fromLink = false) {
-  const ring = fromLink ? 'border:2px solid #fff;box-shadow:0 0 0 3px #f59e0b,0 1px 4px rgba(0,0,0,.35)' : 'border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)'
+function makeNumberedIcon(num, color = 'rgb(var(--c-teal-600))', fromLink = false) {
+  const ring = fromLink ? 'border:2px solid rgb(var(--c-white));box-shadow:0 0 0 3px rgb(var(--c-amber-500)),0 1px 4px rgba(0,0,0,.35)' : 'border:2px solid rgb(var(--c-white));box-shadow:0 1px 4px rgba(0,0,0,.35)'
   return L.divIcon({
-    html: `<div style="background:${color};color:#fff;width:22px;height:22px;border-radius:50%;
+    html: `<div style="background:${color};color:rgb(var(--c-white));width:22px;height:22px;border-radius:50%;
            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
            ${ring}">${num}</div>`,
     className: '',
@@ -63,11 +64,13 @@ function makeNumberedIcon(num, color = '#0d9488', fromLink = false) {
   })
 }
 
-const CITY_COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6']
+const CITY_COLORS = ['teal-600', 'indigo-500', 'amber-500', 'red-500', 'violet-500'].map((c) => `rgb(var(--c-${c}))`)
 
 export default function TripMap({ days }) {
+  const { t } = useTranslation('itinerary')
   if (!days?.length) return null
 
+  const tod = (v) => t(`time.${v}`, { defaultValue: v })
   const cityList = [...new Set(days.map(d => d.city).filter(Boolean))]
   const cityColor = Object.fromEntries(
     cityList.map((c, i) => [c, CITY_COLORS[i % CITY_COLORS.length]])
@@ -116,24 +119,26 @@ export default function TripMap({ days }) {
         <FitBounds positions={positions} />
         <Polyline
           positions={positions}
-          color="#0d9488"
+          color="rgb(var(--c-teal-600))"
           weight={2}
           opacity={0.55}
           dashArray="7 5"
         />
         {allStops.map((stop, i) => {
-          const color = stop.city ? (cityColor[stop.city] || '#0d9488') : '#0d9488'
+          const color = stop.city ? (cityColor[stop.city] || CITY_COLORS[0]) : CITY_COLORS[0]
           return (
             <Marker key={i} position={[stop.lat, stop.lng]} icon={makeNumberedIcon(i + 1, color, stop.fromLink)}>
               <Popup>
                 <div style={{ fontSize: 12, lineHeight: 1.4 }}>
                   <p style={{ fontWeight: 600, margin: 0 }}>{stop.activity}</p>
                   {stop.location && (
-                    <p style={{ color: '#6b7280', margin: '2px 0 0' }}>{stop.location}</p>
+                    <p style={{ color: 'rgb(var(--c-gray-500))', margin: '2px 0 0' }}>{stop.location}</p>
                   )}
-                  {stop.fromLink && <p style={{ color: '#b45309', margin: '2px 0 0', fontWeight: 600 }}>From your link</p>}
-                  <p style={{ color: '#0d9488', margin: '2px 0 0' }}>
-                    Day {stop.day}{stop.city ? ` · ${stop.city}` : ''} · {stop.time}
+                  {stop.fromLink && <p style={{ color: 'rgb(var(--c-amber-700))', margin: '2px 0 0', fontWeight: 600 }}>{t('map.fromLink')}</p>}
+                  <p style={{ color: 'rgb(var(--c-teal-600))', margin: '2px 0 0' }}>
+                    {stop.city
+                      ? t('map.dayLineCity', { day: stop.day, city: stop.city, time: tod(stop.time) })
+                      : t('map.dayLine', { day: stop.day, time: tod(stop.time) })}
                   </p>
                 </div>
               </Popup>

@@ -1,21 +1,22 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { BadgeCheck, CircleCheck, CircleX, Info, Loader2, ShieldAlert, ShieldQuestion, ExternalLink, Sparkles } from 'lucide-react'
 import { safeUrl } from '../utils/planPrint'
 
 // Per-level chip look. The chip is deliberately short (icon + short text) so
 // section headers don't wrap on a phone; the full label is in the popover.
 const LEVELS = {
-  verified:   { text: 'Verified',   Icon: BadgeCheck,    chip: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
-  partial:    { text: 'Partly verified', Icon: ShieldQuestion, chip: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
-  unverified: { text: 'AI-generated', Icon: Sparkles,      chip: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' },
-  conflict:   { text: 'Check details', Icon: ShieldAlert,   chip: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
+  verified:   { Icon: BadgeCheck,    chip: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
+  partial:    { Icon: ShieldQuestion, chip: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
+  unverified: { Icon: Sparkles,      chip: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' },
+  conflict:   { Icon: ShieldAlert,   chip: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
 }
 const PENDING_CHIP = 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
 const CHECK_ICONS = {
-  pass: { Icon: CircleCheck, cls: 'text-emerald-600', sr: 'Passed' },
-  fail: { Icon: CircleX, cls: 'text-rose-600', sr: 'Failed' },
-  info: { Icon: Info, cls: 'text-gray-400', sr: 'Note' },
+  pass: { Icon: CircleCheck, cls: 'text-emerald-600' },
+  fail: { Icon: CircleX, cls: 'text-rose-600' },
+  info: { Icon: Info, cls: 'text-gray-400' },
 }
 
 const POPOVER_WIDTH = 288
@@ -44,6 +45,7 @@ const FOCUSABLE = 'a[href], button:not([disabled])'
 // (overflow-hidden) and keep a transform from their entry animation. Follows
 // the chip on scroll/resize and closes when the chip leaves the viewport.
 function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
+  const { t } = useTranslation('misc')
   const ref = useRef(null)
   const [rect, setRect] = useState(() => anchorRef.current.getBoundingClientRect())
 
@@ -104,7 +106,7 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
 
   const checks = Array.isArray(verification.checks) ? verification.checks : []
   return createPortal(
-    <div ref={ref} id={id} role="dialog" aria-label={`Source verification: ${verification.label || ''}`}
+    <div ref={ref} id={id} role="dialog" aria-label={t('verification.dialogAria', { label: verification.label || '' })}
       tabIndex={-1} onKeyDown={onKeyDown} onClick={(e) => e.stopPropagation()}
       style={placement(rect, window.innerWidth, window.innerHeight)}
       className="z-50 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-left text-xs text-gray-700 focus:outline-none">
@@ -113,17 +115,18 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
       {checks.length > 0 && (
         <ul className="mt-2 space-y-2">
           {checks.map((c, i) => {
-            const { Icon, cls, sr } = CHECK_ICONS[c.status] || CHECK_ICONS.info
+            const status = CHECK_ICONS[c.status] ? c.status : 'info'
+            const { Icon, cls } = CHECK_ICONS[status]
             const href = safeUrl(c.url)
             return (
               <li key={i} className="flex items-start gap-2">
                 <Icon size={14} className={`${cls} mt-0.5 shrink-0`} aria-hidden="true" />
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-800"><span className="sr-only">{sr}: </span>{c.label}</p>
+                  <p className="font-medium text-gray-800"><span className="sr-only">{t(`verification.check.${status}`)}: </span>{c.label}</p>
                   {c.detail && <p className="text-gray-500">{c.detail}</p>}
                   {href && (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 underline break-all">
-                      <ExternalLink size={10} aria-hidden="true" /> Source
+                    <a href={href} data-tid="verification.source" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 underline break-all">
+                      <ExternalLink size={10} aria-hidden="true" /> {t('verification.source')}
                     </a>
                   )}
                 </div>
@@ -138,6 +141,7 @@ function Popover({ id, verification, anchorRef, onClose, onDismiss }) {
 }
 
 export default function VerificationBadge({ verification }) {
+  const { t } = useTranslation('misc')
   const [open, setOpen] = useState(false)
   const buttonRef = useRef(null)
   const id = useId()
@@ -145,18 +149,20 @@ export default function VerificationBadge({ verification }) {
   const dismiss = useCallback(() => setOpen(false), [])
   if (!verification || typeof verification !== 'object') return null
 
-  const level = LEVELS[verification.level] || LEVELS.unverified
+  const levelKey = LEVELS[verification.level] ? verification.level : 'unverified'
+  const level = LEVELS[levelKey]
+  const levelText = t(`verification.level.${levelKey}`)
   const pending = verification.pending === true
   const Icon = pending ? Loader2 : level.Icon
   return (
     <span className="inline-flex shrink-0" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-      <button ref={buttonRef} type="button" aria-expanded={open} aria-controls={open ? id : undefined} aria-haspopup="dialog"
-        aria-label={pending ? 'Checking sources' : `${verification.label || level.text} — source details`}
+      <button ref={buttonRef} type="button" data-tid="verification.badge" aria-expanded={open} aria-controls={open ? id : undefined} aria-haspopup="dialog"
+        aria-label={pending ? t('verification.checkingAria') : t('verification.detailsAria', { label: verification.label || levelText })}
         title={verification.label}
         onClick={() => setOpen((o) => !o)}
         className={`inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium border px-2 py-0.5 rounded-full transition-colors ${pending ? PENDING_CHIP : level.chip}`}>
         <Icon size={11} className={pending ? 'animate-spin' : ''} aria-hidden="true" />
-        <span>{pending ? 'Checking…' : (verification.label || level.text)}</span>
+        <span>{pending ? t('verification.checking') : (verification.label || levelText)}</span>
       </button>
       {open && <Popover id={id} verification={verification} anchorRef={buttonRef} onClose={close} onDismiss={dismiss} />}
     </span>
@@ -165,6 +171,7 @@ export default function VerificationBadge({ verification }) {
 
 // One-line rose banner for a section-level conflict (Visa / Emergency bodies).
 export function VerificationConflictBanner({ verification }) {
+  const { t } = useTranslation('misc')
   if (verification?.level !== 'conflict') return null
   const link = (verification.checks || []).map((c) => c.status === 'fail' ? safeUrl(c.url) : null).find(Boolean)
   return (
@@ -172,7 +179,7 @@ export function VerificationConflictBanner({ verification }) {
       <ShieldAlert size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
       <span>
         {verification.summary}
-        {link && <> <a href={link} target="_blank" rel="noopener noreferrer" className="underline font-medium">Official site</a></>}
+        {link && <> <a href={link} data-tid="verification.official-site" target="_blank" rel="noopener noreferrer" className="underline font-medium">{t('verification.officialSite')}</a></>}
       </span>
     </div>
   )
@@ -180,10 +187,11 @@ export function VerificationConflictBanner({ verification }) {
 
 // Small "Found online" tag for items whose link was confirmed by enrichment.
 export function FoundOnlineBadge({ item }) {
+  const { t } = useTranslation('misc')
   if (item?.link_verified !== true) return null
   return (
-    <span title="This listing was found online by name" className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
-      <BadgeCheck size={10} aria-hidden="true" /> Found online
+    <span title={t('verification.foundOnlineTitle')} className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
+      <BadgeCheck size={10} aria-hidden="true" /> {t('verification.foundOnline')}
     </span>
   )
 }

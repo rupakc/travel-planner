@@ -1,5 +1,5 @@
 from ..schemas.request import DiscoveryRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 from .static_results import find_visa_row
 
@@ -30,7 +30,7 @@ class DiscoveryAgent(BaseAgent):
             f"  Interests: {interest_str}\n\n"
             "Suggest 5 destinations that best match this profile. Vary by region when possible."
         )
-        result = await self.execute(prompt)
+        result = await self.execute(prompt, **locale_kw(request))
 
         # Override LLM visa guesses with authoritative _VISA_TABLE data
         for dest in result.get("destinations", []):

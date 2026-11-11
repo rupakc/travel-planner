@@ -1,0 +1,20 @@
+{
+  "prompt": {
+    "title": "Aidez à améliorer Voyager",
+    "body": "Nous collectons des données d’usage (écrans, appuis, durées), liées à un identifiant aléatoire ou, si vous êtes connecté, à votre compte, pour corriger les bugs et améliorer l’appli. Jamais ce que vous saisissez, votre position ni votre e-mail.",
+    "allow": "Autoriser",
+    "deny": "Non merci"
+  },
+  "switch": {
+    "label": "Aidez à améliorer Voyager",
+    "hint": "Partagez des données d’usage liées à un identifiant aléatoire ou, si vous êtes connecté, à votre compte. Jamais ce que vous saisissez, votre position ni votre e-mail."
+  },
+  "policy": "Politique de confidentialité",
+  "section": {
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "language": "Langue",
+    "privacy": "Confidentialité"
+  },
+  "choices": "Choix de confidentialité"
+}

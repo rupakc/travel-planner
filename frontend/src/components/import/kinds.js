@@ -4,19 +4,19 @@ import {
 } from 'lucide-react'
 
 // Each kind of imported place: its icon, its pin colour on the preview map,
-// and a readable label. Pin colours are mid-dark so white numbers stay legible.
+// and the catalogue key of its readable label (namespace `search`). Pin colours are mid-dark so white numbers stay legible.
 export const KINDS = {
-  sight:     { icon: Landmark,        color: '#0f766e', label: 'Sight' },
-  food:      { icon: UtensilsCrossed, color: '#c2410c', label: 'Food' },
-  drink:     { icon: Wine,            color: '#be123c', label: 'Drinks' },
-  stay:      { icon: BedDouble,       color: '#475569', label: 'Stay' },
-  activity:  { icon: Ticket,          color: '#0369a1', label: 'Activity' },
-  nature:    { icon: Trees,           color: '#15803d', label: 'Nature' },
-  shopping:  { icon: ShoppingBag,     color: '#be185d', label: 'Shopping' },
-  nightlife: { icon: Moon,            color: '#4338ca', label: 'Nightlife' },
-  event:     { icon: CalendarDays,    color: '#7e22ce', label: 'Event' },
-  transport: { icon: TramFront,       color: '#57534e', label: 'Getting around' },
-  area:      { icon: MapPinned,       color: '#0e7490', label: 'Neighbourhood' },
+  sight:     { icon: Landmark,        color: 'rgb(var(--c-teal-700))', labelKey: 'kinds.sight' },
+  food:      { icon: UtensilsCrossed, color: 'rgb(var(--c-orange-700))', labelKey: 'kinds.food' },
+  drink:     { icon: Wine,            color: 'rgb(var(--c-rose-700))', labelKey: 'kinds.drink' },
+  stay:      { icon: BedDouble,       color: 'rgb(var(--c-slate-600))', labelKey: 'kinds.stay' },
+  activity:  { icon: Ticket,          color: 'rgb(var(--c-sky-700))', labelKey: 'kinds.activity' },
+  nature:    { icon: Trees,           color: 'rgb(var(--c-green-700))', labelKey: 'kinds.nature' },
+  shopping:  { icon: ShoppingBag,     color: 'rgb(var(--c-pink-700))', labelKey: 'kinds.shopping' },
+  nightlife: { icon: Moon,            color: 'rgb(var(--c-indigo-700))', labelKey: 'kinds.nightlife' },
+  event:     { icon: CalendarDays,    color: 'rgb(var(--c-purple-700))', labelKey: 'kinds.event' },
+  transport: { icon: TramFront,       color: 'rgb(var(--c-stone-600))', labelKey: 'kinds.transport' },
+  area:      { icon: MapPinned,       color: 'rgb(var(--c-cyan-700))', labelKey: 'kinds.area' },
 }
 
 export const kindOf = (kind) => KINDS[kind] || KINDS.sight

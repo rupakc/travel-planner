@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "search": "খুঁজুন",
+    "chat": "চ্যাট",
+    "nearby": "আমার কাছে",
+    "alerts": "অ্যালার্ট",
+    "preferences": "পছন্দ",
+    "admin": "অ্যাডমিন",
+    "menu": "মেনু",
+    "signOut": "সাইন আউট",
+    "adminBadge": "অ্যাডমিন",
+    "home": "Voyager হোম",
+    "unread_one": "{{count}}টি অপঠিত",
+    "unread_other": "{{count}}টি অপঠিত",
+    "alertsUnread_one": "অ্যালার্ট, {{count}}টি অপঠিত",
+    "alertsUnread_other": "অ্যালার্ট, {{count}}টি অপঠিত"
+  },
+  "language": {
+    "label": "ভাষা"
+  },
+  "theme": {
+    "label": "থিম",
+    "current": "থিম: {{mode}}",
+    "system": "সিস্টেম",
+    "light": "লাইট",
+    "dark": "ডার্ক"
+  },
+  "footer": {
+    "attribution": "স্থানের তথ্য © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · বিমানবন্দরের তথ্য: <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "উচ্চ",
+      "medium": "মাঝারি",
+      "low": "কম"
+    },
+    "coverage": {
+      "excellent": "চমৎকার",
+      "good": "ভালো",
+      "moderate": "মাঝারি",
+      "limited": "সীমিত"
+    },
+    "severity": {
+      "info": "তথ্য",
+      "warning": "সতর্কতা",
+      "danger": "বিপদ",
+      "critical": "গুরুতর"
+    }
+  }
+}

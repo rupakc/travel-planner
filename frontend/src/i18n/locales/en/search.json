@@ -1,0 +1,336 @@
+{
+  "interests": {
+    "food": "🍜 Food",
+    "history": "🏛️ History",
+    "adventure": "🧗 Adventure",
+    "culture": "🎭 Culture",
+    "nature": "🌿 Nature",
+    "shopping": "🛍️ Shopping",
+    "nightlife": "🌙 Nightlife",
+    "wellness": "🧘 Wellness",
+    "art": "🎨 Art",
+    "family": "👨‍👩‍👧 Family"
+  },
+  "interestNames": {
+    "food": "food",
+    "history": "history",
+    "adventure": "adventure",
+    "culture": "culture",
+    "nature": "nature",
+    "shopping": "shopping",
+    "nightlife": "nightlife",
+    "wellness": "wellness",
+    "art": "art",
+    "family": "family"
+  },
+  "tour": {
+    "recent": {
+      "title": "Pick up where you left off",
+      "body": "Your recent searches live here. Load one to tweak it, or run it again as it was."
+    },
+    "route": {
+      "title": "Where are you headed?",
+      "body": "Enter where you're flying from and to. Add stops on the way for a multi-city trip."
+    },
+    "interests": {
+      "title": "Tell us what you love",
+      "body": "Your interests and the discovery dial shape every recommendation — from famous classics to hidden gems."
+    },
+    "preferences": {
+      "title": "We remember your details",
+      "body": "Nationality, visas, travelers and interests you use here are saved to Preferences, and they pre-fill this form next time."
+    },
+    "plan": {
+      "title": "Watch your trip come together",
+      "body": "Flights, hotels, visa, weather and more stream in section by section — the first results appear within seconds."
+    },
+    "myPlan": {
+      "title": "Build your plan",
+      "body": "Add the flights, hotels and activities you like to My Plan, see where the money goes, then add it to your calendar or save it as a PDF. Chat is there for any question along the way."
+    }
+  },
+  "hero": {
+    "badge": "AI-Powered Travel Planning",
+    "title": "Plan Your Perfect Trip",
+    "subtitle": "Flights, hotels, activities, visa, SIM & itinerary — all in one place.",
+    "tour": "New here? Take a quick tour",
+    "importLead": "Saw a great trip online?",
+    "importLink": "Paste the link"
+  },
+  "drop": {
+    "title": "Drop it to plan a trip",
+    "body": "We'll find every place in your screenshot"
+  },
+  "modes": {
+    "known": "I know where I'm going",
+    "discover": "Surprise me 🎲",
+    "compare": "Compare ⚖️",
+    "import": "From a link ✨"
+  },
+  "import": {
+    "heading": "Turn any travel post into your trip",
+    "subheading": "A blog, a YouTube or TikTok video, a friend's message or a screenshot — we'll find every place and plan the days around them.",
+    "steps": {
+      "url": "Reading the page",
+      "text": "Reading your text",
+      "images": "Reading your screenshots",
+      "find": "Finding places",
+      "map": "Putting them on the map"
+    },
+    "typical": {
+      "url": "Usually 10–30 seconds",
+      "text": "Usually 5–10 seconds",
+      "images": "Usually 10–30 seconds"
+    },
+    "elapsed": " · {{seconds}}s so far",
+    "cancel": "Cancel",
+    "escKey": "(Esc)",
+    "formAria": "Plan from a link",
+    "pasteLabel": "Paste a link, or the text itself",
+    "placeholder": "A travel blog, YouTube or TikTok link…\nor a caption, a friend's message, a list of places",
+    "shotsNote_one": "We'll read your screenshot — remove it to use text instead",
+    "shotsNote_other": "We'll read your {{count}} screenshots — remove them to use text instead",
+    "detectedUrl": "Link — we'll read the page",
+    "detectedText": "Text — we'll pick out the places",
+    "counter": "{{n}} / {{max}}",
+    "chooseAria": "Choose screenshots",
+    "removeShot": "Remove {{name}}",
+    "addAnother": "Add another",
+    "dropLead": "Drop screenshots here, or",
+    "chooseFiles": "choose files",
+    "dropHint": "Up to {{max}} · paste works too",
+    "screenshot": "Screenshot",
+    "thatScreenshot": "that screenshot",
+    "thatScreenshotCap": "That screenshot",
+    "tooMany": "Up to {{max}} screenshots at a time — we kept the first {{kept}}.",
+    "tooBig": "{{name}} is still too big after shrinking. Crop it and try again.",
+    "unreadable": "We couldn't read {{name}} — try saving it again as PNG or JPEG.",
+    "actions": {
+      "text": "Paste the text",
+      "images": "Drop a screenshot",
+      "retry": "Try again"
+    },
+    "examples": "Try an example:",
+    "find": "Find the places",
+    "findInShots_one": "Find the places in my screenshot",
+    "findInShots_other": "Find the places in {{count}} screenshots",
+    "example": {
+      "lisbon": {
+        "label": "48 hours in Lisbon",
+        "text": "48 hours in Lisbon: lunch at Time Out Market, Belém Tower and custard tarts at Pastéis de Belém, browse LX Factory, sunset at Miradouro da Senhora do Monte, then a day trip to Pena Palace in Sintra."
+      },
+      "tokyo": {
+        "label": "A friend's Tokyo tips",
+        "text": "Tokyo musts from my trip!! Tsukiji Outer Market for breakfast, teamLab Planets (book ahead), Senso-ji at dawn before the crowds, drinks in Golden Gai, and Shibuya Sky at sunset. If you have time, Hakone for the onsen."
+      },
+      "rome": {
+        "label": "Rome and Florence",
+        "text": "Day 1–2 Rome: Colosseum, dinner in Trastevere, the Pantheon, gelato at Giolitti. Day 3–4 Florence: the Uffizi, climb the Duomo, Piazzale Michelangelo at sunset and lunch at Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "We couldn't reach Voyager. Check your connection and try again.",
+      "unknown": "Something went wrong while reading that. Try again in a moment.",
+      "tooLarge": "That upload is too big — use up to 4 screenshots of 5 MB or less."
+    },
+    "file": {
+      "heic": "iPhone HEIC photos can't be read yet — take a screenshot instead (screenshots are PNG), or export it as JPEG.",
+      "notImage": "{{name}} isn't an image we can read. Use PNG, JPEG or WebP.",
+      "thatFile": "That file",
+      "thatImage": "That image",
+      "tooBigSource": "{{name}} is too big to read here (over 40 MB). Crop it or save it smaller.",
+      "over5": "{{name}} is over 5 MB. Crop it or save it as a smaller PNG or JPEG."
+    }
+  },
+  "form": {
+    "from": "From",
+    "to": "To",
+    "flyingFrom": "Flying from",
+    "departure": "Departure",
+    "return": "Return",
+    "nationality": "Nationality",
+    "budget": "Budget (USD)",
+    "budgetOptional": "Budget (USD, optional)",
+    "travelers": "Travelers",
+    "cityOrAirport": "City or airport…",
+    "nationalityPlaceholder": "American, Indian…",
+    "optional": "Optional",
+    "totalBudget": "Total trip budget",
+    "permits": "🏠 Residence Permits (if any)",
+    "permitsPlaceholder": "Schengen, UK, UAE…",
+    "visas": "📋 Existing Visas (if any)",
+    "visasPlaceholder": "US, Japan, Canada…",
+    "interests": "✨ Interests",
+    "interestsDiscover": "✨ What are you into?",
+    "plan": "Plan My Trip"
+  },
+  "recent": {
+    "loaded": "Loaded {{route}}. Change anything you like, then plan.",
+    "loadedShifted": "Loaded {{route}}. Its dates had passed, so they now start next week with the same trip length — check them, then plan.",
+    "dismiss": "Dismiss",
+    "title": "Recent searches",
+    "loadTitle": "Load into the form to change anything before searching",
+    "datesPassed": "dates passed",
+    "searchAgain": "Search again",
+    "rerunTitle": "Run this exact search again",
+    "rerunPassedTitle": "These dates have passed — load it and pick new dates",
+    "removeAria": "Remove recent search {{route}}"
+  },
+  "stops": {
+    "label": "Stop {{n}} — on the way",
+    "placeholder": "Stopover city…",
+    "nights": "Nights",
+    "optional": "(opt)",
+    "auto": "auto",
+    "remove": "Remove this stop",
+    "add": "Add a stop on the way (multi-city)",
+    "originFallback": "Origin",
+    "stopsFallback": "stops",
+    "destinationFallback": "your destination",
+    "route": "Your route: {{origin}} → {{stops}} → <b>{{destination}}</b>.",
+    "routeNote": "Stops are visited on the way; the \"To\" city is your final destination. Nights left blank are split automatically."
+  },
+  "dial": {
+    "label": "🎯 Discovery style",
+    "classics": "🏛️ Famous classics",
+    "gems": "💎 Hidden gems",
+    "balanced": "⚖️ Balanced mix",
+    "aria": "Serendipity dial: classics to hidden gems",
+    "iconic": "Iconic must-sees",
+    "offBeaten": "Off the beaten path"
+  },
+  "discover": {
+    "finding": "Finding destinations…",
+    "find": "Find My Perfect Destination",
+    "picks": "Your personalized picks ✨",
+    "none": "No destinations found — try different interests or a higher budget.",
+    "failed": "Discovery failed — please try again",
+    "visaFree": "✓ Visa-free",
+    "visaOnArrival": "Visa on arrival",
+    "eVisa": "e-Visa",
+    "visaRequired": "Visa required",
+    "visaVerify": "Verify visa",
+    "costRange": "~${{low}}–${{high}}",
+    "roughEstimate": "rough estimate",
+    "planThisTrip": "Plan this trip →"
+  },
+  "compare": {
+    "intro": "Compare two or three destinations side by side — cost, flights, hotels, weather and visa — before you commit to a full plan.",
+    "destination": "Destination {{n}}",
+    "removeDestination": "Remove this destination",
+    "removeDestinationN": "Remove destination {{n}}",
+    "addAnother": "Add another",
+    "needTwo": "Add at least two different destinations to compare.",
+    "comparing": "Comparing…",
+    "submit": "Compare destinations"
+  },
+  "airport": {
+    "placeholder": "Search cities or airports…",
+    "clear": "Clear"
+  },
+  "nationality": {
+    "placeholder": "Search nationality…",
+    "clear": "Clear"
+  },
+  "tags": {
+    "placeholder": "Type and press Enter...",
+    "hint": "Press Enter or comma to add"
+  },
+  "travelers": {
+    "total_one": "{{count}} traveler",
+    "total_other": "{{count}} travelers",
+    "adults": "Adults",
+    "seniors": "Seniors",
+    "children": "Children",
+    "infants": "Infants",
+    "fewer": "Fewer: {{group}}",
+    "more": "More: {{group}}",
+    "accessibility": "Accessibility needs",
+    "access": {
+      "wheelchair": "♿ Wheelchair / Mobility aid",
+      "visual_impairment": "👁️ Visual impairment",
+      "hearing_impairment": "🦻 Hearing impairment",
+      "cognitive_disability": "🧠 Cognitive / Neurodivergent"
+    }
+  },
+  "map": {
+    "aria": "Map of the places found",
+    "approximate": "Approximate location — somewhere in {{city}}"
+  },
+  "kinds": {
+    "sight": "Sight",
+    "food": "Food",
+    "drink": "Drinks",
+    "stay": "Stay",
+    "activity": "Activity",
+    "nature": "Nature",
+    "shopping": "Shopping",
+    "nightlife": "Nightlife",
+    "event": "Event",
+    "transport": "Getting around",
+    "area": "Neighbourhood"
+  },
+  "preview": {
+    "found": "Here’s what we found",
+    "pageShared": "The page you shared",
+    "yourShots": "Your screenshots",
+    "yourText": "Your pasted text",
+    "by": "by {{author}}",
+    "readJustNow": "Read just now",
+    "sourceFound_one": "{{meta}} — {{count}} place found",
+    "sourceFound_other": "{{meta}} — {{count}} places found",
+    "includeAria": "Include {{name}}",
+    "newNameAria": "New name for {{name}}",
+    "renameAria": "Rename {{name}}",
+    "dayTrip": "day trip to {{town}}",
+    "foundOnGoogle": "Found on Google Maps",
+    "onMap": "On the map",
+    "rating": " · ★ {{rating}}",
+    "approximate": "Approximate",
+    "approximateTitle": "We know the town, not the exact spot",
+    "stop": "Stop",
+    "stopFor": "Stop for {{name}}",
+    "placeFailed": "We couldn’t place that — try another spelling.",
+    "townFor": "Town for {{name}}",
+    "whichTown": "Which town?",
+    "placing": "Placing…",
+    "placeIt": "Place it",
+    "orAddTo": "or add it to",
+    "whichStop": "Which stop is {{name}} in?",
+    "leaveOut": "Leave out",
+    "tooManyStops": "{{city}} isn't one of this trip's stops, and a trip has at most 3 — add it to one of them instead.",
+    "missingOrigin": "Add where you’re flying from.",
+    "missingNationality": "Add your nationality — it decides visa info.",
+    "route": "Your route",
+    "oneLess": "One less night in {{city}}",
+    "oneMore": "One more night in {{city}}",
+    "leaveOutStop": "Leave out {{city}}",
+    "addBack": "Add {{city}} back",
+    "nights_one": "{{count}} night",
+    "nights_other": "{{count}} nights",
+    "totalNights_one": "{{count}} night in total",
+    "totalNights_other": "{{count}} nights in total",
+    "suggestedDays_one": "the source suggests about {{count}} day",
+    "suggestedDays_other": "the source suggests about {{count}} days",
+    "totalWithHint": "{{total}} — {{hint}}.",
+    "totalPlain": "{{total}}.",
+    "bestTime": "Best time: {{season}}.",
+    "placesIn": "Places in {{city}}",
+    "selectAll": "Select all in {{city}}",
+    "selectNone": "Select none in {{city}}",
+    "all": "All",
+    "none": "None",
+    "unplacedAria": "Places we couldn't place",
+    "unplaced_one": "Couldn't place this one",
+    "unplaced_other": "Couldn't place these {{count}}",
+    "unplacedHint": "Type the town each one is in, and we'll put it on the map and plan it in.",
+    "leavingOn": "Leaving on",
+    "back": "Back {{date}}",
+    "interests": "Interests: {{list}}",
+    "tickOne": "Tick at least one place to plan around.",
+    "capNote": "We'll plan the first {{max}} ticked places — untick a few to choose which.",
+    "startOver": "Start over",
+    "plan_one": "Plan this trip ({{count}} place)",
+    "plan_other": "Plan this trip ({{count}} places)"
+  }
+}

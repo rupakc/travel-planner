@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 from .static_results import _match_table_key, _normalise_nationality
 from .web_tools import execute_tool
@@ -221,7 +221,7 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
             f"tipping customs, and money tips specific to {dest_name}."
         )
 
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))
 
     async def _enrich_urls(self, data: dict) -> dict:
         source_urls = data.get("source_urls", [])

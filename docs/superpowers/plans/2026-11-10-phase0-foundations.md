@@ -255,7 +255,7 @@ Steps for each sub-task:
 - Test: `backend/tests/test_locale_prompt.py`
 
 **Interfaces:**
-- Produces: `language_instruction(locale: str | None) -> str` in `base_agent.py`. It returns `""` for `None`/`en`; otherwise exactly: `"Write every human-readable text value in {Language name in English}. Keep JSON keys, enum values, codes, URLs, prices, currency codes, dates and proper names of places exactly as you would in English output."`. An older SPA sends no `locale` and gets English, unchanged.
+- Produces: `language_instruction(locale: str | None) -> str` in `base_agent.py`. It returns `""` for `None`/`en`; otherwise exactly: `"Write every human-readable text value in {Language name in English}. Keep JSON keys, enum values, codes, URLs, prices, currency codes, dates and names of places, venues, hotels, restaurants, tours, events and airlines exactly as you would in English output."` (amended by the final review: enrichment, verification and price lookups key on those names). An older SPA sends no `locale` and gets English, unchanged.
 
 - [ ] **Step 1: Write failing tests**: the instruction is absent for `None`/`en` and present for `de`; two searches differing only in `locale` don't share a cache entry; an unknown locale → 422.
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement.** **Step 4: Run** the backend suite → PASS.

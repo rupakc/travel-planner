@@ -1,25 +1,20 @@
 // Plan a trip from a link, pasted text or screenshots — pure helpers for the
 // Search page's "From a link" mode and the Results page's link banner.
+import i18n from '../i18n'
+
+const tt = (key, opts) => i18n.t(`search:${key}`, opts)
 
 export const MAX_MUST_INCLUDE = 25
 export const MAX_IMAGES = 4
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 
-export const IMPORT_EXAMPLES = [
-  {
-    label: '48 hours in Lisbon',
-    text: '48 hours in Lisbon: lunch at Time Out Market, Belém Tower and custard tarts at Pastéis de Belém, browse LX Factory, sunset at Miradouro da Senhora do Monte, then a day trip to Pena Palace in Sintra.',
-  },
-  {
-    label: "A friend's Tokyo tips",
-    text: 'Tokyo musts from my trip!! Tsukiji Outer Market for breakfast, teamLab Planets (book ahead), Senso-ji at dawn before the crowds, drinks in Golden Gai, and Shibuya Sky at sunset. If you have time, Hakone for the onsen.',
-  },
-  {
-    label: 'Rome and Florence',
-    text: 'Day 1–2 Rome: Colosseum, dinner in Trastevere, the Pantheon, gelato at Giolitti. Day 3–4 Florence: the Uffizi, climb the Duomo, Piazzale Michelangelo at sunset and lunch at Mercato Centrale.',
-  },
-]
+// label / text read at use time so they follow a language switch
+export const IMPORT_EXAMPLES = ['lisbon', 'tokyo', 'rome'].map((id) => ({
+  id,
+  get label() { return tt(`import.example.${id}.label`) },
+  get text() { return tt(`import.example.${id}.text`) },
+}))
 
 const URL_LIKE = /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(:\d+)?([/?#]\S*)?$/i
 
@@ -34,8 +29,8 @@ export function detectImportInput(raw) {
 }
 
 const FRIENDLY = {
-  network: "We couldn't reach Voyager. Check your connection and try again.",
-  unknown: 'Something went wrong while reading that. Try again in a moment.',
+  network: () => tt('import.err.network'),
+  unknown: () => tt('import.err.unknown'),
 }
 // What the error card offers: switch to pasted text / screenshots, or retry
 const ACTIONS = {
@@ -59,10 +54,10 @@ const ACTIONS = {
 export function importErrorView(err) {
   if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || err?.name === 'AbortError') return null
   const res = err?.response
-  if (!res) return { code: 'network', message: FRIENDLY.network, actions: ACTIONS.network }
+  if (!res) return { code: 'network', message: FRIENDLY.network(), actions: ACTIONS.network }
   const detail = res.data?.detail
   if (detail && typeof detail === 'object' && detail.code) {
-    return { code: detail.code, message: detail.message || FRIENDLY.unknown, actions: ACTIONS[detail.code] || [] }
+    return { code: detail.code, message: detail.message || FRIENDLY.unknown(), actions: ACTIONS[detail.code] || [] }
   }
   if (res.status === 429 && typeof detail === 'string') {
     return { code: 'rate_limited', message: detail, actions: [] }
@@ -70,11 +65,11 @@ export function importErrorView(err) {
   if (res.status === 413) {
     return {
       code: 'too_large',
-      message: typeof detail === 'string' ? detail : 'That upload is too big — use up to 4 screenshots of 5 MB or less.',
+      message: typeof detail === 'string' ? detail : tt('import.err.tooLarge'),
       actions: ['images'],
     }
   }
-  return { code: 'unknown', message: FRIENDLY.unknown, actions: ACTIONS.unknown }
+  return { code: 'unknown', message: FRIENDLY.unknown(), actions: ACTIONS.unknown }
 }
 
 /** Why a dropped file can't be used, or null when it's fine. */
@@ -92,14 +87,14 @@ export function checkImageFile(file, { beforeShrink = false } = {}) {
   const type = (file?.type || '').toLowerCase()
   const name = (file?.name || '').toLowerCase()
   if (type === 'image/heic' || type === 'image/heif' || /\.hei[cf]$/.test(name)) {
-    return 'iPhone HEIC photos can\'t be read yet — take a screenshot instead (screenshots are PNG), or export it as JPEG.'
+    return tt('import.file.heic')
   }
-  if (!IMAGE_TYPES.has(type)) return `${file?.name || 'That file'} isn't an image we can read. Use PNG, JPEG or WebP.`
+  if (!IMAGE_TYPES.has(type)) return tt('import.file.notImage', { name: file?.name || tt('import.file.thatFile') })
   if (beforeShrink) {
-    if (file.size > MAX_SOURCE_IMAGE_BYTES) return `${file.name || 'That image'} is too big to read here (over 40 MB). Crop it or save it smaller.`
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) return tt('import.file.tooBigSource', { name: file.name || tt('import.file.thatImage') })
     return null
   }
-  if (file.size > MAX_IMAGE_BYTES) return `${file.name || 'That image'} is over 5 MB. Crop it or save it as a smaller PNG or JPEG.`
+  if (file.size > MAX_IMAGE_BYTES) return tt('import.file.over5', { name: file.name || tt('import.file.thatImage') })
   return null
 }
 

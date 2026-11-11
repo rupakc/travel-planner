@@ -1,5 +1,5 @@
 from ..schemas.request import TravelSearchRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -71,5 +71,7 @@ class EmergencyCardAgent(BaseAgent):
         super().__init__(load_agent_definition(agents_dir, "emergency_card"))
 
     async def run(self, request: TravelSearchRequest) -> dict:
-        result = await self.execute(build_emergency_prompt(request))
+        result = await self.execute(
+            build_emergency_prompt(request), **locale_kw(request)
+        )
         return result

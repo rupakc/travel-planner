@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { AlertTriangle, ExternalLink, Loader2, LocateFixed, MapPin, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { fmtNumber } from '../i18n/format'
 import { fetchNearby } from '../services/api'
 import { track } from '../utils/analytics'
 import {
@@ -14,6 +16,7 @@ const GEO_OPTIONS = { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 *
 export const GEO_WATCHDOG_MS = 20000
 
 function ItemCard({ item }) {
+  const { t } = useTranslation('misc')
   const href = safeHttpUrl(item.maps_uri)
   return (
     <li className="flex flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -21,9 +24,10 @@ function ItemCard({ item }) {
       {item.summary && <p className="mt-1 flex-1 text-sm text-slate-600">{item.summary}</p>}
       {href && (
         <a href={href} target="_blank" rel="noopener noreferrer"
-          aria-label={`Open ${item.name} in Google Maps (opens in a new tab)`}
+          aria-label={t('nearby.openMapsAria', { name: item.name })}
+          data-tid="nearby.open-maps"
           className="mt-3 inline-flex items-center gap-1.5 self-start rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-          <ExternalLink size={12} aria-hidden="true" /> Open in Google Maps
+          <ExternalLink size={12} aria-hidden="true" /> {t('nearby.openMaps')}
         </a>
       )}
     </li>
@@ -53,6 +57,7 @@ function SkeletonSection({ title }) {
  * component's state and is gone when the page is left (never stored).
  */
 export default function NearbyPage() {
+  const { t } = useTranslation('misc')
   const { token } = useAuth()
   // intro → locating → loading → done | error
   const [phase, setPhase] = useState('intro')
@@ -131,24 +136,37 @@ export default function NearbyPage() {
   const sections = phase === 'done' ? nearbySections(data) : []
   const total = sections.reduce((n, s) => n + s.items.length, 0)
   const sources = phase === 'done' ? usableSources(data?.sources) : []
-  const status = phase === 'locating' ? 'Finding your location…'
-    : phase === 'loading' ? 'Looking for places near you…'
-      : phase === 'done' ? `Found ${total} place${total === 1 ? '' : 's'} near ${data?.place?.name || 'you'}.`
-        : phase === 'error' ? error?.text || '' : ''
+  // Section titles/empty lines and the browser-geolocation and network errors
+  // come from utils/liveResults.js in English; translate them by id/code. A
+  // title or message the backend supplied is shown as it came.
+  const sectionTitle = (s) => {
+    const def = NEARBY_SECTIONS.find(x => x.id === s.id)
+    return def && s.title === def.title ? t(`nearby.section.${s.id}`) : s.title
+  }
+  const errorText = (e) => {
+    if (!e) return ''
+    if (e.kind === 'geo' && ['denied', 'unavailable', 'timeout', 'unsupported'].includes(e.code)) return t(`nearby.geo.${e.code}`)
+    if (e.kind === 'api' && ['network', 'grounding_unavailable'].includes(e.code)) return t(`nearby.api.${e.code}`)
+    return e.text
+  }
+  const status = phase === 'locating' ? t('nearby.finding')
+    : phase === 'loading' ? t('nearby.looking')
+      : phase === 'done' ? t('nearby.found', { count: total, place: data?.place?.name || t('nearby.you') })
+        : phase === 'error' ? errorText(error) : ''
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16 pt-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900">Near me</h1>
+          <h1 className="font-display text-2xl font-bold text-slate-900">{t('nearby.title')}</h1>
           <p className="mt-1 max-w-xl text-sm text-slate-600">
-            Places to see, eat, shop and stay around where you are right now.
+            {t('nearby.subtitle')}
           </p>
         </div>
         {phase === 'done' && (
-          <button type="button" onClick={locate}
+          <button type="button" onClick={locate} data-tid="nearby.refresh"
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
+            <RefreshCw size={13} aria-hidden="true" /> {t('nearby.refresh')}
           </button>
         )}
       </header>
@@ -160,15 +178,13 @@ export default function NearbyPage() {
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-600">
             <MapPin size={22} aria-hidden="true" />
           </span>
-          <h2 id="nearby-intro" className="mt-4 text-lg font-semibold text-slate-900">Use your location?</h2>
+          <h2 id="nearby-intro" className="mt-4 text-lg font-semibold text-slate-900">{t('nearby.introTitle')}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-            Your browser will ask to share your location. We use it once, rounded to about 100 metres, to look up
-            places around you on Google Maps. It isn’t saved, and neither are the results — they disappear when you
-            leave this page.
+            {t('nearby.introBody')}
           </p>
-          <button type="button" ref={startRef} onClick={locate}
+          <button type="button" ref={startRef} onClick={locate} data-tid="nearby.use-location"
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500">
-            <LocateFixed size={15} aria-hidden="true" /> Use my location
+            <LocateFixed size={15} aria-hidden="true" /> {t('nearby.useLocation')}
           </button>
         </section>
       )}
@@ -177,15 +193,15 @@ export default function NearbyPage() {
         <div aria-busy="true" data-testid="nearby-loading" className="space-y-8">
           <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <Loader2 size={15} className="animate-spin" aria-hidden="true" />
-            {phase === 'locating' ? 'Finding your location…' : 'Looking for places near you…'}
+            {phase === 'locating' ? t('nearby.finding') : t('nearby.looking')}
             {phase === 'locating' && (
-              <button type="button" onClick={cancel}
+              <button type="button" onClick={cancel} data-tid="nearby.cancel"
                 className="ml-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-                Cancel
+                {t('nearby.cancel')}
               </button>
             )}
           </p>
-          {phase === 'loading' && NEARBY_SECTIONS.map(s => <SkeletonSection key={s.id} title={s.title} />)}
+          {phase === 'loading' && NEARBY_SECTIONS.map(s => <SkeletonSection key={s.id} title={t(`nearby.section.${s.id}`)} />)}
         </div>
       )}
 
@@ -193,13 +209,13 @@ export default function NearbyPage() {
         <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-5 text-amber-900">
           <h2 ref={headingRef} tabIndex={-1} className="flex items-center gap-2 font-semibold focus:outline-none">
             <AlertTriangle size={16} aria-hidden="true" />
-            {error.kind === 'geo' ? 'We couldn’t get your location' : 'We couldn’t load places near you'}
+            {error.kind === 'geo' ? t('nearby.geoErrorTitle') : t('nearby.apiErrorTitle')}
           </h2>
-          <p className="mt-1 text-sm">{error.text}</p>
+          <p className="mt-1 text-sm">{errorText(error)}</p>
           {(error.retry || error.code === 'no_place') && (
-            <button type="button" onClick={locate}
+            <button type="button" onClick={locate} data-tid="nearby.retry"
               className="mt-3 rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-              {error.code === 'no_place' ? 'Check again from where you are now' : 'Try again'}
+              {error.code === 'no_place' ? t('nearby.checkAgain') : t('nearby.tryAgain')}
             </button>
           )}
         </div>
@@ -209,11 +225,11 @@ export default function NearbyPage() {
         <div className="space-y-8">
           <div>
             <h2 ref={headingRef} tabIndex={-1} className="font-display text-xl font-semibold text-slate-900 focus:outline-none">
-              {placeLabel(data?.place) || 'Around you'}
+              {placeLabel(data?.place) || t('nearby.aroundYou')}
             </h2>
             {data?.place?.distance_km != null && (
               <p className="mt-0.5 text-xs text-slate-500">
-                About {Number(data.place.distance_km).toLocaleString('en-US', { maximumFractionDigits: 1 })} km from you
+                {t('nearby.distance', { km: fmtNumber(Number(data.place.distance_km), { maximumFractionDigits: 1 }) })}
               </p>
             )}
           </div>
@@ -221,29 +237,31 @@ export default function NearbyPage() {
           {sections.map(s => (
             <section key={s.id} aria-labelledby={`nearby-${s.id}`} data-testid={`nearby-section-${s.id}`} className="space-y-3">
               <h2 id={`nearby-${s.id}`} className="text-sm font-semibold text-slate-700">
-                {s.title} <span className="font-normal text-slate-400">({s.items.length})</span>
+                {sectionTitle(s)} <span className="font-normal text-slate-400">({s.items.length})</span>
               </h2>
               {s.items.length > 0 ? (
                 <ul className="grid gap-3 sm:grid-cols-2">
                   {s.items.map((item, i) => <ItemCard key={item.place_id || `${item.name}-${i}`} item={item} />)}
                 </ul>
               ) : (
-                <p className="rounded-xl bg-white/70 px-4 py-4 text-sm text-slate-500">{s.empty}</p>
+                <p className="rounded-xl bg-white/70 px-4 py-4 text-sm text-slate-500">{t(`nearby.empty.${s.id}`)}</p>
               )}
             </section>
           ))}
 
           <footer className="space-y-2 border-t border-slate-200/70 pt-4 text-xs text-slate-500">
             <p data-testid="nearby-attribution">
-              Places from <span className="font-medium text-slate-700" translate="no">{data?.attribution || 'Google Maps'}</span>
+              <Trans t={t} i18nKey="nearby.attribution" components={{
+                src: <span className="font-medium text-slate-700" translate="no">{data?.attribution || 'Google Maps'}</span>,
+              }} />
             </p>
             {sources.length > 0 && (
               <div>
-                <h2 className="font-semibold text-slate-600">Sources</h2>
+                <h2 className="font-semibold text-slate-600">{t('nearby.sources')}</h2>
                 <ul className="mt-1 space-y-0.5">
                   {sources.map(src => (
                     <li key={src.index}>
-                      <a href={src.uri} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">
+                      <a href={src.uri} data-tid="nearby.source" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline-offset-2 hover:underline">
                         {src.title}
                       </a>
                     </li>

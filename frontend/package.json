@@ -7,6 +7,7 @@
     "dev": "vite --port 5174",
     "build": "vite build",
     "preview": "vite preview",
+    "tokens": "node scripts/build-tokens.mjs",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
@@ -15,10 +16,12 @@
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "i18next": "26.5.11",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "17.1.9",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.28.0"
   },

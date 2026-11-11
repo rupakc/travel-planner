@@ -1,0 +1,203 @@
+{
+  "modal": {
+    "namePlaceholder": "প্ল্যানের নাম…",
+    "close": "বন্ধ করুন",
+    "empty": "এই প্ল্যানে এখনও কোনো সেভ করা বাছাই নেই।",
+    "trip_one": "{{origin}} → {{destination}} · {{dates}} · {{count}} জন যাত্রী",
+    "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} জন যাত্রী",
+    "watchFare": "এই ভাড়া ট্র্যাক করুন",
+    "delete": "মুছুন",
+    "share": "শেয়ার",
+    "shareTitle": "পাবলিক লিংক কপি করুন — সাইন ইন ছাড়াই যে কেউ এই ভ্রমণ কার্ড দেখতে পারবে",
+    "save": "পরিবর্তন সেভ করুন",
+    "confirmDelete": "\"{{name}}\" মুছবেন?",
+    "msg": {
+      "saved": "সেভ হয়েছে ✓",
+      "saveFailed": "সেভ ব্যর্থ হয়েছে",
+      "shared": "শেয়ার লিংক কপি হয়েছে ✓",
+      "shareFailed": "শেয়ার ব্যর্থ হয়েছে"
+    },
+    "section": {
+      "flight": "ফ্লাইট",
+      "flights_one": "ফ্লাইট ({{count}}টি পর্ব)",
+      "flights_other": "ফ্লাইট ({{count}}টি পর্ব)",
+      "hotel": "হোটেল",
+      "activities": "অ্যাক্টিভিটি ({{count}})",
+      "sim": "সিম কার্ড",
+      "gettingAround": "যাতায়াত ({{count}})",
+      "tips": "টিপস ({{count}})",
+      "events": "ইভেন্ট ({{count}})",
+      "walkingTours": "ওয়াকিং ট্যুর ({{count}})",
+      "itinerarySlots": "ভ্রমণসূচির স্লট ({{count}})",
+      "fullItinerary_one": "সম্পূর্ণ ভ্রমণসূচি ({{count}} দিন)",
+      "fullItinerary_other": "সম্পূর্ণ ভ্রমণসূচি ({{count}} দিন)"
+    },
+    "flight": {
+      "outbound": "যাওয়া:",
+      "return": "ফেরা:",
+      "leg": "পর্ব {{n}}:",
+      "roundTrip": "{{price}} রাউন্ড-ট্রিপ",
+      "oneWay": "{{price}} ওয়ান-ওয়ে",
+      "bookThis": "এই ফ্লাইট বুক করুন"
+    },
+    "book": "বুক করুন",
+    "hotel": {
+      "perNight": "{{price}}/রাত",
+      "perNightTotal": "{{price}}/রাত · মোট {{total}}",
+      "viewBook": "দেখুন ও বুক করুন"
+    },
+    "activity": {
+      "hours": "{{hours}} ঘণ্টা"
+    },
+    "sim": {
+      "data": "{{gb}} GB",
+      "days_one": "{{count}} দিন",
+      "days_other": "{{count}} দিন",
+      "getPlan": "প্ল্যান নিন"
+    },
+    "moreInfo": "আরও তথ্য",
+    "source": "সূত্র",
+    "day": "দিন {{n}}",
+    "timeOfDay": {
+      "morning": "সকাল",
+      "afternoon": "বিকেল",
+      "evening": "সন্ধ্যা"
+    }
+  },
+  "export": {
+    "calendar": "ক্যালেন্ডারে যোগ করুন",
+    "calendarTitle": "Google Calendar, Apple Calendar বা Outlook-এর জন্য .ics ফাইল ডাউনলোড করুন",
+    "print": "প্রিন্ট / PDF",
+    "printTitle": "প্রিন্টযোগ্য সংস্করণ খুলুন, যা প্রিন্ট বা PDF হিসেবে সেভ করা যাবে",
+    "popupBlocked": "আপনার ব্রাউজার নতুন ট্যাব আটকে দিয়েছে — এই সাইটের পপ-আপ অনুমতি দিয়ে আবার চেষ্টা করুন।"
+  },
+  "cost": {
+    "heading": "টাকা কোথায় যাচ্ছে",
+    "cat": {
+      "flights": "ফ্লাইট",
+      "hotel": "হোটেল",
+      "activities": "অ্যাক্টিভিটি",
+      "sim": "সিম / eSIM"
+    },
+    "transportNote": "স্থানীয় যাতায়াত অন্তর্ভুক্ত নয় — ভাড়া ভ্রমণ অনুযায়ী আলাদা।",
+    "total": "মোট",
+    "budget": "বাজেট: {{amount}}"
+  },
+  "budget": {
+    "title": "বাজেট প্ল্যানার",
+    "subtitle": "বাজেট ভাগ করুন, দেখুন কোন বিকল্প মানানসই",
+    "total": "মোট বাজেট",
+    "perPerson": "জনপ্রতি",
+    "reset": "রিসেট",
+    "resetDone": "বাজেট বিভাজন প্রস্তাবিত ভাগে রিসেট হয়েছে",
+    "totalSet": "মোট বাজেট {{amount}}",
+    "cheaper": "সস্তা হোটেল খুঁজুন",
+    "findingCheaper": "সস্তা হোটেল খোঁজা হচ্ছে…",
+    "else": "বাকি সব",
+    "elseHint": "খাবার, যাতায়াত, অতিরিক্ত",
+    "onlyFits": "শুধু মানানসই দেখান",
+    "cat": {
+      "flights": "ফ্লাইট",
+      "stay": "থাকার জায়গা",
+      "activities": "অ্যাক্টিভিটি"
+    },
+    "noun": {
+      "flights": "ফ্লাইট",
+      "stay": "থাকার জায়গা",
+      "activities": "অ্যাক্টিভিটি"
+    },
+    "announceName": {
+      "flights": "ফ্লাইট",
+      "stay": "থাকার জায়গা",
+      "activities": "অ্যাক্টিভিটি"
+    },
+    "announce": "{{name}} বাজেট {{amount}} — {{detail}}",
+    "valueText": "{{noun}} বাবদ {{amount}}",
+    "fit": {
+      "flights_one": "{{count}}টির মধ্যে {{fits}}টি ফ্লাইট মানানসই",
+      "flights_other": "{{count}}টির মধ্যে {{fits}}টি ফ্লাইট মানানসই",
+      "hotels_one": "{{count}}টির মধ্যে {{fits}}টি হোটেল মানানসই",
+      "hotels_other": "{{count}}টির মধ্যে {{fits}}টি হোটেল মানানসই",
+      "activities_one": "{{count}}টি অ্যাক্টিভিটি হবে ({{spent}})",
+      "activities_other": "{{count}}টি অ্যাক্টিভিটি হবে ({{spent}})"
+    }
+  },
+  "best": {
+    "title": "সেরা ভ্যালু প্যাকেজ",
+    "subtitle": "আপনার ফলাফল থেকে দাম ও মানের সেরা ভারসাম্যের বাছাই",
+    "total": "প্যাকেজ মোট",
+    "myPlanTotal": "আমার প্ল্যানের মোট: {{amount}}",
+    "perPerson": "ফ্লাইটের দাম জনপ্রতি",
+    "add": "সব প্ল্যানে যোগ করুন",
+    "added": "আমার প্ল্যানে যোগ হয়েছে",
+    "undo": "ফিরিয়ে নিন",
+    "replaces": "আপনার বর্তমান {{items}} বদলে যাবে।",
+    "listAnd": "{{head}} ও {{last}}",
+    "listSep": ", ",
+    "free": "বিনামূল্যে",
+    "perNight": "{{price}}/রাত",
+    "flight": "ফ্লাইট",
+    "simPlan": "সিম প্ল্যান",
+    "conflict": {
+      "flight": "ফ্লাইট",
+      "hotel": "হোটেল",
+      "sim": "সিম"
+    },
+    "reason": {
+      "cheapestFare": "সবচেয়ে কম ভাড়া",
+      "fewerStops": "সবচেয়ে কম ভাড়ার চেয়ে {{amount}} বেশিতে কম স্টপ",
+      "saves": "সবচেয়ে কম ভাড়ার চেয়ে {{amount}} বেশিতে {{time}} ভ্রমণ সময় বাঁচায়",
+      "midRange": "মাঝারি মানের (3★), নিজ শ্রেণিতে সেরা রিভিউ",
+      "starsBest": "{{stars}}★, নিজ শ্রেণিতে সেরা রিভিউ",
+      "bestReviewed": "নিজ শ্রেণিতে সেরা রিভিউ",
+      "typicalPrice": "{{price}} · এখানকার সাধারণ দামের সমান বা কম",
+      "matches": "{{base}} · আপনার আগ্রহের সঙ্গে মেলে",
+      "freeTour": "বিনামূল্যে ওয়াকিং ট্যুর",
+      "freeEntry": "বিনামূল্যে প্রবেশ",
+      "coversTrip": "আপনার {{days}} দিনের ভ্রমণ কভার করে",
+      "cheapestPlan": "সবচেয়ে সস্তা প্ল্যান",
+      "cheaperStay": "আপনার বাজেটে মানানসই সস্তা থাকার জায়গা"
+    }
+  },
+  "print": {
+    "defaultName": "ভ্রমণ প্ল্যান",
+    "printButton": "প্রিন্ট / PDF হিসেবে সেভ",
+    "footer": "Voyager দিয়ে প্ল্যান করা। দাম ও উপলব্ধতা আনুমানিক — বুক করার আগে নিশ্চিত করুন।",
+    "inspiredBy": "অনুপ্রেরণা: {{source}}",
+    "travelers_one": "{{count}} জন যাত্রী",
+    "travelers_other": "{{count}} জন যাত্রী",
+    "book": "বুক করুন",
+    "viewTour": "ট্যুর দেখুন",
+    "getPlan": "প্ল্যান নিন",
+    "hotelTotal": "মোট {{price}}",
+    "fromLink": "আপনার লিংক থেকে",
+    "alsoFromLink": "আপনার লিংক থেকে আরও: {{names}}",
+    "section": {
+      "flights": "ফ্লাইট",
+      "hotel": "হোটেল",
+      "itinerary": "ভ্রমণসূচি",
+      "activities": "অ্যাক্টিভিটি",
+      "places": "দেখার জায়গা",
+      "walkingTours": "বিনামূল্যের ওয়াকিং ট্যুর",
+      "events": "ইভেন্ট",
+      "sim": "সিম / eSIM",
+      "gettingAround": "যাতায়াত",
+      "tips": "টিপস"
+    }
+  },
+  "ics": {
+    "dayTheme": "দিন {{n}}: {{theme}}",
+    "fromLinkQuote": "আপনার লিংক থেকে: “{{quote}}”",
+    "estCost": "আনুমানিক খরচ: {{amount}}",
+    "arrives": "স্থানীয় সময় {{time}}-এ পৌঁছাবে",
+    "booking": "বুকিং: {{url}}",
+    "price": "দাম: {{price}}",
+    "trip": "ভ্রমণ"
+  },
+  "util": {
+    "budgetUnder": "বাজেটের চেয়ে {{amount}} কম",
+    "budgetOver": "বাজেটের চেয়ে {{amount}} বেশি",
+    "hours": "{{n}} ঘ.",
+    "minutes": "{{n}} মি."
+  }
+}

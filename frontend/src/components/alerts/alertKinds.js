@@ -1,6 +1,7 @@
 import {
   AlertTriangle, BedDouble, CalendarDays, CalendarX, Luggage, Sparkles, Target, Ticket, TrendingDown,
 } from 'lucide-react'
+import i18n from '../../i18n'
 
 /** Icon, colour and action wording for each notification kind. */
 export const ALERT_KINDS = {
@@ -19,6 +20,20 @@ export const ALERT_KINDS = {
 }
 
 export const kindOf = (kind) => ALERT_KINDS[kind] || ALERT_KINDS.watch_expired
+
+// The `action` strings above double as identifiers (callers compare them);
+// this maps each to its catalogue entry so what the traveller reads is localized.
+const ACTION_KEYS = {
+  'See fare': 'kinds.seeFare',
+  'See dates': 'kinds.seeDates',
+  'See hotel': 'kinds.seeHotel',
+  'See activity': 'kinds.seeActivity',
+  'See trip': 'kinds.seeTrip',
+  'Check trip': 'kinds.checkTrip',
+  View: 'kinds.view',
+  Retry: 'kinds.retry',
+}
+export const actionText = (action) => (ACTION_KEYS[action] ? i18n.t(`alerts:${ACTION_KEYS[action]}`) : action)
 
 // Notices shared by every kind of watch (ended / paused).
 const SHARED_NOTICES = new Set(['watch_expired', 'watch_error'])

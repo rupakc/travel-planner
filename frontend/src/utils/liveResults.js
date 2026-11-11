@@ -4,21 +4,15 @@
  * grounding). Results are shown once to the user who asked and kept only in
  * component state: nothing here reads or writes storage.
  */
+import i18n from '../i18n'
+
+const tt = (key, opts) => i18n.t(`misc:${key}`, opts)
 
 /** The four Near me sections, in display order (titles used when the API omits one). */
-export const NEARBY_SECTIONS = [
-  { id: 'see', title: 'Places to see' },
-  { id: 'eat', title: 'Places to eat' },
-  { id: 'shop', title: 'Places to shop' },
-  { id: 'stay', title: 'Places to stay' },
-]
-
-const EMPTY_SECTION = {
-  see: 'No sights turned up right around you.',
-  eat: 'No places to eat turned up right around you.',
-  shop: 'No shops turned up right around you.',
-  stay: 'No places to stay turned up right around you.',
-}
+export const NEARBY_SECTIONS = ['see', 'eat', 'shop', 'stay'].map((id) => ({
+  id,
+  get title() { return tt(`nearby.section.${id}`) },
+}))
 
 /** The four sections in order, each with an `items` array (missing ones are empty). */
 export function nearbySections(data) {
@@ -29,7 +23,7 @@ export function nearbySections(data) {
       id,
       title: (typeof s?.title === 'string' && s.title) || title,
       items: Array.isArray(s?.items) ? s.items.filter(i => i && i.name) : [],
-      empty: EMPTY_SECTION[id],
+      empty: tt(`nearby.empty.${id}`),
     }
   })
 }
@@ -48,7 +42,7 @@ export function safeHttpUrl(uri) {
 /** Sources with a usable link, keeping their original index (quotes cite by index). */
 export function usableSources(sources) {
   return (Array.isArray(sources) ? sources : [])
-    .map((s, index) => ({ index, title: s?.title || s?.uri || 'Source', uri: safeHttpUrl(s?.uri) }))
+    .map((s, index) => ({ index, title: s?.title || s?.uri || tt('live.source'), uri: safeHttpUrl(s?.uri) }))
     .filter(s => s.uri)
 }
 
@@ -82,11 +76,6 @@ export function roundCoord(v) {
   return Math.round(v * 1000) / 1000
 }
 
-const AI_COPY = {
-  ai_limit: 'AI limit reached for this month — try again on the 1st.',
-  ai_billing: 'AI features are unavailable right now. Please try again later.',
-}
-
 /**
  * What to tell the user when a live request fails. Handles the string
  * `detail` (429 rate limit, 404 "Watch not found") and the `{code, message}`
@@ -107,45 +96,41 @@ export function liveErrorMessage(err, scope = 'live') {
   const near = scope === 'nearby'
 
   if (status === null) {
-    return { code: 'network', retry: true, text: 'We couldn’t reach Voyager. Check your connection and try again.' }
+    return { code: 'network', retry: true, text: tt('nearby.api.network') }
   }
   if (status === 429) {
-    return { code: 'rate_limited', retry: true, text: str || 'You’ve made a lot of requests. Please wait a few minutes and try again.' }
+    return { code: 'rate_limited', retry: true, text: str || tt('live.rateLimited') }
   }
   if (status === 503 && (code === 'ai_limit' || code === 'ai_billing')) {
-    return { code, retry: false, text: message || AI_COPY[code] }
+    return { code, retry: false, text: message || tt(`live.${code === 'ai_limit' ? 'aiLimit' : 'aiBilling'}`) }
   }
   if (status === 503 && code === 'grounding_unavailable') {
     return {
       code, retry: false,
-      text: near
-        ? 'Live map results aren’t available on this server right now.'
-        : 'Live web search isn’t available on this server right now.',
+      text: near ? tt('nearby.api.grounding_unavailable') : tt('live.groundingWeb'),
     }
   }
   if (status === 404) {
     if (near) {
-      return { code: 'no_place', retry: false, text: message || 'We don’t know a town or city near you yet.' }
+      return { code: 'no_place', retry: false, text: message || tt('live.noPlace') }
     }
-    return { code: 'not_found', retry: false, text: 'This watch no longer exists. Refresh the page to update your list.' }
+    return { code: 'not_found', retry: false, text: tt('live.notFound') }
   }
   if (status === 409 && code === 'watch_expired') {
-    return { code, retry: false, text: 'This trip’s dates have passed, so there’s nothing live to check.' }
+    return { code, retry: false, text: tt('live.watchExpired') }
   }
   if (status === 401) {
-    return { code: 'signed_out', retry: false, text: 'Your session has ended. Sign in again to continue.' }
+    return { code: 'signed_out', retry: false, text: tt('live.signedOut') }
   }
   if (status === 502) {
     return {
       code: code || 'failed', retry: true,
-      text: message || (near
-        ? 'We couldn’t find places near you right now. Try again.'
-        : 'The web search didn’t find a clear answer this time. Try again in a moment.'),
+      text: message || (near ? tt('live.agentNear') : tt('live.agentWeb')),
     }
   }
   return {
     code: 'failed', retry: true,
-    text: str || (near ? 'Something went wrong finding places near you. Try again.' : 'Couldn’t search the web right now. Try again in a moment.'),
+    text: str || (near ? tt('live.failedNear') : tt('live.failedWeb')),
   }
 }
 
@@ -155,13 +140,13 @@ export function geoErrorMessage(code) {
     case 1:
       return {
         code: 'denied',
-        text: 'Location access is turned off for Voyager. Allow location for this site in your browser’s settings, then try again.',
+        text: tt('nearby.geo.denied'),
       }
     case 2:
-      return { code: 'unavailable', text: 'Your device couldn’t work out where you are. Check that location services are on, then try again.' }
+      return { code: 'unavailable', text: tt('nearby.geo.unavailable') }
     case 3:
-      return { code: 'timeout', text: 'Finding your location took too long. Try again — it’s often quicker the second time.' }
+      return { code: 'timeout', text: tt('nearby.geo.timeout') }
     default:
-      return { code: 'unsupported', text: 'This browser can’t share your location, so Near me can’t work here.' }
+      return { code: 'unsupported', text: tt('nearby.geo.unsupported') }
   }
 }

@@ -9,6 +9,11 @@ import { planItineraryDays } from './planExport'
 import { timeRange } from './schedule'
 import { slotKey } from './itineraryLayout'
 import { toRecentSearch, describeRecentSearch } from './recentSearches'
+import i18n from '../i18n'
+import { fmtNumber, intlLocale } from '../i18n/format'
+
+// Resolved at call time, so the page follows the language in use when it is built
+const tr = (key, opts) => i18n.t(`plan:${key}`, opts)
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 
@@ -26,7 +31,7 @@ export function safeUrl(value) {
   }
 }
 
-const usd = (n) => `$${Math.round(Number(n)).toLocaleString('en-US')}`
+const usd = (n) => fmtNumber(Math.round(Number(n)), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 const esc = escapeHtml
 
 const link = (url, label) => {
@@ -52,9 +57,9 @@ function legText(leg, fallback = {}) {
 
 function flightLine(f) {
   const out = legText(f.outbound || f, { from: f.leg_from, to: f.leg_to, date: f.leg_date })
-  const ret = f.return ? `<br><span class="muted">Return:</span> ${esc(legText(f.return))}` : ''
+  const ret = f.return ? `<br><span class="muted">${esc(tr('modal.flight.return'))}</span> ${esc(legText(f.return))}` : ''
   const price = Number(f.price_usd) > 0 ? ` <span class="amt">${usd(f.price_usd)}</span>` : ''
-  return `${esc(out)}${price}${link(f.booking_url, 'Book')}${ret}`
+  return `${esc(out)}${price}${link(f.booking_url, tr('print.book'))}${ret}`
 }
 
 function breakdownTable(selections, searchData) {
@@ -62,11 +67,11 @@ function breakdownTable(selections, searchData) {
   if (!parts.length) return ''
   const total = parts.reduce((t, p) => t + p.amount, 0)
   const rows = parts
-    .map((p) => `<tr><td>${esc(p.label)}</td><td class="amt">${usd(p.amount)}</td><td class="pct">${Math.round((p.amount / total) * 100)}%</td></tr>`)
+    .map((p) => `<tr><td>${esc(tr(`cost.cat.${p.key}`, { defaultValue: p.label }))}</td><td class="amt">${usd(p.amount)}</td><td class="pct">${Math.round((p.amount / total) * 100)}%</td></tr>`)
     .join('')
-  const budget = searchData?.budget_usd > 0 ? `<p class="muted">Budget: ${usd(searchData.budget_usd)}</p>` : ''
-  const transport = selections?.getting_around?.length ? '<p class="muted">Local transport isn\'t included — fares vary by trip.</p>' : ''
-  return `<table class="costs">${rows}<tr class="total"><td>Total</td><td class="amt">${usd(total)}</td><td></td></tr></table>${budget}${transport}`
+  const budget = searchData?.budget_usd > 0 ? `<p class="muted">${esc(tr('cost.budget', { amount: usd(searchData.budget_usd) }))}</p>` : ''
+  const transport = selections?.getting_around?.length ? `<p class="muted">${esc(tr('cost.transportNote'))}</p>` : ''
+  return `<table class="costs">${rows}<tr class="total"><td>${esc(tr('cost.total'))}</td><td class="amt">${usd(total)}</td><td></td></tr></table>${budget}${transport}`
 }
 
 function itineraryHtml(days, selections) {
@@ -83,14 +88,14 @@ function itineraryHtml(days, selections) {
       const range = timeRange(slot)
       const time = range ? `<span class="time">${esc(range)}</span> ` : ''
       const fromLink = slot.from_link
-        ? ` <span class="link">From your link</span>${slot.link_quote ? ` <span class="muted">“${esc(slot.link_quote)}”</span>` : ''}`
+        ? ` <span class="link">${esc(tr('print.fromLink'))}</span>${slot.link_quote ? ` <span class="muted">“${esc(slot.link_quote)}”</span>` : ''}`
         : ''
-      return `<li><span class="when">${esc(slot.time_of_day)}</span> ${time}${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${fromLink}${notes}</li>`
+      return `<li><span class="when">${esc(tr(`modal.timeOfDay.${slot.time_of_day}`, { defaultValue: slot.time_of_day }))}</span> ${time}${esc(activity)}${location ? ` <span class="muted">· ${esc(location)}</span>` : ''}${cost > 0 ? ` <span class="amt">${usd(cost)}</span>` : ''}${fromLink}${notes}</li>`
     }).join('')
     const extras = (day.link_extras || []).length
-      ? `<p class="note">Also from your link: ${day.link_extras.map((x) => esc(x.name)).join(', ')}</p>`
+      ? `<p class="note">${esc(tr('print.alsoFromLink', { names: day.link_extras.map((x) => x.name).join(', ') }))}</p>`
       : ''
-    const heading = [`Day ${day.day_number}`, day.date, day.city, day.theme].filter(Boolean).map(esc).join(' · ')
+    const heading = [tr('modal.day', { n: day.day_number }), day.date, day.city, day.theme].filter(Boolean).map(esc).join(' · ')
     return `<div class="day"><h3>${heading}</h3><ul>${slots}</ul>${extras}</div>`
   }).join('')
 }
@@ -109,6 +114,7 @@ const CSP = [
 ].join('; ')
 
 const STYLES = `
+  :root{color-scheme: light}
   *{box-sizing:border-box}
   body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2937;background:#fff;margin:0 auto;max-width:780px;padding:32px 24px}
   h1{font-size:24px;margin:0 0 4px;color:#0f766e}
@@ -132,53 +138,54 @@ const STYLES = `
 /** A complete HTML document for printing / saving as PDF. */
 export function buildPlanPrintHtml({ planName, searchData, selections, itinerary = null }) {
   const sel = selections || {}
-  const name = planName || 'Trip plan'
+  const name = planName || tr('print.defaultName')
   const trip = searchData?.origin && searchData?.destination && searchData?.departure_date
     ? describeRecentSearch(toRecentSearch(searchData))
     : null
   const summary = trip
-    ? `<p class="muted">${esc(trip.route)} · ${esc(trip.dates)} · ${trip.travelers} traveler${trip.travelers === 1 ? '' : 's'}</p>`
+    ? `<p class="muted">${esc(trip.route)} · ${esc(trip.dates)} · ${esc(tr('print.travelers', { count: trip.travelers }))}</p>`
     : ''
   const source = searchData?.import_source
   const inspired = source?.title || safeUrl(source?.url)
-    ? `<p class="muted">Inspired by ${safeUrl(source.url) ? `<a href="${esc(safeUrl(source.url))}">${esc(source.title || safeUrl(source.url))}</a>` : esc(source.title)}</p>`
+    ? `<p class="muted">${esc(tr('print.inspiredBy', { source: '\u0000' })).replace('\u0000', () => (safeUrl(source.url) ? `<a href="${esc(safeUrl(source.url))}">${esc(source.title || safeUrl(source.url))}</a>` : esc(source.title)))}</p>`
     : ''
 
   const flights = [...(sel.flight ? [sel.flight] : []), ...(sel.flights || [])]
   const hotel = sel.hotel
-    ? `<p><strong>${esc(sel.hotel.name)}</strong>${sel.hotel.location ? ` <span class="muted">· ${esc(sel.hotel.location)}</span>` : ''}${sel.hotel.price_per_night_usd > 0 ? ` · ${usd(sel.hotel.price_per_night_usd)}/night` : ''}${sel.hotel.total_price_usd > 0 ? ` · <span class="amt">${usd(sel.hotel.total_price_usd)} total</span>` : ''}${link(sel.hotel.booking_url, 'Book')}</p>`
+    ? `<p><strong>${esc(sel.hotel.name)}</strong>${sel.hotel.location ? ` <span class="muted">· ${esc(sel.hotel.location)}</span>` : ''}${sel.hotel.price_per_night_usd > 0 ? ` · ${esc(tr('modal.hotel.perNight', { price: usd(sel.hotel.price_per_night_usd) }))}` : ''}${sel.hotel.total_price_usd > 0 ? ` · <span class="amt">${esc(tr('print.hotelTotal', { price: usd(sel.hotel.total_price_usd) }))}</span>` : ''}${link(sel.hotel.booking_url, tr('print.book'))}</p>`
     : ''
 
   const body = [
-    section('Where the money goes', breakdownTable(sel, searchData)),
-    section('Flights', list(flights, flightLine)),
-    section('Hotel', hotel),
-    section('Itinerary', itineraryHtml(planItineraryDays(sel, itinerary), sel)),
-    section('Activities', list(sel.activities, (a) => `${esc(a.name)}${Number(a.price_usd) > 0 ? ` <span class="amt">${usd(a.price_usd)}</span>` : ''}${a.location ? ` <span class="muted">· ${esc(a.location)}</span>` : ''}${link(a.booking_url, 'Book')}`)),
-    section('Places to see', list(sel.places_to_see, (p) => `${esc(p.name)}${p.neighbourhood ? ` <span class="muted">· ${esc(p.neighbourhood)}</span>` : ''}`)),
-    section('Free walking tours', list(sel.walking_tours, (t) => `${esc(t.name)}${[t.provider, t.city].filter(Boolean).length ? ` <span class="muted">· ${esc([t.provider, t.city].filter(Boolean).join(' · '))}</span>` : ''}${link(t.url, 'View tour')}`)),
-    section('Events', list(sel.events, (e) => `${esc(e.name)}${e.start_date ? ` <span class="muted">· ${esc(e.start_date)}${e.end_date && e.end_date !== e.start_date ? ` – ${esc(e.end_date)}` : ''}</span>` : ''}`)),
-    section('SIM / eSIM', sel.sim ? `<p>${esc([sel.sim.provider, sel.sim.plan_name].filter(Boolean).join(' — '))}${Number(sel.sim.price_usd) > 0 ? ` <span class="amt">${usd(sel.sim.price_usd)}</span>` : ''}${link(sel.sim.url, 'Get plan')}</p>` : ''),
-    section('Getting around', list(sel.getting_around, (t) => `${esc(t.name)}${t.price_info ? ` <span class="muted">· ${esc(t.price_info)}</span>` : ''}`)),
-    section('Tips', list(sel.tips, (t) => `<strong>${esc(t.title)}</strong>${t.body ? ` — ${esc(t.body)}` : ''}`)),
+    section(tr('cost.heading'), breakdownTable(sel, searchData)),
+    section(tr('print.section.flights'), list(flights, flightLine)),
+    section(tr('print.section.hotel'), hotel),
+    section(tr('print.section.itinerary'), itineraryHtml(planItineraryDays(sel, itinerary), sel)),
+    section(tr('print.section.activities'), list(sel.activities, (a) => `${esc(a.name)}${Number(a.price_usd) > 0 ? ` <span class="amt">${usd(a.price_usd)}</span>` : ''}${a.location ? ` <span class="muted">· ${esc(a.location)}</span>` : ''}${link(a.booking_url, tr('print.book'))}`)),
+    section(tr('print.section.places'), list(sel.places_to_see, (p) => `${esc(p.name)}${p.neighbourhood ? ` <span class="muted">· ${esc(p.neighbourhood)}</span>` : ''}`)),
+    section(tr('print.section.walkingTours'), list(sel.walking_tours, (t) => `${esc(t.name)}${[t.provider, t.city].filter(Boolean).length ? ` <span class="muted">· ${esc([t.provider, t.city].filter(Boolean).join(' · '))}</span>` : ''}${link(t.url, tr('print.viewTour'))}`)),
+    section(tr('print.section.events'), list(sel.events, (e) => `${esc(e.name)}${e.start_date ? ` <span class="muted">· ${esc(e.start_date)}${e.end_date && e.end_date !== e.start_date ? ` – ${esc(e.end_date)}` : ''}</span>` : ''}`)),
+    section(tr('print.section.sim'), sel.sim ? `<p>${esc([sel.sim.provider, sel.sim.plan_name].filter(Boolean).join(' — '))}${Number(sel.sim.price_usd) > 0 ? ` <span class="amt">${usd(sel.sim.price_usd)}</span>` : ''}${link(sel.sim.url, tr('print.getPlan'))}</p>` : ''),
+    section(tr('print.section.gettingAround'), list(sel.getting_around, (t) => `${esc(t.name)}${t.price_info ? ` <span class="muted">· ${esc(t.price_info)}</span>` : ''}`)),
+    section(tr('print.section.tips'), list(sel.tips, (t) => `<strong>${esc(t.title)}</strong>${t.body ? ` — ${esc(t.body)}` : ''}`)),
   ].join('')
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${esc(intlLocale(i18n.resolvedLanguage || i18n.language))}">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(name)}</title>
 <style>${STYLES}</style>
 </head>
 <body>
-<div class="toolbar"><button type="button" class="no-print" onclick="${PRINT_HANDLER}">Print / Save as PDF</button></div>
+<div class="toolbar"><button type="button" class="no-print" onclick="${PRINT_HANDLER}">${esc(tr('print.printButton'))}</button></div>
 <h1>${esc(name)}</h1>
 ${summary}
 ${inspired}
 ${body}
-<footer>Planned with Voyager. Prices and availability are estimates — confirm before booking.</footer>
+<footer>${esc(tr('print.footer'))}</footer>
 </body>
 </html>
 `

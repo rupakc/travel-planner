@@ -1,11 +1,14 @@
 import { useContext, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { loginPathFor } from '../../utils/returnPath'
 import { priceWatchLink } from '../../utils/priceWatch'
-import { activitySpec, activityWatchingLabel, ownWatch } from '../../utils/activityWatch'
+import {
+  activitySpec, activityWatchingLabel as watchingLabel, ownWatch,
+} from '../../utils/activityWatch'
 import { ActivityTripContext } from './activityTripContext'
 import { useAirportCities } from '../../hooks/useAirportCities'
 import { withCityNames } from '../../utils/cityNames'
@@ -51,22 +54,24 @@ export default function WatchActivityButton({ activity, variant = 'inline', sour
 }
 
 function SignInToWatch({ style }) {
+  const { t } = useTranslation('alerts')
   const location = useLocation()
   return (
-    <Link to={loginPathFor(location)} onClick={e => e.stopPropagation()} className={style.idle}
-      title="Sign in to get told when this activity’s price drops">
-      <BellPlus size={style.size} aria-hidden="true" /> Watch price
+    <Link to={loginPathFor(location)} data-tid="alerts.watch-activity-signin" onClick={e => e.stopPropagation()} className={style.idle}
+      title={t('btn.signInActivity')}>
+      <BellPlus size={style.size} aria-hidden="true" /> {t('btn.watchPrice')}
     </Link>
   )
 }
 
 function ActiveButton({ activity, spec, style, source }) {
+  const { t } = useTranslation('alerts')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [watch, setWatch] = usePriceWatchFor('activity', spec)
   const watching = watch && watch.status !== 'expired'
-  const label = watching ? activityWatchingLabel(watch) : 'Watch price'
-  const people = spec.travellers === 1 ? '1 traveller' : `${spec.travellers} travellers`
+  const label = watching ? watchingLabel(watch) : t('btn.watchPrice')
+  const people = t('act.people', { count: spec.travellers })
 
   const onClick = (e) => {
     e.stopPropagation()
@@ -76,14 +81,14 @@ function ActiveButton({ activity, spec, style, source }) {
 
   return (
     <>
-      <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${label} — open your alerts` : `Watch the price of ${activity.name}`}
-        title={watching ? 'Open this watch on your Alerts page' : 'Get told when this activity’s price drops'}>
+      <button type="button" data-tid="alerts.watch-activity" onClick={onClick} className={watching ? style.on : style.idle}
+        aria-label={watching ? t('btn.openAria', { label }) : t('btn.watchActivityAria', { name: activity.name })}
+        title={watching ? t('btn.openWatch') : t('btn.activityTitle')}>
         {watching ? <BellRing size={style.size} aria-hidden="true" /> : <BellPlus size={style.size} aria-hidden="true" />}
         <span className="tabular-nums">{label}</span>
       </button>
       {open && (
-        <PriceWatchDialog kind="activity" spec={spec} source={source} unitLabel="per person"
+        <PriceWatchDialog kind="activity" spec={spec} source={source} unitLabel={t('unit.person')}
           preview={{
             title: spec.name,
             subtitle: [spec.city, people].join(' · '),

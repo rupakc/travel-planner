@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-export default function TagInput({ label, value = [], onChange, placeholder = "Type and press Enter..." }) {
+export default function TagInput({ label, value = [], onChange, placeholder }) {
+  const { t } = useTranslation('search')
   const [input, setInput] = useState('')
 
   const addTag = (tag) => {
@@ -32,22 +34,22 @@ export default function TagInput({ label, value = [], onChange, placeholder = "T
         {value.map(tag => (
           <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-teal-50 text-teal-700 border border-teal-200">
             {tag}
-            <button type="button" onClick={() => removeTag(tag)} className="hover:text-teal-600">
+            <button type="button" onClick={() => removeTag(tag)} data-tid="search.tag-remove" className="hover:text-teal-600">
               <X size={12} />
             </button>
           </span>
         ))}
         <input
-          type="text"
+          type="text" data-tid="search.tag-input"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => input && addTag(input)}
-          placeholder={value.length === 0 ? placeholder : ''}
+          placeholder={value.length === 0 ? (placeholder ?? t('tags.placeholder')) : ''}
           className="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
         />
       </div>
-      <p className="mt-1 text-xs text-gray-500">Press Enter or comma to add</p>
+      <p className="mt-1 text-xs text-gray-500">{t('tags.hint')}</p>
     </div>
   )
 }

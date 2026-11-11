@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "search": "搜索",
+    "chat": "聊天",
+    "nearby": "附近",
+    "alerts": "价格提醒",
+    "preferences": "偏好设置",
+    "admin": "管理",
+    "menu": "菜单",
+    "signOut": "退出登录",
+    "adminBadge": "管理员",
+    "home": "Voyager 首页",
+    "unread_other": "{{count}} 条未读",
+    "alertsUnread_other": "价格提醒，{{count}} 条未读"
+  },
+  "language": {
+    "label": "语言"
+  },
+  "theme": {
+    "label": "主题",
+    "current": "主题：{{mode}}",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "footer": {
+    "attribution": "地点数据 © <geonames>GeoNames</geonames>（<licence>CC BY 4.0</licence>）· 机场数据：<ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "coverage": {
+      "excellent": "极佳",
+      "good": "良好",
+      "moderate": "一般",
+      "limited": "有限"
+    },
+    "severity": {
+      "info": "提示",
+      "warning": "警告",
+      "danger": "危险",
+      "critical": "严重"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { BellRing, Loader2, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useAlerts } from '../context/AlertsContext'
 import { useSearchData } from '../context/SearchDataContext'
@@ -13,32 +15,33 @@ import { formatUsd } from '../utils/fareCalendar'
 import { replanSearchData } from '../utils/fareWatch'
 import { track } from '../utils/analytics'
 import {
-  ALERT_TABS, countByTab, filterStatus, inTab, priceCheckMessage, watchDomId,
+  ALERT_TABS, countByTab, inTab, priceCheckMessage, watchDomId,
 } from '../utils/priceWatch'
 import WatchCard from '../components/alerts/WatchCard'
 import { cardFor } from '../components/alerts/cards'
 
 /** What one "Check now" found, in plain words (statuses: see the API). */
 export function checkMessage(res) {
+  const t = (key, opts) => i18n.t(`alerts:${key}`, opts)
   switch (res.check_status) {
     case 'checked':
       if (res.notification) return { tone: 'good', text: res.notification.title }
       if (res.last_price != null) {
-        return { tone: 'neutral', text: `Checked just now: ${formatUsd(res.last_price)}. Nothing worth an alert yet.` }
+        return { tone: 'neutral', text: t('checks.justNow', { price: formatUsd(res.last_price) }) }
       }
-      return { tone: 'neutral', text: 'Checked just now, but no fares were found for these dates.' }
+      return { tone: 'neutral', text: t('checks.noFares') }
     case 'failed':
-      return { tone: 'warn', text: 'Live fares didn’t respond. We’ll try again within the hour.' }
+      return { tone: 'warn', text: t('checks.failed') }
     case 'errored':
-      return { tone: 'warn', text: 'Live fares failed three times in a row, so checks are on hold. Use Retry when you’re ready.' }
+      return { tone: 'warn', text: t('checks.errored') }
     case 'expired':
-      return { tone: 'neutral', text: 'This trip has departed, so we’ve stopped watching its fare.' }
+      return { tone: 'neutral', text: t('checks.expired') }
     case 'postponed':
-      return { tone: 'warn', text: 'Live fares are busy right now — we’ll check again tomorrow.' }
+      return { tone: 'warn', text: t('checks.postponed') }
     case 'deleted':
-      return { tone: 'neutral', text: 'This watch was removed.' }
+      return { tone: 'neutral', text: t('checks.deleted') }
     default:
-      return { tone: 'neutral', text: 'Nothing was checked: this fare isn’t being watched right now.' }
+      return { tone: 'neutral', text: t('checks.default') }
   }
 }
 
@@ -47,11 +50,11 @@ export function checkMessage(res) {
 const ACTIONS = {
   fare: {
     check: (...a) => checkFareWatchNow(...a), update: (...a) => updateFareWatch(...a),
-    remove: (...a) => deleteFareWatch(...a), message: checkMessage, noun: 'fare',
+    remove: (...a) => deleteFareWatch(...a), message: checkMessage, paused: 'checks.pausedFare',
   },
   price: {
     check: (...a) => checkPriceWatchNow(...a), update: (...a) => updatePriceWatch(...a),
-    remove: (...a) => deletePriceWatch(...a), message: priceCheckMessage, noun: 'price',
+    remove: (...a) => deletePriceWatch(...a), message: priceCheckMessage, paused: 'checks.pausedPrice',
   },
 }
 const actionsFor = (w) => (w.kind ? ACTIONS.price : ACTIONS.fare)
@@ -65,6 +68,7 @@ const sortDate = (w) => (w.kind ? w.expires_on : w.departure_date) || ''
 
 /** Every fare and price the traveller watches: filter chips by kind, then Active / Past. */
 export default function AlertsPage() {
+  const { t } = useTranslation('alerts')
   const { token, user, preferences } = useAuth()
   const { caps, watchesChanged, refresh: refreshBell, markSeen } = useAlerts()
   const { setPendingSearchData } = useSearchData()
@@ -100,7 +104,7 @@ export default function AlertsPage() {
       .catch(err => {
         // Price watches still show; the banner offers to try again
         setFares(list => list || [])
-        setLoadError(axiosErrorDetail(err).detail || 'Couldn’t load your watched flights.')
+        setLoadError(axiosErrorDetail(err).detail || i18n.t('alerts:page.loadFailed'))
       })
     loadPrices()
   }, [token, loadPrices])
@@ -169,7 +173,7 @@ export default function AlertsPage() {
         refreshBell()
       }
     } catch (err) {
-      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || 'Couldn’t check right now. Try again in a moment.' })
+      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || i18n.t('alerts:checks.checkFailed') })
     }
   })
 
@@ -178,12 +182,12 @@ export default function AlertsPage() {
     try {
       replace(await act.update(w.id, changes, token))
       watchesChanged()
-      say(w, changes.status === 'paused' ? { tone: 'neutral', text: `Paused. We won’t check this ${act.noun} until you resume.` }
-        : changes.status === 'active' ? { tone: 'neutral', text: 'Watching again.' }
-          : { tone: 'neutral', text: 'Saved.' })
+      say(w, changes.status === 'paused' ? { tone: 'neutral', text: i18n.t(`alerts:${act.paused}`) }
+        : changes.status === 'active' ? { tone: 'neutral', text: i18n.t('alerts:checks.resumed') }
+          : { tone: 'neutral', text: i18n.t('alerts:checks.saved') })
       return true
     } catch (err) {
-      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || 'Couldn’t save that change.' })
+      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || i18n.t('alerts:checks.saveFailed') })
       return false
     }
   })
@@ -195,7 +199,7 @@ export default function AlertsPage() {
       set(list => list.filter(x => x.id !== w.id))
       watchesChanged()
     } catch (err) {
-      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || 'Couldn’t delete this watch.' })
+      say(w, { tone: 'warn', text: axiosErrorDetail(err).detail || i18n.t('alerts:checks.deleteFailed') })
     }
   })
 
@@ -224,26 +228,26 @@ export default function AlertsPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-6">
       <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-slate-900">Watched prices</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900">{t('page.title')}</h1>
         <p className="mt-1 max-w-xl text-sm text-slate-600">
-          We re-check these prices about twice a day and tell you only when a drop is worth knowing about.
+          {t('page.intro')}
         </p>
       </header>
 
       {!watches && !loadError && (
-        <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> Loading your watched prices…</p>
+        <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> {t('page.loading')}</p>
       )}
       {loadError && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{loadError}</span>
-          <button type="button" onClick={load} className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">Try again</button>
+          <button type="button" data-tid="alerts.reload" onClick={load} className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">{t('ui.tryAgain')}</button>
         </div>
       )}
       {priceError && !loadError && (
         <div data-testid="price-load-error" role="status"
           className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-600">
-          <span>We couldn’t load your hotel, activity and trip watches.</span>
-          <button type="button" onClick={loadPrices} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-slate-50">Try again</button>
+          <span>{t('page.priceLoadFailed')}</span>
+          <button type="button" data-tid="alerts.reload-prices" onClick={loadPrices} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-slate-50">{t('ui.tryAgain')}</button>
         </div>
       )}
 
@@ -252,48 +256,46 @@ export default function AlertsPage() {
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-600">
             <BellRing size={22} aria-hidden="true" />
           </span>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Nothing watched yet</h2>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">{t('page.emptyTitle')}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-            {caps.fareWatch
-              ? 'Watch a flight’s fare, a hotel, an activity or a whole saved trip from your results. We’ll keep an eye on the price and let you know when it drops or hits the price you want.'
-              : 'Watching flights, hotels, activities and trips needs live prices, which aren’t set up on this server yet.'}
+            {caps.fareWatch ? t('page.emptyOn') : t('page.emptyOff')}
           </p>
-          <button type="button" onClick={() => navigate('/')}
+          <button type="button" data-tid="alerts.search-flights" onClick={() => navigate('/')}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700">
-            <Search size={15} /> Search flights
+            <Search size={15} /> {t('page.searchFlights')}
           </button>
         </section>
       )}
 
       {watches && watches.length > 0 && (
-        <div role="group" aria-label="Filter watches" className="-mx-1 mb-5 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {ALERT_TABS.map(t => (
-            <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}
-              aria-label={`${t.label}, ${counts[t.id]}`}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${tab === t.id ? 'border-sky-600 bg-sky-600 text-white' : counts[t.id] ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300' : 'border-slate-100 bg-white/60 text-slate-400'}`}>
-              {t.label}<span className={`tabular-nums ${tab === t.id ? 'text-sky-100' : 'text-slate-400'}`}>{counts[t.id]}</span>
+        <div role="group" aria-label={t('page.filterLabel')} className="-mx-1 mb-5 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {ALERT_TABS.map(tb => (
+            <button key={tb.id} type="button" data-tid={`alerts.filter-${tb.id}`} aria-pressed={tab === tb.id} onClick={() => setTab(tb.id)}
+              aria-label={t('page.tabAria', { label: t(`tabs.${tb.id}`), n: counts[tb.id] })}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${tab === tb.id ? 'border-sky-600 bg-sky-600 text-white' : counts[tb.id] ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300' : 'border-slate-100 bg-white/60 text-slate-400'}`}>
+              {t(`tabs.${tb.id}`)}<span className={`tabular-nums ${tab === tb.id ? 'text-sky-100' : 'text-slate-400'}`}>{counts[tb.id]}</span>
             </button>
           ))}
         </div>
       )}
       {watches && watches.length > 0 && (
-        <p className="sr-only" aria-live="polite" data-testid="filter-status">{filterStatus(tab, shown.length)}</p>
+        <p className="sr-only" aria-live="polite" data-testid="filter-status">{t(`tabs.status.${tab}`, { count: shown.length })}</p>
       )}
       {watches && watches.length > 0 && shown.length === 0 && (
         <p className="rounded-xl bg-white/70 px-4 py-6 text-center text-sm text-slate-500">
-          {ALERT_TABS.find(t => t.id === tab)?.empty || 'Nothing watched here yet.'}
+          {tab === 'all' ? t('page.nothingHere') : t(`tabs.empty.${tab}`)}
         </p>
       )}
 
       {active.length > 0 && (
         <section aria-labelledby="alerts-active" className="space-y-4">
-          <h2 id="alerts-active" className="text-sm font-semibold text-slate-700">Active <span className="font-normal text-slate-400">({active.length})</span></h2>
+          <h2 id="alerts-active" className="text-sm font-semibold text-slate-700">{t('page.active')} <span className="font-normal text-slate-400">({active.length})</span></h2>
           {active.map(card)}
         </section>
       )}
       {past.length > 0 && (
         <section aria-labelledby="alerts-past" className="mt-10 space-y-4">
-          <h2 id="alerts-past" className="text-sm font-semibold text-slate-700">Past <span className="font-normal text-slate-400">({past.length})</span></h2>
+          <h2 id="alerts-past" className="text-sm font-semibold text-slate-700">{t('page.past')} <span className="font-normal text-slate-400">({past.length})</span></h2>
           {past.map(card)}
         </section>
       )}

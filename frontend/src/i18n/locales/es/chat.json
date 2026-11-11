@@ -1,0 +1,208 @@
+{
+  "page": {
+    "title": "Chat del planificador de viajes",
+    "intro": "Chatea con tu asistente de viajes con IA. Pídele un plan de viaje completo y los resultados llegarán en tiempo real con tarjetas interactivas.",
+    "placeholder": "Pregunta sobre tu próximo viaje...",
+    "disclaimer": "Asistente de viajes con IA. Verifica los datos importantes en fuentes oficiales.",
+    "clear": "Borrar chat",
+    "stop": "Detener",
+    "send": "Enviar",
+    "planFromLink": "Planificar un viaje desde este enlace"
+  },
+  "suggestion": {
+    "1": "Planifica un viaje de 5 días a Tokio con un presupuesto de 2000 $",
+    "2": "¿Qué necesito para el visado a Tailandia como ciudadano de EE. UU.?",
+    "3": "Busca vuelos baratos de Nueva York a París en junio",
+    "4": "Sugiere una escapada romántica por Europa de una semana"
+  },
+  "error": {
+    "generic": "Lo siento, algo salió mal al responder. Inténtalo de nuevo.",
+    "noResponse": "Lo siento, no recibí respuesta. Intenta preguntar de nuevo.",
+    "withMessage": "Lo siento, algo salió mal: {{message}}"
+  },
+  "bubble": {
+    "planning": "Planificando tu viaje..."
+  },
+  "action": {
+    "add": "Añadir",
+    "added": "Añadido",
+    "inPlan": "En el plan",
+    "book": "Reservar",
+    "get": "Obtener",
+    "info": "Info",
+    "source": "Fuente",
+    "officialSource": "Fuente oficial",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "retry": "Reintentar",
+    "close": "Cerrar",
+    "remove": "Quitar"
+  },
+  "list": {
+    "showMore": "Ver {{n}} más →",
+    "showLess": "Ver menos"
+  },
+  "units": {
+    "hoursShort": "{{value}} h",
+    "daysShort": "{{value}} d"
+  },
+  "enum": {
+    "excellent": "excelente",
+    "good": "buena",
+    "moderate": "moderada",
+    "high": "alta",
+    "medium": "media",
+    "low": "baja"
+  },
+  "agent": {
+    "flights": "Vuelos",
+    "hotels": "Hoteles",
+    "activities": "Actividades",
+    "visa": "Visado",
+    "sim": "Tarjetas SIM",
+    "tips": "Consejos de viaje",
+    "getting_around": "Cómo moverse",
+    "forex": "Moneda y cambio",
+    "itinerary": "Itinerario"
+  },
+  "section": {
+    "building": "Creando tu itinerario…",
+    "searching": "Buscando {{what}}…"
+  },
+  "estimates": {
+    "warning": "Los precios son estimaciones: compruébalos en los sitios de reserva antes de reservar"
+  },
+  "flights": {
+    "none": "No se encontraron vuelos",
+    "roundTripNote": "(ida y vuelta)"
+  },
+  "hotels": {
+    "none": "No se encontraron hoteles",
+    "perNightShort": "/noche"
+  },
+  "activities": {
+    "none": "No se encontraron actividades"
+  },
+  "sim": {
+    "none": "No se encontraron planes SIM"
+  },
+  "tips": {
+    "none": "No hay consejos disponibles"
+  },
+  "transport": {
+    "none": "No hay información de transporte"
+  },
+  "visa": {
+    "none": "No hay información de visado",
+    "maxStay": "Estancia máx.: {{days}} d",
+    "fee": "Tasa: {{fee}}",
+    "free": "Gratis",
+    "type": {
+      "visa-free": "sin visado",
+      "visa-on-arrival": "visado a la llegada",
+      "e-visa": "visado electrónico",
+      "visa-required": "visado obligatorio"
+    }
+  },
+  "forex": {
+    "none": "No hay información de cambio de divisas",
+    "your": "TU",
+    "loading": "Cargando...",
+    "fees": "Comisiones: {{fees}}",
+    "cards": "Tarjetas",
+    "cash": "Efectivo",
+    "dependency": "dependencia {{level}}",
+    "tippingExpected": "Se espera propina",
+    "tippingNotExpected": "No se espera propina"
+  },
+  "itinerary": {
+    "none": "No hay itinerario disponible",
+    "day": "Día {{n}}",
+    "timeOfDay": {
+      "morning": "mañana",
+      "afternoon": "tarde",
+      "evening": "noche"
+    }
+  },
+  "plan": {
+    "defaultName": "Mi plan de viaje"
+  },
+  "budget": {
+    "planCost": "Coste del plan"
+  },
+  "drawer": {
+    "title": "Mi plan",
+    "editingSaved": "Editando plan guardado",
+    "planName": "Nombre del plan",
+    "dragToSaved": "· arrastra para enviarlo a guardados",
+    "flight": "Vuelo",
+    "hotel": "Hotel",
+    "sim": "SIM",
+    "outbound": "Ida:",
+    "return": "Vuelta:",
+    "roundTrip": "ida y vuelta",
+    "oneWay": "solo ida",
+    "hotelLine": "{{price}}/noche",
+    "hotelLineTotal": "{{price}}/noche · {{total}} en total",
+    "activitiesCount": "Actividades ({{n}})",
+    "gettingAroundCount": "Cómo moverse ({{n}})",
+    "tipsCount": "Consejos ({{n}})",
+    "itinerarySlots_one": "Itinerario ({{count}} franja)",
+    "itinerarySlots_many": "Itinerario ({{count}} franjas)",
+    "itinerarySlots_other": "Itinerario ({{count}} franjas)",
+    "slotLine": "Día {{day}} · {{time}}",
+    "dropToLoad": "Suelta para cargar este plan",
+    "selectItems": "Elige elementos de los resultados\npara armar tu plan",
+    "dragSavedHere": "o arrastra aquí un plan guardado",
+    "new": "Nuevo",
+    "saving": "Guardando…",
+    "update": "Actualizar plan",
+    "save": "Guardar plan",
+    "saveSend": "Guardar y enviar a planes guardados",
+    "savedPlans": "Planes guardados",
+    "dropToSave": "↓ Suelta aquí para guardar el plan",
+    "loading": "Cargando…",
+    "noSaved": "Aún no hay planes guardados",
+    "deletePlan": "Eliminar plan",
+    "loaded": "Cargado",
+    "load": "Cargar",
+    "watch": "Vigilar",
+    "view": "Ver",
+    "share": "Compartir",
+    "shareTitle": "Copia un enlace público para compartir; no hace falta iniciar sesión para verlo",
+    "shareFailed": "No se pudo crear el enlace",
+    "linkCopied": "🔗 Enlace copiado: {{url}}",
+    "msg": {
+      "login": "Inicia sesión",
+      "updated": "¡Plan actualizado!",
+      "saved": "¡Guardado!",
+      "failed": "No se pudo guardar",
+      "sentBack": "¡Plan devuelto!",
+      "planSaved": "¡Plan guardado!"
+    }
+  },
+  "trip": {
+    "origin": "Origen",
+    "departureCity": "Ciudad de salida",
+    "plotting": "Trazando tu viaje…",
+    "nights_one": "{{count}} noche",
+    "nights_many": "{{count}} noches",
+    "nights_other": "{{count}} noches",
+    "fullDays_one": "{{count}} día completo",
+    "fullDays_many": "{{count}} días completos",
+    "fullDays_other": "{{count}} días completos",
+    "travelers_one": "{{count}} viajero",
+    "travelers_many": "{{count}} viajeros",
+    "travelers_other": "{{count}} viajeros",
+    "estPerPerson": "est. por persona",
+    "gettingThere": "Cómo llegar",
+    "buildFailed": "No se pudo crear el itinerario. Inténtalo de nuevo.",
+    "daysItinerary": "Itinerario de {{n}} días",
+    "collapseAll": "Contraer todo",
+    "expandAll": "Expandir todo",
+    "travelDay": "✈️ Viaje",
+    "perNight": "/noche",
+    "mustSee": "Imprescindibles",
+    "dining": "Dónde comer"
+  }
+}

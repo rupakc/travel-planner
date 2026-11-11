@@ -20,6 +20,7 @@ import AlertToast          from './components/alerts/AlertToast'
 import NavBar              from './components/ui/NavBar'
 import FeedbackWidget      from './components/FeedbackWidget'
 import AttributionFooter   from './components/ui/AttributionFooter'
+import ConsentPrompt       from './components/ConsentPrompt'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -96,8 +97,28 @@ function Layout() {
   )
 }
 
+// Telemetry is called through import() and never awaited: it can't delay
+// navigation, and a failing SDK is ignored. The SDK is not a separate chunk
+// (ConsentPrompt -> telemetry/consent.js -> client.js import it statically,
+// so it is in the main bundle); import() here only keeps the call async.
+const telemetry = (fn) => {
+  import('./telemetry/client').then(fn).catch(() => {})
+}
+
 export default function App() {
+  const location = useLocation()
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    telemetry((m) => m.screenView(location.pathname))
+  }, [location.pathname])
+
+  useEffect(() => {
+    telemetry((m) => m.setUserPresent(isAuthenticated))
+  }, [isAuthenticated])
+
   return (
+    <>
     <Routes>
       <Route path="/login"           element={<LoginPage />} />
       {/* Public share link — works without login */}
@@ -105,5 +126,7 @@ export default function App() {
       <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
     </Routes>
+    <ConsentPrompt />
+    </>
   )
 }

@@ -1,0 +1,18 @@
+{
+  "tab": "数据分析",
+  "usersToday": "今日用户",
+  "sessionsToday": "今日会话",
+  "users7d": "近 7 天用户",
+  "userDays7": "用户日（7 天）",
+  "chartTitle": "近 30 天每日用户",
+  "chartSummary": "{{from}} 至 {{to}} 每日用户柱状图。峰值：{{max}}（{{peak}}）。",
+  "topEvents": "热门事件",
+  "topScreens": "热门页面",
+  "colEvent": "事件",
+  "colEvents": "事件数",
+  "colScreen": "页面",
+  "colViews": "浏览量",
+  "empty": "暂无数据。",
+  "loading": "正在加载数据分析…",
+  "error": "无法加载数据分析，请稍后重试。"
+}

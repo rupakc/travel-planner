@@ -1,0 +1,193 @@
+{
+  "login": {
+    "tagline": "Planifica tu viaje perfecto",
+    "title": "Inicia sesión en tu cuenta",
+    "username": "Usuario",
+    "usernamePlaceholder": "Introduce tu usuario",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Introduce tu contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "submit": "Iniciar sesión",
+    "submitting": "Iniciando sesión…",
+    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo."
+  },
+  "changePassword": {
+    "title": "Establece tu contraseña",
+    "welcome": "¡Te damos la bienvenida, <strong>{{username}}</strong>! Establece una contraseña nueva para continuar.",
+    "temporary": "Contraseña temporal",
+    "new": "Contraseña nueva",
+    "newPlaceholder": "Mínimo 8 caracteres",
+    "confirm": "Confirma la contraseña nueva",
+    "submit": "Guardar y continuar",
+    "saving": "Guardando…",
+    "mismatch": "Las contraseñas nuevas no coinciden",
+    "tooShort": "La contraseña debe tener al menos 8 caracteres",
+    "failed": "No se pudo cambiar la contraseña",
+    "generic": "Algo salió mal. Inténtalo de nuevo."
+  },
+  "prefs": {
+    "title": "Preferencias de viaje",
+    "subtitle": "Define tus valores predeterminados para rellenar la búsqueda y recibir resultados personalizados.",
+    "taste": {
+      "title": "Perfil de gustos",
+      "reset": "Restablecer",
+      "heading": "Lo que hemos aprendido de tu estilo de viaje",
+      "built_one": "Basado en {{count}} señal de tus planes guardados.",
+      "built_many": "Basado en {{count}} señales de tus planes guardados.",
+      "built_other": "Basado en {{count}} señales de tus planes guardados.",
+      "personalised": "Las búsquedas con sesión iniciada se personalizan automáticamente con este perfil.",
+      "empty": "Aún no hemos aprendido nada: guarda algunos planes y tus próximas búsquedas se personalizarán solas.",
+      "confirmReset": "¿Restablecer tu perfil de gustos? Las próximas búsquedas dejarán de personalizarse con tus planes anteriores."
+    },
+    "signal": {
+      "activity_category": "Tipos de actividad favoritos",
+      "event_category": "Tipos de evento favoritos",
+      "hotel_tier": "Estilo de hotel",
+      "flight_style": "Estilo de vuelo",
+      "interest": "Intereses recurrentes",
+      "destination": "Destinos planificados",
+      "pace": "Ritmo del viaje"
+    },
+    "budget": {
+      "section": "Presupuesto de viaje",
+      "category": "Categoría de presupuesto",
+      "low": {
+        "label": "Económico",
+        "desc": "Hostales, comida callejera, transporte público"
+      },
+      "medium": {
+        "label": "Gama media",
+        "desc": "Hoteles cómodos, buenos restaurantes"
+      },
+      "high": {
+        "label": "Lujo",
+        "desc": "Hoteles premium, alta cocina, tours privados"
+      }
+    },
+    "interest": {
+      "food": "Gastronomía",
+      "history": "Historia",
+      "adventure": "Aventura",
+      "culture": "Cultura",
+      "nature": "Naturaleza",
+      "shopping": "Compras",
+      "nightlife": "Vida nocturna",
+      "wellness": "Bienestar",
+      "art": "Arte",
+      "family": "Familia"
+    },
+    "identity": {
+      "section": "Identidad",
+      "nationality": "Nacionalidad",
+      "nationalityPlaceholder": "Estadounidense, india, británica…",
+      "residence": "Residencia actual",
+      "residencePlaceholder": "p. ej. Múnich, Alemania",
+      "residenceHint": "Se usa como ciudad de salida predeterminada al planificar viajes"
+    },
+    "documents": {
+      "section": "Documentos",
+      "permits": "Permisos de residencia",
+      "permitsPlaceholder": "Schengen, Reino Unido, EAU…",
+      "visas": "Visados vigentes",
+      "visasPlaceholder": "EE. UU., Japón, Canadá…"
+    },
+    "style": {
+      "section": "Estilo de viaje",
+      "group": "Grupo de viaje predeterminado",
+      "groupHint": "Adultos, niños, mayores, bebés y necesidades de accesibilidad: rellena cada búsqueda",
+      "interests": "Intereses"
+    },
+    "save": "Guardar preferencias",
+    "saving": "Guardando…",
+    "saved": "¡Preferencias guardadas!",
+    "errorWithDetail": "Se produjo un error: {{detail}}",
+    "saveFailed": "No se pudo guardar"
+  },
+  "admin": {
+    "title": "Panel de administración",
+    "tabs": {
+      "users": "Usuarios",
+      "feedback": "Opiniones"
+    },
+    "users": {
+      "count_one": "{{count}} usuario",
+      "count_many": "{{count}} usuarios",
+      "count_other": "{{count}} usuarios",
+      "create": "+ Crear usuario",
+      "newUser": "Usuario nuevo",
+      "usernameRequired": "Usuario *",
+      "emailOptional": "Correo electrónico (opcional)",
+      "tempPasswordRequired": "Contraseña temporal *",
+      "adminPrivileges": "Privilegios de administrador",
+      "createSubmit": "Crear",
+      "creating": "Creando…",
+      "createFailed": "No se pudo crear el usuario",
+      "resetOwnHint": "Si restableces tu propia contraseña, tendrás que crear una nueva al recargar la página",
+      "resetOwn": "Restablecer la mía",
+      "reset": "Restablecer",
+      "deactivate": "Desactivar",
+      "reactivate": "Reactivar"
+    },
+    "common": {
+      "cancel": "Cancelar",
+      "loading": "Cargando…",
+      "wentWrong": "Algo salió mal",
+      "close": "Cerrar"
+    },
+    "table": {
+      "username": "Usuario",
+      "email": "Correo",
+      "created": "Creado",
+      "role": "Rol",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "role": {
+      "admin": "Admin",
+      "user": "Usuario"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "reset": {
+      "title": "Restablecer contraseña",
+      "intro": "Estás definiendo una contraseña nueva para <name>{{username}}</name>. Tendrá que cambiarla en su próximo inicio de sesión.",
+      "selfWarning": "Estás restableciendo tu propia contraseña. Se te redirigirá a la página de cambio de contraseña al recargar.",
+      "success": "Contraseña restablecida para {{username}}. Se le pedirá una nueva en su próximo inicio de sesión.",
+      "newPassword": "Contraseña nueva *",
+      "confirmPassword": "Confirmar contraseña *",
+      "minPlaceholder": "Mín. 8 caracteres",
+      "repeatPlaceholder": "Repite la contraseña nueva",
+      "submit": "Restablecer contraseña",
+      "submitting": "Restableciendo…",
+      "tooShort": "La contraseña debe tener al menos 8 caracteres",
+      "mismatch": "Las contraseñas no coinciden",
+      "failed": "No se pudo restablecer la contraseña"
+    },
+    "feedback": {
+      "page": "Página",
+      "category": "Categoría",
+      "minRating": "Valoración mín.",
+      "all": "Todas",
+      "any": "Cualquiera",
+      "export": "Exportar CSV",
+      "empty": "Aún no hay opiniones.",
+      "pages": {
+        "search": "búsqueda",
+        "results": "resultados",
+        "chat": "Chat",
+        "preferences": "preferencias",
+        "admin": "admin"
+      },
+      "categories": {
+        "bug": "error",
+        "feature_request": "sugerencia de función",
+        "general": "general",
+        "praise": "elogio"
+      }
+    }
+  }
+}

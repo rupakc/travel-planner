@@ -1,10 +1,22 @@
 import axios from 'axios'
 import { cityForCode } from '../utils/cityNames'
+import i18n from '../i18n'
+import { isSupportedLanguage } from '../i18n/languages'
 
 const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
 })
+
+/**
+ * `{ locale }` for AI-calling requests: the UI language's base code (zh-CN ->
+ * zh), only when it is one the backend accepts, so an unsupported language
+ * gets no field at all and the AI answers in English.
+ */
+export function localeField() {
+  const base = String(i18n.language || '').split('-')[0].toLowerCase()
+  return isSupportedLanguage(base) ? { locale: base } : {}
+}
 
 /**
  * Stream search results using a Web Worker so SSE parsing
@@ -48,7 +60,7 @@ export function streamSearch(searchData, onResult, onDone, onError, token = null
       // the user's learned Taste Graph profile into agent prompts.
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(searchData),
+    body: JSON.stringify({ ...searchData, ...localeField() }),
   })
 
   return () => worker.terminate()
@@ -67,6 +79,7 @@ export async function searchFlightsFiltered(searchData, filters) {
     budget_usd: searchData.budget_usd || null,
     num_travelers: searchData.num_travelers || 1,
     ...filters,
+    ...localeField(),
   }
   const res = await api.post('/flights/filtered', payload)
   return res.data
@@ -85,6 +98,7 @@ export async function searchHotelsFiltered(searchData, filters) {
     budget_usd: searchData.budget_usd || null,
     num_travelers: searchData.num_travelers || 1,
     ...filters,
+    ...localeField(),
   }
   const res = await api.post('/hotels/filtered', payload)
   return res.data
@@ -103,6 +117,7 @@ export async function searchActivitiesFiltered(searchData, filters) {
     budget_usd: searchData.budget_usd || null,
     num_travelers: searchData.num_travelers || 1,
     ...filters,
+    ...localeField(),
   }
   const res = await api.post('/activities/filtered', payload)
   return res.data
@@ -144,7 +159,7 @@ export function getSerpapiConfigured() {
 }
 
 export async function discoverDestinations(data) {
-  const res = await api.post('/discover', data)
+  const res = await api.post('/discover', { ...data, ...localeField() })
   return res.data
 }
 
@@ -168,14 +183,14 @@ export default api
 
 /** Per-destination lightweight summary for trip comparison. */
 export async function compareDestination(request, token) {
-  const res = await api.post('/compare/destination', request, authHeaders(token))
+  const res = await api.post('/compare/destination', { ...request, ...localeField() }, authHeaders(token))
   return res.data
 }
 
 // Re-run the Trip Health Check against the user's edited itinerary.
 // Auth is optional on /api/stress-test.
 export async function recheckStressTest(payload, token) {
-  const res = await api.post('/stress-test', payload, token ? authHeaders(token) : undefined)
+  const res = await api.post('/stress-test', { ...payload, ...localeField() }, token ? authHeaders(token) : undefined)
   return res.data
 }
 
@@ -275,6 +290,11 @@ export async function updateAccountEmail(email, token) {
   return (await api.put('/auth/email', { email }, authHeaders(token))).data
 }
 
+/** Admin analytics: daily users/sessions/events, top events and screens (days 1-90). */
+export async function getTelemetrySummary(days = 30, token) {
+  return (await api.get('/admin/telemetry/summary', { ...authHeaders(token), params: { days } })).data
+}
+
 // ── Near me (v2) and "Search the web now" ───────────────────────────────────
 // Both answers are live, grounded results for the signed-in user only: callers
 // keep them in component state and never write them to storage or caches.
@@ -287,4 +307,15 @@ export async function fetchNearby({ lat, lng, language = 'en' }, token) {
 /** One live web search for a watch the user owns (kind: flight | hotel | activity | trip). */
 export async function liveCheckWatch(kind, watchId, token) {
   return (await api.post('/live-check', { kind, watch_id: watchId }, authHeaders(token))).data
+}
+
+// Sign-in providers the backend has configured. Any failure (404 on an older
+// backend, network, 5xx) means "none configured": never throws to the UI.
+export async function getAuthProviders() {
+  try {
+    const list = (await api.get('/auth/providers')).data?.providers
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
 }

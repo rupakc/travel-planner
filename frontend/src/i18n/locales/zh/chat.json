@@ -1,0 +1,200 @@
+{
+  "page": {
+    "title": "旅行规划聊天",
+    "intro": "与你的 AI 旅行助手聊天。你可以让它制定完整行程，结果会以互动卡片的形式实时呈现。",
+    "placeholder": "问问你的下一次旅行…",
+    "disclaimer": "AI 旅行助手。重要信息请向官方渠道核实。",
+    "clear": "清空聊天",
+    "stop": "停止",
+    "send": "发送",
+    "planFromLink": "根据此链接规划行程"
+  },
+  "suggestion": {
+    "1": "帮我规划一个预算 2000 美元的东京 5 日游",
+    "2": "美国公民去泰国需要办什么签证？",
+    "3": "帮我找 6 月从纽约飞巴黎的便宜机票",
+    "4": "推荐一个欧洲一周的浪漫之旅"
+  },
+  "error": {
+    "generic": "抱歉，回答时出了点问题，请再试一次。",
+    "noResponse": "抱歉，没有收到回复，请再问一次。",
+    "withMessage": "抱歉，出了点问题：{{message}}"
+  },
+  "bubble": {
+    "planning": "正在规划你的行程…"
+  },
+  "action": {
+    "add": "添加",
+    "added": "已添加",
+    "inPlan": "已在计划中",
+    "book": "预订",
+    "get": "获取",
+    "info": "详情",
+    "source": "来源",
+    "officialSource": "官方来源",
+    "copy": "复制",
+    "copied": "已复制",
+    "retry": "重试",
+    "close": "关闭",
+    "remove": "移除"
+  },
+  "list": {
+    "showMore": "再显示 {{n}} 项 →",
+    "showLess": "收起"
+  },
+  "units": {
+    "hoursShort": "{{value}}小时",
+    "daysShort": "{{value}}天"
+  },
+  "enum": {
+    "excellent": "极佳",
+    "good": "良好",
+    "moderate": "一般",
+    "high": "高",
+    "medium": "中",
+    "low": "低"
+  },
+  "agent": {
+    "flights": "航班",
+    "hotels": "酒店",
+    "activities": "活动",
+    "visa": "签证",
+    "sim": "SIM 卡",
+    "tips": "旅行贴士",
+    "getting_around": "当地交通",
+    "forex": "货币与汇兑",
+    "itinerary": "行程"
+  },
+  "section": {
+    "building": "正在生成你的行程…",
+    "searching": "正在搜索{{what}}…"
+  },
+  "estimates": {
+    "warning": "价格为估算值，预订前请在订票网站核实"
+  },
+  "flights": {
+    "none": "未找到航班",
+    "roundTripNote": "（往返）"
+  },
+  "hotels": {
+    "none": "未找到酒店",
+    "perNightShort": "/晚"
+  },
+  "activities": {
+    "none": "未找到活动"
+  },
+  "sim": {
+    "none": "未找到 SIM 套餐"
+  },
+  "tips": {
+    "none": "暂无贴士"
+  },
+  "transport": {
+    "none": "暂无交通信息"
+  },
+  "visa": {
+    "none": "暂无签证信息",
+    "maxStay": "最长停留：{{days}}天",
+    "fee": "费用：{{fee}}",
+    "free": "免费",
+    "type": {
+      "visa-free": "免签",
+      "visa-on-arrival": "落地签",
+      "e-visa": "电子签",
+      "visa-required": "需办签证"
+    }
+  },
+  "forex": {
+    "none": "暂无汇兑信息",
+    "your": "你的",
+    "loading": "加载中…",
+    "fees": "手续费：{{fees}}",
+    "cards": "银行卡",
+    "cash": "现金",
+    "dependency": "现金依赖度：{{level}}",
+    "tippingExpected": "需要给小费",
+    "tippingNotExpected": "无需给小费"
+  },
+  "itinerary": {
+    "none": "暂无行程",
+    "day": "第 {{n}} 天",
+    "timeOfDay": {
+      "morning": "上午",
+      "afternoon": "下午",
+      "evening": "晚上"
+    }
+  },
+  "plan": {
+    "defaultName": "我的旅行计划"
+  },
+  "budget": {
+    "planCost": "计划花费"
+  },
+  "drawer": {
+    "title": "我的计划",
+    "editingSaved": "正在编辑已保存的计划",
+    "planName": "计划名称",
+    "dragToSaved": "· 拖动以发送到已保存",
+    "flight": "航班",
+    "hotel": "酒店",
+    "sim": "SIM 卡",
+    "outbound": "去程：",
+    "return": "返程：",
+    "roundTrip": "往返",
+    "oneWay": "单程",
+    "hotelLine": "{{price}}/晚",
+    "hotelLineTotal": "{{price}}/晚 · 共 {{total}}",
+    "activitiesCount": "活动（{{n}}）",
+    "gettingAroundCount": "当地交通（{{n}}）",
+    "tipsCount": "贴士（{{n}}）",
+    "itinerarySlots_other": "行程（{{count}} 个时段）",
+    "slotLine": "第 {{day}} 天 · {{time}}",
+    "dropToLoad": "松开以加载此计划",
+    "selectItems": "从搜索结果中选择项目\n来制定你的计划",
+    "dragSavedHere": "或将已保存的计划拖到这里",
+    "new": "新建",
+    "saving": "保存中…",
+    "update": "更新计划",
+    "save": "保存计划",
+    "saveSend": "保存并移到已保存计划",
+    "savedPlans": "已保存的计划",
+    "dropToSave": "↓ 松开以保存计划",
+    "loading": "加载中…",
+    "noSaved": "还没有已保存的计划",
+    "deletePlan": "删除计划",
+    "loaded": "已加载",
+    "load": "加载",
+    "watch": "关注",
+    "view": "查看",
+    "share": "分享",
+    "shareTitle": "复制公开分享链接，无需登录即可查看",
+    "shareFailed": "无法创建分享链接",
+    "linkCopied": "🔗 链接已复制：{{url}}",
+    "msg": {
+      "login": "请先登录",
+      "updated": "计划已更新！",
+      "saved": "已保存！",
+      "failed": "保存失败",
+      "sentBack": "计划已移回！",
+      "planSaved": "计划已保存！"
+    }
+  },
+  "trip": {
+    "origin": "出发地",
+    "departureCity": "出发城市",
+    "plotting": "正在绘制你的旅程…",
+    "nights_other": "{{count}} 晚",
+    "fullDays_other": "{{count}} 个整天",
+    "travelers_other": "{{count}} 位旅客",
+    "estPerPerson": "人均预估",
+    "gettingThere": "前往方式",
+    "buildFailed": "无法生成行程，请重试。",
+    "daysItinerary": "{{n}} 日行程",
+    "collapseAll": "全部收起",
+    "expandAll": "全部展开",
+    "travelDay": "✈️ 出行",
+    "perNight": "/晚",
+    "mustSee": "必看",
+    "dining": "美食"
+  }
+}

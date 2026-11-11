@@ -1,7 +1,7 @@
 import logging
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class GettingAroundAgent(ToolAgent, _URLSearchMixin):
                 "inter-city connections."
             )
         self._destination = request.destination
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))
 
     _MAX_ENRICH = 12
 

@@ -1,12 +1,11 @@
 import asyncio
-import hashlib
 import logging
 
 from fastapi import APIRouter, HTTPException
 
 from ...agents.discovery_agent import DiscoveryAgent
 from ...core import llm
-from ...core.cache import get_cache
+from ...core.cache import get_cache, request_digest
 from ...core.config import settings
 from ...schemas.request import DiscoveryRequest
 
@@ -25,12 +24,7 @@ def get_discovery_agent() -> DiscoveryAgent:
 
 @router.post("/discover")
 async def discover(request: DiscoveryRequest):
-    cache_key = (
-        "discover:"
-        + hashlib.md5(
-            request.model_dump_json().encode(), usedforsecurity=False
-        ).hexdigest()
-    )
+    cache_key = "discover:" + request_digest(request)
     cache = get_cache()
     if cached := cache.get(cache_key):
         return cached

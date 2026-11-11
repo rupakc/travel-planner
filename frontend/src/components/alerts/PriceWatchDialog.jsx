@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellRing, Check, Loader2 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
 import { createPriceWatch } from '../../services/api'
@@ -27,15 +28,16 @@ function currencyMismatch(err) {
 }
 
 function Suggestions({ result, busy, onPick }) {
+  const { t } = useTranslation('alerts')
   return (
     <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3" role="alert">
       <p className="text-sm font-medium text-amber-900">{result.message}</p>
       {result.estimate?.price != null && (
-        <p className="mt-1 text-xs text-amber-800">Our AI estimate was {formatPrice(result.estimate.price, result.estimate.currency)}{result.estimate.label ? ` ${result.estimate.label}` : ''} — an estimate, not a live price, so we can’t watch it.</p>
+        <p className="mt-1 text-xs text-amber-800">{t('dialog.price.estimateNote', { price: formatPrice(result.estimate.price, result.estimate.currency), label: result.estimate.label ? ` ${result.estimate.label}` : '' })}</p>
       )}
       {result.suggestions?.length > 0 && (
         <>
-          <p className="mt-3 text-xs font-medium text-slate-600">Live prices we did find:</p>
+          <p className="mt-3 text-xs font-medium text-slate-600">{t('dialog.price.liveFound')}</p>
           <ul className="mt-1.5 space-y-2">
             {result.suggestions.map((s, i) => (
               <li key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
@@ -50,9 +52,9 @@ function Suggestions({ result, busy, onPick }) {
                       {s.price_label && <span className="ml-1 text-xs text-slate-500">{s.price_label}</span>}
                     </span>
                   )}
-                  <button type="button" disabled={busy} onClick={() => onPick(s)}
+                  <button type="button" data-tid="alerts.watch-instead" disabled={busy} onClick={() => onPick(s)}
                     className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60">
-                    Watch this instead
+                    {t('dialog.price.watchInstead')}
                   </button>
                 </span>
               </li>
@@ -90,6 +92,7 @@ function Suggestions({ result, busy, onPick }) {
  * that currency, then resends the same spec (a cached look: no live call).
  */
 export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel = null, source = 'results', onClose, onWatched }) {
+  const { t } = useTranslation('alerts')
   const { token, user } = useAuth()
   const { caps, watchesChanged, shouldOfferBrowserAlerts, answerBrowserAlerts } = useAlerts()
   const fieldId = useId()
@@ -141,7 +144,7 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
         setNoMatch(null)
         setTarget('')
         setTargetTouched(false)
-      } else setError(axiosErrorDetail(err).detail || `Couldn’t start watching this ${noun}. Try again in a moment.`)
+      } else setError(axiosErrorDetail(err).detail || t(`dialog.price.failed.${noun}`))
     } finally {
       setSaving(false)
     }
@@ -156,8 +159,8 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
   }
 
   const title = done
-    ? (done.already_watching ? `You’re already watching this ${noun}` : `Watching this ${noun}`)
-    : `Watch this ${noun}`
+    ? t(done.already_watching ? `dialog.price.already.${noun}` : `dialog.price.watching.${noun}`)
+    : t(`dialog.price.watch.${noun}`)
   const subtitle = (done ? [done.title, done.subtitle] : [preview.title, preview.subtitle]).filter(Boolean).join(' · ')
 
   return (
@@ -167,25 +170,25 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
           <Body kind={kind} spec={usedSpec} preview={preview} watch={null} unitLabel={unitLabel} onClose={onClose} />
 
           <fieldset className="mt-4 space-y-2">
-            <legend className="mb-2 text-sm font-medium text-slate-700">Tell me</legend>
+            <legend className="mb-2 text-sm font-medium text-slate-700">{t('dialog.tellMe')}</legend>
             <Option name="pmode" value="any_drop" checked={mode === 'any_drop'} onChange={() => setMode('any_drop')}
-              title="When the price drops">
-              <span className="block text-xs text-slate-500">Only meaningful drops. Never more than once a day.</span>
+              title={t('dialog.anyDrop')}>
+              <span className="block text-xs text-slate-500">{t('dialog.price.anyDropHint')}</span>
             </Option>
             <Option name="pmode" value="below_target" checked={mode === 'below_target'} onChange={() => setMode('below_target')}
-              title="When it’s below a price I choose">
+              title={t('dialog.belowTarget')}>
               {mode === 'below_target' && (
                 <span className="mt-2 block">
                   <span className="flex items-center gap-2">
                     <span className="text-sm text-slate-500">{currencySymbol(currency)}</span>
-                    <input type="text" inputMode="numeric" aria-label={`Target price in ${currencyLabel(currency)}`} value={target}
+                    <input type="text" data-tid="alerts.dialog-target" inputMode="numeric" aria-label={t('edit.target', { currency: currencyLabel(currency) })} value={target}
                       placeholder={currencyAsk ? String(defaultTarget(null, currencyAsk.price)) : undefined}
                       onChange={e => { setTarget(e.target.value); setTargetTouched(true) }} aria-invalid={!!shownTargetError}
                       aria-describedby={`${fieldId}-target`}
                       className="w-28 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm tabular-nums focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200" />
                   </span>
                   <span id={`${fieldId}-target`} aria-live="polite" className={`mt-1 block text-xs ${shownTargetError ? 'text-red-600' : 'text-slate-500'}`}>
-                    {shownTargetError || currencyAsk?.message || `The total price, in ${currencyLabel(currency)}.`}
+                    {shownTargetError || currencyAsk?.message || t('dialog.price.targetHelp', { currency: currencyLabel(currency) })}
                   </span>
                 </span>
               )}
@@ -198,12 +201,12 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
           {error && <p role="alert" className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</p>}
 
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button type="button" onClick={onClose}
-              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
-            {!noMatch && <button type="submit" disabled={saving || !!shownTargetError}
+            <button type="button" data-tid="alerts.dialog-cancel" onClick={onClose}
+              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">{t('ui.cancel')}</button>
+            {!noMatch && <button type="submit" data-tid="alerts.dialog-start" disabled={saving || !!shownTargetError}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500">
               {saving ? <Loader2 size={15} className="animate-spin" /> : <BellRing size={15} />}
-              {saving ? 'Finding the live price…' : 'Start watching'}
+              {saving ? t('dialog.price.finding') : t('dialog.start')}
             </button>}
           </div>
         </form>
@@ -215,20 +218,26 @@ export default function PriceWatchDialog({ kind, spec, preview = {}, unitLabel =
             <Check size={18} className="mt-0.5 shrink-0 text-emerald-600" />
             <div className="min-w-0">
               {(done.baseline_price ?? done.last_price) != null
-                ? <p>The live price is <strong className="tabular-nums">{formatPrice(done.baseline_price ?? done.last_price, done.currency)}</strong>. We’ll check about twice a day and only speak up when it’s worth it.</p>
-                : <p>We’ll take the live price shortly, then check about twice a day and only speak up when it’s worth it.</p>}
+                ? (
+                  <p>
+                    <Trans t={t} i18nKey="dialog.price.liveIs"
+                      values={{ price: formatPrice(done.baseline_price ?? done.last_price, done.currency) }}
+                      components={{ strong: <strong className="tabular-nums" /> }} />
+                  </p>
+                )
+                : <p>{t('dialog.price.liveLater')}</p>}
               {done.already_below_target && (
-                <p className="mt-1.5 font-medium">Already below your target — we’ll tell you if it drops further.</p>
+                <p className="mt-1.5 font-medium">{t('dialog.alreadyBelow')}</p>
               )}
               <div className="mt-2"><Body kind={kind} spec={usedSpec} preview={preview} watch={done} unitLabel={unitLabel} onClose={onClose} onReplaced={replaced} /></div>
             </div>
           </div>
           {offerBrowser && <BrowserAlertsOffer onAnswer={(allow) => { answerBrowserAlerts(allow); setOfferBrowser(false) }} />}
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Link to={priceWatchLink(done)} onClick={onClose}
-              className="rounded-full px-4 py-2 text-center text-sm font-medium text-sky-700 hover:bg-sky-50">See your alerts</Link>
-            <button type="button" onClick={onClose}
-              className="rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700">Done</button>
+            <Link to={priceWatchLink(done)} data-tid="alerts.dialog-see-alerts" onClick={onClose}
+              className="rounded-full px-4 py-2 text-center text-sm font-medium text-sky-700 hover:bg-sky-50">{t('dialog.seeAlerts')}</Link>
+            <button type="button" data-tid="alerts.dialog-done" onClick={onClose}
+              className="rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700">{t('ui.done')}</button>
           </div>
         </div>
       )}

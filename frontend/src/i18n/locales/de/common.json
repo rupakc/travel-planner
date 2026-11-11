@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "search": "Suche",
+    "chat": "Chat",
+    "nearby": "In der Nähe",
+    "alerts": "Preisalarme",
+    "preferences": "Einstellungen",
+    "admin": "Admin",
+    "menu": "Menü",
+    "signOut": "Abmelden",
+    "adminBadge": "Admin",
+    "home": "Voyager-Startseite",
+    "unread_one": "{{count}} ungelesen",
+    "unread_other": "{{count}} ungelesen",
+    "alertsUnread_one": "Preisalarme, {{count}} ungelesen",
+    "alertsUnread_other": "Preisalarme, {{count}} ungelesen"
+  },
+  "language": {
+    "label": "Sprache"
+  },
+  "theme": {
+    "label": "Design",
+    "current": "Design: {{mode}}",
+    "system": "System",
+    "light": "Hell",
+    "dark": "Dunkel"
+  },
+  "footer": {
+    "attribution": "Ortsdaten © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Flughafendaten: <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "hoch",
+      "medium": "mittel",
+      "low": "niedrig"
+    },
+    "coverage": {
+      "excellent": "ausgezeichnet",
+      "good": "gut",
+      "moderate": "mäßig",
+      "limited": "begrenzt"
+    },
+    "severity": {
+      "info": "Info",
+      "warning": "Warnung",
+      "danger": "Gefahr",
+      "critical": "kritisch"
+    }
+  }
+}

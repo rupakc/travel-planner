@@ -1,0 +1,18 @@
+{
+  "tab": "Analytics",
+  "usersToday": "Nutzer heute",
+  "sessionsToday": "Sitzungen heute",
+  "users7d": "Nutzer, letzte 7 Tage",
+  "userDays7": "Nutzertage (7 Tage)",
+  "chartTitle": "Tägliche Nutzer, letzte 30 Tage",
+  "chartSummary": "Balkendiagramm der täglichen Nutzer vom {{from}} bis {{to}}. Spitze: {{max}} am {{peak}}.",
+  "topEvents": "Häufigste Ereignisse",
+  "topScreens": "Häufigste Bildschirme",
+  "colEvent": "Ereignis",
+  "colEvents": "Ereignisse",
+  "colScreen": "Bildschirm",
+  "colViews": "Aufrufe",
+  "empty": "Noch keine Daten.",
+  "loading": "Analytics werden geladen…",
+  "error": "Analytics konnten nicht geladen werden. Versuche es später erneut."
+}

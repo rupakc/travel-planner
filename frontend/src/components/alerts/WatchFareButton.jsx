@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, useWatchFor } from '../../context/AlertsContext'
 import { isWatchableTrip, watchingLabel } from '../../utils/fareWatch'
@@ -48,14 +49,16 @@ export default function WatchFareButton(props) {
   return <ActiveWatchButton {...props} />
 }
 
-function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inline', source = 'results', label = 'Watch fare', defaultFlexible = false }) {
+function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inline', source = 'results', label: labelProp = null, defaultFlexible = false }) {
+  const { t } = useTranslation('alerts')
+  const label = labelProp || t('btn.watchFare')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [watch, setWatch] = useWatchFor(trip)
   const style = STYLES[variant]
   const watching = watch && watch.status !== 'expired'
   const watchedText = watching && style.short
-    ? (watch.last_price != null ? formatUsd(watch.last_price) : 'Watching')
+    ? (watch.last_price != null ? formatUsd(watch.last_price) : t('btn.watching'))
     : watching && watchingLabel(watch)
 
   const onClick = (e) => {
@@ -66,9 +69,9 @@ function ActiveWatchButton({ trip, price = null, insights = null, variant = 'inl
 
   return (
     <>
-      <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${watchingLabel(watch)} — open your alerts` : undefined}
-        title={watching ? 'Open this watch on your Alerts page' : 'Get told when this fare drops'}>
+      <button type="button" data-tid="alerts.watch-fare" onClick={onClick} className={watching ? style.on : style.idle}
+        aria-label={watching ? t('btn.openAria', { label: watchingLabel(watch) }) : undefined}
+        title={watching ? t('btn.openWatch') : t('btn.fareTitle')}>
         {watching ? <BellRing size={style.size} /> : <BellPlus size={style.size} />}
         <span className="tabular-nums">{watching ? watchedText : label}</span>
       </button>

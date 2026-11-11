@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "search": "Search",
+    "chat": "Chat",
+    "nearby": "Near me",
+    "alerts": "Alerts",
+    "preferences": "Preferences",
+    "admin": "Admin",
+    "menu": "Menu",
+    "signOut": "Sign out",
+    "adminBadge": "Admin",
+    "home": "Voyager home",
+    "unread_one": "{{count}} unread",
+    "unread_other": "{{count}} unread",
+    "alertsUnread_one": "Alerts, {{count}} unread",
+    "alertsUnread_other": "Alerts, {{count}} unread"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "theme": {
+    "label": "Theme",
+    "current": "Theme: {{mode}}",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "footer": {
+    "attribution": "Place data © <geonames>GeoNames</geonames> (<licence>CC BY 4.0</licence>) · Airport data: <ourairports>OurAirports</ourairports>"
+  },
+  "enum": {
+    "level": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "coverage": {
+      "excellent": "excellent",
+      "good": "good",
+      "moderate": "moderate",
+      "limited": "limited"
+    },
+    "severity": {
+      "info": "info",
+      "warning": "warning",
+      "danger": "danger",
+      "critical": "critical"
+    }
+  }
+}

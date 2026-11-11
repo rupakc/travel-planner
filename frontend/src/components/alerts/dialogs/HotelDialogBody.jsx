@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useAuth } from '../../../context/AuthContext'
 import { useAlerts } from '../../../context/AlertsContext'
 import { createPriceWatch, deletePriceWatch } from '../../../services/api'
@@ -20,18 +21,20 @@ const nightsOf = (ci, co) => Math.round((Date.parse(co) - Date.parse(ci)) / 8640
  * once: after a swap the list is gone.
  */
 export default function HotelDialogBody({ spec = {}, preview = {}, watch = null, unitLabel = null, onClose, onReplaced }) {
+  const { t } = useTranslation('alerts')
   if (watch) return <Tracked watch={watch} unitLabel={unitLabel} onClose={onClose} onReplaced={onReplaced} />
   return (
     <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
       {preview.estimate != null && (
         <p className="text-sm text-slate-600">
-          Shown now <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.estimate, preview.currency)}</span>
-          <span className="ml-1.5 text-xs text-slate-500">{preview.estimateLabel || 'AI estimate'}</span>
+          {t('body.shownNow')} <span className="text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(preview.estimate, preview.currency)}</span>
+          <span className="ml-1.5 text-xs text-slate-500">{preview.estimateLabel || t('hotel.aiEstimate')}</span>
         </p>
       )}
       <p className={`${preview.estimate != null ? 'mt-1 ' : ''}text-xs text-slate-500`}>
-        We’ll find {spec.name ? <strong className="font-medium text-slate-700">{spec.name}</strong> : 'this hotel'} on Google Hotels
-        {spec.city ? ` in ${String(spec.city).split(',')[0]}` : ''} and watch its live price for {preview.subtitle || 'your stay'}.
+        <Trans t={t} i18nKey={spec.city ? 'hotel.findCity' : 'hotel.find'}
+          values={{ name: spec.name || t('hotel.thisHotel'), city: spec.city ? String(spec.city).split(',')[0] : '', stay: preview.subtitle || t('hotel.yourStay') }}
+          components={{ strong: <strong className="font-medium text-slate-700" /> }} />
       </p>
     </div>
   )
@@ -47,6 +50,7 @@ function specOf(watch) {
 }
 
 function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
+  const { t } = useTranslation('alerts')
   const { token } = useAuth()
   const { watchesChanged } = useAlerts()
   const [watch, setWatch] = useState(created)
@@ -94,9 +98,9 @@ function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
           if (back) {
             setWatch(back)
             onReplaced?.(back, { spec: firstSpec })
-            setError('Couldn’t switch to that hotel — you’re still watching the first one.')
+            setError(t('hotel.switchFailed'))
           } else {
-            setError('Couldn’t switch to that hotel, and the first one couldn’t be put back — watch it again from its card.')
+            setError(t('hotel.switchLost'))
           }
           return
         }
@@ -106,7 +110,7 @@ function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
       await deletePriceWatch(watch.id, token)
       switched(next, alt.spec)
     } catch {
-      setError('Couldn’t switch to that hotel — you’re still watching the first one.')
+      setError(t('hotel.switchFailed'))
     } finally {
       setBusy(null)
     }
@@ -114,27 +118,30 @@ function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
 
   return (
     <div className="text-sm text-slate-700">
-      <p>Tracking: <strong className="text-slate-900">{watch.title}</strong> on Google Hotels</p>
+      <p><Trans t={t} i18nKey="hotel.tracking" values={{ title: watch.title }} components={{ strong: <strong className="text-slate-900" /> }} /></p>
       <p className="mt-1 text-xs text-slate-600 tabular-nums">
-        {formatPrice(total, watch.currency)}{nights ? ` for ${nights} night${nights === 1 ? '' : 's'}` : ''}
-        {obs.unit_price != null ? ` · ${formatPrice(obs.unit_price, watch.currency)} ${unitLabel || 'a night'}` : ''}
+        {nights ? t('hotel.priceNights', { price: formatPrice(total, watch.currency), count: nights }) : formatPrice(total, watch.currency)}
+        {obs.unit_price != null ? ` · ${formatPrice(obs.unit_price, watch.currency)} ${unitLabel || t('unit.night')}` : ''}
         {watch.subtitle ? ` · ${watch.subtitle}` : ''}
       </p>
       {matchedElsewhere(watch) && (
         <p className="mt-1.5 text-xs text-slate-600">
-          Your plan calls it “{s.requested_name}”; Google Hotels lists it as “{watch.title}”.
+          {t('hotel.calledIt', { requested: s.requested_name, title: watch.title })}
           {alternatives.length === 0 && (
-            <> Not this one? <Link to={priceWatchLink(watch)} onClick={onClose}
-              className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900">Remove it on your Alerts page</Link>.</>
+            <>{' '}
+              <Trans t={t} i18nKey="hotel.notThisRemove"
+                components={{ pagelink: <Link to={priceWatchLink(watch)} data-tid="alerts.hotel-remove" onClick={onClose}
+                  className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900" /> }} />
+            </>
           )}
         </p>
       )}
       {alternatives.length > 0 && (
         <div className="mt-2">
-          <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)}
-            className="text-xs font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900">Not this one?</button>
+          <button type="button" data-tid="alerts.hotel-not-this" aria-expanded={open} onClick={() => setOpen(v => !v)}
+            className="text-xs font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900">{t('hotel.notThis')}</button>
           {open && (
-            <ul className="mt-2 space-y-2" aria-label="Other hotels on Google Hotels">
+            <ul className="mt-2 space-y-2" aria-label={t('hotel.others')}>
               {alternatives.map((alt, i) => (
                 <li key={alt.spec?.property_token || i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
                   <span className="min-w-0">
@@ -143,9 +150,9 @@ function Tracked({ watch: created, unitLabel, onClose, onReplaced }) {
                   </span>
                   <span className="flex items-center gap-2">
                     {alt.price != null && <span className="text-sm font-semibold tabular-nums text-slate-900">{formatPrice(alt.price, alt.currency)}</span>}
-                    <button type="button" disabled={busy != null} onClick={() => swap(alt, i)}
+                    <button type="button" data-tid="alerts.hotel-swap" disabled={busy != null} onClick={() => swap(alt, i)}
                       className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60">
-                      {busy === i && <Loader2 size={12} className="animate-spin" />} Watch this instead
+                      {busy === i && <Loader2 size={12} className="animate-spin" />} {t('dialog.price.watchInstead')}
                     </button>
                   </span>
                 </li>

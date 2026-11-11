@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { useTranslation, Trans } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
@@ -19,36 +20,20 @@ import { discoverDestinations, compareDestination, getRecentSearches, saveRecent
 import CompareTable from '../components/CompareTable'
 import { buildCompareRequests, compareErrorReason, apiReturnDate } from '../utils/compare'
 import { toRecentSearch, recentSearchToForm, describeRecentSearch } from '../utils/recentSearches'
+import { fmtNumber } from '../i18n/format'
 
-const INTERESTS = [
-  { id: 'food',      label: '🍜 Food' },
-  { id: 'history',   label: '🏛️ History' },
-  { id: 'adventure', label: '🧗 Adventure' },
-  { id: 'culture',   label: '🎭 Culture' },
-  { id: 'nature',    label: '🌿 Nature' },
-  { id: 'shopping',  label: '🛍️ Shopping' },
-  { id: 'nightlife', label: '🌙 Nightlife' },
-  { id: 'wellness',  label: '🧘 Wellness' },
-  { id: 'art',       label: '🎨 Art' },
-  { id: 'family',    label: '👨‍👩‍👧 Family' },
-]
+const INTEREST_IDS = ['food', 'history', 'adventure', 'culture', 'nature', 'shopping', 'nightlife', 'wellness', 'art', 'family']
 
 // First-run tour of the Search page, in page order (the nav is sticky, so
 // its step never scrolls). Steps whose element isn't on screen — no recent
 // searches yet, or the nav collapsed on a phone — are skipped.
-const SEARCH_TOUR_STEPS = [
-  { id: 'recent', target: '[data-tour="recent-searches"]', title: 'Pick up where you left off',
-    body: 'Your recent searches live here. Load one to tweak it, or run it again as it was.' },
-  { id: 'route', target: '[data-tour="route"]', title: 'Where are you headed?',
-    body: 'Enter where you\'re flying from and to. Add stops on the way for a multi-city trip.' },
-  { id: 'interests', target: '[data-tour="interests"]', title: 'Tell us what you love',
-    body: 'Your interests and the discovery dial shape every recommendation — from famous classics to hidden gems.' },
-  { id: 'preferences', target: '[data-tour="nav-preferences"]', title: 'We remember your details',
-    body: 'Nationality, visas, travelers and interests you use here are saved to Preferences, and they pre-fill this form next time.' },
-  { id: 'plan', target: '[data-tour="plan-button"]', title: 'Watch your trip come together',
-    body: 'Flights, hotels, visa, weather and more stream in section by section — the first results appear within seconds.' },
-  { id: 'my-plan', target: null, title: 'Build your plan',
-    body: 'Add the flights, hotels and activities you like to My Plan, see where the money goes, then add it to your calendar or save it as a PDF. Chat is there for any question along the way.' },
+const buildTourSteps = (t) => [
+  { id: 'recent', target: '[data-tour="recent-searches"]', title: t('tour.recent.title'), body: t('tour.recent.body') },
+  { id: 'route', target: '[data-tour="route"]', title: t('tour.route.title'), body: t('tour.route.body') },
+  { id: 'interests', target: '[data-tour="interests"]', title: t('tour.interests.title'), body: t('tour.interests.body') },
+  { id: 'preferences', target: '[data-tour="nav-preferences"]', title: t('tour.preferences.title'), body: t('tour.preferences.body') },
+  { id: 'plan', target: '[data-tour="plan-button"]', title: t('tour.plan.title'), body: t('tour.plan.body') },
+  { id: 'my-plan', target: null, title: t('tour.myPlan.title'), body: t('tour.myPlan.body') },
 ]
 // A short pause after the page is ready so preference pre-fill settles
 const TOUR_START_DELAY_MS = 400
@@ -63,6 +48,8 @@ const USD_TO_BUDGET = (usd) => {
 }
 
 function DestinationCard({ dest, onSelect }) {
+  const { t } = useTranslation('search')
+  const visaLabel = { 'visa-free': t('discover.visaFree'), 'visa-on-arrival': t('discover.visaOnArrival'), 'e-visa': t('discover.eVisa'), required: t('discover.visaRequired') }[dest.visa_type] || t('discover.visaVerify')
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
@@ -81,7 +68,7 @@ function DestinationCard({ dest, onSelect }) {
         dest.visa_type === 'required' ? 'bg-orange-100 text-orange-700' :
         'bg-amber-100 text-amber-700'
       }`}>
-        {dest.visa_verified ? '' : '⚠️ '}{dest.visa_type === 'visa-free' ? '✓ Visa-free' : dest.visa_type === 'visa-on-arrival' ? 'Visa on arrival' : dest.visa_type === 'e-visa' ? 'e-Visa' : dest.visa_type === 'required' ? 'Visa required' : 'Verify visa'}
+        {dest.visa_verified ? '' : '⚠️ '}{visaLabel}
       </span>
 
       {/* Weather */}
@@ -95,7 +82,7 @@ function DestinationCard({ dest, onSelect }) {
       {/* Cost estimate */}
       {dest.estimated_cost_usd_low && (
         <p className="text-sm font-medium text-teal-700">
-          ~${dest.estimated_cost_usd_low.toLocaleString()}–${dest.estimated_cost_usd_high.toLocaleString()} <span className="text-xs font-normal text-gray-500">rough estimate</span>
+          {t('discover.costRange', { low: fmtNumber(dest.estimated_cost_usd_low), high: fmtNumber(dest.estimated_cost_usd_high) })} <span className="text-xs font-normal text-gray-500">{t('discover.roughEstimate')}</span>
         </p>
       )}
 
@@ -108,15 +95,18 @@ function DestinationCard({ dest, onSelect }) {
         </ul>
       )}
 
-      <button type="button" onClick={onSelect}
+      <button type="button" onClick={onSelect} data-tid="search.destination-plan"
         className="mt-auto w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors">
-        Plan this trip →
+        {t('discover.planThisTrip')}
       </button>
     </div>
   )
 }
 
 export default function SearchPage() {
+  const { t } = useTranslation('search')
+  const tourSteps = useMemo(() => buildTourSteps(t), [t])
+  const interestOptions = INTEREST_IDS.map(id => ({ id, label: t(`interests.${id}`) }))
   const { preferences, updatePreferences, token, user } = useAuth()
   const { setPendingSearchData, hasSearchResults, clearSearchResults } = useSearchData()
   const location = useLocation()
@@ -317,8 +307,8 @@ export default function SearchPage() {
     const { datesShifted } = applyRecentSearch(entry)
     const { route } = describeRecentSearch(entry.search)
     setRecentNotice(datesShifted
-      ? `Loaded ${route}. Its dates had passed, so they now start next week with the same trip length — check them, then plan.`
-      : `Loaded ${route}. Change anything you like, then plan.`)
+      ? t('recent.loadedShifted', { route })
+      : t('recent.loaded', { route }))
     track('recent_search_load', 'search', { dates_shifted: datesShifted })
   }
 
@@ -378,7 +368,7 @@ export default function SearchPage() {
     if (compareLoading) return
     const requests = buildCompareRequests(compareForm)
     if (requests.length < 2) {
-      setCompareError('Add at least two different destinations to compare.')
+      setCompareError(t('compare.needTwo'))
       return
     }
     setCompareError(null)
@@ -459,7 +449,7 @@ export default function SearchPage() {
       })
       setDestinations(result.destinations || [])
     } catch (err) {
-      setDiscoverError(err.response?.data?.detail || 'Discovery failed — please try again')
+      setDiscoverError(err.response?.data?.detail || t('discover.failed'))
     } finally {
       setDiscovering(false)
     }
@@ -470,13 +460,13 @@ export default function SearchPage() {
 
   return (
     <div {...pageDrop.handlers} className="relative">
-      <OnboardingTour open={tour.open} steps={SEARCH_TOUR_STEPS} onClose={tour.close} />
+      <OnboardingTour open={tour.open} steps={tourSteps} onClose={tour.close} />
       {pageDrop.dragging && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-amber-50/85 backdrop-blur-sm" aria-hidden="true">
           <div className="rounded-3xl border-2 border-dashed border-amber-400 bg-white/90 px-10 py-8 text-center shadow-xl">
             <ImagePlus size={36} className="mx-auto text-amber-600" />
-            <p className="mt-3 font-display text-xl font-bold text-gray-900">Drop it to plan a trip</p>
-            <p className="mt-1 text-sm text-gray-500">We'll find every place in your screenshot</p>
+            <p className="mt-3 font-display text-xl font-bold text-gray-900">{t('drop.title')}</p>
+            <p className="mt-1 text-sm text-gray-500">{t('drop.body')}</p>
           </div>
         </div>
       )}
@@ -485,19 +475,19 @@ export default function SearchPage() {
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-teal-700 text-xs font-semibold mb-4">
           <Plane size={12} strokeWidth={2.5} />
-          AI-Powered Travel Planning
+          {t('hero.badge')}
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">Plan Your Perfect Trip</h1>
-        <p className="text-slate-500 text-lg">Flights, hotels, activities, visa, SIM &amp; itinerary — all in one place.</p>
-        <button type="button" onClick={() => { setMode('known'); tour.start() }}
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">{t('hero.title')}</h1>
+        <p className="text-slate-500 text-lg">{t('hero.subtitle')}</p>
+        <button type="button" onClick={() => { setMode('known'); tour.start() }} data-tid="search.tour-start"
           className="mt-2 text-sm font-medium text-teal-600 hover:text-teal-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-          New here? Take a quick tour
+          {t('hero.tour')}
         </button>
         {mode !== 'import' && (
           <p className="mt-3">
-            <button type="button" onClick={() => openImport()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-              <Link2 size={14} /> Saw a great trip online? <span className="font-semibold">Paste the link</span>
+            <button type="button" onClick={() => openImport()} data-tid="search.import-open"
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 dark:bg-amber-500/15 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+              <Link2 size={14} /> {t('hero.importLead')} <span className="font-semibold">{t('hero.importLink')}</span>
             </button>
           </p>
         )}
@@ -508,25 +498,25 @@ export default function SearchPage() {
         <div ref={formCardRef} className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8 scroll-mt-20">
           {/* Mode toggle */}
           <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit max-w-full mx-auto">
-            <button type="button"
+            <button type="button" data-tid="search.mode-known"
               onClick={() => setMode('known')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'known' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              I know where I'm going
+              {t('modes.known')}
             </button>
-            <button type="button"
+            <button type="button" data-tid="search.mode-discover"
               onClick={() => setMode('discover')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'discover' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              Surprise me 🎲
+              {t('modes.discover')}
             </button>
-            <button type="button"
+            <button type="button" data-tid="search.mode-compare"
               onClick={openCompare}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'compare' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              Compare ⚖️
+              {t('modes.compare')}
             </button>
-            <button type="button"
+            <button type="button" data-tid="search.mode-import"
               onClick={() => { if (mode !== 'import') openImport() }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'import' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              From a link ✨
+              {t('modes.import')}
             </button>
           </div>
 
@@ -538,8 +528,8 @@ export default function SearchPage() {
           ) : (
             <div className="space-y-4">
               <div className="text-center">
-                <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Turn any travel post into your trip</h2>
-                <p className="mt-1 text-sm text-gray-500">A blog, a YouTube or TikTok video, a friend's message or a screenshot — we'll find every place and plan the days around them.</p>
+                <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">{t('import.heading')}</h2>
+                <p className="mt-1 text-sm text-gray-500">{t('import.subheading')}</p>
               </div>
               <ImportPanel token={token} onPreview={handleImportPreview} seed={importSeed} />
             </div>
@@ -555,7 +545,7 @@ export default function SearchPage() {
             {recentNotice && (
               <div role="status" className="flex items-start gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg text-sm text-teal-800">
                 <span className="flex-1">{recentNotice}</span>
-                <button type="button" onClick={() => setRecentNotice(null)} aria-label="Dismiss"
+                <button type="button" onClick={() => setRecentNotice(null)} aria-label={t('recent.dismiss')} data-tid="search.notice-dismiss"
                   className="text-teal-500 hover:text-teal-700 shrink-0 mt-0.5"><X size={14} /></button>
               </div>
             )}
@@ -563,17 +553,17 @@ export default function SearchPage() {
             {/* Origin + Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="route">
               <AirportSearch
-                label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> From</span>}
+                label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> {t('form.from')}</span>}
                 value={form.origin}
                 onChange={v => setForm(f => ({ ...f, origin: v }))}
-                placeholder="City or airport…"
+                placeholder={t('form.cityOrAirport')}
                 required
               />
               <AirportSearch
-                label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> To</span>}
+                label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> {t('form.to')}</span>}
                 value={form.destination}
                 onChange={v => setForm(f => ({ ...f, destination: v }))}
-                placeholder="City or airport…"
+                placeholder={t('form.cityOrAirport')}
                 required
               />
             </div>
@@ -584,21 +574,21 @@ export default function SearchPage() {
                 <div key={i} className="flex items-end gap-2">
                   <div className="flex-1">
                     <AirportSearch
-                      label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Stop {i + 1} — on the way</span>}
+                      label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> {t('stops.label', { n: i + 1 })}</span>}
                       value={stop.city}
                       onChange={v => setExtraStops(stops => stops.map((s, j) => (j === i ? { ...s, city: v } : s)))}
-                      placeholder="Stopover city…"
+                      placeholder={t('stops.placeholder')}
                       required
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Nights <span className="text-gray-300">(opt)</span></label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t('stops.nights')} <span className="text-gray-300">{t('stops.optional')}</span></label>
                     <input type="number" min="1" max="30" value={stop.nights}
                       onChange={e => setExtraStops(stops => stops.map((s, j) => (j === i ? { ...s, nights: e.target.value } : s)))}
-                      placeholder="auto"
+                      placeholder={t('stops.auto')}
                       className="w-full px-2.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm" />
                   </div>
-                  <button type="button" title="Remove this stop"
+                  <button type="button" title={t('stops.remove')} data-tid="search.stop-remove"
                     onClick={() => setExtraStops(stops => stops.filter((_, j) => j !== i))}
                     className="mb-1 p-2.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
                     <X size={14} />
@@ -606,16 +596,22 @@ export default function SearchPage() {
                 </div>
               ))}
               {extraStops.length < 3 && (
-                <button type="button"
+                <button type="button" data-tid="search.stop-add"
                   onClick={() => setExtraStops(stops => [...stops, { city: '', nights: '' }])}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
-                  <Plus size={14} /> Add a stop on the way (multi-city)
+                  <Plus size={14} /> {t('stops.add')}
                 </button>
               )}
               {extraStops.length > 0 && (
                 <p className="text-xs text-gray-400">
-                  Your route: {form.origin ? form.origin.split(',')[0] : 'Origin'} → {extraStops.filter(s => (s.city || '').trim()).map(s => s.city.split(',')[0]).join(' → ') || 'stops'} → <span className="font-medium text-gray-500">{form.destination ? form.destination.split(',')[0] : 'your destination'}</span>.
-                  Stops are visited on the way; the "To" city is your final destination. Nights left blank are split automatically.
+                  <Trans t={t} i18nKey="stops.route"
+                    values={{
+                      origin: form.origin ? form.origin.split(',')[0] : t('stops.originFallback'),
+                      stops: extraStops.filter(s => (s.city || '').trim()).map(s => s.city.split(',')[0]).join(' → ') || t('stops.stopsFallback'),
+                      destination: form.destination ? form.destination.split(',')[0] : t('stops.destinationFallback'),
+                    }}
+                    components={{ b: <span className="font-medium text-gray-500" /> }} />
+                  {' '}{t('stops.routeNote')}
                 </p>
               )}
             </div>
@@ -623,12 +619,12 @@ export default function SearchPage() {
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Departure</span></label>
+                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
                 <input type="date" required value={form.departure_date} min={today}
                   onChange={e => setForm(f => ({ ...f, departure_date: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Return</span></label>
+                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
                 <input type="date" value={form.return_date} min={form.departure_date}
                   onChange={e => setForm(f => ({ ...f, return_date: e.target.value }))} className={inputClass} />
               </div>
@@ -637,38 +633,38 @@ export default function SearchPage() {
             {/* Nationality + Budget + Travelers */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
               <NationalitySearch
-                label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> Nationality</span>}
+                label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> {t('form.nationality')}</span>}
                 value={form.nationality}
                 onChange={v => setForm(f => ({ ...f, nationality: v }))}
-                placeholder="American, Indian…"
+                placeholder={t('form.nationalityPlaceholder')}
                 required
               />
               <div>
-                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> Budget (USD)</span></label>
+                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budget')}</span></label>
                 <input type="number" value={form.budget_usd} min="0" step="100"
                   onChange={e => setForm(f => ({ ...f, budget_usd: e.target.value }))}
-                  placeholder="Optional" className={inputClass} />
+                  placeholder={t('form.optional')} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> Travelers</span></label>
+                <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> {t('form.travelers')}</span></label>
                 <TravelerPanel form={form} setForm={setForm} />
               </div>
             </div>
 
             {/* Permits & Visas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TagInput label="🏠 Residence Permits (if any)" value={form.residence_permits}
-                onChange={v => setForm(f => ({ ...f, residence_permits: v }))} placeholder="Schengen, UK, UAE…" />
-              <TagInput label="📋 Existing Visas (if any)" value={form.existing_visas}
-                onChange={v => setForm(f => ({ ...f, existing_visas: v }))} placeholder="US, Japan, Canada…" />
+              <TagInput label={t('form.permits')} value={form.residence_permits}
+                onChange={v => setForm(f => ({ ...f, residence_permits: v }))} placeholder={t('form.permitsPlaceholder')} />
+              <TagInput label={t('form.visas')} value={form.existing_visas}
+                onChange={v => setForm(f => ({ ...f, existing_visas: v }))} placeholder={t('form.visasPlaceholder')} />
             </div>
 
             {/* Interests */}
             <div data-tour="interests">
-              <label className={labelClass}>✨ Interests</label>
+              <label className={labelClass}>{t('form.interests')}</label>
               <div className="flex flex-wrap gap-2 mt-1">
-                {INTERESTS.map(({ id, label }) => (
-                  <button key={id} type="button" onClick={() => toggleInterest(id)}
+                {interestOptions.map(({ id, label }) => (
+                  <button key={id} type="button" onClick={() => toggleInterest(id)} data-tid={`search.interest-${id}`}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${form.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                     {label}
                   </button>
@@ -679,9 +675,9 @@ export default function SearchPage() {
             {/* Serendipity dial */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className={labelClass}>🎯 Discovery style</label>
+                <label className={labelClass}>{t('dial.label')}</label>
                 <span className="text-xs font-semibold text-teal-600">
-                  {form.serendipity < 0.33 ? '🏛️ Famous classics' : form.serendipity > 0.66 ? '💎 Hidden gems' : '⚖️ Balanced mix'}
+                  {form.serendipity < 0.33 ? t('dial.classics') : form.serendipity > 0.66 ? t('dial.gems') : t('dial.balanced')}
                 </span>
               </div>
               <input
@@ -689,17 +685,17 @@ export default function SearchPage() {
                 value={form.serendipity}
                 onChange={e => setForm(f => ({ ...f, serendipity: parseFloat(e.target.value) }))}
                 className="w-full accent-teal-600 cursor-pointer"
-                aria-label="Serendipity dial: classics to hidden gems"
+                aria-label={t('dial.aria')}
               />
               <div className="flex justify-between text-[11px] text-gray-400 mt-0.5">
-                <span>Iconic must-sees</span>
-                <span>Off the beaten path</span>
+                <span>{t('dial.iconic')}</span>
+                <span>{t('dial.offBeaten')}</span>
               </div>
             </div>
 
-            <button type="submit" data-tour="plan-button"
+            <button type="submit" data-tour="plan-button" data-tid="search.plan"
               className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
-              <Search size={18} /> Plan My Trip
+              <Search size={18} /> {t('form.plan')}
             </button>
           </form>}
 
@@ -708,19 +704,19 @@ export default function SearchPage() {
               {/* Origin + Dates row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <AirportSearch
-                  label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> Flying from</span>}
+                  label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> {t('form.flyingFrom')}</span>}
                   value={discoverForm.origin}
                   onChange={v => setDiscoverForm(f => ({ ...f, origin: v }))}
-                  placeholder="City or airport…"
+                  placeholder={t('form.cityOrAirport')}
                   required
                 />
                 <div>
-                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Departure</span></label>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
                   <input type="date" required value={discoverForm.departure_date} min={today}
                     onChange={e => setDiscoverForm(f => ({ ...f, departure_date: e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Return</span></label>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
                   <input type="date" value={discoverForm.return_date} min={discoverForm.departure_date}
                     onChange={e => setDiscoverForm(f => ({ ...f, return_date: e.target.value }))} className={inputClass} />
                 </div>
@@ -729,26 +725,26 @@ export default function SearchPage() {
               {/* Nationality + Budget */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <NationalitySearch
-                  label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> Nationality</span>}
+                  label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> {t('form.nationality')}</span>}
                   value={discoverForm.nationality}
                   onChange={v => setDiscoverForm(f => ({ ...f, nationality: v }))}
-                  placeholder="American, Indian…"
+                  placeholder={t('form.nationalityPlaceholder')}
                   required
                 />
                 <div>
-                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> Budget (USD, optional)</span></label>
+                  <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budgetOptional')}</span></label>
                   <input type="number" value={discoverForm.budget_usd} min="0" step="100"
                     onChange={e => setDiscoverForm(f => ({ ...f, budget_usd: e.target.value }))}
-                    placeholder="Total trip budget" className={inputClass} />
+                    placeholder={t('form.totalBudget')} className={inputClass} />
                 </div>
               </div>
 
               {/* Interests */}
               <div>
-                <label className={labelClass}>✨ What are you into?</label>
+                <label className={labelClass}>{t('form.interestsDiscover')}</label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {INTERESTS.map(({ id, label }) => (
-                    <button key={id} type="button"
+                  {interestOptions.map(({ id, label }) => (
+                    <button key={id} type="button" data-tid={`search.discover-interest-${id}`}
                       onClick={() => setDiscoverForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${discoverForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                       {label}
@@ -758,14 +754,14 @@ export default function SearchPage() {
               </div>
 
               {/* Submit button */}
-              <button type="button"
+              <button type="button" data-tid="search.discover-submit"
                 disabled={discovering || !discoverForm.origin || !discoverForm.nationality}
                 onClick={handleDiscover}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base">
                 {discovering ? (
-                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Finding destinations…</>
+                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> {t('discover.finding')}</>
                 ) : (
-                  <><Search size={18} /> Find My Perfect Destination</>
+                  <><Search size={18} /> {t('discover.find')}</>
                 )}
               </button>
 
@@ -777,7 +773,7 @@ export default function SearchPage() {
               {/* Results: DestinationCard grid */}
               {destinations && destinations.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Your personalized picks ✨</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('discover.picks')}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {destinations.map((dest, i) => (
                       <DestinationCard
@@ -796,7 +792,7 @@ export default function SearchPage() {
               )}
 
               {destinations && destinations.length === 0 && (
-                <p className="text-center text-gray-500 text-sm py-4">No destinations found — try different interests or a higher budget.</p>
+                <p className="text-center text-gray-500 text-sm py-4">{t('discover.none')}</p>
               )}
             </div>
           )}
@@ -804,13 +800,13 @@ export default function SearchPage() {
           {mode === 'compare' && compareForm && (
             <div className="space-y-6">
               <form onSubmit={handleCompare} className="space-y-6">
-                <p className="text-sm text-gray-500 text-center">Compare two or three destinations side by side — cost, flights, hotels, weather and visa — before you commit to a full plan.</p>
+                <p className="text-sm text-gray-500 text-center">{t('compare.intro')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <AirportSearch
-                    label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> From</span>}
+                    label={<span className="inline-flex items-center gap-1.5"><Plane size={13} /> {t('form.from')}</span>}
                     value={compareForm.origin}
                     onChange={v => setCompareForm(c => ({ ...c, origin: v }))}
-                    placeholder="City or airport…"
+                    placeholder={t('form.cityOrAirport')}
                     required
                   />
                 </div>
@@ -820,14 +816,14 @@ export default function SearchPage() {
                     <div key={i} className="flex items-end gap-2">
                       <div className="flex-1">
                         <AirportSearch
-                          label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> Destination {i + 1}</span>}
+                          label={<span className="inline-flex items-center gap-1.5"><MapPin size={13} /> {t('compare.destination', { n: i + 1 })}</span>}
                           value={dest}
                           onChange={v => setCompareDestination(i, v)}
-                          placeholder="City or airport…"
+                          placeholder={t('form.cityOrAirport')}
                         />
                       </div>
                       {compareForm.destinations.length > 2 && (
-                        <button type="button" title="Remove this destination" aria-label={`Remove destination ${i + 1}`}
+                        <button type="button" title={t('compare.removeDestination')} aria-label={t('compare.removeDestinationN', { n: i + 1 })} data-tid="search.compare-remove"
                           onClick={() => setCompareForm(c => ({ ...c, destinations: c.destinations.filter((_, j) => j !== i) }))}
                           className="mb-1 p-2.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
                           <X size={14} />
@@ -836,22 +832,22 @@ export default function SearchPage() {
                     </div>
                   ))}
                   {compareForm.destinations.length < 3 && (
-                    <button type="button"
+                    <button type="button" data-tid="search.compare-add"
                       onClick={() => setCompareForm(c => ({ ...c, destinations: [...c.destinations, ''] }))}
                       className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
-                      <Plus size={14} /> Add another
+                      <Plus size={14} /> {t('compare.addAnother')}
                     </button>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Departure</span></label>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
                     <input type="date" required value={compareForm.departure_date} min={today}
                       onChange={e => setCompareForm(c => ({ ...c, departure_date: e.target.value }))} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> Return</span></label>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
                     <input type="date" value={compareForm.return_date} min={compareForm.departure_date}
                       onChange={e => setCompareForm(c => ({ ...c, return_date: e.target.value }))} className={inputClass} />
                   </div>
@@ -859,29 +855,29 @@ export default function SearchPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                   <NationalitySearch
-                    label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> Nationality</span>}
+                    label={<span className="inline-flex items-center gap-1.5"><Globe size={13} /> {t('form.nationality')}</span>}
                     value={compareForm.nationality}
                     onChange={v => setCompareForm(c => ({ ...c, nationality: v }))}
-                    placeholder="American, Indian…"
+                    placeholder={t('form.nationalityPlaceholder')}
                     required
                   />
                   <div>
-                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> Budget (USD)</span></label>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budget')}</span></label>
                     <input type="number" value={compareForm.budget_usd} min="0" step="100"
                       onChange={e => setCompareForm(c => ({ ...c, budget_usd: e.target.value }))}
-                      placeholder="Optional" className={inputClass} />
+                      placeholder={t('form.optional')} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> Travelers</span></label>
+                    <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Users size={13} /> {t('form.travelers')}</span></label>
                     <TravelerPanel form={compareForm} setForm={setCompareForm} />
                   </div>
                 </div>
 
                 <div>
-                  <label className={labelClass}>✨ Interests</label>
+                  <label className={labelClass}>{t('form.interests')}</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {INTERESTS.map(({ id, label }) => (
-                      <button key={id} type="button"
+                    {interestOptions.map(({ id, label }) => (
+                      <button key={id} type="button" data-tid={`search.compare-interest-${id}`}
                         onClick={() => setCompareForm(c => ({ ...c, interests: c.interests.includes(id) ? c.interests.filter(i => i !== id) : [...c.interests, id] }))}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${compareForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                         {label}
@@ -892,9 +888,9 @@ export default function SearchPage() {
 
                 {compareError && <p role="alert" className="text-center text-red-500 text-sm">{compareError}</p>}
 
-                <button type="submit" disabled={compareLoading}
+                <button type="submit" disabled={compareLoading} data-tid="search.compare-submit"
                   className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition-all text-base disabled:opacity-60 disabled:cursor-not-allowed">
-                  <Search size={18} /> {compareLoading ? 'Comparing…' : 'Compare destinations'}
+                  <Search size={18} /> {compareLoading ? t('compare.comparing') : t('compare.submit')}
                 </button>
               </form>
 

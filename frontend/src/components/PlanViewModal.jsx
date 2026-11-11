@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { fmtNumber } from '../i18n/format'
 import {
   X, Plane, Hotel, MapPin, Smartphone, Calendar,
   Save, Trash2, Loader2, Check, PenLine, ExternalLink,
@@ -9,6 +11,7 @@ import WatchFareButton from './alerts/WatchFareButton'
 import WatchTripButton from './alerts/WatchTripButton'
 import { tripFromPlan } from '../utils/fareWatch'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
+import { enumLabel } from '../utils/enumLabel'
 import PlanExport from './PlanExport'
 import { safeUrl } from '../utils/planPrint'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
@@ -25,12 +28,17 @@ const SECTION_COLORS = {
   fuchsia:'bg-fuchsia-50 border-b border-fuchsia-100 text-fuchsia-800',
 }
 
-function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
+// Money: whole dollars for the total, up to cents for item prices
+const usd0 = (n) => fmtNumber(Number(n), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+const usdX = (n) => fmtNumber(Number(n), { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 })
+
+function Section({ title, tid, color, icon: Icon, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="border rounded-xl overflow-hidden mb-3">
       <button
         onClick={() => setOpen(v => !v)}
+        data-tid={`plan.section-${tid}`}
         className={`w-full flex items-center justify-between px-4 py-2.5 font-semibold text-sm ${SECTION_COLORS[color] ?? SECTION_COLORS.teal}`}
       >
         <span className="flex items-center gap-2"><Icon size={14} />{title}</span>
@@ -42,6 +50,8 @@ function Section({ title, color, icon: Icon, children, defaultOpen = false }) {
 }
 
 export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted }) {
+  const { t } = useTranslation('plan')
+  const tod = (v) => t(`modal.timeOfDay.${v}`, { defaultValue: v })
   const [name, setName]           = useState(plan.name)
   const [sel,  setSel]            = useState(() => ({
     flight: null, flights: [], hotel: null, activities: [], sim: null, tips: [], getting_around: [], events: [], walking_tours: [],
@@ -87,13 +97,13 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       })
       if (res.ok) {
         const updated = await res.json()
-        setMsg('Saved ✓')
+        setMsg('saved')
         onSaved?.(updated)
         setTimeout(() => setMsg(''), 2000)
       } else {
-        setMsg('Save failed')
+        setMsg('saveFailed')
       }
-    } catch { setMsg('Save failed') }
+    } catch { setMsg('saveFailed') }
     finally { setSaving(false) }
   }
 
@@ -108,14 +118,14 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       const { share_token } = await res.json()
       const url = `${window.location.origin}/share/${share_token}`
       try { await navigator.clipboard.writeText(url) } catch { /* clipboard may be unavailable */ }
-      setMsg('Share link copied ✓')
+      setMsg('shared')
       setTimeout(() => setMsg(''), 4000)
-    } catch { setMsg('Share failed') }
+    } catch { setMsg('shareFailed') }
     finally { setSharing(false) }
   }
 
   const deletePlan = async () => {
-    if (!confirm(`Delete "${name}"?`)) return
+    if (!confirm(t('modal.confirmDelete', { name }))) return
     setDeleting(true)
     try {
       await fetch(`/api/plans/${plan.id}`, {
@@ -142,21 +152,22 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
             <input
               value={name}
               onChange={e => setName(e.target.value)}
+              data-tid="plan.name-input"
               className="bg-white/20 border border-white/30 rounded-lg px-3 py-1.5 text-white font-semibold text-sm w-full placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/40"
-              placeholder="Plan name…"
+              placeholder={t('modal.namePlaceholder')}
             />
             {sd.origin && (
               <p className="text-slate-300 text-xs mt-1">
-                {sd.origin} → {sd.destination} · {sd.departure_date}{sd.return_date ? ` – ${sd.return_date}` : ''} · {sd.num_travelers || 1} traveler{(sd.num_travelers || 1) > 1 ? 's' : ''}
+                {t('modal.trip', { origin: sd.origin, destination: sd.destination, dates: `${sd.departure_date}${sd.return_date ? ` – ${sd.return_date}` : ''}`, count: sd.num_travelers || 1 })}
               </p>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-              <WatchFareButton variant="onDark" trip={tripFromPlan(plan)} source="plan_view" label="Watch this fare" />
+              <WatchFareButton variant="onDark" trip={tripFromPlan(plan)} source="plan_view" label={t('modal.watchFare')} />
               <WatchTripButton variant="onDark" plan={plan} source="plan_view" />
             </div>
             {totalCost > 0 && (
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-white font-bold text-sm">${totalCost.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                <span className="text-white font-bold text-sm">{usd0(totalCost)}</span>
                 {budget && (
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${budget.status === 'under' ? 'bg-green-500/25 text-green-200' : 'bg-red-500/25 text-red-200'}`}>
                     <DollarSign size={9} className="inline -mt-0.5" /> {budget.label}
@@ -165,7 +176,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
               </div>
             )}
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white shrink-0"><X size={20} /></button>
+          <button onClick={onClose} data-tid="plan.modal-close-x" aria-label={t('modal.close')} className="text-white/80 hover:text-white shrink-0"><X size={20} /></button>
         </div>
 
         {/* Scrollable body */}
@@ -173,7 +184,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
           {!hasSelections && (
             <div className="text-center py-10 text-gray-400">
               <Calendar size={36} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">This plan has no saved selections yet.</p>
+              <p className="text-sm">{t('modal.empty')}</p>
             </div>
           )}
 
@@ -181,27 +192,27 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Flight */}
           {sel.flight && (
-            <Section title="Flight" color="sky" icon={Plane}>
+            <Section title={t('modal.section.flight')} tid="flight" color="sky" icon={Plane}>
               <div className="flex items-start justify-between">
                 <div>
                   {sel.flight.outbound ? (
                     <>
-                      <p className="text-xs text-gray-500 mb-0.5">Outbound: <span className="font-medium text-gray-700">{sel.flight.outbound.airline}</span>{sel.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{sel.flight.outbound.flight_number}</span>} · {sel.flight.outbound.origin} → {sel.flight.outbound.destination}</p>
-                      {sel.flight.return && <p className="text-xs text-gray-500 mb-0.5">Return: <span className="font-medium text-gray-700">{sel.flight.return.airline}</span>{sel.flight.return.flight_number && <span className="text-gray-400 ml-1">{sel.flight.return.flight_number}</span>} · {sel.flight.return.origin} → {sel.flight.return.destination}</p>}
-                      <p className="text-xs font-semibold text-sky-700 mt-0.5">${Number(sel.flight.price_usd).toLocaleString()} {sel.flight.trip_type === 'round_trip' ? 'round-trip' : 'one-way'}</p>
+                      <p className="text-xs text-gray-500 mb-0.5">{t('modal.flight.outbound')} <span className="font-medium text-gray-700">{sel.flight.outbound.airline}</span>{sel.flight.outbound.flight_number && <span className="text-gray-400 ml-1">{sel.flight.outbound.flight_number}</span>} · {sel.flight.outbound.origin} → {sel.flight.outbound.destination}</p>
+                      {sel.flight.return && <p className="text-xs text-gray-500 mb-0.5">{t('modal.flight.return')} <span className="font-medium text-gray-700">{sel.flight.return.airline}</span>{sel.flight.return.flight_number && <span className="text-gray-400 ml-1">{sel.flight.return.flight_number}</span>} · {sel.flight.return.origin} → {sel.flight.return.destination}</p>}
+                      <p className="text-xs font-semibold text-sky-700 mt-0.5">{t(sel.flight.trip_type === 'round_trip' ? 'modal.flight.roundTrip' : 'modal.flight.oneWay', { price: usdX(sel.flight.price_usd) })}</p>
                     </>
                   ) : (
                     <>
                       <p className="text-sm font-semibold text-gray-900">{sel.flight.airline} {sel.flight.flight_number || ''}</p>
                       <p className="text-xs text-gray-500">{sel.flight.origin} → {sel.flight.destination}</p>
-                      {sel.flight.price_usd && <p className="text-xs font-medium text-sky-700 mt-0.5">${Number(sel.flight.price_usd).toLocaleString()}</p>}
+                      {sel.flight.price_usd && <p className="text-xs font-medium text-sky-700 mt-0.5">{usdX(sel.flight.price_usd)}</p>}
                     </>
                   )}
                   {sel.flight.booking_url && (
-                    <a href={sel.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> Book this flight</a>
+                    <a href={sel.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.flight.bookThis')}</a>
                   )}
                 </div>
-                <button onClick={() => removeItem('flight')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <button data-tid="plan.remove-flight" aria-label={t('modal.delete')} onClick={() => removeItem('flight')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -210,26 +221,26 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Multi-city flights (one per leg) */}
           {sel.flights?.length > 0 && (
-            <Section title={`Flights (${sel.flights.length} leg${sel.flights.length > 1 ? 's' : ''})`} color="sky" icon={Plane} defaultOpen>
+            <Section title={t('modal.section.flights', { count: sel.flights.length })} tid="flights" color="sky" icon={Plane} defaultOpen>
               <div className="space-y-2">
                 {sel.flights.map((f, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-xs text-gray-500">
-                        <span className="font-semibold text-sky-700">Leg {(f.leg_index ?? i) + 1}:</span>{' '}
+                        <span className="font-semibold text-sky-700">{t('modal.flight.leg', { n: (f.leg_index ?? i) + 1 })}</span>{' '}
                         <span className="font-medium text-gray-700">{f.outbound?.airline || f.airline}</span>
                         {(f.outbound?.flight_number || f.flight_number) && <span className="text-gray-400 ml-1">{f.outbound?.flight_number || f.flight_number}</span>}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {String(f.leg_from || f.outbound?.origin || '').split(',')[0]} → {String(f.leg_to || f.outbound?.destination || '').split(',')[0]}
                         {f.leg_date ? ` · ${f.leg_date}` : ''}
-                        {f.price_usd != null && <span className="font-semibold text-sky-700"> · ${Number(f.price_usd).toLocaleString()}</span>}
+                        {f.price_usd != null && <span className="font-semibold text-sky-700"> · {usdX(f.price_usd)}</span>}
                       </p>
                       {f.booking_url && (
-                        <a href={f.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-0.5"><ExternalLink size={10} /> Book</a>
+                        <a href={f.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
                       )}
                     </div>
-                    <button onClick={() => removeItem('flights', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-flights" aria-label={t('modal.delete')} onClick={() => removeItem('flights', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -240,7 +251,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Hotel */}
           {sel.hotel && (
-            <Section title="Hotel" color="purple" icon={Hotel}>
+            <Section title={t('modal.section.hotel')} tid="hotel" color="purple" icon={Hotel}>
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{sel.hotel.name}</p>
@@ -251,12 +262,12 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     </div>
                   )}
                   <p className="text-xs text-gray-500 mt-0.5">{sel.hotel.location}</p>
-                  {sel.hotel.price_per_night_usd && <p className="text-xs font-medium text-purple-700 mt-0.5">${sel.hotel.price_per_night_usd}/night{sel.hotel.total_price_usd ? ` · $${sel.hotel.total_price_usd.toLocaleString()} total` : ''}</p>}
+                  {sel.hotel.price_per_night_usd && <p className="text-xs font-medium text-purple-700 mt-0.5">{sel.hotel.total_price_usd ? t('modal.hotel.perNightTotal', { price: usdX(sel.hotel.price_per_night_usd), total: usdX(sel.hotel.total_price_usd) }) : t('modal.hotel.perNight', { price: usdX(sel.hotel.price_per_night_usd) })}</p>}
                   {sel.hotel.booking_url && (
-                    <a href={sel.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1"><ExternalLink size={10} /> View & Book</a>
+                    <a href={sel.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.hotel.viewBook')}</a>
                   )}
                 </div>
-                <button onClick={() => removeItem('hotel')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <button data-tid="plan.remove-hotel" aria-label={t('modal.delete')} onClick={() => removeItem('hotel')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -265,22 +276,22 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Activities */}
           {sel.activities?.length > 0 && (
-            <Section title={`Activities (${sel.activities.length})`} color="green" icon={MapPin}>
+            <Section title={t('modal.section.activities', { count: sel.activities.length })} tid="activities" color="green" icon={MapPin}>
               <div className="space-y-2">
                 {sel.activities.map((a, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-sm font-medium text-gray-900">{a.name}</p>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                        {a.price_usd != null && <span>${a.price_usd}</span>}
-                        {a.duration_hours && <span>{a.duration_hours}h</span>}
+                        {a.price_usd != null && <span>{usdX(a.price_usd)}</span>}
+                        {a.duration_hours && <span>{t('modal.activity.hours', { hours: a.duration_hours })}</span>}
                         {a.location && <span className="truncate">{a.location}</span>}
                       </div>
                       {a.booking_url && (
-                        <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={10} /> Book</a>
+                        <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
                       )}
                     </div>
-                    <button onClick={() => removeItem('activities', a)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-activities" aria-label={t('modal.delete')} onClick={() => removeItem('activities', a)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -291,23 +302,23 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* SIM */}
           {sel.sim && (
-            <Section title="SIM Card" color="pink" icon={Smartphone}>
+            <Section title={t('modal.section.sim')} tid="sim" color="pink" icon={Smartphone}>
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{sel.sim.provider}</p>
                   <p className="text-xs text-gray-500">{sel.sim.plan_name}</p>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                    {sel.sim.price_usd != null && <span className="font-medium text-pink-700">${sel.sim.price_usd}</span>}
-                    {sel.sim.data_gb && <span>{sel.sim.data_gb}GB</span>}
-                    {sel.sim.validity_days && <span>{sel.sim.validity_days} days</span>}
+                    {sel.sim.price_usd != null && <span className="font-medium text-pink-700">{usdX(sel.sim.price_usd)}</span>}
+                    {sel.sim.data_gb && <span>{t('modal.sim.data', { gb: sel.sim.data_gb })}</span>}
+                    {sel.sim.validity_days && <span>{t('modal.sim.days', { count: sel.sim.validity_days })}</span>}
                     {sel.sim.network_quality?.speed && <span className="flex items-center gap-0.5"><Wifi size={9}/>{sel.sim.network_quality.speed}</span>}
-                    {sel.sim.network_quality?.coverage_rating && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${sel.sim.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : sel.sim.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : sel.sim.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{sel.sim.network_quality.coverage_rating}</span>}
+                    {sel.sim.network_quality?.coverage_rating && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${sel.sim.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : sel.sim.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : sel.sim.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{enumLabel('coverage', sel.sim.network_quality.coverage_rating)}</span>}
                   </div>
                   {sel.sim.url && (
-                    <a href={sel.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1"><ExternalLink size={10} /> Get Plan</a>
+                    <a href={sel.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.sim.getPlan')}</a>
                   )}
                 </div>
-                <button onClick={() => removeItem('sim')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <button data-tid="plan.remove-sim" aria-label={t('modal.delete')} onClick={() => removeItem('sim')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -316,7 +327,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Getting Around */}
           {sel.getting_around?.length > 0 && (
-            <Section title={`Getting Around (${sel.getting_around.length})`} color="cyan" icon={Bus}>
+            <Section title={t('modal.section.gettingAround', { count: sel.getting_around.length })} tid="getting-around" color="cyan" icon={Bus}>
               <div className="space-y-2">
                 {sel.getting_around.map((opt, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
@@ -328,10 +339,10 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       </div>
                       {opt.price_info && <p className="text-xs text-gray-500 mt-0.5">{opt.price_info}</p>}
                       {opt.booking_url && (
-                        <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={10} /> More Info</a>
+                        <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.moreInfo')}</a>
                       )}
                     </div>
-                    <button onClick={() => removeItem('getting_around', opt)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-getting-around" aria-label={t('modal.delete')} onClick={() => removeItem('getting_around', opt)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -342,21 +353,21 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Tips */}
           {sel.tips?.length > 0 && (
-            <Section title={`Tips (${sel.tips.length})`} color="amber" icon={Lightbulb}>
+            <Section title={t('modal.section.tips', { count: sel.tips.length })} tid="tips" color="amber" icon={Lightbulb}>
               <div className="space-y-2">
                 {sel.tips.map((t, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium text-gray-900">{t.title}</p>
-                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{t.severity}</span>}
+                        {t.severity && <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${t.severity === 'danger' ? 'bg-red-100 text-red-700' : t.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{enumLabel('severity', t.severity)}</span>}
                       </div>
                       {t.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.body}</p>}
                       {t.source_url && (
-                        <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={10} /> Source</a>
+                        <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.source')}</a>
                       )}
                     </div>
-                    <button onClick={() => removeItem('tips', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-tips" aria-label={t('modal.delete')} onClick={() => removeItem('tips', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -367,7 +378,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Events */}
           {sel.events?.length > 0 && (
-            <Section title={`Events (${sel.events.length})`} color="fuchsia" icon={PartyPopper}>
+            <Section title={t('modal.section.events', { count: sel.events.length })} tid="events" color="fuchsia" icon={PartyPopper}>
               <div className="space-y-2">
                 {sel.events.map((ev, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
@@ -380,7 +391,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       </div>
                       {ev.location && <p className="text-xs text-gray-500 mt-0.5">{ev.location}</p>}
                     </div>
-                    <button onClick={() => removeItem('events', ev)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-events" aria-label={t('modal.delete')} onClick={() => removeItem('events', ev)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -391,7 +402,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Walking tours */}
           {sel.walking_tours?.length > 0 && (
-            <Section title={`Walking Tours (${sel.walking_tours.length})`} color="green" icon={Footprints}>
+            <Section title={t('modal.section.walkingTours', { count: sel.walking_tours.length })} tid="walking-tours" color="green" icon={Footprints}>
               <div className="space-y-2">
                 {(sel.walking_tours || []).map((t, i) => {
                   const href = safeUrl(t.url)
@@ -410,7 +421,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                           {t.city && <span>{t.city}</span>}
                         </div>
                       </div>
-                      <button onClick={() => removeItem('walking_tours', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                      <button data-tid="plan.remove-walking-tours" aria-label={t('modal.delete')} onClick={() => removeItem('walking_tours', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -422,14 +433,14 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
           {/* Itinerary slots */}
           {sel.itinerary_slots?.length > 0 && (
-            <Section title={`Itinerary Slots (${sel.itinerary_slots.length})`} color="teal" icon={Calendar}>
+            <Section title={t('modal.section.itinerarySlots', { count: sel.itinerary_slots.length })} tid="itinerary-slots" color="teal" icon={Calendar}>
               <div className="space-y-2">
                 {sel.itinerary_slots.map((slot, i) => (
                   <div key={i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <div className="flex-1 min-w-0 mr-2">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-xs font-semibold text-teal-600">Day {slot.day_number}</span>
-                        <span className="text-xs text-gray-400 capitalize">{slot.time_of_day}</span>
+                        <span className="text-xs font-semibold text-teal-600">{t('modal.day', { n: slot.day_number })}</span>
+                        <span className="text-xs text-gray-400 capitalize">{tod(slot.time_of_day)}</span>
                         {timeRange(slot) && <span className="text-xs text-teal-600">{timeRange(slot)}</span>}
                       </div>
                       <p className="text-sm font-medium text-gray-900">{slot.activity}</p>
@@ -438,7 +449,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                         <p className="text-xs text-teal-600 italic mt-0.5">📝 {sel.itinerary_notes[slot.key]}</p>
                       )}
                     </div>
-                    <button onClick={() => removeItem('itinerary_slots', slot)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <button data-tid="plan.remove-itinerary-slots" aria-label={t('modal.delete')} onClick={() => removeItem('itinerary_slots', slot)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -448,12 +459,12 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
           )}
           {/* Full itinerary snapshot */}
           {sel.itinerary?.days?.length > 0 && (
-            <Section title={`Full Itinerary (${sel.itinerary.days.length} days)`} color="teal" icon={Calendar}>
+            <Section title={t('modal.section.fullItinerary', { count: sel.itinerary.days.length })} tid="full-itinerary" color="teal" icon={Calendar}>
               <div className="space-y-3">
                 {scheduleDays(arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits).days, sel.itinerary_edits).map((day, i) => (
                   <div key={i}>
                     <p className="text-xs font-bold text-teal-700">
-                      Day {day.day_number}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${String(day.city).split(',')[0]}` : ''}{day.theme ? ` — ${day.theme}` : ''}
+                      {t('modal.day', { n: day.day_number })}{day.date ? ` · ${day.date}` : ''}{day.city ? ` · ${String(day.city).split(',')[0]}` : ''}{day.theme ? ` — ${day.theme}` : ''}
                     </p>
                     <ul className="mt-1 space-y-0.5">
                       {(day.slots || []).map((slot, j) => {
@@ -461,7 +472,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                         const edit = sel.itinerary_edits?.[key] || {}
                         return (
                           <li key={j} className="text-xs text-gray-600">
-                            <span className="capitalize text-gray-400">{slot.time_of_day}</span>
+                            <span className="capitalize text-gray-400">{tod(slot.time_of_day)}</span>
                             {timeRange(slot) && <span className="text-gray-400 tabular-nums"> {timeRange(slot)}</span>}
                             <span className="text-gray-400">:</span> {edit.activity || slot.activity}
                             {sel.itinerary_notes?.[key] && <span className="text-teal-600 italic"> — 📝 {sel.itinerary_notes[key]}</span>}
@@ -478,23 +489,23 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
         {/* Footer */}
         <div className="shrink-0 px-5 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-          <button onClick={deletePlan} disabled={deleting}
+          <button onClick={deletePlan} disabled={deleting} data-tid="plan.delete"
             className="flex items-center gap-1.5 px-3 py-2 text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
-            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Delete
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} {t('modal.delete')}
           </button>
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {msg && <span className={`text-sm font-medium ${msg.includes('fail') ? 'text-red-600' : 'text-green-600'}`}>{msg}</span>}
-            <button onClick={sharePlan} disabled={sharing}
-              title="Copy a public link — anyone can view this trip card, no login needed"
+            {msg && <span className={`text-sm font-medium ${/Failed$/.test(msg) ? 'text-red-600' : 'text-green-600'}`}>{t(`modal.msg.${msg}`)}</span>}
+            <button onClick={sharePlan} disabled={sharing} data-tid="plan.share"
+              title={t('modal.shareTitle')}
               className="flex items-center gap-1.5 px-3 py-2 text-violet-700 border border-violet-300 rounded-lg text-sm font-medium hover:bg-violet-50 transition-colors disabled:opacity-50">
-              {sharing ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />} Share
+              {sharing ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />} {t('modal.share')}
             </button>
-            <button onClick={onClose} className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-              Close
+            <button onClick={onClose} data-tid="plan.modal-close" className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+              {t('modal.close')}
             </button>
-            <button onClick={save} disabled={saving}
+            <button onClick={save} disabled={saving} data-tid="plan.save"
               className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-all">
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Changes
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {t('modal.save')}
             </button>
           </div>
         </div>

@@ -1,0 +1,189 @@
+{
+  "login": {
+    "tagline": "规划你的完美旅行",
+    "title": "登录你的账号",
+    "username": "用户名",
+    "usernamePlaceholder": "输入用户名",
+    "password": "密码",
+    "passwordPlaceholder": "输入密码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "submit": "登录",
+    "submitting": "正在登录…",
+    "failed": "登录失败，请重试。"
+  },
+  "changePassword": {
+    "title": "设置你的密码",
+    "welcome": "欢迎，<strong>{{username}}</strong>！请设置新密码以继续。",
+    "temporary": "临时密码",
+    "new": "新密码",
+    "newPlaceholder": "至少 8 个字符",
+    "confirm": "确认新密码",
+    "submit": "设置密码并继续",
+    "saving": "正在保存…",
+    "mismatch": "两次输入的新密码不一致",
+    "tooShort": "密码至少需要 8 个字符",
+    "failed": "修改密码失败",
+    "generic": "出了点问题，请重试。"
+  },
+  "prefs": {
+    "title": "旅行偏好",
+    "subtitle": "设置默认值，自动填写搜索表单并获得个性化结果。",
+    "taste": {
+      "title": "口味图谱",
+      "reset": "重置",
+      "heading": "我们了解到的你的旅行口味",
+      "built_other": "基于你已保存行程中的 {{count}} 个信号。",
+      "personalised": "登录后的搜索会自动使用此画像进行个性化。",
+      "empty": "暂时还没有学到什么——保存几个行程后，之后的搜索会自动个性化。",
+      "confirmReset": "要重置已学习的口味画像吗？之后的搜索将不再根据过往行程个性化。"
+    },
+    "signal": {
+      "activity_category": "喜爱的活动类型",
+      "event_category": "喜爱的节庆演出类型",
+      "hotel_tier": "酒店风格",
+      "flight_style": "航班偏好",
+      "interest": "常见兴趣",
+      "destination": "计划的目的地",
+      "pace": "行程节奏"
+    },
+    "budget": {
+      "section": "旅行预算",
+      "category": "预算类别",
+      "low": {
+        "label": "经济",
+        "desc": "青旅、街头小吃、公共交通"
+      },
+      "medium": {
+        "label": "中档",
+        "desc": "舒适酒店、不错的餐厅"
+      },
+      "high": {
+        "label": "奢华",
+        "desc": "高端酒店、精致餐饮、私人团游"
+      }
+    },
+    "interest": {
+      "food": "美食",
+      "history": "历史",
+      "adventure": "探险",
+      "culture": "文化",
+      "nature": "自然",
+      "shopping": "购物",
+      "nightlife": "夜生活",
+      "wellness": "健康养生",
+      "art": "艺术",
+      "family": "亲子"
+    },
+    "identity": {
+      "section": "身份",
+      "nationality": "国籍",
+      "nationalityPlaceholder": "美国、印度、英国……",
+      "residence": "现居地",
+      "residencePlaceholder": "例如：德国慕尼黑",
+      "residenceHint": "规划行程时用作默认出发城市"
+    },
+    "documents": {
+      "section": "证件",
+      "permits": "居留许可",
+      "permitsPlaceholder": "申根、英国、阿联酋……",
+      "visas": "已有签证",
+      "visasPlaceholder": "美国、日本、加拿大……"
+    },
+    "style": {
+      "section": "旅行风格",
+      "group": "默认出行人员",
+      "groupHint": "成人、儿童、老人、婴儿和无障碍需求——自动填入每次搜索",
+      "interests": "兴趣"
+    },
+    "save": "保存偏好",
+    "saving": "正在保存…",
+    "saved": "偏好已保存！",
+    "errorWithDetail": "错误：{{detail}}",
+    "saveFailed": "保存失败"
+  },
+  "admin": {
+    "title": "管理面板",
+    "tabs": {
+      "users": "用户",
+      "feedback": "反馈"
+    },
+    "users": {
+      "count_other": "{{count}} 位用户",
+      "create": "+ 创建用户",
+      "newUser": "新用户",
+      "usernameRequired": "用户名 *",
+      "emailOptional": "邮箱（可选）",
+      "tempPasswordRequired": "临时密码 *",
+      "adminPrivileges": "管理员权限",
+      "createSubmit": "创建",
+      "creating": "正在创建…",
+      "createFailed": "创建用户失败",
+      "resetOwnHint": "重置自己的密码后，下次加载页面时需要设置新密码",
+      "resetOwn": "重置我的密码",
+      "reset": "重置密码",
+      "deactivate": "停用",
+      "reactivate": "重新启用"
+    },
+    "common": {
+      "cancel": "取消",
+      "loading": "加载中…",
+      "wentWrong": "出了点问题",
+      "close": "关闭"
+    },
+    "table": {
+      "username": "用户名",
+      "email": "邮箱",
+      "created": "创建时间",
+      "role": "角色",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "role": {
+      "admin": "管理员",
+      "user": "用户"
+    },
+    "status": {
+      "pending": "待激活",
+      "active": "已启用",
+      "inactive": "已停用"
+    },
+    "reset": {
+      "title": "重置密码",
+      "intro": "正在为 <name>{{username}}</name> 设置新密码。对方下次登录时需要修改。",
+      "selfWarning": "你正在重置自己的密码。下次加载页面时将跳转到修改密码页面。",
+      "success": "已重置 {{username}} 的密码。对方下次登录时会被要求设置新密码。",
+      "newPassword": "新密码 *",
+      "confirmPassword": "确认密码 *",
+      "minPlaceholder": "至少 8 个字符",
+      "repeatPlaceholder": "再次输入新密码",
+      "submit": "重置密码",
+      "submitting": "正在重置…",
+      "tooShort": "密码至少需要 8 个字符",
+      "mismatch": "两次输入的密码不一致",
+      "failed": "重置密码失败"
+    },
+    "feedback": {
+      "page": "页面",
+      "category": "类别",
+      "minRating": "最低评分",
+      "all": "全部",
+      "any": "不限",
+      "export": "导出 CSV",
+      "empty": "暂无反馈。",
+      "pages": {
+        "search": "搜索",
+        "results": "结果",
+        "chat": "聊天",
+        "preferences": "偏好",
+        "admin": "管理"
+      },
+      "categories": {
+        "bug": "问题",
+        "feature_request": "功能建议",
+        "general": "一般",
+        "praise": "好评"
+      }
+    }
+  }
+}

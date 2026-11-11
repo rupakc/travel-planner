@@ -1,6 +1,10 @@
 // Trip Remix — one-click "what if" transforms of a search request, plus
 // before/after metric snapshots so the user can compare the two plans.
 
+import i18n from '../i18n'
+import { fmtNumber } from '../i18n/format'
+
+const tt = (key, opts) => i18n.t(`sections:${key}`, opts)
 const DAY_MS = 86400000
 
 function toDate(str) {
@@ -28,39 +32,29 @@ function shiftDates(searchData, days) {
 export const REMIX_PRESETS = [
   {
     id: 'week_later',
-    label: 'A week later',
     emoji: '📅',
-    description: 'Shift the whole trip 7 days forward — same length',
     apply: (sd) => shiftDates(sd, 7),
   },
   {
     id: 'half_budget',
-    label: 'Half the budget',
     emoji: '💸',
-    description: 'Same trip on 50% of the budget',
     apply: (sd) =>
       sd.budget_usd ? { budget_usd: Math.round(sd.budget_usd / 2) } : {},
   },
   {
     id: 'luxe',
-    label: 'Make it luxe',
     emoji: '✨',
-    description: 'Double the budget and aim upmarket',
     apply: (sd) =>
       sd.budget_usd ? { budget_usd: Math.round(sd.budget_usd * 2) } : {},
   },
   {
     id: 'slower_pace',
-    label: 'Slow it down',
     emoji: '🧘',
-    description: 'Relaxed pacing — fewer activities, more downtime',
     apply: () => ({ pace: 'relaxed' }),
   },
   {
     id: 'long_weekend',
-    label: 'Long weekend',
     emoji: '⚡',
-    description: 'Compress to a 3-night getaway from the same start date',
     apply: (sd) => {
       const dep = toDate(sd.departure_date)
       if (!dep) return {}
@@ -68,6 +62,14 @@ export const REMIX_PRESETS = [
     },
   },
 ]
+
+// label / description read at use time so they follow a language switch
+for (const preset of REMIX_PRESETS) {
+  Object.defineProperties(preset, {
+    label: { get: () => tt(`remix.preset.${preset.id}.label`), enumerable: true },
+    description: { get: () => tt(`remix.preset.${preset.id}.description`), enumerable: true },
+  })
+}
 
 export function applyRemix(searchData, presetId) {
   const preset = REMIX_PRESETS.find((p) => p.id === presetId)
@@ -115,10 +117,10 @@ export function snapshotMetrics(results) {
 }
 
 const METRIC_META = {
-  min_flight_usd: { label: 'Cheapest flight', kind: 'usd', betterWhen: 'lower' },
-  min_hotel_nightly_usd: { label: 'Hotel / night', kind: 'usd', betterWhen: 'lower' },
-  itinerary_total_usd: { label: 'Itinerary cost', kind: 'usd', betterWhen: 'lower' },
-  poor_weather_days: { label: 'Poor-weather days', kind: 'count', betterWhen: 'lower' },
+  min_flight_usd: { kind: 'usd', betterWhen: 'lower' },
+  min_hotel_nightly_usd: { kind: 'usd', betterWhen: 'lower' },
+  itinerary_total_usd: { kind: 'usd', betterWhen: 'lower' },
+  poor_weather_days: { kind: 'count', betterWhen: 'lower' },
 }
 
 export function diffMetrics(before, after) {
@@ -130,7 +132,7 @@ export function diffMetrics(before, after) {
     const delta = a - b
     rows.push({
       key,
-      label: meta.label,
+      label: tt(`remix.metric.${key}`),
       kind: meta.kind,
       before: b,
       after: a,
@@ -144,6 +146,6 @@ export function diffMetrics(before, after) {
 
 export function formatMetricValue(value, kind) {
   if (value == null) return '—'
-  if (kind === 'usd') return `$${Math.round(value).toLocaleString()}`
-  return String(value)
+  if (kind === 'usd') return fmtNumber(Math.round(value), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+  return fmtNumber(value)
 }

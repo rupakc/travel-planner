@@ -1,7 +1,7 @@
 import logging
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import ToolAgent, _URLSearchMixin
+from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class SimAgent(ToolAgent, _URLSearchMixin):
                 "cities for any country-specific SIM."
             )
         self._destination = request.destination
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))
 
     async def _enrich_urls(self, data: dict) -> dict:
         items = data.get("results", data.get("plans", []))

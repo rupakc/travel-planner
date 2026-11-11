@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BellPlus, BellRing } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOptionalAuth } from '../../context/AuthContext'
 import { useAlerts, usePriceWatchFor } from '../../context/AlertsContext'
 import { computePlanCost } from '../../utils/planHelpers'
-import { formatDateRange } from '../../utils/fareWatch'
+import { formatDateRange as rangeLabel } from '../../utils/fareWatch'
 import { priceWatchLink } from '../../utils/priceWatch'
-import { isWatchablePlan, tripPreviewParts, tripWatchingLabel } from '../../utils/tripWatch'
+import { isWatchablePlan, tripPreviewParts, tripWatchingLabel as watchingLabel } from '../../utils/tripWatch'
 import { useAirportCities } from '../../hooks/useAirportCities'
 import PriceWatchDialog from './PriceWatchDialog'
 
@@ -37,17 +38,20 @@ const STYLES = {
  * (the My Plan drawer) says the watch prices the saved plan.
  */
 export default function WatchTripButton({ plan, showHint = false, variant = 'inline', className = '', ...rest }) {
+  const { t } = useTranslation('alerts')
   const { token } = useOptionalAuth()
   const { caps } = useAlerts()
   if (!token || !caps.fareWatch) return null
   if (!plan?.id) {
-    return showHint ? <p className={`${STYLES[variant].hint} ${className}`}>Save your plan to watch its price</p> : null
+    return showHint ? <p className={`${STYLES[variant].hint} ${className}`}>{t('btn.saveToWatch')}</p> : null
   }
   if (!isWatchablePlan(plan)) return null
   return <div className={className}><ActiveTripButton plan={plan} variant={variant} {...rest} /></div>
 }
 
-function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch whole trip', savedNote = false }) {
+function ActiveTripButton({ plan, variant, source = 'saved_plan', label: labelProp = null, savedNote = false }) {
+  const { t } = useTranslation('alerts')
+  const label = labelProp || t('btn.watchWhole')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const spec = useMemo(() => ({ plan_id: plan.id }), [plan.id])
@@ -60,7 +64,7 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
 
   const preview = {
     title: plan.name,
-    subtitle: [name ? name(city) : city, sd.departure_date && formatDateRange(sd.departure_date, sd.return_date)]
+    subtitle: [name ? name(city) : city, sd.departure_date && rangeLabel(sd.departure_date, sd.return_date)]
       .filter(Boolean).join(' · '),
     parts: tripPreviewParts(plan.selections, sd),
     planTotal: computePlanCost(plan.selections, sd) || null,
@@ -77,14 +81,14 @@ function ActiveTripButton({ plan, variant, source = 'saved_plan', label = 'Watch
 
   return (
     <>
-      <button type="button" onClick={onClick} className={watching ? style.on : style.idle}
-        aria-label={watching ? `${tripWatchingLabel(watch)} — open your alerts` : undefined}
-        title={watching ? 'Open this watch on your Alerts page' : 'Get told when this trip’s total price drops'}>
+      <button type="button" data-tid="alerts.watch-trip" onClick={onClick} className={watching ? style.on : style.idle}
+        aria-label={watching ? t('btn.openAria', { label: watchingLabel(watch) }) : undefined}
+        title={watching ? t('btn.openWatch') : t('btn.tripTitle')}>
         {watching ? <BellRing size={style.size} aria-hidden="true" /> : <BellPlus size={style.size} aria-hidden="true" />}
-        <span className="tabular-nums">{watching ? tripWatchingLabel(watch) : label}</span>
+        <span className="tabular-nums">{watching ? watchingLabel(watch) : label}</span>
       </button>
       {savedNote && !watching && (
-        <p className={`mt-0.5 ${style.hint}`}>Watches your saved plan — save any changes first.</p>
+        <p className={`mt-0.5 ${style.hint}`}>{t('btn.savedNote')}</p>
       )}
       {open && (
         <PriceWatchDialog kind="trip" spec={spec} preview={preview} source={source}

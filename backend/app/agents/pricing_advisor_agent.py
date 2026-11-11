@@ -1,7 +1,7 @@
 from datetime import date
 
 from ..schemas.request import TravelSearchRequest
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
 
@@ -32,4 +32,4 @@ class PricingAdvisorAgent(BaseAgent):
             f"{price_context}"
             "Provide flight booking timing advice based on historical pricing patterns for this route."
         )
-        return await self.execute(prompt)
+        return await self.execute(prompt, **locale_kw(request))

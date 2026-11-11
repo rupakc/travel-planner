@@ -1,12 +1,23 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
+
+// Telemetry app_version: VITE_APP_VERSION when the build sets it, else
+// <package.json version>+<build date YYYYMMDD>.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+const appVersion = process.env.VITE_APP_VERSION || `${pkg.version}+${buildDate}`
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+  },
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/test/setup.js'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

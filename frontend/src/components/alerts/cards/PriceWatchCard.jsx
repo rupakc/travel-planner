@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ExternalLink, Loader2, Pause, Pencil, Play, RefreshCw, Trash2 } from 'lucide-react'
-import { relativeTime, untilTime, watchStatus } from '../../../utils/fareWatch'
+import { useTranslation } from 'react-i18next'
+import { relativeTime as agoLabel, untilTime as untilLabel, watchStatus } from '../../../utils/fareWatch'
 import {
   checkPriceTarget, currencyLabel, currencySymbol, formatPrice, isUnavailable, priceWatchChange, watchDomId,
 } from '../../../utils/priceWatch'
@@ -16,6 +17,7 @@ const CHIP = {
 const quiet = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500'
 
 function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
+  const { t } = useTranslation('alerts')
   const [mode, setMode] = useState(watch.alert_mode)
   // The exact target ("9.5", not "10"): saving other settings never moves it
   const initialTarget = watch.target_price != null ? String(watch.target_price) : ''
@@ -35,33 +37,33 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
     setSaving(false)
   }
   return (
-    <form onSubmit={save} className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4" aria-label="Edit alert settings">
+    <form onSubmit={save} className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4" aria-label={t('edit.aria')}>
       <fieldset className="space-y-1.5">
-        <legend className="mb-1 text-xs font-medium text-slate-600">Tell me</legend>
+        <legend className="mb-1 text-xs font-medium text-slate-600">{t('edit.tellMe')}</legend>
         <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="radio" name={`pmode-${watch.id}`} checked={mode === 'any_drop'} onChange={() => setMode('any_drop')} className="accent-sky-600" />
-          When the price drops
+          <input type="radio" data-tid="alerts.edit-any-drop" name={`pmode-${watch.id}`} checked={mode === 'any_drop'} onChange={() => setMode('any_drop')} className="accent-sky-600" />
+          {t('edit.whenDrops')}
         </label>
         <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
-          <input type="radio" name={`pmode-${watch.id}`} checked={mode === 'below_target'} onChange={() => setMode('below_target')} className="accent-sky-600" />
-          When it’s below {currencySymbol(watch.currency)}
-          <input type="text" inputMode="numeric" value={target} onChange={e => { setTarget(e.target.value); setMode('below_target') }}
-            aria-label={`Target price in ${currencyLabel(watch.currency)}`} aria-invalid={!!check.error}
+          <input type="radio" data-tid="alerts.edit-below-target" name={`pmode-${watch.id}`} checked={mode === 'below_target'} onChange={() => setMode('below_target')} className="accent-sky-600" />
+          {t('edit.belowSymbol', { symbol: currencySymbol(watch.currency) })}
+          <input type="text" data-tid="alerts.edit-target" inputMode="numeric" value={target} onChange={e => { setTarget(e.target.value); setMode('below_target') }}
+            aria-label={t('edit.target', { currency: currencyLabel(watch.currency) })} aria-invalid={!!check.error}
             className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm tabular-nums focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200" />
         </label>
         {check.error && <p className="text-xs text-red-600">{check.error}</p>}
       </fieldset>
       {emailAvailable && (
         <label className={`flex items-center gap-2 text-sm ${hasEmail ? 'text-slate-700' : 'text-slate-400'}`}>
-          <input type="checkbox" checked={email && hasEmail} disabled={!hasEmail} onChange={e => setEmail(e.target.checked)} className="accent-sky-600" />
-          Also email me{!hasEmail && ' (add an email in Preferences)'}
+          <input type="checkbox" data-tid="alerts.edit-email" checked={email && hasEmail} disabled={!hasEmail} onChange={e => setEmail(e.target.checked)} className="accent-sky-600" />
+          {t('edit.alsoEmail')}{!hasEmail && ` ${t('edit.noEmailHint')}`}
         </label>
       )}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className={quiet}>Cancel</button>
-        <button type="submit" disabled={saving || !!check.error}
+        <button type="button" data-tid="alerts.edit-cancel" onClick={onCancel} className={quiet}>{t('ui.cancel')}</button>
+        <button type="submit" data-tid="alerts.edit-save" disabled={saving || !!check.error}
           className="inline-flex items-center gap-1.5 rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-60">
-          {saving && <Loader2 size={12} className="animate-spin" />} Save
+          {saving && <Loader2 size={12} className="animate-spin" />} {t('ui.save')}
         </button>
       </div>
     </form>
@@ -82,9 +84,12 @@ function EditPanel({ watch, emailAvailable, hasEmail, onSave, onCancel }) {
 export default function PriceWatchCard({
   watch, highlighted = false, busy = null, message = null, emailAvailable = false, hasEmail = false,
   onCheck, onUpdate, onDelete, onLiveCheck = null, onOpen, now = new Date(), Details = null,
-  openLabel = 'Open listing', unitLabel = 'per unit',
-  unavailableText = 'Not available for your dates right now. We’ll keep checking and won’t alert you until it’s back.',
+  openLabel: openLabelProp = null, unitLabel: unitLabelProp = null, unavailableText: unavailableProp = null,
 }) {
+  const { t } = useTranslation('alerts')
+  const openLabel = openLabelProp || t('card.openListing')
+  const unitLabel = unitLabelProp || t('unit.unit')
+  const unavailableText = unavailableProp || t('card.unavailable')
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const live = useLiveCheck(onLiveCheck)
@@ -110,8 +115,8 @@ export default function PriceWatchCard({
           </div>
           {watch.subtitle && <p className="mt-0.5 text-sm text-slate-500">{watch.subtitle}</p>}
           <p className="mt-0.5 text-xs text-slate-400">
-            {target != null ? `Alerts when it’s ${money(target)} or less` : 'Alerts on meaningful drops'}
-            {watch.email_enabled ? ' · also by email' : ''}
+            {target != null ? t('card.alertsTarget', { price: money(target) }) : t('card.alertsDrops')}
+            {watch.email_enabled ? ` · ${t('card.alsoEmail')}` : ''}
           </p>
         </div>
         <div className="sm:text-right">
@@ -125,7 +130,7 @@ export default function PriceWatchCard({
               {change?.direction === 'same' && <p className="mt-1 text-xs text-slate-500">{change.text}</p>}
             </>
           ) : (
-            <p className="text-sm text-slate-500">No price yet</p>
+            <p className="text-sm text-slate-500">{t('card.noPriceYet')}</p>
           )}
         </div>
       </div>
@@ -142,19 +147,19 @@ export default function PriceWatchCard({
         <Sparkline history={watch.history} target={target} format={money} />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
           {watch.lowest_price != null && (
-            <span>Lowest seen <strong className="font-semibold tabular-nums text-slate-700">{money(watch.lowest_price)}</strong></span>
+            <span>{t('card.lowestSeen')} <strong className="font-semibold tabular-nums text-slate-700">{money(watch.lowest_price)}</strong></span>
           )}
-          {watch.last_checked_at && <span>Checked {relativeTime(watch.last_checked_at, now)}</span>}
-          {watch.status === 'active' && watch.next_check_at && <span>Next check {untilTime(watch.next_check_at, now)}</span>}
+          {watch.last_checked_at && <span>{t('card.checked', { when: agoLabel(watch.last_checked_at, now) })}</span>}
+          {watch.status === 'active' && watch.next_check_at && <span>{t('card.nextCheck', { when: untilLabel(watch.next_check_at, now) })}</span>}
         </div>
       </div>
 
       {watch.status === 'error' && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <span>{watch.problem ? `${watch.problem} ` : ''}Checks are on hold.</span>
-          <button type="button" onClick={() => onUpdate({ status: 'active' })} disabled={busy === 'status'}
+          <span>{watch.problem ? `${watch.problem} ` : ''}{t('card.errorPrice')}</span>
+          <button type="button" data-tid="alerts.retry" onClick={() => onUpdate({ status: 'active' })} disabled={busy === 'status'}
             className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">
-            {busy === 'status' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Retry
+            {busy === 'status' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} {t('ui.retry')}
           </button>
         </div>
       )}
@@ -177,43 +182,43 @@ export default function PriceWatchCard({
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
         {!past && link && (
-          <a href={link} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={quiet}>
+          <a href={link} data-tid="alerts.open-listing" target="_blank" rel="noopener noreferrer" onClick={onOpen} className={quiet}>
             <ExternalLink size={12} /> {openLabel}
           </a>
         )}
         <span className="ml-auto flex flex-wrap items-center gap-1">
           {!past && onLiveCheck && <LiveCheckButton live={live} buttonRef={liveButton} />}
           {!past && watch.status !== 'error' && (
-            <button type="button" onClick={onCheck} disabled={busy === 'check'} className={quiet}>
+            <button type="button" data-tid="alerts.check-now" onClick={onCheck} disabled={busy === 'check'} className={quiet}>
               {busy === 'check' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-              {busy === 'check' ? 'Checking…' : 'Check now'}
+              {busy === 'check' ? t('ui.checking') : t('ui.checkNow')}
             </button>
           )}
           {watch.status === 'active' && (
-            <button type="button" onClick={() => onUpdate({ status: 'paused' })} disabled={busy === 'status'} className={quiet}>
-              <Pause size={12} /> Pause
+            <button type="button" data-tid="alerts.pause" onClick={() => onUpdate({ status: 'paused' })} disabled={busy === 'status'} className={quiet}>
+              <Pause size={12} /> {t('ui.pause')}
             </button>
           )}
           {watch.status === 'paused' && (
-            <button type="button" onClick={() => onUpdate({ status: 'active' })} disabled={busy === 'status'} className={quiet}>
-              <Play size={12} /> Resume
+            <button type="button" data-tid="alerts.resume" onClick={() => onUpdate({ status: 'active' })} disabled={busy === 'status'} className={quiet}>
+              <Play size={12} /> {t('ui.resume')}
             </button>
           )}
           {!past && !editing && (
-            <button type="button" onClick={() => setEditing(true)} className={quiet}><Pencil size={12} /> Edit</button>
+            <button type="button" data-tid="alerts.edit" onClick={() => setEditing(true)} className={quiet}><Pencil size={12} /> {t('ui.edit')}</button>
           )}
           {!confirmDelete ? (
-            <button type="button" onClick={() => setConfirmDelete(true)} className={quiet} aria-label={`Delete the ${watch.title} watch`}>
-              <Trash2 size={12} /> Delete
+            <button type="button" data-tid="alerts.delete" onClick={() => setConfirmDelete(true)} className={quiet} aria-label={t('card.deleteAria', { name: watch.title })}>
+              <Trash2 size={12} /> {t('ui.delete')}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 py-0.5 pl-3 pr-1 text-xs text-rose-800" role="group" aria-label="Confirm delete">
-              Stop watching?
-              <button type="button" onClick={onDelete} disabled={busy === 'delete'} autoFocus
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 py-0.5 pl-3 pr-1 text-xs text-rose-800" role="group" aria-label={t('card.confirmDelete')}>
+              {t('card.stopWatching')}
+              <button type="button" data-tid="alerts.delete-confirm" onClick={onDelete} disabled={busy === 'delete'} autoFocus
                 className="rounded-full bg-rose-600 px-2.5 py-1 font-semibold text-white hover:bg-rose-700">
-                {busy === 'delete' ? 'Deleting…' : 'Delete'}
+                {busy === 'delete' ? t('ui.deleting') : t('ui.delete')}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="rounded-full px-2 py-1 font-medium hover:bg-rose-100">Keep</button>
+              <button type="button" data-tid="alerts.delete-keep" onClick={() => setConfirmDelete(false)} className="rounded-full px-2 py-1 font-medium hover:bg-rose-100">{t('ui.keep')}</button>
             </span>
           )}
         </span>

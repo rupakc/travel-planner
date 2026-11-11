@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Route } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../context/AuthContext'
 import { useSearchData } from '../../../context/SearchDataContext'
 import { replanSearchData } from '../../../utils/fareWatch'
@@ -35,6 +36,7 @@ function BreakdownBar({ rows }) {
 }
 
 function TripDetails({ watch }) {
+  const { t } = useTranslation('alerts')
   const navigate = useNavigate()
   const { preferences } = useAuth()
   const { setPendingSearchData } = useSearchData()
@@ -53,7 +55,7 @@ function TripDetails({ watch }) {
     <>
       <BreakdownBar rows={rows} />
       {rows.length > 0 && (
-        <ul aria-label="Trip price breakdown" className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-100 text-sm">
+        <ul aria-label={t('trip.breakdown')} className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-100 text-sm">
           {rows.map(r => (
             <li key={r.id} className="flex items-center gap-2 px-3 py-1.5">
               <span className="min-w-0 flex-1 text-slate-700">
@@ -63,20 +65,20 @@ function TripDetails({ watch }) {
               <TripBadge row={r} />
               <span className="w-20 shrink-0 text-right tabular-nums text-slate-800">
                 {rowPrice(r)}
-                {r.in_total === false && <span className="block text-[10px] text-slate-400">not in total</span>}
+                {r.in_total === false && <span className="block text-[10px] text-slate-400">{t('trip.notInTotal')}</span>}
               </span>
             </li>
           ))}
         </ul>
       )}
       {rows.some(r => !r.live) && (
-        <p className="mt-1.5 text-[11px] text-slate-500">Estimates are fixed and never trigger alerts.</p>
+        <p className="mt-1.5 text-[11px] text-slate-500">{t('trip.estimatesNote')}</p>
       )}
       {changed && <p className="mt-2 text-xs text-slate-600">{changed}</p>}
       {!past && fare && (
-        <button type="button" onClick={replan}
+        <button type="button" data-tid="alerts.trip-replan" onClick={replan}
           className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500">
-          <Route size={13} aria-hidden="true" /> Re-plan this trip
+          <Route size={13} aria-hidden="true" /> {t('trip.replan')}
         </button>
       )}
     </>
@@ -85,5 +87,6 @@ function TripDetails({ watch }) {
 
 /** A watched whole trip: the shared card plus its breakdown, badges and "what changed". */
 export default function TripWatchCard(props) {
-  return <PriceWatchCard {...props} Details={TripDetails} openLabel="Open" />
+  const { t } = useTranslation('alerts')
+  return <PriceWatchCard {...props} Details={TripDetails} openLabel={t('trip.open')} />
 }

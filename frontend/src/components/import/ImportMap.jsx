@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { useTranslation } from 'react-i18next'
 import { kindOf } from './kinds'
 
 // The preview map: one numbered pin per selected place, coloured by kind.
@@ -26,12 +27,12 @@ function FitBounds({ points }) {
   return null
 }
 
-function pinIcon(number, kind, approximate, delayMs) {
+export function pinIcon(number, kind, approximate, delayMs) {
   const color = kindOf(kind).color
   const drop = delayMs == null ? '' : `class="import-pin" style="animation-delay:${delayMs}ms;`
   const style = approximate
-    ? `background:#fff;color:${color};border:2.5px solid ${color}`
-    : `background:${color};color:#fff;border:2px solid #fff`
+    ? `background:rgb(var(--c-white));color:${color};border:2.5px solid ${color}`
+    : `background:${color};color:rgb(var(--c-white));border:2px solid rgb(var(--c-white))`
   return L.divIcon({
     html: `<div ${drop || 'style="'}${style};width:24px;height:24px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font:700 11px/1 Inter,system-ui,sans-serif;
@@ -70,6 +71,7 @@ export function spreadPins(places) {
 }
 
 export default function ImportMap({ places }) {
+  const { t } = useTranslation('search')
   // Pins drop in once, when the preview first appears; later edits (ticking,
   // renaming) reuse the same icons so nothing jumps.
   const icons = useRef(new Map())
@@ -89,7 +91,7 @@ export default function ImportMap({ places }) {
   if (!pins.length) return null
   const points = pins.map((p) => [p.pinLat, p.pinLng])
   return (
-    <div className="h-64 overflow-hidden rounded-2xl ring-1 ring-gray-200 sm:h-80" role="region" aria-label="Map of the places found">
+    <div className="h-64 overflow-hidden rounded-2xl ring-1 ring-gray-200 sm:h-80" role="region" aria-label={t('map.aria')}>
       <MapContainer center={points[0]} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -101,7 +103,7 @@ export default function ImportMap({ places }) {
             alt={p.name} keyboard>
             <Tooltip>
               <strong>{p.name}</strong>
-              {p.approximate ? <><br /><span>Approximate location — somewhere in {p.city}</span></> : null}
+              {p.approximate ? <><br /><span>{t('map.approximate', { city: p.city })}</span></> : null}
             </Tooltip>
           </Marker>
         ))}

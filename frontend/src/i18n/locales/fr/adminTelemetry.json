@@ -1,0 +1,18 @@
+{
+  "tab": "Statistiques",
+  "usersToday": "Utilisateurs aujourd’hui",
+  "sessionsToday": "Sessions aujourd’hui",
+  "users7d": "Utilisateurs, 7 derniers jours",
+  "userDays7": "Jours-utilisateur (7 jours)",
+  "chartTitle": "Utilisateurs par jour, 30 derniers jours",
+  "chartSummary": "Diagramme à barres des utilisateurs par jour du {{from}} au {{to}}. Pic : {{max}} le {{peak}}.",
+  "topEvents": "Événements principaux",
+  "topScreens": "Écrans principaux",
+  "colEvent": "Événement",
+  "colEvents": "Événements",
+  "colScreen": "Écran",
+  "colViews": "Vues",
+  "empty": "Pas encore de données.",
+  "loading": "Chargement des statistiques…",
+  "error": "Impossible de charger les statistiques. Réessayez plus tard."
+}

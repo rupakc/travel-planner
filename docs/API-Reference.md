@@ -50,6 +50,9 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/feedback` | user | Submit feedback |
 | GET | `/api/admin/feedback` | admin | List feedback (filters `page`, `category`, `min_rating`) |
 | POST | `/api/analytics/events` | user | Batch of up to 50 UI events, logged as JSON; `204` |
+| POST | `/api/telemetry` | optional | Batch of up to 100 product-telemetry events; `204`, `404` when disabled |
+| GET | `/api/config` | public | Client config: `public_base_url`, telemetry settings, feature flags |
+| GET | `/api/admin/telemetry/summary` | admin | Daily users/sessions/events, top events and screens (`days` 1–90) |
 | POST | `/api/search` | optional | SSE streaming search (all agents) |
 | POST | `/api/search/sync` | optional | Same run, one JSON response (testing) |
 | POST | `/api/discover` | optional | 5 destination suggestions |
@@ -177,9 +180,12 @@ The main endpoint. It streams results as Server-Sent Events. **Auth:** optional.
   "destinations": null,
   "destination_nights": null,
   "pace": "balanced",
-  "serendipity": 0.5
+  "serendipity": 0.5,
+  "locale": "de"
 }
 ```
+
+`locale` is optional: one of `en`, `es`, `de`, `fr`, `hi`, `zh`, `bn` (anything else is a `422`). When it is not English, every model call for the request is told to write its human-readable text in that language (JSON keys, enum values, codes, URLs, prices, currency codes, dates and place names stay as in English), and the response cache keeps a separate entry per language. Absent or `en` behaves exactly as before. The static Phase 0 data (visa, SIM, tips, getting around, forex, emergency card) stays English until the AI result replaces it. The same field is accepted by `POST /api/chat`, `/api/discover`, `/api/compare/destination` and the single-agent and `/filtered` routes. The web app sends the UI language.
 
 Two optional fields carry a trip imported with `POST /api/import/extract`:
 
@@ -381,9 +387,12 @@ Any piece that failed or timed out is `null` and its name is listed in `missing`
   "messages": [{ "role": "user", "content": "Plan a 5-day trip to Bangkok for two people" }],
   "selections": {},
   "search_results": {},
-  "session_context": {}
+  "session_context": {},
+  "locale": "de"
 }
 ```
+
+`locale` is optional (see [POST /api/search](#post-apisearch)): replies, narrative, suggestion chips and the itinerary text come back in that language.
 
 Event types: `delta` (text), `done`, `error`, `suggestions`, `session_context_update`, `plan_action`, `planning_start`, `trip_map`, `itinerary_generating`, `comprehensive_itinerary`, `planning_done`, `agent_status` and `section_result`. A planning request streams `planning_start → trip_map → itinerary_generating → comprehensive_itinerary → planning_done`; `section_result` appears only in the specialist fallback and refinement paths. An exception still ends the stream with a fallback `delta`, `error` and `done`. When the monthly AI spend cap has tripped, the reply is a `delta` "AI limit reached for this month — try again on the 1st." and `done` (no `error`). See [Chat Assistant](Chat-Assistant.md).
 
@@ -451,6 +460,18 @@ The caller's preferences: `budget_category`, `nationality`, `current_residence`,
 ### POST /api/analytics/events
 
 Up to 50 batched UI events per call, written to the log as JSON. Returns `204`.
+
+### POST /api/telemetry
+
+Body `{"client": {anon_id, session_id, platform, app_version, locale}, "events": [{event, ts, screen, props}]}`. Auth is optional (a signed-in caller's user id is stored). Each event and prop is checked against a closed registry; unknown events, unknown props and values that are not short tokens, numbers, booleans or listed enums are dropped silently, so a well-formed batch always returns `204`. `422` for a malformed envelope or more than 100 events; `413` when the body exceeds 64 KB (or 256 KB once gunzipped; `Content-Encoding: gzip` is accepted); `404` when `TELEMETRY_ENABLED=false`. Own rate bucket `telemetry` (600 per 10 minutes); never behind `ALLOW_ANONYMOUS_AI`.
+
+### GET /api/config
+
+Public, `Cache-Control: max-age=300`. Returns `{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry"}}`. Clients treat a `404` as "telemetry off".
+
+### GET /api/admin/telemetry/summary?days=30
+
+Admin only. Returns `{"days": [{day, users, sessions, events}], "top_events": [{event, events}], "top_screens": [{route, views}], "users_7d"}` from the daily rollups plus today's live numbers. `users` (signed-in user, else anonymous id) and `sessions` are exact distinct counts across all events and platforms, read from `telemetry_daily_totals`. `users_7d` is the distinct users over the trailing 7 UTC days, today included, counted from raw events. Rolled-up days are re-rolled for the trailing 7 days, so late events from offline clients are included.
 
 ---
 

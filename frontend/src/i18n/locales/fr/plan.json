@@ -1,0 +1,211 @@
+{
+  "modal": {
+    "namePlaceholder": "Nom du plan…",
+    "close": "Fermer",
+    "empty": "Ce plan n’a pas encore de sélections enregistrées.",
+    "trip_one": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageur",
+    "trip_many": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageurs",
+    "trip_other": "{{origin}} → {{destination}} · {{dates}} · {{count}} voyageurs",
+    "watchFare": "Surveiller ce tarif",
+    "delete": "Supprimer",
+    "share": "Partager",
+    "shareTitle": "Copiez un lien public : tout le monde peut voir cette fiche de voyage, sans connexion",
+    "save": "Enregistrer",
+    "confirmDelete": "Supprimer « {{name}} » ?",
+    "msg": {
+      "saved": "Enregistré ✓",
+      "saveFailed": "Échec de l’enregistrement",
+      "shared": "Lien copié ✓",
+      "shareFailed": "Échec du partage"
+    },
+    "section": {
+      "flight": "Vol",
+      "flights_one": "Vols ({{count}} tronçon)",
+      "flights_many": "Vols ({{count}} tronçons)",
+      "flights_other": "Vols ({{count}} tronçons)",
+      "hotel": "Hôtel",
+      "activities": "Activités ({{count}})",
+      "sim": "Carte SIM",
+      "gettingAround": "Se déplacer ({{count}})",
+      "tips": "Conseils ({{count}})",
+      "events": "Événements ({{count}})",
+      "walkingTours": "Visites à pied ({{count}})",
+      "itinerarySlots": "Créneaux de l’itinéraire ({{count}})",
+      "fullItinerary_one": "Itinéraire complet ({{count}} jour)",
+      "fullItinerary_many": "Itinéraire complet ({{count}} jours)",
+      "fullItinerary_other": "Itinéraire complet ({{count}} jours)"
+    },
+    "flight": {
+      "outbound": "Aller :",
+      "return": "Retour :",
+      "leg": "Tronçon {{n}} :",
+      "roundTrip": "{{price}} aller-retour",
+      "oneWay": "{{price}} aller simple",
+      "bookThis": "Réserver ce vol"
+    },
+    "book": "Réserver",
+    "hotel": {
+      "perNight": "{{price}}/nuit",
+      "perNightTotal": "{{price}}/nuit · {{total}} au total",
+      "viewBook": "Voir et réserver"
+    },
+    "activity": {
+      "hours": "{{hours}} h"
+    },
+    "sim": {
+      "data": "{{gb}} Go",
+      "days_one": "{{count}} jour",
+      "days_many": "{{count}} jours",
+      "days_other": "{{count}} jours",
+      "getPlan": "Choisir ce forfait"
+    },
+    "moreInfo": "Plus d’infos",
+    "source": "Source",
+    "day": "Jour {{n}}",
+    "timeOfDay": {
+      "morning": "matin",
+      "afternoon": "après-midi",
+      "evening": "soir"
+    }
+  },
+  "export": {
+    "calendar": "Ajouter au calendrier",
+    "calendarTitle": "Téléchargez un fichier .ics pour Google Agenda, Apple Calendrier ou Outlook",
+    "print": "Imprimer / PDF",
+    "printTitle": "Ouvrez une version imprimable à imprimer ou enregistrer en PDF",
+    "popupBlocked": "Votre navigateur a bloqué le nouvel onglet : autorisez les pop-ups pour ce site et réessayez."
+  },
+  "cost": {
+    "heading": "Où va l’argent",
+    "cat": {
+      "flights": "Vols",
+      "hotel": "Hôtel",
+      "activities": "Activités",
+      "sim": "SIM / eSIM"
+    },
+    "transportNote": "Le transport local n’est pas inclus : les tarifs varient selon le voyage.",
+    "total": "Total",
+    "budget": "Budget : {{amount}}"
+  },
+  "budget": {
+    "title": "Planificateur de budget",
+    "subtitle": "Répartissez votre budget et voyez ce qui convient",
+    "total": "Budget total",
+    "perPerson": "par personne",
+    "reset": "Réinitialiser",
+    "resetDone": "Répartition du budget réinitialisée aux parts suggérées",
+    "totalSet": "Budget total {{amount}}",
+    "cheaper": "Trouver des hôtels moins chers",
+    "findingCheaper": "Recherche d’hôtels moins chers…",
+    "else": "Tout le reste",
+    "elseHint": "repas, transport, extras",
+    "onlyFits": "Afficher seulement ce qui convient",
+    "cat": {
+      "flights": "Vols",
+      "stay": "Hébergement",
+      "activities": "Activités"
+    },
+    "noun": {
+      "flights": "vols",
+      "stay": "hébergement",
+      "activities": "activités"
+    },
+    "announceName": {
+      "flights": "Vol",
+      "stay": "Hébergement",
+      "activities": "Activités"
+    },
+    "announce": "Budget {{name}} {{amount}} — {{detail}}",
+    "valueText": "{{amount}} pour {{noun}}",
+    "fit": {
+      "flights_one": "{{fits}} vol sur {{count}} convient",
+      "flights_many": "{{fits}} vols sur {{count}} conviennent",
+      "flights_other": "{{fits}} vols sur {{count}} conviennent",
+      "hotels_one": "{{fits}} hôtel sur {{count}} convient",
+      "hotels_many": "{{fits}} hôtels sur {{count}} conviennent",
+      "hotels_other": "{{fits}} hôtels sur {{count}} conviennent",
+      "activities_one": "Couvre {{count}} activité ({{spent}})",
+      "activities_many": "Couvre {{count}} activités ({{spent}})",
+      "activities_other": "Couvre {{count}} activités ({{spent}})"
+    }
+  },
+  "best": {
+    "title": "Forfait meilleur rapport qualité-prix",
+    "subtitle": "Notre sélection au meilleur rapport qualité-prix parmi vos résultats",
+    "total": "Total du forfait",
+    "myPlanTotal": "Total de Mon plan : {{amount}}",
+    "perPerson": "Les prix des vols sont par personne",
+    "add": "Tout ajouter à Mon plan",
+    "added": "Ajouté à Mon plan",
+    "undo": "Annuler",
+    "replaces": "Remplace votre sélection actuelle : {{items}}.",
+    "listAnd": "{{head}} et {{last}}",
+    "listSep": ", ",
+    "free": "Gratuit",
+    "perNight": "{{price}}/nuit",
+    "flight": "Vol",
+    "simPlan": "Forfait SIM",
+    "conflict": {
+      "flight": "vol",
+      "hotel": "hôtel",
+      "sim": "SIM"
+    },
+    "reason": {
+      "cheapestFare": "Tarif le moins cher",
+      "fewerStops": "Moins d’escales pour {{amount}} de plus que le tarif le moins cher",
+      "saves": "Fait gagner {{time}} de trajet pour {{amount}} de plus que le tarif le moins cher",
+      "midRange": "Milieu de gamme (3★), le mieux noté de sa catégorie",
+      "starsBest": "{{stars}}★, le mieux noté de sa catégorie",
+      "bestReviewed": "Le mieux noté de sa catégorie",
+      "typicalPrice": "{{price}} · au prix habituel ou moins ici",
+      "matches": "{{base}} · correspond à vos centres d’intérêt",
+      "freeTour": "Visite à pied gratuite",
+      "freeEntry": "Entrée gratuite",
+      "coversTrip": "Couvre votre voyage de {{days}} jours",
+      "cheapestPlan": "Forfait le moins cher",
+      "cheaperStay": "Hébergement moins cher pour respecter votre budget"
+    }
+  },
+  "print": {
+    "defaultName": "Plan de voyage",
+    "printButton": "Imprimer / Enregistrer en PDF",
+    "footer": "Planifié avec Voyager. Les prix et la disponibilité sont des estimations : confirmez avant de réserver.",
+    "inspiredBy": "Inspiré de {{source}}",
+    "travelers_one": "{{count}} voyageur",
+    "travelers_many": "{{count}} voyageurs",
+    "travelers_other": "{{count}} voyageurs",
+    "book": "Réserver",
+    "viewTour": "Voir la visite",
+    "getPlan": "Choisir ce forfait",
+    "hotelTotal": "{{price}} au total",
+    "fromLink": "Depuis votre lien",
+    "alsoFromLink": "Également depuis votre lien : {{names}}",
+    "section": {
+      "flights": "Vols",
+      "hotel": "Hôtel",
+      "itinerary": "Itinéraire",
+      "activities": "Activités",
+      "places": "Lieux à voir",
+      "walkingTours": "Visites à pied gratuites",
+      "events": "Événements",
+      "sim": "SIM / eSIM",
+      "gettingAround": "Se déplacer",
+      "tips": "Conseils"
+    }
+  },
+  "ics": {
+    "dayTheme": "Jour {{n}} : {{theme}}",
+    "fromLinkQuote": "Depuis votre lien : « {{quote}} »",
+    "estCost": "Coût est. : {{amount}}",
+    "arrives": "Arrivée à {{time}} heure locale",
+    "booking": "Réservation : {{url}}",
+    "price": "Prix : {{price}}",
+    "trip": "Voyage"
+  },
+  "util": {
+    "budgetUnder": "{{amount}} sous le budget",
+    "budgetOver": "{{amount}} au-dessus du budget",
+    "hours": "{{n}} h",
+    "minutes": "{{n}} min"
+  }
+}

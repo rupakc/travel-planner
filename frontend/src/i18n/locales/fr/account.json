@@ -1,0 +1,193 @@
+{
+  "login": {
+    "tagline": "Planifiez le voyage parfait",
+    "title": "Connectez-vous à votre compte",
+    "username": "Nom d’utilisateur",
+    "usernamePlaceholder": "Saisissez votre nom d’utilisateur",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Saisissez votre mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "failed": "Échec de la connexion. Veuillez réessayer."
+  },
+  "changePassword": {
+    "title": "Définissez votre mot de passe",
+    "welcome": "Bienvenue, <strong>{{username}}</strong> ! Définissez un nouveau mot de passe pour continuer.",
+    "temporary": "Mot de passe temporaire",
+    "new": "Nouveau mot de passe",
+    "newPlaceholder": "Au moins 8 caractères",
+    "confirm": "Confirmez le nouveau mot de passe",
+    "submit": "Valider et continuer",
+    "saving": "Enregistrement…",
+    "mismatch": "Les nouveaux mots de passe ne correspondent pas",
+    "tooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "failed": "Échec du changement de mot de passe",
+    "generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "prefs": {
+    "title": "Préférences de voyage",
+    "subtitle": "Définissez vos valeurs par défaut pour préremplir la recherche et obtenir des résultats personnalisés.",
+    "taste": {
+      "title": "Profil de goûts",
+      "reset": "Réinitialiser",
+      "heading": "Ce que nous avons appris sur vos goûts de voyage",
+      "built_one": "Établi à partir de {{count}} signal dans vos plans enregistrés.",
+      "built_many": "Établi à partir de {{count}} signaux dans vos plans enregistrés.",
+      "built_other": "Établi à partir de {{count}} signaux dans vos plans enregistrés.",
+      "personalised": "Les recherches effectuées une fois connecté sont personnalisées automatiquement avec ce profil.",
+      "empty": "Rien appris pour l’instant : enregistrez quelques plans et vos prochaines recherches seront personnalisées automatiquement.",
+      "confirmReset": "Réinitialiser votre profil de goûts ? Les prochaines recherches ne seront plus personnalisées d’après vos plans passés."
+    },
+    "signal": {
+      "activity_category": "Types d’activités préférés",
+      "event_category": "Types d’événements préférés",
+      "hotel_tier": "Style d’hôtel",
+      "flight_style": "Style de vol",
+      "interest": "Centres d’intérêt récurrents",
+      "destination": "Destinations prévues",
+      "pace": "Rythme du voyage"
+    },
+    "budget": {
+      "section": "Budget de voyage",
+      "category": "Catégorie de budget",
+      "low": {
+        "label": "Économique",
+        "desc": "Auberges, street food, transports en commun"
+      },
+      "medium": {
+        "label": "Milieu de gamme",
+        "desc": "Hôtels confortables, bons restaurants"
+      },
+      "high": {
+        "label": "Luxe",
+        "desc": "Hôtels haut de gamme, gastronomie, visites privées"
+      }
+    },
+    "interest": {
+      "food": "Gastronomie",
+      "history": "Histoire",
+      "adventure": "Aventure",
+      "culture": "Culture",
+      "nature": "Nature",
+      "shopping": "Shopping",
+      "nightlife": "Vie nocturne",
+      "wellness": "Bien-être",
+      "art": "Art",
+      "family": "Famille"
+    },
+    "identity": {
+      "section": "Identité",
+      "nationality": "Nationalité",
+      "nationalityPlaceholder": "Américaine, indienne, britannique…",
+      "residence": "Résidence actuelle",
+      "residencePlaceholder": "p. ex. Munich, Allemagne",
+      "residenceHint": "Utilisée comme ville de départ par défaut lors de la planification"
+    },
+    "documents": {
+      "section": "Documents",
+      "permits": "Titres de séjour",
+      "permitsPlaceholder": "Schengen, Royaume-Uni, EAU…",
+      "visas": "Visas existants",
+      "visasPlaceholder": "États-Unis, Japon, Canada…"
+    },
+    "style": {
+      "section": "Style de voyage",
+      "group": "Groupe de voyage par défaut",
+      "groupHint": "Adultes, enfants, seniors, bébés et besoins d’accessibilité : préremplis à chaque recherche",
+      "interests": "Centres d’intérêt"
+    },
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Préférences enregistrées !",
+    "errorWithDetail": "Erreur : {{detail}}",
+    "saveFailed": "Échec de l’enregistrement"
+  },
+  "admin": {
+    "title": "Espace administrateur",
+    "tabs": {
+      "users": "Utilisateurs",
+      "feedback": "Avis"
+    },
+    "users": {
+      "count_one": "{{count}} utilisateur",
+      "count_many": "{{count}} utilisateurs",
+      "count_other": "{{count}} utilisateurs",
+      "create": "+ Créer un utilisateur",
+      "newUser": "Nouvel utilisateur",
+      "usernameRequired": "Nom d’utilisateur *",
+      "emailOptional": "E-mail (facultatif)",
+      "tempPasswordRequired": "Mot de passe temporaire *",
+      "adminPrivileges": "Droits administrateur",
+      "createSubmit": "Créer",
+      "creating": "Création…",
+      "createFailed": "Échec de la création de l’utilisateur",
+      "resetOwnHint": "Réinitialiser votre propre mot de passe vous obligera à en définir un nouveau au prochain chargement de la page",
+      "resetOwn": "Réinit. le mien",
+      "reset": "Réinit. mdp",
+      "deactivate": "Désactiver",
+      "reactivate": "Réactiver"
+    },
+    "common": {
+      "cancel": "Annuler",
+      "loading": "Chargement…",
+      "wentWrong": "Une erreur est survenue",
+      "close": "Fermer"
+    },
+    "table": {
+      "username": "Nom d’utilisateur",
+      "email": "E-mail",
+      "created": "Créé le",
+      "role": "Rôle",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "role": {
+      "admin": "Admin",
+      "user": "Utilisateur"
+    },
+    "status": {
+      "pending": "En attente",
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "reset": {
+      "title": "Réinitialiser le mot de passe",
+      "intro": "Définition d’un nouveau mot de passe pour <name>{{username}}</name>. Il devra le modifier à la prochaine connexion.",
+      "selfWarning": "Vous réinitialisez votre propre mot de passe. Vous serez redirigé vers la page de changement de mot de passe au prochain chargement.",
+      "success": "Mot de passe réinitialisé pour {{username}}. Un nouveau mot de passe lui sera demandé à la prochaine connexion.",
+      "newPassword": "Nouveau mot de passe *",
+      "confirmPassword": "Confirmer le mot de passe *",
+      "minPlaceholder": "8 caractères min.",
+      "repeatPlaceholder": "Répétez le nouveau mot de passe",
+      "submit": "Réinitialiser",
+      "submitting": "Réinitialisation…",
+      "tooShort": "Le mot de passe doit contenir au moins 8 caractères",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "failed": "Échec de la réinitialisation du mot de passe"
+    },
+    "feedback": {
+      "page": "Page",
+      "category": "Catégorie",
+      "minRating": "Note min.",
+      "all": "Toutes",
+      "any": "Toutes",
+      "export": "Exporter en CSV",
+      "empty": "Aucun avis pour le moment.",
+      "pages": {
+        "search": "Recherche",
+        "results": "Résultats",
+        "chat": "Chat",
+        "preferences": "Préférences",
+        "admin": "Admin"
+      },
+      "categories": {
+        "bug": "bug",
+        "feature_request": "demande de fonctionnalité",
+        "general": "général",
+        "praise": "compliment"
+      }
+    }
+  }
+}

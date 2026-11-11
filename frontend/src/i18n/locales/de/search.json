@@ -1,0 +1,336 @@
+{
+  "interests": {
+    "food": "🍜 Essen",
+    "history": "🏛️ Geschichte",
+    "adventure": "🧗 Abenteuer",
+    "culture": "🎭 Kultur",
+    "nature": "🌿 Natur",
+    "shopping": "🛍️ Shopping",
+    "nightlife": "🌙 Nachtleben",
+    "wellness": "🧘 Wellness",
+    "art": "🎨 Kunst",
+    "family": "👨‍👩‍👧 Familie"
+  },
+  "interestNames": {
+    "food": "Essen",
+    "history": "Geschichte",
+    "adventure": "Abenteuer",
+    "culture": "Kultur",
+    "nature": "Natur",
+    "shopping": "Shopping",
+    "nightlife": "Nachtleben",
+    "wellness": "Wellness",
+    "art": "Kunst",
+    "family": "Familie"
+  },
+  "tour": {
+    "recent": {
+      "title": "Mach da weiter, wo du aufgehört hast",
+      "body": "Hier findest du deine letzten Suchen. Lade eine, um sie anzupassen, oder starte sie erneut."
+    },
+    "route": {
+      "title": "Wohin geht die Reise?",
+      "body": "Gib ein, von wo du abfliegst und wohin es geht. Füge Zwischenstopps für eine Reise durch mehrere Städte hinzu."
+    },
+    "interests": {
+      "title": "Sag uns, was du liebst",
+      "body": "Deine Interessen und der Entdeckerregler bestimmen jede Empfehlung – von berühmten Klassikern bis zu versteckten Perlen."
+    },
+    "preferences": {
+      "title": "Wir merken uns deine Angaben",
+      "body": "Staatsangehörigkeit, Visa, Reisende und Interessen, die du hier nutzt, werden in den Einstellungen gespeichert und beim nächsten Mal automatisch eingetragen."
+    },
+    "plan": {
+      "title": "Sieh zu, wie deine Reise entsteht",
+      "body": "Flüge, Hotels, Visum, Wetter und mehr treffen Abschnitt für Abschnitt ein – die ersten Ergebnisse erscheinen nach wenigen Sekunden."
+    },
+    "myPlan": {
+      "title": "Stell deinen Plan zusammen",
+      "body": "Füge Flüge, Hotels und Aktivitäten, die dir gefallen, zu Mein Plan hinzu, sieh, wohin das Geld geht, und übernimm alles in deinen Kalender oder speichere es als PDF. Der Chat beantwortet unterwegs jede Frage."
+    }
+  },
+  "hero": {
+    "badge": "KI-gestützte Reiseplanung",
+    "title": "Plane deine perfekte Reise",
+    "subtitle": "Flüge, Hotels, Aktivitäten, Visum, SIM & Reiseverlauf – alles an einem Ort.",
+    "tour": "Neu hier? Kurze Tour starten",
+    "importLead": "Eine tolle Reise im Netz gesehen?",
+    "importLink": "Link einfügen"
+  },
+  "drop": {
+    "title": "Zum Planen hier ablegen",
+    "body": "Wir finden jeden Ort in deinem Screenshot"
+  },
+  "modes": {
+    "known": "Ich weiß, wohin",
+    "discover": "Überrasch mich 🎲",
+    "compare": "Vergleichen ⚖️",
+    "import": "Aus einem Link ✨"
+  },
+  "import": {
+    "heading": "Mach aus jedem Reisebeitrag deine Reise",
+    "subheading": "Ein Blog, ein YouTube- oder TikTok-Video, die Nachricht eines Freundes oder ein Screenshot – wir finden jeden Ort und planen die Tage drumherum.",
+    "steps": {
+      "url": "Seite wird gelesen",
+      "text": "Dein Text wird gelesen",
+      "images": "Deine Screenshots werden gelesen",
+      "find": "Orte werden gesucht",
+      "map": "Orte kommen auf die Karte"
+    },
+    "typical": {
+      "url": "Meist 10–30 Sekunden",
+      "text": "Meist 5–10 Sekunden",
+      "images": "Meist 10–30 Sekunden"
+    },
+    "elapsed": " · bisher {{seconds}} s",
+    "cancel": "Abbrechen",
+    "escKey": "(Esc)",
+    "formAria": "Aus einem Link planen",
+    "pasteLabel": "Füge einen Link oder den Text selbst ein",
+    "placeholder": "Ein Reiseblog-, YouTube- oder TikTok-Link …\noder eine Bildunterschrift, die Nachricht eines Freundes, eine Liste von Orten",
+    "shotsNote_one": "Wir lesen deinen Screenshot – entferne ihn, um stattdessen Text zu nutzen",
+    "shotsNote_other": "Wir lesen deine {{count}} Screenshots – entferne sie, um stattdessen Text zu nutzen",
+    "detectedUrl": "Link – wir lesen die Seite",
+    "detectedText": "Text – wir erkennen die Orte darin",
+    "counter": "{{n}} / {{max}}",
+    "chooseAria": "Screenshots auswählen",
+    "removeShot": "{{name}} entfernen",
+    "addAnother": "Weiteren hinzufügen",
+    "dropLead": "Screenshots hierher ziehen oder",
+    "chooseFiles": "Dateien wählen",
+    "dropHint": "Bis zu {{max}} · Einfügen geht auch",
+    "screenshot": "Screenshot",
+    "thatScreenshot": "diesen Screenshot",
+    "thatScreenshotCap": "Dieser Screenshot",
+    "tooMany": "Maximal {{max}} Screenshots auf einmal – wir haben die ersten {{kept}} behalten.",
+    "tooBig": "{{name}} ist auch nach dem Verkleinern noch zu groß. Beschneide das Bild und versuche es erneut.",
+    "unreadable": "{{name}} konnte nicht gelesen werden – speichere die Datei erneut als PNG oder JPEG.",
+    "actions": {
+      "text": "Text einfügen",
+      "images": "Screenshot ablegen",
+      "retry": "Erneut versuchen"
+    },
+    "examples": "Probiere ein Beispiel:",
+    "find": "Orte finden",
+    "findInShots_one": "Orte in meinem Screenshot finden",
+    "findInShots_other": "Orte in {{count}} Screenshots finden",
+    "example": {
+      "lisbon": {
+        "label": "48 Stunden in Lissabon",
+        "text": "48 Stunden in Lissabon: Mittagessen im Time Out Market, Torre de Belém und Pastéis de Nata bei Pastéis de Belém, Stöbern in der LX Factory, Sonnenuntergang am Miradouro da Senhora do Monte, dann ein Tagesausflug zum Palácio da Pena in Sintra."
+      },
+      "tokyo": {
+        "label": "Tokio-Tipps von einem Freund",
+        "text": "Tokio-Highlights von meiner Reise!! Frühstück auf dem Tsukiji Outer Market, teamLab Planets (vorher buchen), Senso-ji im Morgengrauen vor dem Andrang, Drinks in Golden Gai und Shibuya Sky bei Sonnenuntergang. Wenn die Zeit reicht, Hakone für das Onsen."
+      },
+      "rome": {
+        "label": "Rom und Florenz",
+        "text": "Tag 1–2 Rom: Kolosseum, Abendessen in Trastevere, das Pantheon, Eis bei Giolitti. Tag 3–4 Florenz: die Uffizien, Aufstieg auf den Dom, Piazzale Michelangelo bei Sonnenuntergang und Mittagessen im Mercato Centrale."
+      }
+    },
+    "err": {
+      "network": "Wir konnten Voyager nicht erreichen. Prüfe deine Verbindung und versuche es erneut.",
+      "unknown": "Beim Lesen ist etwas schiefgelaufen. Versuche es gleich noch einmal.",
+      "tooLarge": "Dieser Upload ist zu groß – nutze bis zu 4 Screenshots mit höchstens 5 MB."
+    },
+    "file": {
+      "heic": "iPhone-HEIC-Fotos können noch nicht gelesen werden – mache stattdessen einen Screenshot (Screenshots sind PNG) oder exportiere als JPEG.",
+      "notImage": "{{name}} ist kein Bild, das wir lesen können. Nutze PNG, JPEG oder WebP.",
+      "thatFile": "Diese Datei",
+      "thatImage": "Dieses Bild",
+      "tooBigSource": "{{name}} ist zu groß, um hier gelesen zu werden (über 40 MB). Beschneide das Bild oder speichere es kleiner.",
+      "over5": "{{name}} ist größer als 5 MB. Beschneide das Bild oder speichere es als kleineres PNG oder JPEG."
+    }
+  },
+  "form": {
+    "from": "Von",
+    "to": "Nach",
+    "flyingFrom": "Abflug von",
+    "departure": "Hinflug",
+    "return": "Rückflug",
+    "nationality": "Staatsangehörigkeit",
+    "budget": "Budget (USD)",
+    "budgetOptional": "Budget (USD, optional)",
+    "travelers": "Reisende",
+    "cityOrAirport": "Stadt oder Flughafen…",
+    "nationalityPlaceholder": "Deutsch, Indisch…",
+    "optional": "Optional",
+    "totalBudget": "Gesamtbudget der Reise",
+    "permits": "🏠 Aufenthaltstitel (falls vorhanden)",
+    "permitsPlaceholder": "Schengen, UK, VAE…",
+    "visas": "📋 Vorhandene Visa (falls vorhanden)",
+    "visasPlaceholder": "USA, Japan, Kanada…",
+    "interests": "✨ Interessen",
+    "interestsDiscover": "✨ Worauf stehst du?",
+    "plan": "Reise planen"
+  },
+  "recent": {
+    "loaded": "{{route}} geladen. Ändere, was du magst, und plane dann.",
+    "loadedShifted": "{{route}} geladen. Die Daten lagen in der Vergangenheit, deshalb beginnt die Reise jetzt nächste Woche mit gleicher Dauer – prüfe sie und plane dann.",
+    "dismiss": "Schließen",
+    "title": "Letzte Suchen",
+    "loadTitle": "In das Formular laden, um vor der Suche etwas zu ändern",
+    "datesPassed": "Daten vorbei",
+    "searchAgain": "Erneut suchen",
+    "rerunTitle": "Genau diese Suche wiederholen",
+    "rerunPassedTitle": "Diese Daten liegen in der Vergangenheit – lade die Suche und wähle neue Daten",
+    "removeAria": "Letzte Suche {{route}} entfernen"
+  },
+  "stops": {
+    "label": "Stopp {{n}} – unterwegs",
+    "placeholder": "Stopover-Stadt…",
+    "nights": "Nächte",
+    "optional": "(opt.)",
+    "auto": "auto",
+    "remove": "Diesen Stopp entfernen",
+    "add": "Zwischenstopp hinzufügen (mehrere Städte)",
+    "originFallback": "Start",
+    "stopsFallback": "Stopps",
+    "destinationFallback": "dein Ziel",
+    "route": "Deine Route: {{origin}} → {{stops}} → <b>{{destination}}</b>.",
+    "routeNote": "Stopps liegen auf dem Weg; die „Nach“-Stadt ist dein Endziel. Leere Nächte werden automatisch verteilt."
+  },
+  "dial": {
+    "label": "🎯 Entdeckerstil",
+    "classics": "🏛️ Berühmte Klassiker",
+    "gems": "💎 Versteckte Perlen",
+    "balanced": "⚖️ Ausgewogener Mix",
+    "aria": "Entdeckerregler: von Klassikern bis versteckten Perlen",
+    "iconic": "Ikonische Must-sees",
+    "offBeaten": "Abseits der Touristenpfade"
+  },
+  "discover": {
+    "finding": "Suche Reiseziele…",
+    "find": "Mein perfektes Reiseziel finden",
+    "picks": "Deine persönlichen Tipps ✨",
+    "none": "Keine Reiseziele gefunden – probiere andere Interessen oder ein höheres Budget.",
+    "failed": "Entdecken fehlgeschlagen – bitte versuche es erneut",
+    "visaFree": "✓ Visumfrei",
+    "visaOnArrival": "Visum bei Ankunft",
+    "eVisa": "e-Visum",
+    "visaRequired": "Visum erforderlich",
+    "visaVerify": "Visum prüfen",
+    "costRange": "~{{low}}–{{high}} $",
+    "roughEstimate": "grobe Schätzung",
+    "planThisTrip": "Diese Reise planen →"
+  },
+  "compare": {
+    "intro": "Vergleiche zwei oder drei Reiseziele nebeneinander – Kosten, Flüge, Hotels, Wetter und Visum –, bevor du dich für einen ganzen Plan entscheidest.",
+    "destination": "Ziel {{n}}",
+    "removeDestination": "Dieses Ziel entfernen",
+    "removeDestinationN": "Ziel {{n}} entfernen",
+    "addAnother": "Weiteres hinzufügen",
+    "needTwo": "Füge mindestens zwei verschiedene Ziele zum Vergleichen hinzu.",
+    "comparing": "Vergleiche…",
+    "submit": "Ziele vergleichen"
+  },
+  "airport": {
+    "placeholder": "Städte oder Flughäfen suchen…",
+    "clear": "Leeren"
+  },
+  "nationality": {
+    "placeholder": "Staatsangehörigkeit suchen…",
+    "clear": "Leeren"
+  },
+  "tags": {
+    "placeholder": "Eingeben und Enter drücken...",
+    "hint": "Zum Hinzufügen Enter oder Komma drücken"
+  },
+  "travelers": {
+    "total_one": "{{count}} Reisender",
+    "total_other": "{{count}} Reisende",
+    "adults": "Erwachsene",
+    "seniors": "Senioren",
+    "children": "Kinder",
+    "infants": "Babys",
+    "fewer": "Weniger: {{group}}",
+    "more": "Mehr: {{group}}",
+    "accessibility": "Barrierefreiheit",
+    "access": {
+      "wheelchair": "♿ Rollstuhl / Gehhilfe",
+      "visual_impairment": "👁️ Sehbeeinträchtigung",
+      "hearing_impairment": "🦻 Hörbeeinträchtigung",
+      "cognitive_disability": "🧠 Kognitiv / neurodivergent"
+    }
+  },
+  "map": {
+    "aria": "Karte der gefundenen Orte",
+    "approximate": "Ungefährer Standort – irgendwo in {{city}}"
+  },
+  "kinds": {
+    "sight": "Sehenswürdigkeit",
+    "food": "Essen",
+    "drink": "Getränke",
+    "stay": "Unterkunft",
+    "activity": "Aktivität",
+    "nature": "Natur",
+    "shopping": "Shopping",
+    "nightlife": "Nachtleben",
+    "event": "Veranstaltung",
+    "transport": "Fortbewegung",
+    "area": "Viertel"
+  },
+  "preview": {
+    "found": "Das haben wir gefunden",
+    "pageShared": "Die Seite, die du geteilt hast",
+    "yourShots": "Deine Screenshots",
+    "yourText": "Dein eingefügter Text",
+    "by": "von {{author}}",
+    "readJustNow": "Gerade gelesen",
+    "sourceFound_one": "{{meta}} – {{count}} Ort gefunden",
+    "sourceFound_other": "{{meta}} – {{count}} Orte gefunden",
+    "includeAria": "{{name}} einbeziehen",
+    "newNameAria": "Neuer Name für {{name}}",
+    "renameAria": "{{name}} umbenennen",
+    "dayTrip": "Tagesausflug nach {{town}}",
+    "foundOnGoogle": "Auf Google Maps gefunden",
+    "onMap": "Auf der Karte",
+    "rating": " · ★ {{rating}}",
+    "approximate": "Ungefähr",
+    "approximateTitle": "Wir kennen den Ort, aber nicht die genaue Stelle",
+    "stop": "Stopp",
+    "stopFor": "Stopp für {{name}}",
+    "placeFailed": "Das konnten wir nicht verorten – versuche eine andere Schreibweise.",
+    "townFor": "Ort für {{name}}",
+    "whichTown": "Welcher Ort?",
+    "placing": "Wird verortet…",
+    "placeIt": "Verorten",
+    "orAddTo": "oder hinzufügen zu",
+    "whichStop": "In welchem Stopp liegt {{name}}?",
+    "leaveOut": "Weglassen",
+    "tooManyStops": "{{city}} ist kein Stopp dieser Reise, und eine Reise hat höchstens 3 – füge es stattdessen einem davon hinzu.",
+    "missingOrigin": "Gib an, von wo du abfliegst.",
+    "missingNationality": "Gib deine Staatsangehörigkeit an – sie bestimmt die Visa-Infos.",
+    "route": "Deine Route",
+    "oneLess": "Eine Nacht weniger in {{city}}",
+    "oneMore": "Eine Nacht mehr in {{city}}",
+    "leaveOutStop": "{{city}} weglassen",
+    "addBack": "{{city}} wieder hinzufügen",
+    "nights_one": "{{count}} Nacht",
+    "nights_other": "{{count}} Nächte",
+    "totalNights_one": "{{count}} Nacht insgesamt",
+    "totalNights_other": "{{count}} Nächte insgesamt",
+    "suggestedDays_one": "die Quelle empfiehlt etwa {{count}} Tag",
+    "suggestedDays_other": "die Quelle empfiehlt etwa {{count}} Tage",
+    "totalWithHint": "{{total}} – {{hint}}.",
+    "totalPlain": "{{total}}.",
+    "bestTime": "Beste Reisezeit: {{season}}.",
+    "placesIn": "Orte in {{city}}",
+    "selectAll": "Alle in {{city}} auswählen",
+    "selectNone": "Keine in {{city}} auswählen",
+    "all": "Alle",
+    "none": "Keine",
+    "unplacedAria": "Orte, die wir nicht verorten konnten",
+    "unplaced_one": "Dieser Ort konnte nicht verortet werden",
+    "unplaced_other": "Diese {{count}} Orte konnten nicht verortet werden",
+    "unplacedHint": "Gib den Ort an, in dem es liegt – wir setzen es auf die Karte und planen es ein.",
+    "leavingOn": "Abreise am",
+    "back": "Zurück am {{date}}",
+    "interests": "Interessen: {{list}}",
+    "tickOne": "Wähle mindestens einen Ort, um den herum geplant wird.",
+    "capNote": "Wir planen die ersten {{max}} ausgewählten Orte – entferne ein paar Haken, um selbst zu wählen.",
+    "startOver": "Neu starten",
+    "plan_one": "Reise planen ({{count}} Ort)",
+    "plan_other": "Reise planen ({{count}} Orte)"
+  }
+}

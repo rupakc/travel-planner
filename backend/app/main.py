@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import tempfile
 from contextlib import asynccontextmanager
@@ -23,6 +24,7 @@ from .api.routes.airports import router as airports_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.chat import router as chat_router
+from .api.routes.client_config import router as client_config_router
 from .api.routes.compare import router as compare_router
 from .api.routes.devices import router as devices_router
 from .api.routes.discover import router as discover_router
@@ -41,6 +43,7 @@ from .api.routes.price_watches import router as price_watches_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
+from .api.routes.telemetry import router as telemetry_router
 from .api.routes.walking_tours import router as walking_tours_router
 from .core import sse as _sse
 from .core.body_limit import BodySizeLimit
@@ -60,8 +63,10 @@ from .middleware.request_id import RequestIdMiddleware
 from .services import fare_watch, price_watch, push
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
+from .telemetry.maintenance import telemetry_maintenance
 
 configure_logging(json_logs=os.getenv("LOG_FORMAT", "json") == "json")
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -91,6 +96,7 @@ async def lifespan(app: FastAPI):
     seed_admin()
     create_feedback_table()
     create_taste_table()
+    from .db import telemetry_db
     from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
@@ -100,6 +106,14 @@ async def lifespan(app: FastAPI):
     create_price_watch_tables()
     create_notifications_table()
     create_devices_table()
+    # telemetry.db is disposable (not backed up): if it can't be opened, log
+    # and run with telemetry off rather than refuse to start
+    try:
+        telemetry_db.create_telemetry_tables()
+        telemetry_db.set_available(True)
+    except Exception:
+        logger.exception("telemetry store unavailable; telemetry disabled")
+        telemetry_db.set_available(False)
     price_watch.register_builtin_sources()
     from .core import llm
 
@@ -109,6 +123,11 @@ async def lifespan(app: FastAPI):
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
+    telemetry_task = (
+        asyncio.create_task(telemetry_maintenance())
+        if telemetry_db.store_available()
+        else None
+    )
     if vm_mode:
         backup_task = vm_backup.start(
             _settings.backup_bucket,
@@ -123,6 +142,12 @@ async def lifespan(app: FastAPI):
             )
         )
     yield
+    if telemetry_task is not None:
+        telemetry_task.cancel()
+        try:
+            await telemetry_task
+        except asyncio.CancelledError:
+            pass
     await fare_watch.stop_scheduler(fare_watch_task)
     await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled
@@ -181,6 +206,14 @@ app.include_router(auth_router, prefix="/api", tags=["auth"])
 app.include_router(admin_router, prefix="/api", tags=["admin"])
 app.include_router(feedback_router, prefix="/api", tags=["feedback"])
 app.include_router(analytics_router, prefix="/api", tags=["analytics"])
+# Product telemetry: anonymous-friendly, its own bucket, never behind require_ai_access
+app.include_router(
+    telemetry_router,
+    prefix="/api",
+    tags=["telemetry"],
+    dependencies=[Depends(rate_limit("telemetry"))],
+)
+app.include_router(client_config_router, prefix="/api", tags=["config"])
 app.include_router(
     chat_router, prefix="/api", tags=["chat"], dependencies=_limited("chat")
 )

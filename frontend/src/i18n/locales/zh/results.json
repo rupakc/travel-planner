@@ -1,0 +1,389 @@
+{
+  "agents": {
+    "flights": {
+      "label": "航班",
+      "badge": "航班"
+    },
+    "weather": {
+      "label": "天气预报",
+      "badge": "天气"
+    },
+    "hotels": {
+      "label": "酒店",
+      "badge": "酒店"
+    },
+    "activities": {
+      "label": "活动",
+      "badge": "活动"
+    },
+    "places_to_see": {
+      "label": "必游景点",
+      "badge": "景点"
+    },
+    "walking_tours": {
+      "label": "免费步行游览",
+      "badge": "步行游"
+    },
+    "events": {
+      "label": "近期活动",
+      "badge": "近期活动"
+    },
+    "visa": {
+      "label": "签证",
+      "badge": "签证"
+    },
+    "sim": {
+      "label": "SIM 卡",
+      "badge": "SIM 卡"
+    },
+    "tips": {
+      "label": "旅行贴士",
+      "badge": "贴士"
+    },
+    "getting_around": {
+      "label": "当地交通",
+      "badge": "交通"
+    },
+    "forex": {
+      "label": "货币与汇兑",
+      "badge": "汇兑"
+    },
+    "itinerary": {
+      "label": "行程",
+      "badge": "行程"
+    },
+    "stress_test": {
+      "label": "行程体检",
+      "badge": "体检"
+    },
+    "emergency_card": {
+      "label": "紧急卡片",
+      "badge": "紧急"
+    },
+    "packing_list": {
+      "label": "行李清单",
+      "badge": "行李"
+    }
+  },
+  "interests": {
+    "food": "🍜 美食",
+    "history": "🏛️ 历史",
+    "adventure": "🧗 探险",
+    "culture": "🎭 文化",
+    "nature": "🌿 自然",
+    "shopping": "🛍️ 购物",
+    "nightlife": "🌙 夜生活",
+    "wellness": "🧘 健康养生",
+    "art": "🎨 艺术",
+    "family": "👨‍👩‍👧 亲子"
+  },
+  "loading": {
+    "flights": {
+      "m1": "正在搜索航空公司的最优惠价格…",
+      "m2": "正在比较各航空公司的价格…",
+      "m3": "正在查看直飞和转机航班…"
+    },
+    "hotels": {
+      "m1": "正在查找各种预算的酒店…",
+      "m2": "正在查看客房空房情况…",
+      "m3": "正在比较豪华与经济型住宿…"
+    },
+    "activities": {
+      "m1": "正在发掘好玩的活动…",
+      "m2": "正在按你的兴趣匹配活动…",
+      "m3": "正在寻找小众宝藏和必去之地…"
+    },
+    "visa": {
+      "m1": "正在查看入境要求…",
+      "m2": "正在核实签证和护照规定…",
+      "m3": "正在查询疫苗接种要求…"
+    },
+    "sim": {
+      "m1": "正在寻找最划算的 SIM 卡和 eSIM 套餐…",
+      "m2": "正在比较流量套餐…",
+      "m3": "正在查看信号覆盖和价格…"
+    },
+    "tips": {
+      "m1": "正在收集当地旅行贴士…",
+      "m2": "正在查看安全提示…",
+      "m3": "正在查找当地礼仪贴士…"
+    },
+    "getting_around": {
+      "m1": "正在梳理交通方式…",
+      "m2": "正在查看公共交通线路…",
+      "m3": "正在寻找最佳出行方式…"
+    },
+    "forex": {
+      "m1": "正在查看当前汇率…",
+      "m2": "正在寻找最佳兑换地点…",
+      "m3": "正在调研银行卡和取款机选项…"
+    },
+    "itinerary": {
+      "m1": "正在制定你的每日行程…",
+      "m2": "正在按天安排活动…",
+      "m3": "正在打磨完美行程…"
+    },
+    "places_to_see": {
+      "m1": "正在寻找必看景点…",
+      "m2": "正在通过 Google 搜索热门地标…",
+      "m3": "正在发现标志性景点和小众宝藏…"
+    },
+    "walking_tours": {
+      "m1": "正在查看 GuruWalk 和 FreeTour.com…",
+      "m2": "正在查阅 SANDEMANs 和 FreeWalkingTour.com…",
+      "m3": "正在按你的兴趣挑选游览…"
+    },
+    "events": {
+      "m1": "正在查看你出行期间有什么活动…",
+      "m2": "正在搜寻节庆、演唱会和展览…",
+      "m3": "正在查找季节性活动和可能的干扰…"
+    },
+    "weather": {
+      "m1": "正在获取天气预报…",
+      "m2": "正在查看每日天气状况…",
+      "m3": "正在准备你旅途的天气展望…"
+    },
+    "emergency_card": {
+      "m1": "正在查找紧急联系方式…",
+      "m2": "正在查询大使馆信息…",
+      "m3": "正在整理安全信息…"
+    },
+    "packing_list": {
+      "m1": "正在查看天气…",
+      "m2": "正在规划该带什么…",
+      "m3": "正在完善你的行李清单…"
+    },
+    "stress_test": {
+      "m1": "正在为你的计划挑挑毛病…",
+      "m2": "正在检查开放日、时间安排和行程节奏…",
+      "m3": "正在审查预算、签证期限和天气冲突…"
+    },
+    "default": "加载中…"
+  },
+  "plan": {
+    "add": "添加",
+    "added": "已添加",
+    "addToPlan": "加入计划",
+    "addedToPlan": "已加入计划",
+    "inPlan": "已在计划中"
+  },
+  "common": {
+    "close": "关闭"
+  },
+  "total": "共 {{amount}}",
+  "status": {
+    "enhancing": "优化中…",
+    "enhancingTitle": "AI 正在用更多数据完善这部分"
+  },
+  "toggle": {
+    "less": "收起 ▲",
+    "details": "详情 ▼",
+    "why": "为什么？▼"
+  },
+  "filter": {
+    "any": "不限",
+    "earliest": "最早",
+    "latest": "最晚",
+    "clearAll": "全部清除",
+    "searching": "搜索中…",
+    "apply": "应用筛选",
+    "from": "从",
+    "to": "至"
+  },
+  "budget": {
+    "overFlight": "超出机票预算",
+    "overStay": "超出住宿预算",
+    "hiddenShowAll": "已隐藏 {{count}} 项，显示全部"
+  },
+  "weather": {
+    "estimate": "基于历史气候的估算，实际天气可能有所不同",
+    "enRoute": "途中",
+    "days_other": "{{count}} 天",
+    "poorDays_other": "{{count}} 天天气不佳，户外活动可能受影响",
+    "precip": "💧{{mm}} 毫米"
+  },
+  "flights": {
+    "duration": "{{h}}小时{{min}}分",
+    "depart": "出发",
+    "return": "返程",
+    "direct": "直飞",
+    "nonStop": "直飞",
+    "stops_other": "{{count}} 次中转",
+    "stopsBtn_other": "{{count}} 次中转",
+    "layoverIn": "在{{place}}停留{{hours}}小时",
+    "stopIn": "在{{place}}中转",
+    "makeMostOfIt": "充分利用中转时间",
+    "multiCity": "多城市行程：每段选一个航班（已选 {{chosen}}/{{total}}）",
+    "leg": "第 {{n}} 段",
+    "noLegFlights": "这一段没有找到航班，请在“当地交通”里查看火车和巴士",
+    "perPerson": "每人",
+    "roundTripPerPerson": "往返 / 每人",
+    "book": "预订",
+    "bookThis": "预订此航班",
+    "none": "没有找到航班，请调整日期或清除筛选",
+    "col": {
+      "airline": "航空公司",
+      "price": "价格",
+      "stops": "中转",
+      "duration": "时长",
+      "departArrive": "出发 / 到达",
+      "source": "来源",
+      "book": "预订"
+    },
+    "oneWay": "单程",
+    "roundTrip": "往返",
+    "filterTitle": "航班筛选",
+    "numStops": "中转次数",
+    "maxPrice": "最高价格（每人）",
+    "departureTime": "出发时间",
+    "arrivalTime": "到达时间"
+  },
+  "hotels": {
+    "none": "没有找到酒店，请放宽预算或清除筛选",
+    "perNight": "/晚",
+    "viewBook": "查看并预订",
+    "filterTitle": "酒店筛选",
+    "numBeds": "床位数",
+    "beds_other": "{{count}} 张床",
+    "maxCost": "每晚最高价格",
+    "wifiQuality": "WiFi 质量",
+    "wifi": {
+      "basic": "基础",
+      "good": "良好",
+      "excellent": "优秀"
+    },
+    "distance": "距市中心距离",
+    "km": "{{km}} 公里",
+    "privateWashroom": "独立卫生间",
+    "required": "必需"
+  },
+  "activities": {
+    "none": "没有找到活动，请换个兴趣或调整日期",
+    "match": "匹配度 {{percent}}%",
+    "hours": "{{h}} 小时",
+    "bookNow": "立即预订",
+    "fitsBudget": "符合预算",
+    "filterTitle": "活动筛选",
+    "interests": "兴趣",
+    "maxCost": "最高费用（每人）",
+    "availability": "可预订日期",
+    "minRating": "最低评分"
+  },
+  "tags": {
+    "hiddenGem": "小众宝藏",
+    "family": "亲子",
+    "accessible": "无障碍",
+    "checkWeather": "留意天气",
+    "goodWeather": "天气良好"
+  },
+  "places": {
+    "none": "未找到景点",
+    "landmark": "地标",
+    "approxHours": "约 {{h}} 小时",
+    "freeEntry": "免费入场",
+    "viewDetails": "查看详情"
+  },
+  "events": {
+    "error": "这次未能查询当地活动，不影响你行程的其他部分。",
+    "none": "你出行期间没有找到值得关注的活动。",
+    "typicalSeason": "通常在此季节，具体日期可能有所不同",
+    "planAround": "安排行程时请留意这些"
+  },
+  "visa": {
+    "unavailable": "暂无签证信息，请查看本国政府的官方旅行网站",
+    "confidence": "可信度：{{level}}",
+    "maxStay": "最长停留",
+    "days_other": "{{count}} 天",
+    "processing": "办理时间",
+    "fee": "费用",
+    "free": "免费",
+    "officialSource": "官方来源",
+    "vaccination": "疫苗与健康",
+    "required": "必须",
+    "recommended": "建议",
+    "healthSource": "健康信息来源",
+    "customs": "海关与进口规定",
+    "dutyFree": "免税额度",
+    "prohibited": "违禁物品",
+    "mustDeclare": "必须申报",
+    "customsSource": "海关信息来源"
+  },
+  "sim": {
+    "none": "没有找到 SIM 套餐，到达后请咨询当地运营商",
+    "dataGb": "{{gb}}GB 流量",
+    "unlimited": "不限流量",
+    "validity_other": "有效期 {{count}} 天",
+    "getPlan": "获取套餐"
+  },
+  "tips": {
+    "none": "暂无旅行贴士",
+    "source": "来源"
+  },
+  "transport": {
+    "none": "暂无交通信息，到达后请使用当地交通应用",
+    "inCity": "市内",
+    "betweenCities": "城市之间",
+    "other": "其他",
+    "coverage": "覆盖范围：",
+    "price": "价格：",
+    "hours": "运营时间：",
+    "touristPass": "旅游通票：",
+    "moreInfo": "更多信息"
+  },
+  "forex": {
+    "unavailable": "暂无货币信息，实时汇率请查看 xe.com",
+    "yourCurrency": "你的货币",
+    "rateLoading": "正在加载实时汇率…",
+    "whereToExchange": "兑换地点",
+    "fees": "费用：",
+    "cardAcceptance": "刷卡情况",
+    "visaMc": "Visa/MC：",
+    "amex": "Amex：",
+    "contactless": "非接触支付：",
+    "digital": "数字钱包：",
+    "surcharges": "附加费：",
+    "cashAdvice": "现金建议",
+    "cashDependency": "现金依赖度：{{level}}",
+    "denominations": "面额：",
+    "bringUsdEur": "要带美元/欧元吗？",
+    "atmInfo": "取款机信息",
+    "availability": "可用性：",
+    "networks": "网络：",
+    "limit": "限额：",
+    "tippingExpected": "通常需要给小费",
+    "tippingNotExpected": "通常不需要给小费",
+    "moneyTips": "理财贴士",
+    "sourceN": "来源 {{n}}"
+  },
+  "confidence": {
+    "title": "出行便利度"
+  },
+  "pricing": {
+    "now": "现在",
+    "days90": "90天",
+    "bookNow": "立即预订",
+    "considerWaiting": "建议再等等",
+    "confidence": "可信度：{{level}}",
+    "bestWindow": "最佳时段：{{window}}",
+    "estimate": "基于历史规律的估算，并非实时市场数据。{{disclaimer}}"
+  },
+  "emergency": {
+    "numbers": "紧急电话",
+    "police": "警察",
+    "ambulance": "救护车",
+    "fire": "消防",
+    "touristPolice": "旅游警察",
+    "embassy": "大使馆",
+    "afterHours": "非办公时间：{{value}}",
+    "hospitals": "医院",
+    "phrases": "常用短语",
+    "english": "英语",
+    "local": "当地语言",
+    "phonetic": "发音",
+    "laws": "需要了解的法律",
+    "cardTitle": "紧急卡片——{{title}}",
+    "verify": "出发前请核实所有信息，内容可能已过时。",
+    "disclaimer": "以上信息仅供参考，请务必通过官方渠道核实最新情况。大使馆办公时间和医院服务可能会有变动。",
+    "printThis": "打印此卡片"
+  }
+}

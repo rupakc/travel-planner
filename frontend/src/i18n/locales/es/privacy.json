@@ -1,0 +1,20 @@
+{
+  "prompt": {
+    "title": "Ayuda a mejorar Voyager",
+    "body": "Recopilamos datos de uso (pantallas, toques, tiempos) vinculados a un ID aleatorio o, si has iniciado sesión, a tu cuenta, para corregir errores y mejorar la app. Nunca lo que escribes, tu ubicación ni tu correo.",
+    "allow": "Permitir",
+    "deny": "No, gracias"
+  },
+  "switch": {
+    "label": "Ayuda a mejorar Voyager",
+    "hint": "Comparte datos de uso vinculados a un ID aleatorio o, con sesión iniciada, a tu cuenta. Nunca lo que escribes, tu ubicación ni tu correo."
+  },
+  "policy": "Política de privacidad",
+  "section": {
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "language": "Idioma",
+    "privacy": "Privacidad"
+  },
+  "choices": "Opciones de privacidad"
+}
