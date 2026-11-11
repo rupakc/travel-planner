@@ -1,0 +1,2073 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+        <link rel="prev" href="../Accounts-API/">
+      
+      
+        <link rel="next" href="../Testing-and-CI/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Trips API - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#trips-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Trips API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api-contract-frozen-at-the-end-of-wave-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API contract (frozen at the end of wave 0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API contract (frozen at the end of wave 0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discovery-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery (additive)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared objects
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prep-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prep checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#snapshot-and-offline-pack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshot and offline pack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expenses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expenses
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#journal-and-places-ratings-visits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Journal and places (ratings, visits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Today
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#game-additive-rules-and-badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Game (additive rules and badges)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stress-test-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stress test (additive)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#client-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="trips-api">Trips API</h1>
+<blockquote>
+<p>Frozen with Phase 2 wave 0. <strong>Changes:</strong> later changes are additive only (new fields, endpoints or error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR.</p>
+</blockquote>
+<h2 id="api-contract-frozen-at-the-end-of-wave-0">API contract (frozen at the end of wave 0)</h2>
+<p>All paths are under <code>/api</code>, with JSON in and out. Every route needs <code>Authorization: Bearer &lt;access_token&gt;</code> and acts only on the caller's own trips: anybody else's trip answers <code>404 trip_not_found</code>. Errors use the Phase 1 envelope <code>{"detail", "error_code", …}</code>, malformed bodies keep FastAPI's <code>422 {"detail": [...]}</code>, and timestamps are ISO 8601 UTC with <code>Z</code>. Days are <code>YYYY-MM-DD</code>.</p>
+<p><strong><code>today</code></strong>: every <code>GET</code> below and the check-in accept an optional client local date. The server uses it when it is within ±1 day of the server's UTC date, and otherwise uses the UTC date. Clients send the device's local date.</p>
+<h3 id="discovery-additive">Discovery (additive)</h3>
+<p><code>GET /config</code> gains <code>features.trips: true</code> (the trips API exists), <code>features.journey: bool</code> (<code>JOURNEY_UI_ENABLED</code>) and <code>features.offline_pack: bool</code> (<code>OFFLINE_PACK_ENABLED</code>, default <code>true</code>). When <code>offline_pack</code> is false, clients unregister the service worker and delete every offline cache and pack.</p>
+<h3 id="phases">Phases</h3>
+<p><code>phase</code> ∈ <code>dreaming | planning | ready | on_the_road | memories</code>. The effective phase, for start <code>s</code>, end <code>e</code> (<code>e</code> = <code>s</code> when missing), override <code>o</code>, today <code>t</code>, prep complete <code>p</code> and <code>READY_WINDOW_DAYS</code> = 14:</p>
+<ol>
+<li><code>o</code> set → <code>o</code>.</li>
+<li><code>s</code> missing → <code>dreaming</code>.</li>
+<li><code>t &gt; e</code> → <code>memories</code>.</li>
+<li><code>s ≤ t ≤ e</code> → <code>on_the_road</code>.</li>
+<li><code>p</code> or <code>(s − t) ≤ 14</code> days → <code>ready</code>.</li>
+<li>otherwise → <code>planning</code>.</li>
+</ol>
+<p><code>day_index</code> = <code>(t − s) + 1</code> while on the road, else <code>null</code>. <code>days_to_start</code> = <code>s − t</code> when <code>t &lt; s</code>, else <code>null</code>. Golden cases live in <code>backend/tests/fixtures/journey/trip_phase_cases.json</code>, and every client must pass them.</p>
+<h3 id="shared-objects">Shared objects</h3>
+<p><code>Trip</code>:</p>
+<pre><code class="language-json">{&quot;id&quot;: 12, &quot;title&quot;: &quot;Lisbon in spring&quot;, &quot;destination&quot;: &quot;Lisbon&quot;, &quot;destinations&quot;: [&quot;Lisbon&quot;, &quot;Porto&quot;],
+ &quot;origin&quot;: &quot;NYC&quot;, &quot;start_date&quot;: &quot;2027-04-01&quot;, &quot;end_date&quot;: &quot;2027-04-08&quot;, &quot;nights&quot;: 7,
+ &quot;phase&quot;: &quot;planning&quot;, &quot;phase_source&quot;: &quot;auto&quot;, &quot;days_to_start&quot;: 140, &quot;day_index&quot;: null,
+ &quot;num_travelers&quot;: 2, &quot;budget_usd&quot;: 3000, &quot;countries&quot;: [&quot;PT&quot;],
+ &quot;prep&quot;: {&quot;done&quot;: 3, &quot;total&quot;: 9, &quot;percent&quot;: 33, &quot;complete&quot;: false},
+ &quot;has_itinerary&quot;: true, &quot;recap_completed_at&quot;: null, &quot;created_at&quot;: &quot;…Z&quot;, &quot;updated_at&quot;: &quot;…Z&quot;}
+</code></pre>
+<ul>
+<li><code>title</code> is <code>plans.title</code>, falling back to <code>plans.name</code>.</li>
+<li><code>destinations</code> is <code>search_data.destinations</code>, else <code>[destination]</code>, else <code>[]</code>.</li>
+<li><code>phase_source</code> is <code>auto|manual</code>. <code>nights</code> = <code>end − start</code> in days, or <code>null</code>.</li>
+<li><code>countries</code> holds ISO alpha-2 codes, resolved locally (no network).</li>
+<li><code>prep</code> comes from the prep rules below. For a Dreaming trip it is <code>{"done": 0, "total": 0, "percent": 0, "complete": false}</code>.</li>
+</ul>
+<p><code>GameDelta</code>: exactly as in <code>docs/Accounts-API.md</code>. It is <code>null</code> when the game is disabled.</p>
+<p><code>Place key</code>: <code>&lt;kind&gt;:&lt;slug&gt;</code>. <code>kind</code> ∈ <code>activity|place|food|hotel|event|tour|nearby|other</code>. <code>slug</code> = the name NFKD-normalised, combining marks removed, lower-cased, every run of non-<code>[a-z0-9]</code> replaced by <code>-</code>, trimmed of <code>-</code>, and cut to 60 characters (<code>"" → "x"</code>). The server accepts <code>^[a-z]+:[a-z0-9-]{1,60}$</code>. The vectors are in <code>backend/tests/fixtures/journey/place_key_cases.json</code> (for example <code>["activity", "Pastéis de Belém!"] → "activity:pasteis-de-belem"</code>).</p>
+<h3 id="trips">Trips</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"trips": [Trip], "pinned_id": 12 \| null, "today": "2026-11-12"}</code>. Sorted by phase (on_the_road, ready, planning, dreaming, memories), then <code>start_date</code> (memories: newest first), then <code>updated_at</code> desc. At most 200</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>POST /trips</code></td>
+<td><code>{"title": 1..80, "destination"?: ≤120, "start_date"?, "end_date"?}</code></td>
+<td><code>201 Trip</code>. Creates a <code>plans</code> row: <code>name = title</code>, <code>search_data = {"destination": d}</code> (or <code>{}</code>), <code>selections = {}</code></td>
+<td><code>422 trip_dates_invalid</code>, <code>422 trip_title_invalid</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}</code></td>
+<td>query <code>today?</code></td>
+<td><code>Trip</code></td>
+<td><code>404 trip_not_found</code></td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}</code></td>
+<td>any subset of <code>{"title", "start_date", "end_date", "phase"}</code>. A <code>null</code> date clears it, and <code>"phase": null</code> clears the override</td>
+<td><code>Trip</code></td>
+<td><code>422 trip_dates_invalid</code> (end &lt; start, span &gt; 365 days, or a year outside 2000–2100), <code>422 trip_phase_invalid</code>, <code>422 trip_title_invalid</code>, <code>404</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}</code></td>
+<td>—</td>
+<td><code>204</code>. Deletes the plan and every child row (the same as <code>DELETE /plans/{id}</code>)</td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/stats</code></td>
+<td>—</td>
+<td><code>{"countries": [{"code": "PT", "name": "Portugal", "first_trip_id": 12, "visited_at": "…Z", "source": "checkin"\|"recap"}], "continents": ["EU"], "bucket_goal": 30 \| null, "trips_by_phase": {"dreaming": 1, …}}</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><code>pinned_id</code> is the on-the-road trip with the earliest start, else the trip with the smallest <code>days_to_start</code>, else the memories trip with an <code>end_date</code> in the last 14 days and no <code>recap_completed_at</code>, else <code>null</code>. The <code>POST /plans</code> handler stores <code>start_date</code>/<code>end_date</code> from <code>search_data</code>, so plans saved by any client become dated trips.</p>
+<h3 id="prep-checklist">Prep checklist</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/prep</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"items": [PrepItem], "done", "total", "percent", "complete"}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/prep/{item_id}</code></td>
+<td><code>{"done": bool}</code></td>
+<td>the same object plus <code>"item": PrepItem, "game": GameDelta \| null</code></td>
+<td><code>404 prep_item_unknown</code>, <code>409 prep_item_auto</code> (<code>offline_pack</code>), <code>409 prep_item_na</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>PrepItem</code>: <code>{"id", "status": "todo"|"done"|"na", "auto": bool, "due": "YYYY-MM-DD"|null, "overdue": bool, "facts": {…}}</code>. <code>total</code> counts the items that are not <code>na</code>, <code>percent</code> = <code>floor(100 × done / total)</code> (0 when <code>total</code> is 0), and <code>complete</code> = <code>total &gt; 0 and done == total</code>. Items, in order, with <code>due</code> relative to the start (<code>null</code> without a start):</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th><code>na</code> when</th>
+<th>due</th>
+<th>facts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>visa</code></td>
+<td>the visa row says <code>visa-free</code></td>
+<td>start − (visa lead days, or 21)</td>
+<td><code>visa_type</code>, <code>max_stay_days</code>, <code>processing_time</code>, <code>official_url</code>, <code>source</code> (<code>ai</code> from the snapshot, else <code>static</code>, else <code>null</code>)</td>
+</tr>
+<tr>
+<td><code>passport</code></td>
+<td>—</td>
+<td>start − 30</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>bookings</code></td>
+<td>—</td>
+<td>start − 30</td>
+<td><code>flight: bool</code>, <code>hotel: bool</code> (selected in the plan)</td>
+</tr>
+<tr>
+<td><code>insurance</code></td>
+<td>—</td>
+<td>start − 14</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>documents</code></td>
+<td>—</td>
+<td>start − 7</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>stress_test</code></td>
+<td>no itinerary</td>
+<td>start − 7</td>
+<td><code>score: int \| null</code> (the last score, Task 37)</td>
+</tr>
+<tr>
+<td><code>sim</code></td>
+<td>—</td>
+<td>start − 3</td>
+<td><code>plan_name \| null</code></td>
+</tr>
+<tr>
+<td><code>money</code></td>
+<td>—</td>
+<td>start − 3</td>
+<td><code>currency \| null</code> (the local currency code)</td>
+</tr>
+<tr>
+<td><code>packing</code></td>
+<td>—</td>
+<td>start − 1</td>
+<td><code>items: int</code></td>
+</tr>
+<tr>
+<td><code>emergency_card</code></td>
+<td>—</td>
+<td>start − 1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>checkin</code></td>
+<td>no flight selected</td>
+<td>start − 1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>offline_pack</code> (auto)</td>
+<td>—</td>
+<td>start − 1</td>
+<td><code>saved_at \| null</code></td>
+</tr>
+</tbody>
+</table>
+<p>Visa lead days: none for visa-free. Otherwise take the largest number in <code>processing_time</code>: weeks × 7, business days × 1.4 rounded up, days as is. Add 7 days of buffer. When there is no number, use 21. When <code>complete</code> first becomes true, the trip's <code>trip_ready</code> award is made (once per trip).</p>
+<h3 id="snapshot-and-offline-pack">Snapshot and offline pack</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PUT /trips/{id}/snapshot</code></td>
+<td><code>{"emergency_card"?, "forex"?, "visa"?, "packing_list"?, "weather"?}</code>: each an object or <code>null</code>; other keys ignored</td>
+<td><code>204</code>. Stores the merged object with <code>as_of</code> = server time</td>
+<td><code>413 snapshot_too_large</code> (&gt; 262144 bytes as JSON), <code>422 snapshot_invalid</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/offline-pack</code></td>
+<td>query <code>today?</code></td>
+<td><code>OfflinePack</code> with <code>Cache-Control: no-store</code>. Marks prep <code>offline_pack</code> done (Task 37)</td>
+<td><code>404</code></td>
+</tr>
+</tbody>
+</table>
+<p>Clients send the snapshot after every plan save or update made while the results are on screen. Values are the section results as streamed, without <code>verification</code>.</p>
+<p><code>OfflinePack</code>:</p>
+<pre><code class="language-json">{&quot;version&quot;: 1, &quot;trip_id&quot;: 12, &quot;generated_at&quot;: &quot;…Z&quot;, &quot;title&quot;: &quot;…&quot;, &quot;start_date&quot;: &quot;…&quot;, &quot;end_date&quot;: &quot;…&quot;,
+ &quot;destinations&quot;: [{&quot;city&quot;: &quot;Lisbon&quot;, &quot;country_code&quot;: &quot;PT&quot;, &quot;country_name&quot;: &quot;Portugal&quot;}],
+ &quot;emergency&quot;: {&quot;source&quot;: &quot;ai&quot;|&quot;static&quot;|null, &quot;as_of&quot;: &quot;…Z&quot;|null,
+   &quot;cities&quot;: [{&quot;city&quot;: &quot;Lisbon&quot;, &quot;emergency_numbers&quot;: {…}, &quot;embassy&quot;: {…}|null, &quot;hospitals&quot;: [], &quot;local_phrases&quot;: []}]},
+ &quot;phrases&quot;: {&quot;language&quot;: &quot;pt&quot;, &quot;language_name&quot;: &quot;Português&quot;, &quot;items&quot;: [{&quot;id&quot;: &quot;help&quot;, &quot;text&quot;: &quot;Socorro!&quot;, &quot;romanized&quot;: null}]} | null,
+ &quot;address_card&quot;: {&quot;hotel_name&quot;: &quot;…&quot;, &quot;area&quot;: &quot;…&quot;|null, &quot;city&quot;: &quot;Lisbon&quot;,
+   &quot;take_me_to&quot;: {&quot;text&quot;: &quot;…&quot;, &quot;romanized&quot;: null}|null} | null,
+ &quot;currency&quot;: {&quot;local&quot;: &quot;EUR&quot;, &quot;home&quot;: &quot;USD&quot;, &quot;rate&quot;: 0.92, &quot;as_of&quot;: &quot;…Z&quot;, &quot;source&quot;: &quot;snapshot&quot;} | {&quot;local&quot;: &quot;EUR&quot;, &quot;home&quot;: &quot;USD&quot;, &quot;rate&quot;: null, &quot;as_of&quot;: null, &quot;source&quot;: null} | null,
+ &quot;selections&quot;: {&quot;itinerary&quot;, &quot;itinerary_layout&quot;, &quot;itinerary_edits&quot;, &quot;itinerary_notes&quot;, &quot;itinerary_slots&quot;, &quot;hotel&quot;, &quot;flight&quot;, &quot;sim&quot;, &quot;packing_list&quot;},
+ &quot;checkins&quot;: [&quot;2027-04-01&quot;]}
+</code></pre>
+<ul>
+<li><code>rate</code> is local units per 1 home unit.</li>
+<li><code>home</code> is <code>USD</code> unless the snapshot's forex has a rate from the traveller's home currency.</li>
+<li><code>phrase</code> ids: <code>help</code>, <code>call_police</code>, <code>need_doctor</code>, <code>take_me_to</code>, <code>thank_you</code>, <code>how_much</code>, <code>where_toilet</code>, <code>dont_understand</code>.</li>
+<li><code>phrases</code> is <code>null</code> for English-speaking countries.</li>
+</ul>
+<h3 id="expenses">Expenses</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/expenses</code></td>
+<td>—</td>
+<td><code>{"expenses": [Expense], "totals": {"by_currency": {"EUR": "123.40"}, "usd_estimate": "140.20" \| null, "by_category_usd": {"food": "40.00"}, "unconverted": ["GBP"]}, "rate": {"local": "EUR", "usd_to_local": 0.92, "as_of": "…Z"} \| null}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/expenses</code></td>
+<td><code>{"client_id": uuid, "amount": "12.50", "currency": "EUR", "category", "note"?: ≤140, "spent_on": day}</code></td>
+<td><code>201 Expense</code>, or <code>200 Expense</code> (the existing row) when <code>client_id</code> was already used on this trip</td>
+<td><code>422 amount_invalid</code>, <code>422 currency_invalid</code>, <code>422 category_invalid</code>, <code>422 note_too_long</code>, <code>409 expense_limit</code> (2000 per trip)</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}/expenses/{eid}</code></td>
+<td>a subset of <code>amount</code>, <code>currency</code>, <code>category</code>, <code>note</code>, <code>spent_on</code></td>
+<td><code>Expense</code></td>
+<td>the above, <code>404 expense_not_found</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/expenses/{eid}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 expense_not_found</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>Expense</code>: <code>{"id", "client_id", "amount": "12.50", "currency": "EUR", "category", "note", "spent_on", "created_at", "updated_at"}</code>. <code>category</code> ∈ <code>flights|lodging|food|transport|activities|shopping|fees|other</code>. Amounts are decimal strings stored as integer minor units, with the currency's exponent: 0 for <code>JPY KRW VND CLP ISK UGX XAF XOF</code>, 3 for <code>BHD KWD OMR JOD TND</code>, else 2. The rules are <code>0 &lt; amount ≤ 1,000,000</code> and no more decimals than the exponent allows. USD estimates use only USD rows and rows in the snapshot's local currency (<code>amount / usd_to_local</code>). Every other currency is listed in <code>unconverted</code>.</p>
+<h3 id="journal-and-places-ratings-visits">Journal and places (ratings, visits)</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/journal</code></td>
+<td>—</td>
+<td><code>{"entries": [Entry]}</code>, sorted by <code>day</code> (nulls last), then <code>created_at</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/journal</code></td>
+<td><code>{"client_id": uuid, "body": 1..4000, "day"?, "mood"?: "great"\|"good"\|"ok"\|"tough"}</code></td>
+<td><code>201 Entry</code>, or <code>200</code> on a repeated <code>client_id</code></td>
+<td><code>422 journal_empty</code>, <code>422 journal_too_long</code>, <code>422 mood_invalid</code>, <code>409 journal_limit</code> (500)</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{id}/journal/{eid}</code></td>
+<td>a subset of <code>body</code>, <code>day</code>, <code>mood</code></td>
+<td><code>Entry</code></td>
+<td>the above, <code>404 entry_not_found</code></td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/journal/{eid}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 entry_not_found</code></td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/places</code></td>
+<td>—</td>
+<td><code>{"places": [TripPlace]}</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/places/{place_key}</code></td>
+<td><code>{"name": 1..120, "kind", "visited"?: bool, "stars"?: 1..5 \| null, "note"?: ≤500, "day"?, "lat"?, "lng"?}</code> (upsert; omitted fields are kept)</td>
+<td><code>{"place": TripPlace, "game": GameDelta \| null}</code>. <code>game</code> is set when <code>visited</code> first becomes true</td>
+<td><code>422 place_key_invalid</code>, <code>422 stars_invalid</code>, <code>422 note_too_long</code>, <code>409 places_limit</code> (1000)</td>
+</tr>
+<tr>
+<td><code>DELETE /trips/{id}/places/{place_key}</code></td>
+<td>—</td>
+<td><code>204</code></td>
+<td><code>404 place_not_found</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>Entry</code>: <code>{"id", "client_id", "day", "body", "mood", "created_at", "updated_at"}</code>. <code>TripPlace</code>: <code>{"place_key", "name", "kind", "visited", "stars", "note", "day", "lat", "lng", "visited_at", "updated_at"}</code>.</p>
+<h3 id="today">Today</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /trips/{id}/checkin</code></td>
+<td><code>{"day": "YYYY-MM-DD"}</code></td>
+<td><code>200 {"day", "day_index", "city", "country_code", "new_country": bool, "streak": {"current", "longest", "last_day", "freezes"} \| null, "game": GameDelta \| null}</code>. A second call for the same day returns the same data with an empty delta</td>
+<td><code>409 checkin_out_of_trip</code> (day outside <code>[start, end]</code>), <code>422 checkin_day_invalid</code> (more than 1 day from the server's UTC date)</td>
+</tr>
+<tr>
+<td><code>GET /trips/{id}/checkins</code></td>
+<td>—</td>
+<td><code>{"days": ["2027-04-01"], "streak": … \| null}</code></td>
+<td><code>404</code></td>
+</tr>
+</tbody>
+</table>
+<p>The city for day <em>n</em> follows the multi-city allocation of <code>TravelSearchRequest.city_stays</code> (<code>destination_nights</code> honoured), else <code>destination</code>.</p>
+<h3 id="recap">Recap</h3>
+<table>
+<thead>
+<tr>
+<th>Method, path</th>
+<th>Request</th>
+<th>Success</th>
+<th>Errors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /trips/{id}/recap</code></td>
+<td>query <code>today?</code></td>
+<td><code>Recap</code></td>
+<td><code>404</code></td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/recap/complete</code></td>
+<td>query <code>today?</code></td>
+<td><code>{"completed_at", "new_countries": ["PT"], "game": GameDelta \| null}</code>. Idempotent: a repeat returns the first <code>completed_at</code>, <code>new_countries: []</code> and an empty delta</td>
+<td><code>409 recap_not_ready</code> (today ≤ end date, or no dates)</td>
+</tr>
+</tbody>
+</table>
+<p><code>Recap</code>:</p>
+<pre><code class="language-json">{&quot;trip_id&quot;: 12, &quot;title&quot;: &quot;…&quot;, &quot;start_date&quot;: &quot;…&quot;, &quot;end_date&quot;: &quot;…&quot;, &quot;days&quot;: 8, &quot;nights&quot;: 7, &quot;planned_days&quot;: 7,
+ &quot;places&quot;: [TripPlace], &quot;visited_count&quot;: 9, &quot;rated_count&quot;: 7, &quot;avg_stars&quot;: 4.3,
+ &quot;route&quot;: [[38.70, -9.14]], &quot;distance_km&quot;: 41.2,
+ &quot;countries&quot;: [{&quot;code&quot;: &quot;PT&quot;, &quot;name&quot;: &quot;Portugal&quot;, &quot;new&quot;: true}], &quot;continents&quot;: [&quot;EU&quot;],
+ &quot;spend&quot;: {&quot;budget_usd&quot;: 3000, &quot;plan_cost_usd&quot;: null, &quot;spent_usd&quot;: &quot;2140.50&quot;, &quot;by_category_usd&quot;: {…}, &quot;unconverted&quot;: [&quot;GBP&quot;]},
+ &quot;journal_count&quot;: 5, &quot;checkin_days&quot;: 6, &quot;completed_at&quot;: null, &quot;can_complete&quot;: true}
+</code></pre>
+<ul>
+<li><code>route</code> holds the visited places with coordinates, ordered by <code>day</code> then <code>visited_at</code> (at most 500 points).</li>
+<li><code>distance_km</code> is the haversine sum along <code>route</code>, to one decimal, or <code>null</code> with fewer than two points. Clients that have the itinerary may draw the <em>planned</em> route when <code>route</code> is empty.</li>
+<li><code>new</code> means the country was added to <code>user_countries</code> by this trip.</li>
+<li><code>plan_cost_usd</code> is <code>null</code> on the server (clients compute it with <code>computePlanCost</code>).</li>
+</ul>
+<h3 id="game-additive-rules-and-badges">Game (additive rules and badges)</h3>
+<p>These are new rule ids in <code>GET /game/catalog</code>. Clients translate them as <code>game:rules.&lt;id&gt;</code> and <code>game:badges.&lt;id&gt;.name|desc</code>.</p>
+<table>
+<thead>
+<tr>
+<th>rule</th>
+<th>points</th>
+<th>daily cap</th>
+<th>idempotency key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>traveller_type</code></td>
+<td>25</td>
+<td>1</td>
+<td>once per user</td>
+</tr>
+<tr>
+<td><code>plan_saved</code></td>
+<td>10</td>
+<td>3</td>
+<td><code>plan_saved:&lt;plan_id&gt;</code></td>
+</tr>
+<tr>
+<td><code>trip_ready</code></td>
+<td>50</td>
+<td>2</td>
+<td><code>trip_ready:&lt;plan_id&gt;</code></td>
+</tr>
+<tr>
+<td><code>smart_planner</code></td>
+<td>15</td>
+<td>3</td>
+<td><code>smart_planner:&lt;plan_id&gt;:&lt;score&gt;</code></td>
+</tr>
+<tr>
+<td><code>trip_checkin</code></td>
+<td>10</td>
+<td>1</td>
+<td><code>trip_checkin:&lt;plan_id&gt;:&lt;day&gt;</code></td>
+</tr>
+<tr>
+<td><code>place_visited</code></td>
+<td>5</td>
+<td>10</td>
+<td><code>place_visited:&lt;plan_id&gt;:&lt;place_key&gt;</code></td>
+</tr>
+<tr>
+<td><code>country_visited</code></td>
+<td>25</td>
+<td>5</td>
+<td><code>country_visited:&lt;user_id&gt;:&lt;code&gt;</code></td>
+</tr>
+<tr>
+<td><code>continent_visited</code></td>
+<td>50</td>
+<td>3</td>
+<td><code>continent_visited:&lt;user_id&gt;:&lt;continent&gt;</code></td>
+</tr>
+<tr>
+<td><code>recap_complete</code></td>
+<td>100</td>
+<td>2</td>
+<td><code>recap_complete:&lt;plan_id&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>Badges (<code>id</code> (rule, target, tier, icon)):
+- <code>traveller</code> (traveller_type, 1, bronze, compass)
+- <code>first_trip</code> (plan_saved, 1, bronze, map)
+- <code>trip_ready</code> (trip_ready, 1, bronze, circle-check) and <code>ready_regular</code> (trip_ready, 5, silver, badge-check)
+- <code>smart_planner</code> (smart_planner, 3, bronze, brain)
+- <code>on_the_road</code> (trip_checkin, 3, bronze, calendar-check) and <code>road_warrior</code> (trip_checkin, 14, silver, calendar-range)
+- <code>local_explorer</code> (place_visited, 10, bronze, map-pin) and <code>local_legend</code> (place_visited, 50, silver, map-pinned)
+- <code>countries_3</code> (country_visited, 3, bronze, stamp), <code>countries_10</code> (country_visited, 10, silver, globe) and <code>countries_30</code> (country_visited, 30, gold, earth)
+- <code>continents_3</code> (continent_visited, 3, silver, earth) and <code>continents_6</code> (continent_visited, 6, gold, globe-2)
+- <code>storyteller</code> (recap_complete, 1, bronze, book-open) and <code>memory_keeper</code> (recap_complete, 5, silver, library)</p>
+<p>New streak kind <code>trip_checkin</code> (<code>freeze_per_week: 1</code>). <code>Settings</code> gains <code>bucket_list_goal: int 1..250 | null</code> (default <code>null</code>). <code>PUT /account/onboarding</code> with <code>traveller_type</code> awards <code>traveller_type</code> once.</p>
+<h3 id="stress-test-additive">Stress test (additive)</h3>
+<p><code>POST /stress-test</code> accepts an optional <code>plan_id</code>. When the caller is signed in and owns the plan, the server stores the returned score as the prep <code>stress_test</code> fact and marks that item done. When the score is higher than the previous one, it awards <code>smart_planner</code>. The response is unchanged.</p>
+<h2 id="client-notes">Client notes</h2>
+<p>Guidance for the web, iOS and Android clients. It adds no API surface.</p>
+<ul>
+<li><strong>Feature detection.</strong> Call <code>GET /config</code> at start-up. Show no trips UI and make no trips call unless <code>features.trips</code> is true. The journey UI (Trips hub, phases, Today, recap) also needs <code>features.journey</code>. When <code>features.offline_pack</code> is false, unregister the service worker (web) and delete every offline cache and pack. A backend without <code>features.trips</code> is the previous backend: behave exactly as before.</li>
+<li><strong>Phase function.</strong> Every client implements the phase rules from "Phases" and must pass the golden cases in <code>backend/tests/fixtures/journey/trip_phase_cases.json</code>. The server value in <code>Trip.phase</code> is authoritative when online. Offline, recompute it from the cached dates and the device's local date.</li>
+<li><strong><code>today</code>.</strong> Send the device's local date (<code>YYYY-MM-DD</code>) as <code>today=</code> on every <code>GET</code> that accepts it, and use the <code>today</code> echoed by <code>GET /trips</code> for the hub. For check-in, send the local date as <code>day</code>. The server accepts it within +-1 day of its UTC date, so a traveller in Tokyo on the morning of day 1 still gets "Day 1".</li>
+<li><strong>Offline writes.</strong> Create every expense and journal entry with a fresh UUID <code>client_id</code> and queue it in a per-user outbox when offline. Flush the outbox single-flight (one flush at a time, per user). Resending is safe: a repeated <code>client_id</code> answers <code>200</code> with the existing row, so exactly one row results. Delete a user's packs and outbox on sign-out.</li>
+<li><strong>Snapshot.</strong> After every plan save or update made while results are on screen, send <code>PUT /trips/{id}/snapshot</code> with the section results as streamed (without <code>verification</code>). It feeds the offline pack and the prep facts.</li>
+<li><strong>Place keys.</strong> Build <code>place_key</code> as <code>&lt;kind&gt;:&lt;slug&gt;</code> with the slug rule in "Shared objects". Test your slug function against <code>backend/tests/fixtures/journey/place_key_cases.json</code>; for example <code>["activity", "Pastéis de Belém!"]</code> gives <code>activity:pasteis-de-belem</code>.</li>
+<li><strong>Home screen.</strong> Show the Trips hub as the start screen when the signed-in user has at least one trip, otherwise Explore (search). Signed-out users see Explore. Both stay reachable from the tabs.</li>
+<li><strong>Mobile tabs.</strong> Trips (hub and trip detail), Explore (search, chat and Near me), Alerts (fare and price watches), Play (game and bucket list), You (account, preferences, settings).</li>
+<li><strong>Game ids to translate.</strong> Translate each rule id in the "Game" table as <code>game:rules.&lt;id&gt;</code> and each badge as <code>game:badges.&lt;id&gt;.name</code> and <code>game:badges.&lt;id&gt;.desc</code>. The ids: rules <code>traveller_type</code>, <code>plan_saved</code>, <code>trip_ready</code>, <code>smart_planner</code>, <code>trip_checkin</code>, <code>place_visited</code>, <code>country_visited</code>, <code>continent_visited</code>, <code>recap_complete</code>; badges <code>traveller</code>, <code>first_trip</code>, <code>trip_ready</code>, <code>ready_regular</code>, <code>smart_planner</code>, <code>on_the_road</code>, <code>road_warrior</code>, <code>local_explorer</code>, <code>local_legend</code>, <code>countries_3</code>, <code>countries_10</code>, <code>countries_30</code>, <code>continents_3</code>, <code>continents_6</code>, <code>storyteller</code>, <code>memory_keeper</code>. Hide every game element when <code>hide_game</code> is set.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
