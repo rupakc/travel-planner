@@ -1135,6 +1135,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#journey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Journey
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#settings-consent-performance-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1869,6 +1880,104 @@
 <td><code>surface</code> (<code>account</code>, <code>nav</code>, <code>celebration</code>)</td>
 <td>not yet</td>
 <td>A game surface was shown.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="journey">Journey</h3>
+<p>Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the server ahead of the clients. Props are enums, ints and bools only: never an amount, a journal text, a place name or a trip title.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Props</th>
+<th>Web</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trip_view</code></td>
+<td><code>surface</code> (<code>hub</code>, <code>overview</code>, <code>prep</code>, <code>today</code>, <code>money</code>, <code>journal</code>, <code>recap</code>, <code>offline</code>), <code>phase</code> (<code>dreaming</code>, <code>planning</code>, <code>ready</code>, <code>on_the_road</code>, <code>memories</code>, <code>none</code>)</td>
+<td>not yet</td>
+<td>A trip screen was shown.</td>
+</tr>
+<tr>
+<td><code>trip_action</code></td>
+<td><code>action</code> (<code>create</code>, <code>rename</code>, <code>dates</code>, <code>phase_override</code>, <code>phase_clear</code>, <code>delete</code>, <code>open_planner</code>, <code>plan_it</code>, <code>share_status</code>)</td>
+<td>not yet</td>
+<td>A trip management action.</td>
+</tr>
+<tr>
+<td><code>prep_toggle</code></td>
+<td><code>item</code> (<code>visa</code>, <code>passport</code>, <code>bookings</code>, <code>insurance</code>, <code>documents</code>, <code>stress_test</code>, <code>sim</code>, <code>money</code>, <code>packing</code>, <code>emergency_card</code>, <code>checkin</code>, <code>offline_pack</code>), <code>done</code> (bool)</td>
+<td>not yet</td>
+<td>A prep checklist item was ticked or unticked.</td>
+</tr>
+<tr>
+<td><code>prep_complete</code></td>
+<td><code>items</code> (int)</td>
+<td>not yet</td>
+<td>Every prep item is done.</td>
+</tr>
+<tr>
+<td><code>today_action</code></td>
+<td><code>action</code> (<code>checkin</code>, <code>next_up</code>, <code>directions</code>, <code>visited</code>, <code>status_share</code>, <code>nearby</code>)</td>
+<td>not yet</td>
+<td>An action on the Today screen.</td>
+</tr>
+<tr>
+<td><code>offline_pack</code></td>
+<td><code>action</code> (<code>save</code>, <code>refresh</code>, <code>open</code>, <code>remove</code>), <code>result</code> (<code>ok</code>, <code>error</code>, <code>unsupported</code>, <code>quota</code>), <code>kb</code> (int)</td>
+<td>not yet</td>
+<td>An offline pack operation and its size.</td>
+</tr>
+<tr>
+<td><code>outbox_flush</code></td>
+<td><code>sent</code> (int), <code>failed</code> (int), <code>dropped</code> (int)</td>
+<td>not yet</td>
+<td>The offline outbox was flushed after reconnecting.</td>
+</tr>
+<tr>
+<td><code>expense_action</code></td>
+<td><code>action</code> (<code>add</code>, <code>edit</code>, <code>delete</code>), <code>category</code> (<code>flights</code>, <code>lodging</code>, <code>food</code>, <code>transport</code>, <code>activities</code>, <code>shopping</code>, <code>fees</code>, <code>other</code>), <code>queued</code> (bool)</td>
+<td>not yet</td>
+<td>An expense change; <code>queued</code> when made offline. No amount is sent.</td>
+</tr>
+<tr>
+<td><code>journal_action</code></td>
+<td><code>action</code> (<code>add</code>, <code>edit</code>, <code>delete</code>), <code>queued</code> (bool)</td>
+<td>not yet</td>
+<td>A journal entry change; no text is sent.</td>
+</tr>
+<tr>
+<td><code>place_action</code></td>
+<td><code>action</code> (<code>visited</code>, <code>unvisited</code>, <code>rate</code>, <code>unrate</code>), <code>kind</code> (<code>activity</code>, <code>place</code>, <code>food</code>, <code>hotel</code>, <code>event</code>, <code>tour</code>, <code>nearby</code>, <code>other</code>), <code>stars</code> (int)</td>
+<td>not yet</td>
+<td>A place was marked or rated.</td>
+</tr>
+<tr>
+<td><code>recap_action</code></td>
+<td><code>action</code> (<code>view</code>, <code>complete</code>, <code>share</code>, <code>where_next</code>)</td>
+<td>not yet</td>
+<td>An action on the trip recap.</td>
+</tr>
+<tr>
+<td><code>completeness_view</code></td>
+<td><code>surface</code> (<code>drawer</code>, <code>trip</code>), <code>percent</code> (int)</td>
+<td>not yet</td>
+<td>The plan completeness meter was shown.</td>
+</tr>
+<tr>
+<td><code>onboarding_result</code></td>
+<td><code>type</code> (<code>budget_backpacker</code>, <code>family</code>, <code>luxury</code>, <code>adventure</code>, <code>culture_foodie</code>, <code>business</code>, <code>relaxation</code>, <code>accessible</code>), <code>secondary</code> (int)</td>
+<td>not yet</td>
+<td>The traveller-type quiz result.</td>
+</tr>
+<tr>
+<td><code>journey_shell</code></td>
+<td><code>enabled</code> (bool), <code>source</code> (<code>config</code>, <code>override</code>, <code>off</code>)</td>
+<td>not yet</td>
+<td>Whether the journey shell is on and why.</td>
 </tr>
 </tbody>
 </table>
