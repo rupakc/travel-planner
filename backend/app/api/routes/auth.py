@@ -144,6 +144,10 @@ def _queue_verification(user: dict, email: str, background: BackgroundTasks) -> 
         return False
     if not email_delivery_available():
         return False
+    from .signup import address_allowed
+
+    if not address_allowed(email, "verify"):
+        return True  # silent per-address limit: answers as if sent
     token = issue_token(user["id"], "verify_email", email)
     background.add_task(
         send_account_email,
