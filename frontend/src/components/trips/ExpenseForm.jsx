@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toAmountString } from '../../utils/money'
 
@@ -17,15 +17,22 @@ export default function ExpenseForm({ initial, defaultCurrency, today, busy, onS
   const [note, setNote] = useState(initial?.note ?? '')
   const [day, setDay] = useState(initial?.spent_on ?? today)
   const [error, setError] = useState(null)
+  const touched = useRef(false)
 
-  const submit = (e) => {
+  // The default currency can arrive after the form is shown; follow it until the user types one.
+  useEffect(() => {
+    if (!initial && !touched.current) setCurrency(defaultCurrency)
+  }, [defaultCurrency, initial])
+
+  const submit = async (e) => {
     e.preventDefault()
     const cur = currency.trim().toUpperCase()
     if (!/^[A-Z]{3}$/.test(cur)) { setError(t('invalidCurrency')); return }
     const amt = toAmountString(amount, cur)
     if (!amt) { setError(t('invalidAmount')); return }
     setError(null)
-    onSubmit({ amount: amt, currency: cur, category, note: note.trim(), spent_on: day || today })
+    const ok = await onSubmit({ amount: amt, currency: cur, category, note: note.trim(), spent_on: day || today })
+    if (ok && !initial) { setAmount(''); setNote('') }
   }
 
   return (
@@ -39,7 +46,7 @@ export default function ExpenseForm({ initial, defaultCurrency, today, busy, onS
         <div className="col-span-1">
           <label className={label} htmlFor="expense-currency">{t('currency')}</label>
           <input id="expense-currency" data-tid="expense-currency" className={`${field} uppercase`} maxLength={3}
-            autoComplete="off" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            autoComplete="off" value={currency} onChange={(e) => { touched.current = true; setCurrency(e.target.value) }} />
         </div>
         <div className="col-span-2">
           <label className={label} htmlFor="expense-day">{t('day')}</label>

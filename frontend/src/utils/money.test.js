@@ -17,6 +17,10 @@ describe('toAmountString', () => {
     expect(toAmountString('1,234.50', 'USD')).toBe('1234.50')
     expect(toAmountString('1.234,50', 'EUR')).toBe('1234.50')
   })
+  it('reads "1,234" as thousands, but not where three decimals are legal', () => {
+    expect(toAmountString('1,234', 'EUR')).toBe('1234')
+    expect(toAmountString('1,234', 'KWD')).toBeNull()
+  })
   it('rejects more decimals than the currency allows', () => {
     expect(toAmountString('12.5', 'JPY')).toBeNull()
     expect(toAmountString('12.345', 'EUR')).toBeNull()

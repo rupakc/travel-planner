@@ -47,6 +47,7 @@ beforeEach(() => {
   online = true
   journeyOn = true
   vi.clearAllMocks()
+  sessionStorage.clear()
   api.listExpenses.mockResolvedValue(listing())
   host = document.createElement('div')
   document.body.appendChild(host)
@@ -140,5 +141,50 @@ describe('ExpenseLog', () => {
     await act(async () => { host.querySelectorAll('[data-tid="expense-save"]')[1].click() })
     expect(api.updateExpense).toHaveBeenCalledTimes(1)
     expect(api.updateExpense.mock.calls[0][2]).toBe(1)
+  })
+
+  it('clears the form after an add, so a second tap cannot duplicate it', async () => {
+    api.addExpense.mockResolvedValue(exp({ id: 2 }))
+    await render()
+    await type('expense-amount', '9.99')
+    await act(async () => { q('expense-save').click() })
+    expect(q('expense-amount').value).toBe('')
+    await act(async () => { q('expense-save').click() })
+    expect(api.addExpense).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores waiting rows after a remount and drops them once the server has them', async () => {
+    online = false
+    await render()
+    await type('expense-amount', '7')
+    await act(async () => { q('expense-save').click() })
+    const cid = enqueue.mock.calls[0][1].body.client_id
+    await act(async () => { root.unmount() })
+    root = createRoot(host)
+    await render()
+    expect(host.textContent).toContain('Waiting to sync')
+    online = true
+    api.listExpenses.mockResolvedValue(listing({ expenses: [exp({ id: 5, client_id: cid })] }))
+    await render()
+    expect(host.textContent).not.toContain('Waiting to sync')
+    expect(sessionStorage.getItem('tp_exp_pending:7:12')).toBeNull()
+  })
+
+  it('disables edit and delete while offline', async () => {
+    await render()
+    online = false
+    await render()
+    expect(q('expense-edit-1').disabled).toBe(true)
+    expect(q('expense-delete-1').disabled).toBe(true)
+  })
+
+  it('keeps typed input when the default currency arrives late', async () => {
+    let resolve
+    api.listExpenses.mockReturnValue(new Promise((r) => { resolve = r }))
+    await render()
+    await type('expense-amount', '3')
+    await act(async () => { resolve(listing({ rate: { local: 'JPY', usd_to_local: 150, as_of: null } })) })
+    expect(q('expense-amount').value).toBe('3')
+    expect(q('expense-currency').value).toBe('JPY')
   })
 })

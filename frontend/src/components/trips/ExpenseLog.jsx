@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useJourney } from '../../hooks/useJourney'
 import { useAuth } from '../../context/AuthContext'
@@ -13,6 +13,18 @@ import ExpenseForm from './ExpenseForm'
 const num = (s) => Number(s)
 const card = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4'
 
+// The outbox has no way to list its items, so queued rows are mirrored in
+// sessionStorage (per user and trip) to survive a remount or reload.
+const pendingKey = (uid, tripId) => `tp_exp_pending:${uid}:${tripId}`
+function readPending(key) {
+  try { const v = JSON.parse(sessionStorage.getItem(key)); return Array.isArray(v) ? v : [] } catch { return [] }
+}
+function writePending(key, rows) {
+  try {
+    if (rows.length) sessionStorage.setItem(key, JSON.stringify(rows)); else sessionStorage.removeItem(key)
+  } catch { /* storage unavailable */ }
+}
+
 function newClientId() {
   try { return crypto.randomUUID() } catch { return `${Date.now()}-${Math.random().toString(16).slice(2)}` }
 }
@@ -26,7 +38,10 @@ export default function ExpenseLog({ trip, token }) {
   const { user } = useAuth()
   const online = useOnline()
   const [data, setData] = useState(null) // {expenses, totals, rate}
-  const [pending, setPending] = useState([]) // queued, not yet on the server
+  const uid = user?.id ?? user?.username
+  const storeKey = pendingKey(uid, trip?.id)
+  const [pending, setPending] = useState(() => readPending(storeKey)) // queued, not yet on the server
+  const savingRef = useRef(false)
   const [failed, setFailed] = useState(false)
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -51,17 +66,21 @@ export default function ExpenseLog({ trip, token }) {
     if (online) load()
   }, [enabled, tripId, online, load])
 
+  useEffect(() => { writePending(storeKey, pending) }, [storeKey, pending])
+
   const defaultCurrency = data?.rate?.local || 'USD'
 
   const queue = async (body) => {
     const row = { id: `pending-${body.client_id}`, ...body, note: body.note || '', pending: true }
     setPending((p) => [...p, row])
-    await enqueue(user?.id ?? user?.username, {
+    await enqueue(uid, {
       method: 'POST', path: `/trips/${tripId}/expenses`, body, key: body.client_id,
     })
   }
 
   const add = async (fields) => {
+    if (savingRef.current) return false
+    savingRef.current = true
     const body = { client_id: newClientId(), ...fields }
     if (!body.note) delete body.note
     setBusy(true)
@@ -79,9 +98,12 @@ export default function ExpenseLog({ trip, token }) {
         }
       }
       emit('expense_action', { action: 'add', category: body.category, queued })
+      return true
     } catch {
       setFormError(t('saveFailed'))
+      return false
     } finally {
+      savingRef.current = false
       setBusy(false)
     }
   }
@@ -94,8 +116,10 @@ export default function ExpenseLog({ trip, token }) {
       emit('expense_action', { action: 'edit', category: fields.category, queued: false })
       setEditing(null)
       await load()
+      return true
     } catch {
       setFormError(t('saveFailed'))
+      return false
     } finally {
       setBusy(false)
     }
@@ -134,7 +158,7 @@ export default function ExpenseLog({ trip, token }) {
       <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('title')}</h2>
 
       <div className={card}>
-        <ExpenseForm key={defaultCurrency} defaultCurrency={defaultCurrency} today={today} busy={busy} onSubmit={add} />
+        <ExpenseForm defaultCurrency={defaultCurrency} today={today} busy={busy} onSubmit={add} />
         {formError && !editing && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{formError}</p>}
       </div>
 

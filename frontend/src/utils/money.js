@@ -23,8 +23,14 @@ export function toAmountString(input, currency) {
     const group = comma > dot ? '.' : ','
     s = s.slice(0, dec).split(group).join('') + '.' + s.slice(dec + 1)
   } else if (comma >= 0) {
-    if (s.indexOf(',') !== comma) return null
-    s = s.replace(',', '.')
+    if (/^\d{1,3}(,\d{3})+$/.test(s)) {
+      // "1,234" groups thousands, except where three decimals are legal and it is ambiguous.
+      if (currencyExponent(currency) === 3 && s.indexOf(',') === comma) return null
+      s = s.split(',').join('')
+    } else {
+      if (s.indexOf(',') !== comma) return null
+      s = s.replace(',', '.')
+    }
   }
   const m = /^(\d{1,7})(?:\.(\d+))?$/.exec(s)
   if (!m) return null
