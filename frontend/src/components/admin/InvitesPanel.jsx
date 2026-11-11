@@ -20,7 +20,7 @@ const STATUS_CLS = {
   used: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
 }
 
-/** Invite codes. `initial` is the list the page already fetched while probing. */
+/** Invite codes. `initial` is the list the page fetched while probing; it seeds the first render only. */
 export default function InvitesPanel({ token, initial = null }) {
   const { t } = useTranslation(['adminInvites', 'errors'])
   const [rows, setRows] = useState(initial || [])
@@ -39,7 +39,8 @@ export default function InvitesPanel({ token, initial = null }) {
       .finally(() => setLoading(false))
   ), [token, t])
 
-  useEffect(() => { if (!initial) reload() }, [initial, reload])
+  // Always refetch on mount: `initial` only seeds the first render, so a remount never shows a stale list.
+  useEffect(() => { reload() }, [reload])
 
   const submit = async (e) => {
     e.preventDefault()

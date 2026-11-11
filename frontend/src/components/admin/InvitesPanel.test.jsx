@@ -57,6 +57,22 @@ describe('InvitesPanel', () => {
   })
 })
 
+describe('InvitesPanel remount', () => {
+  it('refetches on remount instead of reusing the seeded list', async () => {
+    await act(async () => root.render(<InvitesPanel token="tok" initial={[ROW]} />))
+    await flush()
+    expect(api.listInvites).toHaveBeenCalledTimes(1)
+    api.listInvites.mockResolvedValue([{ ...ROW, id: 9, code_prefix: 'VOY-NEWW' }])
+    await act(async () => root.unmount())
+    root = createRoot(host)
+    await act(async () => root.render(<InvitesPanel token="tok" initial={[ROW]} />))
+    await flush()
+    expect(api.listInvites).toHaveBeenCalledTimes(2)
+    expect(host.textContent).toContain('VOY-NEWW')
+    expect(host.textContent).not.toContain('VOY-ABCD')
+  })
+})
+
 describe('AdminPage invites tab', () => {
   it('is hidden when GET /admin/invites is 404', async () => {
     api.listInvites.mockRejectedValue({ status: 404 })
