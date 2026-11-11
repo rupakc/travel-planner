@@ -164,3 +164,55 @@ def test_phase1_enum_accept_and_reject():
     ]
     for name, props, want in cases:
         assert clean_event({"event": name, "props": props})["props"] == want
+
+
+PHASE2_EVENTS = (
+    "trip_view",
+    "trip_action",
+    "prep_toggle",
+    "prep_complete",
+    "today_action",
+    "offline_pack",
+    "outbox_flush",
+    "expense_action",
+    "journal_action",
+    "place_action",
+    "recap_action",
+    "completeness_view",
+    "onboarding_result",
+    "journey_shell",
+)
+
+
+def test_phase2_events_registered():
+    assert all(name in EVENTS for name in PHASE2_EVENTS)
+
+
+def test_expense_action_drops_amount():
+    out = clean_event(
+        {
+            "event": "expense_action",
+            "props": {
+                "action": "add",
+                "category": "food",
+                "queued": True,
+                "amount": 12,
+            },
+        }
+    )
+    assert out["props"] == {"action": "add", "category": "food", "queued": True}
+
+
+def test_journey_enums_and_types_enforced():
+    out = clean_event(
+        {"event": "trip_view", "props": {"surface": "today", "phase": "bogus"}}
+    )
+    assert out["props"] == {"surface": "today"}
+    out = clean_event(
+        {"event": "journey_shell", "props": {"enabled": 1, "source": "off"}}
+    )
+    assert out["props"] == {"source": "off"}
+    out = clean_event(
+        {"event": "outbox_flush", "props": {"sent": 2, "failed": 0, "dropped": 1}}
+    )
+    assert out["props"] == {"sent": 2, "failed": 0, "dropped": 1}
