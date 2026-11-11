@@ -1,0 +1,35 @@
+{
+  "title": "Settings",
+  "hint": "These follow your account on every device.",
+  "language": "Language",
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "currency": "Currency",
+  "units": {
+    "label": "Units",
+    "metric": "Metric",
+    "imperial": "Imperial"
+  },
+  "timezone": {
+    "label": "Time zone",
+    "useDevice": "Use this device's ({{zone}})"
+  },
+  "hideGame": {
+    "label": "Hide Play & points",
+    "hint": "Hides points, levels and badges everywhere."
+  },
+  "hideCommunity": {
+    "label": "Hide community",
+    "hint": "Hides community features."
+  },
+  "visibility": {
+    "label": "Profile visibility",
+    "public": "Public",
+    "followers": "Followers only",
+    "private": "Private"
+  }
+}

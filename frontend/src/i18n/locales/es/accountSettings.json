@@ -1,0 +1,35 @@
+{
+  "title": "Ajustes",
+  "hint": "Se aplican a tu cuenta en todos tus dispositivos.",
+  "language": "Idioma",
+  "theme": {
+    "label": "Tema",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "currency": "Moneda",
+  "units": {
+    "label": "Unidades",
+    "metric": "Métricas",
+    "imperial": "Imperiales"
+  },
+  "timezone": {
+    "label": "Zona horaria",
+    "useDevice": "Usar la de este dispositivo ({{zone}})"
+  },
+  "hideGame": {
+    "label": "Ocultar Jugar y puntos",
+    "hint": "Oculta puntos, niveles e insignias en todas partes."
+  },
+  "hideCommunity": {
+    "label": "Ocultar comunidad",
+    "hint": "Oculta las funciones de comunidad."
+  },
+  "visibility": {
+    "label": "Visibilidad del perfil",
+    "public": "Público",
+    "followers": "Solo seguidores",
+    "private": "Privado"
+  }
+}

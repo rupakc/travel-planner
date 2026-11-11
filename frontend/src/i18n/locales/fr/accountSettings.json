@@ -1,0 +1,35 @@
+{
+  "title": "Paramètres",
+  "hint": "Ils suivent votre compte sur tous vos appareils.",
+  "language": "Langue",
+  "theme": {
+    "label": "Thème",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "currency": "Devise",
+  "units": {
+    "label": "Unités",
+    "metric": "Métriques",
+    "imperial": "Impériales"
+  },
+  "timezone": {
+    "label": "Fuseau horaire",
+    "useDevice": "Utiliser celui de cet appareil ({{zone}})"
+  },
+  "hideGame": {
+    "label": "Masquer Jouer et les points",
+    "hint": "Masque les points, niveaux et badges partout."
+  },
+  "hideCommunity": {
+    "label": "Masquer la communauté",
+    "hint": "Masque les fonctions communautaires."
+  },
+  "visibility": {
+    "label": "Visibilité du profil",
+    "public": "Public",
+    "followers": "Abonnés uniquement",
+    "private": "Privé"
+  }
+}
