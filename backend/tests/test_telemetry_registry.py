@@ -104,3 +104,48 @@ def test_ui_change_event_keeps_only_tid_and_route():
     )
     assert ev is not None
     assert ev["props"] == {"tid": "search.dest", "route": "/"}
+
+
+PHASE1_EVENTS = (
+    "auth_start",
+    "auth_result",
+    "signup_step",
+    "email_verify",
+    "password_reset",
+    "account_action",
+    "quota_block",
+    "game_award",
+    "badge_earned",
+    "level_up",
+    "game_view",
+)
+
+
+def test_phase1_events_registered():
+    assert all(name in EVENTS for name in PHASE1_EVENTS)
+
+
+def test_auth_result_drops_email_shaped_code():
+    out = clean_event(
+        {
+            "event": "auth_result",
+            "props": {
+                "method": "google",
+                "mode": "signin",
+                "result": "ok",
+                "code": "jane@x.com",
+            },
+        }
+    )
+    assert out["props"] == {"method": "google", "mode": "signin", "result": "ok"}
+
+
+def test_phase1_enums_and_ints():
+    out = clean_event(
+        {"event": "game_award", "props": {"rule": "first_search", "points": 10}}
+    )
+    assert out["props"] == {"rule": "first_search", "points": 10}
+    out = clean_event({"event": "quota_block", "props": {"bucket": "x", "reason": "unverified"}})
+    assert out["props"] == {"reason": "unverified"}
+    out = clean_event({"event": "level_up", "props": {"level": "3"}})
+    assert out["props"] == {}

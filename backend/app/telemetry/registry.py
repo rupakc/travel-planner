@@ -22,6 +22,9 @@ def _enum(*values: str) -> str:
     return "enum:" + "|".join(values)
 
 
+_AUTH_METHOD = _enum("password", "apple", "google", "facebook", "github")
+_AUTH_MODE = _enum("signin", "signup", "link")
+
 EVENTS: dict[str, dict[str, str]] = {
     "app_open": {},
     "app_background": {},
@@ -57,6 +60,47 @@ EVENTS: dict[str, dict[str, str]] = {
         "route": "id",
     },
     "error": {"kind": _enum("js", "promise", "api"), "source": "id", "status": "int"},
+    # Phase 1: accounts and game
+    "auth_start": {"method": _AUTH_METHOD, "mode": _AUTH_MODE},
+    "auth_result": {
+        "method": _AUTH_METHOD,
+        "mode": _AUTH_MODE,
+        "result": _enum(
+            "ok", "error", "cancelled", "coming_soon", "needs_username", "pending"
+        ),
+        "code": "id",
+    },
+    "signup_step": {"step": _enum("form", "check_email", "username", "done")},
+    "email_verify": {
+        "result": _enum("ok", "expired", "invalid", "used", "resent", "email_changed")
+    },
+    "password_reset": {
+        "step": _enum("request", "confirm"),
+        "result": _enum("ok", "error", "expired", "invalid", "used"),
+    },
+    "account_action": {
+        "action": _enum(
+            "avatar_upload",
+            "avatar_remove",
+            "name_change",
+            "settings_change",
+            "export",
+            "delete",
+            "link",
+            "unlink",
+            "signout_all",
+            "email_verify_request",
+            "change_password",
+        )
+    },
+    "quota_block": {
+        "bucket": _enum("search", "chat", "compare", "discover", "light_ai", "import"),
+        "reason": _enum("daily_quota", "unverified"),
+    },
+    "game_award": {"rule": "id", "points": "int"},
+    "badge_earned": {"badge": "id"},
+    "level_up": {"level": "int"},
+    "game_view": {"surface": _enum("account", "nav", "celebration")},
 }
 
 
