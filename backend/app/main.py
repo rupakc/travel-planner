@@ -217,6 +217,7 @@ app.add_middleware(
     prefix="/api/account/avatar",
     max_bytes=2 * 1024 * 1024 + 64 * 1024,
     message="That image is too big — use one under 2 MB.",
+    error_code="avatar_too_large",
 )
 
 app.add_middleware(RequestIdMiddleware)

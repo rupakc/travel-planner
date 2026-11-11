@@ -10,14 +10,26 @@ import json
 
 
 class BodySizeLimit:
-    def __init__(self, app, *, prefix: str, max_bytes: int, message: str) -> None:
+    def __init__(
+        self,
+        app,
+        *,
+        prefix: str,
+        max_bytes: int,
+        message: str,
+        error_code: str | None = None,
+    ) -> None:
         self.app = app
         self.prefix = prefix
         self.max_bytes = max_bytes
         self.message = message
+        self.error_code = error_code
 
     async def _refuse(self, send) -> None:
-        body = json.dumps({"detail": self.message}).encode()
+        payload = {"detail": self.message}
+        if self.error_code:
+            payload["error_code"] = self.error_code
+        body = json.dumps(payload).encode()
         await send(
             {
                 "type": "http.response.start",
