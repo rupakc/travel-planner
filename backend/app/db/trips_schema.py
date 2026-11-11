@@ -100,7 +100,9 @@ def _backfill(conn) -> None:
         conn.execute(
             f"UPDATE plans SET {col} = json_extract(search_data, '$.{path}') "  # nosec B608
             f"WHERE {col} IS NULL AND json_valid(search_data) "
-            f"AND json_extract(search_data, '$.{path}') GLOB ?",
+            f"AND json_extract(search_data, '$.{path}') GLOB ? "
+            f"AND date(json_extract(search_data, '$.{path}')) "
+            f"= json_extract(search_data, '$.{path}')",
             (_DATE_GLOB,),
         )
     conn.execute(
