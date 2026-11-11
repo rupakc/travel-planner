@@ -416,3 +416,98 @@ def test_delete_user_events_counts():
     )  # fmt: skip
     assert telemetry_db.delete_user_events(uid) == 2
     assert telemetry_db.delete_user_events(uid) == 0
+
+
+# ── post-commit cleanup never fails the request ───────────────────────────────
+
+
+def _user_with_traces():
+    """A user with an Apple identity, a telemetry event and an avatar file."""
+    u, h = _user()
+    with get_connection() as conn:
+        conn.execute(
+            """INSERT INTO user_identities (user_id, provider, subject, secret_enc,
+                   created_at) VALUES (?, 'apple', ?, ?, ?)""",
+            (u["id"], uuid.uuid4().hex, secrets_box.seal("apple-rt-9"), _now()),
+        )
+    telemetry_db.insert_events(
+        [
+            {"ts": _ms(), "received_at": _ms(), "event": "e", "session_id": "s",
+             "anon_id": "a", "user_id": u["id"], "platform": "web",
+             "app_version": "1", "locale": "en", "props": "{}"}
+        ]
+    )  # fmt: skip
+    p = avatar_path(u["id"])
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(b"RIFF....WEBP")
+    return u, h
+
+
+def _traces_gone(u) -> bool:
+    return not avatar_path(u["id"]).exists() and not [
+        t for t, _ in _rows_mentioning([u["id"]])
+    ]
+
+
+def test_get_provider_raising_still_cleans_up(client, monkeypatch):
+    def boom(_pid):
+        raise RuntimeError("registry exploded")
+
+    monkeypatch.setattr(account_data.registry, "get_provider", boom)
+    u, h = _user_with_traces()
+    assert _delete(client, h, {"password": _PW}).status_code == 204
+    assert _traces_gone(u)
+
+
+def test_revoke_raising_still_cleans_up(client):
+    fake = _FakeApple(fail=True)
+    registry.override("apple", fake)
+    u, h = _user_with_traces()
+    assert _delete(client, h, {"password": _PW}).status_code == 204
+    assert fake.revoked == ["apple-rt-9"]
+    assert _traces_gone(u)
+
+
+def test_local_cleanup_raising_is_not_a_500(client, monkeypatch):
+    def boom(_uid):
+        raise ValueError("disk on fire")
+
+    monkeypatch.setattr(account_data.telemetry_db, "delete_user_events", boom)
+    registry.override("apple", _FakeApple())
+    u, h = _user_with_traces()
+    assert _delete(client, h, {"password": _PW}).status_code == 204
+    assert users_db.get_user_by_id(u["id"]) is None
+    assert not avatar_path(u["id"]).exists()  # the next step still ran
+
+
+def test_cancelled_request_still_finishes_revoke_and_cleanup():
+    import asyncio
+
+    started, release = asyncio.Event(), asyncio.Event()
+    done: list[str] = []
+
+    class SlowApple:
+        id = "apple"
+
+        async def revoke(self, secret):
+            started.set()
+            await release.wait()
+            done.append(secret)
+
+    registry.override("apple", SlowApple())
+    u, _ = _user_with_traces()
+
+    async def run():
+        req = asyncio.create_task(account_data.delete_user(u))
+        await started.wait()
+        # local cleanup already ran, before the first await
+        assert _traces_gone(u)
+        req.cancel()  # the client went away
+        with pytest.raises(asyncio.CancelledError):
+            await req
+        release.set()
+        await asyncio.gather(*account_data._pending)
+
+    asyncio.run(run())
+    assert done == ["apple-rt-9"]
+    assert users_db.get_user_by_id(u["id"]) is None

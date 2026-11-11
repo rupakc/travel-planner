@@ -9,6 +9,7 @@ table with a ``username`` / ``user_id`` / ``created_by`` / ``user_key`` /
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sqlite3
 from datetime import UTC, datetime
@@ -226,21 +227,39 @@ def delete_rows(user: dict) -> list[tuple[str, str]]:
     return secrets
 
 
-async def _revoke(provider_id: str, sealed: str) -> None:
-    provider = registry.get_provider(provider_id)
-    if provider is None:
-        logger.warning("account_delete: no %s adapter to revoke with", provider_id)
-        return
-    secret = secrets_box.open_(sealed)
-    if not secret:
-        logger.warning("account_delete: %s secret unreadable, not revoked", provider_id)
-        return
+# revocations still running after their request went away (strong refs)
+_pending: set[asyncio.Task] = set()
+
+
+def _step(name: str, fn, *args) -> None:
     try:
+        fn(*args)
+    except Exception as exc:  # best effort: the rows are already gone
+        logger.warning("account_delete: %s failed (%s)", name, type(exc).__name__)
+
+
+async def _revoke(provider_id: str, sealed: str) -> None:
+    try:
+        provider = registry.get_provider(provider_id)
+        if provider is None:
+            logger.warning("account_delete: no %s adapter to revoke with", provider_id)
+            return
+        secret = secrets_box.open_(sealed)
+        if not secret:
+            logger.warning(
+                "account_delete: %s secret unreadable, not revoked", provider_id
+            )
+            return
         await provider.revoke(secret)
-    except Exception as exc:  # best effort: the account is already gone
+    except Exception as exc:  # best effort; never log the secret
         logger.warning(
             "account_delete: %s revoke failed (%s)", provider_id, type(exc).__name__
         )
+
+
+async def _revoke_all(secrets: list[tuple[str, str]]) -> None:
+    for provider_id, sealed in secrets:
+        await _revoke(provider_id, sealed)
 
 
 async def delete_user(user: dict) -> None:
@@ -248,18 +267,18 @@ async def delete_user(user: dict) -> None:
     telemetry and avatar file, and revoke stored provider tokens (Apple).
 
     The DB rows go first, in one transaction, so a failure leaves the account
-    whole; the provider revocation (network) and the file / telemetry-store
-    steps follow and are best effort."""
+    whole. After the commit nothing can fail the request: the local steps
+    (telemetry rows, avatar file) run at once with no await in between, each
+    caught and logged, then the network revocations run in a task shielded
+    from the request's cancellation (a client disconnect lets them finish)."""
     uid = user["id"]
     secrets = delete_rows(user)
-    for provider_id, sealed in secrets:
-        await _revoke(provider_id, sealed)
-    try:
-        telemetry_db.delete_user_events(uid)
-    except sqlite3.Error as exc:
-        logger.warning("account_delete: telemetry rows not deleted (%s)", exc)
-    try:
-        remove_avatar(uid)
-    except OSError as exc:
-        logger.warning("account_delete: avatar not removed (%s)", exc)
+    _step("telemetry delete", telemetry_db.delete_user_events, uid)
+    _step("avatar removal", remove_avatar, uid)
     logger.info("account_delete: account deleted")
+    if not secrets:
+        return
+    task = asyncio.create_task(_revoke_all(secrets))
+    _pending.add(task)
+    task.add_done_callback(_pending.discard)
+    await asyncio.shield(task)

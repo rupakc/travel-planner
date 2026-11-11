@@ -54,8 +54,8 @@ async def delete_account(
     body: DeleteAccountBody, user: dict = Depends(get_current_user)
 ):
     if user_payload(user)["has_password"]:
-        if not body.password or not users_db._verify(
-            body.password, user["password_hash"]
+        if not body.password or not users_db.authenticate_user(
+            user["username"], body.password
         ):
             raise ApiError(403, "password_incorrect", "That password is incorrect.")
     elif (body.confirm_username or "").strip().lower() != user["username"].lower():
