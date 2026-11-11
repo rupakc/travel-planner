@@ -27,6 +27,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null) // {code, text}
   const [done, setDone] = useState(false)
+  const [sessionFailed, setSessionFailed] = useState(false)
 
   useEffect(() => {
     if (window.location.search.includes('token')) {
@@ -46,8 +47,9 @@ export default function ResetPasswordPage() {
     try {
       const res = await confirmPasswordReset(token, password)
       emit('password_reset', { step: 'confirm', result: 'ok' })
-      await applySession(res.session)
       setDone(true)
+      // The password is already changed: a failed sign-in must not look like a failed reset.
+      try { await applySession(res.session) } catch { setSessionFailed(true) }
     } catch (err) {
       emit('password_reset', { step: 'confirm', result: TOKEN_RESULT[err?.code] || 'error' })
       setError({ code: err?.code, text: errorText(tc, err) })
@@ -69,7 +71,7 @@ export default function ResetPasswordPage() {
           {done ? (
             <div className="space-y-4">
               <p role="status" data-tid="reset.done" className="text-sm text-gray-700 dark:text-gray-200">{t('reset.done')}</p>
-              <button type="button" data-tid="reset.continue" onClick={() => navigate('/', { replace: true })}
+              <button type="button" data-tid="reset.continue" onClick={() => navigate(sessionFailed ? '/login' : '/', { replace: true })}
                 className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-semibold rounded-xl shadow-lg text-sm">
                 {t('reset.continue')}
               </button>

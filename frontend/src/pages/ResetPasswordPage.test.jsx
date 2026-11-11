@@ -86,13 +86,25 @@ describe('ResetPasswordPage', () => {
 
   it.each([['token_expired', 'expired'], ['token_used', 'used'], ['token_invalid', 'invalid']])(
     '%s links back to /forgot-password', async (code, result) => {
-      api.confirmPasswordReset.mockRejectedValueOnce({ status: 410, code, detail: '' })
+      api.confirmPasswordReset.mockRejectedValueOnce({ status: code === 'token_expired' ? 410 : code === 'token_used' ? 409 : 400, code, detail: '' })
       await mount()
       fill('a-long-passphrase-1', 'a-long-passphrase-1')
       await submit()
       expect(container.querySelector('[data-tid="reset.request-new"]').getAttribute('href')).toBe('/forgot-password')
       expect(emit).toHaveBeenCalledWith('password_reset', { step: 'confirm', result })
     })
+
+  it('still shows done, and Continue goes to /login, when applySession fails', async () => {
+    api.confirmPasswordReset.mockResolvedValueOnce({ status: 'password_reset', session: { access_token: 'a' } })
+    auth.applySession.mockRejectedValueOnce(new Error('boom'))
+    await mount()
+    fill('a-long-passphrase-1', 'a-long-passphrase-1')
+    await submit()
+    expect(container.querySelector('[data-tid="reset.done"]')).not.toBeNull()
+    expect(container.querySelector('[data-tid="reset.error"]')).toBeNull()
+    act(() => container.querySelector('[data-tid="reset.continue"]').click())
+    expect(location.pathname).toBe('/login')
+  })
 
   it('offers a new link when the token is missing', async () => {
     await mount('/reset-password')
