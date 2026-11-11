@@ -1,0 +1,26 @@
+{
+  "title": "Deine Daten",
+  "intro": "Lade eine Kopie aller bei Voyager über dich gespeicherten Daten herunter oder lösche dein Konto endgültig.",
+  "export": {
+    "button": "Meine Daten herunterladen",
+    "working": "Wird vorbereitet…",
+    "hint": "Eine JSON-Datei mit Profil, Einstellungen, Plänen, Suchen, Beobachtungen und Spielfortschritt.",
+    "error": "Dein Export konnte nicht erstellt werden. Bitte versuche es erneut."
+  },
+  "delete": {
+    "button": "Konto löschen",
+    "title": "Konto löschen?",
+    "intro": "Folgendes wird dauerhaft gelöscht:",
+    "warn": "Das lässt sich nicht rückgängig machen. Lade vorher deine Daten herunter, wenn du eine Kopie möchtest.",
+    "password": "Gib zur Bestätigung dein Passwort ein",
+    "username": "Gib zur Bestätigung deinen Benutzernamen ({{username}}) ein",
+    "cancel": "Abbrechen",
+    "confirm": "Mein Konto löschen",
+    "working": "Wird gelöscht…",
+    "deletedNotice": "Dein Konto wurde gelöscht.",
+    "item1": "Dein Profil, deine Einstellungen und dein Avatar",
+    "item2": "Deine gespeicherten Pläne, Suchen und Präferenzen",
+    "item3": "Deine Flug- und Preisbeobachtungen, Benachrichtigungen und Geräte",
+    "item4": "Dein Feedback, Spielfortschritt und Nutzungsdaten"
+  }
+}
