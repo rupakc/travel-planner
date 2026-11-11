@@ -76,7 +76,7 @@ describe('ExpenseLog', () => {
     expect(item.path).toBe('/trips/12/expenses')
     expect(item.body.client_id).toMatch(/[0-9a-f-]{36}/)
     expect(item.body.amount).toBe('12.50')
-    expect(item.key).toBe(item.body.client_id)
+    expect(item.key).toBe(`expense:12:${item.body.client_id}`)
     expect(host.textContent).toContain('Waiting to sync')
     expect(emit).toHaveBeenCalledWith('expense_action', { action: 'add', category: 'food', queued: true })
   })
@@ -186,5 +186,18 @@ describe('ExpenseLog', () => {
     await act(async () => { resolve(listing({ rate: { local: 'JPY', usd_to_local: 150, as_of: null } })) })
     expect(q('expense-amount').value).toBe('3')
     expect(q('expense-currency').value).toBe('JPY')
+  })
+
+  it('does not leak one trip\'s waiting rows into another', async () => {
+    online = false
+    await render()
+    await type('expense-amount', '7')
+    await act(async () => { q('expense-save').click() })
+    expect(host.textContent).toContain('Waiting to sync')
+    await act(async () => { root.render(<ExpenseLog trip={{ id: 13, budget_usd: 1000 }} token="tok" />) })
+    expect(host.textContent).not.toContain('Waiting to sync')
+    expect(sessionStorage.getItem('tp_exp_pending:7:12')).not.toBeNull()
+    await act(async () => { root.render(<ExpenseLog trip={{ id: 12, budget_usd: 1000 }} token="tok" />) })
+    expect(host.textContent).toContain('Waiting to sync')
   })
 })

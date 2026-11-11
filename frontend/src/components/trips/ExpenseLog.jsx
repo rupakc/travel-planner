@@ -46,6 +46,13 @@ export default function ExpenseLog({ trip, token }) {
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
+  const [loadedKey, setLoadedKey] = useState(storeKey)
+  if (loadedKey !== storeKey) { // another user or trip: its queued rows, not the old ones
+    setLoadedKey(storeKey)
+    setPending(readPending(storeKey))
+    setData(null)
+    setEditing(null)
+  }
   const tripId = trip?.id
   const today = localToday()
 
@@ -74,7 +81,7 @@ export default function ExpenseLog({ trip, token }) {
     const row = { id: `pending-${body.client_id}`, ...body, note: body.note || '', pending: true }
     setPending((p) => [...p, row])
     await enqueue(uid, {
-      method: 'POST', path: `/trips/${tripId}/expenses`, body, key: body.client_id,
+      method: 'POST', path: `/trips/${tripId}/expenses`, body, key: `expense:${tripId}:${body.client_id}`,
     })
   }
 
