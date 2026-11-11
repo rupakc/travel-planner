@@ -23,7 +23,8 @@
   "email": {
     "label": "电子邮箱",
     "verified": "已验证",
-    "unverified": "未验证"
+    "unverified": "未验证",
+    "none": "尚无电子邮箱"
   },
   "menu": {
     "button": "账户菜单",

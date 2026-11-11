@@ -23,7 +23,8 @@
   "email": {
     "label": "Email",
     "verified": "Verified",
-    "unverified": "Not verified"
+    "unverified": "Not verified",
+    "none": "No email yet"
   },
   "menu": {
     "button": "Account menu",

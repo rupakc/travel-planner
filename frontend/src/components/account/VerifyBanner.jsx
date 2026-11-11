@@ -47,7 +47,8 @@ export default function VerifyBanner() {
       <span data-tid="verify-banner.text">
         {state.phase === 'sent' ? t('banner.sent') : t('banner.text')}
       </span>
-      {state.phase !== 'sent' && (
+      {/* No address yet (email: null): nothing to send a link to. */}
+      {state.phase !== 'sent' && user.email !== null && (
         <button
           type="button" data-tid="verify-banner.send" onClick={send} disabled={state.phase === 'sending'}
           className="font-semibold underline disabled:opacity-60"

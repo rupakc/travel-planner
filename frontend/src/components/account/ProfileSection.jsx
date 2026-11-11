@@ -124,6 +124,14 @@ export default function ProfileSection({ account = null, reload }) {
             <dt className="text-xs uppercase tracking-wide text-slate-500">{t('username.label')}</dt>
             <dd className="mt-1 text-slate-800" data-tid="profile.username">@{user.username}</dd>
           </div>
+          {/* `email: null` (an OAuth account whose provider email isn't verified
+              yet) gets a neutral line; a missing key (old backend) shows nothing. */}
+          {user.email === null && (
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-slate-500">{t('email.label')}</dt>
+              <dd className="mt-1 text-slate-500" data-tid="profile.emailNone">{t('email.none')}</dd>
+            </div>
+          )}
           {user.email && (
             <div>
               <dt className="text-xs uppercase tracking-wide text-slate-500">{t('email.label')}</dt>
