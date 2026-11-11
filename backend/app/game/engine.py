@@ -3,14 +3,19 @@
 from datetime import UTC, date, datetime
 from functools import lru_cache
 
+from ..core.config import settings
 from ..db import game_db
 from ..db.database import get_connection
 from .rules import Rules, load_rules
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=4)
+def _rules_for(path: str | None) -> Rules:
+    return load_rules(path or None)
+
+
 def get_rules() -> Rules:
-    return load_rules()
+    return _rules_for(settings.game_rules_path or None)
 
 
 def level_for(xp: int, rules: Rules) -> int:

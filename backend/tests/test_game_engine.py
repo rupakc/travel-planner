@@ -127,3 +127,15 @@ def test_valid_override_is_used_and_once_key_is_forced(uid, tmp_path):
     assert load_rules(str(p)).rules["email_verified"].points == 7
     engine.award(uid, "email_verified", "k1")
     assert [r["idem_key"] for r in _ledger(uid)] == [f"email_verified:{uid}"]
+
+
+def test_engine_honours_rules_path_setting(uid, tmp_path, monkeypatch):
+    data = json.loads(open(load_rules.__globals__["BUILTIN_PATH"]).read())
+    data["rules"]["email_verified"]["points"] = 7
+    p = tmp_path / "ok.json"
+    p.write_text(json.dumps(data))
+    monkeypatch.setattr(settings, "game_rules_path", str(p))
+    assert engine.get_rules().rules["email_verified"].points == 7
+    assert engine.award(uid, "email_verified", "k")["xp"] == 7
+    monkeypatch.setattr(settings, "game_rules_path", str(tmp_path / "missing.json"))
+    assert engine.get_rules().rules["email_verified"].points == 50
