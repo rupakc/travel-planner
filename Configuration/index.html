@@ -1819,7 +1819,7 @@
 </tr>
 </tbody>
 </table>
-<p>Anyone can create an account with <code>POST /api/auth/signup</code> (a verification email is sent first) unless <code>SIGNUP_MODE=invite</code>; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: <a href="../Accounts-API/">Accounts API</a>.</p>
+<p>With <code>SIGNUP_ENABLED=true</code> and email delivery available, anyone can create an account with <code>POST /api/auth/signup</code> (a verification email is sent first) unless <code>SIGNUP_MODE=invite</code>; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: <a href="../Accounts-API/">Accounts API</a>.</p>
 <h3 id="sign-up-sessions-and-email-links">Sign-up, sessions and email links</h3>
 <table>
 <thead>
@@ -1830,6 +1830,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>SIGNUP_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Operator opt-in for native (password) sign-up. While false, <code>POST /api/auth/signup</code> answers <code>503 email_unavailable</code> and <code>GET /api/config</code> reports <code>signup_available: false</code>, even when SMTP is set for fare alerts. OAuth sign-up and password reset are not affected.</td>
+</tr>
 <tr>
 <td><code>SIGNUP_MODE</code></td>
 <td><code>open</code></td>
