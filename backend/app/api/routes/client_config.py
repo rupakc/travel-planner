@@ -34,5 +34,8 @@ def client_config(response: Response) -> dict:
             "telemetry": telemetry,
             "accounts": True,
             "game": bool(settings.game_enabled),
+            "trips": True,
+            "journey": bool(settings.journey_ui_enabled),
+            "offline_pack": bool(settings.offline_pack_enabled),
         },
     }

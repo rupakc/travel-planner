@@ -54,6 +54,13 @@ from .api.routes.signup import router as signup_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.telemetry import router as telemetry_router
+from .api.routes.trip_journal import router as trip_journal_router
+from .api.routes.trip_money import router as trip_money_router
+from .api.routes.trip_offline import router as trip_offline_router
+from .api.routes.trip_prep import router as trip_prep_router
+from .api.routes.trip_recap import router as trip_recap_router
+from .api.routes.trip_today import router as trip_today_router
+from .api.routes.trips import router as trips_router
 from .api.routes.walking_tours import router as walking_tours_router
 from .core import sse as _sse
 from .core.ai_quota import daily_quota
@@ -265,6 +272,13 @@ app.include_router(
     chat_router, prefix="/api", tags=["chat"], dependencies=_limited("chat")
 )
 app.include_router(plans_router, prefix="/api", tags=["plans"])
+app.include_router(trips_router, prefix="/api", tags=["trips"])
+app.include_router(trip_prep_router, prefix="/api", tags=["trips"])
+app.include_router(trip_money_router, prefix="/api", tags=["trips"])
+app.include_router(trip_journal_router, prefix="/api", tags=["trips"])
+app.include_router(trip_offline_router, prefix="/api", tags=["trips"])
+app.include_router(trip_today_router, prefix="/api", tags=["trips"])
+app.include_router(trip_recap_router, prefix="/api", tags=["trips"])
 app.include_router(preferences_router, prefix="/api", tags=["preferences"])
 app.include_router(recent_searches_router, prefix="/api", tags=["recent_searches"])
 app.include_router(airports_router, prefix="/api", tags=["airports"])
