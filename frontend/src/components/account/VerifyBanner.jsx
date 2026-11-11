@@ -35,19 +35,21 @@ export default function VerifyBanner() {
       await requestEmailVerification(token)
       setState({ phase: 'sent', error: '' })
     } catch (err) {
-      setState({ phase: 'error', error: errorText(t, err) })
+      setState({ phase: 'error', error: errorText(t, err), noEmail: err?.code === 'no_email' })
     }
   }
 
   return (
     <div
       role="status" data-tid="verify-banner"
-      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-sm bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-sm bg-amber-100 text-amber-900"
     >
       <span data-tid="verify-banner.text">
         {state.phase === 'sent' ? t('banner.sent') : t('banner.text')}
       </span>
-      {state.phase !== 'sent' && (
+      {/* Hidden after 422 no_email (nothing pending to send to); with email: null
+          the server re-sends to the pending address, so the button stays. */}
+      {state.phase !== 'sent' && !state.noEmail && (
         <button
           type="button" data-tid="verify-banner.send" onClick={send} disabled={state.phase === 'sending'}
           className="font-semibold underline disabled:opacity-60"
@@ -55,7 +57,7 @@ export default function VerifyBanner() {
           {t('banner.send')}
         </button>
       )}
-      {state.error && <span data-tid="verify-banner.error" className="text-red-700 dark:text-red-300">{state.error}</span>}
+      {state.error && <span data-tid="verify-banner.error" className="text-red-700">{state.error}</span>}
       <button
         type="button" data-tid="verify-banner.dismiss" aria-label={t('banner.dismiss')}
         onClick={() => { write(DISMISS_KEY); setDismissed(true) }}

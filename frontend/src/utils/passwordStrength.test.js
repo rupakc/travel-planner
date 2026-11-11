@@ -15,6 +15,11 @@ describe('passwordStrength', () => {
     expect(passwordStrength('Ab1!').score).toBe(0)
     expect(passwordStrength('Ab1!').hints).toContain('tooShort')
   })
+  it('treats 8-9 characters as too short (the server minimum is 10)', () => {
+    expect(passwordStrength('Zq7!vL9x').hints).toContain('tooShort')
+    expect(passwordStrength('Zq7!vL9xw').score).toBe(0)
+    expect(passwordStrength('Zq7!vL9xwT').hints).not.toContain('tooShort')
+  })
   it('flags sequences', () => {
     expect(passwordStrength('abcd1234efgh').hints).toContain('sequence')
   })

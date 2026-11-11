@@ -1,37 +1,100 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { onSessionRevoked } from '../services/sessionRevoked'
 
 const AuthContext = createContext(null)
 
 const telemetry = (fn) => { import('../telemetry/client').then(fn).catch(() => {}) }
 
+const readStoredToken = () => { try { return localStorage.getItem('tp_token') } catch { return null } }
+const writeStoredToken = (value) => {
+  try { if (value) localStorage.setItem('tp_token', value); else localStorage.removeItem('tp_token') } catch { /* private mode */ }
+}
+// Removes the stored token only while it is still `value`: another tab may
+// have stored a fresh token meanwhile, and that one must survive.
+const dropStoredToken = (value) => { if (value && readStoredToken() === value) writeStoredToken(null) }
+
 export function AuthProvider({ children }) {
   const [user, setUser]   = useState(null)
-  const [token, setToken] = useState(() => localStorage.getItem('tp_token'))
+  const [token, setTokenState] = useState(readStoredToken)
   const [preferences, setPreferences] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Why the user was signed out without asking ('session_revoked'), for the login page.
+  const [signOutReason, setSignOutReason] = useState(null)
+  // The token this tab uses right now (synchronously, for listeners), and an
+  // epoch that every sign-in / sign-out bumps so a late answer for an older
+  // session can't overwrite a newer one.
+  const tokenRef = useRef(token)
+  const epoch = useRef(0)
+  const setToken = useCallback((value) => { tokenRef.current = value; setTokenState(value) }, [])
+
+  // Loads the user (and preferences) for `tok`; on failure signs this tab out
+  // without deleting a token another tab stored.
+  const loadSession = useCallback((tok) => {
+    const mine = ++epoch.current
+    return fetch('/api/auth/me', { headers: { Authorization: `Bearer ${tok}` } })
+      .then(async r => {
+        if (r.ok) return r.json()
+        const body = r.status === 401 ? await r.json().catch(() => ({})) : {}
+        if (body?.error_code === 'session_revoked' && epoch.current === mine) setSignOutReason('session_revoked')
+        return Promise.reject()
+      })
+      .then(u => {
+        if (epoch.current !== mine) return
+        setUser(u)
+        if (u.requires_password_change) return
+        return fetch('/api/preferences', { headers: { Authorization: `Bearer ${tok}` } })
+          .then(r => r.ok ? r.json() : null)
+          .then(p => { if (p && epoch.current === mine) setPreferences(p) })
+      })
+      .catch(() => {
+        if (epoch.current !== mine) return
+        dropStoredToken(tok)
+        setToken(null)
+        setUser(null)
+      })
+  }, [setToken])
 
   useEffect(() => {
     if (!token) { setLoading(false); return }
-    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(u => {
-        setUser(u)
-        if (u.requires_password_change) return
-        return fetch('/api/preferences', { headers: { Authorization: `Bearer ${token}` } })
-          .then(r => r.ok ? r.json() : null)
-          .then(p => { if (p) setPreferences(p) })
-      })
-      .catch(() => { localStorage.removeItem('tp_token'); setToken(null) })
-      .finally(() => setLoading(false))
+    // Only the latest attempt ends loading: StrictMode runs this twice, and the
+    // superseded first run must not report "loaded, nobody signed in".
+    const pending = loadSession(token)
+    const mine = epoch.current
+    pending.finally(() => { if (epoch.current === mine) setLoading(false) })
   }, []) // only on mount
+
+  // A request answered 401 session_revoked (password reset, "sign out
+  // everywhere" or a password change elsewhere). Only this tab's own token
+  // counts: a late answer for an older token is ignored. When another tab has
+  // meanwhile stored a different token (it reset or changed the password),
+  // this tab adopts it; otherwise it signs out and says why.
+  useEffect(() => onSessionRevoked((used) => {
+    const current = tokenRef.current
+    if (!current || (used && used !== current)) return
+    const stored = readStoredToken()
+    if (stored && stored !== current) {
+      setToken(stored)
+      loadSession(stored)
+      return
+    }
+    epoch.current += 1
+    dropStoredToken(current)
+    setToken(null)
+    setUser(null)
+    setLoading(false)
+    setSignOutReason('session_revoked')
+  }), [loadSession, setToken])
 
   // Adopts a Session ({access_token, user}): stores the token, sets the user,
   // loads preferences. Used by login and every sign-up / OAuth / reset flow.
   const applySession = useCallback(async (session) => {
     const accessToken = session.access_token
-    localStorage.setItem('tp_token', accessToken)
+    epoch.current += 1
+    writeStoredToken(accessToken)
     setToken(accessToken)
     setUser(session.user)
+    setLoading(false)
+    setSignOutReason(null)
     if (!session.user?.requires_password_change) {
       try {
         const prefsRes = await fetch('/api/preferences', { headers: { Authorization: `Bearer ${accessToken}` } })
@@ -40,7 +103,7 @@ export function AuthProvider({ children }) {
     }
     telemetry((m) => m.setUserPresent(true))
     return session.user
-  }, [])
+  }, [setToken])
 
   const login = async (username, password) => {
     const res = await fetch('/api/auth/login', {
@@ -68,7 +131,8 @@ export function AuthProvider({ children }) {
   }, [token])
 
   const updateTokenAfterPasswordChange = (newToken) => {
-    localStorage.setItem('tp_token', newToken)
+    epoch.current += 1
+    writeStoredToken(newToken)
     setToken(newToken)
     setUser(u => u ? { ...u, requires_password_change: false } : u)
   }
@@ -76,9 +140,11 @@ export function AuthProvider({ children }) {
   const setUserEmail = (email) => setUser(u => (u ? { ...u, email } : u))
 
   const logout = () => {
-    localStorage.removeItem('tp_token')
+    epoch.current += 1
+    writeStoredToken(null)
     setToken(null)
     setUser(null)
+    setLoading(false)
   }
 
   const refreshPreferences = useCallback(() => {
@@ -108,6 +174,7 @@ export function AuthProvider({ children }) {
       refreshUser,
       accountVerified: user?.account_verified !== false,
       logout,
+      signOutReason,
       loading,
       isAuthenticated: !!user,
       isAdmin: !!user?.is_admin,

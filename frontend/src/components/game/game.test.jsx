@@ -4,12 +4,14 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 
+const clientConfig = vi.hoisted(() => ({ value: { config: { features: { accounts: true, game: true } }, loaded: true } }))
+vi.mock('../../hooks/useClientConfig', async (orig) => ({ ...(await orig()), useClientConfig: () => clientConfig.value }))
 const auth = { token: 'tok' }
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }))
 vi.mock('../../services/gameApi', () => ({ getGameMe: vi.fn(), getGameCatalog: vi.fn() }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 const account = { settings: { hide_game: false } }
-vi.mock('../account/SettingsSync', () => ({ useAccountSettings: () => account }))
+vi.mock('../account/SettingsSync', () => ({ useAccountSettings: () => account, useSettingsLoading: () => false, settingsLoading: () => false }))
 
 import GameNavChip from './GameNavChip'
 import GameSection from './GameSection'
@@ -44,6 +46,7 @@ const setReduced = (on) => {
 }
 
 beforeEach(() => {
+  clientConfig.value = { config: { features: { accounts: true, game: true } }, loaded: true }
   vi.clearAllMocks()
   vi.useRealTimers()
   auth.token = 'tok'
@@ -58,6 +61,19 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
 describe('GameNavChip', () => {
+  it('never probes /game/me when /config has no features.game (old backend, GAME_ENABLED=false)', async () => {
+    clientConfig.value = { config: {}, loaded: true }
+    await render(<GameNavChip />)
+    clientConfig.value = { config: { features: { accounts: true, game: false } }, loaded: true }
+    await render(<GameNavChip />)
+    expect(getGameMe).not.toHaveBeenCalled()
+    expect(tid('game.navChip')).toBeNull()
+  })
+  it('does not wrap (bn "লেভেল 2" at 375 px)', async () => {
+    await render(<GameNavChip />)
+    expect(tid('game.navChip').className).toMatch(/\bwhitespace-nowrap\b/)
+    expect(tid('game.navChip').className).toMatch(/\bshrink-0\b/)
+  })
   it('shows the level with a progress ring', async () => {
     await render(<GameNavChip />)
     expect(tid('game.navChip').textContent).toContain('Lv 2')

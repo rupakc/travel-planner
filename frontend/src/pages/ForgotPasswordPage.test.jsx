@@ -57,4 +57,11 @@ describe('ForgotPasswordPage', () => {
     await submit('a@example.com')
     expect(container.querySelector('[data-tid="forgot.error"]').textContent).toMatch(/Email isn't available/)
   })
+
+  it('a network failure (status 0) is an error, not "on its way"', async () => {
+    api.requestPasswordReset.mockRejectedValueOnce({ status: 0, code: null, detail: 'Network Error' })
+    await submit('a@example.com')
+    expect(container.querySelector('[data-tid="forgot.sent"]')).toBeNull()
+    expect(container.querySelector('[data-tid="forgot.error"]').textContent).toBe('Something went wrong. Please try again.')
+  })
 })

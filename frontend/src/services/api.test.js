@@ -83,3 +83,23 @@ describe('recheckStressTest', () => {
     expect(post).toHaveBeenCalledWith('/stress-test', { itinerary: { days: [] }, locale: 'fr' }, undefined)
   })
 })
+
+describe('workerError', () => {
+  afterEach(() => { vi.resetModules() })
+
+  it('translates the code, else uses the message, and reports session_revoked with the stream token', async () => {
+    const { workerError } = await import('./api')
+    const { onSessionRevoked } = await import('./sessionRevoked')
+    const seen = []
+    const off = onSessionRevoked((tok) => seen.push(tok))
+    const { default: i18n } = await import('../i18n')
+    expect(workerError({ message: 'x', code: 'email_unverified', status: 403 }, 't1').message)
+      .toBe(i18n.t('errors:email_unverified'))
+    expect(workerError({ message: 'Too many requests — wait 5 s', code: null, status: 429 }, 't1').message)
+      .toBe('Too many requests — wait 5 s')
+    expect(seen).toEqual([])
+    workerError({ message: 'Signed out', code: 'session_revoked', status: 401 }, 't1')
+    expect(seen).toEqual(['t1'])
+    off()
+  })
+})

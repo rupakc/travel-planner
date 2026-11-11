@@ -28,7 +28,7 @@ import CostBreakdown from '../components/CostBreakdown'
 import PlanExport from '../components/PlanExport'
 import { enumLabel } from '../utils/enumLabel'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
-import { localeField } from '../services/api'
+import { localeField, workerError } from '../services/api'
 import { buildApiHistory } from '../utils/chatHistory'
 import { track } from '../utils/analytics'
 import { stripLinkEvidence } from '../utils/verification'
@@ -75,7 +75,7 @@ function streamChat(messages, onEvent, onDone, onError, token, selections, searc
 
   worker.onmessage = ({ data }) => {
     if (data.type === '__error') {
-      onError(new Error(data.message))
+      onError(workerError(data, token))
       worker.terminate()
     } else if (data.type === '__stream_end') {
       onDone()

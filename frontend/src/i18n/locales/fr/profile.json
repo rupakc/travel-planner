@@ -23,7 +23,8 @@
   "email": {
     "label": "E-mail",
     "verified": "Vérifié",
-    "unverified": "Non vérifié"
+    "unverified": "Non vérifié",
+    "none": "Pas encore d’adresse e-mail"
   },
   "menu": {
     "button": "Menu du compte",

@@ -4,7 +4,7 @@ import { Sparkles, Zap } from 'lucide-react'
 import { onGameAnnounce } from '../../game/announce'
 import { getGameCatalog } from '../../services/gameApi'
 import { emit } from '../../telemetry/client'
-import { useAccountSettings } from '../account/SettingsSync'
+import { useAccountSettings, useSettingsLoading, settingsLoading } from '../account/SettingsSync'
 import { badgeIcon, TIER_CLASS } from './icons'
 
 export const DISMISS_MS = 4000
@@ -58,6 +58,9 @@ export default function GameCelebration() {
   const { t } = useTranslation('game')
   const { settings } = useAccountSettings()
   const hidden = !!settings?.hide_game
+  // Wait for the user's settings before taking a held (replayed) award, so
+  // someone who hid the game never sees one flash up on sign-in.
+  const waiting = useSettingsLoading()
   const [items, setItems] = useState([])
   const catalog = useRef(null)
   const nextId = useRef(0)
@@ -74,7 +77,7 @@ export default function GameCelebration() {
   }, [])
 
   useEffect(() => {
-    if (hidden) return undefined
+    if (hidden || waiting || settingsLoading()) return undefined
     const off = onGameAnnounce(async (delta) => {
       for (const a of delta.awards || []) {
         emit('game_award', { rule: a.rule, points: a.points })
@@ -92,9 +95,9 @@ export default function GameCelebration() {
         emit('level_up', { level: delta.level_up.to })
         push({ kind: 'level', to: delta.level_up.to })
       }
-    })
+    }, { replay: true })
     return off
-  }, [hidden, push])
+  }, [hidden, waiting, push])
 
   useEffect(() => () => {
     for (const timer of timers.current) clearTimeout(timer)
@@ -114,15 +117,15 @@ export default function GameCelebration() {
       {items.map((it) => {
         if (it.kind === 'award') {
           return (
-            <div key={it.id} data-tid="game.toast.award" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white shadow-lg dark:bg-slate-100 dark:text-slate-900">
-              <Zap size={14} aria-hidden="true" className="text-amber-400 dark:text-amber-600" />
+            <div key={it.id} data-tid="game.toast.award" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white shadow-lg">
+              <Zap size={14} aria-hidden="true" className="text-amber-400" />
               {t('toast.xp', { points: it.points, rule: t(`rules.${it.rule}`, { defaultValue: it.rule }) })}
             </div>
           )
         }
         if (it.kind === 'level') {
           return (
-            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-lg dark:bg-teal-400 dark:text-slate-900">
+            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-lg">
               <Sparkles size={14} aria-hidden="true" />
               {t('toast.level', { to: it.to })}
             </div>
@@ -130,15 +133,15 @@ export default function GameCelebration() {
         }
         const Icon = badgeIcon(it.icon)
         return (
-          <div key={it.id} data-tid="game.toast.badge" className="game-pop pointer-events-none relative flex items-center gap-3 rounded-xl border border-teal-200 bg-white px-4 py-3 shadow-lg dark:border-teal-800 dark:bg-slate-800">
+          <div key={it.id} data-tid="game.toast.badge" className="game-pop pointer-events-none relative flex items-center gap-3 rounded-xl border border-teal-200 bg-white px-4 py-3 shadow-lg">
             {!reducedMotion() && <Confetti />}
             <span className={`rounded-full p-2 ${TIER_CLASS[it.tier] || TIER_CLASS.bronze}`}>
               <Icon size={20} aria-hidden="true" />
             </span>
             <span className="text-sm">
-              <span className="block text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-300">{t('toast.badge')}</span>
-              <span className="block font-semibold text-slate-800 dark:text-slate-100">{t(`badges.${it.badge}.name`, { defaultValue: it.badge })}</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">{t(`badges.${it.badge}.desc`, { defaultValue: '' })}</span>
+              <span className="block text-xs font-medium uppercase tracking-wide text-teal-700">{t('toast.badge')}</span>
+              <span className="block font-semibold text-slate-800">{t(`badges.${it.badge}.name`, { defaultValue: it.badge })}</span>
+              <span className="block text-xs text-slate-500">{t(`badges.${it.badge}.desc`, { defaultValue: '' })}</span>
             </span>
           </div>
         )

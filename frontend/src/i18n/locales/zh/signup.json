@@ -12,7 +12,7 @@
   },
   "password": {
     "label": "密码",
-    "placeholder": "至少 8 个字符",
+    "placeholder": "至少 10 个字符",
     "show": "显示密码",
     "hide": "隐藏密码"
   },
@@ -38,7 +38,7 @@
       "4": "强"
     },
     "hint": {
-      "tooShort": "至少使用 8 个字符",
+      "tooShort": "至少使用 10 个字符",
       "longer": "越长越安全",
       "variety": "混合字母、数字和符号",
       "repeats": "避免重复字符",

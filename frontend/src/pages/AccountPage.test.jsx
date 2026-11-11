@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 
+const clientConfig = vi.hoisted(() => ({ value: { config: { features: { accounts: true, game: true } }, loaded: true } }))
+vi.mock('../hooks/useClientConfig', async (orig) => ({ ...(await orig()), useClientConfig: () => clientConfig.value }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
 vi.mock('../services/accountApi', () => ({ getAccount: vi.fn() }))
 vi.mock('../components/account/ProfileSection', () => ({
@@ -21,12 +23,13 @@ vi.mock('../components/game/GameSection', () => ({ default: () => { throw new Er
 
 import { initI18n } from '../i18n/index'
 import { getAccount } from '../services/accountApi'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import AccountPage from './AccountPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let container, root
 beforeEach(async () => {
+  clientConfig.value = { config: { features: { accounts: true, game: true } }, loaded: true }
   await initI18n({ lng: 'en' })
   getAccount.mockReset()
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -62,6 +65,28 @@ describe('AccountPage', () => {
     ))
     expect(tid('account.toast').textContent).toBe('Account connected.')
     expect(tid('account.toast').getAttribute('role')).toBe('status')
+  })
+
+  it('shows an error toast for a failed link and clears the router state', async () => {
+    getAccount.mockResolvedValue({ id: 'u1' })
+    let loc
+    function Where() { loc = useLocation(); return null }
+    await act(async () => root.render(
+      <MemoryRouter initialEntries={[{ pathname: '/account', state: { toast: 'That account is already linked to another user.', toast_tone: 'error' } }]}>
+        <Where /><AccountPage />
+      </MemoryRouter>,
+    ))
+    expect(tid('account.toast')).toBeNull()
+    expect(tid('account.toast.error').textContent).toBe('That account is already linked to another user.')
+    expect(tid('account.toast.error').getAttribute('role')).toBe('alert')
+    expect(loc.state).toBeNull() // a reload won't replay it
+  })
+
+  it('never probes /account without features.accounts in /config', async () => {
+    clientConfig.value = { config: {}, loaded: true }
+    await act(async () => root.render(<MemoryRouter><AccountPage /></MemoryRouter>))
+    expect(getAccount).not.toHaveBeenCalled()
+    expect(tid('state').textContent).toBe('none')
   })
 
   it('shows no toast without router state', async () => {

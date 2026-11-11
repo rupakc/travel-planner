@@ -4,7 +4,7 @@ import { fmtDate } from '../../i18n/format'
 import { errorText } from '../../services/apiError'
 import { listInvites, createInvite, revokeInvite } from '../../services/adminInvitesApi'
 
-const inputCls = 'w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100'
+const inputCls = 'w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-gray-800'
 
 function statusOf(inv, now) {
   if (inv.revoked_at) return 'revoked'
@@ -14,10 +14,10 @@ function statusOf(inv, now) {
 }
 
 const STATUS_CLS = {
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-  revoked: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
-  expired: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
-  used: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+  active: 'bg-green-100 text-green-700',
+  revoked: 'bg-red-100 text-red-600',
+  expired: 'bg-gray-100 text-gray-600',
+  used: 'bg-gray-100 text-gray-600',
 }
 
 /** Invite codes. `initial` is the list the page fetched while probing; it seeds the first render only. */
@@ -84,21 +84,21 @@ export default function InvitesPanel({ token, initial = null }) {
 
   return (
     <div data-tid="adminInvites.panel">
-      <form onSubmit={submit} className="mb-6 p-4 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl space-y-3">
-        <h3 className="font-semibold text-teal-800 dark:text-teal-200 text-sm">{t('adminInvites:newInvite')}</h3>
+      <form onSubmit={submit} className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-xl space-y-3">
+        <h3 className="font-semibold text-teal-800 text-sm">{t('adminInvites:newInvite')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label htmlFor="inv-max" className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('adminInvites:maxUses')}</label>
+            <label htmlFor="inv-max" className="block text-xs font-medium text-gray-600 mb-1">{t('adminInvites:maxUses')}</label>
             <input id="inv-max" data-tid="adminInvites.max-uses" type="number" min="1" max="1000" required
               value={form.max_uses} onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value }))} className={inputCls} />
           </div>
           <div>
-            <label htmlFor="inv-days" className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('adminInvites:expiryDays')}</label>
+            <label htmlFor="inv-days" className="block text-xs font-medium text-gray-600 mb-1">{t('adminInvites:expiryDays')}</label>
             <input id="inv-days" data-tid="adminInvites.expiry-days" type="number" min="1" max="365" required
               value={form.expires_in_days} onChange={(e) => setForm((f) => ({ ...f, expires_in_days: e.target.value }))} className={inputCls} />
           </div>
           <div>
-            <label htmlFor="inv-note" className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('adminInvites:note')}</label>
+            <label htmlFor="inv-note" className="block text-xs font-medium text-gray-600 mb-1">{t('adminInvites:note')}</label>
             <input id="inv-note" data-tid="adminInvites.note" maxLength={80}
               value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} className={inputCls} />
           </div>
@@ -112,16 +112,16 @@ export default function InvitesPanel({ token, initial = null }) {
       {error && <p role="alert" className="mb-4 text-sm text-red-600">{error}</p>}
 
       {created && (
-        <div role="status" data-tid="adminInvites.created" className="mb-6 p-4 border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 rounded-xl">
-          <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">{t('adminInvites:shownOnce')}</p>
+        <div role="status" data-tid="adminInvites.created" className="mb-6 p-4 border border-amber-300 bg-amber-50 rounded-xl">
+          <p className="text-sm text-amber-800 mb-2">{t('adminInvites:shownOnce')}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <code data-tid="adminInvites.code" className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 rounded-lg font-mono text-base text-gray-800 dark:text-gray-100">{created.code}</code>
+            <code data-tid="adminInvites.code" className="px-3 py-1.5 bg-white border border-amber-200 rounded-lg font-mono text-base text-gray-800">{created.code}</code>
             <button type="button" onClick={copy} data-tid="adminInvites.copy"
-              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 font-medium rounded-lg">
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg">
               {copied ? t('adminInvites:copied') : t('adminInvites:copy')}
             </button>
             <button type="button" onClick={() => setCreated(null)} data-tid="adminInvites.dismiss"
-              className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:underline">
+              className="px-3 py-1.5 text-sm text-gray-600 hover:underline">
               {t('adminInvites:dismiss')}
             </button>
           </div>
@@ -133,9 +133,9 @@ export default function InvitesPanel({ token, initial = null }) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-gray-400 py-8 text-center">{t('adminInvites:empty')}</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-gray-200">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs uppercase">
+            <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
               <tr>
                 <th className="px-4 py-3 text-left">{t('adminInvites:colCode')}</th>
                 <th className="px-4 py-3 text-center">{t('adminInvites:colUses')}</th>
@@ -145,7 +145,7 @@ export default function InvitesPanel({ token, initial = null }) {
                 <th className="px-4 py-3 text-center">{t('adminInvites:colActions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-100">
               {rows.map((inv) => {
                 const status = statusOf(inv, now)
                 return (
@@ -160,7 +160,7 @@ export default function InvitesPanel({ token, initial = null }) {
                     <td className="px-4 py-3 text-center">
                       {status === 'active' && (
                         <button type="button" onClick={() => revoke(inv.id)} data-tid="adminInvites.revoke"
-                          className="text-xs px-2 py-1 rounded-md font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">
+                          className="text-xs px-2 py-1 rounded-md font-medium text-red-600 hover:bg-red-50">
                           {t('adminInvites:revoke')}
                         </button>
                       )}

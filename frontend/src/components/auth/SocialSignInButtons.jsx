@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom'
 import { getAuthProviders } from '../../services/api'
 import { navigateTo } from './navigate'
 import { returnPathFrom } from '../../utils/returnPath'
+import { safeAuthStart } from '../../utils/navigate'
 import { emit } from '../../telemetry/client'
 import { AppleIcon, GoogleIcon, FacebookIcon, GitHubIcon } from './providerIcons'
 
@@ -24,21 +25,6 @@ const PROVIDERS = [
   { id: 'github', name: 'GitHub', Icon: GitHubIcon,
     cls: 'bg-[#24292f] text-[#ffffff] border-[#24292f] hover:bg-[#32383f] dark:bg-[#f6f8fa] dark:text-[#24292f] dark:border-[#d0d7de] dark:hover:bg-[#ffffff]' },
 ]
-
-// Only a same-origin OAuth start path is ever navigated to.
-// The URL parser folds dot segments (including %2e%2e) and treats a backslash
-// as a slash, so the resolved path is what gets checked; the raw string must
-// also be free of `..` and backslashes.
-function safeStart(url) {
-  if (typeof url !== 'string' || url.includes('..') || url.includes('\\')) return null
-  try {
-    const u = new URL(url, window.location.origin)
-    if (u.origin !== window.location.origin || !u.pathname.startsWith('/api/auth/')) return null
-    return u.pathname + u.search
-  } catch {
-    return null
-  }
-}
 
 // The start URL gets the client type and where to come back to (re-validated
 // as a same-origin path by returnPathFrom).
@@ -68,7 +54,8 @@ export default function SocialSignInButtons({ mode = 'signin' }) {
 
   const choose = (p) => {
     const info = providers[p.id]
-    const start = info?.configured ? safeStart(info.start_url) : null
+    // Only a same-origin /api/auth/ start path is ever navigated to (the one shared guard).
+    const start = info?.configured ? safeAuthStart(info.start_url) : null
     if (start) {
       setSoon(null)
       emit('auth_start', { method: p.id, mode })

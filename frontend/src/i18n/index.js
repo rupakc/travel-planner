@@ -8,7 +8,13 @@ import {
   DEFAULT_LANGUAGE, LANGUAGE_CODES, SCRIPT_FONTS, intlLocale, isSupportedLanguage,
 } from './languages'
 
+import { setErrorTranslator } from '../utils/httpError'
+
 export { LANGUAGES } from './languages'
+
+// Legacy error paths (fetch, the old axios client, the SSE workers' errors)
+// translate `error_code` through this.
+setErrorTranslator((key, options) => i18n.t(key, options))
 
 const STORAGE_KEY = 'tp_lang'
 

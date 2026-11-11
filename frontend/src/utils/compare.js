@@ -1,5 +1,6 @@
 // Pure helpers for the trip-comparison feature.
 import i18n from '../i18n'
+import { axiosErrorDetail } from './httpError'
 import { fmtNumber } from '../i18n/format'
 
 /**
@@ -94,10 +95,9 @@ export function fmtDuration(minutes) {
  * @param {unknown} err axios error (or anything thrown)
  */
 export function compareErrorReason(err) {
-  const res = err && typeof err === 'object' ? err.response : null
-  const detail = res?.data?.detail
-  if (typeof detail === 'string' && detail.trim()) return detail.trim()
-  const status = res?.status
+  // The translated error_code (email_unverified, ai_daily_quota, …), else the string detail.
+  const { detail, status } = axiosErrorDetail(err)
+  if (detail) return detail
   if (typeof status === 'number' && status >= 400 && status < 500) return i18n.t('misc:compare.errorCheck')
   return i18n.t('misc:compare.errorUnavailable')
 }

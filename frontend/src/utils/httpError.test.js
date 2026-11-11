@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { responseErrorMessage, axiosErrorDetail } from './httpError'
+import { responseErrorMessage, axiosErrorDetail, responseErrorInfo, errorCodeText } from './httpError'
 
 const jsonResponse = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -45,5 +45,27 @@ describe('axiosErrorDetail', () => {
   it('handles network errors and non-errors', () => {
     expect(axiosErrorDetail(new Error('Network Error'))).toEqual({ detail: null, status: null })
     expect(axiosErrorDetail(undefined)).toEqual({ detail: null, status: null })
+  })
+})
+
+describe('error_code translation (contract: render text from error_code, fall back to detail)', () => {
+  it('translates a known error_code on fetch responses and axios errors', async () => {
+    // The test setup initialises i18n, which registers its translator.
+    const res = jsonResponse(429, { detail: "You've used today's AI allowance for search.", error_code: 'ai_daily_quota', bucket: 'search' })
+    expect(await responseErrorMessage(res)).toBe("You've used today's AI allowance. It resets at midnight UTC.")
+    const err = { response: { status: 403, data: { detail: 'server text', error_code: 'email_unverified' } } }
+    expect(axiosErrorDetail(err)).toEqual({ detail: 'Confirm your email to use the AI planner.', status: 403 })
+  })
+
+  it('falls back to detail for an unknown code', async () => {
+    const res = jsonResponse(503, { detail: 'AI limit reached', error_code: 'no_such_code_xyz' })
+    expect(await responseErrorMessage(res)).toBe('AI limit reached')
+    expect(errorCodeText('no_such_code_xyz')).toBeNull()
+  })
+
+  it('responseErrorInfo gives status, code and detail without translating', async () => {
+    const res = jsonResponse(401, { detail: 'Signed out', error_code: 'session_revoked' })
+    expect(await responseErrorInfo(res)).toEqual({ status: 401, code: 'session_revoked', detail: 'Signed out' })
+    expect(await responseErrorInfo(new Response('x', { status: 502 }))).toEqual({ status: 502, code: null, detail: null })
   })
 })

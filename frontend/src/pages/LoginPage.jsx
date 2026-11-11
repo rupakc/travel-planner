@@ -17,13 +17,14 @@ export default function LoginPage() {
   const { t: tAll } = useTranslation()
   const { t: tOauth, i18n } = useTranslation('oauth')
   const { config } = useClientConfig()
-  const { login } = useAuth()
+  const { login, signOutReason } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   const from       = returnPathFrom(location)  // same-origin only
   // Set by the OAuth callback pages; a translation by notice_code wins over the carried text.
   const noticeKey = location.state?.notice_code?.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-  const notice = (noticeKey && i18n.exists(`oauth:${noticeKey}`) ? tOauth(noticeKey) : '') || location.state?.notice || ''
+  const notice = (noticeKey && i18n.exists(`oauth:${noticeKey}`) ? tOauth(noticeKey) : '') || location.state?.notice
+    || (signOutReason ? errorText(tAll, { code: signOutReason }) : '')
 
   const [form, setForm]     = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)
@@ -89,7 +90,7 @@ export default function LoginPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('login.title')}</h2>
 
           {notice && (
-            <div role="status" data-tid="login.notice" className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm text-sky-800 dark:bg-sky-950 dark:border-sky-900 dark:text-sky-200">
+            <div role="status" data-tid="login.notice" className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm text-sky-800">
               {notice}
             </div>
           )}
@@ -101,7 +102,7 @@ export default function LoginPage() {
           )}
 
           {pending && (
-            <div role="status" data-tid="login.pending" className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 dark:bg-amber-950 dark:border-amber-900 dark:text-amber-200">
+            <div role="status" data-tid="login.pending" className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
               <p className="font-medium">{tSignup('login.pendingTitle')}</p>
               <p className="mt-1">{pending.hint
                 ? tSignup('login.pendingBody', { hint: pending.hint })
@@ -114,14 +115,14 @@ export default function LoginPage() {
                     <input type="email" data-tid="login.resend-email" value={resendEmail}
                       onChange={e => setResendEmail(e.target.value)}
                       placeholder={tSignup('login.resendEmail')} aria-label={tSignup('login.resendEmail')}
-                      className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm text-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-amber-800" />
+                      className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm text-gray-900" />
                   )}
                   <button type="button" onClick={handleResend} data-tid="login.resend"
                     disabled={resendState === 'sending' || !resendEmail.trim()}
                     className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-60">
                     {resendState === 'sending' ? tSignup('login.resending') : tSignup('login.resend')}
                   </button>
-                  {resendError && <p role="alert" className="text-red-700 dark:text-red-300">{resendError}</p>}
+                  {resendError && <p role="alert" className="text-red-700">{resendError}</p>}
                 </div>
               )}
             </div>
@@ -130,9 +131,9 @@ export default function LoginPage() {
           <SocialSignInButtons mode="signin" />
 
           <div className="flex items-center gap-3 my-5" role="separator">
-            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="flex-1 h-px bg-gray-200" />
             <span className="text-xs uppercase tracking-wide text-gray-400">{tAuth('divider')}</span>
-            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="flex-1 h-px bg-gray-200" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -179,10 +180,10 @@ export default function LoginPage() {
           {(showSignup || showReset) && (
             <div className="mt-5 flex items-center justify-between text-sm">
               {showSignup && (
-                <Link to="/signup" data-tid="login.create-account" className="font-medium text-teal-700 dark:text-teal-400 hover:underline">{tSignup('login.createAccount')}</Link>
+                <Link to="/signup" data-tid="login.create-account" className="font-medium text-teal-700 hover:underline">{tSignup('login.createAccount')}</Link>
               )}
               {showReset && (
-                <Link to="/forgot-password" data-tid="login.forgot" className="text-gray-600 dark:text-gray-400 hover:underline ml-auto">{tSignup('login.forgot')}</Link>
+                <Link to="/forgot-password" data-tid="login.forgot" className="text-gray-600 hover:underline ml-auto">{tSignup('login.forgot')}</Link>
               )}
             </div>
           )}

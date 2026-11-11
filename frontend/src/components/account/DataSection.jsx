@@ -22,18 +22,49 @@ export default function DataSection({ account }) {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const inputRef = useRef(null)
+  const dialogRef = useRef(null)
+  const triggerRef = useRef(null)
+  const wasOpen = useRef(false)
 
+  // Modal: focus starts in the input, Tab / Shift+Tab wrap inside the dialog,
+  // Escape closes it, and focus returns to the Delete button on close.
   useEffect(() => {
     if (!open) return undefined
     inputRef.current?.focus()
-    const onKey = (e) => { if (e.key === 'Escape' && !deleting) setOpen(false) }
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !deleting) { setOpen(false); return }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusable = [...dialogRef.current.querySelectorAll('input, button, select, textarea, a[href]')]
+        .filter((el) => !el.disabled)
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!dialogRef.current.contains(document.activeElement)) {
+        e.preventDefault()
+        first.focus()
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, deleting])
 
+  useEffect(() => {
+    if (open) { wasOpen.current = true; return }
+    if (wasOpen.current) {
+      wasOpen.current = false
+      if (triggerRef.current?.isConnected) triggerRef.current.focus()
+    }
+  }, [open])
+
   if (!account) return null
   const username = account.user?.username || ''
-  const hasPassword = !!account.user?.has_password
+  const hasPassword = account.user?.has_password !== false   // same default as SecuritySection
   const matches = hasPassword ? value.length > 0 : value.trim() === username && username !== ''
 
   const download = async () => {
@@ -79,9 +110,9 @@ export default function DataSection({ account }) {
   const items = [1, 2, 3, 4].map((n) => t(`delete.item${n}`))
 
   return (
-    <section data-tid="account.data" className="bg-white dark:bg-gray-900 rounded-2xl ring-1 ring-gray-100 dark:ring-gray-800 p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('title')}</h2>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('intro')}</p>
+    <section data-tid="account.data" className="bg-white rounded-2xl ring-1 ring-gray-100 p-6 mb-6">
+      <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
+      <p className="text-sm text-gray-600 mt-1">{t('intro')}</p>
 
       <div className="mt-4 flex flex-wrap gap-3">
         <button type="button" data-tid="account.data.export" onClick={download} disabled={exporting}
@@ -89,41 +120,41 @@ export default function DataSection({ account }) {
           <Download size={16} aria-hidden="true" />
           {exporting ? t('export.working') : t('export.button')}
         </button>
-        <button type="button" data-tid="account.data.delete" onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-700 dark:border-red-800 dark:text-red-300 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950">
+        <button type="button" ref={triggerRef} data-tid="account.data.delete" onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-700 text-sm font-medium hover:bg-red-50">
           <Trash2 size={16} aria-hidden="true" />
           {t('delete.button')}
         </button>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('export.hint')}</p>
-      {exportError && <p role="alert" data-tid="account.data.export-error" className="text-sm text-red-700 dark:text-red-300 mt-2">{exportError}</p>}
+      <p className="text-xs text-gray-500 mt-2">{t('export.hint')}</p>
+      {exportError && <p role="alert" data-tid="account.data.export-error" className="text-sm text-red-700 mt-2">{exportError}</p>}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) close() }}>
-          <form role="dialog" aria-modal="true" aria-labelledby="account-delete-title" data-tid="account.data.dialog"
+          <form ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="account-delete-title" data-tid="account.data.dialog"
             onSubmit={confirmDelete}
-            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 space-y-4">
-            <h3 id="account-delete-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('delete.title')}</h3>
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 id="account-delete-title" className="text-lg font-semibold text-gray-900">{t('delete.title')}</h3>
+            <div className="text-sm text-gray-700">
               <p>{t('delete.intro')}</p>
               <ul className="list-disc pl-5 mt-1 space-y-0.5">
                 {items.map((item) => <li key={item}>{item}</li>)}
               </ul>
-              <p className="mt-2 font-medium text-red-700 dark:text-red-300">{t('delete.warn')}</p>
+              <p className="mt-2 font-medium text-red-700">{t('delete.warn')}</p>
             </div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700">
               {hasPassword ? t('delete.password') : t('delete.username', { username })}
               <input ref={inputRef} data-tid="account.data.confirm-input"
                 type={hasPassword ? 'password' : 'text'}
                 autoComplete={hasPassword ? 'current-password' : 'off'}
                 value={value} onChange={(e) => setValue(e.target.value)}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-800" />
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900" />
             </label>
-            {deleteError && <p role="alert" data-tid="account.data.delete-error" className="text-sm text-red-700 dark:text-red-300">{deleteError}</p>}
+            {deleteError && <p role="alert" data-tid="account.data.delete-error" className="text-sm text-red-700">{deleteError}</p>}
             <div className="flex justify-end gap-3">
               <button type="button" data-tid="account.data.cancel" onClick={close} disabled={deleting}
-                className="px-4 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">
                 {t('delete.cancel')}
               </button>
               <button type="submit" data-tid="account.data.confirm" disabled={!matches || deleting}

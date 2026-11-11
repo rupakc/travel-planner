@@ -28,3 +28,12 @@ describe('errorText', () => {
     expect(errorText(t, { code: null, detail: '' })).toBe('Generic')
   })
 })
+
+describe('errorText with the real catalogue', () => {
+  it('falls back to detail for an unknown code instead of showing the code', async () => {
+    const { default: i18n } = await import('../i18n')
+    const t = i18n.getFixedT('en')
+    expect(errorText(t, { code: 'ai_limit_xyz', detail: 'AI limit reached' })).toBe('AI limit reached')
+    expect(errorText(t, { code: 'email_unverified', detail: 'x' })).toBe('Confirm your email to use the AI planner.')
+  })
+})

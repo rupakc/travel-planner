@@ -12,7 +12,7 @@
   },
   "password": {
     "label": "Password",
-    "placeholder": "At least 8 characters",
+    "placeholder": "At least 10 characters",
     "show": "Show password",
     "hide": "Hide password"
   },
@@ -38,7 +38,7 @@
       "4": "strong"
     },
     "hint": {
-      "tooShort": "use at least 8 characters",
+      "tooShort": "use at least 10 characters",
       "longer": "longer is stronger",
       "variety": "mix letters, numbers and symbols",
       "repeats": "avoid repeated characters",

@@ -6,6 +6,8 @@ import { getTelemetrySummary } from '../services/api'
 import TelemetrySummary from '../components/admin/TelemetrySummary'
 import InvitesPanel from '../components/admin/InvitesPanel'
 import { listInvites } from '../services/adminInvitesApi'
+import { MIN_PASSWORD_LENGTH } from '../utils/passwordStrength'
+import { responseErrorMessage } from '../utils/httpError'
 
 const TABS = ['Users', 'Feedback', 'Analytics', 'Invites']
 
@@ -109,8 +111,7 @@ function UsersTab({ token, currentUsername }) {
         body: JSON.stringify(form),
       })
       if (!res.ok) {
-        const err = await res.json()
-        setFormError(err.detail || t('admin.users.createFailed'))
+        setFormError(await responseErrorMessage(res, t('admin.users.createFailed')))
         return
       }
       setForm({ username: '', email: '', password: '', is_admin: false })
@@ -163,6 +164,7 @@ function UsersTab({ token, currentUsername }) {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('admin.users.tempPasswordRequired')}</label>
               <input data-tid="admin.new-password" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                placeholder={t('admin.reset.minPlaceholder')} minLength={MIN_PASSWORD_LENGTH}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm" required />
             </div>
             <div className="flex items-end pb-1">
@@ -285,7 +287,7 @@ function ResetPasswordModal({ username, token, isSelf, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (form.password.length < 8) {
+    if (form.password.length < MIN_PASSWORD_LENGTH) {
       setError(t('admin.reset.tooShort'))
       return
     }
@@ -304,8 +306,7 @@ function ResetPasswordModal({ username, token, isSelf, onClose }) {
         }
       )
       if (!res.ok) {
-        const err = await res.json()
-        setError(err.detail || t('admin.reset.failed'))
+        setError(await responseErrorMessage(res, t('admin.reset.failed')))
         return
       }
       setSuccess(true)

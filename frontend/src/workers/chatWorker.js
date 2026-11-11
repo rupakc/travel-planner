@@ -1,11 +1,14 @@
 // SSE Web Worker for chat streaming — parses text deltas off the main thread
-import { responseErrorMessage } from '../utils/httpError.js'
+import { responseErrorInfo } from '../utils/httpError.js'
 
 self.onmessage = async ({ data: { url, body, headers } }) => {
   try {
     const response = await fetch(url, { method: 'POST', headers, body })
     if (!response.ok) {
-      self.postMessage({ type: '__error', message: await responseErrorMessage(response) })
+      // The page translates `code` (workers have no i18n) and reports a
+      // 401 session_revoked with the token it sent.
+      const { status, code, detail } = await responseErrorInfo(response)
+      self.postMessage({ type: '__error', message: detail || `HTTP ${status}`, code, status })
       return
     }
     const reader = response.body.getReader()

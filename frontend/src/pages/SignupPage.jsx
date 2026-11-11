@@ -20,8 +20,8 @@ const FIELD_OF = {
   display_name_invalid: 'displayName',
   invite_required: 'invite', invite_invalid: 'invite',
 }
-const INPUT = 'w-full py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100'
-const FIELD_ERR = 'mt-1 text-xs text-red-600 dark:text-red-400'
+const INPUT = 'w-full py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 text-sm'
+const FIELD_ERR = 'mt-1 text-xs text-red-600'
 
 export default function SignupPage() {
   const { t } = useTranslation('signup')
@@ -67,7 +67,9 @@ export default function SignupPage() {
       const res = await signup(body)
       emit('auth_result', { method: 'password', mode: 'signup', result: 'pending' })
       emit('signup_step', { step: 'check_email' })
-      navigate(`/check-email?email=${encodeURIComponent(res?.email || email.toLowerCase())}`)
+      // Router state, not the URL: the address stays out of history and referrers
+      // (history.state survives a reload; without it the page asks for the address).
+      navigate('/check-email', { state: { email: res?.email || email.toLowerCase() } })
     } catch (err) {
       emit('auth_result', { method: 'password', mode: 'signup', result: 'error', code: err?.code || 'unknown' })
       const field = FIELD_OF[err?.code]
@@ -79,21 +81,21 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-slate-50 to-sky-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl shadow-lg mb-4">
             <Plane size={32} className="text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-slate-800 dark:text-gray-100 tracking-tight">Travel Planner</h1>
-          <p className="text-slate-500 dark:text-gray-400 mt-1">{t('tagline')}</p>
+          <h1 className="font-display text-3xl font-bold text-slate-800 tracking-tight">Travel Planner</h1>
+          <p className="text-slate-500 mt-1">{t('tagline')}</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl ring-1 ring-gray-100 dark:ring-gray-800 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">{t('title')}</h2>
+        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('title')}</h2>
 
           {errors.form && (
-            <div role="alert" data-tid="signup.error" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-950 dark:border-red-900 dark:text-red-300">
+            <div role="alert" data-tid="signup.error" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {errors.form}
             </div>
           )}
@@ -101,14 +103,14 @@ export default function SignupPage() {
           <SocialSignInButtons mode="signup" />
 
           <div className="flex items-center gap-3 my-5" role="separator">
-            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="flex-1 h-px bg-gray-200" />
             <span className="text-xs uppercase tracking-wide text-gray-400">{tAuth('divider')}</span>
-            <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="flex-1 h-px bg-gray-200" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="signup-username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('username.label')}</label>
+              <label htmlFor="signup-username" className="block text-sm font-medium text-gray-700 mb-1">{t('username.label')}</label>
               <div className="relative">
                 <input id="signup-username" type="text" required autoFocus autoComplete="username"
                   autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={20}
@@ -119,11 +121,11 @@ export default function SignupPage() {
               </div>
               {errors.username
                 ? <p role="alert" data-tid="signup.username-error" className={FIELD_ERR}>{errors.username}</p>
-                : <p data-tid="signup.username-hint" className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('username.hint')}</p>}
+                : <p data-tid="signup.username-hint" className="mt-1 text-xs text-gray-500">{t('username.hint')}</p>}
             </div>
 
             <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('email.label')}</label>
+              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">{t('email.label')}</label>
               <div className="relative">
                 <input id="signup-email" type="email" required autoComplete="email"
                   data-tid="signup.email" value={form.email} onChange={set('email')}
@@ -135,7 +137,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('password.label')}</label>
+              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">{t('password.label')}</label>
               <div className="relative">
                 <input id="signup-password" type={showPw ? 'text' : 'password'} required autoComplete="new-password"
                   data-tid="signup.password" value={form.password} onChange={set('password')}
@@ -153,7 +155,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="signup-display-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('displayName.label')}</label>
+              <label htmlFor="signup-display-name" className="block text-sm font-medium text-gray-700 mb-1">{t('displayName.label')}</label>
               <input id="signup-display-name" type="text" autoComplete="name" maxLength={50}
                 data-tid="signup.display-name" value={form.displayName} onChange={set('displayName')}
                 placeholder={t('displayName.placeholder')} aria-invalid={!!errors.displayName}
@@ -163,7 +165,7 @@ export default function SignupPage() {
 
             {inviteMode && (
               <div>
-                <label htmlFor="signup-invite" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('invite.label')}</label>
+                <label htmlFor="signup-invite" className="block text-sm font-medium text-gray-700 mb-1">{t('invite.label')}</label>
                 <input id="signup-invite" type="text" required autoComplete="off" autoCapitalize="none"
                   data-tid="signup.invite" value={form.invite} onChange={set('invite')}
                   placeholder={t('invite.placeholder')} aria-invalid={!!errors.invite}
@@ -178,9 +180,9 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-5 text-center text-sm text-gray-600">
             {t('haveAccount')}{' '}
-            <Link to="/login" data-tid="signup.signin-link" className="font-medium text-teal-700 dark:text-teal-400 hover:underline">{t('signIn')}</Link>
+            <Link to="/login" data-tid="signup.signin-link" className="font-medium text-teal-700 hover:underline">{t('signIn')}</Link>
           </p>
         </div>
         <AttributionFooter />

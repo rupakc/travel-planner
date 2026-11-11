@@ -23,7 +23,8 @@
   "email": {
     "label": "ईमेल",
     "verified": "सत्यापित",
-    "unverified": "असत्यापित"
+    "unverified": "असत्यापित",
+    "none": "अभी तक कोई ईमेल नहीं"
   },
   "menu": {
     "button": "खाता मेनू",

@@ -27,7 +27,7 @@ export default function AccountMenu() {
 
   if (!user) return null
   const go = (path) => { setOpen(false); navigate(path) }
-  const item = 'flex w-full items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
+  const item = 'flex w-full items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 hover:bg-slate-100'
 
   return (
     <div className="relative" ref={ref}>
@@ -46,11 +46,11 @@ export default function AccountMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] z-50 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+          className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] z-50 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
         >
-          <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-            <div className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{user.display_name || user.username}</div>
-            <div className="truncate text-xs text-slate-500 dark:text-slate-400">@{user.username}</div>
+          <div className="px-3 py-2 border-b border-slate-100">
+            <div className="truncate text-sm font-medium text-slate-800">{user.display_name || user.username}</div>
+            <div className="truncate text-xs text-slate-500">@{user.username}</div>
           </div>
           <button type="button" role="menuitem" data-tid="account.menu.account" className={item} onClick={() => go('/account')}>
             <UserCog size={14} />{t('menu.account')}

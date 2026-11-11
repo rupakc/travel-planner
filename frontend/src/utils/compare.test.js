@@ -85,6 +85,12 @@ describe('compareErrorReason', () => {
       .toBe('Compare supports single destinations only')
     expect(compareErrorReason(httpErr(502, { detail: 'All sources failed' }))).toBe('All sources failed')
   })
+  it('translates the AI-gate codes', () => {
+    expect(compareErrorReason(httpErr(403, { detail: 'x', error_code: 'email_unverified' })))
+      .toBe('Confirm your email to use the AI planner.')
+    expect(compareErrorReason(httpErr(429, { detail: 'x', error_code: 'ai_daily_quota', bucket: 'compare' })))
+      .toBe("You've used today's AI allowance. It resets at midnight UTC.")
+  })
   it('generic text for non-string 4xx detail', () => {
     expect(compareErrorReason(httpErr(422, { detail: [{ loc: ['body', 'return_date'], msg: 'bad' }] })))
       .toBe('Please check the trip details')
