@@ -1,0 +1,51 @@
+{
+  "chip": {
+    "level": "Lv {{level}}",
+    "label": "Level {{level}}, {{xp}} XP. Open your progress."
+  },
+  "section": {
+    "title": "Your progress",
+    "level": "Level {{level}}",
+    "xp": "{{xp}} XP",
+    "progressLabel": "Progress to the next level",
+    "toNext": "{{remaining}} XP to level {{next}}",
+    "maxLevel": "Top level reached",
+    "badges": "Badges",
+    "earned": "Earned",
+    "badgeProgress": "{{progress}}/{{target}}",
+    "recent": "Recent awards",
+    "recentEmpty": "Nothing yet. Finish a step to earn your first XP.",
+    "points": "+{{points}} XP"
+  },
+  "toast": {
+    "xp": "+{{points}} XP — {{rule}}",
+    "level": "Level {{to}}!",
+    "badge": "Badge earned"
+  },
+  "levels": {
+    "1": "Wanderer",
+    "2": "Tourist",
+    "3": "Explorer",
+    "4": "Voyager",
+    "5": "Navigator",
+    "6": "Pathfinder",
+    "7": "Trailblazer",
+    "8": "Globetrotter",
+    "9": "Adventurer",
+    "10": "Legend"
+  },
+  "badges": {
+    "verified": {
+      "name": "Verified",
+      "desc": "Confirm your email address."
+    },
+    "first_steps": {
+      "name": "First steps",
+      "desc": "Finish the welcome tour."
+    }
+  },
+  "rules": {
+    "email_verified": "Email confirmed",
+    "onboarding_complete": "Welcome tour finished"
+  }
+}

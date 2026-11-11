@@ -1,0 +1,51 @@
+{
+  "chip": {
+    "level": "Lv {{level}}",
+    "label": "{{level}} 级，{{xp}} XP。查看你的进度。"
+  },
+  "section": {
+    "title": "你的进度",
+    "level": "{{level}} 级",
+    "xp": "{{xp}} XP",
+    "progressLabel": "距下一级的进度",
+    "toNext": "距 {{next}} 级还差 {{remaining}} XP",
+    "maxLevel": "已达最高等级",
+    "badges": "徽章",
+    "earned": "已获得",
+    "badgeProgress": "{{progress}}/{{target}}",
+    "recent": "最近奖励",
+    "recentEmpty": "暂无。完成一个步骤即可获得第一份 XP。",
+    "points": "+{{points}} XP"
+  },
+  "toast": {
+    "xp": "+{{points}} XP — {{rule}}",
+    "level": "升到 {{to}} 级！",
+    "badge": "获得徽章"
+  },
+  "levels": {
+    "1": "漫游者",
+    "2": "游客",
+    "3": "探索者",
+    "4": "旅行家",
+    "5": "领航员",
+    "6": "开路者",
+    "7": "先行者",
+    "8": "环球旅人",
+    "9": "冒险家",
+    "10": "传奇"
+  },
+  "badges": {
+    "verified": {
+      "name": "已验证",
+      "desc": "确认你的电子邮箱。"
+    },
+    "first_steps": {
+      "name": "第一步",
+      "desc": "完成欢迎导览。"
+    }
+  },
+  "rules": {
+    "email_verified": "邮箱已确认",
+    "onboarding_complete": "欢迎导览已完成"
+  }
+}
