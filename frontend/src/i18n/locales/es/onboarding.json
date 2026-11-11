@@ -1,0 +1,131 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "Te damos la bienvenida a Voyager",
+      "body": "Planifica viajes con IA: vuelos, hoteles, actividades y un itinerario día a día, todo en un solo lugar."
+    },
+    "howYouTravel": {
+      "title": "¿Cómo viajas?",
+      "body": "Seis preguntas rápidas adaptan Voyager a ti. Puedes omitir cualquiera."
+    },
+    "homeAndPassport": {
+      "title": "Tu ciudad y tu pasaporte",
+      "body": "Cuéntanos desde dónde vuelas y qué pasaporte tienes, para comprobar los visados y encontrar los vuelos adecuados."
+    },
+    "notifications": {
+      "title": "No pierdas de vista tus viajes",
+      "body": "Recibe recordatorios de viaje y alertas de bajada de precio. Puedes desactivar cada uno en Ajustes."
+    },
+    "firstTrip": {
+      "title": "Planifica tu primer viaje",
+      "body": "Busca un destino o pide a Voyager que te sorprenda."
+    }
+  },
+  "quiz": {
+    "companions": {
+      "title": "¿Con quién sueles viajar?",
+      "options": {
+        "solo": "Viajo solo/a",
+        "partner": "En pareja",
+        "family_kids": "En familia con niños",
+        "friends": "Con amigos",
+        "work": "Por trabajo"
+      }
+    },
+    "budget": {
+      "title": "¿Cuál es tu presupuesto habitual?",
+      "options": {
+        "shoestring": "Muy ajustado",
+        "mid_range": "Intermedio",
+        "comfort": "Cómodo",
+        "luxury": "Lujo"
+      }
+    },
+    "interests": {
+      "title": "¿Qué te gusta hacer?",
+      "options": {
+        "food": "Gastronomía",
+        "history_culture": "Historia y cultura",
+        "nature": "Naturaleza y aire libre",
+        "adventure": "Aventura y deportes",
+        "nightlife": "Vida nocturna",
+        "shopping": "Compras",
+        "art_museums": "Arte y museos",
+        "beaches": "Playas y relax",
+        "photography": "Fotografía",
+        "wellness": "Bienestar"
+      }
+    },
+    "pace": {
+      "title": "¿Qué ritmo prefieres?",
+      "options": {
+        "relaxed": "Tranquilo",
+        "balanced": "Equilibrado",
+        "packed": "Intenso"
+      }
+    },
+    "planning": {
+      "title": "¿Cómo planificas?",
+      "options": {
+        "ahead_deals": "Reservo con mucha antelación y busco ofertas",
+        "loose": "Planifico de forma flexible",
+        "spontaneous": "Espontáneo, a última hora"
+      }
+    },
+    "needs": {
+      "title": "¿Hay algo que debamos tener en cuenta?",
+      "options": {
+        "wheelchair": "Silla de ruedas / ayuda para la movilidad",
+        "visual_impairment": "Discapacidad visual",
+        "hearing_impairment": "Discapacidad auditiva",
+        "cognitive_disability": "Discapacidad cognitiva / neurodivergencia",
+        "infants": "Viajo con bebés",
+        "dietary": "Necesidades dietéticas"
+      }
+    }
+  },
+  "types": {
+    "BUDGET_BACKPACKER": {
+      "name": "Mochilero con presupuesto ajustado",
+      "description": "Aprovechando cada céntimo: hostales, comida callejera, free tours a pie y alertas de ofertas."
+    },
+    "FAMILY": {
+      "name": "Viajero en familia",
+      "description": "Viajes que funcionan para todos, con ritmo tranquilo, listas de equipaje e información de seguridad."
+    },
+    "LUXURY": {
+      "name": "Viajero de lujo",
+      "description": "Hoteles premium, alta cocina y tours privados."
+    },
+    "ADVENTURE": {
+      "name": "Aventurero",
+      "description": "Naturaleza, días de actividad y espacio para lo inesperado."
+    },
+    "CULTURE_FOODIE": {
+      "name": "Amante de la cultura y la gastronomía",
+      "description": "Historia, arte, cocina local y lo que pasa en la ciudad."
+    },
+    "BUSINESS": {
+      "name": "Viajero de negocios",
+      "description": "Viajes eficientes con vuelos, conectividad y dinero resueltos."
+    },
+    "RELAXATION": {
+      "name": "Viajero en busca de relax",
+      "description": "Playas, bienestar y días tranquilos."
+    },
+    "ACCESSIBLE": {
+      "name": "Viajero con necesidades de accesibilidad",
+      "description": "Planes que tienen en cuenta tus necesidades de accesibilidad."
+    }
+  },
+  "nav": {
+    "back": "Atrás",
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "seeType": "Ver mi perfil",
+    "finish": "Finalizar",
+    "stepOf_many": "Paso {{step}} de {{count}}",
+    "stepOf_one": "Paso {{step}} de {{count}}",
+    "stepOf_other": "Paso {{step}} de {{count}}"
+  }
+}

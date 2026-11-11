@@ -1,0 +1,131 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "Bienvenue sur Voyager",
+      "body": "Planifiez vos voyages avec l'IA : vols, hôtels, activités et un programme jour par jour, le tout au même endroit."
+    },
+    "howYouTravel": {
+      "title": "Comment voyagez-vous ?",
+      "body": "Six questions rapides adaptent Voyager à vous. Vous pouvez en passer n'importe laquelle."
+    },
+    "homeAndPassport": {
+      "title": "Domicile et passeport",
+      "body": "Indiquez d'où vous partez et quel passeport vous détenez, afin que nous vérifiions les visas et trouvions les bons vols."
+    },
+    "notifications": {
+      "title": "Gardez le fil de vos voyages",
+      "body": "Recevez des rappels de voyage et des alertes de baisse de prix. Vous pouvez désactiver chacun d'eux dans les Réglages."
+    },
+    "firstTrip": {
+      "title": "Planifiez votre premier voyage",
+      "body": "Recherchez une destination ou demandez à Voyager de vous surprendre."
+    }
+  },
+  "quiz": {
+    "companions": {
+      "title": "Avec qui voyagez-vous d'habitude ?",
+      "options": {
+        "solo": "Seul(e)",
+        "partner": "En couple",
+        "family_kids": "En famille avec enfants",
+        "friends": "Entre amis",
+        "work": "Pour le travail"
+      }
+    },
+    "budget": {
+      "title": "Quel est votre budget habituel ?",
+      "options": {
+        "shoestring": "Petit budget",
+        "mid_range": "Milieu de gamme",
+        "comfort": "Confort",
+        "luxury": "Luxe"
+      }
+    },
+    "interests": {
+      "title": "Qu'aimez-vous faire ?",
+      "options": {
+        "food": "Gastronomie",
+        "history_culture": "Histoire et culture",
+        "nature": "Nature et plein air",
+        "adventure": "Aventure et sports",
+        "nightlife": "Vie nocturne",
+        "shopping": "Shopping",
+        "art_museums": "Art et musées",
+        "beaches": "Plages et détente",
+        "photography": "Photographie",
+        "wellness": "Bien-être"
+      }
+    },
+    "pace": {
+      "title": "Quel rythme préférez-vous ?",
+      "options": {
+        "relaxed": "Tranquille",
+        "balanced": "Équilibré",
+        "packed": "Intense"
+      }
+    },
+    "planning": {
+      "title": "Comment planifiez-vous ?",
+      "options": {
+        "ahead_deals": "Réserver longtemps à l'avance et chasser les bons plans",
+        "loose": "Planifier sans trop de contraintes",
+        "spontaneous": "Spontané, à la dernière minute"
+      }
+    },
+    "needs": {
+      "title": "Y a-t-il des besoins dont nous devons tenir compte ?",
+      "options": {
+        "wheelchair": "Fauteuil roulant / aide à la mobilité",
+        "visual_impairment": "Déficience visuelle",
+        "hearing_impairment": "Déficience auditive",
+        "cognitive_disability": "Handicap cognitif / neuroatypie",
+        "infants": "Voyage avec des bébés",
+        "dietary": "Besoins alimentaires"
+      }
+    }
+  },
+  "types": {
+    "BUDGET_BACKPACKER": {
+      "name": "Routard à petit budget",
+      "description": "Chaque sou compte : auberges de jeunesse, street food, visites guidées gratuites à pied et alertes bons plans."
+    },
+    "FAMILY": {
+      "name": "Voyageur en famille",
+      "description": "Des voyages qui conviennent à tous, avec un rythme tranquille, des listes de bagages et des infos de sécurité."
+    },
+    "LUXURY": {
+      "name": "Voyageur de luxe",
+      "description": "Hôtels haut de gamme, gastronomie raffinée et visites privées."
+    },
+    "ADVENTURE": {
+      "name": "Aventurier",
+      "description": "Plein air, journées actives et place à l'imprévu."
+    },
+    "CULTURE_FOODIE": {
+      "name": "Amateur de culture et de bonne chère",
+      "description": "Histoire, art, cuisine locale et ce qui se passe en ville."
+    },
+    "BUSINESS": {
+      "name": "Voyageur d'affaires",
+      "description": "Des voyages efficaces, avec vols, connectivité et argent réglés."
+    },
+    "RELAXATION": {
+      "name": "En quête de détente",
+      "description": "Plages, bien-être et journées tranquilles."
+    },
+    "ACCESSIBLE": {
+      "name": "Voyageur aux besoins d'accessibilité",
+      "description": "Des programmes qui tiennent compte de vos besoins d'accessibilité."
+    }
+  },
+  "nav": {
+    "back": "Retour",
+    "skip": "Passer",
+    "next": "Suivant",
+    "seeType": "Voir mon profil",
+    "finish": "Terminer",
+    "stepOf_many": "Étape {{step}} sur {{count}}",
+    "stepOf_one": "Étape {{step}} sur {{count}}",
+    "stepOf_other": "Étape {{step}} sur {{count}}"
+  }
+}

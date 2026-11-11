@@ -1,0 +1,130 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "Willkommen bei Voyager",
+      "body": "Plane Reisen mit KI: Flüge, Hotels, Aktivitäten und ein Tag-für-Tag-Reiseplan, alles an einem Ort."
+    },
+    "howYouTravel": {
+      "title": "Wie reist du?",
+      "body": "Sechs kurze Fragen passen Voyager an dich an. Du kannst jede überspringen."
+    },
+    "homeAndPassport": {
+      "title": "Heimatort und Reisepass",
+      "body": "Sag uns, von wo du fliegst und welchen Reisepass du hast, damit wir Visa prüfen und passende Flüge finden können."
+    },
+    "notifications": {
+      "title": "Behalte deine Reisen im Blick",
+      "body": "Erhalte Reiseerinnerungen und Preissenkungs-Alarme. Du kannst jede Mitteilung in den Einstellungen ausschalten."
+    },
+    "firstTrip": {
+      "title": "Plane deine erste Reise",
+      "body": "Suche nach einem Reiseziel oder lass dich von Voyager überraschen."
+    }
+  },
+  "quiz": {
+    "companions": {
+      "title": "Mit wem reist du meistens?",
+      "options": {
+        "solo": "Allein",
+        "partner": "Mit Partner oder Partnerin",
+        "family_kids": "Familie mit Kindern",
+        "friends": "Freundesgruppe",
+        "work": "Geschäftlich"
+      }
+    },
+    "budget": {
+      "title": "Welches Reisebudget hast du normalerweise?",
+      "options": {
+        "shoestring": "Sehr knapp",
+        "mid_range": "Mittelklasse",
+        "comfort": "Komfortabel",
+        "luxury": "Luxus"
+      }
+    },
+    "interests": {
+      "title": "Was machst du gerne?",
+      "options": {
+        "food": "Essen und Trinken",
+        "history_culture": "Geschichte und Kultur",
+        "nature": "Natur und Outdoor",
+        "adventure": "Abenteuer und Sport",
+        "nightlife": "Nachtleben",
+        "shopping": "Shopping",
+        "art_museums": "Kunst und Museen",
+        "beaches": "Strand und Entspannung",
+        "photography": "Fotografie",
+        "wellness": "Wellness"
+      }
+    },
+    "pace": {
+      "title": "Welches Tempo magst du?",
+      "options": {
+        "relaxed": "Entspannt",
+        "balanced": "Ausgewogen",
+        "packed": "Vollgepackt"
+      }
+    },
+    "planning": {
+      "title": "Wie planst du?",
+      "options": {
+        "ahead_deals": "Weit im Voraus buchen und Schnäppchen suchen",
+        "loose": "Locker planen",
+        "spontaneous": "Spontan, auf den letzten Drücker"
+      }
+    },
+    "needs": {
+      "title": "Worauf sollen wir bei der Planung Rücksicht nehmen?",
+      "options": {
+        "wheelchair": "Rollstuhl / Mobilitätshilfe",
+        "visual_impairment": "Sehbehinderung",
+        "hearing_impairment": "Hörbehinderung",
+        "cognitive_disability": "Kognitive Beeinträchtigung / Neurodivergenz",
+        "infants": "Reise mit Babys",
+        "dietary": "Ernährungsbedürfnisse"
+      }
+    }
+  },
+  "types": {
+    "BUDGET_BACKPACKER": {
+      "name": "Budget-Backpacker",
+      "description": "Jeden Cent umdrehen: Hostels, Streetfood, kostenlose Stadtführungen und Preisalarme."
+    },
+    "FAMILY": {
+      "name": "Familienreisender",
+      "description": "Reisen, die für alle passen, mit entspanntem Tempo, Packlisten und Sicherheitsinfos."
+    },
+    "LUXURY": {
+      "name": "Luxusreisender",
+      "description": "Erstklassige Hotels, gehobene Küche und private Touren."
+    },
+    "ADVENTURE": {
+      "name": "Abenteurer",
+      "description": "Natur, aktive Tage und Raum für Unerwartetes."
+    },
+    "CULTURE_FOODIE": {
+      "name": "Kultur- und Genussreisender",
+      "description": "Geschichte, Kunst, lokale Küche und was in der Stadt los ist."
+    },
+    "BUSINESS": {
+      "name": "Geschäftsreisender",
+      "description": "Effiziente Reisen mit Flügen, Konnektivität und Geld bestens organisiert."
+    },
+    "RELAXATION": {
+      "name": "Erholungssuchender",
+      "description": "Strände, Wellness und entspannte Tage."
+    },
+    "ACCESSIBLE": {
+      "name": "Reisender mit Barrierefreiheitsbedarf",
+      "description": "Pläne, die deine Anforderungen an Barrierefreiheit berücksichtigen."
+    }
+  },
+  "nav": {
+    "back": "Zurück",
+    "skip": "Überspringen",
+    "next": "Weiter",
+    "seeType": "Meinen Typ ansehen",
+    "finish": "Fertig",
+    "stepOf_one": "Schritt {{step}} von {{count}}",
+    "stepOf_other": "Schritt {{step}} von {{count}}"
+  }
+}

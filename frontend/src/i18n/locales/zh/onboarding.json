@@ -1,0 +1,129 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "欢迎使用 Voyager",
+      "body": "用 AI 规划旅行：航班、酒店、活动和逐日行程，一站搞定。"
+    },
+    "howYouTravel": {
+      "title": "你喜欢怎样旅行？",
+      "body": "六个简短问题，让 Voyager 更贴合你。任何一个都可以跳过。"
+    },
+    "homeAndPassport": {
+      "title": "所在地与护照",
+      "body": "告诉我们你从哪里出发、持有哪国护照，以便我们核查签证并找到合适的航班。"
+    },
+    "notifications": {
+      "title": "随时掌握你的行程",
+      "body": "获取行程提醒和降价提醒。你可以在设置中分别关闭。"
+    },
+    "firstTrip": {
+      "title": "规划你的第一次旅行",
+      "body": "搜索目的地，或让 Voyager 给你一个惊喜。"
+    }
+  },
+  "quiz": {
+    "companions": {
+      "title": "你通常和谁一起旅行？",
+      "options": {
+        "solo": "独自出行",
+        "partner": "和伴侣",
+        "family_kids": "带孩子的家庭",
+        "friends": "朋友结伴",
+        "work": "出差"
+      }
+    },
+    "budget": {
+      "title": "你通常的预算是多少？",
+      "options": {
+        "shoestring": "精打细算",
+        "mid_range": "中等",
+        "comfort": "舒适",
+        "luxury": "奢华"
+      }
+    },
+    "interests": {
+      "title": "你喜欢做什么？",
+      "options": {
+        "food": "美食",
+        "history_culture": "历史与文化",
+        "nature": "自然与户外",
+        "adventure": "冒险与运动",
+        "nightlife": "夜生活",
+        "shopping": "购物",
+        "art_museums": "艺术与博物馆",
+        "beaches": "海滩与放松",
+        "photography": "摄影",
+        "wellness": "养生休闲"
+      }
+    },
+    "pace": {
+      "title": "你喜欢什么节奏？",
+      "options": {
+        "relaxed": "悠闲",
+        "balanced": "均衡",
+        "packed": "紧凑"
+      }
+    },
+    "planning": {
+      "title": "你是怎么做计划的？",
+      "options": {
+        "ahead_deals": "提前预订并寻找优惠",
+        "loose": "大致规划",
+        "spontaneous": "说走就走，临时决定"
+      }
+    },
+    "needs": {
+      "title": "有什么需要我们在规划时考虑的吗？",
+      "options": {
+        "wheelchair": "轮椅 / 行动辅助",
+        "visual_impairment": "视力障碍",
+        "hearing_impairment": "听力障碍",
+        "cognitive_disability": "认知障碍 / 神经多样性",
+        "infants": "带婴儿出行",
+        "dietary": "饮食需求"
+      }
+    }
+  },
+  "types": {
+    "BUDGET_BACKPACKER": {
+      "name": "穷游背包客",
+      "description": "每一分钱都花在刀刃上：青旅、街头小吃、免费步行游览和优惠提醒。"
+    },
+    "FAMILY": {
+      "name": "家庭旅行者",
+      "description": "适合全家人的旅行，节奏轻松，附带行李清单和安全信息。"
+    },
+    "LUXURY": {
+      "name": "奢华旅行者",
+      "description": "高端酒店、精致美食和私人定制游览。"
+    },
+    "ADVENTURE": {
+      "name": "冒险家",
+      "description": "户外活动、充实的日程，也为意外留出空间。"
+    },
+    "CULTURE_FOODIE": {
+      "name": "文化与美食爱好者",
+      "description": "历史、艺术、本地美食，以及城里正在举办的活动。"
+    },
+    "BUSINESS": {
+      "name": "商务旅行者",
+      "description": "高效出行，航班、网络通信和资金一并安排妥当。"
+    },
+    "RELAXATION": {
+      "name": "休闲度假者",
+      "description": "海滩、养生休闲和悠闲时光。"
+    },
+    "ACCESSIBLE": {
+      "name": "无障碍旅行者",
+      "description": "充分考虑你的无障碍需求的行程。"
+    }
+  },
+  "nav": {
+    "back": "返回",
+    "skip": "跳过",
+    "next": "下一步",
+    "seeType": "查看我的类型",
+    "finish": "完成",
+    "stepOf_other": "第 {{step}} 步，共 {{count}} 步"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "tabs": {
+    "trips": "Trips",
+    "explore": "Explore",
+    "alerts": "Alerts",
+    "you": "You"
+  },
+  "infoPlist": {
+    "location": "Voyager uses your location only while you use Near me, to show places around you. It is never stored."
+  },
+  "permissions": {
+    "notificationsTitle": "Stay on top of your trips",
+    "notificationsBody": "Get trip reminders before you leave, price-drop alerts for what you watch, and suggestions nearby while you travel. You can turn each one off in Settings.",
+    "allow": "Allow notifications",
+    "notNow": "Not now",
+    "locationTitle": "Show places near you",
+    "locationBody": "Voyager uses your location only while you use Near me, to show places around you. It is never stored.",
+    "openSettings": "Open Settings"
+  },
+  "session": {
+    "expired": "Your session expired. Please sign in again."
+  },
+  "server": {
+    "title": "Server",
+    "hint": "Address of the Voyager server, for example http://127.0.0.1:8001",
+    "invalid": "Enter a valid http or https address.",
+    "save": "Save",
+    "reset": "Reset to default"
+  },
+  "reminders": {
+    "t7Title": "{{destination}} is a week away",
+    "t7Body": "Time to check your plan, documents and packing list.",
+    "t1Title": "{{destination}} is tomorrow",
+    "t1Body": "Check your flights, hotel and packing list one last time.",
+    "dayTitle": "Day {{day}} in {{destination}}",
+    "dayBody": "See today's plan in Voyager.",
+    "lastDayTitle": "Last day in {{destination}}",
+    "lastDayBody": "Check out times, flights and anything you still want to see."
+  },
+  "shortcuts": {
+    "newSearch": "New search",
+    "newChat": "New chat",
+    "settings": "Settings",
+    "tab": "Go to tab"
+  },
+  "offline": {
+    "banner": "You're offline. Showing saved data."
+  },
+  "maps": {
+    "open": "Open in Maps"
+  }
+}

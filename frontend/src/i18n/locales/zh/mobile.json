@@ -1,0 +1,52 @@
+{
+  "tabs": {
+    "trips": "行程",
+    "explore": "探索",
+    "alerts": "价格提醒",
+    "you": "我的"
+  },
+  "infoPlist": {
+    "location": "Voyager 仅在你使用“附近”功能时使用你的位置，以显示你周围的地点。位置信息不会被存储。"
+  },
+  "permissions": {
+    "notificationsTitle": "随时掌握你的行程",
+    "notificationsBody": "获取出发前的行程提醒、你关注项目的降价提醒，以及旅途中的附近推荐。你可以在设置中分别关闭。",
+    "allow": "允许通知",
+    "notNow": "暂不",
+    "locationTitle": "显示你附近的地点",
+    "locationBody": "Voyager 仅在你使用“附近”功能时使用你的位置，以显示你周围的地点。位置信息不会被存储。",
+    "openSettings": "打开设置"
+  },
+  "session": {
+    "expired": "你的登录已过期，请重新登录。"
+  },
+  "server": {
+    "title": "服务器",
+    "hint": "Voyager 服务器地址，例如 http://127.0.0.1:8001",
+    "invalid": "请输入有效的 http 或 https 地址。",
+    "save": "保存",
+    "reset": "恢复默认"
+  },
+  "reminders": {
+    "t7Title": "距离 {{destination}} 之行还有一周",
+    "t7Body": "是时候检查你的计划、证件和行李清单了。",
+    "t1Title": "{{destination}} 之行就在明天",
+    "t1Body": "最后确认一遍你的航班、酒店和行李清单。",
+    "dayTitle": "{{destination}}第 {{day}} 天",
+    "dayBody": "在 Voyager 中查看今天的计划。",
+    "lastDayTitle": "{{destination}}的最后一天",
+    "lastDayBody": "查看退房时间、航班，以及你还想去看的地方。"
+  },
+  "shortcuts": {
+    "newSearch": "新建搜索",
+    "newChat": "新建对话",
+    "settings": "设置",
+    "tab": "前往标签页"
+  },
+  "offline": {
+    "banner": "你已离线，正在显示已保存的数据。"
+  },
+  "maps": {
+    "open": "在地图中打开"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "tabs": {
+    "trips": "Reisen",
+    "explore": "Entdecken",
+    "alerts": "Preisalarme",
+    "you": "Du"
+  },
+  "infoPlist": {
+    "location": "Voyager nutzt deinen Standort nur, solange du „In der Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert."
+  },
+  "permissions": {
+    "notificationsTitle": "Behalte deine Reisen im Blick",
+    "notificationsBody": "Erhalte Erinnerungen vor der Abreise, Preissenkungs-Alarme zu beobachteten Angeboten und Vorschläge in der Nähe, während du unterwegs bist. Du kannst jede Mitteilung in den Einstellungen ausschalten.",
+    "allow": "Mitteilungen erlauben",
+    "notNow": "Nicht jetzt",
+    "locationTitle": "Orte in deiner Nähe anzeigen",
+    "locationBody": "Voyager nutzt deinen Standort nur, solange du „In der Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert.",
+    "openSettings": "Einstellungen öffnen"
+  },
+  "session": {
+    "expired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an."
+  },
+  "server": {
+    "title": "Server",
+    "hint": "Adresse des Voyager-Servers, zum Beispiel http://127.0.0.1:8001",
+    "invalid": "Gib eine gültige http- oder https-Adresse ein.",
+    "save": "Speichern",
+    "reset": "Auf Standard zurücksetzen"
+  },
+  "reminders": {
+    "t7Title": "{{destination}} ist nur noch eine Woche entfernt",
+    "t7Body": "Zeit, deinen Plan, deine Dokumente und deine Packliste zu prüfen.",
+    "t1Title": "{{destination}} ist morgen",
+    "t1Body": "Prüfe ein letztes Mal deine Flüge, dein Hotel und deine Packliste.",
+    "dayTitle": "Tag {{day}} in {{destination}}",
+    "dayBody": "Sieh dir den heutigen Plan in Voyager an.",
+    "lastDayTitle": "Letzter Tag in {{destination}}",
+    "lastDayBody": "Prüfe Check-out-Zeiten, Flüge und alles, was du noch sehen möchtest."
+  },
+  "shortcuts": {
+    "newSearch": "Neue Suche",
+    "newChat": "Neuer Chat",
+    "settings": "Einstellungen",
+    "tab": "Zum Tab wechseln"
+  },
+  "offline": {
+    "banner": "Du bist offline. Gespeicherte Daten werden angezeigt."
+  },
+  "maps": {
+    "open": "In Karten öffnen"
+  }
+}

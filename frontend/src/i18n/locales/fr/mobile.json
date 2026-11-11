@@ -1,0 +1,52 @@
+{
+  "tabs": {
+    "trips": "Voyages",
+    "explore": "Explorer",
+    "alerts": "Alertes",
+    "you": "Vous"
+  },
+  "infoPlist": {
+    "location": "Voyager utilise votre position uniquement pendant que vous utilisez Près de moi, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée."
+  },
+  "permissions": {
+    "notificationsTitle": "Gardez le fil de vos voyages",
+    "notificationsBody": "Recevez des rappels avant le départ, des alertes de baisse de prix pour ce que vous suivez et des suggestions à proximité pendant votre voyage. Vous pouvez désactiver chacun d'eux dans les Réglages.",
+    "allow": "Autoriser les notifications",
+    "notNow": "Pas maintenant",
+    "locationTitle": "Afficher les lieux près de vous",
+    "locationBody": "Voyager utilise votre position uniquement pendant que vous utilisez Près de moi, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée.",
+    "openSettings": "Ouvrir les Réglages"
+  },
+  "session": {
+    "expired": "Votre session a expiré. Veuillez vous reconnecter."
+  },
+  "server": {
+    "title": "Serveur",
+    "hint": "Adresse du serveur Voyager, par exemple http://127.0.0.1:8001",
+    "invalid": "Saisissez une adresse http ou https valide.",
+    "save": "Enregistrer",
+    "reset": "Rétablir la valeur par défaut"
+  },
+  "reminders": {
+    "t7Title": "{{destination}} dans une semaine",
+    "t7Body": "C'est le moment de vérifier votre programme, vos documents et votre liste de bagages.",
+    "t1Title": "{{destination}} demain",
+    "t1Body": "Vérifiez une dernière fois vos vols, votre hôtel et votre liste de bagages.",
+    "dayTitle": "Jour {{day}} à {{destination}}",
+    "dayBody": "Consultez le programme du jour dans Voyager.",
+    "lastDayTitle": "Dernier jour à {{destination}}",
+    "lastDayBody": "Vérifiez les heures de départ, les vols et tout ce que vous voulez encore voir."
+  },
+  "shortcuts": {
+    "newSearch": "Nouvelle recherche",
+    "newChat": "Nouvelle discussion",
+    "settings": "Réglages",
+    "tab": "Aller à l'onglet"
+  },
+  "offline": {
+    "banner": "Vous êtes hors connexion. Affichage des données enregistrées."
+  },
+  "maps": {
+    "open": "Ouvrir dans Plans"
+  }
+}
