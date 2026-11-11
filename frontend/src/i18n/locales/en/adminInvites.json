@@ -1,0 +1,29 @@
+{
+  "tab": "Invites",
+  "newInvite": "New invite code",
+  "maxUses": "Max uses",
+  "expiryDays": "Expires in (days)",
+  "note": "Note (optional)",
+  "create": "Create code",
+  "creating": "Creating…",
+  "shownOnce": "Copy this code now. It is shown only once and cannot be retrieved later.",
+  "copy": "Copy",
+  "copied": "Copied",
+  "dismiss": "Done",
+  "loading": "Loading…",
+  "empty": "No invite codes yet.",
+  "colCode": "Code",
+  "colUses": "Uses",
+  "colExpires": "Expires",
+  "colNote": "Note",
+  "colStatus": "Status",
+  "colActions": "Actions",
+  "usesOf": "{{used}} / {{max}}",
+  "revoke": "Revoke",
+  "status": {
+    "active": "Active",
+    "revoked": "Revoked",
+    "expired": "Expired",
+    "used": "Used up"
+  }
+}

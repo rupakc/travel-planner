@@ -1,0 +1,29 @@
+{
+  "tab": "邀请码",
+  "newInvite": "新建邀请码",
+  "maxUses": "最大使用次数",
+  "expiryDays": "有效期（天）",
+  "note": "备注（可选）",
+  "create": "生成邀请码",
+  "creating": "正在生成…",
+  "shownOnce": "请立即复制此邀请码。它只显示一次，之后无法再次查看。",
+  "copy": "复制",
+  "copied": "已复制",
+  "dismiss": "完成",
+  "loading": "加载中…",
+  "empty": "还没有邀请码。",
+  "colCode": "邀请码",
+  "colUses": "使用次数",
+  "colExpires": "到期",
+  "colNote": "备注",
+  "colStatus": "状态",
+  "colActions": "操作",
+  "usesOf": "{{used}} / {{max}}",
+  "revoke": "撤销",
+  "status": {
+    "active": "有效",
+    "revoked": "已撤销",
+    "expired": "已过期",
+    "used": "已用完"
+  }
+}

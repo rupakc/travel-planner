@@ -1,0 +1,29 @@
+{
+  "tab": "Invitations",
+  "newInvite": "Nouveau code d'invitation",
+  "maxUses": "Utilisations max.",
+  "expiryDays": "Expire dans (jours)",
+  "note": "Note (facultatif)",
+  "create": "Créer le code",
+  "creating": "Création…",
+  "shownOnce": "Copiez ce code maintenant. Il n'est affiché qu'une seule fois et ne pourra pas être récupéré ensuite.",
+  "copy": "Copier",
+  "copied": "Copié",
+  "dismiss": "Terminé",
+  "loading": "Chargement…",
+  "empty": "Aucun code d'invitation pour l'instant.",
+  "colCode": "Code",
+  "colUses": "Utilisations",
+  "colExpires": "Expire",
+  "colNote": "Note",
+  "colStatus": "Statut",
+  "colActions": "Actions",
+  "usesOf": "{{used}} / {{max}}",
+  "revoke": "Révoquer",
+  "status": {
+    "active": "Actif",
+    "revoked": "Révoqué",
+    "expired": "Expiré",
+    "used": "Épuisé"
+  }
+}

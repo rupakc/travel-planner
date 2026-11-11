@@ -4,13 +4,16 @@ import { useAuth } from '../context/AuthContext'
 import { fmtDate } from '../i18n/format'
 import { getTelemetrySummary } from '../services/api'
 import TelemetrySummary from '../components/admin/TelemetrySummary'
+import InvitesPanel from '../components/admin/InvitesPanel'
+import { listInvites } from '../services/adminInvitesApi'
 
-const TABS = ['Users', 'Feedback', 'Analytics']
+const TABS = ['Users', 'Feedback', 'Analytics', 'Invites']
 
 export default function AdminPage() {
   const { t } = useTranslation('account')
   const { token, user } = useAuth()
   const { t: tt } = useTranslation('adminTelemetry')
+  const { t: ti } = useTranslation('adminInvites')
   const [tab, setTab] = useState('Users')
   // Probed once on mount: a 404 means an older backend, so the tab is hidden.
   const [analytics, setAnalytics] = useState({ summary: null, error: null, hidden: true })
@@ -28,12 +31,28 @@ export default function AdminPage() {
     return () => { live = false }
   }, [token])
 
+  // Same probe for invites: hidden until the backend has the endpoint.
+  const [invites, setInvites] = useState({ rows: null, hidden: true })
+  useEffect(() => {
+    let live = true
+    listInvites(token)
+      .then(rows => live && setInvites({ rows, hidden: false }))
+      .catch(error => {
+        if (!live) return
+        // Only a 404 is "older backend"; other failures keep the tab so the panel can show the error.
+        const hidden = error?.status === 404
+        setInvites({ rows: null, hidden })
+        if (hidden) setTab(cur => (cur === 'Invites' ? 'Users' : cur))
+      })
+    return () => { live = false }
+  }, [token])
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="font-display text-2xl font-bold text-gray-800 mb-6">{t('admin.title')}</h1>
 
       <div className="flex gap-2 mb-6 border-b border-gray-200">
-        {TABS.filter(id => id !== 'Analytics' || !analytics.hidden).map(id => (
+        {TABS.filter(id => (id !== 'Analytics' || !analytics.hidden) && (id !== 'Invites' || !invites.hidden)).map(id => (
           <button
             key={id}
             data-tid={`admin.tab-${id}`}
@@ -44,13 +63,14 @@ export default function AdminPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {id === 'Analytics' ? tt('tab') : t(`admin.tabs.${id.toLowerCase()}`)}
+            {id === 'Analytics' ? tt('tab') : id === 'Invites' ? ti('tab') : t(`admin.tabs.${id.toLowerCase()}`)}
           </button>
         ))}
       </div>
 
       {tab === 'Users'    && <UsersTab token={token} currentUsername={user?.username} />}
       {tab === 'Feedback' && <FeedbackTab token={token} />}
+      {tab === 'Invites'   && <InvitesPanel token={token} initial={invites.rows} />}
       {tab === 'Analytics' && <TelemetrySummary summary={analytics.summary} error={analytics.error} />}
     </div>
   )
