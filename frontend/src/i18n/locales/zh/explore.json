@@ -1,0 +1,12 @@
+{
+  "title": "探索",
+  "subtitle": "寻找你的下一次旅行，获取灵感，或看看你周围有什么。",
+  "modes": {
+    "known": "搜索",
+    "discover": "给我惊喜",
+    "compare": "比较",
+    "import": "从链接导入",
+    "chat": "聊天",
+    "nearby": "附近"
+  }
+}
