@@ -1,0 +1,62 @@
+{
+  "title": "Créez votre compte",
+  "tagline": "Planifiez vos voyages, gagnez des badges, tout au même endroit",
+  "username": {
+    "label": "Nom d'utilisateur",
+    "placeholder": "ex. voyageur_42",
+    "hint": "3 à 20 lettres minuscules, chiffres ou tirets bas."
+  },
+  "email": {
+    "label": "E-mail",
+    "placeholder": "vous@exemple.fr"
+  },
+  "password": {
+    "label": "Mot de passe",
+    "placeholder": "Au moins 8 caractères",
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe"
+  },
+  "displayName": {
+    "label": "Nom affiché (facultatif)",
+    "placeholder": "Comment doit-on vous appeler ?"
+  },
+  "invite": {
+    "label": "Code d'invitation",
+    "placeholder": "Saisissez votre code d'invitation"
+  },
+  "submit": "Créer le compte",
+  "submitting": "Création du compte…",
+  "haveAccount": "Vous avez déjà un compte ?",
+  "signIn": "Se connecter",
+  "strength": {
+    "label": "Robustesse : {{level}}",
+    "level": {
+      "0": "très faible",
+      "1": "faible",
+      "2": "moyenne",
+      "3": "bonne",
+      "4": "forte"
+    },
+    "hint": {
+      "tooShort": "utilisez au moins 8 caractères",
+      "longer": "plus long, c'est plus sûr",
+      "variety": "mélangez lettres, chiffres et symboles",
+      "repeats": "évitez les caractères répétés",
+      "sequence": "évitez les suites comme abc ou 123",
+      "identity": "n'incluez pas votre identifiant ou e-mail"
+    }
+  },
+  "login": {
+    "identifier": "Nom d'utilisateur ou e-mail",
+    "identifierPlaceholder": "Saisissez votre identifiant ou e-mail",
+    "createAccount": "Créer un compte",
+    "forgot": "Mot de passe oublié ?",
+    "pendingTitle": "Confirmez d'abord votre e-mail",
+    "pendingBody": "Nous avons envoyé un lien de confirmation à {{hint}}. Ouvrez-le pour terminer la création de votre compte.",
+    "pendingNoHint": "Ouvrez le lien de confirmation que nous vous avons envoyé pour terminer la création de votre compte.",
+    "resendEmail": "Votre adresse e-mail",
+    "resend": "Renvoyer l'e-mail de confirmation",
+    "resending": "Envoi…",
+    "resent": "E-mail de confirmation envoyé. Consultez votre boîte de réception."
+  }
+}

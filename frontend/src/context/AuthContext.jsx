@@ -49,8 +49,12 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ username, password }),
     })
     if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.detail || 'Login failed')
+      const err = await res.json().catch(() => ({}))
+      const failure = new Error(err.detail || 'Login failed')
+      // Structured fields (e.g. account_pending + email_hint) for the login page.
+      failure.code = err.error_code || null
+      failure.extra = err
+      throw failure
     }
     return applySession(await res.json())
   }

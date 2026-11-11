@@ -1,0 +1,62 @@
+{
+  "title": "Crea tu cuenta",
+  "tagline": "Planifica viajes, gana insignias y guarda todo en un solo lugar",
+  "username": {
+    "label": "Nombre de usuario",
+    "placeholder": "p. ej. viajero_42",
+    "hint": "De 3 a 20 letras minúsculas, números o guiones bajos."
+  },
+  "email": {
+    "label": "Correo electrónico",
+    "placeholder": "tu@ejemplo.com"
+  },
+  "password": {
+    "label": "Contraseña",
+    "placeholder": "Al menos 8 caracteres",
+    "show": "Mostrar contraseña",
+    "hide": "Ocultar contraseña"
+  },
+  "displayName": {
+    "label": "Nombre visible (opcional)",
+    "placeholder": "¿Cómo te llamamos?"
+  },
+  "invite": {
+    "label": "Código de invitación",
+    "placeholder": "Introduce tu código de invitación"
+  },
+  "submit": "Crear cuenta",
+  "submitting": "Creando cuenta…",
+  "haveAccount": "¿Ya tienes una cuenta?",
+  "signIn": "Inicia sesión",
+  "strength": {
+    "label": "Seguridad: {{level}}",
+    "level": {
+      "0": "muy débil",
+      "1": "débil",
+      "2": "aceptable",
+      "3": "buena",
+      "4": "fuerte"
+    },
+    "hint": {
+      "tooShort": "usa al menos 8 caracteres",
+      "longer": "cuanto más larga, más segura",
+      "variety": "mezcla letras, números y símbolos",
+      "repeats": "evita caracteres repetidos",
+      "sequence": "evita secuencias como abc o 123",
+      "identity": "no incluyas tu usuario ni tu correo"
+    }
+  },
+  "login": {
+    "identifier": "Usuario o correo electrónico",
+    "identifierPlaceholder": "Introduce tu usuario o correo",
+    "createAccount": "Crear cuenta",
+    "forgot": "¿Olvidaste tu contraseña?",
+    "pendingTitle": "Confirma primero tu correo",
+    "pendingBody": "Enviamos un enlace de confirmación a {{hint}}. Ábrelo para terminar de crear tu cuenta.",
+    "pendingNoHint": "Abre el enlace de confirmación que te enviamos por correo para terminar de crear tu cuenta.",
+    "resendEmail": "Tu correo electrónico",
+    "resend": "Reenviar correo de confirmación",
+    "resending": "Enviando…",
+    "resent": "Correo de confirmación enviado. Revisa tu bandeja de entrada."
+  }
+}
