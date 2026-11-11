@@ -131,3 +131,13 @@ describe('OAuth notice', () => {
     expect(tid('login.notice')).toBeNull()
   })
 })
+
+describe('signed-out notice', () => {
+  const tid = (id) => container.querySelector(`[data-tid="${id}"]`)
+  afterEach(() => { delete auth.signOutReason })
+  it('explains a revoked session', async () => {
+    auth.signOutReason = 'session_revoked'
+    await render('/login')
+    expect(tid('login.notice').textContent).toBe('You were signed out. Please sign in again.')
+  })
+})

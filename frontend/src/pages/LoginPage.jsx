@@ -17,13 +17,14 @@ export default function LoginPage() {
   const { t: tAll } = useTranslation()
   const { t: tOauth, i18n } = useTranslation('oauth')
   const { config } = useClientConfig()
-  const { login } = useAuth()
+  const { login, signOutReason } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   const from       = returnPathFrom(location)  // same-origin only
   // Set by the OAuth callback pages; a translation by notice_code wins over the carried text.
   const noticeKey = location.state?.notice_code?.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-  const notice = (noticeKey && i18n.exists(`oauth:${noticeKey}`) ? tOauth(noticeKey) : '') || location.state?.notice || ''
+  const notice = (noticeKey && i18n.exists(`oauth:${noticeKey}`) ? tOauth(noticeKey) : '') || location.state?.notice
+    || (signOutReason ? errorText(tAll, { code: signOutReason }) : '')
 
   const [form, setForm]     = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)

@@ -1,6 +1,7 @@
 // Normalises any failed request into one shape, and turns it into UI text.
 // Clients render text from `error_code` (the `errors` namespace) and fall back
 // to the server's English `detail`.
+import { reportSessionRevoked } from './sessionRevoked'
 
 function detailText(detail) {
   if (typeof detail === 'string') return detail
@@ -18,6 +19,7 @@ export function toApiError(err) {
   const { detail, error_code: code, ...extra } = body
   const header = res?.headers?.['retry-after'] ?? res?.headers?.['Retry-After']
   const retry = Number.parseInt(header, 10)
+  if (res?.status === 401 && code === 'session_revoked') reportSessionRevoked()
   return {
     status: res?.status ?? 0,
     code: typeof code === 'string' && code ? code : null,

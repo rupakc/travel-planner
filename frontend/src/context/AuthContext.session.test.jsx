@@ -28,3 +28,40 @@ describe('applySession', () => {
     act(() => root.unmount())
   })
 })
+
+describe('session_revoked', () => {
+  it('signs out with a reason when a request reports session_revoked, and a new session clears it', async () => {
+    const { reportSessionRevoked } = await import('../services/sessionRevoked')
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    await act(async () => { await auth.applySession({ access_token: 'tok', user: { username: 'jane' } }) })
+    expect(auth.signOutReason).toBeNull()
+    act(() => reportSessionRevoked())
+    expect(auth.user).toBeNull()
+    expect(auth.token).toBeNull()
+    expect(localStorage.getItem('tp_token')).toBeNull()
+    expect(auth.signOutReason).toBe('session_revoked')
+    await act(async () => { await auth.applySession({ access_token: 'tok2', user: { username: 'jane' } }) })
+    expect(auth.signOutReason).toBeNull()
+    act(() => root.unmount())
+  })
+
+  it('ignores a report when nobody is signed in', async () => {
+    const { reportSessionRevoked } = await import('../services/sessionRevoked')
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    act(() => reportSessionRevoked())
+    expect(auth.signOutReason).toBeNull()
+    act(() => root.unmount())
+  })
+
+  it('keeps the reason when the stored token is already revoked on load', async () => {
+    localStorage.setItem('tp_token', 'old')
+    fetch.mockResolvedValue({ ok: false, status: 401, json: async () => ({ detail: 'x', error_code: 'session_revoked' }) })
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<AuthProvider><Probe /></AuthProvider>) })
+    expect(localStorage.getItem('tp_token')).toBeNull()
+    expect(auth.signOutReason).toBe('session_revoked')
+    act(() => root.unmount())
+  })
+})

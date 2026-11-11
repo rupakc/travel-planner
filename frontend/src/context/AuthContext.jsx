@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { onSessionRevoked } from '../services/sessionRevoked'
 
 const AuthContext = createContext(null)
 
@@ -9,11 +10,18 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('tp_token'))
   const [preferences, setPreferences] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Why the user was signed out without asking ('session_revoked'), for the login page.
+  const [signOutReason, setSignOutReason] = useState(null)
 
   useEffect(() => {
     if (!token) { setLoading(false); return }
     fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(async r => {
+        if (r.ok) return r.json()
+        const body = r.status === 401 ? await r.json().catch(() => ({})) : {}
+        if (body?.error_code === 'session_revoked') setSignOutReason('session_revoked')
+        return Promise.reject()
+      })
       .then(u => {
         setUser(u)
         if (u.requires_password_change) return
@@ -25,6 +33,16 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, []) // only on mount
 
+  // A request answered 401 session_revoked (password reset or "sign out
+  // everywhere" on another device): drop the dead token and say why.
+  useEffect(() => onSessionRevoked(() => {
+    if (!localStorage.getItem('tp_token')) return
+    localStorage.removeItem('tp_token')
+    setToken(null)
+    setUser(null)
+    setSignOutReason('session_revoked')
+  }), [])
+
   // Adopts a Session ({access_token, user}): stores the token, sets the user,
   // loads preferences. Used by login and every sign-up / OAuth / reset flow.
   const applySession = useCallback(async (session) => {
@@ -32,6 +50,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('tp_token', accessToken)
     setToken(accessToken)
     setUser(session.user)
+    setSignOutReason(null)
     if (!session.user?.requires_password_change) {
       try {
         const prefsRes = await fetch('/api/preferences', { headers: { Authorization: `Bearer ${accessToken}` } })
@@ -108,6 +127,7 @@ export function AuthProvider({ children }) {
       refreshUser,
       accountVerified: user?.account_verified !== false,
       logout,
+      signOutReason,
       loading,
       isAuthenticated: !!user,
       isAdmin: !!user?.is_admin,
