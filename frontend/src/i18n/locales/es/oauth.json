@@ -1,0 +1,16 @@
+{
+  "working": "Iniciando sesión…",
+  "linked": "Cuenta conectada.",
+  "startAgain": "Por favor, empieza de nuevo.",
+  "emailInUseUnverified": "Inicia sesión con tu contraseña y luego conecta este proveedor desde los ajustes de tu cuenta.",
+  "username": {
+    "title": "Elige tu nombre de usuario",
+    "intro": "Elige un nombre de usuario para terminar de crear tu cuenta.",
+    "username": "Nombre de usuario",
+    "displayName": "Nombre visible",
+    "invite": "Código de invitación",
+    "submit": "Crear cuenta",
+    "submitting": "Creando…",
+    "signedAs": "Sesión iniciada como {{email}}"
+  }
+}

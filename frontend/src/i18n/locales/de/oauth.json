@@ -1,0 +1,16 @@
+{
+  "working": "Du wirst angemeldet…",
+  "linked": "Konto verbunden.",
+  "startAgain": "Bitte beginne noch einmal von vorn.",
+  "emailInUseUnverified": "Melde dich mit deinem Passwort an und verbinde diesen Anbieter dann in den Kontoeinstellungen.",
+  "username": {
+    "title": "Wähle deinen Benutzernamen",
+    "intro": "Wähle einen Benutzernamen, um dein Konto fertig einzurichten.",
+    "username": "Benutzername",
+    "displayName": "Anzeigename",
+    "invite": "Einladungscode",
+    "submit": "Konto erstellen",
+    "submitting": "Wird erstellt…",
+    "signedAs": "Angemeldet als {{email}}"
+  }
+}

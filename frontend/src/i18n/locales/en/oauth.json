@@ -1,0 +1,16 @@
+{
+  "working": "Signing you in…",
+  "linked": "Account connected.",
+  "startAgain": "Please start again.",
+  "emailInUseUnverified": "Sign in with your password, then connect this provider from your account settings.",
+  "username": {
+    "title": "Choose your username",
+    "intro": "Pick a username to finish creating your account.",
+    "username": "Username",
+    "displayName": "Display name",
+    "invite": "Invite code",
+    "submit": "Create account",
+    "submitting": "Creating…",
+    "signedAs": "Signed in as {{email}}"
+  }
+}
