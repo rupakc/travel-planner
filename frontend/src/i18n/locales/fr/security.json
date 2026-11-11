@@ -1,0 +1,38 @@
+{
+  "title": "Sécurité",
+  "providers": {
+    "title": "Méthodes de connexion",
+    "connectedAs": "Connecté en tant que {{email}}",
+    "connected": "Connecté",
+    "notConnected": "Non connecté",
+    "soon": "Bientôt disponible",
+    "connect": "Connecter",
+    "disconnect": "Déconnecter",
+    "comingSoon": "La connexion avec {{provider}} arrive bientôt.",
+    "setPasswordFirst": "C'est votre seule façon de vous connecter. Définissez d'abord un mot de passe, puis déconnectez."
+  },
+  "email": {
+    "title": "E-mail",
+    "unverified": "{{email}} n'est pas encore confirmé.",
+    "verify": "Vérifier l'e-mail",
+    "sent": "Nous avons envoyé un lien de confirmation à {{email}}."
+  },
+  "password": {
+    "changeTitle": "Changer le mot de passe",
+    "setTitle": "Définir un mot de passe",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "change": "Changer le mot de passe",
+    "setButton": "Définir le mot de passe",
+    "changed": "Mot de passe modifié. Les autres appareils ont été déconnectés.",
+    "set": "Mot de passe défini. Les autres appareils ont été déconnectés."
+  },
+  "sessions": {
+    "title": "Sessions",
+    "body": "Déconnectez-vous de Voyager sur tous les appareils, y compris celui-ci.",
+    "signOutAll": "Se déconnecter partout",
+    "confirm": "Se déconnecter de tous les appareils ?",
+    "confirmYes": "Oui, se déconnecter partout",
+    "cancel": "Annuler"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "title": "安全",
+  "providers": {
+    "title": "登录方式",
+    "connectedAs": "已连接为 {{email}}",
+    "connected": "已连接",
+    "notConnected": "未连接",
+    "soon": "即将推出",
+    "connect": "连接",
+    "disconnect": "断开连接",
+    "comingSoon": "{{provider}} 登录即将推出。",
+    "setPasswordFirst": "这是你唯一的登录方式。请先设置密码，再断开连接。"
+  },
+  "email": {
+    "title": "电子邮件",
+    "unverified": "{{email}} 尚未确认。",
+    "verify": "验证邮箱",
+    "sent": "我们已向 {{email}} 发送确认链接。"
+  },
+  "password": {
+    "changeTitle": "修改密码",
+    "setTitle": "设置密码",
+    "current": "当前密码",
+    "new": "新密码",
+    "change": "修改密码",
+    "setButton": "设置密码",
+    "changed": "密码已修改，其他设备已退出登录。",
+    "set": "密码已设置，其他设备已退出登录。"
+  },
+  "sessions": {
+    "title": "会话",
+    "body": "在所有设备（包括当前设备）上退出 Voyager。",
+    "signOutAll": "在所有设备退出登录",
+    "confirm": "退出所有设备的登录？",
+    "confirmYes": "是，在所有设备退出",
+    "cancel": "取消"
+  }
+}

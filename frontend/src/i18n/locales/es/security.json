@@ -1,0 +1,38 @@
+{
+  "title": "Seguridad",
+  "providers": {
+    "title": "Métodos de inicio de sesión",
+    "connectedAs": "Conectado como {{email}}",
+    "connected": "Conectado",
+    "notConnected": "No conectado",
+    "soon": "Próximamente",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "comingSoon": "El inicio de sesión con {{provider}} llegará pronto.",
+    "setPasswordFirst": "Es tu única forma de iniciar sesión. Primero crea una contraseña y luego desconecta."
+  },
+  "email": {
+    "title": "Correo electrónico",
+    "unverified": "{{email}} aún no está confirmado.",
+    "verify": "Verificar correo",
+    "sent": "Enviamos un enlace de confirmación a {{email}}."
+  },
+  "password": {
+    "changeTitle": "Cambiar contraseña",
+    "setTitle": "Crear una contraseña",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "change": "Cambiar contraseña",
+    "setButton": "Crear contraseña",
+    "changed": "Contraseña cambiada. Se cerró la sesión en los demás dispositivos.",
+    "set": "Contraseña creada. Se cerró la sesión en los demás dispositivos."
+  },
+  "sessions": {
+    "title": "Sesiones",
+    "body": "Cierra la sesión de Voyager en todos los dispositivos, incluido este.",
+    "signOutAll": "Cerrar sesión en todas partes",
+    "confirm": "¿Cerrar sesión en todos los dispositivos?",
+    "confirmYes": "Sí, cerrar sesión en todas partes",
+    "cancel": "Cancelar"
+  }
+}
