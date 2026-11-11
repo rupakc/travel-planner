@@ -8,8 +8,16 @@ export function SearchDataProvider({ children }) {
   const clearPendingSearch = useCallback(() => setPendingSearchData(null), [])
   const showResults = useCallback(() => setHasSearchResults(true), [])
   const clearSearchResults = useCallback(() => setHasSearchResults(false), [])
+  // A saved plan to open in the planner ("Open in planner" on a trip): the
+  // Results page loads it once its search starts, then clears it.
+  const [pendingPlan, setPendingPlanState] = useState(null)
+  const setPendingPlan = useCallback((plan) => setPendingPlanState(plan ?? null), [])
+  const clearPendingPlan = useCallback(() => setPendingPlanState(null), [])
   return (
-    <SearchDataContext.Provider value={{ pendingSearchData, setPendingSearchData, clearPendingSearch, hasSearchResults, showResults, clearSearchResults }}>
+    <SearchDataContext.Provider value={{
+      pendingSearchData, setPendingSearchData, clearPendingSearch, hasSearchResults, showResults, clearSearchResults,
+      pendingPlan, setPendingPlan, clearPendingPlan,
+    }}>
       {children}
     </SearchDataContext.Provider>
   )

@@ -3,12 +3,16 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
+import { useAccountSettings } from '../account/SettingsSync'
+import { useJourney } from '../../hooks/useJourney'
+import { useHasTrips } from '../../hooks/useHasTrips'
+import BottomTabs from './BottomTabs'
 import NotificationBell from '../alerts/NotificationBell'
 import LanguagePicker from './LanguagePicker'
 import ThemeToggle from './ThemeToggle'
 import GameNavChip from '../game/GameNavChip'
 import AccountMenu from '../account/AccountMenu'
-import { Search, MessageCircle, Settings, ShieldCheck, Menu, X, Plane, BellRing, MapPin } from 'lucide-react'
+import { Search, MessageCircle, Settings, ShieldCheck, Menu, X, Plane, BellRing, MapPin, Luggage, Compass, Trophy, CircleUser } from 'lucide-react'
 
 // `key` names the label (`common:nav.<key>`) and the telemetry id; `tour`
 // is the stable onboarding-tour anchor, independent of the UI language.
@@ -21,21 +25,49 @@ const BASE_TABS = [
 ]
 const ADMIN_TAB = { path: '/admin', key: 'admin', tour: 'admin', icon: ShieldCheck }
 
+// Journey shell tabs (labels from `journey:tabs.<key>`; Admin keeps its
+// common label). Play is hidden when the game is.
+const JOURNEY_TABS = [
+  { path: '/trips',   key: 'trips',   tour: 'trips',   icon: Luggage },
+  { path: '/explore', key: 'explore', tour: 'explore', icon: Compass },
+  { path: '/alerts',  key: 'alerts',  tour: 'alerts',  icon: BellRing },
+  { path: '/play',    key: 'play',    tour: 'play',    icon: Trophy },
+  { path: '/you',     key: 'you',     tour: 'you',     icon: CircleUser },
+]
+
 export default function NavBar() {
   const { user, isAdmin } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const { unread } = useAlerts()
-  const { t } = useTranslation('common')
+  const { t } = useTranslation(['common', 'journey'])
+  const { settings } = useAccountSettings()
+  const { enabled: journey } = useJourney()
+  const { hasTrips } = useHasTrips()
+  const path = location.pathname
 
-  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS
+  const base = journey
+    ? JOURNEY_TABS.filter((tab) => !(tab.key === 'play' && settings?.hide_game))
+    : BASE_TABS
+  const tabs = (isAdmin ? [...base, ADMIN_TAB] : base).map((tab) => ({
+    ...tab,
+    label: journey && tab.key !== 'admin' ? t(`journey:tabs.${tab.key}`) : t(`nav.${tab.key}`),
+  }))
+
+  // Journey: `/` is the Trips hub for users with a trip, else Explore.
+  const isActive = (tabPath) => {
+    if (!journey) return path === tabPath
+    if (tabPath === '/trips') return path === '/trips' || path.startsWith('/trips/') || (path === '/' && hasTrips === true)
+    if (tabPath === '/explore') return path === '/explore' || (path === '/' && hasTrips === false)
+    return path === tabPath
+  }
+  const inactiveText = journey ? 'text-slate-500' : 'text-slate-400'
 
   // `compact` (desktop bar): icon-only below lg so six or seven tabs fit from
   // 640 px up; the name stays as the accessible name and tooltip.
-  const NavLinks = ({ onClick, compact = false }) => tabs.map(({ path, key, tour, icon: Icon }) => {
-    const isActive = location.pathname === path
-    const label = t(`nav.${key}`)
+  const NavLinks = ({ onClick, compact = false }) => tabs.map(({ path, key, tour, label, icon: Icon }) => {
+    const active = isActive(path)
     const hasUnread = path === '/alerts' && unread > 0
     return (
       <button
@@ -45,12 +77,12 @@ export default function NavBar() {
         title={compact ? label : undefined}
         data-tour={`nav-${tour}`}
         data-tid={`nav.${key}`}
-        aria-current={isActive ? 'page' : undefined}
+        aria-current={active ? 'page' : undefined}
         onClick={() => { navigate(path); onClick?.() }}
         className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap py-1.5 rounded-md text-sm font-medium transition-all ${compact ? 'px-2.5 lg:px-3.5' : 'px-3.5'} ${
-          isActive
+          active
             ? 'bg-white text-teal-700 shadow-sm'
-            : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+            : `${inactiveText} hover:text-slate-600 hover:bg-white/50`
         }`}
       >
         <Icon size={14} aria-hidden="true" />
@@ -78,7 +110,14 @@ export default function NavBar() {
           </div>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Mobile hamburger (the journey shell has bottom tabs instead) */}
+        {journey ? (
+          <Link to="/" aria-label={t('nav.home')} data-tid="nav.homeMobile" className="sm:hidden flex items-center p-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm">
+              <Plane size={14} className="text-white" strokeWidth={2.5} />
+            </div>
+          </Link>
+        ) : (
         <button
           className="sm:hidden p-2 text-slate-600 hover:text-slate-800"
           onClick={() => setMenuOpen(o => !o)}
@@ -88,6 +127,7 @@ export default function NavBar() {
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
+        )}
 
         {/* Language + theme, then user info */}
         <div className="flex min-w-0 items-center gap-1 sm:gap-2">
@@ -105,8 +145,12 @@ export default function NavBar() {
         </div>
       </div>
 
+      {journey && (
+        <BottomTabs tabs={tabs} isActive={isActive} onSelect={(to) => navigate(to)} unread={unread} />
+      )}
+
       {/* Mobile nav drawer */}
-      {menuOpen && (
+      {!journey && menuOpen && (
         <div className="sm:hidden bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex flex-col gap-1 sticky top-14 z-40 shadow-md">
           <NavLinks onClick={() => setMenuOpen(false)} />
         </div>

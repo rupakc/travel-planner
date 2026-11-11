@@ -5,6 +5,7 @@ const STATIC = new Set([
   '/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/login', '/change-password',
   '/account', '/signup', '/check-email', '/verify', '/forgot-password', '/reset-password',
   '/auth/callback', '/auth/username',
+  '/trips', '/explore', '/play', '/you', '/onboarding',
 ])
 
 // [pattern, template]: the dynamic routes (and ones the plan reserves).
@@ -12,6 +13,8 @@ const DYNAMIC = [
   [/^\/share\/[^/]+$/, '/share/:token'],
   [/^\/plans\/[^/]+$/, '/plans/:id'],
   [/^\/alerts\/[^/]+$/, '/alerts/:id'],
+  [/^\/trips\/[^/]+$/, '/trips/:id'],
+  [/^\/trips\/[^/]+\/[^/]+$/, '/trips/:id/:tab'],
 ]
 
 export function routeTemplate(pathname) {

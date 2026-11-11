@@ -1,0 +1,39 @@
+{
+  "tabs": {
+    "trips": "Trips",
+    "explore": "Explore",
+    "alerts": "Alerts",
+    "play": "Play",
+    "you": "You"
+  },
+  "phases": {
+    "dreaming": "Dreaming",
+    "planning": "Planning",
+    "ready": "Ready",
+    "on_the_road": "On the road",
+    "memories": "Memories"
+  },
+  "tripTabs": {
+    "overview": "Overview",
+    "prep": "Prep",
+    "today": "Today",
+    "money": "Money",
+    "journal": "Journal",
+    "recap": "Recap",
+    "offline": "Offline"
+  },
+  "countdown_one": "in {{count}} day",
+  "countdown_other": "in {{count}} days",
+  "dayOf": "Day {{day}} of {{count}}",
+  "dayIn": "Day {{day}} in {{city}}",
+  "saved": {
+    "openTrip": "Open trip",
+    "savedToTrips": "Saved to Trips"
+  },
+  "load": {
+    "failed": "Couldn't load this right now.",
+    "retry": "Retry",
+    "loading": "Loading your trips…"
+  },
+  "offlineCopy": "Saved for offline"
+}
