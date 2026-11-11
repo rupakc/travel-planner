@@ -76,6 +76,16 @@ describe('VerifyEmailPage', () => {
     expect(emit).toHaveBeenCalledWith('email_verify', { result: 'ok' })
   })
 
+  it('falls back to Email confirmed with a sign-in link when applySession throws', async () => {
+    verifyEmail.mockResolvedValue({ status: 'verified', session: { access_token: 't' }, game: null })
+    auth.applySession.mockRejectedValueOnce(new Error('boom'))
+    await render()
+    expect(tid('verify-confirmed')).toBeTruthy()
+    expect(tid('verify-login-link').getAttribute('href')).toBe('/login')
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+    expect(emit.mock.calls.filter((c) => c[0] === 'email_verify')).toEqual([['email_verify', { result: 'ok' }]])
+  })
+
   it('shows Email confirmed with an account link when there is no session', async () => {
     verifyEmail.mockResolvedValue({ status: 'verified', session: null, game: null })
     await render()

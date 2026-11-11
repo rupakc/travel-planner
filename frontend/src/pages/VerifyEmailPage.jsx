@@ -37,22 +37,27 @@ export default function VerifyEmailPage() {
       window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
     } catch { /* non-browser environment */ }
     ;(async () => {
+      let res
       try {
-        const res = await verifyEmail(tokenRef.current)
-        emit('email_verify', { result: 'ok' })
-        if (res?.session) {
-          await applySession(res.session)
-          announceGame(res.game)
-          navigate('/', { replace: true })
-        } else {
-          announceGame(res?.game)
-          setState({ status: 'confirmed' })
-        }
+        res = await verifyEmail(tokenRef.current)
       } catch (err) {
         const code = err?.code
         emit('email_verify', { result: RESULT_BY_CODE[code] || 'invalid' })
         setState({ status: 'error', code, err })
+        return
       }
+      // The token is spent. Anything failing below must not look like an error.
+      emit('email_verify', { result: 'ok' })
+      let signedIn = false
+      try {
+        if (res?.session) {
+          await applySession(res.session)
+          signedIn = true
+        }
+        announceGame(res?.game)
+      } catch { /* the email is confirmed regardless */ }
+      if (signedIn) navigate('/', { replace: true })
+      else setState({ status: 'confirmed', signIn: Boolean(res?.session) })
     })()
   }, [applySession, navigate])
 
@@ -72,7 +77,9 @@ export default function VerifyEmailPage() {
   if (state.status === 'confirmed') {
     return shell(<>
       <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2" data-tid="verify-confirmed">{t('verify:verify.confirmed')}</h1>
-      <Link to="/account" className={link} data-tid="verify-account-link">{t('verify:verify.toAccount')}</Link>
+      {state.signIn
+        ? <Link to="/login" className={link} data-tid="verify-login-link">{t('verify:verify.signIn')}</Link>
+        : <Link to="/account" className={link} data-tid="verify-account-link">{t('verify:verify.toAccount')}</Link>}
     </>)
   }
   const { code } = state
