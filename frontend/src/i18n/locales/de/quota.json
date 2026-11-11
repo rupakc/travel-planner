@@ -1,0 +1,21 @@
+{
+  "title": "Tägliches KI-Kontingent",
+  "intro": "Wie viel der heutigen KI-Planung du genutzt hast.",
+  "buckets": {
+    "search": "Suche",
+    "chat": "Chat",
+    "compare": "Vergleichen",
+    "discover": "Entdecken",
+    "light_ai": "Schnellabfragen",
+    "import": "Link-Import"
+  },
+  "usedOf": "{{used}} / {{limit}}",
+  "unlimited": "Kein Tageslimit",
+  "resetsAt": "Wird um {{time}} zurückgesetzt",
+  "banner": {
+    "text": "Bestätige deine E-Mail, um den KI-Planer zu nutzen",
+    "send": "Link senden",
+    "sent": "Link gesendet. Prüfe dein Postfach.",
+    "dismiss": "Schließen"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Quota quotidien d'IA",
+  "intro": "La part de la planification IA d'aujourd'hui que vous avez utilisée.",
+  "buckets": {
+    "search": "Recherche",
+    "chat": "Chat",
+    "compare": "Comparer",
+    "discover": "Découvrir",
+    "light_ai": "Requêtes rapides",
+    "import": "Import de lien"
+  },
+  "usedOf": "{{used}} / {{limit}}",
+  "unlimited": "Aucune limite quotidienne",
+  "resetsAt": "Réinitialisation à {{time}}",
+  "banner": {
+    "text": "Confirmez votre e-mail pour utiliser le planificateur IA",
+    "send": "Envoyer le lien",
+    "sent": "Lien envoyé. Vérifiez votre boîte de réception.",
+    "dismiss": "Fermer"
+  }
+}

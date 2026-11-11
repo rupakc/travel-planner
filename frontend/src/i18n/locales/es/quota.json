@@ -1,0 +1,21 @@
+{
+  "title": "Límite diario de IA",
+  "intro": "Cuánto de la planificación con IA de hoy has usado.",
+  "buckets": {
+    "search": "Búsqueda",
+    "chat": "Chat",
+    "compare": "Comparar",
+    "discover": "Descubrir",
+    "light_ai": "Consultas rápidas",
+    "import": "Importar enlace"
+  },
+  "usedOf": "{{used}} / {{limit}}",
+  "unlimited": "Sin límite diario",
+  "resetsAt": "Se restablece a las {{time}}",
+  "banner": {
+    "text": "Confirma tu correo para usar el planificador de IA",
+    "send": "Enviar enlace",
+    "sent": "Enlace enviado. Revisa tu bandeja de entrada.",
+    "dismiss": "Cerrar"
+  }
+}
