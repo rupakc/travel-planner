@@ -36,17 +36,15 @@ afterEach(() => {
 const tid = (id) => container.querySelector(`[data-tid="${id}"]`)
 
 describe('PlanViewModal', () => {
-  it('as a modal: a dialog with the backdrop, the close buttons and Delete', async () => {
+  it('as a modal (unchanged): the fixed overlay with the backdrop, the close buttons and Delete', async () => {
     const onClose = vi.fn()
     await render(<PlanViewModal plan={PLAN} token="tok" onClose={onClose} />)
-    const dialog = container.querySelector('[role="dialog"]')
-    expect(dialog).not.toBeNull()
-    expect(dialog.getAttribute('aria-modal')).toBe('true')
+    expect(container.querySelector('.fixed.inset-0')).not.toBeNull()
     expect(tid('plan.modal-close-x')).not.toBeNull()
     expect(tid('plan.modal-close')).not.toBeNull()
     expect(tid('plan.delete')).not.toBeNull()
     expect(tid('plan.name-input')).not.toBeNull()
-    await act(async () => tid('plan.modal-backdrop').click())
+    await act(async () => container.querySelector('.backdrop-blur-sm').click())
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -54,7 +52,7 @@ describe('PlanViewModal', () => {
     await render(<PlanViewModal plan={PLAN} token="tok" inline />)
     expect(container.querySelector('[role="dialog"]')).toBeNull()
     expect(container.querySelector('[aria-modal]')).toBeNull()
-    expect(tid('plan.modal-backdrop')).toBeNull()
+    expect(container.querySelector('.backdrop-blur-sm')).toBeNull()
     expect(tid('plan.modal-close-x')).toBeNull()
     expect(tid('plan.modal-close')).toBeNull()
     expect(container.querySelector('.fixed')).toBeNull()

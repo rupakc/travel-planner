@@ -1,5 +1,6 @@
 {
   "loading": "正在加载你的行程…",
+  "planLoading": "正在加载计划…",
   "allTrips": "全部行程",
   "tabsLabel": "行程分区",
   "error": {

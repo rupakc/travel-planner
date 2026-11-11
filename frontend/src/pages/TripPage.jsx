@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { WifiOff } from 'lucide-react'
+import { Loader2, WifiOff } from 'lucide-react'
 import { useJourney } from '../hooks/useJourney'
 import { useAuth } from '../context/AuthContext'
 import { getTrip, patchTrip, deleteTrip, notifyTripsChanged } from '../services/tripsApi'
@@ -42,7 +42,8 @@ async function fetchPlan(token, id) {
 }
 
 // The header fields of an offline pack, as a read-only Trip (phase from the
-// dates on this device).
+// dates on this device). The pack carries no phase override, so a manual
+// stage shows as the date-based one while offline.
 function tripFromPack(pack) {
   const today = localToday()
   const start = pack.start_date ?? null
@@ -94,7 +95,7 @@ function TripScreen({ tripId, tab }) {
   const loadPlan = useCallback(() => {
     setPlan({ status: 'loading', plan: null })
     return fetchPlan(token, tripId).then(
-      (p) => setPlan({ status: 'ok', plan: p }),
+      (p) => setPlan({ status: 'ready', plan: p }),
       () => setPlan({ status: 'error', plan: null }),
     )
   }, [token, tripId])
@@ -121,6 +122,13 @@ function TripScreen({ tripId, tab }) {
   const phase = trip?.phase ?? null
   const { tabs, enabled, active } = resolveTabs({ phase, tab, offline })
 
+  // A save from the inline plan (Overview) updates the copy every tab reads,
+  // so a remount or another tab never shows (or re-saves) the stale plan.
+  const onPlanSaved = useCallback((updated) => {
+    if (!updated || typeof updated !== 'object') return
+    setPlan((p) => ({ status: 'ready', plan: { ...(p.plan || {}), ...updated } }))
+  }, [])
+
   useEffect(() => {
     if (!phase) return
     emit('trip_view', { surface: active, phase })
@@ -130,7 +138,8 @@ function TripScreen({ tripId, tab }) {
     const updated = await patchTrip(token, tripId, changes)
     setLoad({ status: 'ok', trip: updated, err: null })
     emit('trip_action', { action })
-    if ('start_date' in changes || 'end_date' in changes || 'title' in changes) notifyTripsChanged()
+    // The hub groups and sorts by phase and dates and shows the title.
+    notifyTripsChanged()
     return updated
   }, [token, tripId])
 
@@ -188,15 +197,34 @@ function TripScreen({ tripId, tab }) {
   }
 
   const Panel = PANELS[active] ?? TripOverview
-  const extra = active === 'overview' ? { plan: plan.plan, planStatus: plan.status, onRetryPlan: loadPlan } : {}
+  // Offline the selections come from the pack, so the plan counts as ready.
+  const planStatus = offline ? 'ready' : plan.status
+  const extra = active === 'overview' ? { plan: plan.plan, onPlanSaved } : {}
+  // Overview shows its own plan skeleton / error; every other tab gets this strip.
+  const planStrip = planStatus !== 'ready' && active !== 'overview'
 
   return shell(
     <>
       <TripHeader trip={trip} offline={offline} savedAt={savedAt} onPatch={onPatch} onDelete={onDelete} />
       {deleteError && <p role="alert" data-tid="trip.deleteError" className="text-sm text-red-700">{deleteError}</p>}
       <TripTabs tabs={tabs} enabled={enabled} active={active} onSelect={(next) => navigate(tripPath(tripId, next))} />
-      <section role="tabpanel" id={`trip-panel-${active}`} aria-labelledby={`trip-tab-${active}`} data-tid={`trip.panel.${active}`}>
-        <Panel trip={trip} token={token} {...extra} />
+      <section role="tabpanel" id={`trip-panel-${active}`} aria-labelledby={`trip-tab-${active}`} data-tid={`trip.panel.${active}`}
+        className="space-y-3">
+        {planStrip && planStatus === 'loading' && (
+          <p role="status" data-tid="trip.planLoading" className="flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 text-sm text-gray-600">
+            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('planLoading')}
+          </p>
+        )}
+        {planStrip && planStatus === 'error' && (
+          <div role="alert" data-tid="trip.planError" className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <span>{t('overview.loadFailed')}</span>
+            <button type="button" onClick={loadPlan} data-tid="trip.planRetry"
+              className="min-h-[44px] rounded-lg bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">
+              {t('overview.retry')}
+            </button>
+          </div>
+        )}
+        <Panel trip={trip} token={token} planStatus={planStatus} onRetryPlan={loadPlan} {...extra} />
       </section>
     </>,
   )

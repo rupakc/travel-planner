@@ -521,11 +521,10 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" data-tid="plan.modal-backdrop" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal — full-height bottom sheet on mobile, centered card on sm+ */}
-      <div role="dialog" aria-modal="true" aria-label={name || t('modal.namePlaceholder')}
-        className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
         {card}
       </div>
     </div>

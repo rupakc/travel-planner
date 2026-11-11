@@ -32,11 +32,11 @@ function useVisaChecked(trip, token, on) {
 /**
  * The Overview tab. Props: {trip, token} (the Trip merged with the plan's
  * selections and search_data), plus from TripPage the saved `plan`,
- * `planStatus` ('loading' | 'ok' | 'error') and `onRetryPlan`.
+ * `planStatus` ('loading' | 'ready' | 'error'), `onRetryPlan` and `onPlanSaved`.
  * Planning: the completeness meter; then the plan (PlanViewModal inline) and
  * "Open in planner". A Dreaming trip with no search: "Plan it".
  */
-export default function TripOverview({ trip, token, plan = null, planStatus = 'ok', onRetryPlan }) {
+export default function TripOverview({ trip, token, plan = null, planStatus = 'ready', onRetryPlan, onPlanSaved }) {
   const { t } = useTranslation('trip')
   const navigate = useNavigate()
   const { setPendingPlan, setPendingSearchData, showResults } = useSearchData()
@@ -98,7 +98,7 @@ export default function TripOverview({ trip, token, plan = null, planStatus = 'o
       {planning && (
         <CompletenessMeter selections={trip.selections ?? plan.selections ?? {}} searchData={sd} visaChecked={visaChecked} surface="trip" />
       )}
-      <PlanViewModal plan={plan} token={token} inline />
+      <PlanViewModal plan={plan} token={token} inline onSaved={onPlanSaved} />
       <div className="flex flex-col items-start gap-2 rounded-2xl border border-white/60 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-600">{t('overview.openPlannerHint')}</p>
         <button type="button" onClick={openPlanner} data-tid="trip.openPlanner"

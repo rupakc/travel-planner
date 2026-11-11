@@ -37,7 +37,13 @@ vi.mock('../components/trips/CompletenessMeter', () => ({
   default: (props) => <div data-testid="completeness" data-surface={props.surface} data-visa={String(props.visaChecked)} />,
 }))
 vi.mock('../components/PlanViewModal', () => ({
-  default: (props) => <div data-testid="plan-view" data-inline={String(!!props.inline)}>{props.plan?.name}</div>,
+  default: (props) => (
+    <div data-testid="plan-view" data-inline={String(!!props.inline)}>
+      {props.plan?.name}
+      <button type="button" data-tid="test.planSave"
+        onClick={() => props.onSaved?.({ ...props.plan, selections: { hotel: { name: 'Hotel Novo' } } })}>save</button>
+    </div>
+  ),
 }))
 
 import { emit } from '../telemetry/client'
@@ -177,6 +183,52 @@ describe('TripPage', () => {
     expect(patchTrip).toHaveBeenLastCalledWith('tok', 3, { phase: null })
     expect(emit).toHaveBeenCalledWith('trip_action', { action: 'phase_clear' })
     expect(tid('trip.phase').textContent).toContain('Planning')
+    expect(notifyTripsChanged).toHaveBeenCalledTimes(2)
+  })
+
+  it('Escape closes the phase menu and puts focus back on the chip', async () => {
+    getTrip.mockResolvedValue(TRIP)
+    await render('/trips/3')
+    await click(tid('trip.phase'))
+    expect(document.activeElement).toBe(tid('trip.phaseMenu.planning'))
+    await act(async () => {
+      tid('trip.phaseMenu').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(tid('trip.phaseMenu')).toBeNull()
+    expect(document.activeElement).toBe(tid('trip.phase'))
+  })
+
+  it('while the plan loads, other tabs get planStatus "loading" and a shared loading strip', async () => {
+    getTrip.mockResolvedValue(ON_ROAD)
+    globalThis.fetch = vi.fn(() => new Promise(() => {}))
+    await render('/trips/3')
+    expect(tid('trip.planLoading')).not.toBeNull()
+    expect(tabProps.last.planStatus).toBe('loading')
+    expect(typeof tabProps.last.onRetryPlan).toBe('function')
+  })
+
+  it('a failed plan load shows the shared error strip; Retry loads it into the tabs', async () => {
+    getTrip.mockResolvedValue(ON_ROAD)
+    globalThis.fetch = vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }))
+    await render('/trips/3')
+    expect(tid('trip.planError')).not.toBeNull()
+    expect(tabProps.last.planStatus).toBe('error')
+    globalThis.fetch = vi.fn(async () => ({ ok: true, json: async () => PLAN }))
+    await click(tid('trip.planRetry'))
+    expect(tid('trip.planError')).toBeNull()
+    expect(tabProps.last.planStatus).toBe('ready')
+    expect(tabProps.last.trip.selections).toEqual(PLAN.selections)
+  })
+
+  it('a save in the inline plan updates the selections every tab reads', async () => {
+    getTrip.mockResolvedValue(TRIP)
+    await render('/trips/3')
+    await click(tid('test.planSave'))
+    await click(tid('trip.tab.money'))
+    expect(tabProps.last.trip.selections).toEqual({ hotel: { name: 'Hotel Novo' } })
+    await click(tid('trip.tab.overview'))
+    await click(tid('trip.openPlanner'))
+    expect(search.setPendingPlan).toHaveBeenCalledWith({ ...PLAN, selections: { hotel: { name: 'Hotel Novo' } } })
   })
 
   it('renames the trip inline', async () => {

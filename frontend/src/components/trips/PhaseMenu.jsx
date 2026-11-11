@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, CalendarClock } from 'lucide-react'
 
@@ -20,6 +20,17 @@ export default function PhaseMenu({ phase, manual, onPick, onFollow, onClose }) 
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
   }, [onClose])
+
+  // When the menu closes with focus inside it (Escape, a pick), focus goes back
+  // to the chip. A layout-effect cleanup runs while the menu is still in the DOM.
+  useLayoutEffect(() => {
+    const menu = ref.current
+    return () => {
+      if (menu && menu.contains(document.activeElement)) {
+        document.querySelector('[data-tid="trip.phase"]')?.focus()
+      }
+    }
+  }, [])
 
   const onKey = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); onClose(); return }

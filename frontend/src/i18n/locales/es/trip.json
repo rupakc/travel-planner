@@ -1,5 +1,6 @@
 {
   "loading": "Cargando tu viaje…",
+  "planLoading": "Cargando el plan…",
   "allTrips": "Todos los viajes",
   "tabsLabel": "Secciones del viaje",
   "error": {
