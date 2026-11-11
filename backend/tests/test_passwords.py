@@ -10,12 +10,21 @@ def test_common_password():
 
 
 def test_matches_username_case_insensitive():
-    assert password_problem("Jane_Doe12", username="jane_doe12") == "password_matches_identity"
+    assert (
+        password_problem("Jane_Doe12", username="jane_doe12")
+        == "password_matches_identity"
+    )
 
 
 def test_matches_email_and_local_part():
-    assert password_problem("Zebra-Quartz-77", email="zebra-quartz-77@example.com") == "password_matches_identity"
-    assert password_problem("Zebra-Quartz-77", email="ZEBRA-QUARTZ-77") == "password_matches_identity"
+    assert (
+        password_problem("Zebra-Quartz-77", email="zebra-quartz-77@example.com")
+        == "password_matches_identity"
+    )
+    assert (
+        password_problem("Zebra-Quartz-77", email="ZEBRA-QUARTZ-77")
+        == "password_matches_identity"
+    )
 
 
 def test_too_short():
