@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import i18n, { detectLanguage, setLanguage, NAMESPACES } from './index'
+import i18n, { detectLanguage, setLanguage, NAMESPACES, BUNDLED_NAMESPACES } from './index'
 
 const setNavigatorLanguages = (langs) =>
   vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(langs)
@@ -51,5 +51,26 @@ describe('setLanguage', () => {
   it('bundles every en namespace', () => {
     expect(NAMESPACES).toContain('common')
     expect(i18n.hasResourceBundle('en', 'common')).toBe(true)
+  })
+})
+
+describe('lazy English namespaces', () => {
+  it('keeps NAMESPACES unchanged: every en file, sorted', () => {
+    const files = Object.keys(import.meta.glob('./locales/en/*.json'))
+      .map((p) => p.split('/').pop().replace(/\.json$/, '')).sort()
+    expect(NAMESPACES).toEqual(files)
+  })
+
+  it('bundles the eager core and leaves the lazy namespaces out of the main bundle', () => {
+    for (const ns of ['common', 'errors', 'auth', 'journey', 'misc']) expect(BUNDLED_NAMESPACES).toContain(ns)
+    for (const ns of ['accountData', 'accountSettings', 'adminInvites', 'adminTelemetry', 'security', 'mobile']) {
+      expect(NAMESPACES).toContain(ns)
+      expect(BUNDLED_NAMESPACES).not.toContain(ns)
+    }
+  })
+
+  it('has every namespace loaded in tests (bundleAll)', () => {
+    for (const ns of NAMESPACES) expect(i18n.hasResourceBundle('en', ns), ns).toBe(true)
+    expect(i18n.t('accountData:export.button')).toBe('Download my data')
   })
 })

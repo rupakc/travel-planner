@@ -1,5 +1,6 @@
-// i18next set-up. English ships in the main bundle for every namespace; the
-// other languages are separate chunks fetched on first use. Keys follow
+// i18next set-up. English ships in the main bundle for every namespace except
+// the lazy ones in `routeNamespaces.js` (loaded per route by I18nRouteGate);
+// the other languages are separate chunks fetched on first use. Keys follow
 // `ns:area.thing` (e.g. `common:nav.search`), plurals use the JSON v4
 // suffixes (`_one`, `_other`, …) and interpolation is `{{name}}`.
 import i18n from 'i18next'
@@ -20,10 +21,26 @@ const STORAGE_KEY = 'tp_lang'
 
 const nsOf = (path) => path.split('/').pop().replace(/\.json$/, '')
 
-const enModules = import.meta.glob('./locales/en/*.json', { eager: true })
-const lazyModules = import.meta.glob(['./locales/*/*.json', '!./locales/en/*.json'])
+// The brace list is LAZY_NS from `routeNamespaces.js` (globs must be literals;
+// routeNamespaces.test.js keeps the two in step). Every other en file is
+// bundled, so a namespace added later is safe by default.
+const enModules = import.meta.glob(
+  ['./locales/en/*.json', '!./locales/en/{accountData,accountSettings,adminInvites,adminTelemetry,expenses,journal,mobile,nearbyTrip,offlinePack,playYou,prep,recap,security,today,trip,trips}.json'],
+  { eager: true },
+)
+const enLazyModules = import.meta.glob(
+  './locales/en/{accountData,accountSettings,adminInvites,adminTelemetry,expenses,journal,mobile,nearbyTrip,offlinePack,playYou,prep,recap,security,today,trip,trips}.json',
+)
+const lazyModules = {
+  ...import.meta.glob(['./locales/*/*.json', '!./locales/en/*.json']),
+  ...enLazyModules,
+}
 
-export const NAMESPACES = Object.keys(enModules).map(nsOf).sort()
+// Namespaces in the main bundle (English ready before the first render).
+export const BUNDLED_NAMESPACES = Object.keys(enModules).map(nsOf).sort()
+
+// Every en namespace, bundled or lazy.
+export const NAMESPACES = [...BUNDLED_NAMESPACES, ...Object.keys(enLazyModules).map(nsOf)].sort()
 
 const enResources = Object.fromEntries(
   Object.entries(enModules).map(([path, mod]) => [nsOf(path), mod.default ?? mod]),
@@ -103,7 +120,9 @@ function report(event, props) {
 
 let initPromise = null
 
-export function initI18n({ lng } = {}) {
+// `bundleAll` (tests) loads every namespace, lazy ones included, before the
+// promise resolves, so a test can render any page synchronously.
+export function initI18n({ lng, bundleAll = false } = {}) {
   if (initPromise) return initPromise
   i18n.on('languageChanged', applyLanguage)
   initPromise = i18n
@@ -113,7 +132,9 @@ export function initI18n({ lng } = {}) {
       lng: isSupportedLanguage(lng) ? lng : detectLanguage(),
       resources: { en: enResources },
       partialBundledLanguages: true,
-      ns: NAMESPACES,
+      // Only these load at start (other languages' chunks included); the
+      // lazy ones join `ns` when I18nRouteGate loads them.
+      ns: bundleAll ? NAMESPACES : BUNDLED_NAMESPACES,
       defaultNS: 'common',
       fallbackNS: false,
       fallbackLng: DEFAULT_LANGUAGE,
