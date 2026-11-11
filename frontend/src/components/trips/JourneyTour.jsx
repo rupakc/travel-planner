@@ -39,12 +39,12 @@ export default function JourneyTour({ username, visible = true, onboardingDone =
   const { start } = tour
 
   useEffect(() => {
-    if (!active) return undefined
+    if (!enabled) return undefined
     const onReplay = () => start()
     window.addEventListener(REPLAY_EVENT, onReplay)
     return () => window.removeEventListener(REPLAY_EVENT, onReplay)
-  }, [active, start])
+  }, [enabled, start])
 
-  if (!active) return null
+  if (!enabled) return null
   return <OnboardingTour open={tour.open} steps={steps} onClose={tour.close} />
 }

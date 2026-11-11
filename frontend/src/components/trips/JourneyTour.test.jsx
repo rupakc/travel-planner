@@ -5,8 +5,10 @@ import { createRoot } from 'react-dom/client'
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k) => k }) }))
 const journey = { enabled: true }
+vi.mock('../../services/accountApi', () => ({ putOnboarding: vi.fn() }))
 vi.mock('../../hooks/useJourney', () => ({ useJourney: () => journey }))
 import JourneyTour from './JourneyTour'
+import { putOnboarding } from '../../services/accountApi'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const box = { left: 10, top: 10, width: 80, height: 30, right: 90, bottom: 40 }
@@ -84,5 +86,22 @@ describe('JourneyTour', () => {
     act(() => vi.advanceTimersByTime(5000))
     act(() => { window.dispatchEvent(new Event('voyager:replay-journey-tour')) })
     expect(dialog()).toBeNull()
+  })
+
+  it('skips a zero-size duplicate anchor and spotlights the visible one', () => {
+    const hidden = document.querySelector('[data-tour="nav-trips"]')
+    hidden.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 })
+    addAnchor('nav-trips') // the visible twin
+    render({ onboardingDone: true })
+    act(() => vi.advanceTimersByTime(5000))
+    expect(titles()).toEqual(['steps.trips.title'])
+  })
+
+  it('never reports onboarding when finished', () => {
+    render({ onboardingDone: true })
+    act(() => vi.advanceTimersByTime(5000))
+    for (let i = 0; i < 4; i++) click('tour.next')
+    click('tour.start')
+    expect(putOnboarding).not.toHaveBeenCalled()
   })
 })
