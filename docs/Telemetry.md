@@ -112,6 +112,27 @@ Emitted by the Phase 1 account and game features; accepted by the server ahead o
 | `level_up` | `level` (int) | not yet | The user reached a new level. |
 | `game_view` | `surface` (`account`, `nav`, `celebration`) | not yet | A game surface was shown. |
 
+### Journey
+
+Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the server ahead of the clients. Props are enums, ints and bools only: never an amount, a journal text, a place name or a trip title.
+
+| Event | Props | Web | Meaning |
+|---|---|---|---|
+| `trip_view` | `surface` (`hub`, `overview`, `prep`, `today`, `money`, `journal`, `recap`, `offline`), `phase` (`dreaming`, `planning`, `ready`, `on_the_road`, `memories`, `none`) | not yet | A trip screen was shown. |
+| `trip_action` | `action` (`create`, `rename`, `dates`, `phase_override`, `phase_clear`, `delete`, `open_planner`, `plan_it`, `share_status`) | not yet | A trip management action. |
+| `prep_toggle` | `item` (`visa`, `passport`, `bookings`, `insurance`, `documents`, `stress_test`, `sim`, `money`, `packing`, `emergency_card`, `checkin`, `offline_pack`), `done` (bool) | not yet | A prep checklist item was ticked or unticked. |
+| `prep_complete` | `items` (int) | not yet | Every prep item is done. |
+| `today_action` | `action` (`checkin`, `next_up`, `directions`, `visited`, `status_share`, `nearby`) | not yet | An action on the Today screen. |
+| `offline_pack` | `action` (`save`, `refresh`, `open`, `remove`), `result` (`ok`, `error`, `unsupported`, `quota`), `kb` (int) | not yet | An offline pack operation and its size. |
+| `outbox_flush` | `sent` (int), `failed` (int), `dropped` (int) | not yet | The offline outbox was flushed after reconnecting. |
+| `expense_action` | `action` (`add`, `edit`, `delete`), `category` (`flights`, `lodging`, `food`, `transport`, `activities`, `shopping`, `fees`, `other`), `queued` (bool) | not yet | An expense change; `queued` when made offline. No amount is sent. |
+| `journal_action` | `action` (`add`, `edit`, `delete`), `queued` (bool) | not yet | A journal entry change; no text is sent. |
+| `place_action` | `action` (`visited`, `unvisited`, `rate`, `unrate`), `kind` (`activity`, `place`, `food`, `hotel`, `event`, `tour`, `nearby`, `other`), `stars` (int) | not yet | A place was marked or rated. |
+| `recap_action` | `action` (`view`, `complete`, `share`, `where_next`) | not yet | An action on the trip recap. |
+| `completeness_view` | `surface` (`drawer`, `trip`), `percent` (int) | not yet | The plan completeness meter was shown. |
+| `onboarding_result` | `type` (`budget_backpacker`, `family`, `luxury`, `adventure`, `culture_foodie`, `business`, `relaxation`, `accessible`), `secondary` (int) | not yet | The traveller-type quiz result. |
+| `journey_shell` | `enabled` (bool), `source` (`config`, `override`, `off`) | not yet | Whether the journey shell is on and why. |
+
 ### Settings, consent, performance, errors
 
 | Event | Props | Web | Meaning |

@@ -101,6 +101,95 @@ EVENTS: dict[str, dict[str, str]] = {
     "badge_earned": {"badge": "id"},
     "level_up": {"level": "int"},
     "game_view": {"surface": _enum("account", "nav", "celebration")},
+    # Phase 2: journey
+    "trip_view": {
+        "surface": _enum(
+            "hub", "overview", "prep", "today", "money", "journal", "recap", "offline"
+        ),
+        "phase": _enum(
+            "dreaming", "planning", "ready", "on_the_road", "memories", "none"
+        ),
+    },
+    "trip_action": {
+        "action": _enum(
+            "create",
+            "rename",
+            "dates",
+            "phase_override",
+            "phase_clear",
+            "delete",
+            "open_planner",
+            "plan_it",
+            "share_status",
+        )
+    },
+    "prep_toggle": {
+        "item": _enum(
+            "visa",
+            "passport",
+            "bookings",
+            "insurance",
+            "documents",
+            "stress_test",
+            "sim",
+            "money",
+            "packing",
+            "emergency_card",
+            "checkin",
+            "offline_pack",
+        ),
+        "done": "bool",
+    },
+    "prep_complete": {"items": "int"},
+    "today_action": {
+        "action": _enum(
+            "checkin", "next_up", "directions", "visited", "status_share", "nearby"
+        )
+    },
+    "offline_pack": {
+        "action": _enum("save", "refresh", "open", "remove"),
+        "result": _enum("ok", "error", "unsupported", "quota"),
+        "kb": "int",
+    },
+    "outbox_flush": {"sent": "int", "failed": "int", "dropped": "int"},
+    "expense_action": {
+        "action": _enum("add", "edit", "delete"),
+        "category": _enum(
+            "flights",
+            "lodging",
+            "food",
+            "transport",
+            "activities",
+            "shopping",
+            "fees",
+            "other",
+        ),
+        "queued": "bool",
+    },
+    "journal_action": {"action": _enum("add", "edit", "delete"), "queued": "bool"},
+    "place_action": {
+        "action": _enum("visited", "unvisited", "rate", "unrate"),
+        "kind": _enum(
+            "activity", "place", "food", "hotel", "event", "tour", "nearby", "other"
+        ),
+        "stars": "int",
+    },
+    "recap_action": {"action": _enum("view", "complete", "share", "where_next")},
+    "completeness_view": {"surface": _enum("drawer", "trip"), "percent": "int"},
+    "onboarding_result": {
+        "type": _enum(
+            "budget_backpacker",
+            "family",
+            "luxury",
+            "adventure",
+            "culture_foodie",
+            "business",
+            "relaxation",
+            "accessible",
+        ),
+        "secondary": "int",
+    },
+    "journey_shell": {"enabled": "bool", "source": _enum("config", "override", "off")},
 }
 
 
