@@ -187,9 +187,9 @@ POST /api/auth/login
 
 Use `ASWebAuthenticationSession` on iOS and Custom Tabs on Android.
 
-1. Generate a random `verifier` (43 to 128 URL-safe characters) and keep it in memory. Compute `challenge = base64url(sha256(verifier))` without padding.
+1. Generate a random `verifier` (43 to 128 URL-safe characters, per RFC 7636) and keep it in memory. Compute `challenge = base64url(sha256(verifier))` without padding.
 2. Open the system browser at:
-   `https://<base>/api/auth/oauth/github/start?client=ios&challenge=<challenge>&redirect_uri=voyager%3A%2F%2Fauth%2Fcallback`
+   `<base>/api/auth/oauth/github/start?client=ios&challenge=<challenge>&redirect_uri=voyager%3A%2F%2Fauth%2Fcallback`
    `redirect_uri` must exactly match an allow-listed entry (default `voyager://auth/callback` or `<base>/auth/callback`).
 3. The provider flow ends with a redirect to `voyager://auth/callback?code=<handoff>` (or `?error=<code>`, for example `cancelled`). The handoff code lasts 120 s and is single use.
 4. Exchange it:
@@ -203,7 +203,7 @@ Handle the three results:
 
 - `{"status": "signed_in", "session": {…}, "game": {…}, "return_to": "/"}`: store the session.
 - `{"status": "needs_username", "signup_token": "…", "suggested_username": "jane", …}`: ask for a username, then `POST /auth/oauth/complete` with `{"signup_token", "username", "client": "ios", "device_name"}` which returns `201 {"status": "signed_in", "session": {…}, "game": {…}}`.
-- `{"status": "linked", …}`: only when the flow started with a link ticket (signed-in user).
+- `{"status": "linked", …}`: returned only for linking, which is started from a signed-in session with a link ticket (the contract example uses `client=web`).
 
 `400 code_invalid` means the code expired, was used, or the verifier does not match; restart from step 1.
 
@@ -218,7 +218,7 @@ The result is one of the same three shapes as the exchange.
 
 ### 4. Calling the API and refreshing (single flight)
 
-Send `Authorization: Bearer <access_token>`. When a call answers `401` (expired access token), or `401 session_revoked`, refresh. Run at most one refresh at a time: the first request that needs a refresh starts it, and every other request that gets a 401 meanwhile waits for that same refresh to finish, then retries with the new access token.
+Send `Authorization: Bearer <access_token>`. When a call answers `401` (expired access token) or `401 session_revoked`, refresh. Run at most one refresh at a time: the first request that needs a refresh starts it, and every other request that gets a 401 meanwhile waits for that same refresh to finish, then retries with the new access token.
 
 ```http
 POST /api/auth/refresh
@@ -229,11 +229,11 @@ POST /api/auth/refresh
 
 Refresh tokens rotate: persist `rt_new` immediately and discard `rt_old`. Failure handling:
 
-- `401 refresh_stale`: the old token was already rotated less than 30 s ago (for example a second process, or a response lost in transit). The family is still valid. Re-read the newest stored refresh token and retry the refresh once with it. If that also fails, treat it as `refresh_invalid`.
+- `401 refresh_stale`: the old token was already rotated at most 30 s ago (for example a second process, or a response lost in transit). The family is still valid. Re-read the newest stored refresh token and retry the refresh once with it. If that also fails, treat it as `refresh_invalid`.
 - `401 refresh_invalid`: the token is unknown, expired, revoked, the user is inactive, or it was reused after the grace window (which revokes the family). Clear stored tokens and sign the user out.
 - `429`: wait `Retry-After` seconds, then retry. Do not sign out.
 
-A `401 session_revoked` on a freshly refreshed token means the password changed elsewhere or "sign out everywhere" was used: sign out.
+On `401 session_revoked`, try one refresh; if the refresh fails, sign out.
 
 ### 5. Sign out
 
