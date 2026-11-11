@@ -534,3 +534,58 @@ def test_admin_reset_revokes_sessions(client, admin_headers):
     assert me.json()["error_code"] == "session_revoked"
     rr = client.post("/api/auth/refresh", json={"refresh_token": s["refresh_token"]})
     assert rr.json()["error_code"] == "refresh_invalid"
+
+
+# ── login hardening ──────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def verify_spy(monkeypatch):
+    from app.api.routes import auth as auth_routes
+
+    calls = []
+    real = auth_routes._verify
+
+    def spy(password, hashed):
+        calls.append(hashed)
+        return real(password, hashed)
+
+    monkeypatch.setattr(auth_routes, "_verify", spy)
+    return calls, auth_routes._DUMMY_HASH
+
+
+def test_unknown_login_runs_dummy_bcrypt(client, verify_spy):
+    calls, dummy = verify_spy
+    r = _login(client, "nobody-" + _name())
+    assert r.status_code == 401
+    assert calls == [dummy]
+
+
+def test_inactive_and_passwordless_logins_run_dummy_bcrypt(client, verify_spy):
+    calls, dummy = verify_spy
+    u = _user()
+    users_db.deactivate_user(u["username"])
+    oauth = _user(password=None, password_hash="!", signup_method="oauth")
+    assert _login(client, u["username"]).status_code == 401
+    assert _login(client, oauth["username"], "anything-at-all").status_code == 401
+    assert calls == [dummy, dummy]
+
+
+def test_failure_lock_is_per_account_across_username_and_email(client, monkeypatch):
+    from app.core import rate_limit
+    from app.core.config import settings
+    from app.core.rate_limit import SlidingWindowLimiter
+
+    monkeypatch.setattr(settings, "rate_limit_enabled", True)
+    monkeypatch.setattr(rate_limit, "limiter", SlidingWindowLimiter())
+    monkeypatch.setattr(settings, "rate_limit_login", 99)
+    monkeypatch.setattr(settings, "rate_limit_login_failures", 4)
+    email = f"{_name()}@example.com"
+    u = _user(email=email)
+    idents = [u["username"], email.upper(), u["username"].upper(), email]
+    assert [_login(client, i, "wrong-pass-123").status_code for i in idents] == [
+        401
+    ] * 4
+    # locked at the limit, whichever identifier is used (even the right password)
+    assert _login(client, u["username"]).status_code == 429
+    assert _login(client, email).status_code == 429

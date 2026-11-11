@@ -23,6 +23,7 @@ from ...core.urls import public_url
 from ...db.sessions_db import revoke_all
 from ...db.users_db import (
     EmailInUseError,
+    _verify,
     authenticate_user,
     bump_token_version,
     change_password,
@@ -55,20 +56,31 @@ class ChangePasswordRequest(BaseModel):
     device_name: str | None = Field(None, max_length=64)
 
 
+# A fixed bcrypt hash, verified when the login names no usable account so
+# unknown, inactive and password-less logins cost the same time as a real one.
+_DUMMY_HASH = "$2b$12$kRZsB.iPBmEFn5Bh.S/lAOYgfSJCh1jANaXySDq1FqSmN/zlVon9."
+
+
 @router.post("/auth/login", dependencies=[Depends(rate_limit("login"))])
 def login(req: LoginRequest, request: Request):
-    # Per-IP attempts are the "login" bucket. Failures lock this username for
+    # Per-IP attempts are the "login" bucket. Failures lock this account for
     # this IP (and, far higher, from everywhere), checked before bcrypt so a
     # guesser learns nothing; other IPs can't lock the real user out.
     caller = caller_key(request, None)
-    wait = login_locked(req.username, caller)
+    # ``username`` may also be the account's email. The lock is keyed on the
+    # resolved account, so alternating username and email gains nothing.
+    found = get_user_by_login(req.username)
+    lock_key = found["username"].lower() if found else req.username
+    wait = login_locked(lock_key, caller)
     if wait is not None:
         raise too_many(wait)
-    # ``username`` may also be the account's email
-    found = get_user_by_login(req.username)
-    user = authenticate_user(found["username"], req.password) if found else None
+    if found and found["is_active"] and found.get("password_hash") != "!":
+        user = authenticate_user(found["username"], req.password)
+    else:
+        _verify(req.password, _DUMMY_HASH)  # timing parity, result ignored
+        user = None
     if not user:
-        record_login_failure(req.username, caller)
+        record_login_failure(lock_key, caller)
         raise HTTPException(status_code=401, detail="Invalid username or password")
     if user.get("account_status", "active") == "pending":
         # only revealed once the password was right
