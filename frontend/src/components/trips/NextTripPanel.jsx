@@ -19,7 +19,7 @@ export default function NextTripPanel({ trip, prep }) {
     actions = (
       <>
         <Link to={tripPath(id, 'overview')} data-tid="trips-next-pick-dates" className={primary}>{t('next.pickDates')}</Link>
-        <Link to="/explore" data-tid="trips-next-plan-it" className={secondary}>{t('next.planIt')}</Link>
+        <Link to="/explore" state={trip.destination ? { prefill: { destination: trip.destination } } : undefined} data-tid="trips-next-plan-it" className={secondary}>{t('next.planIt')}</Link>
       </>
     )
   } else if (trip.phase === 'planning') {

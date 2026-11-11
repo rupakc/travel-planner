@@ -63,6 +63,7 @@ export default function TripsPage() {
 
   const onCreated = (trip) => {
     setCreating(false)
+    setFailed(false)
     setData((d) => ({ ...(d ?? { pinned_id: null }), trips: [trip, ...(d?.trips ?? [])] }))
   }
 

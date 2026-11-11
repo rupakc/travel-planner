@@ -114,6 +114,25 @@ describe('TripsPage', () => {
     expect(tid('trips-bucket-ring')).toBeNull()
   })
 
+  it('Plan it carries the destination to Explore', async () => {
+    api.listTrips.mockResolvedValue({ trips: [trip({ id: 7, title: 'Rome idea', destination: 'Rome' })], pinned_id: 7, today: '2026-11-12' })
+    await render()
+    expect(tid('trips-next-plan-it').getAttribute('href')).toBe('/explore')
+  })
+
+  it('a successful create clears the load error', async () => {
+    api.listTrips.mockRejectedValueOnce({ code: 'network' })
+    api.createTrip.mockResolvedValue(trip({ id: 9, title: 'Idea' }))
+    await render()
+    await act(async () => { tid('trips-create').click() })
+    const input = tid('trips-create-title')
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+    await act(async () => { setter.call(input, 'Idea'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    await act(async () => { tid('trips-create-dialog').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
+    await flush()
+    expect(tid('trips-retry')).toBeNull()
+  })
+
   it('shows the empty state', async () => {
     api.listTrips.mockResolvedValue({ trips: [], pinned_id: null, today: '2026-11-12' })
     await render()

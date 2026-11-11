@@ -16,12 +16,16 @@ export default function CreateTripDialog({ onClose, onCreated }) {
   const [error, setError] = useState(null)
   const input = useRef(null)
 
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => { input.current?.focus() }, [])
+
   useEffect(() => {
-    input.current?.focus()
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [])
 
   async function submit(e) {
     e.preventDefault()
