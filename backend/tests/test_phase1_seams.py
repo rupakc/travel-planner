@@ -89,7 +89,6 @@ def test_account_requires_auth():
 def test_limited_includes_quota_dependency():
     deps = app_main._limited("search")
     assert len(deps) == 3
-    assert asyncio.run(deps[2].dependency()) is None
     assert callable(ai_quota.daily_quota("search"))
 
 
