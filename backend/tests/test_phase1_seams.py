@@ -127,7 +127,7 @@ def test_phase1_setting_defaults():
     from app.core.config import Settings
 
     expected = {
-        "signup_mode": "open", "email_log_links": False,
+        "signup_mode": "open", "signup_enabled": False, "email_log_links": False,
         "account_token_ttl_minutes": 30, "pending_purge_days": 7,
         "refresh_token_days": 60, "refresh_family_max_days": 365,
         "mobile_access_token_minutes": 60,

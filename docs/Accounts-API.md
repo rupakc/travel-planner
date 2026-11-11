@@ -254,6 +254,7 @@ Clarifications of behaviour the frozen contract left implicit. None changes a re
 - **Apple native secret.** For Apple the server stores the refresh token it needs to revoke on account deletion as `"<client_id>|<refresh_token>"`, Fernet-encrypted (see Global constraints). This is internal storage: no request or response field changes.
 - **Unverified or untrusted provider email.** A provider email that is unverified, or verified but not trusted (Facebook, unless `FACEBOOK_EMAIL_TRUSTED=true`), never deletes and never links to an existing account. If it matches an existing account that has no verified email (for example an admin-created one), the callback answers `email_in_use_unverified`. Only a pending native account is replaced, and only by a trusted, verified provider email.
 - **Password reset verifies the address.** A successful `POST /auth/password-reset/confirm` on an account whose email was unverified marks that email verified, because the link proved control of the mailbox.
+- **Sign-up needs the operator's opt-in.** `signup_available` is true only when email delivery is available *and* the server sets `SIGNUP_ENABLED=true`; otherwise `POST /auth/signup` answers `503 email_unavailable`. OAuth sign-up is not gated by it.
 
 ## Changelog
 

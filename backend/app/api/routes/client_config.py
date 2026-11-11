@@ -25,7 +25,7 @@ def client_config(response: Response) -> dict:
         },
         "auth": {
             "signup_mode": settings.signup_mode,
-            "signup_available": email,
+            "signup_available": email and bool(settings.signup_enabled),
             "password_reset_available": email,
             "min_password_length": MIN_PASSWORD_LENGTH_V2,
             "verify_ttl_s": int(settings.account_token_ttl_minutes) * 60,

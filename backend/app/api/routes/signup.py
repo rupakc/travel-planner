@@ -176,6 +176,10 @@ def _clean_signup(req: SignupRequest) -> tuple[str, str, str | None]:
     "/auth/signup", status_code=202, dependencies=[Depends(_limited("signup"))]
 )
 def signup(req: SignupRequest, background: BackgroundTasks):
+    if not settings.signup_enabled:  # operator opt-in (SIGNUP_ENABLED)
+        raise ApiError(
+            503, "email_unavailable", "Email can't be sent right now. Try again later."
+        )
     _require_email()
     username, email, display = _clean_signup(req)
     locale = _locale(req.locale)

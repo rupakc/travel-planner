@@ -144,6 +144,9 @@ class Settings(BaseSettings):
 
     # --- Phase 1: accounts, OAuth, daily AI quota, game ---
     signup_mode: Literal["open", "invite"] = "open"
+    # Native (password) sign-up is off until the operator opts in: setting
+    # SMTP for fare alerts must not open public registration by itself.
+    signup_enabled: bool = False
     email_log_links: bool = False  # dev: log verification/reset links
     account_token_ttl_minutes: int = 30
     pending_purge_days: int = 7

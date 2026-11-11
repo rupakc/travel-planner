@@ -255,6 +255,26 @@ def test_email_unavailable(client, monkeypatch):
     assert calls == []
 
 
+def test_signup_needs_operator_opt_in(client, sent, monkeypatch):
+    """SMTP alone (set for fare alerts) never opens public sign-up: without
+    SIGNUP_ENABLED it answers 503 email_unavailable and /config hides it,
+    while password reset keeps working."""
+    monkeypatch.setattr(settings, "signup_enabled", False)
+    monkeypatch.setattr(settings, "smtp_host", "smtp.example")
+    r = _signup(client)
+    assert r.status_code == 503 and r.json()["error_code"] == "email_unavailable"
+    auth = client.get("/api/config").json()["auth"]
+    assert auth["signup_available"] is False
+    assert auth["password_reset_available"] is True
+    assert sent == []
+    r = client.post("/api/auth/password-reset/request", json={"email": _email()})
+    assert r.status_code == 202
+
+    monkeypatch.setattr(settings, "signup_enabled", True)
+    assert client.get("/api/config").json()["auth"]["signup_available"] is True
+    assert _signup(client).status_code == 202
+
+
 def test_signup_rate_limited(client, sent, monkeypatch):
     from app.core import rate_limit
 
