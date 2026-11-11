@@ -45,6 +45,7 @@ nav:
       - Internationalization: Internationalization.md
       - Telemetry: Telemetry.md
       - API Reference: API-Reference.md
+      - Accounts API: Accounts-API.md
   - Operations:
       - Testing and CI: Testing-and-CI.md
       - Deployment: Deployment.md
