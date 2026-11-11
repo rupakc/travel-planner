@@ -4,7 +4,7 @@ import { Sparkles, Zap } from 'lucide-react'
 import { onGameAnnounce } from '../../game/announce'
 import { getGameCatalog } from '../../services/gameApi'
 import { emit } from '../../telemetry/client'
-import { useAccountSettings } from '../account/SettingsSync'
+import { useAccountSettings, useSettingsLoading, settingsLoading } from '../account/SettingsSync'
 import { badgeIcon, TIER_CLASS } from './icons'
 
 export const DISMISS_MS = 4000
@@ -58,6 +58,9 @@ export default function GameCelebration() {
   const { t } = useTranslation('game')
   const { settings } = useAccountSettings()
   const hidden = !!settings?.hide_game
+  // Wait for the user's settings before taking a held (replayed) award, so
+  // someone who hid the game never sees one flash up on sign-in.
+  const waiting = useSettingsLoading()
   const [items, setItems] = useState([])
   const catalog = useRef(null)
   const nextId = useRef(0)
@@ -74,7 +77,7 @@ export default function GameCelebration() {
   }, [])
 
   useEffect(() => {
-    if (hidden) return undefined
+    if (hidden || waiting || settingsLoading()) return undefined
     const off = onGameAnnounce(async (delta) => {
       for (const a of delta.awards || []) {
         emit('game_award', { rule: a.rule, points: a.points })
@@ -94,7 +97,7 @@ export default function GameCelebration() {
       }
     }, { replay: true })
     return off
-  }, [hidden, push])
+  }, [hidden, waiting, push])
 
   useEffect(() => () => {
     for (const timer of timers.current) clearTimeout(timer)

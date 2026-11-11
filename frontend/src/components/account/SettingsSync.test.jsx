@@ -12,7 +12,7 @@ vi.mock('../../context/AuthContext', () => ({ useOptionalAuth: () => auth.value 
 
 import { ThemeProvider, useTheme } from '../../theme/ThemeContext'
 import i18n, { initI18n, setLanguage } from '../../i18n'
-import SettingsSync, { useAccountSettings, resetAccountSettings, DEFAULT_SETTINGS } from './SettingsSync'
+import SettingsSync, { useAccountSettings, resetAccountSettings, settingsLoading, DEFAULT_SETTINGS } from './SettingsSync'
 
 const SERVER = { ...DEFAULT_SETTINGS }
 let themeApi, settingsApi
@@ -52,6 +52,21 @@ describe('SettingsSync', () => {
     act(() => root.unmount())
     container.remove()
     vi.useRealTimers()
+  })
+
+  it('reports loading until the settings (with hide_game) are in, and after a 404', async () => {
+    let release
+    api.getSettings.mockReturnValue(new Promise((res) => { release = res }))
+    await act(async () => { root.render(<ThemeProvider><SettingsSync /><Probe /></ThemeProvider>) })
+    expect(settingsLoading()).toBe(true)
+    await act(async () => release({ ...SERVER, hide_game: true }))
+    expect(settingsLoading()).toBe(false)
+    expect(settingsApi.settings.hide_game).toBe(true)
+    act(() => root.unmount())
+    root = createRoot(container)
+    api.getSettings.mockRejectedValue({ status: 404 })
+    await mount()
+    expect(settingsLoading()).toBe(false)
   })
 
   it('applies a server theme at sign-in without patching it back', async () => {

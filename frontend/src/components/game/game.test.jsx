@@ -9,7 +9,7 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }))
 vi.mock('../../services/gameApi', () => ({ getGameMe: vi.fn(), getGameCatalog: vi.fn() }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 const account = { settings: { hide_game: false } }
-vi.mock('../account/SettingsSync', () => ({ useAccountSettings: () => account }))
+vi.mock('../account/SettingsSync', () => ({ useAccountSettings: () => account, useSettingsLoading: () => false, settingsLoading: () => false }))
 
 import GameNavChip from './GameNavChip'
 import GameSection from './GameSection'

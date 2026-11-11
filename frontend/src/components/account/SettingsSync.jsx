@@ -21,11 +21,15 @@ let settings = DEFAULT_SETTINGS
 let token = null
 let pending = {}
 let timer = null
+// True while the signed-in user's settings are being fetched, so consumers
+// that must honour hide_game (the celebration) can wait for them.
+let loading = false
 const listeners = new Set()
 
 const emitChange = () => listeners.forEach((l) => l())
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l) }
 const getSnapshot = () => settings
+const setLoading = (on) => { if (loading !== on) { loading = on; emitChange() } }
 
 function inactive() {
   token = null
@@ -57,8 +61,17 @@ function update(patch) {
 /** Clears the store (sign-out) — and between tests. */
 export function resetAccountSettings() {
   inactive()
+  loading = false
   settings = DEFAULT_SETTINGS
   emitChange()
+}
+
+/** Whether the settings fetch is still in flight (read inside effects). */
+export const settingsLoading = () => loading
+
+/** Re-renders when the settings fetch starts or ends. */
+export function useSettingsLoading() {
+  return useSyncExternalStore(subscribe, settingsLoading, settingsLoading)
 }
 
 export function useAccountSettings() {
@@ -85,10 +98,13 @@ export default function SettingsSync() {
     synced.current = false
     if (!accessToken) { resetAccountSettings(); return undefined }
     let cancelled = false
+    setLoading(true)
     getSettings(accessToken).then((server) => {
-      if (cancelled || !server || typeof server !== 'object') return
+      if (cancelled) return
+      if (!server || typeof server !== 'object') { setLoading(false); return }
       token = accessToken
       settings = { ...DEFAULT_SETTINGS, ...server }
+      loading = false   // together with the settings: one change, hide_game already in
       emitChange()
       const up = {}
 
@@ -116,8 +132,8 @@ export default function SettingsSync() {
       }
       synced.current = true
       if (Object.keys(up).length) update(up)
-    }).catch(() => { /* 404 (old backend) or offline: stay inactive */ })
-    return () => { cancelled = true; inactive() }
+    }).catch(() => { if (!cancelled) setLoading(false) /* 404 (old backend) or offline: stay inactive */ })
+    return () => { cancelled = true; inactive(); setLoading(false) }
   }, [accessToken, setTheme])
 
   // Theme changes from anywhere.
