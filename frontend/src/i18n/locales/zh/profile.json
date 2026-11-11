@@ -21,7 +21,7 @@
     "label": "用户名"
   },
   "email": {
-    "label": "电子邮件",
+    "label": "电子邮箱",
     "verified": "已验证",
     "unverified": "未验证"
   },
