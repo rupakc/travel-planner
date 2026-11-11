@@ -98,12 +98,14 @@ describe('OnboardingTour', () => {
     expect(dialog().textContent).toContain('Build your plan')
     act(() => button('Get started').click())
     expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledWith({ done: true })
   })
 
   it('can be skipped', () => {
     render()
     act(() => button('Skip tour').click())
     expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledWith({ done: false })
   })
 
   it('closes with Escape, even after focus has left the card', () => {
