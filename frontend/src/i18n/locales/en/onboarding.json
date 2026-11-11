@@ -1,0 +1,130 @@
+{
+  "steps": {
+    "welcome": {
+      "title": "Welcome to Voyager",
+      "body": "Plan trips with AI: flights, hotels, activities and a day-by-day itinerary, all in one place."
+    },
+    "howYouTravel": {
+      "title": "How do you travel?",
+      "body": "Six quick questions tailor Voyager to you. You can skip any of them."
+    },
+    "homeAndPassport": {
+      "title": "Home and passport",
+      "body": "Tell us where you fly from and which passport you hold, so we can check visas and find the right flights."
+    },
+    "notifications": {
+      "title": "Stay on top of your trips",
+      "body": "Get trip reminders and price-drop alerts. You can turn each one off in Settings."
+    },
+    "firstTrip": {
+      "title": "Plan your first trip",
+      "body": "Search for a destination, or ask Voyager to surprise you."
+    }
+  },
+  "quiz": {
+    "companions": {
+      "title": "Who do you usually travel with?",
+      "options": {
+        "solo": "Solo",
+        "partner": "With a partner",
+        "family_kids": "Family with kids",
+        "friends": "Friends group",
+        "work": "For work"
+      }
+    },
+    "budget": {
+      "title": "What's your typical budget?",
+      "options": {
+        "shoestring": "Shoestring",
+        "mid_range": "Mid-range",
+        "comfort": "Comfort",
+        "luxury": "Luxury"
+      }
+    },
+    "interests": {
+      "title": "What do you love doing?",
+      "options": {
+        "food": "Food",
+        "history_culture": "History & culture",
+        "nature": "Nature & outdoors",
+        "adventure": "Adventure & sports",
+        "nightlife": "Nightlife",
+        "shopping": "Shopping",
+        "art_museums": "Art & museums",
+        "beaches": "Beaches & relaxation",
+        "photography": "Photography",
+        "wellness": "Wellness"
+      }
+    },
+    "pace": {
+      "title": "What pace do you like?",
+      "options": {
+        "relaxed": "Relaxed",
+        "balanced": "Balanced",
+        "packed": "Packed"
+      }
+    },
+    "planning": {
+      "title": "How do you plan?",
+      "options": {
+        "ahead_deals": "Book far ahead and hunt deals",
+        "loose": "Plan loosely",
+        "spontaneous": "Spontaneous, last-minute"
+      }
+    },
+    "needs": {
+      "title": "Anything we should plan around?",
+      "options": {
+        "wheelchair": "Wheelchair / Mobility aid",
+        "visual_impairment": "Visual impairment",
+        "hearing_impairment": "Hearing impairment",
+        "cognitive_disability": "Cognitive / Neurodivergent",
+        "infants": "Travelling with infants",
+        "dietary": "Dietary needs"
+      }
+    }
+  },
+  "types": {
+    "BUDGET_BACKPACKER": {
+      "name": "Budget Backpacker",
+      "description": "Stretching every dollar: hostels, street food, free walking tours and deal alerts."
+    },
+    "FAMILY": {
+      "name": "Family Traveller",
+      "description": "Trips that work for everyone, with easy pacing, packing lists and safety info."
+    },
+    "LUXURY": {
+      "name": "Luxury Traveller",
+      "description": "Premium hotels, fine dining and private tours."
+    },
+    "ADVENTURE": {
+      "name": "Adventurer",
+      "description": "Outdoors, active days and room for the unexpected."
+    },
+    "CULTURE_FOODIE": {
+      "name": "Culture Seeker & Foodie",
+      "description": "History, art, local food and what's on in town."
+    },
+    "BUSINESS": {
+      "name": "Business Traveller",
+      "description": "Efficient trips with flights, connectivity and money sorted."
+    },
+    "RELAXATION": {
+      "name": "Relaxation Seeker",
+      "description": "Beaches, wellness and slow days."
+    },
+    "ACCESSIBLE": {
+      "name": "Accessible Traveller",
+      "description": "Plans that account for your accessibility needs."
+    }
+  },
+  "nav": {
+    "back": "Back",
+    "skip": "Skip",
+    "next": "Next",
+    "seeType": "See my type",
+    "finish": "Finish",
+    "stepOf_one": "Step {{step}} of {{count}}",
+    "stepOf_other": "Step {{step}} of {{count}}"
+  }
+}

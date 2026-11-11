@@ -1,0 +1,52 @@
+{
+  "tabs": {
+    "trips": "Viajes",
+    "explore": "Explorar",
+    "alerts": "Alertas",
+    "you": "Tú"
+  },
+  "infoPlist": {
+    "location": "Voyager usa tu ubicación solo mientras usas Cerca de mí, para mostrarte lugares a tu alrededor. Nunca se guarda."
+  },
+  "permissions": {
+    "notificationsTitle": "No pierdas de vista tus viajes",
+    "notificationsBody": "Recibe recordatorios antes de salir, alertas de bajada de precio de lo que sigues y sugerencias cercanas mientras viajas. Puedes desactivar cada uno en Ajustes.",
+    "allow": "Permitir notificaciones",
+    "notNow": "Ahora no",
+    "locationTitle": "Muestra lugares cerca de ti",
+    "locationBody": "Voyager usa tu ubicación solo mientras usas Cerca de mí, para mostrarte lugares a tu alrededor. Nunca se guarda.",
+    "openSettings": "Abrir Ajustes"
+  },
+  "session": {
+    "expired": "Tu sesión ha caducado. Vuelve a iniciar sesión."
+  },
+  "server": {
+    "title": "Servidor",
+    "hint": "Dirección del servidor de Voyager, por ejemplo http://127.0.0.1:8001",
+    "invalid": "Introduce una dirección http o https válida.",
+    "save": "Guardar",
+    "reset": "Restablecer valor predeterminado"
+  },
+  "reminders": {
+    "t7Title": "{{destination}} está a una semana",
+    "t7Body": "Es hora de revisar tu plan, tus documentos y tu lista de equipaje.",
+    "t1Title": "{{destination}} es mañana",
+    "t1Body": "Revisa por última vez tus vuelos, tu hotel y tu lista de equipaje.",
+    "dayTitle": "Día {{day}} en {{destination}}",
+    "dayBody": "Consulta el plan de hoy en Voyager.",
+    "lastDayTitle": "Último día en {{destination}}",
+    "lastDayBody": "Revisa los horarios de salida, los vuelos y lo que aún quieras ver."
+  },
+  "shortcuts": {
+    "newSearch": "Nueva búsqueda",
+    "newChat": "Nuevo chat",
+    "settings": "Ajustes",
+    "tab": "Ir a la pestaña"
+  },
+  "offline": {
+    "banner": "Sin conexión. Mostrando datos guardados."
+  },
+  "maps": {
+    "open": "Abrir en Mapas"
+  }
+}
