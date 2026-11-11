@@ -1,0 +1,29 @@
+{
+  "check": {
+    "title": "Vérifiez votre boîte mail",
+    "sent": "Nous avons envoyé un lien à {{email}}. Il est valable 30 minutes.",
+    "sentNoEmail": "Nous vous avons envoyé un lien. Il est valable 30 minutes.",
+    "mailHint": "Ouvrez votre application de messagerie et touchez le lien. Vérifiez vos spams si vous ne le voyez pas.",
+    "resend": "Renvoyer l'e-mail",
+    "resendIn": "Renvoyer dans {{seconds}} s",
+    "resent": "Envoyé. Vérifiez votre boîte de réception.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "email": {
+    "label": "Adresse e-mail",
+    "placeholder": "vous@exemple.fr"
+  },
+  "verify": {
+    "working": "Confirmation de votre e-mail…",
+    "confirmed": "E-mail confirmé",
+    "toAccount": "Aller à votre compte",
+    "used": "Votre e-mail est déjà confirmé. Connectez-vous pour continuer.",
+    "signIn": "Se connecter",
+    "expired": "Ce lien a expiré. Saisissez votre e-mail et nous en enverrons un nouveau.",
+    "emailChanged": "Votre adresse e-mail a changé depuis l'envoi de ce lien. Saisissez votre e-mail et nous enverrons un nouveau lien.",
+    "resend": "Envoyer un nouveau lien",
+    "resent": "Si cette adresse doit être confirmée, un nouveau lien est en route.",
+    "invalid": "Ce lien n'est pas valide.",
+    "toSignup": "Créer un compte"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "check": {
+    "title": "请查收邮件",
+    "sent": "我们已向 {{email}} 发送了链接，30 分钟内有效。",
+    "sentNoEmail": "我们已向你发送了链接，30 分钟内有效。",
+    "mailHint": "打开邮件应用并点击链接。如果没看到，请检查垃圾邮件文件夹。",
+    "resend": "重新发送邮件",
+    "resendIn": "{{seconds}} 秒后可重新发送",
+    "resent": "已发送，请查收。",
+    "backToLogin": "返回登录"
+  },
+  "email": {
+    "label": "电子邮箱",
+    "placeholder": "you@example.com"
+  },
+  "verify": {
+    "working": "正在确认你的邮箱…",
+    "confirmed": "邮箱已确认",
+    "toAccount": "前往你的账户",
+    "used": "你的邮箱已确认，请登录继续。",
+    "signIn": "登录",
+    "expired": "此链接已过期。请输入邮箱，我们会发送新的链接。",
+    "emailChanged": "自发送此链接以来，你的邮箱地址已更改。请输入邮箱，我们会发送新的链接。",
+    "resend": "发送新链接",
+    "resent": "如果该地址需要确认，新的链接已在路上。",
+    "invalid": "此链接无效。",
+    "toSignup": "创建账户"
+  }
+}

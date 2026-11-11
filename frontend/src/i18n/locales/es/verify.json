@@ -1,0 +1,29 @@
+{
+  "check": {
+    "title": "Revisa tu correo",
+    "sent": "Enviamos un enlace a {{email}}. Funciona durante 30 minutos.",
+    "sentNoEmail": "Te enviamos un enlace. Funciona durante 30 minutos.",
+    "mailHint": "Abre tu app de correo y toca el enlace. Revisa la carpeta de spam si no lo ves.",
+    "resend": "Reenviar correo",
+    "resendIn": "Reenviar en {{seconds}} s",
+    "resent": "Enviado. Revisa tu bandeja de entrada.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "email": {
+    "label": "Correo electrónico",
+    "placeholder": "tu@ejemplo.com"
+  },
+  "verify": {
+    "working": "Confirmando tu correo…",
+    "confirmed": "Correo confirmado",
+    "toAccount": "Ir a tu cuenta",
+    "used": "Tu correo ya está confirmado. Inicia sesión para continuar.",
+    "signIn": "Iniciar sesión",
+    "expired": "Este enlace ha caducado. Introduce tu correo y te enviaremos uno nuevo.",
+    "emailChanged": "Tu correo cambió desde que se envió este enlace. Introduce tu correo y te enviaremos un enlace nuevo.",
+    "resend": "Enviar un enlace nuevo",
+    "resent": "Si esa dirección necesita confirmación, un enlace nuevo va en camino.",
+    "invalid": "Ese enlace no es válido.",
+    "toSignup": "Crear una cuenta"
+  }
+}
