@@ -785,6 +785,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#account-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-never-collected" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1588,6 +1599,15 @@
 </tbody>
 </table>
 <p><code>tid</code> is the stable identifier of a button or control (for example <code>nav.search</code>), never its visible text.</p>
+<h2 id="account-data">Account data</h2>
+<p>When you create an account Voyager stores: your username, display name, email address and whether it is verified, a bcrypt hash of your password (never the password), your sign-in method and any linked Google, GitHub, Facebook or Apple identity (provider ID and email, plus an encrypted Apple token that is needed only to revoke access when you delete your account), your settings and onboarding answers, your avatar, active sessions (hashed refresh tokens, device name), and your game progress (XP, badges, streaks). Plans, preferences, recent searches, taste profile, feedback, fare and price watches, notifications and registered devices are stored as before. Verification and reset tokens are stored only as hashes.</p>
+<ul>
+<li><strong>Avatars</strong> are resized to 256 px WebP and kept on the server's disk (<code>$DATA_DIR/avatars</code>). They are not part of the GCS backup, which covers only the database.</li>
+<li><strong>Retention.</strong> An account that never confirms its email is deleted after 7 days. Expired tokens are purged hourly. Refresh tokens expire after 60 days of inactivity and at most 365 days after sign-in.</li>
+<li><strong>Export.</strong> <strong>Account</strong> → <strong>Export my data</strong> (<code>GET /api/account/export</code>) downloads everything above as one JSON file.</li>
+<li><strong>Deletion.</strong> <strong>Account</strong> → <strong>Delete account</strong> (<code>DELETE /api/account</code>, confirmed with your password, or your username if you have none) removes your account and everything in the export, your avatar file and your telemetry events, and revokes Apple tokens. Backups made before the deletion are not rewritten and age out with the normal backup rotation. The last remaining admin cannot be deleted.</li>
+<li><strong>Daily AI allowance.</strong> To apply the daily limits the server counts, per account and per UTC day, how many AI requests you made in each bucket. No request content is stored.</li>
+</ul>
 <h2 id="what-is-never-collected">What is never collected</h2>
 <p>The schema has no field for any of these, and the server drops unknown fields:</p>
 <ul>

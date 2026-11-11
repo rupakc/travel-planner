@@ -604,6 +604,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Accounts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sign-up-sessions-and-email-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign-up, sessions and email links
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sign-in-providers-all-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign-in providers (all optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#daily-ai-quota-and-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daily AI quota and game
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1780,7 +1819,175 @@
 </tr>
 </tbody>
 </table>
-<p>There is no self-registration: the admin creates every other user from the Admin page.</p>
+<p>Anyone can create an account with <code>POST /api/auth/signup</code> (a verification email is sent first) unless <code>SIGNUP_MODE=invite</code>; admins can still create users from the Admin page, and those accounts count as verified for AI. Contract: <a href="../Accounts-API/">Accounts API</a>.</p>
+<h3 id="sign-up-sessions-and-email-links">Sign-up, sessions and email links</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SIGNUP_MODE</code></td>
+<td><code>open</code></td>
+<td><code>open</code>, or <code>invite</code> (sign-up and OAuth sign-up need an invite code from <code>POST /api/admin/invites</code>).</td>
+</tr>
+<tr>
+<td><code>EMAIL_LOG_LINKS</code></td>
+<td><code>false</code></td>
+<td>Dev only: with <code>SMTP_HOST</code> unset, log verification and reset links instead of sending them (also on when the base URL host is <code>localhost</code>).</td>
+</tr>
+<tr>
+<td><code>ACCOUNT_TOKEN_TTL_MINUTES</code></td>
+<td><code>30</code></td>
+<td>Lifetime of verify-email and password-reset tokens (single use).</td>
+</tr>
+<tr>
+<td><code>PENDING_PURGE_DAYS</code></td>
+<td><code>7</code></td>
+<td>An unverified (pending) account is deleted after this many days; the hourly maintenance task also purges expired tokens.</td>
+</tr>
+<tr>
+<td><code>REFRESH_TOKEN_DAYS</code></td>
+<td><code>60</code></td>
+<td>Mobile refresh-token lifetime (rotated on use).</td>
+</tr>
+<tr>
+<td><code>REFRESH_FAMILY_MAX_DAYS</code></td>
+<td><code>365</code></td>
+<td>Absolute lifetime of a refresh-token family from sign-in.</td>
+</tr>
+<tr>
+<td><code>MOBILE_ACCESS_TOKEN_MINUTES</code></td>
+<td><code>60</code></td>
+<td>Access-token lifetime for <code>client</code> ios/android (web stays 24 h).</td>
+</tr>
+<tr>
+<td><code>PUBLIC_BASE_URL</code> / <code>APP_BASE_URL</code></td>
+<td>see above</td>
+<td>Every absolute URL (email links, OAuth <code>redirect_uri</code>, avatar URLs) is <code>PUBLIC_BASE_URL</code>, else <code>APP_BASE_URL</code>, without a trailing <code>/</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sign-in-providers-all-optional">Sign-in providers (all optional)</h3>
+<p>A provider is on only when <strong>all</strong> its credentials are non-empty; otherwise its button shows "coming soon". Secrets go in Secret Manager in production. Setup per provider: <a href="../Deployment-GCP/#sign-in-providers-and-email">Deployment on GCP</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code></td>
+<td><code>""</code></td>
+<td>Google web OAuth client.</td>
+</tr>
+<tr>
+<td><code>GOOGLE_NATIVE_CLIENT_IDS</code></td>
+<td><code>[]</code></td>
+<td>JSON list of the iOS/Android client IDs accepted by <code>POST /api/auth/oauth/google/id-token</code>.</td>
+</tr>
+<tr>
+<td><code>GITHUB_CLIENT_ID</code>, <code>GITHUB_CLIENT_SECRET</code></td>
+<td><code>""</code></td>
+<td>GitHub OAuth app.</td>
+</tr>
+<tr>
+<td><code>FACEBOOK_APP_ID</code>, <code>FACEBOOK_APP_SECRET</code></td>
+<td><code>""</code></td>
+<td>Meta app with Facebook Login.</td>
+</tr>
+<tr>
+<td><code>FACEBOOK_GRAPH_VERSION</code></td>
+<td><code>v24.0</code></td>
+<td>Graph API version used for the profile call.</td>
+</tr>
+<tr>
+<td><code>FACEBOOK_EMAIL_TRUSTED</code></td>
+<td><code>false</code></td>
+<td>Treat Facebook's email as verified. Off by default, so a Facebook email never auto-links to an existing account.</td>
+</tr>
+<tr>
+<td><code>APPLE_SERVICES_ID</code>, <code>APPLE_TEAM_ID</code>, <code>APPLE_KEY_ID</code>, <code>APPLE_PRIVATE_KEY</code></td>
+<td><code>""</code></td>
+<td>Sign in with Apple: Services ID, team, key ID and the <code>.p8</code> key contents.</td>
+</tr>
+<tr>
+<td><code>APPLE_NATIVE_CLIENT_IDS</code></td>
+<td><code>[]</code></td>
+<td>JSON list of iOS bundle IDs accepted by <code>POST /api/auth/oauth/apple/id-token</code>.</td>
+</tr>
+<tr>
+<td><code>OAUTH_MOBILE_REDIRECTS</code></td>
+<td><code>["voyager://auth/callback"]</code></td>
+<td>Exact-match allow-list of mobile <code>redirect_uri</code> values (<code>&lt;base&gt;/auth/callback</code> is always allowed).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="daily-ai-quota-and-game">Daily AI quota and game</h3>
+<p>A signed-in user who has not verified their email cannot use AI routes (<code>403 email_unverified</code>). Verified users also have a per-UTC-day allowance per bucket on top of the 10-minute windows; <code>0</code> means unlimited, and admins are exempt.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AI_DAILY_QUOTA_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Master switch for the daily quota.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_SEARCH</code></td>
+<td><code>20</code></td>
+<td>Per day: <code>/api/search</code>, <code>/api/search/sync</code> and chat full plans.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_CHAT</code></td>
+<td><code>100</code></td>
+<td>Per day: <code>/api/chat</code>.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_COMPARE</code></td>
+<td><code>40</code></td>
+<td>Per day: <code>/api/compare/destination</code>.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_DISCOVER</code></td>
+<td><code>20</code></td>
+<td>Per day: <code>/api/discover</code>.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_LIGHT_AI</code></td>
+<td><code>200</code></td>
+<td>Per day: the light-AI routes.</td>
+</tr>
+<tr>
+<td><code>AI_DAILY_QUOTA_IMPORT</code></td>
+<td><code>20</code></td>
+<td>Per day: <code>/api/import/extract</code>.</td>
+</tr>
+<tr>
+<td><code>GAME_ENABLED</code></td>
+<td><code>true</code></td>
+<td>XP, badges, levels and streaks (<code>GET /api/game/*</code> answer 404 when off).</td>
+</tr>
+<tr>
+<td><code>GAME_RULES_PATH</code></td>
+<td><code>""</code></td>
+<td>Alternative rules file; empty uses <code>backend/app/game/rules.json</code>.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="rate-limits">Rate limits</h2>
 <p>AI-calling endpoints are rate-limited per signed-in user, or per client IP for anonymous callers, in an in-process sliding window (<code>backend/app/core/rate_limit.py</code>). See <a href="../API-Reference/#rate-limits">API Reference</a> for the endpoints in each bucket.</p>
 <table>
@@ -1851,6 +2058,36 @@
 <td><code>RATE_LIMIT_LOGIN_FAILURES_GLOBAL</code></td>
 <td><code>200</code></td>
 <td>Failed logins per username from all IPs together: a backstop against distributed guessing</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_AUTH_EMAIL</code></td>
+<td><code>10</code></td>
+<td>Verify-email and password-reset requests per client IP</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_EMAIL_ADDRESS</code></td>
+<td><code>3</code></td>
+<td>Emails sent to one address per window (verify, reset, resend), so nobody can be mail-bombed</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_SIGNUP</code></td>
+<td><code>5</code></td>
+<td><code>/api/auth/signup</code> per client IP</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_OAUTH</code></td>
+<td><code>30</code></td>
+<td><code>/api/auth/oauth/*</code> per client IP</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_REFRESH</code></td>
+<td><code>60</code></td>
+<td><code>/api/auth/refresh</code> per client IP</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_ACCOUNT</code></td>
+<td><code>30</code></td>
+<td>Account writes: profile, settings, onboarding, avatar, delete</td>
 </tr>
 </tbody>
 </table>

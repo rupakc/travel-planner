@@ -1295,6 +1295,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#contract-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#changelog" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2022,9 +2033,18 @@
 204
 </code></pre>
 <p>This revokes that refresh token's family. Clear local tokens regardless of the response. <code>POST /auth/logout-all</code> (authenticated) revokes every device.</p>
+<h2 id="contract-notes">Contract notes</h2>
+<p>Clarifications of behaviour the frozen contract left implicit. None changes a request or response shape.</p>
+<ul>
+<li><strong>Off-site <code>return_to</code>.</strong> On <code>GET /auth/oauth/&lt;p&gt;/start</code>, a <code>return_to</code> that is not a same-origin path (an absolute URL, a <code>//host</code> form, or anything not starting with a single <code>/</code>) is refused like any other bad start parameter: <code>302</code> to <code>&lt;final&gt;?error=bad_request</code>. It is never followed.</li>
+<li><strong>Apple native secret.</strong> For Apple the server stores the refresh token it needs to revoke on account deletion as <code>"&lt;client_id&gt;|&lt;refresh_token&gt;"</code>, Fernet-encrypted (see Global constraints). This is internal storage: no request or response field changes.</li>
+<li><strong>Unverified or untrusted provider email.</strong> A provider email that is unverified, or verified but not trusted (Facebook, unless <code>FACEBOOK_EMAIL_TRUSTED=true</code>), never deletes and never links to an existing account. If it matches an existing account that has no verified email (for example an admin-created one), the callback answers <code>email_in_use_unverified</code>. Only a pending native account is replaced, and only by a trusted, verified provider email.</li>
+<li><strong>Password reset verifies the address.</strong> A successful <code>POST /auth/password-reset/confirm</code> on an account whose email was unverified marks that email verified, because the link proved control of the mailbox.</li>
+</ul>
 <h2 id="changelog">Changelog</h2>
 <ul>
 <li>2026-11-11 — v1 published</li>
+<li>2026-11-11 — added the "Contract notes" section (clarifications only)</li>
 </ul>
 
 

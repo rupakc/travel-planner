@@ -1346,6 +1346,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="9. Domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#moving-to-a-custom-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moving to a custom domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sign-in-providers-and-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign-in providers and email
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1781,6 +1809,26 @@ sudo /opt/voyager/governor.py close             # close now (by hand)
 <li>On the VM: <code>sudo google_metadata_script_runner startup</code>. This rewrites <code>site.env</code> and <code>app.env</code>'s URLs; restart Caddy in a quiet moment.</li>
 <li>Update the Android <code>PROD_BASE_URL</code> and the uptime check's host.</li>
 </ol>
+<h3 id="moving-to-a-custom-domain">Moving to a custom domain</h3>
+<p>Everything absolute comes from <code>PUBLIC_BASE_URL</code> (else <code>APP_BASE_URL</code>), so the move is configuration only:</p>
+<ol>
+<li>DNS: an A record to the static IP, no AAAA (as above).</li>
+<li>Set <code>voyager-site-host</code> (step 2 above) and run the startup script on the VM: it rewrites <code>SITE_HOST</code> for Caddy and <code>APP_BASE_URL</code>/<code>CORS_ORIGINS</code> in <code>app.env</code>. If you set <code>PUBLIC_BASE_URL</code> in <code>app.env</code>, change it too. Restart the app.</li>
+<li>Provider consoles: add the new redirect URI <code>https://&lt;domain&gt;/api/auth/oauth/&lt;p&gt;/callback</code> for every provider (keep the old one until the old host is retired), and update Apple's domain and return URL. Email links follow the new base automatically.</li>
+<li>Mobile deep links (Phases 7 and 8): the iOS <code>apple-app-site-association</code> and Android <code>assetlinks.json</code> files are served from the new domain's <code>/.well-known/</code>. Universal and app links only work on a domain you own.</li>
+<li>Keep the old <code>&lt;ip&gt;.sslip.io</code> host answering with a redirect to the new domain for a while so old emails, shares and bookmarks still work. Pending verify and reset links issued before the move point at the old host; they expire in 30 minutes.</li>
+</ol>
+<p><strong>Known limitation: Google does not accept <code>sslip.io</code>.</strong> Google OAuth rejects redirect URIs on public-suffix domains such as <code>sslip.io</code>, so Google sign-in becomes available only after the move to a custom domain. GitHub, Facebook, Apple (needs a verified domain) and email sign-in are unaffected. Until then the Google button shows "coming soon".</p>
+<h2 id="sign-in-providers-and-email">Sign-in providers and email</h2>
+<p>Providers are config-gated: add the credentials, restart the app, and the provider turns on with no client update. The redirect (callback) URI to register in each provider's console is <code>&lt;PUBLIC_BASE_URL&gt;/api/auth/oauth/&lt;p&gt;/callback</code>, where <code>&lt;p&gt;</code> is <code>google</code>, <code>github</code>, <code>facebook</code> or <code>apple</code>, for example <code>https://34-23-1-2.sslip.io/api/auth/oauth/github/callback</code>. Client IDs go in <code>/opt/voyager/app.env</code> (uncomment the lines in <code>app.env.example</code>); secrets go in Secret Manager (<code>google-client-secret</code>, <code>github-client-secret</code>, <code>facebook-app-secret</code>, <code>apple-private-key</code>, created empty by the bootstrap) with the same <code>printf</code>/<code>read -s</code> pattern as section 3.</p>
+<ul>
+<li><strong>GitHub</strong>: Settings → Developer settings → OAuth Apps → New. Callback URL as above. Set <code>GITHUB_CLIENT_ID</code> and <code>github-client-secret</code>.</li>
+<li><strong>Facebook</strong>: developers.facebook.com → create an app with Facebook Login, add the callback under Valid OAuth Redirect URIs. Set <code>FACEBOOK_APP_ID</code> and <code>facebook-app-secret</code>. Facebook's email is untrusted unless <code>FACEBOOK_EMAIL_TRUSTED=true</code>.</li>
+<li><strong>Google</strong>: Google Cloud console → APIs &amp; Services → Credentials → OAuth client ID (Web). Needs a custom domain (see the limitation above). Add the iOS and Android client IDs to <code>GOOGLE_NATIVE_CLIENT_IDS</code> for the native apps.</li>
+<li><strong>Apple</strong>: in the Apple developer account create an App ID with Sign in with Apple, then a <strong>Services ID</strong> (this is <code>APPLE_SERVICES_ID</code>; enable Sign in with Apple, set the verified domain and the callback URL above, which Apple calls with a form POST). Create a <strong>Key</strong> with Sign in with Apple enabled: its Key ID is <code>APPLE_KEY_ID</code>, the downloaded <code>.p8</code> contents go in the <code>apple-private-key</code> secret, and your Team ID is <code>APPLE_TEAM_ID</code>. Add the app bundle IDs to <code>APPLE_NATIVE_CLIENT_IDS</code>.</li>
+<li><strong>SMTP</strong>: sign-up verification and password reset need working email. Set the app's <code>SMTP_HOST</code>, <code>SMTP_PORT</code> (587), <code>SMTP_USERNAME</code>, <code>SMTP_FROM</code> in <code>app.env</code> and the <code>smtp-password</code> secret (section 3). Without SMTP, <code>GET /api/config</code> reports <code>signup_available: false</code> and the sign-up and reset forms are hidden.</li>
+<li><strong><code>SIGNUP_MODE</code></strong>: <code>open</code> (default) or <code>invite</code>. In invite mode, create codes with <code>POST /api/admin/invites</code> (admin only); each code has a use limit and an expiry.</li>
+</ul>
 <h2 id="10-cost-watch">10. Cost watch</h2>
 <ul>
 <li><strong>Budgets</strong> (pre-tax, in INR): "Voyager total (alerts)" at ₹2,300 sends email at 50/90/100 % and on forecast; "Voyager Gemini spend cap" at ₹1,800 pauses Gemini when reached. Billing data can lag a day; the on-box governor doesn't.</li>

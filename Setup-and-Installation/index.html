@@ -1489,7 +1489,7 @@ docker compose up --build
 </ol>
 <p>All data lives in one SQLite file, <code>$DATA_DIR/airports.db</code>. <code>DATA_DIR</code> defaults to <code>backend/data</code>, which is gitignored.</p>
 <h2 id="first-login">First login</h2>
-<p>There is <strong>no self-registration</strong>. Accounts are created by an admin.</p>
+<p>Others can create an account from the sign-in page (email verification needs <code>SMTP_*</code>), or an admin can create them.</p>
 <ol>
 <li>Open the app and sign in as <code>admin</code> (or your <code>ADMIN_USERNAME</code>) with the <code>ADMIN_PASSWORD</code> you set. The seeded admin is not asked to change the password.</li>
 <li>Open the <strong>Admin</strong> tab and create users with a temporary password (at least 8 characters). Those users must change it on first login.</li>

@@ -1840,7 +1840,7 @@ data: {&quot;type&quot;: &quot;done&quot;}
 <hr />
 <h2 id="authentication-and-access">Authentication and access</h2>
 <ul>
-<li><code>POST /api/auth/login</code> returns an HS256 JWT valid for 24 h (<code>backend/app/core/auth.py</code>). Passwords are bcrypt-hashed. There is no registration endpoint; admins create users.</li>
+<li><code>POST /api/auth/login</code> returns an HS256 JWT valid for 24 h (<code>backend/app/core/auth.py</code>). Passwords are bcrypt-hashed. Users sign up with email verification (<code>/api/auth/signup</code>, see <a href="../Accounts-API/">Accounts API</a>) or are created by an admin.</li>
 <li>Most routes require a valid token (<code>get_current_user</code>). Admin routes also require <code>is_admin</code>.</li>
 <li><code>/api/search</code>, <code>/api/search/sync</code>, <code>/api/discover</code> and every single-agent ("light_ai") route accept <strong>anonymous</strong> calls, unless <code>ALLOW_ANONYMOUS_AI=false</code> (production): then every AI router answers <code>401</code> to anonymous callers (<code>require_ai_access</code>). They use <code>get_optional_user</code>: with a valid token for an active user, the Taste Graph is applied and the rate-limit key is the user; otherwise, including for a deactivated user's token, the caller is anonymous and keyed by client IP. The SPA itself requires login for every page except <code>/share/:token</code>.</li>
 </ul>

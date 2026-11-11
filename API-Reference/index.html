@@ -2670,6 +2670,7 @@
 <p>The single-agent routes accept anonymous calls; only the rate limit protects them.</p>
 <hr />
 <h2 id="auth">Auth</h2>
+<p>Accounts, sessions, OAuth sign-in, the account area, avatars, export and deletion, the daily AI quota, the game and admin invites are specified in <a href="../Accounts-API/">Accounts API</a>, the frozen contract the web, iOS and Android clients build against. This page covers the original auth endpoints; the legacy request and response keys are unchanged.</p>
 <h3 id="post-apiauthlogin">POST /api/auth/login</h3>
 <pre><code class="language-json">{ &quot;username&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;your-password&quot; }
 </code></pre>
@@ -2689,7 +2690,7 @@
 <p>Returns <code>{ "username", "is_admin", "requires_password_change", "email" }</code>.</p>
 <h3 id="put-apiauthemail">PUT /api/auth/email</h3>
 <p><code>{"email": "me@example.com"}</code> sets the account email (trimmed, lower-cased; not verified, so the route is rate-limited in the light_ai bucket); <code>""</code> clears it and turns email off on all the user's fare watches. Returns <code>{"email": ...}</code>. <code>422</code> for an address that isn't <code>local@domain.tld</code>; <code>409</code> when another account uses it. Set from the Preferences page.</p>
-<p>There is no registration endpoint. Admins create users:</p>
+<p>Self-registration is <code>POST /api/auth/signup</code> (see <a href="../Accounts-API/">Accounts API</a>). Admins can also create users:</p>
 <h3 id="post-apiadminusers">POST /api/admin/users</h3>
 <pre><code class="language-json">{ &quot;username&quot;: &quot;newuser&quot;, &quot;password&quot;: &quot;TemporaryPassword123&quot;, &quot;email&quot;: null, &quot;is_admin&quot;: false }
 </code></pre>
