@@ -94,3 +94,48 @@ async def test_send_failure_returns_false_without_address(monkeypatch, caplog):
         "verify", "secret@b.co", link="https://x", locale="en", username="ann"
     )
     assert ok is False and "secret@b.co" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "bad", ["../x", "../../etc/passwd", "xx", "en/../de", "", None]
+)
+def test_lang_allow_list_rejects_unknown_and_traversal(bad):
+    assert account_email._lang(bad) == "en"
+    assert account_email._lang("de-CH") == "de"
+
+
+async def test_undeliverable_logs_warning(monkeypatch, caplog):
+    monkeypatch.setattr(settings, "smtp_host", "")
+    monkeypatch.setattr(settings, "email_log_links", False)
+    monkeypatch.setattr(settings, "public_base_url", "https://voyager.example")
+    with caplog.at_level(logging.WARNING):
+        ok = await account_email.send_account_email(
+            "verify", "a@b.co", link="https://x/v?t=1", locale="en", username="ann"
+        )
+    assert ok is False
+    assert "account_email.undeliverable" in caplog.text
+    assert "a@b.co" not in caplog.text and "t=1" not in caplog.text
+
+
+def test_user_values_are_html_escaped(mail):
+    msg = account_email.build_account_message(
+        "verify",
+        "a@b.co",
+        link='https://x/v?a=1&b="2"',
+        locale="en",
+        username="<script>alert(1)</script>",
+    )
+    html_ = msg.get_body(("html",)).get_content()
+    assert "<script>" not in html_
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html_
+    assert 'b="2"' not in html_ and "&amp;b=&quot;2&quot;" in html_
+
+
+async def test_smtp_configured_does_not_log_link(mail, monkeypatch, caplog):
+    monkeypatch.setattr(settings, "email_log_links", True)
+    with caplog.at_level(logging.DEBUG):
+        await account_email.send_account_email(
+            "verify", "a@b.co", link="https://x/v?t=secret", locale="en", username="ann"
+        )
+    assert len(mail) == 1
+    assert "secret" not in caplog.text and "dev_link" not in caplog.text

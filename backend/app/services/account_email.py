@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 Kind = Literal["verify", "reset", "already_registered"]
 _DIR = Path(__file__).resolve().parent.parent / "i18n" / "emails"
 _FALLBACK = "en"
+_LOCALES = frozenset({"bn", "de", "en", "es", "fr", "hi", "zh"})
 
 
 def dev_links_enabled() -> bool:
@@ -48,7 +49,7 @@ def _catalog(lang: str) -> dict[str, str]:
 
 def _lang(locale: str | None) -> str:
     base = (locale or "").strip().lower().replace("_", "-").split("-")[0]
-    return base if base and (_DIR / f"{base}.json").is_file() else _FALLBACK
+    return base if base in _LOCALES else _FALLBACK
 
 
 def _fill(text: str, values: dict[str, str]) -> str:
@@ -122,6 +123,7 @@ async def send_account_email(
             logger.info("account_email.dev_link kind=%s url=%s", kind, link)
             return True
         if not settings.smtp_host:
+            logger.warning("account_email.undeliverable kind=%s", kind)
             return False
         msg = build_account_message(
             kind, to, link=link, locale=locale, username=username
