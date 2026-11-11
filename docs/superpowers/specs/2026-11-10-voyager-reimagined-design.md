@@ -149,13 +149,15 @@ SPA reads plans exactly as today and ignores the new columns.
   home-tab sections and feature toggles (e.g. hide Play, hide community), notification categories + quiet hours,
   privacy (profile visibility, telemetry opt-out), connected sign-in methods, change password, export my data
   (JSON), delete account.
-- **Admin-created users keep working.** `is_first_login` keeps its meaning.
+- **Admin-created users keep working.** `is_first_login` keeps its meaning. The AI gate (verified email required
+  for AI) counts admin-created accounts as verified (`signup_method = admin`), so existing users are not locked out.
 - **Identity key [call]**: `username` stays the immutable internal key, so plans, preferences, recent searches,
   taste, feedback and devices need no migration. OAuth sign-ups pick a username once, with a suggestion
   prefilled. The public *display name* can change; the username can't.
 - **Account linking [call]**: a provider identity links automatically only to an account whose email **we**
   have verified (new `email_verified` column). Admin-created emails start unverified and are verified by a link
-  from the account page. Otherwise linking happens only from the account page while signed in. This prevents
+  from the account page. Facebook's email is untrusted by default (`FACEBOOK_EMAIL_TRUSTED=false`): it never
+  auto-links. Otherwise linking happens only from the account page while signed in. This prevents
   account takeover by email.
 
 ## 5. Social, sharing and gamification

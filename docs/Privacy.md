@@ -63,6 +63,16 @@ Property values are short tokens (letters, digits and `_ . : / -`, no spaces or 
 
 `tid` is the stable identifier of a button or control (for example `nav.search`), never its visible text.
 
+## Account data
+
+When you create an account Voyager stores: your username, display name, email address and whether it is verified, a bcrypt hash of your password (never the password), your sign-in method and any linked Google, GitHub, Facebook or Apple identity (provider ID and email, plus an encrypted Apple token that is needed only to revoke access when you delete your account), your settings and onboarding answers, your avatar, active sessions (hashed refresh tokens, device name), and your game progress (XP, badges, streaks). Plans, preferences, recent searches, taste profile, feedback, fare and price watches, notifications and registered devices are stored as before. Verification and reset tokens are stored only as hashes.
+
+- **Avatars** are resized to 256 px WebP and kept on the server's disk (`$DATA_DIR/avatars`). They are not part of the GCS backup, which covers only the database.
+- **Retention.** An account that never confirms its email is deleted after 7 days. Expired tokens are purged hourly. Refresh tokens expire after 60 days of inactivity and at most 365 days after sign-in.
+- **Export.** **Account** → **Export my data** (`GET /api/account/export`) downloads everything above as one JSON file.
+- **Deletion.** **Account** → **Delete account** (`DELETE /api/account`, confirmed with your password, or your username if you have none) removes your account and everything in the export, your avatar file and your telemetry events, and revokes Apple tokens. Backups made before the deletion are not rewritten and age out with the normal backup rotation. The last remaining admin cannot be deleted.
+- **Daily AI allowance.** To apply the daily limits the server counts, per account and per UTC day, how many AI requests you made in each bucket. No request content is stored.
+
 ## What is never collected
 
 The schema has no field for any of these, and the server drops unknown fields:

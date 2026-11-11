@@ -16,7 +16,7 @@ These pages are the technical documentation for people working on the code. The 
 - **My Plan** drawer: pick items into a plan, see the cost breakdown, export to calendar (`.ics`) or print/PDF, save plans and share them by public link.
 - **Chat**: a travel advisor that answers from model knowledge and can plan a whole trip in the conversation.
 - **Personalization**: saved preferences bound two ways to the Search form, and a Taste Graph learned from saved plans.
-- **Accounts**: admin-created users (no self-registration), an admin page, a feedback widget and per-user rate limits.
+- **Accounts**: sign-up with email verification, Google, GitHub, Facebook and Apple sign-in (config-gated), admin-created users, an admin page, a feedback widget and per-user rate limits.
 
 [Trip Planning Features](Trip-Planning-Features.md) describes each of these in detail.
 

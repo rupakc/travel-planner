@@ -95,7 +95,7 @@ All data lives in one SQLite file, `$DATA_DIR/airports.db`. `DATA_DIR` defaults 
 
 ## First login
 
-There is **no self-registration**. Accounts are created by an admin.
+Others can create an account from the sign-in page (email verification needs `SMTP_*`), or an admin can create them.
 
 1. Open the app and sign in as `admin` (or your `ADMIN_USERNAME`) with the `ADMIN_PASSWORD` you set. The seeded admin is not asked to change the password.
 2. Open the **Admin** tab and create users with a temporary password (at least 8 characters). Those users must change it on first login.

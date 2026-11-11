@@ -109,6 +109,8 @@ The single-agent routes accept anonymous calls; only the rate limit protects the
 
 ## Auth
 
+Accounts, sessions, OAuth sign-in, the account area, avatars, export and deletion, the daily AI quota, the game and admin invites are specified in [Accounts API](Accounts-API.md), the frozen contract the web, iOS and Android clients build against. This page covers the original auth endpoints; the legacy request and response keys are unchanged.
+
 ### POST /api/auth/login
 
 ```json
