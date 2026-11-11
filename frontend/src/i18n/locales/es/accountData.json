@@ -1,0 +1,26 @@
+{
+  "title": "Tus datos",
+  "intro": "Descarga una copia de todo lo que Voyager guarda sobre ti o elimina tu cuenta definitivamente.",
+  "export": {
+    "button": "Descargar mis datos",
+    "working": "Preparando…",
+    "hint": "Un archivo JSON con tu perfil, ajustes, planes, búsquedas, alertas y progreso del juego.",
+    "error": "No pudimos preparar tu exportación. Inténtalo de nuevo."
+  },
+  "delete": {
+    "button": "Eliminar cuenta",
+    "title": "¿Eliminar tu cuenta?",
+    "intro": "Se eliminará de forma permanente:",
+    "warn": "No se puede deshacer. Descarga tus datos antes si quieres una copia.",
+    "password": "Introduce tu contraseña para confirmar",
+    "username": "Escribe tu nombre de usuario ({{username}}) para confirmar",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar mi cuenta",
+    "working": "Eliminando…",
+    "deletedNotice": "Tu cuenta fue eliminada.",
+    "item1": "Tu perfil, ajustes y avatar",
+    "item2": "Tus planes, búsquedas y preferencias guardados",
+    "item3": "Tus alertas de tarifas y precios, avisos y dispositivos",
+    "item4": "Tus comentarios, progreso del juego y datos de uso"
+  }
+}

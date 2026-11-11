@@ -14,6 +14,7 @@ export default function LoginPage() {
   const { t } = useTranslation('account')
   const { t: tAuth } = useTranslation('auth')
   const { t: tSignup } = useTranslation('signup')
+  const { t: tData } = useTranslation('accountData')
   const { t: tAll } = useTranslation()
   const { config } = useClientConfig()
   const { login } = useAuth()
@@ -83,6 +84,12 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('login.title')}</h2>
+
+          {location.state?.accountDeleted && (
+            <div role="status" data-tid="login.account-deleted" className="mb-4 p-3 bg-teal-50 border border-teal-200 rounded-lg text-sm text-teal-800 dark:bg-teal-950 dark:border-teal-900 dark:text-teal-200">
+              {tData('delete.deletedNotice')}
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

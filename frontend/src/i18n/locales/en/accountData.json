@@ -1,0 +1,26 @@
+{
+  "title": "Your data",
+  "intro": "Download a copy of everything Voyager holds about you, or delete your account for good.",
+  "export": {
+    "button": "Download my data",
+    "working": "Preparing…",
+    "hint": "A JSON file with your profile, settings, plans, searches, watches and game progress.",
+    "error": "We couldn't prepare your export. Please try again."
+  },
+  "delete": {
+    "button": "Delete account",
+    "title": "Delete your account?",
+    "intro": "This permanently deletes:",
+    "warn": "This can't be undone. Download your data first if you want a copy.",
+    "password": "Enter your password to confirm",
+    "username": "Type your username ({{username}}) to confirm",
+    "cancel": "Cancel",
+    "confirm": "Delete my account",
+    "working": "Deleting…",
+    "deletedNotice": "Your account was deleted.",
+    "item1": "Your profile, settings and avatar",
+    "item2": "Your saved plans, searches and preferences",
+    "item3": "Your fare and price watches, alerts and devices",
+    "item4": "Your feedback, game progress and usage data"
+  }
+}

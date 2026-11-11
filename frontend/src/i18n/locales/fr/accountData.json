@@ -1,0 +1,26 @@
+{
+  "title": "Vos données",
+  "intro": "Téléchargez une copie de tout ce que Voyager conserve sur vous, ou supprimez définitivement votre compte.",
+  "export": {
+    "button": "Télécharger mes données",
+    "working": "Préparation…",
+    "hint": "Un fichier JSON avec votre profil, vos réglages, plans, recherches, alertes et progression de jeu.",
+    "error": "Impossible de préparer votre export. Veuillez réessayer."
+  },
+  "delete": {
+    "button": "Supprimer le compte",
+    "title": "Supprimer votre compte ?",
+    "intro": "Les éléments suivants seront supprimés définitivement :",
+    "warn": "Cette action est irréversible. Téléchargez d'abord vos données si vous en voulez une copie.",
+    "password": "Saisissez votre mot de passe pour confirmer",
+    "username": "Saisissez votre nom d'utilisateur ({{username}}) pour confirmer",
+    "cancel": "Annuler",
+    "confirm": "Supprimer mon compte",
+    "working": "Suppression…",
+    "deletedNotice": "Votre compte a été supprimé.",
+    "item1": "Votre profil, vos réglages et votre avatar",
+    "item2": "Vos plans, recherches et préférences enregistrés",
+    "item3": "Vos alertes de tarifs et de prix, notifications et appareils",
+    "item4": "Vos retours, votre progression de jeu et vos données d'usage"
+  }
+}
