@@ -1,0 +1,35 @@
+{
+  "title": "Einstellungen",
+  "hint": "Sie gelten für Ihr Konto auf allen Geräten.",
+  "language": "Sprache",
+  "theme": {
+    "label": "Design",
+    "system": "System",
+    "light": "Hell",
+    "dark": "Dunkel"
+  },
+  "currency": "Währung",
+  "units": {
+    "label": "Einheiten",
+    "metric": "Metrisch",
+    "imperial": "Imperial"
+  },
+  "timezone": {
+    "label": "Zeitzone",
+    "useDevice": "Die dieses Geräts verwenden ({{zone}})"
+  },
+  "hideGame": {
+    "label": "„Spielen“ und Punkte ausblenden",
+    "hint": "Blendet Punkte, Level und Abzeichen überall aus."
+  },
+  "hideCommunity": {
+    "label": "Community ausblenden",
+    "hint": "Blendet Community-Funktionen aus."
+  },
+  "visibility": {
+    "label": "Profilsichtbarkeit",
+    "public": "Öffentlich",
+    "followers": "Nur Follower",
+    "private": "Privat"
+  }
+}

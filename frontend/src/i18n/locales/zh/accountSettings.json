@@ -1,0 +1,35 @@
+{
+  "title": "设置",
+  "hint": "这些设置会随你的账户同步到所有设备。",
+  "language": "语言",
+  "theme": {
+    "label": "主题",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "currency": "货币",
+  "units": {
+    "label": "单位",
+    "metric": "公制",
+    "imperial": "英制"
+  },
+  "timezone": {
+    "label": "时区",
+    "useDevice": "使用此设备的时区（{{zone}}）"
+  },
+  "hideGame": {
+    "label": "隐藏玩乐与积分",
+    "hint": "在所有位置隐藏积分、等级和徽章。"
+  },
+  "hideCommunity": {
+    "label": "隐藏社区",
+    "hint": "隐藏社区功能。"
+  },
+  "visibility": {
+    "label": "个人资料可见范围",
+    "public": "公开",
+    "followers": "仅关注者",
+    "private": "私密"
+  }
+}
