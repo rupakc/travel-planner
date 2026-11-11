@@ -375,6 +375,28 @@ class LocaleBody(BaseModel):
     locale: str | None = Field(None, max_length=16)
 
 
+def _pending_address(user: dict) -> str:
+    """For an account with no email (an OAuth sign-up whose provider email was
+    untrusted): the address still waiting to be confirmed, from the newest
+    unused verify token, else the newest identity email (tokens are purged).
+    "" when there is none, or another account holds it by now."""
+    from ...db.database import get_connection
+
+    email = tokens.latest_unused_email(user["id"], "verify_email")
+    if not email:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT email FROM user_identities WHERE user_id = ?"
+                " AND email IS NOT NULL ORDER BY created_at DESC, id DESC LIMIT 1",
+                (user["id"],),
+            ).fetchone()
+        email = row["email"] if row else None
+    email = (email or "").strip().lower()
+    if email and users_db.get_user_by_email(email):
+        return ""
+    return email
+
+
 @router.post(
     "/account/email/verify",
     status_code=202,
@@ -385,7 +407,7 @@ def account_email_verify(
     body: LocaleBody | None = None,
     user: dict = Depends(get_current_user),
 ):
-    email = (user.get("email") or "").strip().lower()
+    email = (user.get("email") or "").strip().lower() or _pending_address(user)
     if not email:
         raise ApiError(422, "no_email", "Add an email address first.")
     if user.get("email_verified"):

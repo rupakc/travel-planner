@@ -1188,3 +1188,47 @@ def test_oauth_db_work_runs_off_the_loop(c, providers, sent, monkeypatch):
         "put_ticket",
     } <= names
     assert [c for c in calls if c[1]] == []
+
+
+def test_account_email_verify_reissues_to_the_pending_untrusted_address(
+    c, providers, sent
+):
+    """An OAuth account with no email yet (untrusted provider address) can ask
+    for a new link: it goes to the pending address; 422 no_email only when
+    there is none. The pending address survives the token purge (it is also
+    on the identity row)."""
+    claimed = _email()
+    providers["facebook"].profile = _profile(claimed, trusted=False)
+    user = _untrusted_signup(c, claimed)
+    first = sent[-1]["link"]
+    h = _auth(user)
+    r = c.post("/api/account/email/verify", json={}, headers=h)
+    assert r.status_code == 202, r.text
+    assert r.json() == {"status": "verification_sent", "email": claimed,
+                        "expires_in": 1800}  # fmt: skip
+    assert sent[-1]["to"] == claimed and sent[-1]["link"] != first
+    # the old link is replaced; the new one claims the address
+    old = parse_qs(urlparse(first).query)["token"][0]
+    assert c.post("/api/auth/verify-email", json={"token": old}).status_code == 400
+
+    # tokens purged: the identity's address is still the pending one
+    with get_connection() as conn:
+        conn.execute("DELETE FROM account_tokens WHERE user_id = ?", (user["id"],))
+    r = c.post("/api/account/email/verify", json={}, headers=h)
+    assert r.status_code == 202 and r.json()["email"] == claimed
+    token = parse_qs(urlparse(sent[-1]["link"]).query)["token"][0]
+    assert c.post("/api/auth/verify-email", json={"token": token}).status_code == 200
+    assert users_db.get_user_by_id(user["id"])["email"] == claimed
+
+
+def test_account_email_verify_without_any_address_is_no_email(c, providers, sent):
+    providers["github"].profile = _profile(None)
+    body = c.post(
+        "/api/auth/oauth/exchange", json={"code": _web_code(c, "github")}
+    ).json()
+    user = c.post(
+        "/api/auth/oauth/complete",
+        json={"signup_token": body["signup_token"], "username": _name()},
+    ).json()["session"]["user"]
+    r = c.post("/api/account/email/verify", json={}, headers=_auth(user))
+    assert r.status_code == 422 and r.json()["error_code"] == "no_email"
