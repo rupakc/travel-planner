@@ -100,3 +100,14 @@ def admin_token(client):
 @pytest.fixture(scope="session")
 def admin_headers(admin_token):
     return {"Authorization": f"Bearer {admin_token}"}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def trip_tables(place_data):
+    """Create the Phase 2 trip tables once, whatever the test order (the app
+    lifespan creates them in production)."""
+    from app.db import plans_db
+    from app.db.trips_schema import create_trip_tables
+
+    plans_db.create_plans_table()
+    create_trip_tables()
