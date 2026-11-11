@@ -1,0 +1,51 @@
+{
+  "chip": {
+    "level": "Niv. {{level}}",
+    "label": "Niveau {{level}}, {{xp}} XP. Ouvrir votre progression."
+  },
+  "section": {
+    "title": "Votre progression",
+    "level": "Niveau {{level}}",
+    "xp": "{{xp}} XP",
+    "progressLabel": "Progression vers le niveau suivant",
+    "toNext": "{{remaining}} XP avant le niveau {{next}}",
+    "maxLevel": "Niveau maximum atteint",
+    "badges": "Badges",
+    "earned": "Obtenu",
+    "badgeProgress": "{{progress}}/{{target}}",
+    "recent": "Récompenses récentes",
+    "recentEmpty": "Rien pour l’instant. Terminez une étape pour gagner vos premiers XP.",
+    "points": "+{{points}} XP"
+  },
+  "toast": {
+    "xp": "+{{points}} XP — {{rule}}",
+    "level": "Niveau {{to}} !",
+    "badge": "Badge obtenu"
+  },
+  "levels": {
+    "1": "Marcheur",
+    "2": "Touriste",
+    "3": "Explorateur",
+    "4": "Voyageur",
+    "5": "Navigateur",
+    "6": "Éclaireur",
+    "7": "Pionnier",
+    "8": "Globe-trotteur",
+    "9": "Aventurier",
+    "10": "Légende"
+  },
+  "badges": {
+    "verified": {
+      "name": "Vérifié",
+      "desc": "Confirmez votre adresse e-mail."
+    },
+    "first_steps": {
+      "name": "Premiers pas",
+      "desc": "Terminez la visite de bienvenue."
+    }
+  },
+  "rules": {
+    "email_verified": "E-mail confirmé",
+    "onboarding_complete": "Visite de bienvenue terminée"
+  }
+}
