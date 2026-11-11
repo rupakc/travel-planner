@@ -251,5 +251,16 @@
     "phase": "on_the_road",
     "day_index": 4,
     "days_to_start": null
+  },
+  {
+    "name": "override_inside_trip_keeps_day_index",
+    "start": "2026-12-01",
+    "end": "2026-12-08",
+    "override": "memories",
+    "today": "2026-12-03",
+    "prep_complete": false,
+    "phase": "memories",
+    "day_index": 3,
+    "days_to_start": null
   }
 ]
