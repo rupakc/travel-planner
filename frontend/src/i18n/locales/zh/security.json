@@ -12,7 +12,7 @@
     "setPasswordFirst": "这是你唯一的登录方式。请先设置密码，再断开连接。"
   },
   "email": {
-    "title": "电子邮件",
+    "title": "电子邮箱",
     "unverified": "{{email}} 尚未确认。",
     "verify": "验证邮箱",
     "sent": "我们已向 {{email}} 发送确认链接。"
