@@ -7,7 +7,12 @@ from urllib.parse import urlencode
 import httpx
 
 from app.core.config import settings
-from app.services.oauth.base import OAuthError, ProviderProfile, http_client
+from app.services.oauth.base import (
+    OAuthError,
+    OAuthProvider,
+    ProviderProfile,
+    http_client,
+)
 
 AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -30,7 +35,7 @@ def _pick_email(emails: object) -> str | None:
     return str(verified[0]["email"]) if verified else None
 
 
-class GitHubProvider:
+class GitHubProvider(OAuthProvider):
     id = "github"
     uses_pkce = True
     callback_methods: tuple[str, ...] = ("GET",)
