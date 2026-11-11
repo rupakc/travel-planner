@@ -94,6 +94,24 @@ Auto-captured by one delegated listener (`frontend/src/telemetry/autocapture.js`
 | `onboarding_step` | `step` (int), `action` (`view`, `next`, `skip`, `done`) | not yet | Onboarding progress. |
 | `feature_used` | `feature` (token), `page` (token) | yes | Mirror of every `track(feature, page)` call in `utils/analytics.js`; the metadata is not sent. |
 
+### Accounts and game
+
+Emitted by the Phase 1 account and game features; accepted by the server ahead of the clients. `code` is a short error token, never a message or an e-mail address.
+
+| Event | Props | Web | Meaning |
+|---|---|---|---|
+| `auth_start` | `method` (`password`, `apple`, `google`, `facebook`, `github`), `mode` (`signin`, `signup`, `link`) | not yet | A sign-in, sign-up or account-link attempt began. |
+| `auth_result` | `method`, `mode`, `result` (`ok`, `error`, `cancelled`, `coming_soon`, `needs_username`, `pending`), `code` (token) | not yet | How the attempt ended; `code` is the error code. |
+| `signup_step` | `step` (`form`, `check_email`, `username`, `done`) | not yet | Sign-up progress. |
+| `email_verify` | `result` (`ok`, `expired`, `invalid`, `used`, `resent`, `email_changed`) | not yet | E-mail verification outcome. |
+| `password_reset` | `step` (`request`, `confirm`), `result` (`ok`, `error`, `expired`, `invalid`, `used`) | not yet | Password reset progress. |
+| `account_action` | `action` (`avatar_upload`, `avatar_remove`, `name_change`, `settings_change`, `export`, `delete`, `link`, `unlink`, `signout_all`, `email_verify_request`, `change_password`) | not yet | An account management action. |
+| `quota_block` | `bucket` (`search`, `chat`, `compare`, `discover`, `light_ai`, `import`), `reason` (`daily_quota`, `unverified`) | not yet | An AI request was refused by the daily quota or because the e-mail is unverified. |
+| `game_award` | `rule` (token), `points` (int) | not yet | Points were awarded by a rule. |
+| `badge_earned` | `badge` (token) | not yet | A badge was earned. |
+| `level_up` | `level` (int) | not yet | The user reached a new level. |
+| `game_view` | `surface` (`account`, `nav`, `celebration`) | not yet | A game surface was shown. |
+
 ### Settings, consent, performance, errors
 
 | Event | Props | Web | Meaning |
