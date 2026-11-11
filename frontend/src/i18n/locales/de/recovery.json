@@ -18,6 +18,7 @@
     "saving": "Wird gespeichert…",
     "done": "Passwort geändert – andere Geräte wurden abgemeldet",
     "missingToken": "Diesem Link fehlt das Token.",
-    "requestNew": "Neuen Link anfordern"
+    "requestNew": "Neuen Link anfordern",
+    "continue": "Weiter"
   }
 }

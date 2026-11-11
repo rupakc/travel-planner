@@ -26,6 +26,7 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null) // {code, text}
+  const [done, setDone] = useState(false)
 
   useEffect(() => {
     if (window.location.search.includes('token')) {
@@ -46,8 +47,7 @@ export default function ResetPasswordPage() {
       const res = await confirmPasswordReset(token, password)
       emit('password_reset', { step: 'confirm', result: 'ok' })
       await applySession(res.session)
-      // No app-wide toast exists yet: the message rides along in router state.
-      navigate('/', { replace: true, state: { notice: 'password_reset', message: t('reset.done') } })
+      setDone(true)
     } catch (err) {
       emit('password_reset', { step: 'confirm', result: TOKEN_RESULT[err?.code] || 'error' })
       setError({ code: err?.code, text: errorText(tc, err) })
@@ -66,7 +66,15 @@ export default function ResetPasswordPage() {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl ring-1 ring-gray-100 dark:ring-gray-700 p-8">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('reset.title')}</h1>
-          {tokenProblem ? (
+          {done ? (
+            <div className="space-y-4">
+              <p role="status" data-tid="reset.done" className="text-sm text-gray-700 dark:text-gray-200">{t('reset.done')}</p>
+              <button type="button" data-tid="reset.continue" onClick={() => navigate('/', { replace: true })}
+                className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-semibold rounded-xl shadow-lg text-sm">
+                {t('reset.continue')}
+              </button>
+            </div>
+          ) : tokenProblem ? (
             <div role="alert" data-tid="reset.token-problem" className="space-y-3 text-sm text-gray-700 dark:text-gray-200">
               <p>{error?.text || t('reset.missingToken')}</p>
               <Link to="/forgot-password" data-tid="reset.request-new" className="text-teal-600 dark:text-teal-400 hover:underline">

@@ -18,6 +18,7 @@
     "saving": "保存中…",
     "done": "密码已修改——其他设备已退出登录",
     "missingToken": "此链接缺少令牌。",
-    "requestNew": "请求新链接"
+    "requestNew": "请求新链接",
+    "continue": "继续"
   }
 }

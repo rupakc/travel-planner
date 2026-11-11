@@ -18,6 +18,7 @@
     "saving": "Saving…",
     "done": "Password changed — other devices were signed out",
     "missingToken": "This reset link is missing its token.",
-    "requestNew": "Request a new link"
+    "requestNew": "Request a new link",
+    "continue": "Continue"
   }
 }

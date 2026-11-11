@@ -18,6 +18,7 @@
     "saving": "Guardando…",
     "done": "Contraseña cambiada: se cerró la sesión en los demás dispositivos",
     "missingToken": "Falta el token en este enlace.",
-    "requestNew": "Solicitar un enlace nuevo"
+    "requestNew": "Solicitar un enlace nuevo",
+    "continue": "Continuar"
   }
 }

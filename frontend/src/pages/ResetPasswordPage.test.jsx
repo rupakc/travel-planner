@@ -71,15 +71,16 @@ describe('ResetPasswordPage', () => {
     expect(container.querySelector('[data-tid="reset.error"]')).toBeNull()
   })
 
-  it('applies the session and goes home with the notice', async () => {
+  it('applies the session, shows success, and Continue goes home', async () => {
     api.confirmPasswordReset.mockResolvedValueOnce({ status: 'password_reset', session: { access_token: 'a' } })
     await mount()
     fill('a-long-passphrase-1', 'a-long-passphrase-1')
     await submit()
     expect(api.confirmPasswordReset).toHaveBeenCalledWith('tok123', 'a-long-passphrase-1')
     expect(auth.applySession).toHaveBeenCalledWith({ access_token: 'a' })
+    expect(container.querySelector('[data-tid="reset.done"]').textContent).toBe('Password changed — other devices were signed out')
+    act(() => container.querySelector('[data-tid="reset.continue"]').click())
     expect(location.pathname).toBe('/')
-    expect(location.state.message).toBe('Password changed — other devices were signed out')
     expect(emit).toHaveBeenCalledWith('password_reset', { step: 'confirm', result: 'ok' })
   })
 
