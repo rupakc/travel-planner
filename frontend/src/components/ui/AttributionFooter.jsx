@@ -15,7 +15,7 @@ const ExternalLink = ({ href, tid, children }) => (
 export default function AttributionFooter() {
   const { t } = useTranslation('privacy')
   return (
-    <footer className="py-4 text-center text-xs text-gray-400 print:hidden">
+    <footer className="py-4 text-center text-xs text-gray-500 print:hidden">
       <Trans
         ns="common"
         i18nKey="footer.attribution"
