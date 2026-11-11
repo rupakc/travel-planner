@@ -346,7 +346,7 @@ def create_pending_user(
                (id, username, email, password_hash, is_admin, is_first_login, is_active,
                 created_at, updated_at, signup_method, account_status, email_verified,
                 display_name, locale, invite_id)
-               VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?, 'email', 'pending', 0, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?, 'password', 'pending', 0, ?, ?, ?)""",
             (uid, username, email, pw_hash, now.isoformat(), now.isoformat(),
              display_name, locale, invite_id),
         )  # fmt: skip
