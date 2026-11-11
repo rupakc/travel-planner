@@ -1,0 +1,51 @@
+{
+  "loading": "Cargando tu viaje…",
+  "allTrips": "Todos los viajes",
+  "tabsLabel": "Secciones del viaje",
+  "error": {
+    "failed": "No se pudo cargar este viaje ahora.",
+    "retry": "Reintentar"
+  },
+  "header": {
+    "rename": "Renombrar viaje",
+    "titleLabel": "Nombre del viaje",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "noDates": "Aún sin fechas",
+    "addDates": "Añadir fechas",
+    "editDates": "Cambiar fechas",
+    "phaseLabel": "Etapa del viaje: {{phase}}. Cámbiala",
+    "manual": "elegida por ti",
+    "delete": "Eliminar viaje",
+    "confirmDelete": "¿Eliminar «{{title}}»? También se eliminan su plan, sus gastos y su diario."
+  },
+  "phaseMenu": {
+    "title": "Etapa del viaje",
+    "follow": "Seguir mis fechas",
+    "followHint": "La etapa sigue las fechas del viaje"
+  },
+  "dates": {
+    "title": "Fechas del viaje",
+    "start": "Fecha de inicio",
+    "end": "Fecha de fin",
+    "endHint": "Déjala vacía para un viaje de un día.",
+    "clear": "Borrar fechas",
+    "save": "Guardar fechas",
+    "cancel": "Cancelar"
+  },
+  "offline": {
+    "note": "Estás sin conexión. Esta es la copia guardada el {{date}}.",
+    "noteUndated": "Estás sin conexión. Esta es la copia guardada en este dispositivo.",
+    "empty": "Estás sin conexión y este viaje no está guardado en este dispositivo.",
+    "retry": "Intentar de nuevo"
+  },
+  "overview": {
+    "openPlanner": "Abrir en el planificador",
+    "openPlannerHint": "Cambia vuelos, alojamientos y el plan del día con resultados en directo.",
+    "planIt": "Planéalo",
+    "planItHint": "Busca vuelos, alojamientos y cosas que hacer en {{destination}}.",
+    "planItHintNoPlace": "Busca vuelos, alojamientos y cosas que hacer.",
+    "loadFailed": "No se pudo cargar el plan ahora.",
+    "retry": "Reintentar"
+  }
+}

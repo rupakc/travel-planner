@@ -1,0 +1,51 @@
+{
+  "loading": "Deine Reise wird geladen…",
+  "allTrips": "Alle Reisen",
+  "tabsLabel": "Bereiche der Reise",
+  "error": {
+    "failed": "Diese Reise konnte gerade nicht geladen werden.",
+    "retry": "Erneut versuchen"
+  },
+  "header": {
+    "rename": "Reise umbenennen",
+    "titleLabel": "Name der Reise",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "noDates": "Noch keine Daten",
+    "addDates": "Daten hinzufügen",
+    "editDates": "Daten ändern",
+    "phaseLabel": "Reisephase: {{phase}}. Ändern",
+    "manual": "von dir gewählt",
+    "delete": "Reise löschen",
+    "confirmDelete": "„{{title}}“ löschen? Plan, Ausgaben und Tagebuch werden ebenfalls gelöscht."
+  },
+  "phaseMenu": {
+    "title": "Reisephase",
+    "follow": "Meinen Daten folgen",
+    "followHint": "Die Phase richtet sich nach den Reisedaten"
+  },
+  "dates": {
+    "title": "Reisedaten",
+    "start": "Startdatum",
+    "end": "Enddatum",
+    "endHint": "Leer lassen für eine eintägige Reise.",
+    "clear": "Daten löschen",
+    "save": "Daten speichern",
+    "cancel": "Abbrechen"
+  },
+  "offline": {
+    "note": "Du bist offline. Das ist die Kopie vom {{date}}.",
+    "noteUndated": "Du bist offline. Das ist die auf diesem Gerät gespeicherte Kopie.",
+    "empty": "Du bist offline, und diese Reise ist nicht auf diesem Gerät gespeichert.",
+    "retry": "Erneut versuchen"
+  },
+  "overview": {
+    "openPlanner": "Im Planer öffnen",
+    "openPlannerHint": "Ändere Flüge, Unterkünfte und den Tagesplan mit Live-Ergebnissen.",
+    "planIt": "Jetzt planen",
+    "planItHint": "Finde Flüge, Unterkünfte und Aktivitäten in {{destination}}.",
+    "planItHintNoPlace": "Finde Flüge, Unterkünfte und Aktivitäten.",
+    "loadFailed": "Der Plan konnte gerade nicht geladen werden.",
+    "retry": "Erneut versuchen"
+  }
+}

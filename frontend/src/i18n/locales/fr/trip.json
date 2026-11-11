@@ -1,0 +1,51 @@
+{
+  "loading": "Chargement de votre voyage…",
+  "allTrips": "Tous les voyages",
+  "tabsLabel": "Sections du voyage",
+  "error": {
+    "failed": "Impossible de charger ce voyage pour le moment.",
+    "retry": "Réessayer"
+  },
+  "header": {
+    "rename": "Renommer le voyage",
+    "titleLabel": "Nom du voyage",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "noDates": "Pas encore de dates",
+    "addDates": "Ajouter des dates",
+    "editDates": "Modifier les dates",
+    "phaseLabel": "Étape du voyage : {{phase}}. La modifier",
+    "manual": "choisie par vous",
+    "delete": "Supprimer le voyage",
+    "confirmDelete": "Supprimer « {{title}} » ? Son plan, ses dépenses et son journal seront aussi supprimés."
+  },
+  "phaseMenu": {
+    "title": "Étape du voyage",
+    "follow": "Suivre mes dates",
+    "followHint": "L’étape suit les dates du voyage"
+  },
+  "dates": {
+    "title": "Dates du voyage",
+    "start": "Date de début",
+    "end": "Date de fin",
+    "endHint": "Laissez vide pour un voyage d’une journée.",
+    "clear": "Effacer les dates",
+    "save": "Enregistrer les dates",
+    "cancel": "Annuler"
+  },
+  "offline": {
+    "note": "Vous êtes hors ligne. Voici la copie enregistrée le {{date}}.",
+    "noteUndated": "Vous êtes hors ligne. Voici la copie enregistrée sur cet appareil.",
+    "empty": "Vous êtes hors ligne, et ce voyage n’est pas enregistré sur cet appareil.",
+    "retry": "Réessayer"
+  },
+  "overview": {
+    "openPlanner": "Ouvrir dans le planificateur",
+    "openPlannerHint": "Modifiez vols, hébergements et programme du jour avec des résultats en direct.",
+    "planIt": "Le planifier",
+    "planItHint": "Trouvez vols, hébergements et activités à {{destination}}.",
+    "planItHintNoPlace": "Trouvez vols, hébergements et activités.",
+    "loadFailed": "Impossible de charger le plan pour le moment.",
+    "retry": "Réessayer"
+  }
+}
