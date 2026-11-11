@@ -308,7 +308,13 @@ def password_reset_request(req: EmailRequest, background: BackgroundTasks):
     _require_email()
     email = req.email.strip().lower()
     user = users_db.get_user_by_email(email) if email else None
-    if user and user["is_active"]:
+    # Only to a proven address (or a pending sign-up, which reset activates):
+    # an active account's unverified email may be someone else's claim.
+    if (
+        user
+        and user["is_active"]
+        and (user.get("email_verified") or user.get("account_status") == "pending")
+    ):
         token = tokens.issue_token(user["id"], "reset_password", email, now=_now())
         _send(
             background,
@@ -350,13 +356,11 @@ def password_reset_confirm(req: ResetConfirm):
     users_db.change_password(user["username"], req.new_password)
     users_db.bump_token_version(user["id"])
     revoke_all(user["id"])
-    # The email is proven: a pending account becomes active and verified.
+    # The email is proven: a pending account becomes active and verified. An
+    # active account's unverified email is never marked verified by a reset.
     if user.get("account_status") == "pending":
         users_db.activate_user(user["id"], res["email"])
         hooks.on_email_verified(user["id"])
-    elif not user.get("email_verified"):
-        if users_db.mark_email_verified(user["id"], res["email"]):
-            hooks.on_email_verified(user["id"])
     user = users_db.get_user_by_id(user["id"])
     return {
         "status": "password_reset",
