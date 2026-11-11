@@ -1,0 +1,53 @@
+{
+  "loading": "Loading your recap…",
+  "failed": "Couldn't load your recap right now.",
+  "retry": "Retry",
+  "notReady": "Your recap appears after {{date}}",
+  "finish": "Finish recap",
+  "finishFailed": "Couldn't finish the recap. Try again.",
+  "completed": "Recap finished",
+  "stats": {
+    "days": "Days",
+    "places": "Places visited",
+    "distance": "Distance",
+    "km": "{{km}} km",
+    "countries": "Countries",
+    "journal": "Journal entries",
+    "stars": "Average stars"
+  },
+  "map": {
+    "route": "Your route",
+    "planned": "Planned route"
+  },
+  "spend": {
+    "title": "Spend vs budget",
+    "spent": "Spent (estimate)",
+    "budget": "Budget",
+    "planned": "Planned cost (estimate)",
+    "estimateNote": "Estimates: amounts are converted at approximate rates from the day each expense was logged.",
+    "unconverted": "Not counted, no rate for: {{currencies}}"
+  },
+  "reveal": {
+    "title_one": "New country stamped!",
+    "title_other": "{{count}} new countries stamped!",
+    "close": "Close"
+  },
+  "share": {
+    "cta": "Share",
+    "days_one": "{{count}} day in {{city}}",
+    "days_other": "{{count}} days in {{city}}",
+    "places_one": "{{count}} place",
+    "places_other": "{{count}} places",
+    "copied": "Link copied",
+    "failed": "Couldn't share right now."
+  },
+  "whereNext": {
+    "title": "Where next?",
+    "cta": "Suggest my next trip",
+    "loading": "Looking…",
+    "retry": "Try again",
+    "failed": "Couldn't load suggestions right now.",
+    "none": "No new suggestions this time.",
+    "needOrigin": "Add your home airport to this trip to get suggestions."
+  }
+}
