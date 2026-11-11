@@ -18,9 +18,11 @@ export default function JournalEntryForm({ onSubmit, days = [], busy = false }) 
   const submit = async (e) => {
     e.preventDefault()
     if (over || empty || busy) return
-    await onSubmit({ body: body.trim(), mood, day: day || null })
-    setBody('')
-    setMood(null)
+    const ok = await onSubmit({ body: body.trim(), mood, day: day || null })
+    if (ok) {
+      setBody('')
+      setMood(null)
+    }
   }
 
   return (

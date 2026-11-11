@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useJourney } from '../../hooks/useJourney'
 import { useAuth } from '../../context/AuthContext'
@@ -33,6 +33,8 @@ export default function Journal({ trip, token }) {
   const online = useOnline()
   const [entries, setEntries] = useState([])
   const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const inflight = useRef(false)
   const userId = user?.id
   const days = useMemo(() => tripDays(trip), [trip])
   const sel = trip?.selections || {}
@@ -44,27 +46,42 @@ export default function Journal({ trip, token }) {
     return () => { live = false }
   }, [enabled, token, trip?.id])
 
-  const add = useCallback(async ({ body, mood, day }) => {
+  const send = useCallback(async ({ body, mood, day }) => {
     const payload = { client_id: newId(), body }
     if (mood) payload.mood = mood
     if (day) payload.day = day
     const local = { id: `local-${payload.client_id}`, ...payload, mood: mood || null, day: day || null, pending: true }
     const queue = async () => {
-      await enqueue(userId, { method: 'POST', path: `/trips/${trip.id}/journal`, body: payload, key: payload.client_id })
+      await enqueue(userId, { method: 'POST', path: `/trips/${trip.id}/journal`, body: payload, key: `journal:${trip.id}:${payload.client_id}` })
       setEntries((list) => [...list, local])
       emit('journal_action', { action: 'add', queued: true })
     }
     setError(null)
-    if (!online) { await queue(); return }
+    if (!online) { await queue(); return true }
     try {
       const entry = await addJournal(token, trip.id, payload)
       setEntries((list) => [...list, entry])
       emit('journal_action', { action: 'add', queued: false })
+      return true
     } catch (err) {
-      if (err?.code === 'network') await queue()
-      else setError(err?.message || t('error'))
+      if (err?.code === 'network') { await queue(); return true }
+      setError(err?.message || t('error'))
+      return false
     }
   }, [online, token, trip?.id, userId, t])
+
+  // One add at a time: a double tap cannot send the text twice.
+  const add = useCallback(async (values) => {
+    if (inflight.current) return false
+    inflight.current = true
+    setBusy(true)
+    try {
+      return await send(values)
+    } finally {
+      inflight.current = false
+      setBusy(false)
+    }
+  }, [send])
 
   const remove = useCallback(async (entry) => {
     if (entry.pending) return
@@ -75,7 +92,7 @@ export default function Journal({ trip, token }) {
       emit('journal_action', { action: 'delete', queued: false })
     } catch (err) {
       if (err?.code === 'network') {
-        await enqueue(userId, { method: 'DELETE', path: `/trips/${trip.id}/journal/${entry.id}`, key: `del:${entry.id}` })
+        await enqueue(userId, { method: 'DELETE', path: `/trips/${trip.id}/journal/${entry.id}`, key: `journal-del:${trip.id}:${entry.id}` })
         setEntries((list) => list.filter((e) => e.id !== entry.id))
         emit('journal_action', { action: 'delete', queued: true })
       } else setError(err?.message || t('error'))
@@ -84,17 +101,26 @@ export default function Journal({ trip, token }) {
 
   if (!enabled || !trip) return null
 
-  const groups = []
-  for (const e of entries) {
-    const last = groups[groups.length - 1]
-    if (last && last.day === (e.day || null)) last.items.push(e)
-    else groups.push({ day: e.day || null, items: [e] })
-  }
+  // Contract order: by day (no day last), then creation order.
+  const byDay = new Map()
+  entries.forEach((e, i) => {
+    const d = e.day || ''
+    if (!byDay.has(d)) byDay.set(d, [])
+    byDay.get(d).push({ e, i })
+  })
+  const groups = [...byDay.keys()]
+    .sort((a, b) => (a === b ? 0 : a === '' ? 1 : b === '' ? -1 : a < b ? -1 : 1))
+    .map((d) => ({
+      day: d || null,
+      items: byDay.get(d)
+        .sort((x, y) => String(x.e.created_at || '').localeCompare(String(y.e.created_at || '')) || x.i - y.i)
+        .map((x) => x.e),
+    }))
 
   return (
     <section className="space-y-6 text-slate-900 dark:text-slate-100" data-tid="journal">
       <h2 className="text-lg font-semibold">{t('title')}</h2>
-      <JournalEntryForm onSubmit={add} days={days} />
+      <JournalEntryForm onSubmit={add} days={days} busy={busy} />
       {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}
       {groups.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-300" data-tid="journal-empty">{t('empty')}</p>

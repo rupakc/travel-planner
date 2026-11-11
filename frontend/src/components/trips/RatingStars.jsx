@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 // A 1..5 star radio group. Arrow keys move and select (Left/Down lower,
 // Right/Up raise, Home/End jump); clicking the chosen star clears it (null).
-export default function RatingStars({ value = null, onChange, name = 'rating', disabled = false }) {
+export default function RatingStars({ value = null, onChange, name = 'rating', disabled = false, groupLabel }) {
   const { t } = useTranslation('journal')
   const refs = useRef([])
   const current = Number.isInteger(value) && value >= 1 && value <= 5 ? value : null
@@ -27,7 +27,7 @@ export default function RatingStars({ value = null, onChange, name = 'rating', d
   }
 
   return (
-    <div role="radiogroup" aria-label={t('stars.group')} className="inline-flex" data-tid={`${name}-stars`}>
+    <div role="radiogroup" aria-label={groupLabel || t('stars.group')} className="inline-flex" data-tid={`${name}-stars`}>
       {[1, 2, 3, 4, 5].map((n) => {
         const checked = current === n
         return (

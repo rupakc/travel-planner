@@ -7,6 +7,7 @@ import { arrangeItinerary } from '../../utils/itineraryLayout'
 import { enqueue } from '../../offline/outbox'
 import { useOnline } from '../../offline/useOnline'
 import { emit } from '../../telemetry/client'
+import { announceGame } from '../../game/announce'
 
 // Places to rate: the itinerary's activities plus any visited place the
 // server already holds. Telemetry carries the action, kind and stars only.
@@ -50,22 +51,29 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
 
   const save = useCallback(async (row, changes, props) => {
     const key = row.place_key
-    const body = { name: row.name, kind: row.kind, ...changes }
-    if (row.lat != null && row.lng != null) { body.lat = row.lat; body.lng = row.lng }
+    const before = saved[key]
+    // Full current state, so a queued write that replaces an earlier one loses nothing.
+    const merged = { ...row, ...changes }
+    const body = { name: merged.name, kind: merged.kind, visited: !!merged.visited, stars: merged.stars ?? null }
+    for (const f of ['note', 'day', 'lat', 'lng']) if (merged[f] != null) body[f] = merged[f]
     setError(null)
-    setSaved((s) => ({ ...s, [key]: { ...row, ...s[key], ...changes } }))
+    setSaved((s) => ({ ...s, [key]: merged }))
     const queue = async () => {
-      await enqueue(userId, { method: 'PUT', path: `/trips/${trip.id}/places/${encodeURIComponent(key)}`, body, key: `place:${key}` })
+      await enqueue(userId, { method: 'PUT', path: `/trips/${trip.id}/places/${encodeURIComponent(key)}`, body, key: `place:${trip.id}:${key}` })
+      emit('place_action', props)
     }
-    if (!online) { await queue(); emit('place_action', props); return }
+    if (!online) { await queue(); return }
     try {
       const r = await putPlace(token, trip.id, key, body)
       if (r?.place) setSaved((s) => ({ ...s, [key]: r.place }))
+      if (r?.game) announceGame(r.game)
       emit('place_action', props)
     } catch (err) {
-      if (err?.code === 'network') { await queue(); emit('place_action', props) } else setError(err?.message || t('error'))
+      if (err?.code === 'network') { await queue(); return }
+      setSaved((s) => { const n = { ...s }; if (before) n[key] = before; else delete n[key]; return n })
+      setError(err?.message || t('error'))
     }
-  }, [online, token, trip.id, userId, t])
+  }, [online, token, trip.id, userId, t, saved])
 
   if (!rows.length) return <p className="text-sm text-slate-600 dark:text-slate-300" data-tid="places-empty">{t('places.empty')}</p>
 
@@ -90,6 +98,7 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
           </div>
           <RatingStars
             name={`place-${row.place_key}`}
+            groupLabel={row.name}
             value={row.stars ?? null}
             onChange={(n) => save(row, { stars: n }, { action: n ? 'rate' : 'unrate', kind: row.kind, stars: n || 0 })}
           />
