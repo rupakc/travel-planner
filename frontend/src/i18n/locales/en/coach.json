@@ -1,0 +1,28 @@
+{
+  "steps": {
+    "trips": {
+      "title": "Your trips",
+      "body": "Every trip lives here, from dreaming to done. Tap one to prepare, travel and look back."
+    },
+    "explore": {
+      "title": "Explore",
+      "body": "Search, chat and find places near you to start a new idea."
+    },
+    "alerts": {
+      "title": "Alerts",
+      "body": "Get a nudge when a fare or price you watch drops."
+    },
+    "play": {
+      "title": "Play",
+      "body": "Earn points and badges for planning and travelling. Totally optional."
+    },
+    "you": {
+      "title": "You",
+      "body": "Your profile, settings and this tour whenever you want it again."
+    },
+    "create": {
+      "title": "Start a trip",
+      "body": "Create a trip here, even before you know the dates."
+    }
+  }
+}
