@@ -1,0 +1,28 @@
+{
+  "steps": {
+    "trips": {
+      "title": "Deine Reisen",
+      "body": "Hier lebt jede Reise, vom Traum bis zur Erinnerung. Tippe auf eine, um sie vorzubereiten, zu reisen und zurückzublicken."
+    },
+    "explore": {
+      "title": "Entdecken",
+      "body": "Suche, chatte und finde Orte in deiner Nähe, um eine neue Idee zu starten."
+    },
+    "alerts": {
+      "title": "Hinweise",
+      "body": "Du bekommst einen Hinweis, wenn ein beobachteter Preis sinkt."
+    },
+    "play": {
+      "title": "Spielen",
+      "body": "Sammle Punkte und Abzeichen fürs Planen und Reisen. Völlig freiwillig."
+    },
+    "you": {
+      "title": "Du",
+      "body": "Dein Profil, deine Einstellungen und diese Tour, wann immer du sie wieder willst."
+    },
+    "create": {
+      "title": "Reise starten",
+      "body": "Lege hier eine Reise an, auch wenn du die Daten noch nicht kennst."
+    }
+  }
+}

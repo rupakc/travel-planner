@@ -1,0 +1,28 @@
+{
+  "steps": {
+    "trips": {
+      "title": "Vos voyages",
+      "body": "Chaque voyage vit ici, de l'idée au souvenir. Touchez-en un pour le préparer, voyager et revenir dessus."
+    },
+    "explore": {
+      "title": "Explorer",
+      "body": "Cherchez, discutez et trouvez des lieux près de vous pour lancer une nouvelle idée."
+    },
+    "alerts": {
+      "title": "Alertes",
+      "body": "Vous êtes prévenu quand un tarif ou un prix suivi baisse."
+    },
+    "play": {
+      "title": "Jouer",
+      "body": "Gagnez des points et des badges en planifiant et en voyageant. Totalement facultatif."
+    },
+    "you": {
+      "title": "Vous",
+      "body": "Votre profil, vos réglages et cette visite guidée quand vous voulez la revoir."
+    },
+    "create": {
+      "title": "Commencer un voyage",
+      "body": "Créez un voyage ici, même sans connaître les dates."
+    }
+  }
+}
