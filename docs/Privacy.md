@@ -49,6 +49,17 @@ Property values are short tokens (letters, digits and `_ . : / -`, no spaces or 
 | `feature_used` | `feature`, `page` |
 | `perf` | `metric` (ttfb, fcp, lcp, inp, cls, long_task or cold_start), `value`, `route` |
 | `error` | `kind` (js, promise or api), `source`, `status` |
+| `auth_start` | `method` (password, apple, google, facebook or github), `mode` (signin, signup or link) |
+| `auth_result` | `method`, `mode`, `result` (ok, error, cancelled, coming_soon, needs_username or pending), `code` |
+| `signup_step` | `step` (form, check_email, username or done) |
+| `email_verify` | `result` (ok, expired, invalid, used, resent or email_changed) |
+| `password_reset` | `step` (request or confirm), `result` (ok, error, expired, invalid or used) |
+| `account_action` | `action` (avatar_upload, avatar_remove, name_change, settings_change, export, delete, link, unlink, signout_all, email_verify_request or change_password) |
+| `quota_block` | `bucket` (search, chat, compare, discover, light_ai or import), `reason` (daily_quota or unverified) |
+| `game_award` | `rule`, `points` |
+| `badge_earned` | `badge` |
+| `level_up` | `level` |
+| `game_view` | `surface` (account, nav or celebration) |
 
 `tid` is the stable identifier of a button or control (for example `nav.search`), never its visible text.
 

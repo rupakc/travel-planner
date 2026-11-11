@@ -149,3 +149,16 @@ def test_phase1_enums_and_ints():
     assert out["props"] == {"reason": "unverified"}
     out = clean_event({"event": "level_up", "props": {"level": "3"}})
     assert out["props"] == {}
+
+
+def test_phase1_enum_accept_and_reject():
+    cases = [
+        ("signup_step", {"step": "check_email"}, {"step": "check_email"}),
+        ("signup_step", {"step": "bogus"}, {}),
+        ("email_verify", {"result": "email_changed"}, {"result": "email_changed"}),
+        ("email_verify", {"result": "ok2"}, {}),
+        ("account_action", {"action": "signout_all"}, {"action": "signout_all"}),
+        ("account_action", {"action": "hack"}, {}),
+    ]
+    for name, props, want in cases:
+        assert clean_event({"event": name, "props": props})["props"] == want
