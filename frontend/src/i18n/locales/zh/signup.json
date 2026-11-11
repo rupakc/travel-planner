@@ -1,0 +1,62 @@
+{
+  "title": "创建账户",
+  "tagline": "规划行程、赢取徽章，一切尽在一处",
+  "username": {
+    "label": "用户名",
+    "placeholder": "例如 wanderer_42",
+    "hint": "3-20 个小写字母、数字或下划线。"
+  },
+  "email": {
+    "label": "电子邮箱",
+    "placeholder": "you@example.com"
+  },
+  "password": {
+    "label": "密码",
+    "placeholder": "至少 8 个字符",
+    "show": "显示密码",
+    "hide": "隐藏密码"
+  },
+  "displayName": {
+    "label": "显示名称（可选）",
+    "placeholder": "我们该怎么称呼你？"
+  },
+  "invite": {
+    "label": "邀请码",
+    "placeholder": "输入你的邀请码"
+  },
+  "submit": "创建账户",
+  "submitting": "正在创建账户…",
+  "haveAccount": "已有账户？",
+  "signIn": "登录",
+  "strength": {
+    "label": "强度：{{level}}",
+    "level": {
+      "0": "非常弱",
+      "1": "弱",
+      "2": "一般",
+      "3": "良好",
+      "4": "强"
+    },
+    "hint": {
+      "tooShort": "至少使用 8 个字符",
+      "longer": "越长越安全",
+      "variety": "混合字母、数字和符号",
+      "repeats": "避免重复字符",
+      "sequence": "避免 abc 或 123 这样的连续字符",
+      "identity": "不要包含用户名或邮箱"
+    }
+  },
+  "login": {
+    "identifier": "用户名或邮箱",
+    "identifierPlaceholder": "输入用户名或邮箱",
+    "createAccount": "创建账户",
+    "forgot": "忘记密码？",
+    "pendingTitle": "请先确认你的邮箱",
+    "pendingBody": "我们已向 {{hint}} 发送了确认链接。打开链接即可完成账户创建。",
+    "pendingNoHint": "请打开我们发送给你的确认链接，以完成账户创建。",
+    "resendEmail": "你的邮箱地址",
+    "resend": "重新发送确认邮件",
+    "resending": "正在发送…",
+    "resent": "确认邮件已发送，请查看收件箱。"
+  }
+}

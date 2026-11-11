@@ -1,0 +1,62 @@
+{
+  "title": "Create your account",
+  "tagline": "Plan trips, earn badges, keep everything in one place",
+  "username": {
+    "label": "Username",
+    "placeholder": "e.g. wanderer_42",
+    "hint": "3-20 lowercase letters, numbers or underscores."
+  },
+  "email": {
+    "label": "Email",
+    "placeholder": "you@example.com"
+  },
+  "password": {
+    "label": "Password",
+    "placeholder": "At least 8 characters",
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "displayName": {
+    "label": "Display name (optional)",
+    "placeholder": "How should we call you?"
+  },
+  "invite": {
+    "label": "Invite code",
+    "placeholder": "Enter your invite code"
+  },
+  "submit": "Create account",
+  "submitting": "Creating account…",
+  "haveAccount": "Already have an account?",
+  "signIn": "Sign in",
+  "strength": {
+    "label": "Strength: {{level}}",
+    "level": {
+      "0": "very weak",
+      "1": "weak",
+      "2": "fair",
+      "3": "good",
+      "4": "strong"
+    },
+    "hint": {
+      "tooShort": "use at least 8 characters",
+      "longer": "longer is stronger",
+      "variety": "mix letters, numbers and symbols",
+      "repeats": "avoid repeated characters",
+      "sequence": "avoid sequences like abc or 123",
+      "identity": "don't include your username or email"
+    }
+  },
+  "login": {
+    "identifier": "Username or email",
+    "identifierPlaceholder": "Enter username or email",
+    "createAccount": "Create account",
+    "forgot": "Forgot password?",
+    "pendingTitle": "Confirm your email first",
+    "pendingBody": "We sent a confirmation link to {{hint}}. Open it to finish creating your account.",
+    "pendingNoHint": "Open the confirmation link we emailed you to finish creating your account.",
+    "resendEmail": "Your email address",
+    "resend": "Resend confirmation email",
+    "resending": "Sending…",
+    "resent": "Confirmation email sent. Check your inbox."
+  }
+}

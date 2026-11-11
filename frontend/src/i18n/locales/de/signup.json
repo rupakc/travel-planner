@@ -1,0 +1,62 @@
+{
+  "title": "Konto erstellen",
+  "tagline": "Reisen planen, Abzeichen sammeln, alles an einem Ort",
+  "username": {
+    "label": "Benutzername",
+    "placeholder": "z. B. wanderer_42",
+    "hint": "3–20 Kleinbuchstaben, Ziffern oder Unterstriche."
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "du@beispiel.de"
+  },
+  "password": {
+    "label": "Passwort",
+    "placeholder": "Mindestens 8 Zeichen",
+    "show": "Passwort anzeigen",
+    "hide": "Passwort verbergen"
+  },
+  "displayName": {
+    "label": "Anzeigename (optional)",
+    "placeholder": "Wie sollen wir dich nennen?"
+  },
+  "invite": {
+    "label": "Einladungscode",
+    "placeholder": "Einladungscode eingeben"
+  },
+  "submit": "Konto erstellen",
+  "submitting": "Konto wird erstellt…",
+  "haveAccount": "Du hast schon ein Konto?",
+  "signIn": "Anmelden",
+  "strength": {
+    "label": "Stärke: {{level}}",
+    "level": {
+      "0": "sehr schwach",
+      "1": "schwach",
+      "2": "ok",
+      "3": "gut",
+      "4": "stark"
+    },
+    "hint": {
+      "tooShort": "mindestens 8 Zeichen verwenden",
+      "longer": "länger ist stärker",
+      "variety": "Buchstaben, Ziffern und Symbole mischen",
+      "repeats": "wiederholte Zeichen vermeiden",
+      "sequence": "Folgen wie abc oder 123 vermeiden",
+      "identity": "Benutzername oder E-Mail nicht verwenden"
+    }
+  },
+  "login": {
+    "identifier": "Benutzername oder E-Mail",
+    "identifierPlaceholder": "Benutzername oder E-Mail eingeben",
+    "createAccount": "Konto erstellen",
+    "forgot": "Passwort vergessen?",
+    "pendingTitle": "Bestätige zuerst deine E-Mail",
+    "pendingBody": "Wir haben einen Bestätigungslink an {{hint}} gesendet. Öffne ihn, um dein Konto fertig zu erstellen.",
+    "pendingNoHint": "Öffne den Bestätigungslink aus unserer E-Mail, um dein Konto fertig zu erstellen.",
+    "resendEmail": "Deine E-Mail-Adresse",
+    "resend": "Bestätigungs-E-Mail erneut senden",
+    "resending": "Wird gesendet…",
+    "resent": "Bestätigungs-E-Mail gesendet. Sieh in deinem Posteingang nach."
+  }
+}
