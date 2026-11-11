@@ -129,3 +129,31 @@ def test_host_bundle_is_clean_and_ordered(tmp_path):
     assert expected <= set(names)
     assert "host/systemd/voyager.service" in names
     assert not any(n.startswith("tests/") or "__pycache__" in n for n in names)
+
+
+OAUTH_SECRETS = [
+    "google-client-secret",
+    "github-client-secret",
+    "facebook-app-secret",
+    "apple-private-key",
+]
+
+
+def test_dry_run_creates_oauth_secrets(tmp_path):
+    p, _ = run(tmp_path, "--dry-run")
+    assert p.returncode == 0, p.stderr
+    out = " ".join((p.stdout + p.stderr).split())
+    for s in OAUTH_SECRETS:
+        assert f"secrets create {s} " in out, s
+
+
+def test_app_env_example_names_only_bootstrapped_secrets():
+    text = (ROOT / "deploy" / "gcp" / "app.env.example").read_text()
+    line = next(x for x in text.splitlines() if x.startswith("SECRET_MANAGER_SECRETS="))
+    ids = {
+        v.strip().lower().replace("_", "-") for v in line.split("=", 1)[1].split(",")
+    }
+    script = SCRIPT.read_text()
+    arr = script.split("SECRETS=(", 1)[1].split(")", 1)[0].split()
+    assert ids == set(arr)
+    assert set(OAUTH_SECRETS) <= ids
