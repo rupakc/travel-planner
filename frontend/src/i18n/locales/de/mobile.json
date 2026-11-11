@@ -6,7 +6,7 @@
     "you": "Du"
   },
   "infoPlist": {
-    "location": "Voyager nutzt deinen Standort nur, solange du „In meiner Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert."
+    "location": "Voyager nutzt deinen Standort nur, solange du „In der Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert."
   },
   "permissions": {
     "notificationsTitle": "Behalte deine Reisen im Blick",
@@ -14,7 +14,7 @@
     "allow": "Mitteilungen erlauben",
     "notNow": "Nicht jetzt",
     "locationTitle": "Orte in deiner Nähe anzeigen",
-    "locationBody": "Voyager nutzt deinen Standort nur, solange du „In meiner Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert.",
+    "locationBody": "Voyager nutzt deinen Standort nur, solange du „In der Nähe“ verwendest, um Orte in deiner Umgebung anzuzeigen. Er wird nie gespeichert.",
     "openSettings": "Einstellungen öffnen"
   },
   "session": {

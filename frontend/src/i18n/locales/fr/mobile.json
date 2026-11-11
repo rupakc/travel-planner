@@ -6,7 +6,7 @@
     "you": "Vous"
   },
   "infoPlist": {
-    "location": "Voyager utilise votre position uniquement pendant que vous utilisez À proximité, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée."
+    "location": "Voyager utilise votre position uniquement pendant que vous utilisez Près de moi, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée."
   },
   "permissions": {
     "notificationsTitle": "Gardez le fil de vos voyages",
@@ -14,7 +14,7 @@
     "allow": "Autoriser les notifications",
     "notNow": "Pas maintenant",
     "locationTitle": "Afficher les lieux près de vous",
-    "locationBody": "Voyager utilise votre position uniquement pendant que vous utilisez À proximité, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée.",
+    "locationBody": "Voyager utilise votre position uniquement pendant que vous utilisez Près de moi, pour afficher les lieux autour de vous. Elle n'est jamais enregistrée.",
     "openSettings": "Ouvrir les Réglages"
   },
   "session": {

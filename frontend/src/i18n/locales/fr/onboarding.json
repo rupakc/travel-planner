@@ -36,7 +36,7 @@
       "title": "Quel est votre budget habituel ?",
       "options": {
         "shoestring": "Petit budget",
-        "mid_range": "Moyen de gamme",
+        "mid_range": "Milieu de gamme",
         "comfort": "Confort",
         "luxury": "Luxe"
       }
@@ -114,7 +114,7 @@
       "description": "Plages, bien-être et journées tranquilles."
     },
     "ACCESSIBLE": {
-      "name": "Voyageur en situation de handicap",
+      "name": "Voyageur aux besoins d'accessibilité",
       "description": "Des programmes qui tiennent compte de vos besoins d'accessibilité."
     }
   },

@@ -25,7 +25,7 @@
     "companions": {
       "title": "¿Con quién sueles viajar?",
       "options": {
-        "solo": "Solo",
+        "solo": "Viajo solo/a",
         "partner": "En pareja",
         "family_kids": "En familia con niños",
         "friends": "Con amigos",
@@ -114,7 +114,7 @@
       "description": "Playas, bienestar y días tranquilos."
     },
     "ACCESSIBLE": {
-      "name": "Viajero con accesibilidad",
+      "name": "Viajero con necesidades de accesibilidad",
       "description": "Planes que tienen en cuenta tus necesidades de accesibilidad."
     }
   },
