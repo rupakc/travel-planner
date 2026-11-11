@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { sharePlan } from '../../services/api'
 import { useJourney } from '../../hooks/useJourney'
 import { getRecap, completeRecap } from '../../services/tripsApi'
 import { announceGame } from '../../game/announce'
@@ -15,43 +16,43 @@ import WhereNext from './WhereNext'
 
 const RecapMap = lazy(() => import('./RecapMap'))
 
-async function fetchPlan(token, id) {
-  const res = await fetch(`/api/plans/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-  if (!res.ok) throw new Error('plan')
-  return res.json()
-}
-
 const note = (action) => { try { emit('recap_action', { action }) } catch { /* telemetry never breaks the UI */ } }
 
 export default function Recap({ trip, token }) {
   const { t } = useTranslation('recap')
   const { enabled } = useJourney()
   const [state, setState] = useState({ status: 'loading', recap: null })
-  const [plan, setPlan] = useState(null)
   const [reveal, setReveal] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const shareUrl = useRef(null)
   const tripId = trip?.id
 
-  const load = useCallback(() => {
+  const alive = useRef(0)
+
+  const load = useCallback((first = false) => {
+    const run = ++alive.current
     setState({ status: 'loading', recap: null })
     getRecap(token, tripId)
-      .then((recap) => { setState({ status: 'ok', recap }); note('view') })
-      .catch(() => setState({ status: 'error', recap: null }))
+      .then((recap) => {
+        if (run !== alive.current) return
+        setState({ status: 'ok', recap })
+        if (first) note('view')
+      })
+      .catch(() => { if (run === alive.current) setState({ status: 'error', recap: null }) })
   }, [token, tripId])
 
   useEffect(() => {
+    shareUrl.current = null
+    setReveal(null); setMsg('')
     if (!enabled || !tripId) return undefined
-    load()
-    // The plan supplies the itinerary (planned route), the plan cost and the
-    // interests; the recap still works without it.
-    let live = true
-    fetchPlan(token, tripId).then((p) => { if (live) setPlan(p) }).catch(() => {})
-    return () => { live = false }
+    load(true)
+    return () => { alive.current += 1 }
   }, [enabled, tripId, token, load])
 
-  const sel = plan?.selections
+  // The itinerary, plan cost and interests come from the trip (TripPage passes
+  // `selections` / `search_data`); without them those parts simply stay out.
+  const sel = trip?.selections
   const planned = useMemo(() => {
     if (!sel?.itinerary?.days?.length) return { points: [], km: null }
     return plannedRoute(scheduleDays(arrangeItinerary(sel.itinerary, sel.itinerary_layout, sel.itinerary_edits).days, sel.itinerary_edits))
@@ -65,7 +66,7 @@ export default function Recap({ trip, token }) {
     return (
       <div className="p-4" data-tid="recap.error">
         <p className="text-sm text-red-700 dark:text-red-300" role="alert">{t('failed')}</p>
-        <button type="button" onClick={load} data-tid="recap.retry"
+        <button type="button" onClick={() => load()} data-tid="recap.retry"
           className="mt-2 min-h-[44px] rounded-lg bg-teal-700 px-4 text-sm font-medium text-white hover:bg-teal-800">{t('retry')}</button>
       </div>
     )
@@ -83,7 +84,7 @@ export default function Recap({ trip, token }) {
 
   const usePlanned = !recap.route?.length && planned.points.length > 0
   const points = recap.route?.length ? recap.route : planned.points
-  const planCost = sel ? computePlanCost(sel, plan.search_data) : 0
+  const planCost = sel ? computePlanCost(sel, trip.search_data) : 0
   const city = trip?.destination || recap.title
 
   const finish = async () => {
@@ -107,14 +108,16 @@ export default function Recap({ trip, token }) {
     note('share')
     try {
       if (!shareUrl.current) {
-        const res = await fetch(`/api/plans/${tripId}/share`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
-        if (!res.ok) throw new Error('share')
-        const { share_token } = await res.json()
+        const { share_token } = await sharePlan(token, tripId)
         shareUrl.current = `${window.location.origin}/share/${share_token}`
       }
       const text = `${t('share.days', { count: recap.days, city })} · ${t('share.places', { count: recap.visited_count })}`
       if (typeof navigator.share === 'function') {
-        try { await navigator.share({ title: recap.title, text, url: shareUrl.current }) } catch { /* cancelled */ }
+        try {
+          await navigator.share({ title: recap.title, text, url: shareUrl.current })
+        } catch (err) {
+          if (err?.name !== 'AbortError') throw err
+        }
       } else {
         await navigator.clipboard.writeText(shareUrl.current)
         setMsg(t('share.copied'))
@@ -153,7 +156,7 @@ export default function Recap({ trip, token }) {
         </button>
       </div>
       {msg && <p className="text-sm text-gray-700 dark:text-gray-300" role="status" data-tid="recap.msg">{msg}</p>}
-      <WhereNext trip={trip} plan={plan} onUse={() => note('where_next')} />
+      <WhereNext key={tripId} trip={trip} onUse={() => note('where_next')} />
     </div>
   )
 }

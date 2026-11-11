@@ -50,6 +50,7 @@
     "loading": "Buscando…",
     "retry": "Inténtalo de nuevo",
     "failed": "No pudimos cargar sugerencias ahora.",
-    "none": "Sin sugerencias nuevas esta vez."
+    "none": "Sin sugerencias nuevas esta vez.",
+    "needOrigin": "Añade tu aeropuerto de origen a este viaje para ver sugerencias."
   }
 }

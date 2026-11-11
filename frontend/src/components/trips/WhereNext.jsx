@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { discoverDestinations } from '../../services/api'
@@ -11,19 +11,25 @@ function inDays(n) {
 }
 
 /** "Where next?": asks the discovery agent only when tapped. */
-export default function WhereNext({ trip, plan, onUse }) {
+export default function WhereNext({ trip, onUse }) {
   const { t } = useTranslation('recap')
   const [state, setState] = useState({ status: 'idle', items: [] })
   const current = [trip?.destination, ...(trip?.destinations || [])]
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const load = async () => {
     onUse?.()
+    const sd = trip?.search_data || {}
+    // Discovery needs a home airport; the trip's destination is no substitute.
+    const origin = sd.origin || trip?.origin
+    if (!origin) { setState({ status: 'error', items: [], reason: 'origin' }); return }
     setState({ status: 'loading', items: [] })
-    const sd = plan?.search_data || {}
     try {
       const res = await discoverDestinations({
-        origin: sd.origin || trip?.origin || trip?.destination || '',
+        origin,
         nationality: sd.nationality || '',
+        // discover requires a date; a month and a half out is a neutral placeholder
         departure_date: inDays(45),
         return_date: null,
         budget_usd: trip?.budget_usd ?? sd.budget_usd ?? null,
@@ -31,9 +37,9 @@ export default function WhereNext({ trip, plan, onUse }) {
         adults: Math.max(1, trip?.num_travelers || 1),
       })
       const items = (res?.destinations || []).filter((d) => !current.some((c) => same(c, d.city))).slice(0, 5)
-      setState({ status: 'done', items })
+      if (mounted.current) setState({ status: 'done', items })
     } catch {
-      setState({ status: 'error', items: [] })
+      if (mounted.current) setState({ status: 'error', items: [] })
     }
   }
 
@@ -46,7 +52,7 @@ export default function WhereNext({ trip, plan, onUse }) {
           {state.status === 'loading' ? t('whereNext.loading') : state.status === 'error' ? t('whereNext.retry') : t('whereNext.cta')}
         </button>
       )}
-      {state.status === 'error' && <p className="mt-2 text-sm text-red-700 dark:text-red-300" role="alert">{t('whereNext.failed')}</p>}
+      {state.status === 'error' && <p className="mt-2 text-sm text-red-700 dark:text-red-300" role="alert">{state.reason === 'origin' ? t('whereNext.needOrigin') : t('whereNext.failed')}</p>}
       {state.status === 'done' && state.items.length === 0 && (
         <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{t('whereNext.none')}</p>
       )}

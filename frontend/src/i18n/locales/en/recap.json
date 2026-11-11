@@ -47,6 +47,7 @@
     "loading": "Looking…",
     "retry": "Try again",
     "failed": "Couldn't load suggestions right now.",
-    "none": "No new suggestions this time."
+    "none": "No new suggestions this time.",
+    "needOrigin": "Add your home airport to this trip to get suggestions."
   }
 }

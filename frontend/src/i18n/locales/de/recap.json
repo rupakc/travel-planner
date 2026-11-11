@@ -47,6 +47,7 @@
     "loading": "Suche läuft…",
     "retry": "Erneut versuchen",
     "failed": "Vorschläge konnten gerade nicht geladen werden.",
-    "none": "Diesmal keine neuen Vorschläge."
+    "none": "Diesmal keine neuen Vorschläge.",
+    "needOrigin": "Füge deinen Heimatflughafen zu dieser Reise hinzu, um Vorschläge zu bekommen."
   }
 }

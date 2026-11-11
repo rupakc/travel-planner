@@ -192,6 +192,12 @@ export async function deleteRecentSearch(token, id) {
   await api.delete(`/recent-searches/${encodeURIComponent(id)}`, authHeaders(token))
 }
 
+// Create (or reuse) a plan's public share link -> {share_token}
+export async function sharePlan(token, planId) {
+  const res = await api.post(`/plans/${planId}/share`, null, authHeaders(token))
+  return res.data
+}
+
 export default api
 
 /** Per-destination lightweight summary for trip comparison. */
