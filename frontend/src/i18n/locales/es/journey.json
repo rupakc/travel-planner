@@ -1,0 +1,40 @@
+{
+  "tabs": {
+    "trips": "Viajes",
+    "explore": "Explorar",
+    "alerts": "Alertas",
+    "play": "Jugar",
+    "you": "Tú"
+  },
+  "phases": {
+    "dreaming": "Soñando",
+    "planning": "Planificando",
+    "ready": "Listo",
+    "on_the_road": "De viaje",
+    "memories": "Recuerdos"
+  },
+  "tripTabs": {
+    "overview": "Vista general",
+    "prep": "Preparativos",
+    "today": "Hoy",
+    "money": "Dinero",
+    "journal": "Diario",
+    "recap": "Resumen",
+    "offline": "Sin conexión"
+  },
+  "countdown_one": "en {{count}} día",
+  "countdown_many": "en {{count}} días",
+  "countdown_other": "en {{count}} días",
+  "dayOf": "Día {{day}} de {{count}}",
+  "dayIn": "Día {{day}} en {{city}}",
+  "saved": {
+    "openTrip": "Abrir viaje",
+    "savedToTrips": "Guardado en Viajes"
+  },
+  "load": {
+    "failed": "No se pudo cargar ahora mismo.",
+    "retry": "Reintentar",
+    "loading": "Cargando tus viajes…"
+  },
+  "offlineCopy": "Guardado para usar sin conexión"
+}

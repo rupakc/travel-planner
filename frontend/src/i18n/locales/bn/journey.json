@@ -1,0 +1,39 @@
+{
+  "tabs": {
+    "trips": "ভ্রমণ",
+    "explore": "খুঁজে দেখুন",
+    "alerts": "অ্যালার্ট",
+    "play": "খেলুন",
+    "you": "আপনি"
+  },
+  "phases": {
+    "dreaming": "স্বপ্নে",
+    "planning": "পরিকল্পনা",
+    "ready": "প্রস্তুত",
+    "on_the_road": "পথে",
+    "memories": "স্মৃতি"
+  },
+  "tripTabs": {
+    "overview": "সংক্ষিপ্ত বিবরণ",
+    "prep": "প্রস্তুতি",
+    "today": "আজ",
+    "money": "টাকা",
+    "journal": "ডায়েরি",
+    "recap": "সারসংক্ষেপ",
+    "offline": "অফলাইন"
+  },
+  "countdown_one": "{{count}} দিনে",
+  "countdown_other": "{{count}} দিনে",
+  "dayOf": "{{count}} দিনের মধ্যে দিন {{day}}",
+  "dayIn": "{{city}}-এ দিন {{day}}",
+  "saved": {
+    "openTrip": "ভ্রমণ খুলুন",
+    "savedToTrips": "ভ্রমণে সংরক্ষিত"
+  },
+  "load": {
+    "failed": "এখন লোড করা যায়নি।",
+    "retry": "আবার চেষ্টা করুন",
+    "loading": "আপনার ভ্রমণ লোড হচ্ছে…"
+  },
+  "offlineCopy": "অফলাইনের জন্য সংরক্ষিত"
+}

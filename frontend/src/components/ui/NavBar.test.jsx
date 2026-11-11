@@ -10,6 +10,15 @@ vi.mock('../../context/AuthContext', () => ({
 vi.mock('../../context/AlertsContext', () => ({ useAlerts: () => ({ unread: 2 }) }))
 vi.mock('../alerts/NotificationBell', () => ({ default: () => null }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
+const journey = vi.hoisted(() => ({ value: { enabled: false, tripsApi: false, offlinePack: false, loaded: true } }))
+const trips = vi.hoisted(() => ({ value: { hasTrips: false, loading: false } }))
+const settings = vi.hoisted(() => ({ value: null }))
+vi.mock('../../hooks/useJourney', () => ({ useJourney: () => journey.value }))
+vi.mock('../../hooks/useHasTrips', () => ({ useHasTrips: () => trips.value }))
+vi.mock('../account/SettingsSync', async (importOriginal) => {
+  const real = await importOriginal()
+  return { ...real, useAccountSettings: () => (settings.value ? { settings: settings.value, update: () => {} } : real.useAccountSettings()) }
+})
 
 import i18n from 'i18next'
 import { emit } from '../../telemetry/client'
@@ -107,5 +116,65 @@ describe('NavBar', () => {
     expect(container.querySelector('[data-tid="nav.signOut"]')).toBeNull()
     act(() => container.querySelector('[data-tid="account.menu"]').click())
     expect(container.querySelector('[data-tid="nav.signOut"]')).not.toBeNull()
+  })
+})
+
+describe('NavBar with the journey on', () => {
+  async function renderAt(path) {
+    act(() => root.unmount())
+    root = createRoot(container)
+    await act(async () => root.render(
+      <ThemeProvider><MemoryRouter initialEntries={[path]}><NavBar /></MemoryRouter></ThemeProvider>))
+  }
+  beforeEach(() => { journey.value = { enabled: true, tripsApi: true, offlinePack: true, loaded: true } })
+  afterEach(() => {
+    journey.value = { enabled: false, tripsApi: false, offlinePack: false, loaded: true }
+    trips.value = { hasTrips: false, loading: false }
+    settings.value = null
+  })
+
+  const desktop = () => [...container.querySelectorAll('.bg-slate-100\\/80 button')]
+  const bottom = () => [...container.querySelectorAll('[data-tid="bottomTabs"] button')]
+
+  it('shows the five journey tabs (plus Admin) with tour anchors', async () => {
+    await renderAt('/trips/3/today')
+    expect(desktop().map((b) => b.getAttribute('title'))).toEqual(['Trips', 'Explore', 'Alerts', 'Play', 'You', 'Admin'])
+    expect(desktop().map((b) => b.getAttribute('data-tour'))).toEqual(
+      ['nav-trips', 'nav-explore', 'nav-alerts', 'nav-play', 'nav-you', 'nav-admin'])
+    expect(desktop()[0].getAttribute('aria-current')).toBe('page')
+    expect(desktop()[1].className).toContain('text-slate-500')
+    expect(desktop()[1].className).not.toContain('text-slate-400')
+  })
+
+  it('links Trips to /trips', async () => {
+    await renderAt('/explore')
+    expect(desktop()[1].getAttribute('aria-current')).toBe('page')
+    await act(async () => desktop()[0].click())
+    expect(desktop()[0].getAttribute('aria-current')).toBe('page')
+  })
+
+  it('hides Play when hide_game', async () => {
+    settings.value = { hide_game: true }
+    await renderAt('/trips')
+    expect(desktop().map((b) => b.getAttribute('title'))).toEqual(['Trips', 'Explore', 'Alerts', 'You', 'Admin'])
+    expect(bottom().map((b) => b.textContent)).not.toContain('Play')
+  })
+
+  it('replaces the hamburger with bottom tabs on phones', async () => {
+    await renderAt('/trips')
+    expect(container.querySelector('[data-tid="nav.menu"]')).toBeNull()
+    const nav = container.querySelector('[data-tid="bottomTabs"]')
+    expect(nav.className).toContain('sm:hidden')
+    expect(bottom().map((b) => b.textContent)).toEqual(['Trips', 'Explore', 'Alerts', 'Play', 'You', 'Admin'])
+    expect(bottom().every((b) => b.getAttribute('data-tid')?.startsWith('bottomTabs.'))).toBe(true)
+  })
+
+  it('at / marks Trips for a user with trips, else Explore', async () => {
+    trips.value = { hasTrips: true, loading: false }
+    await renderAt('/')
+    expect(desktop()[0].getAttribute('aria-current')).toBe('page')
+    trips.value = { hasTrips: false, loading: false }
+    await renderAt('/')
+    expect(desktop()[1].getAttribute('aria-current')).toBe('page')
   })
 })

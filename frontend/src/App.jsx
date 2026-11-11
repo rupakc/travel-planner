@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from './context/AuthContext'
 import { SearchDataProvider, useSearchData } from './context/SearchDataContext'
 import { AlertsProvider } from './context/AlertsContext'
@@ -32,6 +33,17 @@ import AccountPage         from './pages/AccountPage'
 import SettingsSync        from './components/account/SettingsSync'
 import VerifyBanner        from './components/account/VerifyBanner'
 import GameCelebration     from './components/game/GameCelebration'
+import TripsPage           from './pages/TripsPage'
+import TripPage            from './pages/TripPage'
+import PlayPage            from './pages/PlayPage'
+import YouPage             from './pages/YouPage'
+import OnboardingPage      from './pages/OnboardingPage'
+import OnboardingGate      from './components/onboarding/OnboardingGate'
+import OfflineBanner       from './components/offline/OfflineBanner'
+import I18nRouteGate       from './components/I18nRouteGate'
+import { useJourney }      from './hooks/useJourney'
+import { useHasTrips }     from './hooks/useHasTrips'
+import { matchTripPath }   from './journey/paths'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -67,42 +79,98 @@ function SearchTab() {
   )
 }
 
-const PATH_LABEL = { '/': 'search', '/chat': 'chat', '/nearby': 'nearby', '/preferences': 'preferences', '/alerts': 'alerts', '/admin': 'admin', '/account': 'account' }
-const KNOWN_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/account'])
+const PATH_LABEL = {
+  '/': 'search', '/chat': 'chat', '/nearby': 'nearby', '/preferences': 'preferences', '/alerts': 'alerts',
+  '/admin': 'admin', '/account': 'account',
+  '/trips': 'trips', '/explore': 'explore', '/play': 'play', '/you': 'you',
+}
+const CLASSIC_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/account'])
+const JOURNEY_PATHS = new Set(['/trips', '/explore', '/play', '/you'])
+
+// The journey-only paths: /trips, /explore, /play, /you and /trips/<id>(/<tab>).
+const isJourneyPath = (path) => JOURNEY_PATHS.has(path) || matchTripPath(path) !== null
+
+// `journey`: true, false, or null while /config is still loading (a journey
+// deep link waits instead of being redirected away).
+function knownPath(path, journey) {
+  if (CLASSIC_PATHS.has(path)) return true
+  if (!isJourneyPath(path)) return false
+  return journey !== false
+}
+
+const pageLabel = (path) => PATH_LABEL[path] ?? (matchTripPath(path) ? 'trip' : 'unknown')
+
+function Pending() {
+  const { t } = useTranslation('journey')
+  return (
+    <div data-tid="journey.homeLoading" role="status" aria-label={t('load.loading')} className="max-w-5xl mx-auto px-4 py-8 space-y-4">
+      <div className="h-8 w-48 rounded-lg bg-white/60 animate-pulse motion-reduce:animate-none" />
+      <div className="h-32 rounded-2xl bg-white/60 animate-pulse motion-reduce:animate-none" />
+      <div className="h-32 rounded-2xl bg-white/60 animate-pulse motion-reduce:animate-none" />
+    </div>
+  )
+}
+
+// Journey-only full-screen routes: the classic shell sends them home.
+function JourneyOnly({ children }) {
+  const { enabled, loaded } = useJourney()
+  if (!loaded) return null
+  return enabled ? children : <Navigate to="/" replace />
+}
 
 function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { enabled: journeyOn, loaded: journeyLoaded } = useJourney()
+  const { hasTrips } = useHasTrips()
   // A click on a native browser notification opens its watch
   const openAlert = useCallback((n) => navigate(notificationLink(n)), [navigate])
 
   useEffect(() => {
-    track('page_view', PATH_LABEL[location.pathname] ?? 'unknown')
+    track('page_view', pageLabel(location.pathname))
   }, [location.pathname])
 
-  if (!KNOWN_PATHS.has(location.pathname)) {
+  const path = location.pathname
+  const journey = journeyLoaded ? journeyOn : null
+  if (!knownPath(path, journey)) {
     return <Navigate to="/" replace />
   }
 
-  const path = location.pathname
+  // With the journey on, `/` is the Trips hub for a user with a trip and
+  // Explore (the search) for everyone else; a skeleton while that is checked.
+  const home = !journeyOn ? 'search' : hasTrips === true ? 'trips' : hasTrips === false ? 'search' : 'pending'
+  const showSearch = (path === '/' && home === 'search') || (journeyOn && path === '/explore')
+  const trip = journeyOn ? matchTripPath(path) : null
+  const waiting = journey === null && isJourneyPath(path)
 
   return (
     <SearchDataProvider>
      <AlertsProvider onOpenLink={openAlert}>
-      <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100">
+      <div className={`min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100${journeyOn ? ' pb-16 sm:pb-0' : ''}`}>
         <SettingsSync />
         <NavBar />
         <VerifyBanner />
+        <OfflineBanner />
+        <OnboardingGate />
         <FeedbackWidget />
         {/* SearchTab and ChatPage are always in the DOM — navigating away never unmounts them */}
-        <div style={{ display: path === '/' ? 'block' : 'none' }}><SearchTab /></div>
+        <div style={{ display: showSearch ? 'block' : 'none' }}><SearchTab /></div>
         <div style={{ display: path === '/chat' ? 'block' : 'none' }}><ChatPage /></div>
-        {path === '/preferences' && <PreferencesPage />}
-        {path === '/alerts'      && <AlertsPage />}
-        {/* Near me unmounts when left: its live results are never kept */}
-        {path === '/nearby'      && <NearbyPage />}
-        {path === '/account'     && <AccountPage />}
-        {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
+        <I18nRouteGate pathname={path}>
+          {path === '/preferences' && <PreferencesPage />}
+          {path === '/alerts'      && <AlertsPage />}
+          {/* Near me unmounts when left: its live results are never kept */}
+          {path === '/nearby'      && <NearbyPage />}
+          {path === '/account'     && <AccountPage />}
+          {path === '/admin'       && <RequireAdmin><AdminPage /></RequireAdmin>}
+          {journeyOn && path === '/' && home === 'trips'   && <TripsPage />}
+          {journeyOn && path === '/' && home === 'pending' && <Pending />}
+          {journeyOn && path === '/trips' && <TripsPage />}
+          {trip && <TripPage tripId={trip.id} tab={trip.tab} />}
+          {journeyOn && path === '/play' && <PlayPage />}
+          {journeyOn && path === '/you'  && <YouPage />}
+          {waiting && <Pending />}
+        </I18nRouteGate>
         <AttributionFooter />
         <AlertToast />
         <GameCelebration />
@@ -146,6 +214,8 @@ export default function App() {
       {/* Public share link — works without login */}
       <Route path="/share/:token"    element={<SharePage />} />
       <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
+      {/* Journey onboarding: full screen, outside the Layout (no nav) */}
+      <Route path="/onboarding"      element={<RequireAuth><JourneyOnly><OnboardingPage /></JourneyOnly></RequireAuth>} />
       <Route path="/*"               element={<RequireAuth><Layout /></RequireAuth>} />
     </Routes>
     <ConsentPrompt />

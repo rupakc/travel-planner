@@ -1,0 +1,107 @@
+{
+  "_doc": "Place key vectors (contract: Place key). Every client and the server must produce `key` from (kind, name).",
+  "cases": [
+    {
+      "kind": "activity",
+      "name": "Pastéis de Belém!",
+      "key": "activity:pasteis-de-belem",
+      "note": "accents and trailing punctuation"
+    },
+    {
+      "kind": "place",
+      "name": "Torre de Belém",
+      "key": "place:torre-de-belem",
+      "note": "accent"
+    },
+    {
+      "kind": "food",
+      "name": "  Café   Ñandú  ",
+      "key": "food:cafe-nandu",
+      "note": "accents, outer and inner whitespace runs"
+    },
+    {
+      "kind": "hotel",
+      "name": "Hôtel--Le  Marais!!!",
+      "key": "hotel:hotel-le-marais",
+      "note": "punctuation runs collapse to one dash"
+    },
+    {
+      "kind": "place",
+      "name": "東京タワー",
+      "key": "place:x",
+      "note": "CJK only: x fallback"
+    },
+    {
+      "kind": "other",
+      "name": "",
+      "key": "other:x",
+      "note": "empty name: x fallback"
+    },
+    {
+      "kind": "event",
+      "name": "!!!---???",
+      "key": "event:x",
+      "note": "punctuation only: x fallback"
+    },
+    {
+      "kind": "tour",
+      "name": "Free Walking Tour #3 (Alfama)",
+      "key": "tour:free-walking-tour-3-alfama",
+      "note": "digits kept, brackets and hash dropped"
+    },
+    {
+      "kind": "nearby",
+      "name": "Ｔｏｋｙｏ Ｓｔａｔｉｏｎ",
+      "key": "nearby:tokyo-station",
+      "note": "full-width letters fold under NFKD"
+    },
+    {
+      "kind": "activity",
+      "name": "Sagrada Família — Basílica",
+      "key": "activity:sagrada-familia-basilica",
+      "note": "em dash with spaces is one run"
+    },
+    {
+      "kind": "place",
+      "name": "İstanbul Modern",
+      "key": "place:istanbul-modern",
+      "note": "dotted capital I decomposes to i"
+    },
+    {
+      "kind": "food",
+      "name": "Ørestad Bageri",
+      "key": "food:restad-bageri",
+      "note": "a letter without decomposition becomes a dash, then is trimmed"
+    },
+    {
+      "kind": "place",
+      "name": "Straße Café",
+      "key": "place:stra-e-cafe",
+      "note": "sharp s has no ASCII decomposition"
+    },
+    {
+      "kind": "activity",
+      "name": "Mixed 東京 Tower",
+      "key": "activity:mixed-tower",
+      "note": "CJK inside a Latin name"
+    },
+    {
+      "kind": "place",
+      "name": "Kraków Old Town",
+      "key": "place:krakow-old-town",
+      "note": "Polish accent"
+    },
+    {
+      "kind": "place",
+      "name": "Ancient Monastery of the Hieronymites Ancient Monastery of the Hieronymites Ancient Monastery of the",
+      "key": "place:ancient-monastery-of-the-hieronymites-ancient-monastery-of-t",
+      "note": "100-character name is cut to 60"
+    },
+    {
+      "kind": "activity",
+      "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yz",
+      "key": "activity:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-",
+      "note": "the cut comes after the trim, so a slug may end with a dash"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "tabs": {
+    "trips": "यात्राएँ",
+    "explore": "खोजें",
+    "alerts": "अलर्ट",
+    "play": "खेलें",
+    "you": "आप"
+  },
+  "phases": {
+    "dreaming": "सपने",
+    "planning": "योजना",
+    "ready": "तैयार",
+    "on_the_road": "सफ़र में",
+    "memories": "यादें"
+  },
+  "tripTabs": {
+    "overview": "अवलोकन",
+    "prep": "तैयारी",
+    "today": "आज",
+    "money": "पैसे",
+    "journal": "डायरी",
+    "recap": "सारांश",
+    "offline": "ऑफ़लाइन"
+  },
+  "countdown_one": "{{count}} दिन में",
+  "countdown_other": "{{count}} दिन में",
+  "dayOf": "दिन {{day}} / {{count}}",
+  "dayIn": "{{city}} में दिन {{day}}",
+  "saved": {
+    "openTrip": "यात्रा खोलें",
+    "savedToTrips": "यात्राओं में सहेजा गया"
+  },
+  "load": {
+    "failed": "अभी लोड नहीं हो सका।",
+    "retry": "फिर कोशिश करें",
+    "loading": "आपकी यात्राएँ लोड हो रही हैं…"
+  },
+  "offlineCopy": "ऑफ़लाइन के लिए सहेजा गया"
+}

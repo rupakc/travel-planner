@@ -1,0 +1,38 @@
+{
+  "tabs": {
+    "trips": "行程",
+    "explore": "探索",
+    "alerts": "价格提醒",
+    "play": "游戏",
+    "you": "我的"
+  },
+  "phases": {
+    "dreaming": "梦想中",
+    "planning": "规划中",
+    "ready": "已就绪",
+    "on_the_road": "旅途中",
+    "memories": "回忆"
+  },
+  "tripTabs": {
+    "overview": "概览",
+    "prep": "准备",
+    "today": "今天",
+    "money": "花费",
+    "journal": "日记",
+    "recap": "回顾",
+    "offline": "离线"
+  },
+  "countdown_other": "{{count}} 天后",
+  "dayOf": "第 {{day}} 天，共 {{count}} 天",
+  "dayIn": "{{city}}第 {{day}} 天",
+  "saved": {
+    "openTrip": "打开行程",
+    "savedToTrips": "已保存到行程"
+  },
+  "load": {
+    "failed": "暂时无法加载。",
+    "retry": "重试",
+    "loading": "正在加载你的行程…"
+  },
+  "offlineCopy": "已保存，可离线使用"
+}
