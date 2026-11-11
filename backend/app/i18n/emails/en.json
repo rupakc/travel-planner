@@ -1,0 +1,18 @@
+{
+  "verify.subject": "Confirm your email for Voyager",
+  "verify.heading": "Confirm your email",
+  "verify.body": "Hi {{username}}, welcome to Voyager! Confirm your email address to finish setting up your account. This link works for {{minutes}} minutes.",
+  "verify.button": "Confirm email",
+  "verify.ignore": "If you didn't create a Voyager account, you can safely ignore this email.",
+  "reset.subject": "Reset your Voyager password",
+  "reset.heading": "Reset your password",
+  "reset.body": "Hi {{username}}, we got a request to reset your Voyager password. Use the button below to choose a new one. This link works for {{minutes}} minutes.",
+  "reset.button": "Reset password",
+  "reset.ignore": "If you didn't ask for this, you can ignore this email; your password stays the same.",
+  "already_registered.subject": "You already have a Voyager account",
+  "already_registered.heading": "You already have an account",
+  "already_registered.body": "Hi {{username}}, someone tried to sign up for Voyager with this email address, but you already have an account. You can sign in, or reset your password if you've forgotten it.",
+  "already_registered.button": "Go to Voyager",
+  "already_registered.ignore": "If this wasn't you, you can ignore this email; nothing has changed.",
+  "footer": "Sent by Voyager. Please don't reply to this message."
+}

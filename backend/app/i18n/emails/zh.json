@@ -1,0 +1,18 @@
+{
+  "verify.subject": "请确认你的 Voyager 邮箱",
+  "verify.heading": "确认你的邮箱",
+  "verify.body": "你好 {{username}}，欢迎使用 Voyager！请确认你的邮箱地址，以完成账号设置。此链接 {{minutes}} 分钟内有效。",
+  "verify.button": "确认邮箱",
+  "verify.ignore": "如果你没有创建 Voyager 账号，请忽略这封邮件。",
+  "reset.subject": "重置你的 Voyager 密码",
+  "reset.heading": "重置你的密码",
+  "reset.body": "你好 {{username}}，我们收到了重置你的 Voyager 密码的请求。请点击下方按钮设置新密码。此链接 {{minutes}} 分钟内有效。",
+  "reset.button": "重置密码",
+  "reset.ignore": "如果这不是你本人的操作，请忽略这封邮件，你的密码不会改变。",
+  "already_registered.subject": "你已经有 Voyager 账号了",
+  "already_registered.heading": "你已经有账号了",
+  "already_registered.body": "你好 {{username}}，有人尝试用这个邮箱地址注册 Voyager，但你已经有账号了。你可以直接登录，如果忘记了密码，也可以重置密码。",
+  "already_registered.button": "前往 Voyager",
+  "already_registered.ignore": "如果这不是你本人的操作，请忽略这封邮件，一切都没有改变。",
+  "footer": "此邮件由 Voyager 发送，请勿直接回复。"
+}

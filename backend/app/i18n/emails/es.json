@@ -1,0 +1,18 @@
+{
+  "verify.subject": "Confirma tu correo para Voyager",
+  "verify.heading": "Confirma tu correo",
+  "verify.body": "Hola {{username}}, ¡te damos la bienvenida a Voyager! Confirma tu dirección de correo para terminar de configurar tu cuenta. Este enlace funciona durante {{minutes}} minutos.",
+  "verify.button": "Confirmar correo",
+  "verify.ignore": "Si no creaste una cuenta de Voyager, puedes ignorar este mensaje sin problema.",
+  "reset.subject": "Restablece tu contraseña de Voyager",
+  "reset.heading": "Restablece tu contraseña",
+  "reset.body": "Hola {{username}}, recibimos una solicitud para restablecer tu contraseña de Voyager. Usa el botón de abajo para elegir una nueva. Este enlace funciona durante {{minutes}} minutos.",
+  "reset.button": "Restablecer contraseña",
+  "reset.ignore": "Si no lo pediste tú, ignora este mensaje; tu contraseña seguirá igual.",
+  "already_registered.subject": "Ya tienes una cuenta de Voyager",
+  "already_registered.heading": "Ya tienes una cuenta",
+  "already_registered.body": "Hola {{username}}, alguien intentó registrarse en Voyager con este correo, pero ya tienes una cuenta. Puedes iniciar sesión o restablecer tu contraseña si la olvidaste.",
+  "already_registered.button": "Ir a Voyager",
+  "already_registered.ignore": "Si no fuiste tú, ignora este mensaje; no ha cambiado nada.",
+  "footer": "Enviado por Voyager. Por favor, no respondas a este mensaje."
+}

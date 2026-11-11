@@ -1,0 +1,18 @@
+{
+  "verify.subject": "Confirmez votre adresse e-mail pour Voyager",
+  "verify.heading": "Confirmez votre adresse e-mail",
+  "verify.body": "Bonjour {{username}}, bienvenue sur Voyager ! Confirmez votre adresse e-mail pour terminer la création de votre compte. Ce lien est valable {{minutes}} minutes.",
+  "verify.button": "Confirmer l'e-mail",
+  "verify.ignore": "Si vous n'avez pas créé de compte Voyager, vous pouvez ignorer ce message.",
+  "reset.subject": "Réinitialisez votre mot de passe Voyager",
+  "reset.heading": "Réinitialisez votre mot de passe",
+  "reset.body": "Bonjour {{username}}, nous avons reçu une demande de réinitialisation de votre mot de passe Voyager. Utilisez le bouton ci-dessous pour en choisir un nouveau. Ce lien est valable {{minutes}} minutes.",
+  "reset.button": "Réinitialiser le mot de passe",
+  "reset.ignore": "Si vous n'êtes pas à l'origine de cette demande, ignorez ce message ; votre mot de passe reste inchangé.",
+  "already_registered.subject": "Vous avez déjà un compte Voyager",
+  "already_registered.heading": "Vous avez déjà un compte",
+  "already_registered.body": "Bonjour {{username}}, quelqu'un a essayé de s'inscrire sur Voyager avec cette adresse e-mail, mais vous avez déjà un compte. Vous pouvez vous connecter ou réinitialiser votre mot de passe si vous l'avez oublié.",
+  "already_registered.button": "Aller sur Voyager",
+  "already_registered.ignore": "Si ce n'était pas vous, ignorez ce message ; rien n'a changé.",
+  "footer": "Envoyé par Voyager. Merci de ne pas répondre à ce message."
+}
