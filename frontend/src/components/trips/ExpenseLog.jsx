@@ -53,20 +53,23 @@ export default function ExpenseLog({ trip, token }) {
     setData(null)
     setEditing(null)
   }
+  const keyRef = useRef(storeKey)
+  keyRef.current = storeKey // in-flight work compares its captured key with this
   const tripId = trip?.id
   const today = localToday()
 
   const load = useCallback(async () => {
     try {
       const res = await listExpenses(token, tripId)
+      if (keyRef.current !== storeKey) return // the user switched trip meanwhile
       setData(res)
       setFailed(false)
       const seen = new Set(res.expenses.map((e) => e.client_id))
       setPending((p) => p.filter((e) => !seen.has(e.client_id)))
     } catch {
-      setFailed(true)
+      if (keyRef.current === storeKey) setFailed(true)
     }
-  }, [token, tripId])
+  }, [token, tripId, storeKey])
 
   useEffect(() => {
     if (!enabled || tripId == null) return
@@ -79,7 +82,9 @@ export default function ExpenseLog({ trip, token }) {
 
   const queue = async (body) => {
     const row = { id: `pending-${body.client_id}`, ...body, note: body.note || '', pending: true }
-    setPending((p) => [...p, row])
+    const key = storeKey
+    if (keyRef.current === key) setPending((p) => [...p, row])
+    else writePending(key, [...readPending(key), row]) // switched away: file it under its own trip
     await enqueue(uid, {
       method: 'POST', path: `/trips/${tripId}/expenses`, body, key: `expense:${tripId}:${body.client_id}`,
     })

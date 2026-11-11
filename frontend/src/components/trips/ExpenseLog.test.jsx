@@ -200,4 +200,30 @@ describe('ExpenseLog', () => {
     await act(async () => { root.render(<ExpenseLog trip={{ id: 12, budget_usd: 1000 }} token="tok" />) })
     expect(host.textContent).toContain('Waiting to sync')
   })
+
+  it('ignores a slow listing that resolves after a trip switch', async () => {
+    let resolveA
+    api.listExpenses.mockImplementation((_t, id) => (id === 12
+      ? new Promise((r) => { resolveA = r })
+      : Promise.resolve(listing({ expenses: [exp({ id: 9, client_id: 'b', note: 'TripB' })] }))))
+    await render()
+    await act(async () => { root.render(<ExpenseLog trip={{ id: 13, budget_usd: 1000 }} token="tok" />) })
+    await act(async () => { resolveA(listing({ expenses: [exp({ id: 8, client_id: 'a', note: 'TripA' })] })) })
+    expect(host.textContent).toContain('TripB')
+    expect(host.textContent).not.toContain('TripA')
+  })
+
+  it('files a row queued after a trip switch under the trip it was made on', async () => {
+    online = false
+    let release
+    enqueue.mockImplementationOnce(() => new Promise((r) => { release = r }))
+    await render()
+    await type('expense-amount', '7')
+    await act(async () => { q('expense-save').click() })
+    await act(async () => { root.render(<ExpenseLog trip={{ id: 13, budget_usd: 1000 }} token="tok" />) })
+    await act(async () => { release() })
+    expect(host.textContent).not.toContain('Waiting to sync')
+    expect(JSON.parse(sessionStorage.getItem('tp_exp_pending:7:12'))).toHaveLength(1)
+    expect(sessionStorage.getItem('tp_exp_pending:7:13')).toBeNull()
+  })
 })
