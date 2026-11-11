@@ -1,0 +1,24 @@
+{
+  "forgot": {
+    "title": "Mot de passe oublié ?",
+    "intro": "Saisissez l'e-mail de votre compte et nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    "email": "E-mail",
+    "submit": "Envoyer le lien",
+    "sending": "Envoi…",
+    "sent": "Si un compte utilise cet e-mail, un lien est en route. Il expire dans 30 minutes.",
+    "unavailable": "La réinitialisation par e-mail n'est pas disponible pour le moment. Contactez l'administrateur.",
+    "back": "Retour à la connexion"
+  },
+  "reset": {
+    "title": "Choisir un nouveau mot de passe",
+    "password": "Nouveau mot de passe",
+    "confirm": "Confirmer le nouveau mot de passe",
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "submit": "Changer le mot de passe",
+    "saving": "Enregistrement…",
+    "done": "Mot de passe modifié : les autres appareils ont été déconnectés",
+    "missingToken": "Ce lien n'a pas de jeton.",
+    "requestNew": "Demander un nouveau lien",
+    "continue": "Continuer"
+  }
+}

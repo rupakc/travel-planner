@@ -1,0 +1,24 @@
+{
+  "forgot": {
+    "title": "¿Olvidaste tu contraseña?",
+    "intro": "Introduce el correo de tu cuenta y te enviaremos un enlace para elegir una nueva contraseña.",
+    "email": "Correo electrónico",
+    "submit": "Enviar enlace",
+    "sending": "Enviando…",
+    "sent": "Si una cuenta usa ese correo, el enlace va de camino. Caduca en 30 minutos.",
+    "unavailable": "El restablecimiento por correo no está disponible ahora. Contacta con el administrador.",
+    "back": "Volver a iniciar sesión"
+  },
+  "reset": {
+    "title": "Elige una nueva contraseña",
+    "password": "Nueva contraseña",
+    "confirm": "Confirma la nueva contraseña",
+    "mismatch": "Las contraseñas no coinciden.",
+    "submit": "Cambiar contraseña",
+    "saving": "Guardando…",
+    "done": "Contraseña cambiada: se cerró la sesión en los demás dispositivos",
+    "missingToken": "Falta el token en este enlace.",
+    "requestNew": "Solicitar un enlace nuevo",
+    "continue": "Continuar"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "forgot": {
+    "title": "Forgot your password?",
+    "intro": "Enter your account email and we'll send you a link to choose a new password.",
+    "email": "Email",
+    "submit": "Send reset link",
+    "sending": "Sending…",
+    "sent": "If an account uses that email, a link is on its way. It expires in 30 minutes.",
+    "unavailable": "Password reset by email isn't available right now. Please contact the administrator.",
+    "back": "Back to sign in"
+  },
+  "reset": {
+    "title": "Choose a new password",
+    "password": "New password",
+    "confirm": "Confirm new password",
+    "mismatch": "The passwords don't match.",
+    "submit": "Change password",
+    "saving": "Saving…",
+    "done": "Password changed — other devices were signed out",
+    "missingToken": "This reset link is missing its token.",
+    "requestNew": "Request a new link",
+    "continue": "Continue"
+  }
+}
