@@ -26,7 +26,7 @@
       "title": "Mit wem reist du meistens?",
       "options": {
         "solo": "Allein",
-        "partner": "Mit Partner oder Partnerin",
+        "partner": "Als Paar",
         "family_kids": "Familie mit Kindern",
         "friends": "Freundesgruppe",
         "work": "Geschäftlich"
@@ -114,7 +114,7 @@
       "description": "Strände, Wellness und entspannte Tage."
     },
     "ACCESSIBLE": {
-      "name": "Reisender mit Barrierefreiheitsbedarf",
+      "name": "Barrierefrei reisen",
       "description": "Pläne, die deine Anforderungen an Barrierefreiheit berücksichtigen."
     }
   },

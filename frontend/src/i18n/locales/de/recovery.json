@@ -3,7 +3,7 @@
     "title": "Passwort vergessen?",
     "intro": "Gib die E-Mail deines Kontos ein, dann senden wir dir einen Link zum Festlegen eines neuen Passworts.",
     "email": "E-Mail",
-    "submit": "Link senden",
+    "submit": "Reset-Link senden",
     "sending": "Wird gesendet…",
     "sent": "Wenn ein Konto diese E-Mail nutzt, ist ein Link unterwegs. Er läuft in 30 Minuten ab.",
     "unavailable": "Das Zurücksetzen per E-Mail ist derzeit nicht verfügbar. Bitte wende dich an den Administrator.",

@@ -5,7 +5,7 @@
   "email_invalid": "Gib eine gültige E-Mail-Adresse ein.",
   "password_too_short": "Dieses Passwort ist zu kurz.",
   "password_too_long": "Dieses Passwort ist zu lang.",
-  "password_common": "Dieses Passwort ist zu verbreitet. Wähle ein schwerer erratbares.",
+  "password_common": "Dieses Passwort ist zu verbreitet. Wähle eines, das schwerer zu erraten ist.",
   "password_matches_identity": "Dein Passwort darf nicht mit Benutzername oder E-Mail übereinstimmen.",
   "display_name_invalid": "Anzeigenamen müssen 1-50 Zeichen ohne Steuerzeichen haben.",
   "invite_required": "Zum Registrieren ist ein Einladungscode nötig.",

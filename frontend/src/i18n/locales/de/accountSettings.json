@@ -1,6 +1,6 @@
 {
   "title": "Einstellungen",
-  "hint": "Sie gelten für Ihr Konto auf allen Geräten.",
+  "hint": "Sie gelten für dein Konto auf allen Geräten.",
   "language": "Sprache",
   "theme": {
     "label": "Design",
@@ -19,7 +19,7 @@
     "useDevice": "Die dieses Geräts verwenden ({{zone}})"
   },
   "hideGame": {
-    "label": "„Spielen“ und Punkte ausblenden",
+    "label": "Spiel & Punkte ausblenden",
     "hint": "Blendet Punkte, Level und Abzeichen überall aus."
   },
   "hideCommunity": {
