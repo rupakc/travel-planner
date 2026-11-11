@@ -1,0 +1,38 @@
+{
+  "title": "Security",
+  "providers": {
+    "title": "Sign-in methods",
+    "connectedAs": "Connected as {{email}}",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "soon": "Coming soon",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "comingSoon": "{{provider}} sign-in is coming soon.",
+    "setPasswordFirst": "This is your only way to sign in. Set a password first, then disconnect."
+  },
+  "email": {
+    "title": "Email",
+    "unverified": "{{email}} isn't confirmed yet.",
+    "verify": "Verify email",
+    "sent": "We sent a confirmation link to {{email}}."
+  },
+  "password": {
+    "changeTitle": "Change password",
+    "setTitle": "Set a password",
+    "current": "Current password",
+    "new": "New password",
+    "change": "Change password",
+    "setButton": "Set password",
+    "changed": "Password changed. Other devices were signed out.",
+    "set": "Password set. Other devices were signed out."
+  },
+  "sessions": {
+    "title": "Sessions",
+    "body": "Sign out of Voyager on every device, including this one.",
+    "signOutAll": "Sign out everywhere",
+    "confirm": "Sign out of all devices?",
+    "confirmYes": "Yes, sign out everywhere",
+    "cancel": "Cancel"
+  }
+}

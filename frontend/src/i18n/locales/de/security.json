@@ -1,0 +1,38 @@
+{
+  "title": "Sicherheit",
+  "providers": {
+    "title": "Anmeldemethoden",
+    "connectedAs": "Verbunden als {{email}}",
+    "connected": "Verbunden",
+    "notConnected": "Nicht verbunden",
+    "soon": "Demnächst",
+    "connect": "Verbinden",
+    "disconnect": "Trennen",
+    "comingSoon": "Die Anmeldung mit {{provider}} kommt bald.",
+    "setPasswordFirst": "Das ist deine einzige Anmeldemethode. Lege zuerst ein Passwort fest und trenne dann die Verbindung."
+  },
+  "email": {
+    "title": "E-Mail",
+    "unverified": "{{email}} ist noch nicht bestätigt.",
+    "verify": "E-Mail bestätigen",
+    "sent": "Wir haben einen Bestätigungslink an {{email}} gesendet."
+  },
+  "password": {
+    "changeTitle": "Passwort ändern",
+    "setTitle": "Passwort festlegen",
+    "current": "Aktuelles Passwort",
+    "new": "Neues Passwort",
+    "change": "Passwort ändern",
+    "setButton": "Passwort festlegen",
+    "changed": "Passwort geändert. Andere Geräte wurden abgemeldet.",
+    "set": "Passwort festgelegt. Andere Geräte wurden abgemeldet."
+  },
+  "sessions": {
+    "title": "Sitzungen",
+    "body": "Melde dich auf allen Geräten bei Voyager ab, auch auf diesem.",
+    "signOutAll": "Überall abmelden",
+    "confirm": "Auf allen Geräten abmelden?",
+    "confirmYes": "Ja, überall abmelden",
+    "cancel": "Abbrechen"
+  }
+}
