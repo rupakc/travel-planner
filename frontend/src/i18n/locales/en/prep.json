@@ -1,0 +1,80 @@
+{
+  "title": "Before you go",
+  "ready": "Trip ready {{percent}} %",
+  "go": "Ready to go",
+  "progress": "{{done}} of {{total}} done",
+  "notNeeded": "Not needed",
+  "overdue": "Overdue",
+  "due": "Due {{date}}",
+  "auto": "Done automatically",
+  "autoNote": "Saved automatically when you save the offline pack",
+  "loading": "Loading your checklist…",
+  "error": "Couldn't load the checklist.",
+  "retry": "Try again",
+  "toggleFailed": "Couldn't save that change. Try again.",
+  "facts": {
+    "visa": "{{visaType}}, apply by {{date}}",
+    "stay": "Stay up to {{n}} days",
+    "processing": "Processing: {{text}}",
+    "official": "Official site",
+    "bookings": "Flight: {{flight}} · Hotel: {{hotel}}",
+    "yes": "booked",
+    "no": "not yet",
+    "score": "Last stress-test score: {{n}}",
+    "sim": "Plan: {{name}}",
+    "money": "Local currency: {{code}}",
+    "packing": "{{n}} items on your list",
+    "saved": "Saved {{date}}",
+    "notSaved": "Not saved yet"
+  },
+  "items": {
+    "visa": {
+      "title": "Sort out your visa",
+      "body": "Check what you need to enter and apply before the deadline."
+    },
+    "passport": {
+      "title": "Check your passport",
+      "body": "Make sure it is valid for at least six months after you return and has blank pages."
+    },
+    "bookings": {
+      "title": "Book flights and hotel",
+      "body": "Pick a flight and a place to stay in your plan."
+    },
+    "insurance": {
+      "title": "Get travel insurance",
+      "body": "Cover medical care, cancellations and lost bags."
+    },
+    "documents": {
+      "title": "Gather your documents",
+      "body": "Tickets, confirmations, visa and insurance papers, in one place."
+    },
+    "stress_test": {
+      "title": "Stress-test your itinerary",
+      "body": "Run the re-check to catch tight timings and clashes."
+    },
+    "sim": {
+      "title": "Choose a SIM or eSIM",
+      "body": "Pick how you will get data when you land."
+    },
+    "money": {
+      "title": "Sort out your money",
+      "body": "Notify your bank, carry a backup card and a little local cash."
+    },
+    "packing": {
+      "title": "Pack your bags",
+      "body": "Go through your packing list and tick things off."
+    },
+    "emergency_card": {
+      "title": "Review your emergency card",
+      "body": "Know the local emergency numbers and your embassy."
+    },
+    "checkin": {
+      "title": "Check in online",
+      "body": "Most airlines open online check-in about 24 hours before departure."
+    },
+    "offline_pack": {
+      "title": "Save the offline pack",
+      "body": "Keep your essentials on your phone for when you have no signal."
+    }
+  }
+}
