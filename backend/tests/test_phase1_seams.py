@@ -101,6 +101,22 @@ def test_hooks_return_none_when_game_disabled(monkeypatch):
     assert hooks.on_onboarding_complete("u") is None
 
 
+def test_failed_award_returns_the_empty_delta(client, monkeypatch):
+    """M-6: an award that raises (game enabled) is the empty GameDelta, not
+    None (which means "game disabled")."""
+    from app.core.config import settings
+    from app.game import engine, hooks
+
+    def boom(*a, **k):
+        raise RuntimeError("db on fire")
+
+    monkeypatch.setattr(settings, "game_enabled", True)
+    monkeypatch.setattr(engine, "award", boom)
+    empty = {"xp": 0, "awards": [], "badges": [], "level_up": None}
+    assert hooks.on_email_verified("no-such-user") == empty
+    assert hooks.on_onboarding_complete("no-such-user") == empty
+
+
 def test_account_maintenance_loop_survives_errors():
     from app.services import account_maintenance as am
 
