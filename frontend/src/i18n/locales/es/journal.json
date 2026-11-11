@@ -1,0 +1,33 @@
+{
+  "title": "Diario",
+  "empty": "Aún no hay entradas. Cuenta cómo fue tu día.",
+  "noDay": "Sin día",
+  "pending": "(esperando sincronizar)",
+  "delete": "Eliminar",
+  "error": "Algo salió mal. Inténtalo de nuevo.",
+  "form": {
+    "label": "¿Qué pasó hoy?",
+    "placeholder": "Escribe unas líneas...",
+    "counter": "{{n}} / {{max}}",
+    "tooLong": "Demasiado largo: {{n}} / {{max}} caracteres",
+    "add": "Añadir entrada",
+    "day": "Día",
+    "noDay": "Sin día"
+  },
+  "mood": {
+    "group": "Estado de ánimo",
+    "great": "Genial",
+    "good": "Bien",
+    "ok": "Normal",
+    "tough": "Duro"
+  },
+  "stars": {
+    "group": "Valoración",
+    "label": "{{n}} de 5 estrellas"
+  },
+  "places": {
+    "title": "Valora tus lugares",
+    "empty": "Aún no hay lugares para valorar.",
+    "visited": "Visitado"
+  }
+}
