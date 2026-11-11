@@ -93,9 +93,11 @@ def test_limited_includes_quota_dependency():
     assert callable(ai_quota.daily_quota("search"))
 
 
-def test_hooks_stubs_return_none():
+def test_hooks_return_none_when_game_disabled(monkeypatch):
+    from app.core.config import settings
     from app.game import hooks
 
+    monkeypatch.setattr(settings, "game_enabled", False)
     assert hooks.on_email_verified("u") is None
     assert hooks.on_onboarding_complete("u") is None
 

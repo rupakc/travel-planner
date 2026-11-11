@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "rules": {
+    "email_verified": {"points": 50, "daily_cap": 1, "once": true},
+    "onboarding_complete": {"points": 100, "daily_cap": 1, "once": true}
+  },
+  "badges": {
+    "verified": {"rule": "email_verified", "target": 1, "tier": "bronze", "icon": "mail-check"},
+    "first_steps": {"rule": "onboarding_complete", "target": 1, "tier": "bronze", "icon": "footprints"}
+  },
+  "levels": {"min_xp": [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000]},
+  "streaks": {"daily": {"freeze_per_week": 1}}
+}
