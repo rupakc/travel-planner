@@ -1,0 +1,11 @@
+{
+  "title": "Plan completeness",
+  "percent": "{{value}}%",
+  "parts": {
+    "flights": "Flights",
+    "stay": "Stay",
+    "days": "Days planned",
+    "visa": "Visa checked",
+    "packing": "Packing list"
+  }
+}
