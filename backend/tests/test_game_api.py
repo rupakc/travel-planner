@@ -51,7 +51,9 @@ def test_catalog(client):
     assert r.headers["cache-control"] == "max-age=300"
     d = r.json()
     assert d["version"] == 1 and len(d["levels"]) == 10
-    assert {b["id"] for b in d["badges"]} == {"verified", "first_steps"}
+    assert {"verified", "first_steps", "traveller", "memory_keeper"} <= {
+        b["id"] for b in d["badges"]
+    }
 
 
 def test_404_when_disabled(client, monkeypatch):

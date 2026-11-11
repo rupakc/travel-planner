@@ -12,7 +12,7 @@ from ...core.session_payload import user_payload
 from ...db import user_settings_db as sdb
 from ...db import users_db
 from ...db.database import get_connection
-from ...game import hooks
+from ...game import hooks, trip_hooks
 
 router = APIRouter()
 
@@ -88,6 +88,10 @@ def put_account_onboarding(
         user["id"], body.step, body.done, body.skipped, body.traveller_type
     )
     game = hooks.on_onboarding_complete(user["id"]) if award else None
+    if body.traveller_type is not None:
+        game = trip_hooks.merge_deltas(
+            game, trip_hooks.on_traveller_type(user["id"], body.traveller_type)
+        )
     return {"onboarding": onboarding, "game": game}
 
 

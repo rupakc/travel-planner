@@ -42,10 +42,83 @@
     "first_steps": {
       "name": "First steps",
       "desc": "Finish the welcome tour."
+    },
+    "traveller": {
+      "name": "Traveller",
+      "desc": "Tell us what kind of traveller you are."
+    },
+    "first_trip": {
+      "name": "First trip",
+      "desc": "Save your first trip."
+    },
+    "trip_ready": {
+      "name": "Trip ready",
+      "desc": "Get a trip fully prepared."
+    },
+    "ready_regular": {
+      "name": "Ready regular",
+      "desc": "Get 5 trips fully prepared."
+    },
+    "smart_planner": {
+      "name": "Smart planner",
+      "desc": "Raise a plan's stress-test score 3 times."
+    },
+    "on_the_road": {
+      "name": "On the road",
+      "desc": "Check in on 3 days of a trip."
+    },
+    "road_warrior": {
+      "name": "Road warrior",
+      "desc": "Check in on 14 days of a trip."
+    },
+    "local_explorer": {
+      "name": "Local explorer",
+      "desc": "Mark 10 places as visited."
+    },
+    "local_legend": {
+      "name": "Local legend",
+      "desc": "Mark 50 places as visited."
+    },
+    "countries_3": {
+      "name": "Passport stamps",
+      "desc": "Visit 3 countries."
+    },
+    "countries_10": {
+      "name": "Seasoned traveller",
+      "desc": "Visit 10 countries."
+    },
+    "countries_30": {
+      "name": "World wanderer",
+      "desc": "Visit 30 countries."
+    },
+    "continents_3": {
+      "name": "Continent hopper",
+      "desc": "Visit 3 continents."
+    },
+    "continents_6": {
+      "name": "Six continents",
+      "desc": "Visit 6 continents."
+    },
+    "storyteller": {
+      "name": "Storyteller",
+      "desc": "Complete a trip recap."
+    },
+    "memory_keeper": {
+      "name": "Memory keeper",
+      "desc": "Complete 5 trip recaps."
     }
   },
   "rules": {
     "email_verified": "Email confirmed",
-    "onboarding_complete": "Welcome tour finished"
+    "onboarding_complete": "Welcome tour finished",
+    "traveller_type": "Traveller type chosen",
+    "plan_saved": "Trip saved",
+    "trip_ready": "Trip ready",
+    "smart_planner": "Plan strengthened",
+    "trip_checkin": "Trip check-in",
+    "place_visited": "Place visited",
+    "country_visited": "New country",
+    "continent_visited": "New continent",
+    "recap_complete": "Trip recap completed"
   }
 }

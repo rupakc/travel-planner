@@ -42,10 +42,83 @@
     "first_steps": {
       "name": "Erste Schritte",
       "desc": "Schließe die Willkommenstour ab."
+    },
+    "traveller": {
+      "name": "Reisetyp",
+      "desc": "Verrate uns, was für ein Reisetyp du bist."
+    },
+    "first_trip": {
+      "name": "Erste Reise",
+      "desc": "Speichere deine erste Reise."
+    },
+    "trip_ready": {
+      "name": "Reise bereit",
+      "desc": "Bereite eine Reise vollständig vor."
+    },
+    "ready_regular": {
+      "name": "Immer bereit",
+      "desc": "Bereite 5 Reisen vollständig vor."
+    },
+    "smart_planner": {
+      "name": "Schlauer Planer",
+      "desc": "Verbessere den Stresstest-Wert eines Plans 3-mal."
+    },
+    "on_the_road": {
+      "name": "Unterwegs",
+      "desc": "Checke an 3 Tagen einer Reise ein."
+    },
+    "road_warrior": {
+      "name": "Straßenkrieger",
+      "desc": "Checke an 14 Tagen einer Reise ein."
+    },
+    "local_explorer": {
+      "name": "Lokaler Entdecker",
+      "desc": "Markiere 10 Orte als besucht."
+    },
+    "local_legend": {
+      "name": "Lokale Legende",
+      "desc": "Markiere 50 Orte als besucht."
+    },
+    "countries_3": {
+      "name": "Passstempel",
+      "desc": "Besuche 3 Länder."
+    },
+    "countries_10": {
+      "name": "Erfahrener Reisender",
+      "desc": "Besuche 10 Länder."
+    },
+    "countries_30": {
+      "name": "Weltenbummler",
+      "desc": "Besuche 30 Länder."
+    },
+    "continents_3": {
+      "name": "Kontinentspringer",
+      "desc": "Besuche 3 Kontinente."
+    },
+    "continents_6": {
+      "name": "Sechs Kontinente",
+      "desc": "Besuche 6 Kontinente."
+    },
+    "storyteller": {
+      "name": "Geschichtenerzähler",
+      "desc": "Schließe einen Reiserückblick ab."
+    },
+    "memory_keeper": {
+      "name": "Erinnerungshüter",
+      "desc": "Schließe 5 Reiserückblicke ab."
     }
   },
   "rules": {
     "email_verified": "E-Mail bestätigt",
-    "onboarding_complete": "Willkommenstour abgeschlossen"
+    "onboarding_complete": "Willkommenstour abgeschlossen",
+    "traveller_type": "Reisetyp gewählt",
+    "plan_saved": "Reise gespeichert",
+    "trip_ready": "Reise bereit",
+    "smart_planner": "Plan gestärkt",
+    "trip_checkin": "Reise-Check-in",
+    "place_visited": "Ort besucht",
+    "country_visited": "Neues Land",
+    "continent_visited": "Neuer Kontinent",
+    "recap_complete": "Reiserückblick abgeschlossen"
   }
 }

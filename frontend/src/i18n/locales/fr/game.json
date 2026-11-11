@@ -42,10 +42,83 @@
     "first_steps": {
       "name": "Premiers pas",
       "desc": "Terminez la visite de bienvenue."
+    },
+    "traveller": {
+      "name": "Voyageur",
+      "desc": "Dites-nous quel type de voyageur vous êtes."
+    },
+    "first_trip": {
+      "name": "Premier voyage",
+      "desc": "Enregistrez votre premier voyage."
+    },
+    "trip_ready": {
+      "name": "Voyage prêt",
+      "desc": "Préparez entièrement un voyage."
+    },
+    "ready_regular": {
+      "name": "Toujours prêt",
+      "desc": "Préparez entièrement 5 voyages."
+    },
+    "smart_planner": {
+      "name": "Planificateur avisé",
+      "desc": "Améliorez 3 fois le score du test de résistance d'un plan."
+    },
+    "on_the_road": {
+      "name": "Sur la route",
+      "desc": "Faites un check-in sur 3 jours d'un voyage."
+    },
+    "road_warrior": {
+      "name": "Guerrier de la route",
+      "desc": "Faites un check-in sur 14 jours d'un voyage."
+    },
+    "local_explorer": {
+      "name": "Explorateur local",
+      "desc": "Marquez 10 lieux comme visités."
+    },
+    "local_legend": {
+      "name": "Légende locale",
+      "desc": "Marquez 50 lieux comme visités."
+    },
+    "countries_3": {
+      "name": "Tampons de passeport",
+      "desc": "Visitez 3 pays."
+    },
+    "countries_10": {
+      "name": "Voyageur aguerri",
+      "desc": "Visitez 10 pays."
+    },
+    "countries_30": {
+      "name": "Globe-trotteur",
+      "desc": "Visitez 30 pays."
+    },
+    "continents_3": {
+      "name": "Sauteur de continents",
+      "desc": "Visitez 3 continents."
+    },
+    "continents_6": {
+      "name": "Six continents",
+      "desc": "Visitez 6 continents."
+    },
+    "storyteller": {
+      "name": "Conteur",
+      "desc": "Terminez le récap d'un voyage."
+    },
+    "memory_keeper": {
+      "name": "Gardien des souvenirs",
+      "desc": "Terminez 5 récaps de voyage."
     }
   },
   "rules": {
     "email_verified": "E-mail confirmé",
-    "onboarding_complete": "Visite de bienvenue terminée"
+    "onboarding_complete": "Visite de bienvenue terminée",
+    "traveller_type": "Type de voyageur choisi",
+    "plan_saved": "Voyage enregistré",
+    "trip_ready": "Voyage prêt",
+    "smart_planner": "Plan renforcé",
+    "trip_checkin": "Check-in du voyage",
+    "place_visited": "Lieu visité",
+    "country_visited": "Nouveau pays",
+    "continent_visited": "Nouveau continent",
+    "recap_complete": "Récap du voyage terminé"
   }
 }

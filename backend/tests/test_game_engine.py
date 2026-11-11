@@ -111,15 +111,16 @@ def test_hooks_award_and_swallow_errors(uid, monkeypatch):
 
 def test_builtin_rules_values():
     r = load_rules()
-    assert {k: (v.points, v.daily_cap, v.once) for k, v in r.rules.items()} == {
+    base = {k: r.rules[k] for k in ("email_verified", "onboarding_complete")}
+    assert {k: (v.points, v.daily_cap, v.once) for k, v in base.items()} == {
         "email_verified": (50, 1, True),
         "onboarding_complete": (100, 1, True),
     }
     assert r.badges["verified"].icon == "mail-check"
     assert r.badges["first_steps"].icon == "footprints"
-    assert all(b.tier == "bronze" and b.target == 1 for b in r.badges.values())
     assert r.levels.min_xp == [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000]
     assert r.streaks["daily"].freeze_per_week == 1
+    assert r.streaks["trip_checkin"].freeze_per_week == 1
 
 
 def test_valid_override_is_used_and_once_key_is_forced(uid, tmp_path):
