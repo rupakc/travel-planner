@@ -81,9 +81,9 @@ def test_stub_routers_importable(name):
     assert isinstance(mod.router, APIRouter)
 
 
-def test_account_stub_answers_404_or_405():
+def test_account_requires_auth():
     r = TestClient(app_main.app).get("/api/account")
-    assert r.status_code in (404, 405)
+    assert r.status_code == 401
 
 
 def test_limited_includes_quota_dependency():
