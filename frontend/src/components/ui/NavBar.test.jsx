@@ -58,6 +58,11 @@ describe('NavBar', () => {
     expect(near.querySelector('span').className).toContain('hidden lg:inline')
   })
 
+  it('classic shell: no bottom tabs and no body marker', () => {
+    expect(container.querySelector('[data-tid="bottomTabs"]')).toBeNull()
+    expect(document.body.hasAttribute('data-bottom-tabs')).toBe(false)
+  })
+
   it('keeps the mobile menu with full labels', async () => {
     await act(async () => container.querySelector('[aria-label="Menu"]').click())
     const drawer = container.querySelector('.sm\\:hidden.flex-col')
@@ -167,6 +172,14 @@ describe('NavBar with the journey on', () => {
     expect(nav.className).toContain('sm:hidden')
     expect(bottom().map((b) => b.textContent)).toEqual(['Trips', 'Explore', 'Alerts', 'Play', 'You', 'Admin'])
     expect(bottom().every((b) => b.getAttribute('data-tid')?.startsWith('bottomTabs.'))).toBe(true)
+  })
+
+  it('marks <body> with data-bottom-tabs only while the bar is mounted', async () => {
+    await renderAt('/trips')
+    expect(document.body.hasAttribute('data-bottom-tabs')).toBe(true)
+    journey.value = { enabled: false, tripsApi: false, offlinePack: false, loaded: true }
+    await renderAt('/')
+    expect(document.body.hasAttribute('data-bottom-tabs')).toBe(false)
   })
 
   it('at / marks Trips for a user with trips, else Explore', async () => {

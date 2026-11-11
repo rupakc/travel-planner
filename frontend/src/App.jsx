@@ -146,7 +146,7 @@ function Layout() {
   return (
     <SearchDataProvider>
      <AlertsProvider onOpenLink={openAlert}>
-      <div className={`min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100${journeyOn ? ' pb-16 sm:pb-0' : ''}`}>
+      <div className={`min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100${journeyOn ? ' pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0' : ''}`}>
         <SettingsSync />
         <NavBar />
         <VerifyBanner />

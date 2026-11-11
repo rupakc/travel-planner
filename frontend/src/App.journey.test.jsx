@@ -94,6 +94,11 @@ describe('App with the journey off (classic shell)', () => {
     expect(where()).toBe('/')
   })
 
+  it('adds no tab-bar padding', async () => {
+    await visit('/')
+    expect(container.querySelector('.min-h-screen').className).not.toContain('pb-[')
+  })
+
   it('keeps the classic routes', async () => {
     await visit('/chat')
     expect(shown('chat')).toBe(true)
@@ -130,6 +135,13 @@ describe('App with the journey on', () => {
     trips.value = { hasTrips: false, loading: false }
     await visit('/')
     expect(container.querySelector('[data-page="trips"]')).toBeNull()
+  })
+
+  it('pads the routed content for the phone tab bar', async () => {
+    await visit('/trips')
+    const shell = container.querySelector('.min-h-screen')
+    expect(shell.className).toContain('pb-[calc(4rem+env(safe-area-inset-bottom))]')
+    expect(shell.className).toContain('sm:pb-0')
   })
 
   it('/trips renders TripsPage', async () => {

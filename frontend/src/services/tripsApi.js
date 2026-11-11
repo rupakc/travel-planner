@@ -22,6 +22,13 @@ async function call(promise) {
   }
 }
 
+// Fired after any client-side change that can add or remove a trip (create,
+// delete, "Save to Trips"); useHasTrips asks the server again.
+export const TRIPS_CHANGED_EVENT = 'voyager:trips-changed'
+export function notifyTripsChanged() {
+  try { window.dispatchEvent(new Event(TRIPS_CHANGED_EVENT)) } catch { /* no window */ }
+}
+
 const trip = (id) => `/trips/${encodeURIComponent(id)}`
 const child = (id, ...parts) => [trip(id), ...parts.map((p) => encodeURIComponent(p))].join('/')
 

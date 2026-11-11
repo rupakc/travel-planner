@@ -82,4 +82,12 @@ describe('tripsApi', () => {
     http.get.mockRejectedValue({ response: { status: 500, data: {}, headers: {} } })
     await expect(api.listTrips('tok')).rejects.toMatchObject({ status: 500, code: null })
   })
+  it('notifyTripsChanged dispatches voyager:trips-changed', () => {
+    const dispatchEvent = vi.fn()
+    vi.stubGlobal('window', { dispatchEvent })
+    api.notifyTripsChanged()
+    expect(api.TRIPS_CHANGED_EVENT).toBe('voyager:trips-changed')
+    expect(dispatchEvent.mock.calls[0][0].type).toBe('voyager:trips-changed')
+    vi.unstubAllGlobals()
+  })
 })

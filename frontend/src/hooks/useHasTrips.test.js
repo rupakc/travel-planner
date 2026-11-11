@@ -8,7 +8,7 @@ const journey = vi.hoisted(() => ({ value: {} }))
 const listTrips = vi.hoisted(() => vi.fn())
 vi.mock('../context/AuthContext', () => ({ useAuth: () => auth.value }))
 vi.mock('./useJourney', () => ({ useJourney: () => journey.value }))
-vi.mock('../services/tripsApi', () => ({ listTrips }))
+vi.mock('../services/tripsApi', () => ({ listTrips, TRIPS_CHANGED_EVENT: 'voyager:trips-changed' }))
 
 import { useHasTrips, _resetHasTripsForTests } from './useHasTrips'
 
@@ -31,6 +31,7 @@ beforeEach(() => {
   auth.value = signedIn
 })
 afterEach(() => { act(() => root.unmount()) })
+
 
 describe('useHasTrips', () => {
   it('signed out: no trips, no request', async () => {
@@ -75,16 +76,60 @@ describe('useHasTrips', () => {
     expect(listTrips).toHaveBeenCalledTimes(1)
     expect(seen.at(-1)).toEqual({ hasTrips: true, loading: false })
   })
-  it('asks again after signing out and back in', async () => {
+
+  it('shares one request between callers', async () => {
+    listTrips.mockResolvedValue({ trips: [{ id: 3 }] })
+    function Two() { return [createElement(Probe, { key: 1 }), createElement(Probe, { key: 2 })] }
+    root = createRoot(document.createElement('div'))
+    await act(async () => root.render(createElement(Two)))
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    expect(listTrips).toHaveBeenCalledTimes(1)
+    expect(seen.slice(-2)).toEqual([{ hasTrips: true, loading: false }, { hasTrips: true, loading: false }])
+  })
+
+  // RequireAuth unmounts Layout and NavBar on sign-out; the next sign-in mounts them again.
+  it('asks again when remounted after sign-out (same user)', async () => {
     listTrips.mockResolvedValue({ trips: [] })
     await render()
-    auth.value = { isAuthenticated: false, token: null, user: null }
-    await act(async () => root.render(createElement(Probe)))
+    act(() => root.unmount())
     listTrips.mockResolvedValue({ trips: [{ id: 1 }] })
-    auth.value = signedIn
-    await act(async () => root.render(createElement(Probe)))
-    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    await render()
     expect(listTrips).toHaveBeenCalledTimes(2)
     expect(seen.at(-1)).toEqual({ hasTrips: true, loading: false })
+  })
+
+  it('asks again for another user, never showing the previous answer', async () => {
+    listTrips.mockResolvedValue({ trips: [{ id: 1 }] })
+    await render()
+    act(() => root.unmount())
+    auth.value = { isAuthenticated: true, token: 'other', user: { id: 2, username: 'b' } }
+    listTrips.mockResolvedValue({ trips: [] })
+    seen = []
+    await render()
+    expect(seen[0]).toEqual({ hasTrips: null, loading: true })
+    expect(listTrips).toHaveBeenLastCalledWith('other')
+    expect(seen.at(-1)).toEqual({ hasTrips: false, loading: false })
+  })
+
+  it('voyager:trips-changed asks again in place, keeping the old answer meanwhile', async () => {
+    listTrips.mockResolvedValue({ trips: [] })
+    await render()
+    expect(seen.at(-1)).toEqual({ hasTrips: false, loading: false })
+    let resolve
+    listTrips.mockReturnValue(new Promise((r) => { resolve = r }))
+    await act(async () => { window.dispatchEvent(new Event('voyager:trips-changed')) })
+    expect(listTrips).toHaveBeenCalledTimes(2)
+    expect(seen.at(-1)).toEqual({ hasTrips: false, loading: false })
+    await act(async () => { resolve({ trips: [{ id: 9 }] }) })
+    expect(seen.at(-1)).toEqual({ hasTrips: true, loading: false })
+  })
+
+  it('ignores the event once nothing is mounted', async () => {
+    listTrips.mockResolvedValue({ trips: [] })
+    await render()
+    act(() => root.unmount())
+    window.dispatchEvent(new Event('voyager:trips-changed'))
+    expect(listTrips).toHaveBeenCalledTimes(1)
+    await render()
   })
 })

@@ -1,28 +1,45 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useJourney } from './useJourney'
-import { listTrips } from '../services/tripsApi'
+import { listTrips, TRIPS_CHANGED_EVENT } from '../services/tripsApi'
 
 // Whether the signed-in user has at least one trip: with the journey on, `/`
-// is the Trips hub only for them (everyone else gets Explore). Fetched once
-// per sign-in and shared by every caller; any failure, a network error
-// included, counts as "no trips". Signed out or journey off: false, no request.
-let cache = { key: null, value: null, promise: null }
+// is the Trips hub only for them (everyone else gets Explore). Any failure, a
+// network error included, counts as "no trips". Signed out or journey off:
+// false, and no request.
+//
+// One module-level answer, keyed by the signed-in user id and shared by every
+// caller (Layout, NavBar). It is dropped when the last caller unmounts, which
+// is what RequireAuth does on sign-out, so the next sign-in (same or another
+// user) asks again; a token refresh while mounted never does. The window
+// event `voyager:trips-changed` (notifyTripsChanged() in services/tripsApi)
+// asks again in place, keeping the previous answer until the new one lands.
+let cache = { key: null, value: null }
+let mounted = 0
+const listeners = new Set()
 
 export function _resetHasTripsForTests() {
-  cache = { key: null, value: null, promise: null }
+  cache = { key: null, value: null }
+  mounted = 0
 }
 
-function load(key, token) {
-  if (cache.key !== key) {
-    const entry = { key, value: null, promise: null }
-    entry.promise = listTrips(token)
-      .then((data) => Array.isArray(data?.trips) && data.trips.length > 0)
-      .catch(() => false)
-      .then((has) => { entry.value = has; return has })
-    cache = entry
-  }
-  return cache
+const notify = () => listeners.forEach((l) => l())
+
+function fetchFor(key, token, previous = null) {
+  const entry = { key, value: previous, token }
+  cache = entry
+  listTrips(token)
+    .then((data) => Array.isArray(data?.trips) && data.trips.length > 0)
+    .catch(() => false)
+    .then((has) => {
+      if (cache !== entry) return // superseded (another user, a newer fetch, cleared)
+      entry.value = has
+      notify()
+    })
+}
+
+function onTripsChanged() {
+  if (cache.key !== null && cache.token) fetchFor(cache.key, cache.token, cache.value)
 }
 
 export function useHasTrips() {
@@ -31,16 +48,25 @@ export function useHasTrips() {
   const key = isAuthenticated && token && enabled ? String(user?.id ?? user?.username ?? '') : null
   const [, rerender] = useState(0)
 
+  // Mount bookkeeping and the change event.
   useEffect(() => {
-    // Signed out (or journey off): the next sign-in asks again.
-    if (key === null) { if (!isAuthenticated) _resetHasTripsForTests(); return undefined }
-    const entry = load(key, token)
-    if (entry.value !== null) return undefined
-    let live = true
-    entry.promise.then(() => { if (live) rerender((n) => n + 1) })
-    return () => { live = false }
-    // The token is read only when the key changes: a refresh never refetches.
-  }, [key])
+    const l = () => rerender((n) => n + 1)
+    listeners.add(l)
+    if (mounted++ === 0) window.addEventListener(TRIPS_CHANGED_EVENT, onTripsChanged)
+    return () => {
+      listeners.delete(l)
+      if (--mounted === 0) {
+        window.removeEventListener(TRIPS_CHANGED_EVENT, onTripsChanged)
+        cache = { key: null, value: null }
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (key === null) return
+    if (cache.key !== key) fetchFor(key, token)
+    else cache.token = token // a refresh: keep the answer, use the new token next time
+  }, [key, token])
 
   if (key === null) return { hasTrips: false, loading: false }
   const value = cache.key === key ? cache.value : null

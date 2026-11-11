@@ -1,9 +1,20 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 // Phone tab bar (< 640 px) for the journey shell; NavBar passes the tabs and
 // which one is active. Each tab is at least 44 px tall.
+//
+// While mounted it sets `data-bottom-tabs` on <body>, so fixed widgets (the
+// feedback pill, toasts) can move out of its way with
+// `[data-bottom-tabs] &` / `body[data-bottom-tabs]` rules on phones.
 export default function BottomTabs({ tabs, isActive, onSelect, unread = 0 }) {
   const { t } = useTranslation(['journey', 'common'])
+  useEffect(() => {
+    const body = typeof document !== 'undefined' ? document.body : null
+    if (!body) return undefined
+    body.setAttribute('data-bottom-tabs', '')
+    return () => body.removeAttribute('data-bottom-tabs')
+  }, [])
   return (
     <nav
       aria-label={t('common:nav.menu')}
