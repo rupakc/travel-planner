@@ -1,6 +1,7 @@
 {
   "page": {
-    "title": "账户"
+    "title": "账户",
+    "sectionFailed": "此部分无法加载。"
   },
   "title": "个人资料",
   "avatar": {

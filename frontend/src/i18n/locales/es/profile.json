@@ -1,6 +1,7 @@
 {
   "page": {
-    "title": "Cuenta"
+    "title": "Cuenta",
+    "sectionFailed": "No se pudo cargar esta sección."
   },
   "title": "Perfil",
   "avatar": {

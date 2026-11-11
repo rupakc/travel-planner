@@ -1,6 +1,7 @@
 {
   "page": {
-    "title": "खाता"
+    "title": "खाता",
+    "sectionFailed": "यह अनुभाग लोड नहीं हो सका।"
   },
   "title": "प्रोफ़ाइल",
   "avatar": {

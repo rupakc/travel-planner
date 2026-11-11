@@ -1,6 +1,7 @@
 {
   "page": {
-    "title": "Compte"
+    "title": "Compte",
+    "sectionFailed": "Cette section n'a pas pu se charger."
   },
   "title": "Profil",
   "avatar": {

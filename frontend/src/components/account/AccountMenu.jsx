@@ -39,7 +39,7 @@ export default function AccountMenu() {
         aria-label={t('menu.button')}
         title={t('menu.button')}
         data-tid="account.menu"
-        className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
       >
         <Avatar user={user} size={28} />
       </button>

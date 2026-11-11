@@ -10,11 +10,20 @@ import GameSection from '../components/game/GameSection'
 import DataSection from '../components/account/DataSection'
 
 // One failing section must not take the page down.
+function SectionFailed() {
+  const { t } = useTranslation('profile')
+  return (
+    <p role="status" data-tid="account.sectionFailed" className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+      {t('page.sectionFailed')}
+    </p>
+  )
+}
+
 class SectionBoundary extends Component {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
-  componentDidCatch() { /* contained */ }
-  render() { return this.state.failed ? null : this.props.children }
+  componentDidCatch(error) { console.error('Account section failed to render', error) }
+  render() { return this.state.failed ? <SectionFailed /> : this.props.children }
 }
 
 export default function AccountPage() {
@@ -24,7 +33,12 @@ export default function AccountPage() {
 
   const load = useCallback(async () => {
     if (!token) return
-    try { setAccount(await getAccount(token)) } catch { setAccount(null) }
+    try {
+      setAccount(await getAccount(token))
+    } catch (err) {
+      // No account API (404) hides the editing; any other error keeps what we had.
+      if (err?.status === 404) setAccount(null)
+    }
   }, [token])
   useEffect(() => { load() }, [load])
 
