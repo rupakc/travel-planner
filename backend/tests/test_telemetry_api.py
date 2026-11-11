@@ -64,10 +64,12 @@ def _rows():
 def _user_headers(client, admin_headers, name="teleuser"):
     client.post(
         "/api/admin/users",
-        json={"username": name, "password": "pass1234", "is_admin": False},
+        json={"username": name, "password": "pass1234-kv", "is_admin": False},
         headers=admin_headers,
     )
-    r = client.post("/api/auth/login", json={"username": name, "password": "pass1234"})
+    r = client.post(
+        "/api/auth/login", json={"username": name, "password": "pass1234-kv"}
+    )
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
