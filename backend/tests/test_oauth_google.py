@@ -142,11 +142,27 @@ async def test_nonce_mismatch_and_wrong_audience_rejected():
             code="c", redirect_uri="r", code_verifier="v", nonce="n", form={}
         )
     assert ei.value.code == "provider_error"
-    idp2 = _idp(lambda r: {"id_token": idp2.id_token(aud="someone-else", nonce="n")})
-    with pytest.raises(OAuthError):
+    # Same trusted key, wrong audience: rejected, while the control token passes.
+    box = {"aud": "someone-else"}
+    idp.id_token_for = lambda: idp.id_token(aud=box["aud"], nonce="n")
+    base.set_transport(
+        idp.transport(
+            {
+                JWKS_URL: lambda r: idp.jwks(),
+                TOKEN_URL: lambda r: {"id_token": idp.id_token_for()},
+            }
+        )
+    )
+    with pytest.raises(OAuthError) as ei:
         await PROVIDER.exchange(
             code="c", redirect_uri="r", code_verifier="v", nonce="n", form={}
         )
+    assert ei.value.code == "provider_error"
+    box["aud"] = CID
+    profile, _ = await PROVIDER.exchange(
+        code="c", redirect_uri="r", code_verifier="v", nonce="n", form={}
+    )
+    assert profile.subject == "sub-1"
 
 
 async def test_alt_issuer_accepted(monkeypatch):
@@ -172,11 +188,11 @@ async def test_verify_id_token_native_audience(monkeypatch):
         nonce="nn",
     )
     assert p.subject == "s9" and p.email_verified
-    # the web client id is not a native audience
-    bad = FakeIdP("https://accounts.google.com", CID)
-    base.set_transport(bad.transport({JWKS_URL: lambda r: bad.jwks()}))
-    with pytest.raises(OAuthError):
-        await PROVIDER.verify_id_token(bad.id_token(), nonce=None)
+    # Same trusted key, but the web client id is not a native audience.
+    wrong = idp.id_token(aud=CID)
+    with pytest.raises(OAuthError) as ei:
+        await PROVIDER.verify_id_token(wrong, nonce=None)
+    assert ei.value.code == "provider_error"
 
 
 async def test_verify_id_token_unconfigured_native():
