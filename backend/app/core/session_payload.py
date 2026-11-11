@@ -24,7 +24,9 @@ def user_payload(user: dict) -> dict:
         "email": user.get("email"),
         "email_verified": bool(user.get("email_verified")),
         "is_admin": bool(user.get("is_admin")),
-        "requires_password_change": bool(user.get("requires_password_change")),
+        "requires_password_change": bool(
+            user.get("requires_password_change", user.get("is_first_login"))
+        ),
         "account_verified": signup_method == "admin"
         or user.get("verified_at") is not None,
         "has_password": user.get("password_hash") not in (None, "", "!"),

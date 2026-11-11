@@ -6,8 +6,10 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, field_validator
 
-from ...core.auth import MIN_PASSWORD_LENGTH, require_admin
-from ...db import telemetry_db
+from ...core.auth import require_admin
+from ...core.errors import ApiError
+from ...core.passwords import password_problem
+from ...db import sessions_db, telemetry_db
 from ...db.users_db import (
     admin_reset_password,
     create_user,
@@ -45,6 +47,16 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
+def _check_password(password: str, *, username: str, email: str | None) -> None:
+    """Admin-set (temporary or reset) passwords follow the same policy as
+    every other password: ``400`` with ``error_code`` and a readable detail."""
+    from .auth import PASSWORD_DETAIL
+
+    problem = password_problem(password, username=username, email=email)
+    if problem:
+        raise ApiError(400, problem, PASSWORD_DETAIL[problem])
+
+
 @router.get("/admin/telemetry/summary")
 def admin_telemetry_summary(
     days: int = Query(30, ge=1, le=90),
@@ -61,11 +73,7 @@ def admin_create_user(
 ):
     if get_user_by_username(req.username):
         raise HTTPException(status_code=409, detail="Username already exists")
-    if len(req.password) < MIN_PASSWORD_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Temporary password must be at least {MIN_PASSWORD_LENGTH} characters",
-        )
+    _check_password(req.password, username=req.username, email=req.email)
     try:
         user = create_user(
             username=req.username,
@@ -126,12 +134,9 @@ def admin_reset_password_endpoint(
         raise HTTPException(
             status_code=400, detail="Cannot reset password for an inactive user"
         )
-    if len(req.new_password) < MIN_PASSWORD_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters",
-        )
-    admin_reset_password(username, req.new_password)
+    _check_password(req.new_password, username=username, email=user.get("email"))
+    admin_reset_password(username, req.new_password)  # also bumps token_version
+    sessions_db.revoke_all(user["id"])
     logger.info("Admin '%s' reset password for user '%s'", _admin["username"], username)
     return {"status": "password_reset", "username": username}
 

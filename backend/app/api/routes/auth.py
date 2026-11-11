@@ -1,9 +1,15 @@
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from ...core.auth import MIN_PASSWORD_LENGTH, create_access_token, get_current_user
+from ...core.auth import get_current_user
+from ...core.errors import ApiError
+from ...core.passwords import (
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH_V2,
+    password_problem,
+)
 from ...core.rate_limit import (
     caller_key,
     login_locked,
@@ -11,24 +17,42 @@ from ...core.rate_limit import (
     record_login_failure,
     too_many,
 )
+from ...core.session import Client, email_hint, issue_session, session_tokens
+from ...core.session_payload import user_payload
+from ...core.urls import public_url
+from ...db.sessions_db import revoke_all
 from ...db.users_db import (
     EmailInUseError,
     authenticate_user,
+    bump_token_version,
     change_password,
+    get_user_by_id,
+    get_user_by_login,
     set_email,
 )
 
 router = APIRouter()
 
+PASSWORD_DETAIL = {
+    "password_too_short": f"Use at least {MIN_PASSWORD_LENGTH_V2} characters.",
+    "password_too_long": f"Use at most {MAX_PASSWORD_LENGTH} characters.",
+    "password_common": "That password is too common. Pick something less guessable.",
+    "password_matches_identity": "Don't use your username or email as the password.",
+}
+
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+    client: Client = "web"
+    device_name: str | None = Field(None, max_length=64)
 
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+    client: Client = "web"
+    device_name: str | None = Field(None, max_length=64)
 
 
 @router.post("/auth/login", dependencies=[Depends(rate_limit("login"))])
@@ -40,27 +64,21 @@ def login(req: LoginRequest, request: Request):
     wait = login_locked(req.username, caller)
     if wait is not None:
         raise too_many(wait)
-    user = authenticate_user(req.username, req.password)
+    # ``username`` may also be the account's email
+    found = get_user_by_login(req.username)
+    user = authenticate_user(found["username"], req.password) if found else None
     if not user:
         record_login_failure(req.username, caller)
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    token = create_access_token(
-        {
-            "sub": user["username"],
-            "is_admin": user["is_admin"],
-            "is_first_login": user["is_first_login"],
-        }
-    )
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "username": user["username"],
-            "is_admin": user["is_admin"],
-            "requires_password_change": user["is_first_login"],
-            "email": user.get("email"),
-        },
-    }
+    if user.get("account_status", "active") == "pending":
+        # only revealed once the password was right
+        raise ApiError(
+            403,
+            "account_pending",
+            "Confirm your email to finish creating your account.",
+            email_hint=email_hint(user.get("email")),
+        )
+    return issue_session(user, req.client, req.device_name)
 
 
 @router.post("/auth/change-password")
@@ -68,34 +86,29 @@ def change_password_endpoint(
     req: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    user = authenticate_user(current_user["username"], req.current_password)
-    if not user:
+    has_password = current_user.get("password_hash") != "!"
+    if has_password and not authenticate_user(
+        current_user["username"], req.current_password
+    ):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    if len(req.new_password) < MIN_PASSWORD_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters",
-        )
-    change_password(current_user["username"], req.new_password)
-    # Issue a new token with is_first_login=False
-    token = create_access_token(
-        {
-            "sub": current_user["username"],
-            "is_admin": current_user["is_admin"],
-            "is_first_login": False,
-        }
+    problem = password_problem(
+        req.new_password,
+        username=current_user["username"],
+        email=current_user.get("email"),
     )
-    return {"access_token": token, "token_type": "bearer"}
+    if problem:
+        raise ApiError(400, problem, PASSWORD_DETAIL[problem])
+    change_password(current_user["username"], req.new_password)
+    # Signs every other session out; the token below keeps this one alive.
+    bump_token_version(current_user["id"])
+    revoke_all(current_user["id"])
+    user = get_user_by_id(current_user["id"])
+    return session_tokens(user, req.client, req.device_name)
 
 
 @router.get("/auth/me")
 def me(current_user: dict = Depends(get_current_user)):
-    return {
-        "username": current_user["username"],
-        "is_admin": current_user["is_admin"],
-        "requires_password_change": current_user["is_first_login"],
-        "email": current_user.get("email"),
-    }
+    return user_payload(current_user)
 
 
 # local@domain.tld — deliberately simple; the mail server has the final word
@@ -106,14 +119,46 @@ class EmailUpdate(BaseModel):
     email: str = Field("", max_length=254)
 
 
+def _queue_verification(user: dict, email: str, background: BackgroundTasks) -> bool:
+    """Queue a verify link for a newly set email; False when no account-email
+    sender (or token store) is available yet."""
+    try:
+        from ...db.account_tokens_db import issue_token
+        from ...services.account_email import (
+            email_delivery_available,
+            send_account_email,
+        )
+    except ImportError:
+        return False
+    if not email_delivery_available():
+        return False
+    token = issue_token(user["id"], "verify_email", email)
+    background.add_task(
+        send_account_email,
+        "verify",
+        email,
+        link=public_url(f"/verify?token={token}"),
+        locale=user.get("locale"),
+        username=user["username"],
+    )
+    return True
+
+
 @router.put("/auth/email", dependencies=[Depends(rate_limit("light_ai"))])
-def update_email(req: EmailUpdate, current_user: dict = Depends(get_current_user)):
-    """Set or clear (empty string) the account's email, used for fare alerts."""
+def update_email(
+    req: EmailUpdate,
+    background: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
+    """Set or clear (empty string) the account's email, used for fare alerts.
+    A changed email starts unverified and gets a verify link when email
+    delivery is available."""
     email = req.email.strip().lower() or None
     if email and not _EMAIL_RE.match(email):
         raise HTTPException(
             status_code=422, detail="That doesn't look like an email address."
         )
+    previous = (current_user.get("email") or "").lower() or None
     try:
         set_email(current_user["username"], email)
     except EmailInUseError:
@@ -125,4 +170,12 @@ def update_email(req: EmailUpdate, current_user: dict = Depends(get_current_user
 
         fare_watch_db.disable_email_for_user(current_user["id"])
         price_watch_db.disable_email_for_user(current_user["id"])
-    return {"email": email}
+    sent = False
+    if email and email != previous:
+        sent = _queue_verification(current_user, email, background)
+    user = get_user_by_id(current_user["id"]) or {}
+    return {
+        "email": email,
+        "email_verified": bool(user.get("email_verified")),
+        "verification_sent": sent,
+    }
