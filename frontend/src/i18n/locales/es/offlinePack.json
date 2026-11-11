@@ -1,0 +1,59 @@
+{
+  "title": "Paquete sin conexión",
+  "intro": "Guarda en este dispositivo los números de emergencia, frases clave, la dirección de tu hotel y un conversor de moneda para usarlos sin conexión.",
+  "save": "Guardar sin conexión",
+  "saving": "Guardando…",
+  "refresh": "Actualizar",
+  "remove": "Quitar",
+  "saved": "Guardado {{when}}",
+  "size": "{{kb}} KB",
+  "tabOnly": "Funciona mientras esta pestaña siga abierta",
+  "offlineNote": "Estás sin conexión. Se muestra el paquete guardado.",
+  "error": {
+    "error": "No se pudo guardar el paquete. Inténtalo de nuevo.",
+    "quota": "No hay espacio suficiente en este dispositivo para guardar el paquete."
+  },
+  "address": {
+    "title": "Enséñaselo a tu conductor",
+    "fallback": "Por favor, llévame a:"
+  },
+  "currency": {
+    "title": "Conversor de moneda",
+    "noRate": "No se guardó ningún tipo de cambio para {{local}}, así que no hay conversor. Consulta el cambio antes de viajar.",
+    "amountLabel": "Importe en {{currency}}",
+    "swap": "Invertir dirección",
+    "rateFrom": "Tipo de cambio del {{date}} ({{source}}), aproximado",
+    "sources": {
+      "snapshot": "guardado con tu viaje"
+    }
+  },
+  "phrases": {
+    "title": "Frases en {{language}}",
+    "show": "Mostrar",
+    "close": "Cerrar",
+    "ids": {
+      "help": "¡Ayuda!",
+      "call_police": "Llama a la policía",
+      "need_doctor": "Necesito un médico",
+      "take_me_to": "Por favor, llévame a…",
+      "thank_you": "Gracias",
+      "how_much": "¿Cuánto cuesta esto?",
+      "where_toilet": "¿Dónde está el baño?",
+      "dont_understand": "No entiendo"
+    }
+  },
+  "emergency": {
+    "title": "Números de emergencia",
+    "reference": "De nuestra lista de referencia",
+    "checked": "Comprobado el {{date}}",
+    "embassy": "Embajada",
+    "hospital": "Hospital",
+    "kinds": {
+      "police": "Policía",
+      "ambulance": "Ambulancia",
+      "fire": "Bomberos",
+      "tourist_police": "Policía turística",
+      "general": "Emergencias generales"
+    }
+  }
+}
