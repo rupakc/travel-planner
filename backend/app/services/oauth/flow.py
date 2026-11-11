@@ -8,6 +8,7 @@ native account with the same email is deleted, never linked.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import importlib
 import logging
@@ -15,11 +16,12 @@ import re
 import secrets
 import sqlite3
 import unicodedata
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from ...core.config import settings
-from ...db import oauth_db, users_db
+from ...db import invites_db, oauth_db, users_db
 from ...db.database import get_connection
 from ...db.reserved_usernames import RESERVED_USERNAMES
 from .base import ProviderProfile
@@ -83,17 +85,53 @@ def _attach(user_id: str, provider: str, profile: ProviderProfile, secret_enc):
     )
 
 
-def _delete_pending_with_email(email: str) -> int:
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT id FROM users WHERE lower(email) = ? AND account_status = 'pending'",
-            (email,),
-        ).fetchall()
-        for r in rows:
-            users_db._delete_user_rows(conn, r["id"])
+def _delete_pending_in(conn: sqlite3.Connection, email: str) -> int:
+    rows = conn.execute(
+        "SELECT id FROM users WHERE lower(email) = ? AND account_status = 'pending'",
+        (email,),
+    ).fetchall()
+    for r in rows:
+        users_db._delete_user_rows(conn, r["id"])
     if rows:
         logger.info("oauth.pending_replaced count=%d", len(rows))
     return len(rows)
+
+
+def _delete_pending_with_email(email: str) -> int:
+    with get_connection() as conn:
+        return _delete_pending_in(conn, email)
+
+
+def _trusted(profile_or_pending) -> bool:
+    if isinstance(profile_or_pending, dict):
+        return bool(
+            profile_or_pending.get("email_verified")
+            and profile_or_pending.get("email_trusted")
+        )
+    return bool(profile_or_pending.email_verified and profile_or_pending.email_trusted)
+
+
+def profile_to_dict(profile: ProviderProfile) -> dict:
+    return dataclasses.asdict(profile)
+
+
+def profile_from_dict(data: dict) -> ProviderProfile:
+    fields = {f.name for f in dataclasses.fields(ProviderProfile)}
+    return ProviderProfile(**{k: v for k, v in data.items() if k in fields})
+
+
+def precheck_link(
+    profile: ProviderProfile, provider: str, link_user_id: str
+) -> Refused | None:
+    """The refusals a link would hit, without attaching anything (the attach
+    happens only after the exchange proved the browser or app)."""
+    known = oauth_db.get_identity(provider, profile.subject)
+    if known and known["user_id"] != link_user_id:
+        return Refused("identity_in_use")
+    user = users_db.get_user_by_id(link_user_id)
+    if not user or not _active(user):
+        return Refused("account_inactive")
+    return None
 
 
 def resolve_identity(
@@ -102,8 +140,10 @@ def resolve_identity(
     *,
     link_user_id: str | None,
     secret: str | None,
+    secret_enc: str | None = None,
 ) -> Result:
-    secret_enc = _sealed(secret)
+    """``secret_enc`` (already sealed) is used when ``secret`` is None."""
+    secret_enc = _sealed(secret) or secret_enc
     email = _email(profile)
 
     # 1. a known identity
@@ -150,8 +190,9 @@ def resolve_identity(
             except sqlite3.IntegrityError:
                 return Refused("identity_in_use")
             return SignedIn(holder)
-        # 4. a pending native account is replaced, never linked
-        if holder and holder.get("account_status") == "pending":
+        # 4. a pending native account is replaced (never linked), but only on
+        # a verified + trusted email: an untrusted claim can't evict anyone
+        if holder and holder.get("account_status") == "pending" and _trusted(profile):
             _delete_pending_with_email(email)
             holder = users_db.get_user_by_email(email)
         # 5. the email belongs to an account we can't link to
@@ -226,63 +267,80 @@ class EmailTaken(Exception):
     pass
 
 
+class InviteInvalid(Exception):
+    pass
+
+
+class IdentityTaken(Exception):
+    pass
+
+
 def create_oauth_user(
     pending: dict,
     *,
     username: str,
     display_name: str | None,
     locale: str | None,
-    invite_id: int | None,
+    invite_code: str | None,
 ) -> dict:
-    """Insert the user and its identity. Raises UsernameTaken / EmailTaken."""
+    """Insert the user, its identity and (with ``invite_code``) the invite use
+    in one ``BEGIN IMMEDIATE`` transaction: any failure rolls all of it back.
+    Raises UsernameTaken / EmailTaken / InviteInvalid / IdentityTaken."""
     email = pending.get("email")
-    trusted = bool(pending.get("email_verified") and pending.get("email_trusted"))
-    if email:
-        _delete_pending_with_email(email)
-        if users_db.get_user_by_email(email):
-            raise EmailTaken
-    if not users_db.username_available(username, _now()):
-        raise UsernameTaken
-    try:
-        user = users_db.create_user(
-            username,
-            password_hash="!",
-            email=email,
-            is_first_login=False,
-            signup_method="oauth",
-            email_verified=False,
-            display_name=display_name,
-            locale=locale,
-        )
-    except users_db.UsernameTakenError as exc:
-        raise UsernameTaken from exc
-    except sqlite3.IntegrityError as exc:
-        if "email" in str(exc):
-            raise EmailTaken from exc
-        raise UsernameTaken from exc
-    if invite_id is not None:
-        with get_connection() as conn:
-            conn.execute(
-                "UPDATE users SET invite_id = ? WHERE id = ?", (invite_id, user["id"])
+    trusted = _trusted(pending)
+    uid = str(uuid.uuid4())
+    now = _now()
+    ts = now.isoformat()
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        invite_id = None
+        if invite_code is not None:
+            h = invites_db._hash(invite_code)
+            cur = conn.execute(
+                "UPDATE invite_codes SET uses = uses + 1 WHERE code_hash = ?"
+                " AND uses < max_uses AND revoked_at IS NULL AND expires_at > ?",
+                (h, ts),
             )
-    try:
-        oauth_db.add_identity(
-            user["id"],
-            pending["provider"],
-            pending["subject"],
-            email=email,
-            email_verified=bool(pending.get("email_verified")),
-            display_name=pending.get("display_name"),
-            picture_url=pending.get("picture_url"),
-            secret_enc=pending.get("secret_enc"),
-        )
-    except sqlite3.IntegrityError:
-        # the same provider account finished another sign-up first
-        users_db.delete_user_row(user["id"])
-        raise
-    if email and trusted:
-        users_db.mark_email_verified(user["id"], email)
-    return users_db.get_user_by_id(user["id"])
+            if cur.rowcount != 1:
+                raise InviteInvalid
+            invite_id = conn.execute(
+                "SELECT id FROM invite_codes WHERE code_hash = ?", (h,)
+            ).fetchone()["id"]
+        if email:
+            if trusted:
+                _delete_pending_in(conn, email)
+            if conn.execute(
+                "SELECT 1 FROM users WHERE lower(email) = ?", (email,)
+            ).fetchone():
+                raise EmailTaken
+        if users_db._holder_blocks(conn, username, now):
+            raise UsernameTaken
+        if conn.execute(
+            "SELECT 1 FROM user_identities WHERE provider = ? AND subject = ?",
+            (pending["provider"], pending["subject"]),
+        ).fetchone():
+            raise IdentityTaken
+        verified = bool(email and trusted)
+        conn.execute(
+            """INSERT INTO users
+               (id, username, email, password_hash, is_admin, is_first_login, is_active,
+                created_at, updated_at, signup_method, account_status, email_verified,
+                verified_at, display_name, locale, invite_id)
+               VALUES (?, ?, ?, '!', 0, 0, 1, ?, ?, 'oauth', 'active', ?, ?, ?, ?, ?)""",
+            (uid, username, email, ts, ts, int(verified), ts if verified else None,
+             display_name, locale, invite_id),
+        )  # fmt: skip
+        conn.execute(
+            """INSERT INTO user_identities
+               (user_id, provider, subject, email, email_verified, display_name,
+                picture_url, secret_enc, created_at, last_used_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (uid, pending["provider"], pending["subject"], email,
+             int(bool(pending.get("email_verified"))), pending.get("display_name"),
+             pending.get("picture_url"), pending.get("secret_enc"),
+             oauth_db.iso(now), oauth_db.iso(now)),
+        )  # fmt: skip
+    return users_db.get_user_by_id(uid)
 
 
 def issue_verify_token(user_id: str, email: str) -> str:

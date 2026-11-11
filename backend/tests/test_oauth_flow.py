@@ -206,6 +206,7 @@ def _auth(user):
 
 
 def test_web_round_trip(c, providers, sent, monkeypatch):
+    monkeypatch.setattr(settings, "game_enabled", False)
     photos = []
 
     async def fake_photo(user_id, url):
@@ -264,7 +265,7 @@ def test_web_round_trip(c, providers, sent, monkeypatch):
     assert user["has_password"] is False
     assert user["email_verified"] is True and user["account_verified"] is True
     assert "refresh_token" not in out["session"]
-    assert out["game"] is None or "awards" in out["game"]
+    assert out["game"] is None  # game disabled → null
     row = users_db.get_user_by_id(user["id"])
     assert row["password_hash"] == "!" and row["verified_at"]
     assert [i["provider"] for i in _identity_rows(user["id"])] == ["google"]
@@ -284,7 +285,7 @@ def test_web_round_trip(c, providers, sent, monkeypatch):
     assert res["status"] == "signed_in"
     assert res["session"]["user"]["id"] == user["id"]
     assert res["return_to"] == "/"
-    assert "game" in res
+    assert res["game"] is None
 
 
 def test_trusted_signup_awards_email_verified(c, providers, sent, monkeypatch):
@@ -299,6 +300,12 @@ def test_trusted_signup_awards_email_verified(c, providers, sent, monkeypatch):
         },
     ).json()
     assert out["game"]["awards"][0]["rule"] == "email_verified"
+    xp = out["game"]["xp"]
+    assert xp > 0
+    # a later sign-in awards nothing: the empty delta with the total
+    res = c.post("/api/auth/oauth/exchange", json={"code": _web_code(c)}).json()
+    assert res["status"] == "signed_in"
+    assert res["game"] == {"xp": xp, "awards": [], "badges": [], "level_up": None}
 
 
 def test_exchange_without_cookie_fails(c, providers):
@@ -864,3 +871,180 @@ def test_tickets_are_single_use_and_hashed(client):
     assert oauth_db.take_ticket("link", tok, now) is None
     tok2 = oauth_db.put_ticket("link", ttl_s=60)
     assert oauth_db.take_ticket("link", tok2, now + timedelta(seconds=61)) is None
+
+
+# ── Fix round 1 ──────────────────────────────────────────────────────────────
+
+
+def test_forwarded_web_link_start_url_attaches_nothing(c, client, providers):
+    from app.main import app
+
+    attacker = _verified_user(_email())
+    providers["github"].profile = _profile(_email(), name="Victim")
+    start_url = c.post(
+        "/api/auth/oauth/link-ticket",
+        json={"provider": "github"},
+        headers=_auth(attacker),
+    ).json()["start_url"]
+    victim = TestClient(app)  # another browser: no tp_oauth_link cookie
+    r = victim.get(start_url, follow_redirects=False)
+    assert r.headers["location"] == BASE_FINAL + "?error=bad_request"
+    assert _identity_rows(attacker["id"]) == []
+
+
+def test_link_callback_in_another_browser_attaches_nothing(c, client, providers):
+    from app.main import app
+
+    attacker = _verified_user(_email())
+    providers["github"].profile = _profile(_email(), name="Victim")
+    start_url = c.post(
+        "/api/auth/oauth/link-ticket",
+        json={"provider": "github"},
+        headers=_auth(attacker),
+    ).json()["start_url"]
+    # the attacker's browser starts; the provider round trip ends in the victim's
+    state = _q(c.get(start_url, follow_redirects=False).headers["location"])["state"]
+    victim = TestClient(app)
+    r = victim.get(
+        "/api/auth/oauth/github/callback",
+        params={"code": "victim-code", "state": state},
+        follow_redirects=False,
+    )
+    code = _q(r.headers["location"])["code"]
+    assert _identity_rows(attacker["id"]) == []  # nothing attached at callback
+    r = victim.post("/api/auth/oauth/exchange", json={"code": code})
+    assert (r.status_code, r.json()["error_code"]) == (400, "code_invalid")
+    assert _identity_rows(attacker["id"]) == []
+
+
+def test_mobile_link_needs_the_verifier(c, providers):
+    user = _verified_user(_email())
+    providers["github"].profile = _profile(_email())
+    verifier = "q" * 43
+    challenge = pkce_challenge(verifier)
+
+    def link_code():
+        url = c.post(
+            "/api/auth/oauth/link-ticket",
+            json={"provider": "github", "client": "ios"},
+            headers=_auth(user),
+        ).json()["start_url"]
+        assert url.endswith("&client=ios")
+        loc = c.get(url + f"&challenge={challenge}", follow_redirects=False).headers[
+            "location"
+        ]
+        r = c.get(
+            "/api/auth/oauth/github/callback",
+            params={"code": "x", "state": _q(loc)["state"]},
+            follow_redirects=False,
+        )
+        return _q(r.headers["location"])["code"]
+
+    r = c.post("/api/auth/oauth/exchange", json={"code": link_code()})
+    assert r.status_code == 400
+    assert _identity_rows(user["id"]) == []
+    r = c.post(
+        "/api/auth/oauth/exchange", json={"code": link_code(), "verifier": verifier}
+    )
+    assert r.json()["status"] == "linked"
+    assert [i["provider"] for i in _identity_rows(user["id"])] == ["github"]
+    # a mobile link ticket can't be started as web (and vice versa)
+    url = c.post(
+        "/api/auth/oauth/link-ticket",
+        json={"provider": "github", "client": "ios"},
+        headers=_auth(user),
+    ).json()["start_url"]
+    r = c.get(url.replace("client=ios", "client=web"), follow_redirects=False)
+    assert r.headers["location"] == BASE_FINAL + "?error=bad_request"
+
+
+def test_untrusted_email_keeps_pending_account(c, providers):
+    email = _email()
+    pending = users_db.create_pending_user(
+        f"p{uuid.uuid4().hex[:8]}", email, "pw-1234567890", None, None, None
+    )
+    providers["facebook"].profile = _profile(email, trusted=False)
+    assert _round_trip(c, "facebook") == BASE_FINAL + "?error=email_in_use_unverified"
+    assert users_db.get_user_by_id(pending["id"]) is not None
+
+
+def test_id_token_resolve_crash_is_provider_error(c, providers, monkeypatch):
+    providers["google"].profile = _profile(_email())
+
+    def boom(*a, **kw):
+        raise RuntimeError("db gone")
+
+    monkeypatch.setattr(flow, "resolve_identity", boom)
+    r = c.post(
+        "/api/auth/oauth/google/id-token", json={"id_token": "good", "client": "ios"}
+    )
+    assert (r.status_code, r.json()["error_code"]) == (400, "provider_error")
+    # an adapter returning no profile is handled the same way
+    monkeypatch.undo()
+    providers["google"].profile = None
+    r = c.post(
+        "/api/auth/oauth/google/id-token", json={"id_token": "good", "client": "ios"}
+    )
+    assert r.status_code < 500
+
+
+def test_unknown_adapter_code_maps_to_provider_error(c, providers):
+    providers["google"].error = "weird_internal_code"
+    assert _round_trip(c) == BASE_FINAL + "?error=provider_error"
+    providers["google"].error = "cancelled"  # contract codes pass through
+    assert _round_trip(c) == BASE_FINAL + "?error=cancelled"
+
+
+def test_failed_complete_keeps_invite_and_token(c, providers, monkeypatch):
+    monkeypatch.setattr(settings, "signup_mode", "invite")
+    email = _email()
+    providers["google"].profile = _profile(email)
+    body = c.post("/api/auth/oauth/exchange", json={"code": _web_code(c)}).json()
+    inv = invites_db.create_invite(None, max_uses=1)
+    name = f"t_{uuid.uuid4().hex[:8]}"
+    req = {"signup_token": body["signup_token"], "username": name,
+           "invite_code": inv["code"]}  # fmt: skip
+
+    # a failure after the user row is inserted (the identity insert) rolls
+    # back the user, the identity and the invite use
+    sub = providers["google"].profile.subject
+    with get_connection() as conn:
+        conn.execute(
+            f"""CREATE TRIGGER t32_fail BEFORE INSERT ON user_identities
+                WHEN NEW.subject = '{sub}' BEGIN SELECT RAISE(ABORT, 'boom'); END"""
+        )
+    try:
+        r = c.post("/api/auth/oauth/complete", json=req)
+    finally:
+        with get_connection() as conn:
+            conn.execute("DROP TRIGGER t32_fail")
+    assert r.json()["error_code"] == "signup_token_invalid"
+    assert users_db.get_user_by_username(name) is None  # nothing half-created
+    assert invites_db.check_invite(inv["code"]) == inv["id"]  # not used up
+
+    # an email taken meanwhile: refused, the invite is still not used up
+    blocker = _verified_user(email)
+    r = c.post("/api/auth/oauth/complete", json=req)
+    assert r.json()["error_code"] == "signup_token_invalid"
+    assert invites_db.check_invite(inv["code"]) == inv["id"]
+
+    # the token was released: once the email frees up the same token works
+    users_db.delete_user_row(blocker["id"])
+    r = c.post("/api/auth/oauth/complete", json=req)
+    assert r.status_code == 201, r.text
+    assert invites_db.check_invite(inv["code"]) is None
+
+
+def test_https_cookie_attributes(c, providers, monkeypatch):
+    monkeypatch.setattr(settings, "public_base_url", "https://voyager.example")
+    user = _verified_user(_email())
+    r = c.post(
+        "/api/auth/oauth/link-ticket", json={"provider": "github"}, headers=_auth(user)
+    )
+    link_cookie = r.headers["set-cookie"]
+    assert link_cookie.startswith("tp_oauth_link=")
+    r = _start(c, "google")
+    for cookie in (link_cookie, r.headers["set-cookie"]):
+        low = cookie.lower()
+        assert "samesite=none" in low and "secure" in low and "httponly" in low
+        assert "path=/api/auth/oauth" in low

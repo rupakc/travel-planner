@@ -30,6 +30,7 @@ from ...db import invites_db, oauth_db
 from ...game import hooks
 from ...services.oauth import flow, registry
 from ...services.oauth.base import OAuthError, pkce_challenge, pkce_verifier
+from ...services.oauth.secrets_box import seal
 from .account import _display_name
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 COOKIE = "tp_oauth"
+LINK_COOKIE = "tp_oauth_link"
 COOKIE_PATH = "/api/auth/oauth"
 STATE_TTL_S = 600
 HANDOFF_TTL_S = 120
@@ -46,6 +48,11 @@ NATIVE_PROVIDERS = ("apple", "google")
 LOCALES = frozenset({"en", "es", "de", "fr", "hi", "zh", "bn"})
 _CHALLENGE_RE = re.compile(r"^[A-Za-z0-9_-]{43}$")
 _CANCEL_ERRORS = {"access_denied", "user_cancelled_authorize", "user_denied"}
+# the contract's callback error codes; anything else reaches clients as provider_error
+CALLBACK_ERRORS = frozenset(
+    {"cancelled", "state_invalid", "provider_error", "provider_unavailable",
+     "email_in_use_unverified", "identity_in_use", "account_inactive", "bad_request"}
+)  # fmt: skip
 
 _oauth_limit = [Depends(rate_limit("oauth"))]
 _logged_config = False
@@ -93,6 +100,8 @@ def _allowed_redirects() -> list[str]:
 
 
 def _redirect(final: str, **params: str) -> RedirectResponse:
+    if "error" in params and params["error"] not in CALLBACK_ERRORS:
+        params["error"] = "provider_error"
     sep = "&" if "?" in final else "?"
     return RedirectResponse(f"{final}{sep}{urlencode(params)}", status_code=302)
 
@@ -133,6 +142,23 @@ def _game(user_id: str, delta: dict | None = None) -> dict | None:
     return {"xp": xp, "awards": [], "badges": [], "level_up": None}
 
 
+def _secure() -> bool:
+    return public_base_url().startswith("https://")
+
+
+def _set_binding_cookie(resp, name: str, value: str, max_age: int) -> None:
+    secure = _secure()
+    resp.set_cookie(
+        name,
+        value,
+        max_age=max_age,
+        path=COOKIE_PATH,
+        httponly=True,
+        secure=secure,
+        samesite="none" if secure else "lax",
+    )
+
+
 def _code_invalid() -> ApiError:
     return ApiError(400, "code_invalid", "This sign-in link has expired. Try again.")
 
@@ -171,6 +197,7 @@ def list_providers():
 
 @router.get("/auth/oauth/{p}/start", dependencies=_oauth_limit)
 def start(
+    request: Request,
     p: str,
     client: str = "web",
     return_to: str | None = None,
@@ -198,7 +225,19 @@ def start(
     link_user_id = None
     if link:
         ticket = oauth_db.take_ticket("link", link, _now())
-        if not ticket or ticket["provider"] != p or not ticket["user_id"]:
+        if (
+            not ticket
+            or ticket["provider"] != p
+            or not ticket["user_id"]
+            or ticket["data"].get("client", "web") != client
+        ):
+            return _redirect(final, error="bad_request")
+        # a web link ticket only works in the browser that asked for it (a
+        # forwarded start_url must not attach someone else's identity); mobile
+        # links are proven by the app's verifier at exchange
+        if not mobile and not oauth_db.binding_matches(
+            request.cookies.get(LINK_COOKIE), ticket["binding_hash"]
+        ):
             return _redirect(final, error="bad_request")
         link_user_id = ticket["user_id"]
     target = _safe_return_to(return_to, "/account" if link_user_id else "/")
@@ -234,16 +273,11 @@ def start(
         logger.exception("oauth.start_failed provider=%s", p)
         return _redirect(final, error="provider_unavailable")
     resp = RedirectResponse(url, status_code=302)
-    secure = public_base_url().startswith("https://")
-    resp.set_cookie(
-        COOKIE,
-        binding,
-        max_age=STATE_TTL_S,
-        path=COOKIE_PATH,
-        httponly=True,
-        secure=secure,
-        samesite="none" if secure else "lax",
-    )
+    # one binding per browser: a second concurrent start replaces it, and the
+    # first flow then fails at exchange with code_invalid (start again)
+    _set_binding_cookie(resp, COOKIE, binding, STATE_TTL_S)
+    if link:
+        resp.delete_cookie(LINK_COOKIE, path=COOKIE_PATH)
     return resp
 
 
@@ -285,10 +319,13 @@ async def _callback(p: str, request: Request) -> RedirectResponse:
     except Exception as exc:
         logger.warning("oauth.callback provider=%s error=%s", p, type(exc).__name__)
         return _redirect(final, error="provider_error")
+    link_user_id = state["user_id"]
     try:
-        result = flow.resolve_identity(
-            profile, p, link_user_id=state["user_id"], secret=secret
-        )
+        if link_user_id:
+            # pre-check only: the attach waits for the exchange's proof
+            result = flow.precheck_link(profile, p, link_user_id) or "link"
+        else:
+            result = flow.resolve_identity(profile, p, link_user_id=None, secret=secret)
     except Exception:
         logger.exception("oauth.resolve_failed provider=%s", p)
         return _redirect(final, error="provider_error")
@@ -300,7 +337,12 @@ async def _callback(p: str, request: Request) -> RedirectResponse:
         "return_to": data.get("return_to", "/"),
         "provider": p,
     }
-    if isinstance(result, flow.NeedsUsername):
+    if result == "link":
+        handoff["result"] = "link"
+        handoff["profile"] = flow.profile_to_dict(profile)
+        handoff["secret_enc"] = seal(secret) if secret else None
+        user_id = link_user_id
+    elif isinstance(result, flow.NeedsUsername):
         handoff["result"] = "needs_username"
         handoff["pending"] = result.pending_data
         user_id = None
@@ -393,7 +435,24 @@ def exchange(req: ExchangeRequest, request: Request):
     kind = data.get("result")
     if kind == "needs_username":
         body = _needs_username(data["pending"], ticket["provider"], return_to)
-    elif kind == "linked":
+    elif kind == "link":
+        try:
+            linked = flow.resolve_identity(
+                flow.profile_from_dict(data["profile"]),
+                ticket["provider"],
+                link_user_id=ticket["user_id"],
+                secret=None,
+                secret_enc=data.get("secret_enc"),
+            )
+        except Exception:
+            logger.exception("oauth.link_failed provider=%s", ticket["provider"])
+            raise _code_invalid() from None
+        if isinstance(linked, flow.Refused):
+            raise ApiError(
+                _REFUSED_STATUS.get(linked.code, 409),
+                linked.code,
+                "This sign-in method can't be linked to your account.",
+            )
         body = {
             "status": "linked",
             "provider": ticket["provider"],
@@ -467,12 +526,8 @@ async def complete(req: CompleteRequest, background: BackgroundTasks):
     if not ticket:
         raise _signup_token_invalid()
     pending = ticket["data"]
-    invite_id = None
-    if invite is not None:
-        invite_id = invites_db.consume_invite(invite)
-        if invite_id is None:
-            oauth_db.release_ticket("signup", req.signup_token)
-            raise ApiError(403, "invite_invalid", "That invite code is not valid.")
+    # one transaction (invite use + user + identity): on any failure nothing
+    # is kept, the invite is not used up and the token is released for a retry
     try:
         user = flow.create_oauth_user(
             pending,
@@ -480,16 +535,19 @@ async def complete(req: CompleteRequest, background: BackgroundTasks):
             display_name=display_name
             or _provider_display_name(pending.get("display_name")),
             locale=_locale(req.locale),
-            invite_id=invite_id,
+            invite_code=invite,
         )
-    except flow.UsernameTaken:
+    except Exception as exc:
         oauth_db.release_ticket("signup", req.signup_token)
-        if invite_id is not None:
-            logger.info("oauth.complete invite use kept after a lost username race")
-        raise ApiError(409, "username_taken", "That username is taken.") from None
-    except (flow.EmailTaken, Exception) as exc:
-        if not isinstance(exc, flow.EmailTaken):
-            logger.exception("oauth.complete_failed")
+        logger.info("oauth.complete_failed reason=%s", type(exc).__name__)
+        if isinstance(exc, flow.UsernameTaken):
+            raise ApiError(409, "username_taken", "That username is taken.") from None
+        if isinstance(exc, flow.InviteInvalid):
+            raise ApiError(
+                403, "invite_invalid", "That invite code is not valid."
+            ) from None
+        if not isinstance(exc, flow.EmailTaken | flow.IdentityTaken):
+            logger.exception("oauth.complete_error")
         raise _signup_token_invalid() from None
 
     delta = None
@@ -537,11 +595,21 @@ def link_ticket(req: LinkTicketRequest, user: dict = Depends(get_current_user)):
         raise ApiError(
             409, "provider_unavailable", "That sign-in method isn't available yet."
         )
+    binding = secrets.token_urlsafe(32) if req.client == "web" else None
     ticket = oauth_db.put_ticket(
-        "link", ttl_s=LINK_TTL_S, provider=p, user_id=user["id"]
+        "link",
+        ttl_s=LINK_TTL_S,
+        provider=p,
+        user_id=user["id"],
+        data={"client": req.client},
+        binding=binding,
     )
     query = urlencode({"link": ticket, "client": req.client})
-    return {"start_url": f"/api/auth/oauth/{p}/start?{query}"}
+    resp = JSONResponse({"start_url": f"/api/auth/oauth/{p}/start?{query}"})
+    if binding:
+        # same-origin XHR: the browser keeps it and sends it with the start
+        _set_binding_cookie(resp, LINK_COOKIE, binding, LINK_TTL_S)
+    return resp
 
 
 # ── Native ID tokens (Apple, Google) ─────────────────────────────────────────
@@ -583,15 +651,21 @@ async def id_token(p: str, req: IdTokenRequest):
         ) from None
     if req.display_name and not profile.display_name:
         profile = dataclasses.replace(profile, display_name=req.display_name)
-    result = flow.resolve_identity(profile, p, link_user_id=None, secret=secret)
+    try:
+        result = flow.resolve_identity(profile, p, link_user_id=None, secret=secret)
+        if isinstance(result, flow.NeedsUsername):
+            return _needs_username(result.pending_data, p, "/")
+    except Exception as exc:
+        logger.warning("oauth.id_token provider=%s error=%s", p, type(exc).__name__)
+        raise ApiError(
+            400, "provider_error", "Sign-in failed. Please try again."
+        ) from None
     if isinstance(result, flow.Refused):
         raise ApiError(
             _REFUSED_STATUS.get(result.code, 409),
             result.code,
             "This sign-in can't be used for an account right now.",
         )
-    if isinstance(result, flow.NeedsUsername):
-        return _needs_username(result.pending_data, p, "/")
     body = _signed_in(result.user, req.client, req.device_name, "/")
     if body is None:
         raise ApiError(403, "account_inactive", "This account is not active.")
