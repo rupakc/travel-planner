@@ -32,4 +32,13 @@ describe('AccountMenu', () => {
     expect(logout).toHaveBeenCalled()
     expect(container.querySelector('[role="menu"]')).toBeNull()
   })
+  it('Feedback item dispatches voyager:open-feedback', () => {
+    const fn = vi.fn()
+    window.addEventListener('voyager:open-feedback', fn)
+    act(() => tid('account.menu').click())
+    expect(tid('account.menu.feedback').textContent).toBe('Feedback')
+    act(() => tid('account.menu.feedback').click())
+    expect(fn).toHaveBeenCalledTimes(1)
+    window.removeEventListener('voyager:open-feedback', fn)
+  })
 })
