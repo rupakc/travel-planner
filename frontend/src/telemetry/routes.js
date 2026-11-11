@@ -3,6 +3,8 @@
 
 const STATIC = new Set([
   '/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/login', '/change-password',
+  '/account', '/signup', '/check-email', '/verify', '/forgot-password', '/reset-password',
+  '/auth/callback', '/auth/username',
 ])
 
 // [pattern, template]: the dynamic routes (and ones the plan reserves).

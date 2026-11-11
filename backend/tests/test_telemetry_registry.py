@@ -145,7 +145,9 @@ def test_phase1_enums_and_ints():
         {"event": "game_award", "props": {"rule": "first_search", "points": 10}}
     )
     assert out["props"] == {"rule": "first_search", "points": 10}
-    out = clean_event({"event": "quota_block", "props": {"bucket": "x", "reason": "unverified"}})
+    out = clean_event(
+        {"event": "quota_block", "props": {"bucket": "x", "reason": "unverified"}}
+    )
     assert out["props"] == {"reason": "unverified"}
     out = clean_event({"event": "level_up", "props": {"level": "3"}})
     assert out["props"] == {}

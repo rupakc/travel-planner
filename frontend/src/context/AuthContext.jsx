@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 
 const AuthContext = createContext(null)
 
+const telemetry = (fn) => { import('../telemetry/client').then(fn).catch(() => {}) }
+
 export function AuthProvider({ children }) {
   const [user, setUser]   = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem('tp_token'))
@@ -23,6 +25,23 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, []) // only on mount
 
+  // Adopts a Session ({access_token, user}): stores the token, sets the user,
+  // loads preferences. Used by login and every sign-up / OAuth / reset flow.
+  const applySession = useCallback(async (session) => {
+    const accessToken = session.access_token
+    localStorage.setItem('tp_token', accessToken)
+    setToken(accessToken)
+    setUser(session.user)
+    if (!session.user?.requires_password_change) {
+      try {
+        const prefsRes = await fetch('/api/preferences', { headers: { Authorization: `Bearer ${accessToken}` } })
+        if (prefsRes.ok) setPreferences(await prefsRes.json())
+      } catch {}
+    }
+    telemetry((m) => m.setUserPresent(true))
+    return session.user
+  }, [])
+
   const login = async (username, password) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -33,18 +52,16 @@ export function AuthProvider({ children }) {
       const err = await res.json()
       throw new Error(err.detail || 'Login failed')
     }
-    const data = await res.json()
-    localStorage.setItem('tp_token', data.access_token)
-    setToken(data.access_token)
-    setUser(data.user)
-    if (!data.user.requires_password_change) {
-      try {
-        const prefsRes = await fetch('/api/preferences', { headers: { Authorization: `Bearer ${data.access_token}` } })
-        if (prefsRes.ok) setPreferences(await prefsRes.json())
-      } catch {}
-    }
-    return data.user
+    return applySession(await res.json())
   }
+
+  const refreshUser = useCallback(async () => {
+    if (!token) return
+    try {
+      const r = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      if (r.ok) setUser(await r.json())
+    } catch {}
+  }, [token])
 
   const updateTokenAfterPasswordChange = (newToken) => {
     localStorage.setItem('tp_token', newToken)
@@ -83,6 +100,9 @@ export function AuthProvider({ children }) {
       user,
       token,
       login,
+      applySession,
+      refreshUser,
+      accountVerified: user?.account_verified !== false,
       logout,
       loading,
       isAuthenticated: !!user,
