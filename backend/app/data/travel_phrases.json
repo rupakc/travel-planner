@@ -55,35 +55,35 @@
    "phrases": {
     "help": {
      "text": "সাহায্য করুন!",
-     "romanized": "sāhāyyo korun!"
+     "romanized": "shahajjo korun!"
     },
     "call_police": {
      "text": "দয়া করে পুলিশ ডাকুন।",
-     "romanized": "dayā kore pulish ḍākun."
+     "romanized": "doya kore pulish ḍakun."
     },
     "need_doctor": {
      "text": "আমার একজন ডাক্তার দরকার।",
-     "romanized": "āmār ekjon ḍāktār dorkār."
+     "romanized": "amar ekjon ḍaktar dorkar."
     },
     "take_me_to": {
-     "text": "দয়া করে আমাকে নিয়ে চলুন:",
-     "romanized": "dayā kore āmāke niye cholun:"
+     "text": "দয়া করে আমাকে এখানে নিয়ে চলুন:",
+     "romanized": "doya kore amake ekhane niye cholun:"
     },
     "thank_you": {
      "text": "ধন্যবাদ।",
-     "romanized": "dhonnobād."
+     "romanized": "dhonnobad."
     },
     "how_much": {
      "text": "এটার দাম কত?",
-     "romanized": "eṭār dām koto?"
+     "romanized": "eṭar dam koto?"
     },
     "where_toilet": {
      "text": "টয়লেট কোথায়?",
-     "romanized": "ṭoylet kothāy?"
+     "romanized": "ṭoyleṭ kothay?"
     },
     "dont_understand": {
      "text": "আমি বুঝতে পারছি না।",
-     "romanized": "āmi bujhte pārchi nā."
+     "romanized": "ami bujhte parchhi na."
     }
    }
   },
@@ -134,7 +134,7 @@
      "romanized": null
     },
     "call_police": {
-     "text": "Ring til politiet, tak.",
+     "text": "Ring venligst efter politiet.",
      "romanized": null
     },
     "need_doctor": {
@@ -211,15 +211,15 @@
     },
     "call_police": {
      "text": "Παρακαλώ, καλέστε την αστυνομία.",
-     "romanized": "Parakaló, kaléste tin astynomía."
+     "romanized": "Parakaló, kaléste tin astinomía."
     },
     "need_doctor": {
      "text": "Χρειάζομαι γιατρό.",
-     "romanized": "Chreiázomai giatró."
+     "romanized": "Chriázome yatró."
     },
     "take_me_to": {
-     "text": "Παρακαλώ, πηγαίνετε με σε αυτή τη διεύθυνση:",
-     "romanized": "Parakaló, pigaínete me se aftí ti diéfthynsi:"
+     "text": "Παρακαλώ, πηγαίνετέ με σε αυτή τη διεύθυνση:",
+     "romanized": "Parakaló, pigénete me s' aftí ti diéfthinsi:"
     },
     "thank_you": {
      "text": "Ευχαριστώ.",
@@ -231,11 +231,11 @@
     },
     "where_toilet": {
      "text": "Πού είναι η τουαλέτα;",
-     "romanized": "Poú eínai i toualéta?"
+     "romanized": "Pu íne i tualéta?"
     },
     "dont_understand": {
      "text": "Δεν καταλαβαίνω.",
-     "romanized": "Den katalavaíno."
+     "romanized": "Den katalavéno."
     }
    }
   },
@@ -332,7 +332,7 @@
      "romanized": null
     },
     "take_me_to": {
-     "text": "Pouvez-vous m'emmener à :",
+     "text": "Emmenez-moi à cette adresse, s'il vous plaît :",
      "romanized": null
     },
     "thank_you": {
@@ -358,8 +358,8 @@
    "script": "Hebr",
    "phrases": {
     "help": {
-     "text": "עזרה!",
-     "romanized": "ezra!"
+     "text": "הצילו!",
+     "romanized": "hatsilu!"
     },
     "call_police": {
      "text": "בבקשה, תתקשרו למשטרה.",
@@ -386,8 +386,8 @@
      "romanized": "eifo hasherutim?"
     },
     "dont_understand": {
-     "text": "לא מובן לי.",
-     "romanized": "lo muvan li."
+     "text": "לא הבנתי.",
+     "romanized": "lo hevanti."
     }
    }
   },
@@ -420,8 +420,8 @@
      "romanized": "yah kitne kā hai?"
     },
     "where_toilet": {
-     "text": "शौचालय कहाँ है?",
-     "romanized": "shauchālay kahāṁ hai?"
+     "text": "टॉयलेट कहाँ है?",
+     "romanized": "ṭoyleṭ kahāṁ hai?"
     },
     "dont_understand": {
      "text": "मुझे समझ नहीं आया।",
@@ -632,8 +632,8 @@
      "romanized": "keisatsu o yonde kudasai."
     },
     "need_doctor": {
-     "text": "医者が必要です。",
-     "romanized": "isha ga hitsuyō desu."
+     "text": "医者に診てもらいたいです。",
+     "romanized": "isha ni mite moraitai desu."
     },
     "take_me_to": {
      "text": "ここまでお願いします：",
@@ -663,7 +663,7 @@
    "phrases": {
     "help": {
      "text": "ជួយខ្ញុំផង!",
-     "romanized": "juoy khnhom phorng!"
+     "romanized": "chuoy knyom phong!"
     },
     "call_police": {
      "text": "សូមហៅប៉ូលិស។",
@@ -671,11 +671,11 @@
     },
     "need_doctor": {
      "text": "ខ្ញុំត្រូវការគ្រូពេទ្យ។",
-     "romanized": "khnhom trov kar kru pet."
+     "romanized": "knyom trov-kar kru-pet."
     },
     "take_me_to": {
      "text": "សូមនាំខ្ញុំទៅកាន់៖",
-     "romanized": "som noam khnhom tov kan:"
+     "romanized": "som noam knyom tov kan:"
     },
     "thank_you": {
      "text": "អរគុណ។",
@@ -691,7 +691,7 @@
     },
     "dont_understand": {
      "text": "ខ្ញុំមិនយល់ទេ។",
-     "romanized": "khnhom min yol te."
+     "romanized": "knyom min yol te."
     }
    }
   },
@@ -914,7 +914,7 @@
      "romanized": null
     },
     "where_toilet": {
-     "text": "Onde fica o banheiro?",
+     "text": "Onde ficam os sanitários?",
      "romanized": null
     },
     "dont_understand": {
@@ -1046,7 +1046,7 @@
      "romanized": null
     },
     "call_police": {
-     "text": "Tafadhali piga simu polisi.",
+     "text": "Tafadhali, ita polisi.",
      "romanized": null
     },
     "need_doctor": {
@@ -1081,35 +1081,35 @@
    "phrases": {
     "help": {
      "text": "ช่วยด้วย!",
-     "romanized": "chûai dûai!"
+     "romanized": "chûay dûay!"
     },
     "call_police": {
-     "text": "กรุณาเรียกตำรวจ",
-     "romanized": "kru-ná-aa rîak tam-rùat"
+     "text": "ช่วยเรียกตำรวจหน่อยครับ/ค่ะ",
+     "romanized": "chûay rîak dtam-rùat nòi kráp/kâ"
     },
     "need_doctor": {
-     "text": "ฉันต้องการหมอ",
-     "romanized": "chǎn tông-gaan mǒr"
+     "text": "ต้องไปหาหมอครับ/ค่ะ",
+     "romanized": "dtông bpai hǎa mǒr kráp/kâ"
     },
     "take_me_to": {
-     "text": "กรุณาพาฉันไปที่:",
-     "romanized": "kru-ná-aa paa chǎn bpai thîi:"
+     "text": "ช่วยพาไปที่นี่หน่อยครับ/ค่ะ:",
+     "romanized": "chûay paa bpai tîi-nîi nòi kráp/kâ:"
     },
     "thank_you": {
-     "text": "ขอบคุณ",
-     "romanized": "kòp-kun"
+     "text": "ขอบคุณครับ/ค่ะ",
+     "romanized": "kòp-kun kráp/kâ"
     },
     "how_much": {
-     "text": "อันนี้ราคาเท่าไร",
-     "romanized": "an-níi raa-kaa tâo-rài"
+     "text": "อันนี้ราคาเท่าไรครับ/ค่ะ",
+     "romanized": "an-níi raa-kaa tâo-rài kráp/kâ"
     },
     "where_toilet": {
-     "text": "ห้องน้ำอยู่ที่ไหน",
-     "romanized": "hông-náam yùu thîi-nǎi"
+     "text": "ห้องน้ำอยู่ที่ไหนครับ/ค่ะ",
+     "romanized": "hông-náam yùu tîi-nǎi kráp/kâ"
     },
     "dont_understand": {
-     "text": "ฉันไม่เข้าใจ",
-     "romanized": "chǎn mâi kâo-jai"
+     "text": "ไม่เข้าใจครับ/ค่ะ",
+     "romanized": "mâi kâo-jai kráp/kâ"
     }
    }
   },
@@ -1203,11 +1203,11 @@
     },
     "need_doctor": {
      "text": "Мені потрібен лікар.",
-     "romanized": "Meni potribnyi likar."
+     "romanized": "Meni potriben likar."
     },
     "take_me_to": {
      "text": "Будь ласка, відвезіть мене за цією адресою:",
-     "romanized": "Bud laska, vidvezit mene za tsieiu adresoiu:"
+     "romanized": "Bud laska, vidvezit mene za tsiieiu adresoiu:"
     },
     "thank_you": {
      "text": "Дякую.",
@@ -1223,7 +1223,7 @@
     },
     "dont_understand": {
      "text": "Я не розумію.",
-     "romanized": "Ia ne rozumiiu."
+     "romanized": "Ya ne rozumiiu."
     }
    }
   },
@@ -1512,7 +1512,7 @@
   "SS": null,
   "ST": "pt",
   "SV": "es",
-  "SX": "nl",
+  "SX": null,
   "SY": "ar",
   "SZ": null,
   "TC": null,

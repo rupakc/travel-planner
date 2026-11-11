@@ -56,3 +56,16 @@ def test_phrases_for_country():
     assert phrases_for_country("zz") is None
     assert phrases_for_country("") is None
     assert phrases_for_country(None) is None
+
+
+def test_thai_polite_particles():
+    for pid, p in DATA["languages"]["th"]["phrases"].items():
+        if pid == "help":
+            continue
+        assert p["text"].rstrip(":").endswith("ครับ/ค่ะ"), pid
+        assert p["romanized"].rstrip(":").endswith("kráp/kâ"), pid
+
+
+def test_neutral_choices():
+    assert DATA["countries"]["SX"] is None
+    assert DATA["languages"]["pt"]["phrases"]["where_toilet"]["text"] == "Onde ficam os sanitários?"
