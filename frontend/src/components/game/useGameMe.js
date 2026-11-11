@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getGameMe } from '../../services/gameApi'
 import { onGameAnnounce } from '../../game/announce'
+import { useClientConfig, featureOn } from '../../hooks/useClientConfig'
 
 // GET /game/me for the signed-in user. `me` stays null when signed out, while
-// loading and when the game API is unavailable (404 from an old backend or
-// GAME_ENABLED=false); any failure just hides the game, it never throws.
+// loading and when the game is unavailable: /config without features.game
+// (old backend, GAME_ENABLED=false) is never probed, and any failure just
+// hides the game, it never throws.
 // A game announcement (an award landed somewhere) refreshes it.
 export default function useGameMe(token, enabled = true) {
   const [me, setMe] = useState(null)
   const [tick, setTick] = useState(0)
-  const active = !!token && enabled
+  const { config, loaded } = useClientConfig()
+  const active = !!token && enabled && loaded && featureOn(config, 'game')
 
   useEffect(() => {
     if (!active) { setMe(null); return undefined }

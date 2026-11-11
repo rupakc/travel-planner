@@ -67,7 +67,9 @@ export default function SignupPage() {
       const res = await signup(body)
       emit('auth_result', { method: 'password', mode: 'signup', result: 'pending' })
       emit('signup_step', { step: 'check_email' })
-      navigate(`/check-email?email=${encodeURIComponent(res?.email || email.toLowerCase())}`)
+      // Router state, not the URL: the address stays out of history and referrers
+      // (history.state survives a reload; without it the page asks for the address).
+      navigate('/check-email', { state: { email: res?.email || email.toLowerCase() } })
     } catch (err) {
       emit('auth_result', { method: 'password', mode: 'signup', result: 'error', code: err?.code || 'unknown' })
       const field = FIELD_OF[err?.code]

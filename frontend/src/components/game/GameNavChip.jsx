@@ -31,7 +31,7 @@ export default function GameNavChip() {
     <Link
       to="/account"
       data-tid="game.navChip"
-      className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-1.5 py-0.5 text-xs font-semibold text-teal-700 hover:bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-teal-900/60"
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-teal-50 px-1.5 py-0.5 text-xs font-semibold text-teal-700 hover:bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-teal-900/60"
       aria-label={label}
       title={label}
     >

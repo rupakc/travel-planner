@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+const clientConfig = vi.hoisted(() => ({ value: { config: { features: { accounts: true, game: true } }, loaded: true } }))
+vi.mock('../../hooks/useClientConfig', async (orig) => ({ ...(await orig()), useClientConfig: () => clientConfig.value }))
 const api = vi.hoisted(() => ({ getSettings: vi.fn(), patchSettings: vi.fn() }))
 vi.mock('../../services/accountApi', () => api)
 const auth = vi.hoisted(() => ({ value: { token: 'tok' } }))
@@ -34,6 +36,7 @@ describe('SettingsSync', () => {
   }
 
   beforeEach(async () => {
+    clientConfig.value = { config: { features: { accounts: true, game: true } }, loaded: true }
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     window.matchMedia = vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {} }))
     localStorage.clear()
@@ -52,6 +55,24 @@ describe('SettingsSync', () => {
     act(() => root.unmount())
     container.remove()
     vi.useRealTimers()
+  })
+
+  it('never probes /account/settings without features.accounts in /config', async () => {
+    clientConfig.value = { config: { features: { telemetry: true } }, loaded: true }
+    await mount()
+    expect(api.getSettings).not.toHaveBeenCalled()
+    expect(settingsLoading()).toBe(false)
+  })
+
+  it('waits for /config before probing, and counts as loading meanwhile', async () => {
+    clientConfig.value = { config: {}, loaded: false }
+    await mount()
+    expect(api.getSettings).not.toHaveBeenCalled()
+    expect(settingsLoading()).toBe(true)
+    clientConfig.value = { config: { features: { accounts: true } }, loaded: true }
+    await mount()
+    expect(api.getSettings).toHaveBeenCalledTimes(1)
+    expect(settingsLoading()).toBe(false)
   })
 
   it('reports loading until the settings (with hide_game) are in, and after a 404', async () => {

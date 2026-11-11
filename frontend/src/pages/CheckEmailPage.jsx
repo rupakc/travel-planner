@@ -8,7 +8,9 @@ import { emit } from '../telemetry/client'
 
 export const RESEND_COOLDOWN_S = 60
 
-// Shown after sign-up. The address comes from router state (`{ email }`) or `?email=`.
+// Shown after sign-up. The address comes from router state (`{ email }`, kept
+// across a reload by history.state), or a legacy `?email=` link; without either
+// the page asks for it before resending.
 export default function CheckEmailPage() {
   const { t } = useTranslation(['verify', 'errors'])
   const location = useLocation()

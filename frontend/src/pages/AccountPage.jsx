@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAccount } from '../services/accountApi'
+import { useClientConfig, featureOn } from '../hooks/useClientConfig'
 import ProfileSection from '../components/account/ProfileSection'
 import SettingsSection from '../components/account/SettingsSection'
 import SecuritySection from '../components/account/SecuritySection'
@@ -43,15 +44,19 @@ export default function AccountPage() {
   }, []) // once, on arrival
   const [account, setAccount] = useState(null) // null: loading, or the API is unavailable (404)
 
+  // /account exists only where /config says features.accounts (else: Profile only, no probe).
+  const { config, loaded } = useClientConfig()
+  const accounts = loaded && featureOn(config, 'accounts')
+
   const load = useCallback(async () => {
-    if (!token) return
+    if (!token || !accounts) return
     try {
       setAccount(await getAccount(token))
     } catch (err) {
       // No account API (404) hides the editing; any other error keeps what we had.
       if (err?.status === 404) setAccount(null)
     }
-  }, [token])
+  }, [token, accounts])
   useEffect(() => { load() }, [load])
 
   const props = { account, reload: load }

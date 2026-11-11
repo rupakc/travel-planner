@@ -66,7 +66,8 @@ describe('SignupPage', () => {
       username: 'wander_42', email: 'Wander@Example.com', password: 'correct horse battery',
     })
     expect(location.pathname).toBe('/check-email')
-    expect(new URLSearchParams(location.search).get('email')).toBe('wander@example.com')
+    expect(location.search).toBe('')
+    expect(location.state).toEqual({ email: 'wander@example.com' })
     expect(emit).toHaveBeenCalledWith('auth_start', { method: 'password', mode: 'signup' })
     expect(emit).toHaveBeenCalledWith('signup_step', { step: 'check_email' })
   })
