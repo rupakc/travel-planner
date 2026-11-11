@@ -18,5 +18,6 @@
   "startsOn": "Today starts on {{date}}",
   "queued": "Saved on this device. It will sync when you're back online.",
   "checkinFailed": "Couldn't check in. Try again.",
-  "visitFailed": "Couldn't save that. Try again."
+  "visitFailed": "Couldn't save that. Try again.",
+  "newCountry": "New country: {{code}}"
 }

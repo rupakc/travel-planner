@@ -9,7 +9,6 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const mocks = vi.hoisted(() => ({
   journey: { enabled: true },
   online: true,
-  pack: null,
   checkIn: vi.fn(),
   putPlace: vi.fn(),
   enqueue: vi.fn(),
@@ -18,7 +17,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../hooks/useJourney', () => ({ useJourney: () => mocks.journey }))
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 7 } }) }))
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => mocks.online }))
-vi.mock('../../offline/useOfflinePack', () => ({ useOfflinePack: () => ({ pack: mocks.pack, savedAt: null, loading: false }) }))
 vi.mock('../../offline/outbox', () => ({ enqueue: (...a) => mocks.enqueue(...a) }))
 vi.mock('../../game/announce', () => ({ announceGame: vi.fn() }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
@@ -38,21 +36,19 @@ const itinerary = { days: [{ day_number: 1, city: 'Lisbon', slots: [
 ] }] }
 const trip = { id: 12, destination: 'Lisbon', start_date: localToday(), end_date: localToday() }
 let container, root
+const withSel = (selections) => ({ ...trip, selections })
 const view = async (props = {}) => {
-  await act(async () => root.render(<MemoryRouter><TodayView trip={trip} token="tok" {...props} /></MemoryRouter>))
+  await act(async () => root.render(<MemoryRouter><TodayView trip={props.trip || withSel(props.selections)} token="tok" /></MemoryRouter>))
 }
 const tid = (id) => container.querySelector(`[data-tid="${id}"]`)
 const text = () => container.textContent
 const click = async (el) => { await act(async () => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })) }) }
 const clickText = (label) => click([...container.querySelectorAll('button')].find((b) => b.textContent.includes(label)))
 
-function mockFetchPlan(selections) {
-  global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ selections }) })
-}
 const reduced = (matches) => { window.matchMedia = vi.fn().mockReturnValue({ matches, addEventListener() {}, removeEventListener() {} }) }
 
 beforeEach(() => {
-  mocks.journey = { enabled: true }; mocks.online = true; mocks.pack = null
+  mocks.journey = { enabled: true }; mocks.online = true
   mocks.checkIn.mockReset(); mocks.putPlace.mockReset(); mocks.enqueue.mockReset()
   reduced(false)
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container)
@@ -60,10 +56,33 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks() })
 
 describe('TodayView', () => {
+  it('recomputes next up every minute', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] })
+    try {
+      vi.setSystemTime(new Date(2027, 3, 1, 8, 0))
+      const t1 = { ...trip, start_date: '2027-04-01', end_date: '2027-04-01' }
+      await view({ trip: { ...t1, selections: { itinerary } } })
+      const next = () => tid('today-next-up').textContent
+      expect(next()).toContain('Tram 28')
+      vi.setSystemTime(new Date(2027, 3, 1, 13, 5))
+      await act(async () => { vi.advanceTimersByTime(60000) })
+      expect(next()).toContain('Belém Tower')
+    } finally { vi.useRealTimers() }
+  })
+
+  it('ignores a second tap on "I went here" while the first is in flight', async () => {
+    let release
+    mocks.putPlace.mockReturnValue(new Promise((r) => { release = r }))
+    await view({ selections: { itinerary } })
+    await click(tid('today-visited-0'))
+    await click(tid('today-visited-0'))
+    expect(mocks.putPlace).toHaveBeenCalledTimes(1)
+    await act(async () => release({ game: null }))
+  })
+
   it('shows the day header and check-in streak, and the stamp on a new country', async () => {
-    mockFetchPlan({ itinerary })
     mocks.checkIn.mockResolvedValue({ day_index: 1, city: 'Lisbon', country_code: 'PT', new_country: true, streak: { current: 3 }, game: null })
-    await view()
+    await view({ selections: { itinerary } })
     expect(text()).toContain('Day 1 in Lisbon')
     await clickText('Check in for today')
     expect(text()).toContain('3-day streak')
@@ -72,25 +91,23 @@ describe('TodayView', () => {
 
   it('plays no stamp under reduced motion', async () => {
     reduced(true)
-    mockFetchPlan({ itinerary })
     mocks.checkIn.mockResolvedValue({ new_country: true, country_code: 'PT', streak: { current: 1 } })
-    await view()
+    await view({ selections: { itinerary } })
     await clickText('Check in for today')
     expect(text()).toContain('1-day streak')
     expect(tid('today-stamp')).toBeNull()
+    expect(tid('today-new-country')).not.toBeNull()
   })
 
   it('renders without itinerary', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ selections: {} }) })
-    await view()
+    await view({ selections: {} })
     expect(text()).toContain('Day 1 in Lisbon')
     expect(text()).toContain('No plan for today yet.')
     expect(text()).toContain('Near me')
   })
 
   it('lists slots with derived times and directions', async () => {
-    mockFetchPlan({ itinerary })
-    await view()
+    await view({ selections: { itinerary } })
     expect(text()).toContain('Belém Tower')
     expect(tid('today-directions-1').getAttribute('href')).toContain('destination=38.69,-9.21')
     expect(text()).toContain('09:00–12:00')
@@ -98,13 +115,12 @@ describe('TodayView', () => {
 
   it('offline "I went here" enqueues the request using the pack', async () => {
     mocks.online = false
-    mocks.pack = { selections: { itinerary } }
-    await view()
+    await view({ selections: { itinerary } })
     await click(tid('today-visited-0'))
     expect(mocks.enqueue).toHaveBeenCalledTimes(1)
     const [userId, item] = mocks.enqueue.mock.calls[0]
     expect(userId).toBe(7)
-    expect(item).toMatchObject({ method: 'PUT', path: '/api/trips/12/places/activity:tram-28' })
+    expect(item).toMatchObject({ method: 'PUT', path: '/trips/12/places/activity:tram-28' })
     expect(item.body).toMatchObject({ name: 'Tram 28', visited: true })
     expect(mocks.putPlace).not.toHaveBeenCalled()
   })

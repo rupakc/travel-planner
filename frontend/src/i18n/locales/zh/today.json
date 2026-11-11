@@ -17,5 +17,6 @@
   "startsOn": "今天从 {{date}} 开始",
   "queued": "已保存在此设备上，恢复联网后会自动同步。",
   "checkinFailed": "打卡失败，请重试。",
-  "visitFailed": "保存失败，请重试。"
+  "visitFailed": "保存失败，请重试。",
+  "newCountry": "新国家：{{code}}"
 }

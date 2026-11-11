@@ -18,5 +18,6 @@
   "startsOn": "Heute beginnt am {{date}}",
   "queued": "Auf diesem Gerät gespeichert. Es wird synchronisiert, sobald du wieder online bist.",
   "checkinFailed": "Einchecken hat nicht geklappt. Versuch es noch einmal.",
-  "visitFailed": "Das konnte nicht gespeichert werden. Versuch es noch einmal."
+  "visitFailed": "Das konnte nicht gespeichert werden. Versuch es noch einmal.",
+  "newCountry": "Neues Land: {{code}}"
 }

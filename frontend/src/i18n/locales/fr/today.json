@@ -19,5 +19,6 @@
   "queued": "Enregistré sur cet appareil. La synchronisation se fera à votre retour en ligne.",
   "checkinFailed": "Impossible d'enregistrer. Veuillez réessayer.",
   "visitFailed": "Impossible d'enregistrer. Veuillez réessayer.",
-  "streak_many": "{{count}} jours d'affilée"
+  "streak_many": "{{count}} jours d'affilée",
+  "newCountry": "Nouveau pays : {{code}}"
 }

@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, MapPin, Navigation as NavIcon, Share2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useJourney } from '../../hooks/useJourney'
-import { useOfflinePack } from '../../offline/useOfflinePack'
 import { useOnline } from '../../offline/useOnline'
 import * as outbox from '../../offline/outbox'
 import { checkIn, listCheckins, listPlaces, putPlace } from '../../services/tripsApi'
@@ -36,9 +35,7 @@ export default function TodayView({ trip, token }) {
   const navigate = useNavigate()
   const online = useOnline()
   const userId = user?.id
-  const { pack } = useOfflinePack(userId, trip?.id)
 
-  const [selections, setSelections] = useState(null)
   const [checked, setChecked] = useState(false)
   const [result, setResult] = useState(null) // the check-in answer
   const [streak, setStreak] = useState(null)
@@ -47,19 +44,15 @@ export default function TodayView({ trip, token }) {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const today = localToday()
-  const idx = trip ? dayIndexOf(trip.start_date, trip.end_date, today) : null
-
-  // The itinerary: the plan online, else the saved pack.
+  // Re-read the clock every minute so next-up and the day roll over.
+  const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    if (!enabled || !trip || !token || !online) return undefined
-    let live = true
-    fetch(`/api/plans/${encodeURIComponent(trip.id)}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((plan) => { if (live && plan?.selections) setSelections(plan.selections) })
-      .catch(() => {})
-    return () => { live = false }
-  }, [enabled, trip, token, online])
+    const id = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(id)
+  }, [])
+  const inFlight = useRef(new Set())
+  const today = localToday(now)
+  const idx = trip ? dayIndexOf(trip.start_date, trip.end_date, today) : null
 
   useEffect(() => {
     if (!enabled || !trip || !token || !online || idx === null) return undefined
@@ -77,7 +70,7 @@ export default function TodayView({ trip, token }) {
     return () => { live = false }
   }, [enabled, trip, token, online, idx, today])
 
-  const source = selections || pack?.selections || null
+  const source = trip?.selections || null
   const days = useMemo(() => {
     const it = source?.itinerary
     if (!it || !Array.isArray(it.days)) return []
@@ -87,7 +80,7 @@ export default function TodayView({ trip, token }) {
   }, [source])
 
   const slots = useMemo(() => todaySlots(days, idx), [days, idx])
-  const upcoming = useMemo(() => nextUp(slots, new Date()), [slots])
+  const upcoming = useMemo(() => nextUp(slots, now), [slots, now])
 
   const doCheckIn = useCallback(async () => {
     setBusy(true); setNote('')
@@ -107,6 +100,8 @@ export default function TodayView({ trip, token }) {
     const key = placeKey('activity', name)
     const body = { name, kind: 'activity', visited: true, day: today }
     if (Number.isFinite(slot.lat) && Number.isFinite(slot.lng)) { body.lat = slot.lat; body.lng = slot.lng }
+    if (inFlight.current.has(key)) return
+    inFlight.current.add(key)
     track('visited')
     try {
       if (!online) throw Object.assign(new Error('offline'), { code: 'network' })
@@ -115,9 +110,11 @@ export default function TodayView({ trip, token }) {
       announceGame(res?.game)
     } catch (err) {
       if (err?.code !== 'network') { setNote(t('visitFailed')); return }
-      await outbox.enqueue(userId, { method: 'PUT', path: `/api/trips/${trip.id}/places/${key}`, body, key: `place:${trip.id}:${key}` })
+      await outbox.enqueue(userId, { method: 'PUT', path: `/trips/${trip.id}/places/${key}`, body, key: `place:${trip.id}:${key}` })
       setQueued((s) => new Set(s).add(key))
       setNote(t('queued'))
+    } finally {
+      inFlight.current.delete(key)
     }
   }, [online, token, trip, today, userId, t])
 
@@ -161,10 +158,12 @@ export default function TodayView({ trip, token }) {
             {t('streak', { count: streak.current })}
           </span>
         )}
-        {result?.new_country && !reducedMotion() && <PassportStamp code={result.country_code} city={result.city} />}
+        {result?.new_country && (reducedMotion()
+          ? <p data-tid="today-new-country" className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t('newCountry', { code: result.country_code })}</p>
+          : <PassportStamp code={result.country_code} city={result.city} />)}
       </div>
 
-      <NextUpCard slot={upcoming} onDirections={() => track('directions')} />
+      <NextUpCard slot={upcoming} onDirections={() => track('next_up')} />
 
       {slots.length === 0 ? (
         <p data-tid="today-empty" className="text-sm text-slate-600 dark:text-slate-300">{t('noPlan')}</p>

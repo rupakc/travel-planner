@@ -19,5 +19,6 @@
   "queued": "Guardado en este dispositivo. Se sincronizará cuando vuelvas a tener conexión.",
   "checkinFailed": "No se pudo registrar. Inténtalo de nuevo.",
   "visitFailed": "No se pudo guardar. Inténtalo de nuevo.",
-  "streak_many": "Racha de {{count}} días"
+  "streak_many": "Racha de {{count}} días",
+  "newCountry": "País nuevo: {{code}}"
 }
