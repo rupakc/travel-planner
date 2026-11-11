@@ -47,6 +47,44 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
 describe('DataSection', () => {
+  it('the delete dialog traps Tab, closes on Escape and returns focus to Delete', async () => {
+    await render()
+    await click(tid('account.data.delete'))
+    const input = tid('account.data.confirm-input')
+    const cancel = tid('account.data.cancel')
+    expect(document.activeElement).toBe(input)
+    const tab = (shiftKey = false) => act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true }))
+    })
+    // Confirm is disabled (nothing typed), so Cancel is the last stop: Tab wraps to the input.
+    cancel.focus()
+    await tab()
+    expect(document.activeElement).toBe(input)
+    await tab(true)
+    expect(document.activeElement).toBe(cancel)
+    // Focus that escaped the dialog is pulled back in.
+    tid('account.data.export').focus()
+    await tab()
+    expect(document.activeElement).toBe(input)
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(tid('account.data.dialog')).toBeNull()
+    expect(document.activeElement).toBe(tid('account.data.delete'))
+  })
+
+  it('Cancel also returns focus to Delete', async () => {
+    await render()
+    await click(tid('account.data.delete'))
+    await click(tid('account.data.cancel'))
+    expect(tid('account.data.dialog')).toBeNull()
+    expect(document.activeElement).toBe(tid('account.data.delete'))
+  })
+
+  it('a missing has_password counts as a password account', async () => {
+    await render({ user: { username: 'jane' } })
+    await click(tid('account.data.delete'))
+    expect(tid('account.data.confirm-input').getAttribute('type')).toBe('password')
+  })
+
   it('renders nothing without an account', async () => {
     await render(null)
     expect(container.innerHTML).toBe('')

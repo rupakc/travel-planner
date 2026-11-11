@@ -22,18 +22,49 @@ export default function DataSection({ account }) {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const inputRef = useRef(null)
+  const dialogRef = useRef(null)
+  const triggerRef = useRef(null)
+  const wasOpen = useRef(false)
 
+  // Modal: focus starts in the input, Tab / Shift+Tab wrap inside the dialog,
+  // Escape closes it, and focus returns to the Delete button on close.
   useEffect(() => {
     if (!open) return undefined
     inputRef.current?.focus()
-    const onKey = (e) => { if (e.key === 'Escape' && !deleting) setOpen(false) }
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !deleting) { setOpen(false); return }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusable = [...dialogRef.current.querySelectorAll('input, button, select, textarea, a[href]')]
+        .filter((el) => !el.disabled)
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!dialogRef.current.contains(document.activeElement)) {
+        e.preventDefault()
+        first.focus()
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, deleting])
 
+  useEffect(() => {
+    if (open) { wasOpen.current = true; return }
+    if (wasOpen.current) {
+      wasOpen.current = false
+      if (triggerRef.current?.isConnected) triggerRef.current.focus()
+    }
+  }, [open])
+
   if (!account) return null
   const username = account.user?.username || ''
-  const hasPassword = !!account.user?.has_password
+  const hasPassword = account.user?.has_password !== false   // same default as SecuritySection
   const matches = hasPassword ? value.length > 0 : value.trim() === username && username !== ''
 
   const download = async () => {
@@ -89,7 +120,7 @@ export default function DataSection({ account }) {
           <Download size={16} aria-hidden="true" />
           {exporting ? t('export.working') : t('export.button')}
         </button>
-        <button type="button" data-tid="account.data.delete" onClick={() => setOpen(true)}
+        <button type="button" ref={triggerRef} data-tid="account.data.delete" onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-700 dark:border-red-800 dark:text-red-300 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950">
           <Trash2 size={16} aria-hidden="true" />
           {t('delete.button')}
@@ -101,7 +132,7 @@ export default function DataSection({ account }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) close() }}>
-          <form role="dialog" aria-modal="true" aria-labelledby="account-delete-title" data-tid="account.data.dialog"
+          <form ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="account-delete-title" data-tid="account.data.dialog"
             onSubmit={confirmDelete}
             className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 space-y-4">
             <h3 id="account-delete-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('delete.title')}</h3>

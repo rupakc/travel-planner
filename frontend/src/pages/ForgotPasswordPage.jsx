@@ -29,9 +29,12 @@ export default function ForgotPasswordPage() {
       setSent(true)
     } catch (err) {
       emit('password_reset', { step: 'request', result: 'error' })
-      // Only 429 / 503 are shown; any other outcome reads like success so the
-      // page never reveals whether an account exists.
+      // Only 429 / 503 are shown; any other server answer reads like success
+      // so the page never reveals whether an account exists. No answer at all
+      // (status 0: offline, network error) reveals nothing either, and no
+      // email is on its way, so it is an error.
       if (err?.status === 429 || err?.status === 503) setError(errorText(tc, err))
+      else if (!err?.status) setError(tc('errors:generic'))
       else setSent(true)
     } finally {
       setLoading(false)
