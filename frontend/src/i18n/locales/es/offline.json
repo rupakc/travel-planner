@@ -1,0 +1,8 @@
+{
+  "banner": {
+    "offline": "Estás sin conexión. Tus viajes guardados siguen funcionando.",
+    "pending_one": "{{count}} cambio pendiente de sincronizar",
+    "pending_many": "{{count}} cambios pendientes de sincronizar",
+    "pending_other": "{{count}} cambios pendientes de sincronizar"
+  }
+}

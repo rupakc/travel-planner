@@ -1,0 +1,7 @@
+{
+  "banner": {
+    "offline": "You're offline. Saved trips still work.",
+    "pending_one": "{{count}} change waiting to sync",
+    "pending_other": "{{count}} changes waiting to sync"
+  }
+}

@@ -1,5 +1,4 @@
-// Stub from Task 4 (frontend seams): Task 21 replaces this file. It already
-// works: it tracks navigator.onLine through the online/offline events.
+// navigator.onLine, kept current through the online/offline events.
 import { useEffect, useState } from 'react'
 
 const current = () => {
@@ -10,6 +9,7 @@ export function useOnline() {
   const [online, setOnline] = useState(current)
   useEffect(() => {
     const update = () => setOnline(current())
+    update()
     window.addEventListener('online', update)
     window.addEventListener('offline', update)
     return () => {
