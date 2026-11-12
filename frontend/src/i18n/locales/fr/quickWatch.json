@@ -1,1 +1,15 @@
-{}
+{
+  "label.watch": "Suivre le prix",
+  "label.watching": "Suivi actif",
+  "label.already": "Déjà suivi",
+  "aria.watch": "Suivre le prix de {{title}}",
+  "aria.already": "Vous suivez déjà {{title}} : ouvrir son historique de prix",
+  "toast.message": "Nous surveillerons ce prix pour vous ; la première vérification arrive bientôt",
+  "toast.undo": "Annuler",
+  "toast.dismiss": "Fermer",
+  "error.watch_limit": "Vous avez atteint la limite de suivis actifs. Supprimez-en un sur la page Alertes pour en ajouter un autre.",
+  "error.live_prices_off": "Le suivi des prix n'est pas disponible pour le moment.",
+  "error.spec_invalid": "Nous n'avons pas pu mettre en place un suivi pour cet élément.",
+  "error.generic": "Impossible de démarrer le suivi. Veuillez réessayer.",
+  "toast.undoFailed": "Impossible d'annuler. Supprimez le suivi sur la page Alertes."
+}

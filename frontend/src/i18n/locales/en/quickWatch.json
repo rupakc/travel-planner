@@ -1,1 +1,15 @@
-{}
+{
+  "label.watch": "Watch price",
+  "label.watching": "Watching",
+  "label.already": "Already watching",
+  "aria.watch": "Watch the price of {{title}}",
+  "aria.already": "Already watching {{title}}: open its price story",
+  "toast.message": "We'll check this price for you — first check soon",
+  "toast.undo": "Undo",
+  "toast.dismiss": "Dismiss",
+  "error.watch_limit": "That's your limit of active watches. Remove one on the Alerts page to add another.",
+  "error.live_prices_off": "Price watching isn't available right now.",
+  "error.spec_invalid": "We couldn't set up a watch for this one.",
+  "error.generic": "Couldn't start the watch. Try again.",
+  "toast.undoFailed": "Couldn't undo that. Remove the watch on the Alerts page."
+}
