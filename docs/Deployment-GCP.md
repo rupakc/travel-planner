@@ -364,6 +364,10 @@ What prevents it now:
 - The governor's per-minute guard sets forwarding back to `1` and emails you (section 8). It also keeps the `FORWARD` policy at `DROP`.
 - CI's `first_boot_sim.sh` (job `host-checks`) installs the image's `60-gce-network-security.conf`. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays `1`. It also runs a real `apt-get` in which a simulated postinst applies the `60-…` file alone, and checks that the hook restores `1`.
 
+### Share-link previews (crawler route)
+
+Caddy rewrites `/share/<token>` to the app's `/api/share/<token>/page` for link-preview crawlers only (fixed `User-Agent` list in `deploy/gcp/Caddyfile`, `@crawler`); everyone else gets the SPA. If the app answers 4xx/5xx (revoked or unknown token, `SHARING_V2_ENABLED=false`, an app build without the route) Caddy falls back to the SPA `index.html`, so a link never breaks and no app change is needed to roll back. Check by hand: `curl -A facebookexternalhit/1.1 https://<host>/share/<token>` should show `og:` tags, and without the `-A` the SPA. Set `PUBLIC_BASE_URL` in `app.env` so the tags carry the public host. Contract: [Sharing API](Sharing-API.md).
+
 ### Deploys: the SPA, Caddy or the deployer
 
 - **New SPA not showing.** `journalctl -u voyager-deploy -n 50`. `skipping Caddy … held` means a digest failed a check: the email and the log say why. Release it by deleting its line in `/opt/voyager/failed-digests`, or merge a fix (a newer digest ends the hold). `release: …` lines name the check that refused the image (symlink, missing asset, size).

@@ -67,7 +67,12 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/plans/{id}/share` | user | Create (or return) the public share token |
 | any | `/api/trips*` | user | Trips: phases, prep checklist, offline snapshot and pack, expenses, journal, place ratings and visits, check-ins, recap, stats. Specified in [Trips API](Trips-API.md) |
 | DELETE | `/api/plans/{id}/share` | user | Revoke the share token (no UI uses it) |
-| GET | `/api/share/{token}` | none | Public, sanitised shared plan |
+| GET | `/api/share/{token}` | none | Public, sanitised shared plan (legacy and Phase 4 tokens; `share_public`) |
+| POST | `/api/shares` | user | Create (or update the options of) a share link for a plan, recap or savings tally (`features.sharing`; see [Sharing API](Sharing-API.md)) |
+| GET | `/api/shares` | user | The caller's share links, newest first |
+| DELETE | `/api/shares/{token}` | user | Revoke a share link (204) |
+| GET | `/api/share/{token}/page` | none | Server-rendered Open Graph page for link-preview crawlers (`noindex`) |
+| GET | `/api/share/{token}/card.png` | none | Share card PNG, `size=link` (1200x630) or `story` (1080x1920) |
 | GET, PUT | `/api/preferences` | user | Get or update preferences |
 | GET, POST | `/api/recent-searches` | user | Last 8 searches; record one |
 | DELETE | `/api/recent-searches/{id}` | user | Remove one (`204`, or `404`) |
@@ -439,7 +444,7 @@ Get, update (name and/or selections) or delete one of the caller's plans; `404` 
 
 ### POST /api/plans/{id}/share and GET /api/share/{token}
 
-`POST` returns `{"share_token": "..."}` (the existing token if there is one). `GET /api/share/{token}` needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. `DELETE /api/plans/{id}/share` revokes the token. See [Sharing and Plans](Sharing-and-Plans.md).
+`POST` returns `{"share_token": "..."}` (the existing token if there is one). `GET /api/share/{token}` needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. `DELETE /api/plans/{id}/share` revokes the token. See [Sharing and Plans](Sharing-and-Plans.md). Share links 2.0 (options for dates, origin and name; card PNG; Open Graph page; list and revoke) is specified in the frozen [Sharing API](Sharing-API.md); these legacy routes are unchanged.
 
 ---
 

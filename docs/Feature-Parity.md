@@ -60,6 +60,9 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Select items into My Plan, save and load plans | ✅ | ✅ | ⏳ Phase 7 |
 | Share link | ✅ | ✅ | ⏳ Phase 7 |
 | Public share viewer | ✅ | ✅ deep link | ⏳ Phase 7 |
+| Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links | ✅ | ⏳ planned ([Sharing API](Sharing-API.md)) | ⏳ planned ([Sharing API](Sharing-API.md)) |
+| Share a trip recap or savings card as a link | ✅ | ⏳ planned | ⏳ planned |
+| Link previews (Open Graph page and card.png for crawlers) | ✅ server-side, all clients | ✅ same links | ✅ same links |
 | Export to calendar (.ics) and print/PDF | ✅ | ✅ | ⏳ Phase 7 |
 | Cost breakdown | ✅ | ? | ⏳ Phase 7 |
 
