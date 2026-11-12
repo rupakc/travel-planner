@@ -1626,7 +1626,7 @@
 <tr>
 <td><code>GET /alerts/suggestions?plan_id=</code></td>
 <td>none</td>
-<td><code>{"suggestions": [{"kind", "title", "subtitle", "spec", "reason": "selected_in_plan"\|"trip_total"\|"departure_soon", "already_watching": bool}], "live_prices": bool}</code>, at most 5, built locally</td>
+<td><code>{"suggestions": [{"kind", "title", "subtitle", "spec", "reason": "selected_in_plan"\|"trip_total"\|"departure_soon", "already_watching": bool}], "live_prices": bool}</code>, at most 5, built locally; in the order flight, hotels (≤ 2), activities (≤ 2), trip, so a full plan fills the cap and the <code>trip</code> total is dropped</td>
 <td><code>404 trip_not_found</code></td>
 </tr>
 <tr>
