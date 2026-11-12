@@ -1613,7 +1613,7 @@
  &quot;options&quot;: {&quot;dates&quot;: &quot;hidden&quot;, &quot;show_origin&quot;: false, &quot;show_name&quot;: false},
  &quot;created_at&quot;: &quot;…Z&quot;}
 </code></pre>
-<p>URLs are absolute: <code>PUBLIC_BASE_URL</code>, else the request's own base URL.</p>
+<p>URLs are absolute: <code>PUBLIC_BASE_URL</code>, else the request's own base URL; the page's Open Graph URLs use the same rule.</p>
 <p>Errors: <code>404 sharing_disabled</code>, <code>404 plan_not_found</code> (missing or not the caller's plan), <code>422 invalid_kind</code>, <code>429</code> (rate limit).</p>
 <h3 id="get-shares">GET /shares</h3>
 <p>Auth, <code>share_manage</code>. The caller's own shares, newest first, at most 100:</p>
@@ -1621,7 +1621,7 @@
              &quot;options&quot;: {&quot;dates&quot;: &quot;hidden&quot;, &quot;show_origin&quot;: false, &quot;show_name&quot;: false},
              &quot;created_at&quot;: &quot;…Z&quot;}]}
 </code></pre>
-<p><code>title</code> is the plan's name (<code>Price alerts</code> for <code>savings</code>). Errors: <code>404 sharing_disabled</code>.</p>
+<p><code>title</code> is the plan's name (<code>Price alerts</code> for <code>savings</code>). Each row (and the <code>POST /shares</code> answer) also carries an additive <code>plan_id</code> (int, or <code>null</code> for <code>savings</code>). Additive field <code>legacy_plan_shares: [{"plan_id", "name", "url"}]</code> lists the caller's plans that still have a legacy share token (<code>url</code> is <code>&lt;base&gt;/share/&lt;token&gt;</code>; the token is exposed nowhere else). Errors: <code>404 sharing_disabled</code>.</p>
 <h3 id="delete-sharestoken">DELETE /shares/{token}</h3>
 <p>Auth, <code>share_manage</code>. Revokes the share: <code>204</code> with no body. The public routes answer <code>404</code> at once and the rendered card is dropped from the server cache. <code>404 share_not_found</code> when the token is not the caller's, and <code>404 sharing_disabled</code>. Revoking a legacy plan token is still <code>DELETE /plans/{id}/share</code>.</p>
 <h3 id="get-sharetoken">GET /share/{token}</h3>
@@ -1638,7 +1638,7 @@
 <p>Public, <code>share_public</code>. Server-rendered HTML for link-preview crawlers: <code>&lt;title&gt;</code>, <code>description</code>, <code>og:type/site_name/title/description/image/image:width/image:height/url</code>, <code>twitter:card=summary_large_image</code> (+ title, description, image), <code>&lt;meta name="robots" content="noindex, nofollow"&gt;</code>, a heading, and a link to the SPA page <code>/share/&lt;token&gt;</code>. <code>og:image</code> is the absolute <code>card.png?size=link</code>. There is no inline script and no tracking. Headers: <code>X-Robots-Tag: noindex, nofollow</code>, <code>Cache-Control: public, max-age=300</code>. <code>404 share_not_found</code> (a JSON error, no tags) for an unknown, revoked or disabled share; only Phase 4 tokens have a page (a legacy token answers <code>404</code>, and the SPA serves it as before).</p>
 <p>Native clients do not need this route: it exists for crawlers (see Crawlers and Open Graph).</p>
 <h3 id="get-sharetokencardpngsizelinkstory">GET /share/{token}/card.png?size=link|story</h3>
-<p>Public, <code>share_public</code>. A PNG: <code>size=link</code> is 1200x630 (the default, used by <code>og:image</code>), <code>size=story</code> is 1080x1920. Headers: <code>Content-Type: image/png</code>, <code>X-Robots-Tag: noindex, nofollow</code>, <code>Cache-Control: public, max-age=300</code>. <code>404 share_not_found</code> for an unknown or revoked token; <code>422</code> for another <code>size</code>. One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.</p>
+<p>Public, <code>share_public</code>. A PNG: <code>size=link</code> is 1200x630 (the default, used by <code>og:image</code>), <code>size=story</code> is 1080x1920. Headers: <code>Content-Type: image/png</code>, <code>X-Robots-Tag: noindex, nofollow</code>, <code>Cache-Control: public, max-age=300</code>. <code>404 share_not_found</code> for an unknown or revoked token; <code>422</code> for another <code>size</code>. <code>503 card_busy</code> when too many cards are rendering at once (retry). One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.</p>
 <h2 id="card-and-snapshot-fields">Card and snapshot fields</h2>
 <p>The page and the card are drawn from one snapshot built from a whitelist (<code>services/share_public.py</code>); it never holds exact dates.</p>
 <table>
@@ -1663,7 +1663,7 @@
 </tr>
 <tr>
 <td><code>stats</code></td>
-<td>At most three chips of <strong>counts only</strong>: plan <code>activities</code>, <code>hotels</code>, <code>places</code>; recap <code>places</code>, <code>activities</code>; savings <code>drops_caught</code>, <code>targets_hit</code>. Zero counts are omitted.</td>
+<td>At most three chips of <strong>counts only</strong>: plan <code>activities</code>, <code>hotels</code>, <code>places</code>; recap <code>places</code>, <code>activities</code>; savings <code>drops_caught</code>, <code>targets_hit</code>. Zero counts are omitted; labels are singular for 1 (<code>1 hotel</code>).</td>
 </tr>
 <tr>
 <td><code>period</code></td>
@@ -1687,13 +1687,17 @@
 <li><code>show_name</code>: without it there is no <code>owner_name</code> anywhere.</li>
 <li><code>search_data</code> is a whitelist (origin, destination(s), dates, interests, traveller counts, pace). Email, nationality, visas, permits, accessibility needs and the raw search request are never exposed.</li>
 <li><strong>Selections scrub</strong> (<code>hidden</code> and <code>month</code>): any key whose name looks like a date or time (<code>date</code>, <code>time</code>, <code>departure</code>, <code>arrival</code>, <code>check_in</code>, <code>check_out</code>, …) is removed, and so is any string value that is an ISO date or datetime. With <code>month</code>, ISO date values become <code>YYYY-MM</code> and date-named keys keep that month. Prices and counts are untouched.</li>
+<li><strong>Always removed from new shares (every date mode):</strong> owner-private free text (<code>itinerary_notes</code>, <code>itinerary_edits</code> and any <code>notes</code> field). Without <code>show_origin</code>, origin keys (<code>origin</code>, <code>leg_from</code>, ...), a return leg's destination and flight booking links are removed from selections in every date mode, including <code>exact</code>.</li>
+<li><strong>Dates in strings (<code>hidden</code>, <code>month</code>):</strong> URL values that carry a date (<code>flt=...2026-05-01</code>, <code>checkin=</code>, ...) are dropped; an ISO date inside any other string drops the value (<code>hidden</code>) or becomes <code>YYYY-MM</code> (<code>month</code>). <code>time_of_day</code> and <code>duration*</code> keys are kept.</li>
+<li><strong>Timestamps:</strong> <code>created_at</code> / <code>updated_at</code> of a new share are <code>null</code> with <code>dates=hidden</code>, <code>YYYY-MM</code> with <code>month</code>, as saved with <code>exact</code>. New plan shares may carry the whitelisted <code>search_data.import_source</code> (<code>{url, title}</code>) like legacy ones. A <code>recap</code> answers with empty <code>search_data</code> and <code>selections</code> (only <code>card</code>).</li>
+<li><strong>Plan names</strong> are truncated to 200 characters on save; card headlines to 120.</li>
 <li><strong>Open Graph tags and the card show at most the month and year</strong>, even with <code>dates=exact</code>.</li>
 <li>No XP, badge or other reward is given for sharing, and views are not counted (no tracking of visitors; the web app sends a <code>share_view</code> telemetry event, enum props only).</li>
 </ul>
 <h2 id="crawlers-and-open-graph">Crawlers and Open Graph</h2>
 <p>Production Caddy serves the SPA at <code>/share/&lt;token&gt;</code>. A request whose <code>User-Agent</code> matches the fixed crawler list (facebookexternalhit, Twitterbot, WhatsApp, LinkedInBot, Slackbot, Discordbot, TelegramBot, Pinterest, Skype, Embedly, Googlebot, Bingbot, Applebot, iMessage, Redditbot, Mastodon) and whose path is <code>/share/&lt;8 to 64 URL-safe characters&gt;</code> is rewritten to <code>/api/share/&lt;token&gt;/page</code>. People get the SPA as before. If the app answers <code>4xx</code> or <code>5xx</code> (revoked share, flag off, an older build without the route) Caddy serves the SPA <code>index.html</code> instead, so a link never breaks. Both images ship independently, so either order of deploy is safe. The absolute URLs in the tags come from <code>PUBLIC_BASE_URL</code>, else the request's base URL (behind Caddy that is the public host). Search engines are told not to index: the page, the card and every public share answer carry <code>noindex</code>.</p>
 <h2 id="rate-limits">Rate limits</h2>
-<p>Buckets per 10 minutes, in-process sliding window: <code>share_public</code> (default 120, per client IP: <code>GET /share/{token}</code>, <code>/page</code>, <code>/card.png</code>) and <code>share_manage</code> (default 30, per signed-in user: <code>/shares</code> create, list, revoke). Over the limit: <code>429</code> with <code>Retry-After</code> and a string <code>detail</code>. Settings <code>RATE_LIMIT_SHARE_PUBLIC</code>, <code>RATE_LIMIT_SHARE_MANAGE</code>.</p>
+<p>Buckets per 10 minutes, in-process sliding window: <code>share_public</code> (default 120, per client IP, IPv6 clients keyed by /64: <code>GET /share/{token}</code>, <code>/page</code>, <code>/card.png</code>) and <code>share_manage</code> (default 30, per signed-in user: <code>/shares</code> create, list, revoke). Over the limit: <code>429</code> with <code>Retry-After</code> and a string <code>detail</code>. Settings <code>RATE_LIMIT_SHARE_PUBLIC</code>, <code>RATE_LIMIT_SHARE_MANAGE</code>.</p>
 <h2 id="caching-and-revocation">Caching and revocation</h2>
 <p>Rendered cards sit in a small in-process TTL cache (64 entries, 10 minutes) keyed by token, size and content; revoking clears the token's entries and every public route answers <code>404</code> immediately. The one residual exposure is the HTTP cache: <code>Cache-Control: public, max-age=300</code> means a browser, proxy or link-preview service that already fetched a page or card may keep showing it for up to five minutes (and previews that chat apps stored on their side can last longer; a revoked link cannot be recalled from them). Treat a revoked share as "stops working within minutes".</p>
 <h2 id="legacy-links">Legacy links</h2>
