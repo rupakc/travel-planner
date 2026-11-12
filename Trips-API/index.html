@@ -1281,6 +1281,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Client notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-notes-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation notes (additive)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -2015,6 +2032,50 @@
 <li><strong>Mobile tabs.</strong> Trips (hub and trip detail), Explore (search, chat and Near me), Alerts (fare and price watches), Play (game and bucket list), You (account, preferences, settings).</li>
 <li><strong>Game ids to translate.</strong> Translate each rule id in the "Game" table as <code>game:rules.&lt;id&gt;</code> and each badge as <code>game:badges.&lt;id&gt;.name</code> and <code>game:badges.&lt;id&gt;.desc</code>. The ids: rules <code>traveller_type</code>, <code>plan_saved</code>, <code>trip_ready</code>, <code>smart_planner</code>, <code>trip_checkin</code>, <code>place_visited</code>, <code>country_visited</code>, <code>continent_visited</code>, <code>recap_complete</code>; badges <code>traveller</code>, <code>first_trip</code>, <code>trip_ready</code>, <code>ready_regular</code>, <code>smart_planner</code>, <code>on_the_road</code>, <code>road_warrior</code>, <code>local_explorer</code>, <code>local_legend</code>, <code>countries_3</code>, <code>countries_10</code>, <code>countries_30</code>, <code>continents_3</code>, <code>continents_6</code>, <code>storyteller</code>, <code>memory_keeper</code>. Hide every game element when <code>hide_game</code> is set.</li>
 </ul>
+<h3 id="implementation-notes-additive">Implementation notes (additive)</h3>
+<p>Field-level <code>422</code> codes the backend emits beyond the tables above. Clients should show a generic message for any <code>422 *_invalid</code> code they do not know.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Extra code</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /trips/{id}/expenses</code>, <code>PATCH .../expenses/{eid}</code></td>
+<td><code>422 spent_on_invalid</code></td>
+<td><code>spent_on</code> is not a <code>YYYY-MM-DD</code> day</td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/expenses</code>, <code>POST /trips/{id}/journal</code></td>
+<td><code>422 client_id_invalid</code></td>
+<td><code>client_id</code> is missing or not a UUID</td>
+</tr>
+<tr>
+<td><code>POST /trips/{id}/journal</code>, <code>PATCH .../journal/{eid}</code></td>
+<td><code>422 day_invalid</code></td>
+<td><code>day</code> is not a <code>YYYY-MM-DD</code> day</td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/places/{place_key}</code></td>
+<td><code>422 name_invalid</code></td>
+<td><code>name</code> is not 1 to 120 characters</td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/places/{place_key}</code></td>
+<td><code>422 kind_invalid</code></td>
+<td><code>kind</code> is not one of the place kinds</td>
+</tr>
+<tr>
+<td><code>PUT /trips/{id}/places/{place_key}</code></td>
+<td><code>422 visited_invalid</code></td>
+<td><code>visited</code> is not a boolean</td>
+</tr>
+</tbody>
+</table>
+<p><code>TripPlace.visited_at</code> is a never-cleared first-visit marker: it is set the first time <code>visited</code> becomes true and stays when <code>visited</code> is later set back to false. Clients read <code>visited</code> for the current state and use <code>visited_at</code> only for ordering and "first visited".</p>
 
 
 

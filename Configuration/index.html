@@ -640,6 +640,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#trips-and-the-journey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trips and the journey
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2018,6 +2029,54 @@
 <td><code>GAME_RULES_PATH</code></td>
 <td><code>""</code></td>
 <td>Alternative rules file; empty uses <code>backend/app/game/rules.json</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trips-and-the-journey">Trips and the journey</h3>
+<p>See <a href="../Trips-API/">Trips API</a>. <code>GET /api/config</code> reports the two flags as <code>features.journey</code> and <code>features.offline_pack</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JOURNEY_UI_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Turns on the journey UI in the web app: Trips hub, trip screen with phases, Explore, Play and You tabs. The trips API is always served.</td>
+</tr>
+<tr>
+<td><code>OFFLINE_PACK_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Kill switch for the offline pack. <code>false</code> makes every client unregister <code>/sw.js</code>, clear its caches and delete saved packs on its next load (see <a href="../Deployment-GCP/#offline-pack-and-the-journey-flag">Deployment on GCP</a>).</td>
+</tr>
+<tr>
+<td><code>READY_WINDOW_DAYS</code></td>
+<td><code>14</code></td>
+<td>Days before the start date at which a dated trip becomes Ready.</td>
+</tr>
+<tr>
+<td><code>TRIP_MAX_EXPENSES</code></td>
+<td><code>2000</code></td>
+<td>Expenses per trip (<code>409 expense_limit</code> beyond).</td>
+</tr>
+<tr>
+<td><code>TRIP_MAX_JOURNAL</code></td>
+<td><code>500</code></td>
+<td>Journal entries per trip (<code>409 journal_limit</code>).</td>
+</tr>
+<tr>
+<td><code>TRIP_MAX_PLACES</code></td>
+<td><code>1000</code></td>
+<td>Rated or visited places per trip (<code>409 places_limit</code>).</td>
+</tr>
+<tr>
+<td><code>TRIP_SNAPSHOT_MAX_BYTES</code></td>
+<td><code>262144</code></td>
+<td>Largest offline snapshot per trip (<code>413 snapshot_too_large</code>).</td>
 </tr>
 </tbody>
 </table>

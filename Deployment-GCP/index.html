@@ -1344,6 +1344,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#offline-pack-and-the-journey-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offline pack and the journey flag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#7-backups-and-restore-drills" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1750,6 +1761,12 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 <li><code>ls -l /var/lib/voyager/edge/</code> shows which release <code>current</code>, <code>prev1</code> and <code>prev2</code> point at; <code>cat /var/lib/voyager/edge/current/SOURCE</code> shows its image.</li>
 <li><strong>Host scripts changed</strong> (<code>deploy/gcp/**</code>): re-run <code>infrastructure/gcp/bootstrap.sh --update-host …</code>, then on the VM run <code>sudo google_metadata_script_runner startup</code>. It returns as soon as the bundle is unpacked and <code>compose up -d</code> has applied the changes; units are started with <code>--no-block</code>, so it never waits on itself. <strong>Afterwards check IPv4 forwarding:</strong> <code>cat /proc/sys/net/ipv4/ip_forward</code> must print <code>1</code>, and <code>curl -m 10 https://&lt;host&gt;/health</code> must answer. If it prints <code>0</code>, see <a href="#11-troubleshooting">Troubleshooting</a>.</li>
 <li><strong>Schema changes stay additive.</strong> A rollback must never meet a DB it can't read.</li>
+</ul>
+<h2 id="offline-pack-and-the-journey-flag">Offline pack and the journey flag</h2>
+<ul>
+<li><strong>Service worker.</strong> The offline pack's service worker is <code>/sw.js</code>, served by Caddy with <code>Cache-Control: no-cache</code> so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed <code>/assets/*</code> files listed in <code>/sw-assets.json</code>, and never intercepts <code>/api/*</code>. Trip data lives in the browser's IndexedDB, not on the VM.</li>
+<li><strong>Kill switch.</strong> Set <code>OFFLINE_PACK_ENABLED=false</code> in <code>app.env</code> and restart the app. <code>GET /api/config</code> then reports <code>features.offline_pack: false</code>, and each client unregisters the worker, deletes the <code>voyager-*</code> caches and removes saved packs on its next load. Set it back to <code>true</code> to allow packs again.</li>
+<li><strong><code>JOURNEY_UI_ENABLED</code>.</strong> Off by default. While it is <code>false</code> the SPA shows the classic search-first app and the new paths (<code>/trips</code>, <code>/explore</code>, <code>/play</code>, <code>/you</code>) fall back to <code>/</code>. The trips API is served either way, so flipping the flag needs only an app restart, never a rebuild.</li>
 </ul>
 <h2 id="7-backups-and-restore-drills">7. Backups and restore drills</h2>
 <p>The disk is authoritative (<code>BACKUP_MODE=vm</code>):</p>

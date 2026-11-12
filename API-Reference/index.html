@@ -1323,6 +1323,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preferences-recent-searches-taste-profile" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2460,6 +2471,12 @@
 <td>Create (or return) the public share token</td>
 </tr>
 <tr>
+<td>any</td>
+<td><code>/api/trips*</code></td>
+<td>user</td>
+<td>Trips: phases, prep checklist, offline snapshot and pack, expenses, journal, place ratings and visits, check-ins, recap, stats. Specified in <a href="../Trips-API/">Trips API</a></td>
+</tr>
+<tr>
 <td>DELETE</td>
 <td><code>/api/plans/{id}/share</code></td>
 <td>user</td>
@@ -3013,6 +3030,8 @@
 <h3 id="post-apiplansidshare-and-get-apisharetoken">POST /api/plans/{id}/share and GET /api/share/{token}</h3>
 <p><code>POST</code> returns <code>{"share_token": "..."}</code> (the existing token if there is one). <code>GET /api/share/{token}</code> needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. <code>DELETE /api/plans/{id}/share</code> revokes the token. See <a href="../Sharing-and-Plans/">Sharing and Plans</a>.</p>
 <hr />
+<h2 id="trips">Trips</h2>
+<p>Trips are plans with dates and a phase (Dreaming, Planning, Ready, On the road, Memories). Every <code>/api/trips*</code> route needs sign-in and acts only on the caller's own trips. The full contract (frozen, additive changes only) is <a href="../Trips-API/">Trips API</a>: <code>GET/POST /trips</code>, <code>GET/PATCH/DELETE /trips/{id}</code>, <code>GET /trips/stats</code>, prep (<code>/trips/{id}/prep</code>), <code>PUT /trips/{id}/snapshot</code>, <code>GET /trips/{id}/offline-pack</code>, expenses, journal, places, check-ins and recap.</p>
 <h2 id="preferences-recent-searches-taste-profile">Preferences, recent searches, taste profile</h2>
 <h3 id="get-put-apipreferences">GET, PUT /api/preferences</h3>
 <p>The caller's preferences: <code>budget_category</code>, <code>nationality</code>, <code>current_residence</code>, <code>residence_permits</code>, <code>existing_visas</code>, <code>interests</code>, <code>num_travelers</code>, <code>adults</code>, <code>children</code>, <code>seniors</code>, <code>infants</code>, <code>accessibility_needs</code>. They pre-fill the Search form, and the Search form writes back to them.</p>

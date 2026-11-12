@@ -1491,11 +1491,32 @@
 <td>Admin Analytics tab</td>
 </tr>
 <tr>
+<td><code>journey</code></td>
+<td>Journey tabs, trips hub shell and load states</td>
+</tr>
+<tr>
+<td><code>offline</code></td>
+<td>Offline banner, queued-write messages</td>
+</tr>
+<tr>
+<td><code>trips</code>, <code>trip</code>, <code>today</code>, <code>prep</code>, <code>completeness</code></td>
+<td>Trips hub, trip screen, Today view, prep checklist, trip-ready meter</td>
+</tr>
+<tr>
+<td><code>offlinePack</code>, <code>expenses</code>, <code>journal</code>, <code>recap</code></td>
+<td>Offline pack, expenses, journal and place ratings, recap</td>
+</tr>
+<tr>
+<td><code>coach</code>, <code>explore</code>, <code>nearbyTrip</code>, <code>playYou</code></td>
+<td>Coach marks, Explore header, Near me trip actions, Play and You tabs</td>
+</tr>
+<tr>
 <td><code>misc</code></td>
 <td>Everything else</td>
 </tr>
 </tbody>
 </table>
+<p>English is lazy per route: <code>common</code>, <code>errors</code>, <code>auth</code>, <code>journey</code>, <code>offline</code> and <code>misc</code>, plus the namespaces the shell renders at first paint, ship in the main bundle; the rest (for example <code>trip</code>, <code>trips</code>, <code>prep</code>, <code>expenses</code>, <code>journal</code>, <code>recap</code>) load when their route is opened (<code>frontend/src/i18n/routeNamespaces.js</code>). The other six languages always load on demand.</p>
 <p>Conventions:</p>
 <ul>
 <li>Keys are nested objects, referenced as <code>ns:area.thing</code> (for example <code>common:nav.search</code>). In a component: <code>const { t } = useTranslation('common')</code>.</li>

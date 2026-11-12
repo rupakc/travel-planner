@@ -1321,6 +1321,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#unreleased-the-trip-journey-trips-api-and-offline-pack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased: the trip journey, trips API and offline pack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#unreleased-faster-deploys-per-image-build-alongside-ci-skip-unchanged-images" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1563,6 +1574,15 @@
 <h1 id="changelog">Changelog</h1>
 <p>Changes since the project started on 2026-05-17. From 2026-08-30 on, every change went through a pull request; dates are merge dates (UTC). A "(#N)" inside a PR title refers to a backlog item, not a PR.</p>
 <hr />
+<h2 id="unreleased-the-trip-journey-trips-api-and-offline-pack">Unreleased: the trip journey, trips API and offline pack</h2>
+<p>Contract: <a href="../Trips-API/">Trips API</a>. Runbook: <a href="../Deployment-GCP/#offline-pack-and-the-journey-flag">Deployment on GCP</a>.</p>
+<ul>
+<li><strong>Trips.</strong> A plan with dates is a trip with a phase (Dreaming, Planning, Ready, On the road, Memories) derived from its dates, with an override. New <code>/api/trips*</code> routers (<code>trips</code>, <code>trip_prep</code>, <code>trip_money</code>, <code>trip_journal</code>, <code>trip_offline</code>, <code>trip_today</code>, <code>trip_recap</code>) and seven tables (<code>trip_expenses</code>, <code>trip_journal</code>, <code>trip_ratings</code>, <code>trip_prep</code>, <code>trip_snapshots</code>, <code>trip_checkins</code>, <code>user_countries</code>), all additive.</li>
+<li><strong>Web journey (behind <code>JOURNEY_UI_ENABLED</code>, off by default).</strong> Trips hub, trip screen (overview, prep checklist, offline pack, Today with check-in, expenses with a currency converter, journal and place ratings, recap with passport stamps), plus Explore, Play and You tabs. Teal-700 is the primary colour.</li>
+<li><strong>Offline pack.</strong> Saving a pack registers <code>/sw.js</code> (app shell), keeps the trip snapshot in IndexedDB and queues expenses and journal writes while offline. <code>OFFLINE_PACK_ENABLED=false</code> removes it from every client on its next load. Packs are cleared on sign-out.</li>
+<li><strong>Settings.</strong> <code>JOURNEY_UI_ENABLED</code>, <code>OFFLINE_PACK_ENABLED</code>, <code>READY_WINDOW_DAYS</code>, <code>TRIP_MAX_EXPENSES</code>, <code>TRIP_MAX_JOURNAL</code>, <code>TRIP_MAX_PLACES</code>, <code>TRIP_SNAPSHOT_MAX_BYTES</code>.</li>
+<li><strong>Languages.</strong> New namespaces in all seven languages; English is bundled per route.</li>
+</ul>
 <h2 id="unreleased-faster-deploys-per-image-build-alongside-ci-skip-unchanged-images">Unreleased: faster deploys (per-image build alongside CI, skip unchanged images)</h2>
 <p>Runbook: <a href="../Deployment-GCP/#6-day-to-day-deploys-and-rollback">Deployment on GCP</a>; workflows: <a href="../Testing-and-CI/#deployyml">Testing and CI</a>.</p>
 <ul>

@@ -1460,6 +1460,10 @@
 │   ├── ChatPage.jsx          chat, TripPlanView, chat plan drawer
 │   ├── PreferencesPage.jsx   preferences + Taste Graph card + fare-alert email
 │   ├── AlertsPage.jsx        watched fares (fare watch and price alerts)
+│   ├── TripsPage.jsx         Trips hub (journey): next trip, all trips, where next, countries
+│   ├── TripPage.jsx          one trip: overview, prep, offline pack, today, expenses, journal, recap tabs
+│   ├── PlayPage.jsx          game and bucket list (journey)
+│   ├── YouPage.jsx           account, preferences and settings (journey)
 │   ├── NearbyPage.jsx        Near me: places around the user's location
 │   ├── AdminPage.jsx         users, feedback and Analytics tab (admins only)
 │   ├── LoginPage.jsx
@@ -1474,6 +1478,9 @@
 │   │                         NotificationBell, AlertToast, AlertEmailField,
 │   │                         LiveCheck (&quot;Search the web now&quot;), cards/
 │   ├── admin/                TelemetrySummary (Analytics tab)
+│   ├── trips/                trip hub and trip-screen pieces: TripCard, TripHeader, TripTabs, PhaseMenu,
+│   │                         PrepChecklist, OfflinePack, TodayView, ExpenseLog, Journal, Recap,
+│   │                         PassportStamp, BucketRing, JourneyTour, ...
 │   ├── auth/                 SocialSignInButtons (Apple, Google, Facebook, GitHub)
 │   └── ui/                   AirportSearch, NationalitySearch, NavBar, TagInput,
 │                             TravelerPanel, AttributionFooter, LanguagePicker, ThemeToggle
@@ -1482,6 +1489,8 @@
 │   ├── AlertsContext.jsx     unread count polling, toasts, watch lookups
 │   └── SearchDataContext.jsx search form and results state
 ├── hooks/useFirstRunTour.js  when to show the onboarding tour
+├── journey/                  paths.js (journey route matching), tripTabs.js
+├── offline/                  registerSW, packStore (IndexedDB packs), outbox (queued writes), useOfflinePack, useOnline
 ├── i18n/                     i18next set-up, locales/&lt;lang&gt;/&lt;ns&gt;.json, format.js (see Internationalization)
 ├── telemetry/                web SDK: client, consent, autocapture, perf, routes (see Telemetry)
 ├── theme/                    ThemeContext, themeStorage, generated tokens.css (see Theming)
@@ -1491,6 +1500,7 @@
     ├── sseWorker.js          parses the /api/search stream
     └── chatWorker.js         parses the /api/chat stream
 </code></pre>
+<p>The offline service worker is <code>frontend/public/sw.js</code> (see <a href="../Deployment-GCP/#offline-pack-and-the-journey-flag">Deployment on GCP</a>); <code>vite/swAssets.js</code> writes the <code>/sw-assets.json</code> list it precaches.</p>
 <p>Tests sit next to the code as <code>*.test.js(x)</code> (vitest + jsdom); see <a href="../Testing-and-CI/">Testing and CI</a>.</p>
 <hr />
 <h2 id="routing-and-always-mounted-tabs">Routing and always-mounted tabs</h2>
@@ -1533,6 +1543,16 @@
 <td><code>/nearby</code></td>
 <td>NearbyPage</td>
 <td>Signed in</td>
+</tr>
+<tr>
+<td><code>/trips</code>, <code>/explore</code>, <code>/play</code>, <code>/you</code></td>
+<td>TripsPage, Search and Results, PlayPage, YouPage</td>
+<td>Signed in, only with <code>features.journey</code></td>
+</tr>
+<tr>
+<td><code>/trips/:id</code> (<code>/:tab</code>)</td>
+<td>TripPage</td>
+<td>Signed in, only with <code>features.journey</code></td>
 </tr>
 <tr>
 <td><code>/alerts</code></td>
