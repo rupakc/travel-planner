@@ -71,6 +71,23 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/shares` | user | Create (or update the options of) a share link for a plan, recap or savings tally (`features.sharing`; see [Sharing API](Sharing-API.md)) |
 | GET | `/api/shares` | user | The caller's share links, newest first |
 | DELETE | `/api/shares/{token}` | user | Revoke a share link (204) |
+| GET, PUT | `/api/social/profile` | user | Own social profile (handle, visibility, opt-in fields); `features.social`, see [Social and Play API](Social-API.md) |
+| GET | `/api/social/handles/check`, `/api/social/profile/{handle}` | user | Handle availability; a public profile (privacy-projected) |
+| PUT, DELETE | `/api/social/follow/{handle}` | user | Follow (or request) and unfollow |
+| GET, POST | `/api/social/follow-requests`, `.../{handle}/accept`, `.../{handle}/decline` | user | Incoming follow requests |
+| GET | `/api/social/following`, `/api/social/followers`, `/api/social/blocks` | user | Handle lists |
+| PUT, DELETE | `/api/social/block/{handle}` | user | Block and unblock (two-way, silent) |
+| POST, GET, DELETE | `/api/social/ideas`, `/api/social/ideas/{id}`, `/api/social/profile/{handle}/ideas` | user | Publish a plan or recap snapshot as an idea; read, delete, list by author |
+| GET | `/api/social/feed` | user | Ideas feed (`for_you`, `following`, `new`) |
+| PUT, DELETE, POST | `/api/social/ideas/{id}/like`, `/api/social/ideas/{id}/save` | user | Like; save = remix into the caller's own plans |
+| GET, POST, DELETE, PUT | `/api/social/ideas/{id}/comments`, `/api/social/comments/{id}`, `/api/social/comments/{id}/helpful` | user | Comments and the helpful mark |
+| POST | `/api/social/reports` | user | Report an idea, comment or profile (204) |
+| GET, POST, DELETE | `/api/admin/social/queue`, `/api/admin/social/{target}/{id}/decide`, `/api/admin/social/users/{handle}/restrict` | admin | Moderation queue, approve or remove, restrict a user |
+| GET | `/api/play/state`, `/api/play/history`, `/api/play/challenge` | user | Play hub, own quiz history, weekly challenge (`features.play`) |
+| POST, GET | `/api/play/quiz`, `/api/play/quiz/{id}` | user | Start or resume a daily, pack or challenge quiz; read a session |
+| POST | `/api/play/quiz/{id}/answer` | user | Answer one question (checked and timed server-side) |
+| GET, POST | `/api/play/h2h`, `/api/play/h2h/{id}/accept`, `/api/play/h2h/{id}/decline` | user | Head-to-head matches |
+| GET | `/api/play/leaderboard` | user | Weekly global or friends board (opt-in, handles only) |
 | GET | `/api/share/{token}/page` | none | Server-rendered Open Graph page for link-preview crawlers (`noindex`) |
 | GET | `/api/share/{token}/card.png` | none | Share card PNG, `size=link` (1200x630) or `story` (1080x1920) |
 | GET, PUT | `/api/preferences` | user | Get or update preferences |
