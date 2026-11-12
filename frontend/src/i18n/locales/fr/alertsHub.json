@@ -1,1 +1,27 @@
-{}
+{
+  "title": "Aperçu des alertes",
+  "paused": {
+    "title": "Vérifications en direct en pause",
+    "body": "Vos suivis gardent leurs derniers prix ; chacun indique quand il a été vérifié."
+  },
+  "prefs": {
+    "button": "Préférences d’alertes"
+  },
+  "sort": {
+    "label": "Trier les suivis",
+    "moving": "En mouvement",
+    "soon": "Départ proche",
+    "newest": "Plus récents"
+  },
+  "deal": {
+    "title": "Chasseur de bonnes affaires",
+    "next": "Prochain badge : {{name}}",
+    "progress": "{{progress}} sur {{target}}",
+    "allDone": "Chasseur de bonnes affaires : tous les badges sont obtenus."
+  },
+  "digest": {
+    "title": "Votre résumé hebdomadaire",
+    "body": "Voici comment vos suivis ont évolué cette semaine. Les prix sont les derniers que nous avons observés.",
+    "dismiss": "Fermer la note du résumé"
+  }
+}

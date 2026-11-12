@@ -113,7 +113,9 @@
     "emptyTitle": "Pas encore d’alertes",
     "emptyBody": "Surveillez un vol, un hôtel, une activité ou tout un voyage et nous vous préviendrons ici quand son prix baisse.",
     "seeAll": "Voir tous les prix surveillés",
-    "announce_many": "{{count}} alertes de prix non lues"
+    "announce_many": "{{count}} alertes de prix non lues",
+    "groupTitle": "{{count}} baisses de prix",
+    "groupLatest": "Dernière : {{title}}"
   },
   "live": {
     "disclaimer": "Issu d’une recherche web en direct à l’instant. Les prix changent vite : vérifiez auprès du prestataire avant de réserver. Non utilisé pour vos alertes de prix.",
@@ -487,5 +489,11 @@
     "expired": "Cette surveillance est terminée, nous avons arrêté les vérifications.",
     "postponed": "Les prix en direct sont surchargés pour le moment : nous revérifierons demain.",
     "default": "Rien n’a été vérifié : ce prix n’est pas surveillé pour le moment."
+  },
+  "extras": {
+    "checked": "Vérifié {{when}}",
+    "pending": "En attente de la première vérification de prix",
+    "storyOpen": "Historique du prix",
+    "storyClose": "Masquer l’historique du prix"
   }
 }

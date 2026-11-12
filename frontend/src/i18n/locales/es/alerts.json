@@ -113,7 +113,9 @@
     "emptyTitle": "Aún no hay alertas",
     "emptyBody": "Vigila un vuelo, hotel, actividad o viaje entero y te avisaremos aquí cuando baje su precio.",
     "seeAll": "Ver todos los precios vigilados",
-    "announce_many": "{{count}} alertas de precio sin leer"
+    "announce_many": "{{count}} alertas de precio sin leer",
+    "groupTitle": "{{count}} bajadas de precio",
+    "groupLatest": "Última: {{title}}"
   },
   "live": {
     "disclaimer": "De una búsqueda web en directo ahora mismo. Los precios cambian rápido: confirma con el proveedor antes de reservar. No se usa para tus alertas de precio.",
@@ -487,5 +489,11 @@
     "expired": "Este seguimiento ha terminado, así que hemos dejado de comprobarlo.",
     "postponed": "Los precios en directo están saturados ahora mismo: volveremos a comprobar mañana.",
     "default": "No se comprobó nada: este precio no se está vigilando ahora mismo."
+  },
+  "extras": {
+    "checked": "Comprobado {{when}}",
+    "pending": "A la espera de la primera comprobación de precio",
+    "storyOpen": "Historia del precio",
+    "storyClose": "Ocultar la historia del precio"
   }
 }

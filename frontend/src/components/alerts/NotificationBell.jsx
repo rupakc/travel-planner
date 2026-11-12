@@ -1,15 +1,19 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlerts } from '../../context/AlertsContext'
+import { useAlertsV2 } from '../../hooks/useAlertsV2'
+import { groupDrops } from '../../utils/notificationGroups'
 import { listNotifications } from '../../services/api'
 import { notificationLink } from '../../utils/fareWatch'
 import { track } from '../../utils/analytics'
 import i18n from '../../i18n'
 import { actionText, alertKindFor, keepDeltaTogether } from './alertKinds'
 import { relativeTime as agoLabel } from '../../utils/fareWatch'
+
+const GROUP_WINDOW_MIN = 15   // the default push-grouping window
 
 export function NotificationItem({ n, onOpen, now = new Date() }) {
   const { t } = useTranslation('alerts')
@@ -42,6 +46,7 @@ export default function NotificationBell() {
   const { token } = useAuth()
   const { unread, markRead } = useAlerts()
   const navigate = useNavigate()
+  const { on: v2 } = useAlertsV2()
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState(null)
@@ -81,11 +86,19 @@ export default function NotificationBell() {
     }
   }, [open, token])
 
-  const openItem = (n) => {
+  // v2: drops that arrived together read as one row ("3 price drops")
+  const rows = useMemo(() => {
+    if (!items) return []
+    if (!v2) return items.map(n => ({ n, ids: [n.id], count: 1 }))
+    return groupDrops(items, GROUP_WINDOW_MIN).map(g => ({ n: g.latest, ids: g.ids, count: g.count }))
+  }, [items, v2])
+
+  const openItem = (n, ids = [n.id]) => {
     track('alert_clicked', 'bell', { kind: n.kind })
-    if (!n.read_at) markRead([n.id])
+    const unreadIds = (items || []).filter(x => ids.includes(x.id) && !x.read_at).map(x => x.id)
+    if (unreadIds.length) markRead(unreadIds)
     setOpen(false)
-    navigate(notificationLink(n))
+    navigate(v2 && n.kind === 'price_digest' ? '/alerts?from=digest&via=in_app' : notificationLink(n))
   }
 
   const markAll = async () => {
@@ -133,7 +146,10 @@ export default function NotificationBell() {
             )}
             {items?.length > 0 && (
               <ul className="divide-y divide-slate-100">
-                {items.map(n => <NotificationItem key={n.id} n={n} onOpen={openItem} />)}
+                {rows.map(({ n, ids, count }) => count > 1
+                  ? <NotificationItem key={ids.join('-')} onOpen={() => openItem(n, ids)}
+                    n={{ ...n, title: t('bell.groupTitle', { count }), body: t('bell.groupLatest', { title: n.title }), read_at: ids.every(id => items.find(x => x.id === id)?.read_at) ? n.read_at : null }} />
+                  : <NotificationItem key={n.id} n={n} onOpen={() => openItem(n)} />)}
               </ul>
             )}
           </div>
