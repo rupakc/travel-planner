@@ -28,8 +28,8 @@
     {
       "kind": "place",
       "name": "東京タワー",
-      "key": "place:x",
-      "note": "CJK only: x fallback"
+      "key": "place:x-fa440c98",
+      "note": "CJK only: x fallback; non-ASCII letters add a hash suffix"
     },
     {
       "kind": "other",
@@ -70,20 +70,20 @@
     {
       "kind": "food",
       "name": "Ørestad Bageri",
-      "key": "food:restad-bageri",
-      "note": "a letter without decomposition becomes a dash, then is trimmed"
+      "key": "food:restad-bageri-ebdbd753",
+      "note": "a letter without decomposition becomes a dash, then is trimmed; non-ASCII letters add a hash suffix"
     },
     {
       "kind": "place",
       "name": "Straße Café",
-      "key": "place:stra-e-cafe",
-      "note": "sharp s has no ASCII decomposition"
+      "key": "place:stra-e-cafe-15c55d4e",
+      "note": "sharp s has no ASCII decomposition; non-ASCII letters add a hash suffix"
     },
     {
       "kind": "activity",
       "name": "Mixed 東京 Tower",
-      "key": "activity:mixed-tower",
-      "note": "CJK inside a Latin name"
+      "key": "activity:mixed-tower-1d77138f",
+      "note": "CJK inside a Latin name; non-ASCII letters add a hash suffix"
     },
     {
       "kind": "place",
@@ -102,6 +102,36 @@
       "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yz",
       "key": "activity:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-",
       "note": "the cut comes after the trim, so a slug may end with a dash"
+    },
+    {
+      "kind": "place",
+      "name": "京都駅",
+      "key": "place:x-dd310a9b",
+      "note": "distinct CJK names get distinct keys"
+    },
+    {
+      "kind": "place",
+      "name": "ताज महल",
+      "key": "place:x-d66b7d60",
+      "note": "Devanagari name"
+    },
+    {
+      "kind": "place",
+      "name": "মেট্রো স্টেশন",
+      "key": "place:x-1d6a7fc5",
+      "note": "Bengali name"
+    },
+    {
+      "kind": "place",
+      "name": "東京タワー アアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアアア",
+      "key": "place:x-8d133d98",
+      "note": "long non-Latin name: slug empty, hash of the whole trimmed name"
+    },
+    {
+      "kind": "food",
+      "name": "Ancient Monastery of the Hieronymites Ancient Monastery of the Hieronymites 東京",
+      "key": "food:ancient-monastery-of-the-hieronymites-ancient-monas-95e2c1ff",
+      "note": "long Latin slug is cut to 51 before the suffix"
     }
   ]
 }

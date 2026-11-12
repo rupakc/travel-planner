@@ -154,6 +154,8 @@ def patch_expense(
     if "spent_on" in sent:
         fields["spent_on"] = _day(req.spent_on or "")
     row = trip_expenses_db.update(plan_id, expense_id, fields)
+    if row is None:  # deleted between the read above and the update
+        raise ApiError(404, "expense_not_found", "Expense not found")
     return _out(row)
 
 

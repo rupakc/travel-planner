@@ -25,13 +25,16 @@ export function tabsFor(phase) {
  * (null: the phase default) and whether the trip came from the offline pack.
  * -> {tabs, enabled, active}
  */
-export function resolveTabs({ phase, tab = null, offline = false }) {
-  const { tabs, default: def } = tabsFor(phase)
-  const wanted = tab && TRIP_TABS.includes(tab) ? tab : null
+export function resolveTabs({ phase, tab = null, offline = false, offlinePack = true }) {
+  const row = tabsFor(phase)
+  // features.offline_pack false (the kill switch): no Offline tab at all.
+  const tabs = offlinePack ? row.tabs : row.tabs.filter((x) => x !== 'offline')
+  const def = !offlinePack && row.default === 'offline' ? 'overview' : row.default
+  const wanted = tab && TRIP_TABS.includes(tab) && (offlinePack || tab !== 'offline') ? tab : null
   if (wanted && !tabs.includes(wanted)) tabs.push(wanted)
   if (!offline) return { tabs, enabled: tabs, active: wanted ?? def }
-  if (!tabs.includes('offline')) tabs.push('offline')
+  if (offlinePack && !tabs.includes('offline')) tabs.push('offline')
   const enabled = tabs.filter((t) => OFFLINE_TABS.includes(t))
   const first = wanted ?? def
-  return { tabs, enabled, active: enabled.includes(first) ? first : 'offline' }
+  return { tabs, enabled, active: enabled.includes(first) ? first : (offlinePack ? 'offline' : (enabled[0] ?? tabs[0])) }
 }

@@ -20,7 +20,7 @@ const safe = (props) => { try { emit('offline_pack', props) } catch { /* telemet
 
 export default function OfflinePack({ trip, token }) {
   const { t } = useTranslation('offlinePack')
-  const { enabled } = useJourney()
+  const { enabled, offlinePack } = useJourney()
   const { user } = useAuth()
   const online = useOnline()
   const rawId = user?.id ?? user?.username
@@ -36,6 +36,7 @@ export default function OfflinePack({ trip, token }) {
   const kb = local?.kb ?? (pack ? sizeKb(pack) : 0)
 
   const save = useCallback(async (action) => {
+    if (!offlinePack) return
     setBusy(true)
     setError(null)
     let result = 'error'
@@ -64,7 +65,7 @@ export default function OfflinePack({ trip, token }) {
       setBusy(false)
       safe({ action, result, kb: savedKb })
     }
-  }, [token, trip?.id, userId])
+  }, [token, trip?.id, userId, offlinePack])
 
   const remove = async () => {
     setBusy(true)
@@ -82,10 +83,10 @@ export default function OfflinePack({ trip, token }) {
   const hasStored = !!stored.pack
   const tripId = trip?.id
   useEffect(() => {
-    if (enabled && hasStored) safe({ action: 'open', result: 'ok', kb: 0 })
-  }, [enabled, hasStored, tripId])
+    if (enabled && offlinePack && hasStored) safe({ action: 'open', result: 'ok', kb: 0 })
+  }, [enabled, offlinePack, hasStored, tripId])
 
-  if (!enabled || !trip) return null
+  if (!enabled || !offlinePack || !trip) return null
 
   return (
     <div data-tid="offlinePack" className="space-y-4">

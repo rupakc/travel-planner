@@ -23,6 +23,16 @@ describe('placeKey', () => {
     })
   }
 
+  it('gives distinct non-Latin names distinct valid keys', () => {
+    const a = placeKey('nearby', '京都駅')
+    const b = placeKey('nearby', '東京タワー')
+    expect(a).not.toBe(b)
+    expect(a).toMatch(/^nearby:x-[0-9a-f]{8}$/)
+    expect(placeKey('nearby', '京都駅')).toBe(a)
+    expect(placeKey('nearby', ' 京都駅 ')).toBe(a)
+    expect(placeKey('nearby', 'ताज महल')).toMatch(SERVER_RE)
+  })
+
   it('treats a missing name as empty', () => {
     expect(placeKey('place', null)).toBe('place:x')
     expect(placeKey('place', undefined)).toBe('place:x')

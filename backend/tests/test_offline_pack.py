@@ -222,3 +222,24 @@ def test_pack_get_completes_prep_and_awards_once(client, admin_headers, monkeypa
             == 200
         )
     assert calls == [trip]
+
+
+def test_pack_404_when_kill_switch_off(client, admin_headers, trip, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "offline_pack_enabled", False)
+    r = client.get(f"/api/trips/{trip}/offline-pack", headers=admin_headers)
+    assert r.status_code == 404
+    assert r.json()["error_code"] == "offline_pack_disabled"
+
+
+def test_snapshot_limit_follows_setting(client, admin_headers, trip, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "trip_snapshot_max_bytes", 100)
+    r = client.put(
+        f"/api/trips/{trip}/snapshot",
+        json={"weather": {"blob": "x" * 200}},
+        headers=admin_headers,
+    )
+    assert r.status_code == 413

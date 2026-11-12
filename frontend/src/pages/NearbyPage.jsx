@@ -22,6 +22,11 @@ const GEO_OPTIONS = { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 *
 // (not blocked) prompt in Firefox/Safari never calls back. Give up after this.
 export const GEO_WATCHDOG_MS = 20000
 
+// Google-Maps-grounded items (the v2 sections) may not be stored: Google's terms
+// keep them with the requesting user. Only non-Google local-data results can be
+// saved to a trip with "I'm here".
+export const fromMaps = (item, data) => !!(item?.maps_uri || item?.place_id || data?.attribution || data?.sources)
+
 function ItemCard({ item, onHere, visited }) {
   const { t } = useTranslation('misc')
   const { t: tt } = useTranslation('nearbyTrip')
@@ -302,7 +307,7 @@ export default function NearbyPage() {
               {s.items.length > 0 ? (
                 <ul className="grid gap-3 sm:grid-cols-2">
                   {s.items.map((item, i) => <ItemCard key={item.place_id || `${item.name}-${i}`} item={item}
-                    onHere={tripId ? imHere : null} visited={visited.has(placeKey('nearby', item.name))} />)}
+                    onHere={tripId && !fromMaps(item, data) ? imHere : null} visited={visited.has(placeKey('nearby', item.name))} />)}
                 </ul>
               ) : (
                 <p className="rounded-xl bg-white/70 px-4 py-4 text-sm text-slate-500">{t(`nearby.empty.${s.id}`)}</p>

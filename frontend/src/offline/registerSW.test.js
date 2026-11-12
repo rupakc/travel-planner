@@ -30,6 +30,17 @@ describe('ensureServiceWorker', () => {
     expect(await ensureServiceWorker()).toBeNull()
   })
 
+  it('returns null and never registers when /config says offline_pack is false', async () => {
+    const register = vi.fn()
+    installSW({ register })
+    vi.resetModules()
+    vi.doMock('../hooks/useClientConfig', () => ({ loadClientConfig: async () => ({ features: { offline_pack: false } }) }))
+    const mod = await import('./registerSW')
+    expect(await mod.ensureServiceWorker()).toBeNull()
+    expect(register).not.toHaveBeenCalled()
+    vi.doUnmock('../hooks/useClientConfig')
+  })
+
   it('returns null outside a secure context', async () => {
     const register = vi.fn()
     installSW({ register })
