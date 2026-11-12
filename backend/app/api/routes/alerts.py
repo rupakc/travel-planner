@@ -5,9 +5,9 @@ import json
 import threading
 from typing import Literal
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from ...core.ai_quota import daily_quota
@@ -25,6 +25,7 @@ from ...db import (
 )
 from ...services import (
     alert_delivery,
+    alert_email,
     alert_moments,
     alert_story,
     fare_watch,
@@ -250,3 +251,55 @@ def quick_watch(body: QuickWatchBody, user: dict = Depends(get_current_user)):
 
 
 # ── END quick-watch ───────────────────────────────────────────────────────────
+
+
+# ── BEGIN digest unsubscribe (Task 10) ────────────────────────────────────────
+
+
+def _digest_page(title: str, body: str, form: str = "", status: int = 200):
+    from .fare_watches import html_page
+
+    return HTMLResponse(html_page(title, body, form), status_code=status)
+
+
+@router.get("/alerts/digest/unsubscribe", response_class=HTMLResponse)
+def digest_unsubscribe_confirm(token: str = Query("")):
+    """Confirmation page only: link scanners follow every GET."""
+    if alert_email.read_digest_unsubscribe_token(token) is None:
+        return _digest_page(
+            "This link isn't valid", "It may have been copied incompletely.", "", 400
+        )
+    import html
+
+    action = html.escape(f"/api/alerts/digest/unsubscribe?token={token}")
+    form = (
+        f'<form method="post" action="{action}" style="margin:0 0 16px">'
+        "<button type='submit' style='background:#0284c7;color:#fff;border:0;"
+        "border-radius:999px;padding:10px 18px;font-weight:600;font-size:14px;"
+        "cursor:pointer'>Stop the weekly digest</button></form>"
+    )
+    return _digest_page(
+        "Stop the weekly digest?",
+        "Your watches keep running; only the weekly summary stops.",
+        form,
+    )
+
+
+@router.post("/alerts/digest/unsubscribe", response_class=HTMLResponse)
+def digest_unsubscribe(token: str = Query("")):
+    """Turns the digest off without login (also the RFC 8058 one-click POST)."""
+    user_id = alert_email.read_digest_unsubscribe_token(token)
+    if user_id is None:
+        return _digest_page(
+            "This link isn't valid", "It may have been copied incompletely.", "", 400
+        )
+    prefs = alerts_db.get_prefs(user_id)
+    prefs["digest_weekly"] = False
+    alerts_db.put_prefs(user_id, prefs)
+    return _digest_page(
+        "Done: no more weekly digests",
+        "You can turn the digest back on any time in your alert settings.",
+    )
+
+
+# ── END digest unsubscribe ────────────────────────────────────────────────────

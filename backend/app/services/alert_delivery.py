@@ -7,6 +7,7 @@
 import asyncio
 import logging
 import re
+import time as time_mod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, time, timedelta
@@ -479,7 +480,13 @@ async def _flush(now: datetime) -> int:
 # ── Loop ──────────────────────────────────────────────────────────────────────
 
 
+DIGEST_INTERVAL_S = 300
+
+
 async def _loop(interval: int) -> None:
+    from . import alert_digest
+
+    last_digest = 0.0
     while True:
         try:
             await asyncio.to_thread(flush, datetime.now(UTC))
@@ -487,6 +494,14 @@ async def _loop(interval: int) -> None:
             raise
         except Exception:  # noqa: BLE001
             logger.warning("alert flush pass failed", exc_info=True)
+        if time_mod.monotonic() - last_digest >= DIGEST_INTERVAL_S:
+            last_digest = time_mod.monotonic()
+            try:
+                await asyncio.to_thread(alert_digest.run_due, datetime.now(UTC))
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                logger.warning("weekly digest pass failed", exc_info=True)
         await asyncio.sleep(interval)
 
 
