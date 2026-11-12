@@ -81,8 +81,13 @@ def test_suggest_order_and_cap(client):
 
 def test_trip_after_parts_when_room(client):
     u, h = _user()
-    sel = {"flight": {"price_usd": 400}, "hotel": {"name": "Lumen", "total_price_usd": 9}}
-    kinds = [s["kind"] for s in _get(client, h, _plan(u, sel=sel)).json()["suggestions"]]
+    sel = {
+        "flight": {"price_usd": 400},
+        "hotel": {"name": "Lumen", "total_price_usd": 9},
+    }
+    kinds = [
+        s["kind"] for s in _get(client, h, _plan(u, sel=sel)).json()["suggestions"]
+    ]
     assert kinds == ["flight", "hotel", "trip"]
 
 
@@ -115,8 +120,12 @@ def test_already_watching_flagged(client):
         r = client.post(
             "/api/alerts/quick-watch",
             headers=h,
-            json={"kind": x["kind"], "title": x["title"], "spec": x["spec"],
-                  "surface": "suggest"},
+            json={
+                "kind": x["kind"],
+                "title": x["title"],
+                "spec": x["spec"],
+                "surface": "suggest",
+            },
         )
         assert r.status_code == 201, r.text
     flags = [x["already_watching"] for x in _get(client, h, pid).json()["suggestions"]]
@@ -130,9 +139,14 @@ def test_suggest_specs_accepted_by_quick_watch(client):
         r = client.post(
             "/api/alerts/quick-watch",
             headers=h,
-            json={"kind": x["kind"], "title": x["title"],
-                  "subtitle": x["subtitle"], "spec": x["spec"],
-                  "plan_id": pid, "surface": "suggest"},
+            json={
+                "kind": x["kind"],
+                "title": x["title"],
+                "subtitle": x["subtitle"],
+                "spec": x["spec"],
+                "plan_id": pid,
+                "surface": "suggest",
+            },
         )
         assert r.status_code in (200, 201), (x["kind"], r.text)
 
@@ -165,3 +179,46 @@ def test_live_prices_flag_off(client, monkeypatch):
     body = _get(client, h, _plan(u)).json()
     assert body["live_prices"] is False and body["suggestions"]
     assert price_watch  # imported for source registration
+
+
+def test_all_four_kinds_eligible_are_produced(client):
+    """A renamed private helper must surface here, not vanish silently."""
+    u, h = _user()
+    sel = {
+        "flight": {"price_usd": 400},
+        "hotel": {"name": "Lumen", "total_price_usd": 900},
+        "activities": [{"name": "Old Town Walk", "booking_url": GYG}],
+    }
+    kinds = [
+        s["kind"] for s in _get(client, h, _plan(u, sel=sel)).json()["suggestions"]
+    ]
+    assert kinds == ["flight", "hotel", "activity", "trip"]
+
+
+def test_already_watching_activity_and_trip(client):
+    u, h = _user()
+    sel = {
+        "flight": {"price_usd": 400},
+        "hotel": {"name": "Lumen", "total_price_usd": 900},
+        "activities": [{"name": "Old Town Walk", "booking_url": GYG}],
+    }
+    pid = _plan(u, sel=sel)
+    for x in _get(client, h, pid).json()["suggestions"]:
+        if x["kind"] in ("activity", "trip"):
+            r = client.post(
+                "/api/alerts/quick-watch",
+                headers=h,
+                json={
+                    "kind": x["kind"],
+                    "title": x["title"],
+                    "spec": x["spec"],
+                    "plan_id": pid,
+                    "surface": "suggest",
+                },
+            )
+            assert r.status_code == 201, r.text
+    flags = {
+        x["kind"]: x["already_watching"]
+        for x in _get(client, h, pid).json()["suggestions"]
+    }
+    assert flags == {"flight": False, "hotel": False, "activity": True, "trip": True}

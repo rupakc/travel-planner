@@ -7,12 +7,19 @@ dates, no city, ...) is simply not suggested.
 
 from __future__ import annotations
 
+import logging
+
+from fastapi import HTTPException
+
 from ..db import fare_watch_db, price_watch_db
 from . import fare_watch, price_watch
 from .activity_prices import page_kind, provider_of
 from .price_sources import activity as activity_src
 from .price_sources import hotel as hotel_src
 from .price_sources import trip as trip_src
+from .price_watch import InvalidSpec
+
+logger = logging.getLogger(__name__)
 
 MAX_SUGGESTIONS = 5
 MAX_HOTELS = 2
@@ -31,8 +38,9 @@ def _sel(plan: dict) -> dict:
 
 
 def _dates(sd: dict) -> tuple[str | None, str | None]:
-    dep, ret = trip_src._iso(sd.get("departure_date")), trip_src._iso(
-        sd.get("return_date")
+    dep, ret = (
+        trip_src._iso(sd.get("departure_date")),
+        trip_src._iso(sd.get("return_date")),
     )
     if dep and ret and ret <= dep:
         ret = None
@@ -62,7 +70,10 @@ def _flight(plan: dict, sd: dict, dep: str | None, ret: str | None) -> dict | No
                 num_travelers=n,
             )
         )
-    except Exception:  # unresolvable airports, bad fields: no suggestion
+    except (HTTPException, ValueError):  # unresolvable airports, bad fields
+        return None
+    except Exception:
+        logger.warning("alert suggestion: flight spec failed", exc_info=True)
         return None
     days = (req.departure_date - fare_watch.utcnow().date()).days
     if days <= 0:
@@ -121,7 +132,10 @@ def _hotels(plan: dict, sd: dict, dep, ret) -> list[dict]:
         }
         try:
             clean = hotel_src._clean(spec)
+        except InvalidSpec:
+            continue
         except Exception:
+            logger.warning("alert suggestion: hotel spec failed", exc_info=True)
             continue
         seen.add(name.lower())
         out.append(
@@ -167,7 +181,10 @@ def _activities(plan: dict, sd: dict) -> list[dict]:
         }
         try:
             activity_src.parse_spec(spec)
+        except InvalidSpec:
+            continue
         except Exception:
+            logger.warning("alert suggestion: activity spec failed", exc_info=True)
             continue
         out.append(
             {
@@ -188,7 +205,10 @@ def _trip(plan: dict, sd: dict) -> dict | None:
     try:
         ctx = trip_src._trip_context(plan)
         parts = [d for d in trip_src._drafts(plan, ctx) if d.get("price", 0) > 0]
+    except InvalidSpec:
+        return None
     except Exception:
+        logger.warning("alert suggestion: trip spec failed", exc_info=True)
         return None
     if len(parts) < 2:
         return None
@@ -219,4 +239,6 @@ def suggestions(plan: dict, user: dict) -> list[dict]:
     for s in out:
         if s["kind"] != "flight":
             s["already_watching"] = _watched(user["id"], s["kind"], s["spec"])
+    # The literal order is flight, hotels, activities, trip, so a full plan
+    # (flight + 2 hotels + 2 activities) fills the cap and drops the trip total.
     return out[:MAX_SUGGESTIONS]
