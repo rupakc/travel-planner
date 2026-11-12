@@ -2378,6 +2378,18 @@
 <td>Current user</td>
 </tr>
 <tr>
+<td>GET</td>
+<td><code>/api/auth/sessions</code></td>
+<td>user</td>
+<td>Live mobile sessions (refresh families); optional <code>X-Refresh-Token</code> marks <code>current</code></td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/auth/sessions/{id}</code></td>
+<td>user</td>
+<td>Revoke one session; <code>404 session_not_found</code> if not yours</td>
+</tr>
+<tr>
 <td>PUT</td>
 <td><code>/api/auth/email</code></td>
 <td>user</td>

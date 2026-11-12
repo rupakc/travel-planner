@@ -1773,6 +1773,20 @@
 <td>—</td>
 </tr>
 <tr>
+<td><code>GET /auth/sessions</code> (additive, 2026-11-12)</td>
+<td>yes</td>
+<td>optional header <code>X-Refresh-Token: rt_…</code> (never logged)</td>
+<td><code>200 {"sessions": [{"id", "client", "device_name", "created_at", "last_used_at", "current"}]}</code>: the caller's live refresh-token families (one per mobile sign-in; web logins have none), most recently used first. <code>id</code> is the family id and stays the same across refreshes. <code>current</code> is true for the family the <code>X-Refresh-Token</code> belongs to. Revoked and expired families are not listed. Bucket <code>account</code></td>
+<td><code>401</code>, <code>429</code></td>
+</tr>
+<tr>
+<td><code>DELETE /auth/sessions/{id}</code> (additive, 2026-11-12)</td>
+<td>yes</td>
+<td>—</td>
+<td><code>204</code>, revokes that whole family (its next refresh answers <code>401 refresh_invalid</code>)</td>
+<td><code>404 session_not_found</code> (unknown, already revoked, or another user's), <code>429</code></td>
+</tr>
+<tr>
 <td><code>POST /auth/change-password</code> (additive)</td>
 <td>yes</td>
 <td><code>{"current_password", "new_password", "client"?}</code>. <code>current_password</code> may be <code>""</code> when <code>has_password</code> is false</td>
@@ -2105,6 +2119,7 @@
 <ul>
 <li>2026-11-11 — v1 published</li>
 <li>2026-11-11 — added the "Contract notes" section (clarifications only)</li>
+<li>2026-11-12 — added <code>GET /auth/sessions</code> and <code>DELETE /auth/sessions/{id}</code> (additive; no existing endpoint changed)</li>
 </ul>
 
 
