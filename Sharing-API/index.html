@@ -1340,10 +1340,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-in-this-phase" class="md-nav__link">
+  <a href="#quiz-and-status-shares-phase-5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not in this phase
+        Quiz and status shares (Phase 5)
       
     </span>
   </a>
@@ -1758,8 +1758,8 @@
 <p>Rendered cards sit in a small in-process TTL cache (64 entries, 10 minutes) keyed by token, size and content; revoking clears the token's entries and every public route answers <code>404</code> immediately. The one residual exposure is the HTTP cache: <code>Cache-Control: public, max-age=300</code> means a browser, proxy or link-preview service that already fetched a page or card may keep showing it for up to five minutes (and previews that chat apps stored on their side can last longer; a revoked link cannot be recalled from them). Treat a revoked share as "stops working within minutes".</p>
 <h2 id="legacy-links">Legacy links</h2>
 <p><code>POST /plans/{id}/share</code> (no body, <code>{"share_token"}</code>), <code>DELETE /plans/{id}/share</code> and the legacy tokens keep their request and response shapes, and <code>GET /share/{token}</code> answers them byte for byte as before; they ignore the options above (dates and origin are as the legacy whitelist). New clients should use <code>POST /shares</code> when <code>features.sharing &gt;= 1</code>.</p>
-<h2 id="not-in-this-phase">Not in this phase</h2>
-<p>A quiz-score share (no quiz yet) and an ephemeral "Day 3 in Lisbon" status (stays a native text share) are deferred.</p>
+<h2 id="quiz-and-status-shares-phase-5">Quiz and status shares (Phase 5)</h2>
+<p>Nothing is deferred for Phase 5: <code>kind: "quiz"</code> (<code>session_id</code>, the caller's finished quiz session; the card shows the pack and score out of 5, never time or answers) and <code>kind: "status"</code> (<code>plan_id</code>, an active trip of the caller; <code>422 no_active_trip</code> otherwise; the card reads "Day N in Place") are served additively, see <a href="../Social-API/">Social and Play API</a>.</p>
 
 
 

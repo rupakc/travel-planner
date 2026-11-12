@@ -2239,11 +2239,6 @@
 <td>XP, badges, levels and streaks (<code>GET /api/game/*</code> answer 404 when off).</td>
 </tr>
 <tr>
-<td><code>PLAY_ENABLED</code></td>
-<td><code>false</code></td>
-<td>Play (Phase 5): daily quiz and topic packs under <code>/api/play/*</code> (also needs <code>GAME_ENABLED</code>); off = 404 <code>play_disabled</code> and <code>features.play</code> 0.</td>
-</tr>
-<tr>
 <td><code>GAME_RULES_PATH</code></td>
 <td><code>""</code></td>
 <td>Alternative rules file; empty uses <code>backend/app/game/rules.json</code>.</td>
@@ -2373,11 +2368,6 @@
 <td><code>RATE_LIMIT_ADMIN</code></td>
 <td><code>120</code></td>
 <td>Phase 5: the admin moderation queue and decisions per user.</td>
-</tr>
-<tr>
-<td><code>RATE_LIMIT_PLAY</code></td>
-<td><code>60</code></td>
-<td>Requests per 10 minutes per user on <code>/api/play/*</code> (no AI calls).</td>
 </tr>
 <tr>
 <td><code>RATE_LIMIT_SHARE_PUBLIC</code></td>

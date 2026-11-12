@@ -2642,6 +2642,108 @@
 <td>Revoke a share link (204)</td>
 </tr>
 <tr>
+<td>GET, PUT</td>
+<td><code>/api/social/profile</code></td>
+<td>user</td>
+<td>Own social profile (handle, visibility, opt-in fields); <code>features.social</code>, see <a href="../Social-API/">Social and Play API</a></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/social/handles/check</code>, <code>/api/social/profile/{handle}</code></td>
+<td>user</td>
+<td>Handle availability; a public profile (privacy-projected)</td>
+</tr>
+<tr>
+<td>PUT, DELETE</td>
+<td><code>/api/social/follow/{handle}</code></td>
+<td>user</td>
+<td>Follow (or request) and unfollow</td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/social/follow-requests</code>, <code>.../{handle}/accept</code>, <code>.../{handle}/decline</code></td>
+<td>user</td>
+<td>Incoming follow requests</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/social/following</code>, <code>/api/social/followers</code>, <code>/api/social/blocks</code></td>
+<td>user</td>
+<td>Handle lists</td>
+</tr>
+<tr>
+<td>PUT, DELETE</td>
+<td><code>/api/social/block/{handle}</code></td>
+<td>user</td>
+<td>Block and unblock (two-way, silent)</td>
+</tr>
+<tr>
+<td>POST, GET, DELETE</td>
+<td><code>/api/social/ideas</code>, <code>/api/social/ideas/{id}</code>, <code>/api/social/profile/{handle}/ideas</code></td>
+<td>user</td>
+<td>Publish a plan or recap snapshot as an idea; read, delete, list by author</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/social/feed</code></td>
+<td>user</td>
+<td>Ideas feed (<code>for_you</code>, <code>following</code>, <code>new</code>)</td>
+</tr>
+<tr>
+<td>PUT, DELETE, POST</td>
+<td><code>/api/social/ideas/{id}/like</code>, <code>/api/social/ideas/{id}/save</code></td>
+<td>user</td>
+<td>Like; save = remix into the caller's own plans</td>
+</tr>
+<tr>
+<td>GET, POST, DELETE, PUT</td>
+<td><code>/api/social/ideas/{id}/comments</code>, <code>/api/social/comments/{id}</code>, <code>/api/social/comments/{id}/helpful</code></td>
+<td>user</td>
+<td>Comments and the helpful mark</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/social/reports</code></td>
+<td>user</td>
+<td>Report an idea, comment or profile (204)</td>
+</tr>
+<tr>
+<td>GET, POST, DELETE</td>
+<td><code>/api/admin/social/queue</code>, <code>/api/admin/social/{target}/{id}/decide</code>, <code>/api/admin/social/users/{handle}/restrict</code></td>
+<td>admin</td>
+<td>Moderation queue, approve or remove, restrict a user</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/play/state</code>, <code>/api/play/history</code>, <code>/api/play/challenge</code></td>
+<td>user</td>
+<td>Play hub, own quiz history, weekly challenge (<code>features.play</code>)</td>
+</tr>
+<tr>
+<td>POST, GET</td>
+<td><code>/api/play/quiz</code>, <code>/api/play/quiz/{id}</code></td>
+<td>user</td>
+<td>Start or resume a daily, pack or challenge quiz; read a session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/play/quiz/{id}/answer</code></td>
+<td>user</td>
+<td>Answer one question (checked and timed server-side)</td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/play/h2h</code>, <code>/api/play/h2h/{id}/accept</code>, <code>/api/play/h2h/{id}/decline</code></td>
+<td>user</td>
+<td>Head-to-head matches</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/play/leaderboard</code></td>
+<td>user</td>
+<td>Weekly global or friends board (opt-in, handles only)</td>
+</tr>
+<tr>
 <td>GET</td>
 <td><code>/api/share/{token}/page</code></td>
 <td>none</td>

@@ -1571,9 +1571,9 @@
 
 <h1 id="social-and-play-api">Social and Play API</h1>
 <blockquote>
-<p><strong>Status:</strong> frozen when Phase 5 merges (draft until then). <strong>Changes:</strong> later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.</p>
+<p><strong>Status:</strong> frozen 2026-11-12 (Phase 5). <strong>Changes:</strong> later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.</p>
 </blockquote>
-<p>Phase 5 adds <strong>profiles, an ideas feed, moderation</strong> (<code>/api/social/*</code>) and <strong>Play</strong> (quizzes, head-to-head, leaderboards, weekly challenges; <code>/api/play/*</code>). Two independent flags, both default <strong>off</strong> until the final review of Phase 5: <code>SOCIAL_ENABLED</code> and <code>PLAY_ENABLED</code> (Play also needs <code>GAME_ENABLED</code>).</p>
+<p>Phase 5 adds <strong>profiles, an ideas feed, moderation</strong> (<code>/api/social/*</code>) and <strong>Play</strong> (quizzes, head-to-head, leaderboards, weekly challenges; <code>/api/play/*</code>). Two independent flags, both default <strong>off</strong> until the owner turns them on: <code>SOCIAL_ENABLED</code> and <code>PLAY_ENABLED</code> (Play also needs <code>GAME_ENABLED</code>).</p>
 <p>All paths are under <code>/api</code>, JSON in and out, <code>Authorization: Bearer &lt;access_token&gt;</code>. Nothing here is available anonymously. Errors use the Phase 1 envelope <code>{"detail", "error_code"}</code>.</p>
 <h2 id="discovery">Discovery</h2>
 <p><code>GET /config</code> gains <code>features.social: 0|1</code> and <code>features.play: 0|1</code> (1 = the routes exist). Off, every route below answers <code>404 social_disabled</code> / <code>404 play_disabled</code>. Clients feature-detect and hide the entry points otherwise.</p>
