@@ -112,11 +112,11 @@
       "desc": "Caza tu primera bajada de precio."
     },
     "deal_hunter_silver": {
-      "name": "Rastreo de ofertas",
+      "name": "Rastreador de ofertas",
       "desc": "Caza 5 bajadas de precio."
     },
     "deal_hunter_gold": {
-      "name": "Rey de ofertas",
+      "name": "Maestro de ofertas",
       "desc": "Caza 20 bajadas de precio."
     },
     "bullseye": {

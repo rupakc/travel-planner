@@ -1,14 +1,14 @@
 {
   "title": "Baisses repérées",
   "amountLine": "Baisses repérées : {{amount}}",
-  "caveat": "L'écart entre le premier prix observé et le plus bas dont nous vous avons alerté, sur les suivis en USD uniquement. Il ne devient de l'argent que si vous réservez à ce prix.",
+  "caveat": "L’écart entre le premier prix observé et le plus bas dont nous vous avons alerté, sur les suivis en USD uniquement. Il ne devient de l’argent que si vous réservez à ce prix.",
   "empty": "Votre première baisse apparaîtra ici",
   "emptyHint": "Chaque vraie baisse de prix de vos suivis est ajoutée ici.",
   "drops_one": "{{count}} baisse repérée",
   "drops_many": "{{count}} de baisses repérées",
   "drops_other": "{{count}} baisses repérées",
   "targets_one": "{{count}} objectif atteint",
-  "targets_many": "{{count}} d'objectifs atteints",
+  "targets_many": "{{count}} d’objectifs atteints",
   "targets_other": "{{count}} objectifs atteints",
   "otherCurrencies": "Autres devises, non converties",
   "best": "Meilleure prise : {{title}}, {{amount}}",
@@ -21,9 +21,9 @@
   "share": "Partager",
   "shareTitle": "Partagez vos prises",
   "close": "Fermer",
-  "download": "Télécharger l'image",
+  "download": "Télécharger l’image",
   "preview": "Aperçu de la carte à partager",
-  "working": "Création de l'image…",
+  "working": "Création de l’image…",
   "status": {
     "native": "Partagé",
     "download": "Image téléchargée",
@@ -31,8 +31,8 @@
     "error": "Impossible de partager cette carte"
   },
   "card": {
-    "headline": "J'ai repéré {{amount}} de baisses de prix avec Voyager",
-    "headlineOther": "J'ai repéré des baisses de prix avec Voyager",
-    "footer": "Uniquement des baisses de prix observées. Réserver à ce prix, c'est à vous de voir."
+    "headline": "J’ai repéré {{amount}} de baisses de prix avec Voyager",
+    "headlineOther": "J’ai repéré des baisses de prix avec Voyager",
+    "footer": "Uniquement des baisses de prix observées. Réserver à ce prix, c’est à vous de voir."
   }
 }

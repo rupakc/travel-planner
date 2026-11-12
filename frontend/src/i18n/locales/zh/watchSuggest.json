@@ -12,7 +12,7 @@
   "status.already": "已在关注",
   "status.running": "正在设置…",
   "status.done": "关注中",
-  "error.watch_limit": "你已达到活跃关注数量上限。请在提醒页面移除一项。",
+  "error.watch_limit": "你已达到活跃关注数量上限。请在价格提醒页面移除一项。",
   "error.live_prices_off": "价格关注功能暂不可用。",
   "error.spec_invalid": "无法为此项设置关注。",
   "error.generic": "无法开始关注。"
