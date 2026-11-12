@@ -34,6 +34,7 @@ def put_preferences(body: dict = Body(...), user: dict = Depends(get_current_use
     alerts_db.put_prefs(user["id"], merged)
     return _prefs_view(user["id"])
 
+
 KINDS = ("flight", "hotel", "activity", "trip")
 
 
