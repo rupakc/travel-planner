@@ -109,6 +109,7 @@ KEYED_TABLES: dict[str, str] = {
         t: "idea_id IN (SELECT id FROM ideas WHERE author_id = ?)"
         for t in ("idea_likes", "idea_saves", "comments")
     },
+    "h2h_matches": "? IN (creator_id, opponent_id)",
 }
 
 # rows that outlive the user, with the reference cleared: table → column

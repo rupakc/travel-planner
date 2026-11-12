@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime
 from ...core.errors import ApiError
 from ...db import game_db, quiz_db
 from ...db.database import get_connection
+from ...services import challenge as challenge_svc
 from .. import engine as game_engine
 from . import engine as quiz_engine
 
@@ -62,6 +63,17 @@ def _finalize_expired(sid: str, now: int) -> None:
             now,
         )
         quiz_db.save_rewards(conn, sid, None, None)
+        mode = s["mode"]
+    if mode == "h2h":
+        # An idle finish still completes the match (and pays both sides).
+        from ...services import h2h
+
+        try:
+            xp = h2h.on_finished(s, datetime.fromtimestamp(now / 1000, UTC))
+            if xp is not None:
+                _store_rewards(sid, xp, None)
+        except Exception:
+            logger.exception("h2h idle finish failed (session=%s)", sid)
 
 
 def view(s: dict, answers: list[dict], *, resumed: bool = False) -> dict:
@@ -107,20 +119,43 @@ def _summary(s: dict) -> dict:
     return out
 
 
+def _challenge_done(conn, user_id: str, week: str) -> bool:
+    """A finished challenge session this ISO week (whatever its country)."""
+    return bool(
+        conn.execute(
+            "SELECT 1 FROM quiz_sessions WHERE user_id = ? AND mode = 'challenge'"
+            " AND day LIKE ? AND finished_ms IS NOT NULL LIMIT 1",
+            (user_id, f"{week}:%"),
+        ).fetchone()
+    )
+
+
 def start(user_id: str, mode: str, pack: str | None) -> dict:
+    ch = None
     if mode == "pack":
         if pack not in quiz_engine.PACKS:
             raise ApiError(422, "invalid_pack", "Unknown pack.")
     elif mode == "daily":
         pack = None
+    elif mode == "challenge":
+        ch = challenge_svc.current(
+            user_id, datetime.fromtimestamp(_now_ms() / 1000, UTC).date()
+        )
+        pack = ch.get("pack")
     else:
         raise ApiError(422, "invalid_mode", "Unknown quiz mode.")
     now = _now_ms()
-    day = _today(now)
+    day = ch["id"] if ch else _today(now)
     expired_id = None
     with get_connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        s = quiz_db.latest_session(conn, user_id, mode, day, pack)
+        s = quiz_db.latest_session(
+            conn, user_id, mode, day, pack if ch is None else None
+        )
+        if mode == "challenge" and _challenge_done(conn, user_id, ch["week"]):
+            raise ApiError(
+                409, "already_done", "This week's challenge is already done."
+            )
         if s and mode == "daily" and s["finished_ms"] is not None:
             raise ApiError(409, "already_done", "Today's daily quiz is already done.")
         rows = quiz_db.answers(conn, s["id"]) if s else []
@@ -131,21 +166,27 @@ def start(user_id: str, mode: str, pack: str | None) -> dict:
             return view(s, rows, resumed=True)
         else:
             sid = secrets.token_urlsafe(12)
-            seed = (
-                quiz_engine.daily_seed(date.fromisoformat(day))
-                if mode == "daily"
-                else secrets.token_hex(8)
-            )
-            questions = quiz_engine.build_questions(pack or "daily", seed)
+            if ch:
+                seed = f"challenge:{ch['id']}"
+                questions = challenge_svc.questions_for(ch)
+            else:
+                seed = (
+                    quiz_engine.daily_seed(date.fromisoformat(day))
+                    if mode == "daily"
+                    else secrets.token_hex(8)
+                )
+                questions = quiz_engine.build_questions(pack or "daily", seed)
             quiz_db.create_session(
                 conn, sid, user_id, mode, pack, day, seed, questions, now
             )
             return view(quiz_db.get_session(conn, sid), quiz_db.answers(conn, sid))
-    # idle with answers: close it as it stands. The daily is then done; a pack
-    # simply starts fresh.
+    # idle with answers: close it as it stands. The daily and the challenge are
+    # then done; a pack simply starts fresh.
     _finalize_expired(expired_id, now)
     if mode == "daily":
         raise ApiError(409, "already_done", "Today's daily quiz is already done.")
+    if mode == "challenge":
+        raise ApiError(409, "already_done", "This week's challenge is already done.")
     return start(user_id, mode, pack)
 
 
@@ -257,7 +298,22 @@ def _reward(s: dict) -> dict:
         at = datetime.fromisoformat(s["day"]).replace(hour=12, tzinfo=UTC)
     try:
         parts = []
-        if s["mode"] == "daily":
+        if s["mode"] == "h2h":
+            from ...services import h2h
+
+            xp = h2h.on_finished(s, at)
+            return _store_rewards(sid, xp, None)
+        if s["mode"] == "challenge":
+            week = s["day"].split(":")[0]
+            parts.append(
+                game_engine.award(
+                    uid,
+                    "challenge_complete",
+                    f"challenge_complete:{uid}:{week}",
+                    now=at,
+                )
+            )
+        elif s["mode"] == "daily":
             parts.append(
                 game_engine.award(
                     uid, "quiz_daily", f"quiz_daily:{uid}:{s['day']}", now=at
@@ -276,6 +332,10 @@ def _reward(s: dict) -> dict:
     except Exception:
         logger.exception("quiz reward failed (session=%s)", sid)
         return s
+    return _store_rewards(sid, xp, streak)
+
+
+def _store_rewards(sid: str, xp: dict | None, streak: dict | None) -> dict:
     with get_connection() as conn:
         quiz_db.save_rewards(conn, sid, xp, streak)
         return quiz_db.get_session(conn, sid)
@@ -336,6 +396,23 @@ def state(user_id: str) -> dict:
             {"id": p, "title_key": f"play.pack.{p}", "questions": sizes[p]}
             for p in quiz_engine.PACKS
         ],
-        "challenge": None,
-        "open_h2h": 0,
+        "challenge": _challenge_state(user_id, now),
+        "open_h2h": _open_h2h(user_id, now),
     }
+
+
+def challenge_public(user_id: str, ch: dict) -> dict:
+    with get_connection() as conn:
+        done = _challenge_done(conn, user_id, ch["week"])
+    return challenge_svc.public(ch, done)
+
+
+def _challenge_state(user_id: str, now: int) -> dict:
+    ch = challenge_svc.current(user_id, datetime.fromtimestamp(now / 1000, UTC).date())
+    return challenge_public(user_id, ch)
+
+
+def _open_h2h(user_id: str, now: int) -> int:
+    from ...services import h2h
+
+    return h2h.waiting_for_you(user_id, now)
