@@ -2064,6 +2064,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2537,7 +2565,37 @@
 <td>GET</td>
 <td><code>/api/share/{token}</code></td>
 <td>none</td>
-<td>Public, sanitised shared plan</td>
+<td>Public, sanitised shared plan (legacy and Phase 4 tokens; <code>share_public</code>)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/shares</code></td>
+<td>user</td>
+<td>Create (or update the options of) a share link for a plan, recap or savings tally (<code>features.sharing</code>; see <a href="../Sharing-API/">Sharing API</a>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/shares</code></td>
+<td>user</td>
+<td>The caller's share links, newest first</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/shares/{token}</code></td>
+<td>user</td>
+<td>Revoke a share link (204)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/share/{token}/page</code></td>
+<td>none</td>
+<td>Server-rendered Open Graph page for link-preview crawlers (<code>noindex</code>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/share/{token}/card.png</code></td>
+<td>none</td>
+<td>Share card PNG, <code>size=link</code> (1200x630) or <code>story</code> (1080x1920)</td>
 </tr>
 <tr>
 <td>GET, PUT</td>
@@ -3121,7 +3179,7 @@
 <h3 id="get-put-delete-apiplansid">GET, PUT, DELETE /api/plans/{id}</h3>
 <p>Get, update (name and/or selections) or delete one of the caller's plans; <code>404</code> for another user's plan.</p>
 <h3 id="post-apiplansidshare-and-get-apisharetoken">POST /api/plans/{id}/share and GET /api/share/{token}</h3>
-<p><code>POST</code> returns <code>{"share_token": "..."}</code> (the existing token if there is one). <code>GET /api/share/{token}</code> needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. <code>DELETE /api/plans/{id}/share</code> revokes the token. See <a href="../Sharing-and-Plans/">Sharing and Plans</a>.</p>
+<p><code>POST</code> returns <code>{"share_token": "..."}</code> (the existing token if there is one). <code>GET /api/share/{token}</code> needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. <code>DELETE /api/plans/{id}/share</code> revokes the token. See <a href="../Sharing-and-Plans/">Sharing and Plans</a>. Share links 2.0 (options for dates, origin and name; card PNG; Open Graph page; list and revoke) is specified in the frozen <a href="../Sharing-API/">Sharing API</a>; these legacy routes are unchanged.</p>
 <hr />
 <h2 id="trips">Trips</h2>
 <p>Trips are plans with dates and a phase (Dreaming, Planning, Ready, On the road, Memories). Every <code>/api/trips*</code> route needs sign-in and acts only on the caller's own trips. The full contract (frozen, additive changes only) is <a href="../Trips-API/">Trips API</a>: <code>GET/POST /trips</code>, <code>GET/PATCH/DELETE /trips/{id}</code>, <code>GET /trips/stats</code>, prep (<code>/trips/{id}/prep</code>), <code>PUT /trips/{id}/snapshot</code>, <code>GET /trips/{id}/offline-pack</code>, expenses, journal, places, check-ins and recap.</p>

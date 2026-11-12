@@ -1,0 +1,1759 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+        <link rel="prev" href="../Alerts-API/">
+      
+      
+        <link rel="next" href="../Testing-and-CI/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Sharing API - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sharing-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sharing API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discovery-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery (additive)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-shares" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /shares
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-shares" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /shares
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-sharestoken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /shares/{token}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-sharetoken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /share/{token}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-sharetokenpage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /share/{token}/page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-sharetokencardpngsizelinkstory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /share/{token}/card.png?size=link|story
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#card-and-snapshot-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Card and snapshot fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-defaults-and-the-date-scrub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy defaults and the date scrub
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crawlers-and-open-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crawlers and Open Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caching-and-revocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caching and revocation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy links
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-in-this-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not in this phase
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="sharing-api">Sharing API</h1>
+<blockquote>
+<p>Frozen with Phase 4. <strong>Changes:</strong> later changes are additive only (new fields, endpoints, kinds, options or error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR.</p>
+</blockquote>
+<p>Share links 2.0 turns a plan, a trip recap or the price-alert savings tally into a <strong>share link</strong>, a <strong>share card</strong> (a PNG drawn by the server) and a <strong>public page</strong> whose Open Graph tags give a proper preview on X, Facebook, WhatsApp, LinkedIn and chat apps. The sharer chooses what is revealed, and can list and revoke links. The old <code>POST /api/plans/{id}/share</code> and its tokens are unchanged and keep working (see Legacy links).</p>
+<h2 id="api-contract">API contract</h2>
+<p>All paths are under <code>/api</code>. JSON in and out, except the page (HTML) and the card (PNG). Management routes need <code>Authorization: Bearer &lt;access_token&gt;</code> and act only on the caller's shares. Errors use the Phase 1 envelope <code>{"detail", "error_code"}</code>; timestamps are ISO 8601 UTC. Routes that depend on the flag answer <code>404</code> when <code>SHARING_V2_ENABLED</code> is off.</p>
+<h3 id="discovery-additive">Discovery (additive)</h3>
+<p><code>GET /config</code> gains <code>features.sharing: 0 | 1</code> (<code>1</code> when <code>SHARING_V2_ENABLED</code> is on). Clients show the new share flow only when it is <code>&gt;= 1</code>, and otherwise keep the legacy plan share (a backend without the field is the same as <code>0</code>).</p>
+<h3 id="post-shares">POST /shares</h3>
+<p>Auth, bucket <code>share_manage</code>.</p>
+<pre><code class="language-json">{&quot;kind&quot;: &quot;plan&quot;, &quot;plan_id&quot;: 12,
+ &quot;options&quot;: {&quot;dates&quot;: &quot;hidden&quot;, &quot;show_origin&quot;: false, &quot;show_name&quot;: false},
+ &quot;locale&quot;: &quot;en&quot;}
+</code></pre>
+<ul>
+<li><code>kind</code>: <code>plan</code> (a plan, covers its itinerary), <code>recap</code> (a trip's memories recap) or <code>savings</code> (the price-alert savings tally). <code>plan_id</code> is required for <code>plan</code> and <code>recap</code> and ignored for <code>savings</code>. More kinds may be added later; clients treat an unknown <code>kind</code> as a plain link.</li>
+<li><code>options</code> (all optional, private defaults shown): <code>dates</code> is <code>hidden | month | exact</code>; <code>show_origin</code> and <code>show_name</code> are booleans. Any other value falls back to the private default.</li>
+<li><code>locale</code> (optional, at most 8 characters): the language of the server-rendered page (<code>en es de fr hi zh bn</code>; anything else is English).</li>
+<li><strong>Idempotent</strong> per (user, kind, <code>plan_id</code>): a second call returns the same token and <strong>replaces</strong> its options.</li>
+</ul>
+<p>Answer <code>200</code>:</p>
+<pre><code class="language-json">{&quot;token&quot;: &quot;…&quot;, &quot;kind&quot;: &quot;plan&quot;, &quot;url&quot;: &quot;https://host/share/&lt;token&gt;&quot;,
+ &quot;card_url&quot;: {&quot;link&quot;: &quot;https://host/api/share/&lt;token&gt;/card.png?size=link&quot;,
+              &quot;story&quot;: &quot;https://host/api/share/&lt;token&gt;/card.png?size=story&quot;},
+ &quot;options&quot;: {&quot;dates&quot;: &quot;hidden&quot;, &quot;show_origin&quot;: false, &quot;show_name&quot;: false},
+ &quot;created_at&quot;: &quot;…Z&quot;}
+</code></pre>
+<p>URLs are absolute: <code>PUBLIC_BASE_URL</code>, else the request's own base URL.</p>
+<p>Errors: <code>404 sharing_disabled</code>, <code>404 plan_not_found</code> (missing or not the caller's plan), <code>422 invalid_kind</code>, <code>429</code> (rate limit).</p>
+<h3 id="get-shares">GET /shares</h3>
+<p>Auth, <code>share_manage</code>. The caller's own shares, newest first, at most 100:</p>
+<pre><code class="language-json">{&quot;shares&quot;: [{&quot;token&quot;: &quot;…&quot;, &quot;kind&quot;: &quot;plan&quot;, &quot;title&quot;: &quot;Lisbon in May&quot;, &quot;url&quot;: &quot;…&quot;,
+             &quot;options&quot;: {&quot;dates&quot;: &quot;hidden&quot;, &quot;show_origin&quot;: false, &quot;show_name&quot;: false},
+             &quot;created_at&quot;: &quot;…Z&quot;}]}
+</code></pre>
+<p><code>title</code> is the plan's name (<code>Price alerts</code> for <code>savings</code>). Errors: <code>404 sharing_disabled</code>.</p>
+<h3 id="delete-sharestoken">DELETE /shares/{token}</h3>
+<p>Auth, <code>share_manage</code>. Revokes the share: <code>204</code> with no body. The public routes answer <code>404</code> at once and the rendered card is dropped from the server cache. <code>404 share_not_found</code> when the token is not the caller's, and <code>404 sharing_disabled</code>. Revoking a legacy plan token is still <code>DELETE /plans/{id}/share</code>.</p>
+<h3 id="get-sharetoken">GET /share/{token}</h3>
+<p>Public (no auth), bucket <code>share_public</code>, per client IP. Answers for both token kinds:</p>
+<ul>
+<li>A <strong>legacy plan token</strong> answers exactly as before: <code>name</code>, <code>created_at</code>, <code>updated_at</code>, <code>search_data</code> (whitelisted fields), <code>selections</code>.</li>
+<li>A <strong>Phase 4 token</strong> answers the same keys with the sharer's options applied, plus:</li>
+<li><code>kind</code>, <code>options</code> (the three options; no <code>locale</code>);</li>
+<li><code>owner_name</code>, only with <code>show_name</code>;</li>
+<li>for <code>recap</code> and <code>savings</code>, <code>card</code>: <code>{"headline", "stats": [{"key", "count"}], "destination"?, "period"?}</code>. For <code>savings</code>, <code>search_data</code> and <code>selections</code> are empty objects and <code>name</code> is <code>Price alerts</code>.</li>
+</ul>
+<p><code>404</code> (<code>{"detail": "Shared plan not found"}</code>) for an unknown or revoked token, or while the flag is off for a Phase 4 token.</p>
+<h3 id="get-sharetokenpage">GET /share/{token}/page</h3>
+<p>Public, <code>share_public</code>. Server-rendered HTML for link-preview crawlers: <code>&lt;title&gt;</code>, <code>description</code>, <code>og:type/site_name/title/description/image/image:width/image:height/url</code>, <code>twitter:card=summary_large_image</code> (+ title, description, image), <code>&lt;meta name="robots" content="noindex, nofollow"&gt;</code>, a heading, and a link to the SPA page <code>/share/&lt;token&gt;</code>. <code>og:image</code> is the absolute <code>card.png?size=link</code>. There is no inline script and no tracking. Headers: <code>X-Robots-Tag: noindex, nofollow</code>, <code>Cache-Control: public, max-age=300</code>. <code>404 share_not_found</code> (a JSON error, no tags) for an unknown, revoked or disabled share; only Phase 4 tokens have a page (a legacy token answers <code>404</code>, and the SPA serves it as before).</p>
+<p>Native clients do not need this route: it exists for crawlers (see Crawlers and Open Graph).</p>
+<h3 id="get-sharetokencardpngsizelinkstory">GET /share/{token}/card.png?size=link|story</h3>
+<p>Public, <code>share_public</code>. A PNG: <code>size=link</code> is 1200x630 (the default, used by <code>og:image</code>), <code>size=story</code> is 1080x1920. Headers: <code>Content-Type: image/png</code>, <code>X-Robots-Tag: noindex, nofollow</code>, <code>Cache-Control: public, max-age=300</code>. <code>404 share_not_found</code> for an unknown or revoked token; <code>422</code> for another <code>size</code>. One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.</p>
+<h2 id="card-and-snapshot-fields">Card and snapshot fields</h2>
+<p>The page and the card are drawn from one snapshot built from a whitelist (<code>services/share_public.py</code>); it never holds exact dates.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>headline</code></td>
+<td><code>7 days in Lisbon</code>, <code>Trip to Lisbon</code>, <code>My trip to Japan: recap</code>, <code>Caught drops worth $412</code>, or the plan name when there is no destination. A headline with glyphs the card font lacks (CJK, Devanagari, Bengali) falls back to a plain English one on the PNG.</td>
+</tr>
+<tr>
+<td><code>destination</code> / <code>destinations</code></td>
+<td>Up to 5 destination names (joined with <code>/</code>).</td>
+</tr>
+<tr>
+<td><code>days</code></td>
+<td>Trip length from the dates, else from the itinerary; <code>null</code> when unknown.</td>
+</tr>
+<tr>
+<td><code>stats</code></td>
+<td>At most three chips of <strong>counts only</strong>: plan <code>activities</code>, <code>hotels</code>, <code>places</code>; recap <code>places</code>, <code>activities</code>; savings <code>drops_caught</code>, <code>targets_hit</code>. Zero counts are omitted.</td>
+</tr>
+<tr>
+<td><code>period</code></td>
+<td><code>YYYY-MM</code>, only when <code>options.dates</code> is <code>month</code> or <code>exact</code>.</td>
+</tr>
+<tr>
+<td><code>origin</code></td>
+<td>Only with <code>show_origin</code>.</td>
+</tr>
+<tr>
+<td><code>owner_name</code></td>
+<td>Only with <code>show_name</code> (the display name, else the username; never an email: a name containing <code>@</code> is dropped).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="privacy-defaults-and-the-date-scrub">Privacy defaults and the date scrub</h2>
+<p>A new share reveals only the title, destination(s), number of days and the plan's selections. Everything else is opt-in:</p>
+<ul>
+<li><code>dates</code>: <code>hidden</code> (default) removes <code>departure_date</code> and <code>return_date</code> from <code>search_data</code> and scrubs the selections; <code>month</code> cuts every date to <code>YYYY-MM</code>; <code>exact</code> leaves the dates and selections as saved.</li>
+<li><code>show_origin</code>: without it <code>origin</code> is removed from <code>search_data</code>.</li>
+<li><code>show_name</code>: without it there is no <code>owner_name</code> anywhere.</li>
+<li><code>search_data</code> is a whitelist (origin, destination(s), dates, interests, traveller counts, pace). Email, nationality, visas, permits, accessibility needs and the raw search request are never exposed.</li>
+<li><strong>Selections scrub</strong> (<code>hidden</code> and <code>month</code>): any key whose name looks like a date or time (<code>date</code>, <code>time</code>, <code>departure</code>, <code>arrival</code>, <code>check_in</code>, <code>check_out</code>, …) is removed, and so is any string value that is an ISO date or datetime. With <code>month</code>, ISO date values become <code>YYYY-MM</code> and date-named keys keep that month. Prices and counts are untouched.</li>
+<li><strong>Open Graph tags and the card show at most the month and year</strong>, even with <code>dates=exact</code>.</li>
+<li>No XP, badge or other reward is given for sharing, and views are not counted (no tracking of visitors; the web app sends a <code>share_view</code> telemetry event, enum props only).</li>
+</ul>
+<h2 id="crawlers-and-open-graph">Crawlers and Open Graph</h2>
+<p>Production Caddy serves the SPA at <code>/share/&lt;token&gt;</code>. A request whose <code>User-Agent</code> matches the fixed crawler list (facebookexternalhit, Twitterbot, WhatsApp, LinkedInBot, Slackbot, Discordbot, TelegramBot, Pinterest, Skype, Embedly, Googlebot, Bingbot, Applebot, iMessage, Redditbot, Mastodon) and whose path is <code>/share/&lt;8 to 64 URL-safe characters&gt;</code> is rewritten to <code>/api/share/&lt;token&gt;/page</code>. People get the SPA as before. If the app answers <code>4xx</code> or <code>5xx</code> (revoked share, flag off, an older build without the route) Caddy serves the SPA <code>index.html</code> instead, so a link never breaks. Both images ship independently, so either order of deploy is safe. The absolute URLs in the tags come from <code>PUBLIC_BASE_URL</code>, else the request's base URL (behind Caddy that is the public host). Search engines are told not to index: the page, the card and every public share answer carry <code>noindex</code>.</p>
+<h2 id="rate-limits">Rate limits</h2>
+<p>Buckets per 10 minutes, in-process sliding window: <code>share_public</code> (default 120, per client IP: <code>GET /share/{token}</code>, <code>/page</code>, <code>/card.png</code>) and <code>share_manage</code> (default 30, per signed-in user: <code>/shares</code> create, list, revoke). Over the limit: <code>429</code> with <code>Retry-After</code> and a string <code>detail</code>. Settings <code>RATE_LIMIT_SHARE_PUBLIC</code>, <code>RATE_LIMIT_SHARE_MANAGE</code>.</p>
+<h2 id="caching-and-revocation">Caching and revocation</h2>
+<p>Rendered cards sit in a small in-process TTL cache (64 entries, 10 minutes) keyed by token, size and content; revoking clears the token's entries and every public route answers <code>404</code> immediately. The one residual exposure is the HTTP cache: <code>Cache-Control: public, max-age=300</code> means a browser, proxy or link-preview service that already fetched a page or card may keep showing it for up to five minutes (and previews that chat apps stored on their side can last longer; a revoked link cannot be recalled from them). Treat a revoked share as "stops working within minutes".</p>
+<h2 id="legacy-links">Legacy links</h2>
+<p><code>POST /plans/{id}/share</code> (no body, <code>{"share_token"}</code>), <code>DELETE /plans/{id}/share</code> and the legacy tokens keep their request and response shapes, and <code>GET /share/{token}</code> answers them byte for byte as before; they ignore the options above (dates and origin are as the legacy whitelist). New clients should use <code>POST /shares</code> when <code>features.sharing &gt;= 1</code>.</p>
+<h2 id="not-in-this-phase">Not in this phase</h2>
+<p>A quiz-score share (no quiz yet) and an ephemeral "Day 3 in Lisbon" status (stays a native text share) are deferred.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

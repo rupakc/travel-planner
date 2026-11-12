@@ -1108,6 +1108,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1471,6 +1499,17 @@
     <span class="md-ellipsis">
       
         Site down, app stuck starting: net.ipv4.ip_forward is 0
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#share-link-previews-crawler-route" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Share-link previews (crawler route)
       
     </span>
   </a>
@@ -1930,6 +1969,8 @@ ls /etc/sysctl.d/                      # 99-voyager-docker.conf must be there
 <li>The governor's per-minute guard sets forwarding back to <code>1</code> and emails you (section 8). It also keeps the <code>FORWARD</code> policy at <code>DROP</code>.</li>
 <li>CI's <code>first_boot_sim.sh</code> (job <code>host-checks</code>) installs the image's <code>60-gce-network-security.conf</code>. It then runs a first boot, a re-run on the live VM and a reboot, and checks after each that forwarding stays <code>1</code>. It also runs a real <code>apt-get</code> in which a simulated postinst applies the <code>60-…</code> file alone, and checks that the hook restores <code>1</code>.</li>
 </ul>
+<h3 id="share-link-previews-crawler-route">Share-link previews (crawler route)</h3>
+<p>Caddy rewrites <code>/share/&lt;token&gt;</code> to the app's <code>/api/share/&lt;token&gt;/page</code> for link-preview crawlers only (fixed <code>User-Agent</code> list in <code>deploy/gcp/Caddyfile</code>, <code>@crawler</code>); everyone else gets the SPA. If the app answers 4xx/5xx (revoked or unknown token, <code>SHARING_V2_ENABLED=false</code>, an app build without the route) Caddy falls back to the SPA <code>index.html</code>, so a link never breaks and no app change is needed to roll back. Check by hand: <code>curl -A facebookexternalhit/1.1 https://&lt;host&gt;/share/&lt;token&gt;</code> should show <code>og:</code> tags, and without the <code>-A</code> the SPA. Set <code>PUBLIC_BASE_URL</code> in <code>app.env</code> so the tags carry the public host. Contract: <a href="../Sharing-API/">Sharing API</a>.</p>
 <h3 id="deploys-the-spa-caddy-or-the-deployer">Deploys: the SPA, Caddy or the deployer</h3>
 <ul>
 <li><strong>New SPA not showing.</strong> <code>journalctl -u voyager-deploy -n 50</code>. <code>skipping Caddy … held</code> means a digest failed a check: the email and the log say why. Release it by deleting its line in <code>/opt/voyager/failed-digests</code>, or merge a fix (a newer digest ends the hold). <code>release: …</code> lines name the check that refused the image (symlink, missing asset, size).</li>
