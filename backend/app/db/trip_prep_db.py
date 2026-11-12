@@ -66,3 +66,21 @@ def get_meta(plan_id: int, item_id: str) -> dict | None:
             (plan_id, item_id),
         ).fetchone()
     return _loads(row["meta"]) if row else None
+
+
+def claim_marker(plan_id: int, key: str) -> bool:
+    """Atomically create the marker row; True only for the caller that made it."""
+    with get_connection() as conn:
+        cur = conn.execute(
+            "INSERT INTO trip_prep (plan_id, item_id, meta, updated_at) "
+            "VALUES (?,?,?,?) ON CONFLICT(plan_id, item_id) DO NOTHING",
+            (plan_id, key, json.dumps({"claimed": True}), _now()),
+        )
+        return cur.rowcount == 1
+
+
+def release_marker(plan_id: int, key: str) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM trip_prep WHERE plan_id = ? AND item_id = ?", (plan_id, key)
+        )

@@ -6,12 +6,16 @@ state and the trip snapshot.
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date, timedelta
 
 from ..agents.static_results import _resolve_dest_currency, find_visa_row
 from ..db import trip_prep_db, trip_snapshot_db
+from ..game import trip_hooks
 from .trip_phase import trip_dates
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_VISA_LEAD_DAYS = 21
 VISA_BUFFER_DAYS = 7
@@ -44,28 +48,27 @@ _NUM = re.compile(
 
 def visa_lead_days(processing_time: str | None, visa_type: str | None) -> int | None:
     """Days before the start to begin the visa; ``None`` for visa-free."""
-    if _is_visa_free(visa_type, processing_time):
+    if _is_visa_free(visa_type):
         return None
-    best: tuple[int, str] | None = None
+    best: int | None = None
     for m in _NUM.finditer(processing_time or ""):
         n = int(m.group(2) or m.group(1))
-        if best is None or n > best[0]:
-            best = (n, (m.group(3) or "days").lower())
+        unit = (m.group(3) or "days").lower()
+        if unit.startswith("week"):
+            days = n * 7
+        elif unit.startswith("month"):
+            days = n * 30
+        elif unit.startswith(("business", "working")):
+            days = (n * 14 + 9) // 10  # ceil(n * 1.4)
+        else:
+            days = n
+        best = days if best is None else max(best, days)
     if best is None:
         return DEFAULT_VISA_LEAD_DAYS
-    n, unit = best
-    if unit.startswith("week"):
-        days = n * 7
-    elif unit.startswith("month"):
-        days = n * 30
-    elif unit.startswith(("business", "working")):
-        days = (n * 14 + 9) // 10  # ceil(n * 1.4)
-    else:
-        days = n
-    return days + VISA_BUFFER_DAYS
+    return best + VISA_BUFFER_DAYS
 
 
-def _is_visa_free(visa_type, processing_time=None) -> bool:
+def _is_visa_free(visa_type) -> bool:
     t = re.sub(r"[\s_]+", "-", str(visa_type or "").strip().lower())
     return t == "visa-free"
 
@@ -216,6 +219,7 @@ def _totals(items: list[dict]) -> dict:
 
 
 def prep_payload(plan: dict, today: date) -> dict:
+    """Items plus totals; totals are zeros for a trip without a start date."""
     plan_id = plan["id"]
     items = build_items(
         plan,
@@ -223,12 +227,32 @@ def prep_payload(plan: dict, today: date) -> dict:
         trip_prep_db.get_state(plan_id),
         today,
     )
+    start, _ = trip_dates(plan)
+    if start is None:
+        return {"items": items, "done": 0, "total": 0, "percent": 0, "complete": False}
     return {"items": items, **_totals(items)}
 
 
 def prep_summary(plan: dict, today: date) -> dict:
-    """The ``Trip.prep`` object; zeros for a trip without a start date."""
-    start, _ = trip_dates(plan)
-    if start is None:
-        return {"done": 0, "total": 0, "percent": 0, "complete": False}
-    return _totals(prep_payload(plan, today)["items"])
+    """The ``Trip.prep`` object."""
+    payload = prep_payload(plan, today)
+    return {k: payload[k] for k in ("done", "total", "percent", "complete")}
+
+
+def maybe_award_trip_ready(plan: dict, user_id: str, today: date) -> dict | None:
+    """Make the once-per-trip ``trip_ready`` award when prep is complete.
+
+    The marker is claimed atomically before the hook runs; a hook failure is
+    logged, releases the claim so a later tick can retry, and returns None.
+    """
+    if not prep_summary(plan, today)["complete"]:
+        return None
+    plan_id = plan["id"]
+    if not trip_prep_db.claim_marker(plan_id, READY_AWARD_KEY):
+        return None
+    try:
+        return trip_hooks.on_trip_ready(user_id, plan_id)
+    except Exception:
+        logger.exception("trip_ready award failed for trip %s", plan_id)
+        trip_prep_db.release_marker(plan_id, READY_AWARD_KEY)
+        return None

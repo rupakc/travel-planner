@@ -7,7 +7,6 @@ from ...core.auth import get_current_user
 from ...core.errors import ApiError
 from ...core.trip_access import owned_trip
 from ...db import trip_prep_db
-from ...game import trip_hooks
 from ...services import trip_prep
 from ...services.trip_phase import resolve_today
 
@@ -49,12 +48,9 @@ def put_prep(
 
     trip_prep_db.set_done(plan_id, item_id, body.done)
     payload = trip_prep.prep_payload(plan, day)
-    game = None
-    if payload["complete"] and not trip_prep_db.get_meta(
-        plan_id, trip_prep.READY_AWARD_KEY
-    ):
-        trip_prep_db.set_meta(plan_id, trip_prep.READY_AWARD_KEY, {"awarded": True})
-        game = trip_hooks.on_trip_ready(user["id"], plan_id)
+    game = (
+        trip_prep.maybe_award_trip_ready(plan, user["id"], day) if body.done else None
+    )
     return {
         **payload,
         "item": next(i for i in payload["items"] if i["id"] == item_id),

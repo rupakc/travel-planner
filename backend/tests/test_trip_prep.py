@@ -207,3 +207,75 @@ def test_db_meta_and_snapshot_roundtrip(trip):
         build_items(_plan(id=trip), trip_snapshot_db.get_snapshot(trip), {}, TODAY)
     )
     assert items["visa"]["facts"]["source"] == "ai"
+
+
+def _complete_all(client, headers, trip_id):
+    base = f"/api/trips/{trip_id}/prep"
+    ids = ["passport", "bookings", "insurance", "documents", "sim", "money"]
+    ids += ["packing", "emergency_card"]
+    for i in ids:
+        client.put(f"{base}/{i}", json={"done": True}, headers=headers)
+    trip_prep_db.set_done(trip_id, "offline_pack", True)
+
+
+def test_other_users_trip_is_404(client, trip):
+    import uuid
+
+    from app.core.auth import create_access_token
+    from app.db.users_db import create_user
+
+    u = create_user(f"prep-{uuid.uuid4().hex[:8]}", "pw-123456789")
+    h = {"Authorization": f"Bearer {create_access_token({'sub': u['username']})}"}
+    assert client.get(f"/api/trips/{trip}/prep", headers=h).status_code == 404
+    r = client.put(f"/api/trips/{trip}/prep/passport", json={"done": True}, headers=h)
+    assert r.status_code == 404
+
+
+def test_dreaming_trip_never_completes(client, admin_headers, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "app.game.trip_hooks.on_trip_ready", lambda uid, pid: calls.append(pid)
+    )
+    r = client.post(
+        "/api/plans",
+        json={
+            "name": "Dream",
+            "search_data": {"destination": "Japan"},
+            "selections": {},
+        },
+        headers=admin_headers,
+    )
+    tid = r.json()["id"]
+    _complete_all(client, admin_headers, tid)
+    r = client.put(
+        f"/api/trips/{tid}/prep/passport", json={"done": True}, headers=admin_headers
+    )
+    body = r.json()
+    assert body["complete"] is False and body["total"] == 0
+    assert body["game"] is None and calls == []
+
+
+def test_award_claim_is_atomic(trip):
+    assert trip_prep_db.claim_marker(trip, "k") is True
+    assert trip_prep_db.claim_marker(trip, "k") is False
+
+
+def test_award_hook_failure_does_not_500_and_retries(
+    client, admin_headers, trip, monkeypatch
+):
+    state = {"n": 0}
+
+    def hook(uid, pid):
+        state["n"] += 1
+        if state["n"] == 1:
+            raise RuntimeError("boom")
+        return {"points": 5}
+
+    monkeypatch.setattr("app.game.trip_hooks.on_trip_ready", hook)
+    _complete_all(client, admin_headers, trip)
+    base = f"/api/trips/{trip}/prep/passport"
+    r = client.put(base, json={"done": True}, headers=admin_headers)
+    assert r.status_code == 200 and r.json()["game"] is None
+    client.put(base, json={"done": False}, headers=admin_headers)
+    r = client.put(base, json={"done": True}, headers=admin_headers)
+    assert r.json()["game"] == {"points": 5}
