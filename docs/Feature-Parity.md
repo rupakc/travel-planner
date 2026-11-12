@@ -98,7 +98,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ⏳ | ⏳ Phase 7 |
 | Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag) | ⏳ | ⏳ Phase 7 |
 | Local trip reminders | — | ✅ | ⏳ Phase 7 |
-| Notification settings (categories, quiet hours, daily cap) | ⏳ Phase 6 (API `/notification-settings` live; UI behind `NOTIFICATIONS_V2_ENABLED`) | ⏳ | ⏳ Phase 7 |
+| Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ⏳ | ⏳ Phase 7 |
 | Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ⏳ | ⏳ Phase 7 |
 | Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ⏳ Phase 6 | ⏳ Phase 6 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |

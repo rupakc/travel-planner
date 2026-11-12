@@ -1,0 +1,47 @@
+{
+  "title": "Notifications",
+  "intro": "Choose what Voyager may send you. These settings follow your account on every device.",
+  "loading": "Loading notification settings",
+  "categories": {
+    "price_drops": {
+      "label": "Price drops",
+      "hint": "When a price you are watching falls."
+    },
+    "trip_reminders": {
+      "label": "Trip reminders",
+      "hint": "A heads-up 30, 7 and 1 days before you go."
+    },
+    "morning_brief": {
+      "label": "Morning brief",
+      "hint": "Your plan for the day while you travel."
+    },
+    "weather": {
+      "label": "Weather",
+      "hint": "Weather notes for your trip."
+    },
+    "nearby": {
+      "label": "Near you",
+      "hint": "Suggestions on this device when you are close to something interesting."
+    }
+  },
+  "quiet": {
+    "label": "Quiet hours",
+    "hint": "No notifications during this window; they wait until it ends.",
+    "start": "From",
+    "end": "Until",
+    "timezone": "Quiet hours follow your account time zone: {{tz}}.",
+    "noTimezone": "Set your time zone in Settings above so quiet hours know when to apply. Until then they are not applied."
+  },
+  "cap": {
+    "label": "Daily limit",
+    "hint": "The most reminders and briefs we send you in one day. Price drops are not counted.",
+    "less": "Fewer notifications per day",
+    "more": "More notifications per day",
+    "value": "{{count}} per day"
+  },
+  "noDevices": "Push notifications are not available on this device yet. Install the Voyager app and sign in to receive them; in-app notifications still work.",
+  "error": {
+    "load": "Could not load your notification settings.",
+    "save": "Could not save that change. It was undone."
+  }
+}

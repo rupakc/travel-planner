@@ -1,0 +1,47 @@
+{
+  "title": "Notifications",
+  "intro": "Choisissez ce que Voyager peut vous envoyer. Ces réglages suivent votre compte sur tous vos appareils.",
+  "loading": "Chargement des réglages de notifications",
+  "categories": {
+    "price_drops": {
+      "label": "Baisses de prix",
+      "hint": "Lorsque le prix d'un élément suivi baisse."
+    },
+    "trip_reminders": {
+      "label": "Rappels de voyage",
+      "hint": "Un message 30, 7 et 1 jours avant le départ."
+    },
+    "morning_brief": {
+      "label": "Récap du matin",
+      "hint": "Votre programme du jour pendant le voyage."
+    },
+    "weather": {
+      "label": "Météo",
+      "hint": "Informations météo pour votre voyage."
+    },
+    "nearby": {
+      "label": "Près de vous",
+      "hint": "Suggestions sur cet appareil lorsque vous êtes près d'un lieu intéressant."
+    }
+  },
+  "quiet": {
+    "label": "Heures calmes",
+    "hint": "Aucune notification pendant cette plage ; elles attendent la fin.",
+    "start": "De",
+    "end": "Jusqu'à",
+    "timezone": "Les heures calmes suivent le fuseau horaire de votre compte : {{tz}}.",
+    "noTimezone": "Définissez votre fuseau horaire dans les Paramètres ci-dessus pour que les heures calmes sachent quand s'appliquer. D'ici là, elles ne sont pas appliquées."
+  },
+  "cap": {
+    "label": "Limite quotidienne",
+    "hint": "Le nombre maximal de rappels et de récaps envoyés par jour. Les baisses de prix ne comptent pas.",
+    "less": "Moins de notifications par jour",
+    "more": "Plus de notifications par jour",
+    "value": "{{count}} par jour"
+  },
+  "noDevices": "Les notifications push ne sont pas encore disponibles sur cet appareil. Installez l'application Voyager et connectez-vous pour les recevoir ; les notifications dans l'application fonctionnent toujours.",
+  "error": {
+    "load": "Impossible de charger vos réglages de notifications.",
+    "save": "Impossible d'enregistrer ce changement. Il a été annulé."
+  }
+}
