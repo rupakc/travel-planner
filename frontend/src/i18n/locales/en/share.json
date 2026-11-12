@@ -95,7 +95,9 @@
       "recap": "Recap",
       "savings": "Catches"
     },
-    "created": "Shared {{date}}"
+    "created": "Shared {{date}}",
+    "legacyTitle": "Older links",
+    "legacyIntro": "Plan links you shared before. Stopping one makes it stop working."
   },
   "entry": {
     "link": "Share link"

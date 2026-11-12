@@ -95,7 +95,9 @@
       "recap": "Rückblick",
       "savings": "Ersparnisse"
     },
-    "created": "Geteilt {{date}}"
+    "created": "Geteilt {{date}}",
+    "legacyTitle": "Ältere Links",
+    "legacyIntro": "Plan-Links, die du früher geteilt hast. Wenn du einen beendest, funktioniert er nicht mehr."
   },
   "entry": {
     "link": "Link teilen"

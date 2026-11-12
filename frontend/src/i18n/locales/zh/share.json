@@ -95,7 +95,9 @@
       "recap": "回顾",
       "savings": "省钱"
     },
-    "created": "分享于 {{date}}"
+    "created": "分享于 {{date}}",
+    "legacyTitle": "旧链接",
+    "legacyIntro": "你之前分享的行程链接。停止分享后，该链接将失效。"
   },
   "entry": {
     "link": "分享链接"

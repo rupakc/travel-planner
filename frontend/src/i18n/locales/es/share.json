@@ -95,7 +95,9 @@
       "recap": "Resumen",
       "savings": "Ahorros"
     },
-    "created": "Compartido {{date}}"
+    "created": "Compartido {{date}}",
+    "legacyTitle": "Enlaces anteriores",
+    "legacyIntro": "Enlaces de planes que compartiste antes. Detener uno hace que deje de funcionar."
   },
   "entry": {
     "link": "Compartir enlace"

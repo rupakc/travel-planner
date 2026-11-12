@@ -206,6 +206,11 @@ export async function createShare(token, body) {
   return res.data
 }
 
+/** Stop a legacy plan share: DELETE /plans/{id}/share (204). */
+export async function unsharePlan(token, planId) {
+  await api.delete(`/plans/${encodeURIComponent(planId)}/share`, authHeaders(token))
+}
+
 /** The caller's shares, newest first -> {shares: [...]}. */
 export async function listShares(token) {
   const res = await api.get('/shares', authHeaders(token))

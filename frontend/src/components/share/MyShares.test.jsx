@@ -6,10 +6,10 @@ import { createRoot } from 'react-dom/client'
 const cfg = vi.hoisted(() => ({ value: { config: { features: { sharing: 1 } }, loaded: true } }))
 vi.mock('../../hooks/useClientConfig', async (orig) => ({ ...(await orig()), useClientConfig: () => cfg.value }))
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
-vi.mock('../../services/api', () => ({ listShares: vi.fn(), revokeShare: vi.fn() }))
+vi.mock('../../services/api', () => ({ listShares: vi.fn(), revokeShare: vi.fn(), unsharePlan: vi.fn() }))
 
 import { initI18n } from '../../i18n/index'
-import { listShares, revokeShare } from '../../services/api'
+import { listShares, revokeShare, unsharePlan } from '../../services/api'
 import MyShares from './MyShares'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -21,7 +21,7 @@ const SHARES = [
 beforeEach(async () => {
   cfg.value = { config: { features: { sharing: 1 } }, loaded: true }
   await initI18n({ lng: 'en' })
-  listShares.mockReset(); revokeShare.mockReset()
+  listShares.mockReset(); revokeShare.mockReset(); unsharePlan.mockReset()
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container)
 })
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks() })
@@ -89,5 +89,36 @@ describe('MyShares', () => {
     await act(async () => { q('shares.revoke.yes').click() })
     expect(qa('shares.item')).toHaveLength(2)
     expect(container.querySelector('[role="alert"]').textContent).toBe('Could not remove the link.')
+  })
+
+  it('lists legacy plan links as Older links and stops one via unsharePlan', async () => {
+    listShares.mockResolvedValue({ shares: [], legacy_plan_shares: [{ plan_id: 5, name: 'Old Rome', url: 'https://x.test/share/legacytok' }] })
+    unsharePlan.mockResolvedValue()
+    await mount()
+    expect(q('shares.empty')).toBeNull()
+    expect(q('shares.legacy').textContent).toContain('Older links')
+    expect(q('shares.legacy.item').textContent).toContain('Old Rome')
+    await act(async () => q('shares.legacy.revoke').click())
+    await act(async () => q('shares.legacy.revoke.yes').click())
+    expect(unsharePlan).toHaveBeenCalledWith('tok', 5)
+    expect(q('shares.legacy')).toBeNull()
+    expect(container.querySelector('[role="status"]').textContent).toBe('Link removed.')
+  })
+
+  it('keeps a legacy link and shows an error when unsharing fails', async () => {
+    listShares.mockResolvedValue({ shares: SHARES, legacy_plan_shares: [{ plan_id: 5, name: 'Old Rome', url: 'https://x.test/share/legacytok' }] })
+    unsharePlan.mockRejectedValue(new Error('x'))
+    await mount()
+    await act(async () => q('shares.legacy.revoke').click())
+    await act(async () => q('shares.legacy.revoke.yes').click())
+    expect(q('shares.legacy.item')).toBeTruthy()
+    expect(container.querySelector('[role="alert"]').textContent).toBe('Could not remove the link.')
+  })
+
+  it('works without legacy_plan_shares (older backend)', async () => {
+    listShares.mockResolvedValue({ shares: SHARES })
+    await mount()
+    expect(q('shares.legacy')).toBeNull()
+    expect(qa('shares.item')).toHaveLength(2)
   })
 })
