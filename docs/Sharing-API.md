@@ -121,6 +121,6 @@ Rendered cards sit in a small in-process TTL cache (64 entries, 10 minutes) keye
 
 `POST /plans/{id}/share` (no body, `{"share_token"}`), `DELETE /plans/{id}/share` and the legacy tokens keep their request and response shapes, and `GET /share/{token}` answers them byte for byte as before; they ignore the options above (dates and origin are as the legacy whitelist). New clients should use `POST /shares` when `features.sharing >= 1`.
 
-## Not in this phase
+## Quiz and status shares (Phase 5)
 
-A quiz-score share (no quiz yet) and an ephemeral "Day 3 in Lisbon" status (stays a native text share) are deferred.
+Nothing is deferred for Phase 5: `kind: "quiz"` (`session_id`, the caller's finished quiz session; the card shows the pack and score out of 5, never time or answers) and `kind: "status"` (`plan_id`, an active trip of the caller; `422 no_active_trip` otherwise; the card reads "Day N in Place") are served additively, see [Social and Play API](Social-API.md).

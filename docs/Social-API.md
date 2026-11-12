@@ -1,8 +1,8 @@
 # Social and Play API
 
-> **Status:** frozen when Phase 5 merges (draft until then). **Changes:** later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.
+> **Status:** frozen 2026-11-12 (Phase 5). **Changes:** later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.
 
-Phase 5 adds **profiles, an ideas feed, moderation** (`/api/social/*`) and **Play** (quizzes, head-to-head, leaderboards, weekly challenges; `/api/play/*`). Two independent flags, both default **off** until the final review of Phase 5: `SOCIAL_ENABLED` and `PLAY_ENABLED` (Play also needs `GAME_ENABLED`).
+Phase 5 adds **profiles, an ideas feed, moderation** (`/api/social/*`) and **Play** (quizzes, head-to-head, leaderboards, weekly challenges; `/api/play/*`). Two independent flags, both default **off** until the owner turns them on: `SOCIAL_ENABLED` and `PLAY_ENABLED` (Play also needs `GAME_ENABLED`).
 
 All paths are under `/api`, JSON in and out, `Authorization: Bearer <access_token>`. Nothing here is available anonymously. Errors use the Phase 1 envelope `{"detail", "error_code"}`.
 

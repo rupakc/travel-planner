@@ -79,6 +79,24 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Recap, passport stamps and countries visited | ✅ | ⏳ 8 | ⏳ 7 |
 | Explore, Play and You tabs | ✅ | ⏳ 8 | ⏳ 7 |
 
+## Social and Play
+
+| Feature | Web | Android | iOS |
+|---|---|---|---|
+| Social profile (handle, privacy, opt-in fields) | ✅ | ⏳ 8 | ⏳ 7 |
+| Follows, follow requests and blocks | ✅ | ⏳ 8 | ⏳ 7 |
+| Ideas feed, publish from a plan or recap, like, save (remix) | ✅ | ⏳ 8 | ⏳ 7 |
+| Comments and helpful marks | ✅ | ⏳ 8 | ⏳ 7 |
+| Reports and admin moderation queue | ✅ | ⏳ 8 (reports) | ⏳ 7 (reports) |
+| Daily quiz and topic packs | ✅ | ⏳ 8 | ⏳ 7 |
+| Head-to-head challenges | ✅ | ⏳ 8 | ⏳ 7 |
+| Weekly leaderboards (global, friends) | ✅ | ⏳ 8 | ⏳ 7 |
+| Weekly "Know before you go" challenge | ✅ | ⏳ 8 | ⏳ 7 |
+| Quiz and trip-status share cards | ✅ | ⏳ 8 | ⏳ 7 |
+| Social and quiz notifications | ✅ | ⏳ 8 | ⏳ 7 |
+
+Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.play`). Contract: [Social and Play API](Social-API.md).
+
 ## Chat
 
 | Feature | Web | Android | iOS |
