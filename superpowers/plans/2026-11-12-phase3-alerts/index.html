@@ -1631,7 +1631,7 @@
 <p><strong>Interfaces:</strong>
 - Consumes: Task 1's <code>alerts_db</code> helpers and <code>game.engine.award</code>.
 - Produces:
-  - <code>drop_facts(watch_kind, watch, note) -&gt; dict | None</code>. It returns <code>None</code> unless the note is a drop or target kind (<code>fare_target</code>, <code>fare_drop</code>, <code>fare_low_level</code>, <code>fare_cheaper_date</code> and the price-watch drop and target kinds) with an observed price. <code>from</code> = the reference the note used, <code>to</code> = the alerted price, <code>pct</code> is rounded to 1 decimal place, and <code>target_hit</code> = the note kind is a target kind.
+  - <code>drop_facts(watch_kind, watch, note) -&gt; dict | None</code>. It returns <code>None</code> unless the note is a drop or target kind (<code>fare_target</code>, <code>fare_drop</code>, <code>fare_low_level</code> and the price-watch drop and target kinds) with an observed price. <code>from</code> = the reference the note used, <code>to</code> = the alerted price, <code>pct</code> is rounded to 1 decimal place, and <code>target_hit</code> = the note kind is a target kind.
   - <code>record(watch_kind, watch, row) -&gt; None</code>: one <code>alert_savings</code> row per notification, idempotent.
   - <code>summary(user_id) -&gt; dict</code> (<code>Savings</code>).
   - <code>GET /alerts/summary</code>.
