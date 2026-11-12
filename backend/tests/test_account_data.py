@@ -88,6 +88,7 @@ _FIXED = {
     "oauth_tickets": {"kind": "link"},
     "user_settings": {"data": "{}"},
     "price_watches": {"kind": "hotel"},
+    "alert_outbox": {"channel": "push"},
 }
 
 
@@ -97,6 +98,8 @@ def _seed_everything(u: dict) -> None:
     with get_connection() as conn:
         for table, (col, key) in account_data.USER_TABLES.items():
             values = {col: uid if key == "id" else name, **_FIXED.get(table, {})}
+            if table in ("alert_savings", "alert_outbox"):  # UNIQUE notification_id
+                values["notification_id"] = uuid.uuid4().int % 10**9
             _fill(conn, table, values)
         plan_id = conn.execute(
             "SELECT id FROM plans WHERE username = ?", (name,)
@@ -104,6 +107,12 @@ def _seed_everything(u: dict) -> None:
         for table in account_data.CHILD_TABLES:
             if table in TRIP_CHILD_TABLES:
                 _fill(conn, table, {"plan_id": plan_id})
+                continue
+            if table == "alert_advice":  # keyed by (kind, watch)
+                pid = conn.execute(
+                    "SELECT id FROM fare_watches WHERE user_id = ?", (uid,)
+                ).fetchone()["id"]
+                _fill(conn, table, {"watch_id": pid, "watch_kind": "flight"})
                 continue
             parent = table.removesuffix("_history") + "es"
             pid = conn.execute(
@@ -190,7 +199,7 @@ def test_every_user_table_is_covered():
             names = {c["name"] for c in _cols(conn, table)}
             if names & {"username", "user_id", "created_by", "user_key"}:
                 assert table in covered, f"{table} holds user rows but is not covered"
-            if "watch_id" in names:
+            if "watch_id" in names and table not in account_data.USER_TABLES:
                 assert table in account_data.CHILD_TABLES, table
             # a trip's rows (fare/price watches hold their owner and only
             # point at a plan, so they are user tables)

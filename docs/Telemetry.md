@@ -132,6 +132,15 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `completeness_view` | `surface` (`drawer`, `trip`), `percent` (int) | not yet | The plan completeness meter was shown. |
 | `onboarding_result` | `type` (`budget_backpacker`, `family`, `luxury`, `adventure`, `culture_foodie`, `business`, `relaxation`, `accessible`), `secondary` (int) | not yet | The traveller-type quiz result. |
 | `journey_shell` | `enabled` (bool), `source` (`config`, `override`, `off`) | not yet | Whether the journey shell is on and why. |
+| `alert_story_view` | `kind` (`flight`, `hotel`, `activity`, `trip`), `verdict` (`great`, `good`, `typical`, `high`, `none`) | not yet | A price story was opened. |
+| `alert_target_set` | `kind`, `from_story` (bool) | not yet | A target price was set. |
+| `alert_advice` | `kind`, `outcome` (`ok`, `cached`, `error`) | not yet | Advice was requested for a watch. |
+| `alert_drop_seen` | `kind`, `target_hit` (bool), `via` (`in_app`, `push`, `email`) | not yet | A price-drop moment was seen. |
+| `alert_quick_watch` | `kind`, `action` (`add`, `undo`, `exists`, `blocked`), `surface` (`results`, `chat`, `trip`, `suggest`) | not yet | A one-tap watch action. |
+| `alert_suggest` | `action` (`shown`, `accepted`, `dismissed`), `count` (int) | not yet | Watch suggestions after saving a plan. |
+| `alert_savings_share` | `target` (`native`, `download`, `copy`) | not yet | The savings card was shared. |
+| `alert_prefs_change` | `field` (`digest`, `quiet_hours`, `instant`, `cap`, `group`) | not yet | An alert preference changed. |
+| `alert_digest_open` | `via` (`in_app`, `email_link`) | not yet | The weekly digest was opened. |
 
 ### Settings, consent, performance, errors
 

@@ -25,6 +25,7 @@ from .api.routes.account_data import router as account_data_router
 from .api.routes.admin import router as admin_router
 from .api.routes.admin_invites import router as admin_invites_router
 from .api.routes.airports import router as airports_router
+from .api.routes.alerts import router as alerts_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.avatars import router as avatars_router
@@ -79,7 +80,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import fare_watch, price_watch, push
+from .services import alert_delivery, fare_watch, price_watch, push
 from .services.account_maintenance import account_maintenance
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
@@ -121,6 +122,7 @@ async def lifespan(app: FastAPI):
     create_feedback_table()
     create_taste_table()
     from .db import telemetry_db
+    from .db.alerts_db import create_alert_tables
     from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
@@ -128,6 +130,7 @@ async def lifespan(app: FastAPI):
 
     create_fare_watch_tables()
     create_price_watch_tables()
+    create_alert_tables()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
@@ -147,6 +150,7 @@ async def lifespan(app: FastAPI):
     # Fare- and price-watch re-checks (one loop): only with live fares (SERPAPI_KEY) and
     # FARE_WATCH_ENABLED. Single-worker deployments — see Deployment.md.
     fare_watch_task = fare_watch.start_scheduler()
+    alert_delivery_task = alert_delivery.start_loop()
     telemetry_task = (
         asyncio.create_task(telemetry_maintenance())
         if telemetry_db.store_available()
@@ -179,6 +183,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
     await fare_watch.stop_scheduler(fare_watch_task)
+    await alert_delivery.stop_loop(alert_delivery_task)
     await llm.aclose()
     await push.drain()  # pushes in flight: a few seconds, then cancelled
     if vm_mode:
@@ -340,6 +345,7 @@ app.include_router(taste_router, prefix="/api", tags=["taste"])
 # Fare watches: create and "check now" draw on the light_ai bucket (per route)
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
+app.include_router(alerts_router, prefix="/api", tags=["alerts"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])
 app.include_router(
