@@ -39,6 +39,7 @@ STAT_LABELS = {  # key -> (singular, plural)
     "places": ("place", "places"),
     "drops_caught": ("drop caught", "drops caught"),
     "targets_hit": ("target hit", "targets hit"),
+    "correct": ("correct answer", "correct answers"),
 }
 
 _MONTHS = (
@@ -90,6 +91,10 @@ def safe_headline(snapshot: dict) -> str:
         return "Watching prices for my next trip"
     if kind == "recap":
         return "My trip: recap"
+    if kind == "quiz":
+        return "My Voyager quiz score"
+    if kind == "status":
+        return "On a trip"
     if isinstance(days, int) and days > 0:
         return f"{days} day{'s' if days != 1 else ''} away"
     return "My trip"

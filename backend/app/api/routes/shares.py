@@ -6,6 +6,7 @@ while ``SHARING_V2_ENABLED`` is off.
 """
 
 import html
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Request, Response
@@ -15,9 +16,10 @@ from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.errors import ApiError
 from ...core.urls import request_public_url
-from ...db import shares_db, users_db
+from ...db import quiz_db, shares_db, users_db
+from ...db.database import get_connection
 from ...db.plans_db import get_plan, get_user_plans
-from ...services import alert_moments, share_card, share_public
+from ...services import alert_moments, share_card, share_public, trip_phase
 
 router = APIRouter()
 # Public crawler/preview routes: own bucket (wired in main.py), no sign-in.
@@ -33,6 +35,7 @@ class ShareOptions(BaseModel):
 class CreateShareBody(BaseModel):
     kind: str
     plan_id: int | None = None
+    session_id: str | None = Field(None, max_length=64)  # kind "quiz"
     options: ShareOptions = Field(default_factory=ShareOptions)
     locale: str | None = Field(None, max_length=8)
 
@@ -58,7 +61,42 @@ def _public_options(share: dict) -> dict:
 def _title(share: dict, plan: dict | None) -> str:
     if share["kind"] == "savings":
         return "Price alerts"
+    if share["kind"] == "quiz":
+        return "Quiz"
     return (plan or {}).get("name") or ""
+
+
+def _is_active(plan: dict, today=None) -> bool:
+    start, end = trip_phase.trip_dates(plan)
+    today = today or datetime.now(UTC).date()
+    return trip_phase.effective_phase(start, end, plan.get("phase"), today, False) == (
+        "on_the_road"
+    )
+
+
+def _finished_quiz(user_id, sid: str | None) -> dict | None:
+    """The caller's finished session ``sid``, else None."""
+    if not sid:
+        return None
+    with get_connection() as conn:
+        s = quiz_db.get_session(conn, sid)
+    if not s or str(s["user_id"]) != str(user_id) or s["finished_ms"] is None:
+        return None
+    return s
+
+
+def _active_trip(user: dict, plan_id: int | None) -> dict:
+    if plan_id is not None:
+        plan = get_plan(plan_id)
+        if not plan or plan["username"] != user["username"]:
+            raise ApiError(404, "plan_not_found", "Plan not found.")
+        if not _is_active(plan):
+            raise ApiError(422, "no_active_trip", "No active trip to share.")
+        return plan
+    for plan in get_user_plans(user["username"]):
+        if _is_active(plan):
+            return plan
+    raise ApiError(422, "no_active_trip", "No active trip to share.")
 
 
 @router.post("/shares")
@@ -69,13 +107,22 @@ def create_share(
     if body.kind not in share_public.KINDS:
         raise ApiError(422, "invalid_kind", "Unknown share kind.")
     plan_id = None
-    if body.kind != "savings":
+    ref = None
+    if body.kind == "quiz":
+        if not (settings.play_enabled and settings.game_enabled):
+            raise ApiError(404, "play_disabled", "Play is not available.")
+        if not _finished_quiz(user["id"], body.session_id):
+            raise ApiError(404, "session_not_found", "Quiz session not found.")
+        ref = body.session_id
+    elif body.kind == "status":
+        plan_id = _active_trip(user, body.plan_id)["id"]
+    elif body.kind != "savings":
         plan = get_plan(body.plan_id) if body.plan_id is not None else None
         if not plan or plan["username"] != user["username"]:
             raise ApiError(404, "plan_not_found", "Plan not found.")
         plan_id = plan["id"]
     options = {**body.options.model_dump(), "locale": body.locale}
-    share = shares_db.upsert_share(user["username"], body.kind, plan_id, options)
+    share = shares_db.upsert_share(user["username"], body.kind, plan_id, options, ref)
     return {
         "token": share["token"],
         "kind": share["kind"],
@@ -142,9 +189,24 @@ def resolve_snapshot(token: str) -> tuple[dict, dict] | None:
         return share, share_public.build_snapshot(
             "savings", opts, savings=summary, owner_name=name
         )
+    if share["kind"] == "quiz":
+        if not (settings.play_enabled and settings.game_enabled) or not owner:
+            return None
+        session = _finished_quiz(owner["id"], share.get("ref"))
+        if not session:
+            return None
+        return share, share_public.build_snapshot(
+            "quiz", opts, quiz=session, owner_name=name
+        )
     plan = get_plan(share["plan_id"]) if share["plan_id"] is not None else None
     if not plan or plan["username"] != share["username"]:
         return None
+    if share["kind"] == "status":  # live only: dies when the trip is over
+        if not _is_active(plan):
+            return None
+        return share, share_public.build_snapshot(
+            "status", opts, plan=plan, owner_name=name
+        )
     return share, share_public.build_snapshot(
         share["kind"], opts, plan=plan, owner_name=name
     )
@@ -157,7 +219,7 @@ def public_payload(token: str) -> dict | None:
         return None
     share, snap = found
     opts = _public_options(share)
-    if share["kind"] == "savings":
+    if share["kind"] in ("savings", "quiz", "status"):
         stamp = share_public._stamp(share["created_at"], opts["dates"])
         body = {
             "name": snap["title"],
@@ -175,7 +237,7 @@ def public_payload(token: str) -> dict | None:
     body.update(kind=share["kind"], options=opts)
     if snap["owner_name"]:
         body["owner_name"] = snap["owner_name"]
-    if share["kind"] in ("recap", "savings"):
+    if share["kind"] in ("recap", "savings", "quiz", "status"):
         card = {"headline": snap["headline"], "stats": snap["stats"]}
         if snap["destination"]:
             card["destination"] = snap["destination"]

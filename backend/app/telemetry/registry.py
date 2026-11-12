@@ -23,7 +23,7 @@ def _enum(*values: str) -> str:
 
 
 _KIND = _enum("flight", "hotel", "activity", "trip")
-_SHARE_KIND = _enum("plan", "recap", "savings")
+_SHARE_KIND = _enum("plan", "recap", "savings", "quiz", "status")
 _AUTH_METHOD = _enum("password", "apple", "google", "facebook", "github")
 _AUTH_MODE = _enum("signin", "signup", "link")
 

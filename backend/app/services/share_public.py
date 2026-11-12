@@ -12,9 +12,9 @@ Two outputs, both built from whitelists so nothing private can leak:
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 
-KINDS = ("plan", "recap", "savings")
+KINDS = ("plan", "recap", "savings", "quiz", "status")
 DATE_MODES = ("hidden", "month", "exact")
 DEFAULT_OPTIONS = {"dates": "hidden", "show_origin": False, "show_name": False}
 
@@ -334,12 +334,55 @@ def savings_card(summary: dict) -> dict:
     }
 
 
+QUIZ_PACK_LABELS = {
+    "flags": "Flags",
+    "capitals": "Capitals",
+    "landmarks": "Landmarks",
+    "cuisine": "Cuisine",
+}
+
+
+def quiz_card(session: dict) -> dict:
+    """Pack and correct-out-of-total only: never time, points or answers."""
+    total = len(session.get("questions") or [])
+    correct = max(0, min(int(session.get("correct") or 0), total))
+    if session.get("mode") == "daily":
+        label = "Daily quiz"
+    else:
+        label = QUIZ_PACK_LABELS.get(session.get("pack"))
+        label = f"{label} quiz" if label else "Quiz"
+    return {
+        "headline": f"{label}: {correct}/{total}" if total else label,
+        "stats": [{"key": "correct", "count": correct}] if correct else [],
+    }
+
+
+def status_card(plan: dict, today: date) -> dict:
+    """ "Day N in Place" from server data; no dates, origin or other trip detail."""
+    from .trip_phase import day_index, trip_dates
+
+    search = plan.get("search_data") or {}
+    dests = _destinations(search)
+    place = " / ".join(dests) if dests else None
+    start, end = trip_dates(plan)
+    day = day_index(start, end, today)
+    if day and place:
+        head = f"Day {day} in {place}"
+    elif place:
+        head = f"On a trip in {place}"
+    else:
+        head = "On a trip"
+    return {"headline": clip_headline(head), "destination": place}
+
+
 def build_snapshot(
     kind: str,
     options: dict | None,
     *,
     plan: dict | None = None,
     savings: dict | None = None,
+    quiz: dict | None = None,
+    today: date | None = None,
     owner_name: str | None = None,
 ) -> dict:
     """What a card or OG page may show. ``owner_name`` must already respect
@@ -361,6 +404,18 @@ def build_snapshot(
         card = savings_card(savings or {})
         snap.update(
             title="Price alerts", headline=card["headline"], stats=card["stats"]
+        )
+        return snap
+    if kind == "quiz":
+        card = quiz_card(quiz or {})
+        snap.update(title="Quiz", headline=card["headline"], stats=card["stats"])
+        return snap
+    if kind == "status":
+        card = status_card(plan or {}, today or datetime.now(UTC).date())
+        snap.update(
+            title="Trip status",
+            headline=card["headline"],
+            destination=card["destination"],
         )
         return snap
     plan = plan or {}
