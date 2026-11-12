@@ -254,6 +254,10 @@ EVENTS: dict[str, dict[str, str]] = {
     },
     "share_revoke": {"kind": _SHARE_KIND},
     "share_view": {"kind": _SHARE_KIND},
+    # Phase 5: admin moderation
+    "admin_mod_action": {
+        "action": _enum("approve", "remove", "restrict", "lift", "view_queue")
+    },
 }
 
 

@@ -151,6 +151,7 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `share_action` | `kind`, `target` (`native`, `copy`, `download`, `x`, `facebook`, `whatsapp`, `linkedin`) | not yet | A share action was used. |
 | `share_revoke` | `kind` | not yet | A share link was revoked. |
 | `share_view` | `kind` | not yet | A public share page was viewed (from the SPA only). |
+| `admin_mod_action` | `action` (`approve`, `remove`, `restrict`, `lift`, `view_queue`) | not yet | An admin acted in the Moderation tab; never the item, handle or text. |
 
 ### Settings, consent, performance, errors
 

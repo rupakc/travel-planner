@@ -1,0 +1,30 @@
+{
+  "tab": "Moderación",
+  "loading": "Cargando…",
+  "empty": "Nada que revisar.",
+  "approve": "Aprobar",
+  "remove": "Eliminar",
+  "restrict": "Restringir autor",
+  "lift": "Quitar restricción",
+  "restrictDays": "Restringir durante (días)",
+  "restricted": "Autor restringido durante {{days}} días.",
+  "lifted": "Restricción quitada.",
+  "more": "Cargar más",
+  "by": "de @{{handle}}",
+  "status": {
+    "held": "Retenidos",
+    "reported": "Denunciados",
+    "hidden": "Ocultos"
+  },
+  "target": {
+    "idea": "Idea",
+    "comment": "Comentario",
+    "profile": "Perfil"
+  },
+  "reason": {
+    "spam": "Spam",
+    "abuse": "Abuso",
+    "unsafe": "Inseguro",
+    "other": "Otro"
+  }
+}

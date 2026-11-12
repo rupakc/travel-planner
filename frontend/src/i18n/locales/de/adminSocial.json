@@ -1,0 +1,30 @@
+{
+  "tab": "Moderation",
+  "loading": "Wird geladen…",
+  "empty": "Nichts zu prüfen.",
+  "approve": "Freigeben",
+  "remove": "Entfernen",
+  "restrict": "Autor sperren",
+  "lift": "Sperre aufheben",
+  "restrictDays": "Sperren für (Tage)",
+  "restricted": "Autor für {{days}} Tage gesperrt.",
+  "lifted": "Sperre aufgehoben.",
+  "more": "Mehr laden",
+  "by": "von @{{handle}}",
+  "status": {
+    "held": "Zurückgehalten",
+    "reported": "Gemeldet",
+    "hidden": "Ausgeblendet"
+  },
+  "target": {
+    "idea": "Idee",
+    "comment": "Kommentar",
+    "profile": "Profil"
+  },
+  "reason": {
+    "spam": "Spam",
+    "abuse": "Missbrauch",
+    "unsafe": "Unsicher",
+    "other": "Sonstiges"
+  }
+}

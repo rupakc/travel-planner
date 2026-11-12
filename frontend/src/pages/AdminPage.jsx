@@ -6,16 +6,19 @@ import { getTelemetrySummary } from '../services/api'
 import TelemetrySummary from '../components/admin/TelemetrySummary'
 import InvitesPanel from '../components/admin/InvitesPanel'
 import { listInvites } from '../services/adminInvitesApi'
+import ModerationQueue from '../components/admin/ModerationQueue'
+import { listQueue } from '../services/adminSocialApi'
 import { MIN_PASSWORD_LENGTH } from '../utils/passwordStrength'
 import { responseErrorMessage } from '../utils/httpError'
 
-const TABS = ['Users', 'Feedback', 'Analytics', 'Invites']
+const TABS = ['Users', 'Feedback', 'Analytics', 'Invites', 'Moderation']
 
 export default function AdminPage() {
   const { t } = useTranslation('account')
   const { token, user } = useAuth()
   const { t: tt } = useTranslation('adminTelemetry')
   const { t: ti } = useTranslation('adminInvites')
+  const { t: tm } = useTranslation('adminSocial')
   const [tab, setTab] = useState('Users')
   // Probed once on mount: a 404 means an older backend, so the tab is hidden.
   const [analytics, setAnalytics] = useState({ summary: null, error: null, hidden: true })
@@ -49,12 +52,27 @@ export default function AdminPage() {
     return () => { live = false }
   }, [token])
 
+  // Moderation: hidden on 404 (older backend or SOCIAL_ENABLED off).
+  const [mod, setMod] = useState({ hidden: true })
+  useEffect(() => {
+    let live = true
+    listQueue(token, 'held')
+      .then(() => live && setMod({ hidden: false }))
+      .catch(error => {
+        if (!live) return
+        const hidden = error?.status === 404
+        setMod({ hidden })
+        if (hidden) setTab(cur => (cur === 'Moderation' ? 'Users' : cur))
+      })
+    return () => { live = false }
+  }, [token])
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="font-display text-2xl font-bold text-gray-800 mb-6">{t('admin.title')}</h1>
 
       <div className="flex gap-2 mb-6 border-b border-gray-200">
-        {TABS.filter(id => (id !== 'Analytics' || !analytics.hidden) && (id !== 'Invites' || !invites.hidden)).map(id => (
+        {TABS.filter(id => (id !== 'Analytics' || !analytics.hidden) && (id !== 'Invites' || !invites.hidden) && (id !== 'Moderation' || !mod.hidden)).map(id => (
           <button
             key={id}
             data-tid={`admin.tab-${id}`}
@@ -65,7 +83,7 @@ export default function AdminPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {id === 'Analytics' ? tt('tab') : id === 'Invites' ? ti('tab') : t(`admin.tabs.${id.toLowerCase()}`)}
+            {id === 'Analytics' ? tt('tab') : id === 'Invites' ? ti('tab') : id === 'Moderation' ? tm('tab') : t(`admin.tabs.${id.toLowerCase()}`)}
           </button>
         ))}
       </div>
@@ -73,6 +91,7 @@ export default function AdminPage() {
       {tab === 'Users'    && <UsersTab token={token} currentUsername={user?.username} />}
       {tab === 'Feedback' && <FeedbackTab token={token} />}
       {tab === 'Invites'   && <InvitesPanel token={token} initial={invites.rows} />}
+      {tab === 'Moderation' && <ModerationQueue token={token} />}
       {tab === 'Analytics' && <TelemetrySummary summary={analytics.summary} error={analytics.error} />}
     </div>
   )

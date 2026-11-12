@@ -1,0 +1,30 @@
+{
+  "tab": "内容审核",
+  "loading": "加载中…",
+  "empty": "没有需要审核的内容。",
+  "approve": "通过",
+  "remove": "删除",
+  "restrict": "限制作者",
+  "lift": "解除限制",
+  "restrictDays": "限制天数",
+  "restricted": "已限制作者 {{days}} 天。",
+  "lifted": "已解除限制。",
+  "more": "加载更多",
+  "by": "来自 @{{handle}}",
+  "status": {
+    "held": "待审",
+    "reported": "已举报",
+    "hidden": "已隐藏"
+  },
+  "target": {
+    "idea": "创意",
+    "comment": "评论",
+    "profile": "主页"
+  },
+  "reason": {
+    "spam": "垃圾信息",
+    "abuse": "滥用",
+    "unsafe": "不安全",
+    "other": "其他"
+  }
+}
