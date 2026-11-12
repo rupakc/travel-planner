@@ -122,6 +122,47 @@ def _stats(kind: str, selections: dict) -> list[dict]:
     return [s for s in stats if s["count"] > 0][:3]
 
 
+_DATE_KEY_RE = re.compile(
+    r"date|time|departure|arrival|check[_-]?in|check[_-]?out", re.IGNORECASE
+)
+_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}.*)?$")
+_DROP = object()
+
+
+def _scrub_value(value, mode: str, key_hit: bool):
+    if isinstance(value, str):
+        if _ISO_RE.match(value.strip()):
+            return _DROP if mode == "hidden" else (_month(value) or _DROP)
+        return _DROP if key_hit else value
+    if isinstance(value, dict):
+        return {} if key_hit and mode == "hidden" else _scrub(value, mode)
+    if isinstance(value, list):
+        out = [_scrub_value(v, mode, False) for v in value]
+        return [v for v in out if v is not _DROP]
+    return _DROP if key_hit else value
+
+
+def _scrub(obj: dict, mode: str) -> dict:
+    out = {}
+    for key, value in obj.items():
+        hit = bool(_DATE_KEY_RE.search(str(key)))
+        if hit and mode == "hidden":
+            continue
+        cleaned = _scrub_value(value, mode, hit)
+        if cleaned is not _DROP:
+            out[key] = cleaned
+    return out
+
+
+def scrub_selections(selections: dict, mode: str) -> dict:
+    """Selections with dates removed (``hidden``) or cut to ``YYYY-MM``
+    (``month``); ``exact`` returns them unchanged. Keys that look like dates or
+    times go, and so does any ISO date or datetime string value."""
+    if mode == "exact":
+        return selections
+    return _scrub(selections, "month" if mode == "month" else "hidden")
+
+
 def sanitize_plan(plan: dict, options: dict | None, owner_name: str | None) -> dict:
     """Public JSON of a plan share: legacy keys with the options applied."""
     opts = normalize_options(options)
@@ -145,7 +186,7 @@ def sanitize_plan(plan: dict, options: dict | None, owner_name: str | None) -> d
         "created_at": plan.get("created_at"),
         "updated_at": plan.get("updated_at"),
         "search_data": public,
-        "selections": plan.get("selections") or {},
+        "selections": scrub_selections(plan.get("selections") or {}, opts["dates"]),
     }
     return out
 

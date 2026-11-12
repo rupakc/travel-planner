@@ -98,3 +98,56 @@ def test_owner_display_name_rules():
     assert sp.owner_display_name(user, {"show_name": True}) == "Ann"
     assert sp.owner_display_name({"username": "bob"}, {"show_name": True}) == "bob"
     assert sp.owner_display_name({"username": "b@x.io"}, {"show_name": True}) is None
+
+
+SEL = {
+    "flight": {
+        "airline": "TP",
+        "departure_time": "2026-04-01T09:30:00",
+        "arrival": "2026-04-01 17:05",
+        "price_usd": 400,
+        "legs": [{"departure_airport": "JFK", "at": "2026-04-01T09:30"}],
+    },
+    "hotel": {"name": "H", "check_in": "2026-04-01", "check_out": "2026-04-07", "stars": 4},
+    "itinerary": {
+        "days": [{"day": 1, "date": "2026-04-01", "slots": [{"time": "09:00", "title": "Tram"}]}]
+    },
+    "activities": [{"name": "Tram 28"}],
+}  # fmt: skip
+
+
+def _flat(obj):
+    return repr(obj)
+
+
+def test_scrub_hidden_removes_all_dates():
+    out = sp.scrub_selections(SEL, "hidden")
+    text = _flat(out)
+    assert "2026" not in text and "09:00" not in text and "17:05" not in text
+    assert out["flight"]["airline"] == "TP" and out["flight"]["price_usd"] == 400
+    assert out["flight"]["legs"] == [{}]
+    assert out["hotel"] == {"name": "H", "stars": 4}
+    assert out["itinerary"]["days"][0]["day"] == 1
+    assert out["activities"] == [{"name": "Tram 28"}]
+
+
+def test_scrub_month_truncates_never_day_or_time():
+    out = sp.scrub_selections(SEL, "month")
+    assert out["hotel"]["check_in"] == "2026-04"
+    assert out["flight"]["legs"][0]["at"] == "2026-04"
+    assert out["itinerary"]["days"][0]["date"] == "2026-04"
+    text = _flat(out)
+    assert "2026-04-" not in text and "09:00" not in text and "T09" not in text
+
+
+def test_scrub_exact_unchanged_and_input_not_mutated():
+    assert sp.scrub_selections(SEL, "exact") is SEL
+    sp.scrub_selections(SEL, "hidden")
+    assert SEL["hotel"]["check_in"] == "2026-04-01"
+
+
+def test_sanitize_plan_applies_scrub():
+    plan = {**PLAN, "selections": SEL}
+    assert "2026-04-01" not in _flat(sp.sanitize_plan(plan, {}, None)["selections"])
+    ex = sp.sanitize_plan(plan, {"dates": "exact"}, None)["selections"]
+    assert ex["hotel"]["check_in"] == "2026-04-01"
