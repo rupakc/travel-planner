@@ -1860,6 +1860,11 @@
 </thead>
 <tbody>
 <tr>
+<td><code>SHARING_V2_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Share links 2.0 (Phase 4): <code>/api/shares*</code> and the new-style <code>GET /api/share/{token}</code> fallback. Off, they answer 404 (<code>sharing_disabled</code> for the authenticated routes) and <code>features.sharing</code> is <code>0</code>; legacy plan share tokens keep working either way.</td>
+</tr>
+<tr>
 <td><code>PRICE_ALERTS_V2_ENABLED</code></td>
 <td><code>true</code></td>
 <td>Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as <code>features.price_alerts_v2</code>; the web UI shows it only when this is true (or for one browser with <code>localStorage.tp_alerts2 = "1"</code>). Runbook: turning it off discards pushes and emails held at that moment (quiet hours, group window); in-app alerts stay. Held items more than 12 h past due are dropped as <code>stale</code> instead of sent.</td>
@@ -2214,6 +2219,16 @@
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>
 <td><code>60</code></td>
 <td>Single-agent routes, <code>/*/filtered</code>, <code>/api/flights/fare-calendar</code>, <code>/api/stress-test</code>, <code>/api/layover</code>, <code>/api/events</code>, <code>/api/walking-tours</code>, creating a fare watch, its "Check now", <code>/api/nearby</code>, <code>/api/live-check</code> and changing the account email</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_SHARE_PUBLIC</code></td>
+<td><code>120</code></td>
+<td>Public share routes (<code>GET /api/share/{token}</code> and, later, the page and card), per client IP.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_SHARE_MANAGE</code></td>
+<td><code>30</code></td>
+<td><code>/api/shares</code> create, list and revoke, per signed-in user.</td>
 </tr>
 <tr>
 <td><code>RATE_LIMIT_LOGIN</code></td>
