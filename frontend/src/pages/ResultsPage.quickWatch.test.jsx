@@ -12,16 +12,19 @@ vi.mock('../components/alerts/WatchActivityButton', () => ({ default: ({ activit
 vi.mock('../components/alerts2/QuickWatchButton', () => ({
   default: (p) => <span data-testid="quick" data-kind={p.kind} data-plan={String(p.planId)} data-spec={JSON.stringify(p.spec)}>{p.title}</span>,
 }))
+vi.mock('../components/alerts/WatchFareButton', () => ({ default: () => <span data-testid="classic-fare" /> }))
 vi.mock('../components/alerts2/WatchSuggestions', () => ({
   default: (p) => <span data-testid="suggest" data-plan={p.planId} data-force={String(!!p.force)} />,
 }))
 
 import { HotelsSection, MyPlanDrawer } from './ResultsPage'
 import { hotelWatchSpec } from '../utils/hotelWatch'
+import { tripFromSearch } from '../utils/fareWatch'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const SEARCH = { destination: 'Lisbon', departure_date: '2099-12-10', return_date: '2099-12-14', adults: 2 }
+const SEARCH2 = { origin: 'NYC', destination: 'LIS', departure_date: '2099-12-10', return_date: '2099-12-14', num_travelers: 2 }
 const HOTEL = { name: 'Lumen Hotel', price_per_night_usd: 100 }
 const sel = { flight: null, flights: [], hotel: null, activities: [], places_to_see: [], sim: null, tips: [], getting_around: [], events: [], walking_tours: [], itinerary_slots: [], itinerary_notes: {}, itinerary_edits: {} }
 
@@ -74,5 +77,18 @@ describe('Results one-tap watch', () => {
     expect(q('suggest')).toHaveLength(1)
     expect(q('suggest')[0].dataset.plan).toBe('5')
     expect(q('suggest')[0].dataset.force).toBe('false')
+  })
+
+  it('flight quick spec equals the dialog spec (the trip object); flag off has classic only', async () => {
+    const el = () => drawer({ selections: { ...sel, flight: { airline: 'Air', price_usd: 500 } }, searchData: SEARCH2 })
+    await render(el())
+    const quick = q('quick').filter((n) => n.dataset.kind === 'flight')
+    expect(quick).toHaveLength(1)
+    expect(JSON.parse(quick[0].dataset.spec)).toEqual(JSON.parse(JSON.stringify(tripFromSearch(SEARCH2))))
+    expect(q('classic-fare')).toHaveLength(1)
+    v2.on = false
+    await render(el())
+    expect(q('quick')).toHaveLength(0)
+    expect(q('classic-fare')).toHaveLength(1)
   })
 })

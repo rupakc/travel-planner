@@ -16,6 +16,7 @@ const VERDICT_STYLE = {
   typical: 'bg-slate-100 text-slate-700',
   high: 'bg-amber-100 text-amber-800',
 }
+const MAX_STORIES = 6
 const asList = (r) => (Array.isArray(r) ? r : Array.isArray(r?.watches) ? r.watches : [])
 const titleOf = (w) => (w.kind === 'flight' ? routeLabel(w)
   : w.title || w.subject?.name || w.subject?.title || w.subject?.city || '')
@@ -44,10 +45,13 @@ export default function TripPricesCard({ planId, token }) {
           ...asList(fares).map((w) => ({ ...w, kind: 'flight' })),
           ...asList(prices),
         ].filter((w) => w.plan_id === planId && w.status !== 'expired')
-        const stories = await Promise.allSettled(mine.map((w) => getStory(token, w.kind, w.id)))
         if (cancelled) return
-        setRows(mine.map((w, i) => ({ w, story: stories[i].status === 'fulfilled' ? stories[i].value : null })))
+        setRows(mine.map((w) => ({ w, story: null })))
         setFailed(false)
+        // Verdict chips load after the list shows, for the first few watches only
+        const stories = await Promise.allSettled(mine.slice(0, MAX_STORIES).map((w) => getStory(token, w.kind, w.id)))
+        if (cancelled) return
+        setRows(mine.map((w, i) => ({ w, story: stories[i]?.status === 'fulfilled' ? stories[i].value : null })))
       } catch {
         if (!cancelled) setFailed(true)
       }

@@ -5,6 +5,7 @@ import { withCityNames } from '../../utils/cityNames'
 import { hotelWatchSpec } from '../../utils/hotelWatch'
 import { activitySpec } from '../../utils/activityWatch'
 import { formatDateRange, isWatchableTrip } from '../../utils/fareWatch'
+import { isWatchablePlan } from '../../utils/tripWatch'
 import { ActivityTripContext } from '../alerts/activityTripContext'
 import QuickWatchButton from './QuickWatchButton'
 
@@ -48,14 +49,23 @@ function ActivityInner({ activity, planId, surface }) {
     spec={spec} planId={planId} surface={surface} />
 }
 
-/** `trip` is tripFromSearch(searchData): a flight spec holds the fare-watch trip fields. */
-export function QuickWatchFare({ trip, planId = null, surface = 'results' }) {
+/**
+ * `trip` is tripFromSearch(searchData) / tripFromPlan(plan). The spec is that very
+ * trip object, exactly what the classic WatchDialog posts (`...trip`).
+ * `onColour` wraps the button in a light pill so it reads on a coloured header.
+ */
+export function QuickWatchFare({ trip, planId = null, surface = 'results', onColour = false }) {
   const { on } = useAlertsV2()
-  const spec = useMemo(() => (trip && {
-    origin: trip.origin, destination: trip.destination, departure_date: trip.departure_date,
-    return_date: trip.return_date || null, num_travelers: trip.num_travelers || 1,
-  }), [trip])
   if (!on || !isWatchableTrip(trip)) return null
-  return <QuickWatchButton kind="flight" title={`${trip.origin} → ${trip.destination}`}
-    subtitle={formatDateRange(trip.departure_date, trip.return_date)} spec={spec} planId={planId} surface={surface} />
+  const button = <QuickWatchButton kind="flight" title={`${trip.origin} → ${trip.destination}`}
+    subtitle={formatDateRange(trip.departure_date, trip.return_date)} spec={{ ...trip }} planId={planId} surface={surface} />
+  return onColour ? <span className="inline-flex flex-col rounded-full bg-white/95 px-1">{button}</span> : button
+}
+
+/** Whole-trip watch of a saved plan: the same `{ plan_id }` spec as WatchTripButton. */
+export function QuickWatchTrip({ plan, surface = 'results' }) {
+  const { on } = useAlertsV2()
+  if (!on || !isWatchablePlan(plan)) return null
+  return <QuickWatchButton kind="trip" title={plan.name || String(plan.id)} spec={{ plan_id: plan.id }}
+    planId={plan.id} surface={surface} />
 }

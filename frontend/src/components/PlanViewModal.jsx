@@ -10,7 +10,7 @@ import {
 import WatchFareButton from './alerts/WatchFareButton'
 import WatchTripButton from './alerts/WatchTripButton'
 import { tripFromPlan } from '../utils/fareWatch'
-import { QuickWatchHotel, QuickWatchActivity } from './alerts2/QuickWatchFor'
+import { QuickWatchHotel, QuickWatchActivity, QuickWatchFare, QuickWatchTrip } from './alerts2/QuickWatchFor'
 import { ActivityTripContext } from './alerts/activityTripContext'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import { enumLabel } from '../utils/enumLabel'
@@ -211,6 +211,10 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                   {sel.flight.booking_url && (
                     <a href={sel.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.flight.bookThis')}</a>
                   )}
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    <QuickWatchFare trip={tripFromPlan(plan)} planId={plan.id ?? null} surface="results" />
+                    <QuickWatchTrip plan={plan} surface="results" />
+                  </div>
                 </div>
                 <button data-tid="plan.remove-flight" aria-label={t('modal.delete')} onClick={() => removeItem('flight')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />

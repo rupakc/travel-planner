@@ -4003,6 +4003,7 @@ export default function ResultsPage() {
           )}
           <WatchFareButton variant="header" trip={tripFromSearch(searchData)} source="flights_header"
             price={cheapestFlightPrice(data)} insights={data?.price_insights} />
+          <QuickWatchFare trip={tripFromSearch(searchData)} surface="results" onColour />
           {canShowFareCalendar && (
             <button data-tid="page.fare-calendar" onClick={e => {
               e.stopPropagation()
