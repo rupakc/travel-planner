@@ -83,14 +83,18 @@
 	# If the app answers 4xx/5xx (revoked token, sharing off, an older build
 	# without the route), the SPA index.html is served instead.
 	@crawler {
-		header_regexp ua User-Agent (?i)facebookexternalhit|twitterbot|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|pinterest|skypeuri|embedly|googlebot|bingbot|applebot|imessage|redditbot|mastodon
+		header_regexp ua User-Agent (?i)\b(?:facebookexternalhit|twitterbot|whatsapp/|linkedinbot|slackbot|discordbot|telegrambot|pinterestbot|skypeuripreview|embedly|googlebot|bingbot|applebot|imessage|redditbot|mastodon/)
 		path_regexp share ^/share/([A-Za-z0-9_-]{8,64})$
 	}
 	handle @crawler {
+		# The answer depends on who asks (same URL, SPA for people)
+		header Vary User-Agent
 		rewrite * /api/share/{re.share.1}/page
 		reverse_proxy app:8001 {
 			flush_interval -1
-			lb_try_duration 30s
+			# Crawlers time out fast: give up early (app restarting or down)
+			# and serve the SPA index (handle_errors below)
+			lb_try_duration 3s
 			lb_try_interval 250ms
 			header_up X-Real-IP {remote_host}
 			@apperr status 4xx 5xx
@@ -101,6 +105,26 @@
 					rewrite * /index.html
 					file_server
 				}
+			}
+		}
+	}
+
+	# App unreachable (502/503/504): a crawler asking for a share page still
+	# gets the SPA index instead of Caddy's bare error; people and API calls
+	# keep the normal error response.
+	handle_errors {
+		@crawler_down {
+			expression `{http.error.status_code} >= 502 && {http.request.orig_uri.path}.matches('^/share/[A-Za-z0-9_-]{8,64}$')`
+			header_regexp ua User-Agent (?i)\b(?:facebookexternalhit|twitterbot|whatsapp/|linkedinbot|slackbot|discordbot|telegrambot|pinterestbot|skypeuripreview|embedly|googlebot|bingbot|applebot|imessage|redditbot|mastodon/)
+		}
+		handle @crawler_down {
+			root * /edge/current/srv
+			header Cache-Control "no-cache"
+			header Vary User-Agent
+			rewrite * /index.html
+			# 200, not the 502 that brought us here
+			file_server {
+				status 200
 			}
 		}
 	}
@@ -132,6 +156,9 @@
 	handle {
 		root * /edge/current/srv
 		header Cache-Control "no-cache"
+		# /share/<token> is a different document for link-preview crawlers
+		@share_page path /share/*
+		header @share_page Vary User-Agent
 		try_files {path} /index.html
 		file_server
 	}

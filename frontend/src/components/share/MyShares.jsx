@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useClientConfig } from '../../hooks/useClientConfig'
-import { listShares, revokeShare } from '../../services/api'
+import { listShares, revokeShare, unsharePlan } from '../../services/api'
 import { copyText, pageUrl, sharingEnabled } from '../../utils/share'
 import { fmtDate } from '../../i18n/format'
 
@@ -20,6 +20,7 @@ export default function MyShares() {
   const { config, loaded } = useClientConfig()
   const on = loaded && sharingEnabled(config)
   const [shares, setShares] = useState(null) // null: loading or hidden
+  const [legacy, setLegacy] = useState([]) // older plan links: [{plan_id, name, url}]
   const [confirming, setConfirming] = useState(null)
   const [note, setNote] = useState(null) // {text, error}
 
@@ -27,7 +28,11 @@ export default function MyShares() {
     if (!on || !token) return undefined
     let live = true
     listShares(token)
-      .then((d) => { if (live) setShares(Array.isArray(d?.shares) ? d.shares : []) })
+      .then((d) => {
+        if (!live) return
+        setShares(Array.isArray(d?.shares) ? d.shares : [])
+        setLegacy(Array.isArray(d?.legacy_plan_shares) ? d.legacy_plan_shares.filter((x) => x && x.plan_id != null && x.url) : [])
+      })
       .catch(() => { if (live) setShares(null) })
     return () => { live = false }
   }, [on, token])
@@ -49,6 +54,23 @@ export default function MyShares() {
     setConfirming(null)
   }, [token, t])
 
+  const revokeLegacy = useCallback(async (l) => {
+    try {
+      await unsharePlan(token, l.plan_id)
+      setLegacy((list) => list.filter((x) => x.plan_id !== l.plan_id))
+      setNote({ text: t('mine.revoked'), error: false })
+      emit('share_revoke', { kind: 'plan' })
+    } catch {
+      setNote({ text: t('mine.error'), error: true })
+    }
+    setConfirming(null)
+  }, [token, t])
+
+  const copyLegacy = useCallback(async (l) => {
+    const ok = await copyText(l.url)
+    setNote({ text: t(ok ? 'mine.copied' : 'mine.copyFailed'), error: !ok })
+  }, [t])
+
   if (!on || !token || shares === null) return null
 
   return (
@@ -56,7 +78,7 @@ export default function MyShares() {
       <h2 className="text-lg font-semibold text-slate-800">{t('mine.title')}</h2>
       <p className="text-sm text-slate-500 mb-3">{t('mine.intro')}</p>
       {note && <p role={note.error ? 'alert' : 'status'} className={`mb-3 text-sm ${note.error ? 'text-red-700' : 'text-emerald-700'}`}>{note.text}</p>}
-      {shares.length === 0 ? (
+      {shares.length === 0 && legacy.length === 0 ? (
         <p data-tid="shares.empty" className="text-sm text-slate-500">{t('mine.empty')}</p>
       ) : (
         <ul className="space-y-3">
@@ -83,6 +105,34 @@ export default function MyShares() {
             </li>
           ))}
         </ul>
+      )}
+      {legacy.length > 0 && (
+        <div data-tid="shares.legacy" className={shares.length ? 'mt-4' : ''}>
+          <h3 className="text-sm font-semibold text-slate-800">{t('mine.legacyTitle')}</h3>
+          <p className="text-xs text-slate-500 mb-2">{t('mine.legacyIntro')}</p>
+          <ul className="space-y-3">
+            {legacy.map((l) => {
+              const key = `legacy-${l.plan_id}`
+              return (
+                <li key={key} data-tid="shares.legacy.item" className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-sm font-medium text-slate-800 break-words">{l.name || t('mine.untitled')}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" className={btn} data-tid="shares.legacy.copy" onClick={() => copyLegacy(l)}>{t('mine.copy')}</button>
+                    {confirming === key ? (
+                      <span role="group" aria-label={t('mine.confirm')} className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm text-slate-700">{t('mine.confirm')}</span>
+                        <button type="button" className={`${btn} border-red-300 text-red-700`} data-tid="shares.legacy.revoke.yes" onClick={() => revokeLegacy(l)}>{t('mine.yes')}</button>
+                        <button type="button" className={btn} data-tid="shares.legacy.revoke.no" onClick={() => setConfirming(null)}>{t('mine.no')}</button>
+                      </span>
+                    ) : (
+                      <button type="button" className={btn} data-tid="shares.legacy.revoke" onClick={() => setConfirming(key)}>{t('mine.revoke')}</button>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
     </section>
   )

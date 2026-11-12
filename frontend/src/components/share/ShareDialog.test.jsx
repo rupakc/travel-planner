@@ -4,12 +4,12 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
-vi.mock('../../services/api', () => ({ createShare: vi.fn(), revokeShare: vi.fn() }))
+vi.mock('../../services/api', () => ({ createShare: vi.fn(), revokeShare: vi.fn(), listShares: vi.fn() }))
 const emit = vi.fn()
 vi.mock('../../telemetry/client', () => ({ emit: (...a) => emit(...a) }))
 
 import ShareDialog from './ShareDialog'
-import { createShare, revokeShare } from '../../services/api'
+import { createShare, listShares, revokeShare } from '../../services/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const SHARE = { token: 'tok12345', kind: 'plan', url: 'https://v.io/share/tok12345', card_url: { link: '/c/l.png', story: '/c/s.png' }, options: {} }
@@ -21,7 +21,7 @@ const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0))
 
 beforeEach(() => {
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
-  vi.clearAllMocks(); createShare.mockResolvedValue(SHARE); revokeShare.mockResolvedValue()
+  vi.clearAllMocks(); listShares.mockResolvedValue({ shares: [] }); createShare.mockResolvedValue(SHARE); revokeShare.mockResolvedValue()
 })
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals() })
 
@@ -122,5 +122,68 @@ describe('ShareDialog', () => {
     expect(ev.defaultPrevented).toBe(true)
     expect(document.activeElement).not.toBe(last)
     document.removeEventListener('keydown', other)
+  })
+
+  it('pre-loads an existing share for the same kind and plan and shows its options', async () => {
+    listShares.mockResolvedValue({ shares: [
+      { ...SHARE, token: 'other123', plan_id: 9 },
+      { ...SHARE, plan_id: 7, options: { dates: 'month', show_origin: true, show_name: false } },
+    ] })
+    await render(<ShareDialog kind="plan" planId={7} onClose={() => {}} />)
+    await flush()
+    expect(q('share-url').value).toBe(SHARE.url)
+    expect(q('share-dates').value).toBe('month')
+    expect(q('share-origin').checked).toBe(true)
+    expect(q('share-create').textContent).toMatch(/update/i)
+  })
+
+  it('skips the pre-load when rows carry no plan_id, and when the list call fails', async () => {
+    listShares.mockResolvedValue({ shares: [SHARE] })
+    await render(<ShareDialog kind="plan" planId={7} onClose={() => {}} />)
+    await flush()
+    expect(q('share-url')).toBeNull()
+    listShares.mockRejectedValue(new Error('x'))
+    await act(async () => { root.render(<ShareDialog kind="recap" planId={7} onClose={() => {}} />) })
+    await flush()
+    expect(q('share-create')).not.toBeNull()
+  })
+
+  it('pre-loads a savings share by kind alone', async () => {
+    listShares.mockResolvedValue({ shares: [{ ...SHARE, kind: 'savings' }] })
+    await render(<ShareDialog kind="savings" onClose={() => {}} />)
+    await flush()
+    expect(q('share-url')).not.toBeNull()
+  })
+
+  it('returns focus to the opener on close', async () => {
+    const opener = document.createElement('button'); document.body.appendChild(opener); opener.focus()
+    await render(<ShareDialog kind="plan" planId={1} onClose={() => {}} />)
+    expect(document.activeElement).not.toBe(opener)
+    await act(async () => { root.render(<div />) })
+    expect(document.activeElement).toBe(opener)
+    opener.remove()
+  })
+
+  it('keeps the live regions mounted before and after a message', async () => {
+    await render(<ShareDialog kind="plan" planId={1} onClose={() => {}} />)
+    const live = host.querySelector('[role="status"]')
+    expect(live).not.toBeNull()
+    await click('share-create')
+    expect(host.querySelector('[role="status"]')).toBe(live)
+    expect(live.textContent).not.toBe('')
+  })
+
+  it('shows the generic unavailable error on 404 without crashing', async () => {
+    createShare.mockRejectedValue({ response: { status: 404 } })
+    await render(<ShareDialog kind="plan" planId={1} onClose={() => {}} />)
+    await click('share-create')
+    expect(host.querySelector('[role="alert"]').textContent).not.toBe('')
+    expect(q('share-create')).not.toBeNull()
+  })
+
+  it('uses theme tokens, not hard-coded white or slate', async () => {
+    await render(<ShareDialog kind="plan" planId={1} onClose={() => {}} />)
+    await click('share-create')
+    expect(host.innerHTML).not.toMatch(/bg-white|slate-/)
   })
 })

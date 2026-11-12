@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { createShare, revokeShare } from '../../services/api'
+import { createShare, listShares, revokeShare } from '../../services/api'
 import {
   DEFAULT_OPTIONS, DATES_MODES, buildIntent, canNativeShare, cardUrl, copyText, downloadBlob, pageUrl, shareFiles,
 } from '../../utils/share'
@@ -12,7 +12,7 @@ function emit(event, props) {
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
 const INTENTS = ['x', 'facebook', 'whatsapp', 'linkedin']
-const btn = 'min-h-[44px] rounded-lg border border-slate-300 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60'
+const btn = 'min-h-[44px] rounded-lg border border-border px-3 text-sm text-text hover:bg-surface disabled:opacity-60'
 
 /**
  * Share dialog for the Phase 4 share links (call it only when sharingEnabled(config)).
@@ -32,11 +32,35 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
   const [status, setStatus] = useState(null) // {kind: 'ok'|'error', key}
   const [confirmRevoke, setConfirmRevoke] = useState(false)
   const [imgOk, setImgOk] = useState(true)
+  const dirty = useRef(false)
   const planKind = kind !== 'savings'
   const message = text || t(`text.${kind}`, { defaultValue: '' })
   const link = share ? (share.url || pageUrl(share.token)) : ''
 
   useEffect(() => { emit('share_open', { kind }) }, [kind])
+
+  // Return focus to whatever opened the dialog when it closes
+  useEffect(() => {
+    const opener = document.activeElement
+    return () => { if (opener && opener !== document.body && opener.isConnected) opener.focus?.() }
+  }, [])
+
+  // Pre-load the caller's existing share for this kind/plan so Create updates it
+  // knowingly. The list only helps when its rows carry plan_id; any failure is ignored.
+  useEffect(() => {
+    let live = true
+    ;(async () => {
+      try {
+        const d = await listShares(token)
+        const rows = Array.isArray(d?.shares) ? d.shares : []
+        const hit = rows.find((s) => s.kind === kind && (!planKind || (s.plan_id != null && String(s.plan_id) === String(planId))))
+        if (!live || !hit) return
+        setShare(hit)
+        if (!dirty.current) setOptions((o) => ({ ...o, ...(hit.options || {}) }))
+      } catch { /* continue without it */ }
+    })()
+    return () => { live = false }
+  }, [token, kind, planId, planKind])
 
   useEffect(() => {
     dialogRef.current?.focus()
@@ -113,39 +137,39 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
     } catch { fail('revoke') } finally { setBusy(false) }
   }
 
-  const set = (patch) => setOptions((o) => ({ ...o, ...patch }))
-  const check = 'h-5 w-5 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-600'
+  const set = (patch) => { dirty.current = true; setOptions((o) => ({ ...o, ...patch })) }
+  const check = 'h-5 w-5 shrink-0 rounded border-border text-teal-700 focus:ring-teal-600'
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" data-tid="share-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.() }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-title" tabIndex={-1}
         data-tid="share-dialog"
-        className="max-h-[92vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl outline-none sm:rounded-2xl">
-        <h2 id="share-title" className="text-base font-semibold text-slate-900">{t(`titleKind.${kind}`, { defaultValue: t('title') })}</h2>
-        <p className="text-sm text-slate-700">{t('intro')}</p>
-        {planKind && <p className="text-xs text-slate-600">{t('reveals')}</p>}
+        className="max-h-[92vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-2xl bg-surface-raised p-4 shadow-xl text-text outline-none sm:rounded-2xl">
+        <h2 id="share-title" className="text-base font-semibold text-text">{t(`titleKind.${kind}`, { defaultValue: t('title') })}</h2>
+        <p className="text-sm text-text">{t('intro')}</p>
+        {planKind && <p className="text-xs text-text-muted">{t('reveals')}</p>}
 
         <fieldset className="space-y-2" disabled={busy}>
-          <legend className="text-sm font-medium text-slate-900">{t('optionsLegend')}</legend>
+          <legend className="text-sm font-medium text-text">{t('optionsLegend')}</legend>
           {planKind && (
             <div>
-              <label htmlFor="share-dates" className="block text-xs text-slate-600">{t('dates')}</label>
+              <label htmlFor="share-dates" className="block text-xs text-text-muted">{t('dates')}</label>
               <select id="share-dates" data-tid="share-dates" value={options.dates} onChange={(e) => set({ dates: e.target.value })}
-                className="mt-1 min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900">
+                className="mt-1 min-h-[44px] w-full rounded-lg border border-border bg-surface-raised px-2 text-sm text-text">
                 {DATES_MODES.map((m) => <option key={m} value={m}>{t(`dates${m[0].toUpperCase()}${m.slice(1)}`)}</option>)}
               </select>
-              <p className="mt-1 text-xs text-slate-600">{t('datesNote')}</p>
+              <p className="mt-1 text-xs text-text-muted">{t('datesNote')}</p>
             </div>
           )}
           {planKind && (
-            <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-800">
+            <label className="flex min-h-[44px] items-center gap-3 text-sm text-text">
               <input type="checkbox" className={check} data-tid="share-origin" checked={options.show_origin}
                 onChange={(e) => set({ show_origin: e.target.checked })} />
               {t('showOrigin')}
             </label>
           )}
-          <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-800">
+          <label className="flex min-h-[44px] items-center gap-3 text-sm text-text">
             <input type="checkbox" className={check} data-tid="share-name" checked={options.show_name}
               onChange={(e) => set({ show_name: e.target.checked })} />
             {t('showName')}
@@ -161,12 +185,12 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
           <div className="space-y-3">
             {imgOk && (
               <img src={share.card_url?.link || cardUrl(share.token)} alt={t('preview')} onError={() => setImgOk(false)}
-                className="aspect-[1200/630] w-full rounded-xl border border-slate-200 object-cover" />
+                className="aspect-[1200/630] w-full rounded-xl border border-border object-cover" />
             )}
             <div>
-              <label htmlFor="share-url" className="block text-xs text-slate-600">{t('urlLabel')}</label>
+              <label htmlFor="share-url" className="block text-xs text-text-muted">{t('urlLabel')}</label>
               <input id="share-url" ref={urlRef} readOnly value={link} onFocus={(e) => e.target.select()} data-tid="share-url"
-                className="mt-1 min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900" />
+                className="mt-1 min-h-[44px] w-full rounded-lg border border-border bg-surface-raised px-2 text-sm text-text" />
             </div>
             <div className="flex flex-wrap gap-2">
               {canNativeShare() && <button type="button" data-tid="share-native" className={btn} onClick={() => act('native')}>{t('actions.native')}</button>}
@@ -181,7 +205,7 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
             </div>
             {confirmRevoke ? (
               <div role="alertdialog" aria-label={t('revokeConfirm')} className="space-y-2 rounded-lg border border-red-200 p-3">
-                <p className="text-sm text-slate-800">{t('revokeConfirm')}</p>
+                <p className="text-sm text-text">{t('revokeConfirm')}</p>
                 <div className="flex gap-2">
                   <button type="button" data-tid="share-revoke-yes" onClick={doRevoke} disabled={busy}
                     className="min-h-[44px] rounded-lg bg-red-700 px-3 text-sm font-semibold text-white disabled:opacity-60">{t('revokeYes')}</button>
@@ -195,15 +219,15 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
           </div>
         )}
 
-        {status && (
-          <p role={status.kind === 'error' ? 'alert' : 'status'} data-testid="share-status"
-            className={`text-xs ${status.kind === 'error' ? 'text-red-700' : 'text-slate-600'}`}>
-            {t(status.kind === 'error' ? `errors.${status.key}` : `status.${status.key}`)}
-          </p>
-        )}
+        <p role="status" aria-live="polite" data-testid="share-status" className="text-xs text-text-muted">
+          {status?.kind === 'ok' ? t(`status.${status.key}`) : ''}
+        </p>
+        <p role="alert" data-testid="share-error" className="text-xs text-red-700">
+          {status?.kind === 'error' ? t(`errors.${status.key}`) : ''}
+        </p>
 
         <button type="button" data-tid="share-close" onClick={onClose}
-          className="min-h-[44px] w-full rounded-lg border border-slate-300 px-4 text-sm text-slate-700">{t('close')}</button>
+          className="min-h-[44px] w-full rounded-lg border border-border px-4 text-sm text-text">{t('close')}</button>
       </div>
     </div>
   )

@@ -103,6 +103,8 @@ def test_crawler_ua_positives_and_negatives():
         "Mozilla/5.0 (compatible; redditbot/1.0)",
         "Mastodon/4.2 (http.rb)",
         "Mozilla/5.0 (iPhone) iMessage",
+        "Pinterestbot/1.0 (+http://www.pinterest.com/bot.html)",
+        "Mozilla/5.0 (compatible; Embedly/0.2; +http://support.embed.ly/)",
     ):
         assert rx.search(ua), ua
     for ua in (
@@ -110,6 +112,14 @@ def test_crawler_ua_positives_and_negatives():
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile Safari/604.1",
         "Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0",
         "",
+        # in-app browsers are people: they get the SPA
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [Pinterest/iOS]",
+        "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126.0 Mobile Safari/537.36 Pinterest/Android",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Instagram 330.0 (FBAN/FBIOS)",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Mobile/15E148 LinkedInApp/9.1",
+        "Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36 Twitter for Android",
+        "Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36 Telegram-Android/10.0",
+        "Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36 MastodonApp",
     ):
         assert not rx.search(ua), ua
 
@@ -120,7 +130,6 @@ def test_crawler_handle_proxies_like_backend_and_falls_back_to_spa():
     assert "rewrite * /api/share/{re.share.1}/page" in crawler
     for setting in (
         "flush_interval -1",
-        "lb_try_duration 30s",
         "lb_try_interval 250ms",
         "header_up X-Real-IP {remote_host}",
         "reverse_proxy app:8001",
@@ -131,6 +140,28 @@ def test_crawler_handle_proxies_like_backend_and_falls_back_to_spa():
     fb = _block("handle_response @apperr {")
     assert "rewrite * /index.html" in fb and "file_server" in fb
     assert "root * /edge/current/srv" in fb
+
+
+def test_crawler_and_share_spa_vary_on_user_agent():
+    assert "header Vary User-Agent" in _block("handle @crawler {")
+    spa = _block(re.search(r"^\s*handle \{", TEXT, re.M).group(0).strip())
+    assert re.search(r"@share_page path /share/\*", spa)
+    assert "header @share_page Vary User-Agent" in spa
+
+
+def test_crawler_proxy_gives_up_fast_and_unreachable_app_serves_spa():
+    crawler = _block("handle @crawler {")
+    assert "lb_try_duration 3s" in crawler
+    assert "lb_try_duration 30s" not in crawler
+    err = _block("handle_errors {")
+    assert "orig_uri.path" in err and "/share/" in err
+    assert "header_regexp ua User-Agent" in err
+    assert "status_code} >= 502" in err
+    assert "status 200" in err
+    assert "rewrite * /index.html" in err and "file_server" in err
+    assert "root * /edge/current/srv" in err
+    # people and API calls keep Caddy's own error response
+    assert "respond" not in err
 
 
 def test_csp_unchanged_by_crawler_route():

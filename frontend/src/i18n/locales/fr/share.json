@@ -95,7 +95,9 @@
       "recap": "Récap",
       "savings": "Économies"
     },
-    "created": "Partagé {{date}}"
+    "created": "Partagé {{date}}",
+    "legacyTitle": "Anciens liens",
+    "legacyIntro": "Liens de plans que vous avez partagés auparavant. En arrêter un le rend inutilisable."
   },
   "entry": {
     "link": "Partager le lien"
