@@ -20,7 +20,15 @@ def _user():
     return u, {"Authorization": f"Bearer {create_access_token({'sub': u['username']})}"}
 
 
-CATS = {"price_drops", "trip_reminders", "morning_brief", "weather", "nearby", "social", "quiz"}
+CATS = {
+    "price_drops",
+    "trip_reminders",
+    "morning_brief",
+    "weather",
+    "nearby",
+    "social",
+    "quiz",
+}
 
 
 def test_requires_auth(client):
@@ -58,7 +66,9 @@ def test_partial_put_and_isolation(client):
         json={"categories": {"nearby": {"enabled": False}}},
         headers=h,
     ).json()
-    assert again["categories"]["weather"]["enabled"] is False and again["daily_cap"] == 5
+    assert (
+        again["categories"]["weather"]["enabled"] is False and again["daily_cap"] == 5
+    )
     other = client.get("/api/notification-settings", headers=h2).json()
     assert other["categories"]["weather"]["enabled"] is True and other["daily_cap"] == 3
 
@@ -79,14 +89,22 @@ def test_partial_put_and_isolation(client):
 def test_invalid(client, body):
     _, h = _user()
     r = client.put("/api/notification-settings", json=body, headers=h)
-    assert r.status_code == 422 and r.json()["error_code"] == "notification_settings_invalid"
+    assert (
+        r.status_code == 422
+        and r.json()["error_code"] == "notification_settings_invalid"
+    )
 
 
 def test_read_only_ignored(client):
     _, h = _user()
     r = client.put(
         "/api/notification-settings",
-        json={"timezone": "X", "devices": 9, "push": {"fcm": True}, "quiet_hours_active": True},
+        json={
+            "timezone": "X",
+            "devices": 9,
+            "push": {"fcm": True},
+            "quiet_hours_active": True,
+        },
         headers=h,
     )
     assert r.status_code == 200 and r.json()["devices"] == 0
@@ -100,16 +118,34 @@ def test_quiet_hours_shared_with_alert_prefs(client):
         json={"quiet_hours": {"start": "21:30", "enabled": True}},
         headers=h,
     )
-    assert r.json()["quiet_hours"] == {"enabled": True, "start": "21:30", "end": "07:00"}
+    assert r.json()["quiet_hours"] == {
+        "enabled": True,
+        "start": "21:30",
+        "end": "07:00",
+    }
     assert r.json()["timezone"] == "Asia/Kolkata"
-    assert client.get("/api/alerts/preferences", headers=h).json()["quiet_hours"]["start"] == "21:30"
-    client.put("/api/alerts/preferences", json={"quiet_hours": {"end": "06:00"}}, headers=h)
-    assert client.get("/api/notification-settings", headers=h).json()["quiet_hours"]["end"] == "06:00"
+    assert (
+        client.get("/api/alerts/preferences", headers=h).json()["quiet_hours"]["start"]
+        == "21:30"
+    )
+    client.put(
+        "/api/alerts/preferences", json={"quiet_hours": {"end": "06:00"}}, headers=h
+    )
+    assert (
+        client.get("/api/notification-settings", headers=h).json()["quiet_hours"]["end"]
+        == "06:00"
+    )
 
 
 def test_devices_count(client):
     u, h = _user()
-    devices_db.upsert_device(u["username"], "tok-123456", "android", None, now=__import__("datetime").datetime.utcnow())
+    devices_db.upsert_device(
+        u["username"],
+        "tok-123456",
+        "android",
+        None,
+        now=__import__("datetime").datetime.utcnow(),
+    )
     assert client.get("/api/notification-settings", headers=h).json()["devices"] == 1
 
 
@@ -119,10 +155,12 @@ def test_catalog(client):
     assert b["locale"] == "en"
     for k in ("trip_t30", "trip_t7", "trip_t1", "trip_morning", "nearby_arrival"):
         assert k in b["templates"]
-    assert notify_text.render("trip_t7", "en", destination="Lisbon").count("Lisbon") == 1
-    assert notify_text.render("nearby_arrival", "en", place="A", item="B", minutes=4) == (
-        "You're near A: B is 4 min away"
+    assert (
+        notify_text.render("trip_t7", "en", destination="Lisbon").count("Lisbon") == 1
     )
+    assert notify_text.render(
+        "nearby_arrival", "en", place="A", item="B", minutes=4
+    ) == ("You're near A: B is 4 min away")
 
 
 def test_config_features(client):

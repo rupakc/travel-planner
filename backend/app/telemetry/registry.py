@@ -220,8 +220,13 @@ EVENTS: dict[str, dict[str, str]] = {
     "notif_settings_view": {},
     "notif_category_toggle": {
         "category": _enum(
-            "price_drops", "trip_reminders", "morning_brief", "weather",
-            "nearby", "social", "quiz",
+            "price_drops",
+            "trip_reminders",
+            "morning_brief",
+            "weather",
+            "nearby",
+            "social",
+            "quiz",
         ),  # fmt: skip
         "on": "bool",
     },
@@ -229,8 +234,13 @@ EVENTS: dict[str, dict[str, str]] = {
     "notif_cap_change": {"cap": "int"},
     "notif_open": {
         "category": _enum(
-            "price_drops", "trip_reminders", "morning_brief", "weather",
-            "nearby", "social", "quiz",
+            "price_drops",
+            "trip_reminders",
+            "morning_brief",
+            "weather",
+            "nearby",
+            "social",
+            "quiz",
         ),  # fmt: skip
         "source": _enum("push", "inapp"),
     },
