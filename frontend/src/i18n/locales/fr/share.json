@@ -57,5 +57,8 @@
     "plan": "Mon plan de voyage sur Voyager",
     "recap": "Le récap de mon voyage sur Voyager",
     "savings": "Les baisses de prix repérées avec Voyager"
+  },
+  "entry": {
+    "link": "Partager le lien"
   }
 }

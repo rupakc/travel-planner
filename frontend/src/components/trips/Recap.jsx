@@ -1,6 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { sharePlan } from '../../services/api'
+import ShareDialog from '../share/ShareDialog'
+import { sharingEnabled } from '../../utils/share'
+import { useClientConfig } from '../../hooks/useClientConfig'
 import { useJourney } from '../../hooks/useJourney'
 import { getRecap, completeRecap } from '../../services/tripsApi'
 import { announceGame } from '../../game/announce'
@@ -25,6 +28,9 @@ export default function Recap({ trip, token }) {
   const [reveal, setReveal] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const { config: clientConfig } = useClientConfig()
+  const sharingV2 = sharingEnabled(clientConfig)
+  const [shareOpen, setShareOpen] = useState(false)
   const shareUrl = useRef(null)
   const tripId = trip?.id
 
@@ -150,11 +156,19 @@ export default function Recap({ trip, token }) {
           </button>
         )}
         {recap.completed_at && <span className="text-sm text-teal-800" data-tid="recap.completed">{t('completed')}</span>}
+        {sharingV2 ? (
+          <button type="button" onClick={() => setShareOpen(true)} data-tid="recap.share-link"
+            className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-800 hover:bg-gray-50">
+            {t('share.cta')}
+          </button>
+        ) : (
         <button type="button" onClick={share} disabled={busy} data-tid="recap.share"
           className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60">
           {t('share.cta')}
         </button>
+        )}
       </div>
+      {sharingV2 && shareOpen && <ShareDialog kind="recap" planId={tripId} onClose={() => setShareOpen(false)} />}
       {msg && <p className="text-sm text-gray-700" role="status" data-tid="recap.msg">{msg}</p>}
       <WhereNext key={tripId} trip={trip} onUse={() => note('where_next')} />
     </div>
