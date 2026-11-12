@@ -43,7 +43,6 @@ def client_config(response: Response) -> dict:
             "price_alerts_v2": bool(settings.price_alerts_v2_enabled),
             "sharing": 1 if settings.sharing_v2_enabled else 0,
             "social": 1 if settings.social_enabled else 0,
-            "play": 1 if settings.play_enabled and settings.game_enabled else 0,
             "notifications_api": 1,
             "notifications_v2": bool(settings.notifications_v2_enabled),
             "apns": apns_configured(),
