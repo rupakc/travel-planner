@@ -31,7 +31,7 @@ export default function TargetSlider({ min, max, value, points = [], step = 1, o
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="flex items-baseline justify-between text-sm font-medium text-slate-700 dark:text-slate-200">
+      <label htmlFor={id} className="flex items-baseline justify-between text-sm font-medium text-slate-700">
         <span>{t('slider.label')}</span>
         <span className="tabular-nums">{fmtCurrency(v, currency)}</span>
       </label>
@@ -42,7 +42,7 @@ export default function TargetSlider({ min, max, value, points = [], step = 1, o
         className="w-full min-h-[44px] accent-sky-600"
       />
       {total > 0 && (
-        <p className="text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
+        <p className="text-xs text-slate-500" aria-live="polite">
           {count > 0 ? t('slider.preview', { count, total }) : t('slider.none', { total })}
         </p>
       )}

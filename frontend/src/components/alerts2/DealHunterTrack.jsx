@@ -44,7 +44,7 @@ export default function DealHunterTrack() {
   if (!next) {
     return (
       <p data-testid="deal-hunter" data-tid="alerts.deal-hunter"
-        className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+        className="flex items-center gap-2 text-xs text-slate-600">
         <Trophy className="h-4 w-4 text-teal-700" aria-hidden="true" />{t('deal.allDone')}
       </p>
     )
@@ -53,13 +53,13 @@ export default function DealHunterTrack() {
   const name = t(`game:badges.${next.id}.name`, { defaultValue: next.id })
   return (
     <div data-testid="deal-hunter" data-tid="alerts.deal-hunter" className="space-y-1">
-      <p className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-200">
+      <p className="flex items-center gap-2 text-xs font-medium text-slate-700">
         <Trophy className="h-4 w-4 text-teal-700" aria-hidden="true" />
         <span>{t('deal.title')}: {t('deal.next', { name })}</span>
-        <span className="ml-auto tabular-nums text-slate-500 dark:text-slate-400">{t('deal.progress', { progress: next.progress, target: next.target })}</span>
+        <span className="ml-auto tabular-nums text-slate-500">{t('deal.progress', { progress: next.progress, target: next.target })}</span>
       </p>
       <div role="progressbar" aria-label={t('deal.next', { name })} aria-valuemin={0} aria-valuemax={next.target} aria-valuenow={next.progress}
-        className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+        className="h-2 overflow-hidden rounded-full bg-slate-200">
         <div className="h-full rounded-full bg-teal-700 transition-[width] motion-reduce:transition-none" style={{ width: `${pct}%` }} />
       </div>
     </div>

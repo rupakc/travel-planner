@@ -57,13 +57,13 @@ export default function SavingsShareCard({ savings, onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.() }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('shareTitle')} tabIndex={-1}
         data-tid="savings-share-dialog"
-        className="w-full max-w-sm space-y-3 rounded-2xl bg-white p-4 shadow-xl outline-none dark:bg-slate-900">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">{t('shareTitle')}</h2>
+        className="w-full max-w-sm space-y-3 rounded-2xl bg-white p-4 shadow-xl outline-none">
+        <h2 className="text-base font-semibold text-slate-900">{t('shareTitle')}</h2>
         <canvas ref={canvasRef} width={CARD_SIZE} height={CARD_SIZE} role="img" aria-label={t('preview')}
-          className="h-auto w-full rounded-xl border border-slate-200 dark:border-slate-700" />
-        <p className="text-sm text-slate-700 dark:text-slate-200">{lines.headline}</p>
+          className="h-auto w-full rounded-xl border border-slate-200" />
+        <p className="text-sm text-slate-700">{lines.headline}</p>
         {status && (
-          <p role="status" className="text-xs text-slate-600 dark:text-slate-300" data-testid="share-status">{t(`status.${status}`)}</p>
+          <p role="status" className="text-xs text-slate-600" data-testid="share-status">{t(`status.${status}`)}</p>
         )}
         <div className="flex gap-2">
           <button type="button" data-tid="savings-share-go" onClick={share} disabled={busy}
@@ -71,7 +71,7 @@ export default function SavingsShareCard({ savings, onClose }) {
             {busy ? t('working') : t('share')}
           </button>
           <button type="button" data-tid="savings-share-close" onClick={onClose}
-            className="min-h-[44px] rounded-lg border border-slate-300 px-4 text-sm text-slate-700 dark:border-slate-600 dark:text-slate-200">
+            className="min-h-[44px] rounded-lg border border-slate-300 px-4 text-sm text-slate-700">
             {t('close')}
           </button>
         </div>

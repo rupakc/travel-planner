@@ -15,7 +15,7 @@ import i18n from '../../i18n'
 
 const UNDO_MS = 5000
 const BTN = 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
-const IDLE = `${BTN} border border-teal-700 text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800`
+const IDLE = `${BTN} border border-teal-700 text-teal-800 hover:bg-teal-50`
 const ON = `${BTN} bg-teal-700 text-white hover:bg-teal-800`
 
 const track = (kind, action, surface) => { try { emit('alert_quick_watch', { kind, action, surface }) } catch { /* never break the UI */ } }
@@ -80,18 +80,18 @@ function UndoToasts() {
     <div className="fixed inset-x-4 bottom-4 z-[70] flex flex-col gap-2 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm">
       {list.map((cur) => (
         <div key={cur.key} role="status" aria-live="polite" data-tid="quick-watch-toast"
-          className="alert-pop flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-          <p className="min-w-0 flex-1 text-sm text-slate-900 dark:text-slate-100">
+          className="alert-pop flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
+          <p className="min-w-0 flex-1 text-sm text-slate-900">
             {cur.error ? t('toast.undoFailed') : t('toast.message')}
           </p>
           {!cur.error && (
             <button type="button" data-tid="quick-watch-undo" onClick={() => undoToast(cur.key)}
-              className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800">
+              className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50">
               {t('toast.undo')}
             </button>
           )}
           <button type="button" data-tid="quick-watch-dismiss" onClick={() => dropToast(cur.key)} aria-label={t('toast.dismiss')}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
             <X size={16} aria-hidden="true" />
           </button>
         </div>
@@ -175,7 +175,7 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
           <span>{state === 'on' ? t('label.watching') : t('label.watch')}</span>
         </button>
       )}
-      {error && <p role="alert" data-tid="quick-watch-error" className="mt-1 text-xs text-red-700 dark:text-red-400">{t(`error.${error}`)}</p>}
+      {error && <p role="alert" data-tid="quick-watch-error" className="mt-1 text-xs text-red-700">{t(`error.${error}`)}</p>}
     </>
   )
 }
