@@ -21,7 +21,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Admin: Analytics tab (telemetry summary) | ✅ | — | ⏳ Phase 7 |
 | Preferences, two-way bound to the search form; Taste Graph | ✅ | ? (Settings and per-feature visibility are device-local per the README) | ⏳ Phase 7 |
 | Light and dark theme (see [Theming](Theming.md)) | ✅ | ✅ | ⏳ Phase 7 |
-| Languages (see [Internationalization](Internationalization.md)) | ✅ en, es, de, fr, hi, zh, bn | English and Spanish; ⏳ Phase 8 for de, fr, hi, zh, bn | ⏳ Phase 7 |
+| Languages (see [Internationalization](Internationalization.md)) | ✅ en, es, de, fr, hi, zh, bn | ✅ en, es, de, fr, hi, zh, bn (hi, zh, bn awaiting native-speaker review) | ⏳ Phase 7 |
 | Telemetry and consent prompt (see [Telemetry](Telemetry.md)) | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
 | Feedback widget | ✅ | ? | ⏳ Phase 7 |
 | Onboarding | ✅ coach-mark tour | ✅ traveller-type onboarding (different flow) | ⏳ Phase 7 |
