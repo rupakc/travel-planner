@@ -107,7 +107,9 @@
     "loadFailed": "Couldn’t load alerts. Check your connection and open this again.",
     "emptyTitle": "No alerts yet",
     "emptyBody": "Watch a flight, hotel, activity or whole trip and we’ll tell you here when its price drops.",
-    "seeAll": "See all watched prices"
+    "seeAll": "See all watched prices",
+    "groupTitle": "{{count}} price drops",
+    "groupLatest": "Latest: {{title}}"
   },
   "live": {
     "disclaimer": "From a live web search just now. Prices change quickly — check the provider before booking. Not used for your price alerts.",
@@ -464,5 +466,11 @@
     "expired": "This watch has ended, so we’ve stopped checking.",
     "postponed": "Live prices are busy right now — we’ll check again tomorrow.",
     "default": "Nothing was checked: this price isn’t being watched right now."
+  },
+  "extras": {
+    "checked": "Checked {{when}}",
+    "pending": "Waiting for the first price check",
+    "storyOpen": "Price story",
+    "storyClose": "Hide price story"
   }
 }

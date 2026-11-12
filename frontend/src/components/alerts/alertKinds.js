@@ -15,6 +15,7 @@ export const ALERT_KINDS = {
   activity_target:   { Icon: Ticket, tone: 'text-emerald-700 bg-emerald-50', action: 'See activity' },
   trip_drop:         { Icon: Luggage, tone: 'text-emerald-700 bg-emerald-50', action: 'See trip' },
   trip_target:       { Icon: Luggage, tone: 'text-emerald-700 bg-emerald-50', action: 'See trip' },
+  price_digest:      { Icon: CalendarDays, tone: 'text-sky-700 bg-sky-50', action: 'View' },
   watch_expired:     { Icon: CalendarX, tone: 'text-slate-500 bg-slate-100', action: 'View' },
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
 }

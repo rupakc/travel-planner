@@ -1,1 +1,27 @@
-{}
+{
+  "title": "Alerts overview",
+  "paused": {
+    "title": "Live checks paused",
+    "body": "Your watches keep their last prices; each shows when it was checked."
+  },
+  "prefs": {
+    "button": "Alert preferences"
+  },
+  "sort": {
+    "label": "Sort watches",
+    "moving": "Moving",
+    "soon": "Departing soon",
+    "newest": "Newest"
+  },
+  "deal": {
+    "title": "Deal hunter",
+    "next": "Next badge: {{name}}",
+    "progress": "{{progress}} of {{target}}",
+    "allDone": "Deal hunter: every badge earned."
+  },
+  "digest": {
+    "title": "Your weekly digest",
+    "body": "Here is how your watches moved this week. Prices are the last ones we observed.",
+    "dismiss": "Dismiss the digest note"
+  }
+}

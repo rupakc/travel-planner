@@ -1,1 +1,27 @@
-{}
+{
+  "title": "Alarm-Übersicht",
+  "paused": {
+    "title": "Live-Prüfungen pausiert",
+    "body": "Deine Beobachtungen behalten ihre letzten Preise; jede zeigt, wann sie geprüft wurde."
+  },
+  "prefs": {
+    "button": "Alarm-Einstellungen"
+  },
+  "sort": {
+    "label": "Beobachtungen sortieren",
+    "moving": "In Bewegung",
+    "soon": "Bald fällig",
+    "newest": "Neueste"
+  },
+  "deal": {
+    "title": "Schnäppchenjäger",
+    "next": "Nächstes Abzeichen: {{name}}",
+    "progress": "{{progress}} von {{target}}",
+    "allDone": "Schnäppchenjäger: alle Abzeichen erreicht."
+  },
+  "digest": {
+    "title": "Deine Wochenübersicht",
+    "body": "So haben sich deine Beobachtungen diese Woche bewegt. Die Preise sind die letzten, die wir beobachtet haben.",
+    "dismiss": "Hinweis zur Wochenübersicht schließen"
+  }
+}

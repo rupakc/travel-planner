@@ -7,6 +7,8 @@ import {
 } from '../../../utils/priceWatch'
 import Sparkline from '../Sparkline'
 import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from '../LiveCheck'
+import WatchCardExtras from '../../alerts2/WatchCardExtras'
+import { useAlertsV2 } from '../../../hooks/useAlertsV2'
 
 const CHIP = {
   sky: 'bg-sky-50 text-sky-800 border-sky-200',
@@ -93,6 +95,7 @@ export default function PriceWatchCard({
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const live = useLiveCheck(onLiveCheck)
+  const { on: v2 } = useAlertsV2()
   const liveButton = useRef(null)
   const status = watchStatus(watch)
   const change = priceWatchChange(watch)
@@ -223,6 +226,7 @@ export default function PriceWatchCard({
           )}
         </span>
       </div>
+      {v2 && <WatchCardExtras watch={watch} />}
     </article>
   )
 }

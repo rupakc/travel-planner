@@ -1,1 +1,27 @@
-{}
+{
+  "title": "Resumen de alertas",
+  "paused": {
+    "title": "Comprobaciones en vivo en pausa",
+    "body": "Tus vigilancias conservan sus últimos precios; cada una muestra cuándo se comprobó."
+  },
+  "prefs": {
+    "button": "Preferencias de alertas"
+  },
+  "sort": {
+    "label": "Ordenar vigilancias",
+    "moving": "En movimiento",
+    "soon": "Salen pronto",
+    "newest": "Más recientes"
+  },
+  "deal": {
+    "title": "Cazaofertas",
+    "next": "Próxima insignia: {{name}}",
+    "progress": "{{progress}} de {{target}}",
+    "allDone": "Cazaofertas: has logrado todas las insignias."
+  },
+  "digest": {
+    "title": "Tu resumen semanal",
+    "body": "Así se movieron tus vigilancias esta semana. Los precios son los últimos que observamos.",
+    "dismiss": "Cerrar la nota del resumen"
+  }
+}

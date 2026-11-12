@@ -107,7 +107,9 @@
     "loadFailed": "Preisalarme konnten nicht geladen werden. Prüf deine Verbindung und öffne es erneut.",
     "emptyTitle": "Noch keine Preisalarme",
     "emptyBody": "Beobachte einen Flug, ein Hotel, eine Aktivität oder eine ganze Reise – hier erfährst du, wenn der Preis fällt.",
-    "seeAll": "Alle beobachteten Preise ansehen"
+    "seeAll": "Alle beobachteten Preise ansehen",
+    "groupTitle": "{{count}} Preissenkungen",
+    "groupLatest": "Neueste: {{title}}"
   },
   "live": {
     "disclaimer": "Aus einer Live-Websuche von eben. Preise ändern sich schnell – prüfe vor der Buchung beim Anbieter. Wird nicht für deine Preisalarme verwendet.",
@@ -464,5 +466,11 @@
     "expired": "Diese Beobachtung ist beendet, wir prüfen nicht mehr.",
     "postponed": "Die Live-Preise sind gerade überlastet – wir prüfen morgen erneut.",
     "default": "Es wurde nichts geprüft: Dieser Preis wird gerade nicht beobachtet."
+  },
+  "extras": {
+    "checked": "Geprüft {{when}}",
+    "pending": "Warte auf die erste Preisprüfung",
+    "storyOpen": "Preisverlauf",
+    "storyClose": "Preisverlauf ausblenden"
   }
 }

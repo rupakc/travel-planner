@@ -21,6 +21,7 @@ import WatchCard from '../components/alerts/WatchCard'
 import AlertsV2Header from '../components/alerts2/AlertsV2Header'
 import { useAlertsV2 } from '../hooks/useAlertsV2'
 import { cardFor } from '../components/alerts/cards'
+import { sortWatches } from '../utils/watchSort'
 
 /** What one "Check now" found, in plain words (statuses: see the API). */
 export function checkMessage(res) {
@@ -85,6 +86,7 @@ export default function AlertsPage() {
   const [loadError, setLoadError] = useState(null)
   const [priceError, setPriceError] = useState(false)
   const [tab, setTab] = useState('all')
+  const [sort, setSort] = useState('moving')   // v2 only; classic order otherwise
   const [busy, setBusy] = useState({})        // DOM id → action in flight
   const [messages, setMessages] = useState({}) // DOM id → { tone, text }
   const handledLink = useRef(null)
@@ -207,7 +209,8 @@ export default function AlertsPage() {
   })
 
   const counts = countByTab(watches)
-  const shown = (watches || []).filter(w => inTab(w, tab))
+  const filtered = (watches || []).filter(w => inTab(w, tab))
+  const shown = v2 ? sortWatches(filtered, sort) : filtered
   const active = shown.filter(w => w.status !== 'expired')
   const past = shown.filter(w => w.status === 'expired')
   const card = (w) => {
@@ -236,7 +239,7 @@ export default function AlertsPage() {
           {t('page.intro')}
         </p>
       </header>
-      {v2 && <AlertsV2Header />}
+      {v2 && <AlertsV2Header sort={sort} onSort={setSort} />}
 
       {!watches && !loadError && (
         <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> {t('page.loading')}</p>
