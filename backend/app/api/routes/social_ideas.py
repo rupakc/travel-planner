@@ -139,7 +139,10 @@ def publish_idea(body: IdeaBody, user: dict = Depends(get_current_user)):
         caption,
         snap,
         snap["interests"],
-        "held" if verdict == "review" else "published",
+        # A held idea stays held (until an admin approves) however it is edited.
+        "held"
+        if (verdict == "review" or (existing and existing["status"] == "held"))
+        else "published",
     )
     return _out(db.get_idea(idea_id, user["id"]))
 

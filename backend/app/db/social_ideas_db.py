@@ -200,7 +200,7 @@ def upsert_idea(
                 title,
                 caption,
                 json.dumps(snapshot),
-                json.dumps(tags),
+                json.dumps(tags, ensure_ascii=False),
                 status,
                 ts,
                 ts,
