@@ -134,3 +134,34 @@ def test_story_cases_cover_every_advice_code_and_verdict():
         "few_checks",
     }
     assert verdicts == {None, "great", "good", "typical", "high"}
+
+
+def test_launcher_leaves_no_real_serpapi_url():
+    import importlib
+    import pkgutil
+
+    from app import services
+    from scripts import run_with_fake_serpapi as launcher
+
+    mods = [
+        importlib.import_module(f"app.services.{m.name}")
+        for m in pkgutil.walk_packages(services.__path__)
+        if not m.ispkg
+    ]
+    saved = {}
+    for m in mods:
+        for k, v in vars(m).items():
+            if isinstance(v, str) and "serpapi.com" in v and v.startswith("http"):
+                saved[(m, k)] = v
+    try:
+        launcher.patch("http://127.0.0.1:1/search.json")
+        left = [
+            f"{m.__name__}.{k}"
+            for m in mods
+            for k, v in vars(m).items()
+            if isinstance(v, str) and "serpapi.com" in v
+        ]
+        assert left == []
+    finally:
+        for (m, k), v in saved.items():
+            setattr(m, k, v)

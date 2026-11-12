@@ -59,7 +59,7 @@ Golden cases: `backend/tests/fixtures/alerts/story_cases.json`, shared by every 
 - `drops_caught` = the number of watches with `caught > 0`. `targets_hit` = the number of those with at least one `target_hit` alert.
 - `best` = the watch with the largest `caught`, USD watches first (a non-USD watch is `best` only when no USD watch has a saving), ties to the lower `watch_id`; `null` when no watch has a saving.
 - `next_milestone` = the smallest milestone strictly above `total_usd` (so a total of exactly 50 has passed 50), and `null` once $1,000 is reached. `progress_pct` = `floor(100 * total_usd / next_milestone)`, and 100 when `next_milestone` is `null`.
-- Deleted watches still count. `since` is the first counted row's time, `null` with none. `watches_active` is the count of the caller's active watches, from the watch stores, not from the rows.
+- Deleted watches still count. `since` is the time of the first counted row (the earliest observed row, estimate rows excluded), `null` with none. `watches_active` is the count of the caller's active watches, from the watch stores, not from the rows.
 - Wording: always "caught a drop of $X", never "you saved" (the app cannot know whether the user booked).
 
 Golden cases: `savings_cases.json`.
@@ -151,7 +151,7 @@ python -m scripts.fake_serpapi --port 8765 [--drop-after N]
 curl http://127.0.0.1:8765/__calls        # {"total": 3, "by_engine": {"google_flights": 3}}
 ```
 
-With `--drop-after N`, every search after the first N serves prices 12 % lower (so an end-to-end run sees a real drop). To run the backend against it, use the launcher, which patches `serp_flights.SERP_URL`, `serp_flights._SERP_URL`, `hotel_prices.SERP_URL` and `activity_prices.SERP_URL` before importing `app.main`:
+With `--drop-after N`, every search after the first N serves prices 12 % lower (so an end-to-end run sees a real drop). To run the backend against it, use the launcher, which patches `serp_flights.SERP_URL`, `serp_flights._SERP_URL`, `hotel_prices.SERP_URL`, `activity_prices.SERP_URL` and `activity_url_resolver._SERPAPI_URL` before importing `app.main`:
 
 ```bash
 SERPAPI_KEY=fake FAKE_SERPAPI_URL=http://127.0.0.1:8765/search.json \

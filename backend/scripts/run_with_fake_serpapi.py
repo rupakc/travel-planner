@@ -5,7 +5,8 @@
         python -m scripts.run_with_fake_serpapi --port 8001
 
 Patches ``serp_flights.SERP_URL``, ``serp_flights._SERP_URL``,
-``hotel_prices.SERP_URL`` and ``activity_prices.SERP_URL`` before importing
+``hotel_prices.SERP_URL``, ``activity_prices.SERP_URL`` and
+``activity_url_resolver._SERPAPI_URL`` before importing
 ``app.main``, then starts uvicorn. The key is a dummy; the real SerpAPI is
 never contacted.
 """
@@ -15,7 +16,12 @@ import os
 
 import uvicorn
 
-from app.services import activity_prices, hotel_prices, serp_flights
+from app.services import (
+    activity_prices,
+    activity_url_resolver,
+    hotel_prices,
+    serp_flights,
+)
 
 
 def patch(url: str) -> None:
@@ -23,6 +29,7 @@ def patch(url: str) -> None:
     serp_flights._SERP_URL = url
     hotel_prices.SERP_URL = url
     activity_prices.SERP_URL = url
+    activity_url_resolver._SERPAPI_URL = url
 
 
 def main() -> None:
