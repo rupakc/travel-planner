@@ -25,6 +25,7 @@ const INERT = {
   caps: { serpapi: false, fareWatch: false, email: false },
   watchFor: async () => null, priceWatchFor: async () => null, watchVersion: 0, watchesChanged: () => {},
   permission: 'unsupported', shouldOfferBrowserAlerts: () => false, answerBrowserAlerts: async () => {},
+  latestDrop: null, markDropShown: () => {}, findDrop: async () => null,
 }
 const AlertsContext = createContext(INERT)
 
@@ -33,12 +34,32 @@ const PROMPTED_KEY = 'tp_alert_permission_asked'
 const browserPermission = () =>
   (typeof window !== 'undefined' && 'Notification' in window ? window.Notification.permission : 'unsupported')
 
+const DROP_SEEN_PREFIX = 'tp_drop_seen:'
+const DROP_SEEN_CAP = 50
+const DROP_SCAN = 20
+
+/** A drop notification carries `data.drop` with observed prices (never an estimate). */
+export function dropOf(n) {
+  const d = n?.data?.drop
+  if (!d || typeof d !== 'object' || d.observed === false) return null
+  return Number.isFinite(Number(d.amount)) && Number(d.amount) > 0 ? d : null
+}
+
+function readShown(uid) {
+  if (uid == null) return []
+  const raw = safeStorage(() => JSON.parse(localStorage.getItem(DROP_SEEN_PREFIX + uid) || '[]'), [])
+  return Array.isArray(raw) ? raw : []
+}
+
 function safeStorage(fn, fallback = null) {
   try { return fn() } catch { return fallback }
 }
 
 export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const userId = user?.id ?? null
+  const [drops, setDrops] = useState([])        // unread notifications that carry a drop
+  const [shownVersion, setShownVersion] = useState(0)
   const [unread, setUnread] = useState(0)
   const [toast, setToast] = useState(null)
   const [caps, setCaps] = useState({ serpapi: false, fareWatch: false, email: false })
@@ -68,6 +89,13 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
     setToast(n)
   }, [])
 
+  // Unread drop notifications, newest first. Read on the first load and whenever the unread
+  // count grows, so the card can show a drop that arrived while the app was closed.
+  const scanDrops = useCallback(async () => {
+    const page = await listNotifications(token, { limit: DROP_SCAN, unreadOnly: true })
+    setDrops((page.items || []).filter(n => dropOf(n) && !n.read_at))
+  }, [token])
+
   // One refresh at a time: focus and visibilitychange fire together on return
   const inflight = useRef(null)
 
@@ -77,13 +105,16 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
       const grew = count > lastCount.current
       lastCount.current = count
       setUnread(count)
+      if (!count) setDrops([])
       if (seenId.current === null) {
         if (!count) { seenId.current = 0; return }
+        scanDrops().catch(() => {})
         const page = await listNotifications(token, { limit: 5 })
         seenId.current = page.items[0]?.id ?? 0
         return
       }
       if (!grew) return
+      scanDrops().catch(() => {})
       const page = await listNotifications(token, { limit: 5, unreadOnly: true })
       const fresh = newestUnseen(page.items, seenId.current)
       if (fresh) {
@@ -93,7 +124,7 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
         announce(fresh)
       }
     } catch { /* offline or signed out — the next poll tries again */ }
-  }, [token, announce])
+  }, [token, announce, scanDrops])
 
   const refresh = useCallback(() => {
     if (!token) return Promise.resolve()
@@ -113,6 +144,7 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   useEffect(() => {
     seenId.current = null
     lastCount.current = 0
+    setDrops([])
   }, [token])
 
   useEffect(() => {
@@ -175,6 +207,31 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
     setWatchVersion(v => v + 1)
   }, [])
 
+  const shown = useMemo(() => new Set(readShown(userId)), [userId, shownVersion])
+  /** The newest unread drop notification not yet shown on this device. */
+  const latestDrop = useMemo(() => {
+    const fresh = drops.filter(n => !shown.has(n.id))
+    return fresh.reduce((best, n) => (!best || n.id > best.id ? n : best), null)
+  }, [drops, shown])
+
+  const markDropShown = useCallback((id) => {
+    if (userId == null || id == null) return
+    const ids = readShown(userId).filter(x => x !== id)
+    ids.push(id)
+    safeStorage(() => localStorage.setItem(DROP_SEEN_PREFIX + userId, JSON.stringify(ids.slice(-DROP_SEEN_CAP))))
+    setShownVersion(v => v + 1)
+  }, [userId])
+
+  /** A drop notification by id (a push deep link), from the loaded ones or the newest page. */
+  const findDrop = useCallback(async (id) => {
+    const known = drops.find(n => n.id === id)
+    if (known) return known
+    try {
+      const page = await listNotifications(token, { limit: 50 })
+      return (page.items || []).find(n => n.id === id && dropOf(n)) || null
+    } catch { return null }
+  }, [token, drops])
+
   const shouldOfferBrowserAlerts = useCallback(() =>
     permission === 'default' && !safeStorage(() => localStorage.getItem(PROMPTED_KEY)), [permission])
 
@@ -190,8 +247,8 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   const value = useMemo(() => ({
     unread, refresh, markRead, markSeen, toast, showToast: setToast, dismissToast: () => setToast(null),
     caps, watchFor, priceWatchFor, watchVersion, watchesChanged, permission,
-    shouldOfferBrowserAlerts, answerBrowserAlerts,
-  }), [unread, refresh, markRead, markSeen, toast, caps, watchFor, priceWatchFor, watchVersion, watchesChanged, permission,
+    shouldOfferBrowserAlerts, answerBrowserAlerts, latestDrop, markDropShown, findDrop,
+  }), [latestDrop, markDropShown, findDrop, unread, refresh, markRead, markSeen, toast, caps, watchFor, priceWatchFor, watchVersion, watchesChanged, permission,
     shouldOfferBrowserAlerts, answerBrowserAlerts])
 
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>
