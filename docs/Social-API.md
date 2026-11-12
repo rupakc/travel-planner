@@ -1,0 +1,76 @@
+# Social and Play API
+
+> **Status:** frozen when Phase 5 merges (draft until then). **Changes:** later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.
+
+Phase 5 adds **profiles, an ideas feed, moderation** (`/api/social/*`) and **Play** (quizzes, head-to-head, leaderboards, weekly challenges; `/api/play/*`). Two independent flags, both default **off** until the final review of Phase 5: `SOCIAL_ENABLED` and `PLAY_ENABLED` (Play also needs `GAME_ENABLED`).
+
+All paths are under `/api`, JSON in and out, `Authorization: Bearer <access_token>`. Nothing here is available anonymously. Errors use the Phase 1 envelope `{"detail", "error_code"}`.
+
+## Discovery
+
+`GET /config` gains `features.social: 0|1` and `features.play: 0|1` (1 = the routes exist). Off, every route below answers `404 social_disabled` / `404 play_disabled`. Clients feature-detect and hide the entry points otherwise.
+
+## Privacy model (binding for every client)
+
+- A **handle** (`3-20` chars `[a-z0-9_]`, unique, case-insensitive, reserved words refused) is the only public identity. It is chosen by the user and is never derived from the username or email. The username, email, real name, plan details and dates are never returned by any route here.
+- A user has **no profile** until they create one (`PUT /social/profile`). Profile `visibility` is `private` (default: invisible to everyone, no feed posting, not searchable, not on boards), `followers` or `public`. Every extra field is a separate opt-in, all default off: `show_avatar`, `show_home_country`, `show_countries`, `show_level`, `show_badges`.
+- **Leaderboards are opt-in** (`leaderboard_opt_in`, default false) and show handles only.
+- **Hide Play and points** (`hide_game` account setting): all `/play/*` routes answer `403 game_hidden`, the user is excluded from every board and never gets quiz or challenge notifications, and the game fields (`level`, `badges`, XP) are omitted from their own profile and are never shown on it to others. The feed and profiles themselves are social, not game, and stay.
+- **Text is plain.** Titles, captions, comments and reasons are stored as plain text (control characters removed, whitespace collapsed, length capped). No markdown, no HTML, no auto-links; clients render them as text only.
+- **Blocking** is two-way and silent: a blocked pair cannot see each other's profile, ideas, comments or board rows, follow, comment, challenge or notify each other.
+
+## Profile
+
+`GET /social/profile` (own): `{"handle": null|str, "visibility", "bio", "show_avatar", "show_home_country", "show_countries", "show_level", "show_badges", "leaderboard_opt_in", "home_country": str|null, "created_at"}`. `handle: null` means no profile yet (defaults shown).
+
+`PUT /social/profile` (rate bucket `social_write`): any subset of `handle` (required the first time; changeable once per 30 days, `409 handle_taken`, `422 handle_invalid|handle_reserved|handle_rate_limited`), `visibility`, `bio` (<= 160), the `show_*` flags, `leaderboard_opt_in`, `home_country` (ISO alpha-2). Answers the own-profile object. Bio goes through the keyword filter (`422 content_rejected`).
+
+`GET /social/profile/{handle}`: `{"handle", "bio", "avatar_url"?, "home_country"?, "countries"?: [alpha2], "level"?, "badges"?: [{id,tier}], "ideas_count", "followers_count", "following_count", "you": {"following": bool, "pending": bool, "follows_you": bool, "blocked": bool}}`. Optional fields appear only when the owner opted in (and, for `level`/`badges`, the owner is not hidden-game). `404 profile_not_found` when private, unknown, blocked either way or the owner is the caller's blocker. A `followers` profile shows only `handle` and counts to non-followers.
+
+`GET /social/handles/check?handle=`: `{"available": bool, "reason"?: "invalid"|"reserved"|"taken"}`.
+
+## Follow and block
+
+- `PUT /social/follow/{handle}` -> `{"state": "following"|"pending"}`. Public profile: immediate. `followers` profile: `pending` until the owner accepts. `private` or blocked: `404 profile_not_found`. Self: `422 cannot_follow_self`. Daily cap 200 (`429`-like `422 limit_reached`).
+- `DELETE /social/follow/{handle}` -> 204 (unfollow or cancel request).
+- `GET /social/follow-requests` -> `{"requests":[{"handle","created_at"}]}`; `POST /social/follow-requests/{handle}/accept` and `/decline` -> 204.
+- `GET /social/following` and `GET /social/followers` -> `{"users":[{"handle"}], "next": cursor|null}`.
+- `PUT /social/block/{handle}` -> 204 (also removes follows both ways); `DELETE /social/block/{handle}` -> 204; `GET /social/blocks` -> `{"users":[{"handle"}]}`.
+
+## Ideas feed
+
+An **idea** is a snapshot of one of the caller's plans or recaps with a title and caption. The snapshot is built with the same whitelist and privacy defaults as a share (no dates, no origin, no name, no prices, no private notes, no email): counts, destinations, days and the plan's selected items only.
+
+- `POST /social/ideas` `{"plan_id": int, "kind": "plan"|"recap", "title": str (<=80), "caption": str (<=500), "locale"?}`: needs a handle, a non-private profile and a verified email (`403 profile_required|email_unverified`). Limit 5 per UTC day (`429`-style `422 limit_reached`), snapshot <= 64 KB. Answers the idea object with `status`: `published`, or `held` when the keyword filter is unsure (visible only to its author and admins until approved); `422 content_rejected` when the filter refuses. Idempotent per (author, plan_id, kind): updates it.
+- Idea object: `{"id","kind","title","caption","author":{"handle","avatar_url"?},"snapshot":{...},"likes","saves","comments","liked":bool,"saved":bool,"mine":bool,"status","created_at"}`.
+- `GET /social/feed?scope=for_you|following|new&cursor=&limit=` (limit <= 30) -> `{"ideas":[...],"next": cursor|null}`. Excludes blocked pairs, hidden/removed/held ideas, and ideas of `private` profiles; `followers`-visibility authors only for their followers. `new` is chronological; `following` is chronological from followed authors; `for_you` ranks `recency + engagement (likes, saves) + taste match` (the caller's interests against the idea's tags), computed in SQLite, no AI call.
+- `GET /social/ideas/{id}`, `DELETE /social/ideas/{id}` (author), `GET /social/profile/{handle}/ideas?cursor=`.
+- `PUT|DELETE /social/ideas/{id}/like` -> 204 (idempotent; no XP).
+- `POST /social/ideas/{id}/save` -> `{"plan_id": int}`: remix. Copies the snapshot into the caller's own plans (a new plan named after the idea, source noted) and awards the author XP once per (saver, idea), never for self-saves. `DELETE /social/ideas/{id}/save` -> 204 (forgets the save mark; the copied plan stays).
+- Comments: `GET /social/ideas/{id}/comments?cursor=` -> `{"comments":[{"id","author":{"handle"},"text","helpful":bool,"mine":bool,"created_at"}],"next"}` oldest first; `POST /social/ideas/{id}/comments` `{"text"<=300}` (limit 30/day; `held` comments are shown only to their author and admins); `DELETE /social/comments/{id}` (comment author or idea author); `PUT|DELETE /social/comments/{id}/helpful` (idea author only; XP to the commenter once).
+
+## Moderation
+
+- `POST /social/reports` `{"target": "idea"|"comment"|"profile", "id": str, "reason": "spam"|"abuse"|"sexual"|"violence"|"misinformation"|"other", "note"?: str (<=200)}` -> 204. One report per (reporter, target); 20 per day. Three distinct reporters auto-hide the target (`hidden`) until an admin decides. Reports of your own content or by unverified users are accepted but do not count toward auto-hide.
+- Keyword filter (committed deny and review lists, plus: any URL or email-like token is held). **No AI moderation call** (cost ruling; see the plan).
+- Admin (`is_admin`; bucket `admin`): `GET /admin/social/queue?status=held|reported|hidden&cursor=` -> `{"items":[{"target","id","status","reason_counts","excerpt","author_handle","created_at"}],"next"}`; `POST /admin/social/{target}/{id}/decide` `{"action": "approve"|"remove"}`; `POST /admin/social/users/{handle}/restrict` `{"days": 1..365}` (no posting, commenting, challenging), `DELETE` lifts it. `403 restricted` for a restricted user's writes. Admin routes answer `404` when `SOCIAL_ENABLED` is off.
+
+## Play
+
+- `GET /play/state` -> `{"daily":{"available":bool,"done":bool,"score":int|null,"streak":{"current","longest","freeze_available"}},"packs":[{"id","title_key","questions"}],"challenge":{"id","kind":"destination"|"featured","country"?,"done":bool}|null,"open_h2h": int}`.
+- Quiz sessions: `POST /play/quiz` `{"mode": "daily"|"pack", "pack"?: "flags"|"capitals"|"landmarks"|"cuisine", "locale"?}` -> `{"session_id","mode","pack","questions":[{"index","kind","prompt":{...},"options":[{"id","label"}]}],"expires_at"}` (5 questions, no answers). The daily quiz is the same five questions for everyone each UTC day and can be completed once (`409 already_done`); a started one is resumed. Packs are unlimited but earn XP only up to a daily cap. Questions are served from a committed bank, so a quiz makes **no AI call**; option order and distractors are deterministic per session.
+- `POST /play/quiz/{session_id}/answer` `{"index": int, "choice": option id}` -> `{"correct": bool, "correct_choice": id, "points": int, "elapsed_ms": int, "done": bool, "summary"?: {"score","correct","total","xp"?: game_result, "streak"?}}`. Answers are checked, and timed, **server-side** (served-at to answered-at); the client clock is never trusted. Points: 100 for correct plus up to 50 for speed (linear over 15 s), 0 if wrong. Re-answering returns the first result. A session expires after 20 minutes of the last activity.
+- `GET /play/quiz/{session_id}` -> session with the answers so far. `GET /play/history?limit=` -> own last sessions `{session_id,mode,pack,score,correct,finished_at}`.
+- **Head-to-head** (asynchronous): `POST /play/h2h` `{"handle", "pack"}` -> `{"id","session_id","questions":[...]}` (creator plays at once; opponent needs a non-private profile and not blocked; `422 limit_reached` beyond 5 open or 10 per day). `GET /play/h2h` -> `{"matches":[{"id","opponent":{"handle"},"pack","state":"waiting_you"|"waiting_them"|"done"|"declined"|"expired","you":int|null,"them":int|null,"winner":"you"|"them"|"draw"|null,"expires_at"}]}`. `POST /play/h2h/{id}/accept` -> the opponent's session (same questions), play it with the normal answer route; `POST /play/h2h/{id}/decline` -> 204. Matches expire after 48 h. The opponent's score is revealed only when both are done.
+- **Leaderboards**: `GET /play/leaderboard?scope=global|friends&week=current|previous` -> `{"week":"2026-W46","rows":[{"rank","handle","score","level"?,"you":bool}],"you":{"rank","score","opted_in"}|null}`. Score = the week's quiz and h2h points (Monday 00:00 UTC). Global shows opted-in users only (top 50). Friends = people the caller follows (approved) who allow it, plus the caller. Hidden-game users never appear.
+- **Weekly challenge** ("Know before you go"): `GET /play/challenge` -> `{"id":"2026-W46:JP","kind","country"?,"title_key","done":bool}`; start it with `POST /play/quiz` `{"mode":"challenge"}`. It is about the country of the caller's next upcoming trip when the bank covers that country, else a featured pack of the week. One XP award per ISO week.
+- XP: `quiz_daily` 10, `quiz_perfect` 20, `quiz_pack` 5 (cap 3/day), `h2h_complete` 10 (cap 3/day), `challenge_complete` 50 (once per week), `idea_saved` 10 (to the author, cap 5/day), `comment_helpful` 5. Never for likes, follows, posting or comments. Values live in `app/game/rules.json`; `GET /game/catalog` lists the new rules and badges (additive). `touch_streak("quiz")` keeps the daily-quiz streak (one freeze a week, never punishing).
+
+## Notifications and sharing (additive)
+
+- Notification kinds: `social_idea_saved`, `social_new_follower` (category `social`), `quiz_h2h_invite`, `quiz_h2h_result` (category `quiz`); `GET /notifications/catalog` gains the matching `h2h_invite`, `h2h_result`, `idea_saved`, `new_follower` templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: `/play/h2h/{id}`, `/feed/{idea_id}`, `/u/{handle}`.
+- `POST /shares` (Sharing API) gains `kind: "quiz"` (extra field `session_id`: the caller's finished quiz session; card = pack and score out of 5, never time or answers) and `kind: "status"` (extra field `plan_id`: an active trip of the caller; card = "Day N in Place", from server data). Both hide the sharer's name unless `show_name`.
+
+## Telemetry
+
+Events, all props enums, bools or ints (no handles, no text): see `Telemetry.md` (`social_*`, `play_*`, `admin_mod_action`).
