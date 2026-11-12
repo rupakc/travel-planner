@@ -61,6 +61,8 @@ describe('WatchSuggestions', () => {
     expect(window.localStorage.getItem('tp_suggest_seen:5:9')).toBe('1')
     await click(q('watch-suggest-dismiss'))
     expect(q('watch-suggest')).toBeNull()
+    act(() => root.unmount()) // remount: only localStorage can remember
+    root = createRoot(host)
     await render({ planId: 9 })
     expect(alertsApi.getSuggestions).toHaveBeenCalledTimes(1)
     expect(q('watch-suggest')).toBeNull()
@@ -100,6 +102,23 @@ describe('WatchSuggestions', () => {
     await click(q('watch-suggest-retry'))
     expect(alertsApi.quickWatch).toHaveBeenCalledTimes(3)
     expect(q('watch-suggest-done')).not.toBeNull()
+  })
+
+  it('force skips the once-per-plan guard but not live prices or empty', async () => {
+    window.localStorage.setItem('tp_suggest_seen:5:9', '1')
+    await render({ planId: 9, force: true })
+    expect(q('watch-suggest')).not.toBeNull()
+    act(() => root.unmount()); root = createRoot(host)
+    v2.livePrices = false
+    await render({ planId: 9, force: true })
+    expect(q('watch-suggest')).toBeNull()
+  })
+
+  it('onDone fires on dismiss', async () => {
+    const onDone = vi.fn()
+    await render({ planId: 9, onDone })
+    await click(q('watch-suggest-dismiss'))
+    expect(onDone).toHaveBeenCalledTimes(1)
   })
 
   it('Escape dismisses', async () => {

@@ -27,9 +27,9 @@ const rowKey = (s, i) => `${s.kind}:${i}`
  * already-watched rows are disabled. "Watch N" creates the ticked watches one
  * after the other, with per-row progress and a Retry on a failed row. Never
  * shown without live prices, with no suggestions, or twice for one plan and
- * user. Props: planId (the saved plan), onClose (optional).
+ * user. Props: planId (the saved plan), onDone (optional; also accepted as onClose), force (skip the once-per-plan guard, for the manual button).
  */
-export default function WatchSuggestions({ planId, onClose }) {
+export default function WatchSuggestions({ planId, onDone, onClose, force = false }) {
   const { t } = useTranslation('watchSuggest')
   const { token, user } = useOptionalAuth()
   const { livePrices } = useAlertsV2()
@@ -50,12 +50,12 @@ export default function WatchSuggestions({ planId, onClose }) {
   useEffect(() => {
     if (!livePrices || !token || userId == null || planId == null) return undefined
     const key = seenKey(userId, planId)
-    if (wasSeen(key)) return undefined
+    if (!force && wasSeen(key)) return undefined
     let cancelled = false
     getSuggestions(token, planId).then((res) => {
       if (cancelled || res?.live_prices === false) return
       const list = Array.isArray(res?.suggestions) ? res.suggestions : []
-      if (!list.length || wasSeen(key)) return
+      if (!list.length || (!force && wasSeen(key))) return
       markSeen(key)
       finished.current = false
       setStatus({}); setErrors({})
@@ -64,12 +64,12 @@ export default function WatchSuggestions({ planId, onClose }) {
       track('shown', list.length)
     }).catch(() => { /* a hint only: stay quiet */ })
     return () => { cancelled = true }
-  }, [livePrices, token, userId, planId])
+  }, [livePrices, token, userId, planId, force])
 
   const close = () => {
     if (items && !finished.current) track('dismissed', items.length)
     setItems(null)
-    onClose?.()
+    ;(onDone ?? onClose)?.()
   }
 
   const closeRef = useRef(close)
@@ -121,7 +121,7 @@ export default function WatchSuggestions({ planId, onClose }) {
 
   const run = async (list, first) => {
     if (running || !list.length) return
-    if (first) { finished.current = true; track('accepted', list.length) }
+    if (first && !finished.current) { finished.current = true; track('accepted', list.length) }
     setRunning(true)
     let created = 0
     for (const row of list) { if (await createOne(row)) created += 1 }
@@ -166,8 +166,9 @@ export default function WatchSuggestions({ planId, onClose }) {
                     </span>
                   </span>
                 </label>
-                {(s.already_watching || st) && (
-                  <div className="flex items-center justify-between gap-2 px-3 pb-3 text-xs" data-tid="watch-suggest-status" aria-live="polite">
+                <div className={`flex items-center justify-between gap-2 px-3 text-xs ${s.already_watching || st ? 'pb-3' : ''}`} data-tid="watch-suggest-status" aria-live="polite">
+                  {(s.already_watching || st) && (
+                    <>
                     {s.already_watching && <span className="text-slate-600 dark:text-slate-400">{t('status.already')}</span>}
                     {!s.already_watching && st === 'running' && <span className="text-slate-600 dark:text-slate-400">{t('status.running')}</span>}
                     {!s.already_watching && st === 'done' && <span className="font-medium text-teal-800 dark:text-teal-300">{t('status.done')}</span>}
@@ -176,13 +177,14 @@ export default function WatchSuggestions({ planId, onClose }) {
                         <span role="alert" className="text-red-700 dark:text-red-400">{t(`error.${errors[k] || 'generic'}`)}</span>
                         <button type="button" data-tid="watch-suggest-retry" disabled={running}
                           onClick={() => run([{ s, k }], false)}
-                          className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800">
+                          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800">
                           {t('retry')}
                         </button>
                       </>
                     )}
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </li>
             )
           })}
