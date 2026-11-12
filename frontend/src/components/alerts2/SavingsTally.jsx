@@ -56,10 +56,10 @@ export default function SavingsTally({ savings: given = null, compact = false })
 
   if (isEmpty(savings)) {
     return (
-      <p className={compact ? 'text-xs text-slate-500 dark:text-slate-400' : 'rounded-xl border border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300'}
+      <p className={compact ? 'text-xs text-slate-500' : 'rounded-xl border border-slate-200 p-4 text-sm text-slate-600'}
         data-testid="savings-empty">
         {t('empty')}
-        {!compact && <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{t('emptyHint')}</span>}
+        {!compact && <span className="mt-1 block text-xs text-slate-500">{t('emptyHint')}</span>}
       </p>
     )
   }
@@ -67,7 +67,7 @@ export default function SavingsTally({ savings: given = null, compact = false })
   const chips = Object.entries(savings.by_currency || {}).filter(([, v]) => v > 0)
   if (compact) {
     return (
-      <p className="text-xs text-slate-600 dark:text-slate-300" data-testid="savings-compact">
+      <p className="text-xs text-slate-600" data-testid="savings-compact">
         {usd > 0 && <span className="font-semibold tabular-nums">{t('amountLine', { amount: fmtCurrency(usd, 'USD') })}</span>}
         {usd > 0 && ' · '}
         {t('drops', { count: savings.drops_caught || 0 })}
@@ -80,25 +80,25 @@ export default function SavingsTally({ savings: given = null, compact = false })
   const next = savings.next_milestone
   const best = savings.best && savings.best.caught > 0 ? savings.best : null
   return (
-    <section className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700" aria-label={t('title')} data-testid="savings-tally">
+    <section className="space-y-3 rounded-xl border border-slate-200 p-4" aria-label={t('title')} data-testid="savings-tally">
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 80 80" className="h-20 w-20 shrink-0" role="img" data-testid="savings-ring" data-progress={pct}
           aria-label={next ? t('progress', { pct, amount: fmtCurrency(next, 'USD') }) : t('allDone')}>
-          <circle cx="40" cy="40" r={R} fill="none" strokeWidth="8" className="stroke-slate-200 dark:stroke-slate-700" />
+          <circle cx="40" cy="40" r={R} fill="none" strokeWidth="8" className="stroke-slate-200" />
           <circle cx="40" cy="40" r={R} fill="none" strokeWidth="8" strokeLinecap="round" transform="rotate(-90 40 40)"
-            className="stroke-teal-700 dark:stroke-teal-400" strokeDasharray={CIRC}
+            className="stroke-teal-700" strokeDasharray={CIRC}
             strokeDashoffset={CIRC * (1 - (next ? pct : 100) / 100)} />
-          <text x="40" y="45" textAnchor="middle" className="fill-slate-700 text-[14px] font-semibold dark:fill-slate-100">{next ? `${pct}%` : '✓'}</text>
+          <text x="40" y="45" textAnchor="middle" className="fill-slate-700 text-[14px] font-semibold">{next ? `${pct}%` : '✓'}</text>
         </svg>
         <div className="min-w-0 space-y-1">
-          <p className="text-lg font-bold tabular-nums text-slate-900 dark:text-slate-50" data-testid="savings-total">
+          <p className="text-lg font-bold tabular-nums text-slate-900" data-testid="savings-total">
             {t('amountLine', { amount: fmtCurrency(Math.round(shown), 'USD') })}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">
+          <p className="text-xs text-slate-600">
             {t('drops', { count: savings.drops_caught || 0 })}
             {savings.targets_hit > 0 && <> · {t('targets', { count: savings.targets_hit })}</>}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="savings-ring-label">
+          <p className="text-xs text-slate-500" data-testid="savings-ring-label">
             {next ? t('progress', { pct, amount: fmtCurrency(next, 'USD') }) : t('allDone')}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function SavingsTally({ savings: given = null, compact = false })
       {chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5" data-testid="savings-chips" aria-label={t('otherCurrencies')}>
           {chips.map(([cur, v]) => (
-            <span key={cur} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <span key={cur} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium tabular-nums text-slate-700">
               {fmtCurrency(v, cur)}
             </span>
           ))}
@@ -119,7 +119,7 @@ export default function SavingsTally({ savings: given = null, compact = false })
           const hit = (savings.total_usd || 0) >= m
           return (
             <li key={m} data-testid="milestone-tick" data-reached={hit}
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${hit ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${hit ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
               {hit ? t('milestoneReached', { amount: fmtCurrency(m, 'USD') }) : t('milestoneAhead', { amount: fmtCurrency(m, 'USD') })}
             </li>
           )
@@ -127,13 +127,13 @@ export default function SavingsTally({ savings: given = null, compact = false })
       </ul>
 
       {best && (
-        <p className="text-sm text-slate-700 dark:text-slate-200" data-testid="savings-best">
+        <p className="text-sm text-slate-700" data-testid="savings-best">
           {best.title
             ? t('best', { title: best.title, amount: fmtCurrency(best.caught, best.currency || 'USD') })
             : t('bestNoTitle', { amount: fmtCurrency(best.caught, best.currency || 'USD') })}
         </p>
       )}
-      <p className="text-xs text-slate-500 dark:text-slate-400">{t('caveat')}</p>
+      <p className="text-xs text-slate-500">{t('caveat')}</p>
 
       <button type="button" data-tid="savings-share" onClick={() => setSharing(true)}
         className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white hover:bg-teal-800">

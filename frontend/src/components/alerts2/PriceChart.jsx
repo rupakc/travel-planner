@@ -60,14 +60,14 @@ export default function PriceChart({ points, typical, target, baseline, lowest, 
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" aria-hidden="true" data-testid="price-chart">
           {typical && (
             <rect data-testid="typical-band" x={PAD.l} width={W - PAD.l - PAD.r} y={y(typical.high)}
-              height={Math.max(1, y(typical.low) - y(typical.high))} className="fill-sky-100 dark:fill-sky-900/40" />
+              height={Math.max(1, y(typical.low) - y(typical.high))} className="fill-sky-100" />
           )}
           {typeof target === 'number' && (
             <line data-testid="target-line" x1={PAD.l} x2={W - PAD.r} y1={y(target)} y2={y(target)}
               strokeDasharray="4 3" className="stroke-emerald-600" strokeWidth="1.5" />
           )}
           <path d={path} fill="none" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
-            className="stroke-sky-600 dark:stroke-sky-400" pathLength="1"
+            className="stroke-sky-600" pathLength="1"
             {...(animate ? { 'data-draw': 'in', style: { strokeDasharray: 1, strokeDashoffset: drawn ? 0 : 1, transition: 'stroke-dashoffset .8s ease' } } : {})} />
           {typeof baseline === 'number' && (
             <circle data-testid="baseline-dot" cx={x(0)} cy={y(baseline)} r="3.5" fill="none" strokeWidth="1.5" className="stroke-slate-500" />
@@ -95,7 +95,7 @@ export default function PriceChart({ points, typical, target, baseline, lowest, 
       <p className="sr-only" aria-live="polite" data-testid="chart-live">
         {cur ? t('chart.point', { price: money(cur.price), date: day(cur.at) }) : ''}
       </p>
-      <ul className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500 dark:text-slate-400">
+      <ul className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
         {typical && <li>{t('chart.typical')}: {money(typical.low)}–{money(typical.high)}</li>}
         {lowest != null && <li>{t('chart.lowest', { price: money(lowest) })}</li>}
         {typeof target === 'number' && <li>{t('chart.target', { price: money(target) })}</li>}

@@ -12,10 +12,10 @@ import TargetSlider from './TargetSlider'
 
 const VERDICT_ICON = { great: TrendingDown, good: ThumbsUp, typical: Minus, high: TrendingUp }
 const VERDICT_STYLE = {
-  great: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
-  good: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200',
-  typical: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
-  high: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  great: 'bg-emerald-100 text-emerald-800',
+  good: 'bg-emerald-50 text-emerald-700',
+  typical: 'bg-slate-100 text-slate-700',
+  high: 'bg-amber-100 text-amber-800',
 }
 
 // Params that are money are formatted with the watch currency; the rest are counts.
@@ -104,16 +104,16 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
           <span className="text-sm font-semibold tabular-nums" title={t('latest')}>{fmtCurrency(story.latest.price, currency)}</span>
         )}
         {days != null && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-slate-500">
             {days === 0 ? t('checkedToday') : t('checkedAgo', { count: days })}
           </span>
         )}
       </div>
 
-      <p className="text-sm text-slate-700 dark:text-slate-200" data-testid="advice">{adviceText(t, advice, currency)}</p>
+      <p className="text-sm text-slate-700" data-testid="advice">{adviceText(t, advice, currency)}</p>
 
       {estimate && (
-        <p className="text-xs italic text-slate-500 dark:text-slate-400" data-testid="estimate">
+        <p className="text-xs italic text-slate-500" data-testid="estimate">
           {t('estimate', { price: fmtCurrency(estimate.price, currency) })}
         </p>
       )}
@@ -122,7 +122,7 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
         <PriceChart points={points} typical={typical} target={story.target} baseline={story.baseline}
           lowest={story.lowest?.price} currency={currency} />
       ) : (
-        <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="few-checks">
+        <p className="text-xs text-slate-500" data-testid="few-checks">
           {points.length === 0 ? t('chart.none') : t('chart.few', { count: points.length })}
         </p>
       )}
@@ -138,12 +138,12 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
       {story.kind === 'flight' && (
         <div className="space-y-1">
           <button type="button" data-tid="price-story-tip" onClick={getTip} disabled={tipState === 'loading'}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:hover:bg-slate-800">
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             {tipState === 'loading' ? t('tip.loading') : t('tip.button')}
             <span className="text-[10px] uppercase tracking-wide text-slate-500">{t('tip.ai')}</span>
           </button>
-          {tip && <p className="text-sm text-slate-700 dark:text-slate-200" data-testid="tip"><strong>{t('tip.title')}: </strong>{tip} <span className="text-[10px] uppercase tracking-wide text-slate-500">{t('tip.ai')}</span></p>}
+          {tip && <p className="text-sm text-slate-700" data-testid="tip"><strong>{t('tip.title')}: </strong>{tip} <span className="text-[10px] uppercase tracking-wide text-slate-500">{t('tip.ai')}</span></p>}
           {tipState === 'error' && <p className="text-xs text-red-600" role="alert">{t('tip.error')}</p>}
           {tipState === 'limit' && <p className="text-xs text-red-600" role="alert">{t('tip.limit')}</p>}
         </div>
