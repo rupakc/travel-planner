@@ -1,6 +1,5 @@
 """Notification text, served to apps (``GET /notifications/catalog``) and used
-by the server senders. T1 stub: English only; T2 fills the other six languages
-and keeps these signatures. Placeholders are ``{name}`` format fields."""
+by the server senders. Placeholders are ``{name}`` format fields."""
 
 DEFAULT_LOCALE = "en"
 
@@ -14,6 +13,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "Tip: {tip}",
         "trip_morning_weather": "Weather: {weather}",
         "nearby_arrival": "You're near {place}: {item} is {minutes} min away",
+        "social_idea_saved": "Someone saved your trip idea.",
+        "social_new_follower": "You have a new follower.",
+        "quiz_h2h_invite": "You have a new head-to-head quiz challenge.",
+        "quiz_h2h_result": "Your head-to-head quiz result is in.",
     },
     "es": {
         "trip_t30": "Faltan {days} días para {destination}. Revisa tu visado y los requisitos de entrada.",
@@ -24,6 +27,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "Consejo: {tip}",
         "trip_morning_weather": "Tiempo: {weather}",
         "nearby_arrival": "Estás cerca de {place}: {item} está a {minutes} min",
+        "social_idea_saved": "Alguien guardó tu idea de viaje.",
+        "social_new_follower": "Tienes un nuevo seguidor.",
+        "quiz_h2h_invite": "Tienes un nuevo desafío de quiz cara a cara.",
+        "quiz_h2h_result": "Ya está el resultado de tu quiz cara a cara.",
     },
     "de": {
         "trip_t30": "Noch {days} Tage bis {destination}. Prüf dein Visum und die Einreiseregeln.",
@@ -34,6 +41,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "Tipp: {tip}",
         "trip_morning_weather": "Wetter: {weather}",
         "nearby_arrival": "Du bist in der Nähe von {place}: {item} ist {minutes} Min. entfernt",
+        "social_idea_saved": "Jemand hat deine Reiseidee gespeichert.",
+        "social_new_follower": "Du hast einen neuen Follower.",
+        "quiz_h2h_invite": "Du hast eine neue Quiz-Herausforderung im Duell.",
+        "quiz_h2h_result": "Das Ergebnis deines Quiz-Duells ist da.",
     },
     "fr": {
         "trip_t30": "Plus que {days} jours avant {destination}. Vérifiez votre visa et les règles d'entrée.",
@@ -44,6 +55,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "Astuce : {tip}",
         "trip_morning_weather": "Météo : {weather}",
         "nearby_arrival": "Vous êtes près de {place} : {item} est à {minutes} min",
+        "social_idea_saved": "Quelqu'un a enregistré votre idée de voyage.",
+        "social_new_follower": "Vous avez un nouvel abonné.",
+        "quiz_h2h_invite": "Vous avez un nouveau défi quiz en duel.",
+        "quiz_h2h_result": "Le résultat de votre duel quiz est arrivé.",
     },
     "hi": {
         "trip_t30": "{destination} में अब {days} दिन बचे हैं। अपना वीज़ा और प्रवेश नियम जाँच लें।",
@@ -54,6 +69,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "सुझाव: {tip}",
         "trip_morning_weather": "मौसम: {weather}",
         "nearby_arrival": "आप {place} के पास हैं: {item} {minutes} मिनट दूर है",
+        "social_idea_saved": "किसी ने आपका यात्रा विचार सहेजा है।",
+        "social_new_follower": "आपका एक नया फ़ॉलोअर है।",
+        "quiz_h2h_invite": "आपके लिए एक नई आमने-सामने क्विज़ चुनौती है।",
+        "quiz_h2h_result": "आपके आमने-सामने क्विज़ का नतीजा आ गया है।",
     },
     "zh": {
         "trip_t30": "距离 {destination} 还有 {days} 天。请检查签证和入境规定。",
@@ -64,6 +83,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "小贴士：{tip}",
         "trip_morning_weather": "天气：{weather}",
         "nearby_arrival": "你在 {place} 附近：{item} 距离 {minutes} 分钟",
+        "social_idea_saved": "有人收藏了你的旅行创意。",
+        "social_new_follower": "你有了一位新关注者。",
+        "quiz_h2h_invite": "你收到了新的一对一问答挑战。",
+        "quiz_h2h_result": "你的一对一问答结果出来了。",
     },
     "bn": {
         "trip_t30": "{destination} যেতে আর {days} দিন বাকি। আপনার ভিসা ও প্রবেশের নিয়ম দেখে নিন।",
@@ -74,6 +97,10 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "trip_morning_tip": "পরামর্শ: {tip}",
         "trip_morning_weather": "আবহাওয়া: {weather}",
         "nearby_arrival": "আপনি {place}-এর কাছে আছেন: {item} {minutes} মিনিট দূরে",
+        "social_idea_saved": "কেউ আপনার ভ্রমণের আইডিয়া সংরক্ষণ করেছেন।",
+        "social_new_follower": "আপনার একজন নতুন ফলোয়ার হয়েছে।",
+        "quiz_h2h_invite": "আপনার জন্য একটি নতুন মুখোমুখি কুইজ চ্যালেঞ্জ এসেছে।",
+        "quiz_h2h_result": "আপনার মুখোমুখি কুইজের ফল এসেছে।",
     },
 }
 

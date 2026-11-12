@@ -12,6 +12,7 @@ from ..db.database import get_connection
 from ..game import engine as game_engine
 from ..game.quiz import engine as quiz_engine
 from ..game.quiz import service as quiz_service
+from . import social_notify
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,7 @@ def create(user_id: str, handle: str, pack: str) -> dict:
         view = quiz_service.view(
             quiz_db.get_session(conn, sid), quiz_db.answers(conn, sid)
         )
+    social_notify.h2h_invite(opp["user_id"], mid)
     return {"id": mid, **view}
 
 
@@ -214,6 +216,7 @@ def on_finished(s: dict, at: datetime) -> dict | None:
         other = _finished(conn, other_sid)
     if not other:
         return None
+    social_notify.h2h_result(other["user_id"], m["id"], at)
     own = game_engine.award(
         s["user_id"], "h2h_complete", f"h2h_complete:{m['id']}:{s['user_id']}", now=at
     )

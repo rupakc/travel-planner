@@ -20,7 +20,7 @@ from ...core.session_payload import _avatar_url
 from ...db import game_db, social_db, user_countries_db, users_db
 from ...game import engine
 from ...game.engine import get_rules
-from ...services import moderation, social_profile
+from ...services import moderation, social_notify, social_profile
 
 FOLLOW_DAILY_CAP = 200
 
@@ -232,6 +232,8 @@ def follow(handle: str, user: dict = Depends(get_current_user)):
         raise ApiError(422, "limit_reached", "Daily follow limit reached.")
     state = "following" if p["visibility"] == "public" else "pending"
     social_db.set_follow(user["id"], p["user_id"], state)
+    if state == "following":
+        social_notify.new_follower(p["user_id"], user["id"])
     return {"state": state}
 
 

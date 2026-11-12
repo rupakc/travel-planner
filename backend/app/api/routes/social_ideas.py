@@ -15,7 +15,7 @@ from ...core.session_payload import user_payload
 from ...db import plans_db, preferences_db, social_db
 from ...db import social_ideas_db as db
 from ...game import engine
-from ...services import idea_snapshot, moderation
+from ...services import idea_snapshot, moderation, social_notify
 from .social import _avatar, _need_profile, _target, require_enabled
 
 logger = logging.getLogger(__name__)
@@ -222,6 +222,7 @@ def save(idea_id: int, user: dict = Depends(get_current_user)):
     db.put_save(idea_id, user["id"], plan["id"])
     if idea["author_id"] != user["id"] and _verified(user):
         _award(idea["author_id"], "idea_saved", f"idea_saved:{user['id']}:{idea_id}")
+    social_notify.idea_saved(idea["author_id"], user["id"], idea_id)
     return {"plan_id": plan["id"]}
 
 
