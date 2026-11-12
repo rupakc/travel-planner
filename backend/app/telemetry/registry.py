@@ -217,6 +217,33 @@ EVENTS: dict[str, dict[str, str]] = {
         "field": _enum("digest", "quiet_hours", "instant", "cap", "group")
     },
     "alert_digest_open": {"via": _enum("in_app", "email_link")},
+    "notif_settings_view": {},
+    "notif_category_toggle": {
+        "category": _enum(
+            "price_drops",
+            "trip_reminders",
+            "morning_brief",
+            "weather",
+            "nearby",
+            "social",
+            "quiz",
+        ),  # fmt: skip
+        "on": "bool",
+    },
+    "notif_quiet_hours_change": {"enabled": "bool"},
+    "notif_cap_change": {"cap": "int"},
+    "notif_open": {
+        "category": _enum(
+            "price_drops",
+            "trip_reminders",
+            "morning_brief",
+            "weather",
+            "nearby",
+            "social",
+            "quiz",
+        ),  # fmt: skip
+        "source": _enum("push", "inapp"),
+    },
     "share_open": {"kind": _SHARE_KIND},
     "share_create": {"kind": _SHARE_KIND, "dates": _enum("hidden", "month", "exact")},
     "share_action": {

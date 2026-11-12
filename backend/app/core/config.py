@@ -187,6 +187,15 @@ class Settings(BaseSettings):
     alert_flush_interval_s: int = 60
     alert_advice_ttl_hours: int = 24
     offline_pack_enabled: bool = True
+    # Notifications 2.0 (Phase 6): category checks, trip pushes, platform routing.
+    # The settings routes always exist; off = the Phase 3 behaviour unchanged.
+    notifications_v2_enabled: bool = False
+    apns_team_id: str = ""
+    apns_key_id: str = ""
+    apns_key_p8: str = ""
+    apns_key_file: str = ""
+    apns_bundle_id: str = "io.github.rupakc.travelplanner"
+    apns_sandbox: bool = False
     # Sharing 2.0 (Phase 4): /api/shares, card and OG page
     sharing_v2_enabled: bool = True
     ready_window_days: int = 14

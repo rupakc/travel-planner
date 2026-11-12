@@ -43,6 +43,7 @@ from .api.routes.link_import import router as link_import_router
 from .api.routes.live_check import router as live_check_router
 from .api.routes.nationalities import router as nationalities_router
 from .api.routes.nearby import router as nearby_router
+from .api.routes.notification_settings import router as notification_settings_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.oauth import router as oauth_router
 from .api.routes.plans import router as plans_router
@@ -128,12 +129,14 @@ async def lifespan(app: FastAPI):
     from .db.devices_db import create_devices_table
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
+    from .db.notify_db import create_notify_tables
     from .db.price_watch_db import create_price_watch_tables
     from .db.shares_db import create_shares_table
 
     create_fare_watch_tables()
     create_price_watch_tables()
     create_alert_tables()
+    create_notify_tables()
     create_shares_table()
     create_notifications_table()
     create_devices_table()
@@ -350,6 +353,9 @@ app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(alerts_router, prefix="/api", tags=["alerts"])
+app.include_router(
+    notification_settings_router, prefix="/api", tags=["notification_settings"]
+)
 app.include_router(
     shares_router,
     prefix="/api",

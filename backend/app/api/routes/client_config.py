@@ -7,6 +7,7 @@ from ...core.passwords import MIN_PASSWORD_LENGTH_V2
 from ...core.urls import public_base_url
 from ...db.telemetry_db import telemetry_active
 from ...services.account_email import email_delivery_available
+from ...services.notify_settings import apns_configured
 
 router = APIRouter()
 
@@ -40,6 +41,9 @@ def client_config(response: Response) -> dict:
             "alerts_api": 2,
             "price_alerts_v2": bool(settings.price_alerts_v2_enabled),
             "sharing": 1 if settings.sharing_v2_enabled else 0,
+            "notifications_api": 1,
+            "notifications_v2": bool(settings.notifications_v2_enabled),
+            "apns": apns_configured(),
             "live_prices": bool(settings.serpapi_key),
         },
     }

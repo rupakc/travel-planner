@@ -46,6 +46,8 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "alert_savings": ("user_id", "id"),
     "alert_outbox": ("user_id", "id"),
     "alert_digests": ("user_id", "id"),
+    "notify_prefs": ("user_id", "id"),
+    "notify_log": ("user_id", "id"),
     "account_tokens": ("user_id", "id"),
     "refresh_tokens": ("user_id", "id"),
     "user_identities": ("user_id", "id"),
@@ -158,6 +160,7 @@ def export_user(user: dict) -> dict:
         taste_db,
     )
     from ..db.feedback_db import _row_to_dict as feedback_row
+    from . import notify_settings
 
     uid, name = user["id"], user["username"]
     account = {
@@ -233,6 +236,7 @@ def export_user(user: dict) -> dict:
             "price_watches": price_watches,
             "notifications": notifications["items"],
             "devices": devices,
+            "notification_settings": notify_settings.stored(uid),
             "game": game,
         }
     )
