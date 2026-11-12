@@ -198,6 +198,30 @@ export async function sharePlan(token, planId) {
   return res.data
 }
 
+// ── Sharing v2 (Phase 4; needs features.sharing >= 1) ───────────────────────
+
+/** Create or update a share: {kind, plan_id?, options, locale?} -> {token, kind, url, card_url, options, created_at}. */
+export async function createShare(token, body) {
+  const res = await api.post('/shares', { ...body, ...localeField() }, authHeaders(token))
+  return res.data
+}
+
+/** The caller's shares, newest first -> {shares: [...]}. */
+export async function listShares(token) {
+  const res = await api.get('/shares', authHeaders(token))
+  return res.data
+}
+
+export async function revokeShare(token, shareToken) {
+  await api.delete(`/shares/${encodeURIComponent(shareToken)}`, authHeaders(token))
+}
+
+/** Public read of a shared page (no auth), legacy and new tokens alike. */
+export async function getSharedPage(shareToken) {
+  const res = await api.get(`/share/${encodeURIComponent(shareToken)}`)
+  return res.data
+}
+
 export default api
 
 /** Per-destination lightweight summary for trip comparison. */

@@ -1,0 +1,61 @@
+{
+  "title": "Teilen",
+  "titleKind": {
+    "plan": "Diesen Plan teilen",
+    "recap": "Deinen Reiserückblick teilen",
+    "savings": "Deine Preisfunde teilen"
+  },
+  "intro": "Wähle, was der Link zeigt. Deine E-Mail, Nationalität und Visadaten werden nie geteilt.",
+  "reveals": "Immer sichtbar: Titel, Ziel, Anzahl der Tage und die Inhalte deines Plans.",
+  "optionsLegend": "Zusätzlich anzeigen",
+  "dates": "Daten",
+  "datesHidden": "Daten ausblenden",
+  "datesMonth": "Nur Monat und Jahr",
+  "datesExact": "Genaue Daten",
+  "datesNote": "Link-Vorschauen zeigen höchstens Monat und Jahr.",
+  "showOrigin": "Von wo ich reise",
+  "showName": "Mein Name",
+  "create": "Link erstellen",
+  "update": "Link aktualisieren",
+  "working": "Einen Moment…",
+  "preview": "Vorschau der Karte",
+  "urlLabel": "Link zum Teilen",
+  "actions": {
+    "native": "Teilen…",
+    "copy": "Link kopieren",
+    "download": "Karte herunterladen",
+    "downloadStory": "Story-Karte herunterladen",
+    "x": "X",
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn"
+  },
+  "actionsLabel": "Teilen auf",
+  "status": {
+    "native": "Geteilt",
+    "copy": "Link kopiert",
+    "copyFailed": "Kopieren nicht möglich. Der Link ist markiert, drücke Strg+C oder halte ihn gedrückt.",
+    "download": "Karte heruntergeladen",
+    "created": "Link bereit",
+    "updated": "Link aktualisiert",
+    "revoked": "Link entfernt. Er funktioniert nicht mehr.",
+    "opened": "Geöffnet"
+  },
+  "errors": {
+    "create": "Der Link konnte nicht erstellt werden. Versuch es noch einmal.",
+    "download": "Die Karte konnte nicht heruntergeladen werden.",
+    "share": "Teilen nicht möglich.",
+    "revoke": "Der Link konnte nicht entfernt werden.",
+    "unavailable": "Links teilen ist gerade nicht verfügbar."
+  },
+  "revoke": "Nicht mehr teilen",
+  "revokeConfirm": "Nicht mehr teilen? Wer den Link hat, verliert den Zugriff.",
+  "revokeYes": "Ja, nicht mehr teilen",
+  "revokeNo": "Behalten",
+  "close": "Schließen",
+  "text": {
+    "plan": "Mein Reiseplan auf Voyager",
+    "recap": "Mein Reiserückblick auf Voyager",
+    "savings": "Preisrückgänge, die ich mit Voyager erwischt habe"
+  }
+}

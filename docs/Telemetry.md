@@ -141,6 +141,11 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `alert_savings_share` | `target` (`native`, `download`, `copy`) | not yet | The savings card was shared. |
 | `alert_prefs_change` | `field` (`digest`, `quiet_hours`, `instant`, `cap`, `group`) | not yet | An alert preference changed. |
 | `alert_digest_open` | `via` (`in_app`, `email_link`) | not yet | The weekly digest was opened. |
+| `share_open` | `kind` (`plan`, `recap`, `savings`) | not yet | The share dialog was opened. |
+| `share_create` | `kind`, `dates` (`hidden`, `month`, `exact`) | not yet | A share link was created or its options updated. |
+| `share_action` | `kind`, `target` (`native`, `copy`, `download`, `x`, `facebook`, `whatsapp`, `linkedin`) | not yet | A share action was used. |
+| `share_revoke` | `kind` | not yet | A share link was revoked. |
+| `share_view` | `kind` | not yet | A public share page was viewed (from the SPA only). |
 
 ### Settings, consent, performance, errors
 

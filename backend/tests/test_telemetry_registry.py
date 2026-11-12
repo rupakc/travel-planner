@@ -229,6 +229,11 @@ def test_registry_phase3_events():
         "alert_savings_share": {"target": "copy"},
         "alert_prefs_change": {"field": "quiet_hours"},
         "alert_digest_open": {"via": "email_link"},
+        "share_open": {"kind": "plan"},
+        "share_create": {"kind": "recap", "dates": "month"},
+        "share_action": {"kind": "savings", "target": "whatsapp"},
+        "share_revoke": {"kind": "plan"},
+        "share_view": {"kind": "recap"},
     }
     for name, props in good.items():
         assert clean_event({"event": name, "props": props})["props"] == props

@@ -18,7 +18,7 @@ export const EAGER_NS = ['common', 'errors', 'auth', 'journey', 'offline', 'misc
 export const SHELL_NS = [
   'account', 'alertPrefs', 'alerts', 'alertsHub', 'chat', 'coach', 'completeness', 'dropMoment',
   'explore', 'game', 'itinerary', 'oauth', 'onboarding', 'plan', 'priceStory', 'privacy', 'profile',
-  'quickWatch', 'quota', 'recovery', 'results', 'savings', 'search', 'sections', 'signup', 'verify',
+  'quickWatch', 'quota', 'recovery', 'results', 'savings', 'search', 'sections', 'share', 'signup', 'verify',
   'watchSuggest',
 ]
 

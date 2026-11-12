@@ -1,0 +1,61 @@
+{
+  "title": "分享",
+  "titleKind": {
+    "plan": "分享这份计划",
+    "recap": "分享你的旅行回顾",
+    "savings": "分享你抓到的降价"
+  },
+  "intro": "选择链接显示的内容。你的邮箱、国籍和签证信息绝不会被分享。",
+  "reveals": "始终显示：标题、目的地、天数以及计划中的项目。",
+  "optionsLegend": "同时显示",
+  "dates": "日期",
+  "datesHidden": "隐藏日期",
+  "datesMonth": "仅显示年月",
+  "datesExact": "精确日期",
+  "datesNote": "链接预览最多只显示年月。",
+  "showOrigin": "我的出发地",
+  "showName": "我的名字",
+  "create": "创建链接",
+  "update": "更新链接",
+  "working": "请稍候…",
+  "preview": "分享卡片预览",
+  "urlLabel": "分享链接",
+  "actions": {
+    "native": "分享…",
+    "copy": "复制链接",
+    "download": "下载卡片",
+    "downloadStory": "下载故事卡片",
+    "x": "X",
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn"
+  },
+  "actionsLabel": "分享到",
+  "status": {
+    "native": "已分享",
+    "copy": "链接已复制",
+    "copyFailed": "无法复制。链接已选中，请按 Ctrl+C 或长按复制。",
+    "download": "卡片已下载",
+    "created": "链接已就绪",
+    "updated": "链接已更新",
+    "revoked": "链接已移除，不再有效。",
+    "opened": "已打开"
+  },
+  "errors": {
+    "create": "无法创建链接，请重试。",
+    "download": "无法下载卡片。",
+    "share": "无法分享。",
+    "revoke": "无法移除链接。",
+    "unavailable": "暂时无法分享链接。"
+  },
+  "revoke": "停止分享",
+  "revokeConfirm": "停止分享？拿到链接的人将无法再访问。",
+  "revokeYes": "是，停止分享",
+  "revokeNo": "保留",
+  "close": "关闭",
+  "text": {
+    "plan": "我在 Voyager 上的旅行计划",
+    "recap": "我在 Voyager 上的旅行回顾",
+    "savings": "我用 Voyager 抓到的降价"
+  }
+}
