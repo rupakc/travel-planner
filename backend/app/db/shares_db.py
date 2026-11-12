@@ -1,5 +1,6 @@
 """SQLite persistence for Phase 4 share links (``shares``). Additive only."""
 
+import hashlib
 import json
 import secrets
 from datetime import UTC, datetime
@@ -29,15 +30,23 @@ def create_shares_table() -> None:
         cols = {r["name"] for r in conn.execute("PRAGMA table_info(shares)")}
         if "ref" not in cols:
             conn.execute("ALTER TABLE shares ADD COLUMN ref TEXT")
-        conn.execute("DROP INDEX IF EXISTS idx_shares_unique")
+        # idx_shares_unique (the previous release's key) is kept so a rollback
+        # can recreate it; ref shares use a distinct negative plan_id surrogate.
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_shares_unique2 ON shares "
             "(username, kind, COALESCE(plan_id, -1), COALESCE(ref, ''))"
         )
 
 
+def _surrogate(ref: str) -> int:
+    """Distinct negative plan_id for a ref share (never a real plan id)."""
+    return -2 - int(hashlib.sha1(ref.encode()).hexdigest()[:8], 16)
+
+
 def _row(row) -> dict:
     d = dict(row)
+    if d.get("ref") and (d.get("plan_id") or 0) < 0:
+        d["plan_id"] = None
     d["options"] = json.loads(d.pop("options_json"))
     return d
 
@@ -52,6 +61,8 @@ def upsert_share(
     """The caller's share for (kind, plan_id, ref): created, or its options
     updated. ``ref`` is a non-plan target (a quiz session id)."""
     payload = json.dumps({k: options.get(k) for k in OPTION_KEYS})
+    if ref:
+        plan_id = _surrogate(ref)
     with get_connection() as conn:
         row = conn.execute(
             "SELECT token FROM shares WHERE username = ? AND kind = ? "

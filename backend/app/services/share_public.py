@@ -12,7 +12,7 @@ Two outputs, both built from whitelists so nothing private can leak:
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 
 KINDS = ("plan", "recap", "savings", "quiz", "status")
 DATE_MODES = ("hidden", "month", "exact")
@@ -411,7 +411,7 @@ def build_snapshot(
         snap.update(title="Quiz", headline=card["headline"], stats=card["stats"])
         return snap
     if kind == "status":
-        card = status_card(plan or {}, today or date.today())
+        card = status_card(plan or {}, today or datetime.now(UTC).date())
         snap.update(
             title="Trip status",
             headline=card["headline"],
