@@ -1,1 +1,36 @@
-{}
+{
+  "title": "Drops caught",
+  "amountLine": "Drops caught: {{amount}}",
+  "caveat": "The drop between the first price we saw and the lowest price we alerted you about, on USD watches only. It only turns into money if you book at that price.",
+  "empty": "Your first drop will show here",
+  "emptyHint": "Every real price drop on your watches is added here.",
+  "drops_one": "{{count}} drop caught",
+  "drops_other": "{{count}} drops caught",
+  "targets_one": "{{count}} target hit",
+  "targets_other": "{{count}} targets hit",
+  "otherCurrencies": "Other currencies, not converted",
+  "best": "Best catch: {{title}}, {{amount}}",
+  "bestNoTitle": "Best catch: {{amount}}",
+  "progress": "{{pct}}% of the way to {{amount}}",
+  "allDone": "Every milestone reached",
+  "milestones": "Milestones",
+  "milestoneReached": "{{amount}} reached",
+  "milestoneAhead": "{{amount}} ahead",
+  "share": "Share",
+  "shareTitle": "Share your catches",
+  "close": "Close",
+  "download": "Download image",
+  "preview": "Preview of the share card",
+  "working": "Making the image…",
+  "status": {
+    "native": "Shared",
+    "download": "Image downloaded",
+    "copy": "Text copied to your clipboard",
+    "error": "Could not share this card"
+  },
+  "card": {
+    "headline": "I caught {{amount}} in price drops with Voyager",
+    "headlineOther": "I caught price drops with Voyager",
+    "footer": "Observed price drops only. Booking at that price is up to you."
+  }
+}

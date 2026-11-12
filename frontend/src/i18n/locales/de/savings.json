@@ -1,1 +1,36 @@
-{}
+{
+  "title": "Erkannte Preissenkungen",
+  "amountLine": "Erkannte Preissenkungen: {{amount}}",
+  "caveat": "Der Unterschied zwischen dem ersten gesehenen Preis und dem niedrigsten Preis, über den wir dich informiert haben, nur bei USD-Beobachtungen. Er wird nur dann zu Geld, wenn du zu diesem Preis buchst.",
+  "empty": "Deine erste Preissenkung erscheint hier",
+  "emptyHint": "Jede echte Preissenkung deiner Beobachtungen wird hier ergänzt.",
+  "drops_one": "{{count}} Preissenkung erkannt",
+  "drops_other": "{{count}} Preissenkungen erkannt",
+  "targets_one": "{{count}} Zielpreis erreicht",
+  "targets_other": "{{count}} Zielpreise erreicht",
+  "otherCurrencies": "Andere Währungen, nicht umgerechnet",
+  "best": "Bester Fang: {{title}}, {{amount}}",
+  "bestNoTitle": "Bester Fang: {{amount}}",
+  "progress": "{{pct}} % des Wegs zu {{amount}}",
+  "allDone": "Alle Meilensteine erreicht",
+  "milestones": "Meilensteine",
+  "milestoneReached": "{{amount}} erreicht",
+  "milestoneAhead": "{{amount}} noch offen",
+  "share": "Teilen",
+  "shareTitle": "Teile deine Treffer",
+  "close": "Schließen",
+  "download": "Bild herunterladen",
+  "preview": "Vorschau der Karte zum Teilen",
+  "working": "Bild wird erstellt…",
+  "status": {
+    "native": "Geteilt",
+    "download": "Bild heruntergeladen",
+    "copy": "Text in die Zwischenablage kopiert",
+    "error": "Diese Karte konnte nicht geteilt werden"
+  },
+  "card": {
+    "headline": "Ich habe mit Voyager Preissenkungen von {{amount}} erkannt",
+    "headlineOther": "Ich habe mit Voyager Preissenkungen erkannt",
+    "footer": "Nur beobachtete Preissenkungen. Ob du zu diesem Preis buchst, liegt bei dir."
+  }
+}

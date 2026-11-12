@@ -1,1 +1,38 @@
-{}
+{
+  "title": "Bajadas detectadas",
+  "amountLine": "Bajadas detectadas: {{amount}}",
+  "caveat": "La diferencia entre el primer precio que vimos y el más bajo del que te avisamos, solo en seguimientos en USD. Solo se convierte en dinero si reservas a ese precio.",
+  "empty": "Tu primera bajada aparecerá aquí",
+  "emptyHint": "Aquí se suma cada bajada de precio real de tus seguimientos.",
+  "drops_one": "{{count}} bajada detectada",
+  "drops_many": "{{count}} de bajadas detectadas",
+  "drops_other": "{{count}} bajadas detectadas",
+  "targets_one": "{{count}} objetivo alcanzado",
+  "targets_many": "{{count}} de objetivos alcanzados",
+  "targets_other": "{{count}} objetivos alcanzados",
+  "otherCurrencies": "Otras monedas, sin convertir",
+  "best": "Mejor detección: {{title}}, {{amount}}",
+  "bestNoTitle": "Mejor detección: {{amount}}",
+  "progress": "{{pct}} % del camino hacia {{amount}}",
+  "allDone": "Todos los hitos alcanzados",
+  "milestones": "Hitos",
+  "milestoneReached": "{{amount}} alcanzado",
+  "milestoneAhead": "{{amount}} por delante",
+  "share": "Compartir",
+  "shareTitle": "Comparte lo que has detectado",
+  "close": "Cerrar",
+  "download": "Descargar imagen",
+  "preview": "Vista previa de la tarjeta para compartir",
+  "working": "Creando la imagen…",
+  "status": {
+    "native": "Compartido",
+    "download": "Imagen descargada",
+    "copy": "Texto copiado al portapapeles",
+    "error": "No se pudo compartir esta tarjeta"
+  },
+  "card": {
+    "headline": "He detectado {{amount}} en bajadas de precio con Voyager",
+    "headlineOther": "He detectado bajadas de precio con Voyager",
+    "footer": "Solo bajadas de precio observadas. Reservar a ese precio depende de ti."
+  }
+}
