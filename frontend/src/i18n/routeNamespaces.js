@@ -23,7 +23,7 @@ export const SHELL_NS = [
 ]
 
 export const LAZY_NS = [
-  'accountData', 'accountSettings', 'adminInvites', 'adminTelemetry', 'expenses', 'journal',
+  'accountData', 'accountSettings', 'adminInvites', 'adminSocial', 'adminTelemetry', 'expenses', 'journal',
   'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'playYou', 'prep', 'recap', 'security', 'today',
   'trip', 'trips',
 ]
@@ -43,7 +43,7 @@ const ROUTES = {
   '/alerts': ['alerts', 'priceStory', 'dropMoment', 'savings', 'quickWatch', 'watchSuggest', 'alertPrefs', 'alertsHub'],
   '/preferences': ['account', 'alerts', 'search', 'privacy'],
   '/account': ['accountData', 'accountSettings', 'notifications', 'security', 'profile', 'quota', 'game', 'privacy', 'signup'],
-  '/admin': ['adminInvites', 'adminTelemetry', 'account', 'signup'],
+  '/admin': ['adminInvites', 'adminSocial', 'adminTelemetry', 'account', 'signup'],
   '/play': ['playYou', 'game'],
   '/you': ['playYou', 'game', 'coach'],
   '/onboarding': ['onboarding'],

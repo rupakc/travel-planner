@@ -1,0 +1,30 @@
+{
+  "tab": "Moderation",
+  "loading": "Loading…",
+  "empty": "Nothing to review.",
+  "approve": "Approve",
+  "remove": "Remove",
+  "restrict": "Restrict author",
+  "lift": "Lift restriction",
+  "restrictDays": "Restrict for (days)",
+  "restricted": "Author restricted for {{days}} days.",
+  "lifted": "Restriction lifted.",
+  "more": "Load more",
+  "by": "by @{{handle}}",
+  "status": {
+    "held": "Held",
+    "reported": "Reported",
+    "hidden": "Hidden"
+  },
+  "target": {
+    "idea": "Idea",
+    "comment": "Comment",
+    "profile": "Profile"
+  },
+  "reason": {
+    "spam": "Spam",
+    "abuse": "Abuse",
+    "unsafe": "Unsafe",
+    "other": "Other"
+  }
+}
