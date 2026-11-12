@@ -97,7 +97,10 @@ export default function Leaderboard({ token }) {
               </li>
             ))}
           </ol>
-          {data.you && data.you.opted_in && (
+          {data.you && data.you.opted_in && data.you.rank == null && (
+            <p className="mt-2 text-xs text-slate-500" data-tid="play.board.unranked">{t('board.unranked')}</p>
+          )}
+          {data.you && data.you.opted_in && data.you.rank != null && (
             <p className="mt-2 text-xs text-slate-500" data-tid="play.board.mine">
               {t('board.mine', { rank: data.you.rank, count: data.you.score })}
             </p>

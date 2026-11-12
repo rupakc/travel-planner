@@ -134,6 +134,50 @@
     "saver_1000": {
       "name": "$1,000 captados",
       "desc": "Caza $1,000 en bajadas de precio."
+    },
+    "quiz_regular": {
+      "name": "Asiduo del quiz",
+      "desc": "Juega el quiz diario durante 7 días."
+    },
+    "quiz_devoted": {
+      "name": "Devoto del quiz",
+      "desc": "Juega el quiz diario durante 30 días."
+    },
+    "quiz_ace": {
+      "name": "As del quiz",
+      "desc": "Consigue una puntuación perfecta en un quiz."
+    },
+    "quiz_master": {
+      "name": "Maestro del quiz",
+      "desc": "Consigue 10 puntuaciones perfectas en quizzes."
+    },
+    "inspirer": {
+      "name": "Inspirador",
+      "desc": "Un viajero guarda tu idea de viaje."
+    },
+    "muse": {
+      "name": "Musa",
+      "desc": "Tus ideas de viaje se guardan 10 veces."
+    },
+    "helpful_voice": {
+      "name": "Voz útil",
+      "desc": "3 de tus comentarios se marcan como útiles."
+    },
+    "h2h_rival": {
+      "name": "Rival",
+      "desc": "Termina un quiz cara a cara."
+    },
+    "h2h_veteran": {
+      "name": "Veterano cara a cara",
+      "desc": "Termina 25 quizzes cara a cara."
+    },
+    "challenge_explorer": {
+      "name": "Explorador de retos",
+      "desc": "Completa un reto semanal."
+    },
+    "challenge_regular": {
+      "name": "Habitual de retos",
+      "desc": "Completa 8 retos semanales."
     }
   },
   "rules": {

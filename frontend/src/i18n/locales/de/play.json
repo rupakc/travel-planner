@@ -93,6 +93,7 @@
     "points_one": "{{count}} Punkt",
     "points_other": "{{count}} Punkte",
     "mine_one": "Du bist auf Platz {{rank}} mit {{count}} Punkt",
-    "mine_other": "Du bist auf Platz {{rank}} mit {{count}} Punkten"
+    "mine_other": "Du bist auf Platz {{rank}} mit {{count}} Punkten",
+    "unranked": "Du hast noch keinen Rang. Spiele das Tagesquiz, um in die Rangliste zu kommen."
   }
 }

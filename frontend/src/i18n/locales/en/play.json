@@ -93,6 +93,7 @@
     "points_one": "{{count}} point",
     "points_other": "{{count}} points",
     "mine_one": "You are #{{rank}} with {{count}} point",
-    "mine_other": "You are #{{rank}} with {{count}} points"
+    "mine_other": "You are #{{rank}} with {{count}} points",
+    "unranked": "You are not ranked yet. Play the daily quiz to get on the board."
   }
 }

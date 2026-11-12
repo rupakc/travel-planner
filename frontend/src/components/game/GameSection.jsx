@@ -99,7 +99,7 @@ export default function GameSection({ account = null }) {
                   key={b.id}
                   data-tid={`game.badge.${b.id}`}
                   data-earned={b.earned ? 'true' : 'false'}
-                  className={`flex items-start gap-2 rounded-xl border p-3 ${
+                  className={`flex min-w-0 items-start gap-2 rounded-xl border p-3 ${
                     b.earned
                       ? 'border-teal-200 bg-teal-50/60'
                       : 'border-slate-200 opacity-60 grayscale'
@@ -108,7 +108,7 @@ export default function GameSection({ account = null }) {
                   <span className={`mt-0.5 rounded-full p-1.5 ${b.earned ? TIER_CLASS[b.tier] || TIER_CLASS.bronze : 'bg-slate-100 text-slate-400'}`}>
                     <Icon size={16} aria-hidden="true" />
                   </span>
-                  <span className="min-w-0 text-sm">
+                  <span className="min-w-0 break-words text-sm">
                     <span className="block font-medium text-slate-800">
                       {t(`badges.${b.id}.name`, { defaultValue: b.id })}
                     </span>

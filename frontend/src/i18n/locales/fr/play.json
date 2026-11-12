@@ -101,6 +101,7 @@
     "mine_one": "Vous êtes {{rank}}e avec {{count}} point",
     "mine_other": "Vous êtes {{rank}}e avec {{count}} points",
     "points_many": "{{count}} points",
-    "mine_many": "Vous êtes {{rank}}e avec {{count}} points"
+    "mine_many": "Vous êtes {{rank}}e avec {{count}} points",
+    "unranked": "Vous n'êtes pas encore classé. Jouez au quiz du jour pour entrer au classement."
   }
 }

@@ -76,8 +76,11 @@
       "places_visited": "Lugares visitados",
       "countries": "Países",
       "drops_caught": "Bajadas detectadas",
-      "targets_hit": "Objetivos logrados"
-    }
+      "targets_hit": "Objetivos logrados",
+      "correct": "Correctas"
+    },
+    "quizTag": "Resultado del quiz",
+    "statusTag": "Estado del viaje"
   },
   "mine": {
     "title": "Tus enlaces compartidos",

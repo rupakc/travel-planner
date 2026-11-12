@@ -76,8 +76,11 @@
       "places_visited": "到访地点",
       "countries": "国家",
       "drops_caught": "捕捉到的降价",
-      "targets_hit": "达成目标"
-    }
+      "targets_hit": "达成目标",
+      "correct": "答对"
+    },
+    "quizTag": "答题得分",
+    "statusTag": "行程状态"
   },
   "mine": {
     "title": "你分享的链接",

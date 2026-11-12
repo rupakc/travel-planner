@@ -72,6 +72,14 @@ describe('QuizHub', () => {
     expect(emit).toHaveBeenCalledWith('play_board_view', { scope: 'friends' })
   })
 
+  it('shows a friendly line, not "#null", when the player has no rank yet', async () => {
+    api.getLeaderboard.mockResolvedValue({ week: '2026-W46', rows: [], you: { rank: null, score: 0, opted_in: true } })
+    await mount(<QuizHub token="t" />)
+    expect(tid('play.board.unranked').textContent).toContain('not ranked yet')
+    expect(tid('play.board.mine')).toBeNull()
+    expect(container.textContent).not.toContain('#null')
+  })
+
   it('plays a quiz, reveals answers and shows the result with XP', async () => {
     api.answerQuiz
       .mockResolvedValueOnce({ correct: true, correct_choice: 'a', points: 140, elapsed_ms: 3000, done: false })

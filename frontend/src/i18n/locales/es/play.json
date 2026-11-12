@@ -101,6 +101,7 @@
     "mine_one": "Eres el n.º {{rank}} con {{count}} punto",
     "mine_other": "Eres el n.º {{rank}} con {{count}} puntos",
     "points_many": "{{count}} puntos",
-    "mine_many": "Eres el n.º {{rank}} con {{count}} puntos"
+    "mine_many": "Eres el n.º {{rank}} con {{count}} puntos",
+    "unranked": "Aún no tienes posición. Juega el quiz diario para entrar en el ranking."
   }
 }

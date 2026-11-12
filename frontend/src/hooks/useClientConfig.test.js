@@ -1,6 +1,17 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { signupAvailable, resetAvailable } from './useClientConfig'
+import { signupAvailable, resetAvailable, featureOn } from './useClientConfig'
+
+describe('featureOn', () => {
+  it('accepts true and the integer 1 that /config sends (play, social), nothing else', () => {
+    expect(featureOn({ features: { play: 1 } }, 'play')).toBe(true)
+    expect(featureOn({ features: { game: true } }, 'game')).toBe(true)
+    expect(featureOn({ features: { play: 0 } }, 'play')).toBe(false)
+    expect(featureOn({ features: { play: 2 } }, 'play')).toBe(false)
+    expect(featureOn({ features: { play: 'yes' } }, 'play')).toBe(false)
+    expect(featureOn({}, 'play')).toBe(false)
+  })
+})
 
 describe('availability helpers', () => {
   it('are false without an auth block (old backend)', () => {

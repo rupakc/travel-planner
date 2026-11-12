@@ -76,8 +76,11 @@
       "places_visited": "ঘোরা স্থান",
       "countries": "দেশ",
       "drops_caught": "ধরা পড়া দাম কমা",
-      "targets_hit": "লক্ষ্য পূরণ"
-    }
+      "targets_hit": "লক্ষ্য পূরণ",
+      "correct": "সঠিক"
+    },
+    "quizTag": "কুইজের স্কোর",
+    "statusTag": "ভ্রমণের অবস্থা"
   },
   "mine": {
     "title": "আপনার শেয়ার করা লিঙ্ক",

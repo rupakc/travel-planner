@@ -76,8 +76,11 @@
       "places_visited": "घूमे गए स्थान",
       "countries": "देश",
       "drops_caught": "पकड़ी गई गिरावट",
-      "targets_hit": "लक्ष्य पूरे"
-    }
+      "targets_hit": "लक्ष्य पूरे",
+      "correct": "सही"
+    },
+    "quizTag": "क्विज़ स्कोर",
+    "statusTag": "यात्रा की स्थिति"
   },
   "mine": {
     "title": "आपके साझा किए गए लिंक",
