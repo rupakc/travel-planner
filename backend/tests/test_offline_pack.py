@@ -47,7 +47,7 @@ def test_pack_static_without_snapshot():
     assert pack["emergency"]["cities"][0]["city"] == "Tokyo"
     assert pack["address_card"]["hotel_name"] == "Hotel Sakura"
     assert pack["address_card"]["area"] == "Shinjuku"
-    assert pack["address_card"]["take_me_to"] is None
+    assert pack["address_card"]["take_me_to"]["text"]
     assert pack["destinations"][0]["country_code"] == "JP"
 
 
