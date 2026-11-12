@@ -339,7 +339,11 @@ async def test_fare_alert_pushes_in_the_background(google, monkeypatch):
     row = fare_watch._notify(watch, note, NOW)
     assert notifications_db.list_notifications(u["id"])["items"][0]["id"] == row["id"]
     await _drain()
-    sender.assert_awaited_once_with(
+    # Only this user's pushes count: a task leaked by an earlier test may
+    # also reach the patched sender in a full-suite run.
+    mine = [c for c in sender.await_args_list if c.args[0] == u["username"]]
+    assert len(mine) == 1
+    sender.assert_any_await(
         u["username"],
         "Berlin → Lisbon dropped to $454",
         "For 1–8 Dec",

@@ -185,8 +185,6 @@ class Settings(BaseSettings):
     ai_daily_quota_light_ai: int = 200
     ai_daily_quota_import: int = 20
     game_enabled: bool = True
-    # Play (Phase 5): quizzes, head-to-head, boards. Also needs game_enabled.
-    play_enabled: bool = False
     journey_ui_enabled: bool = True
     # Price alerts 2.0 (Phase 3): the pipeline, delivery and digest loops
     price_alerts_v2_enabled: bool = True
@@ -206,8 +204,8 @@ class Settings(BaseSettings):
     # Phase 5: profiles, ideas feed, moderation (SOCIAL_ENABLED) and quizzes,
     # head-to-head, boards, challenges (PLAY_ENABLED, also needs GAME_ENABLED).
     # Off = routes 404 and features.social / features.play are 0.
-    social_enabled: bool = False
-    play_enabled: bool = False
+    social_enabled: bool = True
+    play_enabled: bool = True
     # Sharing 2.0 (Phase 4): /api/shares, card and OG page
     sharing_v2_enabled: bool = True
     ready_window_days: int = 14

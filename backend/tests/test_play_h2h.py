@@ -569,3 +569,57 @@ def test_leaderboard_module_has_no_network():
     src = inspect.getsource(leaderboard) + inspect.getsource(challenge)
     for bad in ("httpx", "requests", "llm", "anthropic"):
         assert bad not in src
+
+
+def test_create_requires_own_handle_and_no_restriction(client, clock):
+    from app.db import social_ideas_db
+
+    a, b = _user(client), _user(client)
+    nop = _user(client, handle=False)
+    r = _create(client, nop, b)
+    assert r.status_code == 409 and r.json()["error_code"] == "profile_required"
+    social_ideas_db.restrict(a["id"], 1)
+    r = _create(client, a, b)
+    assert r.status_code == 403 and r.json()["error_code"] == "restricted"
+    social_ideas_db.lift(a["id"])
+    assert _create(client, a, b).status_code == 200
+
+
+def test_board_only_verified_users(client, clock):
+    a = _user(client, opt_in=True)
+    b = _user(client, opt_in=True)
+    _score(client, a)
+    _score(client, b)
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE users SET signup_method = 'self', verified_at = NULL WHERE id = ?",
+            (b["id"],),
+        )
+    assert [r["handle"] for r in _board(client, a)["rows"]] == [a["handle"]]
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE users SET verified_at = '2030-01-01T00:00:00Z' WHERE id = ?",
+            (b["id"],),
+        )
+    assert len(_board(client, a)["rows"]) == 2
+
+
+def test_weekly_pack_cap_and_ranking_ties(client, clock):
+    from app.db import quiz_db
+
+    a = _user(client, opt_in=True)
+    b = _user(client, opt_in=True)
+    with get_connection() as conn:
+        for i in range(25):
+            sid = f"cap{a['handle']}{i}"
+            quiz_db.create_session(
+                conn, sid, a["id"], "pack", "flags", "d", "s", [], clock["ms"]
+            )
+            quiz_db.finish(conn, sid, 100, 1, clock["ms"] + i)
+        quiz_db.create_session(
+            conn, "capb", b["id"], "pack", "flags", "d", "s", [], clock["ms"]
+        )
+        quiz_db.finish(conn, "capb", 2000, 1, clock["ms"])
+    out = _board(client, a)
+    assert [r["score"] for r in out["rows"]] == [2000, 2000]
+    assert [r["rank"] for r in out["rows"]] == [1, 1]

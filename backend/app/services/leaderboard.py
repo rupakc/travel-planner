@@ -12,10 +12,15 @@ from ..game import engine as game_engine
 from . import challenge
 
 GLOBAL_LIMIT = 50
+PACK_WEEKLY_CAP = 20  # finished pack sessions per user per week that score
 
 _HIDDEN = (
     "NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id = p.user_id"
     " AND json_valid(us.data) AND json_extract(us.data, '$.hide_game') IN (1, 'true'))"
+)
+_VERIFIED = (
+    "EXISTS (SELECT 1 FROM users u WHERE u.id = p.user_id"
+    " AND (u.signup_method = 'admin' OR u.verified_at IS NOT NULL))"
 )
 _NOT_BLOCKED = (
     "NOT EXISTS (SELECT 1 FROM social_blocks b WHERE"
@@ -29,16 +34,25 @@ def week_day(week: str, now_ms: int) -> date:
     return today - timedelta(days=7) if week == "previous" else today
 
 
+def _sums(extra: str, cap: str) -> str:
+    """Per-user weekly totals: every finished session in the week range (uses
+    the finished_ms index), but only the first ``cap`` pack sessions count."""
+    return (
+        "SELECT user_id, SUM(score) AS score FROM ("  # nosec B608
+        "SELECT user_id, mode, score, ROW_NUMBER() OVER (PARTITION BY user_id,"
+        " mode = 'pack' ORDER BY finished_ms, id) AS rn FROM quiz_sessions"
+        f" WHERE finished_ms >= :start AND finished_ms < :end{extra})"
+        f" WHERE mode != 'pack' OR rn <= {cap} GROUP BY user_id"
+    )
+
+
 def _scores(conn, user_id: str, scope: str, start: int, end: int) -> list[dict]:
     """Rows (user_id, handle, score, show_level) with score > 0, best first."""
-    sums = (
-        "SELECT user_id, SUM(score) AS score FROM quiz_sessions"
-        " WHERE finished_ms >= :start AND finished_ms < :end GROUP BY user_id"
-    )
+    sums = _sums("", f"{PACK_WEEKLY_CAP}")
     base = (
         "SELECT p.user_id, p.handle, p.show_level, q.score FROM social_profiles p"
         f" JOIN ({sums}) q ON q.user_id = p.user_id"  # nosec B608
-        f" WHERE q.score > 0 AND {_HIDDEN} AND {_NOT_BLOCKED}"  # nosec B608
+        f" WHERE q.score > 0 AND {_VERIFIED} AND {_HIDDEN} AND {_NOT_BLOCKED}"  # nosec B608
     )
     if scope == "friends":
         where = (
@@ -57,49 +71,66 @@ def _scores(conn, user_id: str, scope: str, start: int, end: int) -> list[dict]:
 
 
 def _my_score(conn, user_id: str, start: int, end: int) -> int:
-    return conn.execute(
-        "SELECT COALESCE(SUM(score), 0) FROM quiz_sessions WHERE user_id = ?"
-        " AND finished_ms >= ? AND finished_ms < ?",
-        (user_id, start, end),
-    ).fetchone()[0]
+    row = conn.execute(
+        _sums(" AND user_id = :uid", f"{PACK_WEEKLY_CAP}"),
+        {"uid": user_id, "start": start, "end": end},
+    ).fetchone()
+    return int(row["score"]) if row else 0
 
 
-def _level(user_id: str) -> int:
-    from ..db import game_db
-
-    with get_connection() as conn:
-        xp = game_db.total_xp(conn, user_id)
-    return game_engine.level_for(xp, game_engine.get_rules())
+def _levels(conn, user_ids: list[str]) -> dict[str, int]:
+    """One query for every shown user's level."""
+    if not user_ids:
+        return {}
+    marks = ",".join("?" * len(user_ids))
+    xp = {
+        r[0]: int(r[1])
+        for r in conn.execute(
+            "SELECT user_id, SUM(points) FROM xp_ledger"  # nosec B608
+            f" WHERE user_id IN ({marks}) GROUP BY user_id",
+            user_ids,
+        )
+    }
+    rules = game_engine.get_rules()
+    return {u: game_engine.level_for(xp.get(u, 0), rules) for u in user_ids}
 
 
 def board(user_id: str, scope: str, week: str, now_ms: int) -> dict:
     day = week_day(week, now_ms)
     start, end = challenge.week_bounds_ms(day)
     with get_connection() as conn:
-        rows = _scores(conn, user_id, scope, start, end)
+        rows = _scores(conn, user_id, scope, start, end)  # already sorted by score
         mine = social_db.get_profile(user_id)
         my_score = _my_score(conn, user_id, start, end) if mine else 0
+        # rank = 1 + number of strictly higher scores: one pass over sorted rows
+        ranked, prev, rank = [], None, 0
+        for i, r in enumerate(rows, 1):
+            if r["score"] != prev:
+                prev, rank = r["score"], i
+            ranked.append((rank, r))
+        top = ranked[:GLOBAL_LIMIT]
+        levels = _levels(conn, [r["user_id"] for _, r in top if r["show_level"]])
     out, you = [], None
-    for r in rows:
-        rank = 1 + sum(1 for o in rows if o["score"] > r["score"])
+    for rank, r in ranked:
         if r["user_id"] == user_id:
             you = {
                 "rank": rank,
                 "score": r["score"],
                 "opted_in": bool(mine["leaderboard_opt_in"]),
             }
-        if len(out) < GLOBAL_LIMIT:
-            row = {
-                "rank": rank,
-                "handle": r["handle"],
-                "score": r["score"],
-                "you": r["user_id"] == user_id,
-            }
-            if r["show_level"]:
-                row["level"] = _level(r["user_id"])
-            out.append(row)
+            break
+    for rank, r in top:
+        row = {
+            "rank": rank,
+            "handle": r["handle"],
+            "score": r["score"],
+            "you": r["user_id"] == user_id,
+        }
+        if r["show_level"]:
+            row["level"] = levels[r["user_id"]]
+        out.append(row)
     if mine and you is None:
-        # not on the board: no points this week, or not opted in (global)
+        # not on the board: no points this week, not opted in (global) or unverified
         you = {
             "rank": None,
             "score": my_score,

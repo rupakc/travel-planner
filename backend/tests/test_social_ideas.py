@@ -623,13 +623,16 @@ def test_admin_queue_decide_restrict(client):
 def test_admin_profile_decision(client):
     adm = _user(is_admin=True)
     a = _mk(client)
+    social_db.save_profile(a["id"], {"bio": "spam bio", "show_avatar": True})
     r = client.post(
         f"/api/admin/social/profile/{a['handle']}/decide",
         json={"action": "remove"},
         headers=adm["h"],
     )
     assert r.status_code == 200
-    assert social_db.get_profile(a["id"])["visibility"] == "private"
+    prof = social_db.get_profile(a["id"])
+    assert prof["visibility"] == "private" and prof["bio"] == ""
+    assert prof["show_avatar"] is False
 
 
 def test_expired_restriction_is_not_active(client):
