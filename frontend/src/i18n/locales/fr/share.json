@@ -57,5 +57,44 @@
     "plan": "Mon plan de voyage sur Voyager",
     "recap": "Le récap de mon voyage sur Voyager",
     "savings": "Les baisses de prix repérées avec Voyager"
+  },
+  "page": {
+    "byline": "Partagé par {{name}}",
+    "cta": "Planifiez votre propre voyage",
+    "recapTag": "Récap du voyage",
+    "savingsTag": "Baisses de prix repérées",
+    "unavailable": "Ce lien n'est pas disponible.",
+    "stat": {
+      "activities": "Activités",
+      "hotels": "Hôtels",
+      "places": "Lieux",
+      "places_visited": "Lieux visités",
+      "countries": "Pays",
+      "drops_caught": "Baisses repérées",
+      "targets_hit": "Objectifs atteints"
+    }
+  },
+  "mine": {
+    "title": "Vos liens partagés",
+    "intro": "Les liens que vous avez créés. En arrêter un le rend inutilisable.",
+    "empty": "Vous n'avez encore rien partagé.",
+    "loading": "Chargement…",
+    "copy": "Copier le lien",
+    "copied": "Lien copié",
+    "copyFailed": "Impossible de copier le lien.",
+    "open": "Ouvrir",
+    "revoke": "Arrêter le partage",
+    "confirm": "Arrêter le partage ? Toute personne ayant le lien perdra l'accès.",
+    "yes": "Oui, arrêter",
+    "no": "Garder",
+    "revoked": "Lien supprimé.",
+    "error": "Impossible de supprimer le lien.",
+    "untitled": "Sans titre",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Récap",
+      "savings": "Économies"
+    },
+    "created": "Partagé {{date}}"
   }
 }

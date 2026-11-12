@@ -23,7 +23,7 @@ const tt = (key, opts) => i18n.t(`misc:${key}`, opts)
 // Non-numeric amounts render nothing rather than `$NaN`
 const usd = (n) => (n != null && n !== '' && Number.isFinite(Number(n)) ? `$${fmtNumber(Number(n))}` : '')
 // ISO date strings from the plan, in the reader's locale; raw text if unparsable
-const dateText = (d) => fmtDate(`${d}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' }) || String(d)
+const dateText = (d) => MONTH_ONLY.test(String(d)) ? monthText(d) : fmtDate(`${d}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' }) || String(d)
 
 const FONT_TIMEOUT_MS = 1500
 const FONT_WEIGHTS = [400, 600, 700]
@@ -60,8 +60,13 @@ function pickGradient(name = '') {
   return GRADIENTS[h % GRADIENTS.length]
 }
 
+const MONTH_ONLY = /^\d{4}-\d{2}$/
+// 'YYYY-MM' (month-only share) -> "Mar 2026"; anything unparsable is shown as text
+const monthText = (m) => fmtDate(`${m}-01T00:00:00`, { month: 'short', year: 'numeric' }) || String(m)
+
 function tripDates(sd) {
   if (!sd?.departure_date) return null
+  if (MONTH_ONLY.test(String(sd.departure_date))) return monthText(sd.departure_date)
   const opts = { month: 'short', day: 'numeric', year: 'numeric' }
   const dep = fmtDate(`${sd.departure_date}T00:00:00`, opts)
   if (!sd.return_date) return dep
@@ -283,8 +288,39 @@ async function downloadCard(plan) {
   }
 }
 
+const SHARE_KINDS = ['plan', 'recap', 'savings']
+
+// Recap and savings shares: a card (headline, stats, destination, period), no plan body.
+function CardView({ plan, ts }) {
+  const card = plan.card || {}
+  const [c1, c2] = pickGradient(plan.name || card.headline)
+  const stats = (Array.isArray(card.stats) ? card.stats : []).filter((s) => s && Number.isFinite(Number(s.count)))
+  const period = card.period ? (MONTH_ONLY.test(String(card.period)) ? monthText(card.period) : String(card.period)) : ''
+  return (
+    <div data-tid="share.card" className="rounded-3xl shadow-2xl overflow-hidden text-white relative" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
+      <div className="relative p-8 space-y-5">
+        <p className="text-sm font-semibold tracking-widest uppercase text-white/80">{ts(plan.kind === 'savings' ? 'page.savingsTag' : 'page.recapTag')}</p>
+        <h1 className="text-3xl font-bold leading-tight">{card.headline}</h1>
+        {(card.destination || period) && (
+          <p className="text-white/90 text-sm">{[card.destination, period].filter(Boolean).join(' · ')}</p>
+        )}
+        {stats.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {stats.map((s) => (
+              <span key={s.key} className="px-3 py-1.5 rounded-full bg-white/20 text-sm font-medium">
+                {fmtNumber(Number(s.count))} {ts(`page.stat.${s.key}`, { defaultValue: String(s.key || '').replace(/_/g, ' ') })}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SharePage({ download = downloadCard }) {
   const { t, i18n: i18nHook } = useTranslation('misc')
+  const { t: ts } = useTranslation('share')
   const { token } = useParams()
   const [plan, setPlan] = useState(null)
   const [status, setStatus] = useState('loading')
@@ -298,6 +334,20 @@ export default function SharePage({ download = downloadCard }) {
       .then(data => { setPlan(data); setStatus('done') })
       .catch(() => setStatus('error'))
   }, [token])
+
+  // Public pages stay out of search engines (the API also sends X-Robots-Tag)
+  useEffect(() => {
+    const m = document.createElement('meta')
+    m.name = 'robots'
+    m.content = 'noindex'
+    document.head.appendChild(m)
+    return () => m.remove()
+  }, [])
+
+  useEffect(() => {
+    if (status !== 'done' || !plan) return
+    import('../telemetry/client').then((m) => m.emit('share_view', { kind: SHARE_KINDS.includes(plan.kind) ? plan.kind : 'plan' })).catch(() => {})
+  }, [status, plan])
 
   // Warm the script font as soon as the plan is here (and when the language changes)
   const lang = i18nHook.resolvedLanguage || i18nHook.language
@@ -334,6 +384,25 @@ export default function SharePage({ download = downloadCard }) {
         <h1 className="text-xl font-bold text-slate-800">{t('share.unavailableTitle')}</h1>
         <p className="text-sm text-slate-500">{t('share.unavailableBody')}</p>
         <Link to="/" data-tid="share.plan-own-error" className="mt-2 px-5 py-2.5 bg-teal-700 text-white text-sm font-semibold rounded-xl hover:bg-teal-800 transition-colors">{t('share.planOwn')}</Link>
+        <AttributionFooter />
+      </div>
+    )
+  }
+
+  const byline = typeof plan.owner_name === 'string' && plan.owner_name.trim()
+    ? <p data-tid="share.byline" className="text-center text-sm text-slate-600">{ts('page.byline', { name: plan.owner_name })}</p>
+    : null
+
+  if ((plan.kind === 'recap' || plan.kind === 'savings') && plan.card) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100 py-10 px-4">
+        <div className="max-w-lg mx-auto space-y-6">
+          <CardView plan={plan} ts={ts} />
+          {byline}
+          <Link to="/" data-tid="share.plan-own" className="flex items-center justify-center gap-2 px-5 py-3 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 transition-colors shadow-md text-sm">
+            {ts('page.cta')}
+          </Link>
+        </div>
         <AttributionFooter />
       </div>
     )
@@ -396,6 +465,8 @@ export default function SharePage({ download = downloadCard }) {
             <p className="text-white/70 text-xs pt-2">{plan.name}</p>
           </div>
         </div>
+
+        {byline}
 
         {/* Flights */}
         {(legFlights.length > 0 || sel.flight) && (

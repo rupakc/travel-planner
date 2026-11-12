@@ -57,5 +57,44 @@
     "plan": "Mi plan de viaje en Voyager",
     "recap": "El resumen de mi viaje en Voyager",
     "savings": "Bajadas de precio que cacé con Voyager"
+  },
+  "page": {
+    "byline": "Compartido por {{name}}",
+    "cta": "Planifica tu propio viaje",
+    "recapTag": "Resumen del viaje",
+    "savingsTag": "Bajadas de precio detectadas",
+    "unavailable": "Este enlace no está disponible.",
+    "stat": {
+      "activities": "Actividades",
+      "hotels": "Hoteles",
+      "places": "Lugares",
+      "places_visited": "Lugares visitados",
+      "countries": "Países",
+      "drops_caught": "Bajadas detectadas",
+      "targets_hit": "Objetivos logrados"
+    }
+  },
+  "mine": {
+    "title": "Tus enlaces compartidos",
+    "intro": "Enlaces que creaste. Si dejas de compartir uno, deja de funcionar.",
+    "empty": "Aún no has compartido nada.",
+    "loading": "Cargando…",
+    "copy": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "copyFailed": "No se pudo copiar el enlace.",
+    "open": "Abrir",
+    "revoke": "Dejar de compartir",
+    "confirm": "¿Dejar de compartir? Quien tenga el enlace perderá el acceso.",
+    "yes": "Sí, dejar de compartir",
+    "no": "Mantener",
+    "revoked": "Enlace eliminado.",
+    "error": "No se pudo eliminar el enlace.",
+    "untitled": "Sin título",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Resumen",
+      "savings": "Ahorros"
+    },
+    "created": "Compartido {{date}}"
   }
 }

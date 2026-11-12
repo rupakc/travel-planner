@@ -57,5 +57,44 @@
     "plan": "Mein Reiseplan auf Voyager",
     "recap": "Mein Reiserückblick auf Voyager",
     "savings": "Preisrückgänge, die ich mit Voyager erwischt habe"
+  },
+  "page": {
+    "byline": "Geteilt von {{name}}",
+    "cta": "Plane deine eigene Reise",
+    "recapTag": "Reiserückblick",
+    "savingsTag": "Erwischte Preissenkungen",
+    "unavailable": "Dieser Link ist nicht verfügbar.",
+    "stat": {
+      "activities": "Aktivitäten",
+      "hotels": "Hotels",
+      "places": "Orte",
+      "places_visited": "Besuchte Orte",
+      "countries": "Länder",
+      "drops_caught": "Erwischte Preissenkungen",
+      "targets_hit": "Zielpreise erreicht"
+    }
+  },
+  "mine": {
+    "title": "Deine geteilten Links",
+    "intro": "Links, die du erstellt hast. Wenn du einen beendest, funktioniert er nicht mehr.",
+    "empty": "Du hast noch nichts geteilt.",
+    "loading": "Wird geladen…",
+    "copy": "Link kopieren",
+    "copied": "Link kopiert",
+    "copyFailed": "Der Link konnte nicht kopiert werden.",
+    "open": "Öffnen",
+    "revoke": "Teilen beenden",
+    "confirm": "Teilen beenden? Alle mit dem Link verlieren den Zugriff.",
+    "yes": "Ja, Teilen beenden",
+    "no": "Behalten",
+    "revoked": "Link entfernt.",
+    "error": "Der Link konnte nicht entfernt werden.",
+    "untitled": "Ohne Titel",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Rückblick",
+      "savings": "Ersparnisse"
+    },
+    "created": "Geteilt {{date}}"
   }
 }
