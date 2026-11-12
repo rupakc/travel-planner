@@ -268,12 +268,16 @@ def expire_inactive_past(today: str, *, now: datetime) -> int:
         ).rowcount
 
 
-def due_watch_ids(now: datetime, limit: int) -> list[int]:
+def due_watch_ids(
+    now: datetime, limit: int, *, candidates: int | None = None
+) -> list[int]:
     """Active watches due for a check and not leased, oldest due first.
 
     Read-only: the scheduler leases each one (``claim_watch``) only when it
     actually starts checking it."""
     stamp = now.isoformat()
+    if candidates:  # priority mode: a wider, still oldest-first, pool
+        limit = limit * candidates
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT id FROM fare_watches WHERE status = 'active'"
@@ -329,6 +333,17 @@ def add_history(watch_id: int, entry: dict) -> None:
             " ORDER BY id DESC LIMIT ?)",
             (watch_id, watch_id, HISTORY_KEEP),
         )
+
+
+def recent_prices(watch_id: int, n: int) -> list[float]:
+    """The last ``n`` observed prices (nulls ignored), oldest first."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT price FROM fare_watch_history WHERE watch_id = ? AND price IS NOT NULL "
+            "ORDER BY id DESC LIMIT ?",
+            (watch_id, n),
+        ).fetchall()
+    return [r[0] for r in reversed(rows)]
 
 
 def get_history(watch_id: int) -> list[dict]:

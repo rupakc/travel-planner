@@ -19,7 +19,7 @@ from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
 from ..db.database import airport_city
 from ..schemas.request import TravelSearchRequest
-from . import alert_pipeline, price_rules, push, serp_flights
+from . import alert_pipeline, alert_schedule, price_rules, push, serp_flights
 from .serp_flights import SerpAPIError
 
 logger = logging.getLogger(__name__)
@@ -444,8 +444,33 @@ def next_day(now: datetime, rand: Callable[[], float]) -> datetime:
     return midnight.replace(tzinfo=UTC) + timedelta(minutes=int(rand() * 59))
 
 
-def next_check(now: datetime, rand: Callable[[], float]) -> datetime:
+def _recent_prices(watch_kind: str, watch_id) -> list[float]:
+    if watch_id is None:
+        return []
+    if watch_kind == "flight":
+        return fare_watch_db.recent_prices(watch_id, 5)
+    from ..db import price_watch_db
+
+    return price_watch_db.recent_prices(watch_id, 5)
+
+
+def next_check(
+    now: datetime,
+    rand: Callable[[], float],
+    *,
+    watch_kind: str | None = None,
+    watch: dict | None = None,
+) -> datetime:
     factor = 1 + JITTER * (2 * rand() - 1)
+    if watch is not None and watch_kind and alert_pipeline.enabled():
+        try:
+            history = _recent_prices(watch_kind, watch.get("id"))
+            interval = alert_schedule.next_interval(
+                watch_kind, watch, now.date(), history
+            )
+            return now + interval * factor
+        except Exception:  # scheduling must never fail a check
+            logger.warning("adaptive interval failed", exc_info=True)
     return now + timedelta(hours=settings.fare_watch_interval_hours * factor)
 
 
@@ -656,7 +681,14 @@ def _record_success(
         "failure_count": 0,
         "last_error": None,
         "last_checked_at": stamp,
-        "next_check_at": next_check(now, rand).isoformat(),
+        "next_check_at": next_check(
+            now,
+            rand,
+            watch_kind="flight",
+            watch={**watch, "last_price": check.price}
+            if check.price is not None
+            else watch,
+        ).isoformat(),
         "lease_until": None,
         "updated_at": stamp,
     }
@@ -739,7 +771,12 @@ async def run_due(
         if removed:
             logger.info("Removed %d notifications older than 180 days", removed)
     fare_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
-    ids = fare_watch_db.due_watch_ids(now, CLAIM_BATCH)
+    if alert_pipeline.enabled():
+        ids = alert_schedule.order_due_ids(
+            fare_watch_db, lambda w: "flight", now, CLAIM_BATCH
+        )
+    else:
+        ids = fare_watch_db.due_watch_ids(now, CLAIM_BATCH)
     sem = asyncio.Semaphore(CONCURRENCY)
 
     async def one(watch_id: int) -> CheckOutcome | None:
