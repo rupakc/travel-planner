@@ -1341,6 +1341,34 @@
 <li>The first automatic drop card after a load was once skipped while <code>tp_drop_seen</code> already held the id (not reproduced; later loads showed the card every time). Watch for it.</li>
 <li>Not covered end to end: a hotel/activity drop (the fake serves the hotel fixture at one price).</li>
 </ul>
+<h2 id="from-the-final-review-and-task-reviews">From the final review and task reviews</h2>
+<p>Severity in brackets.</p>
+<ul>
+<li>[low] Several drops for one user dispatched in the same scheduler pass, before the first kicked flush has claimed anything, can each go out as a separate push seconds apart (<code>alert_delivery</code> grouping relies on <code>sent_at</code>).</li>
+<li>[low] <code>push._locks</code> is keyed by event loop and each <code>flush</code> pass runs in a new loop, so entries accumulate (about 24 a day, cleared by the weekly reboot). Use a <code>WeakKeyDictionary</code>.</li>
+<li>[low] <code>alert_outbox</code> and <code>alert_digests</code> are never pruned; the 180-day notification prune leaves their rows (saving-title lookups then fall back to an empty title).</li>
+<li>[low] <code>alert_digest.build_digest</code> labels the week from the UTC <code>now</code> while the claim uses the local ISO week (cosmetic, zones far east of UTC).</li>
+<li>[low] <code>POST /api/alerts/quick-watch</code> is not gated on <code>price_alerts_v2_enabled</code>.</li>
+<li>[note for owner] With v2 on, re-check cadence is daily; legacy was every 12 h. Decide whether that is the intended trade for the SerpAPI budget.</li>
+<li>[low] A grouped push's <code>data.kind</code> is the last row's kind, so the Android channel and priority follow it (T6).</li>
+<li>[low] A crash after claiming an outbox row loses it, and a send failure after the digest claim loses that week's digest (claim-before-send, no retry).</li>
+<li>[low] <code>alerts_db</code> uses <code>datetime.utcnow()</code> (deprecated); price_watch kind default is <code>hotel</code> (T1).</li>
+<li>[low] <code>_is_legacy</code> does one query per outbox item (T6); N+1 saving-title lookup (T5).</li>
+<li>[low] Advice cache is not keyed by locale; <code>now()</code> is not injectable in <code>alert_story</code> (T4).</li>
+<li>[low] Quick-watch: <code>_pending_spec</code> is in <code>serialize</code>, <code>_pending_expiry</code> accepts a past date, the first look is not de-duplicated, and tests use a fake source with kind <code>hotel</code> (T7).</li>
+<li>[low] <code>alert_schedule._starved</code> swallows a <code>TypeError</code> silently; a duplicate assert in a restored test (T8).</li>
+<li>[low] Digest: missing tests noted in T10 review.</li>
+<li>[low] Savings share card: round the total, focus trap/restore in the dialog, canvas text wrap, hard-coded tick values (T13).</li>
+<li>[low] Price story: the slider thumb hit area is under the 44 px tap target (T11); Prefs: quiet-hours notice wording and focus styles (T16).</li>
+<li>[low] The <code>es</code> Deal-hunter badge name needs a native check (T5); redundant <code>SHELL_NS</code> listing (T2).</li>
+<li>[low] <code>fare_cheaper_date</code> no longer counts as a caught drop (fixed in #161); no follow-up needed.</li>
+</ul>
+<h2 id="owner-must-provide">Owner must provide</h2>
+<ul>
+<li>A <code>SERPAPI_KEY</code> in <code>app.env</code> for live prices. None is set in prod today, so <code>features.live_prices</code> stays false and one-tap watching and suggestions stay hidden until it is.</li>
+<li>Optional SMTP settings for the weekly digest email.</li>
+<li>Android and iOS clients to adopt <code>docs/Alerts-API.md</code>.</li>
+</ul>
 
 
 
