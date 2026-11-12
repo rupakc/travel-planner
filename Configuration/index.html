@@ -1969,6 +1969,36 @@
 <td><code>""</code></td>
 <td>FCM project for ADC mode; empty uses <code>GOOGLE_CLOUD_PROJECT</code>, which the entrypoint sets from the metadata server.</td>
 </tr>
+<tr>
+<td><code>APNS_TEAM_ID</code></td>
+<td><code>""</code></td>
+<td>Apple developer Team ID for iOS pushes (APNs token auth). Inert until <code>APNS_TEAM_ID</code>, <code>APNS_KEY_ID</code> and a key (<code>APNS_KEY_P8</code> or <code>APNS_KEY_FILE</code>) are all set; only used when <code>NOTIFICATIONS_V2_ENABLED=true</code>, which routes iOS devices to APNs and Android devices to FCM.</td>
+</tr>
+<tr>
+<td><code>APNS_KEY_ID</code></td>
+<td><code>""</code></td>
+<td>Key ID of the APNs auth key (.p8).</td>
+</tr>
+<tr>
+<td><code>APNS_KEY_P8</code></td>
+<td><code>""</code></td>
+<td>The .p8 key contents (PEM; <code>\n</code> escapes accepted). Wins over <code>APNS_KEY_FILE</code>.</td>
+</tr>
+<tr>
+<td><code>APNS_KEY_FILE</code></td>
+<td><code>""</code></td>
+<td>Path to the .p8 key file.</td>
+</tr>
+<tr>
+<td><code>APNS_BUNDLE_ID</code></td>
+<td><code>io.github.rupakc.travelplanner</code></td>
+<td>The iOS app's bundle id (<code>apns-topic</code>).</td>
+</tr>
+<tr>
+<td><code>APNS_SANDBOX</code></td>
+<td><code>false</code></td>
+<td>Use Apple's sandbox host (development builds).</td>
+</tr>
 </tbody>
 </table>
 <h2 id="accounts">Accounts</h2>
