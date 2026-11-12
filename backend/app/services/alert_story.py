@@ -14,19 +14,23 @@ from ..core.config import settings
 from ..core.errors import ApiError
 from ..db import alerts_db
 from ..schemas.request import TravelSearchRequest
-from . import price_rules
+from . import price_rules, price_watch
 
 MAX_POINTS = 90
 HISTORY_TYPICAL_MIN_POINTS = 6
 STALE_DAYS = 3
 ADVICE_TTL = timedelta(hours=24)
 
-_STEPS = {
-    "flight": price_rules.FARE_STEP,
-    "hotel": price_rules.FARE_STEP,
-    "activity": price_rules.ACTIVITY_STEP,
-    "trip": price_rules.TRIP_STEP,
-}
+
+def _step(kind: str) -> price_rules.Step:
+    """Flights use FARE_STEP; other kinds ask their registered price source."""
+    if kind == "flight":
+        return price_rules.FARE_STEP
+    source = price_watch.get_source(kind)
+    if source is None:
+        price_watch.register_builtin_sources()
+        source = price_watch.get_source(kind)
+    return price_watch.step_for(source) if source else price_rules.DEFAULT_STEP
 
 
 def _parse(ts) -> datetime | None:
@@ -179,7 +183,7 @@ def build_story(
     advice = _advice_code(
         points=points,
         target=target,
-        step=_STEPS.get(kind, price_rules.DEFAULT_STEP),
+        step=_step(kind),
         verdict_=v,
         lowest=lowest["price"] if lowest else None,
         latest=latest["price"] if latest else None,
@@ -250,6 +254,10 @@ async def advice(watch: dict, story: dict, *, locale: str | None = None) -> dict
             "cached": True,
         }
 
+    if not story.get("points"):
+        raise ApiError(
+            422, "advice_no_data", "There is no price history to advise on yet."
+        )
     typical = story.get("typical")
     if typical:
         avg = (typical["low"] + typical["high"]) / 2
@@ -276,7 +284,7 @@ async def advice(watch: dict, story: dict, *, locale: str | None = None) -> dict
     result = await agent.run(request, avg_price=avg)
     if not isinstance(result, dict) or result.get("error"):
         code = (result or {}).get("error_code") if isinstance(result, dict) else None
-        if code in (llm.SPEND_CAP_CODE, getattr(llm, "BILLING_CODE", None)):
+        if code in (llm.SPEND_CAP_CODE, llm.BILLING_CODE):
             raise ApiError(503, code, result.get("error") or "AI limit reached.")
         raise ApiError(502, "advice_failed", "We couldn't get a tip right now.")
     tip = (

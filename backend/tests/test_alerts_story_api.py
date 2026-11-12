@@ -207,3 +207,25 @@ def test_advice_agent_failure_502(client, monkeypatch):
     w = _flight(u)
     r = client.post(f"/api/alerts/watches/flight/{w['id']}/advice", headers=h)
     assert r.status_code == 502 and r.json()["error_code"] == "advice_failed"
+
+
+def test_advice_no_points_422_without_llm(client, monkeypatch):
+    run = AsyncMock()
+    monkeypatch.setattr(PricingAdvisorAgent, "run", run)
+    u, h = _user()
+    w = _flight(u, prices=())
+    r = client.post(f"/api/alerts/watches/flight/{w['id']}/advice", headers=h)
+    assert r.status_code == 422 and r.json()["error_code"] == "advice_no_data"
+    run.assert_not_called()
+
+
+def test_advice_billing_503(client, monkeypatch):
+    monkeypatch.setattr(
+        PricingAdvisorAgent,
+        "run",
+        AsyncMock(return_value={"error": "billing off", "error_code": "ai_billing"}),
+    )
+    u, h = _user()
+    w = _flight(u)
+    r = client.post(f"/api/alerts/watches/flight/{w['id']}/advice", headers=h)
+    assert r.status_code == 503 and r.json()["error_code"] == "ai_billing"
