@@ -223,7 +223,7 @@ def _require_room(user: dict) -> None:
         raise ApiError(409, "watch_limit", price_watch.limit_message())
 
 
-@router.post("/alerts/quick-watch", dependencies=[Depends(rate_limit("light_ai"))])
+@router.post("/alerts/quick-watch")
 def quick_watch(body: QuickWatchBody, user: dict = Depends(get_current_user)):
     """One-tap watch: a pending row, no live look (the scheduler makes the
     first one, which is the baseline and never alerts)."""
