@@ -1,6 +1,6 @@
 # Feature Parity
 
-Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the [Android app's README](https://github.com/rupakc/travel-planner-android#features) (status "every feature module is merged and integrated on `main`") as of 2026-11-10; iOS does not exist yet. Phase numbers are from the [design spec](superpowers/specs/2026-11-10-voyager-reimagined-design.md) (section 11). Update this page in the same change that adds a client feature.
+Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the [Android app's README](https://github.com/rupakc/travel-planner-android#features) (status "every feature module is merged and integrated on `main`") as of 2026-11-12 (Phase 1/2 merged on `main`); iOS does not exist yet. Phase numbers are from the [design spec](superpowers/specs/2026-11-10-voyager-reimagined-design.md) (section 11). Update this page in the same change that adds a client feature.
 
 Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in the Android README, so not confirmed.
 
@@ -9,14 +9,14 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Feature | Web | Android | iOS |
 |---|---|---|---|
 | Sign in with username and password, change password | ✅ | ✅ | ⏳ Phase 7 |
-| Create an account, verify email, reset password | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| Sessions list and revoke one (mobile sign-ins; `GET/DELETE /auth/sessions`) | — | ⏳ Phase 8 | ⏳ Phase 7 |
-| Sessions: sign out everywhere, refresh tokens on mobile | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| Account area: profile, avatar, settings, linked sign-in methods | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| Export my data and delete my account | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| Daily AI allowance and verified-email requirement | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| XP, badges, levels and streaks (can be hidden) | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
-| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then | ⏳ Phase 8 | ⏳ Phase 7 |
+| Create an account, verify email, reset password | ✅ | ✅ | ⏳ Phase 7 |
+| Sessions list and revoke one (mobile sign-ins; `GET/DELETE /auth/sessions`) | — | ✅ | ⏳ Phase 7 |
+| Sessions: sign out everywhere, refresh tokens on mobile | ✅ | ✅ | ⏳ Phase 7 |
+| Account area: profile, avatar, settings, linked sign-in methods | ✅ | ✅ | ⏳ Phase 7 |
+| Export my data and delete my account | ✅ | ✅ | ⏳ Phase 7 |
+| Daily AI allowance and verified-email requirement | ✅ | ✅ | ⏳ Phase 7 |
+| XP, badges, levels and streaks (can be hidden) | ✅ | ✅ | ⏳ Phase 7 |
+| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then | ✅ system browser + PKCE; inert until provider credentials are set | ⏳ Phase 7 |
 | Admin: users and feedback | ✅ | — (README lists traveller-facing flows only) | ⏳ Phase 7 |
 | Admin: Analytics tab (telemetry summary) | ✅ | — | ⏳ Phase 7 |
 | Preferences, two-way bound to the search form; Taste Graph | ✅ | ? (Settings and per-feature visibility are device-local per the README) | ⏳ Phase 7 |
@@ -70,14 +70,14 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
-| Trips hub, trip phases and next-up card | ✅ | ⏳ 8 | ⏳ 7 |
-| Prep checklist and trip-ready meter | ✅ | ⏳ 8 | ⏳ 7 |
-| Offline pack (emergency card, currency, phrases, plan) | ✅ | ⏳ 8 | ⏳ 7 |
-| Today view and daily check-in | ✅ | ⏳ 8 | ⏳ 7 |
-| Expenses with currency converter | ✅ | ⏳ 8 | ⏳ 7 |
-| Journal and place ratings and visits | ✅ | ⏳ 8 | ⏳ 7 |
-| Recap, passport stamps and countries visited | ✅ | ⏳ 8 | ⏳ 7 |
-| Explore, Play and You tabs | ✅ | ⏳ 8 | ⏳ 7 |
+| Trips hub, trip phases and next-up card | ✅ | ✅ | ⏳ 7 |
+| Prep checklist and trip-ready meter | ✅ | ✅ | ⏳ 7 |
+| Offline pack (emergency card, currency, phrases, plan) | ✅ | ✅ | ⏳ 7 |
+| Today view and daily check-in | ✅ | ✅ | ⏳ 7 |
+| Expenses with currency converter | ✅ | ✅ | ⏳ 7 |
+| Journal and place ratings and visits | ✅ | ✅ | ⏳ 7 |
+| Recap, passport stamps and countries visited | ✅ | ✅ | ⏳ 7 |
+| Explore, Play and You tabs | ✅ | ✅ | ⏳ 7 |
 
 ## Chat
 
