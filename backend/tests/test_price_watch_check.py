@@ -646,3 +646,9 @@ def test_redact_error_keeps_the_status_and_drops_the_body():
     assert (
         price_watch.friendly_problem(text) == "Live prices aren't available right now."
     )
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

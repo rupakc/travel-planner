@@ -6,7 +6,7 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ## Unreleased: price alerts 2.0
 
-Contract: [Alerts API](Alerts-API.md). Settings: [Configuration](Configuration.md#price-alerts-20). Everything is additive and gated by `PRICE_ALERTS_V2_ENABLED` (default `false` until the switch-on merge).
+Contract: [Alerts API](Alerts-API.md). Settings: [Configuration](Configuration.md#price-alerts-20). Everything is additive and gated by `PRICE_ALERTS_V2_ENABLED` (default `true` since the switch-on merge; set `false` in `app.env` to revert).
 
 - **Backend.** New `/api/alerts/*` routes (summary, story, flight advice, quick-watch, suggestions, preferences, digest unsubscribe), five tables (`alert_prefs`, `alert_savings`, `alert_outbox`, `alert_digests`, `alert_advice`), `pending_first_check` on every watch, and `data.drop`, `data.game` and the `price_digest` kind on notifications. With the flag on, one seam in each watch service's `_notify` records savings (observed drops only, USD and other currencies kept apart, estimates never count), awards Deal-hunter XP, and applies the delivery rules to push and email: instant mode, per-kind daily caps, quiet hours in the account timezone, grouped pushes. An opt-in weekly digest goes in-app and by email (push only with `digest_push`). The scheduler orders first looks of one-tap watches and adapts intervals.
 - **Honest without a key.** Without `SERPAPI_KEY` stories, savings, digest and suggestions work from stored data, prices say "checked N days ago", and one-tap watch answers `503 live_prices_off`.

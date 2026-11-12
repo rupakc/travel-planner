@@ -61,6 +61,7 @@ def _smtp(monkeypatch):
     monkeypatch.setattr(settings, "smtp_password", PASSWORD)
     monkeypatch.setattr(settings, "smtp_from", "Fare Alerts <alerts@trip.test>")
     monkeypatch.setattr(settings, "smtp_starttls", True)
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)  # legacy send path
     monkeypatch.setattr(settings, "app_base_url", "https://trip.test/")
     monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 10_000)
     monkeypatch.setattr(fare_watch, "_estimate_calls", lambda w: 0)

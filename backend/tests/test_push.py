@@ -558,3 +558,9 @@ async def test_background_push_is_detached_from_the_request_stream(google):
     assert push._tasks
     assert not marker  # not attributed to the stream
     await push.drain()
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

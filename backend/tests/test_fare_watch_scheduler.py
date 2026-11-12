@@ -311,3 +311,9 @@ async def test_run_due_sweeps_notifications_older_than_180_days_once_a_day(
     assert sweeps == []  # same UTC day
     await fare_watch.run_due("k", clock=lambda: NOW + timedelta(days=1))
     assert len(sweeps) == 1
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

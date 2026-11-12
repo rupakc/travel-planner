@@ -787,3 +787,9 @@ async def test_fresh_check_out_of_budget_makes_no_call(user, monkeypatch):
     )
     assert outcome.status == "budget_exhausted"
     call.assert_not_called()
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)
