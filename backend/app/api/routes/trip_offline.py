@@ -1,15 +1,19 @@
 """Trips API: trip snapshot and offline pack."""
 
 import json
+import logging
 
 from fastapi import APIRouter, Depends, Request, Response
 
 from ...core.auth import get_current_user
 from ...core.errors import ApiError
 from ...core.trip_access import owned_trip
-from ...db import trip_snapshot_db
+from ...db import trip_prep_db, trip_snapshot_db
+from ...services import trip_prep
 from ...services.offline_pack import SNAPSHOT_KEYS, build_pack
 from ...services.trip_phase import resolve_today
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -46,11 +50,17 @@ def get_offline_pack(
     from ...db.trip_checkins_db import list_days  # function-local: Task 14
 
     plan = owned_trip(trip_id, user)
+    day = resolve_today(today)
     pack = build_pack(
         plan,
         trip_snapshot_db.get_snapshot(trip_id),
         list(list_days(trip_id)),
-        resolve_today(today),
+        day,
     )
+    try:
+        trip_prep_db.set_done(trip_id, "offline_pack", True)
+        trip_prep.maybe_award_trip_ready(plan, user["id"], day)
+    except Exception:
+        logger.exception("offline-pack prep tick failed for trip %s", trip_id)
     response.headers["Cache-Control"] = "no-store"
     return pack
