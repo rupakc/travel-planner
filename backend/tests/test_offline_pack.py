@@ -178,3 +178,47 @@ def test_other_users_pack_404(client, admin_headers, trip):
     assert (
         client.put(f"/api/trips/{trip}/snapshot", json={}, headers=h).status_code == 404
     )
+
+
+def test_pack_get_ticks_offline_pack(client, admin_headers, trip):
+    from app.db import trip_prep_db
+
+    r = client.get(f"/api/trips/{trip}/offline-pack", headers=admin_headers)
+    assert r.status_code == 200
+    assert trip_prep_db.get_state(trip)["offline_pack"]["done"]
+
+
+def test_pack_get_completes_prep_and_awards_once(client, admin_headers, monkeypatch):
+    trip = client.post(
+        "/api/plans",
+        json={
+            "name": "Future",
+            "search_data": {
+                "destination": "Japan",
+                "nationality": "American",
+                "departure_date": "2999-04-01",
+                "return_date": "2999-04-08",
+            },
+            "selections": {},
+        },
+        headers=admin_headers,
+    ).json()["id"]
+    calls = []
+    monkeypatch.setattr(
+        "app.game.trip_hooks.on_trip_ready", lambda uid, pid: calls.append(pid)
+    )
+    base = f"/api/trips/{trip}/prep"
+    for i in [
+        "passport", "bookings", "insurance", "documents", "sim", "money",
+        "packing", "emergency_card",
+    ]:  # fmt: skip
+        client.put(f"{base}/{i}", json={"done": True}, headers=admin_headers)
+    assert calls == []
+    for _ in range(2):
+        assert (
+            client.get(
+                f"/api/trips/{trip}/offline-pack", headers=admin_headers
+            ).status_code
+            == 200
+        )
+    assert calls == [trip]
