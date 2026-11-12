@@ -214,7 +214,7 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=v
 
 - **Service worker.** The offline pack's service worker is `/sw.js`, served by Caddy with `Cache-Control: no-cache` so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed `/assets/*` files listed in `/sw-assets.json`, and never intercepts `/api/*`. Trip data lives in the browser's IndexedDB, not on the VM.
 - **Kill switch.** Set `OFFLINE_PACK_ENABLED=false` in `app.env` and restart the app. `GET /api/config` then reports `features.offline_pack: false`, and each client unregisters the worker, deletes the `voyager-*` caches and removes saved packs on its next load. Set it back to `true` to allow packs again.
-- **`JOURNEY_UI_ENABLED`.** Off by default. While it is `false` the SPA shows the classic search-first app and the new paths (`/trips`, `/explore`, `/play`, `/you`) fall back to `/`. The trips API is served either way, so flipping the flag needs only an app restart, never a rebuild.
+- **`JOURNEY_UI_ENABLED`.** On by default. To turn the journey UI off, set `JOURNEY_UI_ENABLED=false` in `app.env` and restart the app: the SPA then shows the classic search-first app and the new paths (`/trips`, `/explore`, `/play`, `/you`) fall back to `/`. The trips API is served either way, so flipping the flag needs only an app restart, never a rebuild.
 
 ## 7. Backups and restore drills
 
