@@ -90,7 +90,9 @@
     "seeTrip": "Reise ansehen",
     "view": "Ansehen",
     "retry": "Wiederholen",
-    "checkTrip": "Reise prüfen"
+    "checkTrip": "Reise prüfen",
+    "openTrip": "Reise öffnen",
+    "openToday": "Heute öffnen"
   },
   "toast": {
     "dismiss": "Preisalarm schließen"

@@ -77,9 +77,11 @@ def list_devices(username: str) -> list[dict]:
 
 
 def tokens_for(username: str) -> list[str]:
+    """FCM tokens: iOS rows hold APNs tokens and never go to FCM."""
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT token FROM devices WHERE username = ? ORDER BY id",
+            "SELECT token FROM devices WHERE username = ? AND platform != 'ios'"
+            " ORDER BY id",
             (username,),
         ).fetchall()
     return [r["token"] for r in rows]

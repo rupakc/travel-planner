@@ -238,6 +238,7 @@ export function replanSearchData(w, prefs, { cheapest = false } = {}) {
 
 export function notificationLink(n) {
   const data = n?.data || {}
+  if (typeof data.link === 'string' && data.link.startsWith('/trips/')) return data.link
   if (data.links?.alerts) return data.links.alerts
   return data.watch_id ? `/alerts?watch=${data.watch_id}` : '/alerts'
 }

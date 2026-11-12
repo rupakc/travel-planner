@@ -7,13 +7,12 @@ never replayed late. No game wording and no coordinates here."""
 
 import logging
 from datetime import UTC, date, datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from ..agents.static_results import _DESTINATION_TIPS, _match_table_key
 from ..db import trip_snapshot_db, user_settings_db
 from ..db.database import get_connection
 from ..db.plans_db import _row_to_dict
-from . import notify_center, notify_settings, notify_text, trip_prep
+from . import alert_delivery, notify_center, notify_settings, notify_text, trip_prep
 from .trip_phase import day_index, trip_dates
 
 logger = logging.getLogger(__name__)
@@ -22,21 +21,20 @@ MAX_PLANS = 500
 LOOKAHEAD_DAYS = 31
 TX_HOUR = 9  # local (or UTC without a timezone) hour T-x pushes go out
 MORNING_HOUR = 8
+MORNING_END = 11  # brief goes out 08:00-11:00 local, else that day is skipped
+TX_END = 21  # T-x pushes never go out at or after 21:00 local
 LOG_RETENTION_DAYS = 60
 # kind -> (window of days-to-start, newest first, prep item that must be open)
 _TX = {
     "trip_t30": ((25, 30), "visa"),
     "trip_t7": ((5, 7), "packing"),
-    "trip_t1": ((0, 1), "checkin"),
+    "trip_t1": ((1, 1), "checkin"),
 }
 _SLOT_ORDER = {"morning": 0, "afternoon": 1, "evening": 2, "night": 3}
 
 
 def _zone(tz: str | None):
-    try:
-        return ZoneInfo(tz) if tz else UTC
-    except Exception:  # noqa: BLE001
-        return UTC
+    return alert_delivery._zone(tz) or UTC
 
 
 def _dict(v) -> dict:
@@ -142,8 +140,14 @@ def _send(uid, plan, kind, category, key, body, link, now) -> bool:
     return r is not None
 
 
-def _lines(locale: str, dest: str, kind: str, extras: list[tuple[str, str | None]]):
-    parts = [notify_text.render(kind, locale, destination=dest)]
+def _lines(
+    locale: str,
+    dest: str,
+    kind: str,
+    extras: list[tuple[str, str | None]],
+    days: int | None = None,
+):
+    parts = [notify_text.render(kind, locale, destination=dest, days=days)]
     for key, val in extras:
         if val:
             param = key.rsplit("_", 1)[-1]
@@ -155,7 +159,8 @@ def _plan_pushes(plan: dict, now: datetime, ctx: dict) -> int:
     uid = plan["user_id"]
     u = ctx.setdefault(uid, {})
     if "tz" not in u:
-        u["tz"] = user_settings_db.get_settings(uid).get("timezone")
+        tz0 = user_settings_db.get_settings(uid).get("timezone")
+        u["tz"] = tz0 if alert_delivery._zone(tz0) else None  # invalid = none
         u["cats"] = notify_settings.stored(uid)["categories"]
         u["locale"] = notify_center.user_locale(uid)
     tz, cats, locale = u["tz"], u["cats"], u["locale"]
@@ -173,7 +178,7 @@ def _plan_pushes(plan: dict, now: datetime, ctx: dict) -> int:
     for kind, ((lo, hi), item_id) in _TX.items():
         if not cats.get("trip_reminders", True) or not (lo <= to_start <= hi):
             continue
-        if local.hour < TX_HOUR:
+        if not TX_HOUR <= local.hour < TX_END:
             continue
         prep = trip_prep.prep_payload(plan, today)
         item = next((i for i in prep["items"] if i["id"] == item_id), None)
@@ -187,12 +192,17 @@ def _plan_pushes(plan: dict, now: datetime, ctx: dict) -> int:
         if kind == "trip_t1" and cats.get("weather", True):
             snapshot = snapshot or trip_snapshot_db.get_snapshot(plan["id"]) or {}
             extras.append(("trip_morning_weather", _weather_line(snapshot, start)))
-        body = _lines(locale, dest, kind, extras)
+        body = _lines(locale, dest, kind, extras, to_start)
         key = f"trip:{uid}:{plan['id']}:{kind}"
         sent += _send(uid, plan, kind, "trip_reminders", key, body, link, now)
 
     idx = day_index(start, end, today)
-    if idx and tz and local.hour >= MORNING_HOUR and cats.get("morning_brief", True):
+    if (
+        idx
+        and tz
+        and MORNING_HOUR <= local.hour < MORNING_END
+        and cats.get("morning_brief", True)
+    ):
         snapshot = snapshot or trip_snapshot_db.get_snapshot(plan["id"]) or {}
         extras = [
             ("trip_morning_slot", _first_slot(_dict(plan.get("selections")), idx)),

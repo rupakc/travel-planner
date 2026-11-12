@@ -409,6 +409,8 @@ def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
             "notification_id": str(last["id"]),
             "link": (extra.get("links") or {}).get("alerts")
             or f"/alerts?watch={extra.get('watch_id')}",
+            "category": "price_drops",
+            "plan_id": "",
         }
         for key in ("watch_id", "watch_kind"):
             if extra.get(key) is not None:
@@ -421,6 +423,8 @@ def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
         "kind": last["kind"],
         "notification_id": str(last["id"]),
         "link": "/alerts",
+        "category": "price_drops",
+        "plan_id": "",
         "group_count": str(len(rows)),
     }
     return f"{len(rows)} prices dropped", body, data

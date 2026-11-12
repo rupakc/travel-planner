@@ -23,7 +23,7 @@ def test_config_shape(client, monkeypatch):
         "offline_pack": True,
         "alerts_api": 2,
         "notifications_api": 1,
-        "notifications_v2": False,
+        "notifications_v2": True,
         "apns": False,
         "price_alerts_v2": True,
         "sharing": 1,

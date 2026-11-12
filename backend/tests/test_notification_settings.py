@@ -166,4 +166,4 @@ def test_catalog(client):
 def test_config_features(client):
     f = client.get("/api/config").json()["features"]
     assert f["notifications_api"] == 1
-    assert f["notifications_v2"] is False and f["apns"] is False
+    assert f["notifications_v2"] is True and f["apns"] is False

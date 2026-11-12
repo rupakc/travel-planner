@@ -189,7 +189,7 @@ class Settings(BaseSettings):
     offline_pack_enabled: bool = True
     # Notifications 2.0 (Phase 6): category checks, trip pushes, platform routing.
     # The settings routes always exist; off = the Phase 3 behaviour unchanged.
-    notifications_v2_enabled: bool = False
+    notifications_v2_enabled: bool = True
     apns_team_id: str = ""
     apns_key_id: str = ""
     apns_key_p8: str = ""

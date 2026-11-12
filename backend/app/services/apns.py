@@ -24,7 +24,7 @@ SANDBOX_HOST = "https://api.sandbox.push.apple.com"
 TIMEOUT_SECONDS = 10
 TOKEN_TTL = 50 * 60
 QUIET_KINDS = frozenset({"watch_expired", "watch_error"})
-DEAD_REASONS = frozenset({"BadDeviceToken", "Unregistered"})
+DEAD_REASONS = frozenset({"Unregistered"})
 
 _transport: httpx.AsyncBaseTransport | None = None  # tests inject a MockTransport
 _provider: dict = {}  # cached {"token", "issued_at", "key"}
@@ -102,7 +102,13 @@ async def _send_one(client: httpx.AsyncClient, auth: str, token: str, payload, p
         reason = (r.json() or {}).get("reason", "")
     except (ValueError, AttributeError):
         reason = ""
-    if r.status_code == 410 or reason in DEAD_REASONS:
+    # BadDeviceToken also means "sandbox token sent to production" (or the
+    # reverse), so it prunes only when the sandbox switch is off
+    if (
+        r.status_code == 410
+        or reason in DEAD_REASONS
+        or (reason == "BadDeviceToken" and not settings.apns_sandbox)
+    ):
         devices_db.delete_token(token)
         logger.info("APNs token %s is no longer valid; pruned", masked(token))
         return False

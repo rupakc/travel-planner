@@ -10,7 +10,7 @@ All paths are under `/api`, with JSON in and out. Every route needs `Authorizati
 
 ### Discovery (additive)
 
-`GET /config` gains `features.notifications_api: 1` (the routes below exist), `features.notifications_v2: bool` (`NOTIFICATIONS_V2_ENABLED`: category checks, trip pushes and platform routing are active) and `features.apns: bool` (an Apple key is configured). Clients feature-detect `notifications_api` and hide the settings UI without it.
+`GET /config` gains `features.notifications_api: 1` (the routes below exist), `features.notifications_v2: bool` (`NOTIFICATIONS_V2_ENABLED`, default on: category checks, trip pushes and platform routing are active) and `features.apns: bool` (an Apple key is configured). Clients feature-detect `notifications_api` and hide the settings UI without it.
 
 ### Settings
 
@@ -45,7 +45,7 @@ Rows from `/notifications` and the push `data` payload gain `category` and `plan
 
 ### Delivery rules
 
-Category pushes: category enabled? then dedupe (one per user, plan and kind ever; the morning brief per plan and local day) then quiet hours (held until the window ends, dropped if held over 12 h) then the daily cap, then send. The in-app row is always written. Price drops: `price_drops` enabled, then the Phase 3 rules. Text is rendered in the user's `language` setting, else the newest device `locale`, else `en`. With `hide_game` no game wording appears. While `NOTIFICATIONS_V2_ENABLED` is off the behaviour is the Phase 3 behaviour unchanged.
+Category pushes: category enabled? then dedupe (one per user, plan and kind ever; the morning brief per plan and local day) then quiet hours (held until the window ends, dropped if held over 12 h) then the daily cap, then send. The in-app row is always written. Price drops: `price_drops` enabled, then the Phase 3 rules. Text is rendered in the user's `language` setting, else the newest device `locale`, else `en`. With `hide_game` no game wording appears. Trip pushes go out inside the local day window only: T-30 and T-7 between 09:00 and 21:00 local (retried on later days of their 25-30 and 5-7 day windows), T-1 only the day before the trip, the morning brief (which also covers the first trip day) between 08:00 and 11:00 local; the T-30 and T-7 text shows the days left. An invalid or missing timezone counts as none (UTC for T-x, no morning brief). While `NOTIFICATIONS_V2_ENABLED` is off (it is on by default) the behaviour is the Phase 3 behaviour unchanged.
 
 ### Privacy
 

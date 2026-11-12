@@ -90,7 +90,9 @@
     "seeTrip": "See trip",
     "view": "View",
     "retry": "Retry",
-    "checkTrip": "Check trip"
+    "checkTrip": "Check trip",
+    "openTrip": "Open trip",
+    "openToday": "Open today"
   },
   "toast": {
     "dismiss": "Dismiss alert"

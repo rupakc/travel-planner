@@ -95,7 +95,9 @@
     "seeTrip": "Voir le voyage",
     "view": "Voir",
     "retry": "Réessayer",
-    "checkTrip": "Vérifier le voyage"
+    "checkTrip": "Vérifier le voyage",
+    "openTrip": "Ouvrir le voyage",
+    "openToday": "Ouvrir Aujourd'hui"
   },
   "toast": {
     "dismiss": "Fermer l’alerte"

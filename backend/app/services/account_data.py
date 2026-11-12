@@ -186,6 +186,12 @@ def export_user(user: dict) -> dict:
         for w in price_watch_db.list_watches(uid)
     ]
     notifications = notifications_db.list_notifications(uid, limit=1_000_000)
+    notify_log = _rows(
+        """SELECT id, plan_id, kind, category, status, due_at, sent_at,
+                  dropped_reason, notification_id, created_at
+           FROM notify_log WHERE user_id = ? ORDER BY id""",
+        (uid,),
+    )
     devices = [
         {k: v for k, v in d.items() if k != "username"} | {"token": masked(d["token"])}
         for d in _rows("SELECT * FROM devices WHERE username = ? ORDER BY id", (name,))
@@ -237,6 +243,7 @@ def export_user(user: dict) -> dict:
             "notifications": notifications["items"],
             "devices": devices,
             "notification_settings": notify_settings.stored(uid),
+            "notify_log": notify_log,
             "game": game,
         }
     )

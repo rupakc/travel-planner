@@ -131,11 +131,20 @@ def test_sandbox_host_and_quiet_priority(apple, monkeypatch):
         httpx.Response(400, json={"reason": "BadDeviceToken"}),
     ],
 )
-def test_dead_tokens_pruned(apple, resp):
+def test_dead_tokens_pruned(apple, resp, monkeypatch):
+    monkeypatch.setattr(settings, "apns_sandbox", False)
     u, (t,) = _user(["ios"])
     apple.answers[t] = resp
     assert run(apns.send_to_user(u["username"], "t", "b", {})) == 0
     assert devices_db.devices_for(u["username"]) == []
+
+
+def test_bad_device_token_kept_in_sandbox(apple, monkeypatch):
+    monkeypatch.setattr(settings, "apns_sandbox", True)
+    u, (t,) = _user(["ios"])
+    apple.answers[t] = httpx.Response(400, json={"reason": "BadDeviceToken"})
+    assert run(apns.send_to_user(u["username"], "t", "b", {})) == 0
+    assert devices_db.devices_for(u["username"]) == [(t, "ios")]
 
 
 def test_other_failure_keeps_token_and_never_logs_full_token(apple, caplog):
@@ -159,7 +168,7 @@ def test_network_error_swallowed(apple, monkeypatch):
 def test_devices_for(client):
     u, (a, i) = _user(["android", "ios"])
     assert devices_db.devices_for(u["username"]) == [(a, "android"), (i, "ios")]
-    assert devices_db.tokens_for(u["username"]) == [a, i]
+    assert devices_db.tokens_for(u["username"]) == [a]  # never APNs tokens
 
 
 def test_routing_flag_on_splits_by_platform(apple, monkeypatch):
@@ -230,3 +239,10 @@ def test_register_ios_device(client):
         )
     finally:
         app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_flag_off_fcm_leaves_ios_rows_alone(apple, monkeypatch):
+    monkeypatch.setattr(settings, "notifications_v2_enabled", False)
+    u, (a, i) = _user(["android", "ios"])
+    assert devices_db.tokens_for(u["username"]) == [a]
+    assert devices_db.devices_for(u["username"]) == [(a, "android"), (i, "ios")]

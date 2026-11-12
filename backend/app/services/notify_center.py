@@ -179,11 +179,25 @@ def _rehold(log_id: int, due: datetime) -> None:
         )
 
 
+INTERRUPTED_AFTER = timedelta(minutes=10)
+
+
+def _reset_interrupted(now: datetime) -> int:
+    """Items claimed by a run that died mid-send never finish: drop them."""
+    with get_connection() as conn:
+        return conn.execute(
+            "UPDATE notify_log SET status = 'dropped', dropped_reason = 'interrupted'"
+            " WHERE status = 'sending' AND due_at < ?",
+            (_iso(now - INTERRUPTED_AFTER),),
+        ).rowcount
+
+
 async def _flush(now: datetime) -> int:
     sent = 0
+    _reset_interrupted(now)
     for it in _claim(now):
         try:
-            if _parse(it["due_at"]) < now - STALE_AFTER:
+            if _parse(it["created_at"]) < now - STALE_AFTER:
                 _finish(it["id"], "dropped", now, "stale")
                 continue
             uid = it["user_id"]

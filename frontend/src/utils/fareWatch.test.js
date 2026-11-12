@@ -185,6 +185,8 @@ describe('notifications', () => {
     expect(notificationLink({ data: { watch_id: 7, links: { alerts: '/alerts?watch=7' } } })).toBe('/alerts?watch=7')
     expect(notificationLink({ data: { watch_id: 9 } })).toBe('/alerts?watch=9')
     expect(notificationLink({ data: {} })).toBe('/alerts')
+    expect(notificationLink({ kind: 'trip_t7', data: { link: '/trips/4' } })).toBe('/trips/4')
+    expect(notificationLink({ data: { link: 'https://x.test', watch_id: 2 } })).toBe('/alerts?watch=2')
   })
 
   it('finds the newest notification not yet seen', () => {

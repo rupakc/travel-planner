@@ -208,3 +208,46 @@ def test_languages_render(user, lang):
     assert run(utc(2026, 11, 12, 12, 0), user) == 1
     body = notes(user)[0]["body"]
     assert "Japan" in body and "{" not in body
+
+
+def test_t1_not_on_departure_day_and_t1_only_day_before(user):
+    plan(user, "2026-11-12", "2026-11-14", nat="American")
+    run(utc(2026, 11, 12, 12, 0), user)  # start day: brief only, no "Tomorrow"
+    assert [r["kind"] for r in rows(user)] == ["trip_morning"] or not rows(user)
+    assert all(r["kind"] != "trip_t1" for r in rows(user))
+    assert all("omorrow" not in n["body"] for n in notes(user))
+
+
+def test_t1_fires_day_before(user):
+    plan(user, "2026-11-13", "2026-11-14", nat="American")
+    run(utc(2026, 11, 12, 12, 0), user)
+    assert [r["kind"] for r in rows(user)] == ["trip_t1"]
+
+
+def test_invalid_timezone_counts_as_none(user):
+    with get_connection() as c:  # bypasses validation: stale/legacy stored value
+        c.execute(
+            "INSERT OR REPLACE INTO user_settings (user_id, data, updated_at)"
+            " VALUES (?, ?, ?)",
+            (user["id"], '{"timezone": "Not/AZone"}', "2026-11-12T00:00:00Z"),
+        )
+    plan(user, "2026-11-11", "2026-11-14", nat="American")
+    assert run(utc(2026, 11, 12, 9, 0), user) == 0  # no brief without a tz
+
+
+def test_send_windows(user):
+    plan(user, "2026-12-12", "2026-12-20")  # T-30 window: 25-30 days
+    assert run(utc(2026, 11, 12, 21, 0), user) == 0  # too late in the day
+    assert run(utc(2026, 11, 13, 10, 0), user) == 1  # next day still in window
+    q = plan(user, "2026-11-11", "2026-11-14", nat="American")
+    assert run(utc(2026, 11, 12, 11, 0), user) == 0  # brief window closed
+    assert q["id"]
+
+
+def test_t30_t7_show_days_remaining(user):
+    plan(user, "2026-12-08", "2026-12-20")  # 26 days
+    run(utc(2026, 11, 12, 12, 0), user)
+    assert "26 days" in notes(user)[0]["body"]
+    plan(user, "2026-11-18", "2026-11-25", nat="American")  # 6 days
+    run(utc(2026, 11, 12, 12, 0), user)
+    assert any("6 days" in n["body"] for n in notes(user))

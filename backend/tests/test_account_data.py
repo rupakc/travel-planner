@@ -266,7 +266,7 @@ def test_export_round_trip(client):
         "format", "version", "exported_at", "account", "identities", "settings",
         "onboarding", "preferences", "plans", "recent_searches", "taste",
         "feedback", "fare_watches", "price_watches", "notifications", "devices",
-        "game", "trips", "countries", "notification_settings",
+        "game", "trips", "countries", "notification_settings", "notify_log",
     }  # fmt: skip
     assert body["format"] == "voyager-export" and body["version"] == 1
     assert body["exported_at"].endswith("Z")

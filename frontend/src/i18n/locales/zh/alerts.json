@@ -85,7 +85,9 @@
     "seeTrip": "查看行程",
     "view": "查看",
     "retry": "重试",
-    "checkTrip": "检查行程"
+    "checkTrip": "检查行程",
+    "openTrip": "打开行程",
+    "openToday": "打开“今天”"
   },
   "toast": {
     "dismiss": "关闭价格提醒"
