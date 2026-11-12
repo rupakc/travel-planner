@@ -118,4 +118,21 @@ describe('NotificationsSection', () => {
     await render()
     expect(q('notif.no_devices')).not.toBeNull()
   })
+
+  it('an earlier save answering first does not roll back a newer optimistic edit', async () => {
+    await render()
+    const rel = []
+    for (let i = 0; i < 2; i += 1) {
+      api.putNotificationSettings.mockImplementationOnce((_t, patch) => new Promise((res) => {
+        rel.push(() => res({ ...JSON.parse(JSON.stringify(BASE)), ...(patch.daily_cap ? { daily_cap: patch.daily_cap } : {}) }))
+      }))
+    }
+    await click(q('notif.quiet.toggle'))
+    await click(q('notif.cap.inc'))
+    expect(q('notif.cap.value').textContent).toBe('4')
+    await act(async () => { rel[0]() })
+    expect(q('notif.cap.value').textContent).toBe('4')
+    await act(async () => { rel[1]() })
+    expect(q('notif.cap.value').textContent).toBe('4')
+  })
 })

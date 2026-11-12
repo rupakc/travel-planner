@@ -43,6 +43,7 @@ export default function NotificationsSection() {
   const [loadFailed, setLoadFailed] = useState(false)
   const [error, setError] = useState('')
   const alive = useRef(true)
+  const inflight = useRef(0)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
 
   useEffect(() => {
@@ -55,16 +56,21 @@ export default function NotificationsSection() {
     return () => { live = false }
   }, [token, enabled])
 
-  // Optimistic: apply `optimistic` now, send `patch`, adopt the server's answer, or restore `before`.
+  // Optimistic: apply `optimistic` now, send `patch`, adopt the server's answer (when it is the last save in flight), or restore `before`.
   const save = useCallback(async (patch, optimistic, before, onSaved) => {
     setError('')
     setSettings((s) => ({ ...s, ...optimistic }))
+    inflight.current += 1
     try {
       const next = await putNotificationSettings(token, patch)
+      inflight.current -= 1
       if (!alive.current) return
-      if (next && typeof next === 'object') setSettings(next)
+      // Adopt the server's answer only when no newer save is in flight, or it
+      // would roll back an edit made while this one was travelling.
+      if (inflight.current === 0 && next && typeof next === 'object') setSettings(next)
       onSaved?.()
     } catch {
+      inflight.current -= 1
       if (!alive.current) return
       setSettings((s) => ({ ...s, ...before }))
       setError(t('error.save'))
