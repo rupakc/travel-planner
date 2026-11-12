@@ -1,0 +1,58 @@
+{
+ "search_metadata": {
+  "status": "Success"
+ },
+ "search_parameters": {
+  "engine": "google_flights"
+ },
+ "best_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "LIS",
+      "id": "LIS",
+      "time": "2027-04-08 11:00"
+     },
+     "arrival_airport": {
+      "name": "JFK",
+      "id": "JFK",
+      "time": "2027-04-08 14:20"
+     },
+     "duration": 440,
+     "airline": "TAP Air Portugal",
+     "flight_number": "TP 207",
+     "often_delayed_by_over_30_min": false
+    }
+   ],
+   "total_duration": 440,
+   "price": 412,
+   "type": "Round trip"
+  }
+ ],
+ "other_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "LIS",
+      "id": "LIS",
+      "time": "2027-04-08 13:30"
+     },
+     "arrival_airport": {
+      "name": "JFK",
+      "id": "JFK",
+      "time": "2027-04-08 16:55"
+     },
+     "duration": 445,
+     "airline": "Delta",
+     "flight_number": "DL 265",
+     "often_delayed_by_over_30_min": false
+    }
+   ],
+   "total_duration": 445,
+   "price": 398,
+   "type": "Round trip"
+  }
+ ]
+}

@@ -47,6 +47,7 @@ nav:
       - API Reference: API-Reference.md
       - Accounts API: Accounts-API.md
       - Trips API: Trips-API.md
+      - Alerts API: Alerts-API.md
   - Operations:
       - Testing and CI: Testing-and-CI.md
       - Deployment: Deployment.md

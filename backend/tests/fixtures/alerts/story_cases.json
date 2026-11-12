@@ -1,0 +1,1085 @@
+[
+ {
+  "name": "pending",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": null,
+   "pending_first_check": true,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "pending",
+    "params": {}
+   },
+   "lowest": null,
+   "latest": null
+  }
+ },
+ {
+  "name": "estimate_only",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": null,
+   "pending_first_check": false,
+   "estimate": {
+    "price": 180.0,
+    "source": "estimate"
+   }
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "pending",
+    "params": {}
+   },
+   "lowest": null,
+   "latest": null
+  }
+ },
+ {
+  "name": "no_key_stale_9_days",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 11,
+     "price": 500
+    },
+    {
+     "days_ago": 10,
+     "price": 470
+    },
+    {
+     "days_ago": 9,
+     "price": 430
+    }
+   ],
+   "google_typical": [
+    390,
+    520
+   ],
+   "live_prices": false,
+   "checked_days_ago": 9,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 390,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": null,
+   "advice": {
+    "code": "checks_paused",
+    "params": {
+     "days": 9
+    }
+   },
+   "lowest": 430,
+   "latest": 430
+  }
+ },
+ {
+  "name": "no_key_stale_beats_target_hit",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": 400,
+   "points": [
+    {
+     "days_ago": 7,
+     "price": 450
+    },
+    {
+     "days_ago": 6,
+     "price": 400
+    },
+    {
+     "days_ago": 5,
+     "price": 380
+    }
+   ],
+   "google_typical": [
+    390,
+    520
+   ],
+   "live_prices": false,
+   "checked_days_ago": 5,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 390,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": null,
+   "advice": {
+    "code": "checks_paused",
+    "params": {
+     "days": 5
+    }
+   },
+   "lowest": 380,
+   "latest": 380
+  }
+ },
+ {
+  "name": "no_key_fresh_2_days_still_judged",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 4,
+     "price": 500
+    },
+    {
+     "days_ago": 3,
+     "price": 470
+    },
+    {
+     "days_ago": 2,
+     "price": 430
+    }
+   ],
+   "google_typical": [
+    390,
+    520
+   ],
+   "live_prices": false,
+   "checked_days_ago": 2,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 390,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": "typical",
+   "advice": {
+    "code": "at_lowest",
+    "params": {}
+   },
+   "lowest": 430,
+   "latest": 430
+  }
+ },
+ {
+  "name": "below_target",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": 400,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 455
+    },
+    {
+     "days_ago": 1,
+     "price": 441
+    },
+    {
+     "days_ago": 0,
+     "price": 398
+    }
+   ],
+   "google_typical": [
+    390,
+    520
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 390,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "below_target",
+    "params": {
+     "by": 2.0
+    }
+   },
+   "lowest": 398,
+   "latest": 398
+  }
+ },
+ {
+  "name": "near_target",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": 400,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 470
+    },
+    {
+     "days_ago": 1,
+     "price": 440
+    },
+    {
+     "days_ago": 0,
+     "price": 412
+    }
+   ],
+   "google_typical": [
+    390,
+    520
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 390,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "near_target",
+    "params": {
+     "gap": 12.0
+    }
+   },
+   "lowest": 412,
+   "latest": 412
+  }
+ },
+ {
+  "name": "not_near_target_falls_through_to_at_lowest",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": 380,
+   "points": [
+    {
+     "days_ago": 3,
+     "price": 455
+    },
+    {
+     "days_ago": 2,
+     "price": 441
+    },
+    {
+     "days_ago": 1,
+     "price": 430
+    },
+    {
+     "days_ago": 0,
+     "price": 412
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "at_lowest",
+    "params": {}
+   },
+   "lowest": 412,
+   "latest": 412
+  }
+ },
+ {
+  "name": "at_lowest_beats_below_typical",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 3,
+     "price": 500
+    },
+    {
+     "days_ago": 2,
+     "price": 480
+    },
+    {
+     "days_ago": 1,
+     "price": 470
+    },
+    {
+     "days_ago": 0,
+     "price": 455
+    }
+   ],
+   "google_typical": [
+    440,
+    520
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 440,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "at_lowest",
+    "params": {}
+   },
+   "lowest": 455,
+   "latest": 455
+  }
+ },
+ {
+  "name": "at_lowest_needs_3_points",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 1,
+     "price": 460
+    },
+    {
+     "days_ago": 0,
+     "price": 450
+    }
+   ],
+   "google_typical": [
+    440,
+    520
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 440,
+    "high": 520,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "below_typical",
+    "params": {}
+   },
+   "lowest": 450,
+   "latest": 450
+  }
+ },
+ {
+  "name": "below_typical_great",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 380
+    },
+    {
+     "days_ago": 1,
+     "price": 450
+    },
+    {
+     "days_ago": 0,
+     "price": 400
+    }
+   ],
+   "google_typical": [
+    420,
+    560
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 420,
+    "high": 560,
+    "source": "google"
+   },
+   "verdict": "great",
+   "advice": {
+    "code": "below_typical",
+    "params": {}
+   },
+   "lowest": 380,
+   "latest": 400
+  }
+ },
+ {
+  "name": "verdict_good_at_quarter_boundary",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 410
+    },
+    {
+     "days_ago": 1,
+     "price": 500
+    },
+    {
+     "days_ago": 0,
+     "price": 425
+    }
+   ],
+   "google_typical": [
+    400,
+    500
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 400,
+    "high": 500,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "below_typical",
+    "params": {}
+   },
+   "lowest": 410,
+   "latest": 425
+  }
+ },
+ {
+  "name": "verdict_not_great_when_equal_to_low",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 410
+    },
+    {
+     "days_ago": 1,
+     "price": 500
+    },
+    {
+     "days_ago": 0,
+     "price": 400
+    }
+   ],
+   "google_typical": [
+    400,
+    500
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 400,
+    "high": 500,
+    "source": "google"
+   },
+   "verdict": "good",
+   "advice": {
+    "code": "at_lowest",
+    "params": {}
+   },
+   "lowest": 400,
+   "latest": 400
+  }
+ },
+ {
+  "name": "within_typical",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 430
+    },
+    {
+     "days_ago": 1,
+     "price": 500
+    },
+    {
+     "days_ago": 0,
+     "price": 480
+    }
+   ],
+   "google_typical": [
+    420,
+    560
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 420,
+    "high": 560,
+    "source": "google"
+   },
+   "verdict": "typical",
+   "advice": {
+    "code": "within_typical",
+    "params": {}
+   },
+   "lowest": 430,
+   "latest": 480
+  }
+ },
+ {
+  "name": "typical_at_high_boundary",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 430
+    },
+    {
+     "days_ago": 1,
+     "price": 540
+    },
+    {
+     "days_ago": 0,
+     "price": 500
+    }
+   ],
+   "google_typical": [
+    400,
+    500
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 400,
+    "high": 500,
+    "source": "google"
+   },
+   "verdict": "typical",
+   "advice": {
+    "code": "within_typical",
+    "params": {}
+   },
+   "lowest": 430,
+   "latest": 500
+  }
+ },
+ {
+  "name": "above_typical",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 520
+    },
+    {
+     "days_ago": 1,
+     "price": 560
+    },
+    {
+     "days_ago": 0,
+     "price": 600
+    }
+   ],
+   "google_typical": [
+    420,
+    560
+   ],
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 420,
+    "high": 560,
+    "source": "google"
+   },
+   "verdict": "high",
+   "advice": {
+    "code": "above_typical",
+    "params": {}
+   },
+   "lowest": 520,
+   "latest": 600
+  }
+ },
+ {
+  "name": "steady",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 8,
+     "price": 300
+    },
+    {
+     "days_ago": 6,
+     "price": 301
+    },
+    {
+     "days_ago": 4,
+     "price": 300
+    },
+    {
+     "days_ago": 2,
+     "price": 299
+    },
+    {
+     "days_ago": 0,
+     "price": 300
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "steady",
+    "params": {
+     "days": 8
+    }
+   },
+   "lowest": 299,
+   "latest": 300
+  }
+ },
+ {
+  "name": "not_steady_when_over_1_percent",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 8,
+     "price": 300
+    },
+    {
+     "days_ago": 6,
+     "price": 305
+    },
+    {
+     "days_ago": 4,
+     "price": 300
+    },
+    {
+     "days_ago": 2,
+     "price": 299
+    },
+    {
+     "days_ago": 0,
+     "price": 300
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "few_checks",
+    "params": {
+     "n": 5
+    }
+   },
+   "lowest": 299,
+   "latest": 300
+  }
+ },
+ {
+  "name": "few_checks",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 300
+    },
+    {
+     "days_ago": 1,
+     "price": 310
+    },
+    {
+     "days_ago": 0,
+     "price": 305
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "few_checks",
+    "params": {
+     "n": 3
+    }
+   },
+   "lowest": 300,
+   "latest": 305
+  }
+ },
+ {
+  "name": "flight_without_google_typical_has_none",
+  "input": {
+   "kind": "flight",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 3,
+     "price": 450
+    },
+    {
+     "days_ago": 2,
+     "price": 440
+    },
+    {
+     "days_ago": 1,
+     "price": 445
+    },
+    {
+     "days_ago": 0,
+     "price": 450
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "few_checks",
+    "params": {
+     "n": 4
+    }
+   },
+   "lowest": 440,
+   "latest": 450
+  }
+ },
+ {
+  "name": "hotel_history_typical_6_points",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 5,
+     "price": 220
+    },
+    {
+     "days_ago": 4,
+     "price": 240
+    },
+    {
+     "days_ago": 3,
+     "price": 200
+    },
+    {
+     "days_ago": 2,
+     "price": 260
+    },
+    {
+     "days_ago": 1,
+     "price": 230
+    },
+    {
+     "days_ago": 0,
+     "price": 250
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 220,
+    "high": 250,
+    "source": "history"
+   },
+   "verdict": "typical",
+   "advice": {
+    "code": "within_typical",
+    "params": {}
+   },
+   "lowest": 200,
+   "latest": 250
+  }
+ },
+ {
+  "name": "hotel_5_points_no_history_typical",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 4,
+     "price": 220
+    },
+    {
+     "days_ago": 3,
+     "price": 240
+    },
+    {
+     "days_ago": 2,
+     "price": 200
+    },
+    {
+     "days_ago": 1,
+     "price": 260
+    },
+    {
+     "days_ago": 0,
+     "price": 230
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "few_checks",
+    "params": {
+     "n": 5
+    }
+   },
+   "lowest": 200,
+   "latest": 230
+  }
+ },
+ {
+  "name": "trip_near_target_uses_trip_step",
+  "input": {
+   "kind": "trip",
+   "currency": "USD",
+   "target": 2000,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 2300
+    },
+    {
+     "days_ago": 1,
+     "price": 2200
+    },
+    {
+     "days_ago": 0,
+     "price": 2070
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "near_target",
+    "params": {
+     "gap": 70.0
+    }
+   },
+   "lowest": 2070,
+   "latest": 2070
+  }
+ },
+ {
+  "name": "activity_eur_near_target",
+  "input": {
+   "kind": "activity",
+   "currency": "EUR",
+   "target": 20.0,
+   "points": [
+    {
+     "days_ago": 2,
+     "price": 25.0
+    },
+    {
+     "days_ago": 1,
+     "price": 22.0
+    },
+    {
+     "days_ago": 0,
+     "price": 20.5
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": null,
+   "verdict": null,
+   "advice": {
+    "code": "near_target",
+    "params": {
+     "gap": 0.5
+    }
+   },
+   "lowest": 20.5,
+   "latest": 20.5
+  }
+ },
+ {
+  "name": "hotel_history_7_points_great",
+  "input": {
+   "kind": "hotel",
+   "currency": "USD",
+   "target": null,
+   "points": [
+    {
+     "days_ago": 6,
+     "price": 300
+    },
+    {
+     "days_ago": 5,
+     "price": 320
+    },
+    {
+     "days_ago": 4,
+     "price": 280
+    },
+    {
+     "days_ago": 3,
+     "price": 340
+    },
+    {
+     "days_ago": 2,
+     "price": 310
+    },
+    {
+     "days_ago": 1,
+     "price": 330
+    },
+    {
+     "days_ago": 0,
+     "price": 250
+    }
+   ],
+   "google_typical": null,
+   "live_prices": true,
+   "checked_days_ago": 0,
+   "pending_first_check": false,
+   "estimate": null
+  },
+  "expected": {
+   "typical": {
+    "low": 280,
+    "high": 330,
+    "source": "history"
+   },
+   "verdict": "great",
+   "advice": {
+    "code": "at_lowest",
+    "params": {}
+   },
+   "lowest": 250,
+   "latest": 250
+  }
+ }
+]
