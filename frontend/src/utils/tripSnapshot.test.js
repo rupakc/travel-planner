@@ -16,10 +16,12 @@ describe('snapshotFromResults', () => {
 })
 
 describe('searchMatchesPlan / hasSnapshotData', () => {
-  const plan = { search_data: { destination: 'Lisbon', departure_date: '2027-04-01' } }
+  const plan = { search_data: { origin: 'NYC', destination: 'Lisbon', departure_date: '2027-04-01', return_date: '2027-04-08' } }
   it('matches on destination and departure', () => {
-    expect(searchMatchesPlan({ destination: 'lisbon ', departure_date: '2027-04-01' }, plan)).toBe(true)
-    expect(searchMatchesPlan({ destination: 'Porto', departure_date: '2027-04-01' }, plan)).toBe(false)
+    expect(searchMatchesPlan({ origin: 'nyc', destination: 'lisbon ', departure_date: '2027-04-01', return_date: '2027-04-08' }, plan)).toBe(true)
+    expect(searchMatchesPlan({ origin: 'NYC', destination: 'Porto', departure_date: '2027-04-01', return_date: '2027-04-08' }, plan)).toBe(false)
+    expect(searchMatchesPlan({ origin: 'LON', destination: 'Lisbon', departure_date: '2027-04-01', return_date: '2027-04-08' }, plan)).toBe(false)
+    expect(searchMatchesPlan({ origin: 'NYC', destination: 'Lisbon', departure_date: '2027-04-01', return_date: '2027-04-10' }, plan)).toBe(false)
     expect(searchMatchesPlan(null, plan)).toBe(false)
   })
   it('detects an all-null snapshot', () => {

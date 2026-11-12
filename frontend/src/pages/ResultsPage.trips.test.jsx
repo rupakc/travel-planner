@@ -65,7 +65,7 @@ function mockFetch(postId = 77) {
 const drawer = (props = {}) => (
   <MemoryRouter>
     <MyPlanDrawer isOpen onClose={() => {}} selections={SEL} planName="Trip" onPlanNameChange={() => {}}
-      onRemoveSelection={() => {}} onViewPlan={() => {}} token="tok" searchData={{ destination: 'Lisbon' }}
+      onRemoveSelection={() => {}} onViewPlan={() => {}} token="tok" searchData={{ destination: 'Lisbon' }} screenSearchData={{ destination: 'Lisbon' }}
       results={{ visa: { visa_type: 'e-visa', verification: { level: 'verified' } }, forex: { error: 'x' } }}
       loadedPlanId={null} onLoadPlan={() => {}} onClearLoadedPlan={() => {}} onClearSelections={() => {}} {...props} />
   </MemoryRouter>
@@ -84,12 +84,31 @@ describe('MyPlanDrawer trip saving', () => {
     const [token, id, snap] = putSnapshot.mock.calls[0]
     expect([token, id]).toEqual(['tok', 77])
     expect(snap.visa).toEqual({ visa_type: 'e-visa' })
-    expect(snap.forex).toBeNull()
+    expect(snap).toEqual({ visa: { visa_type: 'e-visa' } })
+    expect('forex' in snap).toBe(false)
+  })
+
+  it('skips the snapshot call when every section is empty', async () => {
+    mockFetch()
+    act(() => root.render(drawer({ results: { forex: { error: 'x' } } })))
+    await flush()
+    await act(async () => { saveBtn().click() })
+    await flush()
+    expect(putSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('does not snapshot on update when the on-screen search is another trip', async () => {
+    mockFetch()
+    act(() => root.render(drawer({ loadedPlanId: 5, screenSearchData: { destination: 'Porto' } })))
+    await flush()
+    await act(async () => { saveBtn().click() })
+    await flush()
+    expect(putSnapshot).not.toHaveBeenCalled()
   })
 
   it('uses loadedPlanId on update', async () => {
     mockFetch()
-    act(() => root.render(drawer({ loadedPlanId: 5 })))
+    act(() => root.render(drawer({ loadedPlanId: 5, screenSearchData: { destination: 'Lisbon' } })))
     await flush()
     await act(async () => { saveBtn().click() })
     await flush()

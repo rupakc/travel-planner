@@ -27,4 +27,6 @@ export function searchMatchesPlan(searchData, plan) {
   if (!searchData || !sd) return false
   return norm(searchData.destination) === norm(sd.destination)
     && norm(searchData.departure_date) === norm(sd.departure_date)
+    && norm(searchData.origin) === norm(sd.origin)
+    && norm(searchData.return_date) === norm(sd.return_date)
 }

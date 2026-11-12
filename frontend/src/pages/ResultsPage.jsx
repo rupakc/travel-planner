@@ -2410,7 +2410,7 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
   )
 }
 
-export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, screenSearchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const { t } = useTranslation('sections')
   const { t: tj } = useTranslation('journey')
   const journey = useJourney()
@@ -2439,6 +2439,8 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
+  // Loading another plan supersedes the trip saved earlier
+  useEffect(() => { if (loadedPlanId) setSavedTripId(null) }, [loadedPlanId])
 
   // The on-screen itinerary belongs to the plan being built from these
   // results — never to a loaded saved plan, which may be a different trip
@@ -2461,7 +2463,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
     let id = isUpdate ? loadedPlanId : null
     if (!isUpdate) { try { id = (await res.json())?.id ?? null } catch { id = null } }
     if (!id || !journey.tripsApi) return id
-    const snapshot = snapshotFromResults(results)
+    // An update only snapshots when the on-screen search is the loaded plan's trip
+    if (isUpdate && !searchMatchesPlan(screenSearchData, { search_data: searchData })) return id
+    // Omit empty sections: the server treats null as "clear that section"
+    const snapshot = Object.fromEntries(Object.entries(snapshotFromResults(results)).filter(([, v]) => v))
     if (hasSnapshotData(snapshot)) {
       try { Promise.resolve(putSnapshot(token, id, snapshot)).catch(() => {}) } catch { /* ignored */ }
     }
@@ -4284,6 +4289,7 @@ export default function ResultsPage() {
         onViewPlan={(plan) => setViewingPlan(plan)}
         token={token}
         searchData={loadedPlanSearchData || searchData}
+        screenSearchData={searchData}
         results={results}
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}
