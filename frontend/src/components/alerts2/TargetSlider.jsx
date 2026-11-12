@@ -16,11 +16,16 @@ export default function TargetSlider({ min, max, value, points = [], step = 1, o
   useEffect(() => { if (value != null) { setV(value); latest.current = value; committed.current = value } }, [value])
 
   const move = (e) => { const n = Number(e.target.value); latest.current = n; setV(n) }
+  const timer = useRef(null)
   const release = () => {
+    clearTimeout(timer.current)
     if (latest.current === committed.current) return
     committed.current = latest.current
     onCommit?.(latest.current)
   }
+  // Arrow keys commit after a short pause, not on every keystroke.
+  const keyRelease = () => { clearTimeout(timer.current); timer.current = setTimeout(release, 600) }
+  useEffect(() => () => clearTimeout(timer.current), [])
   const total = points.length
   const count = countAtOrBelow(points, v)
 
@@ -32,8 +37,9 @@ export default function TargetSlider({ min, max, value, points = [], step = 1, o
       </label>
       <input
         id={id} type="range" min={min} max={max} step={step} value={v}
-        onChange={move} onPointerUp={release} onKeyUp={release} onBlur={release}
-        className="w-full accent-sky-600"
+        onChange={move} onPointerUp={release} onTouchEnd={release} onKeyUp={keyRelease} onBlur={release}
+        data-tid="price-story-target-slider"
+        className="w-full min-h-[44px] accent-sky-600"
       />
       {total > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400" aria-live="polite">

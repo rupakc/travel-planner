@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import i18next from 'i18next'
 import { Minus, Sparkles, ThumbsUp, TrendingDown, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getStory, requestAdvice } from '../../services/alertsApi'
@@ -25,7 +26,9 @@ function adviceText(t, advice, currency) {
   else if (code === 'near_target') o.gap = fmtCurrency(params.gap, currency)
   else if (code === 'checks_paused' || code === 'steady') o.count = params.days
   else if (code === 'few_checks') o.count = params.n
-  return t(`advice.${code}`, o)
+  const key = `advice.${code}`
+  return i18next.exists(`priceStory:${key}`) || i18next.exists(`priceStory:${key}_other`)
+    ? t(key, o) : t('advice.generic')
 }
 
 /**
@@ -78,6 +81,7 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
   const { currency, points = [], typical, verdict, estimate } = story
   const advice = story.advice || adviceFor(story)
   const days = story.checked_days_ago
+  const showVerdict = !(story.live_prices === false && days != null && days > 3)
   const Icon = verdict ? VERDICT_ICON[verdict] : null
   const prices = points.map((p) => p.price)
   const lo = prices.length ? Math.min(...prices) : 0
@@ -89,7 +93,7 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
   return (
     <section className="space-y-3" aria-label={t('title')}>
       <div className="flex flex-wrap items-center gap-2">
-        {verdict && Icon && (
+        {verdict && Icon && showVerdict && (
           <span data-testid="verdict-chip" aria-label={t('verdictLabel', { level: t(`verdict.${verdict}`) })}
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${VERDICT_STYLE[verdict]}`}>
             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -133,13 +137,13 @@ export default function PriceStory({ kind, watchId, story: given = null, onTarge
 
       {story.kind === 'flight' && (
         <div className="space-y-1">
-          <button type="button" onClick={getTip} disabled={tipState === 'loading'}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:hover:bg-slate-800">
+          <button type="button" data-tid="price-story-tip" onClick={getTip} disabled={tipState === 'loading'}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:hover:bg-slate-800">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             {tipState === 'loading' ? t('tip.loading') : t('tip.button')}
             <span className="text-[10px] uppercase tracking-wide text-slate-500">{t('tip.ai')}</span>
           </button>
-          {tip && <p className="text-sm text-slate-700 dark:text-slate-200" data-testid="tip"><strong>{t('tip.title')}: </strong>{tip}</p>}
+          {tip && <p className="text-sm text-slate-700 dark:text-slate-200" data-testid="tip"><strong>{t('tip.title')}: </strong>{tip} <span className="text-[10px] uppercase tracking-wide text-slate-500">{t('tip.ai')}</span></p>}
           {tipState === 'error' && <p className="text-xs text-red-600" role="alert">{t('tip.error')}</p>}
           {tipState === 'limit' && <p className="text-xs text-red-600" role="alert">{t('tip.limit')}</p>}
         </div>

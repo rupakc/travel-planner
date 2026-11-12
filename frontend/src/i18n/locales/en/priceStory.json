@@ -24,7 +24,8 @@
     "steady_one": "Steady for the last {{count}} day.",
     "steady_other": "Steady for the last {{count}} days.",
     "few_checks_one": "Only {{count}} check so far, so there is not much to compare yet.",
-    "few_checks_other": "Only {{count}} checks so far, so there is not much to compare yet."
+    "few_checks_other": "Only {{count}} checks so far, so there is not much to compare yet.",
+    "generic": "See the price history below."
   },
   "checkedToday": "Checked today",
   "checkedAgo_one": "Checked {{count}} day ago",

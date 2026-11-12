@@ -69,6 +69,25 @@ describe('PriceStory', () => {
     expect(host.querySelector('[data-testid="chart-live"]').textContent).toContain('$500.00')
   })
 
+  it('hides the verdict chip when stale and no live prices, even if the server sent one', async () => {
+    await render(<PriceStory story={{ ...STORY, verdict: 'good', live_prices: false, checked_days_ago: 5 }} />)
+    expect(host.querySelector('[data-testid="verdict-chip"]')).toBeNull()
+  })
+
+  it('falls back to a generic line for an unknown advice code', async () => {
+    await render(<PriceStory story={{ ...STORY, advice: { code: 'brand_new', params: {} } }} />)
+    expect(host.querySelector('[data-testid="advice"]').textContent).toBe('See the price history below.')
+  })
+
+  it('has data-tid and 44px targets on interactive elements', async () => {
+    await render(<PriceStory story={STORY} />)
+    for (const id of ['price-story-chart', 'price-story-target-slider', 'price-story-tip']) {
+      expect(host.querySelector(`[data-tid="${id}"]`)).not.toBeNull()
+    }
+    expect(host.querySelector('[data-tid="price-story-tip"]').className).toContain('min-h-[44px]')
+    expect(host.querySelector('input[type="range"]').className).toContain('min-h-[44px]')
+  })
+
   it('tip button only for flights', async () => {
     await render(<PriceStory story={STORY} />)
     expect(host.textContent).toContain('Get a timing tip')
@@ -113,6 +132,21 @@ describe('PriceStory', () => {
 })
 
 describe('TargetSlider', () => {
+  it('debounces keyboard commits to one call', async () => {
+    vi.useFakeTimers()
+    const onCommit = vi.fn()
+    await render(<TargetSlider min={300} max={600} value={500} points={[]} onCommit={onCommit} />)
+    const input = host.querySelector('input')
+    for (const v of [499, 498, 497]) {
+      await act(async () => { setRange(input, v); input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowLeft', bubbles: true })) })
+    }
+    expect(onCommit).not.toHaveBeenCalled()
+    await act(async () => { vi.advanceTimersByTime(700) })
+    expect(onCommit).toHaveBeenCalledTimes(1)
+    expect(onCommit).toHaveBeenCalledWith(497)
+    vi.useRealTimers()
+  })
+
   const points = [{ price: 500 }, { price: 470 }, { price: 430 }, { price: 450 }]
   it('slider commits target once on release', async () => {
     const onCommit = vi.fn()

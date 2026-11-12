@@ -21,7 +21,8 @@
     "within_typical": "在常见价格区间内。",
     "above_typical": "高于常见价格区间。",
     "steady_other": "过去 {{count}} 天价格稳定。",
-    "few_checks_other": "目前只检查了 {{count}} 次，可比较的内容还不多。"
+    "few_checks_other": "目前只检查了 {{count}} 次，可比较的内容还不多。",
+    "generic": "请查看下方的价格历史。"
   },
   "checkedToday": "今天已检查",
   "checkedAgo_other": "{{count}} 天前已检查",

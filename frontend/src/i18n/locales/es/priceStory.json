@@ -16,8 +16,8 @@
     "checks_paused_one": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} día.",
     "checks_paused_many": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} días.",
     "checks_paused_other": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} días.",
-    "below_target": "En su precio objetivo o por debajo, por {{by}}.",
-    "near_target": "Solo {{gap}} por encima de su objetivo.",
+    "below_target": "En tu precio objetivo o por debajo, por {{by}}.",
+    "near_target": "Solo {{gap}} por encima de tu objetivo.",
     "at_lowest": "El precio más bajo visto hasta ahora.",
     "below_typical": "Por debajo del rango habitual para este viaje.",
     "within_typical": "Dentro del rango habitual.",
@@ -27,7 +27,8 @@
     "steady_other": "Estable durante los últimos {{count}} días.",
     "few_checks_one": "Solo {{count}} comprobación por ahora, así que aún hay poco que comparar.",
     "few_checks_many": "Solo {{count}} comprobaciones por ahora, así que aún hay poco que comparar.",
-    "few_checks_other": "Solo {{count}} comprobaciones por ahora, así que aún hay poco que comparar."
+    "few_checks_other": "Solo {{count}} comprobaciones por ahora, así que aún hay poco que comparar.",
+    "generic": "Consulta el historial de precios abajo."
   },
   "checkedToday": "Comprobado hoy",
   "checkedAgo_one": "Comprobado hace {{count}} día",
@@ -37,7 +38,7 @@
   "estimate": "Estimación: {{price}}. No es un precio observado.",
   "chart": {
     "label": "Historial de precios: {{n}} comprobaciones del {{from}} al {{to}}",
-    "help": "Use las flechas izquierda y derecha para recorrer las comprobaciones.",
+    "help": "Usa las flechas izquierda y derecha para recorrer las comprobaciones.",
     "point": "{{price}} el {{date}}",
     "typical": "Rango habitual",
     "lowest": "Más bajo: {{price}}",
@@ -58,10 +59,10 @@
   },
   "slider": {
     "label": "Avisarme en o por debajo de",
-    "preview_one": "{{count}} de sus últimas {{total}} comprobaciones estuvo en o por debajo de esto.",
-    "preview_many": "{{count}} de sus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
-    "preview_other": "{{count}} de sus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
-    "none": "Ninguna de sus últimas {{total}} comprobaciones fue tan baja.",
+    "preview_one": "{{count}} de tus últimas {{total}} comprobaciones estuvo en o por debajo de esto.",
+    "preview_many": "{{count}} de tus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
+    "preview_other": "{{count}} de tus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
+    "none": "Ninguna de tus últimas {{total}} comprobaciones fue tan baja.",
     "saved": "Objetivo guardado.",
     "error": "No se pudo guardar el objetivo."
   }

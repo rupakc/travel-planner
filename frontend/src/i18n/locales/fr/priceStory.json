@@ -27,7 +27,8 @@
     "steady_other": "Stable depuis {{count}} jours.",
     "few_checks_one": "Seulement {{count}} vérification pour l’instant, il y a donc peu à comparer.",
     "few_checks_many": "Seulement {{count}} vérifications pour l’instant, il y a donc peu à comparer.",
-    "few_checks_other": "Seulement {{count}} vérifications pour l’instant, il y a donc peu à comparer."
+    "few_checks_other": "Seulement {{count}} vérifications pour l’instant, il y a donc peu à comparer.",
+    "generic": "Consultez l’historique des prix ci-dessous."
   },
   "checkedToday": "Vérifié aujourd’hui",
   "checkedAgo_one": "Vérifié il y a {{count}} jour",

@@ -15,8 +15,8 @@
     "pending": "Die erste Preisprüfung steht noch aus.",
     "checks_paused_one": "Live-Preisprüfungen sind pausiert. Die letzte Prüfung war vor {{count}} Tag.",
     "checks_paused_other": "Live-Preisprüfungen sind pausiert. Die letzte Prüfung war vor {{count}} Tagen.",
-    "below_target": "Auf oder unter Ihrem Zielpreis, um {{by}}.",
-    "near_target": "Nur {{gap}} über Ihrem Zielpreis.",
+    "below_target": "Auf oder unter deinem Zielpreis, um {{by}}.",
+    "near_target": "Nur {{gap}} über deinem Zielpreis.",
     "at_lowest": "Der bisher niedrigste Preis.",
     "below_typical": "Unter dem üblichen Bereich für diese Reise.",
     "within_typical": "Im üblichen Bereich.",
@@ -24,7 +24,8 @@
     "steady_one": "Stabil seit {{count}} Tag.",
     "steady_other": "Stabil seit {{count}} Tagen.",
     "few_checks_one": "Erst {{count}} Prüfung, daher gibt es noch wenig zu vergleichen.",
-    "few_checks_other": "Erst {{count}} Prüfungen, daher gibt es noch wenig zu vergleichen."
+    "few_checks_other": "Erst {{count}} Prüfungen, daher gibt es noch wenig zu vergleichen.",
+    "generic": "Siehe den Preisverlauf unten."
   },
   "checkedToday": "Heute geprüft",
   "checkedAgo_one": "Vor {{count}} Tag geprüft",
@@ -33,7 +34,7 @@
   "estimate": "Schätzung: {{price}}. Das ist kein beobachteter Preis.",
   "chart": {
     "label": "Preisverlauf: {{n}} Prüfungen von {{from}} bis {{to}}",
-    "help": "Mit den Pfeiltasten links und rechts wechseln Sie zwischen den Prüfungen.",
+    "help": "Mit den Pfeiltasten links und rechts wechselst du zwischen den Prüfungen.",
     "point": "{{price}} am {{date}}",
     "typical": "Üblicher Bereich",
     "lowest": "Niedrigster: {{price}}",
@@ -52,11 +53,11 @@
     "limit": "Das KI-Limit für diesen Monat ist erreicht."
   },
   "slider": {
-    "label": "Benachrichtigen bei oder unter",
-    "preview_one": "{{count}} Ihrer letzten {{total}} Prüfungen lag auf oder unter diesem Wert.",
-    "preview_other": "{{count}} Ihrer letzten {{total}} Prüfungen lagen auf oder unter diesem Wert.",
-    "none": "Keine Ihrer letzten {{total}} Prüfungen lag so niedrig.",
+    "label": "Benachrichtige mich bei oder unter",
+    "preview_one": "{{count}} deiner letzten {{total}} Prüfungen lag auf oder unter diesem Wert.",
+    "preview_other": "{{count}} deiner letzten {{total}} Prüfungen lagen auf oder unter diesem Wert.",
+    "none": "Keine deiner letzten {{total}} Prüfungen lag so niedrig.",
     "saved": "Zielpreis gespeichert.",
-    "error": "Der Zielpreis konnte nicht gespeichert werden."
+    "error": "Dein Zielpreis konnte nicht gespeichert werden."
   }
 }

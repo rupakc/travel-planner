@@ -52,7 +52,7 @@ export default function PriceChart({ points, typical, target, baseline, lowest, 
   return (
     <div className="relative">
       <div
-        role="group" tabIndex={0} aria-label={`${label}. ${t('chart.help')}`}
+        role="group" tabIndex={0} data-tid="price-story-chart" aria-label={`${label}. ${t('chart.help')}`}
         onKeyDown={onKey} onPointerMove={pick} onPointerDown={pick} onPointerLeave={() => setSel(null)}
         onBlur={() => setSel(null)}
         className="rounded-lg touch-pan-y focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
