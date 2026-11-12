@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client'
 
 const authState = { token: 'tok', user: { id: 5 } }
 vi.mock('./AuthContext', () => ({ useAuth: () => authState }))
+const v2 = { on: true }
+vi.mock('../hooks/useAlertsV2', () => ({ useAlertsV2: () => v2 }))
 vi.mock('../services/api', () => ({
   getCapabilities: vi.fn(async () => ({ serpapi: true, fareWatch: true, email: false })),
   getUnreadCount: vi.fn(),
@@ -30,6 +32,7 @@ describe('AlertsContext drop moment state', () => {
 
   beforeEach(() => {
     localStorage.clear()
+    v2.on = true
     authState.user = { id: 5 }
     api.getUnreadCount.mockReset().mockResolvedValue(2)
     api.markNotificationsRead.mockReset()
@@ -80,5 +83,18 @@ describe('AlertsContext drop moment state', () => {
     await mount()
     expect((await seen.findDrop(1)).id).toBe(1)
     expect(await seen.findDrop(99)).toBeNull()
+  })
+
+  it('makes no extra request when the v2 UI is off', async () => {
+    v2.on = false
+    await mount()
+    expect(seen.latestDrop).toBeNull()
+    expect(api.listNotifications).toHaveBeenCalledTimes(1) // the existing first-load page only
+  })
+
+  it('rejects drops with non-numeric fields', async () => {
+    api.listNotifications.mockResolvedValue({ items: [note(8, { drop: { ...drop, pct: null } })] })
+    await mount()
+    expect(seen.latestDrop).toBeNull()
   })
 })

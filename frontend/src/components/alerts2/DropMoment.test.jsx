@@ -84,9 +84,10 @@ describe('DropMoment', () => {
     vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })
     state.latestDrop = note()
     await mount()
-    expect(container.querySelector('[data-tid="dropMoment.amount"]').textContent).not.toContain('57')
+    const visible = () => container.querySelector('[data-tid="dropMoment.amount"] [aria-hidden="true"]').textContent
+    expect(visible()).not.toContain('57')
     await act(async () => { vi.advanceTimersByTime(1200) })
-    expect(container.querySelector('[data-tid="dropMoment.amount"]').textContent).toContain('57')
+    expect(visible()).toContain('57')
     vi.useRealTimers()
   })
 
@@ -130,5 +131,24 @@ describe('DropMoment', () => {
     expect(container.querySelector('[data-tid="dropMoment.book"]').getAttribute('href')).toBe('https://example.com/book')
     await act(async () => { container.querySelector('[data-tid="dropMoment.story"]').click() })
     expect(loc.pathname + loc.search).toBe('/alerts?watch=hotel:7')
+  })
+
+  it('closing a card does not open the next unseen drop in the same session', async () => {
+    state.latestDrop = note()
+    state.markDropShown = vi.fn(() => { state.latestDrop = note({ top: { id: 10 } }) })
+    await mount()
+    const card = container.querySelector('[data-tid="dropMoment.card"]')
+    await act(async () => { card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    await mount()
+    expect(container.querySelector('[data-tid="dropMoment.card"]')).toBeNull()
+    expect(state.markDropShown).toHaveBeenCalledTimes(1)
+  })
+
+  it('announces the final amount in an sr-only span, not an aria-label on the paragraph', async () => {
+    state.latestDrop = note()
+    await mount()
+    const p = container.querySelector('[data-tid="dropMoment.amount"]')
+    expect(p.hasAttribute('aria-label')).toBe(false)
+    expect(p.querySelector('.sr-only').textContent).toContain('$57')
   })
 })

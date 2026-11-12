@@ -158,8 +158,8 @@ function Card({ note, via, onClose }) {
           {hit ? t('titleTarget') : t('title')}
         </h2>
         {data.title && <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">{data.title}</p>}
-        <p data-tid="dropMoment.amount" aria-label={t('caught', { amount: money(amount, currency), percent: percent(drop.pct) })}
-          className="mt-4 text-4xl font-extrabold tabular-nums text-teal-700">
+        <p data-tid="dropMoment.amount" className="mt-4 text-4xl font-extrabold tabular-nums text-teal-700">
+          <span className="sr-only">{t('caught', { amount: money(amount, currency), percent: percent(drop.pct) })}</span>
           <span aria-hidden="true">{'−'}{money(shownAmount, currency)}</span>
           <span aria-hidden="true" className="ml-2 text-lg font-semibold">({'−'}{percent(drop.pct)})</span>
         </p>
@@ -201,6 +201,7 @@ export default function DropMoment() {
   const [linked, setLinked] = useState(null)
   const [open, setOpen] = useState(null)   // { note, via }
   const opener = useRef(null)
+  const autoShown = useRef(false)   // one automatic card per page load
 
   const linkId = Number(new URLSearchParams(location.search).get('drop')) || null
   const seenLink = useRef(null)
@@ -238,7 +239,10 @@ export default function DropMoment() {
   }, [linked, open, show, navigate, location.pathname, location.search])
 
   useEffect(() => {
-    if (!open && !linked && !linkId && latestDrop) show(latestDrop, 'in_app')
+    if (!open && !linked && !linkId && latestDrop && !autoShown.current) {
+      autoShown.current = true
+      show(latestDrop, 'in_app')
+    }
   }, [open, linked, linkId, latestDrop, show])
 
   const close = useCallback(() => {

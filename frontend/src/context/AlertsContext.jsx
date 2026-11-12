@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
+import { useAlertsV2 } from '../hooks/useAlertsV2'
 import {
   getCapabilities, getUnreadCount, listNotifications, markNotificationsRead, matchFareWatch,
   matchPriceWatch,
@@ -42,7 +43,8 @@ const DROP_SCAN = 20
 export function dropOf(n) {
   const d = n?.data?.drop
   if (!d || typeof d !== 'object' || d.observed === false) return null
-  return Number.isFinite(Number(d.amount)) && Number(d.amount) > 0 ? d : null
+  const ok = (v) => typeof v === 'number' && Number.isFinite(v)
+  return ok(d.from) && ok(d.to) && ok(d.amount) && ok(d.pct) && d.amount > 0 ? d : null
 }
 
 function readShown(uid) {
@@ -58,6 +60,7 @@ function safeStorage(fn, fallback = null) {
 export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) {
   const { token, user } = useAuth()
   const userId = user?.id ?? null
+  const { on: v2On } = useAlertsV2()   // the drop scan only runs for the v2 UI
   const [drops, setDrops] = useState([])        // unread notifications that carry a drop
   const [shownVersion, setShownVersion] = useState(0)
   const [unread, setUnread] = useState(0)
@@ -92,9 +95,10 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
   // Unread drop notifications, newest first. Read on the first load and whenever the unread
   // count grows, so the card can show a drop that arrived while the app was closed.
   const scanDrops = useCallback(async () => {
+    if (!v2On) return
     const page = await listNotifications(token, { limit: DROP_SCAN, unreadOnly: true })
     setDrops((page.items || []).filter(n => dropOf(n) && !n.read_at))
-  }, [token])
+  }, [token, v2On])
 
   // One refresh at a time: focus and visibilitychange fire together on return
   const inflight = useRef(null)
@@ -125,6 +129,11 @@ export function AlertsProvider({ children, pollMs = 60000, onOpenLink = null }) 
       }
     } catch { /* offline or signed out — the next poll tries again */ }
   }, [token, announce, scanDrops])
+
+  // The config may answer after the first poll: scan once when v2 turns on
+  useEffect(() => {
+    if (token && v2On && lastCount.current > 0) scanDrops().catch(() => {})
+  }, [token, v2On, scanDrops])
 
   const refresh = useCallback(() => {
     if (!token) return Promise.resolve()
