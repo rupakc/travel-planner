@@ -85,6 +85,16 @@ def tokens_for(username: str) -> list[str]:
     return [r["token"] for r in rows]
 
 
+def devices_for(username: str) -> list[tuple[str, str]]:
+    """``[(token, platform)]`` of the user's devices, oldest first."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT token, platform FROM devices WHERE username = ? ORDER BY id",
+            (username,),
+        ).fetchall()
+    return [(r["token"], r["platform"]) for r in rows]
+
+
 def delete_device(username: str, device_id: int) -> bool:
     """Delete one of the user's devices by id; False when they don't own it."""
     with get_connection() as conn:

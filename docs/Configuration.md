@@ -101,6 +101,12 @@ Fare- and price-watch alerts can also be pushed to the Android app's registered 
 | `FCM_SERVICE_ACCOUNT_FILE` | `""` | Path to a Firebase service-account JSON key (Firebase console → Project settings → Service accounts → Generate new private key) for the project the Android app is registered in. Its `project_id` picks the FCM project. Empty, or a path that does not exist, disables push (`GET /health` reports `push_configured`). Keep the file out of the repo (`*service-account*.json` and `*-key.json` are git-ignored) and readable only by the backend. The key is read once: restart the backend after rotating it. |
 | `FCM_USE_ADC` | `false` | With no key file: send with Application Default Credentials (on the VM, its service account through the metadata server; it needs FCM send rights, e.g. `roles/firebasecloudmessaging.admin`). The key file wins when both are set. |
 | `FCM_PROJECT_ID` | `""` | FCM project for ADC mode; empty uses `GOOGLE_CLOUD_PROJECT`, which the entrypoint sets from the metadata server. |
+| `APNS_TEAM_ID` | `""` | Apple developer Team ID for iOS pushes (APNs token auth). Inert until `APNS_TEAM_ID`, `APNS_KEY_ID` and a key (`APNS_KEY_P8` or `APNS_KEY_FILE`) are all set; only used when `NOTIFICATIONS_V2_ENABLED=true`, which routes iOS devices to APNs and Android devices to FCM. |
+| `APNS_KEY_ID` | `""` | Key ID of the APNs auth key (.p8). |
+| `APNS_KEY_P8` | `""` | The .p8 key contents (PEM; `\n` escapes accepted). Wins over `APNS_KEY_FILE`. |
+| `APNS_KEY_FILE` | `""` | Path to the .p8 key file. |
+| `APNS_BUNDLE_ID` | `io.github.rupakc.travelplanner` | The iOS app's bundle id (`apns-topic`). |
+| `APNS_SANDBOX` | `false` | Use Apple's sandbox host (development builds). |
 
 ## Accounts
 
