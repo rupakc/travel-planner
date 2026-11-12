@@ -1634,7 +1634,7 @@
 </ul>
 <h2 id="notifications-and-sharing-additive">Notifications and sharing (additive)</h2>
 <ul>
-<li>Notification kinds: <code>social_idea_saved</code>, <code>social_new_follower</code> (category <code>social</code>), <code>quiz_h2h_invite</code>, <code>quiz_h2h_result</code> (category <code>quiz</code>); <code>GET /notifications/catalog</code> gains the matching <code>h2h_invite</code>, <code>h2h_result</code>, <code>idea_saved</code>, <code>new_follower</code> templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: <code>/play/h2h/{id}</code>, <code>/feed/{idea_id}</code>, <code>/u/{handle}</code>.</li>
+<li>Notification kinds: <code>social_idea_saved</code>, <code>social_new_follower</code> (category <code>social</code>), <code>quiz_h2h_invite</code>, <code>quiz_h2h_result</code> (category <code>quiz</code>); <code>GET /notifications/catalog</code> gains the matching <code>h2h_invite</code>, <code>h2h_result</code>, <code>idea_saved</code>, <code>new_follower</code> templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: <code>/play/h2h/{id}</code> for the quiz kinds; <code>social_idea_saved</code> and <code>social_new_follower</code> both link to <code>/feed</code>.</li>
 <li><code>POST /shares</code> (Sharing API) gains <code>kind: "quiz"</code> (extra field <code>session_id</code>: the caller's finished quiz session; card = pack and score out of 5, never time or answers) and <code>kind: "status"</code> (extra field <code>plan_id</code>: an active trip of the caller; card = "Day N in Place", from server data). Both hide the sharer's name unless <code>show_name</code>.</li>
 </ul>
 <h2 id="telemetry">Telemetry</h2>
