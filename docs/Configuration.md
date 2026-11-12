@@ -84,7 +84,7 @@ See [Alerts API](Alerts-API.md). With the flag off, fare and price watches, emai
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `PRICE_ALERTS_V2_ENABLED` | `false` | Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as `features.price_alerts_v2`; the web UI shows it only when this is true (or for one browser with `localStorage.tp_alerts2 = "1"`). |
+| `PRICE_ALERTS_V2_ENABLED` | `false` | Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as `features.price_alerts_v2`; the web UI shows it only when this is true (or for one browser with `localStorage.tp_alerts2 = "1"`). Runbook: turning it off discards pushes and emails held at that moment (quiet hours, group window); in-app alerts stay. Held items more than 12 h past due are dropped as `stale` instead of sent. |
 | `ALERT_DIGEST_HOUR_LOCAL` | `9` | Local hour (user's account timezone) from which a user's weekly digest is due on their chosen weekday. |
 | `ALERT_FLUSH_INTERVAL_S` | `60` | How often the delivery loop sends held (quiet-hours, grouped) pushes and emails. |
 | `ALERT_ADVICE_TTL_HOURS` | `24` | How long an AI price tip for a flight watch is cached. |

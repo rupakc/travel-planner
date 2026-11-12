@@ -20,7 +20,6 @@ DROP_KINDS = frozenset(
     {
         "fare_drop",
         "fare_low_level",
-        "fare_cheaper_date",
         "hotel_drop",
         "activity_drop",
         "trip_drop",

@@ -26,6 +26,7 @@ KINDS = ("flight", "hotel", "activity", "trip")
 LEGACY_NOTE_KINDS = ("watch_expired", "watch_error")
 CHANNELS = ("push", "email")
 FLUSH_BATCH = 200
+STALE_AFTER = timedelta(hours=12)  # held longer than this: dropped, not sent
 _HHMM = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
@@ -444,7 +445,14 @@ async def _flush(now: datetime) -> int:
     claimed = alerts_db.claim_due(_iso(now), FLUSH_BATCH)
     if not claimed:
         return 0
-    claimed = _enforce_caps(claimed, now)
+    cutoff = _iso(now - STALE_AFTER)
+    fresh = []
+    for it in claimed:
+        if it["due_at"] < cutoff:
+            _unclaim_dropped(it["id"], "stale")
+        else:
+            fresh.append(it)
+    claimed = _enforce_caps(fresh, now) if fresh else []
     sent = 0
     pushes: dict[str, list[dict]] = {}
     for it in claimed:

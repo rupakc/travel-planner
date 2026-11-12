@@ -252,7 +252,7 @@ Email keeps the per-watch `email_enabled` opt-in and follows rules 1–4, never 
 **Interfaces:**
 - Consumes: Task 1's `alerts_db` helpers and `game.engine.award`.
 - Produces:
-  - `drop_facts(watch_kind, watch, note) -> dict | None`. It returns `None` unless the note is a drop or target kind (`fare_target`, `fare_drop`, `fare_low_level`, `fare_cheaper_date` and the price-watch drop and target kinds) with an observed price. `from` = the reference the note used, `to` = the alerted price, `pct` is rounded to 1 decimal place, and `target_hit` = the note kind is a target kind.
+  - `drop_facts(watch_kind, watch, note) -> dict | None`. It returns `None` unless the note is a drop or target kind (`fare_target`, `fare_drop`, `fare_low_level` and the price-watch drop and target kinds) with an observed price. `from` = the reference the note used, `to` = the alerted price, `pct` is rounded to 1 decimal place, and `target_hit` = the note kind is a target kind.
   - `record(watch_kind, watch, row) -> None`: one `alert_savings` row per notification, idempotent.
   - `summary(user_id) -> dict` (`Savings`).
   - `GET /alerts/summary`.
