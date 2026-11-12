@@ -233,9 +233,22 @@ def _last_push_at(user_id: str) -> datetime | None:
     return _parse_iso(row["t"]) if row and row["t"] else None
 
 
+def _sent_today(user_id: str, kind: str, day_start_utc: str, channel: str) -> int:
+    """Like ``alerts_db.sent_today`` but expired/error notes do not count."""
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT COUNT(*) FROM alert_outbox o"
+            " JOIN notifications n ON n.id = o.notification_id"
+            " WHERE o.user_id = ? AND o.watch_kind = ? AND o.channel = ?"
+            " AND o.sent_at IS NOT NULL AND o.sent_at >= ?"
+            " AND n.kind NOT IN ('watch_expired', 'watch_error')",
+            (user_id, kind, channel, day_start_utc),
+        ).fetchone()[0]
+
+
 def _counts(user_id: str, kind: str, now: datetime, tz: str | None) -> dict:
     start = _iso(_local_day_start(now, tz))
-    return {c: alerts_db.sent_today(user_id, kind, start, c) for c in CHANNELS}
+    return {c: _sent_today(user_id, kind, start, c) for c in CHANNELS}
 
 
 def dispatch(watch: dict, watch_kind: str, row: dict, now: datetime) -> None:
@@ -353,9 +366,12 @@ def _enforce_caps(items: list[dict], now: datetime) -> list[dict]:
         key = (uid, it["watch_kind"], it["channel"])
         if key not in seen:
             start = _iso(_local_day_start(now, tzs[uid]))
-            total = alerts_db.sent_today(uid, it["watch_kind"], start, it["channel"])
+            total = _sent_today(uid, it["watch_kind"], start, it["channel"])
             in_batch = sum(
-                1 for x in items if (x["user_id"], x["watch_kind"], x["channel"]) == key
+                1
+                for x in items
+                if (x["user_id"], x["watch_kind"], x["channel"]) == key
+                and not _is_legacy(x)
             )
             seen[key] = max(0, cap - (total - in_batch))
         if seen[key] > 0:
@@ -364,6 +380,11 @@ def _enforce_caps(items: list[dict], now: datetime) -> list[dict]:
         else:
             _unclaim_dropped(it["id"], "cap")
     return kept
+
+
+def _is_legacy(item: dict) -> bool:
+    note = _note(item["notification_id"])
+    return bool(note and note.get("kind") in LEGACY_NOTE_KINDS)
 
 
 def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
@@ -384,7 +405,7 @@ def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
     if len(rows) > 3:
         body += f" and {len(rows) - 3} more"
     data = {
-        "kind": "price_group",
+        "kind": last["kind"],
         "notification_id": str(last["id"]),
         "link": "/alerts",
         "group_count": str(len(rows)),
@@ -443,7 +464,13 @@ async def _flush(now: datetime) -> int:
             logger.warning("alert email flush failed", exc_info=True)
     for user_id, rows in pushes.items():
         try:
-            await _send_push(user_id, rows)
+            # expired/error notes go out alone, with today's text and priority
+            groupable = [r for r in rows if r["kind"] not in LEGACY_NOTE_KINDS]
+            for r in rows:
+                if r["kind"] in LEGACY_NOTE_KINDS:
+                    await _send_push(user_id, [r])
+            if groupable:
+                await _send_push(user_id, groupable)
         except Exception:  # noqa: BLE001
             logger.warning("alert push flush failed", exc_info=True)
     return sent

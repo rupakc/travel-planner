@@ -139,6 +139,7 @@ def test_group_window_coalesces_three_into_one_push(user, sent):
     assert len(pushes) == 2
     _, title, _, data = pushes[1]
     assert title == "3 prices dropped" and data["group_count"] == "3"
+    assert data["kind"] == "hotel_drop"
 
 
 def test_flush_claims_each_item_once(user, sent):
@@ -216,3 +217,21 @@ def test_validate_prefs():
         with pytest.raises(ad.ApiError) as e:
             ad.validate_prefs(bad)
         assert e.value.status == 422 and e.value.code == "alert_prefs_invalid"
+
+
+def test_expired_never_grouped_nor_capped(user, sent):
+    pushes, _ = sent
+    w = _watch(user)
+    alerts_db.put_prefs(user["id"], {**alerts_db.DEFAULT_PREFS, "group_window_min": 0})
+    for _ in range(3):
+        ad.dispatch(w, "hotel", _note(user, kind="watch_expired"), NOW)
+    ad.flush(NOW)
+    assert len(pushes) == 3 and all(p[3]["kind"] == "watch_expired" for p in pushes)
+    assert "group_count" not in pushes[0][3]
+    # expired rows do not use up the hotel cap
+    n = _note(user)
+    ad.dispatch(w, "hotel", n, NOW)
+    assert [r for r in _outbox(user) if r["notification_id"] == n["id"]][0][
+        "dropped_reason"
+    ] is None
+    ad.flush(NOW)  # leave no due item behind for other tests
