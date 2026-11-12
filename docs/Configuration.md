@@ -144,6 +144,20 @@ A signed-in user who has not verified their email cannot use AI routes (`403 ema
 | `GAME_ENABLED` | `true` | XP, badges, levels and streaks (`GET /api/game/*` answer 404 when off). |
 | `GAME_RULES_PATH` | `""` | Alternative rules file; empty uses `backend/app/game/rules.json`. |
 
+### Trips and the journey
+
+See [Trips API](Trips-API.md). `GET /api/config` reports the two flags as `features.journey` and `features.offline_pack`.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `JOURNEY_UI_ENABLED` | `false` | Turns on the journey UI in the web app: Trips hub, trip screen with phases, Explore, Play and You tabs. The trips API is always served. |
+| `OFFLINE_PACK_ENABLED` | `true` | Kill switch for the offline pack. `false` makes every client unregister `/sw.js`, clear its caches and delete saved packs on its next load (see [Deployment on GCP](Deployment-GCP.md#offline-pack-and-the-journey-flag)). |
+| `READY_WINDOW_DAYS` | `14` | Days before the start date at which a dated trip becomes Ready. |
+| `TRIP_MAX_EXPENSES` | `2000` | Expenses per trip (`409 expense_limit` beyond). |
+| `TRIP_MAX_JOURNAL` | `500` | Journal entries per trip (`409 journal_limit`). |
+| `TRIP_MAX_PLACES` | `1000` | Rated or visited places per trip (`409 places_limit`). |
+| `TRIP_SNAPSHOT_MAX_BYTES` | `262144` | Largest offline snapshot per trip (`413 snapshot_too_large`). |
+
 ## Rate limits
 
 AI-calling endpoints are rate-limited per signed-in user, or per client IP for anonymous callers, in an in-process sliding window (`backend/app/core/rate_limit.py`). See [API Reference](API-Reference.md#rate-limits) for the endpoints in each bucket.

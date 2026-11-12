@@ -214,3 +214,18 @@ Guidance for the web, iOS and Android clients. It adds no API surface.
 - **Home screen.** Show the Trips hub as the start screen when the signed-in user has at least one trip, otherwise Explore (search). Signed-out users see Explore. Both stay reachable from the tabs.
 - **Mobile tabs.** Trips (hub and trip detail), Explore (search, chat and Near me), Alerts (fare and price watches), Play (game and bucket list), You (account, preferences, settings).
 - **Game ids to translate.** Translate each rule id in the "Game" table as `game:rules.<id>` and each badge as `game:badges.<id>.name` and `game:badges.<id>.desc`. The ids: rules `traveller_type`, `plan_saved`, `trip_ready`, `smart_planner`, `trip_checkin`, `place_visited`, `country_visited`, `continent_visited`, `recap_complete`; badges `traveller`, `first_trip`, `trip_ready`, `ready_regular`, `smart_planner`, `on_the_road`, `road_warrior`, `local_explorer`, `local_legend`, `countries_3`, `countries_10`, `countries_30`, `continents_3`, `continents_6`, `storyteller`, `memory_keeper`. Hide every game element when `hide_game` is set.
+
+### Implementation notes (additive)
+
+Field-level `422` codes the backend emits beyond the tables above. Clients should show a generic message for any `422 *_invalid` code they do not know.
+
+| Route | Extra code | When |
+|---|---|---|
+| `POST /trips/{id}/expenses`, `PATCH .../expenses/{eid}` | `422 spent_on_invalid` | `spent_on` is not a `YYYY-MM-DD` day |
+| `POST /trips/{id}/expenses`, `POST /trips/{id}/journal` | `422 client_id_invalid` | `client_id` is missing or not a UUID |
+| `POST /trips/{id}/journal`, `PATCH .../journal/{eid}` | `422 day_invalid` | `day` is not a `YYYY-MM-DD` day |
+| `PUT /trips/{id}/places/{place_key}` | `422 name_invalid` | `name` is not 1 to 120 characters |
+| `PUT /trips/{id}/places/{place_key}` | `422 kind_invalid` | `kind` is not one of the place kinds |
+| `PUT /trips/{id}/places/{place_key}` | `422 visited_invalid` | `visited` is not a boolean |
+
+`TripPlace.visited_at` is a never-cleared first-visit marker: it is set the first time `visited` becomes true and stays when `visited` is later set back to false. Clients read `visited` for the current state and use `visited_at` only for ordering and "first visited".
