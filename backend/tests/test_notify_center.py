@@ -211,3 +211,36 @@ def test_dispatch_flag_on_honours_toggle(user, monkeypatch):
     monkeypatch.setattr(settings, "notifications_v2_enabled", True)
     rows = _dispatch(user)
     assert rows and all(r[1] == "category_off" for r in rows)
+
+
+def test_stale_measured_from_creation_not_rehold(user, sent):
+    user_settings_db.patch_settings(user["id"], {"timezone": "Asia/Kolkata"})
+    _enq(user, "k1", utc(2026, 11, 12, 6, 0))
+    with get_connection() as c:  # re-held recently, but created 13 h before
+        c.execute(
+            "UPDATE notify_log SET status='pending', due_at=? WHERE user_id=?",
+            ("2026-11-12T18:50:00Z", user["id"]),
+        )
+    nc.flush_due(utc(2026, 11, 12, 19, 0))
+    with get_connection() as c:
+        r = c.execute(
+            "SELECT dropped_reason FROM notify_log WHERE user_id=?", (user["id"],)
+        ).fetchone()
+    assert r[0] == "stale"
+
+
+def test_interrupted_sending_reset(user, sent):
+    _enq(user, "k1", utc(2026, 11, 12, 12, 0))
+    with get_connection() as c:
+        c.execute(
+            "UPDATE notify_log SET status='sending', due_at='2026-11-12T12:00:00Z'"
+            " WHERE user_id=?",
+            (user["id"],),
+        )
+    nc.flush_due(utc(2026, 11, 12, 12, 11))
+    with get_connection() as c:
+        r = c.execute(
+            "SELECT status, dropped_reason FROM notify_log WHERE user_id=?",
+            (user["id"],),
+        ).fetchone()
+    assert (r[0], r[1]) == ("dropped", "interrupted")

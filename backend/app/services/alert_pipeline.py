@@ -22,10 +22,12 @@ def enabled() -> bool:
 def enrich(watch: dict, watch_kind: str, note: dict) -> dict:
     """Return the note with ``data.drop`` added for an observed drop or target
     hit; every other note (expired, error, estimates) is unchanged."""
+    base = {"category": "price_drops", "plan_id": None, **note["data"]}
+    note = {**note, "data": base}
     facts = alert_moments.drop_facts(watch_kind, watch, note)
     if not facts:
         return note
-    return {**note, "data": {**note["data"], "drop": facts}}
+    return {**note, "data": {**base, "drop": facts}}
 
 
 def _update_data(note_id: int, data: dict) -> None:

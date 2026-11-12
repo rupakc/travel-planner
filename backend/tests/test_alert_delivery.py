@@ -245,3 +245,18 @@ def test_expired_never_grouped_nor_capped(user, sent):
         "dropped_reason"
     ] is None
     ad.flush(NOW)  # leave no due item behind for other tests
+
+
+def test_enrich_row_data_carries_price_drops_category():
+    from app.services import alert_pipeline
+
+    note = {"kind": "hotel_expired", "title": "t", "body": "b", "data": {"watch_id": 1}}
+    out = alert_pipeline.enrich({"id": 1}, "hotel", note)
+    assert out["data"]["category"] == "price_drops" and out["data"]["plan_id"] is None
+
+
+def test_push_payload_carries_category_single_and_grouped(user):
+    rows = [_note(user, wid=i, title=f"D{i}") for i in (1, 2)]
+    for batch in (rows[:1], rows):
+        data = ad._push_payload(batch)[2]
+        assert data["category"] == "price_drops" and data["plan_id"] == ""

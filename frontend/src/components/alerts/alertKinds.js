@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, BedDouble, CalendarDays, CalendarX, Luggage, Sparkles, Target, Ticket, TrendingDown,
+  AlertTriangle, BedDouble, CalendarDays, CalendarX, Luggage, PlaneTakeoff, Sun, Sparkles, Target, Ticket, TrendingDown,
 } from 'lucide-react'
 import i18n from '../../i18n'
 
@@ -15,6 +15,10 @@ export const ALERT_KINDS = {
   activity_target:   { Icon: Ticket, tone: 'text-emerald-700 bg-emerald-50', action: 'See activity' },
   trip_drop:         { Icon: Luggage, tone: 'text-emerald-700 bg-emerald-50', action: 'See trip' },
   trip_target:       { Icon: Luggage, tone: 'text-emerald-700 bg-emerald-50', action: 'See trip' },
+  trip_t30:          { Icon: CalendarDays, tone: 'text-sky-700 bg-sky-50', action: 'Open trip' },
+  trip_t7:           { Icon: Luggage, tone: 'text-sky-700 bg-sky-50', action: 'Open trip' },
+  trip_t1:           { Icon: PlaneTakeoff, tone: 'text-sky-700 bg-sky-50', action: 'Open trip' },
+  trip_morning:      { Icon: Sun, tone: 'text-amber-700 bg-amber-50', action: 'Open today' },
   price_digest:      { Icon: CalendarDays, tone: 'text-sky-700 bg-sky-50', action: 'View' },
   watch_expired:     { Icon: CalendarX, tone: 'text-slate-500 bg-slate-100', action: 'View' },
   watch_error:       { Icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50', action: 'Retry' },
@@ -31,6 +35,8 @@ const ACTION_KEYS = {
   'See activity': 'kinds.seeActivity',
   'See trip': 'kinds.seeTrip',
   'Check trip': 'kinds.checkTrip',
+  'Open trip': 'kinds.openTrip',
+  'Open today': 'kinds.openToday',
   View: 'kinds.view',
   Retry: 'kinds.retry',
 }

@@ -106,7 +106,8 @@ def test_game_disabled_still_records_savings(uid, sent, monkeypatch):
 def test_non_drop_note_gets_no_drop_or_game(uid, sent):
     watch = {"id": 1, "user_id": uid}
     note = {"kind": "watch_expired", "title": "t", "body": "", "data": {}}
-    assert alert_pipeline.enrich(watch, "flight", note) is note
+    out = alert_pipeline.enrich(watch, "flight", note)
+    assert "drop" not in out["data"] and out["data"]["category"] == "price_drops"
     row = notifications_db.add_notification(uid, "watch_expired", "t", "", {}, now=NOW)
     assert alert_pipeline.after_insert(watch, "flight", row, NOW) is True
     data = notifications_db.list_notifications(uid)["items"][0]["data"]
