@@ -1365,6 +1365,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2088,6 +2116,36 @@
 <td><code>via</code> (<code>in_app</code>, <code>email_link</code>)</td>
 <td>not yet</td>
 <td>The weekly digest was opened.</td>
+</tr>
+<tr>
+<td><code>notif_settings_view</code></td>
+<td>none</td>
+<td>not yet</td>
+<td>The notification settings were opened.</td>
+</tr>
+<tr>
+<td><code>notif_category_toggle</code></td>
+<td><code>category</code> (<code>price_drops</code>, <code>trip_reminders</code>, <code>morning_brief</code>, <code>weather</code>, <code>nearby</code>, <code>social</code>, <code>quiz</code>), <code>on</code> (bool)</td>
+<td>not yet</td>
+<td>A notification category was switched.</td>
+</tr>
+<tr>
+<td><code>notif_quiet_hours_change</code></td>
+<td><code>enabled</code> (bool)</td>
+<td>not yet</td>
+<td>Quiet hours were changed.</td>
+</tr>
+<tr>
+<td><code>notif_cap_change</code></td>
+<td><code>cap</code> (int)</td>
+<td>not yet</td>
+<td>The daily push cap was changed.</td>
+</tr>
+<tr>
+<td><code>notif_open</code></td>
+<td><code>category</code> (as above), <code>source</code> (<code>push</code>, <code>inapp</code>)</td>
+<td>not yet</td>
+<td>A notification was opened (apps send this on tap).</td>
 </tr>
 <tr>
 <td><code>share_open</code></td>
