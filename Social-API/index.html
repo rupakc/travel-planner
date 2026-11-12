@@ -1,0 +1,1693 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+        <link rel="prev" href="../Sharing-API/">
+      
+      
+        <link rel="next" href="../Notifications-API/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Social and Play API - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#social-and-play-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Social and Play API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-model-binding-for-every-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy model (binding for every client)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-and-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow and block
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ideas-feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ideas feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moderation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#play" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Play
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-and-sharing-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications and sharing (additive)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Telemetry
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="social-and-play-api">Social and Play API</h1>
+<blockquote>
+<p><strong>Status:</strong> frozen when Phase 5 merges (draft until then). <strong>Changes:</strong> later changes are additive only (new fields, endpoints, enum values, error codes; nothing renamed, removed or re-typed). Every change needs a contract-change note in its PR and an update to this page in the same PR. Clients ignore fields, enum values and notification kinds they do not know.</p>
+</blockquote>
+<p>Phase 5 adds <strong>profiles, an ideas feed, moderation</strong> (<code>/api/social/*</code>) and <strong>Play</strong> (quizzes, head-to-head, leaderboards, weekly challenges; <code>/api/play/*</code>). Two independent flags, both default <strong>off</strong> until the final review of Phase 5: <code>SOCIAL_ENABLED</code> and <code>PLAY_ENABLED</code> (Play also needs <code>GAME_ENABLED</code>).</p>
+<p>All paths are under <code>/api</code>, JSON in and out, <code>Authorization: Bearer &lt;access_token&gt;</code>. Nothing here is available anonymously. Errors use the Phase 1 envelope <code>{"detail", "error_code"}</code>.</p>
+<h2 id="discovery">Discovery</h2>
+<p><code>GET /config</code> gains <code>features.social: 0|1</code> and <code>features.play: 0|1</code> (1 = the routes exist). Off, every route below answers <code>404 social_disabled</code> / <code>404 play_disabled</code>. Clients feature-detect and hide the entry points otherwise.</p>
+<h2 id="privacy-model-binding-for-every-client">Privacy model (binding for every client)</h2>
+<ul>
+<li>A <strong>handle</strong> (<code>3-20</code> chars <code>[a-z0-9_]</code>, unique, case-insensitive, reserved words refused) is the only public identity. It is chosen by the user and is never derived from the username or email. The username, email, real name, plan details and dates are never returned by any route here.</li>
+<li>A user has <strong>no profile</strong> until they create one (<code>PUT /social/profile</code>). Profile <code>visibility</code> is <code>private</code> (default: invisible to everyone, no feed posting, not searchable, not on boards), <code>followers</code> or <code>public</code>. Every extra field is a separate opt-in, all default off: <code>show_avatar</code>, <code>show_home_country</code>, <code>show_countries</code>, <code>show_level</code>, <code>show_badges</code>.</li>
+<li><strong>Leaderboards are opt-in</strong> (<code>leaderboard_opt_in</code>, default false) and show handles only.</li>
+<li><strong>Hide Play and points</strong> (<code>hide_game</code> account setting): all <code>/play/*</code> routes answer <code>403 game_hidden</code>, the user is excluded from every board and never gets quiz or challenge notifications, and the game fields (<code>level</code>, <code>badges</code>, XP) are omitted from their own profile and are never shown on it to others. The feed and profiles themselves are social, not game, and stay.</li>
+<li><strong>Text is plain.</strong> Titles, captions, comments and reasons are stored as plain text (control characters removed, whitespace collapsed, length capped). No markdown, no HTML, no auto-links; clients render them as text only.</li>
+<li><strong>Blocking</strong> is two-way and silent: a blocked pair cannot see each other's profile, ideas, comments or board rows, follow, comment, challenge or notify each other.</li>
+</ul>
+<h2 id="profile">Profile</h2>
+<p><code>GET /social/profile</code> (own): <code>{"handle": null|str, "visibility", "bio", "show_avatar", "show_home_country", "show_countries", "show_level", "show_badges", "leaderboard_opt_in", "home_country": str|null, "created_at"}</code>. <code>handle: null</code> means no profile yet (defaults shown).</p>
+<p><code>PUT /social/profile</code> (rate bucket <code>social_write</code>): any subset of <code>handle</code> (required the first time; changeable once per 30 days, <code>409 handle_taken</code>, <code>422 handle_invalid|handle_reserved|handle_rate_limited</code>), <code>visibility</code>, <code>bio</code> (&lt;= 160), the <code>show_*</code> flags, <code>leaderboard_opt_in</code>, <code>home_country</code> (ISO alpha-2). Answers the own-profile object. Bio goes through the keyword filter (<code>422 content_rejected</code>).</p>
+<p><code>GET /social/profile/{handle}</code>: <code>{"handle", "bio", "avatar_url"?, "home_country"?, "countries"?: [alpha2], "level"?, "badges"?: [{id,tier}], "ideas_count", "followers_count", "following_count", "you": {"following": bool, "pending": bool, "follows_you": bool, "blocked": bool}}</code>. Optional fields appear only when the owner opted in (and, for <code>level</code>/<code>badges</code>, the owner is not hidden-game). <code>404 profile_not_found</code> when private, unknown, blocked either way or the owner is the caller's blocker. A <code>followers</code> profile shows only <code>handle</code> and counts to non-followers.</p>
+<p><code>GET /social/handles/check?handle=</code>: <code>{"available": bool, "reason"?: "invalid"|"reserved"|"taken"}</code>.</p>
+<h2 id="follow-and-block">Follow and block</h2>
+<ul>
+<li><code>PUT /social/follow/{handle}</code> -&gt; <code>{"state": "following"|"pending"}</code>. Public profile: immediate. <code>followers</code> profile: <code>pending</code> until the owner accepts. <code>private</code> or blocked: <code>404 profile_not_found</code>. Self: <code>422 cannot_follow_self</code>. Daily cap 200 (<code>429</code>-like <code>422 limit_reached</code>).</li>
+<li><code>DELETE /social/follow/{handle}</code> -&gt; 204 (unfollow or cancel request).</li>
+<li><code>GET /social/follow-requests</code> -&gt; <code>{"requests":[{"handle","created_at"}]}</code>; <code>POST /social/follow-requests/{handle}/accept</code> and <code>/decline</code> -&gt; 204.</li>
+<li><code>GET /social/following</code> and <code>GET /social/followers</code> -&gt; <code>{"users":[{"handle"}], "next": cursor|null}</code>.</li>
+<li><code>PUT /social/block/{handle}</code> -&gt; 204 (also removes follows both ways); <code>DELETE /social/block/{handle}</code> -&gt; 204; <code>GET /social/blocks</code> -&gt; <code>{"users":[{"handle"}]}</code>.</li>
+</ul>
+<h2 id="ideas-feed">Ideas feed</h2>
+<p>An <strong>idea</strong> is a snapshot of one of the caller's plans or recaps with a title and caption. The snapshot is built with the same whitelist and privacy defaults as a share (no dates, no origin, no name, no prices, no private notes, no email): counts, destinations, days and the plan's selected items only.</p>
+<ul>
+<li><code>POST /social/ideas</code> <code>{"plan_id": int, "kind": "plan"|"recap", "title": str (&lt;=80), "caption": str (&lt;=500), "locale"?}</code>: needs a handle, a non-private profile and a verified email (<code>403 profile_required|email_unverified</code>). Limit 5 per UTC day (<code>429</code>-style <code>422 limit_reached</code>), snapshot &lt;= 64 KB. Answers the idea object with <code>status</code>: <code>published</code>, or <code>held</code> when the keyword filter is unsure (visible only to its author and admins until approved); <code>422 content_rejected</code> when the filter refuses. Idempotent per (author, plan_id, kind): updates it.</li>
+<li>Idea object: <code>{"id","kind","title","caption","author":{"handle","avatar_url"?},"snapshot":{...},"likes","saves","comments","liked":bool,"saved":bool,"mine":bool,"status","created_at"}</code>.</li>
+<li><code>GET /social/feed?scope=for_you|following|new&amp;cursor=&amp;limit=</code> (limit &lt;= 30) -&gt; <code>{"ideas":[...],"next": cursor|null}</code>. Excludes blocked pairs, hidden/removed/held ideas, and ideas of <code>private</code> profiles; <code>followers</code>-visibility authors only for their followers. <code>new</code> is chronological; <code>following</code> is chronological from followed authors; <code>for_you</code> ranks <code>recency + engagement (likes, saves) + taste match</code> (the caller's interests against the idea's tags), computed in SQLite, no AI call.</li>
+<li><code>GET /social/ideas/{id}</code>, <code>DELETE /social/ideas/{id}</code> (author), <code>GET /social/profile/{handle}/ideas?cursor=</code>.</li>
+<li><code>PUT|DELETE /social/ideas/{id}/like</code> -&gt; 204 (idempotent; no XP).</li>
+<li><code>POST /social/ideas/{id}/save</code> -&gt; <code>{"plan_id": int}</code>: remix. Copies the snapshot into the caller's own plans (a new plan named after the idea, source noted) and awards the author XP once per (saver, idea), never for self-saves. <code>DELETE /social/ideas/{id}/save</code> -&gt; 204 (forgets the save mark; the copied plan stays).</li>
+<li>Comments: <code>GET /social/ideas/{id}/comments?cursor=</code> -&gt; <code>{"comments":[{"id","author":{"handle"},"text","helpful":bool,"mine":bool,"created_at"}],"next"}</code> oldest first; <code>POST /social/ideas/{id}/comments</code> <code>{"text"&lt;=300}</code> (limit 30/day; <code>held</code> comments are shown only to their author and admins); <code>DELETE /social/comments/{id}</code> (comment author or idea author); <code>PUT|DELETE /social/comments/{id}/helpful</code> (idea author only; XP to the commenter once).</li>
+</ul>
+<h2 id="moderation">Moderation</h2>
+<ul>
+<li><code>POST /social/reports</code> <code>{"target": "idea"|"comment"|"profile", "id": str, "reason": "spam"|"abuse"|"sexual"|"violence"|"misinformation"|"other", "note"?: str (&lt;=200)}</code> -&gt; 204. One report per (reporter, target); 20 per day. Three distinct reporters auto-hide the target (<code>hidden</code>) until an admin decides. Reports of your own content or by unverified users are accepted but do not count toward auto-hide.</li>
+<li>Keyword filter (committed deny and review lists, plus: any URL or email-like token is held). <strong>No AI moderation call</strong> (cost ruling; see the plan).</li>
+<li>Admin (<code>is_admin</code>; bucket <code>admin</code>): <code>GET /admin/social/queue?status=held|reported|hidden&amp;cursor=</code> -&gt; <code>{"items":[{"target","id","status","reason_counts","excerpt","author_handle","created_at"}],"next"}</code>; <code>POST /admin/social/{target}/{id}/decide</code> <code>{"action": "approve"|"remove"}</code>; <code>POST /admin/social/users/{handle}/restrict</code> <code>{"days": 1..365}</code> (no posting, commenting, challenging), <code>DELETE</code> lifts it. <code>403 restricted</code> for a restricted user's writes. Admin routes answer <code>404</code> when <code>SOCIAL_ENABLED</code> is off.</li>
+</ul>
+<h2 id="play">Play</h2>
+<ul>
+<li><code>GET /play/state</code> -&gt; <code>{"daily":{"available":bool,"done":bool,"score":int|null,"streak":{"current","longest","freeze_available"}},"packs":[{"id","title_key","questions"}],"challenge":{"id","kind":"destination"|"featured","country"?,"done":bool}|null,"open_h2h": int}</code>.</li>
+<li>Quiz sessions: <code>POST /play/quiz</code> <code>{"mode": "daily"|"pack", "pack"?: "flags"|"capitals"|"landmarks"|"cuisine", "locale"?}</code> -&gt; <code>{"session_id","mode","pack","questions":[{"index","kind","prompt":{...},"options":[{"id","label"}]}],"expires_at"}</code> (5 questions, no answers). The daily quiz is the same five questions for everyone each UTC day and can be completed once (<code>409 already_done</code>); a started one is resumed. Packs are unlimited but earn XP only up to a daily cap. Questions are served from a committed bank, so a quiz makes <strong>no AI call</strong>; option order and distractors are deterministic per session.</li>
+<li><code>POST /play/quiz/{session_id}/answer</code> <code>{"index": int, "choice": option id}</code> -&gt; <code>{"correct": bool, "correct_choice": id, "points": int, "elapsed_ms": int, "done": bool, "summary"?: {"score","correct","total","xp"?: game_result, "streak"?}}</code>. Answers are checked, and timed, <strong>server-side</strong> (served-at to answered-at); the client clock is never trusted. Points: 100 for correct plus up to 50 for speed (linear over 15 s), 0 if wrong. Re-answering returns the first result. A session expires after 20 minutes of the last activity.</li>
+<li><code>GET /play/quiz/{session_id}</code> -&gt; session with the answers so far. <code>GET /play/history?limit=</code> -&gt; own last sessions <code>{session_id,mode,pack,score,correct,finished_at}</code>.</li>
+<li><strong>Head-to-head</strong> (asynchronous): <code>POST /play/h2h</code> <code>{"handle", "pack"}</code> -&gt; <code>{"id","session_id","questions":[...]}</code> (creator plays at once; opponent needs a non-private profile and not blocked; <code>422 limit_reached</code> beyond 5 open or 10 per day). <code>GET /play/h2h</code> -&gt; <code>{"matches":[{"id","opponent":{"handle"},"pack","state":"waiting_you"|"waiting_them"|"done"|"declined"|"expired","you":int|null,"them":int|null,"winner":"you"|"them"|"draw"|null,"expires_at"}]}</code>. <code>POST /play/h2h/{id}/accept</code> -&gt; the opponent's session (same questions), play it with the normal answer route; <code>POST /play/h2h/{id}/decline</code> -&gt; 204. Matches expire after 48 h. The opponent's score is revealed only when both are done.</li>
+<li><strong>Leaderboards</strong>: <code>GET /play/leaderboard?scope=global|friends&amp;week=current|previous</code> -&gt; <code>{"week":"2026-W46","rows":[{"rank","handle","score","level"?,"you":bool}],"you":{"rank","score","opted_in"}|null}</code>. Score = the week's quiz and h2h points (Monday 00:00 UTC). Global shows opted-in users only (top 50). Friends = people the caller follows (approved) who allow it, plus the caller. Hidden-game users never appear.</li>
+<li><strong>Weekly challenge</strong> ("Know before you go"): <code>GET /play/challenge</code> -&gt; <code>{"id":"2026-W46:JP","kind","country"?,"title_key","done":bool}</code>; start it with <code>POST /play/quiz</code> <code>{"mode":"challenge"}</code>. It is about the country of the caller's next upcoming trip when the bank covers that country, else a featured pack of the week. One XP award per ISO week.</li>
+<li>XP: <code>quiz_daily</code> 10, <code>quiz_perfect</code> 20, <code>quiz_pack</code> 5 (cap 3/day), <code>h2h_complete</code> 10 (cap 3/day), <code>challenge_complete</code> 50 (once per week), <code>idea_saved</code> 10 (to the author, cap 5/day), <code>comment_helpful</code> 5. Never for likes, follows, posting or comments. Values live in <code>app/game/rules.json</code>; <code>GET /game/catalog</code> lists the new rules and badges (additive). <code>touch_streak("quiz")</code> keeps the daily-quiz streak (one freeze a week, never punishing).</li>
+</ul>
+<h2 id="notifications-and-sharing-additive">Notifications and sharing (additive)</h2>
+<ul>
+<li>Notification kinds: <code>social_idea_saved</code>, <code>social_new_follower</code> (category <code>social</code>), <code>quiz_h2h_invite</code>, <code>quiz_h2h_result</code> (category <code>quiz</code>); <code>GET /notifications/catalog</code> gains the matching <code>h2h_invite</code>, <code>h2h_result</code>, <code>idea_saved</code>, <code>new_follower</code> templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: <code>/play/h2h/{id}</code>, <code>/feed/{idea_id}</code>, <code>/u/{handle}</code>.</li>
+<li><code>POST /shares</code> (Sharing API) gains <code>kind: "quiz"</code> (extra field <code>session_id</code>: the caller's finished quiz session; card = pack and score out of 5, never time or answers) and <code>kind: "status"</code> (extra field <code>plan_id</code>: an active trip of the caller; card = "Day N in Place", from server data). Both hide the sharer's name unless <code>show_name</code>.</li>
+</ul>
+<h2 id="telemetry">Telemetry</h2>
+<p>Events, all props enums, bools or ints (no handles, no text): see <code>Telemetry.md</code> (<code>social_*</code>, <code>play_*</code>, <code>admin_mod_action</code>).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
