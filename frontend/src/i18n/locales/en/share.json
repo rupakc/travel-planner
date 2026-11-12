@@ -58,6 +58,45 @@
     "recap": "My trip recap on Voyager",
     "savings": "Price drops I caught with Voyager"
   },
+  "page": {
+    "byline": "Shared by {{name}}",
+    "cta": "Plan your own trip",
+    "recapTag": "Trip recap",
+    "savingsTag": "Price drops caught",
+    "unavailable": "This link is not available.",
+    "stat": {
+      "activities": "Activities",
+      "hotels": "Hotels",
+      "places": "Places",
+      "places_visited": "Places visited",
+      "countries": "Countries",
+      "drops_caught": "Drops caught",
+      "targets_hit": "Targets hit"
+    }
+  },
+  "mine": {
+    "title": "Your shared links",
+    "intro": "Links you created. Stopping one makes it stop working.",
+    "empty": "You have not shared anything yet.",
+    "loading": "Loading…",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Could not copy the link.",
+    "open": "Open",
+    "revoke": "Stop sharing",
+    "confirm": "Stop sharing? Anyone with the link will lose access.",
+    "yes": "Yes, stop sharing",
+    "no": "Keep",
+    "revoked": "Link removed.",
+    "error": "Could not remove the link.",
+    "untitled": "Untitled",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Recap",
+      "savings": "Catches"
+    },
+    "created": "Shared {{date}}"
+  },
   "entry": {
     "link": "Share link"
   }

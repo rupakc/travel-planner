@@ -58,6 +58,45 @@
     "recap": "我在 Voyager 上的旅行回顾",
     "savings": "我用 Voyager 抓到的降价"
   },
+  "page": {
+    "byline": "由 {{name}} 分享",
+    "cta": "规划你自己的旅行",
+    "recapTag": "旅行回顾",
+    "savingsTag": "捕捉到的降价",
+    "unavailable": "此链接不可用。",
+    "stat": {
+      "activities": "活动",
+      "hotels": "酒店",
+      "places": "地点",
+      "places_visited": "到访地点",
+      "countries": "国家",
+      "drops_caught": "捕捉到的降价",
+      "targets_hit": "达成目标"
+    }
+  },
+  "mine": {
+    "title": "你分享的链接",
+    "intro": "你创建的链接。停止分享后该链接将失效。",
+    "empty": "你还没有分享任何内容。",
+    "loading": "加载中…",
+    "copy": "复制链接",
+    "copied": "链接已复制",
+    "copyFailed": "无法复制链接。",
+    "open": "打开",
+    "revoke": "停止分享",
+    "confirm": "停止分享？拥有链接的人将无法再访问。",
+    "yes": "是，停止分享",
+    "no": "保留",
+    "revoked": "链接已移除。",
+    "error": "无法移除链接。",
+    "untitled": "无标题",
+    "kind": {
+      "plan": "计划",
+      "recap": "回顾",
+      "savings": "省钱"
+    },
+    "created": "分享于 {{date}}"
+  },
   "entry": {
     "link": "分享链接"
   }
