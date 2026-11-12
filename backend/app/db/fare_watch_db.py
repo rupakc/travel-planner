@@ -22,9 +22,10 @@ _CREATE_FIELDS = (
     "alert_mode",
     "target_price",
     "email_enabled",
+    "pending_first_check",
 )
 
-_BOOL_FIELDS = ("email_enabled",)
+_BOOL_FIELDS = ("email_enabled", "pending_first_check")
 
 # Columns added after the first version of the table (per-signal references)
 _WATCH_MIGRATIONS = (
@@ -34,6 +35,7 @@ _WATCH_MIGRATIONS = (
     ("cheaper_notified_price", "REAL"),
     ("cheaper_notified_at", "TEXT"),
     ("cheaper_peak_price", "REAL"),
+    ("pending_first_check", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 
@@ -137,8 +139,9 @@ def create_watch(
     ``lease_until`` creates it already leased, for a caller that checks it
     straight away (so the scheduler can't check it at the same time)."""
     values = {k: fields[k] for k in _CREATE_FIELDS if fields.get(k) is not None}
-    if "email_enabled" in values:
-        values["email_enabled"] = int(bool(values["email_enabled"]))
+    for f in _BOOL_FIELDS:
+        if f in values:
+            values[f] = int(bool(values[f]))
     stamp = now.isoformat()
     values.update(
         user_id=user_id, next_check_at=stamp, created_at=stamp, updated_at=stamp

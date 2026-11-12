@@ -668,6 +668,8 @@ def _record_success(
     p = check.price
     if p is not None:
         fields["last_price"] = p
+        if watch.get("pending_first_check"):
+            fields["pending_first_check"] = False  # the first look is the baseline
         fields["check_count"] = (watch.get("check_count") or 0) + 1
         if watch.get("baseline_price") is None:
             fields["baseline_price"] = p
