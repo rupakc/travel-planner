@@ -46,6 +46,10 @@ const ROUTES = {
   '/onboarding': ['onboarding'],
 }
 
+// On-demand routes whose lazy namespaces are prefetched in idle time after
+// the first paint (index.js), so the gate rarely needs its skeleton.
+export const PREFETCH_PATHS = ['/account', '/admin', '/', '/trips', '/trips/0', '/play', '/you', '/nearby']
+
 /** The namespaces the page at `pathname` renders with ([] for an unknown path). */
 export function namespacesFor(pathname) {
   const path = String(pathname ?? '')

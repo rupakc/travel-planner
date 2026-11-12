@@ -12,9 +12,11 @@ const GIVE_UP_MS = 3000
 const isLoaded = (namespaces) =>
   i18n.isInitialized && namespaces.every((ns) => i18n.hasLoadedNamespace(ns))
 
+// Visual placeholder only (hidden from assistive tech): it shows for a moment,
+// and no eager namespace has a generic "Loading" string to announce.
 function Skeleton() {
   return (
-    <div data-tid="i18n.routeLoading" role="status" aria-busy="true" className="max-w-5xl mx-auto px-4 py-8 space-y-4">
+    <div data-tid="i18n.routeLoading" aria-hidden="true" className="max-w-5xl mx-auto px-4 py-8 space-y-4">
       <div className="h-8 w-48 rounded-lg bg-white/60 animate-pulse motion-reduce:animate-none" />
       <div className="h-32 rounded-2xl bg-white/60 animate-pulse motion-reduce:animate-none" />
     </div>
@@ -27,11 +29,14 @@ export default function I18nRouteGate({ pathname, children }) {
   const key = lazy.join(',')
   const all = namespaces.join(',')
   const ready = lazy.length === 0 || isLoaded(lazy)
+  // Nothing to show on this path (e.g. `/` while Search is shown): no
+  // skeleton, and no download.
+  const empty = Children.toArray(children).length === 0
   // The key whose load finished, failed or timed out.
   const [settled, setSettled] = useState(null)
 
   useEffect(() => {
-    if (ready) return undefined
+    if (ready || empty) return undefined
     let live = true
     const done = () => { if (live) setSettled(key) }
     const timer = setTimeout(done, GIVE_UP_MS)
@@ -39,10 +44,9 @@ export default function I18nRouteGate({ pathname, children }) {
       .then(() => i18n.loadNamespaces(all.split(',')))
       .then(done, done)
     return () => { live = false; clearTimeout(timer) }
-  }, [key, all, ready])
+  }, [key, all, ready, empty])
 
-  // Nothing to show on this path (e.g. `/` while Search is shown): no skeleton.
-  if (Children.toArray(children).length === 0) return null
+  if (empty) return null
   if (ready || settled === key) return children
   return <Skeleton />
 }

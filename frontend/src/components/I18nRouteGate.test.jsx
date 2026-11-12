@@ -105,3 +105,12 @@ describe('I18nRouteGate', () => {
     expect(ctl.load).not.toHaveBeenCalled()
   })
 })
+
+describe('I18nRouteGate with nothing to render', () => {
+  it('does not start a load', async () => {
+    const ctl = pendingLoad()
+    render(<I18nRouteGate pathname="/account">{false}</I18nRouteGate>)
+    await act(async () => {})
+    expect(ctl.load).not.toHaveBeenCalled()
+  })
+})

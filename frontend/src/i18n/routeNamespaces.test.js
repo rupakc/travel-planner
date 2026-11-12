@@ -81,3 +81,13 @@ describe('route namespaces', () => {
     expect(namespacesFor(undefined)).toEqual([])
   })
 })
+
+// import.meta.glob needs literal patterns, so index.js repeats LAZY_NS twice.
+import indexSource from './index.js?raw'
+describe('index.js lazy globs', () => {
+  it('list exactly LAZY_NS, both of them', () => {
+    const lists = [...indexSource.matchAll(/locales\/en\/\{([^}]+)\}\.json/g)].map((m) => m[1].split(',').sort())
+    expect(lists).toHaveLength(2)
+    for (const list of lists) expect(list).toEqual([...LAZY_NS].sort())
+  })
+})
