@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { snapshotFromResults } from './tripSnapshot'
+import { snapshotFromResults, searchMatchesPlan, hasSnapshotData } from './tripSnapshot'
 
 describe('snapshotFromResults', () => {
   it('drops error sections and verification', () => {
@@ -12,5 +12,18 @@ describe('snapshotFromResults', () => {
   })
   it('handles missing results', () => {
     expect(snapshotFromResults(undefined).weather).toBeNull()
+  })
+})
+
+describe('searchMatchesPlan / hasSnapshotData', () => {
+  const plan = { search_data: { destination: 'Lisbon', departure_date: '2027-04-01' } }
+  it('matches on destination and departure', () => {
+    expect(searchMatchesPlan({ destination: 'lisbon ', departure_date: '2027-04-01' }, plan)).toBe(true)
+    expect(searchMatchesPlan({ destination: 'Porto', departure_date: '2027-04-01' }, plan)).toBe(false)
+    expect(searchMatchesPlan(null, plan)).toBe(false)
+  })
+  it('detects an all-null snapshot', () => {
+    expect(hasSnapshotData(snapshotFromResults({}))).toBe(false)
+    expect(hasSnapshotData(snapshotFromResults({ visa: { a: 1 } }))).toBe(true)
   })
 })
