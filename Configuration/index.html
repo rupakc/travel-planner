@@ -1970,6 +1970,11 @@
 <td>FCM project for ADC mode; empty uses <code>GOOGLE_CLOUD_PROJECT</code>, which the entrypoint sets from the metadata server.</td>
 </tr>
 <tr>
+<td><code>NOTIFICATIONS_V2_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Notifications 2.0: category checks on price pushes, trip pushes (T-30, T-7, T-1, morning brief) and iOS/Android push routing. Trip pushes run inside the alert loop, so they also need <code>PRICE_ALERTS_V2_ENABLED=true</code> (the loop does not start without it). With no FCM/APNs credentials only in-app rows are written. <code>false</code> restores the Phase 3 behaviour.</td>
+</tr>
+<tr>
 <td><code>APNS_TEAM_ID</code></td>
 <td><code>""</code></td>
 <td>Apple developer Team ID for iOS pushes (APNs token auth). Inert until <code>APNS_TEAM_ID</code>, <code>APNS_KEY_ID</code> and a key (<code>APNS_KEY_P8</code> or <code>APNS_KEY_FILE</code>) are all set; only used when <code>NOTIFICATIONS_V2_ENABLED=true</code>, which routes iOS devices to APNs and Android devices to FCM.</td>
