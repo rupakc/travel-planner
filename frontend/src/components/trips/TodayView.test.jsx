@@ -19,6 +19,9 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 7 } 
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => mocks.online }))
 vi.mock('../../offline/outbox', () => ({ enqueue: (...a) => mocks.enqueue(...a) }))
 vi.mock('../../game/announce', () => ({ announceGame: vi.fn() }))
+const cfg = vi.hoisted(() => ({ value: {} }))
+vi.mock('../../hooks/useClientConfig', () => ({ useClientConfig: () => ({ config: cfg.value, loaded: true }) }))
+vi.mock('../share/ShareDialog', () => ({ default: ({ kind, planId }) => <div data-tid="dlg" data-kind={kind} data-plan={planId} /> }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 vi.mock('../../services/tripsApi', () => ({
   checkIn: (...a) => mocks.checkIn(...a),
@@ -56,6 +59,21 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks() })
 
 describe('TodayView', () => {
+  it('status share opens the dialog with sharing on, and keeps the native text share without it', async () => {
+    cfg.value = { features: { sharing: 1 } }
+    await view()
+    await click(tid('today-share'))
+    expect(tid('dlg').dataset).toMatchObject({ kind: 'status', plan: '12' })
+    cfg.value = {}
+    await act(async () => root.unmount()); root = createRoot(container)
+    navigator.share = vi.fn().mockResolvedValue()
+    await view()
+    await click(tid('today-share'))
+    expect(tid('dlg')).toBeNull()
+    expect(navigator.share).toHaveBeenCalled()
+    delete navigator.share
+  })
+
   it('recomputes next up every minute', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] })
     try {

@@ -3,7 +3,9 @@
   "titleKind": {
     "plan": "分享这份计划",
     "recap": "分享你的旅行回顾",
-    "savings": "分享你抓到的降价"
+    "savings": "分享你抓到的降价",
+    "quiz": "分享你的测验结果",
+    "status": "分享你的旅行动态"
   },
   "intro": "选择链接显示的内容。你的邮箱、国籍和签证信息绝不会被分享。",
   "reveals": "始终显示：标题、目的地、天数以及计划中的项目。",
@@ -46,7 +48,8 @@
     "download": "无法下载卡片。",
     "share": "无法分享。",
     "revoke": "无法移除链接。",
-    "unavailable": "暂时无法分享链接。"
+    "unavailable": "暂时无法分享链接。",
+    "noActiveTrip": "目前没有可分享的进行中行程。"
   },
   "revoke": "停止分享",
   "revokeConfirm": "停止分享？拿到链接的人将无法再访问。",
@@ -56,7 +59,9 @@
   "text": {
     "plan": "我在 Voyager 上的旅行计划",
     "recap": "我在 Voyager 上的旅行回顾",
-    "savings": "我用 Voyager 抓到的降价"
+    "savings": "我用 Voyager 抓到的降价",
+    "quiz": "我在 Voyager 上的测验结果",
+    "status": "我在 Voyager 上的旅行动态"
   },
   "page": {
     "byline": "由 {{name}} 分享",
@@ -101,5 +106,6 @@
   },
   "entry": {
     "link": "分享链接"
-  }
+  },
+  "quizCta": "分享结果"
 }

@@ -3,7 +3,9 @@
   "titleKind": {
     "plan": "Partagez ce plan",
     "recap": "Partagez le récap de votre voyage",
-    "savings": "Partagez vos bonnes affaires"
+    "savings": "Partagez vos bonnes affaires",
+    "quiz": "Partagez votre résultat de quiz",
+    "status": "Partagez l'état de votre voyage"
   },
   "intro": "Choisissez ce que le lien montre. Votre e-mail, votre nationalité et vos données de visa ne sont jamais partagés.",
   "reveals": "Toujours affiché : le titre, la destination, le nombre de jours et le contenu de votre plan.",
@@ -46,7 +48,8 @@
     "download": "Impossible de télécharger la carte.",
     "share": "Impossible de partager.",
     "revoke": "Impossible de supprimer le lien.",
-    "unavailable": "Le partage de liens n'est pas disponible pour le moment."
+    "unavailable": "Le partage de liens n'est pas disponible pour le moment.",
+    "noActiveTrip": "Aucun voyage en cours à partager pour le moment."
   },
   "revoke": "Arrêter le partage",
   "revokeConfirm": "Arrêter le partage ? Toute personne ayant le lien perdra l'accès.",
@@ -56,7 +59,9 @@
   "text": {
     "plan": "Mon plan de voyage sur Voyager",
     "recap": "Le récap de mon voyage sur Voyager",
-    "savings": "Les baisses de prix repérées avec Voyager"
+    "savings": "Les baisses de prix repérées avec Voyager",
+    "quiz": "Mon résultat de quiz sur Voyager",
+    "status": "L'état de mon voyage sur Voyager"
   },
   "page": {
     "byline": "Partagé par {{name}}",
@@ -101,5 +106,6 @@
   },
   "entry": {
     "link": "Partager le lien"
-  }
+  },
+  "quizCta": "Partager le résultat"
 }

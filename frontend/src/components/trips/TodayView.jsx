@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, MapPin, Navigation as NavIcon, Share2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useClientConfig } from '../../hooks/useClientConfig'
+import { sharingEnabled } from '../../utils/share'
+import ShareDialog from '../share/ShareDialog'
 import { useJourney } from '../../hooks/useJourney'
 import { useOnline } from '../../offline/useOnline'
 import * as outbox from '../../offline/outbox'
@@ -34,6 +37,9 @@ export default function TodayView({ trip, token }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const online = useOnline()
+  const { config: clientConfig } = useClientConfig()
+  const sharingV2 = sharingEnabled(clientConfig)
+  const [shareOpen, setShareOpen] = useState(false)
   const userId = user?.id
 
   const [checked, setChecked] = useState(false)
@@ -123,12 +129,13 @@ export default function TodayView({ trip, token }) {
 
   const share = useCallback(async () => {
     track('status_share')
+    if (sharingV2) { setShareOpen(true); return }
     const text = heading
     try {
       if (navigator.share) await navigator.share({ text })
       else { await navigator.clipboard.writeText(text); setNote(t('copied')) }
     } catch { /* cancelled */ }
-  }, [heading, t])
+  }, [heading, t, sharingV2])
 
   if (!enabled || !trip) return null
 
@@ -148,6 +155,7 @@ export default function TodayView({ trip, token }) {
           <Share2 size={16} aria-hidden="true" />{t('shareStatus')}
         </button>
       </header>
+      {sharingV2 && shareOpen && <ShareDialog kind="status" planId={trip.id} text={heading} onClose={() => setShareOpen(false)} />}
 
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" data-tid="today-checkin" onClick={doCheckIn} disabled={busy || checked || !online} className={primary}>
