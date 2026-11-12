@@ -1,0 +1,61 @@
+{
+  "title": "Share",
+  "titleKind": {
+    "plan": "Share this plan",
+    "recap": "Share your trip recap",
+    "savings": "Share your catches"
+  },
+  "intro": "Choose what the link shows. Your email, nationality and visa details are never shared.",
+  "reveals": "Always shown: the title, destination, number of days and the items in your plan.",
+  "optionsLegend": "Also show",
+  "dates": "Dates",
+  "datesHidden": "Hide dates",
+  "datesMonth": "Month and year only",
+  "datesExact": "Exact dates",
+  "datesNote": "Link previews never show more than the month and year.",
+  "showOrigin": "Where I'm travelling from",
+  "showName": "My name",
+  "create": "Create link",
+  "update": "Update link",
+  "working": "Working…",
+  "preview": "Preview of the share card",
+  "urlLabel": "Share link",
+  "actions": {
+    "native": "Share…",
+    "copy": "Copy link",
+    "download": "Download card",
+    "downloadStory": "Download story card",
+    "x": "X",
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn"
+  },
+  "actionsLabel": "Share to",
+  "status": {
+    "native": "Shared",
+    "copy": "Link copied",
+    "copyFailed": "Could not copy. The link is selected, press Ctrl+C or long-press to copy.",
+    "download": "Card downloaded",
+    "created": "Link ready",
+    "updated": "Link updated",
+    "revoked": "Link removed. It no longer works.",
+    "opened": "Opened"
+  },
+  "errors": {
+    "create": "Could not create the link. Try again.",
+    "download": "Could not download the card.",
+    "share": "Could not share.",
+    "revoke": "Could not remove the link.",
+    "unavailable": "Sharing links is not available right now."
+  },
+  "revoke": "Stop sharing",
+  "revokeConfirm": "Stop sharing? Anyone with the link will lose access.",
+  "revokeYes": "Yes, stop sharing",
+  "revokeNo": "Keep",
+  "close": "Close",
+  "text": {
+    "plan": "My trip plan on Voyager",
+    "recap": "My trip recap on Voyager",
+    "savings": "Price drops I caught with Voyager"
+  }
+}

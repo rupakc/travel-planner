@@ -1,0 +1,61 @@
+{
+  "title": "Compartir",
+  "titleKind": {
+    "plan": "Comparte este plan",
+    "recap": "Comparte el resumen de tu viaje",
+    "savings": "Comparte tus ahorros"
+  },
+  "intro": "Elige lo que muestra el enlace. Tu correo, nacionalidad y datos de visado nunca se comparten.",
+  "reveals": "Siempre se muestra: el título, el destino, el número de días y lo que hay en tu plan.",
+  "optionsLegend": "Mostrar también",
+  "dates": "Fechas",
+  "datesHidden": "Ocultar fechas",
+  "datesMonth": "Solo mes y año",
+  "datesExact": "Fechas exactas",
+  "datesNote": "Las vistas previas del enlace nunca muestran más que el mes y el año.",
+  "showOrigin": "Desde dónde viajo",
+  "showName": "Mi nombre",
+  "create": "Crear enlace",
+  "update": "Actualizar enlace",
+  "working": "Un momento…",
+  "preview": "Vista previa de la tarjeta",
+  "urlLabel": "Enlace para compartir",
+  "actions": {
+    "native": "Compartir…",
+    "copy": "Copiar enlace",
+    "download": "Descargar tarjeta",
+    "downloadStory": "Descargar tarjeta para stories",
+    "x": "X",
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn"
+  },
+  "actionsLabel": "Compartir en",
+  "status": {
+    "native": "Compartido",
+    "copy": "Enlace copiado",
+    "copyFailed": "No se pudo copiar. El enlace está seleccionado, pulsa Ctrl+C o mantén pulsado para copiar.",
+    "download": "Tarjeta descargada",
+    "created": "Enlace listo",
+    "updated": "Enlace actualizado",
+    "revoked": "Enlace eliminado. Ya no funciona.",
+    "opened": "Abierto"
+  },
+  "errors": {
+    "create": "No se pudo crear el enlace. Inténtalo de nuevo.",
+    "download": "No se pudo descargar la tarjeta.",
+    "share": "No se pudo compartir.",
+    "revoke": "No se pudo eliminar el enlace.",
+    "unavailable": "Compartir enlaces no está disponible ahora mismo."
+  },
+  "revoke": "Dejar de compartir",
+  "revokeConfirm": "¿Dejar de compartir? Quien tenga el enlace perderá el acceso.",
+  "revokeYes": "Sí, dejar de compartir",
+  "revokeNo": "Mantener",
+  "close": "Cerrar",
+  "text": {
+    "plan": "Mi plan de viaje en Voyager",
+    "recap": "El resumen de mi viaje en Voyager",
+    "savings": "Bajadas de precio que cacé con Voyager"
+  }
+}

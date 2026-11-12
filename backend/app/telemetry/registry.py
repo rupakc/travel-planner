@@ -23,6 +23,7 @@ def _enum(*values: str) -> str:
 
 
 _KIND = _enum("flight", "hotel", "activity", "trip")
+_SHARE_KIND = _enum("plan", "recap", "savings")
 _AUTH_METHOD = _enum("password", "apple", "google", "facebook", "github")
 _AUTH_MODE = _enum("signin", "signup", "link")
 
@@ -216,6 +217,16 @@ EVENTS: dict[str, dict[str, str]] = {
         "field": _enum("digest", "quiet_hours", "instant", "cap", "group")
     },
     "alert_digest_open": {"via": _enum("in_app", "email_link")},
+    "share_open": {"kind": _SHARE_KIND},
+    "share_create": {"kind": _SHARE_KIND, "dates": _enum("hidden", "month", "exact")},
+    "share_action": {
+        "kind": _SHARE_KIND,
+        "target": _enum(
+            "native", "copy", "download", "x", "facebook", "whatsapp", "linkedin"
+        ),
+    },
+    "share_revoke": {"kind": _SHARE_KIND},
+    "share_view": {"kind": _SHARE_KIND},
 }
 
 
