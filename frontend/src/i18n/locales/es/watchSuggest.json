@@ -1,1 +1,21 @@
-{}
+{
+  "title": "¿Quieres que vigilemos estos precios?",
+  "subtitle": "Los revisaremos por ti y te avisaremos cuando uno baje.",
+  "close": "Cerrar",
+  "notNow": "Ahora no",
+  "done": "Listo",
+  "retry": "Reintentar",
+  "watchN_one": "Vigilar {{count}}",
+  "watchN_many": "Vigilar {{count}}",
+  "watchN_other": "Vigilar {{count}}",
+  "reason.selected_in_plan": "Lo elegiste para tu plan",
+  "reason.trip_total": "El total de tu viaje",
+  "reason.departure_soon": "Tu viaje empieza pronto",
+  "status.already": "Ya lo vigilas",
+  "status.running": "Configurando…",
+  "status.done": "Vigilando",
+  "error.watch_limit": "Has llegado al límite de vigilancias activas. Quita una en la página de Alertas.",
+  "error.live_prices_off": "La vigilancia de precios no está disponible ahora.",
+  "error.spec_invalid": "No pudimos configurar una vigilancia para este.",
+  "error.generic": "No se pudo iniciar la vigilancia."
+}

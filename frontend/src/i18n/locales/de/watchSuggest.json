@@ -1,1 +1,20 @@
-{}
+{
+  "title": "Sollen wir diese Preise beobachten?",
+  "subtitle": "Wir prüfen sie für dich und melden uns, wenn einer sinkt.",
+  "close": "Schließen",
+  "notNow": "Jetzt nicht",
+  "done": "Fertig",
+  "retry": "Erneut versuchen",
+  "watchN_one": "{{count}} beobachten",
+  "watchN_other": "{{count}} beobachten",
+  "reason.selected_in_plan": "Das hast du für deinen Plan gewählt",
+  "reason.trip_total": "Die Gesamtkosten deiner Reise",
+  "reason.departure_soon": "Deine Reise beginnt bald",
+  "status.already": "Wird bereits beobachtet",
+  "status.running": "Wird eingerichtet …",
+  "status.done": "Wird beobachtet",
+  "error.watch_limit": "Du hast das Limit aktiver Beobachtungen erreicht. Entferne eine auf der Seite Preisalarme.",
+  "error.live_prices_off": "Die Preisbeobachtung ist gerade nicht verfügbar.",
+  "error.spec_invalid": "Für diesen Eintrag konnten wir keine Beobachtung einrichten.",
+  "error.generic": "Die Beobachtung konnte nicht gestartet werden."
+}

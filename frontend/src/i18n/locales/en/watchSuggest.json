@@ -1,1 +1,20 @@
-{}
+{
+  "title": "Want us to watch these prices?",
+  "subtitle": "We'll check them for you and tell you when one drops.",
+  "close": "Close",
+  "notNow": "Not now",
+  "done": "Done",
+  "retry": "Retry",
+  "watchN_one": "Watch {{count}}",
+  "watchN_other": "Watch {{count}}",
+  "reason.selected_in_plan": "You picked this for your plan",
+  "reason.trip_total": "Your trip total",
+  "reason.departure_soon": "Your trip starts soon",
+  "status.already": "Already watching",
+  "status.running": "Setting up…",
+  "status.done": "Watching",
+  "error.watch_limit": "That's your limit of active watches. Remove one on the Alerts page.",
+  "error.live_prices_off": "Price watching isn't available right now.",
+  "error.spec_invalid": "We couldn't set up a watch for this one.",
+  "error.generic": "Couldn't start the watch."
+}
