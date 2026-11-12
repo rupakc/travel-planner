@@ -1,0 +1,32 @@
+{
+  "cta": "分享到灵感",
+  "title": "分享到灵感动态",
+  "titleRecap": "将你的回顾分享到灵感动态",
+  "intro": "发布此计划的快照：目的地、行程天数和你选择的地点。绝不包含日期、价格、出发地和你的姓名。",
+  "titleLabel": "标题",
+  "captionLabel": "说明（可选）",
+  "counter": "{{n}}/{{max}}",
+  "plainNote": "仅限纯文本。链接和邮箱地址会被留待审核。",
+  "submit": "发布",
+  "publishing": "发布中…",
+  "cancel": "取消",
+  "close": "关闭",
+  "loading": "加载中…",
+  "done": "已发布。其他人现在可以在动态中看到它。",
+  "held": "谢谢。你的灵感正在等待快速审核，之后才会显示。",
+  "viewFeed": "打开动态",
+  "needProfile": "请先创建主页。你的昵称是别人能看到的唯一名称。",
+  "createProfile": "创建你的主页",
+  "profilePrivate": "你的主页是私密的。请改为仅粉丝可见或公开后再发布。",
+  "editProfile": "编辑你的主页",
+  "errors": {
+    "content_rejected": "该文本无法使用，请修改措辞。",
+    "profile_required": "请先创建主页。",
+    "email_unverified": "请先验证你的邮箱地址再发布。",
+    "restricted": "你的账号目前受到限制。",
+    "limit_reached": "你已达到今日上限，请明天再试。",
+    "plan_not_found": "找不到该计划。",
+    "idea_unavailable": "此灵感无法再次发布。",
+    "title_invalid": "请添加标题。"
+  }
+}

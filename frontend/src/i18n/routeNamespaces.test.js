@@ -7,7 +7,7 @@ const KNOWN_PATHS = [
   '/', '/chat', '/explore', '/nearby', '/alerts', '/preferences', '/account', '/admin',
   '/trips', '/trips/12', '/trips/12/overview', '/trips/12/prep', '/trips/12/today',
   '/trips/12/money', '/trips/12/journal', '/trips/12/recap', '/trips/12/offline',
-  '/play', '/play/h2h/7', '/you', '/onboarding',
+  '/play', '/play/h2h/7', '/you', '/onboarding', '/feed', '/feed/3', '/u/ann',
 ]
 const routed = new Set(KNOWN_PATHS.flatMap(namespacesFor))
 

@@ -1,0 +1,32 @@
+{
+  "cta": "Compartir en Ideas",
+  "title": "Compartir en el feed de Ideas",
+  "titleRecap": "Comparte tu resumen en el feed de Ideas",
+  "intro": "Publica una instantánea de este plan: destinos, duración del viaje y los lugares que elegiste. Nunca se incluyen fechas, precios, tu ciudad de origen ni tu nombre.",
+  "titleLabel": "Título",
+  "captionLabel": "Descripción (opcional)",
+  "counter": "{{n}}/{{max}}",
+  "plainNote": "Solo texto plano. Los enlaces y correos se retienen para revisión.",
+  "submit": "Publicar",
+  "publishing": "Publicando…",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "loading": "Cargando…",
+  "done": "Publicado. Ya puede encontrarlo cualquiera en el feed.",
+  "held": "Gracias. Tu idea está pendiente de una revisión rápida antes de aparecer.",
+  "viewFeed": "Abrir el feed",
+  "needProfile": "Crea un perfil primero. Tu alias es el único nombre que verán los demás.",
+  "createProfile": "Crea tu perfil",
+  "profilePrivate": "Tu perfil es privado. Hazlo solo para seguidores o público para publicar.",
+  "editProfile": "Edita tu perfil",
+  "errors": {
+    "content_rejected": "Ese texto no se puede usar. Reescríbelo, por favor.",
+    "profile_required": "Crea un perfil primero.",
+    "email_unverified": "Verifica tu correo para publicar.",
+    "restricted": "Tu cuenta está restringida por ahora.",
+    "limit_reached": "Has llegado al límite de hoy. Inténtalo mañana.",
+    "plan_not_found": "No se encontró ese plan.",
+    "idea_unavailable": "Esta idea no se puede volver a publicar.",
+    "title_invalid": "Añade un título."
+  }
+}

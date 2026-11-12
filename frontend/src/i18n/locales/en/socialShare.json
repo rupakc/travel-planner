@@ -1,0 +1,32 @@
+{
+  "cta": "Share to Ideas",
+  "title": "Share to the Ideas feed",
+  "titleRecap": "Share your recap to the Ideas feed",
+  "intro": "Publish a snapshot of this plan: destinations, trip length and the places you picked. Dates, prices, where you travel from and your name are never included.",
+  "titleLabel": "Title",
+  "captionLabel": "Caption (optional)",
+  "counter": "{{n}}/{{max}}",
+  "plainNote": "Plain text only. Links and email addresses are held for review.",
+  "submit": "Publish",
+  "publishing": "Publishing…",
+  "cancel": "Cancel",
+  "close": "Close",
+  "loading": "Loading…",
+  "done": "Published. Others can now find it in the feed.",
+  "held": "Thanks. Your idea is waiting for a quick review before it appears.",
+  "viewFeed": "Open the feed",
+  "needProfile": "Create a profile first. Your handle is the only name others will see.",
+  "createProfile": "Create your profile",
+  "profilePrivate": "Your profile is private. Make it followers-only or public to post.",
+  "editProfile": "Edit your profile",
+  "errors": {
+    "content_rejected": "That text can't be used. Please reword it.",
+    "profile_required": "Create a profile first.",
+    "email_unverified": "Verify your email address to post.",
+    "restricted": "Your account is restricted for now.",
+    "limit_reached": "You have reached today's limit. Try again tomorrow.",
+    "plan_not_found": "That plan could not be found.",
+    "idea_unavailable": "This idea can't be posted again.",
+    "title_invalid": "Add a title."
+  }
+}

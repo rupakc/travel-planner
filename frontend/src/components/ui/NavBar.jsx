@@ -6,13 +6,14 @@ import { useAlerts } from '../../context/AlertsContext'
 import { useAccountSettings } from '../account/SettingsSync'
 import { useJourney } from '../../hooks/useJourney'
 import { useHasTrips } from '../../hooks/useHasTrips'
+import { useSocialEnabled } from '../../hooks/useSocial'
 import BottomTabs from './BottomTabs'
 import NotificationBell from '../alerts/NotificationBell'
 import LanguagePicker from './LanguagePicker'
 import ThemeToggle from './ThemeToggle'
 import GameNavChip from '../game/GameNavChip'
 import AccountMenu from '../account/AccountMenu'
-import { Search, MessageCircle, Settings, ShieldCheck, Menu, X, Plane, BellRing, MapPin, Luggage, Compass, Trophy, CircleUser } from 'lucide-react'
+import { Search, MessageCircle, Settings, ShieldCheck, Menu, X, Plane, BellRing, MapPin, Luggage, Compass, Trophy, CircleUser, Lightbulb } from 'lucide-react'
 
 // `key` names the label (`common:nav.<key>`) and the telemetry id; `tour`
 // is the stable onboarding-tour anchor, independent of the UI language.
@@ -23,6 +24,8 @@ const BASE_TABS = [
   { path: '/alerts',      key: 'alerts',      tour: 'alerts',      icon: BellRing },
   { path: '/preferences', key: 'preferences', tour: 'preferences', icon: Settings },
 ]
+// Phase 5: shown only when the server has the social feed (features.social).
+const FEED_TAB = { path: '/feed', key: 'feed', tour: 'feed', icon: Lightbulb }
 const ADMIN_TAB = { path: '/admin', key: 'admin', tour: 'admin', icon: ShieldCheck }
 
 // Journey shell tabs (labels from `journey:tabs.<key>`; Admin keeps its
@@ -45,18 +48,21 @@ export default function NavBar() {
   const { settings } = useAccountSettings()
   const { enabled: journey } = useJourney()
   const { hasTrips } = useHasTrips()
+  const { enabled: social } = useSocialEnabled()
   const path = location.pathname
 
   const base = journey
     ? JOURNEY_TABS.filter((tab) => !(tab.key === 'play' && settings?.hide_game))
     : BASE_TABS
-  const tabs = (isAdmin ? [...base, ADMIN_TAB] : base).map((tab) => ({
+  const withFeed = social ? [...base, FEED_TAB] : base
+  const tabs = (isAdmin ? [...withFeed, ADMIN_TAB] : withFeed).map((tab) => ({
     ...tab,
-    label: journey && tab.key !== 'admin' ? t(`journey:tabs.${tab.key}`) : t(`nav.${tab.key}`),
+    label: journey && tab.key !== 'admin' && tab.key !== 'feed' ? t(`journey:tabs.${tab.key}`) : t(`nav.${tab.key}`),
   }))
 
   // Journey: `/` is the Trips hub for users with a trip, else Explore.
   const isActive = (tabPath) => {
+    if (tabPath === '/feed') return path === '/feed' || path.startsWith('/feed/') || path.startsWith('/u/')
     if (!journey) return path === tabPath
     if (tabPath === '/trips') return path === '/trips' || path.startsWith('/trips/') || (path === '/' && hasTrips === true)
     if (tabPath === '/explore') return path === '/explore' || (path === '/' && hasTrips === false)

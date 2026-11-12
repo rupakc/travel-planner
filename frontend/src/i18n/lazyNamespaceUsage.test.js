@@ -17,6 +17,7 @@ const SRC = fileURLToPath(new URL('..', import.meta.url))
 const GATED_ENTRIES = [
   'pages/AccountPage.jsx', 'pages/AdminPage.jsx', 'pages/NearbyPage.jsx',
   'pages/TripsPage.jsx', 'pages/TripPage.jsx', 'pages/PlayPage.jsx', 'pages/YouPage.jsx',
+  'pages/FeedPage.jsx', 'pages/ProfilePage.jsx',
 ].map((p) => join(SRC, p))
 
 const IMPORT_RE = /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/g

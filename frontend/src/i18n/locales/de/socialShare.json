@@ -1,0 +1,32 @@
+{
+  "cta": "In Ideen teilen",
+  "title": "Im Ideen-Feed teilen",
+  "titleRecap": "Deinen Rückblick im Ideen-Feed teilen",
+  "intro": "Veröffentliche eine Momentaufnahme dieses Plans: Reiseziele, Reisedauer und die Orte, die du ausgewählt hast. Daten, Preise, dein Abreiseort und dein Name sind nie enthalten.",
+  "titleLabel": "Titel",
+  "captionLabel": "Beschreibung (optional)",
+  "counter": "{{n}}/{{max}}",
+  "plainNote": "Nur reiner Text. Links und E-Mail-Adressen werden zur Prüfung zurückgehalten.",
+  "submit": "Veröffentlichen",
+  "publishing": "Wird veröffentlicht…",
+  "cancel": "Abbrechen",
+  "close": "Schließen",
+  "loading": "Wird geladen…",
+  "done": "Veröffentlicht. Andere finden es jetzt im Feed.",
+  "held": "Danke. Deine Idee wartet auf eine kurze Prüfung, bevor sie erscheint.",
+  "viewFeed": "Feed öffnen",
+  "needProfile": "Erstelle zuerst ein Profil. Dein Handle ist der einzige Name, den andere sehen.",
+  "createProfile": "Profil erstellen",
+  "profilePrivate": "Dein Profil ist privat. Stelle es auf Follower oder öffentlich, um zu posten.",
+  "editProfile": "Profil bearbeiten",
+  "errors": {
+    "content_rejected": "Dieser Text kann nicht verwendet werden. Bitte formuliere ihn um.",
+    "profile_required": "Erstelle zuerst ein Profil.",
+    "email_unverified": "Bestätige deine E-Mail-Adresse, um zu posten.",
+    "restricted": "Dein Konto ist vorerst eingeschränkt.",
+    "limit_reached": "Du hast das heutige Limit erreicht. Versuche es morgen wieder.",
+    "plan_not_found": "Dieser Plan wurde nicht gefunden.",
+    "idea_unavailable": "Diese Idee kann nicht erneut gepostet werden.",
+    "title_invalid": "Füge einen Titel hinzu."
+  }
+}

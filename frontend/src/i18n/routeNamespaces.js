@@ -12,19 +12,20 @@
 // in two import.meta.glob patterns (globs must be literals); a test keeps them
 // in step. A namespace nobody listed stays bundled, which is always safe.
 import { matchTripPath, matchH2hPath } from '../journey/paths'
+import { matchSocialPath } from '../components/social/paths'
 
 export const EAGER_NS = ['common', 'errors', 'auth', 'journey', 'offline', 'misc']
 
 export const SHELL_NS = [
   'account', 'alertPrefs', 'alerts', 'alertsHub', 'chat', 'coach', 'completeness', 'dropMoment',
   'explore', 'game', 'itinerary', 'oauth', 'onboarding', 'plan', 'priceStory', 'privacy', 'profile',
-  'quickWatch', 'quota', 'recovery', 'results', 'savings', 'search', 'sections', 'share', 'signup', 'verify',
-  'watchSuggest',
+  'quickWatch', 'quota', 'recovery', 'results', 'savings', 'search', 'sections', 'share', 'signup', 'socialShare',
+  'verify', 'watchSuggest',
 ]
 
 export const LAZY_NS = [
   'accountData', 'accountSettings', 'adminInvites', 'adminSocial', 'adminTelemetry', 'expenses', 'journal',
-  'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'play', 'playYou', 'prep', 'recap', 'security', 'today',
+  'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'play', 'playYou', 'prep', 'recap', 'security', 'social', 'today',
   'trip', 'trips',
 ]
 
@@ -51,12 +52,13 @@ const ROUTES = {
 
 // On-demand routes whose lazy namespaces are prefetched in idle time after
 // the first paint (index.js), so the gate rarely needs its skeleton.
-export const PREFETCH_PATHS = ['/account', '/admin', '/', '/trips', '/trips/0', '/play', '/you', '/nearby']
+export const PREFETCH_PATHS = ['/account', '/admin', '/', '/trips', '/trips/0', '/play', '/you', '/nearby', '/feed']
 
 /** The namespaces the page at `pathname` renders with ([] for an unknown path). */
 export function namespacesFor(pathname) {
   const path = String(pathname ?? '')
   if (Object.hasOwn(ROUTES, path)) return [...ROUTES[path]]
   if (matchH2hPath(path)) return ['playYou', 'play', 'game']
+  if (matchSocialPath(path)) return ['social', 'game']
   return matchTripPath(path) ? [...TRIP_NS] : []
 }
