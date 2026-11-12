@@ -108,11 +108,11 @@
       "desc": "Terminez 5 récaps de voyage."
     },
     "deal_hunter": {
-      "name": "Chasseur d'offres",
+      "name": "Chasseur d’offres",
       "desc": "Repérez votre première baisse de prix."
     },
     "deal_hunter_silver": {
-      "name": "Pisteur d'offres",
+      "name": "Pisteur d’offres",
       "desc": "Repérez 5 baisses de prix."
     },
     "deal_hunter_gold": {
@@ -120,7 +120,7 @@
       "desc": "Repérez 20 baisses de prix."
     },
     "bullseye": {
-      "name": "Mouche",
+      "name": "Dans le mille",
       "desc": "Atteignez un prix cible que vous avez fixé."
     },
     "saver_50": {

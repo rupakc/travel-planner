@@ -1,9 +1,9 @@
 {
   "title": "已捕捉的降价",
   "amountLine": "已捕捉的降价：{{amount}}",
-  "caveat": "指首次看到的价格与我们提醒过您的最低价之间的差额，仅统计 USD 价格关注。只有您按该价格预订，它才会变成真正的钱。",
-  "empty": "您的第一次降价将显示在这里",
-  "emptyHint": "您关注项目的每一次真实降价都会记在这里。",
+  "caveat": "指首次看到的价格与我们提醒过你的最低价之间的差额，仅统计 USD 价格关注。只有你按该价格预订，它才会变成真正的钱。",
+  "empty": "你的第一次降价将显示在这里",
+  "emptyHint": "你关注项目的每一次真实降价都会记在这里。",
   "drops_other": "已捕捉 {{count}} 次降价",
   "targets_other": "已达成 {{count}} 个目标价",
   "otherCurrencies": "其他货币，未换算",
@@ -13,9 +13,9 @@
   "allDone": "已达成所有里程碑",
   "milestones": "里程碑",
   "milestoneReached": "已达 {{amount}}",
-  "milestoneAhead": "前方 {{amount}}",
+  "milestoneAhead": "下一档 {{amount}}",
   "share": "分享",
-  "shareTitle": "分享您的收获",
+  "shareTitle": "分享你的收获",
   "close": "关闭",
   "download": "下载图片",
   "preview": "分享卡片预览",
@@ -29,6 +29,6 @@
   "card": {
     "headline": "我用 Voyager 捕捉到了 {{amount}} 的降价",
     "headlineOther": "我用 Voyager 捕捉到了降价",
-    "footer": "仅统计观察到的降价。是否按该价格预订由您决定。"
+    "footer": "仅统计观察到的降价。是否按该价格预订由你决定。"
   }
 }

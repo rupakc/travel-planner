@@ -103,7 +103,7 @@
     "emptyBody": "关注航班、酒店、活动或整个行程，价格下降时我们会在这里通知你。",
     "seeAll": "查看全部关注的价格",
     "groupTitle": "{{count}} 次降价",
-    "groupLatest": "最新:{{title}}"
+    "groupLatest": "最新：{{title}}"
   },
   "live": {
     "disclaimer": "来自刚刚的实时网络搜索。价格变化很快，预订前请向服务商确认。不用于你的价格提醒。",
@@ -445,7 +445,7 @@
     "default": "未执行检查：此价格目前没有在关注。"
   },
   "extras": {
-    "checked": "{{when}}检查",
+    "checked": "检查时间：{{when}}",
     "pending": "正在等待首次价格检查",
     "storyOpen": "价格走势",
     "storyClose": "隐藏价格走势"

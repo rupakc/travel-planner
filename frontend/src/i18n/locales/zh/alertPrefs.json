@@ -20,7 +20,7 @@
   "quiet.use_timezone": "使用我的时区（{{tz}}）",
   "quiet.timezone": "免打扰时段按你的时区计算：{{tz}}",
   "caps.label": "每类每日上限",
-  "caps.hint": "每种价格监控每天最多发送的推送和邮件数量。",
+  "caps.hint": "每种关注类型每天最多发送的推送和邮件数量。",
   "caps.less": "减少{{kind}}的每日上限",
   "caps.more": "增加{{kind}}的每日上限",
   "kind.flight": "航班",

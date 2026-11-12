@@ -12,7 +12,7 @@
   "reason.departure_soon": "Deine Reise beginnt bald",
   "status.already": "Wird bereits beobachtet",
   "status.running": "Wird eingerichtet …",
-  "status.done": "Wird beobachtet",
+  "status.done": "Beobachtet",
   "error.watch_limit": "Du hast das Limit aktiver Beobachtungen erreicht. Entferne eine auf der Seite Preisalarme.",
   "error.live_prices_off": "Die Preisbeobachtung ist gerade nicht verfügbar.",
   "error.spec_invalid": "Für diesen Eintrag konnten wir keine Beobachtung einrichten.",

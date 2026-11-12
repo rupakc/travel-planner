@@ -14,10 +14,10 @@
     "newest": "Plus récents"
   },
   "deal": {
-    "title": "Chasseur de bonnes affaires",
+    "title": "Chasseur d’offres",
     "next": "Prochain badge : {{name}}",
     "progress": "{{progress}} sur {{target}}",
-    "allDone": "Chasseur de bonnes affaires : tous les badges sont obtenus."
+    "allDone": "Chasseur d’offres : tous les badges sont obtenus."
   },
   "digest": {
     "title": "Votre résumé hebdomadaire",
