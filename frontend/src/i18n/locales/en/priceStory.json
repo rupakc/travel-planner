@@ -1,1 +1,63 @@
-{}
+{
+  "title": "Price story",
+  "loading": "Loading the price story…",
+  "error": {
+    "load": "Could not load the price story."
+  },
+  "verdict": {
+    "great": "Great price",
+    "good": "Good price",
+    "typical": "Typical price",
+    "high": "High price"
+  },
+  "verdictLabel": "Price level: {{level}}",
+  "advice": {
+    "pending": "Waiting for the first price check.",
+    "checks_paused_one": "Live price checks are paused. The last check was {{count}} day ago.",
+    "checks_paused_other": "Live price checks are paused. The last check was {{count}} days ago.",
+    "below_target": "At or below your target, by {{by}}.",
+    "near_target": "Just {{gap}} above your target.",
+    "at_lowest": "The lowest price seen so far.",
+    "below_typical": "Below the usual range for this trip.",
+    "within_typical": "Within the usual range.",
+    "above_typical": "Above the usual range.",
+    "steady_one": "Steady for the last {{count}} day.",
+    "steady_other": "Steady for the last {{count}} days.",
+    "few_checks_one": "Only {{count}} check so far, so there is not much to compare yet.",
+    "few_checks_other": "Only {{count}} checks so far, so there is not much to compare yet.",
+    "generic": "See the price history below."
+  },
+  "checkedToday": "Checked today",
+  "checkedAgo_one": "Checked {{count}} day ago",
+  "checkedAgo_other": "Checked {{count}} days ago",
+  "latest": "Latest observed price",
+  "estimate": "Estimate: {{price}}. This is not an observed price.",
+  "chart": {
+    "label": "Price history: {{n}} checks from {{from}} to {{to}}",
+    "help": "Use the left and right arrow keys to step through the checks.",
+    "point": "{{price}} on {{date}}",
+    "typical": "Typical range",
+    "lowest": "Lowest: {{price}}",
+    "target": "Target: {{price}}",
+    "baseline": "First seen: {{price}}",
+    "none": "No price checks yet.",
+    "few_one": "{{count}} check so far. A chart appears after two checks.",
+    "few_other": "{{count}} checks so far. A chart appears after two checks."
+  },
+  "tip": {
+    "title": "Timing tip",
+    "button": "Get a timing tip",
+    "ai": "AI-generated",
+    "loading": "Thinking…",
+    "error": "Could not get a tip right now.",
+    "limit": "The AI limit is reached for this month."
+  },
+  "slider": {
+    "label": "Alert me at or below",
+    "preview_one": "{{count}} of your last {{total}} checks was at or below this.",
+    "preview_other": "{{count}} of your last {{total}} checks were at or below this.",
+    "none": "None of your last {{total}} checks were this low.",
+    "saved": "Target saved.",
+    "error": "Could not save the target."
+  }
+}

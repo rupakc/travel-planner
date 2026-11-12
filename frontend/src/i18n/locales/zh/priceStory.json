@@ -1,1 +1,57 @@
-{}
+{
+  "title": "价格走势",
+  "loading": "正在加载价格走势…",
+  "error": {
+    "load": "无法加载价格走势。"
+  },
+  "verdict": {
+    "great": "价格极佳",
+    "good": "价格不错",
+    "typical": "价格正常",
+    "high": "价格偏高"
+  },
+  "verdictLabel": "价格水平：{{level}}",
+  "advice": {
+    "pending": "正在等待首次价格检查。",
+    "checks_paused_other": "实时价格检查已暂停。上次检查是在 {{count}} 天前。",
+    "below_target": "已达到或低于目标价，低 {{by}}。",
+    "near_target": "仅比目标价高 {{gap}}。",
+    "at_lowest": "迄今见到的最低价。",
+    "below_typical": "低于此行程的常见价格区间。",
+    "within_typical": "在常见价格区间内。",
+    "above_typical": "高于常见价格区间。",
+    "steady_other": "过去 {{count}} 天价格稳定。",
+    "few_checks_other": "目前只检查了 {{count}} 次，可比较的内容还不多。",
+    "generic": "请查看下方的价格历史。"
+  },
+  "checkedToday": "今天已检查",
+  "checkedAgo_other": "{{count}} 天前已检查",
+  "latest": "最近观测到的价格",
+  "estimate": "估算：{{price}}。这不是实际观测到的价格。",
+  "chart": {
+    "label": "价格历史：{{from}} 至 {{to}}，共 {{n}} 次检查",
+    "help": "使用左右方向键逐次查看各次检查。",
+    "point": "{{date}}：{{price}}",
+    "typical": "常见区间",
+    "lowest": "最低：{{price}}",
+    "target": "目标：{{price}}",
+    "baseline": "首次价格：{{price}}",
+    "none": "尚无价格检查。",
+    "few_other": "目前有 {{count}} 次检查。检查两次后会显示图表。"
+  },
+  "tip": {
+    "title": "时机建议",
+    "button": "获取时机建议",
+    "ai": "AI 生成",
+    "loading": "思考中…",
+    "error": "暂时无法获取建议。",
+    "limit": "本月 AI 额度已用完。"
+  },
+  "slider": {
+    "label": "价格达到或低于此值时提醒我",
+    "preview_other": "最近 {{total}} 次检查中有 {{count}} 次达到或低于此价格。",
+    "none": "最近 {{total}} 次检查都没有这么低。",
+    "saved": "目标价已保存。",
+    "error": "无法保存目标价。"
+  }
+}
