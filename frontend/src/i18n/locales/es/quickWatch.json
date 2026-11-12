@@ -1,1 +1,15 @@
-{}
+{
+  "label.watch": "Vigilar precio",
+  "label.watching": "Vigilando",
+  "label.already": "Ya lo vigilas",
+  "aria.watch": "Vigila el precio de {{title}}",
+  "aria.unwatch": "Dejar de vigilar {{title}}",
+  "aria.already": "Ya vigilas {{title}}: abre su historia de precio",
+  "toast.message": "Vigilaremos este precio por ti; la primera comprobación llega pronto",
+  "toast.undo": "Deshacer",
+  "toast.dismiss": "Cerrar",
+  "error.watch_limit": "Has llegado al límite de vigilancias activas. Quita una en la página de Alertas para añadir otra.",
+  "error.live_prices_off": "La vigilancia de precios no está disponible ahora mismo.",
+  "error.spec_invalid": "No pudimos configurar una vigilancia para este elemento.",
+  "error.generic": "No se pudo iniciar la vigilancia. Inténtalo de nuevo."
+}
