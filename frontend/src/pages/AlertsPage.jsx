@@ -18,6 +18,8 @@ import {
   ALERT_TABS, countByTab, inTab, priceCheckMessage, watchDomId,
 } from '../utils/priceWatch'
 import WatchCard from '../components/alerts/WatchCard'
+import AlertsV2Header from '../components/alerts2/AlertsV2Header'
+import { useAlertsV2 } from '../hooks/useAlertsV2'
 import { cardFor } from '../components/alerts/cards'
 
 /** What one "Check now" found, in plain words (statuses: see the API). */
@@ -69,6 +71,7 @@ const sortDate = (w) => (w.kind ? w.expires_on : w.departure_date) || ''
 /** Every fare and price the traveller watches: filter chips by kind, then Active / Past. */
 export default function AlertsPage() {
   const { t } = useTranslation('alerts')
+  const { on: v2 } = useAlertsV2()
   const { token, user, preferences } = useAuth()
   const { caps, watchesChanged, refresh: refreshBell, markSeen } = useAlerts()
   const { setPendingSearchData } = useSearchData()
@@ -233,6 +236,7 @@ export default function AlertsPage() {
           {t('page.intro')}
         </p>
       </header>
+      {v2 && <AlertsV2Header />}
 
       {!watches && !loadError && (
         <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> {t('page.loading')}</p>

@@ -7,6 +7,8 @@ import {
   watchStatus,
 } from '../../utils/fareWatch'
 import Sparkline from './Sparkline'
+import WatchCardExtras from '../alerts2/WatchCardExtras'
+import { useAlertsV2 } from '../../hooks/useAlertsV2'
 import { LiveCheckButton, LiveCheckPanel, useLiveCheck } from './LiveCheck'
 
 const CHIP = {
@@ -95,6 +97,7 @@ export default function WatchCard({
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const live = useLiveCheck(onLiveCheck)
+  const { on: v2 } = useAlertsV2()
   const liveButton = useRef(null)
   const status = watchStatus(watch)
   const change = priceChange(watch)
@@ -237,6 +240,7 @@ export default function WatchCard({
           )}
         </span>
       </div>
+      {v2 && <WatchCardExtras watch={watch} />}
     </article>
   )
 }

@@ -44,6 +44,8 @@ import { getAccount }      from './services/accountApi'
 import OfflineBanner       from './components/offline/OfflineBanner'
 import I18nRouteGate       from './components/I18nRouteGate'
 import { useJourney }      from './hooks/useJourney'
+import { useAlertsV2 }     from './hooks/useAlertsV2'
+import DropMoment          from './components/alerts2/DropMoment'
 import { useHasTrips }     from './hooks/useHasTrips'
 import { matchTripPath }   from './journey/paths'
 
@@ -138,6 +140,7 @@ function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { enabled: journeyOn, loaded: journeyLoaded } = useJourney()
+  const { on: alertsV2 } = useAlertsV2()
   const { hasTrips } = useHasTrips()
   // A click on a native browser notification opens its watch
   const openAlert = useCallback((n) => navigate(notificationLink(n)), [navigate])
@@ -190,6 +193,7 @@ function Layout() {
         </I18nRouteGate>
         <AttributionFooter />
         <AlertToast />
+        {alertsV2 && <DropMoment />}
         <GameCelebration />
       </div>
      </AlertsProvider>
