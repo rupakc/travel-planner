@@ -14,7 +14,7 @@
     "memories": "স্মৃতি"
   },
   "tripTabs": {
-    "overview": "সংক্ষিপ্ত বিবরণ",
+    "overview": "এক নজরে",
     "prep": "প্রস্তুতি",
     "today": "আজ",
     "money": "টাকা",
@@ -24,7 +24,7 @@
   },
   "countdown_one": "{{count}} দিনে",
   "countdown_other": "{{count}} দিনে",
-  "dayOf": "{{count}} দিনের মধ্যে দিন {{day}}",
+  "dayOf": "{{count}} দিনের {{day}} নম্বর দিন",
   "dayIn": "{{city}}-এ দিন {{day}}",
   "saved": {
     "openTrip": "ভ্রমণ খুলুন",
