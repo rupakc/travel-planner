@@ -83,3 +83,21 @@ def next_interval(
     if history and _is_flat([p for p in history if p is not None]):
         days += 1
     return timedelta(days=days)
+
+
+def order_due_ids(db, kind_of, now, batch: int) -> list[int]:
+    """Due watch ids for one scheduler pass (flag on). ``db.due_watch_ids``
+    yields a pool of 4x ``batch`` oldest-due first; the longest-waiting watch
+    always keeps the first slot (so nothing starves), the rest follow by
+    ``priority``, all cut to ``batch``."""
+    pool = db.due_watch_ids(now, batch, candidates=4)
+    if not pool:
+        return []
+    oldest, rest = pool[0], pool[1:]
+    ranked = []
+    for i in rest:
+        w = db.get_watch(i)
+        if w is not None:
+            ranked.append((priority(kind_of(w), w, now.date()), i))
+    ranked.sort(key=lambda t: (t[0], t[1]))
+    return ([oldest] + [i for _, i in ranked])[:batch]

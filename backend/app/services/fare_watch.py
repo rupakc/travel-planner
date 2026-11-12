@@ -448,12 +448,10 @@ def _recent_prices(watch_kind: str, watch_id) -> list[float]:
     if watch_id is None:
         return []
     if watch_kind == "flight":
-        rows = fare_watch_db.get_history(watch_id)
-    else:
-        from ..db import price_watch_db
+        return fare_watch_db.recent_prices(watch_id, 5)
+    from ..db import price_watch_db
 
-        rows = price_watch_db.get_history(watch_id)
-    return [r["price"] for r in rows[-5:]]
+    return price_watch_db.recent_prices(watch_id, 5)
 
 
 def next_check(
@@ -474,19 +472,6 @@ def next_check(
         except Exception:  # scheduling must never fail a check
             logger.warning("adaptive interval failed", exc_info=True)
     return now + timedelta(hours=settings.fare_watch_interval_hours * factor)
-
-
-def _ordered_due_ids(db, kind_of, now: datetime) -> list[int]:
-    """Due watch ids, most urgent first (flag on): up to 4x the batch as
-    candidates, ranked by ``alert_schedule.priority``, cut to the batch."""
-    ids = db.due_watch_ids(now, CLAIM_BATCH, candidates=4)
-    ranked = []
-    for i in ids:
-        w = db.get_watch(i)
-        if w is not None:
-            ranked.append((alert_schedule.priority(kind_of(w), w, now.date()), i))
-    ranked.sort(key=lambda t: (t[0], t[1]))
-    return [i for _, i in ranked[:CLAIM_BATCH]]
 
 
 def _notify(watch: dict, note: dict, now: datetime) -> dict:
@@ -787,7 +772,9 @@ async def run_due(
             logger.info("Removed %d notifications older than 180 days", removed)
     fare_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
     if alert_pipeline.enabled():
-        ids = _ordered_due_ids(fare_watch_db, lambda w: "flight", now)
+        ids = alert_schedule.order_due_ids(
+            fare_watch_db, lambda w: "flight", now, CLAIM_BATCH
+        )
     else:
         ids = fare_watch_db.due_watch_ids(now, CLAIM_BATCH)
     sem = asyncio.Semaphore(CONCURRENCY)

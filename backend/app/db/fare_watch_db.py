@@ -335,6 +335,17 @@ def add_history(watch_id: int, entry: dict) -> None:
         )
 
 
+def recent_prices(watch_id: int, n: int) -> list[float]:
+    """The last ``n`` observed prices (nulls ignored), oldest first."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT price FROM fare_watch_history WHERE watch_id = ? AND price IS NOT NULL "
+            "ORDER BY id DESC LIMIT ?",
+            (watch_id, n),
+        ).fetchall()
+    return [r[0] for r in reversed(rows)]
+
+
 def get_history(watch_id: int) -> list[dict]:
     """Oldest first."""
     with get_connection() as conn:

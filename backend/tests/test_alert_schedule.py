@@ -118,13 +118,15 @@ async def _fetch(watch, key):
 @pytest.mark.asyncio
 async def test_budget_short_checks_nearest_departure_first(sched, monkeypatch):
     monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
-    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 1)
+    monkeypatch.setattr(settings, "fare_watch_daily_call_budget", 2)
     monkeypatch.setattr(settings, "fare_watch_user_daily_share", 1.0)
     far, near, mid = _watch(sched, 200), _watch(sched, 5), _watch(sched, 60)
     outs = await fare_watch.run_due("k", clock=lambda: NOW, fetch=_fetch)
     statuses = {o.watch["id"]: o.status for o in outs if o and o.watch}
     assert statuses[near["id"]] == "checked"
-    assert statuses.get(far["id"]) != "checked"
+    # the longest-waiting watch (far, listed first) keeps its reserved slot;
+    # the second slot goes by priority, so near beats mid
+    assert statuses[far["id"]] == "checked"
     assert statuses.get(mid["id"]) != "checked"
 
 
@@ -159,3 +161,18 @@ async def test_flag_off_next_check_unchanged(sched, monkeypatch):
         ws[0]["id"],
         ws[1]["id"],
     ]
+
+
+@pytest.mark.asyncio
+async def test_overdue_far_watch_is_not_starved(sched, monkeypatch):
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
+    monkeypatch.setattr(fare_watch, "_estimate_calls", lambda w: 0)
+    far = _watch(sched, 300)
+    fare_watch_db.update_watch(
+        far["id"], next_check_at=(NOW - timedelta(days=2)).isoformat()
+    )
+    for _ in range(51):
+        _watch(sched, 3)
+    outs = await fare_watch.run_due("k", clock=lambda: NOW, fetch=_fetch)
+    assert len(outs) == 50
+    assert far["id"] in {o.watch["id"] for o in outs if o and o.watch}
