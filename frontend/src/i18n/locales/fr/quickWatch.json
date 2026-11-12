@@ -11,5 +11,11 @@
   "error.live_prices_off": "Le suivi des prix n'est pas disponible pour le moment.",
   "error.spec_invalid": "Nous n'avons pas pu mettre en place un suivi pour cet élément.",
   "error.generic": "Impossible de démarrer le suivi. Veuillez réessayer.",
-  "toast.undoFailed": "Impossible d'annuler. Supprimez le suivi sur la page Alertes."
+  "toast.undoFailed": "Impossible d'annuler. Supprimez le suivi sur la page Alertes.",
+  "prices.title": "Prix",
+  "prices.empty": "Rien n'est encore surveillé pour ce voyage.",
+  "prices.hub": "Ouvrir le centre des alertes de prix",
+  "prices.watchTrip": "Surveiller les prix de ce voyage",
+  "prices.loadFailed": "Impossible de charger les prix surveillés.",
+  "prices.pending": "Première vérification en attente"
 }

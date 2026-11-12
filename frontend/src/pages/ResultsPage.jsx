@@ -55,6 +55,9 @@ import WatchActivityButton from '../components/alerts/WatchActivityButton'
 import { ActivityTripContext } from '../components/alerts/activityTripContext'
 import WatchHotelButton from '../components/alerts/WatchHotelButton'
 import WatchTripButton from '../components/alerts/WatchTripButton'
+import { QuickWatchHotel, QuickWatchActivity, QuickWatchFare } from '../components/alerts2/QuickWatchFor'
+import WatchSuggestions from '../components/alerts2/WatchSuggestions'
+import { useAlertsV2 } from '../hooks/useAlertsV2'
 import { cheapestFlightPrice, tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import { daysUntil, priceInsightsChip } from '../utils/fareCalendar'
 import VerificationBadge, { VerificationConflictBanner, FoundOnlineBadge } from '../components/VerificationBadge'
@@ -848,6 +851,7 @@ export function HotelsSection({ data, selections, onSelect, budget = null, searc
                   {h.source && <span className="px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-500 border border-violet-200">{h.source}</span>}
                   <FoundOnlineBadge item={h} />
                   <WatchHotelButton hotel={h} searchData={searchData} source="results" />
+                  <QuickWatchHotel hotel={h} searchData={searchData} surface="results" />
                 </div>
                 <button type="button" data-tid="results.hotel.add" onClick={e => { e.stopPropagation(); onSelect('hotel', isSelected ? null : h) }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}>
@@ -1066,6 +1070,7 @@ export function ActivitiesSection({ data, selections, onSelect, weatherData, bud
               {a.city && <CityChip city={a.city} />}
               {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} data-tid="results.activity.book" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"><ExternalLink size={10} /> {t('activities.bookNow')}</a>}
               <WatchActivityButton activity={a} source="results_activity" />
+              <QuickWatchActivity activity={a} surface="results" />
               {a.source && !a.from_link && <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-500 border border-emerald-200">{a.source}</span>}
               <FoundOnlineBadge item={a} />
               {budget?.picked.has(a.name) && <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">{t('activities.fitsBudget')}</span>}
@@ -2424,6 +2429,8 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   const [shareMsg, setShareMsg] = useState(null)  // { id, url } | { id, error }
   const [isDragOver, setIsDragOver] = useState(false)
   const [isDragOverSaved, setIsDragOverSaved] = useState(false)
+  const alertsV2 = useAlertsV2()
+  const [suggestPlanId, setSuggestPlanId] = useState(null)
 
   const selectedCount = countSelections(selections) + Object.values(selections.itinerary_notes).filter(Boolean).length
   const estimatedCost = computePlanCost(selections, searchData)
@@ -2495,6 +2502,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
         loadPlans()
         const tripId = await afterSave(res, isUpdate)
         setSavedTripId(journey.enabled ? tripId : null)
+        if (alertsV2.on && tripId != null) setSuggestPlanId(tripId)
         setTimeout(() => { setSaveMsg(''); setSavedTripId(null) }, journey.enabled ? 8000 : 3000)
       } else setSaveMsg('failed')
     } catch { setSaveMsg('failed') }
@@ -2559,6 +2567,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
 
   return (
     <>
+      {alertsV2.on && suggestPlanId != null && <WatchSuggestions planId={suggestPlanId} onDone={() => setSuggestPlanId(null)} />}
       {/* Backdrop */}
       {isOpen && <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />}
 
@@ -2644,6 +2653,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
               <div className="mt-1.5">
                 <WatchFareButton variant="inline" trip={tripFromSearch(searchData)} source="my_plan"
                   price={cheapestFlightPrice(results?.flights)} insights={results?.flights?.price_insights} />
+                <QuickWatchFare trip={tripFromSearch(searchData)} planId={loadedPlanId ?? null} surface="results" />
               </div>
             </div>
           )}
@@ -2688,6 +2698,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                 <a data-tid="drawer.book-hotel" href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1.5"><ExternalLink size={10} /> {t('drawer.viewBook')}</a>
               )}
               <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchData} source="my_plan" /></div>
+              <div className="mt-1.5"><QuickWatchHotel hotel={selections.hotel} searchData={searchData} planId={loadedPlanId ?? null} surface="results" /></div>
             </div>
           )}
 
@@ -2709,6 +2720,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                         <a data-tid="drawer.book-activity" href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('drawer.book')}</a>
                       )}
                       <div className="mt-0.5"><WatchActivityButton activity={a} source="my_plan" /></div>
+                      <div className="mt-0.5"><QuickWatchActivity activity={a} planId={loadedPlanId ?? null} surface="results" /></div>
                     </div>
                     <button data-tid="drawer.remove.activities" onClick={() => onRemoveSelection('activities', a)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
@@ -3991,6 +4003,7 @@ export default function ResultsPage() {
           )}
           <WatchFareButton variant="header" trip={tripFromSearch(searchData)} source="flights_header"
             price={cheapestFlightPrice(data)} insights={data?.price_insights} />
+          <QuickWatchFare trip={tripFromSearch(searchData)} surface="results" onColour />
           {canShowFareCalendar && (
             <button data-tid="page.fare-calendar" onClick={e => {
               e.stopPropagation()
