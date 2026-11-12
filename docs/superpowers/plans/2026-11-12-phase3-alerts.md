@@ -616,3 +616,9 @@ Every PR is green and deployable alone. The backend v2 behaviour is off by defau
 2. **Wording.** Is the "caught a drop of $X" framing acceptable instead of "you saved $X"? We can't know whether the user booked. The share card says "I caught $245 in price drops with Voyager".
 3. **Digest defaults.** Opt-in, Mondays 09:00 local, email + in-app. Should the digest also push (it is currently in-app only, to avoid noise)?
 
+
+## Owner-question rulings (main controller, 2026-11-12)
+
+1. **SerpAPI key in production:** this stays the owner's call. Ship everything config-gated, with the "live checks paused" state shown when no key is set. Nothing may fail or invent prices without a key.
+2. **Savings wording:** use "caught a drop of $X". "You saved" is never used, because we can't know whether the user booked.
+3. **Digest channels:** the digest goes out in-app and by email. Its push is off by default, with a user toggle in alert preferences.
