@@ -15,6 +15,7 @@ from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.errors import ApiError
 from ...core.rate_limit import rate_limit, require_ai_access
+from ...core.trip_access import owned_trip
 from ...db import (
     alerts_db,
     fare_watch_db,
@@ -28,6 +29,7 @@ from ...services import (
     alert_email,
     alert_moments,
     alert_story,
+    alert_suggest,
     fare_watch,
     price_watch,
 )
@@ -303,3 +305,18 @@ def digest_unsubscribe(token: str = Query("")):
 
 
 # ── END digest unsubscribe ────────────────────────────────────────────────────
+
+# ── BEGIN suggestions (Task 9) ────────────────────────────────────────────────
+
+
+@router.get("/alerts/suggestions")
+def watch_suggestions(plan_id: int, user: dict = Depends(get_current_user)) -> dict:
+    """Watches worth setting up for a saved plan (local: no SerpAPI call)."""
+    plan = owned_trip(plan_id, user)
+    return {
+        "suggestions": alert_suggest.suggestions(plan, user),
+        "live_prices": bool(settings.serpapi_key),
+    }
+
+
+# ── END suggestions ───────────────────────────────────────────────────────────
