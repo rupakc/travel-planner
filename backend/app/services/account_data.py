@@ -62,6 +62,12 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "social_profiles": ("user_id", "id"),
     "social_limits": ("user_id", "id"),
     "quiz_sessions": ("user_id", "id"),
+    "ideas": ("author_id", "id"),
+    "idea_likes": ("user_id", "id"),
+    "idea_saves": ("user_id", "id"),
+    "comments": ("author_id", "id"),
+    "reports": ("reporter_id", "id"),
+    "restrictions": ("user_id", "id"),
 }
 
 # child table → WHERE clause over its parent; the one parameter is the user id
@@ -90,6 +96,19 @@ KEYED_TABLES: dict[str, str] = {
     # a follow or block row holds the user on either side
     "social_follows": "? IN (follower_id, followee_id)",
     "social_blocks": "? IN (blocker_id, blocked_id)",
+    # reports first: their lookup reads the comments the next entries delete
+    "reports": (
+        "(target = 'idea' AND target_id IN"
+        " (SELECT CAST(id AS TEXT) FROM ideas WHERE author_id = ?1))"
+        " OR (target = 'comment' AND target_id IN"
+        " (SELECT CAST(id AS TEXT) FROM comments WHERE author_id = ?1"
+        " OR idea_id IN (SELECT id FROM ideas WHERE author_id = ?1)))"
+    ),
+    # other people's likes, saves and comments on the user's ideas
+    **{
+        t: "idea_id IN (SELECT id FROM ideas WHERE author_id = ?)"
+        for t in ("idea_likes", "idea_saves", "comments")
+    },
 }
 
 # rows that outlive the user, with the reference cleared: table → column

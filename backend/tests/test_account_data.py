@@ -89,6 +89,11 @@ _FIXED = {
     "user_settings": {"data": "{}"},
     "price_watches": {"kind": "hotel"},
     "alert_outbox": {"channel": "push"},
+    # composite integer keys are not auto-filled; the idea is nobody's, so
+    # deleting one user's ideas never takes the other user's rows with it
+    "idea_likes": {"idea_id": 10**9},
+    "idea_saves": {"idea_id": 10**9},
+    "comments": {"idea_id": 10**9},
 }
 
 
