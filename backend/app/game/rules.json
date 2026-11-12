@@ -16,7 +16,10 @@
     "deal_target": {"points": 30, "daily_cap": 3},
     "deal_saved_50": {"points": 50, "daily_cap": 1, "once": true},
     "deal_saved_200": {"points": 100, "daily_cap": 1, "once": true},
-    "deal_saved_1000": {"points": 250, "daily_cap": 1, "once": true}
+    "deal_saved_1000": {"points": 250, "daily_cap": 1, "once": true},
+    "quiz_daily": {"points": 10, "daily_cap": 1},
+    "quiz_perfect": {"points": 20, "daily_cap": 3},
+    "quiz_pack": {"points": 5, "daily_cap": 3}
   },
   "badges": {
     "verified": {"rule": "email_verified", "target": 1, "tier": "bronze", "icon": "mail-check"},
@@ -43,11 +46,16 @@
     "bullseye": {"rule": "deal_target", "target": 1, "tier": "bronze", "icon": "target"},
     "saver_50": {"rule": "deal_saved_50", "target": 1, "tier": "bronze", "icon": "piggy-bank"},
     "saver_200": {"rule": "deal_saved_200", "target": 1, "tier": "silver", "icon": "piggy-bank"},
-    "saver_1000": {"rule": "deal_saved_1000", "target": 1, "tier": "gold", "icon": "piggy-bank"}
+    "saver_1000": {"rule": "deal_saved_1000", "target": 1, "tier": "gold", "icon": "piggy-bank"},
+    "quiz_regular": {"rule": "quiz_daily", "target": 7, "tier": "bronze", "icon": "circle-help"},
+    "quiz_devoted": {"rule": "quiz_daily", "target": 30, "tier": "silver", "icon": "circle-help"},
+    "quiz_ace": {"rule": "quiz_perfect", "target": 1, "tier": "bronze", "icon": "sparkles"},
+    "quiz_master": {"rule": "quiz_perfect", "target": 10, "tier": "silver", "icon": "trophy"}
   },
   "levels": {"min_xp": [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000]},
   "streaks": {
     "daily": {"freeze_per_week": 1},
-    "trip_checkin": {"freeze_per_week": 1}
+    "trip_checkin": {"freeze_per_week": 1},
+    "quiz": {"freeze_per_week": 1}
   }
 }

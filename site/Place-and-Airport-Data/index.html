@@ -1,0 +1,2012 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+        <link rel="prev" href="../Agent-System/">
+      
+      
+        <link rel="next" href="../Frontend/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Place and Airport Data - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#place-and-airport-data" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Place and Airport Data
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sources-and-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources and licences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#committed-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Committed files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Committed files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hintsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hints.json
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regenerating-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regenerating the data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioned-seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioned seeding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-a-typed-place-resolves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How a typed place resolves
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How a typed place resolves">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-rules-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The rules, in order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suburbs-satellite-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suburbs (satellite places)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-town-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-town features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bare-airport-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bare airport codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#folding-and-shared-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Folding and shared rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autocomplete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autocomplete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Social-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="place-and-airport-data">Place and Airport Data</h1>
+<p>Travel Planner turns whatever the user types ("Milano", "Portland, ME", "Zermatt") into airport codes for live flight search, and offers an airport-and-place typeahead. Both run against open data committed to the repo and seeded into SQLite. No web call is involved, except for one narrow case described under <a href="#bare-airport-codes">Bare airport codes</a>.</p>
+<hr />
+<h2 id="sources-and-licences">Sources and licences</h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Files used</th>
+<th>Licence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://ourairports.com/data/">OurAirports</a></td>
+<td><code>airports.csv</code>, <code>regions.csv</code>, <code>countries.csv</code></td>
+<td>Public domain</td>
+</tr>
+<tr>
+<td><a href="https://www.geonames.org/">GeoNames</a></td>
+<td><code>cities1000.txt</code>, <code>admin1CodesASCII.txt</code>, <code>allCountries.zip</code></td>
+<td><a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Attribution:</strong> Contains data from GeoNames (geonames.org), CC BY 4.0. The GeoNames data has been modified (filtered, name-folded, scored and linked to airports; country names, non-town features and districts extracted; a suburb flag derived), and GeoNames does not endorse these changes. Airport data comes from OurAirports. In <code>countries.csv</code> the <code>code</code> and <code>name</code> columns are OurAirports data and the <code>names</code> and <code>qualifier_names</code> columns GeoNames data.</p>
+<p>The app footer shows "Place data © GeoNames (CC BY 4.0) · Airport data: OurAirports". <code>backend/app/db/data/README.md</code> holds the full source, licence and derivation notes.</p>
+<p><strong>Snapshot date:</strong> <strong>2026-10-29</strong> for OurAirports, <code>cities1000</code> and <code>admin1CodesASCII</code>; <strong>2026-10-30</strong> for <code>allCountries</code>.</p>
+<hr />
+<h2 id="committed-files">Committed files</h2>
+<p><code>backend/app/db/data/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Size</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>airports.csv</code></td>
+<td>347 KB</td>
+<td>4,014 airports (4,010 with scheduled service): iata, icao, name, city, country, country_code, region, type_rank, scheduled, lat, lng</td>
+</tr>
+<tr>
+<td><code>places.csv.gz</code></td>
+<td>5.6 MB</td>
+<td>162,014 GeoNames places with at least 1,000 people (excluding sections of places and historical, abandoned or destroyed places), each linked to up to 3 ranked airports, with folded alternate names for places of 15k or more and a <code>satellite</code> flag (see <a href="#suburbs-satellite-places">Suburbs</a>)</td>
+</tr>
+<tr>
+<td><code>features.csv.gz</code></td>
+<td>1.7 MB</td>
+<td>31,995 notable GeoNames features that are not towns (islands, parks, resorts, regions, mountains, glaciers, caves, lakes, sites…) and famous districts, each with up to 3 airports</td>
+</tr>
+<tr>
+<td><code>admin1.csv</code></td>
+<td>121 KB</td>
+<td>3,865 first-level divisions (states, provinces, regions)</td>
+</tr>
+<tr>
+<td><code>countries.csv</code></td>
+<td>265 KB</td>
+<td>Every OurAirports country, with 18,071 native and other-language names from GeoNames (and 99 qualifier-only ones) ("Deutschland", "Brasil", "Nippon")</td>
+</tr>
+<tr>
+<td><code>hints.json</code></td>
+<td>15 KB</td>
+<td>Hand-curated, not generated (see below)</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>10 KB</td>
+<td>Sources, licences, derivation rules, regeneration, conflict report</td>
+</tr>
+</tbody>
+</table>
+<p>The total is about 7 MB (the limit is 9 MB). In addition, <code>backend/app/db/seed_airports.py</code> holds a curated list of 402 airports with served-city overrides, and <code>REPLACED_CODES</code> maps 14 retired codes to their replacements (for example PNH → KTI).</p>
+<h3 id="hintsjson">hints.json</h3>
+<p>Curated knowledge the open data lacks:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Entries</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>islands</code></td>
+<td>106</td>
+<td>Islands and their airports ("Sicily" and "Sardegna" → CTA, PMO, TPS / CAG, OLB, AHO; "Borneo" → BKI, KCH)</td>
+</tr>
+<tr>
+<td><code>destinations</code></td>
+<td>88</td>
+<td>Places without a useful airport of their own ("Machu Picchu" → CUZ, "Kyoto" → KIX, ITM; "Zermatt" → ZRH, GVA; "Monte Carlo" → NCE)</td>
+</tr>
+<tr>
+<td><code>regions</code></td>
+<td>22</td>
+<td>Regions ("Algarve" → FAO; "Lake Garda" → VRN, BGY, VCE)</td>
+</tr>
+<tr>
+<td><code>exonyms</code></td>
+<td>80</td>
+<td>Other-language or English names mapped to a GeoNames id, or to <code>"ambiguous"</code> ("Cologne" → Köln, "Milano" → Milan; "Odessa" is ambiguous unless qualified)</td>
+</tr>
+<tr>
+<td><code>city_aliases</code></td>
+<td>19</td>
+<td>Shorthands (SF, LA, KL, HCMC, NOLA…)</td>
+</tr>
+<tr>
+<td><code>country_aliases</code></td>
+<td>84</td>
+<td>"UK", "England", "Holland", "DPRK", "Eire", and countries' own native names verified against GeoNames, which win over any town of that name ("Deutschland", "Nederland" — not Nederland, Texas —, "España", "Nippon", "Suomi", "Hellas", "Sverige", "Misr", "Maroc"…)</td>
+</tr>
+<tr>
+<td><code>qualifier_country_aliases</code></td>
+<td>4</td>
+<td>KSA, PRC, ROK, ROC: countries only as a qualifier ("Riyadh, KSA", "Beijing PRC"), because typed alone each is a scheduled airport code (Kosrae, Prescott, Rockhampton, Rochester)</td>
+</tr>
+<tr>
+<td><code>saint_exceptions</code></td>
+<td>2</td>
+<td>Names that must not get St/Saint variants</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="regenerating-the-data">Regenerating the data</h2>
+<p><code>backend/scripts/build_place_data.py</code> is standard-library only and deterministic (sorted rows, gzip mtime 0); it takes about a minute and treats the downloaded sources as untrusted input. Download the OurAirports CSVs and GeoNames <code>cities1000.zip</code> / <code>admin1CodesASCII.txt</code> / <code>allCountries.zip</code> (423 MB, streamed, not unzipped) into a directory of their own, then from the repo root:</p>
+<pre><code class="language-bash">python3 -I backend/scripts/build_place_data.py \
+    --ourairports /path/to/ourairports-src \
+    --geonames-cities /path/to/geonames-src/extracted/cities1000.txt \
+    --geonames-admin1 /path/to/geonames-src/admin1CodesASCII.txt \
+    --geonames-all /path/to/geonames-src/allCountries.zip \
+    --out backend/app/db/data &gt; conflicts.txt
+</code></pre>
+<p>The script writes <code>airports.csv</code>, <code>places.csv.gz</code>, <code>admin1.csv</code>, <code>countries.csv</code> and <code>features.csv.gz</code>, and prints a summary and a conflict report to stdout (not committed). Then run <code>python3 -m pytest tests/test_build_place_data.py</code> from <code>backend/</code>, update the snapshot date in the data README, and commit the five files. The data README holds the derivation rules, including the notability threshold calibration for features. <code>hints.json</code> is edited by hand.</p>
+<hr />
+<h2 id="versioned-seeding">Versioned seeding</h2>
+<p>At startup, <code>seed()</code> in <code>backend/app/db/seed_airports.py</code> loads the files into the <code>airports</code>, <code>places</code>, <code>place_names</code>, <code>features</code>, <code>feature_names</code> and <code>admin1</code> tables of <code>$DATA_DIR/airports.db</code>. <code>feature_names</code> holds each feature's name, its ASCII spelling and both without a generic part ("Kakadu National Park" → "kakadu", "Mount Everest" → "everest") as tier 0, and its alternate names as tier 1.</p>
+<ul>
+<li>The <strong>data version</strong> is the sha256 of a loader tag (<code>place-data-loader:3</code>) plus the bytes of <code>airports.csv</code>, <code>places.csv.gz</code>, <code>admin1.csv</code> and <code>features.csv.gz</code>, truncated to 16 hex characters and stored as <code>meta.place_data_version</code>. An older <code>places</code> table gains its <code>satellite</code> column in place.</li>
+<li>If the stored version matches, seeding is skipped (about 5 ms).</li>
+<li>Otherwise one <code>BEGIN IMMEDIATE</code> transaction (waiting up to 30 s for another worker's lock) upserts the airports, sets <code>scheduled = 0</code> on old rows missing from the dataset, and rebuilds places, place names and divisions with their indexes. On an empty database this takes about 2.5 s and produces about 316,000 place-name rows, 113,000 feature-name rows and a database of about 33 MB.</li>
+<li>Backups leave these tables and the version out, so a restored database reseeds them.</li>
+</ul>
+<p>It can also be run by hand: <code>cd backend &amp;&amp; python -m app.db.seed_airports</code>. After seeding, <code>places_db.warm()</code> builds an in-memory airport-name index (about 0.06 s).</p>
+<hr />
+<h2 id="how-a-typed-place-resolves">How a typed place resolves</h2>
+<p><code>lookup_city_iata(text)</code> (<code>backend/app/db/database.py</code>) returns up to 3 comma-joined scheduled airport codes, best first, or <code>None</code>. The request validator (<code>backend/app/schemas/request.py</code>) uses it to fill <code>origin_iata</code> and <code>destination_iata</code> for flight search, the fare calendar and Compare. When it returns <code>None</code>, flights fall back to AI estimates for that route.</p>
+<h3 id="the-rules-in-order">The rules, in order</h3>
+<ol>
+<li><strong>An airport code.</strong> An upper-case three-letter code is used as typed, after mapping retired codes ("LHR" → LHR, "PNH" → KTI). Lower-case text tries places first and falls back to the code only if it is a scheduled airport ("lhr" → LHR).</li>
+<li><strong>A typeahead label</strong> such as "LGW — London, United Kingdom" uses its code alone.</li>
+<li><strong>A curated hint</strong>: an island, destination or region from <code>hints.json</code>, unless a stated country contradicts it.</li>
+<li><strong>The curated city list</strong>: airports whose served city matches the text (accent-folded, with St/Saint variants and city aliases), restricted by any stated country, ISO code, alias or region code. A city name that is ambiguous or contested gives <code>None</code>.</li>
+<li><strong>GeoNames place resolution</strong> (<code>resolve_place</code>, <code>backend/app/db/places_db.py</code>):</li>
+<li>Candidates are places whose own name matches. Alternate names count only when no place has that own name, or when the own-name places are small (under 20k) and the alternate one is at least 10× bigger and 150k or more.</li>
+<li>Exonyms from <code>hints.json</code> map an English name to a specific place, or mark it ambiguous.</li>
+<li>A country typed alone gives its top place; a first-level division ("Florida", "Scotland") joins as its top place unless a town of that name is comparably notable. Country names include the native and other-language names in <code>countries.csv</code> ("Deutschland" → BER, "Nippon" → HND); a name that is also the own name of a town of 15k or more stays the town's ("Columbia", South Carolina), unless it is the country's own name, curated as an alias ("Nederland" → AMS, not Nederland, Texas).</li>
+<li>Country names that are also a town's own name ("Eretria", "Coria", "Grenade") name the country only as a qualifier; typed alone they stay the town.</li>
+<li>Stated qualifiers (country name in any of those forms, ISO code, alias, a qualifier-only alias such as KSA, US/CA/AU/BR/IN region code or a division name) filter the candidates ("Berlin, Deutschland", "Riyadh, KSA"). A qualifier that contradicts every candidate gives <code>None</code>.</li>
+<li>An airport whose whole name equals the text can win ("Wagga Wagga" → WGA), but never over a place of 40k or more.</li>
+<li><strong>Suburbs yield to towns with their own airport.</strong> When the top candidate is a <a href="#suburbs-satellite-places">satellite</a> and the best candidate whose first airport is its own scores at least 1/10 of it, the satellites scoring above that town drop out ("Peoria" → PIA, Illinois, not the Phoenix suburb).</li>
+<li><strong>A namesake with its own named airport.</strong> When the top candidate would win without an airport named for it, and one comparable namesake (score within 5×, at least a third of the people) flies from its own named airport, that namesake leads if the top's nearest airport is over 75 km away ("Tongren" → TEN, Guizhou); otherwise the name is ambiguous ("Salisbury").</li>
+<li><strong>The winner must score 3× the next candidate</strong> (score = population × notability). A place under 15k wins only alone or through a hint; one under 5k with no airport within 100 km gives <code>None</code>.</li>
+<li><strong>Non-town features.</strong> When no candidate is a town of 15k or more (and no division or curated city has the name), a notable <a href="#non-town-features">feature</a> by that name answers with its airports ("Kakadu" → DRW; "Arches" → the national park's CNY, not the French village), unless a town of that name lies within 50 km of it (Paros, Naxos: the island town and its airport). Of several features, the most notable needs 3× the next one's notability; otherwise the answer is <code>None</code>, even when small towns share the name ("Mount Olympus": Cyprus or Greece). Districts answer the same way ("Ealing" → LHR, "Manly" → SYD), except by a contested name that many sections elsewhere share: then the answer is <code>None</code>, never another town ("Centar", "Chinatown", "Downtown"). An alternate-name town of 15k or more with at least twice the best feature's alternate names blocks the feature path and competes ("Vila" → Port Vila's VLI, not an Albanian peak); one known only by its people (not by alternate names) must have 3× the people of every town of that name, alternate names included ("Legazpi" stays the Philippine city).</li>
+<li>The place's linked airports are returned. With a curated city in the same country they are appended to the curated codes ("New York" → JFK, LGA, EWR); otherwise foreign airports are dropped unless the place has no domestic one.</li>
+<li><strong>Last resort</strong>: dataset airports whose display city matches.</li>
+</ol>
+<p>Text without a comma is also tried as "City, Qualifier" when the last words name a country or region ("Chicago IL", "Berlin Germany"). Generic affixes are retried too ("Zanzibar Island", "Banff National Park", "Tokyo city").</p>
+<h3 id="suburbs-satellite-places">Suburbs (satellite places)</h3>
+<p>A place is a <em>satellite</em> when its first airport is not named for it but for a place scoring at least 10× more within 60 km: Peoria, Arizona flies from Phoenix's PHX, while Peoria, Illinois has PIA. "Named" is <code>core.places.is_named_airport</code>: the airport's display city is the place or its name names the place, never distance alone. A <em>deep suburb</em> (owner ≥ 100× bigger) drops out when a namesake that is an ordinary satellite or flies from its named airport scores more ("Pontevedra" → Spain's SCQ, VGO, not the Buenos Aires suburb). A satellite that would win yields to a namesake with its named airport scoring ≥ 1/10 of it ("Peoria" → PIA); comparable namesakes stay ambiguous ("Redmond", "Darien"). Two comparable suburbs stay ambiguous ("Glendale": California and Arizona → <code>None</code>), and a satellite keeps its lead over a far smaller namesake.</p>
+<h3 id="non-town-features">Non-town features</h3>
+<p><code>features.csv.gz</code> holds 31,995 GeoNames features that are not towns: islands, archipelagos and atolls, peninsulas, parks and reserves, resorts, regions and coasts, mountains, ranges, peaks and volcanoes, valleys, lakes, beaches, ancient and historical sites, ruins and monuments, deserts, gorges and canyons, glaciers, capes, fjords and caves, plus 7,306 famous districts that take their city's airports (Ealing, Manly, Frankston, Shinjuku). Only notable ones are kept: at least 10 GeoNames alternate names (5 for parks, reserves, resorts, glaciers, capes, fjords, caves, islands and deserts; such a weakly notable island or desert is dropped when another GeoNames row has its name), and an airport. Names also match without generic words in several languages ("Isola Stromboli" → "stromboli", "Parque Nacional de Doñana" → "donana", "Killington Peak", "Annapurna I"); after an island, park or peninsula affix only a feature of that kind answers ("San Blas Islands" is not Argentina's San Blas). Their airports are those on the island (for islands), then large and medium airports within 250 km, same country first, by distance with a large airport counted at half its distance (Florida Keys → EYW, then MIA; Lake Tahoe → RNO before Truckee). The data README has the calibration (5 → 83k features and 3.6 MB; 10 → 14k and 0.9 MB; 20 → 1.3k).</p>
+<p>Curated hints still come first; features answer names the hints do not cover ("Grand Teton" → JAC, "Crater Lake" → MFR, "Mount Rushmore" → RAP, "Tikal" → FRS, "Haida Gwaii" → YZP). Vast regions give a single point, so their airports can be rough (Sumatra → PKU, Pekanbaru); big islands with several gateways are curated ("Borneo" → BKI, KCH).</p>
+<h3 id="examples">Examples</h3>
+<p>Results from the current data:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Result</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Milano</code></td>
+<td>LIN, MXP, BGY</td>
+<td>Exonym entry mapping the Italian name to Milan</td>
+</tr>
+<tr>
+<td><code>Kyoto</code></td>
+<td>KIX, ITM</td>
+<td>Curated destination hint (Kyoto has no airport)</td>
+</tr>
+<tr>
+<td><code>Zermatt</code></td>
+<td>ZRH, GVA</td>
+<td>Curated destination hint (no airport nearby)</td>
+</tr>
+<tr>
+<td><code>Portland, ME</code></td>
+<td>PWM</td>
+<td>The state qualifier picks Portland, Maine</td>
+</tr>
+<tr>
+<td><code>Portland</code></td>
+<td>PDX</td>
+<td>Portland, Oregon dominates by score</td>
+</tr>
+<tr>
+<td><code>Valencia</code></td>
+<td>None</td>
+<td>Valencia, Spain and the larger Valencia, Venezuela: ambiguous</td>
+</tr>
+<tr>
+<td><code>Valencia, Spain</code></td>
+<td>VLC</td>
+<td>The country qualifier settles it</td>
+</tr>
+<tr>
+<td><code>Monte Carlo</code></td>
+<td>NCE</td>
+<td>Curated destination hint</td>
+</tr>
+<tr>
+<td><code>New York</code></td>
+<td>JFK, LGA, EWR</td>
+<td>Curated city plus the place's other airports</td>
+</tr>
+<tr>
+<td><code>Chicago IL</code></td>
+<td>ORD, MDW, GYY</td>
+<td>No-comma reading as "Chicago, IL"</td>
+</tr>
+<tr>
+<td><code>Paris, Texas</code></td>
+<td>DAL, DFW</td>
+<td>Never CDG</td>
+</tr>
+<tr>
+<td><code>Springfield</code></td>
+<td>None</td>
+<td>Many similar-sized namesakes</td>
+</tr>
+<tr>
+<td><code>Berlin, Japan</code></td>
+<td>None</td>
+<td>The stated country contradicts the place</td>
+</tr>
+<tr>
+<td><code>Deutschland</code></td>
+<td>BER</td>
+<td>GeoNames country name</td>
+</tr>
+<tr>
+<td><code>Riyadh KSA</code></td>
+<td>RUH</td>
+<td>No-comma qualifier; KSA alone stays Kosrae's code</td>
+</tr>
+<tr>
+<td><code>Peoria</code></td>
+<td>PIA</td>
+<td>Peoria, Arizona is a Phoenix suburb (satellite)</td>
+</tr>
+<tr>
+<td><code>Glendale</code></td>
+<td>None</td>
+<td>Two comparable suburbs</td>
+</tr>
+<tr>
+<td><code>Kakadu</code></td>
+<td>DRW</td>
+<td>Notable national park, no town of that name</td>
+</tr>
+<tr>
+<td><code>Everest</code></td>
+<td>KTM, LUA, TPJ</td>
+<td>Mount Everest (a feature)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bare-airport-codes">Bare airport codes</h3>
+<p>The one web path: when a request's origin or destination is a bare 3-letter code that is not in the database or <code>REPLACED_CODES</code>, <code>lookup_iata</code> runs a DuckDuckGo search plus an LLM extraction (agent model, <code>llm.generate_sync</code>) to name the city, and stores the answer (<code>backend/app/db/database.py</code>). Everything else is local.</p>
+<h3 id="folding-and-shared-rules">Folding and shared rules</h3>
+<p><code>app.core.places.fold_place</code> (accent and case folding) is shared by the generator and the runtime, so names match the same way in both. <code>backend/app/core/places.py</code> also loads <code>hints.json</code> and defines <code>OWN_AIRPORT_KM = 25</code> and <code>NEVER_LINK = {"ECN"}</code> (Ercan is never suggested for a place, only when typed). Region code tables for the US, Canada, Australia, Brazil and India live in <code>backend/app/db/airport_regions.py</code>.</p>
+<hr />
+<h2 id="autocomplete">Autocomplete</h2>
+<p><code>GET /api/airports/search?q=&amp;limit=</code> (<code>search_airports</code> in <code>backend/app/db/database.py</code>; default 10 results, at most 50):</p>
+<ul>
+<li>Matches airports by code, city, airport name or country, plus the airports of GeoNames places and curated hints whose folded name starts with the query ("kyoto" → ITM, KIX, …; "milan" → MXP, LIN, BGY).</li>
+<li>From the fourth letter, when no town of 15k or more and no curated hint matches, up to 3 notable features whose name starts with the query add their airports, below every town match ("kakadu" → DRW, MNG).</li>
+<li>A country's other name or alias suggests the airports of the place the resolver picks for it, and keeps namesakes abroad out ("deutschland" → BER, not Deutschlandsberg's GRZ; "nederland" → AMS, RTM). From five letters, a prefix of one country's other names suggests that gateway first (a GeoNames other-language name yields to a town or district whose own name starts so: "jordaa" → Amsterdam's Jordaan, not Jordan) and still lists the towns ("deuts" → BER, then GRZ). Official names still match the airports' country column ("germany" lists German airports).</li>
+<li>The suburb rule applies to every matched name: a satellite the resolver sets aside ranks just below its namesake, and stays listed ("peori" → PIA, PHX; "pontevedra" → SCQ, EZE, VGO, AEP).</li>
+<li>Features also match by alternate and short names ("sifnos" → JTR).</li>
+<li>When the whole query (four letters or more) resolves by its own name to a town of 15k or more, or to a curated hint, feature or district while no real town's name starts so, <code>lookup_city_iata</code>'s answer leads the list ("ealing" → LHR before Ealing, New Zealand's TIU; "peoria" → PIA).</li>
+<li>Alternate names count for places of 100k or more from the fourth letter ("münch" → München).</li>
+<li>A place contributes only its own-country airports, and only places scoring at least 1/10 of the best match count.</li>
+<li>Order: exact code, code prefix, exact name, name prefix, then the rest. Lower-case three-letter text that names a place lists the place first ("hue" → HUI; "HUE" → HUE). Within a class, the more notable place comes first, then curated order, then the bigger airport.</li>
+<li>"Contains" matches are dropped once there are real matches, and unscheduled airports appear only for their exact code.</li>
+</ul>
+<p>Each row has <code>iata_code, name, city, country, country_code</code>.</p>
+<hr />
+<h2 id="quality">Quality</h2>
+<ul>
+<li><strong>Golden set.</strong> <code>backend/tests/data/golden_places.csv</code> has 736 cases (443 resolution, 275 data, 18 autocomplete; 578 "first code matches", 98 exact, 50 subset and 10 expected <code>None</code>). <code>tests/test_golden_places_runtime.py</code> runs them all and forbids web calls.</li>
+<li><strong>Fresh blind probe.</strong> On inputs not used during development, about 1.7% resolved to a wrong airport. More inputs now resolve to <code>None</code> by design: when a name is genuinely ambiguous, no answer (and an AI-estimated fare) is better than a confident wrong airport.</li>
+<li><strong>Country names, suburbs and features (2026-10-30).</strong> Measured on the five earlier probe sets (2,484 inputs) and a fresh blind set of 451: on the earlier sets no input gained a wrong airport and one was fixed (Peoria); on the fresh set the 8 wrong answers (7 also on <code>main</code>) were fixed. These figures hold for those sets only.</li>
+<li><strong>Speed.</strong> <code>lookup_city_iata</code> takes about 0.8 ms per call at p50 and under 2.5 ms at p99 (warm), so request handlers call it synchronously.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

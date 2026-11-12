@@ -1,0 +1,1523 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Phase 6 — Notifications Implementation Plan - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-6-notifications-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 6 — Notifications Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Social-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-6-notifications-implementation-plan">Phase 6 — Notifications Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> use superpowers:subagent-driven-development. Steps use <code>- [ ]</code>.</p>
+</blockquote>
+<p><strong>Goal:</strong> Immersive, respectful notifications. Server-side categories, quiet hours and caps; localized trip-phase pushes (T-30, T-7, T-1, morning brief); price drops that respect the same controls; APNs for iOS (inert until the owner sends an Apple key); one client contract for iOS and Android.</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-11-10-voyager-reimagined-design.md</code> §7, §5a, §6 (anti-spam), §8, §11 row 6. <strong>Builds on:</strong> <code>services/push.py</code> (FCM), <code>alert_delivery.py</code> (quiet hours/caps/outbox, shared), <code>alerts_db.alert_prefs</code>, <code>notifications_db</code>, <code>devices_db</code>, Phase 2 <code>trip_prep</code>/<code>trip_phase</code>/<code>trip_snapshots</code>.</p>
+<h2 id="rulings-prudent-defaults-owner-can-change-by-config">Rulings (prudent defaults; owner can change by config)</h2>
+<ol>
+<li><strong>Flag.</strong> <code>NOTIFICATIONS_V2_ENABLED</code> (<code>settings.notifications_v2_enabled</code>, default <code>false</code>; switched on after the final review). The new routes always exist. The flag gates only behaviour: category checks on price pushes, the trip-push loop, and APNs/FCM routing by platform. Off = today's behaviour byte for byte. <code>GET /config</code> gains <code>features.notifications_api: 1</code>, <code>features.notifications_v2: bool</code>, <code>features.apns: bool</code> (key configured).</li>
+<li><strong>Categories</strong> (per-user toggles, all default on): <code>price_drops</code>, <code>trip_reminders</code> (T-30/T-7/T-1), <code>morning_brief</code>, <code>weather</code>, <code>nearby</code> (a client-side switch the apps honour for on-device local notifications; the server never sends it), plus reserved <code>social</code>, <code>quiz</code> (stored and returned, no sender until Phase 5).</li>
+<li><strong>One source of truth for quiet hours</strong>: they stay in <code>alert_prefs.quiet_hours</code> (Phase 3). The new settings routes read and write that same value, so both UIs agree. Quiet window is evaluated in the account <code>timezone</code>. With no timezone, quiet hours are not applied, and the morning brief is <strong>skipped</strong>; T-x reminders go out from 09:00 UTC.</li>
+<li><strong>Caps.</strong> New global <code>daily_cap</code> (int 1–10, default 3) counts non-price pushes per user per local day. Price drops are exempt from it and keep Phase 3's per-kind caps. Held-over-quiet items are re-checked against the cap when released.</li>
+<li><strong>Held items.</strong> A push in quiet hours is held until the window ends and sent then; if held more than 12 h it is dropped. The in-app row is always written, and the user sees it in the notification list.</li>
+<li><strong>Dedupe.</strong> One push per <code>(user, plan, kind)</code> ever, enforced by a unique key in a new <code>notify_log</code> table. Morning brief is per <code>(plan, local day)</code>.</li>
+<li><strong>Localization.</strong> Text is rendered server-side from <code>services/notify_text.py</code> in the 7 languages: user setting <code>language</code>, else the newest device <code>locale</code>, else <code>en</code>. The same templates are served by <code>GET /notifications/catalog</code> so apps localize on-device notifications from one source.</li>
+<li><strong>Location privacy.</strong> The server never receives or stores location, and nothing location-like enters telemetry. "Localized recommendations" are (a) the morning brief, using the plan's own destination, today's itinerary slot and a static country tip; (b) on-device "near you" notifications built from the catalog template and the existing <code>/nearby</code> (coarse place data). The contract tells apps not to send coordinates anywhere new.</li>
+<li><strong>Gamified touches.</strong> The morning brief deep-links to Today (check-in). Push text never mentions streaks or points, and never shows a "streak at risk" nudge (guardrail: never punishing). With <code>hide_game</code> no game wording appears at all.</li>
+<li><strong>APNs</strong> is built (<code>services/apns.py</code>, ES256 JWT via PyJWT, HTTP/2 via <code>httpx[http2]</code>) and inert until <code>APNS_TEAM_ID</code>, <code>APNS_KEY_ID</code>, <code>APNS_KEY_P8</code> (or <code>APNS_KEY_FILE</code>) and <code>APNS_BUNDLE_ID</code> (default <code>io.github.rupakc.travelplanner</code>) are set; <code>APNS_SANDBOX</code> toggles the host. <code>/devices</code> additively accepts <code>platform: "ios"</code>. Tests use <code>httpx.MockTransport</code>, never Apple.</li>
+<li><strong>Deferred</strong> (follow-ups): live weather-change detection (needs a polling budget; <code>weather</code> covers the T-1 and morning-brief weather line from the stored snapshot), web push (VAPID), social/quiz senders, <code>notify_log</code> per-day analytics.</li>
+</ol>
+<h2 id="global-constraints">Global constraints</h2>
+<ul>
+<li>Additive schema only (<code>CREATE TABLE IF NOT EXISTS</code>); new tables <code>notify_prefs</code>, <code>notify_log</code> join the GCS user-table backup set. Old SPA and Android app keep working with the new backend (extra <code>data</code> keys, new kinds are ignored by the old UI; check <code>notifications</code> rendering tolerates unknown <code>kind</code>). The new SPA on the old backend hides the section (feature-detect <code>features.notifications_api</code>).</li>
+<li>No SerpAPI, FCM or Apple traffic in any test; fakes only. <code>ruff check backend/</code>, <code>cd frontend &amp;&amp; npx eslint src/ --max-warnings 0</code>, <code>mkdocs build --strict</code>, pytest, vitest all green.</li>
+<li>i18n: every new UI string in all 7 languages, one new namespace <code>notifications</code> (register in <code>routeNamespaces.js</code> for <code>/account</code>). Light default, dark via tokens only.</li>
+<li>Telemetry: closed registry + <code>docs/Telemetry.md</code> rows; props enums/bools/ints only. New events: <code>notif_settings_view {}</code>, <code>notif_category_toggle {category: enum, on: bool}</code>, <code>notif_quiet_hours_change {enabled: bool}</code>, <code>notif_cap_change {cap: int}</code>, <code>notif_open {category: enum, source: enum push|inapp}</code> (for apps on tap). Elements carry <code>data-tid</code>.</li>
+<li>Commits as rupakc; message ends <code>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;</code>.</li>
+</ul>
+<h2 id="api-contract-docsnotifications-apimd-additive-only-once-merged">API contract (<code>docs/Notifications-API.md</code>, additive-only once merged)</h2>
+<p>All under <code>/api</code>, bearer auth, Phase 1 error envelope <code>{"detail","error_code"}</code>.</p>
+<ul>
+<li><code>GET /notification-settings</code> → <code>{"categories": {"price_drops": {"enabled": true}, "trip_reminders": {...}, "morning_brief": {...}, "weather": {...}, "nearby": {...}, "social": {...}, "quiz": {...}}, "quiet_hours": {"enabled": true, "start": "22:00", "end": "07:00"}, "daily_cap": 3, "timezone": "Asia/Kolkata"|null, "quiet_hours_active": bool, "push": {"fcm": bool, "apns": bool}, "devices": 2}</code>.</li>
+<li><code>PUT /notification-settings</code> (any subset of <code>categories.&lt;name&gt;.enabled</code>, <code>quiet_hours</code> fields, <code>daily_cap</code>; <code>timezone</code>, <code>quiet_hours_active</code>, <code>push</code>, <code>devices</code> read-only and ignored) → same object. <code>422 notification_settings_invalid</code>.</li>
+<li><code>GET /notifications/catalog?locale=xx</code> → <code>{"locale": "es", "templates": {"nearby_arrival": "Estás cerca de {place}: {item} está a {minutes} min", …}}</code> (every template the server sends plus on-device ones; unknown locale → <code>en</code>).</li>
+<li><code>POST /devices</code> accepts <code>platform: "android" | "ios"</code> (APNs token as hex string).</li>
+<li>Notification rows (<code>/notifications</code>) and push <code>data</code> gain <code>category</code> and <code>plan_id</code>; kinds <code>trip_t30</code>, <code>trip_t7</code>, <code>trip_t1</code>, <code>trip_morning</code>. <code>link</code> is a web path (<code>/trips/{id}</code>, <code>/trips/{id}/today</code>); apps map it.</li>
+<li>Delivery order for category pushes: user enabled? → dedupe → quiet hours (hold) → global cap → send. Price drops: <code>price_drops</code> enabled? → Phase 3 rules.</li>
+</ul>
+<h2 id="tasks">Tasks</h2>
+<p>Wave 0: T1 alone (foundation, merges first). Wave 1: T2 ∥ T3 ∥ T5 (disjoint files). Wave 2: T4 (needs T2). Each task = one PR via worktree <code>.claude/worktrees/p6-tN</code>, TDD, merge on green CI.</p>
+<h3 id="t1-foundation-flag-settings-store-routes-registry-contract-sonnet">T1 — Foundation: flag, settings store, routes, registry, contract (sonnet)</h3>
+<p>Files: <code>core/config.py</code> (flag, <code>apns_*</code>), <code>db/notify_db.py</code> (<code>notify_prefs(user_id PK, data JSON)</code>, <code>notify_log(id, user_id, plan_id, kind, dedupe_key UNIQUE, category, status, due_at, sent_at, dropped_reason, notification_id)</code>; tables created in <code>main.py</code> lifespan; add both to the vm_backup user-table list), <code>services/notify_settings.py</code> (defaults, validate, merge, view incl. quiet hours via <code>alerts_db</code>), <code>api/routes/notification_settings.py</code> (+ catalog route reading <code>notify_text.catalog(locale)</code>; T1 ships a stub <code>services/notify_text.py</code> with <code>en</code> only and the <code>catalog()</code>/<code>render(key, locale, **params)</code> signatures that T2 fills in), <code>client_config.py</code>, telemetry registry + <code>docs/Telemetry.md</code>, <code>docs/Notifications-API.md</code>, <code>docs/Feature-Parity.md</code>, <code>mkdocs.yml</code> nav, <code>account_data</code> export/delete includes the new tables. Tests: defaults, partial PUT, validation, quiet-hours sync with <code>/alerts/preferences</code>, auth, other user isolation, registry test.</p>
+<h3 id="t2-delivery-core-text-sonnet">T2 — Delivery core + text (sonnet)</h3>
+<p><code>services/notify_text.py</code> (all templates × 7 languages: trip_t30/t7/t1, morning brief with optional <code>{slot}</code>/<code>{tip}</code>/<code>{weather}</code> lines, <code>nearby_arrival</code>, price-drop group strings reused as-is), <code>services/notify_center.py</code>: pure <code>decide(category, prefs, tz, counts, now)</code> reusing <code>alert_delivery.quiet_until</code>, <code>enqueue_category(user_id, plan_id, kind, category, key, title, body, data, now)</code> (dedupe, writes the in-app row, <code>notify_log</code>), <code>flush_due(now)</code> (hold release, cap recheck, stale drop, sends via <code>push.send_to_user</code>, claim-once); gate <code>alert_delivery.plan</code> on the <code>price_drops</code> toggle when the flag is on; hook <code>flush_due</code> into <code>alert_delivery._loop</code>. Tests incl. golden quiet-hours edges (23:30 Asia/Kolkata, spring-forward New York, no tz), cap, dedupe, double flush, all 7 languages have every key and placeholders match.</p>
+<h3 id="t3-apns-platform-routing-sonnet">T3 — APNs + platform routing (sonnet)</h3>
+<p><code>services/apns.py</code> (<code>configured()</code>, ES256 provider token cached 50 min, <code>send(token, title, body, data)</code>, HTTP/2 POST <code>/3/device/{token}</code>, <code>apns-topic</code>, <code>apns-push-type: alert</code>, <code>apns-priority</code>, dead tokens <code>410</code>/<code>BadDeviceToken</code>/<code>Unregistered</code> pruned, never logs full tokens), <code>devices_db.devices_for(username)</code> → <code>[(token, platform)]</code>, <code>push.send_to_user</code> splits by platform when the flag is on (FCM unchanged for android; iOS to APNs), <code>/devices</code> <code>platform</code> Literal adds <code>ios</code>, <code>requirements.txt</code> adds <code>httpx[http2]</code> (h2). Tests with <code>MockTransport</code> and a generated P-256 key. No test touches the network.</p>
+<h3 id="t4-trip-phase-pushes-sonnet-after-t2">T4 — Trip-phase pushes (sonnet, after T2)</h3>
+<p><code>services/trip_pushes.py</code>: <code>run_due(now)</code> scans the users' plans with a start date. T-30 (only if the visa prep item is not done and a visa is needed), T-7 (packing not done), T-1 (check-in + weather line from the snapshot), morning brief at 08:00 local on each trip day (first itinerary slot of the day, a static country tip, weather line; skipped without tz or after the trip). Uses <code>trip_prep.prep_payload</code>, <code>trip_phase.day_index</code>, <code>notify_center.enqueue_category</code>. Hooked into the loop every 5 min behind the flag, prunes <code>notify_log</code> &gt; 60 days. Tests with fixed <code>now</code>, a trip in each state, done items suppress, double run once.</p>
+<h3 id="t5-web-settings-ui-sonnet-contract-only-backend-may-lag">T5 — Web settings UI (sonnet; contract only, backend may lag)</h3>
+<p><code>frontend/src/services/notificationsApi.js</code>, <code>components/account/NotificationsSection.jsx</code> mounted in <code>AccountPage</code> (feature-detected), category toggles, quiet-hours with timezone shown, daily-cap stepper, "push not available on this device yet" note when <code>devices == 0</code>, <code>notifications.json</code> × 7, <code>routeNamespaces.js</code>, telemetry events, tests. Tokens only, ≥ 44 px targets, keyboard and aria labels.</p>
+<h3 id="t6-e2e-final-review-flag-on">T6 — E2E, final review, flag on</h3>
+<p>Local stack (fake SerpAPI, fake push transports), browser pass on Account → Notifications; one opus whole-branch review; fix findings; set <code>notifications_v2_enabled</code> default <code>true</code> if safe (no FCM/APNs creds in prod means pushes stay inert; in-app rows only); follow-ups doc.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

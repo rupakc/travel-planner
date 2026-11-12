@@ -47,6 +47,7 @@ from .api.routes.notification_settings import router as notification_settings_ro
 from .api.routes.notifications import router as notifications_router
 from .api.routes.oauth import router as oauth_router
 from .api.routes.plans import router as plans_router
+from .api.routes.play import router as play_router
 from .api.routes.preferences import router as preferences_router
 from .api.routes.price_watches import router as price_watches_router
 from .api.routes.quota import router as quota_router
@@ -132,6 +133,7 @@ async def lifespan(app: FastAPI):
     from .db.notifications_db import create_notifications_table
     from .db.notify_db import create_notify_tables
     from .db.price_watch_db import create_price_watch_tables
+    from .db.quiz_db import create_quiz_tables
     from .db.shares_db import create_shares_table
     from .db.social_db import create_social_tables
 
@@ -141,6 +143,7 @@ async def lifespan(app: FastAPI):
     create_notify_tables()
     create_shares_table()
     create_social_tables()
+    create_quiz_tables()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
@@ -272,6 +275,12 @@ app.include_router(account_router, prefix="/api", tags=["account"])
 app.include_router(avatars_router, prefix="/api", tags=["avatars"])
 app.include_router(account_data_router, prefix="/api", tags=["account_data"])
 app.include_router(game_router, prefix="/api", tags=["game"])
+app.include_router(
+    play_router,
+    prefix="/api",
+    tags=["play"],
+    dependencies=[Depends(rate_limit("play"))],
+)
 app.include_router(quota_router, prefix="/api", tags=["quota"])
 app.include_router(admin_invites_router, prefix="/api", tags=["admin_invites"])
 app.include_router(admin_router, prefix="/api", tags=["admin"])

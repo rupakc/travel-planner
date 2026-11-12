@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     rate_limit_import: int = 20  # /import/extract (plan from a link)
     rate_limit_share_public: int = 120  # public share page, JSON and card (per IP)
     rate_limit_share_manage: int = 30  # /shares create, list, revoke (per user)
+    rate_limit_play: int = 60  # /play/* (per user)
     rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
     # Phase 5 (Social + Play), per user: writes, reads, Play, admin moderation
     rate_limit_social_write: int = 30
@@ -185,6 +186,8 @@ class Settings(BaseSettings):
     ai_daily_quota_light_ai: int = 200
     ai_daily_quota_import: int = 20
     game_enabled: bool = True
+    # Play (Phase 5): quizzes, head-to-head, boards. Also needs game_enabled.
+    play_enabled: bool = False
     journey_ui_enabled: bool = True
     # Price alerts 2.0 (Phase 3): the pipeline, delivery and digest loops
     price_alerts_v2_enabled: bool = True

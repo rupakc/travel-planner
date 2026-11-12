@@ -1,0 +1,937 @@
+{
+ "version": 1,
+ "countries": [
+  {
+   "code": "JP",
+   "name": "Japan",
+   "capital": "Tokyo",
+   "region": "as"
+  },
+  {
+   "code": "FR",
+   "name": "France",
+   "capital": "Paris",
+   "region": "eu"
+  },
+  {
+   "code": "IT",
+   "name": "Italy",
+   "capital": "Rome",
+   "region": "eu"
+  },
+  {
+   "code": "ES",
+   "name": "Spain",
+   "capital": "Madrid",
+   "region": "eu"
+  },
+  {
+   "code": "PT",
+   "name": "Portugal",
+   "capital": "Lisbon",
+   "region": "eu"
+  },
+  {
+   "code": "DE",
+   "name": "Germany",
+   "capital": "Berlin",
+   "region": "eu"
+  },
+  {
+   "code": "GB",
+   "name": "United Kingdom",
+   "capital": "London",
+   "region": "eu"
+  },
+  {
+   "code": "IE",
+   "name": "Ireland",
+   "capital": "Dublin",
+   "region": "eu"
+  },
+  {
+   "code": "NL",
+   "name": "Netherlands",
+   "capital": "Amsterdam",
+   "region": "eu"
+  },
+  {
+   "code": "BE",
+   "name": "Belgium",
+   "capital": "Brussels",
+   "region": "eu"
+  },
+  {
+   "code": "CH",
+   "name": "Switzerland",
+   "capital": "Bern",
+   "region": "eu"
+  },
+  {
+   "code": "AT",
+   "name": "Austria",
+   "capital": "Vienna",
+   "region": "eu"
+  },
+  {
+   "code": "SE",
+   "name": "Sweden",
+   "capital": "Stockholm",
+   "region": "eu"
+  },
+  {
+   "code": "NO",
+   "name": "Norway",
+   "capital": "Oslo",
+   "region": "eu"
+  },
+  {
+   "code": "DK",
+   "name": "Denmark",
+   "capital": "Copenhagen",
+   "region": "eu"
+  },
+  {
+   "code": "FI",
+   "name": "Finland",
+   "capital": "Helsinki",
+   "region": "eu"
+  },
+  {
+   "code": "IS",
+   "name": "Iceland",
+   "capital": "Reykjavík",
+   "region": "eu"
+  },
+  {
+   "code": "PL",
+   "name": "Poland",
+   "capital": "Warsaw",
+   "region": "eu"
+  },
+  {
+   "code": "CZ",
+   "name": "Czechia",
+   "capital": "Prague",
+   "region": "eu"
+  },
+  {
+   "code": "HU",
+   "name": "Hungary",
+   "capital": "Budapest",
+   "region": "eu"
+  },
+  {
+   "code": "GR",
+   "name": "Greece",
+   "capital": "Athens",
+   "region": "eu"
+  },
+  {
+   "code": "TR",
+   "name": "Turkey",
+   "capital": "Ankara",
+   "region": "as"
+  },
+  {
+   "code": "RU",
+   "name": "Russia",
+   "capital": "Moscow",
+   "region": "eu"
+  },
+  {
+   "code": "UA",
+   "name": "Ukraine",
+   "capital": "Kyiv",
+   "region": "eu"
+  },
+  {
+   "code": "RO",
+   "name": "Romania",
+   "capital": "Bucharest",
+   "region": "eu"
+  },
+  {
+   "code": "HR",
+   "name": "Croatia",
+   "capital": "Zagreb",
+   "region": "eu"
+  },
+  {
+   "code": "RS",
+   "name": "Serbia",
+   "capital": "Belgrade",
+   "region": "eu"
+  },
+  {
+   "code": "BG",
+   "name": "Bulgaria",
+   "capital": "Sofia",
+   "region": "eu"
+  },
+  {
+   "code": "EE",
+   "name": "Estonia",
+   "capital": "Tallinn",
+   "region": "eu"
+  },
+  {
+   "code": "LV",
+   "name": "Latvia",
+   "capital": "Riga",
+   "region": "eu"
+  },
+  {
+   "code": "LT",
+   "name": "Lithuania",
+   "capital": "Vilnius",
+   "region": "eu"
+  },
+  {
+   "code": "MT",
+   "name": "Malta",
+   "capital": "Valletta",
+   "region": "eu"
+  },
+  {
+   "code": "EG",
+   "name": "Egypt",
+   "capital": "Cairo",
+   "region": "af"
+  },
+  {
+   "code": "MA",
+   "name": "Morocco",
+   "capital": "Rabat",
+   "region": "af"
+  },
+  {
+   "code": "KE",
+   "name": "Kenya",
+   "capital": "Nairobi",
+   "region": "af"
+  },
+  {
+   "code": "NG",
+   "name": "Nigeria",
+   "capital": "Abuja",
+   "region": "af"
+  },
+  {
+   "code": "GH",
+   "name": "Ghana",
+   "capital": "Accra",
+   "region": "af"
+  },
+  {
+   "code": "ET",
+   "name": "Ethiopia",
+   "capital": "Addis Ababa",
+   "region": "af"
+  },
+  {
+   "code": "TZ",
+   "name": "Tanzania",
+   "capital": "Dodoma",
+   "region": "af"
+  },
+  {
+   "code": "SN",
+   "name": "Senegal",
+   "capital": "Dakar",
+   "region": "af"
+  },
+  {
+   "code": "TN",
+   "name": "Tunisia",
+   "capital": "Tunis",
+   "region": "af"
+  },
+  {
+   "code": "DZ",
+   "name": "Algeria",
+   "capital": "Algiers",
+   "region": "af"
+  },
+  {
+   "code": "UG",
+   "name": "Uganda",
+   "capital": "Kampala",
+   "region": "af"
+  },
+  {
+   "code": "IN",
+   "name": "India",
+   "capital": "New Delhi",
+   "region": "as"
+  },
+  {
+   "code": "CN",
+   "name": "China",
+   "capital": "Beijing",
+   "region": "as"
+  },
+  {
+   "code": "KR",
+   "name": "South Korea",
+   "capital": "Seoul",
+   "region": "as"
+  },
+  {
+   "code": "TH",
+   "name": "Thailand",
+   "capital": "Bangkok",
+   "region": "as"
+  },
+  {
+   "code": "VN",
+   "name": "Vietnam",
+   "capital": "Hanoi",
+   "region": "as"
+  },
+  {
+   "code": "ID",
+   "name": "Indonesia",
+   "capital": "Jakarta",
+   "region": "as"
+  },
+  {
+   "code": "MY",
+   "name": "Malaysia",
+   "capital": "Kuala Lumpur",
+   "region": "as"
+  },
+  {
+   "code": "PH",
+   "name": "Philippines",
+   "capital": "Manila",
+   "region": "as"
+  },
+  {
+   "code": "NP",
+   "name": "Nepal",
+   "capital": "Kathmandu",
+   "region": "as"
+  },
+  {
+   "code": "BD",
+   "name": "Bangladesh",
+   "capital": "Dhaka",
+   "region": "as"
+  },
+  {
+   "code": "PK",
+   "name": "Pakistan",
+   "capital": "Islamabad",
+   "region": "as"
+  },
+  {
+   "code": "KZ",
+   "name": "Kazakhstan",
+   "capital": "Astana",
+   "region": "as"
+  },
+  {
+   "code": "UZ",
+   "name": "Uzbekistan",
+   "capital": "Tashkent",
+   "region": "as"
+  },
+  {
+   "code": "MN",
+   "name": "Mongolia",
+   "capital": "Ulaanbaatar",
+   "region": "as"
+  },
+  {
+   "code": "KH",
+   "name": "Cambodia",
+   "capital": "Phnom Penh",
+   "region": "as"
+  },
+  {
+   "code": "LA",
+   "name": "Laos",
+   "capital": "Vientiane",
+   "region": "as"
+  },
+  {
+   "code": "AE",
+   "name": "United Arab Emirates",
+   "capital": "Abu Dhabi",
+   "region": "as"
+  },
+  {
+   "code": "SA",
+   "name": "Saudi Arabia",
+   "capital": "Riyadh",
+   "region": "as"
+  },
+  {
+   "code": "JO",
+   "name": "Jordan",
+   "capital": "Amman",
+   "region": "as"
+  },
+  {
+   "code": "QA",
+   "name": "Qatar",
+   "capital": "Doha",
+   "region": "as"
+  },
+  {
+   "code": "OM",
+   "name": "Oman",
+   "capital": "Muscat",
+   "region": "as"
+  },
+  {
+   "code": "IR",
+   "name": "Iran",
+   "capital": "Tehran",
+   "region": "as"
+  },
+  {
+   "code": "IQ",
+   "name": "Iraq",
+   "capital": "Baghdad",
+   "region": "as"
+  },
+  {
+   "code": "SG",
+   "name": "Singapore",
+   "capital": "Singapore",
+   "region": "as"
+  },
+  {
+   "code": "US",
+   "name": "United States",
+   "capital": "Washington, D.C.",
+   "region": "am"
+  },
+  {
+   "code": "CA",
+   "name": "Canada",
+   "capital": "Ottawa",
+   "region": "am"
+  },
+  {
+   "code": "MX",
+   "name": "Mexico",
+   "capital": "Mexico City",
+   "region": "am"
+  },
+  {
+   "code": "BR",
+   "name": "Brazil",
+   "capital": "Brasília",
+   "region": "am"
+  },
+  {
+   "code": "AR",
+   "name": "Argentina",
+   "capital": "Buenos Aires",
+   "region": "am"
+  },
+  {
+   "code": "CL",
+   "name": "Chile",
+   "capital": "Santiago",
+   "region": "am"
+  },
+  {
+   "code": "PE",
+   "name": "Peru",
+   "capital": "Lima",
+   "region": "am"
+  },
+  {
+   "code": "CO",
+   "name": "Colombia",
+   "capital": "Bogotá",
+   "region": "am"
+  },
+  {
+   "code": "CU",
+   "name": "Cuba",
+   "capital": "Havana",
+   "region": "am"
+  },
+  {
+   "code": "CR",
+   "name": "Costa Rica",
+   "capital": "San José",
+   "region": "am"
+  },
+  {
+   "code": "PA",
+   "name": "Panama",
+   "capital": "Panama City",
+   "region": "am"
+  },
+  {
+   "code": "EC",
+   "name": "Ecuador",
+   "capital": "Quito",
+   "region": "am"
+  },
+  {
+   "code": "UY",
+   "name": "Uruguay",
+   "capital": "Montevideo",
+   "region": "am"
+  },
+  {
+   "code": "JM",
+   "name": "Jamaica",
+   "capital": "Kingston",
+   "region": "am"
+  },
+  {
+   "code": "AU",
+   "name": "Australia",
+   "capital": "Canberra",
+   "region": "oc"
+  },
+  {
+   "code": "NZ",
+   "name": "New Zealand",
+   "capital": "Wellington",
+   "region": "oc"
+  },
+  {
+   "code": "FJ",
+   "name": "Fiji",
+   "capital": "Suva",
+   "region": "oc"
+  }
+ ],
+ "landmarks": [
+  {
+   "name": "Eiffel Tower",
+   "country": "FR"
+  },
+  {
+   "name": "Colosseum",
+   "country": "IT"
+  },
+  {
+   "name": "Sagrada Família",
+   "country": "ES"
+  },
+  {
+   "name": "Big Ben",
+   "country": "GB"
+  },
+  {
+   "name": "Brandenburg Gate",
+   "country": "DE"
+  },
+  {
+   "name": "Acropolis of Athens",
+   "country": "GR"
+  },
+  {
+   "name": "Hagia Sophia",
+   "country": "TR"
+  },
+  {
+   "name": "Saint Basil's Cathedral",
+   "country": "RU"
+  },
+  {
+   "name": "Charles Bridge",
+   "country": "CZ"
+  },
+  {
+   "name": "Neuschwanstein Castle",
+   "country": "DE"
+  },
+  {
+   "name": "Alhambra",
+   "country": "ES"
+  },
+  {
+   "name": "Leaning Tower of Pisa",
+   "country": "IT"
+  },
+  {
+   "name": "Mont Saint-Michel",
+   "country": "FR"
+  },
+  {
+   "name": "Tower Bridge",
+   "country": "GB"
+  },
+  {
+   "name": "Atomium",
+   "country": "BE"
+  },
+  {
+   "name": "The Little Mermaid statue",
+   "country": "DK"
+  },
+  {
+   "name": "Blue Lagoon",
+   "country": "IS"
+  },
+  {
+   "name": "Schönbrunn Palace",
+   "country": "AT"
+  },
+  {
+   "name": "Belém Tower",
+   "country": "PT"
+  },
+  {
+   "name": "Plitvice Lakes",
+   "country": "HR"
+  },
+  {
+   "name": "Bran Castle",
+   "country": "RO"
+  },
+  {
+   "name": "Buda Castle",
+   "country": "HU"
+  },
+  {
+   "name": "Rila Monastery",
+   "country": "BG"
+  },
+  {
+   "name": "Great Pyramid of Giza",
+   "country": "EG"
+  },
+  {
+   "name": "Hassan II Mosque",
+   "country": "MA"
+  },
+  {
+   "name": "Mount Kilimanjaro",
+   "country": "TZ"
+  },
+  {
+   "name": "Rock-hewn churches of Lalibela",
+   "country": "ET"
+  },
+  {
+   "name": "Taj Mahal",
+   "country": "IN"
+  },
+  {
+   "name": "Great Wall of China",
+   "country": "CN"
+  },
+  {
+   "name": "Angkor Wat",
+   "country": "KH"
+  },
+  {
+   "name": "Mount Fuji",
+   "country": "JP"
+  },
+  {
+   "name": "Gyeongbokgung Palace",
+   "country": "KR"
+  },
+  {
+   "name": "Petronas Twin Towers",
+   "country": "MY"
+  },
+  {
+   "name": "Marina Bay Sands",
+   "country": "SG"
+  },
+  {
+   "name": "Wat Arun",
+   "country": "TH"
+  },
+  {
+   "name": "Ha Long Bay",
+   "country": "VN"
+  },
+  {
+   "name": "Burj Khalifa",
+   "country": "AE"
+  },
+  {
+   "name": "Petra",
+   "country": "JO"
+  },
+  {
+   "name": "Borobudur",
+   "country": "ID"
+  },
+  {
+   "name": "Registan",
+   "country": "UZ"
+  },
+  {
+   "name": "Statue of Liberty",
+   "country": "US"
+  },
+  {
+   "name": "Golden Gate Bridge",
+   "country": "US"
+  },
+  {
+   "name": "CN Tower",
+   "country": "CA"
+  },
+  {
+   "name": "Chichén Itzá",
+   "country": "MX"
+  },
+  {
+   "name": "Christ the Redeemer",
+   "country": "BR"
+  },
+  {
+   "name": "Machu Picchu",
+   "country": "PE"
+  },
+  {
+   "name": "Moai of Easter Island",
+   "country": "CL"
+  },
+  {
+   "name": "Galápagos Islands",
+   "country": "EC"
+  },
+  {
+   "name": "Perito Moreno Glacier",
+   "country": "AR"
+  },
+  {
+   "name": "Panama Canal",
+   "country": "PA"
+  },
+  {
+   "name": "Sydney Opera House",
+   "country": "AU"
+  },
+  {
+   "name": "Uluru",
+   "country": "AU"
+  },
+  {
+   "name": "Sky Tower",
+   "country": "NZ"
+  }
+ ],
+ "dishes": [
+  {
+   "name": "Sushi",
+   "country": "JP"
+  },
+  {
+   "name": "Okonomiyaki",
+   "country": "JP"
+  },
+  {
+   "name": "Paella",
+   "country": "ES"
+  },
+  {
+   "name": "Margherita pizza",
+   "country": "IT"
+  },
+  {
+   "name": "Spaghetti carbonara",
+   "country": "IT"
+  },
+  {
+   "name": "Tiramisu",
+   "country": "IT"
+  },
+  {
+   "name": "Ratatouille",
+   "country": "FR"
+  },
+  {
+   "name": "Coq au vin",
+   "country": "FR"
+  },
+  {
+   "name": "Moussaka",
+   "country": "GR"
+  },
+  {
+   "name": "Pierogi",
+   "country": "PL"
+  },
+  {
+   "name": "Goulash",
+   "country": "HU"
+  },
+  {
+   "name": "Fish and chips",
+   "country": "GB"
+  },
+  {
+   "name": "Haggis",
+   "country": "GB"
+  },
+  {
+   "name": "Wiener schnitzel",
+   "country": "AT"
+  },
+  {
+   "name": "Bratwurst",
+   "country": "DE"
+  },
+  {
+   "name": "Poutine",
+   "country": "CA"
+  },
+  {
+   "name": "Tacos al pastor",
+   "country": "MX"
+  },
+  {
+   "name": "Ceviche",
+   "country": "PE"
+  },
+  {
+   "name": "Lomo saltado",
+   "country": "PE"
+  },
+  {
+   "name": "Feijoada",
+   "country": "BR"
+  },
+  {
+   "name": "Asado",
+   "country": "AR"
+  },
+  {
+   "name": "Pad thai",
+   "country": "TH"
+  },
+  {
+   "name": "Tom yum soup",
+   "country": "TH"
+  },
+  {
+   "name": "Pho",
+   "country": "VN"
+  },
+  {
+   "name": "Kimchi",
+   "country": "KR"
+  },
+  {
+   "name": "Bibimbap",
+   "country": "KR"
+  },
+  {
+   "name": "Peking duck",
+   "country": "CN"
+  },
+  {
+   "name": "Butter chicken",
+   "country": "IN"
+  },
+  {
+   "name": "Masala dosa",
+   "country": "IN"
+  },
+  {
+   "name": "Chicken adobo",
+   "country": "PH"
+  },
+  {
+   "name": "Dal bhat",
+   "country": "NP"
+  },
+  {
+   "name": "Koshari",
+   "country": "EG"
+  },
+  {
+   "name": "Tagine",
+   "country": "MA"
+  },
+  {
+   "name": "Injera",
+   "country": "ET"
+  },
+  {
+   "name": "Smørrebrød",
+   "country": "DK"
+  },
+  {
+   "name": "Swedish meatballs",
+   "country": "SE"
+  },
+  {
+   "name": "Lutefisk",
+   "country": "NO"
+  },
+  {
+   "name": "Rösti",
+   "country": "CH"
+  },
+  {
+   "name": "Belgian waffles",
+   "country": "BE"
+  },
+  {
+   "name": "Stroopwafel",
+   "country": "NL"
+  },
+  {
+   "name": "Pastel de nata",
+   "country": "PT"
+  },
+  {
+   "name": "Iskender kebab",
+   "country": "TR"
+  },
+  {
+   "name": "Svíčková",
+   "country": "CZ"
+  },
+  {
+   "name": "Gallo pinto",
+   "country": "CR"
+  },
+  {
+   "name": "Ropa vieja",
+   "country": "CU"
+  },
+  {
+   "name": "Jerk chicken",
+   "country": "JM"
+  },
+  {
+   "name": "Nasi lemak",
+   "country": "MY"
+  },
+  {
+   "name": "Mansaf",
+   "country": "JO"
+  },
+  {
+   "name": "Lamington",
+   "country": "AU"
+  },
+  {
+   "name": "Hāngī",
+   "country": "NZ"
+  },
+  {
+   "name": "Pastel de choclo",
+   "country": "CL"
+  },
+  {
+   "name": "Chivito",
+   "country": "UY"
+  },
+  {
+   "name": "Bandeja paisa",
+   "country": "CO"
+  }
+ ]
+}

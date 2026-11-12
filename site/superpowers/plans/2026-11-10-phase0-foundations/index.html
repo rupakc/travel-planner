@@ -1,0 +1,1788 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Phase 0 — Foundations (theme + dark mode, i18n, telemetry, parity matrix) Implementation Plan - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-0-foundations-theme-dark-mode-i18n-telemetry-parity-matrix-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 0 — Foundations (theme + dark mode, i18n, telemetry, parity matrix) Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Social-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-0-foundations-theme-dark-mode-i18n-telemetry-parity-matrix-implementation-plan">Phase 0 — Foundations (theme + dark mode, i18n, telemetry, parity matrix) Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Give the web app the three foundations every later phase builds on: a token-driven theme with a
+user-selectable dark mode, full UI translation into 7 languages, and a zero-cost telemetry pipeline (backend +
+web SDK). Also write the cross-client feature-parity matrix.</p>
+<p><strong>Architecture:</strong> Every Tailwind colour family the app uses is remapped to CSS variables that flip under
+<code>html.dark</code>, so the ~17k lines of existing JSX get dark mode without class rewrites; hand tuning follows.
+i18n is <code>i18next</code> + <code>react-i18next</code> with one JSON file per <em>namespace per language</em>, so the extraction tasks
+run in parallel without touching each other's files. English is bundled; other languages load lazily.
+Telemetry is a new anonymous-capable <code>POST /api/telemetry</code> that validates every event against a closed registry
+(no free text can get in) and appends to a separate <code>telemetry.db</code>. A small web SDK batches events in the
+background with delegated auto-capture.</p>
+<p><strong>Tech Stack:</strong> FastAPI + SQLite (backend); React 18, Tailwind 3.4, Vite 6, vitest, i18next ^27 + react-i18next ^18 (frontend; peer <code>react &gt;= 18</code>, checked on npm 2026-11-10 — pin a release at least 2 weeks old).</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-11-10-voyager-reimagined-design.md</code> (§8 Telemetry, §9 Look, feel, language, §10 parity, §2 constraints).</p>
+<h2 id="global-constraints">Global Constraints</h2>
+<ul>
+<li>Two-way compatibility: the new SPA must work against the previous backend (<code>/api/config</code> or <code>/api/telemetry</code> 404 → telemetry silently off, no retries). The new backend must keep serving the previous SPA (<code>POST /api/analytics/events</code> unchanged).</li>
+<li>Telemetry never blocks or slows the UI: no <code>await</code> on the critical path, every SDK entry point wrapped in try/catch, work deferred with <code>requestIdleCallback</code> (falling back to <code>setTimeout(…, 1)</code>).</li>
+<li>Telemetry never carries free text the user typed, precise location, email/name, or other users' content. The server enforces this with a closed per-event prop schema.</li>
+<li>Telemetry is disclosed and can be switched off (Settings → Privacy). Users whose device timezone is EU/EEA/UK/CH get a one-time consent choice and are opted out until they choose.</li>
+<li>Raw telemetry is kept 90 days in <code>$DATA_DIR/telemetry.db</code> and is not backed up. Daily aggregates live in the main DB table <code>telemetry_daily</code> and are backed up with the user tables.</li>
+<li>Languages and codes: <code>en</code> English, <code>es</code> Spanish, <code>de</code> Deutsch, <code>fr</code> French, <code>hi</code> Hindi, <code>zh</code> Chinese (Simplified), <code>bn</code> Bengali. <code>en</code> is the fallback.</li>
+<li><strong>[call, deviates from spec §9]</strong>: the canonical catalogue lives at <code>frontend/src/i18n/locales/&lt;lang&gt;/&lt;ns&gt;.json</code>, not a root <code>i18n/</code>. The SPA image build copies only <code>frontend/</code>, and the deploy inputs hash/path filters key on it. Plurals use i18next JSON v4 suffixes (<code>_one</code>, <code>_other</code>, …), which map 1:1 to Android <code>&lt;plurals&gt;</code> and iOS String Catalog plural variations. Update the spec text in Task 12.</li>
+<li>Light is the default theme; options are <code>system</code> / <code>light</code> / <code>dark</code>, stored in <code>localStorage</code> key <code>tp_theme</code>; the language lives in <code>tp_lang</code>.</li>
+<li>Never translate: brand "Voyager", airport/IATA codes, currency codes, place names coming from data, AI/static content strings from the backend (server strings stay English in Phase 0, except AI output per Task 11).</li>
+<li>Python 3.12, ruff clean; <code>npx eslint src/ --max-warnings 0</code>; <code>mkdocs build --strict</code>; every existing test keeps passing.</li>
+</ul>
+<h2 id="review-focus">Review Focus</h2>
+<ol>
+<li><strong>Storage/network hostile browsers</strong> (Safari private mode with <code>localStorage</code> throwing, ad-blockers blocking <code>/api/telemetry</code>, offline): the app works, there's no console spam and no retry storm. → Test in Task 5.</li>
+<li><strong>Old backend</strong> (no <code>/api/config</code>, <code>/api/telemetry</code> → 404): the SDK disables itself for the session after the first 404. → Test in Task 5.</li>
+<li><strong>PII sneaking in</strong> (an <code>id</code> prop carrying <code>"jane@x.com"</code> or <code>"hello world"</code>, unknown props, oversized batches): it gets dropped server-side and the request still returns 204. → Test in Task 2.</li>
+<li><strong>Dark mode leaking into print/PDF export and Leaflet maps</strong>: print is always light, and map tiles are dimmed rather than inverted in a way that breaks markers. → Test in Task 6.</li>
+<li><strong>Missing translation keys and long strings</strong>: a key missing in <code>de</code> shows English, never the raw key, and every locale has every <code>en</code> key with matching <code>{{placeholders}}</code>. → Test in Task 7 (catalogue parity test).</li>
+</ol>
+<hr />
+<h3 id="task-1-telemetry-storage">Task 1: Telemetry storage</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/db/telemetry_db.py</code>
+- Modify: <code>backend/app/main.py</code> (lifespan: create tables; start the maintenance loop from Task 3)
+- Modify: <code>backend/app/db/vm_backup.py</code> and <code>backend/app/db/backup.py</code> (add <code>telemetry_daily</code> wherever the user-table list is defined)
+- Test: <code>backend/tests/test_telemetry_db.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>telemetry_db_path() -&gt; Path</code> → <code>Path(settings.data_dir) / "telemetry.db"</code>
+  - <code>create_telemetry_tables() -&gt; None</code>. In telemetry.db: <code>telemetry_events(id INTEGER PK, ts INTEGER ms, received_at INTEGER ms, event TEXT, session_id TEXT, anon_id TEXT, user_id TEXT NULL, platform TEXT, app_version TEXT, locale TEXT, screen TEXT NULL, props TEXT json)</code> with indexes <code>(ts)</code>, <code>(event, ts)</code>. In the main DB (<code>get_connection</code>): <code>telemetry_daily(day TEXT, event TEXT, platform TEXT, events INTEGER, users INTEGER, sessions INTEGER, PRIMARY KEY(day,event,platform))</code> and <code>telemetry_rollups(day TEXT PRIMARY KEY, done_at TEXT)</code>.
+  - <code>insert_events(rows: list[dict]) -&gt; int</code> (one transaction, <code>executemany</code>, returns the count)
+  - <code>rollup_day(day: str) -&gt; int</code> (<code>YYYY-MM-DD</code> UTC; idempotent: replaces that day's rows, records <code>telemetry_rollups</code>; users = distinct <code>coalesce(user_id, anon_id)</code>)
+  - <code>prune(before_ms: int) -&gt; int</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong> <code>test_insert_and_rollup</code> (insert 3 events, 2 anon ids, 1 user, 2 sessions on one day → <code>rollup_day</code> gives <code>events=3, users=2, sessions=2</code>; running it twice gives the same rows), <code>test_prune_removes_only_older</code>, <code>test_telemetry_db_is_separate_file</code> (after insert, the main DB has no <code>telemetry_events</code> table).</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd backend &amp;&amp; python3 -m pytest -q tests/test_telemetry_db.py</code> → FAIL (module missing).</li>
+<li>[ ] <strong>Step 3: Implement</strong> with its own connection helper mirroring <code>database.get_connection</code> (WAL, <code>synchronous=NORMAL</code>, <code>busy_timeout=5000</code>).</li>
+<li>[ ] <strong>Step 4: Run</strong> the test file → PASS; run the full backend suite → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(telemetry): separate telemetry store with daily rollups</code></li>
+</ul>
+<h3 id="task-2-event-registry-validation">Task 2: Event registry + validation</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/telemetry/__init__.py</code>, <code>backend/app/telemetry/registry.py</code>
+- Test: <code>backend/tests/test_telemetry_registry.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>PROP_TYPES = {"id", "int", "float", "bool"} | {"enum:&lt;a|b|c&gt;"}</code>. <code>id</code> matches <code>^[A-Za-z0-9_.:/-]{1,64}$</code> (no spaces or <code>@</code>, so no sentences and no emails).
+  - <code>EVENTS: dict[str, dict[str, str]]</code> (event → prop → type). It ships with at least the families from spec §8:
+    <code>app_open</code>, <code>app_background</code>, <code>session_start</code>, <code>screen_view{route:id, referrer_route:id}</code>, <code>screen_time{route:id, ms:int}</code>,
+    <code>ui_tap{tid:id, route:id}</code>, <code>ui_toggle{tid:id, route:id, on:bool}</code>, <code>ui_submit{tid:id, route:id}</code>,
+    <code>search_submit{mode:enum:&lt;search|chat|compare|link|discover&gt;, travelers:int, nights:int, multi_city:bool}</code>,
+    <code>search_first_section{ms:int}</code>, <code>search_complete{ms:int, sections:int, errors:int}</code>, <code>search_abandon{ms:int, sections:int}</code>,
+    <code>section_expand{section:id}</code>, <code>plan_select{section:id}</code>, <code>link_out{section:id, domain:id}</code>,
+    <code>share{target:id, object:id}</code>, <code>alert_event{action:id, kind:id}</code>, <code>onboarding_step{step:int, action:enum:&lt;view|next|skip|done&gt;}</code>,
+    <code>theme_change{theme:enum:&lt;system|light|dark&gt;}</code>, <code>language_change{lang:enum:&lt;en|es|de|fr|hi|zh|bn&gt;}</code>, <code>consent{choice:enum:&lt;granted|denied&gt;}</code>,
+    <code>feature_used{feature:id, page:id}</code> (bridge from the old <code>track()</code>),
+    <code>perf{metric:enum:&lt;ttfb|fcp|lcp|inp|cls|long_task|cold_start&gt;, value:float, route:id}</code>, <code>error{kind:enum:&lt;js|promise|api&gt;, source:id, status:int}</code>.
+  - <code>clean_event(raw: dict) -&gt; dict | None</code>: unknown event → <code>None</code>. Unknown props or props failing their type are dropped, not the whole event. Strings longer than 64 are dropped. <code>ts</code> must be within ±7 days of server time, else replaced by the server time.
+  - <code>clean_client(raw: dict) -&gt; dict | None</code>: <code>anon_id</code> (UUID), <code>session_id</code> (UUID), <code>platform</code> enum <code>web|android|ios</code>, <code>app_version</code> id, <code>locale</code> id ≤ 16; invalid → <code>None</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: <code>clean_event({"event":"ui_tap","props":{"tid":"jane@x.com","route":"/results"}})["props"] == {"route":"/results"}</code>; <code>"hello world"</code> dropped the same way; <code>clean_event({"event":"nope"}) is None</code>; an enum outside its set is dropped; <code>test_every_event_documented</code> (every <code>EVENTS</code> key appears in <code>docs/Telemetry.md</code>; that doc is written in Task 12, so mark this test <code>xfail(strict=True)</code> until then and flip it in Task 12).</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement</strong> (a pure module: no I/O).</li>
+<li>[ ] <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(telemetry): closed event registry and validation</code></li>
+</ul>
+<h3 id="task-3-telemetry-config-api-maintenance-loop-admin-summary">Task 3: Telemetry + config API, maintenance loop, admin summary</h3>
+<p><strong>Files:</strong>
+- Create: <code>backend/app/api/routes/telemetry.py</code>, <code>backend/app/api/routes/client_config.py</code>
+- Modify: <code>backend/app/main.py</code> (routers; lifespan task), <code>backend/app/core/config.py</code>, <code>backend/app/core/rate_limit.py</code> (bucket <code>telemetry</code>), <code>backend/app/api/routes/admin.py</code>
+- Test: <code>backend/tests/test_telemetry_api.py</code>, <code>backend/tests/test_client_config.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 1 <code>insert_events</code>, <code>rollup_day</code>, <code>prune</code>; Task 2 <code>clean_event</code>, <code>clean_client</code>.
+- Produces:
+  - Settings: <code>telemetry_enabled: bool = True</code>, <code>telemetry_retention_days: int = 90</code>, <code>rate_limit_telemetry: int = 600</code>, <code>public_base_url: str = ""</code>.
+  - <code>POST /api/telemetry</code>. Body <code>{"client": {...}, "events": [{"event","ts","screen","props"}]}</code>, max 100 events, raw body ≤ 64 KB (else 413), accepts <code>Content-Encoding: gzip</code> (decompressed ≤ 256 KB). Auth is optional (<code>get_optional_user</code>, so <code>user_id</code> is the user's id when signed in). Always 204 when well-formed, even if every event was dropped; 422 only for a malformed envelope; 404 when <code>telemetry_enabled</code> is false. Inserts via <code>asyncio.to_thread</code>. Not behind <code>require_ai_access</code>.
+  - <code>GET /api/config</code> → <code>{"public_base_url": str, "telemetry": {"enabled": bool, "flush_interval_s": 15, "max_batch": 50}, "features": {"telemetry": true}}</code>. Public, no rate limit, <code>Cache-Control: max-age=300</code>. <code>public_base_url</code> defaults to the request's own base URL when the setting is empty.
+  - Lifespan task <code>telemetry_maintenance()</code>: every hour, roll up every day since the last rollup, up to yesterday (UTC); prune <code>&lt; now - retention</code>. Errors are logged, never raised.
+  - <code>GET /api/admin/telemetry/summary?days=30</code> (admin) → <code>{"days": [{"day","users","sessions","events"}], "top_events": [{"event","events"}], "top_screens": [{"route","views"}]}</code> from <code>telemetry_daily</code>, plus today's live numbers from raw events.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: anonymous POST → 204 and a row stored with <code>user_id NULL</code>; signed-in → <code>user_id</code> set; a PII prop is not stored; 101 events → 422; gzip body accepted; <code>telemetry_enabled=False</code> → 404; <code>/api/config</code> shape; the admin summary needs admin (403 for a user) and returns the rolled-up counts; <code>POST /api/analytics/events</code> behaves exactly as before (the existing <code>test_analytics.py</code> still passes untouched).</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong> Add the <code>telemetry</code> bucket to the <code>_bucket_limit</code> mapping.</li>
+<li>[ ] <strong>Step 4: Run</strong> backend suite + <code>ruff check backend/</code> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(telemetry): ingest endpoint, client config, rollup loop, admin summary</code></li>
+</ul>
+<h3 id="task-4-theme-tokens-dark-mode-mechanism">Task 4: Theme tokens + dark mode mechanism</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/design/tokens.json</code>, <code>frontend/scripts/build-tokens.mjs</code>, <code>frontend/src/theme/tokens.css</code> (generated, committed), <code>frontend/src/theme/ThemeContext.jsx</code>, <code>frontend/src/theme/themeStorage.js</code>
+- Modify: <code>frontend/tailwind.config.js</code>, <code>frontend/src/index.css</code>, <code>frontend/index.html</code>, <code>frontend/src/main.jsx</code>, <code>frontend/package.json</code> (script <code>tokens</code>)
+- Test: <code>frontend/src/theme/tokens.test.js</code>, <code>frontend/src/theme/ThemeContext.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>tokens.json</code>: <code>{ "palette": { "&lt;family&gt;": { "50": "#…", …, "950": "#…" } }, "dark": { "&lt;family&gt;": {…} }, "semantic": { "surface", "surface-raised", "text", "text-muted", "border", "accent": … } }</code>. The families are exactly those the code uses: <code>gray slate stone teal amber sky red emerald green violet rose cyan blue purple yellow indigo pink orange lime fuchsia</code>, plus <code>primary</code> (the current teal ramp), a new <code>accent</code> coral ramp, and <code>white</code>. Light values = Tailwind 3.4 defaults (so light mode looks identical to today). Dark values: neutral ramps reversed (50↔950, 100↔900, …) and nudged to a blue-grey night palette; colour ramps reversed with saturation reduced ~15 % for the light end; <code>white</code> → <code>#111827</code>-ish raised surface. <code>black</code> is <em>not</em> remapped (it's used for overlays).
+  - <code>build-tokens.mjs</code> writes <code>tokens.css</code>: <code>:root { --c-gray-50: 249 250 251; … }</code> and <code>html.dark { … }</code> as space-separated RGB channels.
+  - Tailwind: <code>darkMode: 'class'</code>; every family above becomes <code>{ 50: 'rgb(var(--c-gray-50) / &lt;alpha-value&gt;)', … }</code>.
+  - <code>ThemeProvider</code>, <code>useTheme() -&gt; { theme: 'system'|'light'|'dark', resolved: 'light'|'dark', setTheme(t) }</code>. It toggles <code>html.dark</code>, sets <code>color-scheme</code>, and updates <code>&lt;meta name="theme-color"&gt;</code> (light <code>#ffffff</code>, dark the dark surface). <code>system</code> follows <code>matchMedia('(prefers-color-scheme: dark)')</code> live. Storage helpers swallow <code>localStorage</code> errors.
+  - An inline script in <code>index.html</code>, before the CSS, applies <code>dark</code> from <code>tp_theme</code>/the system setting to prevent a flash.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: <code>tokens.test.js</code>: running the generator in memory equals the committed <code>tokens.css</code> (keeps generated output in sync); every family has 11 stops in both modes; WCAG contrast ≥ 4.5 for <code>gray-900</code> on <code>gray-50</code> and for <code>white</code> text on <code>teal-600</code> in both modes (a small <code>contrast(hexA, hexB)</code> helper in the test). <code>ThemeContext.test.jsx</code>: the default is <code>system</code>; <code>setTheme('dark')</code> adds <code>html.dark</code> and persists; a throwing <code>localStorage</code> still works in memory.</li>
+<li>[ ] <strong>Step 2: Run</strong> <code>cd frontend &amp;&amp; npm test -- src/theme</code> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement</strong>; replace the hex colours in <code>.skeleton-shimmer</code> with variables.</li>
+<li>[ ] <strong>Step 4: Run</strong> the full <code>npm test</code> + eslint → PASS (light mode must leave existing tests untouched).</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(theme): token-driven palette with class-based dark mode</code></li>
+</ul>
+<h3 id="task-5-web-telemetry-sdk">Task 5: Web telemetry SDK</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/telemetry/client.js</code>, <code>frontend/src/telemetry/autocapture.js</code>, <code>frontend/src/telemetry/consent.js</code>, <code>frontend/src/telemetry/perf.js</code>, <code>frontend/src/telemetry/routes.js</code>
+- Modify: <code>frontend/src/utils/analytics.js</code> (<code>track()</code> also emits <code>feature_used</code>), <code>frontend/src/main.jsx</code> (<code>initTelemetry()</code> after render, in idle time), <code>frontend/src/App.jsx</code> (screen views on location change)
+- Test: <code>frontend/src/telemetry/client.test.js</code>, <code>consent.test.js</code>, <code>autocapture.test.js</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 3 <code>GET /api/config</code>, <code>POST /api/telemetry</code> (shapes above).
+- Produces:
+  - <code>initTelemetry({ appVersion }) -&gt; void</code> (fetches <code>/api/config</code> once. A 404 or <code>enabled:false</code> → off for the session; consent denied → off).
+  - <code>emit(event: string, props?: object) -&gt; void</code> (never throws; no-op when off).
+  - <code>setUserPresent(bool)</code> (no ids are stored client-side; the server derives <code>user_id</code> from the bearer token, which the client attaches when present).
+  - Queue rules: flush every <code>flush_interval_s</code> or at <code>max_batch</code>; on <code>visibilitychange→hidden</code> use <code>navigator.sendBeacon</code> with a <code>Blob</code> (<code>application/json</code>), since <code>sendBeacon</code> can't send auth headers. Beacon flushes are therefore anonymous, so pending events are flushed with <code>fetch(…, {keepalive:true})</code> + auth first when signed in, with the beacon as fallback. The queue persists to <code>localStorage</code> key <code>tp_tq</code> (cap 500, oldest dropped). After 3 consecutive network failures, exponential backoff up to 5 min. 404 → disable.
+  - <code>anon_id</code> in <code>localStorage</code> <code>tp_anon</code> (UUID via <code>crypto.randomUUID</code>, with a fallback); <code>session_id</code> rotates after 30 min idle.
+  - <code>consent.js</code>: <code>consentRequired(tz = Intl.DateTimeFormat().resolvedOptions().timeZone) -&gt; bool</code> (true for <code>Europe/*</code> except <code>Europe/Istanbul</code>, <code>Europe/Moscow</code>, <code>Europe/Minsk</code>, <code>Europe/Kiev</code>/<code>Europe/Kyiv</code>; plus <code>Atlantic/Reykjavik</code>, <code>Atlantic/Canary</code>, <code>Atlantic/Madeira</code>, <code>Atlantic/Azores</code>, <code>Atlantic/Faroe</code>); <code>getConsent() -&gt; 'granted'|'denied'|null</code>; <code>setConsent(choice)</code> (emits <code>consent</code>); <code>telemetryAllowed() -&gt; bool</code> (= choice granted, or no choice and not required).
+  - <code>autocapture.js</code>: one delegated listener each for <code>click</code>, <code>change</code>, <code>submit</code> on <code>document</code> (capture phase, passive). Element id = closest <code>[data-tid]</code> value; else closest <code>[id]</code> as <code>id:&lt;id&gt;</code>; else <code>auto:&lt;tagName lowercase&gt;</code>. Never reads input values or text content. Route = <code>routeTemplate(location.pathname)</code> from <code>routes.js</code> (<code>/share/:token</code>, <code>/plans/:id</code>, … so tokens/ids never get sent).
+  - <code>perf.js</code>: TTFB/FCP from navigation + paint timing; LCP, INP (approximated from <code>event</code> entries' max duration), CLS and long-task count from <code>PerformanceObserver</code> where supported; <code>error</code> events from <code>window.error</code> / <code>unhandledrejection</code> with <code>source</code> = script file basename + line, never the message.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: with <code>localStorage</code> throwing, <code>emit</code> doesn't throw and events stay in memory; a fetch rejection 3× → backoff, no 4th immediate call; the first POST 404 → later <code>emit</code> calls make no network calls; the <code>/api/config</code> 404 → off; consent: <code>consentRequired('Europe/Berlin') === true</code>, <code>('Asia/Kolkata') === false</code>, <code>('Europe/Istanbul') === false</code>; autocapture: clicking <code>&lt;button data-tid="search.submit"&gt;Go&lt;/button&gt;</code> inside a route emits <code>ui_tap{tid:'search.submit'}</code>, and an <code>&lt;input&gt;</code> change emits no value; <code>routeTemplate('/share/abc123') === '/share/:token'</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement.</strong></li>
+<li>[ ] <strong>Step 4: Run</strong> <code>npm test</code> + eslint → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(telemetry): background web SDK with auto-capture and consent</code></li>
+</ul>
+<h3 id="task-6-dark-mode-polish-across-the-app">Task 6: Dark-mode polish across the app</h3>
+<p><strong>Files:</strong>
+- Modify: components/pages containing hard-coded hex colours (31 occurrences: <code>grep -rn "#[0-9a-fA-F]\{6\}" frontend/src --include=*.jsx</code>), <code>frontend/src/components/TripMap.jsx</code> (+ any other Leaflet use), <code>frontend/src/utils/planPrint.js</code>, <code>frontend/src/index.css</code>
+- Test: <code>frontend/src/utils/planPrint.test.js</code> (extend), <code>frontend/src/theme/darkSurfaces.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 4 variables/<code>useTheme</code>.
+- Produces: the CSS class <code>.map-dark-tiles</code> (on <code>html.dark .leaflet-tile-pane { filter: brightness(.75) contrast(1.1) saturate(.8) }</code>, markers untouched). The print document always renders light (<code>planPrint</code> HTML sets <code>color-scheme: light</code> and inline light colours, and never inherits <code>html.dark</code>).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: the <code>planPrint</code> output contains <code>color-scheme: light</code> and no <code>var(--c-</code>; rendering <code>TripMap</code> in dark mode produces no inline hex colour from the old literal set.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL.</li>
+<li>[ ] <strong>Step 3: Implement</strong>: replace literals with <code>rgb(var(--c-…))</code> or Tailwind classes; review every page in dark mode with the <code>run</code> skill (screenshots of Search, Results, Chat, Alerts, Preferences, Share, Admin, Nearby in both themes) and fix any surface that reads wrong (e.g. <code>bg-white/80</code> glass headers, gradients <code>from-teal-50 to-sky-50</code>).</li>
+<li>[ ] <strong>Step 4: Run</strong> <code>npm test</code> + eslint → PASS; attach the screenshot list to the PR.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(theme): dark-mode pass over maps, print and literal colours</code></li>
+</ul>
+<h3 id="task-7-i18n-framework-common-namespace">Task 7: i18n framework + common namespace</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/i18n/index.js</code>, <code>frontend/src/i18n/format.js</code>, <code>frontend/src/i18n/languages.js</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/common.json</code> (7 files), <code>frontend/src/i18n/catalog.test.js</code>, <code>frontend/src/components/ui/LanguagePicker.jsx</code>, <code>frontend/src/components/ui/ThemeToggle.jsx</code>
+- Modify: <code>frontend/package.json</code> (<code>i18next</code> ^27, <code>react-i18next</code> ^18), <code>frontend/src/main.jsx</code>, the vitest setup file (init i18n eagerly with <code>en</code>), <code>frontend/src/components/ui/NavBar.jsx</code>, <code>frontend/src/components/ui/AttributionFooter.jsx</code> (move their strings into <code>common</code>)
+- Test: <code>catalog.test.js</code>, <code>frontend/src/i18n/format.test.js</code>, <code>NavBar.test.jsx</code> (extend)</p>
+<p><strong>Interfaces:</strong>
+- Produces:
+  - <code>LANGUAGES = [{code:'en', native:'English'}, {code:'es', native:'Español'}, {code:'de', native:'Deutsch'}, {code:'fr', native:'Français'}, {code:'hi', native:'हिन्दी'}, {code:'zh', native:'中文（简体）'}, {code:'bn', native:'বাংলা'}]</code>
+  - <code>initI18n() -&gt; Promise&lt;void&gt;</code>: <code>en</code> resources imported statically for every namespace (<code>import.meta.glob('./locales/en/*.json', {eager:true})</code>); others via <code>import.meta.glob('./locales/*/*.json')</code> lazy backend; <code>fallbackLng: 'en'</code>, <code>returnNull:false</code>, <code>returnEmptyString:false</code>, <code>interpolation.escapeValue:false</code>. Detection: <code>tp_lang</code> → <code>navigator.languages</code> (<code>zh-*</code> → <code>zh</code>) → <code>en</code>. On change: set <code>&lt;html lang&gt;</code> and lazy-load the Noto font (<code>Noto Sans Devanagari</code> for hi, <code>Noto Sans Bengali</code> for bn, <code>Noto Sans SC</code> for zh) by injecting one Google Fonts <code>&lt;link&gt;</code> once.
+  - <code>setLanguage(code)</code> (persists <code>tp_lang</code>, emits <code>language_change</code>).
+  - <code>format.js</code>: <code>fmtDate(d, opts)</code>, <code>fmtNumber(n, opts)</code>, <code>fmtCurrency(n, currency)</code>, <code>fmtRelative(ms)</code> (all <code>Intl.*</code> with <code>i18n.language</code>; <code>zh</code> → <code>zh-CN</code>, <code>hi</code> → <code>hi-IN</code>, <code>bn</code> → <code>bn-IN</code>).
+  - Key convention: <code>ns:area.thing</code> (e.g. <code>common:nav.search</code>), English sentence case; interpolation <code>{{name}}</code>; plurals <code>_one</code>/<code>_other</code> (plus whatever <code>Intl.PluralRules</code> needs per language). Every interactive element touched gets a <code>data-tid</code> (<code>area.thing</code>) for telemetry.
+  - <code>LanguagePicker</code> (native names), <code>ThemeToggle</code> (system/light/dark) in NavBar, emitting <code>theme_change</code> / <code>language_change</code>.
+  - <code>catalog.test.js</code> (catalogue rules): for every namespace and language, the key set equals <code>en</code>'s (plural-aware: a language may need more or fewer plural suffixes per <code>Intl.PluralRules(lang).resolvedOptions().pluralCategories</code>); no empty values; <code>{{placeholders}}</code> match <code>en</code>; no value equals its key; JSON is valid.
+- [ ] <strong>Step 1: Write failing tests</strong>: the catalogue rules; <code>fmtCurrency(1234.5,'EUR')</code> in <code>de</code> → contains <code>1.234,50</code>; in <code>hi</code> it uses Indian grouping for <code>fmtNumber(1234567)</code> (<code>12,34,567</code>); a key missing in <code>de</code> renders the English text; NavBar shows <code>Deutsch</code> in the picker and switches labels.
+- [ ] <strong>Step 2: Run</strong> → FAIL.
+- [ ] <strong>Step 3: Implement</strong>; translate <code>common</code> into all 6 languages.
+- [ ] <strong>Step 4: Run</strong> <code>npm test</code> + eslint + <code>npm run build</code> (check <code>de</code>/<code>hi</code> chunks are split out of the main bundle) → PASS.
+- [ ] <strong>Step 5: Commit</strong> <code>feat(i18n): i18next framework, language + theme pickers, common catalogue</code></p>
+<h3 id="task-8-string-extraction-parallel-one-namespace-per-task">Task 8: String extraction (parallel, one namespace per task)</h3>
+<p>Each sub-task is independent. It owns only its namespace files and its listed source files, so all of them run
+in parallel worktrees once Task 7 is merged.</p>
+<table>
+<thead>
+<tr>
+<th>Sub-task</th>
+<th>Namespace</th>
+<th>Source files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8a</td>
+<td><code>search</code></td>
+<td><code>pages/SearchPage.jsx</code>, <code>components/ui/AirportSearch.jsx</code>, <code>NationalitySearch.jsx</code>, <code>TagInput.jsx</code>, <code>TravelerPanel.jsx</code>, <code>components/RecentSearches.jsx</code>, <code>components/import/*</code></td>
+</tr>
+<tr>
+<td>8b</td>
+<td><code>results</code></td>
+<td><code>pages/ResultsPage.jsx</code> (lines 1–2200)</td>
+</tr>
+<tr>
+<td>8c</td>
+<td><code>results</code> sections</td>
+<td><code>pages/ResultsPage.jsx</code> (lines 2200–end): use the namespace <code>sections</code> to avoid colliding with 8b. 8b and 8c touch disjoint line ranges of one file, so 8c starts from 8b's merged result</td>
+</tr>
+<tr>
+<td>8d</td>
+<td><code>chat</code></td>
+<td><code>pages/ChatPage.jsx</code>, <code>utils/chatHistory.js</code> (user-visible strings only)</td>
+</tr>
+<tr>
+<td>8e</td>
+<td><code>plan</code></td>
+<td><code>PlanViewModal</code>, <code>PlanExport</code>, <code>CostBreakdown</code>, <code>BudgetPlanner</code>, <code>BestValuePackage</code>, <code>utils/planExport.js</code>, <code>utils/planPrint.js</code></td>
+</tr>
+<tr>
+<td>8f</td>
+<td><code>itinerary</code></td>
+<td><code>ItinerarySection</code>, <code>TimelineView</code>, <code>TripMap</code>, <code>WalkingToursSection</code></td>
+</tr>
+<tr>
+<td>8g</td>
+<td><code>alerts</code></td>
+<td><code>pages/AlertsPage.jsx</code>, <code>components/alerts/**</code>, <code>context/AlertsContext.jsx</code> (toast copy), <code>FareCalendarStrip</code></td>
+</tr>
+<tr>
+<td>8h</td>
+<td><code>account</code></td>
+<td><code>LoginPage</code>, <code>ChangePasswordPage</code>, <code>PreferencesPage</code>, <code>AdminPage</code></td>
+</tr>
+<tr>
+<td>8i</td>
+<td><code>misc</code></td>
+<td><code>SharePage</code>, <code>NearbyPage</code>, <code>CompareTable</code>, <code>FeedbackWidget</code>, <code>OnboardingTour</code>, <code>utils/tour.js</code>, <code>VerificationBadge</code>, <code>FromLinkChip</code>, <code>LinkPlanBanner</code>, <code>utils/verification.js</code> (labels shown in the UI)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 7 <code>useTranslation</code>, <code>format.js</code>, the key convention.
+- Produces: <code>locales/en/&lt;ns&gt;.json</code> + 6 translations per namespace; hard-coded <code>toLocaleString('en-US', …)</code>/<code>toLocaleDateString</code> calls in those files switched to <code>format.js</code>; <code>data-tid</code> on every button/link/toggle in those files.</p>
+<p>Steps for each sub-task:
+- [ ] <strong>Step 1:</strong> Extract every user-visible literal (JSX text, <code>placeholder</code>, <code>title</code>, <code>aria-label</code>, <code>alt</code>, toast/confirm text) into <code>en/&lt;ns&gt;.json</code>. Leave alone: test ids, enum values compared in logic, backend-provided strings and URLs.
+- [ ] <strong>Step 2:</strong> Run the namespace's existing tests. They must pass unchanged, since English is the test locale. If a test asserted on text that changed, the extraction changed copy, so fix the extraction, not the test.
+- [ ] <strong>Step 3:</strong> Translate the namespace into es, de, fr, hi, zh, bn. Keep <code>{{placeholders}}</code>, brand and codes; use natural travel-app register (informal "tú" in es, "du" in de, "vous" in fr, neutral Hindi in Devanagari, standard Bengali, Simplified Chinese).
+- [ ] <strong>Step 4:</strong> Run <code>npm test</code> (the catalogue rules must pass) + eslint → PASS.
+- [ ] <strong>Step 5:</strong> Commit <code>feat(i18n): &lt;ns&gt; namespace in 7 languages</code>.</p>
+<h3 id="task-9-translation-review-pass">Task 9: Translation review pass</h3>
+<p><strong>Files:</strong> <code>frontend/src/i18n/locales/{es,de,fr,hi,zh,bn}/*.json</code>
+- [ ] <strong>Step 1:</strong> For each language, a fresh reviewer agent reads <code>en</code> + that language side by side and fixes meaning errors, wrong register, untranslated strings, and wording likely to overflow (German/Bengali &gt; 1.6× <code>en</code> length on buttons gets a shorter wording).
+- [ ] <strong>Step 2:</strong> <code>npm test</code> → PASS. Screenshot Search + Results in <code>de</code> and <code>bn</code> to check for overflow.
+- [ ] <strong>Step 3:</strong> Commit <code>fix(i18n): translation review</code>.</p>
+<h3 id="task-10-privacy-settings-consent-prompt">Task 10: Privacy settings + consent prompt</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/ConsentPrompt.jsx</code>, <code>frontend/src/i18n/locales/&lt;lang&gt;/privacy.json</code>
+- Modify: <code>frontend/src/App.jsx</code> (mount the prompt), <code>frontend/src/pages/PreferencesPage.jsx</code> (sections Appearance — theme + language; Privacy — "Help improve Voyager" switch with a one-line explanation and a privacy policy link)
+- Create: <code>docs/Privacy.md</code> (what is collected, the never-collected list, retention 90 days, how to switch off)
+- Test: <code>frontend/src/components/ConsentPrompt.test.jsx</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 5 <code>consentRequired</code>, <code>getConsent</code>, <code>setConsent</code>.
+- Produces: a small bottom sheet (not a modal; doesn't block interaction), shown once when <code>consentRequired() &amp;&amp; getConsent() === null</code>, with two equal-weight buttons "Allow" / "No thanks" (<code>data-tid</code> <code>privacy.allow</code> / <code>privacy.deny</code>).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: shown for <code>Europe/Paris</code>, not for <code>America/New_York</code>; after a choice it's never shown again; the Preferences switch flips <code>telemetryAllowed()</code>.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(privacy): consent prompt and privacy settings</code></li>
+</ul>
+<h3 id="task-11-ai-output-in-the-users-language">Task 11: AI output in the user's language</h3>
+<p><strong>Files:</strong>
+- Modify: <code>backend/app/schemas/request.py</code> (optional <code>locale: Literal['en','es','de','fr','hi','zh','bn'] | None = None</code> on <code>TravelSearchRequest</code> and the chat request model), <code>backend/app/agents/base_agent.py</code> (system-prompt suffix), the search cache key builder (include <code>locale</code>), <code>frontend/src/services/api.js</code> (send <code>locale: i18n.language</code> on search/chat)
+- Test: <code>backend/tests/test_locale_prompt.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces: <code>language_instruction(locale: str | None) -&gt; str</code> in <code>base_agent.py</code>. It returns <code>""</code> for <code>None</code>/<code>en</code>; otherwise exactly: <code>"Write every human-readable text value in {Language name in English}. Keep JSON keys, enum values, codes, URLs, prices, currency codes, dates and names of places, venues, hotels, restaurants, tours, events and airlines exactly as you would in English output."</code> (amended by the final review: enrichment, verification and price lookups key on those names). An older SPA sends no <code>locale</code> and gets English, unchanged.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: the instruction is absent for <code>None</code>/<code>en</code> and present for <code>de</code>; two searches differing only in <code>locale</code> don't share a cache entry; an unknown locale → 422.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> the backend suite → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(i18n): agents answer in the user's language</code></li>
+</ul>
+<h3 id="task-12-docs-parity-matrix-spec-claudemd-sync">Task 12: Docs, parity matrix, spec + CLAUDE.md sync</h3>
+<p><strong>Files:</strong>
+- Create: <code>docs/Telemetry.md</code> (envelope, every event + props table, client rules, privacy), <code>docs/Internationalization.md</code>, <code>docs/Theming.md</code>, <code>docs/Feature-Parity.md</code>
+- Modify: <code>mkdocs.yml</code> nav, <code>CLAUDE.md</code> (new routes, <code>telemetry.db</code>, i18n/theme dirs, settings), <code>docs/Configuration.md</code> (new settings), <code>docs/API-Reference.md</code>, the spec §9 sentence about the catalogue location/plural format, <code>backend/tests/test_telemetry_registry.py</code> (remove the <code>xfail</code>)
+- [ ] <strong>Step 1:</strong> <code>Feature-Parity.md</code>: one row per user-facing feature (web today, from CLAUDE.md + pages), columns Web / Android / iOS with ✅ / ⏳ phase / —. Fill the Android column from the Android repo's README/feature list (<code>~/.local/bin/gh api repos/rupakc/travel-planner-android/readme</code>); iOS is all ⏳ Phase 7.
+- [ ] <strong>Step 2:</strong> Run <code>mkdocs build --strict</code>, the backend suite (the registry doc test now passes) → PASS.
+- [ ] <strong>Step 3:</strong> Commit <code>docs: telemetry, i18n, theming, feature parity</code>.</p>
+<h3 id="task-13-admin-analytics-tab">Task 13: Admin analytics tab</h3>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/admin/TelemetrySummary.jsx</code> (+ <code>.test.jsx</code>), <code>frontend/src/i18n/locales/&lt;lang&gt;/admin.json</code> keys under <code>telemetry.*</code> (coordinate with 8h: 8h owns <code>account</code>; this task owns the separate namespace <code>adminTelemetry</code>)
+- Modify: <code>frontend/src/pages/AdminPage.jsx</code> (new "Analytics" tab), <code>frontend/src/services/api.js</code> (<code>getTelemetrySummary(days)</code>)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: Task 3 <code>GET /api/admin/telemetry/summary</code>.
+- Produces: an "Analytics" tab with stat tiles (users and sessions today, 7-day users), a 30-day daily-users chart (inline SVG; follow the <code>dataviz</code> skill), and top events and top screens tables. A 404 from an older backend → the tab is hidden.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: renders tiles from a mocked summary; the tab is hidden on 404.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement.</strong> <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(admin): telemetry analytics tab</code></li>
+</ul>
+<h3 id="task-14-sign-in-buttons-on-the-login-page-owner-request-2026-11-10">Task 14: Sign-in buttons on the login page (owner request, 2026-11-10)</h3>
+<p>The OAuth flows themselves are Phase 1. This task puts the buttons in the UI now.</p>
+<p><strong>Files:</strong>
+- Create: <code>frontend/src/components/auth/SocialSignInButtons.jsx</code> (+ <code>.test.jsx</code>), <code>frontend/src/components/auth/providerIcons.jsx</code> (inline SVG marks drawn to each provider's published brand guidelines: Google "G", Facebook "f", GitHub mark, Apple logo), <code>frontend/src/i18n/locales/&lt;lang&gt;/auth.json</code>
+- Modify: <code>frontend/src/pages/LoginPage.jsx</code> (buttons above the username/password form, separated by "or"), <code>frontend/src/services/api.js</code> (<code>getAuthProviders()</code>)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>GET /api/auth/providers</code> → <code>{"providers": [{"id": "google"|"facebook"|"github"|"apple", "configured": bool, "start_url": str|null}]}</code> (built in Phase 1; on 404 every provider counts as not configured).
+- Produces: <code>&lt;SocialSignInButtons mode="signin"|"signup" /&gt;</code>. Order: Apple, Google, Facebook, GitHub. Each is a full-width button with the provider mark and "Continue with {{provider}}", <code>data-tid="auth.provider.&lt;id&gt;"</code>, and it emits <code>ui_tap</code> via autocapture. Configured → navigate to <code>start_url</code>. Not configured → an inline, polite note under the buttons (<code>aria-live="polite"</code>): "{{provider}} sign-in is coming soon — use your username and password for now." No navigation and no error.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong>: four buttons render in order; with a 404 from providers, clicking Google shows the coming-soon note and doesn't navigate; with <code>configured:true</code> it navigates to <code>start_url</code>; the existing LoginPage tests still pass.</li>
+<li>[ ] <strong>Step 2: Run</strong> → FAIL. <strong>Step 3: Implement</strong>, in both themes, and translate <code>auth</code> into all 7 languages. <strong>Step 4: Run</strong> → PASS.</li>
+<li>[ ] <strong>Step 5: Commit</strong> <code>feat(auth): sign-in buttons for Apple, Google, Facebook, GitHub</code></li>
+</ul>
+<h2 id="execution-waves">Execution waves</h2>
+<ul>
+<li><strong>Wave A (parallel):</strong> Tasks 1+2 (one agent: backend storage + registry), Task 4 (theme), Task 7 (i18n framework).</li>
+<li><strong>Wave B (parallel, after A merges):</strong> Task 3 (API), Task 5 (SDK; its interface with Task 3 is fixed above), Task 6 (dark polish), Task 8a, 8b, 8d–8i.</li>
+<li><strong>Wave C:</strong> Task 8c (after 8b), Task 10, Task 11, Task 13, Task 14 (after 8h, which owns LoginPage strings).</li>
+<li><strong>Wave D:</strong> Task 9 (one reviewer per language, in parallel), Task 12.</li>
+<li>Each wave ends with three review passes on the combined diff: spec compliance, correctness (<code>/code-review high</code>), and UX/visual (screenshots in both themes and in <code>de</code>/<code>bn</code>). One PR per wave, merged when CI is green.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

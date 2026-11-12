@@ -18,6 +18,7 @@ def test_config_shape(client, monkeypatch):
         "telemetry": True,
         "accounts": True,
         "game": True,
+        "play": 0,
         "trips": True,
         "journey": True,
         "offline_pack": True,
