@@ -14,6 +14,7 @@ import {
   Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints, Link2
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
+import { Link } from 'react-router-dom'
 import { streamSearch, searchFlightsFiltered, searchHotelsFiltered, searchActivitiesFiltered, saveRecentSearch, recheckStressTest, getSerpapiConfigured } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useSearchData } from '../context/SearchDataContext'
@@ -37,6 +38,11 @@ import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
 import { responseErrorMessage, axiosErrorDetail } from '../utils/httpError'
+import { snapshotFromResults, hasSnapshotData, searchMatchesPlan } from '../utils/tripSnapshot'
+import { putSnapshot } from '../services/tripsApi'
+import { useJourney } from '../hooks/useJourney'
+import { tripPath } from '../journey/paths'
+import CompletenessMeter from '../components/trips/CompletenessMeter'
 import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ItinerarySection from '../components/ItinerarySection'
@@ -2404,8 +2410,11 @@ export function StressTestSection({ data: original, layoutMoved = false, recheck
   )
 }
 
-export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanNameChange, onRemoveSelection, onViewPlan, token, searchData, screenSearchData, results, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
   const { t } = useTranslation('sections')
+  const { t: tj } = useTranslation('journey')
+  const journey = useJourney()
+  const [savedTripId, setSavedTripId] = useState(null)
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -2430,6 +2439,8 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
   }
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
+  // Loading another plan supersedes the trip saved earlier
+  useEffect(() => { if (loadedPlanId) setSavedTripId(null) }, [loadedPlanId])
 
   // The on-screen itinerary belongs to the plan being built from these
   // results — never to a loaded saved plan, which may be a different trip
@@ -2444,6 +2455,22 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
     const saved = stripLinkEvidence(selections)
     if (!days?.length) return saved
     return { ...saved, itinerary: { days, total_estimated_cost_usd: liveItinerary.total_estimated_cost_usd } }
+  }
+
+  // After a save: remember the trip id for "Open trip" and send the offline
+  // snapshot, fire-and-forget (an older backend answers 404; ignored)
+  const afterSave = async (res, isUpdate) => {
+    let id = isUpdate ? loadedPlanId : null
+    if (!isUpdate) { try { id = (await res.json())?.id ?? null } catch { id = null } }
+    if (!id || !journey.tripsApi) return id
+    // An update only snapshots when the on-screen search is the loaded plan's trip
+    if (isUpdate && !searchMatchesPlan(screenSearchData, { search_data: searchData })) return id
+    // Omit empty sections: the server treats null as "clear that section"
+    const snapshot = Object.fromEntries(Object.entries(snapshotFromResults(results)).filter(([, v]) => v))
+    if (hasSnapshotData(snapshot)) {
+      try { Promise.resolve(putSnapshot(token, id, snapshot)).catch(() => {}) } catch { /* ignored */ }
+    }
+    return id
   }
 
   const save = async () => {
@@ -2465,7 +2492,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
       if (res.ok) {
         setSaveMsg(isUpdate ? 'updated' : 'saved')
         track('plan_saved', 'results', { is_update: isUpdate })
-        loadPlans(); setTimeout(() => setSaveMsg(''), 3000)
+        loadPlans()
+        const tripId = await afterSave(res, isUpdate)
+        setSavedTripId(journey.enabled ? tripId : null)
+        setTimeout(() => { setSaveMsg(''); setSavedTripId(null) }, journey.enabled ? 8000 : 3000)
       } else setSaveMsg('failed')
     } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
@@ -2535,7 +2565,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
       {/* Drawer */}
       <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Header */}
-        <div className="px-4 py-3 bg-gradient-to-r from-slate-500 to-slate-600 text-white shrink-0">
+        <div className="px-4 py-3 bg-gradient-to-r from-teal-700 to-teal-800 text-white shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bookmark size={18} />
@@ -2583,6 +2613,8 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             )}
           </div>
 
+          <CompletenessMeter selections={selections} searchData={searchData} surface="drawer"
+            visaChecked={!!results?.visa && !results.visa.error} />
           <CostBreakdown selections={selections} searchData={searchData} />
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
           <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint savedNote source="my_plan" />
@@ -2925,7 +2957,14 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
               <Bookmark size={12} /> {t('drawer.archive')}
             </button>
           )}
-          {saveMsg && <p className={`text-sm text-center font-medium ${saveMsg === 'failed' ? 'text-red-600' : 'text-green-600'}`}>{t(`drawer.msg.${saveMsg}`)}</p>}
+          {saveMsg && (
+            <p className={`text-sm text-center font-medium ${saveMsg === 'failed' ? 'text-red-600' : 'text-green-600'}`}>
+              {t(`drawer.msg.${saveMsg}`)}
+              {journey.enabled && savedTripId && saveMsg !== 'failed' && (
+                <>{' '}<Link data-tid="drawer.open-trip" to={tripPath(savedTripId)} className="underline text-teal-700">{tj('saved.openTrip')}</Link></>
+              )}
+            </p>
+          )}
 
           {/* Saved plans — drop zone for current plan */}
           <div
@@ -3275,7 +3314,7 @@ function RemixComparisonBanner({ remixInfo, results, onDismiss }) {
 export default function ResultsPage() {
   const { t } = useTranslation('sections')
   const { user, token, logout } = useAuth()
-  const { pendingSearchData, clearPendingSearch, showResults, clearSearchResults } = useSearchData()
+  const { pendingSearchData, clearPendingSearch, showResults, clearSearchResults, pendingPlan, clearPendingPlan } = useSearchData()
 
   const [searchData, setSearchData] = useState(null)
   const [statuses,   setStatuses]   = useState(() => Object.fromEntries(AGENT_ORDER.map(a => [a, 'waiting'])))
@@ -3448,7 +3487,7 @@ export default function ResultsPage() {
     if (recheckRun.running || !results.itinerary) return
     const seq = ++recheckSeq.current
     const forLayoutFingerprint = recheckFingerprint(results.itinerary, selections)
-    const payload = buildStressTestPayload(searchData, results, selections)
+    const payload = { ...buildStressTestPayload(searchData, results, selections), ...(loadedPlanId ? { plan_id: loadedPlanId } : {}) }
     setRecheckRun({ running: true, error: null })
     track('health_recheck_run', 'results', {})
     try {
@@ -3572,6 +3611,16 @@ export default function ResultsPage() {
       clearPendingSearch()
     }
   }, [pendingSearchData])
+
+  // "Open in planner" from a trip: load the saved plan once its search is on screen
+  const pendingPlanLoaded = useRef(null)
+  useEffect(() => {
+    if (!pendingPlan || pendingPlanLoaded.current === pendingPlan) return
+    if (!searchMatchesPlan(searchData, pendingPlan)) return
+    pendingPlanLoaded.current = pendingPlan
+    handleLoadPlan(pendingPlan)
+    clearPendingPlan()
+  }, [pendingPlan, searchData])
 
   const handleLayover = async (lv) => {
     const info = { city: lv.city, airport: lv.airport, duration_hours: lv.duration_hours, status: 'loading', data: null }
@@ -4026,7 +4075,7 @@ export default function ResultsPage() {
       {/* Sticky header: top bar + badges */}
       <div className="sticky top-14 z-30">
         {/* Top bar */}
-        <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-800 text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <button data-tid="page.new-search" onClick={() => {
@@ -4240,6 +4289,7 @@ export default function ResultsPage() {
         onViewPlan={(plan) => setViewingPlan(plan)}
         token={token}
         searchData={loadedPlanSearchData || searchData}
+        screenSearchData={searchData}
         results={results}
         loadedPlanId={loadedPlanId}
         onLoadPlan={handleLoadPlan}

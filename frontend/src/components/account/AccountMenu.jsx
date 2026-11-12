@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { UserCog, Settings, LogOut } from 'lucide-react'
+import { UserCog, Settings, LogOut, MessageSquarePlus } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from './Avatar'
 
@@ -9,7 +9,7 @@ import Avatar from './Avatar'
 export default function AccountMenu() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { t } = useTranslation('profile')
+  const { t } = useTranslation(['profile', 'misc'])
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -57,6 +57,9 @@ export default function AccountMenu() {
           </button>
           <button type="button" role="menuitem" data-tid="account.menu.preferences" className={item} onClick={() => go('/preferences')}>
             <Settings size={14} />{t('menu.preferences')}
+          </button>
+          <button type="button" role="menuitem" data-tid="account.menu.feedback" className={item} onClick={() => { setOpen(false); window.dispatchEvent(new Event('voyager:open-feedback')) }}>
+            <MessageSquarePlus size={14} />{t('misc:feedback.trigger')}
           </button>
           <button type="button" role="menuitem" data-tid="nav.signOut" className={item} onClick={() => { setOpen(false); logout() }}>
             <LogOut size={14} />{t('menu.signOut')}

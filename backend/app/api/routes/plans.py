@@ -1,3 +1,4 @@
+import logging
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,6 +15,9 @@ from ...db.plans_db import (
     update_plan,
 )
 from ...db.taste_db import record_plan_signals
+from ...game import trip_hooks
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -83,6 +87,10 @@ def create_plan(req: SavePlanRequest, current_user: dict = Depends(get_current_u
         current_user["username"], req.name, req.search_data, req.selections
     )
     record_plan_signals(current_user["username"], req.search_data, req.selections)
+    try:  # the award never blocks the save; the response keys are unchanged
+        trip_hooks.on_plan_saved(current_user["id"], plan["id"])
+    except Exception as exc:
+        logger.warning("plan_saved hook failed (%s)", type(exc).__name__)
     return plan
 
 

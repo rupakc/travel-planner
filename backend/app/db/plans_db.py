@@ -1,8 +1,10 @@
 """SQLite persistence for saved travel plans."""
 
 import json
+from datetime import date
 
 from .database import get_connection
+from .trip_children import delete_trip_children
 
 
 def create_plans_table() -> None:
@@ -38,11 +40,33 @@ def _row_to_dict(row) -> dict:
     return d
 
 
+def _iso_day(value) -> str | None:
+    """A ``YYYY-MM-DD`` string that is a real calendar day, else None."""
+    if not isinstance(value, str) or len(value) != 10:
+        return None
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        return None
+
+
 def save_plan(username: str, name: str, search_data: dict, selections: dict) -> dict:
+    """Insert a plan; its trip dates come from ``search_data`` (Phase 2)."""
+    sd = search_data if isinstance(search_data, dict) else {}
+    start = _iso_day(sd.get("departure_date"))
+    end = _iso_day(sd.get("return_date"))
     with get_connection() as conn:
         cur = conn.execute(
-            "INSERT INTO plans (username, name, search_data, selections) VALUES (?,?,?,?)",
-            (username, name, json.dumps(search_data), json.dumps(selections)),
+            "INSERT INTO plans (username, name, search_data, selections,"
+            " start_date, end_date) VALUES (?,?,?,?,?,?)",
+            (
+                username,
+                name,
+                json.dumps(search_data),
+                json.dumps(selections),
+                start,
+                end,
+            ),
         )
         plan_id = cur.lastrowid
     return get_plan(plan_id)
@@ -70,6 +94,8 @@ def update_plan(
     if name is not None:
         sets.append("name = ?")
         vals.append(name)
+        # a renamed plan is a renamed trip
+        sets.append("title = NULL")
     if selections is not None:
         sets.append("selections = ?")
         vals.append(json.dumps(selections))
@@ -101,7 +127,10 @@ def get_plan_by_share_token(token: str) -> dict | None:
 
 
 def delete_plan(plan_id: int, username: str) -> None:
+    """Delete a user's plan and, in the same transaction, its trip rows."""
     with get_connection() as conn:
-        conn.execute(
+        cur = conn.execute(
             "DELETE FROM plans WHERE id = ? AND username = ?", (plan_id, username)
         )
+        if cur.rowcount:
+            delete_trip_children(conn, plan_id)
