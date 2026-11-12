@@ -33,6 +33,12 @@ def test_drop_facts_fare_drop():
                  "currency": "USD", "target_hit": False, "observed": True}  # fmt: skip
 
 
+def test_cheaper_date_note_has_no_drop():
+    # its price is a different date's fare: never a saving, XP or moment
+    n = _fare_note("fare_cheaper_date")
+    assert alert_moments.drop_facts("flight", {"id": 1}, n) is None
+
+
 @pytest.mark.parametrize(
     "kind", ["fare_target", "hotel_target", "activity_target", "trip_target"]
 )

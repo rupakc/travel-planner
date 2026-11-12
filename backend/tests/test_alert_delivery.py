@@ -155,6 +155,16 @@ def test_flush_claims_each_item_once(user, sent):
     assert len(pushes) == 1
 
 
+def test_stale_outbox_item_dropped_not_sent(user, sent):
+    pushes, _ = sent
+    n = _note(user)
+    ad.dispatch(_watch(user), "hotel", n, NOW)
+    assert ad.flush(NOW + timedelta(hours=13)) == 0
+    assert pushes == []
+    rows = [r for r in _outbox(user) if r["notification_id"] == n["id"]]
+    assert rows[0]["dropped_reason"] == "stale" and rows[0]["sent_at"] is None
+
+
 def test_in_app_row_always_written(user):
     alerts_db.put_prefs(
         user["id"], {**alerts_db.DEFAULT_PREFS, "instant": "targets_only"}
