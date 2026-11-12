@@ -118,7 +118,7 @@ def test_state_shape(client, clock):
     _, h = _login(client)
     d = client.get("/api/play/state", headers=h).json()
     assert set(d) == {"daily", "packs", "challenge", "open_h2h"}
-    assert d["challenge"] is None and d["open_h2h"] == 0
+    assert d["challenge"]["done"] is False and d["open_h2h"] == 0
     assert d["daily"] == {
         "available": True, "done": False, "score": None,
         "streak": {"current": 0, "longest": 0, "freeze_available": True},
@@ -148,7 +148,7 @@ def test_validation(client, clock):
     r = _start(client, h, mode="pack", pack="etiquette")
     assert r.status_code == 422 and r.json()["error_code"] == "invalid_pack"
     assert _start(client, h, mode="pack").status_code == 422
-    assert _start(client, h, mode="challenge").status_code == 422
+    assert _start(client, h, mode="h2h").status_code == 422
     assert _start(client, h, mode="bogus").status_code == 422
 
 

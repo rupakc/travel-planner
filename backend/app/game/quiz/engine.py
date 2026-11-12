@@ -192,3 +192,31 @@ def build_questions(
 
 def public(q: dict) -> dict:
     return {k: v for k, v in q.items() if k != "answer"}
+
+
+def country_entries(code: str) -> int:
+    """Landmarks and dishes the bank holds for a country (challenge depth)."""
+    b = load_bank()
+    return sum(1 for i in b["landmarks"] + b["dishes"] if i["country"] == code)
+
+
+def build_country_questions(
+    code: str, seed: str, count: int = QUESTIONS_PER_QUIZ
+) -> list[dict]:
+    """Questions about one country: its landmarks and dishes first (what to
+    see and eat there), then its flag and capital to fill the quiz."""
+    bank = load_bank()
+    country = bank["by_code"][code]
+    rng = random.Random(f"country:{code}|{seed}")
+    slots = [("landmark_country", i) for i in bank["landmarks"] if i["country"] == code]
+    slots += [("dish_country", i) for i in bank["dishes"] if i["country"] == code]
+    rng.shuffle(slots)
+    slots = slots[:count]
+    for kind in ("flag", "capital_of", "country_of_capital"):
+        if len(slots) < count:
+            slots.append((kind, None))
+    rng.shuffle(slots)
+    return [
+        {"index": i, **_build_one(rng, kind, country, bank, item)}
+        for i, (kind, item) in enumerate(slots)
+    ]

@@ -134,6 +134,7 @@ async def lifespan(app: FastAPI):
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.notify_db import create_notify_tables
+    from .db.play_db import create_play_tables
     from .db.price_watch_db import create_price_watch_tables
     from .db.quiz_db import create_quiz_tables
     from .db.shares_db import create_shares_table
@@ -148,6 +149,7 @@ async def lifespan(app: FastAPI):
     create_social_tables()
     create_quiz_tables()
     create_social_ideas_tables()
+    create_play_tables()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log

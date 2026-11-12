@@ -21,7 +21,9 @@
     "quiz_perfect": {"points": 20, "daily_cap": 3},
     "quiz_pack": {"points": 5, "daily_cap": 3},
     "idea_saved": {"points": 10, "daily_cap": 5},
-    "comment_helpful": {"points": 5, "daily_cap": 10}
+    "comment_helpful": {"points": 5, "daily_cap": 10},
+    "h2h_complete": {"points": 10, "daily_cap": 3},
+    "challenge_complete": {"points": 50, "daily_cap": 1}
   },
   "badges": {
     "verified": {"rule": "email_verified", "target": 1, "tier": "bronze", "icon": "mail-check"},
@@ -55,7 +57,11 @@
     "quiz_master": {"rule": "quiz_perfect", "target": 10, "tier": "silver", "icon": "trophy"},
     "inspirer": {"rule": "idea_saved", "target": 1, "tier": "bronze", "icon": "lightbulb"},
     "muse": {"rule": "idea_saved", "target": 10, "tier": "silver", "icon": "sparkles"},
-    "helpful_voice": {"rule": "comment_helpful", "target": 3, "tier": "bronze", "icon": "message-circle-heart"}
+    "helpful_voice": {"rule": "comment_helpful", "target": 3, "tier": "bronze", "icon": "message-circle-heart"},
+    "h2h_rival": {"rule": "h2h_complete", "target": 1, "tier": "bronze", "icon": "swords"},
+    "h2h_veteran": {"rule": "h2h_complete", "target": 25, "tier": "silver", "icon": "swords"},
+    "challenge_explorer": {"rule": "challenge_complete", "target": 1, "tier": "bronze", "icon": "compass"},
+    "challenge_regular": {"rule": "challenge_complete", "target": 8, "tier": "silver", "icon": "map"}
   },
   "levels": {"min_xp": [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000]},
   "streaks": {
