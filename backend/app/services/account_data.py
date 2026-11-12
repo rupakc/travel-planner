@@ -10,6 +10,7 @@ table with a ``username`` / ``user_id`` / ``created_by`` / ``user_key`` /
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import sqlite3
 from datetime import UTC, datetime
@@ -20,6 +21,9 @@ from ..db import fare_watch_db, game_db, price_watch_db, telemetry_db, users_db
 from ..db import user_settings_db as sdb
 from ..db.database import get_connection
 from ..db.devices_db import masked
+from ..db.trip_children import TRIP_CHILD_TABLES
+from ..db.trip_snapshot_db import get_snapshot
+from ..db.user_countries_db import list_countries
 from ..game import engine
 from .avatar import remove_avatar
 from .oauth import registry, secrets_box
@@ -51,9 +55,14 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
 }
 
 # child table → WHERE clause over its parent; the one parameter is the user id
+_USER_PLANS = (
+    "plan_id IN (SELECT id FROM plans WHERE username ="
+    " (SELECT username FROM users WHERE id = ?))"
+)
 CHILD_TABLES: dict[str, str] = {
     "fare_watch_history": "watch_id IN (SELECT id FROM fare_watches WHERE user_id = ?)",
     "price_watch_history": "watch_id IN (SELECT id FROM price_watches WHERE user_id = ?)",
+    **dict.fromkeys(TRIP_CHILD_TABLES, _USER_PLANS),
 }
 
 # tables keyed by a value derived from the user id; the parameter is the user id
@@ -91,6 +100,39 @@ def _rows(sql: str, params: tuple) -> list[dict]:
 
 def _iso_z(dt: datetime) -> str:
     return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# export key → (child table, ORDER BY)
+_TRIP_EXPORT = {
+    "expenses": ("trip_expenses", "spent_on, created_at, id"),
+    "journal": ("trip_journal", "created_at, id"),
+    "places": ("trip_ratings", "updated_at, place_key"),
+    "prep": ("trip_prep", "item_id"),
+    "checkins": ("trip_checkins", "day"),
+}
+
+
+def _parse_meta(row: dict) -> dict:
+    if isinstance(row.get("meta"), str):
+        try:
+            row["meta"] = json.loads(row["meta"])
+        except ValueError:
+            pass
+    return row
+
+
+def _trip_export(plan_id: int) -> dict:
+    out: dict = {}
+    for key, (table, order) in _TRIP_EXPORT.items():
+        rows = _rows(
+            f"SELECT * FROM {table} WHERE plan_id = ? ORDER BY {order}",  # nosec B608
+            (plan_id,),
+        )
+        out[key] = [
+            _parse_meta({k: v for k, v in r.items() if k != "plan_id"}) for r in rows
+        ]
+    out["snapshot"] = get_snapshot(plan_id)
+    return out
 
 
 def export_user(user: dict) -> dict:
@@ -154,6 +196,7 @@ def export_user(user: dict) -> dict:
             (uid,),
         ),
     }
+    plans = plans_db.get_user_plans(name)
     return _scrub(
         {
             "format": "voyager-export",
@@ -164,7 +207,12 @@ def export_user(user: dict) -> dict:
             "settings": sdb.get_settings(uid),
             "onboarding": sdb.get_onboarding(uid),
             "preferences": preferences_db.get_preferences(name),
-            "plans": plans_db.get_user_plans(name),
+            "plans": plans,
+            "trips": {str(p["id"]): _trip_export(p["id"]) for p in plans},
+            "countries": [
+                {k: v for k, v in c.items() if k != "user_id"}
+                for c in list_countries(uid)
+            ],
             "recent_searches": recent_searches_db.list_recent_searches(name),
             "taste": taste,
             "feedback": feedback,

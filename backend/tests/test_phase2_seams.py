@@ -25,8 +25,8 @@ def test_stub_routers_importable(name):
     assert hasattr(mod, "router")
 
 
-def test_trips_route_not_served_by_stubs(client):
-    assert client.get("/api/trips").status_code in (404, 405)
+def test_trips_route_requires_sign_in(client):
+    assert client.get("/api/trips").status_code == 401
 
 
 def test_owned_trip_404_for_other_user(monkeypatch):
