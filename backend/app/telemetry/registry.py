@@ -274,6 +274,23 @@ EVENTS: dict[str, dict[str, str]] = {
     "play_h2h_result": {"winner": _enum("you", "them", "draw")},
     "play_board_view": {"scope": _enum("global", "friends")},
     "play_challenge_view": {},
+    # Phase 5 social (props are enums only: no handles, ids or text)
+    "social_profile_view": {},
+    "social_profile_save": {"visibility": _enum("private", "followers", "public")},
+    "social_feed_view": {"scope": _enum("for_you", "following", "new")},
+    "social_idea_publish": {"kind": _enum("plan", "recap")},
+    "social_idea_open": {},
+    "social_idea_like": {"on": "bool"},
+    "social_idea_save": {},
+    "social_comment": {},
+    "social_follow": {"state": _enum("following", "pending", "none")},
+    "social_report": {
+        "target": _enum("idea", "comment", "profile"),
+        "reason": _enum(
+            "spam", "abuse", "sexual", "violence", "misinformation", "other"
+        ),
+    },
+    "social_block": {"on": "bool"},
 }
 
 

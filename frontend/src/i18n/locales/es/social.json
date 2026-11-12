@@ -1,0 +1,169 @@
+{
+  "feed": {
+    "title": "Ideas",
+    "scopes": "Feed",
+    "scope": {
+      "for_you": "Para ti",
+      "following": "Siguiendo",
+      "new": "Nuevo"
+    },
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "loadMore": "Ver más",
+    "empty": "Aún no hay ideas. Comparte uno de tus planes para empezar.",
+    "emptyFollowing": "Todavía no hay nada de las personas que sigues.",
+    "myProfile": "Mi perfil",
+    "profilePrompt": "Crea un perfil para publicar ideas, dar me gusta y seguir a otros.",
+    "createProfile": "Crea tu perfil",
+    "back": "Volver a las ideas",
+    "error": "Algo salió mal. Inténtalo de nuevo.",
+    "ideaGone": "Esta idea no está disponible."
+  },
+  "actions": {
+    "close": "Cerrar",
+    "cancel": "Cancelar"
+  },
+  "idea": {
+    "by": "de",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Resumen del viaje"
+    },
+    "held": "Pendiente de revisión",
+    "tripDays": "Viaje de {{days}} días",
+    "stats": {
+      "activities": "Actividades",
+      "hotels": "Hoteles",
+      "places": "Lugares"
+    },
+    "itemsHeading": "Qué incluye",
+    "moreItems": "+{{n}} más",
+    "like": "Me gusta",
+    "unlike": "Te gusta",
+    "save": "Guardar en mis planes",
+    "savedAgain": "Guardado",
+    "savedNote": "Guardado en tus planes.",
+    "comments": "Comentarios",
+    "hideComments": "Ocultar comentarios",
+    "report": "Denunciar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar esta idea para siempre?"
+  },
+  "comments": {
+    "title": "Comentarios",
+    "empty": "Aún no hay comentarios.",
+    "helpful": "Útil",
+    "held": "Pendiente de revisión",
+    "markHelpful": "Marcar como útil",
+    "unmarkHelpful": "Quitar la marca de útil",
+    "delete": "Eliminar",
+    "more": "Ver más comentarios",
+    "label": "Añade un comentario",
+    "counter": "{{n}}/{{max}}",
+    "post": "Publicar comentario"
+  },
+  "report": {
+    "title": "Denunciar",
+    "intro": "Cuéntanos qué pasa. Tres denuncias de personas verificadas lo ocultan hasta que un moderador lo revise.",
+    "reasonLabel": "Motivo",
+    "reason": {
+      "spam": "Spam",
+      "abuse": "Abuso o acoso",
+      "sexual": "Contenido sexual",
+      "violence": "Violencia",
+      "misinformation": "Desinformación",
+      "other": "Otro motivo"
+    },
+    "noteLabel": "Detalles (opcional)",
+    "submit": "Enviar denuncia",
+    "sent": "Gracias, le echaremos un vistazo."
+  },
+  "block": {
+    "block": "Bloquear",
+    "unblock": "Desbloquear",
+    "confirm": "¿Bloquear a @{{handle}}? Dejaréis de ver el perfil, las ideas y los comentarios del otro, y se eliminan los seguimientos.",
+    "yes": "Sí, bloquear"
+  },
+  "profile": {
+    "of": "Perfil de @{{handle}}",
+    "followsYou": "Te sigue",
+    "from": "De {{country}}",
+    "visited": "Países visitados",
+    "level": "Nivel {{level}}",
+    "badges": "Insignias",
+    "ideas": "Ideas",
+    "followers": "Seguidores",
+    "followingLabel": "Siguiendo",
+    "follow": "Seguir",
+    "following": "Siguiendo",
+    "requested": "Solicitado",
+    "notFound": "Este perfil no está disponible.",
+    "noIdeas": "No hay ideas que mostrar.",
+    "edit": "Editar perfil"
+  },
+  "editor": {
+    "title": "Edita tu perfil",
+    "createTitle": "Crea tu perfil",
+    "intro": "Tu alias es tu único nombre público. Tu nombre de usuario, tu correo y tu nombre real nunca se muestran. Tú decides quién ve el resto.",
+    "handle": "Alias",
+    "handleHelp": "De 3 a 20 caracteres: letras, números y guiones bajos.",
+    "handleChecking": "Comprobando…",
+    "handleOk": "Disponible",
+    "handleReason": {
+      "invalid": "Usa de 3 a 20 letras, números o guiones bajos.",
+      "reserved": "Ese alias está reservado.",
+      "taken": "Ese alias ya está en uso."
+    },
+    "visibility": "Quién puede ver tu perfil",
+    "visibilityOption": {
+      "private": "Solo yo (privado)",
+      "followers": "Mis seguidores",
+      "public": "Todo el mundo"
+    },
+    "visibilityNote": {
+      "private": "Nadie puede encontrarte y tú no puedes publicar ideas.",
+      "followers": "Los demás solo ven tu alias y los contadores hasta que aceptes su solicitud.",
+      "public": "Cualquiera que haya iniciado sesión puede ver tu perfil y seguirte."
+    },
+    "bio": "Biografía",
+    "counter": "{{n}}/{{max}}",
+    "homeCountry": "País de origen",
+    "none": "No mostrar",
+    "showLegend": "Mostrar en mi perfil",
+    "showNote": "Todo esto está desactivado hasta que lo actives.",
+    "flag": {
+      "show_avatar": "Mi foto",
+      "show_home_country": "Mi país de origen",
+      "show_countries": "Los países que he visitado",
+      "show_level": "Mi nivel",
+      "show_badges": "Mis insignias",
+      "leaderboard_opt_in": "Mostrarme en las clasificaciones (solo el alias)"
+    },
+    "saved": "Perfil guardado.",
+    "saving": "Guardando…",
+    "save": "Guardar perfil",
+    "requests": "Solicitudes de seguimiento",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "blocked": "Personas bloqueadas"
+  },
+  "errors": {
+    "handle_taken": "Ese alias ya está en uso.",
+    "handle_invalid": "Usa de 3 a 20 letras, números o guiones bajos.",
+    "handle_reserved": "Ese alias está reservado.",
+    "handle_rate_limited": "Puedes cambiar tu alias una vez cada 30 días.",
+    "content_rejected": "Ese texto no se puede usar. Reescríbelo, por favor.",
+    "profile_required": "Crea un perfil primero.",
+    "email_unverified": "Verifica tu correo para hacerlo.",
+    "restricted": "Tu cuenta está restringida por ahora.",
+    "limit_reached": "Has llegado al límite de hoy. Inténtalo mañana.",
+    "country_invalid": "Elige un país de la lista.",
+    "idea_unavailable": "Esta idea no está disponible.",
+    "profile_not_found": "Este perfil no está disponible.",
+    "idea_not_found": "Esta idea no está disponible.",
+    "comment_not_found": "Este comentario no está disponible.",
+    "cannot_follow_self": "No puedes seguirte a ti mismo.",
+    "cannot_block_self": "No puedes bloquearte a ti mismo.",
+    "not_found": "Eso no está disponible."
+  }
+}

@@ -36,6 +36,10 @@ import GameCelebration     from './components/game/GameCelebration'
 import TripsPage           from './pages/TripsPage'
 import TripPage            from './pages/TripPage'
 import PlayPage            from './pages/PlayPage'
+import FeedPage            from './pages/FeedPage'
+import ProfilePage         from './pages/ProfilePage'
+import { matchSocialPath } from './components/social/paths'
+import { useSocialEnabled } from './hooks/useSocial'
 import YouPage             from './pages/YouPage'
 import OnboardingPage      from './pages/OnboardingPage'
 import OnboardingGate      from './components/onboarding/OnboardingGate'
@@ -102,7 +106,9 @@ function knownPath(path, journey) {
   return journey !== false
 }
 
-const pageLabel = (path) => PATH_LABEL[path] ?? (matchTripPath(path) ? 'trip' : matchH2hPath(path) ? 'play' : 'unknown')
+const pageLabel = (path) =>
+  PATH_LABEL[path] ??
+  (matchTripPath(path) ? 'trip' : matchH2hPath(path) ? 'play' : matchSocialPath(path) ? 'social' : 'unknown')
 
 function Pending() {
   const { t } = useTranslation('journey')
@@ -142,6 +148,7 @@ function Layout() {
   const { enabled: journeyOn, loaded: journeyLoaded } = useJourney()
   const { on: alertsV2 } = useAlertsV2()
   const { hasTrips } = useHasTrips()
+  const social = useSocialEnabled()
   // A click on a native browser notification opens its watch
   const openAlert = useCallback((n) => navigate(notificationLink(n)), [navigate])
 
@@ -151,7 +158,10 @@ function Layout() {
 
   const path = location.pathname
   const journey = journeyLoaded ? journeyOn : null
-  if (!knownPath(path, journey)) {
+  // /feed, /feed/<id> and /u/<handle> exist only when the server has the social
+  // feed (features.social); until /config answers they wait, never redirect.
+  const socialRoute = matchSocialPath(path)
+  if (socialRoute ? (social.loaded && !social.enabled) : !knownPath(path, journey)) {
     return <Navigate to="/" replace />
   }
 
@@ -160,7 +170,7 @@ function Layout() {
   const home = !journeyOn ? 'search' : hasTrips === true ? 'trips' : hasTrips === false ? 'search' : 'pending'
   const showSearch = (path === '/' && home === 'search') || (journeyOn && path === '/explore')
   const trip = journeyOn ? matchTripPath(path) : null
-  const waiting = journey === null && isJourneyPath(path)
+  const waiting = (journey === null && isJourneyPath(path)) || (!!socialRoute && !social.loaded)
 
   return (
     <SearchDataProvider>
@@ -190,6 +200,8 @@ function Layout() {
           {journeyOn && path === '/play' && <PlayPage />}
           {journeyOn && matchH2hPath(path) && <PlayPage h2hId={matchH2hPath(path)} />}
           {journeyOn && path === '/you'  && <YouPage />}
+          {social.enabled && socialRoute?.page === 'feed' && <FeedPage key={socialRoute.id ?? 'feed'} ideaId={socialRoute.id} />}
+          {social.enabled && socialRoute?.page === 'profile' && <ProfilePage handle={socialRoute.handle} />}
           {waiting && <Pending />}
         </I18nRouteGate>
         <AttributionFooter />

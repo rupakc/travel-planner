@@ -1,0 +1,169 @@
+{
+  "feed": {
+    "title": "灵感",
+    "scopes": "动态",
+    "scope": {
+      "for_you": "为你推荐",
+      "following": "已关注",
+      "new": "最新"
+    },
+    "loading": "加载中…",
+    "retry": "重试",
+    "loadMore": "显示更多",
+    "empty": "这里还没有灵感。分享一个你的计划来开个头吧。",
+    "emptyFollowing": "你关注的人还没有发布内容。",
+    "myProfile": "我的主页",
+    "profilePrompt": "创建主页即可发布灵感、点赞和关注他人。",
+    "createProfile": "创建你的主页",
+    "back": "返回灵感",
+    "error": "出错了，请重试。",
+    "ideaGone": "此灵感不可用。"
+  },
+  "actions": {
+    "close": "关闭",
+    "cancel": "取消"
+  },
+  "idea": {
+    "by": "来自",
+    "kind": {
+      "plan": "计划",
+      "recap": "旅行回顾"
+    },
+    "held": "等待审核",
+    "tripDays": "{{days}} 天行程",
+    "stats": {
+      "activities": "活动",
+      "hotels": "酒店",
+      "places": "地点"
+    },
+    "itemsHeading": "包含内容",
+    "moreItems": "另外 {{n}} 项",
+    "like": "点赞",
+    "unlike": "已点赞",
+    "save": "保存到我的计划",
+    "savedAgain": "已保存",
+    "savedNote": "已保存到你的计划。",
+    "comments": "评论",
+    "hideComments": "隐藏评论",
+    "report": "举报",
+    "delete": "删除",
+    "deleteConfirm": "要永久删除这条灵感吗？"
+  },
+  "comments": {
+    "title": "评论",
+    "empty": "还没有评论。",
+    "helpful": "有帮助",
+    "held": "等待审核",
+    "markHelpful": "标记为有帮助",
+    "unmarkHelpful": "取消有帮助标记",
+    "delete": "删除",
+    "more": "显示更多评论",
+    "label": "添加评论",
+    "counter": "{{n}}/{{max}}",
+    "post": "发表评论"
+  },
+  "report": {
+    "title": "举报",
+    "intro": "请告诉我们问题所在。已验证用户的三次举报会使其暂时隐藏，直到版主查看。",
+    "reasonLabel": "原因",
+    "reason": {
+      "spam": "垃圾信息",
+      "abuse": "辱骂或骚扰",
+      "sexual": "色情内容",
+      "violence": "暴力",
+      "misinformation": "虚假信息",
+      "other": "其他"
+    },
+    "noteLabel": "详情（可选）",
+    "submit": "提交举报",
+    "sent": "谢谢，我们会查看。"
+  },
+  "block": {
+    "block": "屏蔽",
+    "unblock": "取消屏蔽",
+    "confirm": "要屏蔽 @{{handle}} 吗？你们将互相看不到对方的主页、灵感和评论，已有的关注也会解除。",
+    "yes": "是，屏蔽"
+  },
+  "profile": {
+    "of": "@{{handle}} 的主页",
+    "followsYou": "关注了你",
+    "from": "来自{{country}}",
+    "visited": "去过的国家",
+    "level": "等级 {{level}}",
+    "badges": "徽章",
+    "ideas": "灵感",
+    "followers": "粉丝",
+    "followingLabel": "关注",
+    "follow": "关注",
+    "following": "已关注",
+    "requested": "已申请",
+    "notFound": "此主页不可用。",
+    "noIdeas": "没有可显示的灵感。",
+    "edit": "编辑主页"
+  },
+  "editor": {
+    "title": "编辑你的主页",
+    "createTitle": "创建你的主页",
+    "intro": "你的昵称是你唯一的公开名称。你的用户名、邮箱和真实姓名绝不会显示。其余内容由你决定谁可以看到。",
+    "handle": "昵称",
+    "handleHelp": "3 到 20 个字符：字母、数字和下划线。",
+    "handleChecking": "检查中…",
+    "handleOk": "可用",
+    "handleReason": {
+      "invalid": "请使用 3 到 20 个字母、数字或下划线。",
+      "reserved": "该昵称为保留名称。",
+      "taken": "该昵称已被占用。"
+    },
+    "visibility": "谁可以看到你的主页",
+    "visibilityOption": {
+      "private": "仅自己（私密）",
+      "followers": "我的粉丝",
+      "public": "所有人"
+    },
+    "visibilityNote": {
+      "private": "没有人能找到你，你也无法发布灵感。",
+      "followers": "在你接受关注申请之前，其他人只能看到你的昵称和数量。",
+      "public": "任何已登录的人都可以查看你的主页并关注你。"
+    },
+    "bio": "简介",
+    "counter": "{{n}}/{{max}}",
+    "homeCountry": "所在国家",
+    "none": "不显示",
+    "showLegend": "在我的主页上显示",
+    "showNote": "这里的所有内容在你开启之前都是关闭的。",
+    "flag": {
+      "show_avatar": "我的头像",
+      "show_home_country": "我的所在国家",
+      "show_countries": "我去过的国家",
+      "show_level": "我的等级",
+      "show_badges": "我的徽章",
+      "leaderboard_opt_in": "在排行榜上显示我（仅昵称）"
+    },
+    "saved": "主页已保存。",
+    "saving": "保存中…",
+    "save": "保存主页",
+    "requests": "关注申请",
+    "accept": "接受",
+    "decline": "拒绝",
+    "blocked": "已屏蔽的用户"
+  },
+  "errors": {
+    "handle_taken": "该昵称已被占用。",
+    "handle_invalid": "请使用 3 到 20 个字母、数字或下划线。",
+    "handle_reserved": "该昵称为保留名称。",
+    "handle_rate_limited": "昵称每 30 天只能修改一次。",
+    "content_rejected": "该文本无法使用，请修改措辞。",
+    "profile_required": "请先创建主页。",
+    "email_unverified": "请先验证你的邮箱地址。",
+    "restricted": "你的账号目前受到限制。",
+    "limit_reached": "你已达到今日上限，请明天再试。",
+    "country_invalid": "请从列表中选择一个国家。",
+    "idea_unavailable": "此灵感不可用。",
+    "profile_not_found": "此主页不可用。",
+    "idea_not_found": "此灵感不可用。",
+    "comment_not_found": "此评论不可用。",
+    "cannot_follow_self": "你不能关注自己。",
+    "cannot_block_self": "你不能屏蔽自己。",
+    "not_found": "该内容不可用。"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "feed": {
+    "title": "Ideas",
+    "scopes": "Feed",
+    "scope": {
+      "for_you": "For you",
+      "following": "Following",
+      "new": "New"
+    },
+    "loading": "Loading…",
+    "retry": "Try again",
+    "loadMore": "Show more",
+    "empty": "No ideas here yet. Share one of your plans to get things started.",
+    "emptyFollowing": "Nothing from the people you follow yet.",
+    "myProfile": "My profile",
+    "profilePrompt": "Create a profile to post ideas, like and follow.",
+    "createProfile": "Create your profile",
+    "back": "Back to ideas",
+    "error": "Something went wrong. Please try again.",
+    "ideaGone": "This idea is not available."
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel"
+  },
+  "idea": {
+    "by": "by",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Trip recap"
+    },
+    "held": "Waiting for review",
+    "tripDays": "{{days}}-day trip",
+    "stats": {
+      "activities": "Activities",
+      "hotels": "Hotels",
+      "places": "Places"
+    },
+    "itemsHeading": "What's in it",
+    "moreItems": "+{{n}} more",
+    "like": "Like",
+    "unlike": "Liked",
+    "save": "Save to my plans",
+    "savedAgain": "Saved",
+    "savedNote": "Saved to your plans.",
+    "comments": "Comments",
+    "hideComments": "Hide comments",
+    "report": "Report",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this idea for good?"
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet.",
+    "helpful": "Helpful",
+    "held": "Waiting for review",
+    "markHelpful": "Mark as helpful",
+    "unmarkHelpful": "Remove helpful mark",
+    "delete": "Delete",
+    "more": "Show more comments",
+    "label": "Add a comment",
+    "counter": "{{n}}/{{max}}",
+    "post": "Post comment"
+  },
+  "report": {
+    "title": "Report",
+    "intro": "Tell us what is wrong. Three reports from verified people hide it until a moderator has looked.",
+    "reasonLabel": "Reason",
+    "reason": {
+      "spam": "Spam",
+      "abuse": "Abuse or harassment",
+      "sexual": "Sexual content",
+      "violence": "Violence",
+      "misinformation": "Misinformation",
+      "other": "Something else"
+    },
+    "noteLabel": "Details (optional)",
+    "submit": "Send report",
+    "sent": "Thanks, we will take a look."
+  },
+  "block": {
+    "block": "Block",
+    "unblock": "Unblock",
+    "confirm": "Block @{{handle}}? You will no longer see each other's profile, ideas or comments, and any follows are removed.",
+    "yes": "Yes, block"
+  },
+  "profile": {
+    "of": "Profile of @{{handle}}",
+    "followsYou": "Follows you",
+    "from": "From {{country}}",
+    "visited": "Countries visited",
+    "level": "Level {{level}}",
+    "badges": "Badges",
+    "ideas": "Ideas",
+    "followers": "Followers",
+    "followingLabel": "Following",
+    "follow": "Follow",
+    "following": "Following",
+    "requested": "Requested",
+    "notFound": "This profile is not available.",
+    "noIdeas": "No ideas to show.",
+    "edit": "Edit profile"
+  },
+  "editor": {
+    "title": "Edit your profile",
+    "createTitle": "Create your profile",
+    "intro": "Your handle is your only public name. Your username, email and real name are never shown. You decide who sees the rest.",
+    "handle": "Handle",
+    "handleHelp": "3 to 20 characters: letters, digits and underscores.",
+    "handleChecking": "Checking…",
+    "handleOk": "Available",
+    "handleReason": {
+      "invalid": "Use 3 to 20 letters, digits or underscores.",
+      "reserved": "That handle is reserved.",
+      "taken": "That handle is taken."
+    },
+    "visibility": "Who can see your profile",
+    "visibilityOption": {
+      "private": "Only me (private)",
+      "followers": "My followers",
+      "public": "Everyone"
+    },
+    "visibilityNote": {
+      "private": "Nobody can find you, and you cannot post ideas.",
+      "followers": "Others see only your handle and counts until you accept their follow request.",
+      "public": "Anyone signed in can see your profile and follow you."
+    },
+    "bio": "Bio",
+    "counter": "{{n}}/{{max}}",
+    "homeCountry": "Home country",
+    "none": "Not shown",
+    "showLegend": "Show on my profile",
+    "showNote": "Everything here is off until you switch it on.",
+    "flag": {
+      "show_avatar": "My picture",
+      "show_home_country": "My home country",
+      "show_countries": "Countries I have visited",
+      "show_level": "My level",
+      "show_badges": "My badges",
+      "leaderboard_opt_in": "Show me on leaderboards (handle only)"
+    },
+    "saved": "Profile saved.",
+    "saving": "Saving…",
+    "save": "Save profile",
+    "requests": "Follow requests",
+    "accept": "Accept",
+    "decline": "Decline",
+    "blocked": "Blocked people"
+  },
+  "errors": {
+    "handle_taken": "That handle is taken.",
+    "handle_invalid": "Use 3 to 20 letters, digits or underscores.",
+    "handle_reserved": "That handle is reserved.",
+    "handle_rate_limited": "You can change your handle once every 30 days.",
+    "content_rejected": "That text can't be used. Please reword it.",
+    "profile_required": "Create a profile first.",
+    "email_unverified": "Verify your email address to do that.",
+    "restricted": "Your account is restricted for now.",
+    "limit_reached": "You have reached today's limit. Try again tomorrow.",
+    "country_invalid": "Pick a country from the list.",
+    "idea_unavailable": "This idea is not available.",
+    "profile_not_found": "This profile is not available.",
+    "idea_not_found": "This idea is not available.",
+    "comment_not_found": "This comment is not available.",
+    "cannot_follow_self": "You can't follow yourself.",
+    "cannot_block_self": "You can't block yourself.",
+    "not_found": "That is not available."
+  }
+}

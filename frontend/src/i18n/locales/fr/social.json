@@ -1,0 +1,169 @@
+{
+  "feed": {
+    "title": "Idées",
+    "scopes": "Fil",
+    "scope": {
+      "for_you": "Pour vous",
+      "following": "Abonnements",
+      "new": "Récent"
+    },
+    "loading": "Chargement…",
+    "retry": "Réessayer",
+    "loadMore": "Voir plus",
+    "empty": "Pas encore d'idées. Partagez l'un de vos plans pour lancer la machine.",
+    "emptyFollowing": "Rien pour l'instant de la part des personnes que vous suivez.",
+    "myProfile": "Mon profil",
+    "profilePrompt": "Créez un profil pour publier des idées, aimer et suivre d'autres voyageurs.",
+    "createProfile": "Créer votre profil",
+    "back": "Retour aux idées",
+    "error": "Une erreur s'est produite. Veuillez réessayer.",
+    "ideaGone": "Cette idée n'est pas disponible."
+  },
+  "actions": {
+    "close": "Fermer",
+    "cancel": "Annuler"
+  },
+  "idea": {
+    "by": "par",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Récap de voyage"
+    },
+    "held": "En attente de vérification",
+    "tripDays": "Voyage de {{days}} jours",
+    "stats": {
+      "activities": "Activités",
+      "hotels": "Hôtels",
+      "places": "Lieux"
+    },
+    "itemsHeading": "Au programme",
+    "moreItems": "+{{n}} de plus",
+    "like": "J'aime",
+    "unlike": "Aimé",
+    "save": "Enregistrer dans mes plans",
+    "savedAgain": "Enregistré",
+    "savedNote": "Enregistré dans vos plans.",
+    "comments": "Commentaires",
+    "hideComments": "Masquer les commentaires",
+    "report": "Signaler",
+    "delete": "Supprimer",
+    "deleteConfirm": "Supprimer définitivement cette idée ?"
+  },
+  "comments": {
+    "title": "Commentaires",
+    "empty": "Pas encore de commentaires.",
+    "helpful": "Utile",
+    "held": "En attente de vérification",
+    "markHelpful": "Marquer comme utile",
+    "unmarkHelpful": "Retirer la mention utile",
+    "delete": "Supprimer",
+    "more": "Voir plus de commentaires",
+    "label": "Ajouter un commentaire",
+    "counter": "{{n}}/{{max}}",
+    "post": "Publier le commentaire"
+  },
+  "report": {
+    "title": "Signaler",
+    "intro": "Dites-nous ce qui ne va pas. Trois signalements de personnes vérifiées le masquent jusqu'à ce qu'un modérateur l'examine.",
+    "reasonLabel": "Motif",
+    "reason": {
+      "spam": "Spam",
+      "abuse": "Abus ou harcèlement",
+      "sexual": "Contenu sexuel",
+      "violence": "Violence",
+      "misinformation": "Désinformation",
+      "other": "Autre chose"
+    },
+    "noteLabel": "Détails (facultatif)",
+    "submit": "Envoyer le signalement",
+    "sent": "Merci, nous allons y jeter un œil."
+  },
+  "block": {
+    "block": "Bloquer",
+    "unblock": "Débloquer",
+    "confirm": "Bloquer @{{handle}} ? Vous ne verrez plus le profil, les idées ni les commentaires l'un de l'autre, et les abonnements seront supprimés.",
+    "yes": "Oui, bloquer"
+  },
+  "profile": {
+    "of": "Profil de @{{handle}}",
+    "followsYou": "Vous suit",
+    "from": "De {{country}}",
+    "visited": "Pays visités",
+    "level": "Niveau {{level}}",
+    "badges": "Badges",
+    "ideas": "Idées",
+    "followers": "Abonnés",
+    "followingLabel": "Abonnements",
+    "follow": "Suivre",
+    "following": "Suivi",
+    "requested": "Demandé",
+    "notFound": "Ce profil n'est pas disponible.",
+    "noIdeas": "Aucune idée à afficher.",
+    "edit": "Modifier le profil"
+  },
+  "editor": {
+    "title": "Modifier votre profil",
+    "createTitle": "Créer votre profil",
+    "intro": "Votre pseudo est votre seul nom public. Votre identifiant, votre e-mail et votre vrai nom ne sont jamais affichés. Vous choisissez qui voit le reste.",
+    "handle": "Pseudo",
+    "handleHelp": "De 3 à 20 caractères : lettres, chiffres et tirets bas.",
+    "handleChecking": "Vérification…",
+    "handleOk": "Disponible",
+    "handleReason": {
+      "invalid": "Utilisez de 3 à 20 lettres, chiffres ou tirets bas.",
+      "reserved": "Ce pseudo est réservé.",
+      "taken": "Ce pseudo est déjà pris."
+    },
+    "visibility": "Qui peut voir votre profil",
+    "visibilityOption": {
+      "private": "Moi seul (privé)",
+      "followers": "Mes abonnés",
+      "public": "Tout le monde"
+    },
+    "visibilityNote": {
+      "private": "Personne ne peut vous trouver et vous ne pouvez pas publier d'idées.",
+      "followers": "Les autres ne voient que votre pseudo et les compteurs tant que vous n'avez pas accepté leur demande.",
+      "public": "Toute personne connectée peut voir votre profil et vous suivre."
+    },
+    "bio": "Bio",
+    "counter": "{{n}}/{{max}}",
+    "homeCountry": "Pays d'origine",
+    "none": "Non affiché",
+    "showLegend": "Afficher sur mon profil",
+    "showNote": "Tout ce qui suit est désactivé tant que vous ne l'activez pas.",
+    "flag": {
+      "show_avatar": "Ma photo",
+      "show_home_country": "Mon pays d'origine",
+      "show_countries": "Les pays que j'ai visités",
+      "show_level": "Mon niveau",
+      "show_badges": "Mes badges",
+      "leaderboard_opt_in": "M'afficher dans les classements (pseudo uniquement)"
+    },
+    "saved": "Profil enregistré.",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer le profil",
+    "requests": "Demandes d'abonnement",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "blocked": "Personnes bloquées"
+  },
+  "errors": {
+    "handle_taken": "Ce pseudo est déjà pris.",
+    "handle_invalid": "Utilisez de 3 à 20 lettres, chiffres ou tirets bas.",
+    "handle_reserved": "Ce pseudo est réservé.",
+    "handle_rate_limited": "Vous ne pouvez changer de pseudo qu'une fois tous les 30 jours.",
+    "content_rejected": "Ce texte ne peut pas être utilisé. Veuillez le reformuler.",
+    "profile_required": "Créez d'abord un profil.",
+    "email_unverified": "Vérifiez votre adresse e-mail pour faire cela.",
+    "restricted": "Votre compte est restreint pour le moment.",
+    "limit_reached": "Vous avez atteint la limite du jour. Réessayez demain.",
+    "country_invalid": "Choisissez un pays dans la liste.",
+    "idea_unavailable": "Cette idée n'est pas disponible.",
+    "profile_not_found": "Ce profil n'est pas disponible.",
+    "idea_not_found": "Cette idée n'est pas disponible.",
+    "comment_not_found": "Ce commentaire n'est pas disponible.",
+    "cannot_follow_self": "Vous ne pouvez pas vous suivre vous-même.",
+    "cannot_block_self": "Vous ne pouvez pas vous bloquer vous-même.",
+    "not_found": "Cela n'est pas disponible."
+  }
+}

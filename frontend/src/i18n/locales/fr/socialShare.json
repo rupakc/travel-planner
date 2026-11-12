@@ -1,0 +1,32 @@
+{
+  "cta": "Partager dans Idées",
+  "title": "Partager dans le fil d'idées",
+  "titleRecap": "Partager votre récap dans le fil d'idées",
+  "intro": "Publiez un aperçu de ce plan : destinations, durée du voyage et lieux choisis. Les dates, les prix, votre ville de départ et votre nom ne sont jamais inclus.",
+  "titleLabel": "Titre",
+  "captionLabel": "Description (facultatif)",
+  "counter": "{{n}}/{{max}}",
+  "plainNote": "Texte brut uniquement. Les liens et les adresses e-mail sont retenus pour vérification.",
+  "submit": "Publier",
+  "publishing": "Publication…",
+  "cancel": "Annuler",
+  "close": "Fermer",
+  "loading": "Chargement…",
+  "done": "Publié. Les autres peuvent maintenant le trouver dans le fil.",
+  "held": "Merci. Votre idée attend une vérification rapide avant d'apparaître.",
+  "viewFeed": "Ouvrir le fil",
+  "needProfile": "Créez d'abord un profil. Votre pseudo est le seul nom que les autres verront.",
+  "createProfile": "Créer votre profil",
+  "profilePrivate": "Votre profil est privé. Passez-le en abonnés seulement ou en public pour publier.",
+  "editProfile": "Modifier votre profil",
+  "errors": {
+    "content_rejected": "Ce texte ne peut pas être utilisé. Veuillez le reformuler.",
+    "profile_required": "Créez d'abord un profil.",
+    "email_unverified": "Vérifiez votre adresse e-mail pour publier.",
+    "restricted": "Votre compte est restreint pour le moment.",
+    "limit_reached": "Vous avez atteint la limite du jour. Réessayez demain.",
+    "plan_not_found": "Ce plan est introuvable.",
+    "idea_unavailable": "Cette idée ne peut pas être republiée.",
+    "title_invalid": "Ajoutez un titre."
+  }
+}

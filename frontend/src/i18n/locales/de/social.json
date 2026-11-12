@@ -1,0 +1,169 @@
+{
+  "feed": {
+    "title": "Ideen",
+    "scopes": "Feed",
+    "scope": {
+      "for_you": "Für dich",
+      "following": "Folge ich",
+      "new": "Neu"
+    },
+    "loading": "Wird geladen…",
+    "retry": "Erneut versuchen",
+    "loadMore": "Mehr anzeigen",
+    "empty": "Noch keine Ideen. Teile einen deiner Pläne, um loszulegen.",
+    "emptyFollowing": "Von den Personen, denen du folgst, gibt es noch nichts.",
+    "myProfile": "Mein Profil",
+    "profilePrompt": "Erstelle ein Profil, um Ideen zu posten, zu liken und anderen zu folgen.",
+    "createProfile": "Profil erstellen",
+    "back": "Zurück zu den Ideen",
+    "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "ideaGone": "Diese Idee ist nicht verfügbar."
+  },
+  "actions": {
+    "close": "Schließen",
+    "cancel": "Abbrechen"
+  },
+  "idea": {
+    "by": "von",
+    "kind": {
+      "plan": "Plan",
+      "recap": "Reiserückblick"
+    },
+    "held": "Wartet auf Prüfung",
+    "tripDays": "{{days}}-Tage-Reise",
+    "stats": {
+      "activities": "Aktivitäten",
+      "hotels": "Hotels",
+      "places": "Orte"
+    },
+    "itemsHeading": "Das ist drin",
+    "moreItems": "+{{n}} weitere",
+    "like": "Gefällt mir",
+    "unlike": "Gefällt dir",
+    "save": "In meinen Plänen speichern",
+    "savedAgain": "Gespeichert",
+    "savedNote": "In deinen Plänen gespeichert.",
+    "comments": "Kommentare",
+    "hideComments": "Kommentare ausblenden",
+    "report": "Melden",
+    "delete": "Löschen",
+    "deleteConfirm": "Diese Idee endgültig löschen?"
+  },
+  "comments": {
+    "title": "Kommentare",
+    "empty": "Noch keine Kommentare.",
+    "helpful": "Hilfreich",
+    "held": "Wartet auf Prüfung",
+    "markHelpful": "Als hilfreich markieren",
+    "unmarkHelpful": "Hilfreich-Markierung entfernen",
+    "delete": "Löschen",
+    "more": "Weitere Kommentare anzeigen",
+    "label": "Kommentar hinzufügen",
+    "counter": "{{n}}/{{max}}",
+    "post": "Kommentar posten"
+  },
+  "report": {
+    "title": "Melden",
+    "intro": "Sag uns, was nicht stimmt. Drei Meldungen von verifizierten Personen blenden den Inhalt aus, bis ein Moderator ihn geprüft hat.",
+    "reasonLabel": "Grund",
+    "reason": {
+      "spam": "Spam",
+      "abuse": "Beleidigung oder Belästigung",
+      "sexual": "Sexuelle Inhalte",
+      "violence": "Gewalt",
+      "misinformation": "Falschinformation",
+      "other": "Etwas anderes"
+    },
+    "noteLabel": "Details (optional)",
+    "submit": "Meldung senden",
+    "sent": "Danke, wir sehen es uns an."
+  },
+  "block": {
+    "block": "Blockieren",
+    "unblock": "Blockierung aufheben",
+    "confirm": "@{{handle}} blockieren? Ihr seht gegenseitig weder Profil noch Ideen oder Kommentare, und bestehende Follows werden entfernt.",
+    "yes": "Ja, blockieren"
+  },
+  "profile": {
+    "of": "Profil von @{{handle}}",
+    "followsYou": "Folgt dir",
+    "from": "Aus {{country}}",
+    "visited": "Besuchte Länder",
+    "level": "Level {{level}}",
+    "badges": "Abzeichen",
+    "ideas": "Ideen",
+    "followers": "Follower",
+    "followingLabel": "Folge ich",
+    "follow": "Folgen",
+    "following": "Gefolgt",
+    "requested": "Angefragt",
+    "notFound": "Dieses Profil ist nicht verfügbar.",
+    "noIdeas": "Keine Ideen vorhanden.",
+    "edit": "Profil bearbeiten"
+  },
+  "editor": {
+    "title": "Dein Profil bearbeiten",
+    "createTitle": "Profil erstellen",
+    "intro": "Dein Handle ist dein einziger öffentlicher Name. Benutzername, E-Mail und echter Name werden nie angezeigt. Du entscheidest, wer den Rest sieht.",
+    "handle": "Handle",
+    "handleHelp": "3 bis 20 Zeichen: Buchstaben, Ziffern und Unterstriche.",
+    "handleChecking": "Wird geprüft…",
+    "handleOk": "Verfügbar",
+    "handleReason": {
+      "invalid": "Nutze 3 bis 20 Buchstaben, Ziffern oder Unterstriche.",
+      "reserved": "Dieses Handle ist reserviert.",
+      "taken": "Dieses Handle ist vergeben."
+    },
+    "visibility": "Wer dein Profil sehen kann",
+    "visibilityOption": {
+      "private": "Nur ich (privat)",
+      "followers": "Meine Follower",
+      "public": "Alle"
+    },
+    "visibilityNote": {
+      "private": "Niemand kann dich finden, und du kannst keine Ideen posten.",
+      "followers": "Andere sehen nur dein Handle und die Zahlen, bis du ihre Anfrage annimmst.",
+      "public": "Alle, die angemeldet sind, können dein Profil sehen und dir folgen."
+    },
+    "bio": "Über mich",
+    "counter": "{{n}}/{{max}}",
+    "homeCountry": "Heimatland",
+    "none": "Nicht anzeigen",
+    "showLegend": "Auf meinem Profil zeigen",
+    "showNote": "Alles hier ist aus, bis du es einschaltest.",
+    "flag": {
+      "show_avatar": "Mein Bild",
+      "show_home_country": "Mein Heimatland",
+      "show_countries": "Länder, die ich besucht habe",
+      "show_level": "Mein Level",
+      "show_badges": "Meine Abzeichen",
+      "leaderboard_opt_in": "In Bestenlisten anzeigen (nur Handle)"
+    },
+    "saved": "Profil gespeichert.",
+    "saving": "Wird gespeichert…",
+    "save": "Profil speichern",
+    "requests": "Follow-Anfragen",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "blocked": "Blockierte Personen"
+  },
+  "errors": {
+    "handle_taken": "Dieses Handle ist vergeben.",
+    "handle_invalid": "Nutze 3 bis 20 Buchstaben, Ziffern oder Unterstriche.",
+    "handle_reserved": "Dieses Handle ist reserviert.",
+    "handle_rate_limited": "Du kannst dein Handle nur alle 30 Tage ändern.",
+    "content_rejected": "Dieser Text kann nicht verwendet werden. Bitte formuliere ihn um.",
+    "profile_required": "Erstelle zuerst ein Profil.",
+    "email_unverified": "Bestätige deine E-Mail-Adresse, um das zu tun.",
+    "restricted": "Dein Konto ist vorerst eingeschränkt.",
+    "limit_reached": "Du hast das heutige Limit erreicht. Versuche es morgen wieder.",
+    "country_invalid": "Wähle ein Land aus der Liste.",
+    "idea_unavailable": "Diese Idee ist nicht verfügbar.",
+    "profile_not_found": "Dieses Profil ist nicht verfügbar.",
+    "idea_not_found": "Diese Idee ist nicht verfügbar.",
+    "comment_not_found": "Dieser Kommentar ist nicht verfügbar.",
+    "cannot_follow_self": "Du kannst dir nicht selbst folgen.",
+    "cannot_block_self": "Du kannst dich nicht selbst blockieren.",
+    "not_found": "Das ist nicht verfügbar."
+  }
+}

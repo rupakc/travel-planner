@@ -11,6 +11,11 @@ describe('routeTemplate (journey routes)', () => {
   it('knows the static journey routes', () => {
     for (const p of ['/trips', '/explore', '/play', '/you', '/onboarding']) expect(routeTemplate(p)).toBe(p)
   })
+  it('maps social routes to templates, never the handle or idea id', () => {
+    expect(routeTemplate('/feed')).toBe('/feed')
+    expect(routeTemplate('/feed/7')).toBe('/feed/:id')
+    expect(routeTemplate('/u/ann_x')).toBe('/u/:handle')
+  })
   it('keeps the existing routes', () => {
     expect(routeTemplate('/')).toBe('/')
     expect(routeTemplate('/share/abc')).toBe('/share/:token')

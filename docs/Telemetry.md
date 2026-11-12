@@ -161,6 +161,17 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `share_revoke` | `kind` | not yet | A share link was revoked. |
 | `share_view` | `kind` | not yet | A public share page was viewed (from the SPA only). |
 | `admin_mod_action` | `action` (`approve`, `remove`, `restrict`, `lift`, `view_queue`) | not yet | An admin acted in the Moderation tab; never the item, handle or text. |
+| `social_profile_view` | none | not yet | A profile page was opened (the route is a template, never the handle). |
+| `social_profile_save` | `visibility` (`private`, `followers`, `public`) | not yet | The own profile was saved. |
+| `social_feed_view` | `scope` (`for_you`, `following`, `new`) | not yet | The ideas feed was shown or its scope changed. |
+| `social_idea_publish` | `kind` (`plan`, `recap`) | not yet | An idea was published (or updated) from a plan or recap. |
+| `social_idea_open` | none | not yet | An idea was opened on its own page. |
+| `social_idea_like` | `on` (bool) | not yet | An idea was liked or unliked. |
+| `social_idea_save` | none | not yet | An idea was saved to the user's own plans (remix). |
+| `social_comment` | none | not yet | A comment was posted. |
+| `social_follow` | `state` (`following`, `pending`, `none`) | not yet | A follow, follow request or unfollow. |
+| `social_report` | `target` (`idea`, `comment`, `profile`), `reason` (`spam`, `abuse`, `sexual`, `violence`, `misinformation`, `other`) | not yet | A report was sent. |
+| `social_block` | `on` (bool) | not yet | Someone was blocked or unblocked. |
 
 ### Settings, consent, performance, errors
 

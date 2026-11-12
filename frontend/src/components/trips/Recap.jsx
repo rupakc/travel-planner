@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useTranslation } from 'react-i18next'
 import { sharePlan } from '../../services/api'
 import ShareDialog from '../share/ShareDialog'
+import PublishIdeaButton from '../social/PublishIdeaButton'
 import { sharingEnabled } from '../../utils/share'
 import { useClientConfig } from '../../hooks/useClientConfig'
 import { useJourney } from '../../hooks/useJourney'
@@ -169,6 +170,7 @@ export default function Recap({ trip, token }) {
         )}
       </div>
       {sharingV2 && shareOpen && <ShareDialog kind="recap" planId={tripId} onClose={() => setShareOpen(false)} />}
+      {recap.completed_at && <PublishIdeaButton kind="recap" planId={tripId} tid="recap.publish-idea" />}
       {msg && <p className="text-sm text-gray-700" role="status" data-tid="recap.msg">{msg}</p>}
       <WhereNext key={tripId} trip={trip} onUse={() => note('where_next')} />
     </div>

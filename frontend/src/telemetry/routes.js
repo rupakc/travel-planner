@@ -5,7 +5,7 @@ const STATIC = new Set([
   '/', '/chat', '/nearby', '/preferences', '/alerts', '/admin', '/login', '/change-password',
   '/account', '/signup', '/check-email', '/verify', '/forgot-password', '/reset-password',
   '/auth/callback', '/auth/username',
-  '/trips', '/explore', '/play', '/you', '/onboarding',
+  '/trips', '/explore', '/play', '/you', '/onboarding', '/feed',
 ])
 
 // [pattern, template]: the dynamic routes (and ones the plan reserves).
@@ -16,6 +16,9 @@ const DYNAMIC = [
   [/^\/trips\/[^/]+$/, '/trips/:id'],
   [/^\/trips\/[^/]+\/[^/]+$/, '/trips/:id/:tab'],
   [/^\/play\/h2h\/[^/]+$/, '/play/h2h/:id'],
+  // Phase 5 social: a handle or idea id never leaves the browser.
+  [/^\/u\/[^/]+$/, '/u/:handle'],
+  [/^\/feed\/[^/]+$/, '/feed/:id'],
 ]
 
 export function routeTemplate(pathname) {

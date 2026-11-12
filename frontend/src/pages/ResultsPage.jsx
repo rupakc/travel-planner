@@ -46,6 +46,7 @@ import CompletenessMeter from '../components/trips/CompletenessMeter'
 import { buildStressTestPayload, recheckFingerprint, recheckErrorMessage } from '../utils/stressTestPayload'
 import PlanViewModal from '../components/PlanViewModal'
 import ShareDialog from '../components/share/ShareDialog'
+import PublishIdeaButton from '../components/social/PublishIdeaButton'
 import { sharingEnabled } from '../utils/share'
 import { useClientConfig } from '../hooks/useClientConfig'
 import ItinerarySection from '../components/ItinerarySection'
@@ -3062,6 +3063,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                       )}
                     </div>
                     <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
+                    <PublishIdeaButton kind="plan" planId={plan.id} tid="drawer.publish-idea" className="mt-1.5 min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700 hover:bg-teal-50" />
                     {shareMsg?.id === plan.id && (
                       shareMsg.error
                         ? <p className="text-[11px] text-red-500 mt-1">{t('drawer.shareError')}</p>
