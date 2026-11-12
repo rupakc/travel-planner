@@ -222,6 +222,7 @@ export default function DropMoment() {
   }, [linkId, findDrop])
 
   const show = useCallback((note, via) => {
+    autoShown.current = true   // any card counts: closing it never opens the next one
     opener.current = document.activeElement
     setOpen({ note, via })
     markDropShown(note.id)
@@ -240,7 +241,6 @@ export default function DropMoment() {
 
   useEffect(() => {
     if (!open && !linked && !linkId && latestDrop && !autoShown.current) {
-      autoShown.current = true
       show(latestDrop, 'in_app')
     }
   }, [open, linked, linkId, latestDrop, show])

@@ -151,4 +151,16 @@ describe('DropMoment', () => {
     expect(p.hasAttribute('aria-label')).toBe(false)
     expect(p.querySelector('.sr-only').textContent).toContain('$57')
   })
+
+  it('closing a deep-linked card does not open the next unseen drop', async () => {
+    state.findDrop = vi.fn(async () => note())
+    state.latestDrop = note({ top: { id: 10 } })
+    state.markDropShown = vi.fn()
+    await mount('/alerts?drop=9')
+    const card = container.querySelector('[data-tid="dropMoment.card"]')
+    expect(card).not.toBeNull()
+    await act(async () => { card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(container.querySelector('[data-tid="dropMoment.card"]')).toBeNull()
+    expect(state.markDropShown).toHaveBeenCalledTimes(1)
+  })
 })
