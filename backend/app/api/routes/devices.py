@@ -19,7 +19,7 @@ class DeviceToken(BaseModel):
 
 
 class RegisterDevice(DeviceToken):
-    platform: Literal["android"] = "android"
+    platform: Literal["android", "ios"] = "android"
     locale: str | None = Field(None, max_length=35)
 
 

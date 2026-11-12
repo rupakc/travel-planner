@@ -140,7 +140,7 @@ def test_cap_evicts_the_oldest_device(client):
     [
         {"token": "", "platform": "android"},
         {"token": "x" * 4097, "platform": "android"},
-        {"token": "abc", "platform": "ios"},
+        {"token": "abc", "platform": "web"},
         {"platform": "android"},
     ],
 )

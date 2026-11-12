@@ -29,6 +29,7 @@ from google.auth import jwt as google_jwt
 from ..core.config import settings
 from ..db import devices_db
 from ..db.devices_db import masked
+from . import apns
 
 logger = logging.getLogger(__name__)
 
@@ -228,11 +229,44 @@ async def send_to_user(
     username: str, title: str, body: str, data: dict[str, str]
 ) -> int:
     """Push one notification to every device of ``username``, concurrently.
-    Returns how many FCM accepted; never raises."""
+    Returns how many pushes were accepted; never raises. With
+    ``notifications_v2_enabled`` iOS devices go to APNs and the rest to FCM;
+    otherwise every token goes to FCM exactly as before."""
+    if settings.notifications_v2_enabled:
+        return await _send_routed(username, title, body, data)
+    return await _send_fcm(username, title, body, data)
+
+
+async def _send_routed(
+    username: str, title: str, body: str, data: dict[str, str]
+) -> int:
+    try:
+        devices = devices_db.devices_for(username)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Push to %s failed: %s", username, type(exc).__name__)
+        return 0
+    ios = [t for t, p in devices if p == "ios"]
+    android = [t for t, p in devices if p != "ios"]
+    sent = 0
+    if android:
+        sent += await _send_fcm(username, title, body, data, tokens=android)
+    if ios and apns.configured():
+        sent += await apns.send_tokens(ios, title, body, data)
+    return sent
+
+
+async def _send_fcm(
+    username: str,
+    title: str,
+    body: str,
+    data: dict[str, str],
+    tokens: list[str] | None = None,
+) -> int:
     if not configured():
         return 0
     try:
-        tokens = devices_db.tokens_for(username)
+        if tokens is None:
+            tokens = devices_db.tokens_for(username)
         if not tokens:
             return 0
         if _key_file_configured():
