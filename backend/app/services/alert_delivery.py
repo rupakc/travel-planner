@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from ..core.config import settings
 from ..core.errors import ApiError
 from ..db import alerts_db, fare_watch_db, price_watch_db
 from ..db.alerts_db import DEFAULT_PREFS
@@ -115,6 +116,7 @@ def plan(
     counts: dict,
     last_push_at: datetime | None,
     now: datetime,
+    price_drops_enabled: bool = True,
 ) -> Decision:
     """The delivery rules for one new notification (pure).
 
@@ -123,6 +125,9 @@ def plan(
     # 1. expired / error notes go out as today
     if note_row.get("kind") in LEGACY_NOTE_KINDS:
         return Decision(list(CHANNELS), now, "legacy")
+    # 1b. Notifications 2.0: the user switched the price_drops category off
+    if not price_drops_enabled:
+        return Decision([], None, "category_off")
     # 2. targets only
     if prefs.get("instant") == "targets_only" and not _is_target_hit(note_row):
         return Decision([], None, "targets_only")
@@ -259,6 +264,11 @@ def dispatch(watch: dict, watch_kind: str, row: dict, now: datetime) -> None:
     user_id = watch["user_id"]
     prefs = alerts_db.get_prefs(user_id)
     tz = _user_tz(user_id)
+    category_on = True
+    if settings.notifications_v2_enabled:
+        from . import notify_settings
+
+        category_on = notify_settings.category_enabled(user_id, "price_drops")
     decision = plan(
         row,
         watch_kind,
@@ -267,6 +277,7 @@ def dispatch(watch: dict, watch_kind: str, row: dict, now: datetime) -> None:
         _counts(user_id, watch_kind, now, tz),
         _last_push_at(user_id),
         now,
+        category_on,
     )
     wanted = [
         c for c in CHANNELS if c != "email" or watch.get("email_enabled")
@@ -502,6 +513,15 @@ async def _loop(interval: int) -> None:
             raise
         except Exception:  # noqa: BLE001
             logger.warning("alert flush pass failed", exc_info=True)
+        if settings.notifications_v2_enabled:
+            try:
+                from . import notify_center
+
+                await asyncio.to_thread(notify_center.flush_due, datetime.now(UTC))
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                logger.warning("notify flush pass failed", exc_info=True)
         if time_mod.monotonic() - last_digest >= DIGEST_INTERVAL_S:
             last_digest = time_mod.monotonic()
             try:
@@ -516,8 +536,6 @@ async def _loop(interval: int) -> None:
 def start_loop() -> asyncio.Task | None:
     """The outbox flush loop; ``None`` while the v2 flag is off. Items left
     over from a stopped loop stay due and go out on the next start."""
-    from ..core.config import settings
-
     if not settings.price_alerts_v2_enabled:
         return None
     return asyncio.create_task(_loop(max(1, settings.alert_flush_interval_s)))
