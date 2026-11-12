@@ -188,7 +188,7 @@ class Settings(BaseSettings):
     alert_advice_ttl_hours: int = 24
     offline_pack_enabled: bool = True
     # Sharing 2.0 (Phase 4): /api/shares, card and OG page
-    sharing_v2_enabled: bool = False
+    sharing_v2_enabled: bool = True
     ready_window_days: int = 14
     trip_max_expenses: int = 2000
     trip_max_journal: int = 500
