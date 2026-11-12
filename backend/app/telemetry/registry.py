@@ -258,6 +258,22 @@ EVENTS: dict[str, dict[str, str]] = {
     "admin_mod_action": {
         "action": _enum("approve", "remove", "restrict", "lift", "view_queue")
     },
+    # Phase 5: Play
+    "play_state_view": {},
+    "play_quiz_start": {
+        "mode": _enum("daily", "pack", "challenge", "h2h"),
+        "pack": _enum("flags", "capitals", "landmarks", "cuisine", "none"),
+    },
+    "play_quiz_answer": {"correct": "bool", "elapsed_s": "int"},
+    "play_quiz_done": {
+        "mode": _enum("daily", "pack", "challenge", "h2h"),
+        "correct": "int",
+    },
+    "play_h2h_create": {},
+    "play_h2h_open": {},
+    "play_h2h_result": {"winner": _enum("you", "them", "draw")},
+    "play_board_view": {"scope": _enum("global", "friends")},
+    "play_challenge_view": {},
 }
 
 

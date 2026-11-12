@@ -15,3 +15,11 @@ export function matchTripPath(pathname) {
   if (tab !== null && !TRIP_TABS.includes(tab)) return null
   return { id: Number(m[1]), tab }
 }
+
+const H2H_RE = /^\/play\/h2h\/([A-Za-z0-9_-]{1,64})\/?$/
+
+/** '/play/h2h/abc' -> 'abc' (a head-to-head match page); else null. */
+export function matchH2hPath(pathname) {
+  const m = H2H_RE.exec(String(pathname ?? ''))
+  return m ? m[1] : null
+}

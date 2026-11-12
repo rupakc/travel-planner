@@ -1,0 +1,98 @@
+{
+  "loading": "Lädt…",
+  "daily": {
+    "title": "Tägliches Quiz",
+    "hint": "Fünf Fragen, heute für alle gleich. Ein Versuch pro Tag.",
+    "start": "Heutiges Quiz spielen",
+    "streak_one": "{{count}} Tag in Folge",
+    "streak_other": "{{count}} Tage in Folge",
+    "done_one": "Heute erledigt: {{count}} Punkt",
+    "done_other": "Heute erledigt: {{count}} Punkte"
+  },
+  "challenge": {
+    "title": "Wissen vor der Reise",
+    "destination": "Fünf Fragen zu {{country}}, deiner nächsten Reise.",
+    "featured": "Das Paket der Woche: fünf Fragen.",
+    "start": "Challenge starten",
+    "done": "Diese Woche erledigt. Super!"
+  },
+  "packs": {
+    "title": "Übungspakete"
+  },
+  "pack": {
+    "flags": "Flaggen",
+    "capitals": "Hauptstädte",
+    "landmarks": "Wahrzeichen",
+    "cuisine": "Küche"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "Zu welchem Land gehört diese Flagge?",
+      "capital_of": "Was ist die Hauptstadt von {{country}}?",
+      "country_of_capital": "{{capital}} ist die Hauptstadt welchen Landes?",
+      "landmark_country": "In welchem Land liegt {{landmark}}?",
+      "dish_country": "Aus welchem Land stammt {{dish}}?"
+    },
+    "flagAlt": "Flagge",
+    "progress": "Frage {{current}} von {{total}}",
+    "timer_one": "Noch {{count}} Sekunde",
+    "timer_other": "Noch {{count}} Sekunden",
+    "correct": "Richtige Antwort",
+    "wrong": "Deine Antwort, falsch",
+    "correctPoints_one": "Richtig! +{{count}} Punkt",
+    "correctPoints_other": "Richtig! +{{count}} Punkte",
+    "wrongNote": "Diesmal nicht. Die richtige Antwort ist markiert.",
+    "next": "Nächste Frage",
+    "finish": "Ergebnis ansehen"
+  },
+  "result": {
+    "title": "Dein Ergebnis",
+    "correct": "{{correct}} von {{total}} richtig",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "{{count}} Tag in Folge",
+    "streak_other": "{{count}} Tage in Folge",
+    "back": "Zurück zu Play"
+  },
+  "h2h": {
+    "title": "Duell",
+    "hint": "Fordere jemanden per Handle heraus. Du spielst jetzt, die andere Person hat 48 Stunden.",
+    "empty": "Noch keine Duelle.",
+    "handle": "Handle der Person",
+    "pack": "Paket",
+    "create": "Herausfordern",
+    "open": "Öffnen",
+    "back": "Zurück zu Play",
+    "missing": "Dieses Duell wurde nicht gefunden.",
+    "vs": "Du gegen {{handle}}",
+    "score": "{{you}} zu {{them}}",
+    "state_waiting_you": "Du bist dran",
+    "state_waiting_them": "Warten auf die Antwort",
+    "state_done": "Beendet",
+    "state_declined": "Abgelehnt",
+    "state_expired": "Abgelaufen",
+    "winner_you": "Du hast gewonnen!",
+    "winner_them": "Diesmal hat die andere Person gewonnen.",
+    "winner_draw": "Unentschieden.",
+    "accept": "Annehmen und spielen",
+    "decline": "Ablehnen"
+  },
+  "board": {
+    "title": "Bestenliste",
+    "scope": "Bereich der Bestenliste",
+    "scope_global": "Weltweit",
+    "scope_friends": "Freunde",
+    "week_current": "Diese Woche",
+    "week_previous": "Letzte Woche",
+    "optinNote": "Die weltweite Liste zeigt nur Handles, und nur von Leuten, die mitmachen. Willst du dabei sein?",
+    "handle": "Wähle einen Handle",
+    "join": "Bestenliste beitreten",
+    "failed": "Die Bestenliste konnte nicht geladen werden.",
+    "empty": "Diese Woche noch niemand hier.",
+    "you": "(du)",
+    "points_one": "{{count}} Punkt",
+    "points_other": "{{count}} Punkte",
+    "mine_one": "Du bist auf Platz {{rank}} mit {{count}} Punkt",
+    "mine_other": "Du bist auf Platz {{rank}} mit {{count}} Punkten"
+  }
+}

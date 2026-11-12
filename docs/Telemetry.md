@@ -111,6 +111,15 @@ Emitted by the Phase 1 account and game features; accepted by the server ahead o
 | `badge_earned` | `badge` (token) | not yet | A badge was earned. |
 | `level_up` | `level` (int) | not yet | The user reached a new level. |
 | `game_view` | `surface` (`account`, `nav`, `celebration`) | not yet | A game surface was shown. |
+| `play_state_view` | none | not yet | The Play page showed its quiz hub. |
+| `play_quiz_start` | `mode` (`daily`, `pack`, `challenge`, `h2h`), `pack` (`flags`, `capitals`, `landmarks`, `cuisine`, `none`) | not yet | A quiz was started or resumed. |
+| `play_quiz_answer` | `correct` (bool), `elapsed_s` (int) | not yet | One quiz question was answered. |
+| `play_quiz_done` | `mode`, `correct` (int) | not yet | A quiz finished. |
+| `play_h2h_create` | none | not yet | A head-to-head challenge was sent. |
+| `play_h2h_open` | none | not yet | A head-to-head match was opened. |
+| `play_h2h_result` | `winner` (`you`, `them`, `draw`) | not yet | A finished head-to-head result was shown. |
+| `play_board_view` | `scope` (`global`, `friends`) | not yet | A leaderboard tab was shown. |
+| `play_challenge_view` | none | not yet | The weekly challenge card was shown. |
 
 ### Journey
 

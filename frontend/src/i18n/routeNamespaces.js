@@ -11,7 +11,7 @@
 // Lazy: LAZY_NS, used only inside I18nRouteGate. `index.js` repeats this list
 // in two import.meta.glob patterns (globs must be literals); a test keeps them
 // in step. A namespace nobody listed stays bundled, which is always safe.
-import { matchTripPath } from '../journey/paths'
+import { matchTripPath, matchH2hPath } from '../journey/paths'
 
 export const EAGER_NS = ['common', 'errors', 'auth', 'journey', 'offline', 'misc']
 
@@ -24,7 +24,7 @@ export const SHELL_NS = [
 
 export const LAZY_NS = [
   'accountData', 'accountSettings', 'adminInvites', 'adminSocial', 'adminTelemetry', 'expenses', 'journal',
-  'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'playYou', 'prep', 'recap', 'security', 'today',
+  'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'play', 'playYou', 'prep', 'recap', 'security', 'today',
   'trip', 'trips',
 ]
 
@@ -44,7 +44,7 @@ const ROUTES = {
   '/preferences': ['account', 'alerts', 'search', 'privacy'],
   '/account': ['accountData', 'accountSettings', 'notifications', 'security', 'profile', 'quota', 'game', 'privacy', 'signup'],
   '/admin': ['adminInvites', 'adminSocial', 'adminTelemetry', 'account', 'signup'],
-  '/play': ['playYou', 'game'],
+  '/play': ['playYou', 'play', 'game'],
   '/you': ['playYou', 'game', 'coach'],
   '/onboarding': ['onboarding'],
 }
@@ -57,5 +57,6 @@ export const PREFETCH_PATHS = ['/account', '/admin', '/', '/trips', '/trips/0', 
 export function namespacesFor(pathname) {
   const path = String(pathname ?? '')
   if (Object.hasOwn(ROUTES, path)) return [...ROUTES[path]]
+  if (matchH2hPath(path)) return ['playYou', 'play', 'game']
   return matchTripPath(path) ? [...TRIP_NS] : []
 }

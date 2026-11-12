@@ -5,6 +5,10 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 
 const journey = vi.hoisted(() => ({ enabled: true }))
+const cfg = vi.hoisted(() => ({ features: {} }))
+vi.mock('../hooks/useClientConfig', () => ({ useClientConfig: () => ({ config: cfg, loaded: true }), featureOn: (c, k) => !!c.features?.[k] }))
+vi.mock('../components/play/QuizHub', () => ({ default: () => <div data-tid="play.hub" /> }))
+vi.mock('../components/play/H2HMatch', () => ({ default: () => <div data-tid="play.h2h.match" /> }))
 vi.mock('../hooks/useJourney', () => ({ useJourney: () => ({ enabled: journey.enabled }) }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
 vi.mock('../services/accountApi', () => ({ getAccount: vi.fn(), patchSettings: vi.fn() }))
@@ -43,6 +47,28 @@ beforeEach(async () => {
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container)
 })
 afterEach(() => { act(() => root.unmount()); container.remove() })
+
+describe('PlayPage play flag', () => {
+  it('hides the quiz hub when features.play is off or missing', async () => {
+    cfg.features = {}
+    await mount()
+    expect(tid('play.hub')).toBeNull()
+  })
+  it('shows the hub when features.play is on, and nothing of it for a hidden game', async () => {
+    cfg.features = { play: 1 }
+    await mount()
+    expect(tid('play.hub')).not.toBeNull()
+    acct.settings = { hide_game: true }
+    await mount()
+    expect(tid('play.hub')).toBeNull()
+    expect(tid('play.hidden')).not.toBeNull()
+  })
+  it('renders a match page on /play/h2h/:id only with the flag', async () => {
+    cfg.features = { play: 1 }
+    await act(async () => { root.render(<MemoryRouter><PlayPage h2hId="m1" /></MemoryRouter>) })
+    expect(tid('play.h2h.match')).not.toBeNull()
+  })
+})
 
 describe('PlayPage', () => {
   it('renders countries with names, flags, continents and the streak', async () => {

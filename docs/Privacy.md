@@ -60,6 +60,11 @@ Property values are short tokens (letters, digits and `_ . : / -`, no spaces or 
 | `badge_earned` | `badge` |
 | `level_up` | `level` |
 | `game_view` | `surface` (account, nav or celebration) |
+| `play_quiz_start` | `mode` (daily, pack, challenge or h2h), `pack` |
+| `play_quiz_answer` | `correct`, `elapsed_s` |
+| `play_quiz_done` | `mode`, `correct` |
+| `play_h2h_result` | `winner` (you, them or draw) |
+| `play_board_view` | `scope` (global or friends) |
 
 `tid` is the stable identifier of a button or control (for example `nav.search`), never its visible text.
 

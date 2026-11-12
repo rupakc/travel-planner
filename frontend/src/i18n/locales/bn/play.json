@@ -1,0 +1,98 @@
+{
+  "loading": "লোড হচ্ছে…",
+  "daily": {
+    "title": "দৈনিক কুইজ",
+    "hint": "পাঁচটি প্রশ্ন, আজ সবার জন্য একই। দিনে একবারই চেষ্টা।",
+    "start": "আজকের কুইজ খেলুন",
+    "streak_one": "টানা {{count}} দিন কুইজ",
+    "streak_other": "টানা {{count}} দিন কুইজ",
+    "done_one": "আজ শেষ: {{count}} পয়েন্ট",
+    "done_other": "আজ শেষ: {{count}} পয়েন্ট"
+  },
+  "challenge": {
+    "title": "যাওয়ার আগে জানুন",
+    "destination": "{{country}} সম্পর্কে পাঁচটি প্রশ্ন, আপনার পরের ভ্রমণ।",
+    "featured": "এই সপ্তাহের বিশেষ প্যাক: পাঁচটি প্রশ্ন।",
+    "start": "চ্যালেঞ্জ শুরু করুন",
+    "done": "এই সপ্তাহে শেষ। দারুণ!"
+  },
+  "packs": {
+    "title": "অনুশীলন প্যাক"
+  },
+  "pack": {
+    "flags": "পতাকা",
+    "capitals": "রাজধানী",
+    "landmarks": "ল্যান্ডমার্ক",
+    "cuisine": "খাবার"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "এই পতাকা কোন দেশের?",
+      "capital_of": "{{country}}-এর রাজধানী কোনটি?",
+      "country_of_capital": "{{capital}} কোন দেশের রাজধানী?",
+      "landmark_country": "{{landmark}} কোন দেশে?",
+      "dish_country": "{{dish}} কোন দেশের খাবার?"
+    },
+    "flagAlt": "পতাকা",
+    "progress": "প্রশ্ন {{current}} / {{total}}",
+    "timer_one": "{{count}} সেকেন্ড বাকি",
+    "timer_other": "{{count}} সেকেন্ড বাকি",
+    "correct": "সঠিক উত্তর",
+    "wrong": "আপনার উত্তর, ভুল",
+    "correctPoints_one": "সঠিক! +{{count}} পয়েন্ট",
+    "correctPoints_other": "সঠিক! +{{count}} পয়েন্ট",
+    "wrongNote": "এবার নয়। সঠিক উত্তর চিহ্নিত আছে।",
+    "next": "পরের প্রশ্ন",
+    "finish": "ফলাফল দেখুন"
+  },
+  "result": {
+    "title": "আপনার ফলাফল",
+    "correct": "{{total}}-এর মধ্যে {{correct}} সঠিক",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "টানা {{count}} দিন",
+    "streak_other": "টানা {{count}} দিন",
+    "back": "Play-এ ফিরুন"
+  },
+  "h2h": {
+    "title": "মুখোমুখি",
+    "hint": "হ্যান্ডেল দিয়ে বন্ধুকে চ্যালেঞ্জ করুন। আপনি এখন খেলুন, তাঁর ৪৮ ঘণ্টা সময়।",
+    "empty": "এখনও কোনো ম্যাচ নেই।",
+    "handle": "তাঁর হ্যান্ডেল",
+    "pack": "প্যাক",
+    "create": "চ্যালেঞ্জ করুন",
+    "open": "খুলুন",
+    "back": "Play-এ ফিরুন",
+    "missing": "এই ম্যাচ পাওয়া যায়নি।",
+    "vs": "আপনি বনাম {{handle}}",
+    "score": "{{you}} - {{them}}",
+    "state_waiting_you": "আপনার পালা",
+    "state_waiting_them": "তাঁর উত্তরের অপেক্ষা",
+    "state_done": "শেষ",
+    "state_declined": "প্রত্যাখ্যাত",
+    "state_expired": "মেয়াদ শেষ",
+    "winner_you": "আপনি জিতেছেন!",
+    "winner_them": "এবার তিনি জিতেছেন।",
+    "winner_draw": "ড্র।",
+    "accept": "গ্রহণ করে খেলুন",
+    "decline": "প্রত্যাখ্যান করুন"
+  },
+  "board": {
+    "title": "লিডারবোর্ড",
+    "scope": "লিডারবোর্ডের পরিসর",
+    "scope_global": "বিশ্বব্যাপী",
+    "scope_friends": "বন্ধু",
+    "week_current": "এই সপ্তাহ",
+    "week_previous": "গত সপ্তাহ",
+    "optinNote": "বিশ্বব্যাপী বোর্ডে শুধু হ্যান্ডেল দেখায়, আর শুধু যাঁরা যোগ দেন তাঁদের। আপনি কি যোগ দিতে চান?",
+    "handle": "একটি হ্যান্ডেল বেছে নিন",
+    "join": "লিডারবোর্ডে যোগ দিন",
+    "failed": "লিডারবোর্ড লোড করা যায়নি।",
+    "empty": "এই সপ্তাহে এখনও কেউ নেই।",
+    "you": "(আপনি)",
+    "points_one": "{{count}} পয়েন্ট",
+    "points_other": "{{count}} পয়েন্ট",
+    "mine_one": "আপনি {{rank}} নম্বরে, {{count}} পয়েন্ট নিয়ে",
+    "mine_other": "আপনি {{rank}} নম্বরে, {{count}} পয়েন্ট নিয়ে"
+  }
+}
