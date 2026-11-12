@@ -24,6 +24,7 @@ from .api.routes.account import router as account_router
 from .api.routes.account_data import router as account_data_router
 from .api.routes.admin import router as admin_router
 from .api.routes.admin_invites import router as admin_invites_router
+from .api.routes.admin_social import router as admin_social_router
 from .api.routes.airports import router as airports_router
 from .api.routes.alerts import router as alerts_router
 from .api.routes.analytics import router as analytics_router
@@ -57,6 +58,7 @@ from .api.routes.shares import public_router as shares_public_router
 from .api.routes.shares import router as shares_router
 from .api.routes.signup import router as signup_router
 from .api.routes.social import router as social_router
+from .api.routes.social_ideas import router as social_ideas_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.telemetry import router as telemetry_router
@@ -136,6 +138,7 @@ async def lifespan(app: FastAPI):
     from .db.quiz_db import create_quiz_tables
     from .db.shares_db import create_shares_table
     from .db.social_db import create_social_tables
+    from .db.social_ideas_db import create_social_ideas_tables
 
     create_fare_watch_tables()
     create_price_watch_tables()
@@ -144,6 +147,7 @@ async def lifespan(app: FastAPI):
     create_shares_table()
     create_social_tables()
     create_quiz_tables()
+    create_social_ideas_tables()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
@@ -382,6 +386,8 @@ app.include_router(
 )
 # Social (Phase 5): flag + per-route read/write buckets live in the router
 app.include_router(social_router, prefix="/api", tags=["social"])
+app.include_router(social_ideas_router, prefix="/api", tags=["social"])
+app.include_router(admin_social_router, prefix="/api", tags=["admin_social"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])
 app.include_router(

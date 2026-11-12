@@ -69,3 +69,15 @@ def check(text: str) -> Verdict:
 def classify(text: str) -> Verdict | None:
     """Optional classifier hook (a follow-up); None = no opinion."""
     return None
+
+
+def verdict(*texts: str) -> Verdict:
+    """The strictest outcome over several fields (keyword filter, then the
+    optional classifier hook)."""
+    rank = {"allow": 0, "review": 1, "reject": 2}
+    worst: Verdict = "allow"
+    for t in texts:
+        for v in (check(t), classify(t)):
+            if v and rank[v] > rank[worst]:
+                worst = v
+    return worst
