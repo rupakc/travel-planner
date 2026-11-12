@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     rate_limit_discover: int = 10  # /discover
     rate_limit_light_ai: int = 60  # single-agent routes, /stress-test, /*/filtered
     rate_limit_import: int = 20  # /import/extract (plan from a link)
+    rate_limit_share_public: int = 120  # public share page, JSON and card (per IP)
+    rate_limit_share_manage: int = 30  # /shares create, list, revoke (per user)
     rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
     # /auth/login: attempts per client IP; failed attempts per (username, IP),
     # so others can't lock a user out; and a high per-username ceiling across
@@ -185,6 +187,8 @@ class Settings(BaseSettings):
     alert_flush_interval_s: int = 60
     alert_advice_ttl_hours: int = 24
     offline_pack_enabled: bool = True
+    # Sharing 2.0 (Phase 4): /api/shares, card and OG page
+    sharing_v2_enabled: bool = False
     ready_window_days: int = 14
     trip_max_expenses: int = 2000
     trip_max_journal: int = 500

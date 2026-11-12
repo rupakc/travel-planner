@@ -51,6 +51,7 @@ from .api.routes.price_watches import router as price_watches_router
 from .api.routes.quota import router as quota_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.sessions import router as sessions_router
+from .api.routes.shares import router as shares_router
 from .api.routes.signup import router as signup_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
@@ -127,10 +128,12 @@ async def lifespan(app: FastAPI):
     from .db.fare_watch_db import create_fare_watch_tables
     from .db.notifications_db import create_notifications_table
     from .db.price_watch_db import create_price_watch_tables
+    from .db.shares_db import create_shares_table
 
     create_fare_watch_tables()
     create_price_watch_tables()
     create_alert_tables()
+    create_shares_table()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
@@ -346,6 +349,12 @@ app.include_router(taste_router, prefix="/api", tags=["taste"])
 app.include_router(fare_watches_router, prefix="/api", tags=["fare_watches"])
 app.include_router(price_watches_router, prefix="/api", tags=["price_watches"])
 app.include_router(alerts_router, prefix="/api", tags=["alerts"])
+app.include_router(
+    shares_router,
+    prefix="/api",
+    tags=["shares"],
+    dependencies=[Depends(rate_limit("share_manage"))],
+)
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])
 app.include_router(

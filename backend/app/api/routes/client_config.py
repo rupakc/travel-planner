@@ -39,6 +39,7 @@ def client_config(response: Response) -> dict:
             "offline_pack": bool(settings.offline_pack_enabled),
             "alerts_api": 2,
             "price_alerts_v2": bool(settings.price_alerts_v2_enabled),
+            "sharing": 1 if settings.sharing_v2_enabled else 0,
             "live_prices": bool(settings.serpapi_key),
         },
     }

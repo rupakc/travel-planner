@@ -56,6 +56,7 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "user_badges": ("user_id", "id"),
     "user_streaks": ("user_id", "id"),
     "user_countries": ("user_id", "id"),
+    "shares": ("username", "username"),
 }
 
 # child table → WHERE clause over its parent; the one parameter is the user id

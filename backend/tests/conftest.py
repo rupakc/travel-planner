@@ -111,3 +111,6 @@ def trip_tables(place_data):
 
     plans_db.create_plans_table()
     create_trip_tables()
+    from app.db.shares_db import create_shares_table
+
+    create_shares_table()
