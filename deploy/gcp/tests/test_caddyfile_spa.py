@@ -76,8 +76,14 @@ def test_crawler_path_matches_only_share_tokens():
     pat = re.search(r"path_regexp\s+share\s+(\S+)", body).group(1)
     rx = re.compile(pat)
     assert rx.match("/share/abcDEF12_-xyz").group(1) == "abcDEF12_-xyz"
-    for bad in ("/share/short", "/share/", "/share/abcdefgh/x", "/share/" + "a" * 65,
-                "/api/share/abcdefgh", "/share/abc def12"):
+    for bad in (
+        "/share/short",
+        "/share/",
+        "/share/abcdefgh/x",
+        "/share/" + "a" * 65,
+        "/api/share/abcdefgh",
+        "/share/abc def12",
+    ):
         assert not rx.match(bad), bad
 
 
@@ -112,9 +118,13 @@ def test_crawler_handle_proxies_like_backend_and_falls_back_to_spa():
     crawler = _block("handle @crawler {")
     backend = _block("handle @backend {")
     assert "rewrite * /api/share/{re.share.1}/page" in crawler
-    for setting in ("flush_interval -1", "lb_try_duration 30s",
-                    "lb_try_interval 250ms", "header_up X-Real-IP {remote_host}",
-                    "reverse_proxy app:8001"):
+    for setting in (
+        "flush_interval -1",
+        "lb_try_duration 30s",
+        "lb_try_interval 250ms",
+        "header_up X-Real-IP {remote_host}",
+        "reverse_proxy app:8001",
+    ):
         assert setting in crawler and setting in backend, setting
     assert "handle_response @apperr" in crawler
     assert "status 4xx 5xx" in crawler
