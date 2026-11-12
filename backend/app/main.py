@@ -51,6 +51,7 @@ from .api.routes.price_watches import router as price_watches_router
 from .api.routes.quota import router as quota_router
 from .api.routes.recent_searches import router as recent_searches_router
 from .api.routes.sessions import router as sessions_router
+from .api.routes.shares import public_router as shares_public_router
 from .api.routes.shares import router as shares_router
 from .api.routes.signup import router as signup_router
 from .api.routes.stress_test import router as stress_test_router
@@ -354,6 +355,12 @@ app.include_router(
     prefix="/api",
     tags=["shares"],
     dependencies=[Depends(rate_limit("share_manage"))],
+)
+app.include_router(
+    shares_public_router,
+    prefix="/api",
+    tags=["shares"],
+    dependencies=[Depends(rate_limit("share_public"))],
 )
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])

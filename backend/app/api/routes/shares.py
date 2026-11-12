@@ -5,9 +5,10 @@
 while ``SHARING_V2_ENABLED`` is off.
 """
 
+import html
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field
 
 from ...core.auth import get_current_user
@@ -16,9 +17,11 @@ from ...core.errors import ApiError
 from ...core.urls import public_url
 from ...db import shares_db, users_db
 from ...db.plans_db import get_plan
-from ...services import alert_moments, share_public
+from ...services import alert_moments, share_card, share_public
 
 router = APIRouter()
+# Public crawler/preview routes: own bucket (wired in main.py), no sign-in.
+public_router = APIRouter()
 
 
 class ShareOptions(BaseModel):
@@ -105,12 +108,7 @@ def revoke_my_share(token: str, user: dict = Depends(get_current_user)):
     require_enabled()
     if not shares_db.delete_share(token, user["username"]):
         raise ApiError(404, "share_not_found", "Share not found.")
-    try:  # Task 2's card cache; absent until then
-        from ...services import share_card
-
-        share_card.invalidate(token)
-    except (ImportError, AttributeError):
-        pass
+    share_card.invalidate(token)
     return Response(status_code=204)
 
 
@@ -166,3 +164,86 @@ def public_payload(token: str) -> dict | None:
             card["period"] = snap["period"]
         body["card"] = card
     return body
+
+
+_NOINDEX = {"X-Robots-Tag": "noindex, nofollow"}
+
+
+def _origin(request: Request) -> str:
+    base = settings.public_base_url.strip() or str(request.base_url)
+    return base.rstrip("/")
+
+
+def _description(snap: dict) -> str:
+    parts = [share_card.stat_text(s) for s in snap["stats"]]
+    month = share_card.month_label(snap["period"])
+    if month:
+        parts.insert(0, month)
+    if snap["owner_name"]:
+        parts.append(f"by {snap['owner_name']}")
+    return " · ".join(parts) or "Planned with Voyager"
+
+
+def _page_html(token: str, snap: dict, origin: str, lang: str) -> str:
+    e = lambda v: html.escape(str(v), quote=True)  # noqa: E731
+    title = snap["headline"] or "My trip"
+    url = f"{origin}/share/{token}"
+    image = f"{origin}/api/share/{token}/card.png?size=link"
+    desc = _description(snap)
+    return f"""<!doctype html>
+<html lang="{e(lang)}">
+<head>
+<meta charset="utf-8">
+<title>{e(title)}</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="{e(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Voyager">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(desc)}">
+<meta property="og:image" content="{e(image)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{e(url)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{e(title)}">
+<meta name="twitter:description" content="{e(desc)}">
+<meta name="twitter:image" content="{e(image)}">
+</head>
+<body>
+<h1>{e(title)}</h1>
+<p>{e(desc)}</p>
+<p><a href="{e(url)}">Open on Voyager</a></p>
+</body>
+</html>
+"""
+
+
+@public_router.get("/share/{token}/page")
+def share_page(token: str, request: Request):
+    found = resolve_snapshot(token)
+    if not found:
+        raise ApiError(404, "share_not_found", "Share not found.")
+    share, snap = found
+    lang = (share["options"].get("locale") or "en") if share.get("options") else "en"
+    if lang not in ("en", "es", "de", "fr", "hi", "zh", "bn"):
+        lang = "en"
+    body = _page_html(token, snap, _origin(request), lang)
+    return Response(
+        body,
+        media_type="text/html",
+        headers={**_NOINDEX, "Cache-Control": "public, max-age=300"},
+    )
+
+
+@public_router.get("/share/{token}/card.png")
+def share_card_png(token: str, size: Literal["link", "story"] = "link"):
+    found = resolve_snapshot(token)
+    if not found:
+        raise ApiError(404, "share_not_found", "Share not found.")
+    png = share_card.get_card(token, found[1], size)
+    return Response(
+        png,
+        media_type="image/png",
+        headers={**_NOINDEX, "Cache-Control": "public, max-age=300"},
+    )
