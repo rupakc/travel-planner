@@ -50,7 +50,7 @@ def test_catalog_lists_new_badges():
         "continents_6",
         "memory_keeper",
     } <= ids
-    assert len(c["badges"]) == 25  # 18 + 7 Deal-hunter badges
+    assert len(c["badges"]) == 29  # 18 + 7 Deal-hunter + 4 quiz badges
     assert {r["id"] for r in c["rules"]} >= {"plan_saved", "continent_visited"}
 
 

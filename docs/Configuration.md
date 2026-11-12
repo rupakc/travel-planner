@@ -165,6 +165,7 @@ A signed-in user who has not verified their email cannot use AI routes (`403 ema
 | `AI_DAILY_QUOTA_LIGHT_AI` | `200` | Per day: the light-AI routes. |
 | `AI_DAILY_QUOTA_IMPORT` | `20` | Per day: `/api/import/extract`. |
 | `GAME_ENABLED` | `true` | XP, badges, levels and streaks (`GET /api/game/*` answer 404 when off). |
+| `PLAY_ENABLED` | `false` | Play (Phase 5): daily quiz and topic packs under `/api/play/*` (also needs `GAME_ENABLED`); off = 404 `play_disabled` and `features.play` 0. |
 | `GAME_RULES_PATH` | `""` | Alternative rules file; empty uses `backend/app/game/rules.json`. |
 
 ### Trips and the journey
@@ -200,6 +201,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_SOCIAL_READ` | `120` | Phase 5: social reads per user (profiles, lists, feed). |
 | `RATE_LIMIT_PLAY` | `60` | Phase 5: every `/api/play/*` route per user. |
 | `RATE_LIMIT_ADMIN` | `120` | Phase 5: the admin moderation queue and decisions per user. |
+| `RATE_LIMIT_PLAY` | `60` | Requests per 10 minutes per user on `/api/play/*` (no AI calls). |
 | `RATE_LIMIT_SHARE_PUBLIC` | `120` | Public share routes (`GET /api/share/{token}`, `/page` and `/card.png`), per client IP. |
 | `RATE_LIMIT_SHARE_MANAGE` | `30` | `/api/shares` create, list and revoke, per signed-in user. |
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |

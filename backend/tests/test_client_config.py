@@ -18,6 +18,7 @@ def test_config_shape(client, monkeypatch):
         "telemetry": True,
         "accounts": True,
         "game": True,
+        "play": 0,
         "trips": True,
         "journey": True,
         "offline_pack": True,
@@ -28,7 +29,6 @@ def test_config_shape(client, monkeypatch):
         "price_alerts_v2": True,
         "sharing": 1,
         "social": 0,
-        "play": 0,
         "live_prices": False,
     }
     assert r.headers["cache-control"] == "max-age=300"

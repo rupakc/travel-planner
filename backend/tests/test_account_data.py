@@ -114,6 +114,12 @@ def _seed_everything(u: dict) -> None:
                 ).fetchone()["id"]
                 _fill(conn, table, {"watch_id": pid, "watch_kind": "flight"})
                 continue
+            if table == "quiz_answers":  # keyed by session
+                sid = conn.execute(
+                    "SELECT id FROM quiz_sessions WHERE user_id = ?", (uid,)
+                ).fetchone()["id"]
+                _fill(conn, table, {"session_id": sid, "idx": 0})
+                continue
             parent = table.removesuffix("_history") + "es"
             pid = conn.execute(
                 f"SELECT id FROM {parent} WHERE user_id = ?",  # nosec B608

@@ -61,6 +61,7 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "shares": ("username", "username"),
     "social_profiles": ("user_id", "id"),
     "social_limits": ("user_id", "id"),
+    "quiz_sessions": ("user_id", "id"),
 }
 
 # child table → WHERE clause over its parent; the one parameter is the user id
@@ -79,6 +80,7 @@ CHILD_TABLES: dict[str, str] = {
         " OR (watch_kind != 'flight' AND watch_id IN"
         " (SELECT id FROM price_watches WHERE user_id = u.id))))"
     ),
+    "quiz_answers": "session_id IN (SELECT id FROM quiz_sessions WHERE user_id = ?)",
     **dict.fromkeys(TRIP_CHILD_TABLES, _USER_PLANS),
 }
 
