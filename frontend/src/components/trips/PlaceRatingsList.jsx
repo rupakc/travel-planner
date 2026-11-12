@@ -75,16 +75,16 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
     }
   }, [online, token, trip.id, userId, t, saved])
 
-  if (!rows.length) return <p className="text-sm text-slate-600 dark:text-slate-300" data-tid="places-empty">{t('places.empty')}</p>
+  if (!rows.length) return <p className="text-sm text-slate-600" data-tid="places-empty">{t('places.empty')}</p>
 
   return (
-    <ul className="divide-y divide-slate-200 dark:divide-slate-700" data-tid="places-list">
-      {error && <li role="alert" className="py-2 text-sm text-red-700 dark:text-red-400">{error}</li>}
+    <ul className="divide-y divide-slate-200" data-tid="places-list">
+      {error && <li role="alert" className="py-2 text-sm text-red-700">{error}</li>}
       {rows.map((row) => (
         <li key={row.place_key} className="flex flex-wrap items-center justify-between gap-2 py-2" data-tid={`place-${row.place_key}`}>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-slate-900 dark:text-slate-100">{row.name}</div>
-            <label className="mt-1 inline-flex min-h-[44px] items-center gap-2 text-sm text-slate-700 dark:text-slate-200 sm:min-h-0">
+            <div className="truncate text-slate-900">{row.name}</div>
+            <label className="mt-1 inline-flex min-h-[44px] items-center gap-2 text-sm text-slate-700 sm:min-h-0">
               <input
                 type="checkbox"
                 checked={!!row.visited}

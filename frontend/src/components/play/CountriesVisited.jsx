@@ -47,7 +47,7 @@ export default function CountriesVisited({ countries = [], continents = [], goal
           <ul className="flex flex-wrap gap-2">
             {continents.filter((c) => CONTINENTS.includes(c)).map((c) => (
               <li key={c} data-tid={`play.continent.${c}`}
-                className="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800 dark:bg-teal-900 dark:text-teal-100">
+                className="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">
                 {t(`continents.${c}`)}
               </li>
             ))}

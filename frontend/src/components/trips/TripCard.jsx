@@ -18,11 +18,11 @@ export default function TripCard({ trip }) {
     <Link
       to={tripPath(trip.id)}
       data-tid={`trips-card-${trip.id}`}
-      className="block min-h-[44px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-400"
+      className="block min-h-[44px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-teal-600"
     >
-      <div className="font-semibold text-slate-900 dark:text-slate-100">{trip.title}</div>
-      {trip.destination && <div className="text-sm text-slate-600 dark:text-slate-300">{trip.destination}</div>}
-      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{dates || t('card.noDates')}</div>
+      <div className="font-semibold text-slate-900">{trip.title}</div>
+      {trip.destination && <div className="text-sm text-slate-600">{trip.destination}</div>}
+      <div className="mt-1 text-xs text-slate-500">{dates || t('card.noDates')}</div>
     </Link>
   )
 }

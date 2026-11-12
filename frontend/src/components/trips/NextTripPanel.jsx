@@ -4,7 +4,7 @@ import { fmtDate } from '../../i18n/format'
 import { tripPath } from '../../journey/paths'
 
 const primary = 'inline-flex min-h-[44px] items-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800'
-const secondary = 'inline-flex min-h-[44px] items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700'
+const secondary = 'inline-flex min-h-[44px] items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50'
 
 // The pinned trip with one "what now" line for its phase. `prep` is the
 // getPrep answer for a Ready trip (null while loading or when it failed).
@@ -48,11 +48,11 @@ export default function NextTripPanel({ trip, prep }) {
     <section
       data-tid="trips-next-panel"
       aria-label={t('next.heading')}
-      className="rounded-2xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950"
+      className="rounded-2xl border border-teal-200 bg-teal-50 p-4"
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200">{t('next.heading')}</div>
-      <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{trip.title}</div>
-      <div data-tid="trips-next-line" className="mt-1 text-sm text-slate-700 dark:text-slate-200">{line}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-teal-800">{t('next.heading')}</div>
+      <div className="mt-1 text-lg font-semibold text-slate-900">{trip.title}</div>
+      <div data-tid="trips-next-line" className="mt-1 text-sm text-slate-700">{line}</div>
       <div className="mt-3 flex flex-wrap gap-2">{actions}</div>
     </section>
   )

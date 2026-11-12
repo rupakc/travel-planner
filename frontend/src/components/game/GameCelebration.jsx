@@ -111,7 +111,7 @@ export default function GameCelebration() {
       role="status"
       aria-live="polite"
       data-tid="game.celebration"
-      className="pointer-events-none fixed bottom-4 left-4 z-50 flex max-w-[calc(100vw-2rem)] flex-col gap-2"
+      className="pointer-events-none fixed bottom-4 left-4 z-[55] flex max-w-[calc(100vw-2rem)] flex-col gap-2"
     >
       <style>{CSS}</style>
       {items.map((it) => {

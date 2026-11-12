@@ -60,12 +60,12 @@ export default function Recap({ trip, token }) {
 
   if (!enabled) return null
   if (state.status === 'loading') {
-    return <p className="p-4 text-sm text-gray-600 dark:text-gray-300" role="status" data-tid="recap.loading">{t('loading')}</p>
+    return <p className="p-4 text-sm text-gray-600" role="status" data-tid="recap.loading">{t('loading')}</p>
   }
   if (state.status === 'error') {
     return (
       <div className="p-4" data-tid="recap.error">
-        <p className="text-sm text-red-700 dark:text-red-300" role="alert">{t('failed')}</p>
+        <p className="text-sm text-red-700" role="alert">{t('failed')}</p>
         <button type="button" onClick={() => load()} data-tid="recap.retry"
           className="mt-2 min-h-[44px] rounded-lg bg-teal-700 px-4 text-sm font-medium text-white hover:bg-teal-800">{t('retry')}</button>
       </div>
@@ -75,7 +75,7 @@ export default function Recap({ trip, token }) {
   const recap = state.recap
   if (!recap.can_complete && !recap.completed_at) {
     return (
-      <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+      <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-800"
         data-tid="recap.not-ready">
         {t('notReady', { date: recap.end_date ? fmtDate(recap.end_date, { dateStyle: 'medium' }) : '—' })}
       </p>
@@ -128,14 +128,14 @@ export default function Recap({ trip, token }) {
 
   return (
     <div className="space-y-4" data-tid="recap.root">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{recap.title}</h2>
+      <h2 className="text-lg font-bold text-gray-900">{recap.title}</h2>
       <Stats recap={recap} plannedKm={usePlanned ? planned.km : null} />
       {points.length > 0 && (
         <div>
-          <p className="mb-1 text-sm font-medium text-gray-800 dark:text-gray-200" data-tid="recap.map-label">
+          <p className="mb-1 text-sm font-medium text-gray-800" data-tid="recap.map-label">
             {usePlanned ? t('map.planned') : t('map.route')}
           </p>
-          <Suspense fallback={<div className="h-56 rounded-xl bg-gray-100 dark:bg-gray-800" />}>
+          <Suspense fallback={<div className="h-56 rounded-xl bg-gray-100" />}>
             <RecapMap points={points} label={usePlanned ? t('map.planned') : t('map.route')} />
           </Suspense>
         </div>
@@ -149,13 +149,13 @@ export default function Recap({ trip, token }) {
             {t('finish')}
           </button>
         )}
-        {recap.completed_at && <span className="text-sm text-teal-800 dark:text-teal-300" data-tid="recap.completed">{t('completed')}</span>}
+        {recap.completed_at && <span className="text-sm text-teal-800" data-tid="recap.completed">{t('completed')}</span>}
         <button type="button" onClick={share} disabled={busy} data-tid="recap.share"
-          className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">
+          className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60">
           {t('share.cta')}
         </button>
       </div>
-      {msg && <p className="text-sm text-gray-700 dark:text-gray-300" role="status" data-tid="recap.msg">{msg}</p>}
+      {msg && <p className="text-sm text-gray-700" role="status" data-tid="recap.msg">{msg}</p>}
       <WhereNext key={tripId} trip={trip} onUse={() => note('where_next')} />
     </div>
   )

@@ -27,7 +27,7 @@ export default function JournalEntryForm({ onSubmit, days = [], busy = false }) 
 
   return (
     <form onSubmit={submit} className="space-y-3" data-tid="journal-form">
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="journal-body">
+      <label className="block text-sm font-medium text-slate-700" htmlFor="journal-body">
         {t('form.label')}
       </label>
       <textarea
@@ -39,13 +39,13 @@ export default function JournalEntryForm({ onSubmit, days = [], busy = false }) 
         aria-invalid={over}
         aria-describedby="journal-count"
         data-tid="journal-body"
-        className="w-full rounded-lg border border-slate-300 bg-white p-3 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className="w-full rounded-lg border border-slate-300 bg-white p-3 text-base text-slate-900"
       />
       <div
         id="journal-count"
         data-tid="journal-counter"
         role={over ? 'alert' : undefined}
-        className={`text-sm ${over ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}
+        className={`text-sm ${over ? 'text-red-700' : 'text-slate-600'}`}
       >
         {over ? t('form.tooLong', { n: body.length, max: MAX_BODY }) : t('form.counter', { n: body.length, max: MAX_BODY })}
       </div>
@@ -59,21 +59,21 @@ export default function JournalEntryForm({ onSubmit, days = [], busy = false }) 
             onClick={() => setMood(mood === m ? null : m)}
             data-tid={`journal-mood-${m}`}
             className={`min-h-[44px] rounded-full border px-3 text-sm ${mood === m
-              ? 'border-teal-700 bg-teal-50 text-teal-900 dark:bg-teal-900/40 dark:text-teal-100'
-              : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'}`}
+              ? 'border-teal-700 bg-teal-50 text-teal-900'
+              : 'border-slate-300 text-slate-700'}`}
           >
             <span aria-hidden="true">{EMOJI[m]} </span>{t(`mood.${m}`)}
           </button>
         ))}
       </div>
       {days.length > 0 && (
-        <label className="block text-sm text-slate-700 dark:text-slate-200">
+        <label className="block text-sm text-slate-700">
           {t('form.day')}
           <select
             value={day}
             onChange={(e) => setDay(e.target.value)}
             data-tid="journal-day"
-            className="mt-1 block min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="mt-1 block min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-2 text-slate-900"
           >
             <option value="">{t('form.noDay')}</option>
             {days.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}

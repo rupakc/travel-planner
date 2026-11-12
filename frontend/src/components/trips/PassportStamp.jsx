@@ -14,7 +14,7 @@ export default function PassportStamp({ code, city }) {
       data-tid="today-stamp"
       role="img"
       aria-label={t('stamp', { code })}
-      className="today-stamp inline-flex flex-col items-center rounded-md border-4 border-double border-rose-700 px-4 py-2 -rotate-6 text-rose-700 dark:border-rose-400 dark:text-rose-300"
+      className="today-stamp inline-flex flex-col items-center rounded-md border-4 border-double border-rose-700 px-4 py-2 -rotate-6 text-rose-700"
     >
       <style>{CSS}</style>
       <span className="text-xs font-bold uppercase tracking-widest">{t('stampTitle')}</span>

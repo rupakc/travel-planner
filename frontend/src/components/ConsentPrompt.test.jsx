@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { readFileSync } from 'node:fs'
 
 vi.mock('../telemetry/client', () => ({ emit: vi.fn() }))
 
@@ -142,5 +143,15 @@ describe('Privacy choices (footer)', () => {
     await i18n.changeLanguage('de')
     await page()
     expect(tid('privacy.choices').textContent).toBe('Datenschutz-Einstellungen')
+  })
+})
+
+describe('overlay stacking', () => {
+  it('keeps the consent banner below the tour, game toasts and alert toasts', () => {
+    const z = (file, re) => Number(re.exec(readFileSync(new URL(file, import.meta.url), 'utf8'))[1])
+    const banner = z('./ConsentPrompt.jsx', /fixed bottom-3[^"]*z-(?:\[)?(\d+)/)
+    expect(banner).toBeLessThan(z('./OnboardingTour.jsx', /fixed inset-0 z-\[(\d+)\]/))
+    expect(banner).toBeLessThan(z('./game/GameCelebration.jsx', /fixed bottom-4 left-4 z-\[?(\d+)/))
+    expect(banner).toBeLessThan(z('./alerts/AlertToast.jsx', /pointer-events-none fixed[^"]*z-\[(\d+)\]/))
   })
 })

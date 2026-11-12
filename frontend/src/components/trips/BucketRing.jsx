@@ -12,19 +12,19 @@ export default function BucketRing({ count = 0, goal }) {
   return (
     <div
       data-tid="trips-bucket-ring"
-      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
     >
       <svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label={t('bucket.label', { count, goal })}>
-        <circle cx="26" cy="26" r={radius} fill="none" strokeWidth="6" className="stroke-slate-200 dark:stroke-slate-700" />
+        <circle cx="26" cy="26" r={radius} fill="none" strokeWidth="6" className="stroke-slate-200" />
         <circle
           cx="26" cy="26" r={radius} fill="none" strokeWidth="6" strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
-          transform="rotate(-90 26 26)" className="stroke-teal-700 dark:stroke-teal-400"
+          transform="rotate(-90 26 26)" className="stroke-teal-700"
         />
       </svg>
       <div className="text-sm">
-        <div className="font-semibold text-slate-900 dark:text-slate-100">{count} / {goal}</div>
-        <div className="text-slate-600 dark:text-slate-300">{t('bucket.title')}</div>
+        <div className="font-semibold text-slate-900">{count} / {goal}</div>
+        <div className="text-slate-600">{t('bucket.title')}</div>
       </div>
     </div>
   )

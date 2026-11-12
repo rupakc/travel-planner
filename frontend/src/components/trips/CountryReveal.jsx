@@ -20,19 +20,19 @@ export default function CountryReveal({ countries, onClose }) {
   if (!countries?.length) return null
   const list = reduced()
   return (
-    <div className="rounded-2xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40"
+    <div className="rounded-2xl border border-teal-200 bg-teal-50 p-4"
       role="status" data-tid="recap.reveal">
       <style>{CSS}</style>
-      <h3 className="font-semibold text-teal-900 dark:text-teal-100">{t('reveal.title', { count: countries.length })}</h3>
+      <h3 className="font-semibold text-teal-900">{t('reveal.title', { count: countries.length })}</h3>
       {list ? (
-        <ul className="mt-2 list-disc pl-5 text-sm text-teal-900 dark:text-teal-100" data-tid="recap.reveal-list">
+        <ul className="mt-2 list-disc pl-5 text-sm text-teal-900" data-tid="recap.reveal-list">
           {countries.map((c) => <li key={c.code}>{c.name}</li>)}
         </ul>
       ) : (
         <div className="mt-3 flex flex-wrap gap-3">
           {countries.map((c, i) => (
             <div key={c.code} data-tid={`recap.stamp-${c.code}`}
-              className="recap-stamp rounded-lg border-4 border-double border-teal-700 px-4 py-2 text-center text-teal-800 dark:border-teal-300 dark:text-teal-200"
+              className="recap-stamp rounded-lg border-4 border-double border-teal-700 px-4 py-2 text-center text-teal-800"
               style={{ animationDelay: `${i * 250}ms` }}>
               <div className="text-xs font-bold uppercase tracking-widest">{c.code}</div>
               <div className="text-sm font-semibold">{c.name}</div>
@@ -41,7 +41,7 @@ export default function CountryReveal({ countries, onClose }) {
         </div>
       )}
       <button type="button" onClick={onClose} data-tid="recap.reveal-close"
-        className="mt-3 min-h-[44px] rounded-lg px-3 text-sm font-medium text-teal-800 underline dark:text-teal-200">
+        className="mt-3 min-h-[44px] rounded-lg px-3 text-sm font-medium text-teal-800 underline">
         {t('reveal.close')}
       </button>
     </div>
