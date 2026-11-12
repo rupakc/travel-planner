@@ -40,7 +40,7 @@ def create_shares_table() -> None:
 
 def _surrogate(ref: str) -> int:
     """Distinct negative plan_id for a ref share (never a real plan id)."""
-    return -2 - int(hashlib.sha1(ref.encode()).hexdigest()[:8], 16)
+    return -2 - int(hashlib.sha1(ref.encode(), usedforsecurity=False).hexdigest()[:8], 16)
 
 
 def _row(row) -> dict:
