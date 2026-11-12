@@ -74,7 +74,8 @@ def test_service_stubs():
         "by_currency": {},
     }
     assert trip_money.usd_rate(None) is None
-    assert phrases.phrases_for_country("JP") is None
+    jp = phrases.phrases_for_country("JP")
+    assert isinstance(jp, dict) and jp["language"] == "ja"
 
 
 def test_db_stubs():

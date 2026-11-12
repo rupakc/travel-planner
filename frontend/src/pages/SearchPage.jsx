@@ -16,6 +16,7 @@ import TravelerPanel from '../components/ui/TravelerPanel'
 import RecentSearches from '../components/RecentSearches'
 import OnboardingTour from '../components/OnboardingTour'
 import useFirstRunTour from '../hooks/useFirstRunTour'
+import { useJourney } from '../hooks/useJourney'
 import { discoverDestinations, compareDestination, getRecentSearches, saveRecentSearch, deleteRecentSearch } from '../services/api'
 import CompareTable from '../components/CompareTable'
 import { buildCompareRequests, compareErrorReason, apiReturnDate } from '../utils/compare'
@@ -106,6 +107,8 @@ function DestinationCard({ dest, onSelect }) {
 
 export default function SearchPage() {
   const { t } = useTranslation('search')
+  const { t: tx } = useTranslation('explore')
+  const { enabled: journeyOn } = useJourney()
   const tourSteps = useMemo(() => buildTourSteps(t), [t])
   const interestOptions = INTEREST_IDS.map(id => ({ id, label: t(`interests.${id}`) }))
   const { preferences, updatePreferences, token, user } = useAuth()
@@ -125,6 +128,7 @@ export default function SearchPage() {
   // Arrived to import (deep link or a dropped screenshot): no first-run tour
   const [importEntry, setImportEntry] = useState(false)
   const formCardRef = useRef(null)
+  const modeRowRef = useRef(null)
   const [discoverForm, setDiscoverForm] = useState({
     origin: '',
     nationality: '',
@@ -189,13 +193,29 @@ export default function SearchPage() {
   // and waits for that history to load so the page has stopped shifting.
   const tour = useFirstRunTour({
     username: user?.username,
-    visible: location.pathname === '/' && !hasSearchResults && mode === 'known' && !importEntry
+    visible: !journeyOn && location.pathname === '/' && !hasSearchResults && mode === 'known' && !importEntry
       && !importLinkFromQuery(location.search),
     eligible: recentLoaded && recentSearches.length === 0,
     delayMs: TOUR_START_DELAY_MS,
     token,
     stepsCount: tourSteps.length,
   })
+
+  // Arrived from a trip or a suggestion with a destination to plan
+  const prefillDestination = location.state?.prefill?.destination
+  useEffect(() => {
+    if (typeof prefillDestination !== 'string' || !prefillDestination) return
+    setMode('known')
+    setForm(f => ({ ...f, destination: prefillDestination }))
+  }, [prefillDestination, location.key])
+
+  // The mode row scrolls sideways on phones: keep the active tab in view
+  useEffect(() => {
+    const el = modeRowRef.current?.querySelector('[data-active="true"]')
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest', inline: 'center' })
+    }
+  }, [mode, journeyOn])
 
   // Pre-fill from saved preferences
   useEffect(() => {
@@ -476,51 +496,72 @@ export default function SearchPage() {
 
       {/* Hero */}
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-teal-700 text-xs font-semibold mb-4">
-          <Plane size={12} strokeWidth={2.5} />
-          {t('hero.badge')}
-        </div>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">{t('hero.title')}</h1>
-        <p className="text-slate-500 text-lg">{t('hero.subtitle')}</p>
-        <button type="button" onClick={() => { setMode('known'); tour.start() }} data-tid="search.tour-start"
-          className="mt-2 text-sm font-medium text-teal-600 hover:text-teal-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-          {t('hero.tour')}
-        </button>
-        {mode !== 'import' && (
-          <p className="mt-3">
-            <button type="button" onClick={() => openImport()} data-tid="search.import-open"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 dark:bg-amber-500/15 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-              <Link2 size={14} /> {t('hero.importLead')} <span className="font-semibold">{t('hero.importLink')}</span>
-            </button>
-          </p>
+        {journeyOn ? (
+          <>
+            <h1 data-tid="explore.title" className="font-display text-3xl sm:text-4xl font-bold mb-3 tracking-tight leading-[1.1] text-gray-900">{tx('title')}</h1>
+            <p className="text-slate-500 text-lg">{tx('subtitle')}</p>
+          </>
+        ) : (
+          <>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-teal-700 text-xs font-semibold mb-4">
+            <Plane size={12} strokeWidth={2.5} />
+            {t('hero.badge')}
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight leading-[1.1] bg-gradient-to-r from-teal-700 via-teal-600 to-sky-600 bg-clip-text text-transparent">{t('hero.title')}</h1>
+          <p className="text-slate-500 text-lg">{t('hero.subtitle')}</p>
+          <button type="button" onClick={() => { setMode('known'); tour.start() }} data-tid="search.tour-start"
+            className="mt-2 text-sm font-medium text-teal-600 hover:text-teal-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
+            {t('hero.tour')}
+          </button>
+          {mode !== 'import' && (
+            <p className="mt-3">
+              <button type="button" onClick={() => openImport()} data-tid="search.import-open"
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3.5 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 dark:bg-amber-500/15 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                <Link2 size={14} /> {t('hero.importLead')} <span className="font-semibold">{t('hero.importLink')}</span>
+              </button>
+            </p>
+          )}
+          </>
         )}
       </div>
 
       {/* Form card */}
       <div className="max-w-4xl mx-auto px-4 pb-16 -mt-2">
         <div ref={formCardRef} className="bg-white rounded-3xl shadow-2xl ring-1 ring-gray-100 p-4 sm:p-6 md:p-8 scroll-mt-20">
-          {/* Mode toggle */}
-          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit max-w-full mx-auto">
-            <button type="button" data-tid="search.mode-known"
+          {/* Mode toggle: one scrolling row, never wraps */}
+          <div ref={modeRowRef} data-tid="search.modes" className="flex items-center gap-1 sm:gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-fit max-w-full mx-auto overflow-x-auto whitespace-nowrap snap-x">
+            <button type="button" data-tid="search.mode-known" data-active={mode === 'known'}
               onClick={() => setMode('known')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'known' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              {t('modes.known')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start ${mode === 'known' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              {journeyOn ? tx('modes.known') : t('modes.known')}
             </button>
-            <button type="button" data-tid="search.mode-discover"
+            <button type="button" data-tid="search.mode-discover" data-active={mode === 'discover'}
               onClick={() => setMode('discover')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'discover' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              {t('modes.discover')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start ${mode === 'discover' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              {journeyOn ? tx('modes.discover') : t('modes.discover')}
             </button>
-            <button type="button" data-tid="search.mode-compare"
+            <button type="button" data-tid="search.mode-compare" data-active={mode === 'compare'}
               onClick={openCompare}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'compare' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              {t('modes.compare')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start ${mode === 'compare' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              {journeyOn ? tx('modes.compare') : t('modes.compare')}
             </button>
-            <button type="button" data-tid="search.mode-import"
+            <button type="button" data-tid="search.mode-import" data-active={mode === 'import'}
               onClick={() => { if (mode !== 'import') openImport() }}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${mode === 'import' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              {t('modes.import')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start ${mode === 'import' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+              {journeyOn ? tx('modes.import') : t('modes.import')}
             </button>
+            {journeyOn && (
+              <>
+                <button type="button" data-tid="search.mode-chat" onClick={() => navigate('/chat')}
+                  className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start text-gray-500 hover:text-gray-700">
+                  {tx('modes.chat')}
+                </button>
+                <button type="button" data-tid="search.mode-nearby" onClick={() => navigate('/nearby')}
+                  className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 snap-start text-gray-500 hover:text-gray-700">
+                  {tx('modes.nearby')}
+                </button>
+              </>
+            )}
           </div>
 
           {mode === 'import' && (importPreview ? (

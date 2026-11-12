@@ -1,0 +1,80 @@
+{
+  "title": "Antes de salir",
+  "ready": "Viaje listo al {{percent}} %",
+  "go": "Todo listo",
+  "progress": "{{done}} de {{total}} hechos",
+  "notNeeded": "No hace falta",
+  "overdue": "Atrasado",
+  "due": "Para el {{date}}",
+  "auto": "Se marca solo",
+  "autoNote": "Se guarda automáticamente al guardar el pack sin conexión",
+  "loading": "Cargando tu lista…",
+  "error": "No se pudo cargar la lista.",
+  "retry": "Reintentar",
+  "toggleFailed": "No se pudo guardar el cambio. Inténtalo de nuevo.",
+  "facts": {
+    "visa": "{{visaType}}, solicítalo antes del {{date}}",
+    "stay": "Estancia de hasta {{n}} días",
+    "processing": "Trámite: {{text}}",
+    "official": "Sitio oficial",
+    "bookings": "Vuelo: {{flight}} · Hotel: {{hotel}}",
+    "yes": "reservado",
+    "no": "aún no",
+    "score": "Última puntuación del test de estrés: {{n}}",
+    "sim": "Plan: {{name}}",
+    "money": "Moneda local: {{code}}",
+    "packing": "{{n}} cosas en tu lista",
+    "saved": "Guardado el {{date}}",
+    "notSaved": "Aún sin guardar"
+  },
+  "items": {
+    "visa": {
+      "title": "Resuelve tu visado",
+      "body": "Comprueba qué necesitas para entrar y solicítalo antes del plazo."
+    },
+    "passport": {
+      "title": "Revisa tu pasaporte",
+      "body": "Asegúrate de que sea válido al menos seis meses tras tu regreso y tenga páginas libres."
+    },
+    "bookings": {
+      "title": "Reserva vuelo y hotel",
+      "body": "Elige un vuelo y un alojamiento en tu plan."
+    },
+    "insurance": {
+      "title": "Contrata un seguro de viaje",
+      "body": "Cubre atención médica, cancelaciones y equipaje perdido."
+    },
+    "documents": {
+      "title": "Reúne tus documentos",
+      "body": "Billetes, confirmaciones, visado y seguro, todo en un sitio."
+    },
+    "stress_test": {
+      "title": "Pon a prueba tu itinerario",
+      "body": "Haz la revisión para detectar horarios justos y choques."
+    },
+    "sim": {
+      "title": "Elige una SIM o eSIM",
+      "body": "Decide cómo tendrás datos al llegar."
+    },
+    "money": {
+      "title": "Organiza tu dinero",
+      "body": "Avisa a tu banco, lleva una tarjeta de repuesto y algo de efectivo local."
+    },
+    "packing": {
+      "title": "Haz la maleta",
+      "body": "Repasa tu lista de equipaje y ve marcando."
+    },
+    "emergency_card": {
+      "title": "Revisa tu tarjeta de emergencia",
+      "body": "Conoce los números de emergencia locales y tu embajada."
+    },
+    "checkin": {
+      "title": "Haz el check-in online",
+      "body": "La mayoría de aerolíneas abre el check-in unas 24 horas antes."
+    },
+    "offline_pack": {
+      "title": "Guarda el pack sin conexión",
+      "body": "Lleva lo esencial en el móvil para cuando no tengas cobertura."
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "title": "Pack hors ligne",
+  "intro": "Enregistrez sur cet appareil les numéros d'urgence, les phrases utiles, l'adresse de votre hôtel et un convertisseur de devises pour y accéder sans connexion.",
+  "save": "Enregistrer hors ligne",
+  "saving": "Enregistrement…",
+  "refresh": "Actualiser",
+  "remove": "Supprimer",
+  "saved": "Enregistré {{when}}",
+  "size": "{{kb}} Ko",
+  "tabOnly": "Fonctionne tant que cet onglet reste ouvert",
+  "offlineNote": "Vous êtes hors ligne. Le pack enregistré s'affiche.",
+  "error": {
+    "error": "Impossible d'enregistrer le pack. Réessayez.",
+    "quota": "Pas assez d'espace sur cet appareil pour enregistrer le pack."
+  },
+  "address": {
+    "title": "À montrer à votre chauffeur",
+    "fallback": "Veuillez m'emmener à :"
+  },
+  "currency": {
+    "title": "Convertisseur de devises",
+    "noRate": "Aucun taux de change n'a été enregistré pour {{local}}, il n'y a donc pas de convertisseur. Vérifiez un taux avant de partir.",
+    "amountLabel": "Montant en {{currency}}",
+    "swap": "Inverser le sens",
+    "rateFrom": "Taux du {{date}} ({{source}}), approximatif",
+    "sources": {
+      "snapshot": "enregistré avec votre voyage"
+    }
+  },
+  "phrases": {
+    "title": "Phrases en {{language}}",
+    "show": "Afficher",
+    "close": "Fermer",
+    "ids": {
+      "help": "Au secours !",
+      "call_police": "Appelez la police",
+      "need_doctor": "J'ai besoin d'un médecin",
+      "take_me_to": "Veuillez m'emmener à…",
+      "thank_you": "Merci",
+      "how_much": "Combien ça coûte ?",
+      "where_toilet": "Où sont les toilettes ?",
+      "dont_understand": "Je ne comprends pas"
+    }
+  },
+  "emergency": {
+    "title": "Numéros d'urgence",
+    "reference": "Issu de notre liste de référence",
+    "checked": "Vérifié le {{date}}",
+    "embassy": "Ambassade",
+    "hospital": "Hôpital",
+    "kinds": {
+      "police": "Police",
+      "ambulance": "Ambulance",
+      "fire": "Pompiers",
+      "tourist_police": "Police touristique",
+      "general": "Urgences générales"
+    }
+  }
+}

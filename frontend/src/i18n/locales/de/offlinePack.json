@@ -1,0 +1,59 @@
+{
+  "title": "Offline-Paket",
+  "intro": "Speichere Notrufnummern, wichtige Sätze, die Adresse deines Hotels und einen Währungsrechner auf diesem Gerät, damit sie ohne Verbindung funktionieren.",
+  "save": "Offline speichern",
+  "saving": "Wird gespeichert…",
+  "refresh": "Aktualisieren",
+  "remove": "Entfernen",
+  "saved": "Gespeichert {{when}}",
+  "size": "{{kb}} KB",
+  "tabOnly": "Funktioniert, solange dieser Tab geöffnet bleibt",
+  "offlineNote": "Du bist offline. Das gespeicherte Paket wird angezeigt.",
+  "error": {
+    "error": "Das Paket konnte nicht gespeichert werden. Versuch es noch einmal.",
+    "quota": "Auf diesem Gerät ist nicht genug Speicher, um das Paket zu sichern."
+  },
+  "address": {
+    "title": "Zeig das deinem Fahrer",
+    "fallback": "Bitte bringen Sie mich zu:"
+  },
+  "currency": {
+    "title": "Währungsrechner",
+    "noRate": "Für {{local}} wurde kein Wechselkurs gespeichert, daher gibt es keinen Rechner. Prüfe den Kurs vor der Reise.",
+    "amountLabel": "Betrag in {{currency}}",
+    "swap": "Richtung wechseln",
+    "rateFrom": "Kurs vom {{date}} ({{source}}), ungefähr",
+    "sources": {
+      "snapshot": "mit deiner Reise gespeichert"
+    }
+  },
+  "phrases": {
+    "title": "Sätze auf {{language}}",
+    "show": "Anzeigen",
+    "close": "Schließen",
+    "ids": {
+      "help": "Hilfe!",
+      "call_police": "Rufen Sie die Polizei",
+      "need_doctor": "Ich brauche einen Arzt",
+      "take_me_to": "Bitte bringen Sie mich zu…",
+      "thank_you": "Danke",
+      "how_much": "Was kostet das?",
+      "where_toilet": "Wo ist die Toilette?",
+      "dont_understand": "Ich verstehe nicht"
+    }
+  },
+  "emergency": {
+    "title": "Notrufnummern",
+    "reference": "Aus unserer Referenzliste",
+    "checked": "Geprüft am {{date}}",
+    "embassy": "Botschaft",
+    "hospital": "Krankenhaus",
+    "kinds": {
+      "police": "Polizei",
+      "ambulance": "Rettungsdienst",
+      "fire": "Feuerwehr",
+      "tourist_police": "Touristenpolizei",
+      "general": "Allgemeiner Notruf"
+    }
+  }
+}

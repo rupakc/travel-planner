@@ -1,0 +1,68 @@
+{
+  "title": "Trips",
+  "create": {
+    "open": "New trip",
+    "heading": "Save an idea",
+    "title": "Title",
+    "destination": "Destination (optional)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "titleInvalid": "Please give your trip a title.",
+    "failed": "Couldn't save this trip. Try again."
+  },
+  "load": {
+    "failed": "Couldn't load this right now.",
+    "retry": "Retry",
+    "loading": "Loading your trips…"
+  },
+  "empty": {
+    "text": "No trips yet. Plan one or save an idea for later.",
+    "plan": "Plan a trip",
+    "idea": "Save an idea"
+  },
+  "card": {
+    "noDates": "No dates yet"
+  },
+  "bucket": {
+    "title": "Countries visited",
+    "label": "{{count}} of {{goal}} countries visited"
+  },
+  "phases": {
+    "dreaming": "Dreaming",
+    "planning": "Planning",
+    "ready": "Ready",
+    "on_the_road": "On the road",
+    "memories": "Memories"
+  },
+  "next": {
+    "heading": "Next trip",
+    "dreaming": "An idea waiting for dates.",
+    "pickDates": "Pick dates",
+    "planIt": "Plan it",
+    "planning": "{{percent}} % planned",
+    "open": "Open trip",
+    "ready": "Next: {{item}} by {{date}}",
+    "readyNoDate": "Next: {{item}}",
+    "allSet": "Everything is ready.",
+    "readyFallback": "Finish your prep",
+    "openPrep": "Open prep",
+    "onTheRoad": "Day {{day}} in {{city}}",
+    "openToday": "Open Today",
+    "memories": "Relive your trip",
+    "openRecap": "Open recap"
+  },
+  "prepItems": {
+    "visa": "Visa",
+    "passport": "Passport",
+    "bookings": "Bookings",
+    "insurance": "Travel insurance",
+    "documents": "Documents",
+    "stress_test": "Stress-test your plan",
+    "sim": "SIM card",
+    "money": "Money",
+    "packing": "Packing list",
+    "emergency_card": "Emergency card",
+    "checkin": "Flight check-in",
+    "offline_pack": "Offline pack"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "title": "Vor der Abreise",
+  "ready": "Reise zu {{percent}} % bereit",
+  "go": "Startklar",
+  "progress": "{{done}} von {{total}} erledigt",
+  "notNeeded": "Nicht nötig",
+  "overdue": "Überfällig",
+  "due": "Fällig am {{date}}",
+  "auto": "Wird automatisch erledigt",
+  "autoNote": "Wird automatisch gespeichert, wenn du das Offline-Paket speicherst",
+  "loading": "Deine Checkliste wird geladen…",
+  "error": "Die Checkliste konnte nicht geladen werden.",
+  "retry": "Erneut versuchen",
+  "toggleFailed": "Die Änderung konnte nicht gespeichert werden. Versuch es nochmal.",
+  "facts": {
+    "visa": "{{visaType}}, beantrage es bis {{date}}",
+    "stay": "Aufenthalt bis zu {{n}} Tage",
+    "processing": "Bearbeitung: {{text}}",
+    "official": "Offizielle Seite",
+    "bookings": "Flug: {{flight}} · Hotel: {{hotel}}",
+    "yes": "gebucht",
+    "no": "noch nicht",
+    "score": "Letzter Stresstest-Wert: {{n}}",
+    "sim": "Tarif: {{name}}",
+    "money": "Landeswährung: {{code}}",
+    "packing": "{{n}} Dinge auf deiner Liste",
+    "saved": "Gespeichert am {{date}}",
+    "notSaved": "Noch nicht gespeichert"
+  },
+  "items": {
+    "visa": {
+      "title": "Visum klären",
+      "body": "Prüfe, was du für die Einreise brauchst, und beantrage es rechtzeitig."
+    },
+    "passport": {
+      "title": "Reisepass prüfen",
+      "body": "Er sollte nach deiner Rückkehr noch mindestens sechs Monate gültig sein und freie Seiten haben."
+    },
+    "bookings": {
+      "title": "Flug und Hotel buchen",
+      "body": "Wähle in deinem Plan einen Flug und eine Unterkunft."
+    },
+    "insurance": {
+      "title": "Reiseversicherung abschließen",
+      "body": "Sie deckt Arztkosten, Stornierungen und verlorenes Gepäck ab."
+    },
+    "documents": {
+      "title": "Unterlagen bereitlegen",
+      "body": "Tickets, Bestätigungen, Visum und Versicherung an einem Ort."
+    },
+    "stress_test": {
+      "title": "Reiseplan auf die Probe stellen",
+      "body": "Starte die Prüfung, um knappe Zeiten und Überschneidungen zu finden."
+    },
+    "sim": {
+      "title": "SIM oder eSIM wählen",
+      "body": "Entscheide, wie du nach der Landung Daten bekommst."
+    },
+    "money": {
+      "title": "Geld regeln",
+      "body": "Sag deiner Bank Bescheid, nimm eine Ersatzkarte und etwas Bargeld mit."
+    },
+    "packing": {
+      "title": "Koffer packen",
+      "body": "Geh deine Packliste durch und hake ab."
+    },
+    "emergency_card": {
+      "title": "Notfallkarte ansehen",
+      "body": "Kenne die lokalen Notrufnummern und deine Botschaft."
+    },
+    "checkin": {
+      "title": "Online einchecken",
+      "body": "Die meisten Airlines öffnen den Online-Check-in etwa 24 Stunden vor Abflug."
+    },
+    "offline_pack": {
+      "title": "Offline-Paket speichern",
+      "body": "Hab das Wichtigste auf dem Handy, falls du keinen Empfang hast."
+    }
+  }
+}

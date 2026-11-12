@@ -1,0 +1,33 @@
+{
+  "title": "日记",
+  "empty": "还没有记录。写写今天的经历吧。",
+  "noDay": "未指定日期",
+  "pending": "(等待同步)",
+  "delete": "删除",
+  "error": "出了点问题，请重试。",
+  "form": {
+    "label": "今天发生了什么?",
+    "placeholder": "写几句话...",
+    "counter": "{{n}} / {{max}}",
+    "tooLong": "太长了:{{n}} / {{max}} 个字符",
+    "add": "添加记录",
+    "day": "日期",
+    "noDay": "未指定日期"
+  },
+  "mood": {
+    "group": "心情",
+    "great": "很棒",
+    "good": "不错",
+    "ok": "一般",
+    "tough": "艰难"
+  },
+  "stars": {
+    "group": "评分",
+    "label": "5 星中的 {{n}} 星"
+  },
+  "places": {
+    "title": "为你去过的地方评分",
+    "empty": "暂时没有可评分的地点。",
+    "visited": "已去过"
+  }
+}

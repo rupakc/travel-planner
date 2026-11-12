@@ -1,0 +1,52 @@
+{
+  "loading": "Loading your trip…",
+  "planLoading": "Loading the plan…",
+  "allTrips": "All trips",
+  "tabsLabel": "Trip sections",
+  "error": {
+    "failed": "Couldn't load this trip right now.",
+    "retry": "Retry"
+  },
+  "header": {
+    "rename": "Rename trip",
+    "titleLabel": "Trip name",
+    "save": "Save",
+    "cancel": "Cancel",
+    "noDates": "No dates yet",
+    "addDates": "Add dates",
+    "editDates": "Change dates",
+    "phaseLabel": "Trip stage: {{phase}}. Change it",
+    "manual": "set by you",
+    "delete": "Delete trip",
+    "confirmDelete": "Delete “{{title}}”? Its plan, expenses and journal are deleted too."
+  },
+  "phaseMenu": {
+    "title": "Trip stage",
+    "follow": "Follow my dates",
+    "followHint": "The stage follows the trip dates"
+  },
+  "dates": {
+    "title": "Trip dates",
+    "start": "Start date",
+    "end": "End date",
+    "endHint": "Leave empty for a one-day trip.",
+    "clear": "Clear dates",
+    "save": "Save dates",
+    "cancel": "Cancel"
+  },
+  "offline": {
+    "note": "You're offline. This is the copy saved on {{date}}.",
+    "noteUndated": "You're offline. This is the copy saved on this device.",
+    "empty": "You're offline, and this trip isn't saved on this device.",
+    "retry": "Try again"
+  },
+  "overview": {
+    "openPlanner": "Open in planner",
+    "openPlannerHint": "Change flights, stays and the day plan with live results.",
+    "planIt": "Plan it",
+    "planItHint": "Find flights, stays and things to do in {{destination}}.",
+    "planItHintNoPlace": "Find flights, stays and things to do.",
+    "loadFailed": "Couldn't load the plan right now.",
+    "retry": "Retry"
+  }
+}

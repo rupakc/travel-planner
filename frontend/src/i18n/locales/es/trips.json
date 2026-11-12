@@ -1,0 +1,68 @@
+{
+  "title": "Viajes",
+  "create": {
+    "open": "Nuevo viaje",
+    "heading": "Guarda una idea",
+    "title": "Título",
+    "destination": "Destino (opcional)",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "titleInvalid": "Ponle un título a tu viaje.",
+    "failed": "No pudimos guardar este viaje. Inténtalo de nuevo."
+  },
+  "load": {
+    "failed": "No se pudo cargar ahora mismo.",
+    "retry": "Reintentar",
+    "loading": "Cargando tus viajes…"
+  },
+  "empty": {
+    "text": "Aún no tienes viajes. Planea uno o guarda una idea para más tarde.",
+    "plan": "Planear un viaje",
+    "idea": "Guardar una idea"
+  },
+  "card": {
+    "noDates": "Aún sin fechas"
+  },
+  "bucket": {
+    "title": "Países visitados",
+    "label": "{{count}} de {{goal}} países visitados"
+  },
+  "phases": {
+    "dreaming": "Soñando",
+    "planning": "Planificando",
+    "ready": "Listo",
+    "on_the_road": "De viaje",
+    "memories": "Recuerdos"
+  },
+  "next": {
+    "heading": "Próximo viaje",
+    "dreaming": "Una idea a la espera de fechas.",
+    "pickDates": "Elegir fechas",
+    "planIt": "Planéalo",
+    "planning": "{{percent}} % planificado",
+    "open": "Abrir viaje",
+    "ready": "Siguiente: {{item}} antes del {{date}}",
+    "readyNoDate": "Siguiente: {{item}}",
+    "allSet": "Todo está listo.",
+    "readyFallback": "Termina tu preparación",
+    "openPrep": "Abrir preparación",
+    "onTheRoad": "Día {{day}} en {{city}}",
+    "openToday": "Abrir Hoy",
+    "memories": "Revive tu viaje",
+    "openRecap": "Abrir resumen"
+  },
+  "prepItems": {
+    "visa": "Visado",
+    "passport": "Pasaporte",
+    "bookings": "Reservas",
+    "insurance": "Seguro de viaje",
+    "documents": "Documentos",
+    "stress_test": "Pon a prueba tu plan",
+    "sim": "Tarjeta SIM",
+    "money": "Dinero",
+    "packing": "Lista de equipaje",
+    "emergency_card": "Tarjeta de emergencia",
+    "checkin": "Check-in del vuelo",
+    "offline_pack": "Paquete sin conexión"
+  }
+}

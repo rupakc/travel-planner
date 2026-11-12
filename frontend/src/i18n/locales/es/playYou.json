@@ -1,0 +1,55 @@
+{
+  "page": {
+    "title": "Jugar"
+  },
+  "countries": {
+    "title": "Países visitados",
+    "empty": "Haz check-in en un viaje o termina un resumen para añadir tu primer país.",
+    "count_one": "{{count}} país visitado",
+    "count_other": "{{count}} países visitados",
+    "countOfGoal_one": "{{count}} de {{goal}} países visitados",
+    "countOfGoal_other": "{{count}} de {{goal}} países visitados",
+    "count_many": "{{count}} países visitados",
+    "countOfGoal_many": "{{count}} de {{goal}} países visitados"
+  },
+  "continents": {
+    "title_one": "Continentes ({{count}})",
+    "title_other": "Continentes ({{count}})",
+    "AF": "África",
+    "AN": "Antártida",
+    "AS": "Asia",
+    "EU": "Europa",
+    "NA": "Norteamérica",
+    "OC": "Oceanía",
+    "SA": "Sudamérica",
+    "title_many": "Continentes ({{count}})"
+  },
+  "goal": {
+    "title": "Meta de tu lista de deseos",
+    "hint": "¿Cuántos países quieres conocer? Elige un número de {{min}} a {{max}}.",
+    "label": "Países por conocer",
+    "save": "Guardar meta",
+    "invalid": "Introduce un número entero de {{min}} a {{max}}.",
+    "saved": "Meta guardada.",
+    "error": "No se pudo guardar tu meta. Inténtalo de nuevo."
+  },
+  "streak": {
+    "title": "Racha de check-in de viaje",
+    "current_one": "{{count}} día seguido",
+    "current_other": "{{count}} días seguidos",
+    "longest_one": "Más larga: {{count}} día",
+    "longest_other": "Más larga: {{count}} días",
+    "current_many": "{{count}} días seguidos",
+    "longest_many": "Más larga: {{count}} días"
+  },
+  "hidden": {
+    "note": "El juego está oculto. Puedes volver a activarlo en tus ajustes.",
+    "link": "Abrir ajustes"
+  },
+  "you": {
+    "more": "Más",
+    "preferences": "Preferencias",
+    "alerts": "Alertas",
+    "tour": "Enséñame la app"
+  }
+}

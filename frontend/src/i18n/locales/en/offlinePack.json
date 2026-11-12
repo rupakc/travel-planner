@@ -1,0 +1,59 @@
+{
+  "title": "Offline pack",
+  "intro": "Save emergency numbers, key phrases, your hotel address and a currency converter on this device, so they work without a connection.",
+  "save": "Save for offline",
+  "saving": "Saving…",
+  "refresh": "Refresh",
+  "remove": "Remove",
+  "saved": "Saved {{when}}",
+  "size": "{{kb}} KB",
+  "tabOnly": "Works while this tab stays open",
+  "offlineNote": "You are offline. Showing the saved pack.",
+  "error": {
+    "error": "Could not save the pack. Try again.",
+    "quota": "Not enough storage on this device to save the pack."
+  },
+  "address": {
+    "title": "Show this to your driver",
+    "fallback": "Please take me to:"
+  },
+  "currency": {
+    "title": "Currency converter",
+    "noRate": "No exchange rate was saved for {{local}}, so there is no converter. Check a rate before you travel.",
+    "amountLabel": "Amount in {{currency}}",
+    "swap": "Swap direction",
+    "rateFrom": "Rate from {{date}} ({{source}}), approximate",
+    "sources": {
+      "snapshot": "saved with your trip"
+    }
+  },
+  "phrases": {
+    "title": "Phrases in {{language}}",
+    "show": "Show",
+    "close": "Close",
+    "ids": {
+      "help": "Help!",
+      "call_police": "Call the police",
+      "need_doctor": "I need a doctor",
+      "take_me_to": "Please take me to…",
+      "thank_you": "Thank you",
+      "how_much": "How much is this?",
+      "where_toilet": "Where is the toilet?",
+      "dont_understand": "I don't understand"
+    }
+  },
+  "emergency": {
+    "title": "Emergency numbers",
+    "reference": "From our reference list",
+    "checked": "Checked {{date}}",
+    "embassy": "Embassy",
+    "hospital": "Hospital",
+    "kinds": {
+      "police": "Police",
+      "ambulance": "Ambulance",
+      "fire": "Fire",
+      "tourist_police": "Tourist police",
+      "general": "General emergency"
+    }
+  }
+}

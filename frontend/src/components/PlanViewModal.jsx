@@ -49,7 +49,10 @@ function Section({ title, tid, color, icon: Icon, children, defaultOpen = false 
   )
 }
 
-export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted }) {
+// `inline`: the plan body inside a page (the trip screen's Overview) instead
+// of a modal: no backdrop, no dialog role, no close buttons; the page owns the
+// title and Delete.
+export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted, inline = false }) {
   const { t } = useTranslation('plan')
   const tod = (v) => t(`modal.timeOfDay.${v}`, { defaultValue: v })
   const [name, setName]           = useState(plan.name)
@@ -139,23 +142,18 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
   const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.walking_tours?.length || sel.itinerary_slots?.length
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal — full-height bottom sheet on mobile, centered card on sm+ */}
-      <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+  const card = (
+      <>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white shrink-0">
           <div className="flex-1 min-w-0 mr-3">
-            <input
+            {!inline && <input
               value={name}
               onChange={e => setName(e.target.value)}
               data-tid="plan.name-input"
               className="bg-white/20 border border-white/30 rounded-lg px-3 py-1.5 text-white font-semibold text-sm w-full placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/40"
               placeholder={t('modal.namePlaceholder')}
-            />
+            />}
             {sd.origin && (
               <p className="text-slate-300 text-xs mt-1">
                 {t('modal.trip', { origin: sd.origin, destination: sd.destination, dates: `${sd.departure_date}${sd.return_date ? ` – ${sd.return_date}` : ''}`, count: sd.num_travelers || 1 })}
@@ -176,11 +174,11 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
               </div>
             )}
           </div>
-          <button onClick={onClose} data-tid="plan.modal-close-x" aria-label={t('modal.close')} className="text-white/80 hover:text-white shrink-0"><X size={20} /></button>
+          {!inline && <button onClick={onClose} data-tid="plan.modal-close-x" aria-label={t('modal.close')} className="text-white/80 hover:text-white shrink-0"><X size={20} /></button>}
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className={inline ? 'p-4 sm:p-5' : 'flex-1 overflow-y-auto p-5'}>
           {!hasSelections && (
             <div className="text-center py-10 text-gray-400">
               <Calendar size={36} className="mx-auto mb-2 opacity-30" />
@@ -489,10 +487,10 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
 
         {/* Footer */}
         <div className="shrink-0 px-5 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-          <button onClick={deletePlan} disabled={deleting} data-tid="plan.delete"
+          {!inline && <button onClick={deletePlan} disabled={deleting} data-tid="plan.delete"
             className="flex items-center gap-1.5 px-3 py-2 text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} {t('modal.delete')}
-          </button>
+          </button>}
           <div className="flex items-center gap-2 flex-1 justify-end">
             {msg && <span className={`text-sm font-medium ${/Failed$/.test(msg) ? 'text-red-600' : 'text-green-600'}`}>{t(`modal.msg.${msg}`)}</span>}
             <button onClick={sharePlan} disabled={sharing} data-tid="plan.share"
@@ -500,15 +498,34 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
               className="flex items-center gap-1.5 px-3 py-2 text-violet-700 border border-violet-300 rounded-lg text-sm font-medium hover:bg-violet-50 transition-colors disabled:opacity-50">
               {sharing ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />} {t('modal.share')}
             </button>
-            <button onClick={onClose} data-tid="plan.modal-close" className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+            {!inline && <button onClick={onClose} data-tid="plan.modal-close" className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
               {t('modal.close')}
-            </button>
+            </button>}
             <button onClick={save} disabled={saving} data-tid="plan.save"
               className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {t('modal.save')}
             </button>
           </div>
         </div>
+      </>
+  )
+
+  if (inline) {
+    return (
+      <div data-tid="plan.inline" className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        {card}
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal — full-height bottom sheet on mobile, centered card on sm+ */}
+      <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {card}
       </div>
     </div>
   )

@@ -1,0 +1,80 @@
+{
+  "title": "出发之前",
+  "ready": "行程已准备 {{percent}} %",
+  "go": "准备出发",
+  "progress": "已完成 {{done}}/{{total}}",
+  "notNeeded": "无需办理",
+  "overdue": "已逾期",
+  "due": "截止 {{date}}",
+  "auto": "自动完成",
+  "autoNote": "保存离线包时会自动保存",
+  "loading": "正在加载清单…",
+  "error": "无法加载清单。",
+  "retry": "重试",
+  "toggleFailed": "无法保存此更改，请重试。",
+  "facts": {
+    "visa": "{{visaType}}，请在 {{date}} 前申请",
+    "stay": "最长停留 {{n}} 天",
+    "processing": "办理时间：{{text}}",
+    "official": "官方网站",
+    "bookings": "机票：{{flight}} · 酒店：{{hotel}}",
+    "yes": "已预订",
+    "no": "尚未预订",
+    "score": "上次压力测试得分：{{n}}",
+    "sim": "套餐：{{name}}",
+    "money": "当地货币：{{code}}",
+    "packing": "清单中有 {{n}} 件物品",
+    "saved": "保存于 {{date}}",
+    "notSaved": "尚未保存"
+  },
+  "items": {
+    "visa": {
+      "title": "办好签证",
+      "body": "确认入境需要什么，并在截止日期前申请。"
+    },
+    "passport": {
+      "title": "检查护照",
+      "body": "确保返程后至少还有六个月有效期，并留有空白页。"
+    },
+    "bookings": {
+      "title": "预订机票和酒店",
+      "body": "在行程中选好航班和住处。"
+    },
+    "insurance": {
+      "title": "购买旅行保险",
+      "body": "涵盖医疗、取消行程和行李丢失。"
+    },
+    "documents": {
+      "title": "备齐证件",
+      "body": "机票、确认单、签证和保险单据放在一起。"
+    },
+    "stress_test": {
+      "title": "给行程做压力测试",
+      "body": "运行复查，找出时间过紧和冲突的地方。"
+    },
+    "sim": {
+      "title": "选择 SIM 卡或 eSIM",
+      "body": "决定落地后如何上网。"
+    },
+    "money": {
+      "title": "安排好资金",
+      "body": "通知银行，带一张备用卡和少量当地现金。"
+    },
+    "packing": {
+      "title": "打包行李",
+      "body": "对照打包清单逐项勾选。"
+    },
+    "emergency_card": {
+      "title": "查看紧急卡",
+      "body": "了解当地紧急电话和所在国使馆。"
+    },
+    "checkin": {
+      "title": "在线值机",
+      "body": "大多数航空公司在起飞前约 24 小时开放在线值机。"
+    },
+    "offline_pack": {
+      "title": "保存离线包",
+      "body": "把重要信息存在手机里，没有信号时也能用。"
+    }
+  }
+}

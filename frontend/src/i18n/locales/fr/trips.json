@@ -1,0 +1,68 @@
+{
+  "title": "Voyages",
+  "create": {
+    "open": "Nouveau voyage",
+    "heading": "Enregistrer une idée",
+    "title": "Titre",
+    "destination": "Destination (facultatif)",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "titleInvalid": "Donnez un titre à votre voyage.",
+    "failed": "Impossible d’enregistrer ce voyage. Réessayez."
+  },
+  "load": {
+    "failed": "Impossible de charger pour le moment.",
+    "retry": "Réessayer",
+    "loading": "Chargement de vos voyages…"
+  },
+  "empty": {
+    "text": "Aucun voyage pour l’instant. Planifiez-en un ou enregistrez une idée pour plus tard.",
+    "plan": "Planifier un voyage",
+    "idea": "Enregistrer une idée"
+  },
+  "card": {
+    "noDates": "Pas encore de dates"
+  },
+  "bucket": {
+    "title": "Pays visités",
+    "label": "{{count}} pays visités sur {{goal}}"
+  },
+  "phases": {
+    "dreaming": "En rêve",
+    "planning": "En préparation",
+    "ready": "Prêt",
+    "on_the_road": "En route",
+    "memories": "Souvenirs"
+  },
+  "next": {
+    "heading": "Prochain voyage",
+    "dreaming": "Une idée en attente de dates.",
+    "pickDates": "Choisir les dates",
+    "planIt": "Le planifier",
+    "planning": "{{percent}} % planifié",
+    "open": "Ouvrir le voyage",
+    "ready": "Ensuite : {{item}} avant le {{date}}",
+    "readyNoDate": "Ensuite : {{item}}",
+    "allSet": "Tout est prêt.",
+    "readyFallback": "Terminez votre préparation",
+    "openPrep": "Ouvrir la préparation",
+    "onTheRoad": "Jour {{day}} à {{city}}",
+    "openToday": "Ouvrir Aujourd’hui",
+    "memories": "Revivez votre voyage",
+    "openRecap": "Ouvrir le récap"
+  },
+  "prepItems": {
+    "visa": "Visa",
+    "passport": "Passeport",
+    "bookings": "Réservations",
+    "insurance": "Assurance voyage",
+    "documents": "Documents",
+    "stress_test": "Tester votre plan",
+    "sim": "Carte SIM",
+    "money": "Argent",
+    "packing": "Liste de bagages",
+    "emergency_card": "Carte d’urgence",
+    "checkin": "Enregistrement du vol",
+    "offline_pack": "Pack hors ligne"
+  }
+}

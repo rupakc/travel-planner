@@ -1,0 +1,33 @@
+{
+  "title": "Journal",
+  "empty": "No entries yet. Write about your day.",
+  "noDay": "No day",
+  "pending": "(waiting to sync)",
+  "delete": "Delete",
+  "error": "Something went wrong. Try again.",
+  "form": {
+    "label": "What happened today?",
+    "placeholder": "Write a few lines...",
+    "counter": "{{n}} / {{max}}",
+    "tooLong": "Too long: {{n}} / {{max}} characters",
+    "add": "Add entry",
+    "day": "Day",
+    "noDay": "No day"
+  },
+  "mood": {
+    "group": "Mood",
+    "great": "Great",
+    "good": "Good",
+    "ok": "Okay",
+    "tough": "Tough"
+  },
+  "stars": {
+    "group": "Rating",
+    "label": "{{n}} of 5 stars"
+  },
+  "places": {
+    "title": "Rate your places",
+    "empty": "No places to rate yet.",
+    "visited": "Visited"
+  }
+}
