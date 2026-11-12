@@ -42,10 +42,83 @@
     "first_steps": {
       "name": "第一步",
       "desc": "完成欢迎导览。"
+    },
+    "traveller": {
+      "name": "旅行者",
+      "desc": "告诉我们你是哪种旅行者。"
+    },
+    "first_trip": {
+      "name": "首次旅行",
+      "desc": "保存你的第一次旅行。"
+    },
+    "trip_ready": {
+      "name": "行程就绪",
+      "desc": "把一次旅行完全准备好。"
+    },
+    "ready_regular": {
+      "name": "常备达人",
+      "desc": "把 5 次旅行完全准备好。"
+    },
+    "smart_planner": {
+      "name": "聪明规划师",
+      "desc": "将某个计划的压力测试得分提高 3 次。"
+    },
+    "on_the_road": {
+      "name": "在路上",
+      "desc": "在一次旅行的 3 天里打卡。"
+    },
+    "road_warrior": {
+      "name": "旅途战士",
+      "desc": "在一次旅行的 14 天里打卡。"
+    },
+    "local_explorer": {
+      "name": "本地探索者",
+      "desc": "将 10 个地点标记为已到访。"
+    },
+    "local_legend": {
+      "name": "本地传奇",
+      "desc": "将 50 个地点标记为已到访。"
+    },
+    "countries_3": {
+      "name": "护照印章",
+      "desc": "到访 3 个国家。"
+    },
+    "countries_10": {
+      "name": "资深旅行者",
+      "desc": "到访 10 个国家。"
+    },
+    "countries_30": {
+      "name": "环球漫游者",
+      "desc": "到访 30 个国家。"
+    },
+    "continents_3": {
+      "name": "跨洲旅人",
+      "desc": "到访 3 个大洲。"
+    },
+    "continents_6": {
+      "name": "六大洲",
+      "desc": "到访 6 个大洲。"
+    },
+    "storyteller": {
+      "name": "故事讲述者",
+      "desc": "完成一次旅行回顾。"
+    },
+    "memory_keeper": {
+      "name": "回忆守护者",
+      "desc": "完成 5 次旅行回顾。"
     }
   },
   "rules": {
     "email_verified": "邮箱已确认",
-    "onboarding_complete": "欢迎导览已完成"
+    "onboarding_complete": "欢迎导览已完成",
+    "traveller_type": "已选择旅行者类型",
+    "plan_saved": "旅行已保存",
+    "trip_ready": "行程就绪",
+    "smart_planner": "计划已强化",
+    "trip_checkin": "旅行打卡",
+    "place_visited": "地点已到访",
+    "country_visited": "新国家",
+    "continent_visited": "新大洲",
+    "recap_complete": "旅行回顾已完成"
   }
 }

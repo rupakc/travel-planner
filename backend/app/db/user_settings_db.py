@@ -20,6 +20,7 @@ DEFAULT_SETTINGS: dict = {
     "hide_community": False,
     "profile_visibility": "public",
     "telemetry_opt_out": False,
+    "bucket_list_goal": None,
 }
 
 DEFAULT_ONBOARDING: dict = {
@@ -43,6 +44,7 @@ class SettingsPatch(BaseModel):
     hide_community: bool = False
     profile_visibility: Literal["public", "followers", "private"] = "public"
     telemetry_opt_out: bool = False
+    bucket_list_goal: int | None = Field(default=None, ge=1, le=250)
 
     @field_validator("timezone")
     @classmethod

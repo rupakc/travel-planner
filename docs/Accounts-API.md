@@ -42,9 +42,12 @@ When nothing was awarded: `{"xp": <total>, "awards": [], "badges": [], "level_up
 `Settings`. Every key is always present, and PATCH accepts any subset; unknown keys return 422:
 ```json
 {"language": null, "theme": "system", "currency": "USD", "units": "metric", "timezone": null,
- "hide_game": false, "hide_community": false, "profile_visibility": "public", "telemetry_opt_out": false}
+ "hide_game": false, "hide_community": false, "profile_visibility": "public", "telemetry_opt_out": false,
+ "bucket_list_goal": null}
 ```
 `language` is one of the 7 codes or `null`. `theme` is `system|light|dark`. `currency` matches `^[A-Z]{3}$`. `units` is `metric|imperial`. `timezone` is an IANA name that `zoneinfo` accepts, or `null`. `profile_visibility` is `public|followers|private`.
+
+**Additive (Phase 2).** `Settings` gains `bucket_list_goal: int 1..250 | null` (default `null`; see `Trips-API.md`). The Phase 2 journey rules, badges and the `trip_checkin` streak appear in `GET /game/catalog`; `PUT /account/onboarding` with `traveller_type` awards `traveller_type` once and merges that into `game`.
 
 ### Discovery
 

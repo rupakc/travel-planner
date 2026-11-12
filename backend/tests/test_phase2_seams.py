@@ -45,17 +45,27 @@ def test_owned_trip_404_for_other_user(monkeypatch):
     assert exc.value.code == "trip_not_found"
 
 
-def test_hooks_stubs_return_none():
+def test_hooks_return_real_deltas(monkeypatch):
+    from app.core.config import settings
     from app.game import trip_hooks as h
 
     d = date(2026, 1, 1)
-    assert h.on_plan_saved("u", 1) is None
-    assert h.on_trip_ready("u", 1) is None
-    assert h.on_smart_planner("u", 1, 90) is None
-    assert h.on_place_visited("u", 1, "k") is None
-    assert h.on_trip_checkin("u", 1, d, ["JP"]) == (None, None)
-    assert h.on_recap_complete("u", 1, []) is None
-    assert h.on_traveller_type("u", "foodie") is None
+    for delta in (
+        h.on_plan_saved("u", 1),
+        h.on_trip_ready("u", 1),
+        h.on_smart_planner("u", 1, 90),
+        h.on_place_visited("u", 1, "k"),
+        h.on_recap_complete("u", 1, []),
+        h.on_traveller_type("u", "foodie"),
+    ):
+        assert isinstance(delta, dict) and {"xp", "awards", "badges"} <= set(delta)
+    game, streak = h.on_trip_checkin("u", 1, d, ["JP"])
+    assert isinstance(game, dict) and "awards" in game
+    assert streak is not None
+    # Game disabled: hooks read as "disabled" (None).
+    monkeypatch.setattr(settings, "game_enabled", False)
+    assert h.on_plan_saved("u", 2) is None
+    assert h.on_trip_checkin("u", 2, d, []) == (None, None)
 
 
 def test_service_stubs():
