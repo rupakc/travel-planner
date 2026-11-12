@@ -3,7 +3,9 @@
   "titleKind": {
     "plan": "Diesen Plan teilen",
     "recap": "Deinen Reiserückblick teilen",
-    "savings": "Deine Preisfunde teilen"
+    "savings": "Deine Preisfunde teilen",
+    "quiz": "Teile dein Quiz-Ergebnis",
+    "status": "Teile den Stand deiner Reise"
   },
   "intro": "Wähle, was der Link zeigt. Deine E-Mail, Nationalität und Visadaten werden nie geteilt.",
   "reveals": "Immer sichtbar: Titel, Ziel, Anzahl der Tage und die Inhalte deines Plans.",
@@ -46,7 +48,8 @@
     "download": "Die Karte konnte nicht heruntergeladen werden.",
     "share": "Teilen nicht möglich.",
     "revoke": "Der Link konnte nicht entfernt werden.",
-    "unavailable": "Links teilen ist gerade nicht verfügbar."
+    "unavailable": "Links teilen ist gerade nicht verfügbar.",
+    "noActiveTrip": "Gerade gibt es keine aktive Reise zum Teilen."
   },
   "revoke": "Nicht mehr teilen",
   "revokeConfirm": "Nicht mehr teilen? Wer den Link hat, verliert den Zugriff.",
@@ -56,7 +59,9 @@
   "text": {
     "plan": "Mein Reiseplan auf Voyager",
     "recap": "Mein Reiserückblick auf Voyager",
-    "savings": "Preisrückgänge, die ich mit Voyager erwischt habe"
+    "savings": "Preisrückgänge, die ich mit Voyager erwischt habe",
+    "quiz": "Mein Quiz-Ergebnis auf Voyager",
+    "status": "Der Stand meiner Reise auf Voyager"
   },
   "page": {
     "byline": "Geteilt von {{name}}",
@@ -101,5 +106,6 @@
   },
   "entry": {
     "link": "Link teilen"
-  }
+  },
+  "quizCta": "Ergebnis teilen"
 }

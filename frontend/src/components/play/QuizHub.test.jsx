@@ -92,7 +92,7 @@ describe('QuizHub', () => {
     await click('play.quiz.next')
     expect(tid('play.result.score').textContent).toBe('140')
     expect(tid('play.result.xp').textContent).toContain('10')
-    expect(tid('play.result.share.seam')).not.toBeNull()
+    expect(tid('play.result.share.seam')).toBeNull()
     expect(emit).toHaveBeenCalledWith('play_quiz_done', { mode: 'daily', correct: 1 })
   })
 

@@ -3,7 +3,9 @@
   "titleKind": {
     "plan": "Share this plan",
     "recap": "Share your trip recap",
-    "savings": "Share your catches"
+    "savings": "Share your catches",
+    "quiz": "Share your quiz result",
+    "status": "Share your trip status"
   },
   "intro": "Choose what the link shows. Your email, nationality and visa details are never shared.",
   "reveals": "Always shown: the title, destination, number of days and the items in your plan.",
@@ -46,7 +48,8 @@
     "download": "Could not download the card.",
     "share": "Could not share.",
     "revoke": "Could not remove the link.",
-    "unavailable": "Sharing links is not available right now."
+    "unavailable": "Sharing links is not available right now.",
+    "noActiveTrip": "No active trip to share right now."
   },
   "revoke": "Stop sharing",
   "revokeConfirm": "Stop sharing? Anyone with the link will lose access.",
@@ -56,7 +59,9 @@
   "text": {
     "plan": "My trip plan on Voyager",
     "recap": "My trip recap on Voyager",
-    "savings": "Price drops I caught with Voyager"
+    "savings": "Price drops I caught with Voyager",
+    "quiz": "My quiz result on Voyager",
+    "status": "My trip status on Voyager"
   },
   "page": {
     "byline": "Shared by {{name}}",
@@ -101,5 +106,6 @@
   },
   "entry": {
     "link": "Share link"
-  }
+  },
+  "quizCta": "Share result"
 }

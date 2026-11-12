@@ -3,7 +3,9 @@
   "titleKind": {
     "plan": "Comparte este plan",
     "recap": "Comparte el resumen de tu viaje",
-    "savings": "Comparte tus ahorros"
+    "savings": "Comparte tus ahorros",
+    "quiz": "Comparte el resultado de tu quiz",
+    "status": "Comparte el estado de tu viaje"
   },
   "intro": "Elige lo que muestra el enlace. Tu correo, nacionalidad y datos de visado nunca se comparten.",
   "reveals": "Siempre se muestra: el título, el destino, el número de días y lo que hay en tu plan.",
@@ -46,7 +48,8 @@
     "download": "No se pudo descargar la tarjeta.",
     "share": "No se pudo compartir.",
     "revoke": "No se pudo eliminar el enlace.",
-    "unavailable": "Compartir enlaces no está disponible ahora mismo."
+    "unavailable": "Compartir enlaces no está disponible ahora mismo.",
+    "noActiveTrip": "No hay ningún viaje activo para compartir ahora."
   },
   "revoke": "Dejar de compartir",
   "revokeConfirm": "¿Dejar de compartir? Quien tenga el enlace perderá el acceso.",
@@ -56,7 +59,9 @@
   "text": {
     "plan": "Mi plan de viaje en Voyager",
     "recap": "El resumen de mi viaje en Voyager",
-    "savings": "Bajadas de precio que cacé con Voyager"
+    "savings": "Bajadas de precio que cacé con Voyager",
+    "quiz": "Mi resultado del quiz en Voyager",
+    "status": "El estado de mi viaje en Voyager"
   },
   "page": {
     "byline": "Compartido por {{name}}",
@@ -101,5 +106,6 @@
   },
   "entry": {
     "link": "Compartir enlace"
-  }
+  },
+  "quizCta": "Compartir resultado"
 }

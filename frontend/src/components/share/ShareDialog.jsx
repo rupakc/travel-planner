@@ -16,12 +16,13 @@ const btn = 'min-h-[44px] rounded-lg border border-border px-3 text-sm text-text
 
 /**
  * Share dialog for the Phase 4 share links (call it only when sharingEnabled(config)).
- * Props: kind ('plan'|'recap'|'savings'), planId (required for plan and recap),
+ * Props: kind ('plan'|'recap'|'savings'|'quiz'|'status'), planId (required for plan and recap, optional for status),
+ * sessionId (required for quiz: the caller's finished quiz session),
  * onClose, onChange?(share | null) called after a create/update (share) or a revoke (null),
  * defaultOptions? ({dates, show_origin, show_name}), text? (share message; default is translated per kind).
  * Escape closes only this dialog and Tab stays inside it.
  */
-export default function ShareDialog({ kind, planId, onClose, onChange, defaultOptions, text }) {
+export default function ShareDialog({ kind, planId, sessionId, onClose, onChange, defaultOptions, text }) {
   const { t } = useTranslation('share')
   const { token } = useAuth()
   const dialogRef = useRef(null)
@@ -33,7 +34,8 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
   const [confirmRevoke, setConfirmRevoke] = useState(false)
   const [imgOk, setImgOk] = useState(true)
   const dirty = useRef(false)
-  const planKind = kind !== 'savings'
+  const planKind = kind === 'plan' || kind === 'recap' // shows dates/origin and needs a plan
+  const matchPlan = planKind
   const message = text || t(`text.${kind}`, { defaultValue: '' })
   const link = share ? (share.url || pageUrl(share.token)) : ''
 
@@ -53,14 +55,14 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
       try {
         const d = await listShares(token)
         const rows = Array.isArray(d?.shares) ? d.shares : []
-        const hit = rows.find((s) => s.kind === kind && (!planKind || (s.plan_id != null && String(s.plan_id) === String(planId))))
+        const hit = kind === 'quiz' ? null : rows.find((s) => s.kind === kind && (!matchPlan || (s.plan_id != null && String(s.plan_id) === String(planId))))
         if (!live || !hit) return
         setShare(hit)
         if (!dirty.current) setOptions((o) => ({ ...o, ...(hit.options || {}) }))
       } catch { /* continue without it */ }
     })()
     return () => { live = false }
-  }, [token, kind, planId, planKind])
+  }, [token, kind, planId, matchPlan])
 
   useEffect(() => {
     dialogRef.current?.focus()
@@ -88,7 +90,8 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
     setBusy(true); setStatus(null)
     try {
       const body = { kind, options }
-      if (planKind) body.plan_id = planId
+      if (planKind || (kind === 'status' && planId != null)) body.plan_id = planId
+      if (kind === 'quiz') body.session_id = sessionId
       const res = await createShare(token, body)
       const wasNew = !share
       setShare(res); setImgOk(true)
@@ -96,7 +99,9 @@ export default function ShareDialog({ kind, planId, onClose, onChange, defaultOp
       ok(wasNew ? 'created' : 'updated')
       onChange?.(res)
     } catch (e) {
-      fail(e?.response?.status === 404 ? 'unavailable' : 'create')
+      const st = e?.response?.status
+      const code = e?.response?.data?.error_code || e?.response?.data?.detail?.error_code || e?.response?.data?.code
+      fail(st === 404 || (st === 422 && code === 'invalid_kind') ? 'unavailable' : code === 'no_active_trip' ? 'noActiveTrip' : 'create')
     } finally { setBusy(false) }
   }
 

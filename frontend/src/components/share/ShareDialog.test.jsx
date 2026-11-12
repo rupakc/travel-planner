@@ -56,6 +56,21 @@ describe('ShareDialog', () => {
     expect(createShare.mock.calls[0][1].plan_id).toBeUndefined()
   })
 
+  it('quiz sends session_id and no plan_id, hides plan-only options', async () => {
+    await render(<ShareDialog kind="quiz" sessionId="s9" onClose={() => {}} />)
+    expect(q('share-dates')).toBeNull()
+    await click('share-create')
+    expect(createShare).toHaveBeenCalledWith('tok', { kind: 'quiz', session_id: 's9', options: { dates: 'hidden', show_origin: false, show_name: false } })
+  })
+
+  it('status sends the optional plan_id; an old backend (422 invalid_kind) shows unavailable', async () => {
+    createShare.mockRejectedValue({ response: { status: 422, data: { error_code: 'invalid_kind' } } })
+    await render(<ShareDialog kind="status" planId={4} onClose={() => {}} />)
+    await click('share-create')
+    expect(createShare.mock.calls[0][1].plan_id).toBe(4)
+    expect(host.querySelector('[data-testid="share-error"]').textContent).not.toBe('')
+  })
+
   it('shows an error and no card when create fails', async () => {
     createShare.mockRejectedValue({ response: { status: 500 } })
     await render(<ShareDialog kind="plan" planId={1} onClose={() => {}} />)
