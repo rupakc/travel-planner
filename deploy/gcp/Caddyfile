@@ -77,6 +77,34 @@
 		}
 	}
 
+	# Link-preview crawlers (chat apps, social networks, search bots) asking for
+	# a public share page get the app's small server-rendered HTML page with
+	# Open Graph tags; people (any other User-Agent) fall through to the SPA.
+	# If the app answers 4xx/5xx (revoked token, sharing off, an older build
+	# without the route), the SPA index.html is served instead.
+	@crawler {
+		header_regexp ua User-Agent (?i)facebookexternalhit|twitterbot|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|pinterest|skypeuri|embedly|googlebot|bingbot|applebot|imessage|redditbot|mastodon
+		path_regexp share ^/share/([A-Za-z0-9_-]{8,64})$
+	}
+	handle @crawler {
+		rewrite * /api/share/{re.share.1}/page
+		reverse_proxy app:8001 {
+			flush_interval -1
+			lb_try_duration 30s
+			lb_try_interval 250ms
+			header_up X-Real-IP {remote_host}
+			@apperr status 4xx 5xx
+			handle_response @apperr {
+				route {
+					root * /edge/current/srv
+					header Cache-Control "no-cache"
+					rewrite * /index.html
+					file_server
+				}
+			}
+		}
+	}
+
 	# Hashed build assets never change: cache for a year. They are looked up
 	# in the current release and the two before it, so a browser still
 	# holding an older index.html gets its lazy chunks after a deploy.
