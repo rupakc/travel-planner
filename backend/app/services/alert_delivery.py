@@ -500,12 +500,14 @@ async def _flush(now: datetime) -> int:
 
 
 DIGEST_INTERVAL_S = 300
+TRIP_PUSH_INTERVAL_S = 300
 
 
 async def _loop(interval: int) -> None:
     from . import alert_digest
 
     last_digest = 0.0
+    last_trip = -TRIP_PUSH_INTERVAL_S
     while True:
         try:
             await asyncio.to_thread(flush, datetime.now(UTC))
@@ -522,6 +524,18 @@ async def _loop(interval: int) -> None:
                 raise
             except Exception:  # noqa: BLE001
                 logger.warning("notify flush pass failed", exc_info=True)
+            try:
+                from . import trip_pushes
+
+                if time_mod.monotonic() - last_trip >= TRIP_PUSH_INTERVAL_S:
+                    last_trip = time_mod.monotonic()
+                    t = datetime.now(UTC)
+                    await asyncio.to_thread(trip_pushes.run_due, t)
+                    await asyncio.to_thread(trip_pushes.prune_log, t)
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                logger.warning("trip push pass failed", exc_info=True)
         if time_mod.monotonic() - last_digest >= DIGEST_INTERVAL_S:
             last_digest = time_mod.monotonic()
             try:
