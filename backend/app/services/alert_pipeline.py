@@ -18,5 +18,8 @@ def enrich(watch: dict, watch_kind: str, note: dict) -> dict:
 
 def after_insert(watch: dict, watch_kind: str, row: dict, now: datetime) -> bool:
     """Record savings/XP and hand push and email to the delivery layer.
-    ``True`` means v2 took over push and email (stub: ``False``)."""
+    ``True`` means v2 took over push and email AND has persisted ``_v2`` in
+    the stored notification's ``data`` itself; ``_notify`` relies only on the
+    returned bool. Raising is safe: ``_notify`` falls back to legacy push and
+    email (stub: ``False``)."""
     return False

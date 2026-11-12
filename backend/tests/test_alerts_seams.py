@@ -123,3 +123,33 @@ def test_stubs_are_inert():
 def test_start_loop_none_when_flag_off(monkeypatch):
     monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)
     assert alert_delivery.start_loop() is None
+
+
+@pytest.mark.parametrize("module", [fare_watch, price_watch])
+def test_after_insert_raising_falls_back_to_legacy(monkeypatch, users, module):
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
+    spy = _Spy(monkeypatch, module)
+
+    def boom(*a):
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(alert_pipeline, "enrich", lambda w, k, n: n)
+    monkeypatch.setattr(alert_pipeline, "after_insert", boom)
+    row = module._notify({"id": 3, "user_id": users, "kind": "hotel"}, _note(), NOW)
+    assert len(spy.calls) == 1
+    assert "_v2" not in row["data"]
+
+
+@pytest.mark.parametrize("module", [fare_watch, price_watch])
+def test_enrich_raising_still_inserts_unenriched(monkeypatch, users, module):
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
+    spy = _Spy(monkeypatch, module)
+
+    def boom(*a):
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(alert_pipeline, "enrich", boom)
+    monkeypatch.setattr(alert_pipeline, "after_insert", lambda *a: False)
+    row = module._notify({"id": 3, "user_id": users, "kind": "hotel"}, _note(), NOW)
+    assert row["data"] == {"x": 1}
+    assert len(spy.calls) == 1
