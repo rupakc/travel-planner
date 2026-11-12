@@ -1,8 +1,8 @@
 {
   "title": "Voyages",
   "create": {
-    "open": "Nouveau voyage",
-    "heading": "Enregistrer une idée",
+    "open": "Nouveau",
+    "heading": "Noter une idée",
     "title": "Titre",
     "destination": "Destination (facultatif)",
     "cancel": "Annuler",
@@ -17,8 +17,8 @@
   },
   "empty": {
     "text": "Aucun voyage pour l’instant. Planifiez-en un ou enregistrez une idée pour plus tard.",
-    "plan": "Planifier un voyage",
-    "idea": "Enregistrer une idée"
+    "plan": "Planifier",
+    "idea": "Noter une idée"
   },
   "card": {
     "noDates": "Pas encore de dates"
@@ -29,7 +29,7 @@
   },
   "phases": {
     "dreaming": "En rêve",
-    "planning": "En préparation",
+    "planning": "Préparation",
     "ready": "Prêt",
     "on_the_road": "En route",
     "memories": "Souvenirs"
@@ -37,19 +37,19 @@
   "next": {
     "heading": "Prochain voyage",
     "dreaming": "Une idée en attente de dates.",
-    "pickDates": "Choisir les dates",
-    "planIt": "Le planifier",
+    "pickDates": "Fixer les dates",
+    "planIt": "Planifier",
     "planning": "{{percent}} % planifié",
-    "open": "Ouvrir le voyage",
+    "open": "Voir le voyage",
     "ready": "Ensuite : {{item}} avant le {{date}}",
     "readyNoDate": "Ensuite : {{item}}",
     "allSet": "Tout est prêt.",
-    "readyFallback": "Terminez votre préparation",
-    "openPrep": "Ouvrir la préparation",
+    "readyFallback": "Terminez la préparation",
+    "openPrep": "Préparation",
     "onTheRoad": "Jour {{day}} à {{city}}",
-    "openToday": "Ouvrir Aujourd’hui",
+    "openToday": "Aujourd’hui",
     "memories": "Revivez votre voyage",
-    "openRecap": "Ouvrir le récap"
+    "openRecap": "Voir le bilan"
   },
   "prepItems": {
     "visa": "Visa",

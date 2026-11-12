@@ -10,7 +10,7 @@
   "autoNote": "Wird automatisch gespeichert, wenn du das Offline-Paket speicherst",
   "loading": "Deine Checkliste wird geladen…",
   "error": "Die Checkliste konnte nicht geladen werden.",
-  "retry": "Erneut versuchen",
+  "retry": "Nochmal",
   "toggleFailed": "Die Änderung konnte nicht gespeichert werden. Versuch es nochmal.",
   "facts": {
     "visa": "{{visaType}}, beantrage es bis {{date}}",
@@ -66,7 +66,7 @@
     },
     "emergency_card": {
       "title": "Notfallkarte ansehen",
-      "body": "Kenne die lokalen Notrufnummern und deine Botschaft."
+      "body": "Halte die Notrufnummern vor Ort und deine Botschaft bereit."
     },
     "checkin": {
       "title": "Online einchecken",

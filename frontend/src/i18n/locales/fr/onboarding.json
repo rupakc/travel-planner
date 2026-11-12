@@ -68,7 +68,7 @@
       "title": "Comment planifiez-vous ?",
       "options": {
         "ahead_deals": "Réserver tôt, chasser les bons plans",
-        "loose": "Planifier sans trop de contraintes",
+        "loose": "Planifier à la carte",
         "spontaneous": "Spontané, à la dernière minute"
       }
     },
@@ -129,7 +129,7 @@
     "stepOf_other": "Étape {{step}} sur {{count}}"
   },
   "web": {
-    "skipAll": "Passer la configuration",
+    "skipAll": "Passer",
     "getStarted": "Commencer",
     "continue": "Continuer",
     "resume": "Bon retour ! Nous avons gardé votre progression : reprenez là où vous vous étiez arrêté.",
@@ -140,20 +140,20 @@
     "resultAlso": "Un peu aussi",
     "resultSkipped": "Vous avez passé toutes les questions, nous avons donc commencé avec un large éventail. Vous pouvez refaire le quiz à tout moment.",
     "changeAnswers": "Ce n’est pas vous ? Modifier les réponses",
-    "homeAirport": "Aéroport de départ habituel",
+    "homeAirport": "Aéroport de départ",
     "homeAirportPlaceholder": "Ville ou code d’aéroport",
     "homeAirportHint": "Enregistré sur cet appareil pour lancer vos recherches depuis chez vous.",
     "passport": "Passeport",
     "passportPlaceholder": "Votre nationalité, p. ex. indienne",
     "passportHint": "Sert à vérifier les règles de visa. Enregistré dans vos préférences.",
     "allowNotifications": "Autoriser les notifications",
-    "notNow": "Pas maintenant",
+    "notNow": "Plus tard",
     "notificationsOn": "Les notifications sont activées.",
     "notificationsBlocked": "Votre navigateur bloque les notifications",
     "notificationsBlockedBody": "Pour recevoir des alertes plus tard, autorisez les notifications de ce site dans les réglages de votre navigateur.",
     "firstTrip": "Planifier mon premier voyage",
     "explore": "Simplement explorer",
-    "saving": "Enregistrement…",
+    "saving": "Sauvegarde…",
     "syncFailed": "Impossible d’enregistrer vos préférences dans votre compte",
     "syncFailedBody": "Vos réponses restent sur cet appareil. Vos centres d’intérêt, votre budget, votre groupe de voyage et votre passeport n’ont pas atteint votre compte.",
     "retry": "Réessayer",

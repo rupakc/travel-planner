@@ -25,7 +25,7 @@
     "companions": {
       "title": "¿Con quién sueles viajar?",
       "options": {
-        "solo": "Viajo solo/a",
+        "solo": "Solo/a",
         "partner": "En pareja",
         "family_kids": "En familia con niños",
         "friends": "Con amigos",
@@ -129,7 +129,7 @@
     "stepOf_other": "Paso {{step}} de {{count}}"
   },
   "web": {
-    "skipAll": "Saltar la configuración",
+    "skipAll": "Omitir configuración",
     "getStarted": "Empezar",
     "continue": "Continuar",
     "resume": "¡Hola de nuevo! Guardamos tu progreso, así que puedes seguir donde lo dejaste.",

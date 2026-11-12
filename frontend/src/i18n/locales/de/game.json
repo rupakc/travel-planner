@@ -26,7 +26,7 @@
     "1": "Wanderer",
     "2": "Tourist",
     "3": "Entdecker",
-    "4": "Reisender",
+    "4": "Voyager",
     "5": "Navigator",
     "6": "Pfadfinder",
     "7": "Wegbereiter",
@@ -68,7 +68,7 @@
       "desc": "Checke an 3 Tagen einer Reise ein."
     },
     "road_warrior": {
-      "name": "Straßenkrieger",
+      "name": "Vielreisender",
       "desc": "Checke an 14 Tagen einer Reise ein."
     },
     "local_explorer": {
@@ -88,7 +88,7 @@
       "desc": "Besuche 10 Länder."
     },
     "countries_30": {
-      "name": "Weltenbummler",
+      "name": "Weltreisender",
       "desc": "Besuche 30 Länder."
     },
     "continents_3": {

@@ -28,7 +28,7 @@
     "title": "Objectif de votre liste de voyages",
     "hint": "Combien de pays souhaitez-vous voir ? Choisissez un nombre de {{min}} à {{max}}.",
     "label": "Pays à voir",
-    "save": "Enregistrer l'objectif",
+    "save": "Enregistrer",
     "invalid": "Saisissez un nombre entier de {{min}} à {{max}}.",
     "saved": "Objectif enregistré.",
     "error": "Impossible d'enregistrer votre objectif. Réessayez."

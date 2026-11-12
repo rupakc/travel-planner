@@ -1,9 +1,9 @@
 {
   "loading": "Dein Rückblick wird geladen…",
   "failed": "Dein Rückblick konnte gerade nicht geladen werden.",
-  "retry": "Erneut versuchen",
+  "retry": "Nochmal",
   "notReady": "Dein Rückblick erscheint nach dem {{date}}",
-  "finish": "Rückblick abschließen",
+  "finish": "Abschließen",
   "finishFailed": "Der Rückblick konnte nicht abgeschlossen werden. Versuch es noch einmal.",
   "completed": "Rückblick abgeschlossen",
   "stats": {
@@ -43,9 +43,9 @@
   },
   "whereNext": {
     "title": "Wohin als Nächstes?",
-    "cta": "Schlag mir meine nächste Reise vor",
+    "cta": "Nächste Reise vorschlagen",
     "loading": "Suche läuft…",
-    "retry": "Erneut versuchen",
+    "retry": "Nochmal",
     "failed": "Vorschläge konnten gerade nicht geladen werden.",
     "none": "Diesmal keine neuen Vorschläge.",
     "needOrigin": "Füge deinen Heimatflughafen zu dieser Reise hinzu, um Vorschläge zu bekommen."

@@ -34,7 +34,7 @@
     "officialSource": "Offizielle Quelle",
     "copy": "Kopieren",
     "copied": "Kopiert",
-    "retry": "Wiederholen",
+    "retry": "Nochmal",
     "close": "Schließen",
     "remove": "Entfernen"
   },
@@ -155,7 +155,7 @@
     "dragSavedHere": "oder ziehe einen gespeicherten Plan hierher",
     "new": "Neu",
     "saving": "Speichern…",
-    "update": "Plan aktualisieren",
+    "update": "Aktualisieren",
     "save": "Plan speichern",
     "saveSend": "Speichern & zu gespeicherten Plänen",
     "savedPlans": "Gespeicherte Pläne",

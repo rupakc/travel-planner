@@ -4,11 +4,11 @@
     "explore": "Explorer",
     "alerts": "Alertes",
     "play": "Jouer",
-    "you": "Vous"
+    "you": "Moi"
   },
   "phases": {
     "dreaming": "En rêve",
-    "planning": "En préparation",
+    "planning": "Préparation",
     "ready": "Prêt",
     "on_the_road": "En route",
     "memories": "Souvenirs"
@@ -28,8 +28,8 @@
   "dayOf": "Jour {{day}} sur {{count}}",
   "dayIn": "Jour {{day}} à {{city}}",
   "saved": {
-    "openTrip": "Ouvrir le voyage",
-    "savedToTrips": "Enregistré dans Voyages"
+    "openTrip": "Voir le voyage",
+    "savedToTrips": "Ajouté à Voyages"
   },
   "load": {
     "failed": "Impossible de charger pour le moment.",

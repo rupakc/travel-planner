@@ -38,7 +38,7 @@
     "note": "Estás sin conexión. Esta es la copia guardada el {{date}}.",
     "noteUndated": "Estás sin conexión. Esta es la copia guardada en este dispositivo.",
     "empty": "Estás sin conexión y este viaje no está guardado en este dispositivo.",
-    "retry": "Intentar de nuevo"
+    "retry": "Reintentar"
   },
   "overview": {
     "openPlanner": "Abrir en el planificador",

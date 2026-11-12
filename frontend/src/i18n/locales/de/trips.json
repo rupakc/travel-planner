@@ -12,7 +12,7 @@
   },
   "load": {
     "failed": "Das konnte gerade nicht geladen werden.",
-    "retry": "Erneut versuchen",
+    "retry": "Nochmal",
     "loading": "Deine Reisen werden geladen…"
   },
   "empty": {
@@ -21,7 +21,7 @@
     "idea": "Idee speichern"
   },
   "card": {
-    "noDates": "Noch keine Daten"
+    "noDates": "Noch kein Datum"
   },
   "bucket": {
     "title": "Besuchte Länder",
@@ -37,18 +37,18 @@
   "next": {
     "heading": "Nächste Reise",
     "dreaming": "Eine Idee wartet auf Reisedaten.",
-    "pickDates": "Daten wählen",
-    "planIt": "Plane sie",
+    "pickDates": "Datum wählen",
+    "planIt": "Planen",
     "planning": "{{percent}} % geplant",
     "open": "Reise öffnen",
     "ready": "Als Nächstes: {{item}} bis {{date}}",
     "readyNoDate": "Als Nächstes: {{item}}",
     "allSet": "Alles ist bereit.",
-    "readyFallback": "Schließe deine Vorbereitung ab",
-    "openPrep": "Vorbereitung öffnen",
+    "readyFallback": "Vorbereitung abschließen",
+    "openPrep": "Vorbereitung",
     "onTheRoad": "Tag {{day}} in {{city}}",
     "openToday": "Heute öffnen",
-    "memories": "Erlebe deine Reise noch einmal",
+    "memories": "Reise noch einmal erleben",
     "openRecap": "Rückblick öffnen"
   },
   "prepItems": {

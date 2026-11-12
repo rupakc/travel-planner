@@ -105,7 +105,7 @@
     }
   },
   "forex": {
-    "none": "No hay información de cambio de divisas",
+    "none": "Sin información de cambio",
     "your": "TU",
     "loading": "Cargando...",
     "fees": "Comisiones: {{fees}}",
