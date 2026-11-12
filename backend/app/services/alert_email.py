@@ -409,3 +409,11 @@ async def deliver_price(watch: dict, note: dict, now: datetime) -> bool:
             type(exc).__name__,
         )
         return False
+
+
+async def deliver_one(watch_kind: str, watch: dict, row: dict, now: datetime) -> bool:
+    """Email one stored notification for the outbox flush (fare or price
+    watch). Keeps the per-watch ``email_enabled`` opt-in; never raises."""
+    if watch_kind == "flight":
+        return await deliver(watch, row, now)
+    return await deliver_price(watch, row, now)
