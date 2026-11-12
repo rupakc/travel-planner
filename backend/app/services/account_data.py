@@ -59,6 +59,8 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "user_streaks": ("user_id", "id"),
     "user_countries": ("user_id", "id"),
     "shares": ("username", "username"),
+    "social_profiles": ("user_id", "id"),
+    "social_limits": ("user_id", "id"),
 }
 
 # child table → WHERE clause over its parent; the one parameter is the user id
@@ -83,6 +85,9 @@ CHILD_TABLES: dict[str, str] = {
 # tables keyed by a value derived from the user id; the parameter is the user id
 KEYED_TABLES: dict[str, str] = {
     "ai_usage_daily": "user_key = 'user:' || ?",
+    # a follow or block row holds the user on either side
+    "social_follows": "? IN (follower_id, followee_id)",
+    "social_blocks": "? IN (blocker_id, blocked_id)",
 }
 
 # rows that outlive the user, with the reference cleared: table → column

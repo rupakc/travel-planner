@@ -55,6 +55,7 @@ from .api.routes.sessions import router as sessions_router
 from .api.routes.shares import public_router as shares_public_router
 from .api.routes.shares import router as shares_router
 from .api.routes.signup import router as signup_router
+from .api.routes.social import router as social_router
 from .api.routes.stress_test import router as stress_test_router
 from .api.routes.taste import router as taste_router
 from .api.routes.telemetry import router as telemetry_router
@@ -132,12 +133,14 @@ async def lifespan(app: FastAPI):
     from .db.notify_db import create_notify_tables
     from .db.price_watch_db import create_price_watch_tables
     from .db.shares_db import create_shares_table
+    from .db.social_db import create_social_tables
 
     create_fare_watch_tables()
     create_price_watch_tables()
     create_alert_tables()
     create_notify_tables()
     create_shares_table()
+    create_social_tables()
     create_notifications_table()
     create_devices_table()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
@@ -368,6 +371,8 @@ app.include_router(
     tags=["shares"],
     dependencies=[Depends(rate_limit("share_public"))],
 )
+# Social (Phase 5): flag + per-route read/write buckets live in the router
+app.include_router(social_router, prefix="/api", tags=["social"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(devices_router, prefix="/api", tags=["devices"])
 app.include_router(

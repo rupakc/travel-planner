@@ -93,6 +93,11 @@ class Settings(BaseSettings):
     rate_limit_share_public: int = 120  # public share page, JSON and card (per IP)
     rate_limit_share_manage: int = 30  # /shares create, list, revoke (per user)
     rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
+    # Phase 5 (Social + Play), per user: writes, reads, Play, admin moderation
+    rate_limit_social_write: int = 30
+    rate_limit_social_read: int = 120
+    rate_limit_play: int = 60
+    rate_limit_admin: int = 120
     # /auth/login: attempts per client IP; failed attempts per (username, IP),
     # so others can't lock a user out; and a high per-username ceiling across
     # all IPs as a backstop against distributed guessing
@@ -196,6 +201,11 @@ class Settings(BaseSettings):
     apns_key_file: str = ""
     apns_bundle_id: str = "io.github.rupakc.travelplanner"
     apns_sandbox: bool = False
+    # Phase 5: profiles, ideas feed, moderation (SOCIAL_ENABLED) and quizzes,
+    # head-to-head, boards, challenges (PLAY_ENABLED, also needs GAME_ENABLED).
+    # Off = routes 404 and features.social / features.play are 0.
+    social_enabled: bool = False
+    play_enabled: bool = False
     # Sharing 2.0 (Phase 4): /api/shares, card and OG page
     sharing_v2_enabled: bool = True
     ready_window_days: int = 14

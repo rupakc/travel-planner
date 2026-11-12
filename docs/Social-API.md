@@ -37,6 +37,8 @@ All paths are under `/api`, JSON in and out, `Authorization: Bearer <access_toke
 - `GET /social/following` and `GET /social/followers` -> `{"users":[{"handle"}], "next": cursor|null}`.
 - `PUT /social/block/{handle}` -> 204 (also removes follows both ways); `DELETE /social/block/{handle}` -> 204; `GET /social/blocks` -> `{"users":[{"handle"}]}`.
 
+**Clarifications (T1).** The first handle is free; the 30-day clock starts at the first change (`422 handle_rate_limited` carries `retry_after` seconds). Handles are stored lower-case. `home_country` that is not a known ISO code: `422 country_invalid`. Following needs a handle (`403 profile_required`). A request to accept or decline that does not exist: `404 request_not_found`. Blocking yourself: `422 cannot_block_self`; a bad list cursor: `422 invalid_cursor`. Because a blocked pair gets `404 profile_not_found` both ways, `you.blocked` is always `false` in practice (use `GET /social/blocks` to unblock). `followers_count`, `following_count` and the follower/following lists leave out users whose profile is `private`. `GET /social/profile/{own handle}` works for the owner whatever the visibility. The own-profile `GET` never carries game fields.
+
 ## Ideas feed
 
 An **idea** is a snapshot of one of the caller's plans or recaps with a title and caption. The snapshot is built with the same whitelist and privacy defaults as a share (no dates, no origin, no name, no prices, no private notes, no email): counts, destinations, days and the plan's selected items only.

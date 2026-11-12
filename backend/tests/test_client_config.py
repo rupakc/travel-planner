@@ -27,6 +27,8 @@ def test_config_shape(client, monkeypatch):
         "apns": False,
         "price_alerts_v2": True,
         "sharing": 1,
+        "social": 0,
+        "play": 0,
         "live_prices": False,
     }
     assert r.headers["cache-control"] == "max-age=300"
@@ -92,3 +94,12 @@ def test_config_alert_features(client, monkeypatch):
     monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
     f = client.get("/api/config").json()["features"]
     assert f["live_prices"] is True and f["price_alerts_v2"] is True
+
+
+def test_social_and_play_flags(client, monkeypatch):
+    monkeypatch.setattr(settings, "social_enabled", True)
+    monkeypatch.setattr(settings, "play_enabled", True)
+    f = client.get("/api/config").json()["features"]
+    assert (f["social"], f["play"]) == (1, 1)
+    monkeypatch.setattr(settings, "game_enabled", False)  # Play needs the game
+    assert client.get("/api/config").json()["features"]["play"] == 0
