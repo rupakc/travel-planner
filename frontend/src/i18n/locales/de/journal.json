@@ -1,0 +1,33 @@
+{
+  "title": "Tagebuch",
+  "empty": "Noch keine Einträge. Schreib über deinen Tag.",
+  "noDay": "Ohne Tag",
+  "pending": "(wartet auf Synchronisierung)",
+  "delete": "Löschen",
+  "error": "Etwas ist schiefgelaufen. Versuch es nochmal.",
+  "form": {
+    "label": "Was ist heute passiert?",
+    "placeholder": "Schreib ein paar Zeilen...",
+    "counter": "{{n}} / {{max}}",
+    "tooLong": "Zu lang: {{n}} / {{max}} Zeichen",
+    "add": "Eintrag hinzufügen",
+    "day": "Tag",
+    "noDay": "Ohne Tag"
+  },
+  "mood": {
+    "group": "Stimmung",
+    "great": "Super",
+    "good": "Gut",
+    "ok": "Okay",
+    "tough": "Schwierig"
+  },
+  "stars": {
+    "group": "Bewertung",
+    "label": "{{n}} von 5 Sternen"
+  },
+  "places": {
+    "title": "Bewerte deine Orte",
+    "empty": "Noch keine Orte zum Bewerten.",
+    "visited": "Besucht"
+  }
+}

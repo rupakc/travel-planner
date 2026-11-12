@@ -1,0 +1,56 @@
+{
+  "loading": "Chargement de votre récap…",
+  "failed": "Impossible de charger votre récap pour le moment.",
+  "retry": "Réessayer",
+  "notReady": "Votre récap apparaît après le {{date}}",
+  "finish": "Terminer le récap",
+  "finishFailed": "Impossible de terminer le récap. Réessayez.",
+  "completed": "Récap terminé",
+  "stats": {
+    "days": "Jours",
+    "places": "Lieux visités",
+    "distance": "Distance",
+    "km": "{{km}} km",
+    "countries": "Pays",
+    "journal": "Entrées du journal",
+    "stars": "Moyenne d'étoiles"
+  },
+  "map": {
+    "route": "Votre itinéraire",
+    "planned": "Itinéraire prévu"
+  },
+  "spend": {
+    "title": "Dépenses et budget",
+    "spent": "Dépensé (estimation)",
+    "budget": "Budget",
+    "planned": "Coût prévu (estimation)",
+    "estimateNote": "Estimations : les montants sont convertis à des taux approximatifs du jour de chaque dépense.",
+    "unconverted": "Non comptés, pas de taux pour : {{currencies}}"
+  },
+  "reveal": {
+    "title_one": "Nouveau pays tamponné !",
+    "title_other": "{{count}} nouveaux pays tamponnés !",
+    "close": "Fermer",
+    "title_many": "{{count}} nouveaux pays tamponnés !"
+  },
+  "share": {
+    "cta": "Partager",
+    "days_one": "{{count}} jour à {{city}}",
+    "days_other": "{{count}} jours à {{city}}",
+    "places_one": "{{count}} lieu",
+    "places_other": "{{count}} lieux",
+    "copied": "Lien copié",
+    "failed": "Impossible de partager pour le moment.",
+    "days_many": "{{count}} jours à {{city}}",
+    "places_many": "{{count}} lieux"
+  },
+  "whereNext": {
+    "title": "Et maintenant, où aller ?",
+    "cta": "Proposez-moi mon prochain voyage",
+    "loading": "Recherche…",
+    "retry": "Réessayer",
+    "failed": "Impossible de charger les suggestions pour le moment.",
+    "none": "Pas de nouvelle suggestion cette fois.",
+    "needOrigin": "Ajoutez votre aéroport de départ à ce voyage pour obtenir des suggestions."
+  }
+}

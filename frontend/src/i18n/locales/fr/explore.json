@@ -1,0 +1,12 @@
+{
+  "title": "Explorer",
+  "subtitle": "Trouvez votre prochain voyage, demandez des idées ou regardez autour de vous.",
+  "modes": {
+    "known": "Rechercher",
+    "discover": "Surprenez-moi",
+    "compare": "Comparer",
+    "import": "Depuis un lien",
+    "chat": "Chat",
+    "nearby": "Près de moi"
+  }
+}

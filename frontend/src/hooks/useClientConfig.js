@@ -1,17 +1,50 @@
 import { useEffect, useState } from 'react'
 
 // /api/config is fetched once per page load and cached at module level. A 404
-// (older backend) or a network error gives {}: every feature stays hidden.
+// (older backend) or another HTTP error gives {}: every feature stays hidden.
+// The last good answer is also kept in localStorage (tp_config_cache), and a
+// request that never got an answer (offline) uses it, so a reload in airplane
+// mode keeps the journey shell (and the saved offline pack) on. A fresh
+// answer always wins, e.g. features.offline_pack false.
+const STORAGE_KEY = 'tp_config_cache'
 let cached = null
 let pending = null
+
+const isObject = (c) => !!c && typeof c === 'object' && !Array.isArray(c)
+
+function readStored() {
+  try {
+    const c = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    return isObject(c) ? c : null
+  } catch { return null }
+}
+function writeStored(c) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(c)) } catch { /* private mode */ }
+}
+function dropStored() {
+  try { localStorage.removeItem(STORAGE_KEY) } catch { /* private mode */ }
+}
+
+async function fetchConfig() {
+  let r
+  try {
+    r = await fetch('/api/config')
+  } catch {
+    return readStored() || {} // no answer at all: the last good /config
+  }
+  if (!r.ok) { dropStored(); return {} }
+  try {
+    const c = await r.json()
+    if (!isObject(c)) return {}
+    writeStored(c)
+    return c
+  } catch { return {} }
+}
 
 export function loadClientConfig() {
   if (cached) return Promise.resolve(cached)
   if (!pending) {
-    pending = fetch('/api/config')
-      .then((r) => (r.ok ? r.json() : {}))
-      .catch(() => ({}))
-      .then((c) => { cached = c && typeof c === 'object' ? c : {}; return cached })
+    pending = fetchConfig().then((c) => { cached = isObject(c) ? c : {}; return cached })
   }
   return pending
 }

@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "Play"
+  },
+  "countries": {
+    "title": "Countries visited",
+    "empty": "Check in on a trip or finish a recap to add your first country.",
+    "count_one": "{{count}} country visited",
+    "count_other": "{{count}} countries visited",
+    "countOfGoal_one": "{{count}} of {{goal}} countries visited",
+    "countOfGoal_other": "{{count}} of {{goal}} countries visited"
+  },
+  "continents": {
+    "title_one": "Continents ({{count}})",
+    "title_other": "Continents ({{count}})",
+    "AF": "Africa",
+    "AN": "Antarctica",
+    "AS": "Asia",
+    "EU": "Europe",
+    "NA": "North America",
+    "OC": "Oceania",
+    "SA": "South America"
+  },
+  "goal": {
+    "title": "Bucket list goal",
+    "hint": "How many countries do you want to see? Pick a number from {{min}} to {{max}}.",
+    "label": "Countries to see",
+    "save": "Save goal",
+    "invalid": "Enter a whole number from {{min}} to {{max}}.",
+    "saved": "Goal saved.",
+    "error": "Could not save your goal. Try again."
+  },
+  "streak": {
+    "title": "Trip check-in streak",
+    "current_one": "{{count}} day in a row",
+    "current_other": "{{count}} days in a row",
+    "longest_one": "Longest: {{count}} day",
+    "longest_other": "Longest: {{count}} days"
+  },
+  "hidden": {
+    "note": "The game is hidden. You can turn it back on in your settings.",
+    "link": "Open settings"
+  },
+  "you": {
+    "more": "More",
+    "preferences": "Preferences",
+    "alerts": "Alerts",
+    "tour": "Show me around"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "banner": {
+    "offline": "Vous êtes hors ligne. Vos voyages enregistrés fonctionnent toujours.",
+    "pending_one": "{{count}} modification en attente de synchronisation",
+    "pending_many": "{{count}} modifications en attente de synchronisation",
+    "pending_other": "{{count}} modifications en attente de synchronisation"
+  }
+}

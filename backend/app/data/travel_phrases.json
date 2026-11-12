@@ -1,0 +1,1558 @@
+{
+ "version": 1,
+ "phrase_ids": [
+  "help",
+  "call_police",
+  "need_doctor",
+  "take_me_to",
+  "thank_you",
+  "how_much",
+  "where_toilet",
+  "dont_understand"
+ ],
+ "languages": {
+  "ar": {
+   "name": "العربية",
+   "script": "Arab",
+   "phrases": {
+    "help": {
+     "text": "النجدة!",
+     "romanized": "an-najda!"
+    },
+    "call_police": {
+     "text": "من فضلك، اتصل بالشرطة.",
+     "romanized": "min faḍlak, ittaṣil bish-shurṭa."
+    },
+    "need_doctor": {
+     "text": "أحتاج إلى طبيب.",
+     "romanized": "aḥtāju ilā ṭabīb."
+    },
+    "take_me_to": {
+     "text": "من فضلك، خذني إلى:",
+     "romanized": "min faḍlak, khudhnī ilā:"
+    },
+    "thank_you": {
+     "text": "شكرًا.",
+     "romanized": "shukran."
+    },
+    "how_much": {
+     "text": "بكم هذا؟",
+     "romanized": "bikam hādhā?"
+    },
+    "where_toilet": {
+     "text": "أين الحمّام؟",
+     "romanized": "ayna al-ḥammām?"
+    },
+    "dont_understand": {
+     "text": "لا أفهم.",
+     "romanized": "lā afham."
+    }
+   }
+  },
+  "bn": {
+   "name": "বাংলা",
+   "script": "Beng",
+   "phrases": {
+    "help": {
+     "text": "সাহায্য করুন!",
+     "romanized": "shahajjo korun!"
+    },
+    "call_police": {
+     "text": "দয়া করে পুলিশ ডাকুন।",
+     "romanized": "doya kore pulish ḍakun."
+    },
+    "need_doctor": {
+     "text": "আমার একজন ডাক্তার দরকার।",
+     "romanized": "amar ekjon ḍaktar dorkar."
+    },
+    "take_me_to": {
+     "text": "দয়া করে আমাকে এখানে নিয়ে চলুন:",
+     "romanized": "doya kore amake ekhane niye cholun:"
+    },
+    "thank_you": {
+     "text": "ধন্যবাদ।",
+     "romanized": "dhonnobad."
+    },
+    "how_much": {
+     "text": "এটার দাম কত?",
+     "romanized": "eṭar dam koto?"
+    },
+    "where_toilet": {
+     "text": "টয়লেট কোথায়?",
+     "romanized": "ṭoyleṭ kothay?"
+    },
+    "dont_understand": {
+     "text": "আমি বুঝতে পারছি না।",
+     "romanized": "ami bujhte parchhi na."
+    }
+   }
+  },
+  "cs": {
+   "name": "Čeština",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Pomoc!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Zavolejte prosím policii.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Potřebuji lékaře.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Odvezte mě prosím na tuto adresu:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Děkuji.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Kolik to stojí?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Kde je toaleta?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Nerozumím.",
+     "romanized": null
+    }
+   }
+  },
+  "da": {
+   "name": "Dansk",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Hjælp!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Ring venligst efter politiet.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Jeg har brug for en læge.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Kør mig venligst til:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Tak.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hvad koster det?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Hvor er toilettet?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Jeg forstår ikke.",
+     "romanized": null
+    }
+   }
+  },
+  "de": {
+   "name": "Deutsch",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Hilfe!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Bitte rufen Sie die Polizei.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Ich brauche einen Arzt.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Bitte bringen Sie mich zu:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Danke schön.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Was kostet das?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Wo ist die Toilette?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Ich verstehe nicht.",
+     "romanized": null
+    }
+   }
+  },
+  "el": {
+   "name": "Ελληνικά",
+   "script": "Grek",
+   "phrases": {
+    "help": {
+     "text": "Βοήθεια!",
+     "romanized": "Voíthia!"
+    },
+    "call_police": {
+     "text": "Παρακαλώ, καλέστε την αστυνομία.",
+     "romanized": "Parakaló, kaléste tin astinomía."
+    },
+    "need_doctor": {
+     "text": "Χρειάζομαι γιατρό.",
+     "romanized": "Chriázome yatró."
+    },
+    "take_me_to": {
+     "text": "Παρακαλώ, πηγαίνετέ με σε αυτή τη διεύθυνση:",
+     "romanized": "Parakaló, pigénete me s' aftí ti diéfthinsi:"
+    },
+    "thank_you": {
+     "text": "Ευχαριστώ.",
+     "romanized": "Efcharistó."
+    },
+    "how_much": {
+     "text": "Πόσο κάνει;",
+     "romanized": "Póso káni?"
+    },
+    "where_toilet": {
+     "text": "Πού είναι η τουαλέτα;",
+     "romanized": "Pu íne i tualéta?"
+    },
+    "dont_understand": {
+     "text": "Δεν καταλαβαίνω.",
+     "romanized": "Den katalavéno."
+    }
+   }
+  },
+  "es": {
+   "name": "Español",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "¡Ayuda!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Por favor, llame a la policía.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Necesito un médico.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Por favor, lléveme a:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Gracias.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "¿Cuánto cuesta?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "¿Dónde está el baño?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "No entiendo.",
+     "romanized": null
+    }
+   }
+  },
+  "fi": {
+   "name": "Suomi",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Apua!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Soittakaa poliisille, kiitos.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Tarvitsen lääkärin.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Viekää minut tähän osoitteeseen:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Kiitos.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Paljonko tämä maksaa?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Missä on vessa?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "En ymmärrä.",
+     "romanized": null
+    }
+   }
+  },
+  "fr": {
+   "name": "Français",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Au secours !",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Appelez la police, s'il vous plaît.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "J'ai besoin d'un médecin.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Emmenez-moi à cette adresse, s'il vous plaît :",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Merci.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Combien ça coûte ?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Où sont les toilettes ?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Je ne comprends pas.",
+     "romanized": null
+    }
+   }
+  },
+  "he": {
+   "name": "עברית",
+   "script": "Hebr",
+   "phrases": {
+    "help": {
+     "text": "הצילו!",
+     "romanized": "hatsilu!"
+    },
+    "call_police": {
+     "text": "בבקשה, תתקשרו למשטרה.",
+     "romanized": "bevakasha, titkashru lamishtara."
+    },
+    "need_doctor": {
+     "text": "דרוש לי רופא.",
+     "romanized": "darush li rofe."
+    },
+    "take_me_to": {
+     "text": "בבקשה, קחו אותי אל:",
+     "romanized": "bevakasha, kchu oti el:"
+    },
+    "thank_you": {
+     "text": "תודה.",
+     "romanized": "toda."
+    },
+    "how_much": {
+     "text": "כמה זה עולה?",
+     "romanized": "kama ze ole?"
+    },
+    "where_toilet": {
+     "text": "איפה השירותים?",
+     "romanized": "eifo hasherutim?"
+    },
+    "dont_understand": {
+     "text": "לא הבנתי.",
+     "romanized": "lo hevanti."
+    }
+   }
+  },
+  "hi": {
+   "name": "हिन्दी",
+   "script": "Deva",
+   "phrases": {
+    "help": {
+     "text": "मदद कीजिए!",
+     "romanized": "madad kījie!"
+    },
+    "call_police": {
+     "text": "कृपया पुलिस को बुलाइए।",
+     "romanized": "kripayā pulis ko bulāie."
+    },
+    "need_doctor": {
+     "text": "मुझे डॉक्टर की ज़रूरत है।",
+     "romanized": "mujhe ḍākṭar kī zarūrat hai."
+    },
+    "take_me_to": {
+     "text": "कृपया मुझे यहाँ ले चलिए:",
+     "romanized": "kripayā mujhe yahāṁ le chalie:"
+    },
+    "thank_you": {
+     "text": "धन्यवाद।",
+     "romanized": "dhanyavād."
+    },
+    "how_much": {
+     "text": "यह कितने का है?",
+     "romanized": "yah kitne kā hai?"
+    },
+    "where_toilet": {
+     "text": "टॉयलेट कहाँ है?",
+     "romanized": "ṭoyleṭ kahāṁ hai?"
+    },
+    "dont_understand": {
+     "text": "मुझे समझ नहीं आया।",
+     "romanized": "mujhe samajh nahīṁ āyā."
+    }
+   }
+  },
+  "hr": {
+   "name": "Hrvatski",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "U pomoć!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Molim vas, nazovite policiju.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Trebam liječnika.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Molim vas, odvezite me na ovu adresu:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Hvala.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Koliko ovo košta?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Gdje je zahod?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Ne razumijem.",
+     "romanized": null
+    }
+   }
+  },
+  "hu": {
+   "name": "Magyar",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Segítség!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Kérem, hívja a rendőrséget.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Orvosra van szükségem.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Kérem, vigyen erre a címre:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Köszönöm.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Mennyibe kerül ez?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Hol van a mosdó?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Nem értem.",
+     "romanized": null
+    }
+   }
+  },
+  "id": {
+   "name": "Bahasa Indonesia",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Tolong!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Tolong panggil polisi.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Saya butuh dokter.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Tolong antar saya ke:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Terima kasih.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Berapa harganya?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Di mana toilet?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Saya tidak mengerti.",
+     "romanized": null
+    }
+   }
+  },
+  "is": {
+   "name": "Íslenska",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Hjálp!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Vinsamlegast hringið á lögregluna.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Ég þarf lækni.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Vinsamlegast farið með mig á þetta heimilisfang:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Takk.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hvað kostar þetta?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Hvar er salernið?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Ég skil ekki.",
+     "romanized": null
+    }
+   }
+  },
+  "it": {
+   "name": "Italiano",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Aiuto!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Per favore, chiami la polizia.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Ho bisogno di un medico.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Per favore, mi porti a:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Grazie.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Quanto costa?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Dov'è il bagno?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Non capisco.",
+     "romanized": null
+    }
+   }
+  },
+  "ja": {
+   "name": "日本語",
+   "script": "Jpan",
+   "phrases": {
+    "help": {
+     "text": "助けてください！",
+     "romanized": "tasukete kudasai!"
+    },
+    "call_police": {
+     "text": "警察を呼んでください。",
+     "romanized": "keisatsu o yonde kudasai."
+    },
+    "need_doctor": {
+     "text": "医者に診てもらいたいです。",
+     "romanized": "isha ni mite moraitai desu."
+    },
+    "take_me_to": {
+     "text": "ここまでお願いします：",
+     "romanized": "koko made onegai shimasu:"
+    },
+    "thank_you": {
+     "text": "ありがとうございます。",
+     "romanized": "arigatō gozaimasu."
+    },
+    "how_much": {
+     "text": "これはいくらですか？",
+     "romanized": "kore wa ikura desu ka?"
+    },
+    "where_toilet": {
+     "text": "トイレはどこですか？",
+     "romanized": "toire wa doko desu ka?"
+    },
+    "dont_understand": {
+     "text": "わかりません。",
+     "romanized": "wakarimasen."
+    }
+   }
+  },
+  "km": {
+   "name": "ភាសាខ្មែរ",
+   "script": "Khmr",
+   "phrases": {
+    "help": {
+     "text": "ជួយខ្ញុំផង!",
+     "romanized": "chuoy knyom phong!"
+    },
+    "call_police": {
+     "text": "សូមហៅប៉ូលិស។",
+     "romanized": "som hav polis."
+    },
+    "need_doctor": {
+     "text": "ខ្ញុំត្រូវការគ្រូពេទ្យ។",
+     "romanized": "knyom trov-kar kru-pet."
+    },
+    "take_me_to": {
+     "text": "សូមនាំខ្ញុំទៅកាន់៖",
+     "romanized": "som noam knyom tov kan:"
+    },
+    "thank_you": {
+     "text": "អរគុណ។",
+     "romanized": "aw kun."
+    },
+    "how_much": {
+     "text": "តម្លៃប៉ុន្មាន?",
+     "romanized": "domlai ponman?"
+    },
+    "where_toilet": {
+     "text": "បន្ទប់ទឹកនៅឯណា?",
+     "romanized": "bontoap tek nov ae na?"
+    },
+    "dont_understand": {
+     "text": "ខ្ញុំមិនយល់ទេ។",
+     "romanized": "knyom min yol te."
+    }
+   }
+  },
+  "ko": {
+   "name": "한국어",
+   "script": "Kore",
+   "phrases": {
+    "help": {
+     "text": "도와주세요!",
+     "romanized": "dowajuseyo!"
+    },
+    "call_police": {
+     "text": "경찰을 불러 주세요.",
+     "romanized": "gyeongchareul bulleo juseyo."
+    },
+    "need_doctor": {
+     "text": "의사가 필요해요.",
+     "romanized": "uisaga piryohaeyo."
+    },
+    "take_me_to": {
+     "text": "여기로 데려다 주세요:",
+     "romanized": "yeogiro deryeoda juseyo:"
+    },
+    "thank_you": {
+     "text": "감사합니다.",
+     "romanized": "gamsahamnida."
+    },
+    "how_much": {
+     "text": "얼마예요?",
+     "romanized": "eolmayeyo?"
+    },
+    "where_toilet": {
+     "text": "화장실이 어디예요?",
+     "romanized": "hwajangsiri eodiyeyo?"
+    },
+    "dont_understand": {
+     "text": "이해가 안 돼요.",
+     "romanized": "ihaega an dwaeyo."
+    }
+   }
+  },
+  "ms": {
+   "name": "Bahasa Melayu",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Tolong!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Tolong panggil polis.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Saya perlukan doktor.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Tolong hantar saya ke:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Terima kasih.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Berapa harganya?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Di mana tandas?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Saya tidak faham.",
+     "romanized": null
+    }
+   }
+  },
+  "nl": {
+   "name": "Nederlands",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Help!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Wilt u alstublieft de politie bellen?",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Ik heb een arts nodig.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Brengt u mij alstublieft naar:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Dank u wel.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hoeveel kost dit?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Waar is het toilet?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Ik begrijp het niet.",
+     "romanized": null
+    }
+   }
+  },
+  "no": {
+   "name": "Norsk",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Hjelp!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Ring politiet, takk.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Jeg trenger en lege.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Vennligst kjør meg til:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Takk.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hvor mye koster dette?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Hvor er toalettet?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Jeg forstår ikke.",
+     "romanized": null
+    }
+   }
+  },
+  "pl": {
+   "name": "Polski",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Pomocy!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Proszę wezwać policję.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Potrzebuję lekarza.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Proszę zawieźć mnie pod ten adres:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Dziękuję.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Ile to kosztuje?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Gdzie jest toaleta?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Nie rozumiem.",
+     "romanized": null
+    }
+   }
+  },
+  "pt": {
+   "name": "Português",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Socorro!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Por favor, chame a polícia.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Preciso de um médico.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Por favor, leve-me a:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Obrigado(a).",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Quanto custa?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Onde ficam os sanitários?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Não entendo.",
+     "romanized": null
+    }
+   }
+  },
+  "ro": {
+   "name": "Română",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Ajutor!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Vă rog, chemați poliția.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Am nevoie de un medic.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Vă rog, duceți-mă la:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Mulțumesc.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Cât costă?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Unde este toaleta?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Nu înțeleg.",
+     "romanized": null
+    }
+   }
+  },
+  "ru": {
+   "name": "Русский",
+   "script": "Cyrl",
+   "phrases": {
+    "help": {
+     "text": "Помогите!",
+     "romanized": "Pomogite!"
+    },
+    "call_police": {
+     "text": "Пожалуйста, вызовите полицию.",
+     "romanized": "Pozhaluysta, vyzovite politsiyu."
+    },
+    "need_doctor": {
+     "text": "Мне нужен врач.",
+     "romanized": "Mne nuzhen vrach."
+    },
+    "take_me_to": {
+     "text": "Пожалуйста, отвезите меня по этому адресу:",
+     "romanized": "Pozhaluysta, otvezite menya po etomu adresu:"
+    },
+    "thank_you": {
+     "text": "Спасибо.",
+     "romanized": "Spasibo."
+    },
+    "how_much": {
+     "text": "Сколько это стоит?",
+     "romanized": "Skolko eto stoit?"
+    },
+    "where_toilet": {
+     "text": "Где туалет?",
+     "romanized": "Gde tualet?"
+    },
+    "dont_understand": {
+     "text": "Я не понимаю.",
+     "romanized": "Ya ne ponimayu."
+    }
+   }
+  },
+  "sv": {
+   "name": "Svenska",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Hjälp!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Ring polisen, tack.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Jag behöver en läkare.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Vänligen kör mig till:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Tack.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hur mycket kostar det?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Var är toaletten?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Jag förstår inte.",
+     "romanized": null
+    }
+   }
+  },
+  "sw": {
+   "name": "Kiswahili",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Msaada!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Tafadhali, ita polisi.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Ninahitaji daktari.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Tafadhali nipeleke:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Asante.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Hii ni bei gani?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Choo kiko wapi?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Sielewi.",
+     "romanized": null
+    }
+   }
+  },
+  "th": {
+   "name": "ภาษาไทย",
+   "script": "Thai",
+   "phrases": {
+    "help": {
+     "text": "ช่วยด้วย!",
+     "romanized": "chûay dûay!"
+    },
+    "call_police": {
+     "text": "ช่วยเรียกตำรวจหน่อยครับ/ค่ะ",
+     "romanized": "chûay rîak dtam-rùat nòi kráp/kâ"
+    },
+    "need_doctor": {
+     "text": "ต้องไปหาหมอครับ/ค่ะ",
+     "romanized": "dtông bpai hǎa mǒr kráp/kâ"
+    },
+    "take_me_to": {
+     "text": "ช่วยพาไปที่นี่หน่อยครับ/ค่ะ:",
+     "romanized": "chûay paa bpai tîi-nîi nòi kráp/kâ:"
+    },
+    "thank_you": {
+     "text": "ขอบคุณครับ/ค่ะ",
+     "romanized": "kòp-kun kráp/kâ"
+    },
+    "how_much": {
+     "text": "อันนี้ราคาเท่าไรครับ/ค่ะ",
+     "romanized": "an-níi raa-kaa tâo-rài kráp/kâ"
+    },
+    "where_toilet": {
+     "text": "ห้องน้ำอยู่ที่ไหนครับ/ค่ะ",
+     "romanized": "hông-náam yùu tîi-nǎi kráp/kâ"
+    },
+    "dont_understand": {
+     "text": "ไม่เข้าใจครับ/ค่ะ",
+     "romanized": "mâi kâo-jai kráp/kâ"
+    }
+   }
+  },
+  "tl": {
+   "name": "Tagalog",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Tulong!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Pakitawag po ang pulis.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Kailangan ko po ng doktor.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Pakihatid po ako sa:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Salamat po.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Magkano po ito?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Nasaan po ang banyo?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Hindi ko po maintindihan.",
+     "romanized": null
+    }
+   }
+  },
+  "tr": {
+   "name": "Türkçe",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "İmdat!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Lütfen polisi arayın.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Doktora ihtiyacım var.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Lütfen beni şuraya götürün:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Teşekkür ederim.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Bu ne kadar?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Tuvalet nerede?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Anlamıyorum.",
+     "romanized": null
+    }
+   }
+  },
+  "uk": {
+   "name": "Українська",
+   "script": "Cyrl",
+   "phrases": {
+    "help": {
+     "text": "Допоможіть!",
+     "romanized": "Dopomozhit!"
+    },
+    "call_police": {
+     "text": "Будь ласка, викличте поліцію.",
+     "romanized": "Bud laska, vyklychte politsiiu."
+    },
+    "need_doctor": {
+     "text": "Мені потрібен лікар.",
+     "romanized": "Meni potriben likar."
+    },
+    "take_me_to": {
+     "text": "Будь ласка, відвезіть мене за цією адресою:",
+     "romanized": "Bud laska, vidvezit mene za tsiieiu adresoiu:"
+    },
+    "thank_you": {
+     "text": "Дякую.",
+     "romanized": "Diakuiu."
+    },
+    "how_much": {
+     "text": "Скільки це коштує?",
+     "romanized": "Skilky tse koshtuie?"
+    },
+    "where_toilet": {
+     "text": "Де туалет?",
+     "romanized": "De tualet?"
+    },
+    "dont_understand": {
+     "text": "Я не розумію.",
+     "romanized": "Ya ne rozumiiu."
+    }
+   }
+  },
+  "vi": {
+   "name": "Tiếng Việt",
+   "script": "Latn",
+   "phrases": {
+    "help": {
+     "text": "Cứu tôi với!",
+     "romanized": null
+    },
+    "call_police": {
+     "text": "Làm ơn gọi cảnh sát.",
+     "romanized": null
+    },
+    "need_doctor": {
+     "text": "Tôi cần bác sĩ.",
+     "romanized": null
+    },
+    "take_me_to": {
+     "text": "Làm ơn đưa tôi đến:",
+     "romanized": null
+    },
+    "thank_you": {
+     "text": "Cảm ơn.",
+     "romanized": null
+    },
+    "how_much": {
+     "text": "Cái này giá bao nhiêu?",
+     "romanized": null
+    },
+    "where_toilet": {
+     "text": "Nhà vệ sinh ở đâu?",
+     "romanized": null
+    },
+    "dont_understand": {
+     "text": "Tôi không hiểu.",
+     "romanized": null
+    }
+   }
+  },
+  "zh": {
+   "name": "中文",
+   "script": "Hans",
+   "phrases": {
+    "help": {
+     "text": "救命！",
+     "romanized": "Jiùmìng!"
+    },
+    "call_police": {
+     "text": "请帮我叫警察。",
+     "romanized": "Qǐng bāng wǒ jiào jǐngchá."
+    },
+    "need_doctor": {
+     "text": "我需要医生。",
+     "romanized": "Wǒ xūyào yīshēng."
+    },
+    "take_me_to": {
+     "text": "请带我去：",
+     "romanized": "Qǐng dài wǒ qù:"
+    },
+    "thank_you": {
+     "text": "谢谢。",
+     "romanized": "Xièxie."
+    },
+    "how_much": {
+     "text": "这个多少钱？",
+     "romanized": "Zhège duōshao qián?"
+    },
+    "where_toilet": {
+     "text": "洗手间在哪里？",
+     "romanized": "Xǐshǒujiān zài nǎlǐ?"
+    },
+    "dont_understand": {
+     "text": "我听不懂。",
+     "romanized": "Wǒ tīng bù dǒng."
+    }
+   }
+  }
+ },
+ "countries": {
+  "AD": null,
+  "AE": "ar",
+  "AF": null,
+  "AG": null,
+  "AI": null,
+  "AL": null,
+  "AM": null,
+  "AO": "pt",
+  "AQ": null,
+  "AR": "es",
+  "AS": null,
+  "AT": "de",
+  "AU": null,
+  "AW": "nl",
+  "AZ": null,
+  "BA": null,
+  "BB": null,
+  "BD": "bn",
+  "BE": "nl",
+  "BF": "fr",
+  "BG": null,
+  "BH": "ar",
+  "BI": "fr",
+  "BJ": "fr",
+  "BL": "fr",
+  "BM": null,
+  "BN": "ms",
+  "BO": "es",
+  "BQ": "nl",
+  "BR": "pt",
+  "BS": null,
+  "BT": null,
+  "BW": null,
+  "BY": "ru",
+  "BZ": null,
+  "CA": null,
+  "CC": null,
+  "CD": "fr",
+  "CF": "fr",
+  "CG": "fr",
+  "CH": "de",
+  "CI": "fr",
+  "CK": null,
+  "CL": "es",
+  "CM": "fr",
+  "CN": "zh",
+  "CO": "es",
+  "CR": "es",
+  "CU": "es",
+  "CV": "pt",
+  "CW": "nl",
+  "CX": null,
+  "CY": "el",
+  "CZ": "cs",
+  "DE": "de",
+  "DJ": "fr",
+  "DK": "da",
+  "DM": null,
+  "DO": "es",
+  "DZ": "ar",
+  "EC": "es",
+  "EE": null,
+  "EG": "ar",
+  "EH": "ar",
+  "ER": null,
+  "ES": "es",
+  "ET": null,
+  "FI": "fi",
+  "FJ": null,
+  "FK": null,
+  "FM": null,
+  "FO": "da",
+  "FR": "fr",
+  "GA": "fr",
+  "GB": null,
+  "GD": null,
+  "GE": null,
+  "GF": "fr",
+  "GG": null,
+  "GH": null,
+  "GI": null,
+  "GL": "da",
+  "GM": null,
+  "GN": "fr",
+  "GP": "fr",
+  "GQ": "es",
+  "GR": "el",
+  "GS": null,
+  "GT": "es",
+  "GU": null,
+  "GW": "pt",
+  "GY": null,
+  "HK": null,
+  "HM": null,
+  "HN": "es",
+  "HR": "hr",
+  "HT": "fr",
+  "HU": "hu",
+  "ID": "id",
+  "IE": null,
+  "IL": "he",
+  "IM": null,
+  "IN": "hi",
+  "IO": null,
+  "IQ": "ar",
+  "IR": null,
+  "IS": "is",
+  "IT": "it",
+  "JE": null,
+  "JM": null,
+  "JO": "ar",
+  "JP": "ja",
+  "KE": "sw",
+  "KG": "ru",
+  "KH": "km",
+  "KI": null,
+  "KM": "fr",
+  "KN": null,
+  "KP": "ko",
+  "KR": "ko",
+  "KW": "ar",
+  "KY": null,
+  "KZ": "ru",
+  "LA": null,
+  "LB": "ar",
+  "LC": null,
+  "LI": "de",
+  "LK": null,
+  "LR": null,
+  "LS": null,
+  "LT": null,
+  "LU": "fr",
+  "LV": null,
+  "LY": "ar",
+  "MA": "ar",
+  "MC": "fr",
+  "MD": "ro",
+  "ME": null,
+  "MF": "fr",
+  "MG": "fr",
+  "MH": null,
+  "MK": null,
+  "ML": "fr",
+  "MM": null,
+  "MN": null,
+  "MO": null,
+  "MP": null,
+  "MQ": "fr",
+  "MR": "ar",
+  "MS": null,
+  "MT": null,
+  "MU": null,
+  "MV": null,
+  "MW": null,
+  "MX": "es",
+  "MY": "ms",
+  "MZ": "pt",
+  "NA": null,
+  "NC": "fr",
+  "NE": "fr",
+  "NF": null,
+  "NG": null,
+  "NI": "es",
+  "NL": "nl",
+  "NO": "no",
+  "NP": null,
+  "NR": null,
+  "NU": null,
+  "NZ": null,
+  "OM": "ar",
+  "PA": "es",
+  "PE": "es",
+  "PF": "fr",
+  "PG": null,
+  "PH": "tl",
+  "PK": null,
+  "PL": "pl",
+  "PM": "fr",
+  "PN": null,
+  "PR": "es",
+  "PS": "ar",
+  "PT": "pt",
+  "PW": null,
+  "PY": "es",
+  "QA": "ar",
+  "RE": "fr",
+  "RO": "ro",
+  "RS": null,
+  "RU": "ru",
+  "RW": null,
+  "SA": "ar",
+  "SB": null,
+  "SC": null,
+  "SD": "ar",
+  "SE": "sv",
+  "SG": null,
+  "SH": null,
+  "SI": null,
+  "SK": null,
+  "SL": null,
+  "SM": "it",
+  "SN": "fr",
+  "SO": null,
+  "SR": "nl",
+  "SS": null,
+  "ST": "pt",
+  "SV": "es",
+  "SX": null,
+  "SY": "ar",
+  "SZ": null,
+  "TC": null,
+  "TD": "fr",
+  "TF": "fr",
+  "TG": "fr",
+  "TH": "th",
+  "TJ": null,
+  "TK": null,
+  "TL": null,
+  "TM": null,
+  "TN": "ar",
+  "TO": null,
+  "TR": "tr",
+  "TT": null,
+  "TV": null,
+  "TW": "zh",
+  "TZ": "sw",
+  "UA": "uk",
+  "UG": null,
+  "UM": null,
+  "US": null,
+  "UY": "es",
+  "UZ": null,
+  "VA": "it",
+  "VC": null,
+  "VE": "es",
+  "VG": null,
+  "VI": null,
+  "VN": "vi",
+  "VU": null,
+  "WF": "fr",
+  "WS": null,
+  "XK": null,
+  "XP": null,
+  "YE": "ar",
+  "YT": "fr",
+  "ZA": null,
+  "ZM": null,
+  "ZW": null,
+  "ZZ": null
+ }
+}

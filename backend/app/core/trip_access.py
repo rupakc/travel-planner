@@ -6,6 +6,7 @@ from .errors import ApiError
 
 def owned_trip(plan_id: int, user: dict) -> dict:
     plan = plans_db.get_plan(plan_id)
-    if not plan or plan.get("username") != user.get("username"):
+    owner = plan.get("username") if plan else None
+    if not owner or owner != user.get("username"):
         raise ApiError(404, "trip_not_found", "Trip not found")
     return plan

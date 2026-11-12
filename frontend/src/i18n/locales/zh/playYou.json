@@ -1,0 +1,45 @@
+{
+  "page": {
+    "title": "玩乐"
+  },
+  "countries": {
+    "title": "到访过的国家",
+    "empty": "在旅行中签到或完成回顾，即可添加你的第一个国家。",
+    "count_other": "已到访 {{count}} 个国家",
+    "countOfGoal_other": "已到访 {{count}} / {{goal}} 个国家"
+  },
+  "continents": {
+    "title_other": "大洲（{{count}}）",
+    "AF": "非洲",
+    "AN": "南极洲",
+    "AS": "亚洲",
+    "EU": "欧洲",
+    "NA": "北美洲",
+    "OC": "大洋洲",
+    "SA": "南美洲"
+  },
+  "goal": {
+    "title": "心愿清单目标",
+    "hint": "你想去多少个国家？请选择 {{min}} 到 {{max}} 之间的数字。",
+    "label": "想去的国家数",
+    "save": "保存目标",
+    "invalid": "请输入 {{min}} 到 {{max}} 之间的整数。",
+    "saved": "目标已保存。",
+    "error": "无法保存你的目标，请重试。"
+  },
+  "streak": {
+    "title": "旅行签到连续天数",
+    "current_other": "连续 {{count}} 天",
+    "longest_other": "最长：{{count}} 天"
+  },
+  "hidden": {
+    "note": "游戏已隐藏。你可以在设置中重新开启。",
+    "link": "打开设置"
+  },
+  "you": {
+    "more": "更多",
+    "preferences": "偏好设置",
+    "alerts": "提醒",
+    "tour": "带我看看"
+  }
+}

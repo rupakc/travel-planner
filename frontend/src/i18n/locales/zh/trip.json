@@ -1,0 +1,52 @@
+{
+  "loading": "正在加载你的行程…",
+  "planLoading": "正在加载计划…",
+  "allTrips": "全部行程",
+  "tabsLabel": "行程分区",
+  "error": {
+    "failed": "暂时无法加载这个行程。",
+    "retry": "重试"
+  },
+  "header": {
+    "rename": "重命名行程",
+    "titleLabel": "行程名称",
+    "save": "保存",
+    "cancel": "取消",
+    "noDates": "尚未设定日期",
+    "addDates": "添加日期",
+    "editDates": "更改日期",
+    "phaseLabel": "行程阶段：{{phase}}。点击更改",
+    "manual": "手动设置",
+    "delete": "删除行程",
+    "confirmDelete": "删除“{{title}}”？其计划、开支和日记也会一并删除。"
+  },
+  "phaseMenu": {
+    "title": "行程阶段",
+    "follow": "按我的日期",
+    "followHint": "阶段随行程日期自动变化"
+  },
+  "dates": {
+    "title": "行程日期",
+    "start": "开始日期",
+    "end": "结束日期",
+    "endHint": "一日游可留空。",
+    "clear": "清除日期",
+    "save": "保存日期",
+    "cancel": "取消"
+  },
+  "offline": {
+    "note": "你已离线。这是 {{date}} 保存的副本。",
+    "noteUndated": "你已离线。这是保存在此设备上的副本。",
+    "empty": "你已离线，且此行程未保存在此设备上。",
+    "retry": "重试"
+  },
+  "overview": {
+    "openPlanner": "在规划器中打开",
+    "openPlannerHint": "用实时结果更改航班、住宿和每日安排。",
+    "planIt": "开始规划",
+    "planItHint": "查找 {{destination}} 的航班、住宿和活动。",
+    "planItHintNoPlace": "查找航班、住宿和活动。",
+    "loadFailed": "暂时无法加载计划。",
+    "retry": "重试"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "banner": {
+    "offline": "Du bist offline. Gespeicherte Reisen funktionieren weiterhin.",
+    "pending_one": "{{count}} Änderung wartet auf die Synchronisierung",
+    "pending_other": "{{count}} Änderungen warten auf die Synchronisierung"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "title": "离线包",
+  "intro": "把紧急电话、常用语句、酒店地址和货币换算器保存在此设备上，没有网络也能使用。",
+  "save": "保存以供离线使用",
+  "saving": "正在保存…",
+  "refresh": "刷新",
+  "remove": "移除",
+  "saved": "已于 {{when}} 保存",
+  "size": "{{kb}} KB",
+  "tabOnly": "只要此标签页保持打开就能使用",
+  "offlineNote": "你当前处于离线状态，显示的是已保存的离线包。",
+  "error": {
+    "error": "无法保存离线包，请重试。",
+    "quota": "此设备存储空间不足，无法保存离线包。"
+  },
+  "address": {
+    "title": "请把这个给司机看",
+    "fallback": "请带我去："
+  },
+  "currency": {
+    "title": "货币换算器",
+    "noRate": "没有保存 {{local}} 的汇率，因此没有换算器。出发前请查询汇率。",
+    "amountLabel": "{{currency}} 金额",
+    "swap": "切换方向",
+    "rateFrom": "{{date}} 的汇率（{{source}}），仅供参考",
+    "sources": {
+      "snapshot": "随行程保存"
+    }
+  },
+  "phrases": {
+    "title": "{{language}}常用语",
+    "show": "展示",
+    "close": "关闭",
+    "ids": {
+      "help": "救命！",
+      "call_police": "请报警",
+      "need_doctor": "我需要医生",
+      "take_me_to": "请带我去……",
+      "thank_you": "谢谢",
+      "how_much": "这个多少钱？",
+      "where_toilet": "洗手间在哪里？",
+      "dont_understand": "我听不懂"
+    }
+  },
+  "emergency": {
+    "title": "紧急电话",
+    "reference": "来自我们的参考列表",
+    "checked": "{{date}} 已核对",
+    "embassy": "大使馆",
+    "hospital": "医院",
+    "kinds": {
+      "police": "警察",
+      "ambulance": "救护车",
+      "fire": "消防",
+      "tourist_police": "旅游警察",
+      "general": "综合紧急电话"
+    }
+  }
+}

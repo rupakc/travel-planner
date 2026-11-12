@@ -1,0 +1,23 @@
+{
+  "dayIn": "Day {{day}} in {{city}}",
+  "checkIn": "Check in for today",
+  "checkedIn": "Checked in",
+  "streak_one": "{{count}}-day streak",
+  "streak_other": "{{count}}-day streak",
+  "stampTitle": "New country",
+  "stamp": "New country stamp: {{code}}",
+  "nextUp": "Next up",
+  "nothingNext": "Nothing more planned for today.",
+  "noPlan": "No plan for today yet.",
+  "directions": "Directions",
+  "wentHere": "I went here",
+  "visited": "Visited",
+  "shareStatus": "Share status",
+  "copied": "Copied to the clipboard.",
+  "nearMe": "Near me",
+  "startsOn": "Today starts on {{date}}",
+  "queued": "Saved on this device. It will sync when you're back online.",
+  "checkinFailed": "Couldn't check in. Try again.",
+  "visitFailed": "Couldn't save that. Try again.",
+  "newCountry": "New country: {{code}}"
+}
