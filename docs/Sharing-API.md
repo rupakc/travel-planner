@@ -47,7 +47,7 @@ Auth, `share_manage`. The caller's own shares, newest first, at most 100:
              "options": {"dates": "hidden", "show_origin": false, "show_name": false},
              "created_at": "…Z"}]}
 ```
-`title` is the plan's name (`Price alerts` for `savings`). Additive field `legacy_plan_shares: [{"plan_id", "name", "url"}]` lists the caller's plans that still have a legacy share token (`url` is `<base>/share/<token>`; the token is exposed nowhere else). Errors: `404 sharing_disabled`.
+`title` is the plan's name (`Price alerts` for `savings`). Each row (and the `POST /shares` answer) also carries an additive `plan_id` (int, or `null` for `savings`). Additive field `legacy_plan_shares: [{"plan_id", "name", "url"}]` lists the caller's plans that still have a legacy share token (`url` is `<base>/share/<token>`; the token is exposed nowhere else). Errors: `404 sharing_disabled`.
 
 ### DELETE /shares/{token}
 

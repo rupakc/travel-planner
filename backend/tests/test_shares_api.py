@@ -299,3 +299,17 @@ def test_import_source_and_private_notes_not_shared(client):
     flat = str(body)
     assert "secret" not in flat.replace("import_source", "") and "Bob" not in flat
     assert body["created_at"]  # exact keeps it
+
+
+def test_plan_id_on_create_and_list(client):
+    _, h = _user()
+    plan = _plan(client, h)
+    made = _share(client, h, plan["id"])
+    assert made["plan_id"] == plan["id"]
+    sav = client.post("/api/shares", json={"kind": "savings"}, headers=h).json()
+    assert sav["plan_id"] is None
+    rows = {
+        r["token"]: r for r in client.get("/api/shares", headers=h).json()["shares"]
+    }
+    assert rows[made["token"]]["plan_id"] == plan["id"]
+    assert rows[sav["token"]]["plan_id"] is None

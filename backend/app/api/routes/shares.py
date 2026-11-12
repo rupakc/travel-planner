@@ -79,6 +79,7 @@ def create_share(
     return {
         "token": share["token"],
         "kind": share["kind"],
+        "plan_id": share.get("plan_id"),
         "url": share_url(share["token"], request),
         "card_url": card_urls(share["token"], request),
         "options": _public_options(share),
@@ -96,6 +97,7 @@ def list_my_shares(request: Request, user: dict = Depends(get_current_user)):
             {
                 "token": share["token"],
                 "kind": share["kind"],
+                "plan_id": share.get("plan_id"),
                 "title": _title(share, plan),
                 "url": share_url(share["token"], request),
                 "options": _public_options(share),
