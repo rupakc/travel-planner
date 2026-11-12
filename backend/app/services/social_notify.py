@@ -1,0 +1,89 @@
+"""Senders for the ``social`` and ``quiz`` notification categories (Phase 5).
+
+Fire-and-forget: every public function swallows and logs its own errors, so a
+broken notification never fails or slows the request that caused it (the push
+itself is sent later by ``notify_center.flush_due``). Text is generic on
+purpose: no handles, names or ids, only the shared catalog. The ``quiz`` kinds
+are never sent to a user who hides the game."""
+
+import logging
+from datetime import UTC, datetime
+
+from ..db import game_db
+from . import notify_center, notify_text
+
+logger = logging.getLogger(__name__)
+
+IDEA_SAVED = "social_idea_saved"
+NEW_FOLLOWER = "social_new_follower"
+H2H_INVITE = "quiz_h2h_invite"
+H2H_RESULT = "quiz_h2h_result"
+
+
+def _enqueue(
+    user_id: str, kind: str, category: str, key: str, link: str, now: datetime | None
+) -> None:
+    try:
+        if category == "quiz" and game_db.hide_game(user_id):
+            return
+        body = notify_text.render(kind, notify_center.user_locale(user_id))
+        notify_center.enqueue_category(
+            user_id,
+            None,
+            kind,
+            category,
+            key,
+            "Voyager",
+            body,
+            {"link": link},
+            now or datetime.now(UTC),
+        )
+    except Exception:  # noqa: BLE001
+        logger.warning("social notification failed (kind=%s)", kind, exc_info=True)
+
+
+def idea_saved(author_id: str, saver_id: str, idea_id: int) -> None:
+    if author_id != saver_id:
+        _enqueue(
+            author_id,
+            IDEA_SAVED,
+            "social",
+            f"{IDEA_SAVED}:{author_id}:{saver_id}:{idea_id}",
+            "/feed",
+            None,
+        )
+
+
+def new_follower(followee_id: str, follower_id: str) -> None:
+    if followee_id != follower_id:
+        _enqueue(
+            followee_id,
+            NEW_FOLLOWER,
+            "social",
+            f"{NEW_FOLLOWER}:{followee_id}:{follower_id}",
+            "/feed",
+            None,
+        )
+
+
+def h2h_invite(opponent_id: str, match_id: str) -> None:
+    _enqueue(
+        opponent_id,
+        H2H_INVITE,
+        "quiz",
+        f"{H2H_INVITE}:{opponent_id}:{match_id}",
+        f"/play/h2h/{match_id}",
+        None,
+    )
+
+
+def h2h_result(user_id: str, match_id: str, now: datetime | None = None) -> None:
+    """For the side that finished first and is now waiting."""
+    _enqueue(
+        user_id,
+        H2H_RESULT,
+        "quiz",
+        f"{H2H_RESULT}:{user_id}:{match_id}",
+        f"/play/h2h/{match_id}",
+        now,
+    )

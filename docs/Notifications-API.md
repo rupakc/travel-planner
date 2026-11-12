@@ -24,7 +24,7 @@ All paths are under `/api`, with JSON in and out. Every route needs `Authorizati
  "push": {"fcm": false, "apns": false}, "devices": 2}
 ```
 
-- `categories`: all default on. `nearby` is a client-side switch the apps honour for on-device local notifications; the server never sends it. `social` and `quiz` are stored and returned and have no sender yet.
+- `categories`: all default on. `nearby` is a client-side switch the apps honour for on-device local notifications; the server never sends it. `social` (idea saved, new follower) and `quiz` (head-to-head invite, head-to-head result) are sent by the server; `quiz` kinds are never sent to a user who hides the game. Additive: new notification kinds `social_idea_saved`, `social_new_follower`, `quiz_h2h_invite`, `quiz_h2h_result`; their text carries no handles or ids.
 - `quiet_hours` is the same value as `alert_prefs.quiet_hours` (`GET/PUT /alerts/preferences`): a change through either route shows in both. It is evaluated in the account `timezone`; `timezone` is `null` when unset or invalid, and then quiet hours are not applied and the morning brief is skipped.
 - `daily_cap` (1 to 10, default 3) counts non-price pushes per user per local day. Price drops are exempt and keep the per-kind caps of `/alerts/preferences`.
 - `push.fcm` / `push.apns`: whether the server can deliver to that platform. `devices`: the caller's registered device count.
@@ -41,7 +41,7 @@ All paths are under `/api`, with JSON in and out. Every route needs `Authorizati
 
 ### Notification rows and push data (additive)
 
-Rows from `/notifications` and the push `data` payload gain `category` and `plan_id` (`null` for price drops). New kinds: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`; clients ignore a kind they do not know. `link` is a web path (`/trips/{id}`, `/trips/{id}/today`) that apps map to a screen.
+Rows from `/notifications` and the push `data` payload gain `category` and `plan_id` (`null` for price drops). New kinds: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`; clients ignore a kind they do not know. `link` is a web path (`/trips/{id}`, `/trips/{id}/today`, `/feed`, `/play/h2h/{match_id}`) that apps map to a screen.
 
 ### Delivery rules
 
