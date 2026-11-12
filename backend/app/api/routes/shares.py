@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.errors import ApiError
-from ...core.urls import public_url
+from ...core.urls import request_public_url
 from ...db import shares_db, users_db
-from ...db.plans_db import get_plan
+from ...db.plans_db import get_plan, get_user_plans
 from ...services import alert_moments, share_card, share_public
 
 router = APIRouter()
@@ -42,12 +42,12 @@ def require_enabled() -> None:
         raise ApiError(404, "sharing_disabled", "Sharing is not available.")
 
 
-def share_url(token: str) -> str:
-    return public_url(f"/share/{token}")
+def share_url(token: str, request: Request | None = None) -> str:
+    return request_public_url(f"/share/{token}", request)
 
 
-def card_urls(token: str) -> dict:
-    base = public_url(f"/api/share/{token}/card.png")
+def card_urls(token: str, request: Request | None = None) -> dict:
+    base = request_public_url(f"/api/share/{token}/card.png", request)
     return {"link": f"{base}?size=link", "story": f"{base}?size=story"}
 
 
@@ -62,7 +62,9 @@ def _title(share: dict, plan: dict | None) -> str:
 
 
 @router.post("/shares")
-def create_share(body: CreateShareBody, user: dict = Depends(get_current_user)):
+def create_share(
+    body: CreateShareBody, request: Request, user: dict = Depends(get_current_user)
+):
     require_enabled()
     if body.kind not in share_public.KINDS:
         raise ApiError(422, "invalid_kind", "Unknown share kind.")
@@ -77,15 +79,15 @@ def create_share(body: CreateShareBody, user: dict = Depends(get_current_user)):
     return {
         "token": share["token"],
         "kind": share["kind"],
-        "url": share_url(share["token"]),
-        "card_url": card_urls(share["token"]),
+        "url": share_url(share["token"], request),
+        "card_url": card_urls(share["token"], request),
         "options": _public_options(share),
         "created_at": share["created_at"],
     }
 
 
 @router.get("/shares")
-def list_my_shares(user: dict = Depends(get_current_user)):
+def list_my_shares(request: Request, user: dict = Depends(get_current_user)):
     require_enabled()
     out = []
     for share in shares_db.list_shares(user["username"]):
@@ -95,12 +97,23 @@ def list_my_shares(user: dict = Depends(get_current_user)):
                 "token": share["token"],
                 "kind": share["kind"],
                 "title": _title(share, plan),
-                "url": share_url(share["token"]),
+                "url": share_url(share["token"], request),
                 "options": _public_options(share),
                 "created_at": share["created_at"],
             }
         )
-    return {"shares": out}
+    # Plans still shared through the legacy token (POST /plans/{id}/share):
+    # the only place the token is exposed, as part of its public URL.
+    legacy = [
+        {
+            "plan_id": p["id"],
+            "name": p.get("name"),
+            "url": share_url(p["share_token"], request),
+        }
+        for p in get_user_plans(user["username"])
+        if p.get("share_token")
+    ]
+    return {"shares": out, "legacy_plan_shares": legacy}
 
 
 @router.delete("/shares/{token}")
@@ -143,16 +156,20 @@ def public_payload(token: str) -> dict | None:
     share, snap = found
     opts = _public_options(share)
     if share["kind"] == "savings":
+        stamp = share_public._stamp(share["created_at"], opts["dates"])
         body = {
             "name": snap["title"],
-            "created_at": share["created_at"],
-            "updated_at": share["created_at"],
+            "created_at": stamp,
+            "updated_at": stamp,
             "search_data": {},
             "selections": {},
         }
     else:
         plan = get_plan(share["plan_id"])
         body = share_public.sanitize_plan(plan, opts, snap["owner_name"])
+        if share["kind"] == "recap":  # a recap shows only its card
+            body["search_data"] = {}
+            body["selections"] = {}
     body.update(kind=share["kind"], options=opts)
     if snap["owner_name"]:
         body["owner_name"] = snap["owner_name"]
@@ -169,11 +186,6 @@ def public_payload(token: str) -> dict | None:
 _NOINDEX = {"X-Robots-Tag": "noindex, nofollow"}
 
 
-def _origin(request: Request) -> str:
-    base = settings.public_base_url.strip() or str(request.base_url)
-    return base.rstrip("/")
-
-
 def _description(snap: dict) -> str:
     parts = [share_card.stat_text(s) for s in snap["stats"]]
     month = share_card.month_label(snap["period"])
@@ -184,11 +196,11 @@ def _description(snap: dict) -> str:
     return " · ".join(parts) or "Planned with Voyager"
 
 
-def _page_html(token: str, snap: dict, origin: str, lang: str) -> str:
+def _page_html(token: str, snap: dict, request: Request, lang: str) -> str:
     e = lambda v: html.escape(str(v), quote=True)  # noqa: E731
     title = snap["headline"] or "My trip"
-    url = f"{origin}/share/{token}"
-    image = f"{origin}/api/share/{token}/card.png?size=link"
+    url = share_url(token, request)
+    image = card_urls(token, request)["link"]
     desc = _description(snap)
     return f"""<!doctype html>
 <html lang="{e(lang)}">
@@ -228,7 +240,7 @@ def share_page(token: str, request: Request):
     lang = (share["options"].get("locale") or "en") if share.get("options") else "en"
     if lang not in ("en", "es", "de", "fr", "hi", "zh", "bn"):
         lang = "en"
-    body = _page_html(token, snap, _origin(request), lang)
+    body = _page_html(token, snap, request, lang)
     return Response(
         body,
         media_type="text/html",
@@ -241,7 +253,10 @@ def share_card_png(token: str, size: Literal["link", "story"] = "link"):
     found = resolve_snapshot(token)
     if not found:
         raise ApiError(404, "share_not_found", "Share not found.")
-    png = share_card.get_card(token, found[1], size)
+    try:
+        png = share_card.get_card(token, found[1], size)
+    except share_card.RenderBusy:
+        raise ApiError(503, "card_busy", "Card rendering is busy; retry shortly.")
     return Response(
         png,
         media_type="image/png",

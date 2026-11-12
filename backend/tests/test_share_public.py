@@ -141,7 +141,7 @@ def test_scrub_month_truncates_never_day_or_time():
 
 
 def test_scrub_exact_unchanged_and_input_not_mutated():
-    assert sp.scrub_selections(SEL, "exact") is SEL
+    assert sp.scrub_selections(SEL, "exact", show_origin=True) == SEL
     sp.scrub_selections(SEL, "hidden")
     assert SEL["hotel"]["check_in"] == "2026-04-01"
 
@@ -151,3 +151,120 @@ def test_sanitize_plan_applies_scrub():
     assert "2026-04-01" not in _flat(sp.sanitize_plan(plan, {}, None)["selections"])
     ex = sp.sanitize_plan(plan, {"dates": "exact"}, None)["selections"]
     assert ex["hotel"]["check_in"] == "2026-04-01"
+
+
+FLIGHT_SEL = {
+    "flight": {
+        "airline": "ANA",
+        "price_usd": 900,
+        "origin": "New York, USA",
+        "outbound": {
+            "airline": "ANA",
+            "origin": "JFK",
+            "destination": "NRT",
+            "departure_time": "2026-05-01T10:00",
+            "duration_minutes": 840,
+        },
+        "return": {"origin": "NRT", "destination": "JFK", "airline": "ANA"},
+        "booking_url": "https://www.google.com/travel/flights#flt=JFK.NRT.2026-05-01*NRT.JFK.2026-05-08",
+        "leg_from": "New York",
+    },
+    "hotel": {
+        "name": "H",
+        "booking_url": "https://h.example/x?checkin=2026-05-01&checkout=2026-05-08",
+        "info_url": "https://h.example/about",
+        "note": "Stay 2026-05-01 to 2026-05-08",
+    },
+    "itinerary": {
+        "days": [
+            {
+                "day": 1,
+                "slots": [
+                    {
+                        "time_of_day": "morning",
+                        "title": "T",
+                        "duration": "2h",
+                        "duration_minutes": 120,
+                        "notes": "private",
+                    }
+                ],
+            }
+        ]
+    },
+    "itinerary_notes": {"1": "x"},
+    "itinerary_edits": {"1": {}},
+}
+
+
+def test_urls_with_dates_dropped_hidden_and_month():
+    for mode in ("hidden", "month"):
+        out = sp.scrub_selections(FLIGHT_SEL, mode, show_origin=True)
+        flat = _flat(out)
+        assert "2026-05-0" not in flat and "checkin" not in flat and "flt=" not in flat
+        assert out["hotel"]["info_url"] == "https://h.example/about"
+    m = sp.scrub_selections(FLIGHT_SEL, "month", show_origin=True)
+    assert m["hotel"]["note"] == "Stay 2026-05 to 2026-05"
+    assert "note" not in sp.scrub_selections(FLIGHT_SEL, "hidden")["hotel"]
+
+
+def test_origin_scrubbed_in_every_mode():
+    for mode in ("hidden", "month", "exact"):
+        out = sp.scrub_selections(
+            FLIGHT_SEL, mode, show_origin=False, origin="New York, USA"
+        )
+        f = out["flight"]
+        assert "origin" not in f and "leg_from" not in f
+        assert "origin" not in f["outbound"]
+        assert "destination" not in f["return"]
+        assert "booking_url" not in f
+    ex = sp.scrub_selections(FLIGHT_SEL, "exact", show_origin=False)
+    assert ex["flight"]["outbound"]["departure_time"] == "2026-05-01T10:00"
+    assert "booking_url" in ex["hotel"]
+
+
+def test_private_notes_and_time_of_day():
+    for mode in ("hidden", "month", "exact"):
+        out = sp.scrub_selections(FLIGHT_SEL, mode)
+        assert "itinerary_notes" not in out and "itinerary_edits" not in out
+        slot = out["itinerary"]["days"][0]["slots"][0]
+        assert slot["time_of_day"] == "morning" and slot["duration"] == "2h"
+        assert slot["duration_minutes"] == 120 and "notes" not in slot
+
+
+def test_card_wrap_linear_and_clipped():
+    import time
+
+    from app.services import share_card
+
+    t = time.time()
+    snap = sp.build_snapshot("plan", {}, plan={"name": "x" * 5000, "search_data": {}})
+    assert len(snap["headline"]) <= 120
+    share_card.render({"headline": "ab " * 3000, "kind": "plan"})
+    share_card.render({"headline": "w" * 5000, "kind": "plan"})
+    assert time.time() - t < 1
+
+
+def test_plural_stat_labels():
+    from app.services.share_card import stat_text
+
+    assert stat_text({"key": "activities", "count": 1}) == "1 activity"
+    assert stat_text({"key": "hotels", "count": 1}) == "1 hotel"
+    assert stat_text({"key": "hotels", "count": 2}) == "2 hotels"
+    s = sp.build_snapshot(
+        "savings", {}, savings={"total_usd": 5, "drops_caught": 0, "targets_hit": 2}
+    )
+    assert s["stats"] == [{"key": "targets_hit", "count": 2}]
+
+
+def test_ipv6_clients_share_a_64_bucket():
+    from types import SimpleNamespace
+
+    from app.core.rate_limit import caller_key
+
+    def req(h):
+        return SimpleNamespace(client=SimpleNamespace(host=h))
+
+    assert caller_key(req("2001:db8:1:2::1"), None) == caller_key(
+        req("2001:db8:1:2:ffff::9"), None
+    )
+    assert caller_key(req("1.2.3.4"), None) == "ip:1.2.3.4"
