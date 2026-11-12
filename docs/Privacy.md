@@ -73,6 +73,13 @@ When you create an account Voyager stores: your username, display name, email ad
 - **Deletion.** **Account** → **Delete account** (`DELETE /api/account`, confirmed with your password, or your username if you have none) removes your account and everything in the export, your avatar file and your telemetry events, and revokes Apple tokens. Backups made before the deletion are not rewritten and age out with the normal backup rotation. The last remaining admin cannot be deleted.
 - **Daily AI allowance.** To apply the daily limits the server counts, per account and per UTC day, how many AI requests you made in each bucket. No request content is stored.
 
+## Trips, expenses and journal
+
+If you use trips, the server stores them with your account: trip titles, destinations and dates, your prep checklist ticks, expenses (amount, currency, category, note, day), journal entries and moods, your star ratings and notes for places, which places you visited, the countries (and so continents) of trips you checked in to or completed a recap for, and the offline snapshot of a trip's emergency card, currency, visa and packing facts. All of it is included in **Export my data** and removed by **Delete account**.
+
+- **Offline packs** are kept in your browser (IndexedDB and the cache of the app's service worker), not sent anywhere. They are cleared when you sign out, and when an administrator switches the offline pack off.
+- **No location history.** A check-in records a day and the trip's city, never your coordinates. Coordinates stored with a place are the place's, supplied by the app.
+
 ## What is never collected
 
 The schema has no field for any of these, and the server drops unknown fields:

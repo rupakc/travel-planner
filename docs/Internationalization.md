@@ -20,7 +20,14 @@ Strings live in `frontend/src/i18n/locales/<lang>/<namespace>.json`, loaded with
 | `sections` | Result section chrome (flights, hotels, visa, ...) |
 | `privacy` | Consent prompt and Privacy switch |
 | `adminTelemetry` | Admin Analytics tab |
+| `journey` | Journey tabs, trips hub shell and load states |
+| `offline` | Offline banner, queued-write messages |
+| `trips`, `trip`, `today`, `prep`, `completeness` | Trips hub, trip screen, Today view, prep checklist, trip-ready meter |
+| `offlinePack`, `expenses`, `journal`, `recap` | Offline pack, expenses, journal and place ratings, recap |
+| `coach`, `explore`, `nearbyTrip`, `playYou` | Coach marks, Explore header, Near me trip actions, Play and You tabs |
 | `misc` | Everything else |
+
+English is lazy per route: `common`, `errors`, `auth`, `journey`, `offline` and `misc`, plus the namespaces the shell renders at first paint, ship in the main bundle; the rest (for example `trip`, `trips`, `prep`, `expenses`, `journal`, `recap`) load when their route is opened (`frontend/src/i18n/routeNamespaces.js`). The other six languages always load on demand.
 
 Conventions:
 

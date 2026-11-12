@@ -63,6 +63,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | GET, POST | `/api/plans` | user | List own plans; save a plan |
 | GET, PUT, DELETE | `/api/plans/{id}` | user | Get, rename/update, delete own plan |
 | POST | `/api/plans/{id}/share` | user | Create (or return) the public share token |
+| any | `/api/trips*` | user | Trips: phases, prep checklist, offline snapshot and pack, expenses, journal, place ratings and visits, check-ins, recap, stats. Specified in [Trips API](Trips-API.md) |
 | DELETE | `/api/plans/{id}/share` | user | Revoke the share token (no UI uses it) |
 | GET | `/api/share/{token}` | none | Public, sanitised shared plan |
 | GET, PUT | `/api/preferences` | user | Get or update preferences |
@@ -432,6 +433,10 @@ Get, update (name and/or selections) or delete one of the caller's plans; `404` 
 `POST` returns `{"share_token": "..."}` (the existing token if there is one). `GET /api/share/{token}` needs no auth and returns the plan's name, timestamps, selections and only these search fields: origin, destination, destinations, dates, interests, traveller counts and pace. `DELETE /api/plans/{id}/share` revokes the token. See [Sharing and Plans](Sharing-and-Plans.md).
 
 ---
+
+## Trips
+
+Trips are plans with dates and a phase (Dreaming, Planning, Ready, On the road, Memories). Every `/api/trips*` route needs sign-in and acts only on the caller's own trips. The full contract (frozen, additive changes only) is [Trips API](Trips-API.md): `GET/POST /trips`, `GET/PATCH/DELETE /trips/{id}`, `GET /trips/stats`, prep (`/trips/{id}/prep`), `PUT /trips/{id}/snapshot`, `GET /trips/{id}/offline-pack`, expenses, journal, places, check-ins and recap.
 
 ## Preferences, recent searches, taste profile
 

@@ -8,7 +8,7 @@ The web app has a light theme (the default) and a designed dark theme. Colours a
 
 | Key | Holds |
 |---|---|
-| `palette` | Light-mode colours: 22 families (`gray`, `slate`, `stone`, `teal`, `amber`, `sky`, `red`, `emerald`, `green`, `violet`, `rose`, `cyan`, `blue`, `purple`, `yellow`, `indigo`, `pink`, `orange`, `lime`, `fuchsia`, `primary`, `accent`) with stops `50` to `950`, plus `white`. Values equal Tailwind 3.4's defaults, plus the primary teal and the accent coral. |
+| `palette` | Light-mode colours: 22 families (`gray`, `slate`, `stone`, `teal`, `amber`, `sky`, `red`, `emerald`, `green`, `violet`, `rose`, `cyan`, `blue`, `purple`, `yellow`, `indigo`, `pink`, `orange`, `lime`, `fuchsia`, `primary`, `accent`) with stops `50` to `950`, plus `white`. Values equal Tailwind 3.4's defaults, plus the primary teal (`primary-700`, teal-700, is the app's primary colour) and the accent coral. |
 | `dark` | The same families and stops for `html.dark`, plus `white` (the dark page surface). |
 | `semantic` | Named roles pointing at a stop: `surface`, `surface-raised`, `text`, `text-muted`, `border`, `accent`. |
 

@@ -4,6 +4,16 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: the trip journey, trips API and offline pack
+
+Contract: [Trips API](Trips-API.md). Runbook: [Deployment on GCP](Deployment-GCP.md#offline-pack-and-the-journey-flag).
+
+- **Trips.** A plan with dates is a trip with a phase (Dreaming, Planning, Ready, On the road, Memories) derived from its dates, with an override. New `/api/trips*` routers (`trips`, `trip_prep`, `trip_money`, `trip_journal`, `trip_offline`, `trip_today`, `trip_recap`) and seven tables (`trip_expenses`, `trip_journal`, `trip_ratings`, `trip_prep`, `trip_snapshots`, `trip_checkins`, `user_countries`), all additive.
+- **Web journey (behind `JOURNEY_UI_ENABLED`, off by default).** Trips hub, trip screen (overview, prep checklist, offline pack, Today with check-in, expenses with a currency converter, journal and place ratings, recap with passport stamps), plus Explore, Play and You tabs. Teal-700 is the primary colour.
+- **Offline pack.** Saving a pack registers `/sw.js` (app shell), keeps the trip snapshot in IndexedDB and queues expenses and journal writes while offline. `OFFLINE_PACK_ENABLED=false` removes it from every client on its next load. Packs are cleared on sign-out.
+- **Settings.** `JOURNEY_UI_ENABLED`, `OFFLINE_PACK_ENABLED`, `READY_WINDOW_DAYS`, `TRIP_MAX_EXPENSES`, `TRIP_MAX_JOURNAL`, `TRIP_MAX_PLACES`, `TRIP_SNAPSHOT_MAX_BYTES`.
+- **Languages.** New namespaces in all seven languages; English is bundled per route.
+
 ## Unreleased: faster deploys (per-image build alongside CI, skip unchanged images)
 
 Runbook: [Deployment on GCP](Deployment-GCP.md#6-day-to-day-deploys-and-rollback); workflows: [Testing and CI](Testing-and-CI.md#deployyml).

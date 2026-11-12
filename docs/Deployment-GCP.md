@@ -210,6 +210,12 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=v
 - **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`. It returns as soon as the bundle is unpacked and `compose up -d` has applied the changes; units are started with `--no-block`, so it never waits on itself. **Afterwards check IPv4 forwarding:** `cat /proc/sys/net/ipv4/ip_forward` must print `1`, and `curl -m 10 https://<host>/health` must answer. If it prints `0`, see [Troubleshooting](#11-troubleshooting).
 - **Schema changes stay additive.** A rollback must never meet a DB it can't read.
 
+## Offline pack and the journey flag
+
+- **Service worker.** The offline pack's service worker is `/sw.js`, served by Caddy with `Cache-Control: no-cache` so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed `/assets/*` files listed in `/sw-assets.json`, and never intercepts `/api/*`. Trip data lives in the browser's IndexedDB, not on the VM.
+- **Kill switch.** Set `OFFLINE_PACK_ENABLED=false` in `app.env` and restart the app. `GET /api/config` then reports `features.offline_pack: false`, and each client unregisters the worker, deletes the `voyager-*` caches and removes saved packs on its next load. Set it back to `true` to allow packs again.
+- **`JOURNEY_UI_ENABLED`.** Off by default. While it is `false` the SPA shows the classic search-first app and the new paths (`/trips`, `/explore`, `/play`, `/you`) fall back to `/`. The trips API is served either way, so flipping the flag needs only an app restart, never a rebuild.
+
 ## 7. Backups and restore drills
 
 The disk is authoritative (`BACKUP_MODE=vm`):

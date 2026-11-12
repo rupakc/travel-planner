@@ -62,6 +62,19 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Export to calendar (.ics) and print/PDF | ✅ | ✅ | ⏳ Phase 7 |
 | Cost breakdown | ✅ | ? | ⏳ Phase 7 |
 
+## Trips and the journey
+
+| Feature | Web | Android | iOS |
+|---|---|---|---|
+| Trips hub, trip phases and next-up card | ✅ | ⏳ 8 | ⏳ 7 |
+| Prep checklist and trip-ready meter | ✅ | ⏳ 8 | ⏳ 7 |
+| Offline pack (emergency card, currency, phrases, plan) | ✅ | ⏳ 8 | ⏳ 7 |
+| Today view and daily check-in | ✅ | ⏳ 8 | ⏳ 7 |
+| Expenses with currency converter | ✅ | ⏳ 8 | ⏳ 7 |
+| Journal and place ratings and visits | ✅ | ⏳ 8 | ⏳ 7 |
+| Recap, passport stamps and countries visited | ✅ | ⏳ 8 | ⏳ 7 |
+| Explore, Play and You tabs | ✅ | ⏳ 8 | ⏳ 7 |
+
 ## Chat
 
 | Feature | Web | Android | iOS |
