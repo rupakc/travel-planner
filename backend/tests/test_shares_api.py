@@ -211,8 +211,11 @@ def test_recap_and_savings(client):
     again = client.post("/api/shares", json={"kind": "savings"}, headers=h).json()
     assert again["token"] == r.json()["token"]
     sb = client.get(f"/api/share/{r.json()['token']}").json()
-    assert sb["kind"] == "savings" and sb["card"]["stats"][0]["key"] == "drops_caught"
+    assert sb["kind"] == "savings" and sb["card"]["stats"] == []
     assert sb["selections"] == {}
+    assert sb["created_at"] is None  # dates hidden by default
+    rb = client.get(f"/api/share/{token}").json()
+    assert rb["selections"] == {} and rb["search_data"] == {}
 
 
 def test_plan_delete_revokes_share(client):
@@ -241,3 +244,72 @@ def test_rate_limits(client, monkeypatch):
         assert r.status_code == 429 and "Retry-After" in r.headers
     finally:
         rate_limit.limiter = rate_limit.SlidingWindowLimiter()
+
+
+def test_legacy_plan_shares_listed_and_urls_absolute(client, monkeypatch):
+    monkeypatch.setattr(settings, "public_base_url", "")
+    _, h = _user()
+    plan = _plan(client, h)
+    tok = client.post(f"/api/plans/{plan['id']}/share", headers=h).json()["share_token"]
+    made = _share(client, h, plan["id"])
+    assert made["url"].startswith("http") and "/share/" in made["url"]
+    assert made["card_url"]["link"].startswith("http")
+    lst = client.get("/api/shares", headers=h).json()
+    assert [x["plan_id"] for x in lst["legacy_plan_shares"]] == [plan["id"]]
+    assert lst["legacy_plan_shares"][0]["url"].endswith(f"/share/{tok}")
+    assert tok not in str(lst["shares"])
+
+
+def test_long_plan_name_truncated_and_card_fast(client):
+    import time
+
+    _, h = _user()
+    plan = _plan(client, h, name="word " * 1000)
+    assert len(plan["name"]) == 200
+    tok = _share(client, h, plan["id"])["token"]
+    t = time.time()
+    r = client.get(f"/api/share/{tok}/card.png")
+    assert r.status_code == 200 and time.time() - t < 1
+
+
+def test_import_source_and_private_notes_not_shared(client):
+    _, h = _user()
+    plan = _plan(
+        client,
+        h,
+        import_source={"url": "https://x.example/a", "title": "T", "secret": 1},
+    )
+    client.put(
+        f"/api/plans/{plan['id']}",
+        json={
+            "selections": {
+                "itinerary_notes": {"1": "my secret"},
+                "itinerary_edits": {"1": {"title": "x"}},
+                "activities": [{"name": "A", "notes": "call Bob"}],
+            }
+        },
+        headers=h,
+    )
+    tok = _share(client, h, plan["id"], dates="exact", show_origin=True)["token"]
+    body = client.get(f"/api/share/{tok}").json()
+    assert body["search_data"]["import_source"] == {
+        "url": "https://x.example/a",
+        "title": "T",
+    }
+    flat = str(body)
+    assert "secret" not in flat.replace("import_source", "") and "Bob" not in flat
+    assert body["created_at"]  # exact keeps it
+
+
+def test_plan_id_on_create_and_list(client):
+    _, h = _user()
+    plan = _plan(client, h)
+    made = _share(client, h, plan["id"])
+    assert made["plan_id"] == plan["id"]
+    sav = client.post("/api/shares", json={"kind": "savings"}, headers=h).json()
+    assert sav["plan_id"] is None
+    rows = {
+        r["token"]: r for r in client.get("/api/shares", headers=h).json()["shares"]
+    }
+    assert rows[made["token"]]["plan_id"] == plan["id"]
+    assert rows[sav["token"]]["plan_id"] is None

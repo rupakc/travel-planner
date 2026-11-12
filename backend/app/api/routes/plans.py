@@ -2,7 +2,7 @@ import logging
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from ...core.auth import get_current_user
 from ...core.rate_limit import rate_limit
@@ -17,6 +17,7 @@ from ...db.plans_db import (
 )
 from ...db.taste_db import record_plan_signals
 from ...game import trip_hooks
+from ...services import share_public
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +41,7 @@ _PUBLIC_SEARCH_FIELDS = (
 )
 
 
-def _public_import_source(value) -> dict | None:
-    """The "Inspired by" link of an imported trip: title and an http(s) URL."""
-    if not isinstance(value, dict):
-        return None
-    url = value.get("url")
-    if not (isinstance(url, str) and url.lower().startswith(("http://", "https://"))):
-        url = None
-    title = value.get("title") if isinstance(value.get("title"), str) else None
-    return {"url": url, "title": title}
+_public_import_source = share_public.public_import_source
 
 
 def _sanitize_shared_plan(plan: dict) -> dict:
@@ -66,15 +59,27 @@ def _sanitize_shared_plan(plan: dict) -> dict:
     }
 
 
+NAME_MAX = 200
+
+
+def _clip_name(value):
+    """Plan names are truncated (never rejected) to NAME_MAX characters."""
+    return value[:NAME_MAX] if isinstance(value, str) else value
+
+
 class SavePlanRequest(BaseModel):
     name: str
     search_data: dict
     selections: dict
 
+    _clip = field_validator("name")(_clip_name)
+
 
 class UpdatePlanRequest(BaseModel):
     name: str | None = None
     selections: dict | None = None
+
+    _clip = field_validator("name")(_clip_name)
 
 
 @router.get("/plans")

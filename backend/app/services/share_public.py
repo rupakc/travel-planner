@@ -125,42 +125,145 @@ def _stats(kind: str, selections: dict) -> list[dict]:
 _DATE_KEY_RE = re.compile(
     r"date|time|departure|arrival|check[_-]?in|check[_-]?out", re.IGNORECASE
 )
+# Keys that match the date regex by accident but carry no date.
+_DATE_KEY_EXEMPT_RE = re.compile(r"^(time_of_day|duration)", re.IGNORECASE)
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}.*)?$")
+_ISO_ANY_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_URL_DATE_RE = re.compile(
+    r"\d{4}-\d{2}-\d{2}|\d{8}|check[_-]?(?:in|out)|[?&#;](?:date|dep|ret|depart|"
+    r"return|from|to|arrive)[a-z_]*=",
+    re.IGNORECASE,
+)
+# Owner-private free text: never part of a new-style share, in any date mode
+# (the sharer wrote these for themselves; they may name people, addresses or
+# booking references).
+_PRIVATE_KEYS = frozenset({"itinerary_notes", "itinerary_edits", "notes"})
+_ORIGIN_KEYS = frozenset({"origin", "leg_from", "origin_airport", "origin_city"})
+_RETURN_KEYS = frozenset({"return", "inbound", "return_flight", "return_leg"})
+_RETURN_DEST_KEYS = frozenset({"destination", "to", "leg_to", "arrival_airport"})
+_FLIGHTISH_KEYS = frozenset({"outbound", "return", "inbound", "leg_from", "airline"})
 _DROP = object()
 
 
-def _scrub_value(value, mode: str, key_hit: bool):
-    if isinstance(value, str):
+def _is_url(key, value: str) -> bool:
+    return str(key).lower().endswith("url") or value.strip().lower().startswith(
+        ("http://", "https://")
+    )
+
+
+def _scrub_str(key, value: str, mode: str, key_hit: bool):
+    if _is_url(key, value):
+        # Booking links embed travel dates (flt=JFK.NRT.2026-05-01, checkin=).
+        if mode != "exact" and _URL_DATE_RE.search(value):
+            return _DROP
+        return value
+    if mode == "exact":
+        return value
+    if _ISO_ANY_RE.search(value):
+        if mode == "hidden":
+            return _DROP
         if _ISO_RE.match(value.strip()):
-            return _DROP if mode == "hidden" else (_month(value) or _DROP)
-        return _DROP if key_hit else value
-    if isinstance(value, dict):
-        return {} if key_hit and mode == "hidden" else _scrub(value, mode)
-    if isinstance(value, list):
-        out = [_scrub_value(v, mode, False) for v in value]
-        return [v for v in out if v is not _DROP]
+            return _month(value) or _DROP
+        return _ISO_ANY_RE.sub(lambda m: m.group(0)[:7], value)
     return _DROP if key_hit else value
 
 
-def _scrub(obj: dict, mode: str) -> dict:
+def _scrub_value(key, value, mode: str, key_hit: bool, ctx: dict):
+    if isinstance(value, str):
+        return _scrub_str(key, value, mode, key_hit)
+    if isinstance(value, dict):
+        if key_hit and mode == "hidden":
+            return {}
+        return _scrub(value, mode, ctx, parent_key=str(key))
+    if isinstance(value, list):
+        out = [_scrub_value(key, v, mode, False, ctx) for v in value]
+        return [v for v in out if v is not _DROP]
+    if mode == "exact":
+        return value
+    return _DROP if key_hit else value
+
+
+def _origin_key(key: str, parent_key: str, ctx: dict) -> bool:
+    if ctx.get("show_origin"):
+        return False
+    k = str(key).lower()
+    if k in _ORIGIN_KEYS:
+        return True
+    return k in _RETURN_DEST_KEYS and parent_key.lower() in _RETURN_KEYS
+
+
+def _scrub(obj: dict, mode: str, ctx: dict, parent_key: str = "") -> dict:
+    flightish = bool(_FLIGHTISH_KEYS & {str(k).lower() for k in obj})
+    origin = ctx.get("origin")
     out = {}
     for key, value in obj.items():
-        hit = bool(_DATE_KEY_RE.search(str(key)))
+        k = str(key).lower()
+        if k in _PRIVATE_KEYS or _origin_key(k, parent_key, ctx):
+            continue
+        if (
+            not ctx.get("show_origin")
+            and flightish
+            and k.endswith("url")
+            and isinstance(value, str)
+        ):
+            continue  # flight links carry the origin airport code
+        if (
+            origin
+            and isinstance(value, str)
+            and k in ("leg_to", "destination", "to")
+            and value.strip().casefold() == origin
+        ):
+            continue
+        exempt = bool(_DATE_KEY_EXEMPT_RE.match(k))
+        hit = bool(_DATE_KEY_RE.search(k)) and not exempt
         if hit and mode == "hidden":
             continue
-        cleaned = _scrub_value(value, mode, hit)
+        cleaned = _scrub_value(key, value, mode, hit, ctx)
         if cleaned is not _DROP:
             out[key] = cleaned
     return out
 
 
-def scrub_selections(selections: dict, mode: str) -> dict:
-    """Selections with dates removed (``hidden``) or cut to ``YYYY-MM``
-    (``month``); ``exact`` returns them unchanged. Keys that look like dates or
-    times go, and so does any ISO date or datetime string value."""
+def scrub_selections(
+    selections: dict,
+    mode: str,
+    *,
+    show_origin: bool = True,
+    origin: str | None = None,
+) -> dict:
+    """Selections made safe for a public new-style share.
+
+    Always: owner-private free text (``itinerary_notes``, ``itinerary_edits``,
+    any ``notes``) is removed. Without ``show_origin``: origin keys, a return
+    leg's destination and flight links are removed in every date mode.
+    ``hidden``/``month``: keys that look like dates or times go (not
+    ``time_of_day`` or ``duration*``), URLs carrying dates go, and ISO dates
+    inside any string are dropped (hidden) or cut to ``YYYY-MM`` (month);
+    ``exact`` leaves dates alone."""
+    ctx = {
+        "show_origin": show_origin,
+        "origin": origin.strip().casefold() if isinstance(origin, str) else None,
+    }
+    return _scrub(selections, mode if mode in ("hidden", "month") else "exact", ctx)
+
+
+def _stamp(value, mode: str):
+    """Timestamps reveal when the trip was planned: null when dates are hidden,
+    ``YYYY-MM`` for month, as saved for exact."""
     if mode == "exact":
-        return selections
-    return _scrub(selections, "month" if mode == "month" else "hidden")
+        return value
+    return _month(value) if mode == "month" else None
+
+
+def public_import_source(value) -> dict | None:
+    """The "Inspired by" link of an imported trip: title and an http(s) URL."""
+    if not isinstance(value, dict):
+        return None
+    url = value.get("url")
+    if not (isinstance(url, str) and url.lower().startswith(("http://", "https://"))):
+        url = None
+    title = value.get("title") if isinstance(value.get("title"), str) else None
+    return {"url": url, "title": title}
 
 
 def sanitize_plan(plan: dict, options: dict | None, owner_name: str | None) -> dict:
@@ -183,16 +286,32 @@ def sanitize_plan(plan: dict, options: dict | None, owner_name: str | None) -> d
         public.pop("origin", None)
     out = {
         "name": plan.get("name"),
-        "created_at": plan.get("created_at"),
-        "updated_at": plan.get("updated_at"),
+        "created_at": _stamp(plan.get("created_at"), opts["dates"]),
+        "updated_at": _stamp(plan.get("updated_at"), opts["dates"]),
         "search_data": public,
-        "selections": scrub_selections(plan.get("selections") or {}, opts["dates"]),
+        "selections": scrub_selections(
+            plan.get("selections") or {},
+            opts["dates"],
+            show_origin=opts["show_origin"],
+            origin=search.get("origin"),
+        ),
     }
+    imp = public_import_source(search.get("import_source"))
+    if imp:
+        public["import_source"] = imp
     return out
 
 
 def _money(amount: float) -> str:
     return f"${amount:,.0f}" if float(amount).is_integer() else f"${amount:,.2f}"
+
+
+HEADLINE_MAX = 120
+
+
+def clip_headline(text: str, limit: int = HEADLINE_MAX) -> str:
+    text = " ".join(str(text).split())
+    return text if len(text) <= limit else text[: limit - 3].rstrip() + "..."
 
 
 def savings_card(summary: dict) -> dict:
@@ -205,8 +324,12 @@ def savings_card(summary: dict) -> dict:
             else "Watching prices for my next trip"
         ),
         "stats": [
-            {"key": "drops_caught", "count": drops},
-            {"key": "targets_hit", "count": int(summary.get("targets_hit") or 0)},
+            s
+            for s in (
+                {"key": "drops_caught", "count": drops},
+                {"key": "targets_hit", "count": int(summary.get("targets_hit") or 0)},
+            )
+            if s["count"] > 0
         ],
     }
 
@@ -260,6 +383,7 @@ def build_snapshot(
         snap["headline"] = f"Trip to {place}"
     else:
         snap["headline"] = str(plan.get("name") or "My trip")
+    snap["headline"] = clip_headline(snap["headline"])
     snap["stats"] = _stats(kind, selections)
     if opts["dates"] != "hidden":
         snap["period"] = _month(search.get("departure_date"))

@@ -5,6 +5,7 @@ requests inside the window. Single-process only — fine for one uvicorn
 worker; a multi-instance deployment would need a shared store.
 """
 
+import ipaddress
 import math
 import threading
 import time
@@ -74,12 +75,23 @@ def _bucket_limit(bucket: str) -> int:
     return getattr(settings, f"rate_limit_{bucket}")
 
 
+def _ip_bucket(host: str) -> str:
+    """IPv6 clients control a whole /64, so they share one budget per /64."""
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return host
+    if ip.version == 6 and ip.ipv4_mapped is None:
+        return str(ipaddress.ip_network(f"{host}/64", strict=False))
+    return host
+
+
 def caller_key(request: Request, user: dict | None) -> str:
     """Whose budget a request draws on: the signed-in user, else the client IP."""
     if user and user.get("username"):
         return f"user:{user['username']}"
     host = request.client.host if request.client else "unknown"
-    return f"ip:{host}"
+    return f"ip:{_ip_bucket(host)}"
 
 
 def try_consume(bucket: str, key: str) -> int | None:

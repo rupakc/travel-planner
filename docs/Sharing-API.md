@@ -35,7 +35,7 @@ Answer `200`:
  "options": {"dates": "hidden", "show_origin": false, "show_name": false},
  "created_at": "…Z"}
 ```
-URLs are absolute: `PUBLIC_BASE_URL`, else the request's own base URL.
+URLs are absolute: `PUBLIC_BASE_URL`, else the request's own base URL; the page's Open Graph URLs use the same rule.
 
 Errors: `404 sharing_disabled`, `404 plan_not_found` (missing or not the caller's plan), `422 invalid_kind`, `429` (rate limit).
 
@@ -47,7 +47,7 @@ Auth, `share_manage`. The caller's own shares, newest first, at most 100:
              "options": {"dates": "hidden", "show_origin": false, "show_name": false},
              "created_at": "…Z"}]}
 ```
-`title` is the plan's name (`Price alerts` for `savings`). Errors: `404 sharing_disabled`.
+`title` is the plan's name (`Price alerts` for `savings`). Each row (and the `POST /shares` answer) also carries an additive `plan_id` (int, or `null` for `savings`). Additive field `legacy_plan_shares: [{"plan_id", "name", "url"}]` lists the caller's plans that still have a legacy share token (`url` is `<base>/share/<token>`; the token is exposed nowhere else). Errors: `404 sharing_disabled`.
 
 ### DELETE /shares/{token}
 
@@ -73,7 +73,7 @@ Native clients do not need this route: it exists for crawlers (see Crawlers and 
 
 ### GET /share/{token}/card.png?size=link|story
 
-Public, `share_public`. A PNG: `size=link` is 1200x630 (the default, used by `og:image`), `size=story` is 1080x1920. Headers: `Content-Type: image/png`, `X-Robots-Tag: noindex, nofollow`, `Cache-Control: public, max-age=300`. `404 share_not_found` for an unknown or revoked token; `422` for another `size`. One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.
+Public, `share_public`. A PNG: `size=link` is 1200x630 (the default, used by `og:image`), `size=story` is 1080x1920. Headers: `Content-Type: image/png`, `X-Robots-Tag: noindex, nofollow`, `Cache-Control: public, max-age=300`. `404 share_not_found` for an unknown or revoked token; `422` for another `size`. `503 card_busy` when too many cards are rendering at once (retry). One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.
 
 ## Card and snapshot fields
 
@@ -84,7 +84,7 @@ The page and the card are drawn from one snapshot built from a whitelist (`servi
 | `headline` | `7 days in Lisbon`, `Trip to Lisbon`, `My trip to Japan: recap`, `Caught drops worth $412`, or the plan name when there is no destination. A headline with glyphs the card font lacks (CJK, Devanagari, Bengali) falls back to a plain English one on the PNG. |
 | `destination` / `destinations` | Up to 5 destination names (joined with ` / `). |
 | `days` | Trip length from the dates, else from the itinerary; `null` when unknown. |
-| `stats` | At most three chips of **counts only**: plan `activities`, `hotels`, `places`; recap `places`, `activities`; savings `drops_caught`, `targets_hit`. Zero counts are omitted. |
+| `stats` | At most three chips of **counts only**: plan `activities`, `hotels`, `places`; recap `places`, `activities`; savings `drops_caught`, `targets_hit`. Zero counts are omitted; labels are singular for 1 (`1 hotel`). |
 | `period` | `YYYY-MM`, only when `options.dates` is `month` or `exact`. |
 | `origin` | Only with `show_origin`. |
 | `owner_name` | Only with `show_name` (the display name, else the username; never an email: a name containing `@` is dropped). |
@@ -98,6 +98,10 @@ A new share reveals only the title, destination(s), number of days and the plan'
 - `show_name`: without it there is no `owner_name` anywhere.
 - `search_data` is a whitelist (origin, destination(s), dates, interests, traveller counts, pace). Email, nationality, visas, permits, accessibility needs and the raw search request are never exposed.
 - **Selections scrub** (`hidden` and `month`): any key whose name looks like a date or time (`date`, `time`, `departure`, `arrival`, `check_in`, `check_out`, …) is removed, and so is any string value that is an ISO date or datetime. With `month`, ISO date values become `YYYY-MM` and date-named keys keep that month. Prices and counts are untouched.
+- **Always removed from new shares (every date mode):** owner-private free text (`itinerary_notes`, `itinerary_edits` and any `notes` field). Without `show_origin`, origin keys (`origin`, `leg_from`, ...), a return leg's destination and flight booking links are removed from selections in every date mode, including `exact`.
+- **Dates in strings (`hidden`, `month`):** URL values that carry a date (`flt=...2026-05-01`, `checkin=`, ...) are dropped; an ISO date inside any other string drops the value (`hidden`) or becomes `YYYY-MM` (`month`). `time_of_day` and `duration*` keys are kept.
+- **Timestamps:** `created_at` / `updated_at` of a new share are `null` with `dates=hidden`, `YYYY-MM` with `month`, as saved with `exact`. New plan shares may carry the whitelisted `search_data.import_source` (`{url, title}`) like legacy ones. A `recap` answers with empty `search_data` and `selections` (only `card`).
+- **Plan names** are truncated to 200 characters on save; card headlines to 120.
 - **Open Graph tags and the card show at most the month and year**, even with `dates=exact`.
 - No XP, badge or other reward is given for sharing, and views are not counted (no tracking of visitors; the web app sends a `share_view` telemetry event, enum props only).
 
@@ -107,7 +111,7 @@ Production Caddy serves the SPA at `/share/<token>`. A request whose `User-Agent
 
 ## Rate limits
 
-Buckets per 10 minutes, in-process sliding window: `share_public` (default 120, per client IP: `GET /share/{token}`, `/page`, `/card.png`) and `share_manage` (default 30, per signed-in user: `/shares` create, list, revoke). Over the limit: `429` with `Retry-After` and a string `detail`. Settings `RATE_LIMIT_SHARE_PUBLIC`, `RATE_LIMIT_SHARE_MANAGE`.
+Buckets per 10 minutes, in-process sliding window: `share_public` (default 120, per client IP, IPv6 clients keyed by /64: `GET /share/{token}`, `/page`, `/card.png`) and `share_manage` (default 30, per signed-in user: `/shares` create, list, revoke). Over the limit: `429` with `Retry-After` and a string `detail`. Settings `RATE_LIMIT_SHARE_PUBLIC`, `RATE_LIMIT_SHARE_MANAGE`.
 
 ## Caching and revocation
 
