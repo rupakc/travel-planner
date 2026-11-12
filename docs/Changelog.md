@@ -4,6 +4,15 @@ Changes since the project started on 2026-05-17. From 2026-08-30 on, every chang
 
 ---
 
+## Unreleased: price alerts 2.0
+
+Contract: [Alerts API](Alerts-API.md). Settings: [Configuration](Configuration.md#price-alerts-20). Everything is additive and gated by `PRICE_ALERTS_V2_ENABLED` (default `false` until the switch-on merge).
+
+- **Backend.** New `/api/alerts/*` routes (summary, story, flight advice, quick-watch, suggestions, preferences, digest unsubscribe), five tables (`alert_prefs`, `alert_savings`, `alert_outbox`, `alert_digests`, `alert_advice`), `pending_first_check` on every watch, and `data.drop`, `data.game` and the `price_digest` kind on notifications. With the flag on, one seam in each watch service's `_notify` records savings (observed drops only, USD and other currencies kept apart, estimates never count), awards Deal-hunter XP, and applies the delivery rules to push and email: instant mode, per-kind daily caps, quiet hours in the account timezone, grouped pushes. An opt-in weekly digest goes in-app and by email (push only with `digest_push`). The scheduler orders first looks of one-tap watches and adapts intervals.
+- **Honest without a key.** Without `SERPAPI_KEY` stories, savings, digest and suggestions work from stored data, prices say "checked N days ago", and one-tap watch answers `503 live_prices_off`.
+- **Web.** Price story and chart, drop moment, savings tally and share card, Deal-hunter track, one-tap watch on Results, Chat and Trip, suggestions on saving a plan, and alert preferences, in all seven languages.
+- **Settings.** `PRICE_ALERTS_V2_ENABLED`, `ALERT_DIGEST_HOUR_LOCAL`, `ALERT_FLUSH_INTERVAL_S`, `ALERT_ADVICE_TTL_HOURS`.
+
 ## Unreleased: the trip journey, trips API and offline pack
 
 Contract: [Trips API](Trips-API.md). Runbook: [Deployment on GCP](Deployment-GCP.md#offline-pack-and-the-journey-flag).
