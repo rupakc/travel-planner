@@ -115,7 +115,6 @@ def test_flag_on_calls_pipeline(monkeypatch, users, module, took_over):
 
 
 def test_stubs_are_inert():
-    assert alert_pipeline.after_insert({}, "flight", {}, NOW) is False
     assert alert_delivery.flush(NOW) == 0
     assert asyncio.run(alert_delivery.stop_loop(None)) is None
 

@@ -9,7 +9,7 @@ from ...core.config import settings
 from ...core.errors import ApiError
 from ...core.rate_limit import rate_limit, require_ai_access
 from ...db import alerts_db, fare_watch_db, price_watch_db, user_settings_db, users_db
-from ...services import alert_delivery, alert_story
+from ...services import alert_delivery, alert_moments, alert_story
 
 router = APIRouter()
 
@@ -85,3 +85,9 @@ async def watch_advice(
     story = _story(kind, watch, history, user)
     row = users_db.get_user_by_id(user["id"]) or {}
     return await alert_story.advice(watch, story, locale=row.get("locale"))
+
+
+@router.get("/alerts/summary")
+def savings_summary(user: dict = Depends(get_current_user)) -> dict:
+    """The caller's savings tally ("caught a drop of $X")."""
+    return alert_moments.summary(user["id"])

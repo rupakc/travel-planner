@@ -106,6 +106,34 @@
     "memory_keeper": {
       "name": "回忆守护者",
       "desc": "完成 5 次旅行回顾。"
+    },
+    "deal_hunter": {
+      "name": "优惠猎人",
+      "desc": "抓住你的第一次降价。"
+    },
+    "deal_hunter_silver": {
+      "name": "优惠追踪者",
+      "desc": "抓住 5 次降价。"
+    },
+    "deal_hunter_gold": {
+      "name": "优惠大师",
+      "desc": "抓住 20 次降价。"
+    },
+    "bullseye": {
+      "name": "正中靶心",
+      "desc": "达到你设定的目标价格。"
+    },
+    "saver_50": {
+      "name": "已抓住 $50",
+      "desc": "在降价中抓住 $50。"
+    },
+    "saver_200": {
+      "name": "已抓住 $200",
+      "desc": "在降价中抓住 $200。"
+    },
+    "saver_1000": {
+      "name": "已抓住 $1,000",
+      "desc": "在降价中抓住 $1,000。"
     }
   },
   "rules": {
@@ -119,6 +147,11 @@
     "place_visited": "地点已到访",
     "country_visited": "新国家",
     "continent_visited": "新大洲",
-    "recap_complete": "旅行回顾已完成"
+    "recap_complete": "旅行回顾已完成",
+    "deal_drop": "抓住一次降价",
+    "deal_target": "达到目标价格",
+    "deal_saved_50": "已抓住 $50",
+    "deal_saved_200": "已抓住 $200",
+    "deal_saved_1000": "已抓住 $1,000"
   }
 }

@@ -106,6 +106,34 @@
     "memory_keeper": {
       "name": "Gardien des souvenirs",
       "desc": "Terminez 5 récaps de voyage."
+    },
+    "deal_hunter": {
+      "name": "Chasseur d'offres",
+      "desc": "Repérez votre première baisse de prix."
+    },
+    "deal_hunter_silver": {
+      "name": "Pisteur d'offres",
+      "desc": "Repérez 5 baisses de prix."
+    },
+    "deal_hunter_gold": {
+      "name": "Maître des offres",
+      "desc": "Repérez 20 baisses de prix."
+    },
+    "bullseye": {
+      "name": "Mouche",
+      "desc": "Atteignez un prix cible que vous avez fixé."
+    },
+    "saver_50": {
+      "name": "50 $ captés",
+      "desc": "Captez 50 $ de baisses de prix."
+    },
+    "saver_200": {
+      "name": "200 $ captés",
+      "desc": "Captez 200 $ de baisses de prix."
+    },
+    "saver_1000": {
+      "name": "1 000 $ captés",
+      "desc": "Captez 1 000 $ de baisses de prix."
     }
   },
   "rules": {
@@ -119,6 +147,11 @@
     "place_visited": "Lieu visité",
     "country_visited": "Nouveau pays",
     "continent_visited": "Nouveau continent",
-    "recap_complete": "Récap du voyage terminé"
+    "recap_complete": "Récap du voyage terminé",
+    "deal_drop": "Baisse de prix repérée",
+    "deal_target": "Prix cible atteint",
+    "deal_saved_50": "50 $ captés",
+    "deal_saved_200": "200 $ captés",
+    "deal_saved_1000": "1 000 $ captés"
   }
 }

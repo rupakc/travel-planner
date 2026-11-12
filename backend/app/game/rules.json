@@ -11,7 +11,12 @@
     "place_visited": {"points": 5, "daily_cap": 10},
     "country_visited": {"points": 25, "daily_cap": 5},
     "continent_visited": {"points": 50, "daily_cap": 3},
-    "recap_complete": {"points": 100, "daily_cap": 2}
+    "recap_complete": {"points": 100, "daily_cap": 2},
+    "deal_drop": {"points": 15, "daily_cap": 5},
+    "deal_target": {"points": 30, "daily_cap": 3},
+    "deal_saved_50": {"points": 50, "daily_cap": 1, "once": true},
+    "deal_saved_200": {"points": 100, "daily_cap": 1, "once": true},
+    "deal_saved_1000": {"points": 250, "daily_cap": 1, "once": true}
   },
   "badges": {
     "verified": {"rule": "email_verified", "target": 1, "tier": "bronze", "icon": "mail-check"},
@@ -31,7 +36,14 @@
     "continents_3": {"rule": "continent_visited", "target": 3, "tier": "silver", "icon": "earth"},
     "continents_6": {"rule": "continent_visited", "target": 6, "tier": "gold", "icon": "globe-2"},
     "storyteller": {"rule": "recap_complete", "target": 1, "tier": "bronze", "icon": "book-open"},
-    "memory_keeper": {"rule": "recap_complete", "target": 5, "tier": "silver", "icon": "library"}
+    "memory_keeper": {"rule": "recap_complete", "target": 5, "tier": "silver", "icon": "library"},
+    "deal_hunter": {"rule": "deal_drop", "target": 1, "tier": "bronze", "icon": "trending-down"},
+    "deal_hunter_silver": {"rule": "deal_drop", "target": 5, "tier": "silver", "icon": "trending-down"},
+    "deal_hunter_gold": {"rule": "deal_drop", "target": 20, "tier": "gold", "icon": "trending-down"},
+    "bullseye": {"rule": "deal_target", "target": 1, "tier": "bronze", "icon": "target"},
+    "saver_50": {"rule": "deal_saved_50", "target": 1, "tier": "bronze", "icon": "piggy-bank"},
+    "saver_200": {"rule": "deal_saved_200", "target": 1, "tier": "silver", "icon": "piggy-bank"},
+    "saver_1000": {"rule": "deal_saved_1000", "target": 1, "tier": "gold", "icon": "piggy-bank"}
   },
   "levels": {"min_xp": [0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000]},
   "streaks": {
