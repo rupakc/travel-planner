@@ -136,12 +136,19 @@ export function AuthProvider({ children }) {
       })
   }, [setToken])
 
-  // While offline, check the session again as soon as the network is back.
+  // While offline, check the session again as soon as the network is back
+  // (`online`), or when the tab is shown again: the server may have been the
+  // one unreachable (a reboot window) while the device stayed online.
   useEffect(() => {
     if (!offline) return undefined
-    const onOnline = () => { const tok = tokenRef.current; if (tok) loadSession(tok) }
-    window.addEventListener('online', onOnline)
-    return () => window.removeEventListener('online', onOnline)
+    const recheck = () => { const tok = tokenRef.current; if (tok) loadSession(tok) }
+    const onVisible = () => { if (document.visibilityState === 'visible') recheck() }
+    window.addEventListener('online', recheck)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', recheck)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [offline, loadSession])
 
   // The offline kill switch (features.offline_pack false in /config).
@@ -250,7 +257,11 @@ export function AuthProvider({ children }) {
     epoch.current += 1
     writeStoredToken(newToken)
     setToken(newToken)
-    setUser(u => u ? { ...u, requires_password_change: false } : u)
+    const current = userRef.current
+    const next = current ? { ...current, requires_password_change: false } : current
+    userRef.current = next
+    setUser(next)
+    writeUserCache(next)
   }
 
   const setUserEmail = (email) => setUser(u => (u ? { ...u, email } : u))

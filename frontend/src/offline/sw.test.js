@@ -64,20 +64,29 @@ async function message(data) {
   return reply
 }
 
+// A complete shell cache, as a successful precache leaves it.
+const MARKER = '/__voyager-shell-complete'
+async function completeShell(name, entries, completedAt = 1) {
+  const cache = await caches.open(name)
+  for (const [path, body] of Object.entries(entries)) await cache.put(path, new Response(body))
+  await cache.put(MARKER, new Response(JSON.stringify({ completed_at: completedAt })))
+  return cache
+}
+
+const manifestOf = (version, assets = ['/assets/a.js']) => ({ version, shell: ['/index.html'], assets })
+
 beforeEach(load)
 
 describe('sw.js', () => {
   it('navigation falls back to the cached shell', async () => {
-    const shell = await caches.open('voyager-shell-1.0.0')
-    await shell.put('/index.html', new Response('<html>shell</html>'))
+    await completeShell('voyager-shell-1.0.0-a', { '/index.html': '<html>shell</html>' })
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
     const res = await dispatchFetch('/trips/12/offline', { mode: 'navigate' })
     expect(await res.text()).toBe('<html>shell</html>')
   })
 
   it('navigation goes to the network first when online', async () => {
-    const shell = await caches.open('voyager-shell-1.0.0')
-    await shell.put('/index.html', new Response('old'))
+    await completeShell('voyager-shell-1.0.0-a', { '/index.html': 'old' })
     fetchMock.mockResolvedValue(new Response('fresh'))
     const res = await dispatchFetch('/trips', { mode: 'navigate' })
     expect(await res.text()).toBe('fresh')
@@ -95,8 +104,7 @@ describe('sw.js', () => {
   })
 
   it('serves /assets/a.js from the cache, else the network', async () => {
-    const shell = await caches.open('voyager-shell-1.0.0')
-    await shell.put('/assets/a.js', new Response('cached js'))
+    await completeShell('voyager-shell-1.0.0-a', { '/assets/a.js': 'cached js' })
     const hit = await dispatchFetch('/assets/a.js')
     expect(await hit.text()).toBe('cached js')
     expect(fetchMock).not.toHaveBeenCalled()
@@ -107,7 +115,7 @@ describe('sw.js', () => {
   })
 
   it('precache fills the new version cache, deletes the old version caches and replies {ok, bytes}', async () => {
-    await caches.open('voyager-shell-0.9.0')
+    await completeShell('voyager-shell-0.9.0-a', { '/index.html': 'old' })
     await caches.open('someone-else')
     const manifest = {
       version: '1.0.0',
@@ -128,15 +136,18 @@ describe('sw.js', () => {
     const answer = reply.mock.calls[0][0]
     expect(answer.ok).toBe(true)
     expect(answer.bytes).toBeGreaterThan(0)
-    expect((await caches.keys()).sort()).toEqual(['someone-else', 'voyager-shell-1.0.0'])
-    const cache = await caches.open('voyager-shell-1.0.0')
+    const names = (await caches.keys()).sort()
+    expect(names).toHaveLength(2)
+    expect(names[0]).toBe('someone-else')
+    expect(names[1]).toMatch(/^voyager-shell-1\.0\.0-\w+$/)
+    const cache = await caches.open(names[1])
+    expect(await cache.match(MARKER)).toBeDefined()
     expect(await (await cache.match('/assets/a.js')).text()).toBe('body of /assets/a.js')
     expect(await cache.match('/manifest.webmanifest')).toBeUndefined()
   })
 
   it('a failed asset keeps the previous version and answers ok: false', async () => {
-    const old = await caches.open('voyager-shell-0.9.0')
-    await old.put('/index.html', new Response('old shell'))
+    await completeShell('voyager-shell-0.9.0-a', { '/index.html': 'old shell' })
     fetchMock.mockImplementation(async (url) => {
       if (url === '/sw-assets.json') return new Response(JSON.stringify({ version: '1.0.0', shell: ['/index.html'], assets: ['/assets/a.js'] }))
       if (url === '/assets/a.js') throw new TypeError('Failed to fetch')
@@ -144,7 +155,55 @@ describe('sw.js', () => {
     })
     const reply = await message({ type: 'precache' })
     expect(reply.mock.calls[0][0].ok).toBe(false)
-    expect(await caches.keys()).toEqual(['voyager-shell-0.9.0'])
+    expect(await caches.keys()).toEqual(['voyager-shell-0.9.0-a'])
+  })
+
+  it('a same-version partial failure keeps the old shell intact', async () => {
+    await completeShell('voyager-shell-1.0.0', { '/index.html': 'old shell', '/assets/a.js': 'old a' })
+    fetchMock.mockImplementation(async (url) => {
+      if (url === '/sw-assets.json') return new Response(JSON.stringify(manifestOf('1.0.0', ['/assets/b.js', '/assets/c.js'])))
+      if (url === '/assets/c.js') throw new TypeError('Failed to fetch')
+      return new Response(`new ${url}`)
+    })
+    const reply = await message({ type: 'precache' })
+    expect(reply.mock.calls[0][0].ok).toBe(false)
+    expect(await caches.keys()).toEqual(['voyager-shell-1.0.0'])
+    fetchMock.mockReset()
+    fetchMock.mockRejectedValue(new TypeError('offline'))
+    expect(await (await dispatchFetch('/trips/1', { mode: 'navigate' })).text()).toBe('old shell')
+    expect(await (await dispatchFetch('/assets/a.js')).text()).toBe('old a')
+  })
+
+  it('a same-version re-precache replaces the shell without mixing the two', async () => {
+    await completeShell('voyager-shell-1.0.0-a', { '/index.html': 'old shell', '/assets/a.js': 'old a' })
+    fetchMock.mockImplementation(async (url) => {
+      if (url === '/sw-assets.json') return new Response(JSON.stringify(manifestOf('1.0.0', ['/assets/b.js'])))
+      return new Response(`new ${url}`)
+    })
+    expect((await message({ type: 'precache' })).mock.calls[0][0].ok).toBe(true)
+    const names = await caches.keys()
+    expect(names).toHaveLength(1)
+    expect(names[0]).not.toBe('voyager-shell-1.0.0-a')
+    fetchMock.mockReset()
+    fetchMock.mockRejectedValue(new TypeError('offline'))
+    expect(await (await dispatchFetch('/trips/1', { mode: 'navigate' })).text()).toBe('new /index.html')
+    // the old build's chunk is gone with its cache (network → offline error)
+    await expect(dispatchFetch('/assets/a.js')).rejects.toThrow()
+  })
+
+  it('an unmarked (cut-off) cache is never served', async () => {
+    await completeShell('voyager-shell-1.0.0-a', { '/index.html': 'complete shell' }, 1)
+    const cut = await caches.open('voyager-shell-1.0.0-b')
+    await cut.put('/index.html', new Response('half-filled shell'))
+    fetchMock.mockRejectedValue(new TypeError('offline'))
+    expect(await (await dispatchFetch('/x', { mode: 'navigate' })).text()).toBe('complete shell')
+  })
+
+  it('serves the newest complete shell', async () => {
+    await completeShell('voyager-shell-1.0.0-z', { '/index.html': 'older' }, 1)
+    await completeShell('voyager-shell-1.0.0-a', { '/index.html': 'newer' }, 2)
+    fetchMock.mockRejectedValue(new TypeError('offline'))
+    expect(await (await dispatchFetch('/x', { mode: 'navigate' })).text()).toBe('newer')
   })
 
   it('purge deletes every voyager-* cache', async () => {

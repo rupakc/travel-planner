@@ -10,8 +10,15 @@
  * - /assets/*: cache first, then the network.
  * - Everything else, /api/* included, is not intercepted.
  * - message {type: 'precache'}: fetch /sw-assets.json (no-store), cache every
- *   URL into voyager-shell-<version>, delete the other voyager-shell-*
- *   caches, reply {ok, bytes}.
+ *   URL into voyager-shell-<version>-<run id>, delete the other
+ *   voyager-shell-* caches, reply {ok, bytes}.
+ *
+ * Precache is atomic. Every run fills a cache of its own and writes the
+ * completion marker (MARKER) last. Only a cache that holds the marker is ever
+ * served (the newest complete one), and the other shell caches are deleted
+ * only after the new one is complete. A failed or cut-off fill therefore
+ * leaves the previous complete shell serving, even when two builds share a
+ * version (same-day builds do).
  * - message {type: 'purge'}: delete every voyager-* cache, reply {ok: true}.
  *
  * Served by the Caddy SPA handle with Cache-Control: no-cache.
@@ -24,14 +31,32 @@ const SHELL_PREFIX = 'voyager-shell-'
 // shell entries (e.g. a manifest an older build lacks) are skipped if missing.
 const REQUIRED = ['/index.html']
 const PARALLEL = 6
+const MARKER = '/__voyager-shell-complete'
 
 self.addEventListener('install', () => { self.skipWaiting() })
 self.addEventListener('activate', (event) => { event.waitUntil(self.clients.claim()) })
 
+// When a cache was completed (ms), or null for an incomplete one.
+async function completedAt(cache) {
+  try {
+    const marker = await cache.match(MARKER)
+    if (!marker) return null
+    const info = await marker.json()
+    return Number(info && info.completed_at) || 0
+  } catch (_) { return null }
+}
+
+// The newest complete shell cache, or null. Incomplete ones are never served.
 async function shellCache() {
-  const names = (await caches.keys()).filter((n) => n.startsWith(SHELL_PREFIX))
-  if (!names.length) return null
-  return caches.open(names[names.length - 1])
+  let best = null
+  let bestAt = -1
+  for (const name of await caches.keys()) {
+    if (!name.startsWith(SHELL_PREFIX)) continue
+    const cache = await caches.open(name)
+    const at = await completedAt(cache)
+    if (at !== null && at > bestAt) { best = cache; bestAt = at }
+  }
+  return best
 }
 
 async function fromShell(path) {
@@ -79,12 +104,12 @@ async function precache() {
   if (!res.ok) throw new Error(`sw-assets.json ${res.status}`)
   const manifest = await res.json()
   const version = String(manifest.version || 'unknown').replace(/[^\w.+-]/g, '_')
-  const name = SHELL_PREFIX + version
+  const runId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+  const name = `${SHELL_PREFIX}${version}-${runId}`
   const shell = Array.isArray(manifest.shell) ? manifest.shell : []
   const assets = Array.isArray(manifest.assets) ? manifest.assets : []
   const urls = [...new Set([...shell, ...assets])]
   const required = new Set([...REQUIRED, ...assets])
-  const existed = (await caches.keys()).includes(name)
   const cache = await caches.open(name)
   let bytes = 0
   let ok = true
@@ -100,21 +125,24 @@ async function precache() {
     bytes += body.byteLength
     await cache.put(url, await storable(response))
   }
-  for (let i = 0; i < urls.length; i += PARALLEL) {
-    await Promise.all(urls.slice(i, i + PARALLEL).map(one))
+  try {
+    for (let i = 0; i < urls.length; i += PARALLEL) {
+      await Promise.all(urls.slice(i, i + PARALLEL).map(one))
+    }
+  } catch (err) {
+    await caches.delete(name)
+    throw err
   }
 
   if (!ok) {
-    // keep whatever worked before; a half-filled new cache is useless
-    if (!existed) await caches.delete(name)
+    // the previous complete shell keeps serving; this run's cache is useless
+    await caches.delete(name)
     return { ok: false, bytes }
   }
-  // the same version precached again: drop entries no longer listed
-  const keep = new Set(urls)
-  for (const req of await cache.keys()) {
-    const path = new URL(req.url).pathname
-    if (!keep.has(path)) await cache.delete(req)
-  }
+  // the marker goes in last: only now may this cache be served
+  await cache.put(MARKER, new Response(JSON.stringify({ version, completed_at: Date.now() }), {
+    headers: { 'Content-Type': 'application/json' },
+  }))
   for (const other of await caches.keys()) {
     if (other.startsWith(SHELL_PREFIX) && other !== name) await caches.delete(other)
   }
