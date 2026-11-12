@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ...core.auth import get_current_user
+from ...core.rate_limit import rate_limit
 from ...db.plans_db import (
     delete_plan,
     get_plan,
@@ -138,13 +139,21 @@ def revoke_share(plan_id: int, current_user: dict = Depends(get_current_user)):
     return {"success": True}
 
 
-@router.get("/share/{token}")
+@router.get("/share/{token}", dependencies=[Depends(rate_limit("share_public"))])
 def get_shared_plan(token: str):
-    """Public, read-only view of a shared plan — no authentication required."""
+    """Public, read-only view of a shared plan — no authentication required.
+
+    Legacy plan tokens answer exactly as before; otherwise a Phase 4 share
+    (``shares`` table) answers with its options applied."""
     plan = get_plan_by_share_token(token)
-    if not plan:
+    if plan:
+        return _sanitize_shared_plan(plan)
+    from .shares import public_payload
+
+    payload = public_payload(token)
+    if payload is None:
         raise HTTPException(status_code=404, detail="Shared plan not found")
-    return _sanitize_shared_plan(plan)
+    return payload
 
 
 @router.delete("/plans/{plan_id}")

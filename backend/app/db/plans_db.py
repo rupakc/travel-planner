@@ -134,3 +134,4 @@ def delete_plan(plan_id: int, username: str) -> None:
         )
         if cur.rowcount:
             delete_trip_children(conn, plan_id)
+            conn.execute("DELETE FROM shares WHERE plan_id = ?", (plan_id,))

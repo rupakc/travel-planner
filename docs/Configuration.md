@@ -84,6 +84,7 @@ See [Alerts API](Alerts-API.md). With the flag off, fare and price watches, emai
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `SHARING_V2_ENABLED` | `false` | Share links 2.0 (Phase 4): `/api/shares*` and the new-style `GET /api/share/{token}` fallback. Off, they answer 404 (`sharing_disabled` for the authenticated routes) and `features.sharing` is `0`; legacy plan share tokens keep working either way. |
 | `PRICE_ALERTS_V2_ENABLED` | `true` | Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as `features.price_alerts_v2`; the web UI shows it only when this is true (or for one browser with `localStorage.tp_alerts2 = "1"`). Runbook: turning it off discards pushes and emails held at that moment (quiet hours, group window); in-app alerts stay. Held items more than 12 h past due are dropped as `stale` instead of sent. |
 | `ALERT_DIGEST_HOUR_LOCAL` | `9` | Local hour (user's account timezone) from which a user's weekly digest is due on their chosen weekday. |
 | `ALERT_FLUSH_INTERVAL_S` | `60` | How often the delivery loop sends held (quiet-hours, grouped) pushes and emails. |
@@ -186,6 +187,8 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
 | `RATE_LIMIT_TELEMETRY` | `120` | `POST /api/telemetry` (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`). The total across callers is bounded by `TELEMETRY_MAX_DB_MB` and `TELEMETRY_MAX_EVENTS_PER_DAY`. |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
+| `RATE_LIMIT_SHARE_PUBLIC` | `120` | Public share routes (`GET /api/share/{token}` and, later, the page and card), per client IP. |
+| `RATE_LIMIT_SHARE_MANAGE` | `30` | `/api/shares` create, list and revoke, per signed-in user. |
 | `RATE_LIMIT_LOGIN` | `10` | `/api/auth/login` attempts per client IP |
 | `RATE_LIMIT_LOGIN_FAILURES` | `10` | Failed logins per username **from one client IP** per window; over it that IP waits for that username (checked before bcrypt, even for a correct password). Failures from other IPs never lock the real user out. |
 | `RATE_LIMIT_LOGIN_FAILURES_GLOBAL` | `200` | Failed logins per username from all IPs together: a backstop against distributed guessing |
