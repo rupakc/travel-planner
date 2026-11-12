@@ -141,6 +141,11 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `alert_savings_share` | `target` (`native`, `download`, `copy`) | not yet | The savings card was shared. |
 | `alert_prefs_change` | `field` (`digest`, `quiet_hours`, `instant`, `cap`, `group`) | not yet | An alert preference changed. |
 | `alert_digest_open` | `via` (`in_app`, `email_link`) | not yet | The weekly digest was opened. |
+| `notif_settings_view` | none | not yet | The notification settings were opened. |
+| `notif_category_toggle` | `category` (`price_drops`, `trip_reminders`, `morning_brief`, `weather`, `nearby`, `social`, `quiz`), `on` (bool) | not yet | A notification category was switched. |
+| `notif_quiet_hours_change` | `enabled` (bool) | not yet | Quiet hours were changed. |
+| `notif_cap_change` | `cap` (int) | not yet | The daily push cap was changed. |
+| `notif_open` | `category` (as above), `source` (`push`, `inapp`) | not yet | A notification was opened (apps send this on tap). |
 | `share_open` | `kind` (`plan`, `recap`, `savings`) | not yet | The share dialog was opened. |
 | `share_create` | `kind`, `dates` (`hidden`, `month`, `exact`) | not yet | A share link was created or its options updated. |
 | `share_action` | `kind`, `target` (`native`, `copy`, `download`, `x`, `facebook`, `whatsapp`, `linkedin`) | not yet | A share action was used. |
