@@ -242,6 +242,7 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/nearby"): "light_ai",
     # "Search the web now": one Search-grounded Gemini call per click
     ("POST", "/api/live-check"): "light_ai",
+    ("POST", "/api/alerts/watches/{kind}/{watch_id}/advice"): "light_ai",
     ("POST", "/api/import/extract"): "import",
     ("POST", "/api/import/resolve-place"): "import",
     # Fare watch: creating one and "Check now" each make a live fare lookup

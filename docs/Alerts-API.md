@@ -91,6 +91,11 @@ Golden cases: `savings_cases.json`.
 | `PUT /alerts/preferences` | any subset of the writable `AlertPrefs` keys (everything except `timezone` and `quiet_hours_active`) | `AlertPrefs` | `422 alert_prefs_invalid` |
 | `GET /alerts/digest/unsubscribe?token=` and `POST` | none | HTML page (the same pattern as the watch unsubscribe pages); sets `digest_weekly=false` | none |
 
+**Additive clarifications (Task 4).**
+
+- `POST /alerts/watches/{kind}/{id}/advice` can also answer `502 advice_failed` (the advisor returned nothing usable; retry later), `503 ai_billing` (AI billing is off, like `ai_limit`) and `422 advice_no_data` (the flight watch has no observed price yet, so no model call is made). Clients translate all three codes.
+- A story's `target` and the `below_target` / `near_target` advice use the watch's target only when `mode` is `below_target`; in `any_drop` mode `target` is `null` even if a stale target price is stored.
+
 **Watch objects (additive).** Every watch from `/fare-watches*` and `/price-watches*` gains `pending_first_check: bool`. A pending watch has `last_price: null`.
 
 **Notifications (additive).**
