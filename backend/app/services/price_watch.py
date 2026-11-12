@@ -563,7 +563,12 @@ async def _first_look(
         unavailable_count=0,
         last_error=None,
         last_checked_at=stamp,
-        next_check_at=fare_watch.next_check(now, rand).isoformat(),
+        next_check_at=fare_watch.next_check(
+            now,
+            rand,
+            watch_kind=watch["kind"],
+            watch={**watch, "subject": live.subject, "last_price": base.price},
+        ).isoformat(),
         last_observation=_observation_json(base, stamp),
         reference_looks={"baseline": base.breakdown}
         if base.breakdown is not None
@@ -954,7 +959,10 @@ def _record_unavailable(
             "errored", price_watch_db.update_watch(watch["id"], **fields), note
         )
     fields.update(
-        last_error=None, next_check_at=fare_watch.next_check(now, rand).isoformat()
+        last_error=None,
+        next_check_at=fare_watch.next_check(
+            now, rand, watch_kind=watch["kind"], watch=watch
+        ).isoformat(),
     )
     return CheckOutcome(
         "unavailable", price_watch_db.update_watch(watch["id"], **fields)
@@ -995,7 +1003,9 @@ def _record_success(
         "check_count": (watch.get("check_count") or 0) + 1,
         "last_observation": _observation_json(obs, stamp),
         "last_checked_at": stamp,
-        "next_check_at": fare_watch.next_check(now, rand).isoformat(),
+        "next_check_at": fare_watch.next_check(
+            now, rand, watch_kind=watch["kind"], watch={**watch, "last_price": p}
+        ).isoformat(),
         "lease_until": None,
         "updated_at": stamp,
     }
@@ -1053,7 +1063,10 @@ async def run_due(
     three), so it is never retried every tick; it never stops the others."""
     now = clock()
     price_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
-    ids = price_watch_db.due_watch_ids(now, CLAIM_BATCH)
+    if alert_pipeline.enabled():
+        ids = fare_watch._ordered_due_ids(price_watch_db, lambda w: w["kind"], now)
+    else:
+        ids = price_watch_db.due_watch_ids(now, CLAIM_BATCH)
     sem = asyncio.Semaphore(CONCURRENCY)
 
     async def one(watch_id: int) -> CheckOutcome | None:

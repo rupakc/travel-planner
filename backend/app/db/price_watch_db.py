@@ -253,10 +253,14 @@ def expire_inactive_past(today: str, *, now: datetime) -> int:
         ).rowcount
 
 
-def due_watch_ids(now: datetime, limit: int) -> list[int]:
+def due_watch_ids(
+    now: datetime, limit: int, *, candidates: int | None = None
+) -> list[int]:
     """Active watches due for a check and not leased, oldest due first
     (read-only: ``claim_watch`` leases each one when its turn comes)."""
     stamp = now.isoformat()
+    if candidates:  # priority mode: a wider, still oldest-first, pool
+        limit = limit * candidates
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT id FROM price_watches WHERE status = 'active'"
