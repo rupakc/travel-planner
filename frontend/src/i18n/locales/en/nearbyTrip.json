@@ -1,0 +1,7 @@
+{
+  "here": "I'm here",
+  "visited": "Visited",
+  "hereAria": "I'm here at {{name}}",
+  "failed": "Couldn't save that. Try again.",
+  "queued": "Saved on this device. It will sync when you're online."
+}

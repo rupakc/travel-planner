@@ -1,0 +1,7 @@
+{
+  "here": "Estoy aquí",
+  "visited": "Visitado",
+  "hereAria": "Estoy aquí, en {{name}}",
+  "failed": "No se pudo guardar. Inténtalo de nuevo.",
+  "queued": "Guardado en este dispositivo. Se sincronizará cuando tengas conexión."
+}
