@@ -8,9 +8,7 @@ PW = "Correct-Horse-Battery-9"
 
 
 def _user() -> dict:
-    return users_db.create_user(
-        "l" + uuid.uuid4().hex[:10], PW, is_first_login=False
-    )
+    return users_db.create_user("l" + uuid.uuid4().hex[:10], PW, is_first_login=False)
 
 
 def _login(tc, u, **extra):
@@ -47,10 +45,17 @@ def test_lists_own_families_and_current_flag(client):
     rows = r.json()["sessions"]
     assert len(rows) == 2
     by_name = {x["device_name"]: x for x in rows}
-    assert by_name["Pixel"]["current"] is True and by_name["Pixel"]["client"] == "android"
+    assert (
+        by_name["Pixel"]["current"] is True and by_name["Pixel"]["client"] == "android"
+    )
     assert by_name["iPhone"]["current"] is False
     assert set(rows[0]) == {
-        "id", "client", "device_name", "created_at", "last_used_at", "current"
+        "id",
+        "client",
+        "device_name",
+        "created_at",
+        "last_used_at",
+        "current",
     }
     assert b["refresh_token"] not in r.text and a["refresh_token"] not in r.text
     # no header: nothing is current
@@ -66,7 +71,8 @@ def test_current_survives_rotation_with_stable_id(client):
     assert rot.status_code == 200
     new = rot.json()
     r = client.get(
-        "/api/auth/sessions", headers=_h(new, **{"X-Refresh-Token": new["refresh_token"]})
+        "/api/auth/sessions",
+        headers=_h(new, **{"X-Refresh-Token": new["refresh_token"]}),
     )
     rows = r.json()["sessions"]
     assert len(rows) == 1
@@ -84,9 +90,12 @@ def test_other_users_sessions_hidden_and_404(client):
     # still alive for the owner
     assert len(client.get("/api/auth/sessions", headers=_h(a)).json()["sessions"]) == 1
     assert len(client.get("/api/auth/sessions", headers=_h(b)).json()["sessions"]) == 1
-    assert client.post(
-        "/api/auth/refresh", json={"refresh_token": a["refresh_token"]}
-    ).status_code == 200
+    assert (
+        client.post(
+            "/api/auth/refresh", json={"refresh_token": a["refresh_token"]}
+        ).status_code
+        == 200
+    )
 
 
 def test_revoke_removes_family_and_blocks_refresh(client):
@@ -101,9 +110,12 @@ def test_revoke_removes_family_and_blocks_refresh(client):
     assert client.delete(f"/api/auth/sessions/{sid}", headers=_h(a)).status_code == 204
     rows = client.get("/api/auth/sessions", headers=_h(a)).json()["sessions"]
     assert [x["device_name"] for x in rows] == ["iPhone"]
-    assert client.post(
-        "/api/auth/refresh", json={"refresh_token": a["refresh_token"]}
-    ).status_code == 401
+    assert (
+        client.post(
+            "/api/auth/refresh", json={"refresh_token": a["refresh_token"]}
+        ).status_code
+        == 401
+    )
     # a revoked family is now a 404
     assert client.delete(f"/api/auth/sessions/{sid}", headers=_h(a)).status_code == 404
 
