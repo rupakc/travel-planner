@@ -150,7 +150,7 @@ See [Trips API](Trips-API.md). `GET /api/config` reports the two flags as `featu
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `JOURNEY_UI_ENABLED` | `false` | Turns on the journey UI in the web app: Trips hub, trip screen with phases, Explore, Play and You tabs. The trips API is always served. |
+| `JOURNEY_UI_ENABLED` | `true` | Turns on the journey UI in the web app: Trips hub, trip screen with phases, Explore, Play and You tabs. The trips API is always served. The owner can set `JOURNEY_UI_ENABLED=false` in `app.env` and restart the app to turn it off, with no rebuild. |
 | `OFFLINE_PACK_ENABLED` | `true` | Kill switch for the offline pack. `false` makes every client unregister `/sw.js`, clear its caches and delete saved packs on its next load (see [Deployment on GCP](Deployment-GCP.md#offline-pack-and-the-journey-flag)). |
 | `READY_WINDOW_DAYS` | `14` | Days before the start date at which a dated trip becomes Ready. |
 | `TRIP_MAX_EXPENSES` | `2000` | Expenses per trip (`409 expense_limit` beyond). |

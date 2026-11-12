@@ -19,7 +19,7 @@ def test_config_shape(client, monkeypatch):
         "accounts": True,
         "game": True,
         "trips": True,
-        "journey": False,
+        "journey": True,
         "offline_pack": True,
     }
     assert r.headers["cache-control"] == "max-age=300"
@@ -68,8 +68,8 @@ def test_config_signup_unavailable_without_email(client, monkeypatch):
 
 def test_config_features_trips(client, monkeypatch):
     f = client.get("/api/config").json()["features"]
-    assert f["trips"] is True and f["journey"] is False
-    monkeypatch.setattr(settings, "journey_ui_enabled", True)
+    assert f["trips"] is True and f["journey"] is True and f["offline_pack"] is True
+    monkeypatch.setattr(settings, "journey_ui_enabled", False)
     monkeypatch.setattr(settings, "offline_pack_enabled", False)
     f = client.get("/api/config").json()["features"]
-    assert f["journey"] is True and f["offline_pack"] is False
+    assert f["journey"] is False and f["offline_pack"] is False

@@ -98,7 +98,7 @@ def test_db_stubs():
 
 
 def test_settings_defaults():
-    assert settings.journey_ui_enabled is False
+    assert settings.journey_ui_enabled is True
     assert settings.offline_pack_enabled is True
     assert settings.ready_window_days == 14
     assert settings.trip_max_expenses == 2000

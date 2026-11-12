@@ -178,7 +178,7 @@ class Settings(BaseSettings):
     ai_daily_quota_light_ai: int = 200
     ai_daily_quota_import: int = 20
     game_enabled: bool = True
-    journey_ui_enabled: bool = False
+    journey_ui_enabled: bool = True
     offline_pack_enabled: bool = True
     ready_window_days: int = 14
     trip_max_expenses: int = 2000
