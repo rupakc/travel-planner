@@ -1,5 +1,6 @@
 """Task 10: the opt-in weekly price digest."""
 
+import re
 import uuid
 from datetime import UTC, datetime
 
@@ -140,6 +141,8 @@ def test_digest_email_has_unsubscribe_and_no_estimate_as_price(user, monkeypatch
     assert "/api/alerts/digest/unsubscribe?token=" in msg["List-Unsubscribe"]
     body = msg.get_body(("plain",)).get_content()
     assert "Stop the weekly digest" in body and "USD 500" in body
+    # the unsubscribe URL carries a random token that may contain "99"
+    body = re.sub(r"https?://\S+", "", body)
     assert "99" not in body
 
 
