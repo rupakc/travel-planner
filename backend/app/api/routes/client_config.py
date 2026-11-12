@@ -37,5 +37,8 @@ def client_config(response: Response) -> dict:
             "trips": True,
             "journey": bool(settings.journey_ui_enabled),
             "offline_pack": bool(settings.offline_pack_enabled),
+            "alerts_api": 2,
+            "price_alerts_v2": bool(settings.price_alerts_v2_enabled),
+            "live_prices": bool(settings.serpapi_key),
         },
     }

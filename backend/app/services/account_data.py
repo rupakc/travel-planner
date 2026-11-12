@@ -42,6 +42,10 @@ USER_TABLES: dict[str, tuple[str, Literal["id", "username"]]] = {
     "fare_watches": ("user_id", "id"),
     "fare_watch_user_quota": ("user_id", "id"),
     "price_watches": ("user_id", "id"),
+    "alert_prefs": ("user_id", "id"),
+    "alert_savings": ("user_id", "id"),
+    "alert_outbox": ("user_id", "id"),
+    "alert_digests": ("user_id", "id"),
     "account_tokens": ("user_id", "id"),
     "refresh_tokens": ("user_id", "id"),
     "user_identities": ("user_id", "id"),
@@ -62,6 +66,14 @@ _USER_PLANS = (
 CHILD_TABLES: dict[str, str] = {
     "fare_watch_history": "watch_id IN (SELECT id FROM fare_watches WHERE user_id = ?)",
     "price_watch_history": "watch_id IN (SELECT id FROM price_watches WHERE user_id = ?)",
+    # cached advice is keyed by (kind, watch): a flight is a fare watch
+    "alert_advice": (
+        "EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND ("
+        "(watch_kind = 'flight' AND watch_id IN"
+        " (SELECT id FROM fare_watches WHERE user_id = u.id))"
+        " OR (watch_kind != 'flight' AND watch_id IN"
+        " (SELECT id FROM price_watches WHERE user_id = u.id))))"
+    ),
     **dict.fromkeys(TRIP_CHILD_TABLES, _USER_PLANS),
 }
 

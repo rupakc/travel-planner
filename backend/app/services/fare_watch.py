@@ -19,7 +19,7 @@ from ..core.config import settings
 from ..db import fare_watch_db, notifications_db
 from ..db.database import airport_city
 from ..schemas.request import TravelSearchRequest
-from . import price_rules, push, serp_flights
+from . import alert_pipeline, price_rules, push, serp_flights
 from .serp_flights import SerpAPIError
 
 logger = logging.getLogger(__name__)
@@ -450,6 +450,9 @@ def next_check(now: datetime, rand: Callable[[], float]) -> datetime:
 
 
 def _notify(watch: dict, note: dict, now: datetime) -> dict:
+    v2 = alert_pipeline.enabled()
+    if v2:
+        note = alert_pipeline.enrich(watch, "flight", note)
     row = notifications_db.add_notification(
         watch["user_id"],
         note["kind"],
@@ -458,6 +461,9 @@ def _notify(watch: dict, note: dict, now: datetime) -> dict:
         note["data"],
         now=now,
     )
+    if v2 and alert_pipeline.after_insert(watch, "flight", row, now):
+        row["data"]["_v2"] = True  # v2 owns push and email for this one
+        return row
     # Also to the owner's phones, in the background (a no-op when push is off)
     push.notify(watch["user_id"], row, f"/alerts?watch={watch['id']}")
     return row
@@ -575,7 +581,7 @@ async def _check_watch(
         return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
 
     outcome = _record_success(watch, check, now, rand)
-    if outcome.notification:
+    if outcome.notification and not outcome.notification["data"].get("_v2"):
         from .alert_email import deliver
 
         await deliver(outcome.watch, outcome.notification, now)

@@ -179,6 +179,11 @@ class Settings(BaseSettings):
     ai_daily_quota_import: int = 20
     game_enabled: bool = True
     journey_ui_enabled: bool = True
+    # Price alerts 2.0 (Phase 3): the pipeline, delivery and digest loops
+    price_alerts_v2_enabled: bool = False
+    alert_digest_hour_local: int = 9
+    alert_flush_interval_s: int = 60
+    alert_advice_ttl_hours: int = 24
     offline_pack_enabled: bool = True
     ready_window_days: int = 14
     trip_max_expenses: int = 2000

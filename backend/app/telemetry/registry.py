@@ -22,6 +22,7 @@ def _enum(*values: str) -> str:
     return "enum:" + "|".join(values)
 
 
+_KIND = _enum("flight", "hotel", "activity", "trip")
 _AUTH_METHOD = _enum("password", "apple", "google", "facebook", "github")
 _AUTH_MODE = _enum("signin", "signup", "link")
 
@@ -190,6 +191,31 @@ EVENTS: dict[str, dict[str, str]] = {
         "secondary": "int",
     },
     "journey_shell": {"enabled": "bool", "source": _enum("config", "override", "off")},
+    "alert_story_view": {
+        "kind": _KIND,
+        "verdict": _enum("great", "good", "typical", "high", "none"),
+    },
+    "alert_target_set": {"kind": _KIND, "from_story": "bool"},
+    "alert_advice": {"kind": _KIND, "outcome": _enum("ok", "cached", "error")},
+    "alert_drop_seen": {
+        "kind": _KIND,
+        "target_hit": "bool",
+        "via": _enum("in_app", "push", "email"),
+    },
+    "alert_quick_watch": {
+        "kind": _KIND,
+        "action": _enum("add", "undo", "exists", "blocked"),
+        "surface": _enum("results", "chat", "trip", "suggest"),
+    },
+    "alert_suggest": {
+        "action": _enum("shown", "accepted", "dismissed"),
+        "count": "int",
+    },
+    "alert_savings_share": {"target": _enum("native", "download", "copy")},
+    "alert_prefs_change": {
+        "field": _enum("digest", "quiet_hours", "instant", "cap", "group")
+    },
+    "alert_digest_open": {"via": _enum("in_app", "email_link")},
 }
 
 

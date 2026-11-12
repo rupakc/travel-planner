@@ -216,3 +216,21 @@ def test_journey_enums_and_types_enforced():
         {"event": "outbox_flush", "props": {"sent": 2, "failed": 0, "dropped": 1}}
     )
     assert out["props"] == {"sent": 2, "failed": 0, "dropped": 1}
+
+
+def test_registry_phase3_events():
+    good = {
+        "alert_story_view": {"kind": "flight", "verdict": "none"},
+        "alert_target_set": {"kind": "trip", "from_story": True},
+        "alert_advice": {"kind": "flight", "outcome": "cached"},
+        "alert_drop_seen": {"kind": "hotel", "target_hit": False, "via": "push"},
+        "alert_quick_watch": {"kind": "activity", "action": "undo", "surface": "chat"},
+        "alert_suggest": {"action": "shown", "count": 3},
+        "alert_savings_share": {"target": "copy"},
+        "alert_prefs_change": {"field": "quiet_hours"},
+        "alert_digest_open": {"via": "email_link"},
+    }
+    for name, props in good.items():
+        assert clean_event({"event": name, "props": props})["props"] == props
+        out = clean_event({"event": name, "props": {**props, "amount": "$412"}})
+        assert out["props"] == props  # a string amount is dropped

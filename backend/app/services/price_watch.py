@@ -28,7 +28,7 @@ from typing import Literal, Protocol, runtime_checkable
 from ..core.cache import fresh_reads
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
-from . import fare_watch, price_rules, push
+from . import alert_pipeline, fare_watch, price_rules, push
 from .fare_watch import CheckOutcome
 
 logger = logging.getLogger(__name__)
@@ -517,6 +517,9 @@ def _error_note(watch: dict, reason: str) -> dict:
 
 
 def _notify(watch: dict, note: dict, now: datetime) -> dict:
+    v2 = alert_pipeline.enabled()
+    if v2:
+        note = alert_pipeline.enrich(watch, watch.get("kind") or "hotel", note)
     row = notifications_db.add_notification(
         watch["user_id"],
         note["kind"],
@@ -525,6 +528,11 @@ def _notify(watch: dict, note: dict, now: datetime) -> dict:
         note["data"],
         now=now,
     )
+    if v2 and alert_pipeline.after_insert(
+        watch, watch.get("kind") or "hotel", row, now
+    ):
+        row["data"]["_v2"] = True  # v2 owns push and email for this one
+        return row
     # Also to the owner's phones, in the background (a no-op when push is off)
     push.notify(watch["user_id"], row, alerts_link(watch))
     return row
@@ -675,7 +683,7 @@ async def _check_watch(
             "Price watch %d: recording the look failed", watch_id, exc_info=True
         )
         return _record_failure(watch, f"{type(exc).__name__}: {exc}", now)
-    if outcome.notification:
+    if outcome.notification and not outcome.notification["data"].get("_v2"):
         from .alert_email import deliver_price
 
         await deliver_price(outcome.watch, outcome.notification, now)
