@@ -248,7 +248,7 @@ export default function PreferencesPage() {
             <div className="flex flex-wrap gap-2">
               {INTERESTS.map(({ id, emoji }) => (
                 <button key={id} type="button" data-tid={`prefs.interest-${id}`} onClick={() => toggleInterest(id)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${prefs.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${prefs.interests.includes(id) ? 'bg-teal-700 border-teal-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                   {`${emoji} ${t(`prefs.interest.${id}`)}`}
                 </button>
               ))}
@@ -258,7 +258,7 @@ export default function PreferencesPage() {
           {/* Save */}
           <div className="flex items-center gap-3 pt-2">
             <button onClick={handleSave} disabled={saving} data-tid="prefs.save"
-              className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-all shadow-md text-sm">
+              className="flex items-center gap-2 px-6 py-2.5 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 disabled:opacity-50 transition-all shadow-md text-sm">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? t('prefs.saving') : t('prefs.save')}
             </button>

@@ -343,7 +343,7 @@ function FlightLeg({ leg, direction, onLayover }) {
                 {isLong && onLayover && (
                   <button type="button" data-tid="results.flight.layover"
                     onClick={e => { e.stopPropagation(); onLayover(lv) }}
-                    className="px-1.5 py-0.5 rounded-full bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors">
+                    className="px-1.5 py-0.5 rounded-full bg-teal-700 text-white font-semibold hover:bg-teal-800 transition-colors">
                     ✨ {t('flights.makeMostOfIt')}
                   </button>
                 )}
@@ -463,7 +463,7 @@ function MultiCityFlightsSection({ legs, selections, onSelect, pricingData, depa
                             {f.source && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g, ' ')}</span>}
                           </div>
                           <button type="button" data-tid="results.flight.add" onClick={e => { e.stopPropagation(); onSelect('flights', f) }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${isSelected ? 'bg-teal-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-teal-100 hover:text-teal-700'}`}>
                             {isSelected ? <><Check size={11}/> {t('plan.added')}</> : <><Plus size={11}/> {t('plan.add')}</>}
                           </button>
                         </div>
@@ -2946,7 +2946,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
               </button>
             )}
             <button data-tid="drawer.save" onClick={save} disabled={saving || selectedCount === 0}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 text-sm transition-all">
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 disabled:opacity-50 text-sm transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? t('drawer.saving') : loadedPlanId ? t('drawer.update') : t('drawer.savePlan')}
             </button>
@@ -3021,7 +3021,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                     </div>
                     <div className="flex gap-1.5 mt-1.5">
                       <button data-tid="drawer.load-plan" onClick={() => onLoadPlan(plan)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-700 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
                         {isLoaded ? <><Check size={11} /> {t('drawer.loaded')}</> : <><RefreshCw size={11} /> {t('drawer.load')}</>}
                       </button>
                       <WatchFareButton variant="card" label={t('drawer.watch')} trip={tripFromPlan(plan)} source="saved_plan" />
@@ -3127,13 +3127,13 @@ function SearchPanel({ searchData, isOpen, onToggle, onUpdateSearch }) {
             <div className="flex flex-wrap gap-1.5">
               {INTEREST_LIST.map(id => (
                 <button key={id} type="button" data-tid={`searchPanel.interest.${id}`} onClick={()=>toggle(id)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${form.interests.includes(id)?'bg-teal-600 border-teal-600 text-white':'bg-white border-gray-200 text-gray-600 hover:border-teal-300'}`}>
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${form.interests.includes(id)?'bg-teal-700 border-teal-600 text-white':'bg-white border-gray-200 text-gray-600 hover:border-teal-300'}`}>
                   {INTEREST_LABELS[id] || id}
                 </button>
               ))}
             </div>
           </div>
-          <button type="submit" data-tid="searchPanel.update" className="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors">
+          <button type="submit" data-tid="searchPanel.update" className="flex items-center gap-2 px-5 py-2 bg-teal-700 text-white text-sm font-semibold rounded-lg hover:bg-teal-800 transition-colors">
             <RefreshCw size={14} /> {t('searchPanel.update')}
           </button>
         </form>
@@ -4234,7 +4234,7 @@ export default function ResultsPage() {
               data-tid="page.view-cards"
               onClick={() => setView('cards')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                view === 'cards' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                view === 'cards' ? 'bg-teal-700 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               <LayoutList size={14} /> {t('page.cards')}
@@ -4243,7 +4243,7 @@ export default function ResultsPage() {
               data-tid="page.view-timeline"
               onClick={() => setView('timeline')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                view === 'timeline' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                view === 'timeline' ? 'bg-teal-700 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               <CalendarDays size={14} /> {t('page.timeline')}
@@ -4267,7 +4267,7 @@ export default function ResultsPage() {
 
       {/* Floating plan button */}
       <button data-tid="page.my-plan" onClick={() => setIsPlanOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-teal-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl hover:bg-teal-700 transition-all">
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-teal-700 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl hover:bg-teal-800 transition-all">
         <Bookmark size={16} />
         <span className="text-sm">{t('drawer.title')}</span>
         {selectedCount > 0 && (

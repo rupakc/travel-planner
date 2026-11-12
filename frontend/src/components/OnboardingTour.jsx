@@ -166,7 +166,7 @@ export default function OnboardingTour({ open, steps, onClose }) {
             </button>
           )}
           <button type="button" ref={primaryRef} onClick={next} data-tid={isLast ? 'tour.start' : 'tour.next'}
-            className="px-3.5 py-1.5 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2">
+            className="px-3.5 py-1.5 text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2">
             {isLast ? t('tour.start') : t('tour.next')}
           </button>
         </div>

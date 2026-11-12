@@ -191,7 +191,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
               return (
                 <li key={label} className="flex items-center gap-3">
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                    done ? 'bg-teal-600 text-white' : active ? 'bg-amber-400 text-amber-950 import-step-active' : 'bg-white text-gray-400 ring-1 ring-gray-200'
+                    done ? 'bg-teal-700 text-white' : active ? 'bg-amber-400 text-amber-950 import-step-active' : 'bg-white text-gray-400 ring-1 ring-gray-200'
                   }`}>
                     {done ? <Check size={14} /> : i + 1}
                   </span>

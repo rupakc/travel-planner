@@ -144,7 +144,7 @@ function ResendForm({ t, code, link }) {
             data-tid="verify-email-input"
             className="w-full rounded-lg border border-slate-300 px-3 py-2"
           />
-          <button type="submit" disabled={busy || !email.trim()} data-tid="verify-resend" className="w-full rounded-lg bg-teal-600 text-white py-2 font-medium disabled:opacity-50">
+          <button type="submit" disabled={busy || !email.trim()} data-tid="verify-resend" className="w-full rounded-lg bg-teal-700 text-white py-2 font-medium disabled:opacity-50">
             {t('verify:verify.resend')}
           </button>
           {error && <p role="alert" className="text-sm text-red-600" data-tid="verify-resend-error">{error}</p>}

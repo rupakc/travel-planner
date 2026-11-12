@@ -502,7 +502,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
               {t('modal.close')}
             </button>}
             <button onClick={save} disabled={saving} data-tid="plan.save"
-              className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-all">
+              className="flex items-center gap-1.5 px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {t('modal.save')}
             </button>
           </div>

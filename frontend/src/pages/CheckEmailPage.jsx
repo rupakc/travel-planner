@@ -77,7 +77,7 @@ export default function CheckEmailPage() {
           onClick={resend}
           disabled={!email || busy || cooldown > 0}
           data-tid="check-email-resend"
-          className="mt-5 w-full rounded-lg bg-teal-600 text-white py-2 font-medium disabled:opacity-50"
+          className="mt-5 w-full rounded-lg bg-teal-700 text-white py-2 font-medium disabled:opacity-50"
         >
           {cooldown > 0 ? t('verify:check.resendIn', { seconds: cooldown }) : t('verify:check.resend')}
         </button>

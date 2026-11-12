@@ -333,7 +333,7 @@ export default function SharePage({ download = downloadCard }) {
         <p className="text-4xl">🗺️</p>
         <h1 className="text-xl font-bold text-slate-800">{t('share.unavailableTitle')}</h1>
         <p className="text-sm text-slate-500">{t('share.unavailableBody')}</p>
-        <Link to="/" data-tid="share.plan-own-error" className="mt-2 px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">{t('share.planOwn')}</Link>
+        <Link to="/" data-tid="share.plan-own-error" className="mt-2 px-5 py-2.5 bg-teal-700 text-white text-sm font-semibold rounded-xl hover:bg-teal-800 transition-colors">{t('share.planOwn')}</Link>
         <AttributionFooter />
       </div>
     )
@@ -640,7 +640,7 @@ export default function SharePage({ download = downloadCard }) {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={handleDownload} data-tid="share.download" disabled={downloading} aria-busy={downloading}
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-md text-sm disabled:opacity-70">
+            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 transition-colors shadow-md text-sm disabled:opacity-70">
             {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} {t('share.download')}
           </button>
           <Link to="/" data-tid="share.plan-own" className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-white text-teal-700 font-semibold rounded-xl border border-teal-200 hover:bg-teal-50 transition-colors text-sm">

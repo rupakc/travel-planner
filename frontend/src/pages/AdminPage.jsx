@@ -140,7 +140,7 @@ function UsersTab({ token, currentUsername }) {
         <button
           onClick={() => setShowCreate(s => !s)}
           data-tid="admin.create-user"
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition-colors"
         >
           {t('admin.users.create')}
         </button>
@@ -177,7 +177,7 @@ function UsersTab({ token, currentUsername }) {
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={formLoading} data-tid="admin.create-submit"
-              className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg">
+              className="px-4 py-1.5 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg">
               {formLoading ? t('admin.users.creating') : t('admin.users.createSubmit')}
             </button>
             <button type="button" onClick={() => setShowCreate(false)} data-tid="admin.create-cancel"
@@ -379,7 +379,7 @@ function ResetPasswordModal({ username, token, isSelf, onClose }) {
             </div>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={loading} data-tid="admin.reset-submit"
-                className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 px-4 py-2 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg transition-colors">
                 {loading ? t('admin.reset.submitting') : t('admin.reset.submit')}
               </button>
               <button type="button" onClick={handleClose} disabled={loading} data-tid="admin.reset-cancel"

@@ -102,7 +102,7 @@ export default function ChangePasswordPage() {
             type="submit"
             data-tid="change-password.submit"
             disabled={loading}
-            className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white font-semibold rounded-lg transition-colors"
+            className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-300 text-white font-semibold rounded-lg transition-colors"
           >
             {loading ? t('changePassword.saving') : t('changePassword.submit')}
           </button>

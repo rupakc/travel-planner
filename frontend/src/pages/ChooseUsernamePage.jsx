@@ -81,7 +81,7 @@ export default function ChooseUsernamePage() {
           </div>
         )}
         <button type="submit" disabled={busy} data-tid="oauth.username.submit"
-          className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-medium rounded-lg text-sm">
+          className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 disabled:opacity-60 text-white font-medium rounded-lg text-sm">
           {busy ? t('oauth:username.submitting') : t('oauth:username.submit')}
         </button>
       </form>
