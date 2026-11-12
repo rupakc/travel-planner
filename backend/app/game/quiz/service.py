@@ -63,6 +63,17 @@ def _finalize_expired(sid: str, now: int) -> None:
             now,
         )
         quiz_db.save_rewards(conn, sid, None, None)
+        mode = s["mode"]
+    if mode == "h2h":
+        # An idle finish still completes the match (and pays both sides).
+        from ...services import h2h
+
+        try:
+            xp = h2h.on_finished(s, datetime.fromtimestamp(now / 1000, UTC))
+            if xp is not None:
+                _store_rewards(sid, xp, None)
+        except Exception:
+            logger.exception("h2h idle finish failed (session=%s)", sid)
 
 
 def view(s: dict, answers: list[dict], *, resumed: bool = False) -> dict:
