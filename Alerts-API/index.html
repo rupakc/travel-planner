@@ -1649,6 +1649,11 @@
 </tr>
 </tbody>
 </table>
+<p><strong>Additive clarifications (Task 4).</strong></p>
+<ul>
+<li><code>POST /alerts/watches/{kind}/{id}/advice</code> can also answer <code>502 advice_failed</code> (the advisor returned nothing usable; retry later), <code>503 ai_billing</code> (AI billing is off, like <code>ai_limit</code>) and <code>422 advice_no_data</code> (the flight watch has no observed price yet, so no model call is made). Clients translate all three codes.</li>
+<li>A story's <code>target</code> and the <code>below_target</code> / <code>near_target</code> advice use the watch's target only when <code>mode</code> is <code>below_target</code>; in <code>any_drop</code> mode <code>target</code> is <code>null</code> even if a stale target price is stored.</li>
+</ul>
 <p><strong>Watch objects (additive).</strong> Every watch from <code>/fare-watches*</code> and <code>/price-watches*</code> gains <code>pending_first_check: bool</code>. A pending watch has <code>last_price: null</code>.</p>
 <p><strong>Notifications (additive).</strong></p>
 <ul>
