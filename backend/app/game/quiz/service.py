@@ -252,6 +252,9 @@ def _reward(s: dict) -> dict:
     uid, sid = s["user_id"], s["id"]
     xp = streak = None
     at = datetime.fromtimestamp(_now_ms() / 1000, UTC)
+    if s["mode"] == "daily":
+        # A daily finished after UTC midnight still belongs to its own day.
+        at = datetime.fromisoformat(s["day"]).replace(hour=12, tzinfo=UTC)
     try:
         parts = []
         if s["mode"] == "daily":

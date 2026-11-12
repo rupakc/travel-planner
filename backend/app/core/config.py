@@ -97,7 +97,6 @@ class Settings(BaseSettings):
     # Phase 5 (Social + Play), per user: writes, reads, Play, admin moderation
     rate_limit_social_write: int = 30
     rate_limit_social_read: int = 120
-    rate_limit_play: int = 60
     rate_limit_admin: int = 120
     # /auth/login: attempts per client IP; failed attempts per (username, IP),
     # so others can't lock a user out; and a high per-username ceiling across
