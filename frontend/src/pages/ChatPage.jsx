@@ -630,6 +630,8 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   }
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
+  // Loading another plan supersedes the trip saved earlier.
+  useEffect(() => { if (loadedPlanId) setSavedTripId(null) }, [loadedPlanId])
 
   // Freeze the chat's section results into the trip (journey backend only);
   // nothing to send when the chat has none. Never fails the save.
@@ -639,9 +641,11 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
     if (!id) { try { id = (await res.json())?.id } catch { id = null } }
     if (!id) return
     setSavedTripId(id)
-    const snap = snapshotFromResults(sectionResults)
-    if (Object.values(snap).some(Boolean)) {
-      try { await putSnapshot(token, id, snap) } catch { /* the plan is saved; the snapshot is optional */ }
+    // Omit sections the chat lacks: the server may treat null as "clear".
+    const snap = Object.fromEntries(Object.entries(snapshotFromResults(sectionResults)).filter(([, v]) => v))
+    if (Object.keys(snap).length) {
+      // Fire and forget: the plan is saved; the snapshot is optional.
+      try { Promise.resolve(putSnapshot(token, id, snap)).catch(() => {}) } catch { /* ignore */ }
     }
     notifyTripsChanged()
   }
@@ -760,8 +764,8 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
           <CostBreakdown selections={selections} searchData={searchContext} />
           <CompletenessMeter selections={selections} searchData={searchContext} surface="drawer" />
-          {journeyOn && (savedTripId || loadedPlanId) && onOpenTrip && (
-            <button type="button" data-tid="chat.open-trip" onClick={() => onOpenTrip(savedTripId || loadedPlanId)}
+          {journeyOn && (loadedPlanId || savedTripId) && onOpenTrip && (
+            <button type="button" data-tid="chat.open-trip" onClick={() => onOpenTrip(loadedPlanId || savedTripId)}
               className="w-full px-3 py-2 text-sm font-semibold rounded-lg bg-teal-700 hover:bg-teal-800 text-white">{tj('openTrip')}</button>
           )}
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchContext} selections={selections} source="chat" />

@@ -42,7 +42,8 @@ describe('ChatPlanDrawer trips', () => {
     const [tok, id, snap] = putSnapshot.mock.calls[0]
     expect([tok, id]).toEqual(['tok', 9])
     expect(snap.forex).toEqual({ currency: 'JPY' })
-    expect(snap.visa).toBeNull()
+    expect('visa' in snap).toBe(false)
+    expect(Object.values(snap).includes(null)).toBe(false)
   })
 
   it('update path sends the snapshot for the loaded plan', async () => {
@@ -66,5 +67,25 @@ describe('ChatPlanDrawer trips', () => {
     render({ sectionResults: SECTIONS })
     expect(container.querySelector('[data-tid="chat.open-trip"]')).toBeNull()
     expect(container.querySelector('[data-tid="completeness.meter"]')).toBeNull()
+  })
+
+  it('Open trip follows the loaded plan after saving another', async () => {
+    const onOpenTrip = vi.fn()
+    render({ sectionResults: SECTIONS, onOpenTrip })
+    await act(async () => { btn(/Save Plan/).click() })
+    render({ sectionResults: SECTIONS, onOpenTrip, loadedPlanId: 5 })
+    await act(async () => { container.querySelector('[data-tid="chat.open-trip"]').click() })
+    expect(onOpenTrip).toHaveBeenCalledWith(5)
+  })
+
+  it('a failing snapshot does not fail or delay the save', async () => {
+    putSnapshot.mockImplementationOnce(() => new Promise(() => {}))
+    render({ sectionResults: SECTIONS })
+    await act(async () => { btn(/Save Plan/).click() })
+    expect(container.textContent).not.toMatch(/failed/i)
+    expect(container.querySelector('[data-tid="chat.open-trip"]')).toBeTruthy()
+    putSnapshot.mockRejectedValueOnce(new Error('boom'))
+    await act(async () => { btn(/Save Plan/).click() })
+    expect(container.textContent).not.toMatch(/failed/i)
   })
 })
