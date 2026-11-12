@@ -417,3 +417,112 @@ async def deliver_one(watch_kind: str, watch: dict, row: dict, now: datetime) ->
     if watch_kind == "flight":
         return await deliver(watch, row, now)
     return await deliver_price(watch, row, now)
+
+
+# ── Weekly digest ─────────────────────────────────────────────────────────────
+
+DIGEST_UNSUB_PURPOSE = "digest-unsubscribe"
+
+
+def digest_unsubscribe_token(user_id: str) -> str:
+    """Signed, non-expiring token naming one user (``uid``), digest-only."""
+    return jwt.encode(
+        {"uid": user_id, "purpose": DIGEST_UNSUB_PURPOSE},
+        settings.jwt_secret_key,
+        algorithm="HS256",
+    )
+
+
+def read_digest_unsubscribe_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
+    except PyJWTError:
+        return None
+    uid = payload.get("uid")
+    if payload.get("purpose") != DIGEST_UNSUB_PURPOSE or not isinstance(uid, str):
+        return None
+    return uid
+
+
+def _money(amount, currency: str | None) -> str:
+    if amount is None:
+        return "—"
+    return f"{currency or 'USD'} {amount:,.0f}"
+
+
+def _digest_lines(digest: dict) -> list[dict]:
+    lines = []
+    for w in digest.get("watches", []):
+        latest = w.get("latest")  # observed prices only, never an estimate
+        cur = w.get("currency") or (latest or {}).get("currency")
+        ch = w.get("change_7d")
+        lines.append(
+            {
+                "title": w.get("title") or "",
+                "now": _money(latest, cur) if latest is not None else "no price yet",
+                "change": (
+                    ""
+                    if not ch
+                    else f"{'down' if ch < 0 else 'up'} {_money(abs(ch), cur)} this week"
+                ),
+                "spark": sparkline(w.get("spark") or []),
+            }
+        )
+    return lines
+
+
+def build_digest_message(user: dict, digest: dict) -> EmailMessage:
+    """The weekly digest: text + HTML, one line per watch, observed prices only."""
+    lines = _digest_lines(digest)
+    sav = digest.get("savings") or {}
+    caught = sav.get("total_usd") or 0
+    week = digest.get("week", "")
+    unsub = _url(
+        f"/api/alerts/digest/unsubscribe?token={digest_unsubscribe_token(user['id'])}"
+    )
+    see = _url("/alerts")
+    text = [f"Your weekly price digest ({week})", ""]
+    for ln in lines:
+        text.append(
+            f"- {ln['title']}: {ln['now']}"
+            + (f", {ln['change']}" if ln["change"] else "")
+            + (f"  {ln['spark']}" if ln["spark"] else "")
+        )
+    if caught:
+        text += ["", f"Caught so far: ${caught:,.0f}"]
+    text += [
+        "",
+        f"Open your alerts: {see}",
+        f"Stop the weekly digest: {unsub}",
+    ]
+    rows = "".join(
+        "<tr><td style='padding:6px 0'>"
+        f"<b>{html.escape(ln['title'])}</b><br>"
+        f"<span style='color:#475569'>{html.escape(ln['now'])}"
+        + (f", {html.escape(ln['change'])}" if ln["change"] else "")
+        + f" <span style='letter-spacing:1px'>{html.escape(ln['spark'])}</span>"
+        "</span></td></tr>"
+        for ln in lines
+    )
+    body = (
+        "<!doctype html><html><body style='font-family:system-ui,sans-serif;"
+        "color:#0f172a;max-width:520px;margin:0 auto;padding:16px'>"
+        f"<h1 style='font-size:20px'>Your weekly price digest</h1>"
+        f"<table style='width:100%;border-collapse:collapse'>{rows}</table>"
+        + (f"<p>Caught so far: <b>${caught:,.0f}</b></p>" if caught else "")
+        + f"<p><a href='{html.escape(see)}'>Open your alerts</a></p>"
+        f"<p style='color:#64748b;font-size:12px'>"
+        f"<a href='{html.escape(unsub)}'>Stop the weekly digest</a></p>"
+        "</body></html>"
+    )
+    msg = EmailMessage(policy=_POLICY)
+    msg["Subject"] = f"Your weekly price digest ({week})"
+    msg["From"] = _sender()
+    msg["To"] = user["email"]
+    msg["Date"] = formatdate(localtime=False, usegmt=True)
+    msg["Message-ID"] = make_msgid(domain=_mail_domain())
+    msg["List-Unsubscribe"] = f"<{unsub}>"
+    msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
+    msg.set_content("\n".join(text))
+    msg.add_alternative(body, subtype="html")
+    return msg
