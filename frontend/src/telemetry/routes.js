@@ -15,6 +15,7 @@ const DYNAMIC = [
   [/^\/alerts\/[^/]+$/, '/alerts/:id'],
   [/^\/trips\/[^/]+$/, '/trips/:id'],
   [/^\/trips\/[^/]+\/[^/]+$/, '/trips/:id/:tab'],
+  [/^\/play\/h2h\/[^/]+$/, '/play/h2h/:id'],
 ]
 
 export function routeTemplate(pathname) {

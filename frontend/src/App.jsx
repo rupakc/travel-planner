@@ -47,7 +47,7 @@ import { useJourney }      from './hooks/useJourney'
 import { useAlertsV2 }     from './hooks/useAlertsV2'
 import DropMoment          from './components/alerts2/DropMoment'
 import { useHasTrips }     from './hooks/useHasTrips'
-import { matchTripPath }   from './journey/paths'
+import { matchTripPath, matchH2hPath } from './journey/paths'
 
 // SearchDataProvider is intentionally placed inside Layout (not at App root)
 // so that all search/results state is wiped on logout and starts fresh on login.
@@ -92,7 +92,7 @@ const CLASSIC_PATHS = new Set(['/', '/chat', '/nearby', '/preferences', '/alerts
 const JOURNEY_PATHS = new Set(['/trips', '/explore', '/play', '/you'])
 
 // The journey-only paths: /trips, /explore, /play, /you and /trips/<id>(/<tab>).
-const isJourneyPath = (path) => JOURNEY_PATHS.has(path) || matchTripPath(path) !== null
+const isJourneyPath = (path) => JOURNEY_PATHS.has(path) || matchTripPath(path) !== null || matchH2hPath(path) !== null
 
 // `journey`: true, false, or null while /config is still loading (a journey
 // deep link waits instead of being redirected away).
@@ -102,7 +102,7 @@ function knownPath(path, journey) {
   return journey !== false
 }
 
-const pageLabel = (path) => PATH_LABEL[path] ?? (matchTripPath(path) ? 'trip' : 'unknown')
+const pageLabel = (path) => PATH_LABEL[path] ?? (matchTripPath(path) ? 'trip' : matchH2hPath(path) ? 'play' : 'unknown')
 
 function Pending() {
   const { t } = useTranslation('journey')
@@ -188,6 +188,7 @@ function Layout() {
           {journeyOn && path === '/trips' && <TripsPage />}
           {trip && <TripPage tripId={trip.id} tab={trip.tab} />}
           {journeyOn && path === '/play' && <PlayPage />}
+          {journeyOn && matchH2hPath(path) && <PlayPage h2hId={matchH2hPath(path)} />}
           {journeyOn && path === '/you'  && <YouPage />}
           {waiting && <Pending />}
         </I18nRouteGate>

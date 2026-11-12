@@ -1,0 +1,98 @@
+{
+  "loading": "Loading…",
+  "daily": {
+    "title": "Daily quiz",
+    "hint": "Five questions, the same for everyone today. One try a day.",
+    "start": "Play today's quiz",
+    "streak_one": "{{count}}-day quiz streak",
+    "streak_other": "{{count}}-day quiz streak",
+    "done_one": "Done today: {{count}} point",
+    "done_other": "Done today: {{count}} points"
+  },
+  "challenge": {
+    "title": "Know before you go",
+    "destination": "Five questions about {{country}}, your next trip.",
+    "featured": "This week's featured pack: five questions.",
+    "start": "Start the challenge",
+    "done": "Done this week. Nice!"
+  },
+  "packs": {
+    "title": "Practice packs"
+  },
+  "pack": {
+    "flags": "Flags",
+    "capitals": "Capitals",
+    "landmarks": "Landmarks",
+    "cuisine": "Cuisine"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "Which country has this flag?",
+      "capital_of": "What is the capital of {{country}}?",
+      "country_of_capital": "{{capital}} is the capital of which country?",
+      "landmark_country": "In which country is {{landmark}}?",
+      "dish_country": "{{dish}} comes from which country?"
+    },
+    "flagAlt": "Flag",
+    "progress": "Question {{current}} of {{total}}",
+    "timer_one": "{{count}} second left",
+    "timer_other": "{{count}} seconds left",
+    "correct": "Correct answer",
+    "wrong": "Your answer, incorrect",
+    "correctPoints_one": "Correct! +{{count}} point",
+    "correctPoints_other": "Correct! +{{count}} points",
+    "wrongNote": "Not this time. The right answer is marked.",
+    "next": "Next question",
+    "finish": "See result"
+  },
+  "result": {
+    "title": "Your result",
+    "correct": "{{correct}} of {{total}} correct",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "{{count}}-day streak",
+    "streak_other": "{{count}}-day streak",
+    "back": "Back to Play"
+  },
+  "h2h": {
+    "title": "Head-to-head",
+    "hint": "Challenge a friend by handle. Play now, they answer within 48 hours.",
+    "empty": "No matches yet.",
+    "handle": "Their handle",
+    "pack": "Pack",
+    "create": "Challenge",
+    "open": "Open",
+    "back": "Back to Play",
+    "missing": "This match was not found.",
+    "vs": "You vs {{handle}}",
+    "score": "{{you}} to {{them}}",
+    "state_waiting_you": "Your turn",
+    "state_waiting_them": "Waiting for them",
+    "state_done": "Finished",
+    "state_declined": "Declined",
+    "state_expired": "Expired",
+    "winner_you": "You won!",
+    "winner_them": "They won this one.",
+    "winner_draw": "A draw.",
+    "accept": "Accept and play",
+    "decline": "Decline"
+  },
+  "board": {
+    "title": "Leaderboard",
+    "scope": "Leaderboard scope",
+    "scope_global": "Global",
+    "scope_friends": "Friends",
+    "week_current": "This week",
+    "week_previous": "Last week",
+    "optinNote": "The global board shows handles only, and only for people who join. Want to be on it?",
+    "handle": "Choose a handle",
+    "join": "Join the leaderboard",
+    "failed": "The leaderboard could not be loaded.",
+    "empty": "Nobody here yet this week.",
+    "you": "(you)",
+    "points_one": "{{count}} point",
+    "points_other": "{{count}} points",
+    "mine_one": "You are #{{rank}} with {{count}} point",
+    "mine_other": "You are #{{rank}} with {{count}} points"
+  }
+}

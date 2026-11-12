@@ -1,0 +1,106 @@
+{
+  "loading": "Cargando…",
+  "daily": {
+    "title": "Quiz diario",
+    "hint": "Cinco preguntas, las mismas para todos hoy. Un intento al día.",
+    "start": "Jugar el quiz de hoy",
+    "streak_one": "Racha de {{count}} día",
+    "streak_other": "Racha de {{count}} días",
+    "done_one": "Hecho hoy: {{count}} punto",
+    "done_other": "Hecho hoy: {{count}} puntos",
+    "streak_many": "Racha de {{count}} días",
+    "done_many": "Hecho hoy: {{count}} puntos"
+  },
+  "challenge": {
+    "title": "Infórmate antes de viajar",
+    "destination": "Cinco preguntas sobre {{country}}, tu próximo viaje.",
+    "featured": "El pack destacado de la semana: cinco preguntas.",
+    "start": "Empezar el reto",
+    "done": "Hecho esta semana. ¡Bien!"
+  },
+  "packs": {
+    "title": "Packs de práctica"
+  },
+  "pack": {
+    "flags": "Banderas",
+    "capitals": "Capitales",
+    "landmarks": "Monumentos",
+    "cuisine": "Gastronomía"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "¿De qué país es esta bandera?",
+      "capital_of": "¿Cuál es la capital de {{country}}?",
+      "country_of_capital": "¿De qué país es capital {{capital}}?",
+      "landmark_country": "¿En qué país está {{landmark}}?",
+      "dish_country": "¿De qué país es {{dish}}?"
+    },
+    "flagAlt": "Bandera",
+    "progress": "Pregunta {{current}} de {{total}}",
+    "timer_one": "Queda {{count}} segundo",
+    "timer_other": "Quedan {{count}} segundos",
+    "correct": "Respuesta correcta",
+    "wrong": "Tu respuesta, incorrecta",
+    "correctPoints_one": "¡Correcto! +{{count}} punto",
+    "correctPoints_other": "¡Correcto! +{{count}} puntos",
+    "wrongNote": "Esta vez no. Marcamos la correcta.",
+    "next": "Siguiente pregunta",
+    "finish": "Ver resultado",
+    "timer_many": "Quedan {{count}} segundos",
+    "correctPoints_many": "¡Correcto! +{{count}} puntos"
+  },
+  "result": {
+    "title": "Tu resultado",
+    "correct": "{{correct}} de {{total}} correctas",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "Racha de {{count}} día",
+    "streak_other": "Racha de {{count}} días",
+    "back": "Volver a Jugar",
+    "xp_many": "+{{count}} XP",
+    "streak_many": "Racha de {{count}} días"
+  },
+  "h2h": {
+    "title": "Cara a cara",
+    "hint": "Reta a un amigo por su alias. Juegas ahora y tiene 48 horas para responder.",
+    "empty": "Aún no hay partidas.",
+    "handle": "Su alias",
+    "pack": "Pack",
+    "create": "Retar",
+    "open": "Abrir",
+    "back": "Volver a Jugar",
+    "missing": "No se encontró esta partida.",
+    "vs": "Tú vs {{handle}}",
+    "score": "{{you}} a {{them}}",
+    "state_waiting_you": "Te toca",
+    "state_waiting_them": "Esperando respuesta",
+    "state_done": "Terminada",
+    "state_declined": "Rechazada",
+    "state_expired": "Caducada",
+    "winner_you": "¡Ganaste!",
+    "winner_them": "Esta la ganó la otra persona.",
+    "winner_draw": "Empate.",
+    "accept": "Aceptar y jugar",
+    "decline": "Rechazar"
+  },
+  "board": {
+    "title": "Clasificación",
+    "scope": "Ámbito de la clasificación",
+    "scope_global": "Global",
+    "scope_friends": "Amigos",
+    "week_current": "Esta semana",
+    "week_previous": "Semana pasada",
+    "optinNote": "La clasificación global solo muestra alias y solo de quien se une. ¿Quieres aparecer?",
+    "handle": "Elige un alias",
+    "join": "Unirme a la clasificación",
+    "failed": "No se pudo cargar la clasificación.",
+    "empty": "Aún no hay nadie esta semana.",
+    "you": "(tú)",
+    "points_one": "{{count}} punto",
+    "points_other": "{{count}} puntos",
+    "mine_one": "Eres el n.º {{rank}} con {{count}} punto",
+    "mine_other": "Eres el n.º {{rank}} con {{count}} puntos",
+    "points_many": "{{count}} puntos",
+    "mine_many": "Eres el n.º {{rank}} con {{count}} puntos"
+  }
+}

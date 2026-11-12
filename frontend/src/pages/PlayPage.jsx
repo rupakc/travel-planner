@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
+import { useClientConfig, featureOn } from '../hooks/useClientConfig'
 import { useAuth } from '../context/AuthContext'
 import { getAccount } from '../services/accountApi'
 import { getTripStats } from '../services/tripsApi'
@@ -10,6 +11,8 @@ import useGameMe from '../components/game/useGameMe'
 import GameSection from '../components/game/GameSection'
 import CountriesVisited from '../components/play/CountriesVisited'
 import BucketGoalEditor from '../components/play/BucketGoalEditor'
+import QuizHub from '../components/play/QuizHub'
+import H2HMatch from '../components/play/H2HMatch'
 
 function Streak({ token }) {
   const { t } = useTranslation('playYou')
@@ -25,11 +28,13 @@ function Streak({ token }) {
   )
 }
 
-export default function PlayPage() {
+export default function PlayPage({ h2hId = null }) {
   const { enabled } = useJourney()
   const { token } = useAuth()
   const { t } = useTranslation('playYou')
   const { settings } = useAccountSettings()
+  const { config } = useClientConfig()
+  const playOn = featureOn(config, 'play') // Phase 5: quiz, head-to-head, boards (older backends: off)
   const hidden = !!settings?.hide_game
   const [account, setAccount] = useState(null)
   const [stats, setStats] = useState(null)
@@ -54,9 +59,20 @@ export default function PlayPage() {
     )
   }
 
+  if (h2hId && playOn) {
+    return (
+      <main className="mx-auto max-w-3xl space-y-6 px-4 py-6" data-tid="play.page">
+        <h1 className="text-2xl font-bold text-slate-800">{t('page.title')}</h1>
+        <H2HMatch token={token} id={h2hId} />
+      </main>
+    )
+  }
+  if (h2hId) return <Navigate to="/play" replace />
+
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6" data-tid="play.page">
       <h1 className="text-2xl font-bold text-slate-800">{t('page.title')}</h1>
+      {playOn && <QuizHub token={token} />}
       <GameSection account={account} />
       <Streak token={token} />
       {stats && (

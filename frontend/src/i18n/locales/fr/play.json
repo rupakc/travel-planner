@@ -1,0 +1,106 @@
+{
+  "loading": "Chargement…",
+  "daily": {
+    "title": "Quiz du jour",
+    "hint": "Cinq questions, les mêmes pour tout le monde aujourd'hui. Un essai par jour.",
+    "start": "Jouer au quiz du jour",
+    "streak_one": "{{count}} jour d'affilée",
+    "streak_other": "{{count}} jours d'affilée",
+    "done_one": "Fait aujourd'hui : {{count}} point",
+    "done_other": "Fait aujourd'hui : {{count}} points",
+    "streak_many": "{{count}} jours d'affilée",
+    "done_many": "Fait aujourd'hui : {{count}} points"
+  },
+  "challenge": {
+    "title": "À savoir avant de partir",
+    "destination": "Cinq questions sur {{country}}, votre prochain voyage.",
+    "featured": "Le pack de la semaine : cinq questions.",
+    "start": "Lancer le défi",
+    "done": "Fait cette semaine. Bravo !"
+  },
+  "packs": {
+    "title": "Packs d'entraînement"
+  },
+  "pack": {
+    "flags": "Drapeaux",
+    "capitals": "Capitales",
+    "landmarks": "Monuments",
+    "cuisine": "Cuisine"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "De quel pays est ce drapeau ?",
+      "capital_of": "Quelle est la capitale de {{country}} ?",
+      "country_of_capital": "{{capital}} est la capitale de quel pays ?",
+      "landmark_country": "Dans quel pays se trouve {{landmark}} ?",
+      "dish_country": "{{dish}} vient de quel pays ?"
+    },
+    "flagAlt": "Drapeau",
+    "progress": "Question {{current}} sur {{total}}",
+    "timer_one": "Encore {{count}} seconde",
+    "timer_other": "Encore {{count}} secondes",
+    "correct": "Bonne réponse",
+    "wrong": "Votre réponse, incorrecte",
+    "correctPoints_one": "Bravo ! +{{count}} point",
+    "correctPoints_other": "Bravo ! +{{count}} points",
+    "wrongNote": "Pas cette fois. La bonne réponse est indiquée.",
+    "next": "Question suivante",
+    "finish": "Voir le résultat",
+    "timer_many": "Encore {{count}} secondes",
+    "correctPoints_many": "Bravo ! +{{count}} points"
+  },
+  "result": {
+    "title": "Votre résultat",
+    "correct": "{{correct}} sur {{total}} correctes",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "{{count}} jour d'affilée",
+    "streak_other": "{{count}} jours d'affilée",
+    "back": "Retour à Jouer",
+    "xp_many": "+{{count}} XP",
+    "streak_many": "{{count}} jours d'affilée"
+  },
+  "h2h": {
+    "title": "Face à face",
+    "hint": "Défiez un ami via son pseudo. Vous jouez maintenant, il a 48 heures pour répondre.",
+    "empty": "Aucun duel pour l'instant.",
+    "handle": "Son pseudo",
+    "pack": "Pack",
+    "create": "Défier",
+    "open": "Ouvrir",
+    "back": "Retour à Jouer",
+    "missing": "Ce duel est introuvable.",
+    "vs": "Vous contre {{handle}}",
+    "score": "{{you}} à {{them}}",
+    "state_waiting_you": "À vous de jouer",
+    "state_waiting_them": "En attente de sa réponse",
+    "state_done": "Terminé",
+    "state_declined": "Refusé",
+    "state_expired": "Expiré",
+    "winner_you": "Vous avez gagné !",
+    "winner_them": "Il ou elle a gagné cette fois.",
+    "winner_draw": "Égalité.",
+    "accept": "Accepter et jouer",
+    "decline": "Refuser"
+  },
+  "board": {
+    "title": "Classement",
+    "scope": "Portée du classement",
+    "scope_global": "Mondial",
+    "scope_friends": "Amis",
+    "week_current": "Cette semaine",
+    "week_previous": "Semaine dernière",
+    "optinNote": "Le classement mondial n'affiche que des pseudos, et seulement pour ceux qui y participent. Voulez-vous y figurer ?",
+    "handle": "Choisissez un pseudo",
+    "join": "Rejoindre le classement",
+    "failed": "Le classement n'a pas pu être chargé.",
+    "empty": "Personne pour l'instant cette semaine.",
+    "you": "(vous)",
+    "points_one": "{{count}} point",
+    "points_other": "{{count}} points",
+    "mine_one": "Vous êtes {{rank}}e avec {{count}} point",
+    "mine_other": "Vous êtes {{rank}}e avec {{count}} points",
+    "points_many": "{{count}} points",
+    "mine_many": "Vous êtes {{rank}}e avec {{count}} points"
+  }
+}

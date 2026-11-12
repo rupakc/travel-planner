@@ -1,0 +1,98 @@
+{
+  "loading": "लोड हो रहा है…",
+  "daily": {
+    "title": "दैनिक क्विज़",
+    "hint": "पाँच प्रश्न, आज सबके लिए एक जैसे। दिन में एक ही प्रयास।",
+    "start": "आज का क्विज़ खेलें",
+    "streak_one": "{{count}} दिन की लगातार क्विज़",
+    "streak_other": "{{count}} दिनों की लगातार क्विज़",
+    "done_one": "आज पूरा: {{count}} अंक",
+    "done_other": "आज पूरा: {{count}} अंक"
+  },
+  "challenge": {
+    "title": "जाने से पहले जानें",
+    "destination": "{{country}} के बारे में पाँच प्रश्न, आपकी अगली यात्रा।",
+    "featured": "इस सप्ताह का चुना हुआ पैक: पाँच प्रश्न।",
+    "start": "चुनौती शुरू करें",
+    "done": "इस सप्ताह पूरा। बढ़िया!"
+  },
+  "packs": {
+    "title": "अभ्यास पैक"
+  },
+  "pack": {
+    "flags": "झंडे",
+    "capitals": "राजधानियाँ",
+    "landmarks": "प्रसिद्ध स्थल",
+    "cuisine": "व्यंजन"
+  },
+  "quiz": {
+    "prompt": {
+      "flag": "यह झंडा किस देश का है?",
+      "capital_of": "{{country}} की राजधानी क्या है?",
+      "country_of_capital": "{{capital}} किस देश की राजधानी है?",
+      "landmark_country": "{{landmark}} किस देश में है?",
+      "dish_country": "{{dish}} किस देश का व्यंजन है?"
+    },
+    "flagAlt": "झंडा",
+    "progress": "प्रश्न {{current}} / {{total}}",
+    "timer_one": "{{count}} सेकंड बचा",
+    "timer_other": "{{count}} सेकंड बचे",
+    "correct": "सही उत्तर",
+    "wrong": "आपका उत्तर, गलत",
+    "correctPoints_one": "सही! +{{count}} अंक",
+    "correctPoints_other": "सही! +{{count}} अंक",
+    "wrongNote": "इस बार नहीं। सही उत्तर चिह्नित है।",
+    "next": "अगला प्रश्न",
+    "finish": "नतीजा देखें"
+  },
+  "result": {
+    "title": "आपका नतीजा",
+    "correct": "{{total}} में से {{correct}} सही",
+    "xp_one": "+{{count}} XP",
+    "xp_other": "+{{count}} XP",
+    "streak_one": "{{count}} दिन लगातार",
+    "streak_other": "{{count}} दिन लगातार",
+    "back": "Play पर वापस"
+  },
+  "h2h": {
+    "title": "आमने-सामने",
+    "hint": "हैंडल से किसी दोस्त को चुनौती दें। आप अभी खेलें, उनके पास 48 घंटे हैं।",
+    "empty": "अभी कोई मैच नहीं।",
+    "handle": "उनका हैंडल",
+    "pack": "पैक",
+    "create": "चुनौती दें",
+    "open": "खोलें",
+    "back": "Play पर वापस",
+    "missing": "यह मैच नहीं मिला।",
+    "vs": "आप बनाम {{handle}}",
+    "score": "{{you}} - {{them}}",
+    "state_waiting_you": "आपकी बारी",
+    "state_waiting_them": "उनके जवाब का इंतज़ार",
+    "state_done": "पूरा हुआ",
+    "state_declined": "अस्वीकृत",
+    "state_expired": "समय समाप्त",
+    "winner_you": "आप जीते!",
+    "winner_them": "इस बार वे जीते।",
+    "winner_draw": "बराबरी।",
+    "accept": "स्वीकार करें और खेलें",
+    "decline": "अस्वीकार करें"
+  },
+  "board": {
+    "title": "लीडरबोर्ड",
+    "scope": "लीडरबोर्ड का दायरा",
+    "scope_global": "वैश्विक",
+    "scope_friends": "दोस्त",
+    "week_current": "इस सप्ताह",
+    "week_previous": "पिछला सप्ताह",
+    "optinNote": "वैश्विक बोर्ड केवल हैंडल दिखाता है, और सिर्फ़ उन्हीं के जो जुड़ते हैं। क्या आप जुड़ना चाहते हैं?",
+    "handle": "एक हैंडल चुनें",
+    "join": "लीडरबोर्ड से जुड़ें",
+    "failed": "लीडरबोर्ड लोड नहीं हो सका।",
+    "empty": "इस सप्ताह अभी कोई नहीं।",
+    "you": "(आप)",
+    "points_one": "{{count}} अंक",
+    "points_other": "{{count}} अंक",
+    "mine_one": "आप {{rank}} नंबर पर हैं, {{count}} अंक के साथ",
+    "mine_other": "आप {{rank}} नंबर पर हैं, {{count}} अंकों के साथ"
+  }
+}

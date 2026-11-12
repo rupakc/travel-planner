@@ -26,11 +26,11 @@ const nsOf = (path) => path.split('/').pop().replace(/\.json$/, '')
 // routeNamespaces.test.js keeps the two in step). Every other en file is
 // bundled, so a namespace added later is safe by default.
 const enModules = import.meta.glob(
-  ['./locales/en/*.json', '!./locales/en/{accountData,accountSettings,adminInvites,adminSocial,adminTelemetry,expenses,journal,mobile,nearbyTrip,notifications,offlinePack,playYou,prep,recap,security,today,trip,trips}.json'],
+  ['./locales/en/*.json', '!./locales/en/{accountData,accountSettings,adminInvites,adminSocial,adminTelemetry,expenses,journal,mobile,nearbyTrip,notifications,offlinePack,play,playYou,prep,recap,security,today,trip,trips}.json'],
   { eager: true },
 )
 const enLazyModules = import.meta.glob(
-  './locales/en/{accountData,accountSettings,adminInvites,adminSocial,adminTelemetry,expenses,journal,mobile,nearbyTrip,notifications,offlinePack,playYou,prep,recap,security,today,trip,trips}.json',
+  './locales/en/{accountData,accountSettings,adminInvites,adminSocial,adminTelemetry,expenses,journal,mobile,nearbyTrip,notifications,offlinePack,play,playYou,prep,recap,security,today,trip,trips}.json',
 )
 const lazyModules = {
   ...import.meta.glob(['./locales/*/*.json', '!./locales/en/*.json']),
