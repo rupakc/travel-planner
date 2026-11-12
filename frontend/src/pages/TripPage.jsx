@@ -21,6 +21,7 @@ import ExpenseLog from '../components/trips/ExpenseLog'
 import Journal from '../components/trips/Journal'
 import Recap from '../components/trips/Recap'
 import OfflinePack from '../components/trips/OfflinePack'
+import TripPricesCard from '../components/alerts2/TripPricesCard'
 
 const PANELS = {
   overview: TripOverview,
@@ -226,6 +227,7 @@ function TripScreen({ tripId, tab }) {
           </div>
         )}
         <Panel trip={trip} token={token} planStatus={planStatus} onRetryPlan={loadPlan} {...extra} />
+        {active === 'overview' && !offline && <TripPricesCard planId={trip.id} token={token} />}
       </section>
     </>,
   )

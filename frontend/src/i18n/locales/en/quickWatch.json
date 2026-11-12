@@ -11,5 +11,11 @@
   "error.live_prices_off": "Price watching isn't available right now.",
   "error.spec_invalid": "We couldn't set up a watch for this one.",
   "error.generic": "Couldn't start the watch. Try again.",
-  "toast.undoFailed": "Couldn't undo that. Remove the watch on the Alerts page."
+  "toast.undoFailed": "Couldn't undo that. Remove the watch on the Alerts page.",
+  "prices.title": "Prices",
+  "prices.empty": "Nothing is being watched for this trip yet.",
+  "prices.hub": "Open the price alerts hub",
+  "prices.watchTrip": "Watch prices for this trip",
+  "prices.loadFailed": "Could not load the watched prices.",
+  "prices.pending": "First check pending"
 }

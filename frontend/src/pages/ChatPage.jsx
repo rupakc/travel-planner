@@ -22,6 +22,9 @@ import { ActivityTripContext } from '../components/alerts/activityTripContext'
 import { messageTrip } from '../utils/activityWatch'
 import WatchHotelButton from '../components/alerts/WatchHotelButton'
 import WatchTripButton from '../components/alerts/WatchTripButton'
+import { QuickWatchHotel, QuickWatchActivity, QuickWatchFare } from '../components/alerts2/QuickWatchFor'
+import WatchSuggestions from '../components/alerts2/WatchSuggestions'
+import { useAlertsV2 } from '../hooks/useAlertsV2'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
@@ -615,6 +618,8 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   const [viewingPlan, setViewingPlan] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isDragOverSaved, setIsDragOverSaved] = useState(false)
+  const alertsV2 = useAlertsV2()
+  const [suggestPlanId, setSuggestPlanId] = useState(null)
 
   const selectedCount = countSelections(selections)
   const estimatedCost = computePlanCost(selections, searchContext)
@@ -636,10 +641,10 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   // Freeze the chat's section results into the trip (journey backend only);
   // nothing to send when the chat has none. Never fails the save.
   const saveTripSnapshot = async (res, planId) => {
-    if (!tripsApi) return
     let id = planId
     if (!id) { try { id = (await res.json())?.id } catch { id = null } }
-    if (!id) return
+    if (!id) return null
+    if (!tripsApi) return id
     setSavedTripId(id)
     // Omit sections the chat lacks: the server may treat null as "clear".
     const snap = Object.fromEntries(Object.entries(snapshotFromResults(sectionResults)).filter(([, v]) => v))
@@ -648,6 +653,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
       try { Promise.resolve(putSnapshot(token, id, snap)).catch(() => {}) } catch { /* ignore */ }
     }
     notifyTripsChanged()
+    return id
   }
 
   const save = async () => {
@@ -662,7 +668,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         ? JSON.stringify({ name: planName, selections: saved })
         : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
-      if (res.ok) { await saveTripSnapshot(res, isUpdate ? loadedPlanId : null); setSaveMsg(isUpdate ? 'updated' : 'saved'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
+      if (res.ok) { const savedId = await saveTripSnapshot(res, isUpdate ? loadedPlanId : null); if (alertsV2.on && savedId != null) setSuggestPlanId(savedId); setSaveMsg(isUpdate ? 'updated' : 'saved'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
       else setSaveMsg('failed')
     } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
@@ -726,6 +732,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
   return (
     <>
+      {alertsV2.on && suggestPlanId != null && <WatchSuggestions planId={suggestPlanId} onDone={() => setSuggestPlanId(null)} />}
       {isOpen && <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />}
       <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="px-4 py-3 bg-gradient-to-r from-slate-500 to-slate-600 text-white shrink-0">
@@ -792,6 +799,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
               {selections.flight.booking_url && <a href={selections.flight.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('action.book')}</a>}
               <div className="mt-1.5">
                 <WatchFareButton variant="inline" trip={tripFromSearch(searchContext)} source="chat_plan" />
+                <QuickWatchFare trip={tripFromSearch(searchContext)} planId={loadedPlanId ?? null} surface="chat" />
               </div>
             </div>
           )}
@@ -808,6 +816,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                 : t('drawer.hotelLine', { price: `$${fmtNumber(selections.hotel.price_per_night_usd)}` })}</p>
               {selections.hotel.booking_url && <a href={selections.hotel.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium mt-1"><ExternalLink size={10} /> {t('action.book')}</a>}
               <div className="mt-1.5"><WatchHotelButton hotel={selections.hotel} searchData={searchContext} source="chat_plan" /></div>
+              <div className="mt-1.5"><QuickWatchHotel hotel={selections.hotel} searchData={searchContext} planId={loadedPlanId ?? null} surface="chat" /></div>
             </div>
           )}
 
@@ -824,6 +833,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                     </div>
                     {a.booking_url && <a href={a.booking_url} target="_blank" rel="noopener noreferrer" data-tid="chat.link-book" className="text-emerald-600 text-[10px]"><ExternalLink size={8} className="inline" /> {t('action.book')}</a>}
                     <div><WatchActivityButton activity={a} variant="compact" source="chat_plan" /></div>
+                    <div><QuickWatchActivity activity={a} planId={loadedPlanId ?? null} surface="chat" /></div>
                   </div>
                   <button onClick={() => onRemoveSelection('activities', a)} data-tid="chat.remove-activity" aria-label={t('action.remove')} className="text-gray-400 hover:text-red-500 shrink-0"><X size={12} /></button>
                 </div>

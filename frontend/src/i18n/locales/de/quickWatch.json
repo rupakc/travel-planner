@@ -11,5 +11,11 @@
   "error.live_prices_off": "Preisbeobachtung ist gerade nicht verfügbar.",
   "error.spec_invalid": "Für dieses Angebot konnten wir keine Beobachtung einrichten.",
   "error.generic": "Die Beobachtung konnte nicht gestartet werden. Versuch es noch einmal.",
-  "toast.undoFailed": "Rückgängig machen hat nicht geklappt. Entferne die Beobachtung auf der Alarm-Seite."
+  "toast.undoFailed": "Rückgängig machen hat nicht geklappt. Entferne die Beobachtung auf der Alarm-Seite.",
+  "prices.title": "Preise",
+  "prices.empty": "Für diese Reise wird noch nichts beobachtet.",
+  "prices.hub": "Preisalarme öffnen",
+  "prices.watchTrip": "Preise für diese Reise beobachten",
+  "prices.loadFailed": "Die beobachteten Preise konnten nicht geladen werden.",
+  "prices.pending": "Erste Prüfung steht noch aus"
 }

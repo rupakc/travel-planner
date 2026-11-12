@@ -11,5 +11,11 @@
   "error.live_prices_off": "价格关注功能暂时不可用。",
   "error.spec_invalid": "我们无法为此项目设置关注。",
   "error.generic": "无法开始关注，请重试。",
-  "toast.undoFailed": "无法撤销。请在提醒页面移除该关注。"
+  "toast.undoFailed": "无法撤销。请在提醒页面移除该关注。",
+  "prices.title": "价格",
+  "prices.empty": "这次行程还没有关注任何价格。",
+  "prices.hub": "打开价格提醒中心",
+  "prices.watchTrip": "关注这次行程的价格",
+  "prices.loadFailed": "无法加载已关注的价格。",
+  "prices.pending": "首次检查待进行"
 }

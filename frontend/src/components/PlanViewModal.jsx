@@ -10,6 +10,8 @@ import {
 import WatchFareButton from './alerts/WatchFareButton'
 import WatchTripButton from './alerts/WatchTripButton'
 import { tripFromPlan } from '../utils/fareWatch'
+import { QuickWatchHotel, QuickWatchActivity } from './alerts2/QuickWatchFor'
+import { ActivityTripContext } from './alerts/activityTripContext'
 import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import { enumLabel } from '../utils/enumLabel'
 import PlanExport from './PlanExport'
@@ -264,6 +266,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                   {sel.hotel.booking_url && (
                     <a href={sel.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.hotel.viewBook')}</a>
                   )}
+                  <div className="mt-1"><QuickWatchHotel hotel={sel.hotel} searchData={sd} planId={plan.id ?? null} surface="results" /></div>
                 </div>
                 <button data-tid="plan.remove-hotel" aria-label={t('modal.delete')} onClick={() => removeItem('hotel')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                   <Trash2 size={14} />
@@ -288,6 +291,11 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       {a.booking_url && (
                         <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
                       )}
+                      <div className="mt-1">
+                        <ActivityTripContext.Provider value={{ searchData: sd, itinerary: sel.itinerary || null }}>
+                          <QuickWatchActivity activity={a} planId={plan.id ?? null} surface="results" />
+                        </ActivityTripContext.Provider>
+                      </div>
                     </div>
                     <button data-tid="plan.remove-activities" aria-label={t('modal.delete')} onClick={() => removeItem('activities', a)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
