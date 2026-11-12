@@ -22,7 +22,7 @@ Auth, bucket `share_manage`.
  "locale": "en"}
 ```
 
-- `kind`: `plan` (a plan, covers its itinerary), `recap` (a trip's memories recap) or `savings` (the price-alert savings tally). `plan_id` is required for `plan` and `recap` and ignored for `savings`. More kinds may be added later; clients treat an unknown `kind` as a plain link.
+- `kind`: `plan` (a plan, covers its itinerary), `recap` (a trip's memories recap) or `savings` (the price-alert savings tally). `plan_id` is required for `plan` and `recap` and ignored for `savings`. **Added in Phase 5 (additive):** `quiz` (extra request field `session_id`: the caller's *finished* quiz session, `404 session_not_found` otherwise; `404 play_disabled` while Play is off; idempotent per session; the card is the pack and correct answers out of the total, e.g. `Flags quiz: 4/5`, never time, points or answers) and `status` (optional `plan_id`: an active, on-the-road trip of the caller, else the caller's first active trip; `422 no_active_trip` when there is none; the card is `Day N in Place` from server data and the link answers `404` once the trip is over). Neither carries `search_data`/`selections`; both return a `card` like `recap`, and the name is shown only with `show_name`. More kinds may be added later; clients treat an unknown `kind` as a plain link.
 - `options` (all optional, private defaults shown): `dates` is `hidden | month | exact`; `show_origin` and `show_name` are booleans. Any other value falls back to the private default.
 - `locale` (optional, at most 8 characters): the language of the server-rendered page (`en es de fr hi zh bn`; anything else is English).
 - **Idempotent** per (user, kind, `plan_id`): a second call returns the same token and **replaces** its options.

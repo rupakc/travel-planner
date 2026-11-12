@@ -95,7 +95,7 @@ def test_not_yours_and_validation(client):
     assert r.status_code == 404 and r.json()["error_code"] == "plan_not_found"
     r = client.post("/api/shares", json={"kind": "plan"}, headers=h1)
     assert r.status_code == 404
-    r = client.post("/api/shares", json={"kind": "quiz"}, headers=h1)
+    r = client.post("/api/shares", json={"kind": "bogus"}, headers=h1)
     assert r.status_code == 422 and r.json()["error_code"] == "invalid_kind"
     token = _share(client, h1, plan["id"])["token"]
     r = client.delete(f"/api/shares/{token}", headers=h2)
