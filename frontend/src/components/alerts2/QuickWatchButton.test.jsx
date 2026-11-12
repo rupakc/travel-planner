@@ -88,6 +88,39 @@ describe('QuickWatchButton', () => {
     expect(btn().getAttribute('aria-pressed')).toBe('true')
   })
 
+  it('undo has a busy guard: one DELETE, no false failure', async () => {
+    alertsApi.quickWatch.mockResolvedValue({ kind: 'hotel', watch: { id: 5 }, existing: false })
+    const d = deferred()
+    api.deletePriceWatch.mockReturnValue(d.p)
+    await render()
+    await tap(btn())
+    const undo = document.querySelector('[data-tid="quick-watch-undo"]')
+    await tap(undo); await tap(undo)
+    expect(api.deletePriceWatch).toHaveBeenCalledTimes(1)
+    await act(async () => { d.resolve({}) })
+    expect(document.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
+    expect(document.body.textContent).not.toContain("Couldn't undo")
+  })
+
+  it('two watches keep two toasts, each with its own undo', async () => {
+    alertsApi.quickWatch.mockResolvedValueOnce({ kind: 'hotel', watch: { id: 5 }, existing: false })
+      .mockResolvedValueOnce({ kind: 'hotel', watch: { id: 6 }, existing: false })
+    api.deletePriceWatch.mockResolvedValue({})
+    await act(async () => {
+      root.render(<MemoryRouter>
+        <QuickWatchButton kind="hotel" title="A" spec={{}} /><QuickWatchButton kind="hotel" title="B" spec={{}} />
+      </MemoryRouter>)
+    })
+    const [a, b] = host.querySelectorAll('[data-tid="quick-watch"]')
+    await tap(a); await tap(b)
+    expect(document.querySelectorAll('[data-tid="quick-watch-toast"]')).toHaveLength(2)
+    await tap(document.querySelectorAll('[data-tid="quick-watch-undo"]')[0])
+    expect(api.deletePriceWatch).toHaveBeenCalledWith(5, 'tok')
+    expect(document.querySelectorAll('[data-tid="quick-watch-toast"]')).toHaveLength(1)
+    await tap(document.querySelector('[data-tid="quick-watch-undo"]'))
+    expect(api.deletePriceWatch).toHaveBeenCalledWith(6, 'tok')
+  })
+
   it('tapping while pressed does nothing more', async () => {
     alertsApi.quickWatch.mockResolvedValue({ kind: 'hotel', watch: { id: 5 }, existing: false })
     await render()
