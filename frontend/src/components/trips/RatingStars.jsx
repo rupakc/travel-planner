@@ -45,7 +45,7 @@ export default function RatingStars({ value = null, onChange, name = 'rating', d
             data-tid={`${name}-star-${n}`}
             className="flex h-11 w-9 items-center justify-center text-2xl leading-none sm:h-9 sm:w-8"
           >
-            <span aria-hidden="true" className={current && n <= current ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'}>
+            <span aria-hidden="true" className={current && n <= current ? 'text-amber-500' : 'text-slate-300'}>
               {current && n <= current ? '★' : '☆'}
             </span>
           </button>

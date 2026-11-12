@@ -8,17 +8,17 @@ export default function NextUpCard({ slot, onDirections }) {
   const { t } = useTranslation('today')
   if (!slot) {
     return (
-      <div data-tid="today-next-up" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+      <div data-tid="today-next-up" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
         {t('nothingNext')}
       </div>
     )
   }
   const url = directionsUrl({ lat: slot.lat, lng: slot.lng, name: slot.activity }, { apple: isApplePlatform() })
   return (
-    <div data-tid="today-next-up" className="rounded-xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950">
-      <p className="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200">{t('nextUp')}</p>
-      <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">{slot.activity}</p>
-      <p className="text-sm text-slate-600 dark:text-slate-300">{timeRange(slot)}</p>
+    <div data-tid="today-next-up" className="rounded-xl border border-teal-200 bg-teal-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-teal-800">{t('nextUp')}</p>
+      <p className="mt-1 text-base font-semibold text-slate-900">{slot.activity}</p>
+      <p className="text-sm text-slate-600">{timeRange(slot)}</p>
       <a
         data-tid="today-next-directions"
         href={url}

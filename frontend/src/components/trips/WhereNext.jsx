@@ -44,17 +44,17 @@ export default function WhereNext({ trip, onUse }) {
   }
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800" data-tid="recap.where-next">
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('whereNext.title')}</h3>
+    <section className="rounded-xl border border-gray-200 bg-white p-4" data-tid="recap.where-next">
+      <h3 className="font-semibold text-gray-900">{t('whereNext.title')}</h3>
       {state.status !== 'done' && (
         <button type="button" onClick={load} disabled={state.status === 'loading'} data-tid="recap.where-next-go"
           className="mt-2 min-h-[44px] rounded-lg bg-teal-700 px-4 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60">
           {state.status === 'loading' ? t('whereNext.loading') : state.status === 'error' ? t('whereNext.retry') : t('whereNext.cta')}
         </button>
       )}
-      {state.status === 'error' && <p className="mt-2 text-sm text-red-700 dark:text-red-300" role="alert">{state.reason === 'origin' ? t('whereNext.needOrigin') : t('whereNext.failed')}</p>}
+      {state.status === 'error' && <p className="mt-2 text-sm text-red-700" role="alert">{state.reason === 'origin' ? t('whereNext.needOrigin') : t('whereNext.failed')}</p>}
       {state.status === 'done' && state.items.length === 0 && (
-        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{t('whereNext.none')}</p>
+        <p className="mt-2 text-sm text-gray-700">{t('whereNext.none')}</p>
       )}
       {state.items.length > 0 && (
         <ul className="mt-2 space-y-2" data-tid="recap.where-next-list">
@@ -62,9 +62,9 @@ export default function WhereNext({ trip, onUse }) {
             <li key={`${d.city}-${i}`}>
               <Link to="/explore" state={{ prefill: { destination: `${d.city}, ${d.country}` } }}
                 data-tid={`recap.where-next-item-${i}`}
-                className="flex min-h-[44px] flex-col justify-center rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">
-                <span className="font-medium text-gray-900 dark:text-gray-100">{d.city}, {d.country}</span>
-                {d.tagline || d.reason ? <span className="text-xs text-gray-600 dark:text-gray-300">{d.tagline || d.reason}</span> : null}
+                className="flex min-h-[44px] flex-col justify-center rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                <span className="font-medium text-gray-900">{d.city}, {d.country}</span>
+                {d.tagline || d.reason ? <span className="text-xs text-gray-600">{d.tagline || d.reason}</span> : null}
               </Link>
             </li>
           ))}

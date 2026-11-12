@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { createTrip, notifyTripsChanged } from '../../services/tripsApi'
 import { emit } from '../../telemetry/client'
 
-const field = 'mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100'
+const field = 'mt-1 w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900'
 
 // Save an idea: a Dreaming trip with a title and an optional destination.
 export default function CreateTripDialog({ onClose, onCreated }) {
@@ -51,28 +51,28 @@ export default function CreateTripDialog({ onClose, onCreated }) {
       <form
         role="dialog" aria-modal="true" aria-labelledby="trips-create-title" onSubmit={submit}
         data-tid="trips-create-dialog"
-        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-800"
+        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl"
       >
-        <h2 id="trips-create-title" className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('create.heading')}</h2>
-        <label className="mt-3 block text-sm text-slate-700 dark:text-slate-200">
+        <h2 id="trips-create-title" className="text-lg font-semibold text-slate-900">{t('create.heading')}</h2>
+        <label className="mt-3 block text-sm text-slate-700">
           {t('create.title')}
           <input
             ref={input} data-tid="trips-create-title" value={title} maxLength={80} required
             onChange={(e) => setTitle(e.target.value)} className={field}
           />
         </label>
-        <label className="mt-3 block text-sm text-slate-700 dark:text-slate-200">
+        <label className="mt-3 block text-sm text-slate-700">
           {t('create.destination')}
           <input
             data-tid="trips-create-destination" value={destination} maxLength={120}
             onChange={(e) => setDestination(e.target.value)} className={field}
           />
         </label>
-        {error && <p role="alert" data-tid="trips-create-error" className="mt-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
+        {error && <p role="alert" data-tid="trips-create-error" className="mt-3 text-sm text-red-700">{error}</p>}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button" data-tid="trips-create-cancel" onClick={onClose}
-            className="min-h-[44px] rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-800 dark:border-slate-600 dark:text-slate-100"
+            className="min-h-[44px] rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-800"
           >{t('create.cancel')}</button>
           <button
             type="submit" data-tid="trips-create-submit" disabled={busy || !title.trim()}

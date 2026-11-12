@@ -118,26 +118,26 @@ export default function Journal({ trip, token }) {
     }))
 
   return (
-    <section className="space-y-6 text-slate-900 dark:text-slate-100" data-tid="journal">
+    <section className="space-y-6 text-slate-900" data-tid="journal">
       <h2 className="text-lg font-semibold">{t('title')}</h2>
       <JournalEntryForm onSubmit={add} days={days} busy={busy} />
-      {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       {groups.length === 0 ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300" data-tid="journal-empty">{t('empty')}</p>
+        <p className="text-sm text-slate-600" data-tid="journal-empty">{t('empty')}</p>
       ) : groups.map((g) => (
         <div key={g.day || 'none'}>
-          <h3 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+          <h3 className="mb-2 text-sm font-medium text-slate-600">
             {g.day ? fmtDate(`${g.day}T12:00:00`, { weekday: 'short', day: 'numeric', month: 'short' }) : t('noDay')}
           </h3>
           <ul className="space-y-2">
             {g.items.map((e) => (
-              <li key={e.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700" data-tid={`journal-entry-${e.id}`}>
+              <li key={e.id} className="rounded-lg border border-slate-200 p-3" data-tid={`journal-entry-${e.id}`}>
                 <p className="whitespace-pre-wrap break-words">{e.body}</p>
-                <div className="mt-2 flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
+                <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                   <span>{e.mood ? t(`mood.${e.mood}`) : ''}{e.pending ? ` ${t('pending')}` : ''}</span>
                   {!e.pending && (
                     <button type="button" onClick={() => remove(e)} data-tid={`journal-delete-${e.id}`}
-                      className="min-h-[44px] px-3 text-red-700 dark:text-red-400">{t('delete')}</button>
+                      className="min-h-[44px] px-3 text-red-700">{t('delete')}</button>
                   )}
                 </div>
               </li>

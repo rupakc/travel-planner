@@ -21,7 +21,7 @@ import PassportStamp from './PassportStamp'
 
 const btn = 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 disabled:opacity-50'
 const primary = `${btn} bg-teal-700 hover:bg-teal-800 text-white`
-const quiet = `${btn} border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800`
+const quiet = `${btn} border border-slate-300 bg-white text-slate-800 hover:bg-slate-50`
 
 const reducedMotion = () => {
   try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches } catch { return false }
@@ -134,14 +134,14 @@ export default function TodayView({ trip, token }) {
 
   if (idx === null) {
     return (
-      <section data-tid="today-view" className="p-4 text-slate-700 dark:text-slate-200">
+      <section data-tid="today-view" className="p-4 text-slate-700">
         <p data-tid="today-not-started">{t('startsOn', { date: trip.start_date ? fmtDate(new Date(`${trip.start_date}T12:00:00`)) : '—' })}</p>
       </section>
     )
   }
 
   return (
-    <section data-tid="today-view" className="mx-auto max-w-2xl space-y-4 p-4 text-slate-900 dark:text-slate-100">
+    <section data-tid="today-view" className="mx-auto max-w-2xl space-y-4 p-4 text-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h2 data-tid="today-heading" className="text-xl font-bold">{heading}</h2>
         <button type="button" data-tid="today-share" onClick={share} className={quiet}>
@@ -154,27 +154,27 @@ export default function TodayView({ trip, token }) {
           <Check size={16} aria-hidden="true" />{checked ? t('checkedIn') : t('checkIn')}
         </button>
         {streak && streak.current > 0 && (
-          <span data-tid="today-streak" className="text-sm font-medium text-amber-800 dark:text-amber-300">
+          <span data-tid="today-streak" className="text-sm font-medium text-amber-800">
             {t('streak', { count: streak.current })}
           </span>
         )}
         {result?.new_country && (reducedMotion()
-          ? <p data-tid="today-new-country" className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t('newCountry', { code: result.country_code })}</p>
+          ? <p data-tid="today-new-country" className="text-sm font-semibold text-rose-700">{t('newCountry', { code: result.country_code })}</p>
           : <PassportStamp code={result.country_code} city={result.city} />)}
       </div>
 
       <NextUpCard slot={upcoming} onDirections={() => track('next_up')} />
 
       {slots.length === 0 ? (
-        <p data-tid="today-empty" className="text-sm text-slate-600 dark:text-slate-300">{t('noPlan')}</p>
+        <p data-tid="today-empty" className="text-sm text-slate-600">{t('noPlan')}</p>
       ) : (
         <ul className="space-y-2">
           {slots.map((slot, i) => {
             const key = placeKey('activity', slot.activity)
             const done = visited.has(key)
             return (
-              <li key={slot.key || i} data-tid={`today-slot-${i}`} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-                <p className="text-xs text-slate-600 dark:text-slate-300">{timeRange(slot)}</p>
+              <li key={slot.key || i} data-tid={`today-slot-${i}`} className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-xs text-slate-600">{timeRange(slot)}</p>
                 <p className="font-medium">{slot.activity}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <a
@@ -201,7 +201,7 @@ export default function TodayView({ trip, token }) {
         <MapPin size={16} aria-hidden="true" />{t('nearMe')}
       </button>
 
-      <p role="status" data-tid="today-note" className="min-h-[1.25rem] text-sm text-slate-600 dark:text-slate-300">{note}</p>
+      <p role="status" data-tid="today-note" className="min-h-[1.25rem] text-sm text-slate-600">{note}</p>
     </section>
   )
 }

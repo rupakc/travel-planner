@@ -77,7 +77,7 @@ export default function TripsPage() {
   return (
     <main data-tid="trips-hub" className="mx-auto max-w-3xl space-y-5 px-4 py-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('title')}</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t('title')}</h1>
         <button
           type="button" data-tid="trips-create" data-tour="trips-create" onClick={() => setCreating(true)}
           className="min-h-[44px] rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
@@ -85,7 +85,7 @@ export default function TripsPage() {
       </div>
 
       {failed && (
-        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <p>{t('load.failed')}</p>
           <button
             type="button" data-tid="trips-retry" onClick={load}
@@ -93,15 +93,15 @@ export default function TripsPage() {
           >{t('load.retry')}</button>
         </div>
       )}
-      {!data && !failed && <p className="text-sm text-slate-600 dark:text-slate-300">{t('load.loading')}</p>}
+      {!data && !failed && <p className="text-sm text-slate-600">{t('load.loading')}</p>}
 
       {data && (
         <>
           {showRing && <BucketRing count={stats.countries?.length ?? 0} goal={stats.bucket_goal} />}
           {pinned && <NextTripPanel trip={pinned} prep={prep} />}
           {trips.length === 0 ? (
-            <section data-tid="trips-empty" className="rounded-2xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-600">
-              <p className="text-slate-700 dark:text-slate-200">{t('empty.text')}</p>
+            <section data-tid="trips-empty" className="rounded-2xl border border-dashed border-slate-300 p-6 text-center">
+              <p className="text-slate-700">{t('empty.text')}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Link
                   to="/explore" data-tid="trips-empty-plan"
@@ -109,13 +109,13 @@ export default function TripsPage() {
                 >{t('empty.plan')}</Link>
                 <button
                   type="button" data-tid="trips-empty-idea" onClick={() => setCreating(true)}
-                  className="min-h-[44px] rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 dark:border-slate-600 dark:text-slate-100"
+                  className="min-h-[44px] rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800"
                 >{t('empty.idea')}</button>
               </div>
             </section>
           ) : groups.map(({ phase, items }) => (
             <section key={phase} data-tid={`trips-group-${phase}`} aria-label={t(`phases.${phase}`)}>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-600">
                 {t(`phases.${phase}`)} <span className="font-normal">({items.length})</span>
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">{items.map((tr) => <TripCard key={tr.id} trip={tr} />)}</div>

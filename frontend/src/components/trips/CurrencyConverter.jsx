@@ -14,9 +14,9 @@ export default function CurrencyConverter({ currency }) {
   const { local, home, rate, as_of: asOf, source } = currency
   if (rate == null) {
     return (
-      <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('currency.title')}</h3>
-        <p data-tid="offlinePack.currency.norate" className="text-sm text-gray-600 dark:text-gray-400">{t('currency.noRate', { local })}</p>
+      <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-1">{t('currency.title')}</h3>
+        <p data-tid="offlinePack.currency.norate" className="text-sm text-gray-600">{t('currency.noRate', { local })}</p>
       </section>
     )
   }
@@ -25,8 +25,8 @@ export default function CurrencyConverter({ currency }) {
   const raw = amount === '' ? NaN : convert(parseAmount(amount), rate, direction)
   const out = Number.isFinite(raw) ? roundFor(to, raw) : null
   return (
-    <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('currency.title')}</h3>
+    <section data-tid="offlinePack.currency" className="rounded-xl border border-gray-200 bg-white p-4">
+      <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('currency.title')}</h3>
       <div className="flex flex-wrap items-center gap-2">
         <input
           data-tid="offlinePack.currency.amount"
@@ -34,23 +34,23 @@ export default function CurrencyConverter({ currency }) {
           aria-label={t('currency.amountLabel', { currency: from })}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="min-h-[44px] w-32 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-lg text-gray-900 dark:text-gray-100"
+          className="min-h-[44px] w-32 rounded-lg border border-gray-300 bg-white px-3 text-lg text-gray-900"
         />
-        <span className="font-medium text-gray-800 dark:text-gray-200">{from}</span>
+        <span className="font-medium text-gray-800">{from}</span>
         <button
           type="button"
           data-tid="offlinePack.currency.swap"
           onClick={() => setDirection((d) => (d === 'toLocal' ? 'toHome' : 'toLocal'))}
           aria-label={t('currency.swap')}
-          className="min-h-[44px] min-w-[44px] rounded-lg border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200"
+          className="min-h-[44px] min-w-[44px] rounded-lg border border-gray-300 text-gray-800"
         >
           ⇄
         </button>
-        <span data-tid="offlinePack.currency.result" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <span data-tid="offlinePack.currency.result" className="text-lg font-semibold text-gray-900">
           {out == null ? '—' : fmtNumber(out, { minimumFractionDigits: 0, maximumFractionDigits: exponentFor(to) })} {to}
         </span>
       </div>
-      <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+      <p className="mt-2 text-xs text-gray-600">
         {t('currency.rateFrom', {
           date: fmtDate(asOf, sameYear(asOf) ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' }),
           source: t(`currency.sources.${source}`, { defaultValue: source || '' }),

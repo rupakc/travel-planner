@@ -4,8 +4,8 @@ import { toAmountString } from '../../utils/money'
 
 export const EXPENSE_CATEGORIES = ['flights', 'lodging', 'food', 'transport', 'activities', 'shopping', 'fees', 'other']
 
-const field = 'w-full min-h-[44px] rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-100'
-const label = 'block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1'
+const field = 'w-full min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900'
+const label = 'block text-xs font-medium text-slate-600 mb-1'
 
 // Quick-add / edit form. onSubmit gets {amount, currency, category, note, spent_on}
 // with a validated decimal-string amount; the caller does the saving.
@@ -60,7 +60,7 @@ export default function ExpenseForm({ initial, defaultCurrency, today, busy, onS
             onClick={() => setCategory(c)}
             className={`min-h-[44px] px-3 rounded-full text-sm border ${category === c
               ? 'bg-teal-700 border-teal-700 text-white'
-              : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200'}`}>
+              : 'bg-white border-slate-300 text-slate-700'}`}>
             {t(`cat.${c}`)}
           </button>
         ))}
@@ -70,7 +70,7 @@ export default function ExpenseForm({ initial, defaultCurrency, today, busy, onS
         <input id="expense-note" data-tid="expense-note" className={field} maxLength={140}
           value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
-      {error && <p role="alert" data-tid="expense-error" className="text-sm text-red-700 dark:text-red-300">{error}</p>}
+      {error && <p role="alert" data-tid="expense-error" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={busy} data-tid="expense-save"
           className="min-h-[44px] px-4 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium disabled:opacity-60">
@@ -78,7 +78,7 @@ export default function ExpenseForm({ initial, defaultCurrency, today, busy, onS
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} data-tid="expense-cancel"
-            className="min-h-[44px] px-4 rounded-lg border border-slate-300 dark:border-slate-600 text-sm text-slate-700 dark:text-slate-200">
+            className="min-h-[44px] px-4 rounded-lg border border-slate-300 text-sm text-slate-700">
             {t('cancel')}
           </button>
         )}

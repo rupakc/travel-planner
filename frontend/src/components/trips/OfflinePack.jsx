@@ -89,27 +89,27 @@ export default function OfflinePack({ trip, token }) {
 
   return (
     <div data-tid="offlinePack" className="space-y-4">
-      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('title')}</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('intro')}</p>
+      <section className="rounded-xl border border-gray-200 bg-white p-4">
+        <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
+        <p className="text-sm text-gray-600 mt-1">{t('intro')}</p>
         {pack && (
-          <p data-tid="offlinePack.status" className="mt-2 text-sm text-gray-800 dark:text-gray-200">
+          <p data-tid="offlinePack.status" className="mt-2 text-sm text-gray-800">
             {t('saved', { when: fmtDate(savedAt || pack.generated_at, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) })}
             {' · '}{t('size', { kb })}
           </p>
         )}
         {local && !local.worker && (
-          <p data-tid="offlinePack.tabnote" className="mt-1 text-sm text-amber-800 dark:text-amber-300">{t('tabOnly')}</p>
+          <p data-tid="offlinePack.tabnote" className="mt-1 text-sm text-amber-800">{t('tabOnly')}</p>
         )}
-        {!online && <p data-tid="offlinePack.offline" className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('offlineNote')}</p>}
-        {error && <p role="alert" data-tid="offlinePack.error" className="mt-1 text-sm text-red-700 dark:text-red-400">{t(`error.${error}`)}</p>}
+        {!online && <p data-tid="offlinePack.offline" className="mt-1 text-sm text-gray-600">{t('offlineNote')}</p>}
+        {error && <p role="alert" data-tid="offlinePack.error" className="mt-1 text-sm text-red-700">{t(`error.${error}`)}</p>}
         <div className="mt-3 flex flex-wrap gap-2">
           {pack ? (
             <>
               <button type="button" data-tid="offlinePack.refresh" disabled={busy || !online || !userId} onClick={() => save('refresh')}
                 className={`${btn} bg-teal-700 hover:bg-teal-800 text-white`}>{t('refresh')}</button>
               <button type="button" data-tid="offlinePack.remove" disabled={busy} onClick={remove}
-                className={`${btn} border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200`}>{t('remove')}</button>
+                className={`${btn} border border-gray-300 text-gray-800`}>{t('remove')}</button>
             </>
           ) : (
             <button type="button" data-tid="offlinePack.save" disabled={busy || !online || !userId} onClick={() => save('save')}

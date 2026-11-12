@@ -11,7 +11,7 @@ import { localToday } from '../../utils/tripPhase'
 import ExpenseForm from './ExpenseForm'
 
 const num = (s) => Number(s)
-const card = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4'
+const card = 'rounded-xl border border-slate-200 bg-white p-4'
 
 // The outbox has no way to list its items, so queued rows are mirrored in
 // sessionStorage (per user and trip) to survive a remount or reload.
@@ -167,47 +167,47 @@ export default function ExpenseLog({ trip, token }) {
 
   return (
     <section data-tid="expense-log" className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('title')}</h2>
+      <h2 className="text-lg font-semibold text-slate-900">{t('title')}</h2>
 
       <div className={card}>
         <ExpenseForm defaultCurrency={defaultCurrency} today={today} busy={busy} onSubmit={add} />
-        {formError && !editing && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{formError}</p>}
+        {formError && !editing && <p role="alert" className="mt-2 text-sm text-red-700">{formError}</p>}
       </div>
 
       {failed && !data && (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+        <p className="text-sm text-slate-600">
           {t('loadFailed')}{' '}
           <button type="button" data-tid="expense-retry" onClick={load}
-            className="min-h-[44px] underline text-teal-700 dark:text-teal-300">{t('retry')}</button>
+            className="min-h-[44px] underline text-teal-700">{t('retry')}</button>
         </p>
       )}
 
       {totals && (
         <div className={card} data-tid="expense-totals">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{t('totals')}</h3>
-          <ul className="text-sm text-slate-800 dark:text-slate-100 space-y-1">
+          <h3 className="text-sm font-semibold text-slate-700 mb-2">{t('totals')}</h3>
+          <ul className="text-sm text-slate-800 space-y-1">
             {Object.entries(totals.by_currency || {}).map(([cur, amt]) => (
               <li key={cur} data-tid={`expense-total-${cur}`}>{money(amt, cur)}</li>
             ))}
           </ul>
           {usd != null && budget > 0 && (
             <div className="mt-3" data-tid="expense-budget">
-              <p className="text-sm text-slate-800 dark:text-slate-100">
+              <p className="text-sm text-slate-800">
                 {t('budget', { usd: money(usd, 'USD'), budget: money(budget, 'USD') })}
               </p>
-              <div className="mt-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700" role="progressbar"
+              <div className="mt-1 h-2 rounded-full bg-slate-200" role="progressbar"
                 aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-                <div className="h-2 rounded-full bg-teal-700 dark:bg-teal-400" style={{ width: `${pct}%` }} />
+                <div className="h-2 rounded-full bg-teal-700" style={{ width: `${pct}%` }} />
               </div>
               {data.rate?.as_of && (
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-xs text-slate-600">
                   {t('rateNote', { date: fmtDate(data.rate.as_of, { day: 'numeric', month: 'short' }) })}
                 </p>
               )}
             </div>
           )}
           {totals.unconverted?.length > 0 && (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300" data-tid="expense-unconverted">
+            <p className="mt-2 text-xs text-slate-600" data-tid="expense-unconverted">
               {t('unconverted', { list: totals.unconverted.join(', ') })}
             </p>
           )}
@@ -215,32 +215,32 @@ export default function ExpenseLog({ trip, token }) {
       )}
 
       {byDay.length === 0 && data && (
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t('empty')}</p>
+        <p className="text-sm text-slate-600">{t('empty')}</p>
       )}
 
       {byDay.map(([day, items]) => (
         <div key={day} data-tid={`expense-day-${day}`}>
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
+          <h3 className="text-sm font-semibold text-slate-700 mb-1">
             {fmtDate(`${day}T12:00:00`, { weekday: 'short', day: 'numeric', month: 'short' })}
           </h3>
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
             {items.map((e) => (
               <li key={e.id} className="p-3" data-tid={`expense-row-${e.id}`}>
                 {editing?.id === e.id ? (
                   <>
                     <ExpenseForm initial={e} defaultCurrency={defaultCurrency} today={today} busy={busy}
                       onSubmit={save} onCancel={() => setEditing(null)} />
-                    {formError && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{formError}</p>}
+                    {formError && <p role="alert" className="mt-2 text-sm text-red-700">{formError}</p>}
                   </>
                 ) : (
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      <p className="text-sm font-medium text-slate-900">
                         {money(e.amount, e.currency)} · {t(`cat.${e.category}`)}
                       </p>
-                      {e.note && <p className="text-sm text-slate-600 dark:text-slate-300 break-words">{e.note}</p>}
+                      {e.note && <p className="text-sm text-slate-600 break-words">{e.note}</p>}
                       {e.pending && (
-                        <p className="text-xs text-amber-800 dark:text-amber-300" data-tid="expense-pending">{t('waiting')}</p>
+                        <p className="text-xs text-amber-800" data-tid="expense-pending">{t('waiting')}</p>
                       )}
                     </div>
                     {!e.pending && (
@@ -248,11 +248,11 @@ export default function ExpenseLog({ trip, token }) {
                         <button type="button" data-tid={`expense-edit-${e.id}`} disabled={!online}
                           title={online ? undefined : t('needsConnection')}
                           onClick={() => { setFormError(null); setEditing(e) }}
-                          className="min-h-[44px] px-3 text-sm text-teal-700 dark:text-teal-300 disabled:opacity-50">{t('edit')}</button>
+                          className="min-h-[44px] px-3 text-sm text-teal-700 disabled:opacity-50">{t('edit')}</button>
                         <button type="button" data-tid={`expense-delete-${e.id}`} disabled={!online}
                           title={online ? undefined : t('needsConnection')}
                           onClick={() => remove(e)}
-                          className="min-h-[44px] px-3 text-sm text-red-700 dark:text-red-300 disabled:opacity-50">{t('delete')}</button>
+                          className="min-h-[44px] px-3 text-sm text-red-700 disabled:opacity-50">{t('delete')}</button>
                       </div>
                     )}
                   </div>

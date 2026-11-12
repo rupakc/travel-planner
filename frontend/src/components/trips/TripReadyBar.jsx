@@ -17,21 +17,21 @@ export default function TripReadyBar({ percent = 0, complete = false, celebrate 
     <div
       data-tid="prep-ready-bar"
       className={`relative overflow-hidden rounded-xl border p-3 ${complete
-        ? 'border-teal-600 bg-teal-50 dark:border-teal-500 dark:bg-teal-950'
-        : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}
+        ? 'border-teal-600 bg-teal-50'
+        : 'border-slate-200 bg-white'}`}
     >
-      <div className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+      <div className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900">
         <span data-tid="prep-ready-label">{t('ready', { percent: pct })}</span>
         {complete && (
-          <span data-tid="prep-ready-go" role="status" className="text-teal-800 dark:text-teal-300">{t('go')}</span>
+          <span data-tid="prep-ready-go" role="status" className="text-teal-800">{t('go')}</span>
         )}
       </div>
       <div
         role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}
         aria-label={t('ready', { percent: pct })}
-        className="mt-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700"
+        className="mt-2 h-2 rounded-full bg-slate-200"
       >
-        <div className="h-2 rounded-full bg-teal-700 dark:bg-teal-400 transition-[width] motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+        <div className="h-2 rounded-full bg-teal-700 transition-[width] motion-reduce:transition-none" style={{ width: `${pct}%` }} />
       </div>
       {confetti && (
         <div className="confetti pointer-events-none absolute inset-0" aria-hidden="true" data-tid="prep-confetti">

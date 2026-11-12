@@ -88,7 +88,7 @@ export default function ConsentPrompt() {
         tabIndex={-1}
         aria-labelledby="tp-consent-title"
         data-tid="privacy.prompt"
-        className="fixed bottom-3 left-3 right-3 z-[60] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl focus:outline-none sm:bottom-4 sm:left-auto sm:right-4 sm:w-96 sm:p-4"
+        className="fixed bottom-3 left-3 right-3 z-40 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl focus:outline-none sm:bottom-4 sm:left-auto sm:right-4 sm:w-96 sm:p-4"
       >
         <div className="flex items-start gap-2">
           <h2 id="tp-consent-title"
