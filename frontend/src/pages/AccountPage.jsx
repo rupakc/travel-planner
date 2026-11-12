@@ -6,6 +6,7 @@ import { getAccount } from '../services/accountApi'
 import { useClientConfig, featureOn } from '../hooks/useClientConfig'
 import ProfileSection from '../components/account/ProfileSection'
 import SettingsSection from '../components/account/SettingsSection'
+import NotificationsSection from '../components/account/NotificationsSection'
 import SecuritySection from '../components/account/SecuritySection'
 import QuotaSection from '../components/account/QuotaSection'
 import GameSection from '../components/game/GameSection'
@@ -70,7 +71,7 @@ export default function AccountPage() {
         <p role="alert" data-tid="account.toast.error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{notice.text}</p>
       )}
       <h1 className="text-2xl font-bold text-slate-800">{t('page.title')}</h1>
-      {[ProfileSection, SettingsSection, SecuritySection, QuotaSection, GameSection, MyShares, DataSection].map((Section, i) => (
+      {[ProfileSection, SettingsSection, NotificationsSection, SecuritySection, QuotaSection, GameSection, MyShares, DataSection].map((Section, i) => (
         <SectionBoundary key={i}><Section {...props} /></SectionBoundary>
       ))}
     </main>

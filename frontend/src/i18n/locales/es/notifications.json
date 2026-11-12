@@ -1,0 +1,47 @@
+{
+  "title": "Notificaciones",
+  "intro": "Elige qué puede enviarte Voyager. Estos ajustes acompañan a tu cuenta en todos tus dispositivos.",
+  "loading": "Cargando ajustes de notificaciones",
+  "categories": {
+    "price_drops": {
+      "label": "Bajadas de precio",
+      "hint": "Cuando baja el precio de algo que sigues."
+    },
+    "trip_reminders": {
+      "label": "Recordatorios de viaje",
+      "hint": "Un aviso 30, 7 y 1 días antes de salir."
+    },
+    "morning_brief": {
+      "label": "Resumen matinal",
+      "hint": "Tu plan del día mientras viajas."
+    },
+    "weather": {
+      "label": "Clima",
+      "hint": "Avisos del tiempo para tu viaje."
+    },
+    "nearby": {
+      "label": "Cerca de ti",
+      "hint": "Sugerencias en este dispositivo cuando estás cerca de algo interesante."
+    }
+  },
+  "quiet": {
+    "label": "Horas de silencio",
+    "hint": "Sin notificaciones en este horario; esperan hasta que termine.",
+    "start": "Desde",
+    "end": "Hasta",
+    "timezone": "Las horas de silencio siguen la zona horaria de tu cuenta: {{tz}}.",
+    "noTimezone": "Configura tu zona horaria en Ajustes, arriba, para que las horas de silencio sepan cuándo aplicarse. Mientras tanto no se aplican."
+  },
+  "cap": {
+    "label": "Límite diario",
+    "hint": "El máximo de recordatorios y resúmenes que te enviamos en un día. Las bajadas de precio no cuentan.",
+    "less": "Menos notificaciones al día",
+    "more": "Más notificaciones al día",
+    "value": "{{count}} al día"
+  },
+  "noDevices": "Las notificaciones push aún no están disponibles en este dispositivo. Instala la app de Voyager e inicia sesión para recibirlas; las notificaciones dentro de la app siguen funcionando.",
+  "error": {
+    "load": "No se pudieron cargar tus ajustes de notificaciones.",
+    "save": "No se pudo guardar el cambio. Se deshizo."
+  }
+}

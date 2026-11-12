@@ -1,0 +1,47 @@
+{
+  "title": "Benachrichtigungen",
+  "intro": "Lege fest, was Voyager dir schicken darf. Diese Einstellungen gelten für dein Konto auf allen Geräten.",
+  "loading": "Benachrichtigungseinstellungen werden geladen",
+  "categories": {
+    "price_drops": {
+      "label": "Preissenkungen",
+      "hint": "Wenn ein beobachteter Preis fällt."
+    },
+    "trip_reminders": {
+      "label": "Reiseerinnerungen",
+      "hint": "Ein Hinweis 30, 7 und 1 Tag vor der Abreise."
+    },
+    "morning_brief": {
+      "label": "Morgenübersicht",
+      "hint": "Dein Tagesplan während der Reise."
+    },
+    "weather": {
+      "label": "Wetter",
+      "hint": "Wetterhinweise für deine Reise."
+    },
+    "nearby": {
+      "label": "In deiner Nähe",
+      "hint": "Vorschläge auf diesem Gerät, wenn du in der Nähe von etwas Interessantem bist."
+    }
+  },
+  "quiet": {
+    "label": "Ruhezeiten",
+    "hint": "In diesem Zeitraum gibt es keine Benachrichtigungen; sie warten, bis er endet.",
+    "start": "Von",
+    "end": "Bis",
+    "timezone": "Die Ruhezeiten richten sich nach der Zeitzone deines Kontos: {{tz}}.",
+    "noTimezone": "Stelle oben in den Einstellungen deine Zeitzone ein, damit die Ruhezeiten wissen, wann sie gelten. Bis dahin werden sie nicht angewendet."
+  },
+  "cap": {
+    "label": "Tageslimit",
+    "hint": "Die maximale Zahl an Erinnerungen und Übersichten pro Tag. Preissenkungen zählen nicht mit.",
+    "less": "Weniger Benachrichtigungen pro Tag",
+    "more": "Mehr Benachrichtigungen pro Tag",
+    "value": "{{count}} pro Tag"
+  },
+  "noDevices": "Push-Benachrichtigungen sind auf diesem Gerät noch nicht verfügbar. Installiere die Voyager-App und melde dich an, um sie zu erhalten; Benachrichtigungen in der App funktionieren weiterhin.",
+  "error": {
+    "load": "Deine Benachrichtigungseinstellungen konnten nicht geladen werden.",
+    "save": "Die Änderung konnte nicht gespeichert werden. Sie wurde rückgängig gemacht."
+  }
+}

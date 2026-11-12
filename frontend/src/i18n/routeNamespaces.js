@@ -24,7 +24,7 @@ export const SHELL_NS = [
 
 export const LAZY_NS = [
   'accountData', 'accountSettings', 'adminInvites', 'adminTelemetry', 'expenses', 'journal',
-  'mobile', 'nearbyTrip', 'offlinePack', 'playYou', 'prep', 'recap', 'security', 'today',
+  'mobile', 'nearbyTrip', 'notifications', 'offlinePack', 'playYou', 'prep', 'recap', 'security', 'today',
   'trip', 'trips',
 ]
 
@@ -42,7 +42,7 @@ const ROUTES = {
   // render outside the gate), listed here so the page names what it renders.
   '/alerts': ['alerts', 'priceStory', 'dropMoment', 'savings', 'quickWatch', 'watchSuggest', 'alertPrefs', 'alertsHub'],
   '/preferences': ['account', 'alerts', 'search', 'privacy'],
-  '/account': ['accountData', 'accountSettings', 'security', 'profile', 'quota', 'game', 'privacy', 'signup'],
+  '/account': ['accountData', 'accountSettings', 'notifications', 'security', 'profile', 'quota', 'game', 'privacy', 'signup'],
   '/admin': ['adminInvites', 'adminTelemetry', 'account', 'signup'],
   '/play': ['playYou', 'game'],
   '/you': ['playYou', 'game', 'coach'],
