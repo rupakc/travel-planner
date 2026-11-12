@@ -48,6 +48,14 @@ def user():
     return create_user(f"pws-{uuid.uuid4().hex[:8]}", "pw-123456789")
 
 
+@pytest.mark.asyncio
+async def test_run_due_with_alerts_v2_orders_due_watches(src, user, monkeypatch):
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
+    _due(user)
+    outcomes = await price_watch.run_due("k", clock=lambda: NOW, rand=lambda: 0.5)
+    assert len(outcomes) == 1 and outcomes[0] is not None
+
+
 def _due(user, expires_on="2027-02-01"):
     created = CreatedWatch(
         subject={"name": "Thing"},

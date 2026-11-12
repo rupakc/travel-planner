@@ -28,7 +28,7 @@ from typing import Literal, Protocol, runtime_checkable
 from ..core.cache import fresh_reads
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
-from . import alert_pipeline, fare_watch, price_rules, push
+from . import alert_pipeline, alert_schedule, fare_watch, price_rules, push
 from .fare_watch import CheckOutcome
 
 logger = logging.getLogger(__name__)
@@ -1064,7 +1064,9 @@ async def run_due(
     now = clock()
     price_watch_db.expire_inactive_past(now.date().isoformat(), now=now)
     if alert_pipeline.enabled():
-        ids = fare_watch._ordered_due_ids(price_watch_db, lambda w: w["kind"], now)
+        ids = alert_schedule.order_due_ids(
+            price_watch_db, lambda w: w["kind"], now, CLAIM_BATCH
+        )
     else:
         ids = price_watch_db.due_watch_ids(now, CLAIM_BATCH)
     sem = asyncio.Semaphore(CONCURRENCY)
