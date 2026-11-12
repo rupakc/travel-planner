@@ -1,1 +1,68 @@
-{}
+{
+  "title": "Historia del precio",
+  "loading": "Cargando la historia del precio…",
+  "error": {
+    "load": "No se pudo cargar la historia del precio."
+  },
+  "verdict": {
+    "great": "Precio excelente",
+    "good": "Buen precio",
+    "typical": "Precio habitual",
+    "high": "Precio alto"
+  },
+  "verdictLabel": "Nivel de precio: {{level}}",
+  "advice": {
+    "pending": "Esperando la primera comprobación de precio.",
+    "checks_paused_one": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} día.",
+    "checks_paused_many": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} días.",
+    "checks_paused_other": "Las comprobaciones de precio en vivo están en pausa. La última fue hace {{count}} días.",
+    "below_target": "En su precio objetivo o por debajo, por {{by}}.",
+    "near_target": "Solo {{gap}} por encima de su objetivo.",
+    "at_lowest": "El precio más bajo visto hasta ahora.",
+    "below_typical": "Por debajo del rango habitual para este viaje.",
+    "within_typical": "Dentro del rango habitual.",
+    "above_typical": "Por encima del rango habitual.",
+    "steady_one": "Estable durante el último {{count}} día.",
+    "steady_many": "Estable durante los últimos {{count}} días.",
+    "steady_other": "Estable durante los últimos {{count}} días.",
+    "few_checks_one": "Solo {{count}} comprobación por ahora, así que aún hay poco que comparar.",
+    "few_checks_many": "Solo {{count}} comprobaciones por ahora, así que aún hay poco que comparar.",
+    "few_checks_other": "Solo {{count}} comprobaciones por ahora, así que aún hay poco que comparar."
+  },
+  "checkedToday": "Comprobado hoy",
+  "checkedAgo_one": "Comprobado hace {{count}} día",
+  "checkedAgo_many": "Comprobado hace {{count}} días",
+  "checkedAgo_other": "Comprobado hace {{count}} días",
+  "latest": "Último precio observado",
+  "estimate": "Estimación: {{price}}. No es un precio observado.",
+  "chart": {
+    "label": "Historial de precios: {{n}} comprobaciones del {{from}} al {{to}}",
+    "help": "Use las flechas izquierda y derecha para recorrer las comprobaciones.",
+    "point": "{{price}} el {{date}}",
+    "typical": "Rango habitual",
+    "lowest": "Más bajo: {{price}}",
+    "target": "Objetivo: {{price}}",
+    "baseline": "Primer precio: {{price}}",
+    "none": "Aún no hay comprobaciones de precio.",
+    "few_one": "{{count}} comprobación por ahora. El gráfico aparece tras dos comprobaciones.",
+    "few_many": "{{count}} comprobaciones por ahora. El gráfico aparece tras dos comprobaciones.",
+    "few_other": "{{count}} comprobaciones por ahora. El gráfico aparece tras dos comprobaciones."
+  },
+  "tip": {
+    "title": "Consejo de momento",
+    "button": "Obtener un consejo de momento",
+    "ai": "Generado por IA",
+    "loading": "Pensando…",
+    "error": "No se pudo obtener un consejo ahora.",
+    "limit": "Se alcanzó el límite de IA de este mes."
+  },
+  "slider": {
+    "label": "Avisarme en o por debajo de",
+    "preview_one": "{{count}} de sus últimas {{total}} comprobaciones estuvo en o por debajo de esto.",
+    "preview_many": "{{count}} de sus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
+    "preview_other": "{{count}} de sus últimas {{total}} comprobaciones estuvieron en o por debajo de esto.",
+    "none": "Ninguna de sus últimas {{total}} comprobaciones fue tan baja.",
+    "saved": "Objetivo guardado.",
+    "error": "No se pudo guardar el objetivo."
+  }
+}

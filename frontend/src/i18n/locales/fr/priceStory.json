@@ -1,1 +1,68 @@
-{}
+{
+  "title": "Historique du prix",
+  "loading": "Chargement de l’historique du prix…",
+  "error": {
+    "load": "Impossible de charger l’historique du prix."
+  },
+  "verdict": {
+    "great": "Très bon prix",
+    "good": "Bon prix",
+    "typical": "Prix habituel",
+    "high": "Prix élevé"
+  },
+  "verdictLabel": "Niveau de prix : {{level}}",
+  "advice": {
+    "pending": "En attente de la première vérification du prix.",
+    "checks_paused_one": "Les vérifications de prix en direct sont suspendues. La dernière date d’il y a {{count}} jour.",
+    "checks_paused_many": "Les vérifications de prix en direct sont suspendues. La dernière date d’il y a {{count}} jours.",
+    "checks_paused_other": "Les vérifications de prix en direct sont suspendues. La dernière date d’il y a {{count}} jours.",
+    "below_target": "Au prix cible ou en dessous, de {{by}}.",
+    "near_target": "À seulement {{gap}} au-dessus de votre cible.",
+    "at_lowest": "Le prix le plus bas relevé jusqu’ici.",
+    "below_typical": "En dessous de la fourchette habituelle pour ce voyage.",
+    "within_typical": "Dans la fourchette habituelle.",
+    "above_typical": "Au-dessus de la fourchette habituelle.",
+    "steady_one": "Stable depuis {{count}} jour.",
+    "steady_many": "Stable depuis {{count}} jours.",
+    "steady_other": "Stable depuis {{count}} jours.",
+    "few_checks_one": "Seulement {{count}} vérification pour l’instant, il y a donc peu à comparer.",
+    "few_checks_many": "Seulement {{count}} vérifications pour l’instant, il y a donc peu à comparer.",
+    "few_checks_other": "Seulement {{count}} vérifications pour l’instant, il y a donc peu à comparer."
+  },
+  "checkedToday": "Vérifié aujourd’hui",
+  "checkedAgo_one": "Vérifié il y a {{count}} jour",
+  "checkedAgo_many": "Vérifié il y a {{count}} jours",
+  "checkedAgo_other": "Vérifié il y a {{count}} jours",
+  "latest": "Dernier prix observé",
+  "estimate": "Estimation : {{price}}. Ce n’est pas un prix observé.",
+  "chart": {
+    "label": "Historique des prix : {{n}} vérifications du {{from}} au {{to}}",
+    "help": "Utilisez les flèches gauche et droite pour parcourir les vérifications.",
+    "point": "{{price}} le {{date}}",
+    "typical": "Fourchette habituelle",
+    "lowest": "Plus bas : {{price}}",
+    "target": "Cible : {{price}}",
+    "baseline": "Premier prix : {{price}}",
+    "none": "Aucune vérification de prix pour l’instant.",
+    "few_one": "{{count}} vérification pour l’instant. Un graphique apparaît après deux vérifications.",
+    "few_many": "{{count}} vérifications pour l’instant. Un graphique apparaît après deux vérifications.",
+    "few_other": "{{count}} vérifications pour l’instant. Un graphique apparaît après deux vérifications."
+  },
+  "tip": {
+    "title": "Conseil de timing",
+    "button": "Obtenir un conseil de timing",
+    "ai": "Généré par IA",
+    "loading": "Réflexion en cours…",
+    "error": "Impossible d’obtenir un conseil pour le moment.",
+    "limit": "La limite d’IA de ce mois est atteinte."
+  },
+  "slider": {
+    "label": "Me prévenir à ou en dessous de",
+    "preview_one": "{{count}} de vos {{total}} dernières vérifications était à ce niveau ou en dessous.",
+    "preview_many": "{{count}} de vos {{total}} dernières vérifications étaient à ce niveau ou en dessous.",
+    "preview_other": "{{count}} de vos {{total}} dernières vérifications étaient à ce niveau ou en dessous.",
+    "none": "Aucune de vos {{total}} dernières vérifications n’était aussi basse.",
+    "saved": "Cible enregistrée.",
+    "error": "Impossible d’enregistrer la cible."
+  }
+}
