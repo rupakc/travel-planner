@@ -807,6 +807,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#price-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price alerts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-never-collected" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1681,6 +1692,8 @@
 <li><strong>Offline packs</strong> are kept in your browser (IndexedDB and the cache of the app's service worker), not sent anywhere. They are cleared when you sign out, and when an administrator switches the offline pack off.</li>
 <li><strong>No location history.</strong> A check-in records a day and the trip's city, never your coordinates. Coordinates stored with a place are the place's, supplied by the app.</li>
 </ul>
+<h2 id="price-alerts">Price alerts</h2>
+<p>Beyond the watches and notifications above, price alerts 2.0 stores, per account: your alert preferences (weekly digest on or off, weekday, whether the digest also pushes, instant alerts, quiet hours, daily caps, grouping window), a <strong>savings ledger</strong> (one row per observed price drop on one of your watches: the watch, the prices before and after, the currency and the time; drops between observed prices only, never estimates), a queue of pushes and emails waiting for quiet hours or grouping, a record of which weeks your digest was sent, and a cached price tip per flight watch. The <strong>weekly digest</strong> is opt-in; it is sent to your account email (if verified and the server has SMTP) and shown in the app, and as a push only if you turn that on. Its email carries a stop link. The savings figure is a tally of "drops caught", not a record of what you booked. All of it is included in <strong>Export my data</strong> and removed by <strong>Delete account</strong>. The alert telemetry events (<code>alert_story_view</code>, <code>alert_target_set</code>, <code>alert_advice</code>, <code>alert_drop_seen</code>, <code>alert_quick_watch</code>, <code>alert_suggest</code>, <code>alert_savings_share</code>, <code>alert_prefs_change</code>, <code>alert_digest_open</code>) carry only enums, counts and flags, never an amount, a price, a title or a place. Sharing the "I caught $X" card happens in your browser; the server sees nothing of it.</p>
 <h2 id="what-is-never-collected">What is never collected</h2>
 <p>The schema has no field for any of these, and the server drops unknown fields:</p>
 <ul>

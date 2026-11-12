@@ -1011,6 +1011,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#price-alerts-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price alerts 2.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#utilities" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1505,6 +1516,9 @@
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
 │   │                         NotificationBell, AlertToast, AlertEmailField,
 │   │                         LiveCheck (&quot;Search the web now&quot;), cards/
+│   ├── alerts2/              price alerts 2.0 (see below): PriceStory, PriceChart, TargetSlider,
+│   │                         DropMoment, SavingsTally, SavingsShareCard, DealHunterTrack,
+│   │                         QuickWatchButton, WatchSuggestions, TripPricesCard, AlertPrefsPanel, ...
 │   ├── admin/                TelemetrySummary (Analytics tab)
 │   ├── trips/                trip hub and trip-screen pieces: TripCard, TripHeader, TripTabs, PhaseMenu,
 │   │                         PrepChecklist, OfflinePack, TodayView, ExpenseLog, Journal, Recap,
@@ -1618,6 +1632,8 @@
 <p><code>sseWorker.js</code> POSTs to <code>/api/search</code>, reads the body as a stream, splits <code>data:</code> events, and posts each parsed event to the main thread, which only updates React state. If the stream closes without a <code>done</code> event it posts <code>__interrupted</code>. <code>chatWorker.js</code> does the same for <code>/api/chat</code>. Keeping the parsing off the main thread keeps the UI responsive while large payloads arrive.</p>
 <h2 id="api-layer">API layer</h2>
 <p><code>services/api.js</code> is an axios instance that adds <code>Authorization: Bearer &lt;token&gt;</code>, plus helpers: <code>streamSearch</code> (spawns the worker), the filtered searches, <code>fetchFareCalendar</code>, <code>getSerpapiConfigured</code> (reads <code>/health</code> once per page load), <code>discoverDestinations</code>, the recent-search calls, <code>compareDestination</code> and <code>recheckStressTest</code>. <code>utils/httpError.js</code> turns error responses into messages, showing a string <code>detail</code> (such as the 429 rate-limit message) as-is.</p>
+<h2 id="price-alerts-20">Price alerts 2.0</h2>
+<p><code>components/alerts2/</code> is rendered only when <code>useAlertsV2</code> says so: <code>features.price_alerts_v2</code> from <code>/api/config</code> is true, or <code>features.alerts_api === 2</code> and <code>localStorage.tp_alerts2 = "1"</code> (<code>"0"</code> always turns it off). Against a backend without <code>features.alerts_api</code> the classic Alerts page renders and no v2 control appears. Each watch card gets a price story (inline-SVG chart, keyboard-scrubbable, typical range, target slider, verdict and advice translated from codes plus params), the Alerts page a savings tally with milestones and a shareable "I caught $X" card (Canvas 2D, Web Share API), the notification bell a drop moment card (count-up skipped under <code>prefers-reduced-motion</code>) and the preferences panel the digest, quiet-hour, cap and grouping controls. One-tap watch and the suggestions sheet appear on Results, Chat and Trip cards and are hidden when <code>features.live_prices</code> is false. The Deal-hunter track follows the account's <code>hide_game</code> setting. Strings live in the <code>priceStory</code>, <code>savings</code>, <code>quickWatch</code>, <code>watchSuggest</code>, <code>alertPrefs</code> and <code>alertsHub</code> namespaces, plus added keys in <code>alerts</code> and <code>game</code>. <code>AlertsContext</code> also surfaces a drop's <code>data.drop</code> and <code>data.game</code>.</p>
 <h2 id="utilities">Utilities</h2>
 <p>Pure, unit-tested helpers in <code>src/utils/</code>:</p>
 <table>

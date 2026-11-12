@@ -1717,6 +1717,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#apialerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /api/alerts/*
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get-apinotifications" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2680,6 +2691,48 @@
 </tr>
 <tr>
 <td>GET</td>
+<td><code>/api/alerts/summary</code></td>
+<td>user</td>
+<td>Savings tally: <code>total_usd</code>, <code>by_currency</code>, drops caught, targets hit, milestones</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/alerts/watches/{kind}/{id}/story</code></td>
+<td>user</td>
+<td>Price story for one watch (points, lowest, typical range, verdict, advice code); stored data only, no SerpAPI</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/alerts/watches/{kind}/{id}/advice</code></td>
+<td>user</td>
+<td>Cached AI price tip, flights only (<code>422 advice_unsupported</code> otherwise); <code>light_ai</code> bucket</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/alerts/quick-watch</code></td>
+<td>user</td>
+<td>One-tap watch, created pending with no live look (<code>503 live_prices_off</code> without <code>SERPAPI_KEY</code>, <code>409 watch_limit</code>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/alerts/suggestions?plan_id=</code></td>
+<td>user</td>
+<td>Up to 5 watch suggestions for a saved plan, built locally</td>
+</tr>
+<tr>
+<td>GET, PUT</td>
+<td><code>/api/alerts/preferences</code></td>
+<td>user</td>
+<td>Digest, quiet hours, caps, grouping, <code>digest_push</code></td>
+</tr>
+<tr>
+<td>GET, POST</td>
+<td><code>/api/alerts/digest/unsubscribe?token=</code></td>
+<td>none</td>
+<td>"Stop the weekly digest": confirmation page (GET), turn off (POST / one-click)</td>
+</tr>
+<tr>
+<td>GET</td>
 <td><code>/api/notifications</code></td>
 <td>user</td>
 <td>Own notifications, newest first (<code>unread_only</code>, <code>limit</code> 1–100, <code>offset</code>)</td>
@@ -3329,6 +3382,8 @@
 <p>"Check now" (also on a paused watch). Like the fare-watch check, it never answers from the 30-minute cache: the look is live, refreshes the cache, and its calls count against the daily budget and the caller's share. Returns the watch plus <code>check_status</code> (<code>checked</code>, <code>unavailable</code>, <code>failed</code>, <code>errored</code>, <code>postponed</code>, <code>expired</code>, <code>skipped</code>, <code>deleted</code>) and <code>notification</code>. <code>429</code> / <code>409</code> / <code>503</code> as for fare watches. Rate-limited (light_ai).</p>
 <h3 id="get-post-apiprice-watchesunsubscribetoken">GET, POST /api/price-watches/unsubscribe?token=</h3>
 <p>As the fare-watch unsubscribe link, for one price watch (its own signed token; a fare-watch token is refused with <code>400</code>).</p>
+<h3 id="apialerts">/api/alerts/*</h3>
+<p>Price alerts 2.0. The full contract (objects, advice codes, error codes, delivery rules) is the frozen <a href="../Alerts-API/">Alerts API</a>. In short: every route needs a signed-in user and acts only on the caller's watches (<code>404 watch_not_found</code>). <code>GET /api/config</code> reports <code>features.alerts_api: 2</code>, <code>features.price_alerts_v2</code> (<code>PRICE_ALERTS_V2_ENABLED</code>) and <code>features.live_prices</code> (a SerpAPI key is set). The read routes always exist; the pipeline behind them (drop facts, savings rows, Deal-hunter XP, delivery rules, digest) runs only when <code>PRICE_ALERTS_V2_ENABLED=true</code>. Every watch object also carries <code>pending_first_check</code>, and drop notifications may carry extra <code>data.drop</code> / <code>data.game</code> keys, and a <code>price_digest</code> kind with <code>data.digest</code> exists; clients that don't know them ignore them.</p>
 <h3 id="get-apinotifications">GET /api/notifications</h3>
 <p><code>?unread_only=false&amp;limit=20&amp;offset=0</code> → <code>{"items": [...], "total": n, "unread": n}</code>, newest first. An item:</p>
 <pre><code class="language-json">{

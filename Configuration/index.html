@@ -582,6 +582,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Fare watch and email alerts (optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#price-alerts-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price alerts 2.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1831,6 +1848,40 @@
 </tr>
 </tbody>
 </table>
+<h3 id="price-alerts-20">Price alerts 2.0</h3>
+<p>See <a href="../Alerts-API/">Alerts API</a>. With the flag off, fare and price watches, email and push behave exactly as before; the <code>/api/alerts/*</code> read routes are always served.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PRICE_ALERTS_V2_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as <code>features.price_alerts_v2</code>; the web UI shows it only when this is true (or for one browser with <code>localStorage.tp_alerts2 = "1"</code>).</td>
+</tr>
+<tr>
+<td><code>ALERT_DIGEST_HOUR_LOCAL</code></td>
+<td><code>9</code></td>
+<td>Local hour (user's account timezone) from which a user's weekly digest is due on their chosen weekday.</td>
+</tr>
+<tr>
+<td><code>ALERT_FLUSH_INTERVAL_S</code></td>
+<td><code>60</code></td>
+<td>How often the delivery loop sends held (quiet-hours, grouped) pushes and emails.</td>
+</tr>
+<tr>
+<td><code>ALERT_ADVICE_TTL_HOURS</code></td>
+<td><code>24</code></td>
+<td>How long an AI price tip for a flight watch is cached.</td>
+</tr>
+</tbody>
+</table>
+<p>Without <code>SERPAPI_KEY</code>, <code>features.live_prices</code> is false: stories, savings, the digest and suggestions work from stored data, every price shows "checked N days ago", and one-tap watch answers <code>503 live_prices_off</code>.</p>
 <h2 id="push-alerts-optional">Push alerts (optional)</h2>
 <p>Fare- and price-watch alerts can also be pushed to the Android app's registered devices (<code>/api/devices</code>) through Firebase Cloud Messaging (FCM HTTP v1). Without it, alerts still appear in the app and by email, and the Android app polls <code>/api/notifications</code>.</p>
 <table>
