@@ -1,7 +1,7 @@
 """Priority and adaptive intervals for the watch scheduler (flag-gated by the
 callers: with PRICE_ALERTS_V2_ENABLED off none of this is consulted)."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 NO_DATE_DAYS = 60  # days-to-go assumed when a watch has no date
 _NEAR_TARGET = 0.10  # within 10 % above the target: look twice as often
@@ -85,19 +85,37 @@ def next_interval(
     return timedelta(days=days)
 
 
+STARVED_AFTER = timedelta(days=7)
+STARVED_INTERVALS = 3
+
+
+def _starved(kind: str, watch: dict, now) -> bool:
+    """Overdue by more than 7 days, or by more than 3x its own interval."""
+    try:
+        overdue = now - datetime.fromisoformat(watch["next_check_at"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return overdue > STARVED_AFTER or overdue > STARVED_INTERVALS * next_interval(
+        kind, watch, now.date()
+    )
+
+
 def order_due_ids(db, kind_of, now, batch: int) -> list[int]:
-    """Due watch ids for one scheduler pass (flag on). ``db.due_watch_ids``
-    yields a pool of 4x ``batch`` oldest-due first; the longest-waiting watch
-    always keeps the first slot (so nothing starves), the rest follow by
-    ``priority``, all cut to ``batch``."""
+    """Due watch ids for one scheduler pass (flag on), by ``priority``.
+    ``db.due_watch_ids`` yields a pool of 4x ``batch`` oldest-due first. When
+    the longest-waiting watch is starved (see ``_starved``) and the pass has
+    at least 2 picks, it keeps the first slot so nothing waits forever;
+    otherwise the order is pure priority."""
     pool = db.due_watch_ids(now, batch, candidates=4)
-    if not pool:
-        return []
-    oldest, rest = pool[0], pool[1:]
-    ranked = []
-    for i in rest:
-        w = db.get_watch(i)
-        if w is not None:
-            ranked.append((priority(kind_of(w), w, now.date()), i))
-    ranked.sort(key=lambda t: (t[0], t[1]))
-    return ([oldest] + [i for _, i in ranked])[:batch]
+    watches = {i: db.get_watch(i) for i in pool}
+    ranked = sorted(
+        (priority(kind_of(w), w, now.date()), i)
+        for i, w in watches.items()
+        if w is not None
+    )
+    ids = [i for _, i in ranked]
+    if batch >= 2 and pool and watches.get(pool[0]) is not None:
+        first = pool[0]
+        if _starved(kind_of(watches[first]), watches[first], now):
+            ids = [first] + [i for i in ids if i != first]
+    return ids[:batch]
