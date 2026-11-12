@@ -1,5 +1,6 @@
 """Trips API: journal entries and place ratings/visits."""
 
+import logging
 import re
 import unicodedata
 from datetime import date
@@ -13,11 +14,12 @@ from ...core.trip_access import owned_trip
 from ...db import trip_journal_db as db
 from ...game import trip_hooks
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MOODS = ("great", "good", "ok", "tough")
 KINDS = ("activity", "place", "food", "hotel", "event", "tour", "nearby", "other")
-PLACE_KEY_RE = re.compile(r"^[a-z]+:[a-z0-9-]{1,60}$")
+PLACE_KEY_RE = re.compile(r"[a-z]+:[a-z0-9-]{1,60}")
 
 
 def _clean(text: str) -> str:
@@ -140,7 +142,7 @@ def put_place(
     user: dict = Depends(get_current_user),
 ):
     owned_trip(plan_id, user)
-    if not PLACE_KEY_RE.match(place_key):
+    if not PLACE_KEY_RE.fullmatch(place_key):
         raise ApiError(422, "place_key_invalid", "Invalid place key")
     fields: dict = {}
     existing = db.get_place(plan_id, place_key)
@@ -187,11 +189,13 @@ def put_place(
         place, newly = db.upsert_place(plan_id, place_key, fields)
     except db.LimitReached:
         raise ApiError(409, "places_limit", "Too many places on this trip") from None
-    game = (
-        trip_hooks.on_place_visited(str(user["id"]), plan_id, place_key)
-        if newly
-        else None
-    )
+    game = None
+    if newly:
+        try:
+            game = trip_hooks.on_place_visited(str(user["id"]), plan_id, place_key)
+        except Exception:
+            logger.exception("place_visited award failed for trip %s", plan_id)
+            db.release_first_visit(plan_id, place_key)
     return {"place": place, "game": game}
 
 

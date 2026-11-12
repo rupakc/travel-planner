@@ -155,6 +155,113 @@ def test_limits(client, admin_headers, trip, monkeypatch):
     assert _put(client, admin_headers, trip, key="place:a", stars=2).status_code == 200
 
 
-def test_other_users_trip_404(client, admin_headers):
-    r = client.get("/api/trips/999999/journal", headers=admin_headers)
-    assert r.status_code == 404
+@pytest.fixture
+def other_headers(client, admin_headers):
+    name = "u" + uuid.uuid4().hex[:8]
+    pw = "temp1234-kv"
+    client.post(
+        "/api/admin/users",
+        json={"username": name, "password": pw, "is_admin": False},
+        headers=admin_headers,
+    )
+    tok = client.post("/api/auth/login", json={"username": name, "password": pw})
+    return {"Authorization": f"Bearer {tok.json()['access_token']}"}
+
+
+def test_other_users_trip_404(client, admin_headers, other_headers, trip):
+    e = _post(client, admin_headers, trip).json()
+    _put(client, admin_headers, trip)
+    h = other_headers
+    base = f"/api/trips/{trip}"
+    calls = [
+        client.get(f"{base}/journal", headers=h),
+        client.post(
+            f"{base}/journal", json={"client_id": "x", "body": "hi"}, headers=h
+        ),
+        client.patch(f"{base}/journal/{e['id']}", json={"body": "z"}, headers=h),
+        client.delete(f"{base}/journal/{e['id']}", headers=h),
+        client.get(f"{base}/places", headers=h),
+        client.put(
+            f"{base}/places/activity:belem",
+            json={"name": "B", "kind": "activity", "visited": True},
+            headers=h,
+        ),
+        client.delete(f"{base}/places/activity:belem", headers=h),
+    ]
+    assert [c.status_code for c in calls] == [404] * 7
+    assert (
+        len(client.get(f"{base}/journal", headers=admin_headers).json()["entries"]) == 1
+    )
+    assert (
+        client.get(f"{base}/places", headers=admin_headers).json()["places"][0][
+            "visited"
+        ]
+        is False
+    )
+
+
+def test_add_entry_conflict_returns_existing(trip):
+    cid = str(uuid.uuid4())
+    first, created = db.add_entry(trip, cid, "a", None, None)
+    again, created2 = db.add_entry(trip, cid, "b", None, None)
+    assert created and not created2 and again["id"] == first["id"]
+    assert again["body"] == "a"
+
+
+def test_add_entry_race_after_preselect(trip, monkeypatch):
+    """A concurrent insert landing between check and insert must not 500."""
+    cid = str(uuid.uuid4())
+    real = db.get_connection
+    state = {"done": False}
+
+    def racing():
+        if not state["done"]:
+            state["done"] = True
+            with real() as c:
+                c.execute(
+                    "INSERT INTO trip_journal (plan_id, client_id, body, created_at, "
+                    "updated_at) VALUES (?,?,?,?,?)",
+                    (trip, cid, "winner", "t", "t"),
+                )
+        return real()
+
+    monkeypatch.setattr(db, "get_connection", racing)
+    row, created = db.add_entry(trip, cid, "loser", None, None)
+    assert not created and row["body"] == "winner"
+
+
+def test_visit_toggle_awards_once(client, admin_headers, trip, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        trip_hooks, "on_place_visited", lambda u, p, k: calls.append(k) or {"p": 1}
+    )
+    assert _put(client, admin_headers, trip, visited=True).json()["game"]
+    _put(client, admin_headers, trip, visited=False)
+    assert _put(client, admin_headers, trip, visited=True).json()["game"] is None
+    assert len(calls) == 1
+
+
+def test_concurrent_first_visit_single_claim(trip):
+    claims = []
+    for _ in range(2):
+        _, newly = db.upsert_place(
+            trip, "place:x", {"name": "X", "kind": "place", "visited": True}
+        )
+        claims.append(newly)
+    assert claims == [True, False]
+
+
+def test_hook_failure_not_500_and_retryable(client, admin_headers, trip, monkeypatch):
+    def boom(u, p, k):
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(trip_hooks, "on_place_visited", boom)
+    r = _put(client, admin_headers, trip, visited=True)
+    assert r.status_code == 200 and r.json()["game"] is None
+    monkeypatch.setattr(trip_hooks, "on_place_visited", lambda u, p, k: {"p": 1})
+    assert _put(client, admin_headers, trip, visited=True).json()["game"] == {"p": 1}
+
+
+def test_place_key_trailing_newline_rejected(client, admin_headers, trip):
+    r = _put(client, admin_headers, trip, key="activity:x%0A")
+    assert r.status_code == 422

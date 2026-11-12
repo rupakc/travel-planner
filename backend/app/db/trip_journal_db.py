@@ -34,27 +34,25 @@ def add_entry(
     """Insert an entry; a repeated client_id returns the existing row, False."""
     now = _now()
     with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        count = conn.execute(
+            "SELECT COUNT(*) FROM trip_journal WHERE plan_id = ?", (plan_id,)
+        ).fetchone()[0]
+        cur = conn.execute(
+            "INSERT INTO trip_journal "
+            "(plan_id, client_id, day, body, mood, created_at, updated_at) "
+            "SELECT ?,?,?,?,?,?,? WHERE ? < ? "
+            "ON CONFLICT(plan_id, client_id) DO NOTHING",
+            (plan_id, client_id, day, body, mood, now, now, count, JOURNAL_LIMIT),
+        )
+        created = cur.rowcount == 1
         row = conn.execute(
             "SELECT * FROM trip_journal WHERE plan_id = ? AND client_id = ?",
             (plan_id, client_id),
         ).fetchone()
-        if row:
-            return _entry(row), False
-        count = conn.execute(
-            "SELECT COUNT(*) FROM trip_journal WHERE plan_id = ?", (plan_id,)
-        ).fetchone()[0]
-        if count >= JOURNAL_LIMIT:
-            raise LimitReached
-        cur = conn.execute(
-            "INSERT INTO trip_journal "
-            "(plan_id, client_id, day, body, mood, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?)",
-            (plan_id, client_id, day, body, mood, now, now),
-        )
-        row = conn.execute(
-            "SELECT * FROM trip_journal WHERE id = ?", (cur.lastrowid,)
-        ).fetchone()
-    return _entry(row), True
+    if row is None:
+        raise LimitReached
+    return _entry(row), created
 
 
 def update_entry(plan_id: int, entry_id: int, fields: dict) -> dict | None:
@@ -100,6 +98,7 @@ def upsert_place(plan_id: int, place_key: str, fields: dict) -> tuple[dict, bool
     Returns (row, newly_visited). `name` and `kind` are required on insert."""
     now = _now()
     with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         old = conn.execute(
             "SELECT * FROM trip_ratings WHERE plan_id = ? AND place_key = ?",
             (plan_id, place_key),
@@ -120,20 +119,18 @@ def upsert_place(plan_id: int, place_key: str, fields: dict) -> tuple[dict, bool
                 "lat": None,
                 "lng": None,
             }
-            was_visited = False
             visited_at = None
         else:
             data = _place(old)
-            was_visited = data["visited"]
             visited_at = data["visited_at"]
         for k in _PLACE_FIELDS:
             if k in fields:
                 data[k] = fields[k]
-        newly = bool(data["visited"]) and not was_visited
+        # visited_at is the first-visit marker: set once, never cleared, so
+        # toggling visited off and on again is not a new first visit.
+        newly = bool(data["visited"]) and visited_at is None
         if newly:
             visited_at = now
-        elif not data["visited"]:
-            visited_at = None
         conn.execute(
             "INSERT INTO trip_ratings (plan_id, place_key, name, kind, visited, "
             "stars, note, day, lat, lng, visited_at, updated_at) "
@@ -163,6 +160,16 @@ def upsert_place(plan_id: int, place_key: str, fields: dict) -> tuple[dict, bool
             (plan_id, place_key),
         ).fetchone()
     return _place(row), newly
+
+
+def release_first_visit(plan_id: int, place_key: str) -> None:
+    """Undo the first-visit claim (the award hook failed) so a retry can award."""
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE trip_ratings SET visited_at = NULL "
+            "WHERE plan_id = ? AND place_key = ?",
+            (plan_id, place_key),
+        )
 
 
 def get_place(plan_id: int, place_key: str) -> dict | None:
