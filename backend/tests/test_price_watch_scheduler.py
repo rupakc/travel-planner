@@ -333,3 +333,9 @@ async def test_a_scheduled_check_with_a_broken_compose_is_not_retried_each_tick(
     await price_watch.run_due("k", clock=lambda: NOW + timedelta(minutes=5))
     assert len(src.checked) == 1
     assert price_watch_db.get_watch(w["id"])["failure_count"] == 1
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

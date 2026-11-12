@@ -486,3 +486,9 @@ def test_check_now_out_of_budget_spends_nothing_even_with_a_cached_look(
     assert r.status_code == 429 and "Retry-After" in r.headers
     assert call.await_count == 0
     assert price_watch_db.get_watch(w["id"])["last_price"] == 368.0
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

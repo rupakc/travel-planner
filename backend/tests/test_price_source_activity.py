@@ -800,3 +800,9 @@ class TestApiFixRound:
             headers=h,
         )
         assert m.json()["watch"] is None
+
+
+@pytest.fixture(autouse=True)
+def _legacy_alerts(monkeypatch):
+    """These tests cover the legacy (flag off) alert pipeline."""
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)

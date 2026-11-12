@@ -22,7 +22,7 @@ def test_config_shape(client, monkeypatch):
         "journey": True,
         "offline_pack": True,
         "alerts_api": 2,
-        "price_alerts_v2": False,
+        "price_alerts_v2": True,
         "live_prices": False,
     }
     assert r.headers["cache-control"] == "max-age=300"
@@ -82,7 +82,7 @@ def test_config_alert_features(client, monkeypatch):
     monkeypatch.setattr(settings, "serpapi_key", "")
     f = client.get("/api/config").json()["features"]
     assert f["alerts_api"] == 2
-    assert f["price_alerts_v2"] is False
+    assert f["price_alerts_v2"] is True
     assert f["live_prices"] is False
     monkeypatch.setattr(settings, "serpapi_key", "fake-key")
     monkeypatch.setattr(settings, "price_alerts_v2_enabled", True)
