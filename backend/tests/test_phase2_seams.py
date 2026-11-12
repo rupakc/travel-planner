@@ -61,7 +61,7 @@ def test_hooks_stubs_return_none():
 def test_service_stubs():
     from app.services import phrases, trip_money, trip_prep
 
-    assert trip_prep.prep_summary({}, date(2026, 1, 1)) == {
+    assert trip_prep.prep_summary({"id": "p-none"}, date(2026, 1, 1)) == {
         "done": 0,
         "total": 0,
         "percent": 0,
