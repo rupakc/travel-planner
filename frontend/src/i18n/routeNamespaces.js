@@ -16,9 +16,10 @@ import { matchTripPath } from '../journey/paths'
 export const EAGER_NS = ['common', 'errors', 'auth', 'journey', 'offline', 'misc']
 
 export const SHELL_NS = [
-  'account', 'alerts', 'chat', 'coach', 'completeness', 'explore', 'game', 'itinerary',
-  'oauth', 'onboarding', 'plan', 'privacy', 'profile', 'quota', 'recovery', 'results',
-  'search', 'sections', 'signup', 'verify',
+  'account', 'alertPrefs', 'alerts', 'alertsHub', 'chat', 'coach', 'completeness', 'dropMoment',
+  'explore', 'game', 'itinerary', 'oauth', 'onboarding', 'plan', 'priceStory', 'privacy', 'profile',
+  'quickWatch', 'quota', 'recovery', 'results', 'savings', 'search', 'sections', 'signup', 'verify',
+  'watchSuggest',
 ]
 
 export const LAZY_NS = [
@@ -37,7 +38,9 @@ const ROUTES = {
   '/explore': ['explore'],
   '/chat': ['chat'],
   '/nearby': ['nearbyTrip'],
-  '/alerts': ['alerts'],
+  // Phase 3 alerts 2.0 namespaces: all bundled (the drop moment, quick watch and suggestions
+  // render outside the gate), listed here so the page names what it renders.
+  '/alerts': ['alerts', 'priceStory', 'dropMoment', 'savings', 'quickWatch', 'watchSuggest', 'alertPrefs', 'alertsHub'],
   '/preferences': ['account', 'alerts', 'search', 'privacy'],
   '/account': ['accountData', 'accountSettings', 'security', 'profile', 'quota', 'game', 'privacy', 'signup'],
   '/admin': ['adminInvites', 'adminTelemetry', 'account', 'signup'],
