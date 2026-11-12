@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Share2 } from 'lucide-react'
+import { Link2, Share2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getSavings } from '../../services/alertsApi'
 import { fmtCurrency } from '../../i18n/format'
 import { prefersReducedMotion } from './PriceChart'
 import SavingsShareCard from './SavingsShareCard'
+import ShareDialog from '../share/ShareDialog'
+import { sharingEnabled } from '../../utils/share'
+import { useClientConfig } from '../../hooks/useClientConfig'
 
 const MILESTONES = [50, 200, 1000]
 const R = 34
@@ -41,7 +44,11 @@ export default function SavingsTally({ savings: given = null, compact = false })
   const { t } = useTranslation('savings')
   const { token } = useAuth()
   const [loaded, setLoaded] = useState(null)
+  const { t: ts } = useTranslation('share')
+  const { config: clientConfig } = useClientConfig()
+  const sharingV2 = sharingEnabled(clientConfig)
   const [sharing, setSharing] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
   const savings = given || loaded
   useEffect(() => {
     if (given || !token) return undefined
@@ -139,6 +146,13 @@ export default function SavingsTally({ savings: given = null, compact = false })
         className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white hover:bg-teal-800">
         <Share2 className="h-4 w-4" aria-hidden="true" />{t('share')}
       </button>
+      {sharingV2 && (
+        <button type="button" data-tid="savings-share-link" onClick={() => setLinkOpen(true)}
+          className="ml-2 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <Link2 className="h-4 w-4" aria-hidden="true" />{ts('entry.link')}
+        </button>
+      )}
+      {sharingV2 && linkOpen && <ShareDialog kind="savings" onClose={() => setLinkOpen(false)} />}
       {sharing && <SavingsShareCard savings={savings} onClose={() => setSharing(false)} />}
     </section>
   )

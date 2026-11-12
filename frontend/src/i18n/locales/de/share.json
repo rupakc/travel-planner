@@ -96,5 +96,8 @@
       "savings": "Ersparnisse"
     },
     "created": "Geteilt {{date}}"
+  },
+  "entry": {
+    "link": "Link teilen"
   }
 }

@@ -96,5 +96,8 @@
       "savings": "省钱"
     },
     "created": "分享于 {{date}}"
+  },
+  "entry": {
+    "link": "分享链接"
   }
 }

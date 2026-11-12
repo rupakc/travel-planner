@@ -16,6 +16,9 @@ import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import PlanViewModal from '../components/PlanViewModal'
+import ShareDialog from '../components/share/ShareDialog'
+import { sharingEnabled } from '../utils/share'
+import { useClientConfig } from '../hooks/useClientConfig'
 import WatchFareButton from '../components/alerts/WatchFareButton'
 import WatchActivityButton from '../components/alerts/WatchActivityButton'
 import { ActivityTripContext } from '../components/alerts/activityTripContext'
@@ -614,6 +617,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [sharingId, setSharingId] = useState(null)
+  const { config: clientConfig } = useClientConfig()
+  const sharingV2 = sharingEnabled(clientConfig)
+  const [shareDialogPlan, setShareDialogPlan] = useState(null)
   const [shareMsg, setShareMsg] = useState(null)  // { id, url } | { id, error }
   const [viewingPlan, setViewingPlan] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -1004,11 +1010,19 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700 transition-colors">
                         <Eye size={11} /> {t('drawer.view')}
                       </button>
+                      {sharingV2 ? (
+                        <button onClick={() => setShareDialogPlan(plan)} data-tid="chat.plan-share-link"
+                          title={t('drawer.shareTitle')}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
+                          <Share2 size={11} /> {t('drawer.share')}
+                        </button>
+                      ) : (
                       <button onClick={() => sharePlan(plan.id)} disabled={sharingId === plan.id} data-tid="chat.plan-share"
                         title={t('drawer.shareTitle')}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-colors">
                         {sharingId === plan.id ? <Loader2 size={11} className="animate-spin" /> : <Share2 size={11} />} {t('drawer.share')}
                       </button>
+                      )}
                     </div>
                     <WatchTripButton plan={plan} source="saved_plan" className="mt-1.5" />
                     {shareMsg?.id === plan.id && (
@@ -1024,6 +1038,9 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         </div>
       </div>
 
+      {sharingV2 && shareDialogPlan && (
+        <ShareDialog kind="plan" planId={shareDialogPlan.id} onClose={() => setShareDialogPlan(null)} />
+      )}
       {viewingPlan && (
         <PlanViewModal
           plan={viewingPlan}

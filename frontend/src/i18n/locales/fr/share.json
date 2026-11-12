@@ -96,5 +96,8 @@
       "savings": "Économies"
     },
     "created": "Partagé {{date}}"
+  },
+  "entry": {
+    "link": "Partager le lien"
   }
 }

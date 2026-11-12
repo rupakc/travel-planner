@@ -167,3 +167,59 @@ def revoke_all(user_id: str) -> None:
             "UPDATE refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL",
             (_iso(datetime.now(UTC)), user_id),
         )
+
+
+def list_families(user_id: str, now: datetime) -> list[dict]:
+    """Live refresh families of a user (not revoked, not expired), newest first.
+
+    A family is live while it has an unrotated, unrevoked, unexpired token.
+    ``created_at`` is the family's first token, ``last_used_at`` its latest use.
+    ``token_hash`` is the live token's hash (for the ``current`` comparison only).
+    """
+    with get_connection() as conn:
+        rows = conn.execute(
+            """SELECT family_id, client, device_name, token_hash, expires_at,
+                      family_expires_at,
+                      (SELECT MIN(created_at) FROM refresh_tokens f
+                        WHERE f.family_id = t.family_id) AS first_at,
+                      (SELECT MAX(last_used_at) FROM refresh_tokens f
+                        WHERE f.family_id = t.family_id) AS used_at
+               FROM refresh_tokens t
+               WHERE user_id = ? AND revoked_at IS NULL AND rotated_at IS NULL""",
+            (user_id,),
+        ).fetchall()
+    out = []
+    for r in rows:
+        if _parse(r["expires_at"]) <= now or _parse(r["family_expires_at"]) <= now:
+            continue
+        out.append(
+            {
+                "id": r["family_id"],
+                "client": r["client"],
+                "device_name": r["device_name"],
+                "created_at": r["first_at"],
+                "last_used_at": r["used_at"] or r["first_at"],
+                "token_hash": r["token_hash"],
+            }
+        )
+    out.sort(key=lambda s: s["last_used_at"], reverse=True)
+    return out
+
+
+def hash_token(token: str) -> str:
+    return _hash(token)
+
+
+def revoke_family(user_id: str, family_id: str, now: datetime) -> bool:
+    """Revoke a live family owned by ``user_id``; False if there is none."""
+    with get_connection() as conn:
+        live = conn.execute(
+            """SELECT 1 FROM refresh_tokens
+               WHERE user_id = ? AND family_id = ? AND revoked_at IS NULL
+               LIMIT 1""",
+            (user_id, family_id),
+        ).fetchone()
+        if not live:
+            return False
+        _revoke_family(conn, family_id, now)
+        return True

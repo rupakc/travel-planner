@@ -79,6 +79,8 @@ Username rule: lower-cased, then `^[a-z0-9_]{3,20}$`, not in `RESERVED_USERNAMES
 | `POST /auth/refresh` | — | `{"refresh_token"}` | `200 {"access_token", "token_type": "bearer", "expires_in": 3600, "refresh_token": "rt_…"}`, rotated | `401 refresh_stale` (an already-rotated token reused ≤ 30 s after rotation; the family is kept), `401 refresh_invalid` (unknown, expired, revoked, user inactive, or reused after the grace window, which revokes the family), `429` |
 | `POST /auth/logout` | optional | `{"refresh_token"?}` | `204`, and revokes that refresh token's family | — |
 | `POST /auth/logout-all` | yes | — | `204`; bumps `token_version` and revokes every refresh token | — |
+| `GET /auth/sessions` (additive, 2026-11-12) | yes | optional header `X-Refresh-Token: rt_…` (never logged) | `200 {"sessions": [{"id", "client", "device_name", "created_at", "last_used_at", "current"}]}`: the caller's live refresh-token families (one per mobile sign-in; web logins have none), most recently used first. `id` is the family id and stays the same across refreshes. `current` is true for the family the `X-Refresh-Token` belongs to. Revoked and expired families are not listed. Bucket `account` | `401`, `429` |
+| `DELETE /auth/sessions/{id}` (additive, 2026-11-12) | yes | — | `204`, revokes that whole family (its next refresh answers `401 refresh_invalid`) | `404 session_not_found` (unknown, already revoked, or another user's), `429` |
 | `POST /auth/change-password` (additive) | yes | `{"current_password", "new_password", "client"?}`. `current_password` may be `""` when `has_password` is false | `200 {"access_token", "token_type", "expires_in"}`, plus `refresh_token` for mobile. Bumps `token_version`, revokes every refresh token, and the new token keeps this session alive | `400` "Current password is incorrect" (unchanged), the password errors above as `400` with `error_code` |
 | `GET /auth/me` (additive) | yes | — | `User` | `401 session_revoked` when `tv` is stale |
 | `PUT /auth/email` (additive) | yes | unchanged | `{"email", "email_verified": false, "verification_sent": bool}`. A changed email starts unverified, and a link is sent when email is available | unchanged |
@@ -264,3 +266,4 @@ Clarifications of behaviour the frozen contract left implicit. None changes a re
 
 - 2026-11-11 — v1 published
 - 2026-11-11 — added the "Contract notes" section (clarifications only)
+- 2026-11-12 — added `GET /auth/sessions` and `DELETE /auth/sessions/{id}` (additive; no existing endpoint changed)

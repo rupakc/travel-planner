@@ -96,5 +96,8 @@
       "savings": "Catches"
     },
     "created": "Shared {{date}}"
+  },
+  "entry": {
+    "link": "Share link"
   }
 }

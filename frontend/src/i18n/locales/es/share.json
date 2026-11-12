@@ -96,5 +96,8 @@
       "savings": "Ahorros"
     },
     "created": "Compartido {{date}}"
+  },
+  "entry": {
+    "link": "Compartir enlace"
   }
 }
