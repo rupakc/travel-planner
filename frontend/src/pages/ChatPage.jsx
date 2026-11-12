@@ -34,6 +34,11 @@ import { track } from '../utils/analytics'
 import { stripLinkEvidence } from '../utils/verification'
 import { chatImportLink } from '../utils/linkImport'
 import { safeUrl } from '../utils/planPrint'
+import { snapshotFromResults } from '../utils/tripSnapshot'
+import { putSnapshot, notifyTripsChanged } from '../services/tripsApi'
+import { tripPath } from '../journey/paths'
+import { useJourney } from '../hooks/useJourney'
+import CompletenessMeter from '../components/trips/CompletenessMeter'
 
 // Fix Leaflet default icon (only once, even if TripMap.jsx also does this)
 delete L.Icon.Default.prototype._getIconUrl
@@ -595,8 +600,11 @@ function PlanningMessage({ sections, sectionStatuses, selections, onSelect, itin
 
 // ─── My Plan Drawer (compact version for chat) ──────────────────────────────
 
-export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections }) {
+export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, planName, onPlanNameChange, onRemoveSelection, token, loadedPlanId, onLoadPlan, onClearLoadedPlan, onClearSelections, sectionResults, onOpenTrip }) {
   const { t } = useTranslation('chat')
+  const { t: tj } = useTranslation('journey')
+  const { enabled: journeyOn, tripsApi } = useJourney()
+  const [savedTripId, setSavedTripId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [savedPlans, setSavedPlans] = useState([])
@@ -623,6 +631,21 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
 
   useEffect(() => { if (isOpen) loadPlans() }, [isOpen])
 
+  // Freeze the chat's section results into the trip (journey backend only);
+  // nothing to send when the chat has none. Never fails the save.
+  const saveTripSnapshot = async (res, planId) => {
+    if (!tripsApi) return
+    let id = planId
+    if (!id) { try { id = (await res.json())?.id } catch { id = null } }
+    if (!id) return
+    setSavedTripId(id)
+    const snap = snapshotFromResults(sectionResults)
+    if (Object.values(snap).some(Boolean)) {
+      try { await putSnapshot(token, id, snap) } catch { /* the plan is saved; the snapshot is optional */ }
+    }
+    notifyTripsChanged()
+  }
+
   const save = async () => {
     if (!token) { setSaveMsg('login'); return }
     setSaving(true); setSaveMsg('')
@@ -635,7 +658,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         ? JSON.stringify({ name: planName, selections: saved })
         : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
-      if (res.ok) { setSaveMsg(isUpdate ? 'updated' : 'saved'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
+      if (res.ok) { await saveTripSnapshot(res, isUpdate ? loadedPlanId : null); setSaveMsg(isUpdate ? 'updated' : 'saved'); loadPlans(); setTimeout(() => setSaveMsg(''), 3000) }
       else setSaveMsg('failed')
     } catch { setSaveMsg('failed') }
     finally { setSaving(false) }
@@ -680,6 +703,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
         : JSON.stringify({ name: planName, search_data: {}, selections: saved })
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body })
       if (res.ok) {
+        await saveTripSnapshot(res, isUpdate ? loadedPlanId : null)
         setSaveMsg(isUpdate ? 'sentBack' : 'planSaved')
         loadPlans()
         onClearLoadedPlan()
@@ -735,6 +759,11 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           </div>
 
           <CostBreakdown selections={selections} searchData={searchContext} />
+          <CompletenessMeter selections={selections} searchData={searchContext} surface="drawer" />
+          {journeyOn && (savedTripId || loadedPlanId) && onOpenTrip && (
+            <button type="button" data-tid="chat.open-trip" onClick={() => onOpenTrip(savedTripId || loadedPlanId)}
+              className="w-full px-3 py-2 text-sm font-semibold rounded-lg bg-teal-700 hover:bg-teal-800 text-white">{tj('openTrip')}</button>
+          )}
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchContext} selections={selections} source="chat" />
           <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchContext, selections } : null} showHint savedNote source="chat_plan" />
 
@@ -1117,6 +1146,14 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [isPlanOpen, setIsPlanOpen] = useState(false)
+  // Latest good section_result per section across the conversation.
+  const sectionResults = useMemo(() => {
+    const out = {}
+    for (const m of messages) {
+      for (const [k, v] of Object.entries(m.sections || {})) if (v && !v.error) out[k] = v
+    }
+    return out
+  }, [messages])
   const [planName, setPlanName] = useState(() => t('plan.defaultName'))
   const [loadedPlanId, setLoadedPlanId] = useState(null)
   // Trip details (dates, budget) of a saved plan loaded into the drawer —
@@ -1675,6 +1712,8 @@ export default function ChatPage() {
         onLoadPlan={handleLoadPlan}
         onClearLoadedPlan={() => { setLoadedPlanId(null); setLoadedPlanSearchData(null) }}
         onClearSelections={() => setSelections({ ...EMPTY_SELECTIONS })}
+        sectionResults={sectionResults}
+        onOpenTrip={(id) => { setIsPlanOpen(false); navigate(tripPath(id)) }}
       />
     </div>
     </ActivityTripContext.Provider>
