@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Header, Response
 from pydantic import BaseModel, Field
 
 from ...core.auth import get_current_user
@@ -59,4 +59,37 @@ def logout(req: LogoutRequest | None = None):
 def logout_all(user: dict = Depends(get_current_user)):
     bump_token_version(user["id"])
     sessions_db.revoke_all(user["id"])
+    return Response(status_code=204)
+
+
+@router.get("/auth/sessions", dependencies=[Depends(rate_limit("account"))])
+def list_sessions(
+    user: dict = Depends(get_current_user),
+    x_refresh_token: str | None = Header(None, max_length=256),
+):
+    """The caller's live refresh-token families (mobile sign-ins), one per device."""
+    current = sessions_db.hash_token(x_refresh_token) if x_refresh_token else None
+    return {
+        "sessions": [
+            {
+                "id": s["id"],
+                "client": s["client"],
+                "device_name": s["device_name"],
+                "created_at": s["created_at"],
+                "last_used_at": s["last_used_at"],
+                "current": current is not None and s["token_hash"] == current,
+            }
+            for s in sessions_db.list_families(user["id"], _now())
+        ]
+    }
+
+
+@router.delete(
+    "/auth/sessions/{session_id}",
+    status_code=204,
+    dependencies=[Depends(rate_limit("account"))],
+)
+def revoke_session(session_id: str, user: dict = Depends(get_current_user)):
+    if not sessions_db.revoke_family(user["id"], session_id, _now()):
+        raise ApiError(404, "session_not_found", "Session not found.")
     return Response(status_code=204)

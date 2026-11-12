@@ -10,6 +10,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 |---|---|---|---|
 | Sign in with username and password, change password | ✅ | ✅ | ⏳ Phase 7 |
 | Create an account, verify email, reset password | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Sessions list and revoke one (mobile sign-ins; `GET/DELETE /auth/sessions`) | — | ⏳ Phase 8 | ⏳ Phase 7 |
 | Sessions: sign out everywhere, refresh tokens on mobile | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
 | Account area: profile, avatar, settings, linked sign-in methods | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
 | Export my data and delete my account | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |

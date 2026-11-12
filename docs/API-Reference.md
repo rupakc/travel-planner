@@ -41,6 +41,8 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/auth/login` | none | Username and password → JWT |
 | POST | `/api/auth/change-password` | user | Change own password; returns a new token |
 | GET | `/api/auth/me` | user | Current user |
+| GET | `/api/auth/sessions` | user | Live mobile sessions (refresh families); optional `X-Refresh-Token` marks `current` |
+| DELETE | `/api/auth/sessions/{id}` | user | Revoke one session; `404 session_not_found` if not yours |
 | PUT | `/api/auth/email` | user | Set or clear the account email (for fare alert emails) |
 | POST | `/api/admin/users` | admin | Create a user with a temporary password |
 | GET | `/api/admin/users` | admin | List users (no password hashes) |
