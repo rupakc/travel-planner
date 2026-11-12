@@ -6,10 +6,20 @@ from app.services.phrases import phrases_for_country
 
 _APP = Path(__file__).resolve().parent.parent / "app"
 DATA = json.loads((_APP / "data" / "travel_phrases.json").read_text(encoding="utf-8"))
-IDS = ["help", "call_police", "need_doctor", "take_me_to", "thank_you",
-       "how_much", "where_toilet", "dont_understand"]
-LANGS = ("ar bn cs da de el es fi fr he hi hr hu id is it ja km ko ms nl no pl pt "
-         "ro ru sv sw th tl tr uk vi zh").split()
+IDS = [
+    "help",
+    "call_police",
+    "need_doctor",
+    "take_me_to",
+    "thank_you",
+    "how_much",
+    "where_toilet",
+    "dont_understand",
+]
+LANGS = (
+    "ar bn cs da de el es fi fr he hi hr hu id is it ja km ko ms nl no pl pt "
+    "ro ru sv sw th tl tr uk vi zh"
+).split()
 
 
 def test_phrase_ids_and_language_list():
@@ -37,7 +47,9 @@ def test_non_latin_scripts_have_romanization():
 
 
 def test_every_country_maps_to_known_language_or_null():
-    with open(_APP / "db" / "data" / "countries.csv", encoding="utf-8", newline="") as f:
+    with open(
+        _APP / "db" / "data" / "countries.csv", encoding="utf-8", newline=""
+    ) as f:
         codes = {r["code"] for r in csv.DictReader(f)}
     assert set(DATA["countries"]) == codes
     for cc, lang in DATA["countries"].items():
@@ -68,4 +80,7 @@ def test_thai_polite_particles():
 
 def test_neutral_choices():
     assert DATA["countries"]["SX"] is None
-    assert DATA["languages"]["pt"]["phrases"]["where_toilet"]["text"] == "Onde ficam os sanitários?"
+    assert (
+        DATA["languages"]["pt"]["phrases"]["where_toilet"]["text"]
+        == "Onde ficam os sanitários?"
+    )
