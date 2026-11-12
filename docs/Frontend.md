@@ -34,6 +34,9 @@ frontend/src/
 │   ├── alerts/               WatchFareButton, WatchDialog, WatchCard, Sparkline,
 │   │                         NotificationBell, AlertToast, AlertEmailField,
 │   │                         LiveCheck ("Search the web now"), cards/
+│   ├── alerts2/              price alerts 2.0 (see below): PriceStory, PriceChart, TargetSlider,
+│   │                         DropMoment, SavingsTally, SavingsShareCard, DealHunterTrack,
+│   │                         QuickWatchButton, WatchSuggestions, TripPricesCard, AlertPrefsPanel, ...
 │   ├── admin/                TelemetrySummary (Analytics tab)
 │   ├── trips/                trip hub and trip-screen pieces: TripCard, TripHeader, TripTabs, PhaseMenu,
 │   │                         PrepChecklist, OfflinePack, TodayView, ExpenseLog, Journal, Recap,
@@ -102,6 +105,10 @@ Search/Results and Chat are **always mounted** and hidden with CSS, so navigatin
 ## API layer
 
 `services/api.js` is an axios instance that adds `Authorization: Bearer <token>`, plus helpers: `streamSearch` (spawns the worker), the filtered searches, `fetchFareCalendar`, `getSerpapiConfigured` (reads `/health` once per page load), `discoverDestinations`, the recent-search calls, `compareDestination` and `recheckStressTest`. `utils/httpError.js` turns error responses into messages, showing a string `detail` (such as the 429 rate-limit message) as-is.
+
+## Price alerts 2.0
+
+`components/alerts2/` is rendered only when `useAlertsV2` says so: `features.price_alerts_v2` from `/api/config` is true, or `features.alerts_api === 2` and `localStorage.tp_alerts2 = "1"` (`"0"` always turns it off). Against a backend without `features.alerts_api` the classic Alerts page renders and no v2 control appears. Each watch card gets a price story (inline-SVG chart, keyboard-scrubbable, typical range, target slider, verdict and advice translated from codes plus params), the Alerts page a savings tally with milestones and a shareable "I caught $X" card (Canvas 2D, Web Share API), the notification bell a drop moment card (count-up skipped under `prefers-reduced-motion`) and the preferences panel the digest, quiet-hour, cap and grouping controls. One-tap watch and the suggestions sheet appear on Results, Chat and Trip cards and are hidden when `features.live_prices` is false. The Deal-hunter track follows the account's `hide_game` setting. Strings live in the `priceStory`, `savings`, `quickWatch`, `watchSuggest`, `alertPrefs` and `alertsHub` namespaces, plus added keys in `alerts` and `game`. `AlertsContext` also surfaces a drop's `data.drop` and `data.game`.
 
 ## Utilities
 

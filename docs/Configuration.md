@@ -78,6 +78,19 @@ Fare watch re-checks watched fares in the background and needs `SERPAPI_KEY`. Pr
 | `SMTP_STARTTLS` | `true` | Upgrade the connection with STARTTLS before logging in. |
 | `APP_BASE_URL` | `http://localhost:5174` | Public URL of the frontend, used for the links in alert emails ("See flights", "Re-plan", and the stop-emails link, which goes to `APP_BASE_URL/api/...`, so the frontend's host must proxy `/api`). That link opens a confirmation page (GET) and the change is a POST, which is also the RFC 8058 one-click target named in the `List-Unsubscribe` / `List-Unsubscribe-Post` headers. Account emails are not verified: setting one is signed-in only and rate-limited. |
 
+### Price alerts 2.0
+
+See [Alerts API](Alerts-API.md). With the flag off, fare and price watches, email and push behave exactly as before; the `/api/alerts/*` read routes are always served.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PRICE_ALERTS_V2_ENABLED` | `false` | Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as `features.price_alerts_v2`; the web UI shows it only when this is true (or for one browser with `localStorage.tp_alerts2 = "1"`). |
+| `ALERT_DIGEST_HOUR_LOCAL` | `9` | Local hour (user's account timezone) from which a user's weekly digest is due on their chosen weekday. |
+| `ALERT_FLUSH_INTERVAL_S` | `60` | How often the delivery loop sends held (quiet-hours, grouped) pushes and emails. |
+| `ALERT_ADVICE_TTL_HOURS` | `24` | How long an AI price tip for a flight watch is cached. |
+
+Without `SERPAPI_KEY`, `features.live_prices` is false: stories, savings, the digest and suggestions work from stored data, every price shows "checked N days ago", and one-tap watch answers `503 live_prices_off`.
+
 ## Push alerts (optional)
 
 Fare- and price-watch alerts can also be pushed to the Android app's registered devices (`/api/devices`) through Firebase Cloud Messaging (FCM HTTP v1). Without it, alerts still appear in the app and by email, and the Android app polls `/api/notifications`.

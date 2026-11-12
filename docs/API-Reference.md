@@ -93,6 +93,13 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | GET, PATCH, DELETE | `/api/price-watches/{id}` | user | Get, edit (pause/resume, mode, target, email), delete own price watch |
 | POST | `/api/price-watches/{id}/check` | user | "Check now": one live look |
 | GET, POST | `/api/price-watches/unsubscribe?token=` | none | "Stop emails" for one price watch: confirmation page (GET), turn off (POST / one-click) |
+| GET | `/api/alerts/summary` | user | Savings tally: `total_usd`, `by_currency`, drops caught, targets hit, milestones |
+| GET | `/api/alerts/watches/{kind}/{id}/story` | user | Price story for one watch (points, lowest, typical range, verdict, advice code); stored data only, no SerpAPI |
+| POST | `/api/alerts/watches/{kind}/{id}/advice` | user | Cached AI price tip, flights only (`422 advice_unsupported` otherwise); `light_ai` bucket |
+| POST | `/api/alerts/quick-watch` | user | One-tap watch, created pending with no live look (`503 live_prices_off` without `SERPAPI_KEY`, `409 watch_limit`) |
+| GET | `/api/alerts/suggestions?plan_id=` | user | Up to 5 watch suggestions for a saved plan, built locally |
+| GET, PUT | `/api/alerts/preferences` | user | Digest, quiet hours, caps, grouping, `digest_push` |
+| GET, POST | `/api/alerts/digest/unsubscribe?token=` | none | "Stop the weekly digest": confirmation page (GET), turn off (POST / one-click) |
 | GET | `/api/notifications` | user | Own notifications, newest first (`unread_only`, `limit` 1–100, `offset`) |
 | GET | `/api/notifications/unread-count` | user | `{"count": n}` |
 | POST | `/api/notifications/read` | user | Mark `ids` (or `all`) read |
@@ -744,6 +751,10 @@ Deletes the watch and its history. Returns `{"deleted": true}`.
 ### GET, POST /api/price-watches/unsubscribe?token=
 
 As the fare-watch unsubscribe link, for one price watch (its own signed token; a fare-watch token is refused with `400`).
+
+### /api/alerts/*
+
+Price alerts 2.0. The full contract (objects, advice codes, error codes, delivery rules) is the frozen [Alerts API](Alerts-API.md). In short: every route needs a signed-in user and acts only on the caller's watches (`404 watch_not_found`). `GET /api/config` reports `features.alerts_api: 2`, `features.price_alerts_v2` (`PRICE_ALERTS_V2_ENABLED`) and `features.live_prices` (a SerpAPI key is set). The read routes always exist; the pipeline behind them (drop facts, savings rows, Deal-hunter XP, delivery rules, digest) runs only when `PRICE_ALERTS_V2_ENABLED=true`. Every watch object also carries `pending_first_check`, and drop notifications may carry extra `data.drop` / `data.game` keys, and a `price_digest` kind with `data.digest` exists; clients that don't know them ignore them.
 
 ### GET /api/notifications
 

@@ -89,6 +89,10 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Notification inbox and unread bell | ✅ | ✅ | ⏳ Phase 7 |
 | Alert e-mail | ✅ | ? | ⏳ Phase 7 |
 | Push notifications | — (a toast, or a native notification while the tab is open) | ⏳ Phase 6 (FCM wired, inert until configured) | ⏳ Phase 6 |
+| Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ⏳ | ⏳ Phase 7 |
+| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag) | ⏳ | ⏳ Phase 7 |
+| One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ⏳ | ⏳ Phase 7 |
+| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag) | ⏳ | ⏳ Phase 7 |
 | Local trip reminders | — | ✅ | ⏳ Phase 7 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
 | Near me | ✅ | ✅ | ⏳ Phase 7 |

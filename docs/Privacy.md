@@ -80,6 +80,10 @@ If you use trips, the server stores them with your account: trip titles, destina
 - **Offline packs** are kept in your browser (IndexedDB and the cache of the app's service worker), not sent anywhere. They are cleared when you sign out, and when an administrator switches the offline pack off.
 - **No location history.** A check-in records a day and the trip's city, never your coordinates. Coordinates stored with a place are the place's, supplied by the app.
 
+## Price alerts
+
+Beyond the watches and notifications above, price alerts 2.0 stores, per account: your alert preferences (weekly digest on or off, weekday, whether the digest also pushes, instant alerts, quiet hours, daily caps, grouping window), a **savings ledger** (one row per observed price drop on one of your watches: the watch, the prices before and after, the currency and the time; drops between observed prices only, never estimates), a queue of pushes and emails waiting for quiet hours or grouping, a record of which weeks your digest was sent, and a cached price tip per flight watch. The **weekly digest** is opt-in; it is sent to your account email (if verified and the server has SMTP) and shown in the app, and as a push only if you turn that on. Its email carries a stop link. The savings figure is a tally of "drops caught", not a record of what you booked. All of it is included in **Export my data** and removed by **Delete account**. The alert telemetry events (`alert_story_view`, `alert_target_set`, `alert_advice`, `alert_drop_seen`, `alert_quick_watch`, `alert_suggest`, `alert_savings_share`, `alert_prefs_change`, `alert_digest_open`) carry only enums, counts and flags, never an amount, a price, a title or a place. Sharing the "I caught $X" card happens in your browser; the server sees nothing of it.
+
 ## What is never collected
 
 The schema has no field for any of these, and the server drops unknown fields:
