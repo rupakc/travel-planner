@@ -1,0 +1,6 @@
+{
+  "banner": {
+    "offline": "你已离线。已保存的行程仍可使用。",
+    "pending_other": "{{count}} 项更改等待同步"
+  }
+}

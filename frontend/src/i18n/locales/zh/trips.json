@@ -1,0 +1,68 @@
+{
+  "title": "旅行",
+  "create": {
+    "open": "新建旅行",
+    "heading": "保存一个想法",
+    "title": "标题",
+    "destination": "目的地（可选）",
+    "cancel": "取消",
+    "save": "保存",
+    "titleInvalid": "请给你的旅行起个标题。",
+    "failed": "无法保存这次旅行，请重试。"
+  },
+  "load": {
+    "failed": "暂时无法加载。",
+    "retry": "重试",
+    "loading": "正在加载你的旅行…"
+  },
+  "empty": {
+    "text": "还没有旅行。规划一次，或先保存一个想法。",
+    "plan": "规划旅行",
+    "idea": "保存一个想法"
+  },
+  "card": {
+    "noDates": "尚未设定日期"
+  },
+  "bucket": {
+    "title": "已到访国家",
+    "label": "已到访 {{count}} / {{goal}} 个国家"
+  },
+  "phases": {
+    "dreaming": "憧憬中",
+    "planning": "规划中",
+    "ready": "已就绪",
+    "on_the_road": "旅途中",
+    "memories": "回忆"
+  },
+  "next": {
+    "heading": "下一次旅行",
+    "dreaming": "一个等待确定日期的想法。",
+    "pickDates": "选择日期",
+    "planIt": "开始规划",
+    "planning": "已规划 {{percent}} %",
+    "open": "打开旅行",
+    "ready": "下一步：{{date}} 前完成{{item}}",
+    "readyNoDate": "下一步：{{item}}",
+    "allSet": "一切就绪。",
+    "readyFallback": "完成你的准备",
+    "openPrep": "打开准备清单",
+    "onTheRoad": "第 {{day}} 天 · {{city}}",
+    "openToday": "打开今日",
+    "memories": "重温你的旅行",
+    "openRecap": "打开回顾"
+  },
+  "prepItems": {
+    "visa": "签证",
+    "passport": "护照",
+    "bookings": "预订",
+    "insurance": "旅行保险",
+    "documents": "证件",
+    "stress_test": "检验你的计划",
+    "sim": "SIM 卡",
+    "money": "资金",
+    "packing": "行李清单",
+    "emergency_card": "紧急卡片",
+    "checkin": "航班值机",
+    "offline_pack": "离线包"
+  }
+}

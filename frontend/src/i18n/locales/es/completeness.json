@@ -1,0 +1,11 @@
+{
+  "title": "Plan completo",
+  "percent": "{{value}}%",
+  "parts": {
+    "flights": "Vuelos",
+    "stay": "Alojamiento",
+    "days": "Días planificados",
+    "visa": "Visado revisado",
+    "packing": "Lista de equipaje"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "title": "Avant le départ",
+  "ready": "Voyage prêt à {{percent}} %",
+  "go": "Prêt à partir",
+  "progress": "{{done}} sur {{total}} faits",
+  "notNeeded": "Non nécessaire",
+  "overdue": "En retard",
+  "due": "Avant le {{date}}",
+  "auto": "Fait automatiquement",
+  "autoNote": "Enregistré automatiquement quand vous enregistrez le pack hors ligne",
+  "loading": "Chargement de votre liste…",
+  "error": "Impossible de charger la liste.",
+  "retry": "Réessayer",
+  "toggleFailed": "Impossible d'enregistrer ce changement. Réessayez.",
+  "facts": {
+    "visa": "{{visaType}}, à demander avant le {{date}}",
+    "stay": "Séjour jusqu'à {{n}} jours",
+    "processing": "Délai : {{text}}",
+    "official": "Site officiel",
+    "bookings": "Vol : {{flight}} · Hôtel : {{hotel}}",
+    "yes": "réservé",
+    "no": "pas encore",
+    "score": "Dernier score du test de résistance : {{n}}",
+    "sim": "Forfait : {{name}}",
+    "money": "Monnaie locale : {{code}}",
+    "packing": "{{n}} éléments sur votre liste",
+    "saved": "Enregistré le {{date}}",
+    "notSaved": "Pas encore enregistré"
+  },
+  "items": {
+    "visa": {
+      "title": "Réglez votre visa",
+      "body": "Vérifiez ce qu'il faut pour entrer et faites la demande avant l'échéance."
+    },
+    "passport": {
+      "title": "Vérifiez votre passeport",
+      "body": "Il doit être valable au moins six mois après votre retour et avoir des pages vierges."
+    },
+    "bookings": {
+      "title": "Réservez vol et hôtel",
+      "body": "Choisissez un vol et un hébergement dans votre plan."
+    },
+    "insurance": {
+      "title": "Prenez une assurance voyage",
+      "body": "Elle couvre les soins, les annulations et les bagages perdus."
+    },
+    "documents": {
+      "title": "Rassemblez vos documents",
+      "body": "Billets, confirmations, visa et assurance, au même endroit."
+    },
+    "stress_test": {
+      "title": "Testez votre itinéraire",
+      "body": "Lancez la vérification pour repérer les horaires serrés et les conflits."
+    },
+    "sim": {
+      "title": "Choisissez une SIM ou eSIM",
+      "body": "Décidez comment vous aurez des données à l'arrivée."
+    },
+    "money": {
+      "title": "Organisez votre argent",
+      "body": "Prévenez votre banque, prenez une carte de secours et un peu d'espèces locales."
+    },
+    "packing": {
+      "title": "Faites vos valises",
+      "body": "Parcourez votre liste de bagages et cochez au fur et à mesure."
+    },
+    "emergency_card": {
+      "title": "Relisez votre carte d'urgence",
+      "body": "Connaissez les numéros d'urgence locaux et votre ambassade."
+    },
+    "checkin": {
+      "title": "Enregistrez-vous en ligne",
+      "body": "La plupart des compagnies ouvrent l'enregistrement environ 24 heures avant le départ."
+    },
+    "offline_pack": {
+      "title": "Enregistrez le pack hors ligne",
+      "body": "Gardez l'essentiel sur votre téléphone pour quand il n'y a pas de réseau."
+    }
+  }
+}

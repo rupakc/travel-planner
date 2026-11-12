@@ -1,0 +1,68 @@
+{
+  "title": "Reisen",
+  "create": {
+    "open": "Neue Reise",
+    "heading": "Idee speichern",
+    "title": "Titel",
+    "destination": "Reiseziel (optional)",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "titleInvalid": "Gib deiner Reise bitte einen Titel.",
+    "failed": "Die Reise konnte nicht gespeichert werden. Versuch es nochmal."
+  },
+  "load": {
+    "failed": "Das konnte gerade nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "loading": "Deine Reisen werden geladen…"
+  },
+  "empty": {
+    "text": "Noch keine Reisen. Plane eine oder speichere eine Idee für später.",
+    "plan": "Reise planen",
+    "idea": "Idee speichern"
+  },
+  "card": {
+    "noDates": "Noch keine Daten"
+  },
+  "bucket": {
+    "title": "Besuchte Länder",
+    "label": "{{count}} von {{goal}} Ländern besucht"
+  },
+  "phases": {
+    "dreaming": "Träumen",
+    "planning": "Planen",
+    "ready": "Bereit",
+    "on_the_road": "Unterwegs",
+    "memories": "Erinnerungen"
+  },
+  "next": {
+    "heading": "Nächste Reise",
+    "dreaming": "Eine Idee wartet auf Reisedaten.",
+    "pickDates": "Daten wählen",
+    "planIt": "Plane sie",
+    "planning": "{{percent}} % geplant",
+    "open": "Reise öffnen",
+    "ready": "Als Nächstes: {{item}} bis {{date}}",
+    "readyNoDate": "Als Nächstes: {{item}}",
+    "allSet": "Alles ist bereit.",
+    "readyFallback": "Schließe deine Vorbereitung ab",
+    "openPrep": "Vorbereitung öffnen",
+    "onTheRoad": "Tag {{day}} in {{city}}",
+    "openToday": "Heute öffnen",
+    "memories": "Erlebe deine Reise noch einmal",
+    "openRecap": "Rückblick öffnen"
+  },
+  "prepItems": {
+    "visa": "Visum",
+    "passport": "Reisepass",
+    "bookings": "Buchungen",
+    "insurance": "Reiseversicherung",
+    "documents": "Dokumente",
+    "stress_test": "Plan auf die Probe stellen",
+    "sim": "SIM-Karte",
+    "money": "Geld",
+    "packing": "Packliste",
+    "emergency_card": "Notfallkarte",
+    "checkin": "Flug-Check-in",
+    "offline_pack": "Offline-Paket"
+  }
+}

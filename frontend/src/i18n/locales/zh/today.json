@@ -1,0 +1,22 @@
+{
+  "dayIn": "第 {{day}} 天，{{city}}",
+  "checkIn": "今日打卡",
+  "checkedIn": "已打卡",
+  "streak_other": "连续 {{count}} 天",
+  "stampTitle": "新国家",
+  "stamp": "新国家印章：{{code}}",
+  "nextUp": "接下来",
+  "nothingNext": "今天没有更多安排了。",
+  "noPlan": "今天还没有安排。",
+  "directions": "路线",
+  "wentHere": "我来过这里",
+  "visited": "已到访",
+  "shareStatus": "分享状态",
+  "copied": "已复制到剪贴板。",
+  "nearMe": "附近",
+  "startsOn": "今天从 {{date}} 开始",
+  "queued": "已保存在此设备上，恢复联网后会自动同步。",
+  "checkinFailed": "打卡失败，请重试。",
+  "visitFailed": "保存失败，请重试。",
+  "newCountry": "新国家：{{code}}"
+}

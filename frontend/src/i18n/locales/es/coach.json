@@ -1,0 +1,28 @@
+{
+  "steps": {
+    "trips": {
+      "title": "Tus viajes",
+      "body": "Aquí vive cada viaje, desde la idea hasta el recuerdo. Toca uno para prepararlo, viajar y repasarlo."
+    },
+    "explore": {
+      "title": "Explorar",
+      "body": "Busca, chatea y descubre lugares cerca de ti para empezar una idea nueva."
+    },
+    "alerts": {
+      "title": "Alertas",
+      "body": "Te avisamos cuando baje una tarifa o un precio que sigues."
+    },
+    "play": {
+      "title": "Jugar",
+      "body": "Gana puntos e insignias por planificar y viajar. Totalmente opcional."
+    },
+    "you": {
+      "title": "Tú",
+      "body": "Tu perfil, tus ajustes y este recorrido cuando quieras verlo otra vez."
+    },
+    "create": {
+      "title": "Empieza un viaje",
+      "body": "Crea un viaje aquí, aunque todavía no sepas las fechas."
+    }
+  }
+}

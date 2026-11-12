@@ -1,0 +1,11 @@
+{
+  "title": "Avancement du plan",
+  "percent": "{{value}} %",
+  "parts": {
+    "flights": "Vols",
+    "stay": "Hébergement",
+    "days": "Jours planifiés",
+    "visa": "Visa vérifié",
+    "packing": "Liste de bagages"
+  }
+}

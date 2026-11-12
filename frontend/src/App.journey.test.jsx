@@ -11,6 +11,10 @@ vi.mock('./context/AuthContext', () => ({ useAuth: () => auth.value }))
 vi.mock('./hooks/useJourney', () => ({ useJourney: () => journey.value }))
 vi.mock('./hooks/useHasTrips', () => ({ useHasTrips: () => trips.value }))
 vi.mock('./context/AlertsContext', () => ({ AlertsProvider: ({ children }) => children }))
+vi.mock('./components/trips/JourneyTour', () => ({
+  default: (p) => <div data-coach data-props={JSON.stringify(p)} />,
+}))
+vi.mock('./services/accountApi', () => ({ getAccount: vi.fn(async () => ({ onboarding: { done: true } })) }))
 vi.mock('./utils/analytics', () => ({ track: vi.fn() }))
 vi.mock('./telemetry/client', () => ({ screenView: vi.fn(), setUserPresent: vi.fn() }))
 
@@ -190,5 +194,20 @@ describe('App with the journey on', () => {
     journey.value = { enabled: false, tripsApi: false, offlinePack: false, loaded: false }
     await visit('/trips/12/offline')
     expect(where()).toBe('/trips/12/offline')
+  })
+})
+
+describe('journey coach marks mount', () => {
+  it('is absent with the journey off', async () => {
+    journey.value = OFF
+    await visit('/')
+    expect(container.querySelector('[data-coach]')).toBeNull()
+  })
+
+  it('mounts with the journey on, passing the user and onboarding state', async () => {
+    journey.value = ON
+    await visit('/trips')
+    const p = JSON.parse(container.querySelector('[data-coach]').getAttribute('data-props'))
+    expect(p).toEqual({ username: 'a', visible: true, onboardingDone: true })
   })
 })

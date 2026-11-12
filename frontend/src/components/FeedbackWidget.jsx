@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { MessageSquarePlus, X, Star } from 'lucide-react'
@@ -25,6 +25,20 @@ export default function FeedbackWidget() {
   const [message, setMessage]   = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+
+  const [tabs, setTabs] = useState(() => document.body.hasAttribute('data-bottom-tabs'))
+  useEffect(() => {
+    const sync = () => setTabs(document.body.hasAttribute('data-bottom-tabs'))
+    sync()
+    const mo = new MutationObserver(sync)
+    mo.observe(document.body, { attributes: true, attributeFilter: ['data-bottom-tabs'] })
+    return () => mo.disconnect()
+  }, [])
+  useEffect(() => {
+    const onOpen = () => { reset(); setOpen(true) }
+    window.addEventListener('voyager:open-feedback', onOpen)
+    return () => window.removeEventListener('voyager:open-feedback', onOpen)
+  }, [])
 
   const page = PATH_TO_PAGE[location.pathname] ?? 'other'
 
@@ -66,7 +80,7 @@ export default function FeedbackWidget() {
       <button
         onClick={open ? handleClose : handleOpen}
         data-tid="feedback.toggle"
-        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-3.5 py-2.5 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium rounded-full shadow-lg transition-all"
+        className={`fixed ${tabs ? 'bottom-20' : 'bottom-6'} left-6 z-50 hidden sm:flex items-center gap-2 px-3.5 py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-full shadow-lg transition-all`}
         title={t('feedback.triggerTitle')}
       >
         {open ? <X size={15} /> : <MessageSquarePlus size={15} />}
@@ -75,7 +89,7 @@ export default function FeedbackWidget() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 left-6 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+        <div className={`fixed ${tabs ? 'bottom-36' : 'bottom-20'} left-6 z-50 w-80 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden`}>
           {done ? (
             <div className="p-6 text-center">
               <div className="text-3xl mb-2">🙏</div>

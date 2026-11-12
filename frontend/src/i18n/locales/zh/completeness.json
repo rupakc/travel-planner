@@ -1,0 +1,11 @@
+{
+  "title": "计划完成度",
+  "percent": "{{value}}%",
+  "parts": {
+    "flights": "航班",
+    "stay": "住宿",
+    "days": "已安排的天数",
+    "visa": "已核对签证",
+    "packing": "行李清单"
+  }
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from './context/AuthContext'
@@ -39,6 +39,8 @@ import PlayPage            from './pages/PlayPage'
 import YouPage             from './pages/YouPage'
 import OnboardingPage      from './pages/OnboardingPage'
 import OnboardingGate      from './components/onboarding/OnboardingGate'
+import JourneyTour         from './components/trips/JourneyTour'
+import { getAccount }      from './services/accountApi'
 import OfflineBanner       from './components/offline/OfflineBanner'
 import I18nRouteGate       from './components/I18nRouteGate'
 import { useJourney }      from './hooks/useJourney'
@@ -118,6 +120,20 @@ function JourneyOnly({ children }) {
   return enabled ? children : <Navigate to="/" replace />
 }
 
+// Coach marks for the journey tabs, once the account's onboarding is done.
+function JourneyCoach({ visible }) {
+  const { token, user } = useAuth()
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    let live = true
+    Promise.resolve(getAccount(token))
+      .then((a) => { if (live) setDone(a?.onboarding?.done === true) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [token])
+  return <JourneyTour username={user?.username} visible={visible} onboardingDone={done} />
+}
+
 function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -152,6 +168,7 @@ function Layout() {
         <VerifyBanner />
         <OfflineBanner />
         <OnboardingGate />
+        {journeyOn && <JourneyCoach visible />}
         <FeedbackWidget />
         {/* SearchTab and ChatPage are always in the DOM — navigating away never unmounts them */}
         <div style={{ display: showSearch ? 'block' : 'none' }}><SearchTab /></div>

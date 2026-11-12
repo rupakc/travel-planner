@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "Spielen"
+  },
+  "countries": {
+    "title": "Besuchte Länder",
+    "empty": "Checke auf einer Reise ein oder schließe einen Rückblick ab, um dein erstes Land hinzuzufügen.",
+    "count_one": "{{count}} Land besucht",
+    "count_other": "{{count}} Länder besucht",
+    "countOfGoal_one": "{{count}} von {{goal}} Ländern besucht",
+    "countOfGoal_other": "{{count}} von {{goal}} Ländern besucht"
+  },
+  "continents": {
+    "title_one": "Kontinente ({{count}})",
+    "title_other": "Kontinente ({{count}})",
+    "AF": "Afrika",
+    "AN": "Antarktis",
+    "AS": "Asien",
+    "EU": "Europa",
+    "NA": "Nordamerika",
+    "OC": "Ozeanien",
+    "SA": "Südamerika"
+  },
+  "goal": {
+    "title": "Ziel deiner Wunschliste",
+    "hint": "Wie viele Länder möchtest du sehen? Wähle eine Zahl von {{min}} bis {{max}}.",
+    "label": "Länder, die du sehen willst",
+    "save": "Ziel speichern",
+    "invalid": "Gib eine ganze Zahl von {{min}} bis {{max}} ein.",
+    "saved": "Ziel gespeichert.",
+    "error": "Dein Ziel konnte nicht gespeichert werden. Versuche es erneut."
+  },
+  "streak": {
+    "title": "Reise-Check-in-Serie",
+    "current_one": "{{count}} Tag in Folge",
+    "current_other": "{{count}} Tage in Folge",
+    "longest_one": "Längste: {{count}} Tag",
+    "longest_other": "Längste: {{count}} Tage"
+  },
+  "hidden": {
+    "note": "Das Spiel ist ausgeblendet. Du kannst es in deinen Einstellungen wieder einschalten.",
+    "link": "Einstellungen öffnen"
+  },
+  "you": {
+    "more": "Mehr",
+    "preferences": "Vorlieben",
+    "alerts": "Preisalarme",
+    "tour": "Zeig mir die App"
+  }
+}

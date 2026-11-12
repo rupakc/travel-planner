@@ -10,6 +10,9 @@ import pytest
 from app.core.auth import create_access_token
 from app.db import telemetry_db, users_db
 from app.db.database import get_connection
+from app.db.trip_children import TRIP_CHILD_TABLES
+from app.db.trip_snapshot_db import put_snapshot
+from app.db.user_countries_db import add_countries
 from app.db.users_db import create_user
 from app.services import account_data
 from app.services.avatar import avatar_path
@@ -95,7 +98,13 @@ def _seed_everything(u: dict) -> None:
         for table, (col, key) in account_data.USER_TABLES.items():
             values = {col: uid if key == "id" else name, **_FIXED.get(table, {})}
             _fill(conn, table, values)
+        plan_id = conn.execute(
+            "SELECT id FROM plans WHERE username = ?", (name,)
+        ).fetchone()["id"]
         for table in account_data.CHILD_TABLES:
+            if table in TRIP_CHILD_TABLES:
+                _fill(conn, table, {"plan_id": plan_id})
+                continue
             parent = table.removesuffix("_history") + "es"
             pid = conn.execute(
                 f"SELECT id FROM {parent} WHERE user_id = ?",  # nosec B608
@@ -183,6 +192,10 @@ def test_every_user_table_is_covered():
                 assert table in covered, f"{table} holds user rows but is not covered"
             if "watch_id" in names:
                 assert table in account_data.CHILD_TABLES, table
+            # a trip's rows (fare/price watches hold their owner and only
+            # point at a plan, so they are user tables)
+            if "plan_id" in names and table not in account_data.USER_TABLES:
+                assert table in account_data.CHILD_TABLES, table
     for table, (col, key) in account_data.USER_TABLES.items():
         assert key in ("id", "username")
         with get_connection() as conn:
@@ -244,7 +257,7 @@ def test_export_round_trip(client):
         "format", "version", "exported_at", "account", "identities", "settings",
         "onboarding", "preferences", "plans", "recent_searches", "taste",
         "feedback", "fare_watches", "price_watches", "notifications", "devices",
-        "game",
+        "game", "trips", "countries",
     }  # fmt: skip
     assert body["format"] == "voyager-export" and body["version"] == 1
     assert body["exported_at"].endswith("Z")
@@ -257,6 +270,112 @@ def test_export_round_trip(client):
     raw = r.text
     for secret in ("fcm-secret-token", "rt-hash-zzz", "plain:", "apple-refresh"):
         assert secret not in raw
+
+
+def _seed_trip(plan_id: int) -> None:
+    now = _now()
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO trip_expenses (plan_id, client_id, amount_minor, currency,"
+            " category, note, spent_on, created_at, updated_at)"
+            " VALUES (?, 'c1', 1250, 'EUR', 'food', 'Nata', '2027-04-01', ?, ?)",
+            (plan_id, now, now),
+        )
+        conn.execute(
+            "INSERT INTO trip_journal (plan_id, client_id, day, body, mood,"
+            " created_at, updated_at) VALUES (?, 'j1', '2027-04-01', 'Sunny', 'great', ?, ?)",
+            (plan_id, now, now),
+        )
+        conn.execute(
+            "INSERT INTO trip_ratings (plan_id, place_key, name, kind, visited, stars,"
+            " updated_at) VALUES (?, 'place:belem', 'Belém', 'place', 1, 5, ?)",
+            (plan_id, now),
+        )
+        conn.execute(
+            "INSERT INTO trip_prep (plan_id, item_id, done_at, meta, updated_at)"
+            " VALUES (?, 'stress_test', ?, '{\"score\": 80}', ?)",
+            (plan_id, now, now),
+        )
+        conn.execute(
+            "INSERT INTO trip_checkins (plan_id, day, city, country_code, created_at)"
+            " VALUES (?, '2027-04-01', 'Lisbon', 'PT', ?)",
+            (plan_id, now),
+        )
+    put_snapshot(plan_id, {"forex": {"rate": 0.92}})
+
+
+def test_export_includes_trips(client):
+    u, h = _user()
+    a = client.post(
+        "/api/plans",
+        json={"name": "Lisbon", "search_data": {"destination": "Lisbon"},
+              "selections": {}},
+        headers=h,
+    ).json()  # fmt: skip
+    b = client.post("/api/trips", json={"title": "Kyoto"}, headers=h).json()
+    _seed_trip(a["id"])
+    add_countries(u["id"], ["PT"], a["id"], "checkin")
+
+    body = client.get("/api/account/export", headers=h).json()
+    assert set(body["trips"]) == {str(a["id"]), str(b["id"])}
+    trip = body["trips"][str(a["id"])]
+    assert set(trip) == {
+        "expenses",
+        "journal",
+        "places",
+        "prep",
+        "checkins",
+        "snapshot",
+    }
+    [exp] = trip["expenses"]
+    assert (exp["client_id"], exp["amount_minor"], exp["currency"]) == (
+        "c1",
+        1250,
+        "EUR",
+    )
+    assert "plan_id" not in exp
+    assert trip["journal"][0]["body"] == "Sunny"
+    assert trip["places"][0]["place_key"] == "place:belem"
+    assert trip["prep"][0]["item_id"] == "stress_test"
+    assert trip["prep"][0]["meta"] == {"score": 80}
+    assert trip["checkins"][0]["day"] == "2027-04-01"
+    assert trip["snapshot"]["forex"] == {"rate": 0.92}
+    assert trip["snapshot"]["as_of"].endswith("Z")
+    empty = body["trips"][str(b["id"])]
+    assert empty == {"expenses": [], "journal": [], "places": [], "prep": [],
+                     "checkins": [], "snapshot": None}  # fmt: skip
+    [country] = body["countries"]
+    assert country["country_code"] == "PT" and country["first_plan_id"] == a["id"]
+    assert "user_id" not in country
+
+
+def test_account_delete_removes_trip_rows(client):
+    u, h = _user()
+    other, oh = _user()
+    mine = client.post("/api/trips", json={"title": "Mine"}, headers=h).json()
+    theirs = client.post("/api/trips", json={"title": "Theirs"}, headers=oh).json()
+    for pid in (mine["id"], theirs["id"]):
+        _seed_trip(pid)
+    add_countries(u["id"], ["PT"], mine["id"], "checkin")
+    add_countries(other["id"], ["PT"], theirs["id"], "checkin")
+
+    assert _delete(client, h, {"password": _PW}).status_code == 204
+
+    with get_connection() as conn:
+        for table in TRIP_CHILD_TABLES:
+            count = lambda pid: conn.execute(  # noqa: E731
+                f"SELECT COUNT(*) FROM {table} WHERE plan_id = ?",  # nosec B608
+                (pid,),
+            ).fetchone()[0]
+            assert count(mine["id"]) == 0, table
+            assert count(theirs["id"]) == 1, table
+        assert not conn.execute(
+            "SELECT 1 FROM user_countries WHERE user_id = ?", (u["id"],)
+        ).fetchone()
+        assert conn.execute(
+            "SELECT 1 FROM user_countries WHERE user_id = ?", (other["id"],)
+        ).fetchone()
+    assert client.get(f"/api/trips/{theirs['id']}", headers=oh).status_code == 200
 
 
 def test_export_requires_auth(client):

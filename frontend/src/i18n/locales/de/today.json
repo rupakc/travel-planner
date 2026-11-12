@@ -1,0 +1,23 @@
+{
+  "dayIn": "Tag {{day}} in {{city}}",
+  "checkIn": "Für heute einchecken",
+  "checkedIn": "Eingecheckt",
+  "streak_one": "{{count}} Tag in Folge",
+  "streak_other": "{{count}} Tage in Folge",
+  "stampTitle": "Neues Land",
+  "stamp": "Stempel für neues Land: {{code}}",
+  "nextUp": "Als Nächstes",
+  "nothingNext": "Für heute ist nichts mehr geplant.",
+  "noPlan": "Für heute gibt es noch keinen Plan.",
+  "directions": "Route",
+  "wentHere": "Ich war hier",
+  "visited": "Besucht",
+  "shareStatus": "Status teilen",
+  "copied": "In die Zwischenablage kopiert.",
+  "nearMe": "In meiner Nähe",
+  "startsOn": "Heute beginnt am {{date}}",
+  "queued": "Auf diesem Gerät gespeichert. Es wird synchronisiert, sobald du wieder online bist.",
+  "checkinFailed": "Einchecken hat nicht geklappt. Versuch es noch einmal.",
+  "visitFailed": "Das konnte nicht gespeichert werden. Versuch es noch einmal.",
+  "newCountry": "Neues Land: {{code}}"
+}

@@ -105,6 +105,19 @@ describe('design tokens', () => {
     expect(contrast(color('dark', 'gray', '500'), color('dark', 'white'))).toBeGreaterThanOrEqual(4.5)
   })
 
+  it('dark gray-400 and slate-400 muted text reads at AA on cards and the page', () => {
+    for (const fam of ['gray', 'slate']) {
+      expect(contrast(color('dark', fam, '400'), color('dark', 'white'))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(color('dark', fam, '400'), color('dark', 'gray', '50'))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('white text on teal-700 reads at WCAG AA in both modes', () => {
+    for (const mode of ['palette', 'dark']) {
+      expect(contrast(color(mode, 'white'), color(mode, 'teal', '700'))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
   it('tinted text keeps AA on its own tinted chip in dark mode (e.g. text-amber-700 on bg-amber-50)', () => {
     for (const fam of EXPECTED_FAMILIES) {
       expect(contrast(color('dark', fam, '700'), color('dark', fam, '50'))).toBeGreaterThanOrEqual(4.5)

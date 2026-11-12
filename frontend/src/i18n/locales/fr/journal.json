@@ -1,0 +1,33 @@
+{
+  "title": "Journal",
+  "empty": "Aucune entrée pour l'instant. Racontez votre journée.",
+  "noDay": "Sans jour",
+  "pending": "(en attente de synchronisation)",
+  "delete": "Supprimer",
+  "error": "Une erreur s'est produite. Réessayez.",
+  "form": {
+    "label": "Que s'est-il passé aujourd'hui ?",
+    "placeholder": "Écrivez quelques lignes...",
+    "counter": "{{n}} / {{max}}",
+    "tooLong": "Trop long : {{n}} / {{max}} caractères",
+    "add": "Ajouter l'entrée",
+    "day": "Jour",
+    "noDay": "Sans jour"
+  },
+  "mood": {
+    "group": "Humeur",
+    "great": "Super",
+    "good": "Bien",
+    "ok": "Moyen",
+    "tough": "Difficile"
+  },
+  "stars": {
+    "group": "Note",
+    "label": "{{n}} étoiles sur 5"
+  },
+  "places": {
+    "title": "Notez vos lieux",
+    "empty": "Aucun lieu à noter pour l'instant.",
+    "visited": "Visité"
+  }
+}
