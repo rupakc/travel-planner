@@ -20,6 +20,7 @@ vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 import * as alertsApi from '../../services/alertsApi'
 import * as gameApi from '../../services/gameApi'
 import { emit } from '../../telemetry/client'
+import { _resetStoryCache } from '../../utils/storyCache'
 import { sortWatches } from '../../utils/watchSort'
 import AlertsV2Header from './AlertsV2Header'
 import WatchCardExtras from './WatchCardExtras'
@@ -35,6 +36,8 @@ const STORY = {
 }
 
 let root; let host
+const io = { list: [] }
+const see = async () => { await act(async () => { io.list.forEach((o) => o.cb([{ isIntersecting: true }])) }) }
 const render = async (el) => { await act(async () => { root.render(el) }) }
 const q = (tid) => host.querySelector(`[data-tid="${tid}"]`)
 
@@ -44,6 +47,9 @@ beforeEach(() => {
   window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
   window.requestAnimationFrame = (f) => setTimeout(f, 0); window.cancelAnimationFrame = clearTimeout
   vi.clearAllMocks()
+  _resetStoryCache()
+  io.list = []
+  window.IntersectionObserver = class { constructor(cb) { this.cb = cb; io.list.push(this) } observe() {} disconnect() {} }
   alertsApi.getSavings.mockResolvedValue({ total_usd: 0, by_currency: {}, drops_caught: 0 })
   alertsApi.getStory.mockResolvedValue(STORY)
   gameApi.getGameCatalog.mockResolvedValue({ badges: [
@@ -121,6 +127,7 @@ describe('WatchCardExtras', () => {
 
   it('shows the verdict chip and expands the story on tap', async () => {
     await mount('/alerts')
+    await see()
     expect(host.querySelector('[data-testid="extras-verdict"]').textContent).toBe('Good price')
     expect(q('alerts.story-toggle').getAttribute('aria-expanded')).toBe('false')
     await act(async () => { q('alerts.story-toggle').dispatchEvent(new MouseEvent('click', { bubbles: true })) })
@@ -144,7 +151,40 @@ describe('WatchCardExtras', () => {
   it('says it is waiting when there is no look yet', async () => {
     alertsApi.getStory.mockRejectedValue(new Error('x'))
     await mount('/alerts', { id: 7, kind: 'hotel', last_checked_at: null })
+    await see()
     expect(host.querySelector('[data-testid="extras-checked"]').textContent).toBe('Waiting for the first price check')
     expect(host.querySelector('[data-testid="extras-verdict"]')).toBeNull()
+  })
+})
+
+describe('lazy story loading', () => {
+  const mount = (watch) => render(<MemoryRouter><article><WatchCardExtras watch={watch} /></article></MemoryRouter>)
+
+  it('does not fetch until the card is seen, then fetches once', async () => {
+    await mount({ id: 7, last_checked_at: 'x' })
+    expect(alertsApi.getStory).not.toHaveBeenCalled()
+    await see()
+    expect(alertsApi.getStory).toHaveBeenCalledTimes(1)
+  })
+
+  it('falls back to fetch-on-expand without IntersectionObserver', async () => {
+    delete window.IntersectionObserver
+    await mount({ id: 8, last_checked_at: 'x' })
+    expect(alertsApi.getStory).not.toHaveBeenCalled()
+    await act(async () => { q('alerts.story-toggle').dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(alertsApi.getStory).toHaveBeenCalledTimes(1)
+  })
+
+  it('shares the cache per kind:id:last_checked_at and limits concurrency to 3', async () => {
+    const { loadStory } = await import('../../utils/storyCache')
+    const done = []
+    alertsApi.getStory.mockImplementation(() => new Promise((r) => { done.push(r) }))
+    const ps = [1, 2, 3, 4, 5].map((i) => loadStory('t', 'flight', i, 's'))
+    loadStory('t', 'flight', 1, 's')
+    expect(alertsApi.getStory).toHaveBeenCalledTimes(3)
+    await act(async () => { done[0](STORY); await ps[0] })
+    expect(alertsApi.getStory).toHaveBeenCalledTimes(4)
+    loadStory('t', 'flight', 1, 'newer')
+    expect(alertsApi.getStory.mock.calls.length).toBeLessThanOrEqual(5)
   })
 })

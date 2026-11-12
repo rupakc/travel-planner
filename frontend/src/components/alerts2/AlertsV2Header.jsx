@@ -77,12 +77,14 @@ export default function AlertsV2Header({ sort: given, onSort }) {
         <DealHunterTrack />
       </div>
 
-      {prefsOpen && (
-        <div id="alerts-prefs-panel" role="region" aria-label={t('prefs.button')} data-testid="prefs-region"
-          className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-          <AlertPrefsPanel />
-        </div>
-      )}
+      <div id="alerts-prefs-panel">
+        {prefsOpen && (
+          <div role="region" aria-label={t('prefs.button')} data-testid="prefs-region"
+            className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+            <AlertPrefsPanel />
+          </div>
+        )}
+      </div>
 
       <div role="group" aria-label={t('sort.label')} className="-mx-1 flex gap-2 overflow-x-auto px-1">
         {SORTS.map((s) => (

@@ -3,7 +3,7 @@ import { useInRouterContext, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { getStory } from '../../services/alertsApi'
+import { loadStory } from '../../utils/storyCache'
 import { relativeTime } from '../../utils/fareWatch'
 import { prefersReducedMotion } from './PriceChart'
 import PriceStory from './PriceStory'
@@ -44,12 +44,26 @@ export default function WatchCardExtras({ watch }) {
   const [open, setOpen] = useState(false)
   const [version, setVersion] = useState(0)
 
+  // Lazy: the story loads when the card nears the viewport (or, without
+  // IntersectionObserver, when it is expanded), through a shared cache.
+  const [visible, setVisible] = useState(false)
   useEffect(() => {
-    if (!token) return undefined
+    const el = root.current
+    if (visible || !el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setVisible(true); io.disconnect() }
+    }, { rootMargin: '200px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [visible])
+
+  const want = visible || open
+  useEffect(() => {
+    if (!token || !want) return undefined
     let live = true
-    getStory(token, kind, watch.id).then((s) => { if (live) setStory(s) }, () => {})
+    loadStory(token, kind, watch.id, `${watch.last_checked_at || ''}:${version}`).then((s) => { if (live) setStory(s) }, () => {})
     return () => { live = false }
-  }, [token, kind, watch.id, version, watch.last_checked_at])
+  }, [token, want, kind, watch.id, version, watch.last_checked_at])
 
   const reveal = () => {
     setOpen(true)
@@ -78,13 +92,11 @@ export default function WatchCardExtras({ watch }) {
           <ChevronDown className={`h-4 w-4 transition-transform motion-reduce:transition-none ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
       </div>
-      {open && (
-        <div id={panel} className="mt-2" data-testid="extras-story">
-          {story
-            ? <PriceStory story={story} onTargetSaved={() => setVersion((v) => v + 1)} />
-            : <PriceStory kind={kind} watchId={watch.id} onTargetSaved={() => setVersion((v) => v + 1)} />}
-        </div>
-      )}
+      <div id={panel} className={open ? 'mt-2' : undefined} data-testid={open ? 'extras-story' : undefined}>
+        {open && (story
+          ? <PriceStory story={story} onTargetSaved={() => setVersion((v) => v + 1)} />
+          : <p className="text-xs text-slate-500" role="status">{tStory('loading')}</p>)}
+      </div>
     </div>
   )
 }
