@@ -23,7 +23,7 @@ def test_config_shape(client, monkeypatch):
         "offline_pack": True,
         "alerts_api": 2,
         "price_alerts_v2": True,
-        "sharing": 0,
+        "sharing": 1,
         "live_prices": False,
     }
     assert r.headers["cache-control"] == "max-age=300"
