@@ -1,0 +1,600 @@
+[
+ {
+  "name": "empty",
+  "input": {
+   "rows": [],
+   "watches_active": 0
+  },
+  "expected": {
+   "total_usd": 0.0,
+   "by_currency": {},
+   "drops_caught": 0,
+   "targets_hit": 0,
+   "watches_active": 0,
+   "best": null,
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 50,
+   "progress_pct": 0,
+   "since": null
+  }
+ },
+ {
+  "name": "single_usd_drop",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Lisbon",
+     "currency": "USD",
+     "baseline": 455.0,
+     "alerted_price": 412.0,
+     "notification_id": 11,
+     "at": "2026-11-03T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 43.0,
+   "by_currency": {},
+   "drops_caught": 1,
+   "targets_hit": 0,
+   "watches_active": 1,
+   "best": {
+    "kind": "flight",
+    "watch_id": 1,
+    "title": "NYC to Lisbon",
+    "caught": 43.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 50,
+   "progress_pct": 86,
+   "since": "2026-11-03T08:00:00Z"
+  }
+ },
+ {
+  "name": "repeat_alerts_same_watch_counts_once",
+  "input": {
+   "rows": [
+    {
+     "kind": "hotel",
+     "watch_id": 3,
+     "title": "Hotel Lumen",
+     "currency": "USD",
+     "baseline": 500.0,
+     "alerted_price": 450.0,
+     "notification_id": 21,
+     "at": "2026-11-01T10:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "hotel",
+     "watch_id": 3,
+     "title": "Hotel Lumen",
+     "currency": "USD",
+     "baseline": 500.0,
+     "alerted_price": 420.0,
+     "notification_id": 22,
+     "at": "2026-11-04T10:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "hotel",
+     "watch_id": 3,
+     "title": "Hotel Lumen",
+     "currency": "USD",
+     "baseline": 500.0,
+     "alerted_price": 440.0,
+     "notification_id": 23,
+     "at": "2026-11-06T10:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 80.0,
+   "by_currency": {},
+   "drops_caught": 1,
+   "targets_hit": 0,
+   "watches_active": 1,
+   "best": {
+    "kind": "hotel",
+    "watch_id": 3,
+    "title": "Hotel Lumen",
+    "caught": 80.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 40,
+   "since": "2026-11-01T10:00:00Z"
+  }
+ },
+ {
+  "name": "eur_separate",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Rome",
+     "currency": "USD",
+     "baseline": 600.0,
+     "alerted_price": 500.0,
+     "notification_id": 31,
+     "at": "2026-11-02T09:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "activity",
+     "watch_id": 4,
+     "title": "Colosseum tour",
+     "currency": "EUR",
+     "baseline": 40.0,
+     "alerted_price": 28.0,
+     "notification_id": 32,
+     "at": "2026-11-05T09:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 2
+  },
+  "expected": {
+   "total_usd": 100.0,
+   "by_currency": {
+    "EUR": 12.0
+   },
+   "drops_caught": 2,
+   "targets_hit": 0,
+   "watches_active": 2,
+   "best": {
+    "kind": "flight",
+    "watch_id": 1,
+    "title": "NYC to Rome",
+    "caught": 100.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 50,
+   "since": "2026-11-02T09:00:00Z"
+  }
+ },
+ {
+  "name": "eur_only_best_is_eur",
+  "input": {
+   "rows": [
+    {
+     "kind": "activity",
+     "watch_id": 4,
+     "title": "Colosseum tour",
+     "currency": "EUR",
+     "baseline": 40.0,
+     "alerted_price": 28.0,
+     "notification_id": 32,
+     "at": "2026-11-05T09:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 0.0,
+   "by_currency": {
+    "EUR": 12.0
+   },
+   "drops_caught": 1,
+   "targets_hit": 0,
+   "watches_active": 1,
+   "best": {
+    "kind": "activity",
+    "watch_id": 4,
+    "title": "Colosseum tour",
+    "caught": 12.0,
+    "currency": "EUR"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 50,
+   "progress_pct": 0,
+   "since": "2026-11-05T09:00:00Z"
+  }
+ },
+ {
+  "name": "estimate_excluded",
+  "input": {
+   "rows": [
+    {
+     "kind": "trip",
+     "watch_id": 9,
+     "title": "Lisbon trip",
+     "currency": "USD",
+     "baseline": 3000.0,
+     "alerted_price": 2500.0,
+     "notification_id": 41,
+     "at": "2026-11-01T07:00:00Z",
+     "target_hit": false,
+     "observed": false,
+     "watch_deleted": false
+    },
+    {
+     "kind": "hotel",
+     "watch_id": 3,
+     "title": "Hotel Lumen",
+     "currency": "USD",
+     "baseline": 300.0,
+     "alerted_price": 240.0,
+     "notification_id": 42,
+     "at": "2026-11-08T07:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 2
+  },
+  "expected": {
+   "total_usd": 60.0,
+   "by_currency": {},
+   "drops_caught": 1,
+   "targets_hit": 0,
+   "watches_active": 2,
+   "best": {
+    "kind": "hotel",
+    "watch_id": 3,
+    "title": "Hotel Lumen",
+    "caught": 60.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 30,
+   "since": "2026-11-08T07:00:00Z"
+  }
+ },
+ {
+  "name": "deleted_watch_counts",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 2,
+     "title": "NYC to Paris",
+     "currency": "USD",
+     "baseline": 700.0,
+     "alerted_price": 600.0,
+     "notification_id": 51,
+     "at": "2026-10-20T07:00:00Z",
+     "target_hit": true,
+     "observed": true,
+     "watch_deleted": true
+    },
+    {
+     "kind": "hotel",
+     "watch_id": 5,
+     "title": "Hotel Eiffel",
+     "currency": "USD",
+     "baseline": 400.0,
+     "alerted_price": 250.0,
+     "notification_id": 52,
+     "at": "2026-11-02T07:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 250.0,
+   "by_currency": {},
+   "drops_caught": 2,
+   "targets_hit": 1,
+   "watches_active": 1,
+   "best": {
+    "kind": "hotel",
+    "watch_id": 5,
+    "title": "Hotel Eiffel",
+    "caught": 150.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 1000,
+   "progress_pct": 25,
+   "since": "2026-10-20T07:00:00Z"
+  }
+ },
+ {
+  "name": "same_id_different_kind_are_separate",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Lisbon",
+     "currency": "USD",
+     "baseline": 455.0,
+     "alerted_price": 412.0,
+     "notification_id": 61,
+     "at": "2026-11-03T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "hotel",
+     "watch_id": 1,
+     "title": "Hotel Lumen",
+     "currency": "USD",
+     "baseline": 300.0,
+     "alerted_price": 240.0,
+     "notification_id": 62,
+     "at": "2026-11-04T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 2
+  },
+  "expected": {
+   "total_usd": 103.0,
+   "by_currency": {},
+   "drops_caught": 2,
+   "targets_hit": 0,
+   "watches_active": 2,
+   "best": {
+    "kind": "hotel",
+    "watch_id": 1,
+    "title": "Hotel Lumen",
+    "caught": 60.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 51,
+   "since": "2026-11-03T08:00:00Z"
+  }
+ },
+ {
+  "name": "exactly_50_passes_first_milestone",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Lisbon",
+     "currency": "USD",
+     "baseline": 150.0,
+     "alerted_price": 100.0,
+     "notification_id": 71,
+     "at": "2026-11-03T08:00:00Z",
+     "target_hit": true,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 50.0,
+   "by_currency": {},
+   "drops_caught": 1,
+   "targets_hit": 1,
+   "watches_active": 1,
+   "best": {
+    "kind": "flight",
+    "watch_id": 1,
+    "title": "NYC to Lisbon",
+    "caught": 50.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 25,
+   "since": "2026-11-03T08:00:00Z"
+  }
+ },
+ {
+  "name": "past_1000_has_no_next_milestone",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Tokyo",
+     "currency": "USD",
+     "baseline": 1500.0,
+     "alerted_price": 800.0,
+     "notification_id": 81,
+     "at": "2026-09-01T08:00:00Z",
+     "target_hit": true,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "trip",
+     "watch_id": 2,
+     "title": "Tokyo trip",
+     "currency": "USD",
+     "baseline": 4000.0,
+     "alerted_price": 3550.0,
+     "notification_id": 82,
+     "at": "2026-09-09T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 2
+  },
+  "expected": {
+   "total_usd": 1150.0,
+   "by_currency": {},
+   "drops_caught": 2,
+   "targets_hit": 1,
+   "watches_active": 2,
+   "best": {
+    "kind": "flight",
+    "watch_id": 1,
+    "title": "NYC to Tokyo",
+    "caught": 700.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": null,
+   "progress_pct": 100,
+   "since": "2026-09-01T08:00:00Z"
+  }
+ },
+ {
+  "name": "best_tie_lowest_watch_id",
+  "input": {
+   "rows": [
+    {
+     "kind": "hotel",
+     "watch_id": 5,
+     "title": "Hotel Eiffel",
+     "currency": "USD",
+     "baseline": 300.0,
+     "alerted_price": 240.0,
+     "notification_id": 91,
+     "at": "2026-11-01T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    },
+    {
+     "kind": "flight",
+     "watch_id": 2,
+     "title": "NYC to Paris",
+     "currency": "USD",
+     "baseline": 460.0,
+     "alerted_price": 400.0,
+     "notification_id": 92,
+     "at": "2026-11-02T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 2
+  },
+  "expected": {
+   "total_usd": 120.0,
+   "by_currency": {},
+   "drops_caught": 2,
+   "targets_hit": 0,
+   "watches_active": 2,
+   "best": {
+    "kind": "flight",
+    "watch_id": 2,
+    "title": "NYC to Paris",
+    "caught": 60.0,
+    "currency": "USD"
+   },
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 200,
+   "progress_pct": 60,
+   "since": "2026-11-01T08:00:00Z"
+  }
+ },
+ {
+  "name": "alert_above_baseline_adds_nothing",
+  "input": {
+   "rows": [
+    {
+     "kind": "flight",
+     "watch_id": 1,
+     "title": "NYC to Lisbon",
+     "currency": "USD",
+     "baseline": 400.0,
+     "alerted_price": 420.0,
+     "notification_id": 95,
+     "at": "2026-11-03T08:00:00Z",
+     "target_hit": false,
+     "observed": true,
+     "watch_deleted": false
+    }
+   ],
+   "watches_active": 1
+  },
+  "expected": {
+   "total_usd": 0.0,
+   "by_currency": {},
+   "drops_caught": 0,
+   "targets_hit": 0,
+   "watches_active": 1,
+   "best": null,
+   "milestones": [
+    50,
+    200,
+    1000
+   ],
+   "next_milestone": 50,
+   "progress_pct": 0,
+   "since": "2026-11-03T08:00:00Z"
+  }
+ }
+]

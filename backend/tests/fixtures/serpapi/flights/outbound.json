@@ -1,0 +1,146 @@
+{
+ "search_metadata": {
+  "status": "Success"
+ },
+ "search_parameters": {
+  "engine": "google_flights",
+  "departure_id": "JFK",
+  "arrival_id": "LIS",
+  "type": "1"
+ },
+ "best_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "JFK",
+      "id": "JFK",
+      "time": "2027-04-01 19:30"
+     },
+     "arrival_airport": {
+      "name": "LIS",
+      "id": "LIS",
+      "time": "2027-04-02 07:35"
+     },
+     "duration": 425,
+     "airline": "TAP Air Portugal",
+     "flight_number": "TP 208",
+     "often_delayed_by_over_30_min": false
+    }
+   ],
+   "total_duration": 425,
+   "price": 412,
+   "type": "Round trip",
+   "departure_token": "fake-token-tap",
+   "carbon_emissions": {
+    "this_flight": 410000
+   }
+  },
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "JFK",
+      "id": "JFK",
+      "time": "2027-04-01 21:10"
+     },
+     "arrival_airport": {
+      "name": "LIS",
+      "id": "LIS",
+      "time": "2027-04-02 09:20"
+     },
+     "duration": 430,
+     "airline": "Delta",
+     "flight_number": "DL 264",
+     "often_delayed_by_over_30_min": false
+    }
+   ],
+   "total_duration": 430,
+   "price": 398,
+   "type": "Round trip",
+   "departure_token": "fake-token-delta",
+   "carbon_emissions": {
+    "this_flight": 420000
+   }
+  }
+ ],
+ "other_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "JFK",
+      "id": "JFK",
+      "time": "2027-04-01 17:00"
+     },
+     "arrival_airport": {
+      "name": "CDG",
+      "id": "CDG",
+      "time": "2027-04-02 06:30"
+     },
+     "duration": 450,
+     "airline": "Air France",
+     "flight_number": "AF 9",
+     "often_delayed_by_over_30_min": false
+    },
+    {
+     "departure_airport": {
+      "name": "CDG",
+      "id": "CDG",
+      "time": "2027-04-02 08:45"
+     },
+     "arrival_airport": {
+      "name": "LIS",
+      "id": "LIS",
+      "time": "2027-04-02 10:10"
+     },
+     "duration": 145,
+     "airline": "Air France",
+     "flight_number": "AF 1124",
+     "often_delayed_by_over_30_min": false
+    }
+   ],
+   "layovers": [
+    {
+     "duration": 135,
+     "name": "Charles de Gaulle",
+     "id": "CDG"
+    }
+   ],
+   "total_duration": 730,
+   "price": 455,
+   "type": "Round trip",
+   "departure_token": "fake-token-af"
+  }
+ ],
+ "price_insights": {
+  "lowest_price": 398,
+  "price_level": "typical",
+  "typical_price_range": [
+   390,
+   520
+  ],
+  "price_history": [
+   [
+    1762300800,
+    455
+   ],
+   [
+    1762387200,
+    441
+   ],
+   [
+    1762473600,
+    430
+   ],
+   [
+    1762560000,
+    412
+   ],
+   [
+    1762646400,
+    398
+   ]
+  ]
+ }
+}

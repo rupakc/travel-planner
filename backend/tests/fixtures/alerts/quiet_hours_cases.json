@@ -1,0 +1,210 @@
+[
+ {
+  "name": "kolkata_2330_held_to_0700",
+  "input": {
+   "now_utc": "2026-11-12T18:00:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2026-11-13T01:30:00Z"
+  }
+ },
+ {
+  "name": "wraps_midnight_0630_held",
+  "input": {
+   "now_utc": "2026-11-13T01:00:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2026-11-13T01:30:00Z"
+  }
+ },
+ {
+  "name": "start_boundary_2200_inclusive",
+  "input": {
+   "now_utc": "2026-11-12T16:30:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2026-11-13T01:30:00Z"
+  }
+ },
+ {
+  "name": "end_boundary_0700_exclusive",
+  "input": {
+   "now_utc": "2026-11-13T01:30:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-13T01:30:00Z"
+  }
+ },
+ {
+  "name": "midday_not_quiet",
+  "input": {
+   "now_utc": "2026-11-12T06:30:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-12T06:30:00Z"
+  }
+ },
+ {
+  "name": "ny_spring_forward",
+  "input": {
+   "now_utc": "2027-03-14T04:30:00Z",
+   "timezone": "America/New_York",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2027-03-14T11:00:00Z"
+  }
+ },
+ {
+  "name": "ny_spring_forward_after_gap",
+  "input": {
+   "now_utc": "2027-03-14T07:30:00Z",
+   "timezone": "America/New_York",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2027-03-14T11:00:00Z"
+  }
+ },
+ {
+  "name": "ny_fall_back",
+  "input": {
+   "now_utc": "2027-11-07T05:30:00Z",
+   "timezone": "America/New_York",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2027-11-07T12:00:00Z"
+  }
+ },
+ {
+  "name": "same_day_window_no_wrap",
+  "input": {
+   "now_utc": "2026-11-12T14:00:00Z",
+   "timezone": "Europe/London",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "13:00",
+    "end": "15:00"
+   }
+  },
+  "expected": {
+   "deliver": "held",
+   "due_utc": "2026-11-12T15:00:00Z"
+  }
+ },
+ {
+  "name": "no_timezone_immediate",
+  "input": {
+   "now_utc": "2026-11-12T18:00:00Z",
+   "timezone": null,
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-12T18:00:00Z"
+  }
+ },
+ {
+  "name": "unknown_timezone_immediate",
+  "input": {
+   "now_utc": "2026-11-12T18:00:00Z",
+   "timezone": "Mars/Olympus",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-12T18:00:00Z"
+  }
+ },
+ {
+  "name": "start_equals_end_disabled",
+  "input": {
+   "now_utc": "2026-11-12T18:00:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "22:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-12T18:00:00Z"
+  }
+ },
+ {
+  "name": "disabled_flag_immediate",
+  "input": {
+   "now_utc": "2026-11-12T18:00:00Z",
+   "timezone": "Asia/Kolkata",
+   "quiet_hours": {
+    "enabled": false,
+    "start": "22:00",
+    "end": "07:00"
+   }
+  },
+  "expected": {
+   "deliver": "now",
+   "due_utc": "2026-11-12T18:00:00Z"
+  }
+ }
+]
