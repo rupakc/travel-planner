@@ -106,6 +106,34 @@
     "memory_keeper": {
       "name": "Memory keeper",
       "desc": "Complete 5 trip recaps."
+    },
+    "deal_hunter": {
+      "name": "Deal hunter",
+      "desc": "Catch your first price drop."
+    },
+    "deal_hunter_silver": {
+      "name": "Deal tracker",
+      "desc": "Catch 5 price drops."
+    },
+    "deal_hunter_gold": {
+      "name": "Deal master",
+      "desc": "Catch 20 price drops."
+    },
+    "bullseye": {
+      "name": "Bullseye",
+      "desc": "Hit a price target you set."
+    },
+    "saver_50": {
+      "name": "$50 caught",
+      "desc": "Catch $50 in price drops."
+    },
+    "saver_200": {
+      "name": "$200 caught",
+      "desc": "Catch $200 in price drops."
+    },
+    "saver_1000": {
+      "name": "$1,000 caught",
+      "desc": "Catch $1,000 in price drops."
     }
   },
   "rules": {
@@ -119,6 +147,11 @@
     "place_visited": "Place visited",
     "country_visited": "New country",
     "continent_visited": "New continent",
-    "recap_complete": "Trip recap completed"
+    "recap_complete": "Trip recap completed",
+    "deal_drop": "Price drop caught",
+    "deal_target": "Price target hit",
+    "deal_saved_50": "$50 caught",
+    "deal_saved_200": "$200 caught",
+    "deal_saved_1000": "$1,000 caught"
   }
 }
