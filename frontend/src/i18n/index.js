@@ -1,5 +1,6 @@
-// i18next set-up. English ships in the main bundle for every namespace; the
-// other languages are separate chunks fetched on first use. Keys follow
+// i18next set-up. English ships in the main bundle for every namespace except
+// the lazy ones in `routeNamespaces.js` (loaded per route by I18nRouteGate);
+// the other languages are separate chunks fetched on first use. Keys follow
 // `ns:area.thing` (e.g. `common:nav.search`), plurals use the JSON v4
 // suffixes (`_one`, `_other`, …) and interpolation is `{{name}}`.
 import i18n from 'i18next'
@@ -9,6 +10,7 @@ import {
 } from './languages'
 
 import { setErrorTranslator } from '../utils/httpError'
+import { LAZY_NS, PREFETCH_PATHS, namespacesFor } from './routeNamespaces'
 
 export { LANGUAGES } from './languages'
 
@@ -20,10 +22,27 @@ const STORAGE_KEY = 'tp_lang'
 
 const nsOf = (path) => path.split('/').pop().replace(/\.json$/, '')
 
-const enModules = import.meta.glob('./locales/en/*.json', { eager: true })
-const lazyModules = import.meta.glob(['./locales/*/*.json', '!./locales/en/*.json'])
+// The brace list is LAZY_NS from `routeNamespaces.js` (globs must be literals;
+// routeNamespaces.test.js keeps the two in step). Every other en file is
+// bundled, so a namespace added later is safe by default.
+const enModules = import.meta.glob(
+  ['./locales/en/*.json', '!./locales/en/{accountData,accountSettings,adminInvites,adminTelemetry,expenses,journal,mobile,nearbyTrip,offlinePack,playYou,prep,recap,security,today,trip,trips}.json'],
+  { eager: true },
+)
+const enLazyModules = import.meta.glob(
+  './locales/en/{accountData,accountSettings,adminInvites,adminTelemetry,expenses,journal,mobile,nearbyTrip,offlinePack,playYou,prep,recap,security,today,trip,trips}.json',
+)
+const lazyModules = {
+  ...import.meta.glob(['./locales/*/*.json', '!./locales/en/*.json']),
+  ...enLazyModules,
+}
 
-export const NAMESPACES = Object.keys(enModules).map(nsOf).sort()
+// Namespaces in the main bundle (English ready before the first render).
+// Frozen: i18next keeps `options.ns` by reference and pushes into it.
+export const BUNDLED_NAMESPACES = Object.freeze(Object.keys(enModules).map(nsOf).sort())
+
+// Every en namespace, bundled or lazy.
+export const NAMESPACES = Object.freeze([...BUNDLED_NAMESPACES, ...Object.keys(enLazyModules).map(nsOf)].sort())
 
 const enResources = Object.fromEntries(
   Object.entries(enModules).map(([path, mod]) => [nsOf(path), mod.default ?? mod]),
@@ -103,7 +122,9 @@ function report(event, props) {
 
 let initPromise = null
 
-export function initI18n({ lng } = {}) {
+// `bundleAll` (tests) loads every namespace, lazy ones included, before the
+// promise resolves, so a test can render any page synchronously.
+export function initI18n({ lng, bundleAll = false } = {}) {
   if (initPromise) return initPromise
   i18n.on('languageChanged', applyLanguage)
   initPromise = i18n
@@ -113,7 +134,10 @@ export function initI18n({ lng } = {}) {
       lng: isSupportedLanguage(lng) ? lng : detectLanguage(),
       resources: { en: enResources },
       partialBundledLanguages: true,
-      ns: NAMESPACES,
+      // Only these load at start (other languages' chunks included); the
+      // lazy ones join `ns` when I18nRouteGate loads them.
+      // A copy: loadNamespaces pushes into it.
+      ns: [...(bundleAll ? NAMESPACES : BUNDLED_NAMESPACES)],
       defaultNS: 'common',
       fallbackNS: false,
       fallbackLng: DEFAULT_LANGUAGE,
@@ -126,8 +150,27 @@ export function initI18n({ lng } = {}) {
       // instead of suspending the tree.
       react: { useSuspense: false },
     })
-    .then(() => {})
+    .then(() => { if (!bundleAll) prefetchLazyNamespaces() })
   return initPromise
+}
+
+// After first paint, in idle time, loads the lazy namespaces of the known
+// on-demand routes (that exist), so opening /account or /admin rarely shows
+// the gate's skeleton. Never awaited; a failure only means the gate waits.
+export function prefetchLazyNamespaces() {
+  const wanted = [...new Set(PREFETCH_PATHS.flatMap(namespacesFor))]
+    .filter((ns) => LAZY_NS.includes(ns) && NAMESPACES.includes(ns))
+  if (!wanted.length) return
+  const run = () => {
+    try { Promise.resolve(i18n.loadNamespaces(wanted)).catch(() => {}) } catch { /* ignore */ }
+  }
+  try {
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 5000 })
+    } else {
+      setTimeout(run, 1500)
+    }
+  } catch { /* never break start-up over a prefetch */ }
 }
 
 // Switches language, remembers it in tp_lang and reports the change.
