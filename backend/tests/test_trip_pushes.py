@@ -203,7 +203,11 @@ def test_far_trips_not_scanned_and_prune(user):
             "UPDATE notify_log SET created_at = '2000-01-01T00:00:00Z'"
             " WHERE dedupe_key = 'old'"
         )
-    assert tp.prune_log(datetime.now(UTC)) == 1
+    assert tp.prune_log(datetime.now(UTC)) >= 1  # other tests may leave aged rows
+    with get_connection() as conn:
+        assert not conn.execute(
+            "SELECT 1 FROM notify_log WHERE dedupe_key = 'old'"
+        ).fetchone()
 
 
 @pytest.mark.parametrize("lang", LANGS)
