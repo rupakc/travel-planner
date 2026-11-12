@@ -1889,7 +1889,7 @@
 <tbody>
 <tr>
 <td><code>SHARING_V2_ENABLED</code></td>
-<td><code>false</code></td>
+<td><code>true</code></td>
 <td>Share links 2.0 (Phase 4): <code>/api/shares*</code> and the new-style <code>GET /api/share/{token}</code> fallback. Off, they answer 404 (<code>sharing_disabled</code> for the authenticated routes) and <code>features.sharing</code> is <code>0</code>; legacy plan share tokens keep working either way. Contract: <a href="../Sharing-API/">Sharing API</a>. Set <code>PUBLIC_BASE_URL</code> in production: share links, <code>og:url</code> and the absolute <code>og:image</code> of the crawler page are built from it (else the request's base URL, which behind a proxy may not be the public host).</td>
 </tr>
 <tr>
