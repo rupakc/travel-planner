@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { AlertTriangle, ExternalLink, Loader2, LocateFixed, MapPin, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Check, ExternalLink, Loader2, LocateFixed, MapPin, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { fmtNumber } from '../i18n/format'
 import { fetchNearby } from '../services/api'
+import { listTrips, putPlace } from '../services/tripsApi'
+import { useJourney } from '../hooks/useJourney'
+import { announceGame } from '../game/announce'
+import { enqueue } from '../offline/outbox'
+import { emit } from '../telemetry/client'
+import { placeKey } from '../utils/placeKey'
+import { localToday } from '../utils/tripPhase'
 import { track } from '../utils/analytics'
 import {
   NEARBY_SECTIONS, browserLanguage, geoErrorMessage, liveErrorMessage, nearbySections, placeLabel, roundCoord,
@@ -15,8 +22,9 @@ const GEO_OPTIONS = { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 *
 // (not blocked) prompt in Firefox/Safari never calls back. Give up after this.
 export const GEO_WATCHDOG_MS = 20000
 
-function ItemCard({ item }) {
+function ItemCard({ item, onHere, visited }) {
   const { t } = useTranslation('misc')
+  const { t: tt } = useTranslation('nearbyTrip')
   const href = safeHttpUrl(item.maps_uri)
   return (
     <li className="flex flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -30,6 +38,18 @@ function ItemCard({ item }) {
           <ExternalLink size={12} aria-hidden="true" /> {t('nearby.openMaps')}
         </a>
       )}
+      {onHere && (visited ? (
+        <span data-tid="nearby.visited"
+          className="mt-3 inline-flex items-center gap-1.5 self-start rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
+          <Check size={12} aria-hidden="true" /> {tt('visited')}
+        </span>
+      ) : (
+        <button type="button" onClick={() => onHere(item)} data-tid="nearby.here"
+          aria-label={tt('hereAria', { name: item.name })}
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-full bg-teal-700 px-4 py-1 text-xs font-semibold text-white hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 sm:min-h-0">
+          <MapPin size={12} aria-hidden="true" /> {tt('here')}
+        </button>
+      ))}
     </li>
   )
 }
@@ -58,7 +78,13 @@ function SkeletonSection({ title }) {
  */
 export default function NearbyPage() {
   const { t } = useTranslation('misc')
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const { t: tt } = useTranslation('nearbyTrip')
+  const { enabled: journey } = useJourney()
+  const [tripId, setTripId] = useState(null)   // pinned trip, only while on the road
+  const [visited, setVisited] = useState(() => new Set())
+  const [tripNote, setTripNote] = useState('')
+  const here = useRef(null)                    // last located coordinates
   // intro → locating → loading → done | error
   const [phase, setPhase] = useState('intro')
   const [error, setError] = useState(null)   // { kind: 'geo'|'api', code, text, retry }
@@ -71,6 +97,37 @@ export default function NearbyPage() {
   const clearWatchdog = () => { clearTimeout(watchdog.current); watchdog.current = null }
   useEffect(() => () => { run.current += 1; clearWatchdog() }, []) // drop answers that land after leaving
 
+  // "I'm here" only with the journey on and the pinned trip on the road
+  useEffect(() => {
+    if (!journey || !token) { setTripId(null); return undefined }
+    let live = true
+    listTrips(token).then((res) => {
+      const pinned = res?.trips?.find((tr) => tr.id === res.pinned_id)
+      if (live) setTripId(pinned?.phase === 'on_the_road' ? pinned.id : null)
+    }).catch(() => { if (live) setTripId(null) })
+    return () => { live = false }
+  }, [journey, token])
+
+  const imHere = useCallback(async (item) => {
+    const key = placeKey('nearby', item.name)
+    const body = { name: item.name, kind: 'nearby', visited: true, day: localToday() }
+    const lat = Number.isFinite(item.lat) ? item.lat : here.current?.lat
+    const lng = Number.isFinite(item.lng) ? item.lng : here.current?.lng
+    if (Number.isFinite(lat) && Number.isFinite(lng)) { body.lat = lat; body.lng = lng }
+    try { emit('today_action', { action: 'visited' }) } catch { /* telemetry never blocks */ }
+    setTripNote('')
+    try {
+      const res = await putPlace(token, tripId, key, body)
+      setVisited((v) => new Set(v).add(key))
+      announceGame(res?.game)
+    } catch (err) {
+      if (err?.code !== 'network') { setTripNote(tt('failed')); return }
+      await enqueue(user?.id, { method: 'PUT', path: `/trips/${tripId}/places/${encodeURIComponent(key)}`, body, key: `place:${tripId}:${key}` })
+      setVisited((v) => new Set(v).add(key))
+      setTripNote(tt('queued'))
+    }
+  }, [token, tripId, user, tt])
+
   const load = useCallback(async (coords, id) => {
     setPhase('loading')
     try {
@@ -78,6 +135,7 @@ export default function NearbyPage() {
         lat: roundCoord(coords.latitude), lng: roundCoord(coords.longitude), language: browserLanguage(),
       }, token)
       if (run.current !== id) return
+      here.current = { lat: roundCoord(coords.latitude), lng: roundCoord(coords.longitude) }
       setData(res)
       setPhase('done')
       track('nearby_loaded', 'nearby')
@@ -234,6 +292,8 @@ export default function NearbyPage() {
             )}
           </div>
 
+          {tripNote && <p role="status" className="text-sm text-slate-600" data-tid="nearby.trip-note">{tripNote}</p>}
+
           {sections.map(s => (
             <section key={s.id} aria-labelledby={`nearby-${s.id}`} data-testid={`nearby-section-${s.id}`} className="space-y-3">
               <h2 id={`nearby-${s.id}`} className="text-sm font-semibold text-slate-700">
@@ -241,7 +301,8 @@ export default function NearbyPage() {
               </h2>
               {s.items.length > 0 ? (
                 <ul className="grid gap-3 sm:grid-cols-2">
-                  {s.items.map((item, i) => <ItemCard key={item.place_id || `${item.name}-${i}`} item={item} />)}
+                  {s.items.map((item, i) => <ItemCard key={item.place_id || `${item.name}-${i}`} item={item}
+                    onHere={tripId ? imHere : null} visited={visited.has(placeKey('nearby', item.name))} />)}
                 </ul>
               ) : (
                 <p className="rounded-xl bg-white/70 px-4 py-4 text-sm text-slate-500">{t(`nearby.empty.${s.id}`)}</p>

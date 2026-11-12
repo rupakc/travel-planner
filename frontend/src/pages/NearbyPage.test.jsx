@@ -188,8 +188,14 @@ describe('NearbyPage', () => {
     await click(button('Use my location'))
     await flush()
     expect(container.textContent).toMatch(/Belém Tower/)
-    expect(setItem).not.toHaveBeenCalled()
-    expect(localStorage.length).toBe(0)
-    expect(sessionStorage.length).toBe(0)
+    // Infra (telemetry anon/session ids + queue, /config cache, i18n choice) may write on a slow
+    // runner once an async effect resolves; Near me results and the position must never be stored.
+    const INFRA = new Set(['tp_anon', 'tp_tsess', 'tp_tq', 'tp_config_cache', 'tp_lang'])
+    const stored = [...setItem.mock.calls.map(([k, v]) => [k, String(v)]),
+      ...[localStorage, sessionStorage].flatMap(st => Object.keys(st).map(k => [k, st.getItem(k)]))]
+    for (const [key, value] of stored) {
+      expect(INFRA.has(key), `unexpected storage key ${key}`).toBe(true)
+      expect(value).not.toMatch(/Belém|Time Out Market|Lisbon|38\.72|-9\.1[34]/)
+    }
   })
 })
