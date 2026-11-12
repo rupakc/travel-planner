@@ -1,1 +1,21 @@
-{}
+{
+  "title": "Voulez-vous que nous surveillions ces prix ?",
+  "subtitle": "Nous les vérifierons pour vous et vous préviendrons dès qu'un prix baisse.",
+  "close": "Fermer",
+  "notNow": "Pas maintenant",
+  "done": "Terminé",
+  "retry": "Réessayer",
+  "watchN_one": "Surveiller {{count}}",
+  "watchN_many": "Surveiller {{count}}",
+  "watchN_other": "Surveiller {{count}}",
+  "reason.selected_in_plan": "Vous l'avez choisi pour votre plan",
+  "reason.trip_total": "Le total de votre voyage",
+  "reason.departure_soon": "Votre voyage commence bientôt",
+  "status.already": "Déjà surveillé",
+  "status.running": "Mise en place…",
+  "status.done": "Surveillé",
+  "error.watch_limit": "Vous avez atteint la limite de surveillances actives. Supprimez-en une sur la page Alertes.",
+  "error.live_prices_off": "La surveillance des prix n'est pas disponible pour le moment.",
+  "error.spec_invalid": "Nous n'avons pas pu configurer de surveillance pour celui-ci.",
+  "error.generic": "Impossible de démarrer la surveillance."
+}
