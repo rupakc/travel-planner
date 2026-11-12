@@ -10,7 +10,7 @@
     "placeholder": "Écrivez quelques lignes...",
     "counter": "{{n}} / {{max}}",
     "tooLong": "Trop long : {{n}} / {{max}} caractères",
-    "add": "Ajouter l'entrée",
+    "add": "Ajouter",
     "day": "Jour",
     "noDay": "Sans jour"
   },

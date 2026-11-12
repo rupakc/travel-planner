@@ -122,13 +122,13 @@
     "back": "Zurück",
     "skip": "Überspringen",
     "next": "Weiter",
-    "seeType": "Meinen Typ ansehen",
+    "seeType": "Typ ansehen",
     "finish": "Fertig",
     "stepOf_one": "Schritt {{step}} von {{count}}",
     "stepOf_other": "Schritt {{step}} von {{count}}"
   },
   "web": {
-    "skipAll": "Einrichtung überspringen",
+    "skipAll": "Überspringen",
     "getStarted": "Los geht’s",
     "continue": "Weiter",
     "resume": "Willkommen zurück! Wir haben uns gemerkt, wo du warst, also kannst du direkt weitermachen.",
@@ -155,7 +155,7 @@
     "saving": "Speichern…",
     "syncFailed": "Einstellungen konnten nicht in deinem Konto gespeichert werden",
     "syncFailedBody": "Deine Antworten bleiben auf diesem Gerät. Deine Interessen, dein Budget, deine Reisegruppe und dein Reisepass wurden nicht in dein Konto übertragen.",
-    "retry": "Wiederholen",
+    "retry": "Nochmal",
     "continueWithoutSync": "Ohne Synchronisierung fortfahren"
   }
 }

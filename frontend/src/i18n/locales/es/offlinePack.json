@@ -15,7 +15,7 @@
   },
   "address": {
     "title": "Enséñaselo a tu conductor",
-    "fallback": "Por favor, llévame a:"
+    "fallback": "Por favor, lléveme a:"
   },
   "currency": {
     "title": "Conversor de moneda",
@@ -33,9 +33,9 @@
     "close": "Cerrar",
     "ids": {
       "help": "¡Ayuda!",
-      "call_police": "Llama a la policía",
+      "call_police": "Llame a la policía",
       "need_doctor": "Necesito un médico",
-      "take_me_to": "Por favor, llévame a…",
+      "take_me_to": "Por favor, lléveme a…",
       "thank_you": "Gracias",
       "how_much": "¿Cuánto cuesta esto?",
       "where_toilet": "¿Dónde está el baño?",

@@ -5,16 +5,16 @@
   "tabsLabel": "Bereiche der Reise",
   "error": {
     "failed": "Diese Reise konnte gerade nicht geladen werden.",
-    "retry": "Erneut versuchen"
+    "retry": "Nochmal"
   },
   "header": {
     "rename": "Reise umbenennen",
     "titleLabel": "Name der Reise",
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "noDates": "Noch keine Daten",
-    "addDates": "Daten hinzufügen",
-    "editDates": "Daten ändern",
+    "noDates": "Noch kein Datum",
+    "addDates": "Datum setzen",
+    "editDates": "Datum ändern",
     "phaseLabel": "Reisephase: {{phase}}. Ändern",
     "manual": "von dir gewählt",
     "delete": "Reise löschen",
@@ -30,23 +30,23 @@
     "start": "Startdatum",
     "end": "Enddatum",
     "endHint": "Leer lassen für eine eintägige Reise.",
-    "clear": "Daten löschen",
-    "save": "Daten speichern",
+    "clear": "Datum löschen",
+    "save": "Datum speichern",
     "cancel": "Abbrechen"
   },
   "offline": {
     "note": "Du bist offline. Das ist die Kopie vom {{date}}.",
     "noteUndated": "Du bist offline. Das ist die auf diesem Gerät gespeicherte Kopie.",
     "empty": "Du bist offline, und diese Reise ist nicht auf diesem Gerät gespeichert.",
-    "retry": "Erneut versuchen"
+    "retry": "Nochmal"
   },
   "overview": {
     "openPlanner": "Im Planer öffnen",
     "openPlannerHint": "Ändere Flüge, Unterkünfte und den Tagesplan mit Live-Ergebnissen.",
-    "planIt": "Jetzt planen",
+    "planIt": "Planen",
     "planItHint": "Finde Flüge, Unterkünfte und Aktivitäten in {{destination}}.",
     "planItHintNoPlace": "Finde Flüge, Unterkünfte und Aktivitäten.",
     "loadFailed": "Der Plan konnte gerade nicht geladen werden.",
-    "retry": "Erneut versuchen"
+    "retry": "Nochmal"
   }
 }

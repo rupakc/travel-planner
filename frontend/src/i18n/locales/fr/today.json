@@ -1,7 +1,7 @@
 {
   "dayIn": "Jour {{day}} à {{city}}",
-  "checkIn": "Faire le point du jour",
-  "checkedIn": "Jour enregistré",
+  "checkIn": "Valider ma journée",
+  "checkedIn": "Journée validée",
   "streak_one": "{{count}} jour d'affilée",
   "streak_other": "{{count}} jours d'affilée",
   "stampTitle": "Nouveau pays",
@@ -10,7 +10,7 @@
   "nothingNext": "Plus rien de prévu aujourd'hui.",
   "noPlan": "Pas encore de programme pour aujourd'hui.",
   "directions": "Itinéraire",
-  "wentHere": "J'y suis allé",
+  "wentHere": "J’y suis allé(e)",
   "visited": "Visité",
   "shareStatus": "Partager le statut",
   "copied": "Copié dans le presse-papiers.",

@@ -32,7 +32,7 @@
   },
   "load": {
     "failed": "Das konnte gerade nicht geladen werden.",
-    "retry": "Erneut versuchen",
+    "retry": "Nochmal",
     "loading": "Deine Reisen werden geladen…"
   },
   "offlineCopy": "Offline gespeichert"

@@ -14,7 +14,7 @@
   "visited": "Besucht",
   "shareStatus": "Status teilen",
   "copied": "In die Zwischenablage kopiert.",
-  "nearMe": "In meiner Nähe",
+  "nearMe": "In der Nähe",
   "startsOn": "Heute beginnt am {{date}}",
   "queued": "Auf diesem Gerät gespeichert. Es wird synchronisiert, sobald du wieder online bist.",
   "checkinFailed": "Einchecken hat nicht geklappt. Versuch es noch einmal.",

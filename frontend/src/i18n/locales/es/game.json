@@ -26,7 +26,7 @@
     "1": "Caminante",
     "2": "Turista",
     "3": "Explorador",
-    "4": "Viajero",
+    "4": "Voyager",
     "5": "Navegante",
     "6": "Buscador de rutas",
     "7": "Pionero",
@@ -88,7 +88,7 @@
       "desc": "Visita 10 países."
     },
     "countries_30": {
-      "name": "Trotamundos",
+      "name": "Nómada del mundo",
       "desc": "Visita 30 países."
     },
     "continents_3": {

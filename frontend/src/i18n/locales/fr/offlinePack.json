@@ -2,7 +2,7 @@
   "title": "Pack hors ligne",
   "intro": "Enregistrez sur cet appareil les numéros d'urgence, les phrases utiles, l'adresse de votre hôtel et un convertisseur de devises pour y accéder sans connexion.",
   "save": "Enregistrer hors ligne",
-  "saving": "Enregistrement…",
+  "saving": "Sauvegarde…",
   "refresh": "Actualiser",
   "remove": "Supprimer",
   "saved": "Enregistré {{when}}",

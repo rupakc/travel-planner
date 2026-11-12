@@ -10,7 +10,7 @@
     "placeholder": "Schreib ein paar Zeilen...",
     "counter": "{{n}} / {{max}}",
     "tooLong": "Zu lang: {{n}} / {{max}} Zeichen",
-    "add": "Eintrag hinzufügen",
+    "add": "Hinzufügen",
     "day": "Tag",
     "noDay": "Ohne Tag"
   },

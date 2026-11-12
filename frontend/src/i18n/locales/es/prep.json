@@ -7,7 +7,7 @@
   "overdue": "Atrasado",
   "due": "Para el {{date}}",
   "auto": "Se marca solo",
-  "autoNote": "Se guarda automáticamente al guardar el pack sin conexión",
+  "autoNote": "Se guarda automáticamente al guardar el paquete sin conexión",
   "loading": "Cargando tu lista…",
   "error": "No se pudo cargar la lista.",
   "retry": "Reintentar",
@@ -73,7 +73,7 @@
       "body": "La mayoría de aerolíneas abre el check-in unas 24 horas antes."
     },
     "offline_pack": {
-      "title": "Guarda el pack sin conexión",
+      "title": "Guarda el paquete sin conexión",
       "body": "Lleva lo esencial en el móvil para cuando no tengas cobertura."
     }
   }
