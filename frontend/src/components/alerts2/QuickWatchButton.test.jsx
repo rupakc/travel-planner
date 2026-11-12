@@ -15,10 +15,10 @@ vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 import * as alertsApi from '../../services/alertsApi'
 import * as api from '../../services/api'
 import { emit } from '../../telemetry/client'
-import QuickWatchButton from './QuickWatchButton'
+import QuickWatchButton, { _resetQuickWatchToast } from './QuickWatchButton'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
-let root; let host
+let root; let host; let unmounted = false
 const Loc = () => <span data-testid="loc">{useLocation().pathname}</span>
 const render = async (props = {}) => {
   await act(async () => {
@@ -31,9 +31,9 @@ const deferred = () => { let resolve; let reject; const p = new Promise((a, b) =
 
 beforeEach(() => {
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
-  vi.clearAllMocks(); auth.token = 'tok'; v2.livePrices = true
+  unmounted = false; vi.clearAllMocks(); auth.token = 'tok'; v2.livePrices = true
 })
-afterEach(() => { act(() => root.unmount()); host.remove() })
+afterEach(() => { if (!unmounted) act(() => root.unmount()); host.remove(); act(() => _resetQuickWatchToast()) })
 
 describe('QuickWatchButton', () => {
   it('hidden when live_prices is false', async () => {
@@ -60,11 +60,40 @@ describe('QuickWatchButton', () => {
     api.deletePriceWatch.mockResolvedValue({})
     await render()
     await tap(btn())
-    expect(host.textContent).toContain("We'll check this price for you")
-    await tap(host.querySelector('[data-tid="quick-watch-undo"]'))
+    expect(document.body.textContent).toContain("We'll check this price for you")
+    await tap(document.querySelector('[data-tid="quick-watch-undo"]'))
     expect(api.deletePriceWatch).toHaveBeenCalledWith(5, 'tok')
     expect(btn().getAttribute('aria-pressed')).toBe('false')
-    expect(host.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
+    expect(document.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
+  })
+
+  it('undo still works after the button unmounts', async () => {
+    alertsApi.quickWatch.mockResolvedValue({ kind: 'hotel', watch: { id: 5 }, existing: false })
+    api.deletePriceWatch.mockResolvedValue({})
+    await render()
+    await tap(btn())
+    await act(async () => { root.unmount() }); unmounted = true
+    await tap(document.querySelector('[data-tid="quick-watch-undo"]'))
+    expect(api.deletePriceWatch).toHaveBeenCalledWith(5, 'tok')
+    expect(document.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
+  })
+
+  it('failed undo shows an error and keeps the button pressed', async () => {
+    alertsApi.quickWatch.mockResolvedValue({ kind: 'hotel', watch: { id: 5 }, existing: false })
+    api.deletePriceWatch.mockRejectedValue({ status: 500 })
+    await render()
+    await tap(btn())
+    await tap(document.querySelector('[data-tid="quick-watch-undo"]'))
+    expect(document.querySelector('[data-tid="quick-watch-toast"]').textContent).toContain("Couldn't undo")
+    expect(btn().getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('tapping while pressed does nothing more', async () => {
+    alertsApi.quickWatch.mockResolvedValue({ kind: 'hotel', watch: { id: 5 }, existing: false })
+    await render()
+    await tap(btn()); await tap(btn())
+    expect(api.deletePriceWatch).not.toHaveBeenCalled()
+    expect(alertsApi.quickWatch).toHaveBeenCalledTimes(1)
   })
 
   it('undo on a flight deletes a fare watch', async () => {
@@ -72,7 +101,7 @@ describe('QuickWatchButton', () => {
     api.deleteFareWatch.mockResolvedValue({})
     await render({ kind: 'flight' })
     await tap(btn())
-    await tap(host.querySelector('[data-tid="quick-watch-undo"]'))
+    await tap(document.querySelector('[data-tid="quick-watch-undo"]'))
     expect(api.deleteFareWatch).toHaveBeenCalledWith(9, 'tok')
   })
 
@@ -83,7 +112,7 @@ describe('QuickWatchButton', () => {
     const link = host.querySelector('[data-tid="quick-watch-existing"]')
     expect(link.textContent).toContain('Already watching')
     expect(link.getAttribute('href')).toBe('/alerts?kind=hotel&watch=5')
-    expect(host.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
+    expect(document.querySelector('[data-tid="quick-watch-toast"]')).toBeNull()
   })
 
   it('double tap sends one request', async () => {

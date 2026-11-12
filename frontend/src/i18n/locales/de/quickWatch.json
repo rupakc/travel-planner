@@ -3,7 +3,6 @@
   "label.watching": "Wird beobachtet",
   "label.already": "Schon beobachtet",
   "aria.watch": "Preis von {{title}} beobachten",
-  "aria.unwatch": "Beobachtung von {{title}} beenden",
   "aria.already": "Du beobachtest {{title}} schon: Preisverlauf öffnen",
   "toast.message": "Wir behalten diesen Preis für dich im Blick; die erste Prüfung folgt bald",
   "toast.undo": "Rückgängig",
@@ -11,5 +10,6 @@
   "error.watch_limit": "Du hast das Limit aktiver Beobachtungen erreicht. Entferne auf der Alarm-Seite eine, um eine neue anzulegen.",
   "error.live_prices_off": "Preisbeobachtung ist gerade nicht verfügbar.",
   "error.spec_invalid": "Für dieses Angebot konnten wir keine Beobachtung einrichten.",
-  "error.generic": "Die Beobachtung konnte nicht gestartet werden. Versuch es noch einmal."
+  "error.generic": "Die Beobachtung konnte nicht gestartet werden. Versuch es noch einmal.",
+  "toast.undoFailed": "Rückgängig machen hat nicht geklappt. Entferne die Beobachtung auf der Alarm-Seite."
 }

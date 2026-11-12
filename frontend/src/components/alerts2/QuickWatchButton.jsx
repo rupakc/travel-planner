@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { createRoot } from 'react-dom/client'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +11,7 @@ import { deleteFareWatch, deletePriceWatch } from '../../services/api'
 import { priceWatchLink } from '../../utils/priceWatch'
 import { loginPathFor } from '../../utils/returnPath'
 import { emit } from '../../telemetry/client'
+import i18n from '../../i18n'
 
 const UNDO_MS = 5000
 const BTN = 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
@@ -20,12 +22,82 @@ const track = (kind, action, surface) => { try { emit('alert_quick_watch', { kin
 const removeWatch = (kind, id, token) => (kind === 'flight' ? deleteFareWatch(id, token) : deletePriceWatch(id, token))
 const KNOWN_ERRORS = ['watch_limit', 'live_prices_off', 'spec_invalid']
 
+
+// The Undo toast lives outside the button: a module-level store rendered by its
+// own tiny React root on document.body, so it survives the card unmounting
+// (e.g. a re-render of the results list) inside the 5 s window.
+let toastState = null // {kind, id, token, surface, error, onUndone}
+let toastTimer = null
+let toastRoot = null
+let toastHost = null
+const listeners = new Set()
+const emitToast = () => listeners.forEach((l) => l())
+const setToastState = (next) => { toastState = next; emitToast() }
+const clearToast = () => { clearTimeout(toastTimer); setToastState(null) }
+const armToast = () => { clearTimeout(toastTimer); toastTimer = setTimeout(clearToast, UNDO_MS) }
+
+function showUndoToast(entry) {
+  setToastState({ ...entry, error: false })
+  armToast()
+  if (!toastRoot && typeof document !== 'undefined') {
+    toastHost = document.createElement('div')
+    toastHost.setAttribute('data-tid', 'quick-watch-toast-host')
+    document.body.appendChild(toastHost)
+    toastRoot = createRoot(toastHost)
+    toastRoot.render(<UndoToast />)
+  }
+}
+
+async function undoToast() {
+  const cur = toastState
+  if (!cur) return
+  clearTimeout(toastTimer)
+  try {
+    await removeWatch(cur.kind, cur.id, cur.token)
+    track(cur.kind, 'undo', cur.surface)
+    setToastState(null)
+    cur.onUndone?.()
+  } catch {
+    setToastState({ ...cur, error: true })
+    armToast()
+  }
+}
+
+/** Test hook: drop any toast and its host. */
+export function _resetQuickWatchToast() {
+  clearToast()
+  if (toastRoot) { toastRoot.unmount(); toastHost.remove(); toastRoot = null; toastHost = null }
+}
+
+function UndoToast() {
+  const cur = useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l) }, () => toastState)
+  if (!cur) return null
+  const t = (k) => i18n.t(`quickWatch:${k}`)
+  return (
+    <div role="status" aria-live="polite" data-tid="quick-watch-toast"
+      className="alert-pop fixed inset-x-4 bottom-4 z-[70] flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm dark:border-slate-700 dark:bg-slate-900">
+      <p className="min-w-0 flex-1 text-sm text-slate-900 dark:text-slate-100">
+        {cur.error ? t('toast.undoFailed') : t('toast.message')}
+      </p>
+      {!cur.error && (
+        <button type="button" data-tid="quick-watch-undo" onClick={undoToast}
+          className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800">
+          {t('toast.undo')}
+        </button>
+      )}
+      <button type="button" data-tid="quick-watch-dismiss" onClick={clearToast} aria-label={t('toast.dismiss')}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+        <X size={16} aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
 /**
  * One-tap "Watch price" on a card. Optimistic: it reads "Watching" at once
  * (with a small bounce) and rolls back if the request fails. A toast offers
- * Undo for 5 s. Hidden unless the server can make live looks; signed out, a
- * tap leads to sign-in. The toast is local: AlertsContext's toast is for
- * incoming notifications and has no action slot.
+ * Undo for 5 s (it outlives this button). Hidden unless the server can make
+ * live looks; signed out, a tap leads to sign-in.
  */
 export default function QuickWatchButton({ kind, title, subtitle, spec, planId, surface = 'results' }) {
   const { t } = useTranslation('quickWatch')
@@ -37,32 +109,12 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
   const [state, setState] = useState('idle') // idle | on | existing
   const [watch, setWatch] = useState(null)
   const [error, setError] = useState(null)
-  const [toast, setToast] = useState(false)
   const busy = useRef(false)
-  const timer = useRef(null)
-  useEffect(() => () => clearTimeout(timer.current), [])
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  const safe = (fn) => { if (mounted.current) fn() }
 
   if (!livePrices) return null
-
-  const closeToast = () => { clearTimeout(timer.current); setToast(false) }
-
-  const undo = async () => {
-    if (busy.current || !watch) return
-    busy.current = true
-    closeToast()
-    const prev = state
-    setState('idle')
-    try {
-      await removeWatch(kind, watch.id, token)
-      track(kind, 'undo', surface)
-      setWatch(null)
-      watchesChanged?.()
-    } catch {
-      setState(prev)
-    } finally {
-      busy.current = false
-    }
-  }
 
   const add = async () => {
     if (busy.current) return
@@ -72,21 +124,23 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
     try {
       const body = { kind, title, spec, surface, ...(subtitle ? { subtitle } : {}), ...(planId != null ? { plan_id: planId } : {}) }
       const res = await quickWatch(token, body)
-      setWatch(res.watch)
+      safe(() => setWatch(res.watch))
       watchesChanged?.()
       if (res.existing) {
-        setState('existing')
+        safe(() => setState('existing'))
         track(kind, 'exists', surface)
       } else {
         track(kind, 'add', surface)
-        setToast(true)
-        clearTimeout(timer.current)
-        timer.current = setTimeout(() => setToast(false), UNDO_MS)
+        showUndoToast({
+          kind, id: res.watch.id, token, surface,
+          onUndone: () => { safe(() => { setState('idle'); setWatch(null) }); watchesChanged?.() },
+        })
       }
     } catch (err) {
-      setState('idle')
-      const code = KNOWN_ERRORS.includes(err?.code) ? err.code : 'generic'
-      setError(code)
+      safe(() => {
+        setState('idle')
+        setError(KNOWN_ERRORS.includes(err?.code) ? err.code : 'generic')
+      })
       if (err?.status === 409) track(kind, 'blocked', surface)
     } finally {
       busy.current = false
@@ -95,8 +149,7 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
 
   const onClick = () => {
     if (!token) { navigate(loginPathFor(location)); return }
-    if (state === 'on') undo()
-    else add()
+    if (state === 'idle') add()
   }
 
   return (
@@ -108,8 +161,7 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
         </Link>
       ) : (
         <button type="button" data-tid="quick-watch" aria-pressed={state === 'on'} onClick={onClick}
-          aria-label={state === 'on' ? t('aria.unwatch', { title }) : t('aria.watch', { title })}
-          className={state === 'on' ? ON : IDLE}>
+          aria-label={t('aria.watch', { title })} className={state === 'on' ? ON : IDLE}>
           {state === 'on'
             ? <Eye size={16} aria-hidden="true" className="bell-nudge" />
             : <EyeOff size={16} aria-hidden="true" />}
@@ -117,20 +169,6 @@ export default function QuickWatchButton({ kind, title, subtitle, spec, planId, 
         </button>
       )}
       {error && <p role="alert" data-tid="quick-watch-error" className="mt-1 text-xs text-red-700 dark:text-red-400">{t(`error.${error}`)}</p>}
-      {toast && (
-        <div role="status" aria-live="polite" data-tid="quick-watch-toast"
-          className="alert-pop fixed inset-x-4 bottom-4 z-[70] flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm dark:border-slate-700 dark:bg-slate-900">
-          <p className="min-w-0 flex-1 text-sm text-slate-900 dark:text-slate-100">{t('toast.message')}</p>
-          <button type="button" data-tid="quick-watch-undo" onClick={undo}
-            className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-slate-800">
-            {t('toast.undo')}
-          </button>
-          <button type="button" data-tid="quick-watch-dismiss" onClick={closeToast} aria-label={t('toast.dismiss')}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-            <X size={16} aria-hidden="true" />
-          </button>
-        </div>
-      )}
     </>
   )
 }

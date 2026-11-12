@@ -3,7 +3,6 @@
   "label.watching": "关注中",
   "label.already": "已在关注",
   "aria.watch": "关注 {{title}} 的价格",
-  "aria.unwatch": "取消关注 {{title}}",
   "aria.already": "已在关注 {{title}}：打开价格走势",
   "toast.message": "我们会帮你留意这个价格，很快进行首次查询",
   "toast.undo": "撤销",
@@ -11,5 +10,6 @@
   "error.watch_limit": "你已达到可同时关注的数量上限。请在提醒页面移除一个后再添加。",
   "error.live_prices_off": "价格关注功能暂时不可用。",
   "error.spec_invalid": "我们无法为此项目设置关注。",
-  "error.generic": "无法开始关注，请重试。"
+  "error.generic": "无法开始关注，请重试。",
+  "toast.undoFailed": "无法撤销。请在提醒页面移除该关注。"
 }
