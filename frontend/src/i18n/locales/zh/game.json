@@ -134,6 +134,50 @@
     "saver_1000": {
       "name": "已抓住 $1,000",
       "desc": "在降价中抓住 $1,000。"
+    },
+    "quiz_regular": {
+      "name": "答题常客",
+      "desc": "累计7天参与每日答题。"
+    },
+    "quiz_devoted": {
+      "name": "答题达人",
+      "desc": "累计30天参与每日答题。"
+    },
+    "quiz_ace": {
+      "name": "答题高手",
+      "desc": "在一次答题中拿到满分。"
+    },
+    "quiz_master": {
+      "name": "答题大师",
+      "desc": "获得10次答题满分。"
+    },
+    "inspirer": {
+      "name": "灵感提供者",
+      "desc": "有旅行者收藏了你的旅行创意。"
+    },
+    "muse": {
+      "name": "缪斯",
+      "desc": "你的旅行创意被收藏10次。"
+    },
+    "helpful_voice": {
+      "name": "热心发声",
+      "desc": "你的3条评论被标为有帮助。"
+    },
+    "h2h_rival": {
+      "name": "对手",
+      "desc": "完成一场对战答题。"
+    },
+    "h2h_veteran": {
+      "name": "对战老将",
+      "desc": "完成25场对战答题。"
+    },
+    "challenge_explorer": {
+      "name": "挑战探索者",
+      "desc": "完成一次每周挑战。"
+    },
+    "challenge_regular": {
+      "name": "挑战常客",
+      "desc": "完成8次每周挑战。"
     }
   },
   "rules": {

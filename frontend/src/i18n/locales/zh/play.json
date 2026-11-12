@@ -85,6 +85,7 @@
     "empty": "本周还没有人上榜。",
     "you": "（你）",
     "points_other": "{{count}} 分",
-    "mine_other": "你排第 {{rank}} 名，{{count}} 分"
+    "mine_other": "你排第 {{rank}} 名，{{count}} 分",
+    "unranked": "你还没有排名。参与每日答题即可上榜。"
   }
 }

@@ -66,4 +66,7 @@ export const resetAvailable = (config) => config?.auth?.password_reset_available
 // `features.<name> === true` in /config. An older backend's /config has no
 // `accounts`/`game` flags (or 404s), so their endpoints are never probed:
 // no 404 noise in devtools on every load.
-export const featureOn = (config, name) => config?.features?.[name] === true
+export const featureOn = (config, name) => {
+  const v = config?.features?.[name]
+  return v === true || v === 1 // /config sends some flags as 0|1 (play, social)
+}

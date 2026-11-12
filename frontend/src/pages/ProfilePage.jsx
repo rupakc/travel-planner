@@ -68,7 +68,15 @@ function ProfileView({ handle, own }) {
   if (!profile) return <p role="status" data-tid="social.profile.loading" className="text-sm text-text-muted">{t('feed.loading')}</p>
 
   const avatar = safeAvatar(profile.avatar_url)
-  const setYou = (patch) => setProfile((p) => ({ ...p, you: { ...(p.you || {}), ...patch } }))
+  const setYou = (patch) => setProfile((p) => {
+    // Only an accepted follow counts as a follower (a pending request does not).
+    const delta = 'following' in patch ? (patch.following ? 1 : 0) - (p.you?.following ? 1 : 0) : 0
+    return {
+      ...p,
+      followers_count: Math.max(0, (p.followers_count ?? 0) + delta),
+      you: { ...(p.you || {}), ...patch },
+    }
+  })
   const countries = Array.isArray(profile.countries) ? profile.countries : []
   const badges = Array.isArray(profile.badges) ? profile.badges : []
   return (

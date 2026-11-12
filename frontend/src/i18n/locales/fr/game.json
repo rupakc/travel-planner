@@ -134,6 +134,50 @@
     "saver_1000": {
       "name": "1 000 $ captés",
       "desc": "Captez 1 000 $ de baisses de prix."
+    },
+    "quiz_regular": {
+      "name": "Habitué du quiz",
+      "desc": "Jouez au quiz du jour pendant 7 jours."
+    },
+    "quiz_devoted": {
+      "name": "Fidèle du quiz",
+      "desc": "Jouez au quiz du jour pendant 30 jours."
+    },
+    "quiz_ace": {
+      "name": "As du quiz",
+      "desc": "Obtenez un score parfait à un quiz."
+    },
+    "quiz_master": {
+      "name": "Maître du quiz",
+      "desc": "Obtenez 10 scores parfaits au quiz."
+    },
+    "inspirer": {
+      "name": "Inspirateur",
+      "desc": "Un voyageur enregistre votre idée de voyage."
+    },
+    "muse": {
+      "name": "Muse",
+      "desc": "Vos idées de voyage sont enregistrées 10 fois."
+    },
+    "helpful_voice": {
+      "name": "Voix utile",
+      "desc": "3 de vos commentaires sont jugés utiles."
+    },
+    "h2h_rival": {
+      "name": "Rival",
+      "desc": "Terminez un quiz en duel."
+    },
+    "h2h_veteran": {
+      "name": "Vétéran du duel",
+      "desc": "Terminez 25 quiz en duel."
+    },
+    "challenge_explorer": {
+      "name": "Explorateur de défis",
+      "desc": "Terminez un défi hebdomadaire."
+    },
+    "challenge_regular": {
+      "name": "Habitué des défis",
+      "desc": "Terminez 8 défis hebdomadaires."
     }
   },
   "rules": {

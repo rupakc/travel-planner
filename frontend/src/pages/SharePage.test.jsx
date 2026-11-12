@@ -139,6 +139,20 @@ describe('SharePage kinds', () => {
     expect(text()).not.toContain('Invalid')
   })
 
+  it('quiz and status shares render their card, not the generic plan hero', async () => {
+    await show({ name: 'Quiz', kind: 'quiz', search_data: {}, selections: {}, card: { headline: 'Daily quiz: 3/5', stats: [{ key: 'correct', count: 3 }] } })
+    expect(container.querySelector('h1').textContent).toBe('Daily quiz: 3/5')
+    expect(text()).toContain('Quiz score')
+    expect(text()).toContain('3 Correct')
+    expect(text()).not.toContain('Somewhere wonderful')
+  })
+
+  it('status shares render their card', async () => {
+    await show({ name: 'S', kind: 'status', search_data: {}, selections: {}, card: { headline: 'Day 2 of 7 in Rome', destination: 'Rome' } })
+    expect(container.querySelector('h1').textContent).toBe('Day 2 of 7 in Rome')
+    expect(text()).toContain('Trip status')
+  })
+
   it('recap renders the card with stats, destination and period', async () => {
     await show({
       name: 'T', kind: 'recap', search_data: {}, selections: {},

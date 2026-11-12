@@ -76,8 +76,11 @@
       "places_visited": "Places visited",
       "countries": "Countries",
       "drops_caught": "Drops caught",
-      "targets_hit": "Targets hit"
-    }
+      "targets_hit": "Targets hit",
+      "correct": "Correct"
+    },
+    "quizTag": "Quiz score",
+    "statusTag": "Trip status"
   },
   "mine": {
     "title": "Your shared links",

@@ -134,6 +134,50 @@
     "saver_1000": {
       "name": "$1,000 erwischt",
       "desc": "Erwisch $1,000 an Preisrückgängen."
+    },
+    "quiz_regular": {
+      "name": "Quiz-Stammgast",
+      "desc": "Spiele das Tagesquiz an 7 Tagen."
+    },
+    "quiz_devoted": {
+      "name": "Quiz-Fan",
+      "desc": "Spiele das Tagesquiz an 30 Tagen."
+    },
+    "quiz_ace": {
+      "name": "Quiz-Ass",
+      "desc": "Erreiche bei einem Quiz die volle Punktzahl."
+    },
+    "quiz_master": {
+      "name": "Quiz-Meister",
+      "desc": "Erreiche 10 Mal die volle Punktzahl im Quiz."
+    },
+    "inspirer": {
+      "name": "Inspirator",
+      "desc": "Ein Reisender speichert deine Reiseidee."
+    },
+    "muse": {
+      "name": "Muse",
+      "desc": "Deine Reiseideen wurden 10 Mal gespeichert."
+    },
+    "helpful_voice": {
+      "name": "Hilfreiche Stimme",
+      "desc": "3 deiner Kommentare wurden als hilfreich markiert."
+    },
+    "h2h_rival": {
+      "name": "Rivale",
+      "desc": "Beende ein Duell-Quiz."
+    },
+    "h2h_veteran": {
+      "name": "Duell-Veteran",
+      "desc": "Beende 25 Duell-Quizze."
+    },
+    "challenge_explorer": {
+      "name": "Challenge-Entdecker",
+      "desc": "Schließe eine Wochen-Challenge ab."
+    },
+    "challenge_regular": {
+      "name": "Challenge-Stammgast",
+      "desc": "Schließe 8 Wochen-Challenges ab."
     }
   },
   "rules": {

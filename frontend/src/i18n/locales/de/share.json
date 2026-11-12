@@ -76,8 +76,11 @@
       "places_visited": "Besuchte Orte",
       "countries": "Länder",
       "drops_caught": "Erwischte Preissenkungen",
-      "targets_hit": "Zielpreise erreicht"
-    }
+      "targets_hit": "Zielpreise erreicht",
+      "correct": "Richtig"
+    },
+    "quizTag": "Quiz-Ergebnis",
+    "statusTag": "Reisestatus"
   },
   "mine": {
     "title": "Deine geteilten Links",

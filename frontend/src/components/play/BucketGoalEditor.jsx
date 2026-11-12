@@ -36,7 +36,7 @@ export default function BucketGoalEditor({ token, goal = null, onSaved }) {
           <input type="number" inputMode="numeric" min={GOAL_MIN} max={GOAL_MAX} step="1" value={value}
             data-tid="play.goal.input" aria-invalid={value !== '' && !valid}
             onChange={(e) => { setValue(e.target.value); setState('idle') }}
-            className="mt-1 block w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800" />
+            className="mt-1 block min-h-[44px] w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800" />
         </label>
         <button type="submit" disabled={!valid || state === 'saving'} data-tid="play.goal.save"
           className="min-h-[44px] rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">

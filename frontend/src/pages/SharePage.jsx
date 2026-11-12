@@ -288,7 +288,9 @@ async function downloadCard(plan) {
   }
 }
 
-const SHARE_KINDS = ['plan', 'recap', 'savings']
+const SHARE_KINDS = ['plan', 'recap', 'savings', 'quiz', 'status']
+const CARD_KINDS = ['recap', 'savings', 'quiz', 'status']
+const CARD_TAG = { recap: 'page.recapTag', savings: 'page.savingsTag', quiz: 'page.quizTag', status: 'page.statusTag' }
 
 // Recap and savings shares: a card (headline, stats, destination, period), no plan body.
 function CardView({ plan, ts }) {
@@ -299,7 +301,7 @@ function CardView({ plan, ts }) {
   return (
     <div data-tid="share.card" className="rounded-3xl shadow-2xl overflow-hidden text-white relative" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
       <div className="relative p-8 space-y-5">
-        <p className="text-sm font-semibold tracking-widest uppercase text-white/80">{ts(plan.kind === 'savings' ? 'page.savingsTag' : 'page.recapTag')}</p>
+        <p className="text-sm font-semibold tracking-widest uppercase text-white/80">{ts(CARD_TAG[plan.kind] || 'page.recapTag')}</p>
         <h1 className="text-3xl font-bold leading-tight">{card.headline}</h1>
         {(card.destination || period) && (
           <p className="text-white/90 text-sm">{[card.destination, period].filter(Boolean).join(' · ')}</p>
@@ -393,7 +395,7 @@ export default function SharePage({ download = downloadCard }) {
     ? <p data-tid="share.byline" className="text-center text-sm text-slate-600">{ts('page.byline', { name: plan.owner_name })}</p>
     : null
 
-  if ((plan.kind === 'recap' || plan.kind === 'savings') && plan.card) {
+  if (CARD_KINDS.includes(plan.kind) && plan.card) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-100 via-teal-50 to-emerald-100 py-10 px-4">
         <div className="max-w-lg mx-auto space-y-6">

@@ -88,6 +88,18 @@ describe('ProfilePage (someone else)', () => {
     expect(tid('social.follow').textContent).toBe('Follow')
   })
 
+  it('updates the Followers count after follow and unfollow', async () => {
+    api.getProfile.mockResolvedValue({ ...PROFILE, you: { following: false, pending: false } })
+    api.follow.mockResolvedValue({ state: 'following' })
+    api.unfollow.mockResolvedValue(null)
+    await mount('ann')
+    expect(container.textContent).toContain('Followers4')
+    await click(tid('social.follow'))
+    expect(container.textContent).toContain('Followers5')
+    await click(tid('social.follow'))
+    expect(container.textContent).toContain('Followers4')
+  })
+
   it('blocks after a confirm and then shows the profile as unavailable', async () => {
     api.blockUser.mockResolvedValue(null)
     await mount('ann')

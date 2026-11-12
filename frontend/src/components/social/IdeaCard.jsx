@@ -89,7 +89,7 @@ export default function IdeaCard({ idea, onChange, onDeleted, expanded = false, 
       </header>
 
       <h3 className="text-lg font-semibold text-text break-words">
-        {link ? <Link to={feedPath(idea.id)} data-tid="social.idea.open" className="hover:underline">{title}</Link> : title}
+        {link ? <Link to={feedPath(idea.id)} data-tid="social.idea.open" className="inline-flex min-h-[44px] items-center hover:underline">{title}</Link> : title}
       </h3>
       {idea.caption && <p className="whitespace-pre-wrap break-words text-sm text-text" data-tid="social.idea.caption">{idea.caption}</p>}
 

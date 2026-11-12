@@ -6,6 +6,6 @@ export default function Handle({ handle, className = '', tid = 'social.handle' }
   const text = `@${String(handle ?? '')}`
   if (!HANDLE_RE.test(String(handle ?? ''))) return <span className={className}>{text}</span>
   return (
-    <Link to={profilePath(handle)} data-tid={tid} className={`font-medium hover:underline ${className}`}>{text}</Link>
+    <Link to={profilePath(handle)} data-tid={tid} className={`inline-flex min-h-[44px] items-center font-medium hover:underline ${className}`}>{text}</Link>
   )
 }
