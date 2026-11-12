@@ -1613,9 +1613,11 @@
 <p>When nothing was awarded: <code>{"xp": &lt;total&gt;, "awards": [], "badges": [], "level_up": null}</code>. When the game is disabled: <code>null</code>.</p>
 <p><code>Settings</code>. Every key is always present, and PATCH accepts any subset; unknown keys return 422:</p>
 <pre><code class="language-json">{&quot;language&quot;: null, &quot;theme&quot;: &quot;system&quot;, &quot;currency&quot;: &quot;USD&quot;, &quot;units&quot;: &quot;metric&quot;, &quot;timezone&quot;: null,
- &quot;hide_game&quot;: false, &quot;hide_community&quot;: false, &quot;profile_visibility&quot;: &quot;public&quot;, &quot;telemetry_opt_out&quot;: false}
+ &quot;hide_game&quot;: false, &quot;hide_community&quot;: false, &quot;profile_visibility&quot;: &quot;public&quot;, &quot;telemetry_opt_out&quot;: false,
+ &quot;bucket_list_goal&quot;: null}
 </code></pre>
 <p><code>language</code> is one of the 7 codes or <code>null</code>. <code>theme</code> is <code>system|light|dark</code>. <code>currency</code> matches <code>^[A-Z]{3}$</code>. <code>units</code> is <code>metric|imperial</code>. <code>timezone</code> is an IANA name that <code>zoneinfo</code> accepts, or <code>null</code>. <code>profile_visibility</code> is <code>public|followers|private</code>.</p>
+<p><strong>Additive (Phase 2).</strong> <code>Settings</code> gains <code>bucket_list_goal: int 1..250 | null</code> (default <code>null</code>; see <code>Trips-API.md</code>). The Phase 2 journey rules, badges and the <code>trip_checkin</code> streak appear in <code>GET /game/catalog</code>; <code>PUT /account/onboarding</code> with <code>traveller_type</code> awards <code>traveller_type</code> once and merges that into <code>game</code>.</p>
 <h3 id="discovery">Discovery</h3>
 <table>
 <thead>
