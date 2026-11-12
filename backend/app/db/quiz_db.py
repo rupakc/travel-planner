@@ -30,6 +30,8 @@ def create_quiz_tables() -> None:
                 ON quiz_sessions (user_id, mode, day);
             CREATE INDEX IF NOT EXISTS idx_quiz_sessions_done
                 ON quiz_sessions (user_id, finished_ms);
+            CREATE INDEX IF NOT EXISTS idx_quiz_sessions_finished
+                ON quiz_sessions (finished_ms);
             CREATE TABLE IF NOT EXISTS quiz_answers (
                 session_id  TEXT NOT NULL,
                 idx         INTEGER NOT NULL,

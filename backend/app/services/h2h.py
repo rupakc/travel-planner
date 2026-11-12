@@ -7,7 +7,7 @@ import secrets
 from datetime import datetime
 
 from ..core.errors import ApiError
-from ..db import game_db, play_db, quiz_db, social_db
+from ..db import game_db, play_db, quiz_db, social_db, social_ideas_db
 from ..db.database import get_connection
 from ..game import engine as game_engine
 from ..game.quiz import engine as quiz_engine
@@ -41,6 +41,13 @@ def _handle(user_id: str) -> str | None:
 def create(user_id: str, handle: str, pack: str) -> dict:
     if pack not in quiz_engine.PACKS:
         raise ApiError(422, "invalid_pack", "Unknown pack.")
+    if social_ideas_db.is_restricted(user_id):
+        raise ApiError(403, "restricted", "Your account is restricted for now.")
+    mine = social_db.get_profile(user_id)
+    if not mine or not mine.get("handle"):
+        raise ApiError(
+            409, "profile_required", "Create a profile with a handle to challenge."
+        )
     opp = social_db.get_profile_by_handle(handle)
     if (
         not opp

@@ -26,6 +26,10 @@ def create_play_tables() -> None:
                 ON h2h_matches (creator_id, created_ms);
             CREATE INDEX IF NOT EXISTS idx_h2h_opponent
                 ON h2h_matches (opponent_id, created_ms);
+            CREATE INDEX IF NOT EXISTS idx_h2h_creator_session
+                ON h2h_matches (creator_session_id);
+            CREATE INDEX IF NOT EXISTS idx_h2h_opponent_session
+                ON h2h_matches (opponent_session_id);
         """)
 
 

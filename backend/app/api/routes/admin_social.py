@@ -57,7 +57,12 @@ def decide(
         if not p:
             raise nf
         if body.action == "remove":
-            social_db.save_profile(p["user_id"], {"visibility": "private"})
+            # Private, bio and avatar opt-in cleared so the owner cannot
+            # republish the same bio straight away.
+            social_db.save_profile(
+                p["user_id"],
+                {"visibility": "private", "bio": "", "show_avatar": False},
+            )
         db.resolve_reports("profile", p["user_id"])
         return {"target": target, "id": item_id, "status": body.action}
     if not item_id.isdigit():

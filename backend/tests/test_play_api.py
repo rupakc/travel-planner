@@ -81,10 +81,10 @@ def test_flag_off_404_and_features(client, monkeypatch):
     assert client.get("/api/play/state", headers=h).status_code == 404
 
 
-def test_default_flag_is_off():
+def test_default_flag_is_on():
     from app.core.config import Settings
 
-    assert Settings(_env_file=None).play_enabled is False
+    assert Settings(_env_file=None).play_enabled is True
 
 
 def test_requires_auth(client):
