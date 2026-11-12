@@ -198,7 +198,12 @@ def test_far_trips_not_scanned_and_prune(user):
     nc.enqueue_category(
         user["id"], 1, "trip_t7", "trip_reminders", "old", "t", "b", {}, utc(2026, 8, 1)
     )
-    assert tp.prune_log(utc(2026, 11, 12)) == 1
+    with get_connection() as conn:  # created_at uses the wall clock: age it explicitly
+        conn.execute(
+            "UPDATE notify_log SET created_at = '2000-01-01T00:00:00Z'"
+            " WHERE dedupe_key = 'old'"
+        )
+    assert tp.prune_log(datetime.now(UTC)) == 1
 
 
 @pytest.mark.parametrize("lang", LANGS)
