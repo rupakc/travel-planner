@@ -57,5 +57,8 @@
     "plan": "My trip plan on Voyager",
     "recap": "My trip recap on Voyager",
     "savings": "Price drops I caught with Voyager"
+  },
+  "entry": {
+    "link": "Share link"
   }
 }

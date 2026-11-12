@@ -57,5 +57,8 @@
     "plan": "Mi plan de viaje en Voyager",
     "recap": "El resumen de mi viaje en Voyager",
     "savings": "Bajadas de precio que cacé con Voyager"
+  },
+  "entry": {
+    "link": "Compartir enlace"
   }
 }

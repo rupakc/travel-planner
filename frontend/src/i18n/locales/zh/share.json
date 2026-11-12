@@ -57,5 +57,8 @@
     "plan": "我在 Voyager 上的旅行计划",
     "recap": "我在 Voyager 上的旅行回顾",
     "savings": "我用 Voyager 抓到的降价"
+  },
+  "entry": {
+    "link": "分享链接"
   }
 }
