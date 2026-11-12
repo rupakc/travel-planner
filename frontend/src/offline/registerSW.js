@@ -8,6 +8,7 @@
 // registration the browser refused. Callers then keep the pack data only
 // ("works while this tab stays open" when storageMode() is 'memory').
 import { clearAllPacks } from './packStore'
+import { loadClientConfig } from '../hooks/useClientConfig'
 
 const SW_URL = '/sw.js'
 const READY_TIMEOUT_MS = 30_000
@@ -30,6 +31,10 @@ const timeout = (promise, ms) => Promise.race([
 /** -> ServiceWorkerRegistration, or null when unsupported. */
 export async function ensureServiceWorker() {
   if (!supported()) return null
+  // The kill switch (features.offline_pack false) also holds after page load.
+  try {
+    if ((await loadClientConfig())?.features?.offline_pack === false) return null
+  } catch { /* unknown: carry on */ }
   try {
     return (await navigator.serviceWorker.register(SW_URL, { scope: '/' })) || null
   } catch {

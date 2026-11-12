@@ -56,4 +56,11 @@ describe('resolveTabs', () => {
     expect(r.enabled).toEqual(['offline'])
     expect(r.active).toBe('offline')
   })
+
+  it('offline_pack off: no Offline tab, and an offline-tab URL falls back to the phase default', () => {
+    const r = resolveTabs({ phase: 'planning', offlinePack: false })
+    expect(r.tabs).toEqual(['overview', 'prep', 'money'])
+    expect(resolveTabs({ phase: 'ready', tab: 'offline', offlinePack: false })).toMatchObject({ active: 'prep' })
+    expect(resolveTabs({ phase: 'on_the_road', offlinePack: false, offline: true })).toMatchObject({ tabs: ['today', 'money', 'journal', 'overview'], enabled: ['today'], active: 'today' })
+  })
 })

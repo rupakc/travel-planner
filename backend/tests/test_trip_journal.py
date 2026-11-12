@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from app.core.config import settings
 from app.db import trip_journal_db as db
 from app.game import trip_hooks
 
@@ -140,8 +141,8 @@ def test_visited_awards_once_per_place(client, admin_headers, trip, monkeypatch)
 
 
 def test_limits(client, admin_headers, trip, monkeypatch):
-    monkeypatch.setattr(db, "JOURNAL_LIMIT", 2)
-    monkeypatch.setattr(db, "PLACES_LIMIT", 2)
+    monkeypatch.setattr(settings, "trip_max_journal", 2)
+    monkeypatch.setattr(settings, "trip_max_places", 2)
     cid = str(uuid.uuid4())
     assert _post(client, admin_headers, trip, client_id=cid).status_code == 201
     assert _post(client, admin_headers, trip).status_code == 201

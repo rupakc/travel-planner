@@ -2,10 +2,8 @@
 
 from datetime import UTC, datetime
 
+from ..core.config import settings
 from .database import get_connection
-
-JOURNAL_LIMIT = 500
-PLACES_LIMIT = 1000
 
 _PLACE_FIELDS = ("name", "kind", "visited", "stars", "note", "day", "lat", "lng")
 
@@ -43,7 +41,17 @@ def add_entry(
             "(plan_id, client_id, day, body, mood, created_at, updated_at) "
             "SELECT ?,?,?,?,?,?,? WHERE ? < ? "
             "ON CONFLICT(plan_id, client_id) DO NOTHING",
-            (plan_id, client_id, day, body, mood, now, now, count, JOURNAL_LIMIT),
+            (
+                plan_id,
+                client_id,
+                day,
+                body,
+                mood,
+                now,
+                now,
+                count,
+                settings.trip_max_journal,
+            ),
         )
         created = cur.rowcount == 1
         row = conn.execute(
@@ -107,7 +115,7 @@ def upsert_place(plan_id: int, place_key: str, fields: dict) -> tuple[dict, bool
             count = conn.execute(
                 "SELECT COUNT(*) FROM trip_ratings WHERE plan_id = ?", (plan_id,)
             ).fetchone()[0]
-            if count >= PLACES_LIMIT:
+            if count >= settings.trip_max_places:
                 raise LimitReached
             data = {
                 "name": "",

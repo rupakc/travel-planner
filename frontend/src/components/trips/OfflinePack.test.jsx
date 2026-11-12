@@ -4,9 +4,9 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const calls = []
-const state = { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, online: true, stored: { pack: null, savedAt: null, loading: false } }
+const state = { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, offlinePack: true, online: true, stored: { pack: null, savedAt: null, loading: false } }
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: state.user }) }))
-vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: state.journey }) }))
+vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: state.journey, offlinePack: state.offlinePack }) }))
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => state.online }))
 vi.mock('../../offline/useOfflinePack', () => ({ useOfflinePack: () => state.stored }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
@@ -44,7 +44,7 @@ const render = () => act(async () => root.render(<OfflinePack trip={{ id: 12 }} 
 beforeEach(() => {
   vi.clearAllMocks()
   calls.length = 0
-  Object.assign(state, { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, user: { id: 7 }, online: true, reg: {}, stored: { pack: null, savedAt: null, loading: false } })
+  Object.assign(state, { shell: { ok: true, kb: 10 }, saveErr: null, swThrow: false, journey: true, offlinePack: true, user: { id: 7 }, online: true, reg: {}, stored: { pack: null, savedAt: null, loading: false } })
   Object.defineProperty(navigator, 'storage', {
     configurable: true,
     value: { persist: vi.fn(async () => { calls.push('persist'); return true }) },
@@ -60,6 +60,13 @@ describe('OfflinePack', () => {
     state.journey = false
     await render()
     expect(container.innerHTML).toBe('')
+  })
+
+  it('renders nothing and never touches the service worker when the kill switch is on', async () => {
+    state.offlinePack = false
+    await render()
+    expect(container.innerHTML).toBe('')
+    expect(calls).toEqual([])
   })
 
   it('saves in order and shows Saved', async () => {

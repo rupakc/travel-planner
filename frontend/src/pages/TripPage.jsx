@@ -76,6 +76,7 @@ function TripScreen({ tripId, tab }) {
   const navigate = useNavigate()
   const { token, user } = useAuth()
   const online = useOnline()
+  const { offlinePack } = useJourney()
   const { pack, savedAt, loading: packLoading } = useOfflinePack(user?.id ?? null, tripId)
   const [load, setLoad] = useState({ status: 'loading', trip: null, err: null })
   const [plan, setPlan] = useState({ status: 'loading', plan: null })
@@ -120,7 +121,7 @@ function TripScreen({ tripId, tab }) {
     ? { ...base, selections: plan.plan?.selections ?? {}, search_data: plan.plan?.search_data ?? {} }
     : base
   const phase = trip?.phase ?? null
-  const { tabs, enabled, active } = resolveTabs({ phase, tab, offline })
+  const { tabs, enabled, active } = resolveTabs({ phase, tab, offline, offlinePack })
 
   // A save from the inline plan (Overview) updates the copy every tab reads,
   // so a remount or another tab never shows (or re-saves) the stale plan.

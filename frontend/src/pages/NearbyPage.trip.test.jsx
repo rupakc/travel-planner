@@ -22,6 +22,10 @@ import NearbyPage from './NearbyPage'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+const LOCAL = {
+  place: { name: 'Lisbon', lat: 38.72, lng: -9.14 },
+  sections: [{ id: 'see', title: 'Places to see', items: [{ name: 'Belém Tower' }] }],
+}
 const DATA = {
   place: { name: 'Lisbon', lat: 38.72, lng: -9.14 },
   sections: [{ id: 'see', title: 'Places to see', items: [{ name: 'Belém Tower', place_id: 'p1', maps_uri: 'https://maps.google.com/?cid=1' }] }],
@@ -53,18 +57,28 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
 describe('Near me during a trip', () => {
+  it('hides I\'m here for Google-Maps-grounded items, so their names are never stored', async () => {
+    api.fetchNearby.mockResolvedValue(DATA)
+    await openResults()
+    expect(byTid('nearby.here')).toBeNull()
+    expect(trips.putPlace).not.toHaveBeenCalled()
+  })
+
   it('shows I\'m here only with an on-the-road pinned trip', async () => {
+    api.fetchNearby.mockResolvedValue(LOCAL)
     await openResults()
     expect(byTid('nearby.here')).not.toBeNull()
   })
 
   it('hides it for a trip that is not on the road', async () => {
     trips.listTrips.mockResolvedValue({ pinned_id: 5, trips: [{ id: 5, phase: 'ready' }] })
+    api.fetchNearby.mockResolvedValue(LOCAL)
     await openResults()
     expect(byTid('nearby.here')).toBeNull()
   })
 
   it('a tap sends the visit with coordinates, announces and shows Visited', async () => {
+    api.fetchNearby.mockResolvedValue(LOCAL)
     await openResults()
     await click(byTid('nearby.here'))
     await flush()

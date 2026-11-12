@@ -5,7 +5,7 @@ import uuid
 import pytest
 
 from app.core.config import settings
-from app.db import plans_db, trip_snapshot_db
+from app.db import plans_db, trip_expenses_db, trip_snapshot_db
 from app.services import trip_money
 
 
@@ -225,3 +225,12 @@ def test_other_users_expense_404(client, hdr, trip):
     )
     assert client.delete(f"{base}/{eid}", headers=other).status_code == 404
     assert len(_get(client, hdr, trip)["expenses"]) == 1
+
+
+def test_patch_race_with_delete_is_404_not_500(client, hdr, trip, monkeypatch):
+    eid = _post(client, hdr, trip).json()["id"]
+    monkeypatch.setattr(trip_expenses_db, "update", lambda *a, **k: None)
+    r = client.patch(
+        f"/api/trips/{trip}/expenses/{eid}", json={"note": "x"}, headers=hdr["moneya"]
+    )
+    assert (r.status_code, r.json()["error_code"]) == (404, "expense_not_found")
