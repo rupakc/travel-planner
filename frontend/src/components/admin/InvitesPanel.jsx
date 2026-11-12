@@ -104,7 +104,7 @@ export default function InvitesPanel({ token, initial = null }) {
           </div>
         </div>
         <button type="submit" disabled={busy} data-tid="adminInvites.create"
-          className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg">
+          className="px-4 py-1.5 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-300 text-white text-sm font-medium rounded-lg">
           {busy ? t('adminInvites:creating') : t('adminInvites:create')}
         </button>
       </form>

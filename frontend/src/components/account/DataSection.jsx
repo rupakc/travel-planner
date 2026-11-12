@@ -116,7 +116,7 @@ export default function DataSection({ account }) {
 
       <div className="mt-4 flex flex-wrap gap-3">
         <button type="button" data-tid="account.data.export" onClick={download} disabled={exporting}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 disabled:opacity-60">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-700 text-white text-sm font-medium hover:bg-teal-800 disabled:opacity-60">
           <Download size={16} aria-hidden="true" />
           {exporting ? t('export.working') : t('export.button')}
         </button>

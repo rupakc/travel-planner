@@ -471,7 +471,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
     <div className="space-y-2">
       {data.days.map(day => (
         <div key={day.day_number} className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className={`${day.city ? 'bg-indigo-700' : 'bg-teal-600'} text-white px-3 py-1.5 text-xs font-semibold flex justify-between`}>
+          <div className={`${day.city ? 'bg-indigo-700' : 'bg-teal-700'} text-white px-3 py-1.5 text-xs font-semibold flex justify-between`}>
             <span>
               {t('itinerary.day', { n: day.day_number })}{day.date && ` — ${day.date}`}
               {day.city && (
@@ -496,7 +496,7 @@ function ChatItinerarySection({ data, selections, onSelect }) {
                   </div>
                   {slot.estimated_cost_usd != null && <span className="text-gray-400 shrink-0">${slot.estimated_cost_usd}</span>}
                   <button onClick={() => onSelect('itinerary_slots', slotObj)} data-tid="chat.slot-select"
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100'}`}>
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${isSelected ? 'bg-teal-700 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100'}`}>
                     {isSelected ? <><Check size={8}/> {t('action.added')}</> : <><Plus size={8}/> {t('action.add')}</>}
                   </button>
                 </div>
@@ -921,7 +921,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
               </button>
             )}
             <button onClick={save} data-tid="chat.plan-save" disabled={saving || selectedCount === 0}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 text-sm transition-all">
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 disabled:opacity-50 text-sm transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? t('drawer.saving') : loadedPlanId ? t('drawer.update') : t('drawer.save')}
             </button>
@@ -986,7 +986,7 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
                     </div>
                     <div className="flex gap-1.5 mt-1.5">
                       <button onClick={() => onLoadPlan(plan)} data-tid="chat.plan-load"
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-xs font-medium transition-colors ${isLoaded ? 'bg-teal-700 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-teal-50 hover:border-teal-400 hover:text-teal-700'}`}>
                         {isLoaded ? <><Check size={11} /> {t('drawer.loaded')}</> : <><RefreshCw size={11} /> {t('drawer.load')}</>}
                       </button>
                       <WatchFareButton variant="card" label={t('drawer.watch')} trip={tripFromPlan(plan)} source="saved_plan" />
@@ -1683,7 +1683,7 @@ export default function ChatPage() {
               </button>
             ) : (
               <button onClick={() => sendMessage(input)} data-tid="chat.send" disabled={!input.trim()}
-                className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white shadow-sm" title={t('page.send')} aria-label={t('page.send')}>
+                className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-200 disabled:text-gray-400 text-white shadow-sm" title={t('page.send')} aria-label={t('page.send')}>
                 <Send size={16} />
               </button>
             )}
@@ -1695,7 +1695,7 @@ export default function ChatPage() {
       {/* My Plan floating button */}
       {(() => { const cost = computePlanCost(selections, planTrip); return (
       <button onClick={() => setIsPlanOpen(true)} data-tid="chat.open-plan"
-        className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-700 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
+        className="fixed bottom-20 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-teal-700 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-teal-800 ring-1 ring-teal-500/20 active:scale-95 transition-transform">
         <Bookmark size={14} />
         <span className="text-xs">{t('drawer.title')}</span>
         {cost > 0 && <span className="text-[10px] font-bold opacity-80">${fmtNumber(cost, { maximumFractionDigits: 0 })}</span>}

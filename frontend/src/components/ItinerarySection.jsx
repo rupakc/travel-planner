@@ -511,7 +511,7 @@ export default function ItinerarySection({
                               />
                             </div>
                             <button type="button" data-tid="itinerary.edit-done" onClick={() => setEditingSlot(null)}
-                              className="flex items-center gap-1 px-3 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold hover:bg-teal-700">
+                              className="flex items-center gap-1 px-3 py-1 bg-teal-700 text-white rounded-full text-xs font-semibold hover:bg-teal-800">
                               <Check size={10}/> {t('edit.done')}
                             </button>
                           </div>
@@ -562,7 +562,7 @@ export default function ItinerarySection({
                             onClick={() => onSlotPlan(key, { key, day_number: day.day_number, time_of_day: slot.time_of_day, activity, location, estimated_cost_usd: cost, ...pickedTimes(slot) })}
                             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                               inPlan
-                                ? 'bg-teal-600 text-white'
+                                ? 'bg-teal-700 text-white'
                                 : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
                             }`}>
                             {inPlan

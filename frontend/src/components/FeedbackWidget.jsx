@@ -164,7 +164,7 @@ export default function FeedbackWidget() {
                   onClick={submit}
                   data-tid="feedback.send"
                   disabled={!rating || submitting}
-                  className="w-full py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-200 disabled:text-teal-400 text-white text-sm font-semibold rounded-lg transition-colors"
+                  className="w-full py-2 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-200 disabled:text-teal-400 text-white text-sm font-semibold rounded-lg transition-colors"
                 >
                   {submitting ? t('feedback.sending') : t('feedback.send')}
                 </button>

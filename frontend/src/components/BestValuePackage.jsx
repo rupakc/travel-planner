@@ -155,7 +155,7 @@ export default function BestValuePackage({ pkg, selections, searchData, onApply,
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 ${
             disabled
               ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
-              : 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+              : 'bg-teal-700 text-white border-teal-600 hover:bg-teal-800'
           }`}
         >
           {applied && <Check size={12} />}

@@ -98,7 +98,7 @@ function DestinationCard({ dest, onSelect }) {
       )}
 
       <button type="button" onClick={onSelect} data-tid="search.destination-plan"
-        className="mt-auto w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors">
+        className="mt-auto w-full py-2 px-3 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition-colors">
         {t('discover.planThisTrip')}
       </button>
     </div>
@@ -709,7 +709,7 @@ export default function SearchPage() {
               <div className="flex flex-wrap gap-2 mt-1">
                 {interestOptions.map(({ id, label }) => (
                   <button key={id} type="button" onClick={() => toggleInterest(id)} data-tid={`search.interest-${id}`}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${form.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${form.interests.includes(id) ? 'bg-teal-700 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                     {label}
                   </button>
                 ))}
@@ -790,7 +790,7 @@ export default function SearchPage() {
                   {interestOptions.map(({ id, label }) => (
                     <button key={id} type="button" data-tid={`search.discover-interest-${id}`}
                       onClick={() => setDiscoverForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }))}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${discoverForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${discoverForm.interests.includes(id) ? 'bg-teal-700 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                       {label}
                     </button>
                   ))}
@@ -923,7 +923,7 @@ export default function SearchPage() {
                     {interestOptions.map(({ id, label }) => (
                       <button key={id} type="button" data-tid={`search.compare-interest-${id}`}
                         onClick={() => setCompareForm(c => ({ ...c, interests: c.interests.includes(id) ? c.interests.filter(i => i !== id) : [...c.interests, id] }))}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${compareForm.interests.includes(id) ? 'bg-teal-600 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${compareForm.interests.includes(id) ? 'bg-teal-700 border-teal-600 text-white shadow-sm ring-2 ring-teal-200 ring-offset-1' : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'}`}>
                         {label}
                       </button>
                     ))}

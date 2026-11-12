@@ -125,7 +125,7 @@ export default function GameCelebration() {
         }
         if (it.kind === 'level') {
           return (
-            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-lg">
+            <div key={it.id} data-tid="game.toast.level" className="game-pop pointer-events-none flex items-center gap-2 rounded-xl bg-teal-700 px-3 py-2 text-sm font-semibold text-white shadow-lg">
               <Sparkles size={14} aria-hidden="true" />
               {t('toast.level', { to: it.to })}
             </div>

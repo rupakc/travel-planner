@@ -146,7 +146,7 @@ function PlanButton({ index, col, onPlan }) {
       type="button"
       data-tid="compare.plan"
       onClick={() => { track('compare_plan_clicked', 'search', { position: index }); onPlan(index) }}
-      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700"
+      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800"
     >
       {t('compare.planThis')}
     </button>
