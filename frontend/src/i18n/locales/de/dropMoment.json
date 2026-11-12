@@ -1,1 +1,12 @@
-{}
+{
+  "title": "Preissenkung erkannt",
+  "titleTarget": "Dein Zielpreis ist erreicht",
+  "caught": "Preissenkung von {{amount}} ({{percent}}) erkannt",
+  "nowPrice": "jetzt",
+  "xp": "+{{xp}} XP",
+  "note": "Das ist der Unterschied zwischen zwei beobachteten Preisen. Preise können sich ändern, bevor du buchst.",
+  "story": "Preisverlauf ansehen",
+  "book": "Buchen",
+  "share": "Teilen",
+  "close": "Schließen"
+}

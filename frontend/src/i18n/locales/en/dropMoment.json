@@ -1,1 +1,12 @@
-{}
+{
+  "title": "Price drop caught",
+  "titleTarget": "Your target price is here",
+  "caught": "Caught a drop of {{amount}} ({{percent}})",
+  "nowPrice": "now at",
+  "xp": "+{{xp}} XP",
+  "note": "This is the drop between two prices we observed. Prices can change before you book.",
+  "story": "See price story",
+  "book": "Book",
+  "share": "Share",
+  "close": "Close"
+}
