@@ -36,9 +36,10 @@ _CREATE_FIELDS = (
     "last_observation",
     "reference_looks",
     "lease_until",
+    "pending_first_check",
 )
 
-_BOOL_FIELDS = ("email_enabled",)
+_BOOL_FIELDS = ("email_enabled", "pending_first_check")
 _JSON_FIELDS = ("subject", "last_observation", "reference_looks")
 
 
@@ -102,6 +103,13 @@ def create_price_watch_tables() -> None:
         }
         if "reference_looks" not in cols:
             conn.execute("ALTER TABLE price_watches ADD COLUMN reference_looks TEXT")
+        # One-tap watches are created pending: no live look until the
+        # scheduler's first check (the first look sets the baseline)
+        if "pending_first_check" not in cols:
+            conn.execute(
+                "ALTER TABLE price_watches ADD COLUMN "
+                "pending_first_check INTEGER NOT NULL DEFAULT 0"
+            )
 
 
 def _row(row) -> dict | None:

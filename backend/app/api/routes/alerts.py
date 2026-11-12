@@ -1,15 +1,36 @@
 """Price alerts 2.0 routes (``/api/alerts/*``). Contract: docs/Alerts-API.md.
 Each later task adds its own routes here."""
 
-from fastapi import APIRouter, Body, Depends
+import json
+import threading
+from typing import Literal
+
+from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, ValidationError
 
 from ...core.ai_quota import daily_quota
 from ...core.auth import get_current_user
 from ...core.config import settings
 from ...core.errors import ApiError
 from ...core.rate_limit import rate_limit, require_ai_access
-from ...db import alerts_db, fare_watch_db, price_watch_db, user_settings_db, users_db
-from ...services import alert_delivery, alert_moments, alert_story
+from ...db import (
+    alerts_db,
+    fare_watch_db,
+    plans_db,
+    price_watch_db,
+    user_settings_db,
+    users_db,
+)
+from ...services import (
+    alert_delivery,
+    alert_moments,
+    alert_story,
+    fare_watch,
+    price_watch,
+)
+from ...services.price_watch import InvalidSpec
 
 router = APIRouter()
 
@@ -91,3 +112,141 @@ async def watch_advice(
 def savings_summary(user: dict = Depends(get_current_user)) -> dict:
     """The caller's savings tally ("caught a drop of $X")."""
     return alert_moments.summary(user["id"])
+
+
+# ── BEGIN quick-watch (Task 7) ────────────────────────────────────────────────
+
+_quick_lock = threading.Lock()  # a double tap must create one watch
+
+
+class QuickWatchBody(BaseModel):
+    kind: Literal["flight", "hotel", "activity", "trip"]
+    title: str = Field(..., min_length=1, max_length=120)
+    subtitle: str | None = Field(None, max_length=160)
+    spec: dict
+    plan_id: int | None = None
+    surface: Literal["results", "chat", "trip", "suggest"]
+
+
+def _spec_invalid(detail: str) -> ApiError:
+    return ApiError(422, "spec_invalid", detail)
+
+
+def _quick_flight(body: QuickWatchBody, user: dict, serialize) -> tuple[dict, bool]:
+    from .fare_watches import TripFields, _resolve, _trip_from_plan
+
+    try:
+        trip = TripFields(**{**body.spec, "plan_id": None})
+        plan_id = body.plan_id or body.spec.get("plan_id")
+        if isinstance(plan_id, int) and not isinstance(plan_id, bool):
+            trip = _trip_from_plan(plan_id, user)
+        else:
+            plan_id = None
+        req = _resolve(trip)
+    except (ValidationError, TypeError) as exc:
+        raise _spec_invalid("That trip can't be watched.") from exc
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise ApiError(404, "trip_not_found", str(exc.detail)) from exc
+        raise _spec_invalid(str(exc.detail)) from exc
+    now = fare_watch.utcnow()
+    if req.departure_date <= now.date():
+        raise _spec_invalid("This trip departs too soon to watch its fare.")
+    if req.return_date and req.return_date < req.departure_date:
+        raise _spec_invalid("The return date is before the departure date.")
+    dep = str(req.departure_date)
+    ret = str(req.return_date) if req.return_date else None
+    existing = fare_watch_db.find_watch(
+        user["id"],
+        req.origin_iata,
+        req.destination_iata,
+        dep,
+        ret,
+        req.num_travelers,
+    )
+    if existing and existing["status"] != "expired":
+        return serialize(existing), True
+    _require_room(user)
+    watch = fare_watch_db.create_watch(
+        user["id"],
+        {
+            "plan_id": plan_id,
+            "origin_code": req.origin_iata,
+            "destination_code": req.destination_iata,
+            "origin_label": req.origin,
+            "destination_label": req.destination,
+            "departure_date": dep,
+            "return_date": ret,
+            "num_travelers": req.num_travelers,
+            "alert_mode": "any_drop",
+            "email_enabled": False,
+            "pending_first_check": True,
+        },
+        now=now,
+    )
+    return serialize(watch), False
+
+
+def _quick_price(body: QuickWatchBody, user: dict, serialize) -> tuple[dict, bool]:
+    source = price_watch.get_source(body.kind)
+    if source is None:
+        raise _spec_invalid("We can't watch prices of this kind yet.")
+    spec = dict(body.spec)
+    if body.plan_id is not None:
+        spec.setdefault("plan_id", body.plan_id)
+    from .price_watches import MAX_SPEC_BYTES
+
+    if len(json.dumps(spec, default=str)) > MAX_SPEC_BYTES:
+        raise _spec_invalid("That request is too large.")
+    try:
+        key = source.match_key(spec)
+        if (
+            body.kind == "trip"
+        ):  # the plan must be the caller's (as the first look needs)
+            plan = plans_db.get_plan(int(spec["plan_id"]))
+            if not plan or plan.get("username") != user.get("username"):
+                raise ApiError(404, "trip_not_found", "Plan not found")
+    except InvalidSpec as exc:
+        raise _spec_invalid(str(exc)) from exc
+    existing = price_watch_db.find_watch(user["id"], body.kind, key) if key else None
+    if existing and existing["status"] != "expired":
+        return serialize(existing), True
+    _require_room(user)
+    watch = price_watch.record_pending(
+        source, spec, user, body.title, body.subtitle, spec.get("plan_id")
+    )
+    return serialize(watch), False
+
+
+def _require_room(user: dict) -> None:
+    if price_watch.limit_reached(user["id"]):
+        raise ApiError(409, "watch_limit", price_watch.limit_message())
+
+
+@router.post("/alerts/quick-watch", dependencies=[Depends(rate_limit("light_ai"))])
+def quick_watch(body: QuickWatchBody, user: dict = Depends(get_current_user)):
+    """One-tap watch: a pending row, no live look (the scheduler makes the
+    first one, which is the baseline and never alerts)."""
+    if not settings.serpapi_key:
+        raise ApiError(
+            503,
+            "live_prices_off",
+            "Price watches need live prices, which aren't set up.",
+        )
+    from . import fare_watches, price_watches
+
+    serialize = (
+        fare_watches.serialize if body.kind == "flight" else price_watches.serialize
+    )
+    make = _quick_flight if body.kind == "flight" else _quick_price
+    with _quick_lock:
+        watch, existing = make(body, user, serialize)
+    return JSONResponse(
+        status_code=200 if existing else 201,
+        content=jsonable_encoder(
+            {"kind": body.kind, "watch": watch, "existing": existing}
+        ),
+    )
+
+
+# ── END quick-watch ───────────────────────────────────────────────────────────

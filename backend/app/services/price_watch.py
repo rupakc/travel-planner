@@ -401,6 +401,189 @@ def record_created(
     return watch
 
 
+# ── One-tap (pending) watches ─────────────────────────────────────────────────
+
+PENDING_KEY = "_pending_spec"  # in `subject` until the first look matches it
+_PENDING_FALLBACK_DAYS = 365
+
+
+def is_pending(watch: dict) -> bool:
+    return bool((watch.get("subject") or {}).get(PENDING_KEY))
+
+
+def _pending_expiry(spec: dict, now: datetime) -> str:
+    """Best-effort end date of a not-yet-looked-at watch (the first look
+    replaces it with the source's own): the stay or activity date, else a
+    year out."""
+    for key in ("check_in", "date"):
+        raw = spec.get(key)
+        try:
+            return date.fromisoformat(str(raw)).isoformat()
+        except ValueError:
+            continue
+    return (now.date() + timedelta(days=_PENDING_FALLBACK_DAYS)).isoformat()
+
+
+def record_pending(
+    source: PriceSource,
+    spec: dict,
+    user: dict,
+    title: str,
+    subtitle: str | None,
+    plan_id: int | None,
+    *,
+    now: datetime | None = None,
+) -> dict:
+    """Store a watch with no live look yet (one-tap watch): ``any_drop``, email
+    off, due now, ``pending_first_check``. Its first check calls
+    ``source.create`` and fills the row; that look is the baseline and never
+    alerts. ``spec`` must already have passed ``source.match_key``."""
+    now = now or fare_watch.utcnow()
+    return price_watch_db.create_watch(
+        user["id"],
+        {
+            "kind": source.kind,
+            "plan_id": plan_id,
+            "title": title,
+            "subtitle": subtitle,
+            "subject": {PENDING_KEY: spec},
+            "match_key": source.match_key(spec),
+            "alert_mode": "any_drop",
+            "email_enabled": False,
+            "expires_on": _pending_expiry(spec, now),
+            "pending_first_check": True,
+            "next_check_at": now.isoformat(),
+        },
+        now=now,
+    )
+
+
+async def _first_look(
+    watch: dict,
+    source: PriceSource,
+    *,
+    now: datetime,
+    api_key: str,
+    rand: Callable[[], float],
+    manual: bool,
+) -> CheckOutcome:
+    """The first check of a pending watch: match the stored spec to a live
+    subject (``source.create``) and fill the row with it. Never alerts (it is
+    the baseline). Nothing live (``NoLivePrice``) takes the unavailable path
+    with the estimate kept, frozen, in the observation."""
+    watch_id, stamp = watch["id"], now.isoformat()
+    day = now.date().isoformat()
+    held = create_hold(source)
+    budget = settings.fare_watch_daily_call_budget
+    if not fare_watch_db.reserve_calls(
+        day,
+        held,
+        budget,
+        user_id=watch["user_id"],
+        user_cap=fare_watch.user_daily_cap(),
+    ):
+        pool_left = budget - fare_watch_db.calls_used(day) >= held
+        if manual:
+            price_watch_db.update_watch(watch_id, lease_until=None)
+            return CheckOutcome(
+                "budget_exhausted", watch, reason="user" if pool_left else "global"
+            )
+        watch = price_watch_db.update_watch(
+            watch_id,
+            next_check_at=fare_watch.next_day(now, rand).isoformat(),
+            lease_until=None,
+            updated_at=stamp,
+        )
+        return CheckOutcome("postponed", watch)
+
+    def settle(spent: int) -> None:
+        if 0 <= spent < held:
+            fare_watch_db.adjust_calls(
+                day,
+                spent - held,
+                user_id=watch["user_id"],
+                budget=budget,
+                user_cap=fare_watch.user_daily_cap(),
+            )
+
+    from ..db import users_db
+
+    user = users_db.get_user_by_id(watch["user_id"]) or {"id": watch["user_id"]}
+    spec = watch["subject"][PENDING_KEY]
+    try:
+        result = await source.create(spec, user, api_key)
+    except Exception as exc:
+        settle(calls_spent(exc, 0 if isinstance(exc, InvalidSpec) else held))
+        if getattr(exc, "quota_exceeded", False):
+            watch = price_watch_db.update_watch(
+                watch_id,
+                next_check_at=fare_watch.next_day(now, rand).isoformat(),
+                lease_until=None,
+                updated_at=stamp,
+            )
+            return CheckOutcome("postponed", watch)
+        return _record_failure(watch, redact_error(exc, api_key), now)
+
+    live = result if isinstance(result, CreatedWatch) else None
+    if live is not None and (
+        live.baseline.status != "ok" or live.baseline.price is None
+    ):
+        live = None
+    spent = result.calls if isinstance(result, NoLivePrice) else result.baseline.calls
+    settle(spent)
+
+    if live is None:
+        estimate = result.estimate if isinstance(result, NoLivePrice) else None
+        obs = PriceObservation(
+            price=None,
+            status="unavailable",
+            observed={"estimate": estimate, "frozen": True} if estimate else {},
+        )
+        outcome = _record_unavailable(watch, obs, now, rand)
+        if outcome.watch is not None:  # the first look happened either way
+            outcome.watch = price_watch_db.update_watch(
+                watch_id, pending_first_check=False
+            )
+        return outcome
+
+    base = live.baseline
+    watch = price_watch_db.update_watch(
+        watch_id,
+        subject=live.subject,
+        title=live.title,
+        subtitle=live.subtitle,
+        plan_id=live.plan_id if live.plan_id is not None else watch.get("plan_id"),
+        currency=live.currency,
+        expires_on=live.expires_on,
+        baseline_price=base.price,
+        last_price=base.price,
+        lowest_price=base.price,
+        check_count=1,
+        failure_count=0,
+        unavailable_count=0,
+        last_error=None,
+        last_checked_at=stamp,
+        next_check_at=fare_watch.next_check(now, rand).isoformat(),
+        last_observation=_observation_json(base, stamp),
+        reference_looks={"baseline": base.breakdown}
+        if base.breakdown is not None
+        else None,
+        pending_first_check=False,
+        lease_until=None,
+        updated_at=stamp,
+    )
+    price_watch_db.add_history(
+        watch_id,
+        {
+            "checked_at": stamp,
+            "price": base.price,
+            "breakdown": base.breakdown,
+            "observed": {**base.observed, "status": base.status},
+        },
+    )
+    return CheckOutcome("checked", watch)
+
+
 # ── Rules and wording ─────────────────────────────────────────────────────────
 
 
@@ -621,6 +804,11 @@ async def _check_watch(
             updated_at=stamp,
         )
         return CheckOutcome("skipped", watch)
+
+    if is_pending(watch):
+        return await _first_look(
+            watch, source, now=now, api_key=api_key, rand=rand, manual=manual
+        )
 
     day = now.date().isoformat()
     try:
