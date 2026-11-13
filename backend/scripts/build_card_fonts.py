@@ -10,8 +10,8 @@ cards can draw and writes:
                               digits, user place names)
     noto-sans-devanagari.ttf  whole Devanagari block (hi)
     noto-sans-bengali.ttf     whole Bengali block (bn)
-    noto-sans-sc.ttf          every zh catalogue character + common place-name
-                              characters (zh)
+    noto-sans-sc.ttf          every zh catalogue character + GB2312 level 1+2
+                              hanzi (~6,763) + place-name characters (zh)
     coverage.json             code-point ranges each file covers (read at
                               runtime so cards never draw a missing glyph)
     OFL.txt                   the licence (Noto Project Authors)
@@ -56,6 +56,20 @@ PLACE_CHARS = (
     "麦芬冰爱荷比时奥地捷克波匈牙克罗地联酋以色列约旦非肯尼亚坦桑"
 )
 
+
+def gb2312_hanzi() -> set[int]:
+    """Every hanzi of GB2312 level 1 + 2 (rows 16-87, ~6,763 characters)."""
+    out = set()
+    for row in range(0xB0, 0xF8):
+        for col in range(0xA1, 0xFF):
+            try:
+                ch = bytes([row, col]).decode("gb2312")
+            except UnicodeDecodeError:
+                continue
+            out.add(ord(ch))
+    return out
+
+
 LATIN = (
     list(range(0x20, 0x250))
     + list(range(0x2000, 0x2070))
@@ -86,7 +100,7 @@ def build(name: str, src: Path) -> None:
     font = instancer.instantiateVariableFont(font, axes)
     wanted = set(RANGES[name]) | {ord(c) for c in all_text() if ord(c) > 0x20}
     if name == "noto-sans-sc":
-        wanted |= {ord(c) for c in PLACE_CHARS}
+        wanted |= {ord(c) for c in PLACE_CHARS} | gb2312_hanzi()
     opts = subset.Options()
     opts.layout_features = ["*"]
     opts.hinting = False
