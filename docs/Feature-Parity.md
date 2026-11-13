@@ -23,7 +23,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Preferences, two-way bound to the search form; Taste Graph | ✅ | ? (Settings and per-feature visibility are device-local per the README) | ⏳ Phase 7 |
 | Light and dark theme (see [Theming](Theming.md)) | ✅ | ✅ | ⏳ Phase 7 |
 | Languages (see [Internationalization](Internationalization.md)) | ✅ en, es, de, fr, hi, zh, bn | ✅ en, es, de, fr, hi, zh, bn (hi, zh, bn awaiting native-speaker review) | ⏳ Phase 7 |
-| Telemetry and consent prompt (see [Telemetry](Telemetry.md)) | ✅ | ✅ every tap, toggle, change and submit reported through shared UI wrappers (tid and route only) and a region-gated consent prompt (EU/EEA/UK/CH by device time zone, reopenable from Settings) | ⏳ Phase 7 |
+| Telemetry and consent prompt (see [Telemetry](Telemetry.md)) | ✅ | ✅ every tap, toggle, change and submit reported through shared UI wrappers (tid and route only) and a region-gated consent prompt (EU/EEA/UK/CH by device time zone, reopenable from the sign-in screen's "Privacy choices" link) | ⏳ Phase 7 |
 | Feedback widget | ✅ | ? | ⏳ Phase 7 |
 | Onboarding | ✅ coach-mark tour; welcome and notifications copy shared with Android | ✅ traveller-type onboarding; same copy as web in all 7 languages, no first-run feature picker (feature toggles stay in Settings → Features, the Settings retake keeps the picker) | ⏳ Phase 7 |
 
