@@ -244,6 +244,7 @@ EVENTS: dict[str, dict[str, str]] = {
         ),  # fmt: skip
         "source": _enum("push", "inapp"),
     },
+    "nearby_notif_post": {"kind": _enum("personalized", "generic")},
     "share_open": {"kind": _SHARE_KIND},
     "share_create": {"kind": _SHARE_KIND, "dates": _enum("hidden", "month", "exact")},
     "share_action": {

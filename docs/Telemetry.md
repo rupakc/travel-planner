@@ -155,6 +155,7 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `notif_quiet_hours_change` | `enabled` (bool) | not yet | Quiet hours were changed. |
 | `notif_cap_change` | `cap` (int) | not yet | The daily push cap was changed. |
 | `notif_open` | `category` (as above), `source` (`push`, `inapp`) | not yet | A notification was opened (apps send this on tap). |
+| `nearby_notif_post` | `kind` (`personalized`, `generic`) | not yet | The Android app posted a "near you" notification, naming a nearby pick or with the generic text. |
 | `share_open` | `kind` (`plan`, `recap`, `savings`, `quiz`, `status`) | not yet | The share dialog was opened. |
 | `share_create` | `kind`, `dates` (`hidden`, `month`, `exact`) | not yet | A share link was created or its options updated. |
 | `share_action` | `kind`, `target` (`native`, `copy`, `download`, `x`, `facebook`, `whatsapp`, `linkedin`) | not yet | A share action was used. |
