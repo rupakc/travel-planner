@@ -448,19 +448,29 @@ async def _send_push(user_id: str, rows: list[dict]) -> bool:
 
     locale = await asyncio.to_thread(notify_center.user_locale, user_id)
     title, body, data = _push_payload(rows, locale)
-    # stable per group: a retry after a lost ack carries the same key, so a
-    # client can collapse a duplicate
-    data["dedupe_key"] = "alert-" + "-".join(
-        str(i) for i in sorted(r["id"] for r in rows)
-    )
+    # stable per item (the notification id clients already dedupe on), so a
+    # retry after a lost ack can be collapsed by the client
+    data["dedupe_key"] = data["notification_id"]
     accepted = await push.send_to_user(user["username"], title, body, data)
     if accepted:
         return True
     try:
-        has_devices = bool(devices_db.devices_for(user["username"]))
+        devices = devices_db.devices_for(user["username"])
     except Exception:  # noqa: BLE001
         return False
-    return not (has_devices and push.configured())
+    # deliverable per route: FCM needs Android tokens and FCM configured,
+    # APNs needs iOS tokens and APNs configured
+    from . import apns
+
+    ios = any(p == "ios" for _, p in devices)
+    android = any(p != "ios" for _, p in devices)
+    if not settings.notifications_v2_enabled:
+        ios_route = False
+        android = bool(devices)
+    else:
+        ios_route = ios and apns.configured()
+    deliverable = (android and push.configured()) or ios_route
+    return not deliverable
 
 
 def flush(now: datetime) -> int:
@@ -551,6 +561,26 @@ PRUNE_INTERVAL_S = 86400
 TRIP_PUSH_INTERVAL_S = 300
 
 
+WEATHER_PASS_TIMEOUT_S = 60
+
+
+async def _weather_pass() -> None:
+    """Its own task: a slow forecast API never holds up the outbox flush."""
+    try:
+        from . import weather_push
+
+        await asyncio.wait_for(
+            asyncio.to_thread(weather_push.run_due, datetime.now(UTC)),
+            WEATHER_PASS_TIMEOUT_S,
+        )
+    except asyncio.CancelledError:
+        raise
+    except TimeoutError:
+        logger.warning("weather push pass timed out")
+    except Exception:  # noqa: BLE001
+        logger.warning("weather push pass failed", exc_info=True)
+
+
 async def _loop(interval: int) -> None:
     from . import alert_digest
 
@@ -559,6 +589,7 @@ async def _loop(interval: int) -> None:
     last_trip = -TRIP_PUSH_INTERVAL_S
     last_quiz = -TRIP_PUSH_INTERVAL_S
     last_weather = -1e9
+    weather_task: asyncio.Task | None = None
     while True:
         try:
             await asyncio.to_thread(flush, datetime.now(UTC))
@@ -598,17 +629,12 @@ async def _loop(interval: int) -> None:
             except Exception:  # noqa: BLE001
                 logger.warning("quiz push pass failed", exc_info=True)
             if settings.weather_push_enabled:
-                try:
-                    from . import weather_push
-
-                    every = max(1, settings.weather_push_interval_hours) * 3600
-                    if time_mod.monotonic() - last_weather >= every:
-                        last_weather = time_mod.monotonic()
-                        await asyncio.to_thread(weather_push.run_due, datetime.now(UTC))
-                except asyncio.CancelledError:
-                    raise
-                except Exception:  # noqa: BLE001
-                    logger.warning("weather push pass failed", exc_info=True)
+                every = max(1, settings.weather_push_interval_hours) * 3600
+                if time_mod.monotonic() - last_weather >= every and (
+                    weather_task is None or weather_task.done()
+                ):
+                    last_weather = time_mod.monotonic()
+                    weather_task = asyncio.create_task(_weather_pass())
         if time_mod.monotonic() - last_prune >= PRUNE_INTERVAL_S:
             last_prune = time_mod.monotonic()
             try:

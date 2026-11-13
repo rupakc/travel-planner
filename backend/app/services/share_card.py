@@ -53,7 +53,7 @@ class RenderBusy(Exception):
     """Too many renders in flight (the route answers 503)."""
 
 
-_cache: TTLCache = TTLCache(maxsize=64, ttl=600)
+_cache: TTLCache = TTLCache(maxsize=256, ttl=600)
 _lock = threading.Lock()
 
 
@@ -224,7 +224,7 @@ def localized_headline(snapshot: dict, lang: str) -> str:
     if place:
         return t["trip"].format(place=place)
     if isinstance(days, int) and days > 0:
-        return t["away"].format(n=days)
+        return t["trip_days"].format(n=days)
     name = str(snapshot.get("title") or "")
     if name and supported(name, lang):
         return clip_headline(name)
@@ -384,7 +384,7 @@ def render(snapshot: dict, size: str = "link", lang: str = "en") -> bytes:
 def get_card(token: str, snapshot: dict, size: str, lang: str = "en") -> bytes:
     """Cached :func:`render`; the key includes the snapshot and language so
     edited options never serve a stale card."""
-    lang = i18n.norm_lang(lang)
+    lang = effective_lang(lang)
     digest = hashlib.sha256(
         json.dumps(snapshot, sort_keys=True, default=str).encode()
     ).hexdigest()

@@ -330,3 +330,44 @@ def test_claimed_counts_toward_cap_only_while_leased(user):
     alerts_db.claim_due(ad._iso(NOW), 10)
     start = ad._iso(NOW - timedelta(hours=12))
     assert alerts_db.sent_today(user["id"], "hotel", start, "push") == 1
+
+
+@pytest.mark.parametrize(
+    "devices,fcm,apns_on,expected",
+    [
+        ([("t", "ios")], True, False, True),  # nothing deliverable: ack, no retry
+        ([("t", "ios")], False, True, False),  # APNs failure retries
+        ([("t", "android")], True, False, False),  # FCM failure retries
+        ([("t", "android")], False, True, True),  # FCM off, no Android route
+        ([], True, True, True),
+    ],
+)
+def test_send_push_per_route_deliverable(
+    user, monkeypatch, devices, fcm, apns_on, expected
+):
+    from app.db import devices_db
+    from app.services import apns
+
+    async def none(*a):
+        return 0
+
+    monkeypatch.setattr(push, "send_to_user", none)
+    monkeypatch.setattr(push, "configured", lambda: fcm)
+    monkeypatch.setattr(apns, "configured", lambda: apns_on)
+    monkeypatch.setattr(ad.settings, "notifications_v2_enabled", True)
+    monkeypatch.setattr(devices_db, "devices_for", lambda u: devices)
+    ok = asyncio.run(ad._send_push(user["id"], [_note(user)]))
+    assert ok is expected
+
+
+def test_dedupe_key_is_notification_id(user, monkeypatch):
+    seen = {}
+
+    async def grab(username, title, body, data):
+        seen.update(data)
+        return 1
+
+    monkeypatch.setattr(push, "send_to_user", grab)
+    n = _note(user)
+    assert asyncio.run(ad._send_push(user["id"], [n]))
+    assert seen["dedupe_key"] == seen["notification_id"] == str(n["id"])

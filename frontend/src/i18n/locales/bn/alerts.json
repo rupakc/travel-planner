@@ -99,6 +99,7 @@
   },
   "bell": {
     "unreadBadge": "অপঠিত",
+    "weatherCredit": "আবহাওয়ার তথ্য: Open-Meteo.com",
     "notifications": "বিজ্ঞপ্তি",
     "notificationsUnread": "বিজ্ঞপ্তি, {{n}}টি অপঠিত",
     "announce_one": "{{count}}টি অপঠিত দামের অ্যালার্ট",

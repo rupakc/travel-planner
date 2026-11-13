@@ -159,11 +159,15 @@ def enqueue_category(
     d = _decide_for(user_id, category, tz, now)
     status = "pending" if d.action != "drop" else "dropped"
     due = _iso(d.due_at) if d.due_at else None
+    reason = d.reason if d.action == "drop" else None
+    vu = row_data.get("valid_until")
+    if status == "pending" and vu and (d.due_at or now) >= _parse(vu):
+        status, reason = "dropped", "stale"  # held past the moment it was about
     with get_connection() as conn:
         conn.execute(
             "UPDATE notify_log SET notification_id = ?, status = ?, due_at = ?,"
             " dropped_reason = ? WHERE id = ?",
-            (note["id"], status, due, d.reason if d.action == "drop" else None, log_id),
+            (note["id"], status, due, reason, log_id),
         )
     return {
         "notification_id": note["id"],
@@ -250,6 +254,10 @@ async def _flush(now: datetime) -> int:
                 _finish(it["id"], "dropped", now, "no_user")
                 continue
             note = notifications_db._row(r)
+            vu = (note["data"] or {}).get("valid_until")
+            if vu and now >= _parse(vu):
+                _finish(it["id"], "dropped", now, "stale")
+                continue
             payload = {
                 "kind": note["kind"],
                 "notification_id": str(note["id"]),

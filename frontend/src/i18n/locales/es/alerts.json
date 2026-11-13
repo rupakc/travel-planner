@@ -104,6 +104,7 @@
   },
   "bell": {
     "unreadBadge": "Sin leer",
+    "weatherCredit": "Datos meteorológicos de Open-Meteo.com",
     "notifications": "Notificaciones",
     "notificationsUnread": "Notificaciones, {{n}} sin leer",
     "announce_one": "{{count}} alerta de precio sin leer",

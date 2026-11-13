@@ -190,3 +190,62 @@ def test_open_meteo_parse_and_cache():
     c.forecast(35.68, 139.69)
     c.forecast(35.71, 139.72)  # same rounded cell
     assert Http.n == 1
+
+
+def test_day_comes_from_destination_clock(user):
+    user_settings_db.patch_settings(user["id"], {"timezone": "America/New_York"})
+    make_plan(user, start="2026-11-13", end="2026-11-16")  # slot is on day 2
+    now = datetime(2026, 11, 13, 22, 0, tzinfo=UTC)  # NY 17:00 on the 13th
+    fc = Forecast(precip_prob={"2026-11-14T10:00": 80.0}, utc_offset_s=32400)
+    wp.run_due(now, FakeClient(fc))  # Tokyo is 07:00 on the 14th = day 2
+    r = rows(user)
+    assert len(r) == 1 and ":2026-11-14:10:" in r[0]["dedupe_key"]
+
+
+def test_slot_already_started_is_skipped(user):
+    make_plan(user)
+    fc = Forecast(precip_prob={f"{DAY}T10:00": 80.0})
+    wp.run_due(datetime(2026, 11, 13, 10, 5, tzinfo=UTC), FakeClient(fc))
+    assert rows(user) == []
+    wp.run_due(datetime(2026, 11, 13, 9, 55, tzinfo=UTC), FakeClient(fc))
+    assert len(rows(user)) == 1
+
+
+def test_held_past_slot_start_is_dropped_stale(user):
+    make_plan(user)
+    alerts_db.put_prefs(
+        user["id"],
+        {"quiet_hours": {"enabled": True, "start": "22:00", "end": "11:00"}},
+    )
+    wp.run_due(NOW, FakeClient(rainy()))  # held until 11:00, slot starts 10:00
+    r = rows(user)[0]
+    assert r["status"] == "dropped" and r["dropped_reason"] == "stale"
+
+
+def test_flush_drops_item_past_valid_until(user):
+    from app.services import notify_center
+
+    make_plan(user)
+    wp.run_due(NOW, FakeClient(rainy()))
+    assert rows(user)[0]["status"] == "pending"
+    assert notify_center.flush_due(datetime(2026, 11, 13, 10, 30, tzinfo=UTC)) == 0
+    assert rows(user)[0]["dropped_reason"] == "stale"
+
+
+def test_empty_slot_name_uses_generic_text(user):
+    make_plan(user, slots=[{"day_number": 2, "start_time": "10:00", "outdoor": True}])
+    wp.run_due(NOW, FakeClient(rainy()))
+    assert len(rows(user)) == 1
+    for lang in LANGS:
+        for k in ("rain", "heat", "cold"):
+            out = notify_text.render(
+                f"weather_{k}_generic", lang, slot="", time="10:00"
+            )
+            assert "10:00" in out and "{" not in out
+
+
+def test_pass_call_cap(user):
+    make_plan(user)
+    fake = FakeClient(rainy())
+    wp.run_due(NOW, fake, max_calls=0)
+    assert fake.calls == 0
