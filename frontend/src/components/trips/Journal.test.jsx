@@ -9,7 +9,13 @@ const online = { value: true }
 vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: journey.enabled }) }))
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 7 } }) }))
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => online.value }))
-vi.mock('../../offline/outbox', () => ({ enqueue: vi.fn(async () => {}) }))
+const rejectedRows = vi.hoisted(() => ({ list: [] }))
+vi.mock('../../offline/outbox', () => ({
+  enqueue: vi.fn(async () => {}),
+  listRejected: vi.fn(async () => rejectedRows.list),
+  dismissRejected: vi.fn(async () => {}),
+  OUTBOX_CHANGED_EVENT: 'voyager:outbox-changed',
+}))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 vi.mock('../../services/tripsApi', () => ({
   listJournal: vi.fn(async () => ({ entries: [] })),
@@ -42,12 +48,20 @@ const button = (name) => [...container.querySelectorAll('button')].find((b) => b
 const radio = (label) => container.querySelector(`[role="radio"][aria-label="${label}"]`)
 
 beforeEach(() => {
-  vi.clearAllMocks(); online.value = true; journey.enabled = true
+  vi.clearAllMocks(); rejectedRows.list = []; online.value = true; journey.enabled = true
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container)
 })
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
 describe('Journal', () => {
+  it('shows a refused (journal full) write as a visible notice', async () => {
+    rejectedRows.list = [{ key: 'journal:12:r1', path: '/trips/12/journal', body: { client_id: 'r1', body: 'Lost words' }, rejected: 'journal_limit', order: 1 }]
+    await mount()
+    const n = container.querySelector('[data-tid="outbox-rejected"]')
+    expect(n.textContent).toContain('journal is full')
+    expect(n.textContent).toContain('Lost words')
+  })
+
   it('renders nothing when the journey is off', async () => {
     journey.enabled = false
     await mount()

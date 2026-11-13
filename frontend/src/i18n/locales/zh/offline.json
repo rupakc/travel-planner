@@ -2,5 +2,12 @@
   "banner": {
     "offline": "你已离线。已保存的行程仍可使用。",
     "pending_other": "{{count}} 项更改等待同步"
+  },
+  "rejected": {
+    "expense_limit": "此笔支出未保存：该行程的支出数量已达上限。",
+    "journal_limit": "此日记未保存：日记已满。",
+    "places_limit": "此地点未保存：该行程的地点过多。",
+    "generic": "此更改未保存：该行程已达上限。",
+    "dismiss": "关闭"
   }
 }

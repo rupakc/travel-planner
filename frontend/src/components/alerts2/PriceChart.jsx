@@ -44,6 +44,8 @@ export default function PriceChart({ points, typical, target, baseline, lowest, 
   const onKey = (e) => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); setSel((s) => Math.max(0, (s ?? n) - 1)) }
     else if (e.key === 'ArrowRight') { e.preventDefault(); setSel((s) => Math.min(n - 1, (s ?? -1) + 1)) }
+    else if (e.key === 'Home') { e.preventDefault(); setSel(0) }
+    else if (e.key === 'End') { e.preventDefault(); setSel(n - 1) }
     else if (e.key === 'Escape') setSel(null)
   }
   const cur = sel != null ? points[sel] : null

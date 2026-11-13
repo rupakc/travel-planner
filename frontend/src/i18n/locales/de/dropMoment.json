@@ -8,5 +8,6 @@
   "story": "Preisverlauf ansehen",
   "book": "Buchen",
   "share": "Teilen",
-  "close": "Schließen"
+  "close": "Schließen",
+  "badge": "Abzeichen verdient: {{name}}"
 }

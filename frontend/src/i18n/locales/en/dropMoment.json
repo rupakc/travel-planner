@@ -8,5 +8,6 @@
   "story": "See price story",
   "book": "Book",
   "share": "Share",
-  "close": "Close"
+  "close": "Close",
+  "badge": "Badge earned: {{name}}"
 }

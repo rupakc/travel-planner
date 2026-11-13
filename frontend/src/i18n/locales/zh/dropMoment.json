@@ -8,5 +8,6 @@
   "story": "查看价格走势",
   "book": "预订",
   "share": "分享",
-  "close": "关闭"
+  "close": "关闭",
+  "badge": "获得徽章：{{name}}"
 }

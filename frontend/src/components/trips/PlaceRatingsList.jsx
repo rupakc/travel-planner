@@ -5,6 +5,7 @@ import { listPlaces, putPlace } from '../../services/tripsApi'
 import { placeKey } from '../../utils/placeKey'
 import { arrangeItinerary } from '../../utils/itineraryLayout'
 import { enqueue } from '../../offline/outbox'
+import RejectedWrites, { useRejectedWrites } from '../offline/RejectedWrites'
 import { useOnline } from '../../offline/useOnline'
 import { emit } from '../../telemetry/client'
 import { announceGame } from '../../game/announce'
@@ -29,6 +30,7 @@ export function itineraryPlaces(itinerary, layout, edits) {
 }
 
 export default function PlaceRatingsList({ trip, token, userId, itinerary, layout, edits }) {
+  const rejected = useRejectedWrites(userId, trip?.id == null ? null : `/trips/${trip.id}/places`)
   const { t } = useTranslation('journal')
   const online = useOnline()
   const [saved, setSaved] = useState({})
@@ -78,6 +80,8 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
   if (!rows.length) return <p className="text-sm text-slate-600" data-tid="places-empty">{t('places.empty')}</p>
 
   return (
+    <>
+    <RejectedWrites userId={userId} rows={rejected} />
     <ul className="divide-y divide-slate-200" data-tid="places-list">
       {error && <li role="alert" className="py-2 text-sm text-red-700">{error}</li>}
       {rows.map((row) => (
@@ -105,5 +109,6 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
         </li>
       ))}
     </ul>
+    </>
   )
 }

@@ -8,5 +8,6 @@
   "story": "Voir l’historique du prix",
   "book": "Réserver",
   "share": "Partager",
-  "close": "Fermer"
+  "close": "Fermer",
+  "badge": "Badge obtenu : {{name}}"
 }

@@ -69,6 +69,17 @@ describe('PriceStory', () => {
     expect(host.querySelector('[data-testid="chart-live"]').textContent).toContain('$500.00')
   })
 
+  it('Home and End jump to the first and latest check', async () => {
+    await render(<PriceStory story={STORY} />)
+    const group = host.querySelector('[role="group"]')
+    await act(async () => { group.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true })) })
+    const last = host.querySelector('[data-testid="chart-live"]').textContent
+    await act(async () => { group.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true })) })
+    const first = host.querySelector('[data-testid="chart-live"]').textContent
+    expect(first).not.toBe(last)
+    expect(first).toContain('$')
+  })
+
   it('hides the verdict chip when stale and no live prices, even if the server sent one', async () => {
     await render(<PriceStory story={{ ...STORY, verdict: 'good', live_prices: false, checked_days_ago: 5 }} />)
     expect(host.querySelector('[data-testid="verdict-chip"]')).toBeNull()

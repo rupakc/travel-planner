@@ -4,6 +4,7 @@ import { useJourney } from '../../hooks/useJourney'
 import { useAuth } from '../../context/AuthContext'
 import { addJournal, deleteJournal, listJournal } from '../../services/tripsApi'
 import { enqueue } from '../../offline/outbox'
+import RejectedWrites, { useRejectedWrites } from '../offline/RejectedWrites'
 import { useOnline } from '../../offline/useOnline'
 import { emit } from '../../telemetry/client'
 import { fmtDate } from '../../i18n/format'
@@ -36,6 +37,7 @@ export default function Journal({ trip, token }) {
   const [busy, setBusy] = useState(false)
   const inflight = useRef(false)
   const userId = user?.id
+  const rejected = useRejectedWrites(userId, trip?.id == null ? null : `/trips/${trip.id}/journal`)
   const days = useMemo(() => tripDays(trip), [trip])
   const sel = trip?.selections || {}
 
@@ -45,6 +47,13 @@ export default function Journal({ trip, token }) {
     listJournal(token, trip.id).then((r) => { if (live) setEntries(r?.entries || []) }).catch(() => {})
     return () => { live = false }
   }, [enabled, token, trip?.id])
+
+  // A queued entry the server refused (journal full) is not "waiting" any more.
+  useEffect(() => {
+    if (!rejected.length) return
+    const gone = new Set(rejected.map((r) => `local-${r.body?.client_id}`))
+    setEntries((list) => (list.some((e) => gone.has(e.id)) ? list.filter((e) => !gone.has(e.id)) : list))
+  }, [rejected])
 
   const send = useCallback(async ({ body, mood, day }) => {
     const payload = { client_id: newId(), body }
@@ -122,6 +131,7 @@ export default function Journal({ trip, token }) {
       <h2 className="text-lg font-semibold">{t('title')}</h2>
       <JournalEntryForm onSubmit={add} days={days} busy={busy} />
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      <RejectedWrites userId={userId} rows={rejected} summary={(b) => b?.body} />
       {groups.length === 0 ? (
         <p className="text-sm text-slate-600" data-tid="journal-empty">{t('empty')}</p>
       ) : groups.map((g) => (

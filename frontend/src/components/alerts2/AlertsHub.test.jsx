@@ -86,6 +86,16 @@ describe('Alerts hub header', () => {
     expect(sortWatches(moving, 'moving').map((w) => w.id)).toEqual([2, 1])
   })
 
+  it('deal hunter treats earned_at (the server shape) as earned and moves on to the next badge', async () => {
+    state.me = { badges: [{ id: 'deal_hunter', progress: 1, target: 1, earned_at: '2026-11-11T10:00:00Z' }] }
+    await header()
+    await act(async () => {})
+    const t = q('alerts.deal-hunter')
+    expect(t).not.toBeNull()
+    // deal_hunter (target 1) is earned, so the track points at silver (target 5)
+    expect(t.querySelector('[role="progressbar"]').getAttribute('aria-valuemax')).toBe('5')
+  })
+
   it('deal hunter shows the next badge and is hidden with hide_game', async () => {
     state.me = { badges: [{ id: 'deal_hunter', progress: 1, target: 1, earned: true }, { id: 'deal_hunter_silver', progress: 3, target: 5, earned: false }] }
     await header()

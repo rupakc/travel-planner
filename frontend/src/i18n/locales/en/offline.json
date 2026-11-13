@@ -3,5 +3,12 @@
     "offline": "You're offline. Saved trips still work.",
     "pending_one": "{{count}} change waiting to sync",
     "pending_other": "{{count}} changes waiting to sync"
+  },
+  "rejected": {
+    "expense_limit": "This expense wasn't saved: the trip has reached its expense limit.",
+    "journal_limit": "This journal entry wasn't saved: the journal is full.",
+    "places_limit": "This place wasn't saved: the trip has too many places.",
+    "generic": "This change wasn't saved: the trip has reached a limit.",
+    "dismiss": "Dismiss"
   }
 }

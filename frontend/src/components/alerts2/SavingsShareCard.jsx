@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fmtCurrency } from '../../i18n/format'
+import { useTheme } from '../../theme/ThemeContext'
 import { drawSavingsCard, savingsCardLines, shareSavings, renderSavingsBlob, CARD_SIZE } from '../../utils/savingsCard'
 
 function emitShare(target) {
   import('../../telemetry/client').then((m) => m.emit('alert_savings_share', { target })).catch(() => {})
-}
-
-const isDark = () => {
-  try { return !!window.matchMedia?.('(prefers-color-scheme: dark)').matches } catch { return false }
 }
 
 /**
@@ -23,7 +20,8 @@ export default function SavingsShareCard({ savings, onClose }) {
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
   const lines = savingsCardLines(savings, t, fmtCurrency)
-  const theme = isDark() ? 'dark' : 'light'
+  const { resolved } = useTheme() // the app theme (html.dark), not the OS setting
+  const theme = resolved === 'dark' ? 'dark' : 'light'
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext?.('2d')
