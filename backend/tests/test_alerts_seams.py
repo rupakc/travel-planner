@@ -24,7 +24,7 @@ COLUMNS = {
         "due_at", "sent_at", "dropped_reason",
     ],
     "alert_digests": ["user_id", "week", "status", "sent_at"],
-    "alert_advice": ["watch_kind", "watch_id", "tip", "generated_at"],
+    "alert_advice": ["watch_kind", "watch_id", "tip", "generated_at", "locale"],
 }  # fmt: skip
 
 

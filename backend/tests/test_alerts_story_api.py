@@ -229,3 +229,23 @@ def test_advice_billing_503(client, monkeypatch):
     w = _flight(u)
     r = client.post(f"/api/alerts/watches/flight/{w['id']}/advice", headers=h)
     assert r.status_code == 503 and r.json()["error_code"] == "ai_billing"
+
+
+def test_advice_cache_is_keyed_by_locale(client, monkeypatch):
+    run = AsyncMock(return_value={"recommendation_detail": "tip"})
+    monkeypatch.setattr(PricingAdvisorAgent, "run", run)
+    u, h = _user()
+    w = _flight(u)
+    url = f"/api/alerts/watches/flight/{w['id']}/advice"
+    assert client.post(url, headers=h).json()["cached"] is False
+    assert client.post(url, headers=h).json()["cached"] is True
+    from app.db import users_db
+
+    with get_connection() as conn:
+        conn.execute("UPDATE users SET locale = 'es' WHERE id = ?", (u["id"],))
+    assert users_db.get_user_by_id(u["id"]).get("locale") == "es"
+    assert (
+        client.post(url, headers=h).json()["cached"] is False
+    )  # English tip not reused
+    assert client.post(url, headers=h).json()["cached"] is True
+    assert run.call_count == 2
