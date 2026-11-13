@@ -260,3 +260,73 @@ def test_push_payload_carries_category_single_and_grouped(user):
     for batch in (rows[:1], rows):
         data = ad._push_payload(batch)[2]
         assert data["category"] == "price_drops" and data["plan_id"] == ""
+
+
+# ── claim + ack ──────────────────────────────────────────────────────────────
+
+
+def _queue(user):
+    ad.dispatch(_watch(user), "hotel", _note(user), NOW)
+    return _outbox(user)
+
+
+def test_send_fails_once_then_delivered_once(user, monkeypatch):
+    calls = []
+
+    async def flaky(username, title, body, data):
+        calls.append(data["dedupe_key"])
+        return 0 if len(calls) == 1 else 1
+
+    monkeypatch.setattr(push, "send_to_user", flaky)
+    monkeypatch.setattr(push, "configured", lambda: True)
+    from app.db import devices_db
+
+    monkeypatch.setattr(devices_db, "devices_for", lambda u: [("t", "android")])
+    row = _queue(user)[0]
+    assert ad.flush(NOW) == 0  # failed: lease released, retry scheduled
+    r = _outbox(user)[0]
+    assert r["sent_at"] is None and r["claimed_at"] is None and r["attempts"] == 1
+    assert ad.flush(NOW + timedelta(seconds=30)) == 0  # backoff holds it
+    assert ad.flush(NOW + timedelta(minutes=2)) == 1
+    assert ad.flush(NOW + timedelta(minutes=10)) == 0  # acked: no duplicate
+    assert len(calls) == 2 and calls[0] == calls[1]  # same key on the retry
+    assert _outbox(user)[0]["sent_at"] and row["id"]
+
+
+def test_crash_between_claim_and_ack_redelivers_after_lease(user, sent):
+    pushes, _ = sent
+    _queue(user)
+    claimed = alerts_db.claim_due(ad._iso(NOW), 10)  # crash: never acked
+    assert len(claimed) == 1
+    assert alerts_db.claim_due(ad._iso(NOW), 10) == []  # lease held
+    assert ad.flush(NOW + timedelta(seconds=10)) == 0
+    later = NOW + timedelta(seconds=ad.settings.alert_outbox_lease_s + 5)
+    assert ad.flush(later) == 1
+    assert len(pushes) == 1 and _outbox(user)[0]["attempts"] == 2
+
+
+def test_attempts_bounded_then_dropped(user, monkeypatch):
+    async def bad(*a):
+        return 0
+
+    monkeypatch.setattr(push, "send_to_user", bad)
+    monkeypatch.setattr(push, "configured", lambda: True)
+    from app.db import devices_db
+
+    monkeypatch.setattr(devices_db, "devices_for", lambda u: [("t", "android")])
+    monkeypatch.setattr(ad.settings, "alert_outbox_max_attempts", 3)
+    _queue(user)
+    t = NOW
+    for _ in range(6):
+        t += timedelta(hours=1)
+        ad.flush(t)
+    r = _outbox(user)[0]
+    assert r["dropped_reason"] == "max_attempts" and r["attempts"] == 3
+    assert r["sent_at"] is None
+
+
+def test_claimed_counts_toward_cap_only_while_leased(user):
+    _queue(user)
+    alerts_db.claim_due(ad._iso(NOW), 10)
+    start = ad._iso(NOW - timedelta(hours=12))
+    assert alerts_db.sent_today(user["id"], "hotel", start, "push") == 1

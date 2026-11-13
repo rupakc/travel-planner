@@ -22,6 +22,7 @@ COLUMNS = {
     "alert_outbox": [
         "id", "user_id", "notification_id", "channel", "watch_kind",
         "due_at", "sent_at", "dropped_reason",
+        "claimed_at", "attempts", "next_try_at",
     ],
     "alert_digests": ["user_id", "week", "status", "sent_at"],
     "alert_advice": ["watch_kind", "watch_id", "tip", "generated_at", "locale"],

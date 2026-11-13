@@ -190,6 +190,8 @@ class Settings(BaseSettings):
     price_alerts_v2_enabled: bool = True
     alert_digest_hour_local: int = 9
     alert_flush_interval_s: int = 60
+    alert_outbox_max_attempts: int = 5
+    alert_outbox_lease_s: int = 300
     alert_advice_ttl_hours: int = 24
     offline_pack_enabled: bool = True
     # Notifications 2.0 (Phase 6): category checks, trip pushes, platform routing.

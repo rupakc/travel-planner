@@ -90,6 +90,8 @@ See [Alerts API](Alerts-API.md). With the flag off, fare and price watches, emai
 | `PRICE_ALERTS_V2_ENABLED` | `true` | Turns on the v2 pipeline: drop facts, savings rows, Deal-hunter XP, delivery rules (quiet hours, caps, grouping), the outbox flush loop, the weekly digest and adaptive scheduling. Reported as `features.price_alerts_v2`; the web UI shows it only when this is true (or for one browser with `localStorage.tp_alerts2 = "1"`). Runbook: turning it off discards pushes and emails held at that moment (quiet hours, group window); in-app alerts stay. Held items more than 12 h past due are dropped as `stale` instead of sent. |
 | `ALERT_DIGEST_HOUR_LOCAL` | `9` | Local hour (user's account timezone) from which a user's weekly digest is due on their chosen weekday. |
 | `ALERT_FLUSH_INTERVAL_S` | `60` | How often the delivery loop sends held (quiet-hours, grouped) pushes and emails. |
+| `ALERT_OUTBOX_MAX_ATTEMPTS` | `5` | Sends tried per held alert (claim, send, then ack) before it is dropped with a log line; failures retry with backoff. |
+| `ALERT_OUTBOX_LEASE_S` | `300` | How long a claimed alert is leased; after a crash it is redelivered once the lease expires. |
 | `ALERT_ADVICE_TTL_HOURS` | `24` | How long an AI price tip for a flight watch is cached. |
 
 Without `SERPAPI_KEY`, `features.live_prices` is false: stories, savings, the digest and suggestions work from stored data, every price shows "checked N days ago", and one-tap watch answers `503 live_prices_off`.
