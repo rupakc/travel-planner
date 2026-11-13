@@ -1,0 +1,1737 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered travel planning with multi-agent orchestration — flights, hotels, activities, visa, SIM, itineraries, destination discovery, and more">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>iOS Phase 3-6 adoption (alerts 2.0, sharing, notifications, social + play) - Travel Planner — Developer Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ios-phase-3-6-adoption-alerts-20-sharing-notifications-social-play" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-header__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Travel Planner — Developer Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              iOS Phase 3-6 adoption (alerts 2.0, sharing, notifications, social + play)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Setup-and-Installation/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Trip-Planning-Features/" class="md-tabs__link">
+          
+  
+  
+  Using the app
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Testing-and-CI/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Travel Planner — Developer Docs" class="md-nav__button md-logo" aria-label="Travel Planner — Developer Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Travel Planner — Developer Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rupakc/travel-planner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Setup-and-Installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup and Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the app
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using the app
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trip-Planning-Features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Multi-City-Trips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-City Trips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Chat-Assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Personalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-and-Plans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing and Plans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Feature-Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Agent-System/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Place-and-Airport-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place and Airport Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Internationalization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internationalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../API-Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Accounts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Trips-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trips API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Alerts-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Sharing-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sharing API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Social-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Social and Play API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Notifications-API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Testing-and-CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Deployment-GCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment on GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ios-phase-3-6-adoption-alerts-20-sharing-notifications-social-play">iOS Phase 3-6 adoption (alerts 2.0, sharing, notifications, social + play)</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> use superpowers:subagent-driven-development. Controller rules: <code>.superpowers/controller-rules.md</code> (git identity <code>rupakc &lt;4364388+rupakc@users.noreply.github.com&gt;</code>, one worktree per implementer, ≤ 3 subagents, <code>~/.local/bin/gh pr checks &lt;n&gt; --watch --fail-fast --interval 60</code>, merge only on exit 0). Repo <code>rupakc/travel-planner-ios</code>, one PR per task. This plan builds on <code>2026-11-11-ios-app.md</code> (conventions, module graph, the <code>CI(...)</code> and snapshot-recording convention) and <strong>assumes its Tasks 1-37 are merged</strong>, including T30 (<code>FeatureShare</code> viewer), T32 (<code>FeatureAlerts</code>), T33 (<code>NotificationsCore</code>), T35 (<code>FeatureSettings</code>), T14 stubs and T38 smoke suite, plus the Phase 1+2 adoption (Trips with Today/Recap, account settings). It does not redo them; it extends them.</p>
+</blockquote>
+<p><strong>Goal:</strong> the iOS app adopts the frozen contracts <code>Alerts-API.md</code> (P3), <code>Sharing-API.md</code> (P4), <code>Notifications-API.md</code> (P6), <code>Social-API.md</code> (P5), all in <code>~/travel-planner/docs/</code>. Order: P3, P4, P6, P5. Model: the Android plan <code>~/travel-planner-android/docs/superpowers/plans/2026-11-13-android-phase3-6-parity.md</code> (same breakdown; rulings reused where they fit). Web scope and rulings: <code>docs/superpowers/plans/2026-11-12-phase{3,4,5,6}-*.md</code> and their follow-ups, <code>docs/Feature-Parity.md</code>. Authority: the spec <code>2026-11-10-voyager-reimagined-design.md</code>.</p>
+<h2 id="global-constraints-in-addition-to-the-ios-plans">Global constraints (in addition to the iOS plan's)</h2>
+<ul>
+<li><strong>Mixed versions.</strong> Read <code>GET /config</code> <code>features</code>: <code>alerts_api</code> (2), <code>price_alerts_v2</code>, <code>live_prices</code>, <code>sharing</code> (0/1), <code>notifications_api</code>, <code>notifications_v2</code>, <code>apns</code>, <code>social</code>, <code>play</code> (0/1), <code>game</code>. Never call a route whose flag is absent or 0; the older backend gets today's screens, silently, no retry storm. Unknown JSON keys, notification kinds and categories, advice codes and share kinds are ignored (an unknown share kind is a plain link). <code>/config</code> is cached 5 min server-side, so a 404 from a flagged route degrades that feature off for the session.</li>
+<li><strong>Server decides.</strong> The app never recomputes verdicts, advice codes, savings, scores or quiz points and never calls SerpAPI or any price source. Exception: the quiet-hours evaluator used for on-device notifications (R10), tested against the golden file.</li>
+<li><strong>Wording.</strong> "Caught a drop of $X", never "saved". Every price shows its age (<code>checked_days_ago</code>); <code>checks_paused</code> says live checks are paused, never "great price now"; an estimate is labelled "estimate" and never counts. No currency conversion: <code>total_usd</code> plus <code>by_currency</code> lines.</li>
+<li><strong>hide_game</strong> (<code>features.game</code> false or the account setting) hides XP, badges, levels, boards, Play and all game wording, in notifications too. An unreadable setting counts as hidden for game wording.</li>
+<li><strong>Credentials do not exist</strong> (SerpAPI, APNs, FCM, SMTP, Meta). Everything is config-gated and inert; tests use fakes (<code>MockURLProtocol</code>, <code>Fake*Repository</code>, <code>FakeNotificationCenter</code>, <code>FakeClock</code>, <code>FakeShareCardLoader</code>, <code>FakeLocationProvider</code>, a fake APNs payload). No test reaches a real network.</li>
+<li><strong>Strings in all 7 languages</strong> (en es de fr hi zh bn). Web namespaces on main already cover most copy (<code>priceStory</code>, <code>dropMoment</code>, <code>savings</code>, <code>quickWatch</code>, <code>watchSuggest</code>, <code>alertPrefs</code>, <code>alertsHub</code>, <code>share</code>, <code>notifications</code>, <code>social</code>, <code>play</code>, <code>socialShare</code>, <code>playYou</code>, <code>game</code>; <code>adminSocial</code> is out of scope). Only mobile-only keys that no web namespace has go into the web <code>mobile</code> namespace in all 7 languages (Task 0a, dropped if nothing is missing), then <code>scripts/upstream/sync.sh</code> re-vendors. <code>i18n/pending/en</code> stays empty. Server error codes are translated; the backend <code>detail</code> is the fallback. Missing key falls back to English, never the raw key. User-facing text only through <code>L10n</code>.</li>
+<li><strong>Telemetry</strong> only events in the vendored registry, <code>platform: "ios"</code>, enum/bool/int props, no PII, no handles, ids, tokens, share URLs, free text or location; every control gets a tid through the Task 13 modifier; calls are synchronous and non-throwing for the caller. Events: <code>alert_story_view</code>, <code>alert_target_set</code>, <code>alert_advice</code>, <code>alert_drop_seen</code>, <code>alert_quick_watch</code>, <code>alert_suggest</code>, <code>alert_savings_share</code>, <code>alert_prefs_change</code>, <code>alert_digest_open</code> (P3); <code>share_open|create|action|revoke</code> (P4; <code>share_view</code> is SPA-only); <code>notif_settings_view|category_toggle|quiet_hours_change|cap_change|open</code> (P6); <code>social_profile_view|profile_save|follow|block|feed_view|idea_publish|idea_open|idea_like|idea_save|comment|report</code>, <code>play_state_view|quiz_start|quiz_answer|quiz_done|h2h_create|h2h_open|h2h_result|board_view|challenge_view</code> (P5, all in the registry on main). Props exactly as the <code>Telemetry.md</code> rows; <code>TelemetryPropsTests</code> rejects anything else.</li>
+<li><strong>Privacy.</strong> No location goes to any new endpoint or telemetry. Share defaults stay private. Cached shared cards and downloaded PNGs live in <code>NSTemporaryDirectory()/share-cards</code> and are purged at sign-out and launch.</li>
+<li><strong>A11y and adaptive.</strong> Dynamic Type to AX5 without clipping primary actions, VoiceOver labels on every icon-only control, 44 pt targets, Reduce Motion respected, light default and dark supported, iPad (sheets as popovers or form sheets, two-column lists where it fits). Every network screen has loading, empty, error-with-retry; a 429 shows the backend <code>detail</code>.</li>
+<li><strong>Per-user local data</strong> is cleared by sign-out (the existing session cleaner).</li>
+<li><strong>Each task:</strong> tests first, <code>CI(&lt;Target&gt;Tests)</code> green with 0 swiftlint warnings, snapshots recorded per the iOS plan's convention and each PNG viewed before commit (iPhone light, iPhone dark, <code>hi</code>/<code>de</code> long-string, AX5, iPad where listed), docs touched (<code>docs/Modules.md</code>, <code>Telemetry.md</code>, <code>Localization.md</code>, <code>Privacy-Labels.md</code>, <code>reference/api-contract.md</code>), and <code>MEMORY.md</code> for each ruling.</li>
+</ul>
+<h2 id="rulings">Rulings</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Ruling</th>
+<th>Why</th>
+<th>Cost if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>Task 0 lands everything shared once: package targets, routes, deep links, flag struct, per-phase stub files (<code>VoyagerModel/PhaseN/</code>, <code>VoyagerData/PhaseN/</code>, <code>VoyagerEnv/PhaseN/</code>, <code>TestSupport/PhaseN/</code>, <code>tools/stub_backend/phaseN.py</code>), the Settings and AppShell rows, one upstream sync</td>
+<td>each phase's core task then replaces only its own stubs, so the three cores and all UI tasks touch disjoint files</td>
+<td>rebase churn</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Price story chart uses Swift Charts (system framework, not third-party): <code>LineMark</code> for points, <code>RectangleMark</code> for the typical band, <code>chartXSelection</code> scrubbing, <code>AXChartDescriptorRepresentable</code> for VoiceOver, plus "first check" and "latest" accessibility actions</td>
+<td>no new dependency; a11y; matches the iOS plan's one-third-party rule</td>
+<td>a custom Canvas later</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>One-tap watch and suggestions show only when <code>live_prices</code> and (<code>price_alerts_v2</code> or <code>alerts_api &gt;= 2</code>); stories, savings and the digest show from stored data regardless</td>
+<td>contract client notes</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Drop moment shows the notification's own <code>data.game.xp</code> (award plus badge) only when game is visible; never a client sum</td>
+<td>the web follow-up left it open; server value is truth</td>
+<td>copy tweak</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Share is route-based: entry points call <code>router.open(.shareSheet(target))</code>, <code>FeatureShare</code> owns the sheet. Two buttons: "Share link" (<code>ShareLink(item: url, preview: SharePreview(title, image: card thumbnail))</code>) and "Share image" (<code>ShareLink</code> of the <code>size=story</code> PNG as a <code>Transferable</code>). The card is downloaded with the app's <code>URLSession</code> only when its host is the base URL or a trusted host, else link only; a failed download shares the link only. Instagram Stories / TikTok are out (Meta App ID, developer apps: owner items)</td>
+<td>features never import each other; SSRF-safe; contract defers the rest</td>
+<td>a later add-on</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>Opening share links: <code>onOpenURL</code> accepts <code>https://&lt;trusted host&gt;/share/&lt;token&gt;</code> (live once the owner's associated domains exist) and <code>voyager://share/&lt;token&gt;</code>; My shares has an "Open a link" <code>PasteButton(payloadType: URL.self)</code> (no paste-permission prompt). The in-app view is <code>FeatureShare</code> (<code>GET /share/{token}</code>, public)</td>
+<td>AASA is an owner action; paste always works</td>
+<td>chooser to Safari</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Notification settings live in You &gt; Notifications (T35's <code>NotificationsSection</code> row opens <code>.notificationSettings</code>). Quiet hours are one server value shared with alert prefs: either screen saves through its own route and both refetch. The <code>nearby</code> category is a local switch, also PUT to the server. The screen shows the iOS permission state with an "Open Settings" action, <code>push.apns</code> false as an honest "push is not set up on this server yet" note, and the device count</td>
+<td>contract; iOS permission is separate</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Taps: <code>trip_*</code> rows and pushes open Trips Today by <code>plan_id</code> (fallback: trip detail, then the inbox); an empty <code>plan_id</code> opens the inbox; <code>link</code> is only ever mapped through <code>DeepLinks</code> allow-listing (<code>/trips/{id}</code>, <code>/trips/{id}/today</code>, <code>/feed</code> and <code>/feed/{id}</code>, <code>/u/{handle}</code>, <code>/play/h2h/{id}</code>, <code>/share/{token}</code>, <code>/alerts</code>; today the social kinds' <code>link</code> is <code>/feed</code>, a richer link is a web follow-up, so an unresolved one opens the Ideas tab), never opened raw; an unknown kind shows a generic inbox row. Foreground presentation honours the category switch; <code>notif_open</code> is sent on tap with <code>source</code> <code>push</code> or <code>inapp</code></td>
+<td>the Phase 6 follow-up asked clients to confirm this</td>
+<td>wrong screen on tap</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>No duplicate or rule-breaking local notifications. The server always writes an in-app row, even when quiet hours, caps or categories suppressed the push. So <code>AlertPoller</code> must pass every row through <code>NotificationGate</code> (category enabled, quiet hours via the evaluator, <code>daily_cap</code> for non-price kinds, <code>instant=targets_only</code>) and a held row is scheduled for the window's end; and when server push is live (<code>features.notifications_v2</code> and <code>push.apns</code> and a registered device) the local <code>TripReminderScheduler</code> drops its T-7, T-1 and morning reminders (keeps checkout) and the poller drops to the T48 safety net</td>
+<td>the T33 poller and reminders predate categories; without this a phone buzzes at 03:00 or twice</td>
+<td>wrong silence or double buzz</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>"Near you" is built on-device from <code>GET /notifications/catalog?locale=</code> (<code>nearby_arrival</code>, cached per locale in Caches, bundled English fallback in <code>mobile</code>) plus the existing <code>POST /nearby</code> call. When-in-use permission only: it is evaluated when the scene becomes active during an active trip phase (no Always permission, no geofencing, no background location), at most one per ~500 m cell per 6 h, never inside local quiet hours, only when the <code>nearby</code> switch is on, shown as a local notification (foreground banner). No coordinates in any new call or telemetry</td>
+<td>iOS cannot do background proximity with when-in-use; honest and privacy-first</td>
+<td>fewer triggers than Android</td>
+</tr>
+<tr>
+<td>R11</td>
+<td><code>QuietHours.evaluate(now, timezone, quiet)</code> lives in <code>Domain</code> and passes <code>quiet_hours_cases.json</code> (vendored golden); <code>timezone == nil</code> means not applied</td>
+<td>contract golden cases</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R12</td>
+<td>New targets <code>FeatureSocial</code> (profile, follows, blocks, feed, ideas, comments, reports) and <code>FeaturePlay</code> (quiz, head-to-head, boards, challenge); they do not import each other. <code>AppShell</code> composes: Ideas as a segment next to "Surprise me" in the Discover tab; Play as a section of the You tab; profile and follow requests under You. Admin moderation UI is a non-goal (like admin)</td>
+<td>module graph; admin non-goal</td>
+<td>a later module</td>
+</tr>
+<tr>
+<td>R13</td>
+<td>UGC safety (App Store 1.2): every user string renders with <code>Text(verbatim:)</code>, no markdown, no links, no data detectors; report (7 reasons enum-mapped) on every idea, comment and profile; block (two-way, silent); the <code>held</code> and <code>hidden</code> states have honest copy; a one-time community-rules acceptance before the first profile save or post (<code>UserDefaults</code>, per user); a support contact row (owner supplies the URL; row hidden while empty). The keyword filter is server-side</td>
+<td>review guideline</td>
+<td>App Review rejection</td>
+</tr>
+<tr>
+<td>R14</td>
+<td>Quiz: answers sent immediately, timed by the server; the app shows a 15 s countdown for feel and never computes points; Reduce Motion replaces the animation with text</td>
+<td>contract</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R15</td>
+<td>Quiz and status shares reuse the P4 flow (<code>kind: quiz</code> with <code>session_id</code> of a finished session, <code>kind: status</code> with <code>plan_id</code> of an active trip); errors <code>404 session_not_found|play_disabled</code>, <code>422 no_active_trip</code> are translated; names hidden unless <code>show_name</code></td>
+<td>Social-API</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R16</td>
+<td>T48 (APNs registration, gated on the owner's Apple account) keeps its scope. Its gate becomes the pure <code>PushGate.shouldRegister(config:permission:)</code> that P6.2 adds: <code>features.apns == true</code> and notifications allowed. Nothing here registers a device</td>
+<td>one gate, testable now</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R17</td>
+<td>Gaps found in a contract are logged in the ledger and in the follow-ups doc, never papered over by guessing fields. Social-API.md is frozen (2026-11-12) and web Phase 5 is merged with both flags on by default, so Phase 5 is not gated; the contract's T1-T4 clarifications and the web Phase 5 follow-ups are inputs</td>
+<td>the contract is the authority</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<h2 id="review-focus">Review focus</h2>
+<ol>
+<li><strong>A price drop arrives three ways</strong> (APNs push, inbox row, local poll) during quiet hours with the daily cap reached: one notification at most, held to the window's end, deduped by <code>notification_id</code>. → <code>NotificationGateTests</code>, <code>test_pollerHoldsDuringQuietHours</code>, <code>test_pushAndPollDedupe</code> (6.2).</li>
+<li><strong>Hostile user text</strong> (<code>**bold** [x](javascript:alert(1)) https://evil.test</code> in a caption or handle bio) renders literally. → <code>test_userTextRendersVerbatim</code> snapshot (5.3).</li>
+<li><strong>Share privacy</strong>: a second <code>POST /shares</code> replaces the options of the same link; the sheet says so, defaults are private, and revoke removes it from the list at once. → 4.1, 4.2 tests.</li>
+</ol>
+<h2 id="task-0-foundations-two-prs-first">Task 0: Foundations (two PRs, first)</h2>
+<p><strong>0a [travel-planner repo].</strong> First diff every key the tasks list under "Strings" against the web catalogues on main (<code>mobile</code>, <code>share</code>, <code>socialShare</code>, <code>notifications</code>, <code>social</code>, <code>play</code>, <code>playYou</code>, <code>priceStory</code>, ...); add only the keys no namespace has to <code>frontend/src/i18n/locales/&lt;lang&gt;/mobile.json</code> in all 7 languages (informal es/de, <code>vous</code> fr; <code>npm test</code> catalog test green). i18n-only, safe to deploy. If every key already exists, there is no 0a PR and Task 0b starts at once; a later top-up (one open at a time) covers keys found missing during a task. Test: <code>catalog.test.js</code>.</p>
+<p><strong>0b [iOS].</strong> Files: <code>Package.swift</code> (+ <code>FeatureSocial</code>, <code>FeaturePlay</code>, their test targets, edges <code>VoyagerEnv, SharedUI, SectionsUI, Domain</code>; AppShell gains both), <code>VoyagerModel/{RemoteFeatures,Route+Phase3to6}.swift</code>, per-phase stub files per R1, <code>Domain/QuietHours.swift</code>, <code>Upstream/</code> sync (adds <code>Upstream/fixtures/alerts/{story_cases,savings_cases,quiet_hours_cases}.json</code>), <code>tools/stub_backend/{phase3,phase4,phase6}.py</code> plus a dispatcher, T35 row destinations (<code>.notificationSettings</code>, <code>.myShares</code>, <code>.alertPrefs</code>), <code>DeepLinks</code> table entries listed in R8, <code>GameVisibility</code> (protocol + fake).
+- <code>RemoteFeatures</code> decodes the <code>features</code> flags above with safe defaults (absent = 0/false); <code>Route</code> gains <code>.shareSheet(ShareTarget)</code>, <code>.myShares</code>, <code>.openShare(token)</code>, <code>.notificationSettings</code>, <code>.alertPrefs</code>, <code>.priceStory(kind, id)</code>, <code>.tripToday(planID)</code>, and (stubbed for P5) <code>.profile(handle)</code>, <code>.profileEditor</code>, <code>.ideaDetail(id)</code>, <code>.ideas</code>, <code>.play</code>, <code>.quiz(sessionID)</code>, <code>.h2h(id)</code>.
+- Tests: <code>RemoteFeaturesTests.test_absentFlagsAreOff</code>, <code>test_unknownKeysIgnored</code>; <code>QuietHoursTests.test_goldenCases</code> (every case), <code>test_nilTimezoneNeverHolds</code>, <code>test_wrapsMidnightEndExclusive</code>; <code>DeepLinksTests.test_phase3to6Paths</code>, <code>test_rawLinkNeverOpened</code>; <code>GameVisibilityTests.test_unreadableIsHidden</code>. Snapshots: none. Commit <code>feat(foundation): phase 3-6 seams</code>.</p>
+<h2 id="phase-3-price-alerts-20-featurealerts-voyagerenv">Phase 3: price alerts 2.0 (<code>FeatureAlerts</code>, <code>VoyagerEnv</code>)</h2>
+<ul>
+<li><strong>3.1 Core</strong> (needs T0). Files: <code>VoyagerModel/Phase3/*</code>, <code>VoyagerData/Phase3/*</code>, <code>VoyagerEnv/Phase3/*</code>, <code>TestSupport/Phase3/*</code>, <code>tools/stub_backend/phase3.py</code>, <code>FeatureAlerts/Slots/*</code> (three stub extension points on <code>WatchCard</code>, the alerts header and inbox rows, so 3.2-3.4 each replace only their own).</li>
+<li><code>AlertsV2Repository</code>: <code>summary()</code>, <code>story(kind:id:)</code>, <code>advice(kind:id:)</code>, <code>quickWatch(_:)</code>, <code>suggestions(planID:)</code>, <code>prefs()</code>, <code>updatePrefs(_:)</code>; DTOs <code>PriceStory</code>, <code>Savings</code>, <code>AlertPrefs</code>, <code>QuickWatchRequest</code>, <code>DropData</code>, <code>GameDelta</code>, <code>DigestData</code>; <code>LenientNumber</code> decoding (Int/Double/String), <code>pendingFirstCheck</code> and <code>lastPrice == nil</code> on watches, notification <code>data.drop|game|digest|group_count</code>.</li>
+<li>Tests: parse each contract example; <code>StoryRenderCases.test_goldenStoryCases</code> (every <code>story_cases.json</code> case maps to the expected code, params, verdict key; the app never recomputes), <code>SavingsCases.test_goldenSavingsCases</code>, <code>test_pendingWatchDecodes</code>, <code>test_unknownAdviceCodeIgnored</code>, <code>test_v1BackendKeepsLegacyScreens</code>. Snapshots: none (data task).</li>
+<li><strong>3.2 Price story + advice</strong> (needs 3.1; ∥ 3.3, 3.4). Files: <code>FeatureAlerts/Story/{PriceStoryView,PriceStoryModel,StoryChart,AdviceLine,AIAdviceButton}.swift</code>.</li>
+<li>Story card per watch: chart (R2), typical band, verdict chip (<code>great|good|typical|high</code>, hidden when null), advice line from <code>advice.code</code> + <code>params</code> (8 codes), "Checked N days ago", estimate label, pending state; AI tip (<code>422 advice_no_data|advice_unsupported</code>, <code>502 advice_failed</code>, <code>503 ai_limit|ai_billing</code> each a translated message).</li>
+<li>Tests: <code>test_adviceCodeCopyForAll8</code>, <code>test_checksPausedNeverSaysGreatPrice</code>, <code>test_estimateNeverPlotted</code>, <code>test_scrubReadsPointAndAge</code>, <code>test_adviceErrorMapping</code>, <code>test_storyViewEmitsOnce</code>. Snapshots: <code>StoryGoodLight</code>, <code>StoryHighDark</code>, <code>StoryPending</code>, <code>StoryChecksPausedDE</code>, <code>StoryAX5</code>, <code>StoryChartVoiceOverDescriptor</code>, iPad <code>StoryRegular</code>. Strings: chart a11y descriptor, scrub hint. Telemetry: <code>alert_story_view</code>, <code>alert_advice</code>, <code>alert_target_set</code>.</li>
+<li><strong>3.3 Savings, drop moment, digest</strong> (needs 3.1; ∥ 3.2, 3.4). Files: <code>FeatureAlerts/Savings/{SavingsHeader,DropMomentCard,DigestRow,PausedBanner}.swift</code>, <code>FeatureAlerts/NotificationsInboxView.swift</code> (the only edit to a T32 file, via the inbox slot).</li>
+<li>Savings tally with progress to <code>next_milestone</code> (milestones 50, 200, 1000; none left at 1000), <code>by_currency</code> lines unconverted, "caught a drop of $X" drop card from <code>data.drop</code> (target-hit variant; game line per R4), <code>price_digest</code> row with its <code>watches</code>, "live checks paused" banner when <code>live_prices</code> is false, grouped-push <code>group_count</code> text from the server title, pending and unknown rows tolerated.</li>
+<li>Tests: <code>test_neverSaysSaved</code> (grep every string value in the 7 catalogues for the drop copy), <code>test_milestoneProgress</code>, <code>test_byCurrencyNotConverted</code>, <code>test_gameLineHiddenWhenHideGame</code>, <code>test_digestRowTolerance</code>, <code>test_pausedBannerFollowsFlag</code>. Snapshots: <code>DropMomentLight</code>, <code>DropTargetHitDark</code>, <code>DropGameLineHidden</code>, <code>SavingsHeaderMilestone</code>, <code>SavingsHeaderEmpty</code>, <code>DigestRowHI</code>, <code>PausedBanner</code>. Telemetry: <code>alert_drop_seen</code>, <code>alert_digest_open</code>. The "Share savings" button only calls <code>router.open(.shareSheet(.savings))</code> and is wired in 4.4.</li>
+<li><strong>3.4 One-tap watch, suggestions, prefs</strong> (needs 3.1; ∥ 3.2, 3.3). Files: <code>VoyagerEnv/Phase3/QuickWatchCoordinator.swift</code> (extends the T32 <code>WatchCreateCoordinator</code> with <code>state(for:)</code>: <code>idle|existing|pending|limit|off</code>), <code>FeatureAlerts/Prefs/{AlertPrefsView,AlertPrefsModel,SuggestionsSheet,SuggestionRow}.swift</code>.</li>
+<li>Result cards, My Plan items and chat cards already call the coordinator (T32), so their states update with no feature-file edit; if a call site needs one, the controller serialises it after that feature's merge. Errors <code>live_prices_off</code>, <code>watch_limit</code>, <code>spec_invalid</code>, <code>trip_not_found</code>. Suggestions (<code>selected_in_plan|trip_total|departure_soon</code> copy) shown only per R3. Prefs: digest weekly/push/day, instant (<code>all|targets_only</code>), quiet hours, per-kind caps 1-10, group window 0-120, read-only timezone and <code>quiet_hours_active</code>, <code>422 alert_prefs_invalid</code>.</li>
+<li>Tests: <code>test_buttonHiddenWithoutLivePrices</code>, <code>test_existingWatchShowsWatching</code>, <code>test_limitAndOffMessages</code>, <code>test_undoRemovesWatch</code>, <code>test_digestPushDisabledWithoutWeekly</code>, <code>test_prefsInvalidKeepsDraft</code>, <code>test_timezoneReadOnly</code>, <code>test_suggestionsHiddenWhenOff</code>. Snapshots: <code>WatchButtonStates</code>, <code>SuggestionsSheet</code>, <code>AlertPrefsLight</code>, <code>AlertPrefsDarkAX5</code>, <code>AlertPrefsIPad</code>. Telemetry: <code>alert_quick_watch</code>, <code>alert_suggest</code>, <code>alert_prefs_change</code>.</li>
+</ul>
+<h2 id="phase-4-sharing-featureshare-voyagerenv">Phase 4: sharing (<code>FeatureShare</code>, <code>VoyagerEnv</code>)</h2>
+<ul>
+<li><strong>4.1 Core + share sheet</strong> (needs T0; may overlap 3.x). Files: <code>VoyagerModel/Phase4/*</code>, <code>VoyagerData/Phase4/*</code>, <code>VoyagerEnv/Phase4/*</code>, <code>FeatureShare/Create/{ShareSheetView,ShareSheetModel,ShareCardLoader,ShareImage}.swift</code>, <code>tools/stub_backend/phase4.py</code>.</li>
+<li><code>SharesRepository</code>: <code>create(kind:planID:options:locale:)</code>, <code>list()</code>, <code>revoke(token:)</code>; <code>ShareOptions</code> (<code>dates: hidden|month|exact</code>, <code>showOrigin</code>, <code>showName</code>, private defaults); <code>ShareKind</code> with an unknown case. Sheet per R5, with the "a second share of the same item updates this link" note, the flag check (<code>sharing &gt;= 1</code>, else the T29 legacy link button stays), errors <code>404 sharing_disabled</code> (falls back to legacy for plans), <code>404 plan_not_found</code>, <code>422 invalid_kind</code>, 429 <code>detail</code>.</li>
+<li>Tests: <code>test_privateDefaults</code>, <code>test_createIsIdempotentUI</code>, <code>test_unknownKindIsPlainLink</code>, <code>test_cardHostMustBeTrusted</code>, <code>test_downloadFailureSharesLinkOnly</code>, <code>test_tempCardsPurgedOnSignOut</code>, <code>test_flagOffKeepsLegacy</code>, <code>test_errorCodeMapping</code>. Snapshots: <code>ShareSheetPlan</code>, <code>ShareSheetDatesExact</code>, <code>ShareSheetLoadingCard</code>, <code>ShareSheetDE</code>, <code>ShareSheetAX5</code>, iPad <code>ShareSheetForm</code>. Strings: sheet copy, "Share image". Telemetry: <code>share_open</code>, <code>share_create</code> (<code>dates</code>), <code>share_action</code> (<code>native</code>, <code>copy</code>).</li>
+<li><strong>4.2 My shares</strong> (needs 4.1; ∥ 4.3). Files: <code>FeatureShare/Mine/{MySharesView,MySharesModel,ShareRow}.swift</code>. Newest first, <code>legacy_plan_shares</code> section, copy, share again, "Open a link" paste (R6, routes to <code>.openShare</code>), revoke with a confirmation dialog (no Undo: revoke is immediate, the copy says so), empty and error states; reachable from You.</li>
+<li>Tests: <code>test_legacyRowsListed</code>, <code>test_revokeRemovesImmediately</code>, <code>test_revoke404TreatedAsGone</code>, <code>test_pasteRoutesToViewer</code>, <code>test_listEmptyAndError</code>. Snapshots: <code>MySharesList</code>, <code>MySharesEmpty</code>, <code>MySharesRevokeDialog</code>, <code>MySharesHI</code>. Telemetry: <code>share_revoke</code>, <code>share_action</code>.</li>
+<li><strong>4.3 Open share links + viewer kinds</strong> (needs 4.1; ∥ 4.2). Files: <code>FeatureShare/Viewer/{SharedRecapView,SharedSavingsView,SharedUnknownKindView}.swift</code>, one dispatch edit in <code>SharedPlanModel.swift</code> (T30), the <code>AppShell</code> <code>onOpenURL</code> handler for share links, <code>docs/Deep-Links.md</code>.</li>
+<li><code>GET /share/{token}</code> gains <code>kind</code>, <code>options</code>, <code>owner_name</code> (only when present), <code>card</code> (<code>headline</code>, <code>stats[{key,count}]</code>, <code>destination</code>, <code>period</code>); recap and savings views from <code>card</code> (stats are counts only); plan kind keeps the T30 view with "Inspired by" and Remix; unknown kind shows the headline plus "Open in browser" (<code>SFSafariViewController</code>); 404 shows the T30 not-found copy (also for a revoked link). <code>share_view</code> is not sent (SPA-only).</li>
+<li>Tests: <code>test_recapCardRenders</code>, <code>test_savingsCardRenders</code>, <code>test_unknownKindOffersBrowser</code>, <code>test_legacyTokenUnchanged</code>, <code>test_ownerNameOnlyWhenPresent</code>, <code>test_trustedHttpsOpens</code>, <code>test_untrustedHostIgnored</code>, <code>test_customSchemeOpens</code>. Snapshots: <code>SharedRecap</code>, <code>SharedSavings</code>, <code>SharedUnknownKind</code>, <code>SharedRevoked404</code>, <code>SharedRecapDark</code>.</li>
+<li><strong>4.4 Entry points</strong> (needs 3.3, 4.1 and the Phase 2 Recap tab). One-line <code>router.open(.shareSheet(...))</code> edits in <code>FeaturePlan</code> (replaces <code>ShareLinkButton</code> internals when <code>sharing &gt;= 1</code>), <code>FeatureTrips</code> Recap, <code>FeatureAlerts</code> savings header. Tests: <code>test_planShareOpensSheetWhenFlagOn</code>, <code>test_recapShareKind</code>, <code>test_savingsShareEmitsTelemetry</code> (<code>alert_savings_share</code>). Snapshots: <code>PlanShareEntry</code>, <code>RecapShareEntry</code>, <code>SavingsShareEntry</code>.</li>
+</ul>
+<h2 id="phase-6-notifications-notificationscore-featuresettings">Phase 6: notifications (<code>NotificationsCore</code>, <code>FeatureSettings</code>)</h2>
+<ul>
+<li><strong>6.1 Core + settings</strong> (needs T0; may overlap 3.x and 4.x). Files: <code>VoyagerModel/Phase6/*</code>, <code>VoyagerData/Phase6/*</code>, <code>VoyagerEnv/Phase6/*</code>, <code>Domain/NotificationGate.swift</code>, <code>FeatureSettings/Notifications/{NotificationSettingsView,NotificationSettingsModel,PermissionStatusCard}.swift</code>, <code>tools/stub_backend/phase6.py</code>.</li>
+<li><code>NotificationSettingsRepository</code>: <code>get()</code>, <code>update(_:)</code>; <code>NotificationCatalogRepository.templates(locale:)</code> (cache per locale in Caches, English fallback); <code>NotificationGate.decide(row:settings:prefs:now:) -&gt; .deliverNow | .holdUntil(Date) | .drop</code>. Screen per R7: seven category switches (<code>quiz</code> hidden when game is hidden), quiet hours (HH:MM pickers), daily cap 1-10, timezone display (read-only), push status, <code>422 notification_settings_invalid</code>. <code>POST /devices</code> keeps <code>platform: "ios"</code> (T48).</li>
+<li>Tests: <code>test_settingsRoundTrip</code>, <code>test_invalidKeepsDraft</code>, <code>test_quietHoursSharedWithAlertPrefs</code> (edit via either, both refetch), <code>test_hiddenWithoutNotificationsApi</code>, <code>test_catalogCachedPerLocale</code>, <code>test_unknownTemplateKeysIgnored</code>, <code>test_gateCategoryOff</code>, <code>test_gateCapExemptForPriceDrops</code>, <code>test_gateTargetsOnly</code>, <code>test_gateHoldsToWindowEnd</code>. Snapshots: <code>NotifSettingsLight</code>, <code>NotifSettingsPermissionDenied</code>, <code>NotifSettingsPushUnavailable</code>, <code>NotifSettingsDE</code>, <code>NotifSettingsAX5</code>, iPad <code>NotifSettingsForm</code>. Strings: permission and server-push notes. Telemetry: <code>notif_settings_view</code>, <code>notif_category_toggle</code>, <code>notif_quiet_hours_change</code>, <code>notif_cap_change</code>.</li>
+<li><strong>6.2 Push, rows, local policy</strong> (needs 6.1; ∥ 6.3). Files: <code>NotificationsCore/{PushPayload,PushGate,ReminderPolicy,NotificationRouting}.swift</code>, edits to <code>AlertPoller.swift</code> and <code>TripReminderScheduler.swift</code> (T33), <code>FeatureAlerts/NotificationsInboxView</code> row icons for <code>trip_*</code>.</li>
+<li><code>PushPayload</code> parses <code>category</code>, <code>plan_id</code>, <code>kind</code>, <code>notification_id</code>, <code>group_count</code>, <code>link</code>; <code>trip_t30|t7|t1|morning</code> rows and taps per R8; <code>PushGate</code> per R16; <code>ReminderPolicy</code> and the poller gate per R9; local reminders add T-30, copy from the catalog when every placeholder can be filled, else <code>mobile:reminders.*</code>; hide_game wording; <code>notif_open</code> on tap.</li>
+<li>Tests: <code>test_tripTapOpensToday</code>, <code>test_emptyPlanIDOpensInbox</code>, <code>test_unknownKindGenericRow</code>, <code>test_linkAllowListed</code>, <code>test_pushAndPollDedupe</code>, <code>test_pollerHoldsDuringQuietHours</code>, <code>test_pollerRespectsCategoryOff</code>, <code>test_localTripRemindersDroppedWhenServerPushLive</code>, <code>test_localRemindersKeptWithoutApns</code>, <code>test_gate_registersOnlyWhenApnsAndAllowed</code>, <code>test_groupedPushTitleFromServer</code>, <code>test_fakeApnsPayloadRoutes</code>, <code>test_capAt60StillHolds</code>. Snapshots: <code>InboxTripRows</code>, <code>InboxUnknownKind</code>, <code>InboxGroupedDrop</code>.</li>
+<li><strong>6.3 Near you</strong> (needs 6.1, T34; ∥ 6.2). Files: <code>NotificationsCore/{NearYouNotifier,NearYouTemplates}.swift</code>, <code>NearbyInvite.swift</code> (T33 hook only).</li>
+<li>Per R10: <code>NearYouNotifier.evaluate(location:, phase:, now:) async</code> called from the scene-active hook; builds text from <code>nearby_arrival</code> placeholders (<code>{place}</code>, <code>{item}</code>, <code>{minutes}</code>) from the existing <code>/nearby</code> result; honours <code>nearby</code> switch, local quiet hours (R11), throttle; the location stays in memory.</li>
+<li>Tests: <code>test_requiresNearbySwitch</code>, <code>test_blockedInQuietHours</code>, <code>test_throttlePerCellAndHours</code>, <code>test_templateFallbackEnglish</code>, <code>test_noLocationInTelemetryOrNewCalls</code> (recording fake transport: only <code>/nearby</code> is called), <code>test_noAlwaysPermissionRequested</code>, <code>test_onlyDuringActiveTrip</code>. Snapshots: <code>NearYouBanner</code>, <code>NearYouBannerHI</code>. Strings: fallback copy and permission rationale.</li>
+</ul>
+<h2 id="phase-5-social-and-play-featuresocial-featureplay">Phase 5: social and play (<code>FeatureSocial</code>, <code>FeaturePlay</code>)</h2>
+<ul>
+<li><strong>5.1 Core</strong> (needs T0; first of P5). Files: <code>VoyagerModel/Phase5/*</code>, <code>VoyagerData/Phase5/*</code>, <code>VoyagerEnv/Phase5/*</code>, <code>TestSupport/Phase5/*</code>, <code>tools/stub_backend/phase5.py</code>, <code>AppShell</code> composition (R12), an upstream sync only if the vendored SHA predates the P5 catalogues and registry (<code>social</code>, <code>play</code>, <code>socialShare</code>, <code>playYou</code>, <code>game</code>), catalog rows for <code>social_idea_saved</code>, <code>social_new_follower</code>, <code>quiz_h2h_invite</code>, <code>quiz_h2h_result</code> and links.</li>
+<li><code>SocialRepository</code> (profile, handle check, follow, follow requests, blocks, feed, ideas, comments, helpful, report) and <code>PlayRepository</code> (state, quiz, answer, session, history, h2h, leaderboard, challenge), DTOs with all optional fields lenient, cursor paging, flags <code>social</code>/<code>play</code>, <code>403 game_hidden</code> and <code>404 social_disabled|play_disabled</code> as typed errors.</li>
+<li>Tests: parse every Social-API example, <code>test_flagsHideEntryPoints</code>, <code>test_gameHiddenHidesPlay</code>, <code>test_optionalProfileFieldsAbsent</code>, <code>test_cursorPaging</code>, <code>test_playRoutes404TurnsOff</code>. Snapshots: none.</li>
+<li><strong>5.2 Profile, follows, blocks</strong> (needs 5.1; ∥ 5.3, 5.4). Files: <code>FeatureSocial/Profile/*</code>. Create profile (live handle check, <code>409 handle_taken</code>, <code>422 handle_invalid|handle_reserved|handle_rate_limited</code> (carries <code>retry_after</code> seconds; the first handle is free, the 30-day clock starts at the first change), <code>country_invalid</code>, <code>403 profile_required</code> on follow, <code>404 request_not_found</code>, <code>content_rejected</code>, opt-in toggles default off, visibility <code>private|followers|public</code>, bio ≤ 160, home country), the R13 rules acceptance, public profile (optional fields only when present; <code>404 profile_not_found</code> for private or blocked), follow, pending, cancel, requests accept and decline, followers, following, block list, report profile.</li>
+<li>Tests: <code>test_everyToggleDefaultsOff</code>, <code>test_handleCheckDebounced</code>, <code>test_handleChangeRateLimitedMessage</code>, <code>test_pendingStateForFollowersProfile</code>, <code>test_blockIsSilentAndTwoWay</code>, <code>test_rulesAcceptedOncePerUser</code>, <code>test_levelBadgesHiddenWhenHideGame</code>. Snapshots: <code>ProfileEditor</code>, <code>PublicProfileFull</code>, <code>PublicProfileMinimal</code>, <code>FollowRequests</code>, <code>BlockList</code>, <code>ProfileHI</code>, <code>ProfileAX5</code>. Telemetry: <code>social_profile_view</code>, <code>social_profile_save</code>, <code>social_follow</code>, <code>social_block</code>, <code>social_report</code>.</li>
+<li><strong>5.3 Ideas feed</strong> (needs 5.1; ∥ 5.2, 5.4). Files: <code>FeatureSocial/Feed/*</code>. Scopes <code>for_you|following|new</code>, cursor paging, publish from a plan or recap (<code>profile_required</code> and <code>email_unverified</code> send to the profile editor or verify; <code>held</code> notice; <code>422 limit_reached</code>; title ≤ 80, caption ≤ 500), like (idempotent), save as remix (opens the new plan; <code>DELETE</code> forgets the mark), comments (≤ 300, oldest first, helpful by the idea author, delete), delete own idea, report, blocked and hidden handling, support contact row (R13).</li>
+<li>Tests: <code>test_publishErrorRouting</code>, <code>test_heldNoticeOnlyToAuthor</code>, <code>test_likeIdempotent</code>, <code>test_saveOpensNewPlan</code>, <code>test_helpfulOnlyForIdeaAuthor</code>, <code>test_everyReportReasonMapped</code>, <code>test_userTextRendersVerbatim</code>, <code>test_supportRowHiddenWhenEmpty</code>, <code>test_feedEmptyAndError</code>. Snapshots: <code>FeedCards</code>, <code>IdeaDetail</code>, <code>PublishSheet</code>, <code>HeldNotice</code>, <code>ReportSheet</code>, <code>HostileTextVerbatim</code>, <code>FeedHI</code>, iPad <code>FeedTwoColumn</code>. Telemetry: <code>social_feed_view</code>, <code>social_idea_publish|open|like|save</code>, <code>social_comment</code>.</li>
+<li><strong>5.4 Quiz</strong> (needs 5.1; ∥ 5.2, 5.3). Files: <code>FeaturePlay/Quiz/*</code>, <code>FeaturePlay/PlayHomeView.swift</code>. Play state (daily, packs, streak with the freeze note, challenge, open h2h count), daily and pack quiz, 5 questions, answer flow per R14 (option <code>code</code> localises country names; the prompt <code>template</code> picks the copy; h2h sessions use the same answer route), per-question result, summary with score, streak and XP (hidden when game is hidden; whole feature hidden then), history, <code>409 already_done</code>, resume from <code>GET /play/quiz/{id}</code>, unknown question <code>kind</code> degrades to "update the app" for that question.</li>
+<li>Tests: <code>test_answerSentImmediatelyNoLocalPoints</code>, <code>test_countdownDoesNotSubmit</code>, <code>test_resumeContinuesAtFirstUnanswered</code>, <code>test_alreadyDoneShowsScore</code>, <code>test_gameHiddenHidesPlay</code>, <code>test_unknownQuestionKindDegrades</code>, <code>test_reduceMotionNoAnimation</code>. Snapshots: <code>PlayHome</code>, <code>QuizQuestion</code>, <code>QuizCorrectDark</code>, <code>QuizSummary</code>, <code>QuizAlreadyDone</code>, <code>QuizAX5</code>, <code>QuizHI</code>. Telemetry: <code>play_state_view</code>, <code>play_quiz_start|answer|done</code>.</li>
+<li><strong>5.5 Head-to-head, boards, challenge</strong> (needs 5.1, 5.4). Files: <code>FeaturePlay/{H2H,Boards,Challenge}/*</code>. Create by handle (typed or chosen through a <code>.profile</code> route result; <code>422 limit_reached</code>), list states (<code>waiting_you|waiting_them|done|declined|expired</code>), accept or decline, results hidden until both finish, global and friends boards with the opt-in prompt (<code>leaderboard_opt_in</code>), <code>you</code> row, week <code>current|previous</code>, weekly challenge start and done, <code>403 game_hidden</code>.</li>
+<li>Tests: <code>test_h2hStatesMapped</code>, <code>test_opponentScoreHiddenUntilDone</code>, <code>test_boardOptInPrompt</code>, <code>test_boardHandlesOnly</code>, <code>test_challengeOncePerWeekDoneState</code>, <code>test_gameHidden403</code>. Snapshots: <code>H2HList</code>, <code>H2HResult</code>, <code>BoardGlobal</code>, <code>BoardFriendsEmpty</code>, <code>ChallengeCard</code>, <code>BoardHI</code>. Telemetry: <code>play_h2h_*</code>, <code>play_board_view</code>, <code>play_challenge_view</code> as the registry names them.</li>
+<li><strong>5.6 Shares and links</strong> (needs 4.1, 5.4). <code>kind: quiz</code> (<code>session_id</code>) from the quiz summary and <code>kind: status</code> (<code>plan_id</code>) from Trips Today through <code>router.open(.shareSheet(...))</code> (R15), notification taps for <code>social_*</code> and <code>quiz_*</code> kinds via <code>DeepLinks</code>. Tests: <code>test_quizShareSendsSessionID</code>, <code>test_statusShareSendsPlanID</code>, <code>test_nameHiddenUnlessShowName</code>, <code>test_socialKindsRoute</code>, <code>test_quizKindsNeverForHiddenGame</code>. Snapshots: <code>QuizShareEntry</code>, <code>StatusShareEntry</code>.</li>
+</ul>
+<h2 id="finish">Finish</h2>
+<ul>
+<li><strong>F1</strong> One opus whole-branch review of everything merged since T0; fix findings (small PRs).</li>
+<li><strong>F2</strong> UI smoke on the stub backend (T38 suite, iPhone and iPad): <code>UITests/Phase{3,4,6,5}Smoke.swift</code>, one flow per phase: a watch with a drop and its story; a share and My shares revoke; notification settings with a quiet-hours edit; profile creation plus the daily quiz. Stub modules per phase from R1. <code>CI(full)</code> green, <code>sim-build</code> green.</li>
+<li><strong>F3</strong> <code>docs/superpowers/plans/2026-11-13-ios-phase3-6-followups.md</code> (this directory; rulings revisited, owner items: Apple key for APNs, associated domains/AASA, Meta App ID, support URL, SerpAPI key, native review of hi/bn/zh).</li>
+<li><strong>F4</strong> Small travel-planner PR: <code>docs/Feature-Parity.md</code> iOS column for Phases 3-6.</li>
+</ul>
+<h2 id="waves-max-3-agents-at-once-sonnet-implementers-and-reviewers-haiku-re-reviews-opus-only-at-f1">Waves (max 3 agents at once, Sonnet implementers and reviewers, Haiku re-reviews, opus only at F1)</h2>
+<table>
+<thead>
+<tr>
+<th>Wave</th>
+<th>Tasks</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0a then 0b</td>
+<td>0a is a web PR; 0b needs its merge for the sync</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3.1 ∥ 4.1 ∥ 6.1</td>
+<td>disjoint stub files (R1); to keep the stated order, start 3.1 first and the others as capacity allows</td>
+</tr>
+<tr>
+<td>2</td>
+<td>3.2 ∥ 3.3 ∥ 3.4</td>
+<td>each replaces only its own slot files</td>
+</tr>
+<tr>
+<td>3</td>
+<td>4.2 ∥ 4.3 ∥ 6.2</td>
+<td>4.4 waits for 3.3 and 4.1 and runs here or next</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4.4 ∥ 6.3</td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td>5.1</td>
+<td>alone</td>
+</tr>
+<tr>
+<td>6</td>
+<td>5.2 ∥ 5.3 ∥ 5.4</td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>5.5 ∥ 5.6</td>
+<td>5.6 also needs 4.1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>F1, F2, F3, F4</td>
+<td>F3 and F4 in parallel with F2</td>
+</tr>
+</tbody>
+</table>
+<p>Tasks sharing no files may run together within a wave; merge order inside a wave does not matter, and after each merge the controller runs <code>CI(full)</code> on main. The token-budget rules (≤ 2 tracks) win over the table when they conflict.</p>
+<h2 id="what-the-owner-must-provide-none-blocks-the-tasks-above">What the owner must provide (none blocks the tasks above)</h2>
+<p>Apple Developer account plus an APNs key (T48; P6 is inert on the server until then), associated domains for <code>https</code> share links, a support URL for the feed, a Meta App ID for Instagram Stories (deferred), <code>SERPAPI_KEY</code> for live prices (until set, <code>live_prices</code> is false and one-tap watching and suggestions stay hidden), and native review of hi, bn, zh strings.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
