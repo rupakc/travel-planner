@@ -702,3 +702,18 @@ def test_rate_limit_applies(client, monkeypatch):
         client.get("/api/social/feed", headers=u["h"]).status_code for _ in range(3)
     ]
     assert codes[:2] == [200, 200] and codes[2] == 429
+
+
+def test_snapshot_size_measures_stored_json(client, monkeypatch):
+    u = _mk(client)
+    plan = _plan(u, sel={"hotels": [{"name": "宿" * 300, "checkin": "x"}]})
+    snap = idea_snapshot.build(plan_row := plans_db.get_plan(plan["id"]), "plan")
+    assert plan_row
+    repr_size = len(str(snap).encode())
+    json_size = len(json.dumps(snap).encode())
+    assert json_size > repr_size
+    monkeypatch.setattr(
+        idea_snapshot, "SNAPSHOT_MAX_BYTES", (repr_size + json_size) // 2
+    )
+    r = _post(client, u, plan)
+    assert r.status_code == 422 and r.json()["error_code"] == "snapshot_too_large"
