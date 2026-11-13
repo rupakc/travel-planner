@@ -33,6 +33,16 @@
     "signOutAll": "Se déconnecter partout",
     "confirm": "Se déconnecter de tous les appareils ?",
     "confirmYes": "Oui, se déconnecter partout",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "devicesTitle": "Appareils connectés",
+    "lastUsed": "Dernière activité {{when}}",
+    "thisDevice": "Cet appareil",
+    "signOutDevice": "Se déconnecter",
+    "signOutDeviceLabel": "Déconnecter {{device}}",
+    "unnamed": "Appareil sans nom",
+    "revokeFailed": "Impossible de déconnecter cet appareil. Réessayez.",
+    "client_web": "Web",
+    "client_ios": "iPhone ou iPad",
+    "client_android": "Android"
   }
 }

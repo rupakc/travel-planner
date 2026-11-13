@@ -9,6 +9,7 @@ vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }))
 vi.mock('../../services/api', () => ({ getAuthProviders: vi.fn() }))
 vi.mock('../../services/authApi', () => ({
   getLinkStartUrl: vi.fn(), logoutAll: vi.fn(), changePasswordV2: vi.fn(),
+  listSessions: vi.fn(), revokeSession: vi.fn(),
 }))
 vi.mock('../../services/accountApi', () => ({ unlinkIdentity: vi.fn(), requestEmailVerification: vi.fn() }))
 vi.mock('../auth/navigate', () => ({ navigateTo: vi.fn() }))
@@ -16,7 +17,7 @@ vi.mock('../auth/PasswordStrengthMeter', () => ({ default: () => null }))
 
 import SecuritySection from './SecuritySection'
 import { getAuthProviders } from '../../services/api'
-import { getLinkStartUrl, logoutAll, changePasswordV2 } from '../../services/authApi'
+import { getLinkStartUrl, logoutAll, changePasswordV2, listSessions, revokeSession } from '../../services/authApi'
 import { unlinkIdentity } from '../../services/accountApi'
 import { navigateTo } from '../auth/navigate'
 
@@ -41,6 +42,7 @@ const click = async (el) => act(async () => { el.dispatchEvent(new MouseEvent('c
 
 beforeEach(() => {
   vi.clearAllMocks()
+  listSessions.mockRejectedValue({ status: 404 })
   getAuthProviders.mockResolvedValue([{ id: 'github', configured: true, start_url: '/api/auth/oauth/github/start' }])
   container = document.createElement('div')
   document.body.appendChild(container)
@@ -149,5 +151,35 @@ describe('SecuritySection password refresh', () => {
     await act(async () => { tid('security.password-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
     expect(auth.updateTokenAfterPasswordChange).not.toHaveBeenCalled()
     expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  describe('signed-in devices', () => {
+    const devs = [
+      { id: 'a', client: 'android', device_name: 'Pixel 8', last_used_at: new Date().toISOString(), current: true },
+      { id: 'b', client: 'ios', device_name: null, last_used_at: new Date(Date.now() - 3 * 3600e3).toISOString(), current: false },
+    ]
+    it('hides the list on an older backend (404)', async () => {
+      await render()
+      expect(tid('security.device')).toBeNull()
+    })
+    it('lists devices, offers sign-out only for the others, and removes one on success', async () => {
+      listSessions.mockResolvedValue({ sessions: devs })
+      revokeSession.mockResolvedValue(null)
+      await render()
+      expect(container.querySelectorAll('[data-tid="security.device"]').length).toBe(2)
+      const outs = container.querySelectorAll('[data-tid="security.device-signout"]')
+      expect(outs.length).toBe(1)
+      await click(outs[0])
+      expect(revokeSession).toHaveBeenCalledWith('tok', 'b')
+      expect(container.querySelectorAll('[data-tid="security.device"]').length).toBe(1)
+    })
+    it('shows an error when revoking fails', async () => {
+      listSessions.mockResolvedValue({ sessions: devs })
+      revokeSession.mockRejectedValue({ status: 500 })
+      await render()
+      await click(tid('security.device-signout'))
+      expect(tid('security.device-msg')).not.toBeNull()
+      expect(container.querySelectorAll('[data-tid="security.device"]').length).toBe(2)
+    })
   })
 })

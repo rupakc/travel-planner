@@ -33,6 +33,16 @@
     "signOutAll": "在所有设备退出登录",
     "confirm": "退出所有设备的登录？",
     "confirmYes": "是，在所有设备退出",
-    "cancel": "取消"
+    "cancel": "取消",
+    "devicesTitle": "已登录的设备",
+    "lastUsed": "最近活跃：{{when}}",
+    "thisDevice": "此设备",
+    "signOutDevice": "退出登录",
+    "signOutDeviceLabel": "退出 {{device}}",
+    "unnamed": "未命名设备",
+    "revokeFailed": "无法退出该设备，请重试。",
+    "client_web": "网页",
+    "client_ios": "iPhone 或 iPad",
+    "client_android": "Android"
   }
 }

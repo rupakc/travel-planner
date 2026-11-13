@@ -33,6 +33,16 @@
     "signOutAll": "Sign out everywhere",
     "confirm": "Sign out of all devices?",
     "confirmYes": "Yes, sign out everywhere",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "devicesTitle": "Signed-in devices",
+    "lastUsed": "Last active {{when}}",
+    "thisDevice": "This device",
+    "signOutDevice": "Sign out",
+    "signOutDeviceLabel": "Sign out {{device}}",
+    "unnamed": "Unnamed device",
+    "revokeFailed": "Could not sign that device out. Try again.",
+    "client_web": "Web",
+    "client_ios": "iPhone or iPad",
+    "client_android": "Android"
   }
 }

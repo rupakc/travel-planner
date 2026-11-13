@@ -26,3 +26,8 @@ export const logoutAll = (token) => unwrap(http.post('/auth/logout-all', {}, bea
 export const changePasswordV2 = (token, current, next) =>
   unwrap(http.post('/auth/change-password',
     { current_password: current, new_password: next, ...base() }, bearer(token)))
+// Live refresh-token families (mobile sign-ins). Additive endpoints: an older
+// backend answers 404/405, which callers treat as "no list".
+export const listSessions = (token) => unwrap(http.get('/auth/sessions', bearer(token)))
+export const revokeSession = (token, id) =>
+  unwrap(http.delete(`/auth/sessions/${encodeURIComponent(id)}`, bearer(token)))
