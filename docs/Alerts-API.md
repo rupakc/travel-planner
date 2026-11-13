@@ -101,6 +101,7 @@ Golden cases: `savings_cases.json`.
 **Notifications (additive).**
 
 - A drop notification's `data` gains `drop: {"from", "to", "amount", "pct", "currency", "target_hit": bool, "observed": true}` and `game: GameDelta | null`.
+- A price-drop, `watch_expired` or `watch_error` notification's `data` may carry `i18n: {"title", "body"}`, a structured spec the server renders in the user's language for push, email and the digest. `title` and `body` stay English; clients can ignore `i18n`.
 - The new kind `price_digest` has the usual `title` and `body` plus `data.digest: {"week": "2026-W46", "watches": [{"kind", "watch_id", "title", "latest", "change_7d", "lowest", "checked_at"}], "savings": Savings}`.
 - A grouped push carries `data.group_count` (a string).
 

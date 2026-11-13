@@ -11,7 +11,14 @@ from datetime import UTC, datetime, timedelta
 from ..core.config import settings
 from ..db import alerts_db, fare_watch_db, notifications_db, price_watch_db, users_db
 from ..db.database import get_connection
-from . import alert_delivery, alert_email, alert_moments, alert_story, fare_watch
+from . import (
+    alert_delivery,
+    alert_email,
+    alert_moments,
+    alert_story,
+    alert_text,
+    fare_watch,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -136,30 +143,35 @@ def _run(coro):
         return ex.submit(asyncio.run, coro).result()
 
 
-def _title_body(digest: dict) -> tuple[str, str]:
+def _title_body(digest: dict, locale: str | None = None) -> tuple[str, str]:
     n = len(digest["watches"])
     caught = digest["savings"].get("total_usd") or 0
-    body = f"{n} watch{'es' if n != 1 else ''} checked this week"
+    body = alert_text.t("d_body", locale, n=n)
     if caught:
-        body += f", ${caught:,.0f} caught so far"
-    return "Your weekly price digest", body
+        body += alert_text.t("d_caught_tail", locale, amount=f"${caught:,.0f}")
+    return alert_text.t("d_title", locale), body
 
 
 def _deliver(user: dict, prefs: dict, note: dict, digest: dict) -> None:
+    from . import notify_center
+
+    locale = notify_center.user_locale(user["id"])
     if (
         user.get("email")
         and user.get("email_verified")
         and alert_email.email_available()
     ):
         try:
-            alert_email.send_message(alert_email.build_digest_message(user, digest))
+            alert_email.send_message(
+                alert_email.build_digest_message(user, digest, locale)
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Digest email failed: %s", type(exc).__name__)
     if prefs.get("digest_push") is True:
         try:
             from . import push
 
-            title, body = _title_body(digest)
+            title, body = _title_body(digest, locale)
             data = {
                 "kind": "price_digest",
                 "notification_id": str(note["id"]),

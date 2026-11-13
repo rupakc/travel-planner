@@ -62,6 +62,7 @@ from ...db.database import airport_city
 from ...schemas.request import TravelSearchRequest
 from .. import activity_prices, fare_watch, hotel_prices, price_rules, serp_flights
 from ..activity_prices import ActivityListing
+from ..alert_text import CAP, DR, J, S, note_text
 from ..fare_watch import date_range
 from ..price_watch import (
     CreatedWatch,
@@ -787,6 +788,38 @@ def _phrase(moves: list[dict]) -> str:
     return ", ".join(f"{m['label']} {_signed(m['delta'])}" for m in moves)
 
 
+def _x_label(label: str):
+    """A component label as a spec: the known English group words localise."""
+    keys = {
+        "flights": "m_flights",
+        "Flights": "m_flights",
+        "hotel": "m_stay",
+        "activities": "m_activities",
+        "other": "m_other",
+    }
+    return S(keys[label]) if label in keys else label
+
+
+def _x_phrase(moves: list[dict]):
+    key = {
+        "flights": "m_flights",
+        "hotel": "m_stay",
+        "activities": "m_activities",
+        "other": "m_other",
+    }
+    return J(
+        *[
+            S(
+                "t_move",
+                label=S(key[m["label"]]) if m["label"] in key else m["label"],
+                delta=_signed(m["delta"]),
+            )
+            for m in moves
+        ],
+        sep=", ",
+    )
+
+
 def _estimates_sentence(rows: list[dict]) -> str | None:
     names = [r["label"] for r in rows if not r.get("live")]
     if not names:
@@ -795,6 +828,29 @@ def _estimates_sentence(rows: list[dict]) -> str | None:
     if len(names) > MAX_NAMED_ESTIMATES:
         shown += f" +{len(names) - MAX_NAMED_ESTIMATES} more"
     return f"Estimates ({shown}) are held fixed and never trigger alerts."
+
+
+def _x_estimates(rows: list[dict]):
+    names = [_x_label(r["label"]) for r in rows if not r.get("live")]
+    if not names:
+        return None
+    shown = J(*names[:MAX_NAMED_ESTIMATES], sep=", ")
+    if len(names) > MAX_NAMED_ESTIMATES:
+        shown = S("t_more", shown=shown, k=len(names) - MAX_NAMED_ESTIMATES)
+    return S("t_estimates", shown=shown)
+
+
+def _x_unpriced(rows: list[dict]) -> list:
+    out = []
+    for r in rows:
+        if (
+            r.get("live")
+            and r["type"] in _ANCHORS
+            and r["status"] in ("unavailable", "error")
+        ):
+            name = _x_label("Flights" if r["type"] == "flight" else r["label"])
+            out.append(S("t_unpriced", name=name, p=usd(r["price"])))
+    return out
 
 
 def _unpriced_sentences(rows: list[dict]) -> list[str]:
@@ -814,6 +870,10 @@ def _unpriced_sentences(rows: list[dict]) -> list[str]:
                 f"{name}: no live price on this check (last seen {usd(r['price'])})."
             )
     return out
+
+
+def _x_your_trip(city: str | None):
+    return S("t_trip_city", city=city) if city else S("t_trip")
 
 
 def _your_trip(city: str | None) -> str:
@@ -943,20 +1003,35 @@ class TripSource:
         rows = obs.breakdown or []
         moves = _moves(watch, obs, ref)
         phrase = _phrase(moves)
+        x_trip = _x_your_trip(city)
         if kind.endswith("_target"):
+            x_title = S(
+                "t_target_title", trip=x_trip, p=usd(p), t=usd(watch["target_price"])
+            )
             title = (
                 f"🧳 {_your_trip(city)} is now {usd(p)} — below your "
                 f"{usd(watch['target_price'])} target"
             )
         else:
             title = f"🧳 {_your_trip(city)} is {usd(ref - p)} cheaper"
+            x_title = S("t_cheaper_title", trip=x_trip, d=usd(ref - p))
             if phrase:
                 title += f": {phrase}"
+                x_title = S(
+                    "t_cheaper_phrase",
+                    trip=x_trip,
+                    d=usd(ref - p),
+                    phrase=_x_phrase(moves),
+                )
         body = [f"Now {usd(p)}, was {usd(ref)}."]
+        x_body: list = [S("t_now", p=usd(p), r=usd(ref))]
         if phrase:
             body.append(f"{phrase[0].upper()}{phrase[1:]}.")
+            x_body.append(S("t_sentence", text=CAP(_x_phrase(moves))))
         body += _unpriced_sentences(rows)
+        x_body += _x_unpriced(rows)
         if any(r.get("live") and r["type"] == "flight" for r in rows):
+            x_body.append(S("t_flights_note"))
             body.append(
                 "Flights are the cheapest Google Flights fare on your dates, "
                 "not one specific flight."
@@ -964,7 +1039,15 @@ class TripSource:
         estimates = _estimates_sentence(rows)
         if estimates:
             body.append(estimates)
+            x_body.append(_x_estimates(rows))
         if s.get("departure_date"):
+            x_body.append(
+                S(
+                    "t_for",
+                    dates=DR(s["departure_date"], s.get("return_date")),
+                    people=S("u_traveller", n=s.get("travellers") or 1),
+                )
+            )
             body.append(
                 f"For {date_range(s['departure_date'], s.get('return_date'))}"
                 f" · {_plural(s.get('travellers') or 1, 'traveller')}."
@@ -973,7 +1056,12 @@ class TripSource:
             "kind": kind,
             "title": title,
             "body": " ".join(body),
-            "data": {"components": moves, "plan_id": s.get("plan_id"), "city": city},
+            "data": {
+                "components": moves,
+                "plan_id": s.get("plan_id"),
+                "city": city,
+                "i18n": note_text(x_title, J(*x_body)),
+            },
         }
 
 

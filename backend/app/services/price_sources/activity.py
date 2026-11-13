@@ -34,6 +34,7 @@ from ...db.database import airport_city
 from .. import activity_prices as ap
 from .. import fare_watch, price_rules
 from ..activity_prices import ActivityListing
+from ..alert_text import J, S, note_text
 from ..price_watch import (
     CreatedWatch,
     InvalidSpec,
@@ -387,27 +388,46 @@ class ActivitySource:
         provider = _provider(subject.get("provider", ""))
         if kind.endswith("_target"):
             title = f"🎟️ {name} is under your target: from {money(unit)} per person"
+            x_title = S("a_target_title", name=name, unit=money(unit))
             lead = (
                 f"Your target was {money(watch['target_price'])}."
                 if watch.get("target_price") is not None
                 else ""
             )
+            x_lead = S("a_lead", t=money(watch["target_price"])) if lead else None
         else:
+            x_lead = None
+            x_title = S(
+                "a_drop_title", name=name, unit=money(unit), d=money(ref_unit - unit)
+            )
             title = (
                 f"🎟️ {name} is now from {money(unit)} per person "
                 f"(−{money(ref_unit - unit)})"
             )
             lead = ""
         if travellers > 1:
+            x_total = S(
+                "a_total_group",
+                total=money(obs.price),
+                people=S("u_traveller", n=travellers),
+                ref=money(ref),
+            )
             total = (
                 f"That's {money(obs.price)} for {_people(travellers)}, "
                 f"down from {money(ref)}."
             )
         else:
+            x_total = S("a_total_one", ref=money(ref_unit))
             total = f"Down from {money(ref_unit)} per person."
         honesty = f"Price as shown in Google results for {provider}."
         yours = f"Watching it for your ‘{ai_name}’." if differs else ""
         body = " ".join(x for x in (yours, lead, total, honesty) if x)
+        x_body = J(
+            S("a_yours", name=ai_name) if differs else None,
+            x_lead,
+            x_total,
+            S("a_honesty", provider=provider),
+        )
         return {
             "kind": kind,
             "title": title,
@@ -418,6 +438,7 @@ class ActivitySource:
                 "travellers": travellers,
                 "provider": subject.get("provider"),
                 "listing_title": subject.get("listing_title"),
+                "i18n": note_text(x_title, x_body),
             },
         }
 
