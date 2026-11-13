@@ -450,7 +450,9 @@ async def _send_push(user_id: str, rows: list[dict]) -> bool:
     title, body, data = _push_payload(rows, locale)
     # stable per group: a retry after a lost ack carries the same key, so a
     # client can collapse a duplicate
-    data["dedupe_key"] = "alert-" + "-".join(str(i) for i in sorted(r["id"] for r in rows))
+    data["dedupe_key"] = "alert-" + "-".join(
+        str(i) for i in sorted(r["id"] for r in rows)
+    )
     accepted = await push.send_to_user(user["username"], title, body, data)
     if accepted:
         return True

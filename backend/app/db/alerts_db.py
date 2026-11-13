@@ -208,7 +208,9 @@ def claim_due(
                     (r["id"],),
                 )
                 logger.warning(
-                    "alert outbox item %s dropped after %s attempts", r["id"], r["attempts"]
+                    "alert outbox item %s dropped after %s attempts",
+                    r["id"],
+                    r["attempts"],
                 )
                 continue
             cur = conn.execute(
