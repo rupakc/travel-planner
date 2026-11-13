@@ -2,9 +2,12 @@
 the push/email outbox, weekly digests and cached advice. Additive tables only."""
 
 import json
+import logging
 from datetime import UTC, datetime
 
 from .database import get_connection
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PREFS: dict = {
     "digest_weekly": False,
@@ -69,6 +72,14 @@ def create_alert_tables() -> None:
                 PRIMARY KEY (watch_kind, watch_id)
             );
         """)
+        ocols = {r[1] for r in conn.execute("PRAGMA table_info(alert_outbox)")}
+        for col, ddl in (  # additive: claim lease + bounded retries
+            ("claimed_at", "TEXT"),
+            ("attempts", "INTEGER NOT NULL DEFAULT 0"),
+            ("next_try_at", "TEXT"),
+        ):
+            if col not in ocols:
+                conn.execute(f"ALTER TABLE alert_outbox ADD COLUMN {col} {ddl}")
         cols = {r[1] for r in conn.execute("PRAGMA table_info(alert_advice)")}
         if "locale" not in cols:  # additive: the tip's language (cache key)
             conn.execute("ALTER TABLE alert_advice ADD COLUMN locale TEXT")
@@ -167,25 +178,93 @@ def enqueue(
         return cur.rowcount > 0
 
 
-def claim_due(now: str, limit: int) -> list[dict]:
-    """Due, unsent, undropped items, each marked sent atomically so two
-    concurrent passes never claim the same one."""
+def claim_due(
+    now: str,
+    limit: int,
+    lease_before: str | None = None,
+    max_attempts: int = 5,
+) -> list[dict]:
+    """Due, unsent, undropped items, each leased atomically (``claimed_at``,
+    ``attempts`` + 1) so two concurrent passes never claim the same one.
+    ``sent_at`` is set only by :func:`ack`, after a successful send. A lease
+    older than ``lease_before`` (a crash between claim and ack) is claimable
+    again; an item that has used ``max_attempts`` is dropped instead."""
+    lease_before = lease_before or now
     claimed: list[dict] = []
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT * FROM alert_outbox WHERE sent_at IS NULL"
             " AND dropped_reason IS NULL AND due_at <= ?"
+            " AND (next_try_at IS NULL OR next_try_at <= ?)"
+            " AND (claimed_at IS NULL OR claimed_at < ?)"
             " ORDER BY due_at, id LIMIT ?",
-            (now, limit),
+            (now, now, lease_before, limit),
         ).fetchall()
         for r in rows:
+            if (r["attempts"] or 0) >= max_attempts:
+                conn.execute(
+                    "UPDATE alert_outbox SET dropped_reason = 'max_attempts',"
+                    " claimed_at = NULL WHERE id = ?",
+                    (r["id"],),
+                )
+                logger.warning(
+                    "alert outbox item %s dropped after %s attempts",
+                    r["id"],
+                    r["attempts"],
+                )
+                continue
             cur = conn.execute(
-                "UPDATE alert_outbox SET sent_at = ? WHERE id = ? AND sent_at IS NULL",
-                (now, r["id"]),
+                "UPDATE alert_outbox SET claimed_at = ?, attempts = attempts + 1"
+                " WHERE id = ? AND sent_at IS NULL AND dropped_reason IS NULL"
+                " AND (claimed_at IS NULL OR claimed_at < ?)",
+                (now, r["id"], lease_before),
             )
             if cur.rowcount:
-                claimed.append(dict(r) | {"sent_at": now})
+                claimed.append(
+                    dict(r) | {"claimed_at": now, "attempts": (r["attempts"] or 0) + 1}
+                )
     return claimed
+
+
+def ack(item_ids: list[int], now: str) -> None:
+    """The send succeeded (or there was nothing to send): the item is done."""
+    if not item_ids:
+        return
+    with get_connection() as conn:
+        conn.executemany(
+            "UPDATE alert_outbox SET sent_at = ? WHERE id = ? AND sent_at IS NULL",
+            [(now, i) for i in item_ids],
+        )
+
+
+def fail(item_ids: list[int], retry_at: str, max_attempts: int = 5) -> None:
+    """The send failed: release the lease and retry at ``retry_at``; an item
+    that has used its attempts is dropped (logged)."""
+    if not item_ids:
+        return
+    with get_connection() as conn:
+        for i in item_ids:
+            row = conn.execute(
+                "SELECT attempts FROM alert_outbox WHERE id = ? AND sent_at IS NULL",
+                (i,),
+            ).fetchone()
+            if row is None:
+                continue
+            if (row["attempts"] or 0) >= max_attempts:
+                conn.execute(
+                    "UPDATE alert_outbox SET dropped_reason = 'max_attempts',"
+                    " claimed_at = NULL WHERE id = ?",
+                    (i,),
+                )
+                logger.warning(
+                    "alert outbox item %s dropped after %s attempts", i, row["attempts"]
+                )
+            else:
+                conn.execute(
+                    "UPDATE alert_outbox SET claimed_at = NULL, next_try_at = ?"
+                    " WHERE id = ?",
+                    (retry_at, i),
+                )
 
 
 def mark_dropped(item_id: int, reason: str) -> None:
@@ -200,8 +279,9 @@ def sent_today(user_id: str, kind: str, day_start_utc: str, channel: str) -> int
     with get_connection() as conn:
         return conn.execute(
             "SELECT COUNT(*) FROM alert_outbox WHERE user_id = ? AND watch_kind = ?"
-            " AND channel = ? AND sent_at IS NOT NULL AND sent_at >= ?",
-            (user_id, kind, channel, day_start_utc),
+            " AND channel = ? AND dropped_reason IS NULL AND ((sent_at IS NOT NULL"
+            " AND sent_at >= ?) OR (sent_at IS NULL AND claimed_at >= ?))",
+            (user_id, kind, channel, day_start_utc, day_start_utc),
         ).fetchone()[0]
 
 

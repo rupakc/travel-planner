@@ -32,6 +32,7 @@ def _setup(client, monkeypatch):
     monkeypatch.setattr(settings, "play_enabled", True)
     monkeypatch.setattr(settings, "game_enabled", True)
     monkeypatch.setattr(settings, "social_enabled", True)
+    monkeypatch.setattr(quiz_pushes, "_cursor", "")
 
 
 def _user(tz="UTC", device=True, played=True):
@@ -208,3 +209,13 @@ def test_comment_category_off_dropped(client):
     client.post(f"/api/social/ideas/{i}/comments", json={"text": "Hi"}, headers=b["h"])
     r = _log(a, "social_idea_comment")[0]
     assert r["status"] == "dropped" and r["dropped_reason"] == "disabled"
+
+
+def test_candidates_rotate_past_the_page_size(monkeypatch):
+    monkeypatch.setattr(quiz_pushes, "MAX_USERS", 10)
+    ids = {_user()["id"] for _ in range(25)}
+    seen: list[str] = []
+    for _ in range(20):  # other tests' players share the table
+        seen += [c["user_id"] for c in quiz_pushes._candidates(NOON)]
+    assert ids <= set(seen)
+    assert len(quiz_pushes._candidates(NOON)) > 0  # wraps, never stuck

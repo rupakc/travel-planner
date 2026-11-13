@@ -355,7 +355,8 @@ def _load_watch(watch_kind: str, notification: dict) -> dict | None:
 def _unclaim_dropped(item_id: int, reason: str) -> None:
     with get_connection() as conn:
         conn.execute(
-            "UPDATE alert_outbox SET sent_at = NULL, dropped_reason = ? WHERE id = ?",
+            "UPDATE alert_outbox SET sent_at = NULL, claimed_at = NULL,"
+            " dropped_reason = ? WHERE id = ?",
             (reason, item_id),
         )
 
@@ -432,18 +433,34 @@ def _push_payload(rows: list[dict], locale: str | None = None) -> tuple[str, str
     return alert_text.t("g_title", locale, n=len(rows)), body, data
 
 
-async def _send_push(user_id: str, rows: list[dict]) -> None:
+async def _send_push(user_id: str, rows: list[dict]) -> bool:
+    """True when delivered or when there is nothing to deliver to (no active
+    user, no device, push not configured); False when a send was attempted
+    and no device accepted it, so the outbox retries."""
+    from ..db import devices_db
     from ..db.users_db import get_user_by_id
     from . import push
 
     user = get_user_by_id(user_id)
     if not user or not user.get("is_active"):
-        return
+        return True
     from . import notify_center
 
     locale = await asyncio.to_thread(notify_center.user_locale, user_id)
     title, body, data = _push_payload(rows, locale)
-    await push.send_to_user(user["username"], title, body, data)
+    # stable per group: a retry after a lost ack carries the same key, so a
+    # client can collapse a duplicate
+    data["dedupe_key"] = "alert-" + "-".join(
+        str(i) for i in sorted(r["id"] for r in rows)
+    )
+    accepted = await push.send_to_user(user["username"], title, body, data)
+    if accepted:
+        return True
+    try:
+        has_devices = bool(devices_db.devices_for(user["username"]))
+    except Exception:  # noqa: BLE001
+        return False
+    return not (has_devices and push.configured())
 
 
 def flush(now: datetime) -> int:
@@ -462,7 +479,9 @@ def flush(now: datetime) -> int:
 async def _flush(now: datetime) -> int:
     from . import alert_email
 
-    claimed = alerts_db.claim_due(_iso(now), FLUSH_BATCH)
+    max_attempts = max(1, settings.alert_outbox_max_attempts)
+    lease_before = _iso(now - timedelta(seconds=max(1, settings.alert_outbox_lease_s)))
+    claimed = alerts_db.claim_due(_iso(now), FLUSH_BATCH, lease_before, max_attempts)
     if not claimed:
         return 0
     cutoff = _iso(now - STALE_AFTER)
@@ -474,34 +493,53 @@ async def _flush(now: datetime) -> int:
             fresh.append(it)
     claimed = _enforce_caps(fresh, now) if fresh else []
     sent = 0
-    pushes: dict[str, list[dict]] = {}
+    done: list[int] = []  # acked: delivered, or nothing to deliver
+    failed: list[int] = []  # leased back for a retry
+    pushes: dict[str, list[tuple[dict, dict]]] = {}
     for it in claimed:
         note = _note(it["notification_id"])
         if note is None:
+            done.append(it["id"])
             continue
         if it["channel"] == "push":
-            pushes.setdefault(it["user_id"], []).append(note)
-            sent += 1
+            pushes.setdefault(it["user_id"], []).append((it, note))
             continue
         watch = _load_watch(it["watch_kind"], note)
         if watch is None:
+            done.append(it["id"])
             continue
         try:
             if await alert_email.deliver_one(it["watch_kind"], watch, note, now):
                 sent += 1
+            done.append(it["id"])
         except Exception:  # noqa: BLE001
             logger.warning("alert email flush failed", exc_info=True)
-    for user_id, rows in pushes.items():
+            failed.append(it["id"])
+    for user_id, pairs in pushes.items():
         try:
             # expired/error notes go out alone, with today's text and priority
-            groupable = [r for r in rows if r["kind"] not in LEGACY_NOTE_KINDS]
-            for r in rows:
+            groupable = [(i, r) for i, r in pairs if r["kind"] not in LEGACY_NOTE_KINDS]
+            for i, r in pairs:
                 if r["kind"] in LEGACY_NOTE_KINDS:
-                    await _send_push(user_id, [r])
+                    ok = await _send_push(user_id, [r])
+                    (done if ok else failed).append(i["id"])
+                    sent += ok
             if groupable:
-                await _send_push(user_id, groupable)
+                ok = await _send_push(user_id, [r for _, r in groupable])
+                (done if ok else failed).extend(i["id"] for i, _ in groupable)
+                sent += len(groupable) * ok
         except Exception:  # noqa: BLE001
             logger.warning("alert push flush failed", exc_info=True)
+            handled = set(done) | set(failed)
+            failed.extend(i["id"] for i, _ in pairs if i["id"] not in handled)
+    # ack only after the sends: a crash before this line leaves the lease to
+    # expire and the item to be redelivered
+    alerts_db.ack(done, _iso(now))
+    if failed:
+        attempts = {it["id"]: it["attempts"] for it in claimed}
+        for i in failed:
+            delay = min(60 * 2 ** (attempts.get(i, 1) - 1), 3600)
+            alerts_db.fail([i], _iso(now + timedelta(seconds=delay)), max_attempts)
     return sent
 
 

@@ -24,17 +24,37 @@ START_HOUR = 12
 END_HOUR = 20
 
 
-def _candidates(now: datetime) -> list[dict]:
-    since_ms = int((now - timedelta(days=ACTIVE_DAYS)).timestamp() * 1000)
+_cursor = ""  # keyset cursor (users.id) of the last page, in memory
+
+
+def _page(since_ms: int, after: str) -> list[dict]:
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT u.id AS user_id FROM users u WHERE u.is_active = 1"
+            "SELECT u.id AS user_id FROM users u WHERE u.is_active = 1 AND u.id > ?"
             " AND EXISTS (SELECT 1 FROM devices d WHERE d.username = u.username)"
             " AND EXISTS (SELECT 1 FROM quiz_sessions q WHERE q.user_id = u.id"
             " AND q.created_ms >= ?) ORDER BY u.id LIMIT ?",
-            (since_ms, MAX_USERS),
+            (after, since_ms, MAX_USERS),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def _candidates(now: datetime) -> list[dict]:
+    """The next page of up to ``MAX_USERS`` active players after the cursor,
+    wrapping to the start past the last one, so every player is eventually
+    considered however many there are (a restart just begins again)."""
+    global _cursor
+    since_ms = int((now - timedelta(days=ACTIVE_DAYS)).timestamp() * 1000)
+    rows = _page(since_ms, _cursor)
+    if len(rows) < MAX_USERS:  # reached the end: next pass starts over
+        if _cursor and not rows:
+            rows = _page(since_ms, "")
+            _cursor = rows[-1]["user_id"] if len(rows) == MAX_USERS else ""
+        else:
+            _cursor = ""
+    else:
+        _cursor = rows[-1]["user_id"]
+    return rows
 
 
 def _daily_done(user_id: str, utc_day: str) -> bool:
