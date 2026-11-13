@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import time
+import weakref
 
 import httpx
 from google.auth import crypt
@@ -48,7 +49,9 @@ _transport: httpx.AsyncBaseTransport | None = None  # tests inject a MockTranspo
 _access: dict = {}  # cached {"token", "expires_at", "email"}
 # One token refresh at a time, so a burst of pushes shares one exchange (a
 # lock per event loop: an asyncio.Lock can't cross loops)
-_locks: dict[asyncio.AbstractEventLoop, asyncio.Lock] = {}
+_locks: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock]" = (
+    weakref.WeakKeyDictionary()
+)
 # Fire-and-forget pushes still running (a reference keeps them from being
 # garbage-collected mid-flight)
 _tasks: set[asyncio.Task] = set()

@@ -397,3 +397,26 @@ def test_rate_limit_play_bucket(client, monkeypatch):
     codes = [client.get("/api/play/state", headers=h).status_code for _ in range(3)]
     rate_limit.limiter._hits.clear()
     assert codes == [200, 200, 429]
+
+
+def test_repeated_last_answer_retries_failed_reward(client, clock, monkeypatch):
+    uid, h = _login(client)
+    sid = _start(client, h, mode="daily").json()["session_id"]
+    from app.game import engine as game_engine
+
+    real = game_engine.award
+
+    def boom(*a, **k):
+        raise RuntimeError("transient")
+
+    monkeypatch.setattr(game_engine, "award", boom)
+    last = _play(client, h, sid, ["right"] * 5)[-1].json()
+    assert last["done"] is True and "xp" not in last["summary"]
+    monkeypatch.setattr(game_engine, "award", real)
+    again = client.post(
+        f"/api/play/quiz/{sid}/answer", json={"index": 4, "choice": "a"}, headers=h
+    ).json()
+    assert {a["rule"] for a in again["summary"]["xp"]["awards"]} == {
+        "quiz_daily",
+        "quiz_perfect",
+    }

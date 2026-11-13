@@ -1,6 +1,7 @@
 """Social ideas feed, comments and reports (Phase 5). Contract:
 docs/Social-API.md. Same flag and buckets as ``social.py``."""
 
+import json
 import logging
 from typing import Literal
 
@@ -124,7 +125,9 @@ def publish_idea(body: IdeaBody, user: dict = Depends(get_current_user)):
     if verdict == "reject":
         raise ApiError(422, "content_rejected", "That text can't be used.")
     snap = idea_snapshot.build(plan, body.kind)
-    if len(str(snap).encode()) > idea_snapshot.SNAPSHOT_MAX_BYTES:
+    # measure real UTF-8 JSON (not the Python repr, not \\u escapes)
+    size = len(json.dumps(snap, ensure_ascii=False).encode("utf-8"))
+    if size > idea_snapshot.SNAPSHOT_MAX_BYTES:
         raise ApiError(422, "snapshot_too_large", "That plan is too large to share.")
     existing = db.find_idea(user["id"], body.plan_id, body.kind)
     if existing and existing["status"] in ("hidden", "removed"):

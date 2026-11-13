@@ -2,7 +2,7 @@
 the push/email outbox, weekly digests and cached advice. Additive tables only."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from .database import get_connection
 
@@ -69,10 +69,13 @@ def create_alert_tables() -> None:
                 PRIMARY KEY (watch_kind, watch_id)
             );
         """)
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(alert_advice)")}
+        if "locale" not in cols:  # additive: the tip's language (cache key)
+            conn.execute("ALTER TABLE alert_advice ADD COLUMN locale TEXT")
 
 
 def _now() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(UTC).replace(tzinfo=None).isoformat() + "Z"
 
 
 # ── Preferences ───────────────────────────────────────────────────────────────
@@ -202,6 +205,20 @@ def sent_today(user_id: str, kind: str, day_start_utc: str, channel: str) -> int
         ).fetchone()[0]
 
 
+def prune(cutoff_iso: str) -> int:
+    """Drop outbox and digest rows older than ``cutoff_iso`` (same retention
+    as the notifications they point at); returns the rows removed."""
+    with get_connection() as conn:
+        a = conn.execute(
+            "DELETE FROM alert_outbox WHERE due_at < ?", (cutoff_iso,)
+        ).rowcount
+        b = conn.execute(
+            "DELETE FROM alert_digests WHERE sent_at IS NOT NULL AND sent_at < ?",
+            (cutoff_iso,),
+        ).rowcount
+    return a + b
+
+
 # ── Digests ───────────────────────────────────────────────────────────────────
 
 
@@ -219,20 +236,32 @@ def digest_claim(user_id: str, week: str) -> bool:
 # ── Advice cache ──────────────────────────────────────────────────────────────
 
 
-def get_advice(watch_kind: str, watch_id: int) -> dict | None:
+def get_advice(
+    watch_kind: str, watch_id: int, locale: str | None = None
+) -> dict | None:
+    """The cached tip, only when it was written in ``locale`` (``None`` = English)."""
     with get_connection() as conn:
         row = conn.execute(
             "SELECT * FROM alert_advice WHERE watch_kind = ? AND watch_id = ?",
             (watch_kind, watch_id),
         ).fetchone()
-    return dict(row) if row else None
+    if not row or (row["locale"] or "en") != (locale or "en"):
+        return None
+    return dict(row)
 
 
-def put_advice(watch_kind: str, watch_id: int, tip: str, generated_at: str) -> None:
+def put_advice(
+    watch_kind: str,
+    watch_id: int,
+    tip: str,
+    generated_at: str,
+    locale: str | None = None,
+) -> None:
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO alert_advice (watch_kind, watch_id, tip, generated_at)"
-            " VALUES (?, ?, ?, ?) ON CONFLICT(watch_kind, watch_id)"
-            " DO UPDATE SET tip = excluded.tip, generated_at = excluded.generated_at",
-            (watch_kind, watch_id, tip, generated_at),
+            "INSERT INTO alert_advice (watch_kind, watch_id, tip, generated_at, locale)"
+            " VALUES (?, ?, ?, ?, ?) ON CONFLICT(watch_kind, watch_id)"
+            " DO UPDATE SET tip = excluded.tip, generated_at = excluded.generated_at,"
+            " locale = excluded.locale",
+            (watch_kind, watch_id, tip, generated_at, locale or "en"),
         )

@@ -509,6 +509,7 @@ async def _flush(now: datetime) -> int:
 
 
 DIGEST_INTERVAL_S = 300
+PRUNE_INTERVAL_S = 86400
 TRIP_PUSH_INTERVAL_S = 300
 
 
@@ -516,6 +517,7 @@ async def _loop(interval: int) -> None:
     from . import alert_digest
 
     last_digest = 0.0
+    last_prune = 0.0
     last_trip = -TRIP_PUSH_INTERVAL_S
     while True:
         try:
@@ -548,6 +550,15 @@ async def _loop(interval: int) -> None:
                 raise
             except Exception:  # noqa: BLE001
                 logger.warning("trip push pass failed", exc_info=True)
+        if time_mod.monotonic() - last_prune >= PRUNE_INTERVAL_S:
+            last_prune = time_mod.monotonic()
+            try:
+                cutoff = _iso(datetime.now(UTC) - timedelta(days=180))
+                await asyncio.to_thread(alerts_db.prune, cutoff)
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                logger.warning("alert prune failed", exc_info=True)
         if time_mod.monotonic() - last_digest >= DIGEST_INTERVAL_S:
             last_digest = time_mod.monotonic()
             try:

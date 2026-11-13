@@ -244,7 +244,8 @@ async def advice(watch: dict, story: dict, *, locale: str | None = None) -> dict
     built from the stored latest/lowest/typical only (no SerpAPI)."""
     now = _utcnow()
     kind, watch_id = story["kind"], watch["id"]
-    cached = alerts_db.get_advice(kind, watch_id)
+    locale = locale if locale in ("en", "es", "de", "fr", "hi", "zh", "bn") else None
+    cached = alerts_db.get_advice(kind, watch_id, locale)
     gen = _parse(cached["generated_at"]) if cached else None
     if cached and gen and now - gen < ADVICE_TTL:
         return {
@@ -295,5 +296,5 @@ async def advice(watch: dict, story: dict, *, locale: str | None = None) -> dict
     if not isinstance(tip, str) or not tip.strip():
         raise ApiError(502, "advice_failed", "We couldn't get a tip right now.")
     stamp = _stamp(now)
-    alerts_db.put_advice(kind, watch_id, tip.strip(), stamp)
+    alerts_db.put_advice(kind, watch_id, tip.strip(), stamp, locale)
     return {"tip": tip.strip(), "source": "ai", "generated_at": stamp, "cached": False}
