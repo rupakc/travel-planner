@@ -790,12 +790,14 @@ def _phrase(moves: list[dict]) -> str:
 
 def _x_label(label: str):
     """A component label as a spec: the known English group words localise."""
-    key = f"m_{label}"
-    return (
-        S(key)
-        if label in ("flights", "hotel", "activities", "other", "Flights")
-        else label
-    )
+    keys = {
+        "flights": "m_flights",
+        "Flights": "m_flights",
+        "hotel": "m_stay",
+        "activities": "m_activities",
+        "other": "m_other",
+    }
+    return S(keys[label]) if label in keys else label
 
 
 def _x_phrase(moves: list[dict]):
