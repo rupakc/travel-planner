@@ -1648,7 +1648,7 @@
 
 
 <h1 id="telemetry">Telemetry</h1>
-<p>Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web today; Android and iOS later). What users are told is in <a href="../Privacy/">Privacy</a>; this page is the developer contract. The closed schema lives in <code>backend/app/telemetry/registry.py</code> (<code>EVENTS</code>), and a test fails if an event there is missing from this page.</p>
+<p>Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web and Android today; iOS later). What users are told is in <a href="../Privacy/">Privacy</a>; this page is the developer contract. The closed schema lives in <code>backend/app/telemetry/registry.py</code> (<code>EVENTS</code>), and a test fails if an event there is missing from this page.</p>
 <p>It is separate from <code>POST /api/analytics/events</code> (signed-in only, writes log lines, endpoint unchanged), but the web client sends to that endpoint only while <code>telemetryAllowed()</code>, so one switch covers both.</p>
 <h2 id="envelope">Envelope</h2>
 <p><code>POST /api/telemetry</code>, JSON, optionally gzipped (<code>Content-Encoding: gzip</code>), auth optional:</p>

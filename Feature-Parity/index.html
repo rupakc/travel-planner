@@ -872,6 +872,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1559,7 +1570,7 @@
 
 
 <h1 id="feature-parity">Feature Parity</h1>
-<p>Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the <a href="https://github.com/rupakc/travel-planner-android#features">Android app's README</a> (status "every feature module is merged and integrated on <code>main</code>") as of 2026-11-12 (Phase 1/2 merged on <code>main</code>); iOS does not exist yet. Phase numbers are from the <a href="../superpowers/specs/2026-11-10-voyager-reimagined-design/">design spec</a> (section 11). Update this page in the same change that adds a client feature.</p>
+<p>Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the <a href="https://github.com/rupakc/travel-planner-android#features">Android app's README</a> (status "every feature module is merged and integrated on <code>main</code>") as of 2026-11-13 (Phases 1 to 5 merged on <code>main</code>, plus the final-audit parity fixes); iOS does not exist yet. Phase numbers are from the <a href="../superpowers/specs/2026-11-10-voyager-reimagined-design/">design spec</a> (section 11). Update this page in the same change that adds a client feature.</p>
 <p>Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in the Android README, so not confirmed.</p>
 <h2 id="account-and-settings">Account and settings</h2>
 <table>
@@ -1581,12 +1592,12 @@
 <tr>
 <td>Create an account, verify email, reset password</td>
 <td>✅</td>
-<td>✅</td>
+<td>✅ password strength meter (same rules as web); a verify link opened while signed in asks to sign out first (web swaps accounts)</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
-<td>Sessions list and revoke one (mobile sign-ins; <code>GET/DELETE /auth/sessions</code>)</td>
-<td>—</td>
+<td>Sessions list and revoke one (<code>GET/DELETE /auth/sessions</code>)</td>
+<td>✅ (Account → Security; hidden on an older backend)</td>
 <td>✅</td>
 <td>⏳ Phase 7</td>
 </tr>
@@ -1599,7 +1610,7 @@
 <tr>
 <td>Account area: profile, avatar, settings, linked sign-in methods</td>
 <td>✅</td>
-<td>✅</td>
+<td>✅ including linking Google, GitHub and Facebook</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
@@ -1611,19 +1622,25 @@
 <tr>
 <td>Daily AI allowance and verified-email requirement</td>
 <td>✅</td>
-<td>✅</td>
+<td>✅ an <code>email_unverified</code> refusal raises a banner with a send-link action</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
 <td>XP, badges, levels and streaks (can be hidden)</td>
 <td>✅</td>
 <td>✅</td>
+<td></td>
+</tr>
+<tr>
+<td>Hide community (<code>hide_community</code>: hides Ideas, profile and social surfaces)</td>
+<td>✅</td>
+<td>✅ Ideas entry, profile, publish launcher and social notification switch</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
 <td>Social sign-in buttons (Apple, Google, Facebook, GitHub)</td>
 <td>✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then</td>
-<td>✅ system browser + PKCE; inert until provider credentials are set</td>
+<td>✅ same four buttons including Apple, "coming soon" note until the provider is configured; system browser + PKCE</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
@@ -1659,7 +1676,7 @@
 <tr>
 <td>Telemetry and consent prompt (see <a href="../Telemetry/">Telemetry</a>)</td>
 <td>✅</td>
-<td>⏳ Phase 8</td>
+<td>✅ every tap, toggle, change and submit reported through shared UI wrappers (tid and route only) and a region-gated consent prompt (EU/EEA/UK/CH by device time zone, reopenable from the sign-in screen's "Privacy choices" link)</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
@@ -1670,8 +1687,8 @@
 </tr>
 <tr>
 <td>Onboarding</td>
-<td>✅ coach-mark tour</td>
-<td>✅ traveller-type onboarding (different flow)</td>
+<td>✅ coach-mark tour; welcome and notifications copy shared with Android</td>
+<td>✅ traveller-type onboarding; same copy as web in all 7 languages, no first-run feature picker (feature toggles stay in Settings → Features, the Settings retake keeps the picker)</td>
 <td>⏳ Phase 7</td>
 </tr>
 </tbody>
@@ -1695,7 +1712,7 @@
 </tr>
 <tr>
 <td>Surprise me (discover)</td>
-<td>✅</td>
+<td>✅ uses the signed-in user's Taste Graph</td>
 <td>✅</td>
 <td>⏳ Phase 7</td>
 </tr>
@@ -1890,7 +1907,7 @@
 </tr>
 <tr>
 <td>Offline pack (emergency card, currency, phrases, plan)</td>
-<td>✅</td>
+<td>✅ queued offline writes show a "rejected" state when the server refuses them (for example a per-trip cap)</td>
 <td>✅</td>
 <td>⏳ 7</td>
 </tr>
@@ -1915,7 +1932,7 @@
 <tr>
 <td>Recap, passport stamps and countries visited</td>
 <td>✅</td>
-<td>✅</td>
+<td>✅ (the scratch map is a country list; passport stamps are not built)</td>
 <td>⏳ 7</td>
 </tr>
 <tr>
@@ -1998,7 +2015,7 @@
 <td>⏳ 7</td>
 </tr>
 <tr>
-<td>Social and quiz notifications</td>
+<td>Social and quiz notifications (daily quiz reminder, likes and comments on your ideas, head-to-head)</td>
 <td>✅</td>
 <td>✅</td>
 <td>⏳ 7</td>
@@ -2050,7 +2067,7 @@
 </tr>
 <tr>
 <td>Alert e-mail</td>
-<td>✅</td>
+<td>✅ localised to the account language (server-side <code>data.i18n</code>)</td>
 <td>?</td>
 <td>⏳ Phase 7</td>
 </tr>
@@ -2068,8 +2085,8 @@
 </tr>
 <tr>
 <td>Drop moment, savings tally and Deal-hunter XP</td>
-<td>✅ (same flag)</td>
-<td>✅ ("caught a drop", never "saved")</td>
+<td>✅ (same flag; savings card follows the light/dark theme, drop-moment badge)</td>
+<td>✅ ("caught a drop", never "saved"); the Deal-hunter track, bucket ring and passport stamp are not built</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
@@ -2080,7 +2097,7 @@
 </tr>
 <tr>
 <td>Weekly digest, quiet hours, caps and grouping (preferences)</td>
-<td>✅ (same flag)</td>
+<td>✅ (same flag; digest text localised)</td>
 <td>✅</td>
 <td>⏳ Phase 7</td>
 </tr>
@@ -2105,7 +2122,7 @@
 <tr>
 <td>Trip-phase pushes (T-30, T-7, T-1, morning brief)</td>
 <td>—</td>
-<td>✅ taps open the trip Today tab</td>
+<td>✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on</td>
 <td>⏳ Phase 6</td>
 </tr>
 <tr>
@@ -2117,11 +2134,23 @@
 <tr>
 <td>Near me</td>
 <td>✅</td>
-<td>✅</td>
+<td>✅ (a background geofence arrival notification is not built, by ruling)</td>
+<td></td>
+</tr>
+<tr>
+<td>Weather-change push</td>
+<td>—</td>
+<td>— (not built)</td>
 <td>⏳ Phase 7</td>
 </tr>
 </tbody>
 </table>
+<h2 id="known-gaps">Known gaps</h2>
+<ul>
+<li>Android: background geofence arrival notification (not built, by ruling), weather-change push (not built on any client), Deal-hunter track, bucket ring and passport stamp, scratch map is a country list.</li>
+<li>Android: one-tap watch on a saved plan or chat (when live prices and Alerts v2 are on), a dismissible watch offer right after a plan is saved, and Recap "Where next" (AI picks from <code>/api/discover</code>, on tap, seeded by the Taste Graph server-side) shipped in #121.</li>
+<li>Android: follows, comments, head-to-head and the weekly challenge remain Phase 8.</li>
+</ul>
 
 
 
