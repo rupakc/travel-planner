@@ -519,6 +519,7 @@ async def _loop(interval: int) -> None:
     last_digest = 0.0
     last_prune = 0.0
     last_trip = -TRIP_PUSH_INTERVAL_S
+    last_quiz = -TRIP_PUSH_INTERVAL_S
     while True:
         try:
             await asyncio.to_thread(flush, datetime.now(UTC))
@@ -543,13 +544,20 @@ async def _loop(interval: int) -> None:
                     t = datetime.now(UTC)
                     await asyncio.to_thread(trip_pushes.run_due, t)
                     await asyncio.to_thread(trip_pushes.prune_log, t)
-                    from . import quiz_pushes
-
-                    await asyncio.to_thread(quiz_pushes.run_due, t)
             except asyncio.CancelledError:
                 raise
             except Exception:  # noqa: BLE001
                 logger.warning("trip push pass failed", exc_info=True)
+            try:
+                from . import quiz_pushes
+
+                if time_mod.monotonic() - last_quiz >= TRIP_PUSH_INTERVAL_S:
+                    last_quiz = time_mod.monotonic()
+                    await asyncio.to_thread(quiz_pushes.run_due, datetime.now(UTC))
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                logger.warning("quiz push pass failed", exc_info=True)
         if time_mod.monotonic() - last_prune >= PRUNE_INTERVAL_S:
             last_prune = time_mod.monotonic()
             try:
