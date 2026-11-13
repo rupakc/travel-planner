@@ -1742,6 +1742,7 @@
 <p><strong>Notifications (additive).</strong></p>
 <ul>
 <li>A drop notification's <code>data</code> gains <code>drop: {"from", "to", "amount", "pct", "currency", "target_hit": bool, "observed": true}</code> and <code>game: GameDelta | null</code>.</li>
+<li>A price-drop, <code>watch_expired</code> or <code>watch_error</code> notification's <code>data</code> may carry <code>i18n: {"title", "body"}</code>, a structured spec the server renders in the user's language for push, email and the digest. <code>title</code> and <code>body</code> stay English; clients can ignore <code>i18n</code>.</li>
 <li>The new kind <code>price_digest</code> has the usual <code>title</code> and <code>body</code> plus <code>data.digest: {"week": "2026-W46", "watches": [{"kind", "watch_id", "title", "latest", "change_7d", "lowest", "checked_at"}], "savings": Savings}</code>.</li>
 <li>A grouped push carries <code>data.group_count</code> (a string).</li>
 </ul>
